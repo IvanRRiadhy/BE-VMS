@@ -1,0 +1,140 @@
+
+
+/* CALENDER ELEMENT */
+* {
+  box-sizing: border-box;
+}
+ul {
+  list-style-type: none;
+}
+
+ul {
+  list-style-type: none;
+}
+
+.month {
+  padding: 15px 25px;
+  width: 100%;
+  text-align: center;
+  position: relative;
+}
+
+.month ul {
+  margin: 0;
+  padding: 0;
+}
+
+.month ul li {
+  color: white;
+  font-size: 12px;
+  text-transform: capitalize;
+  letter-spacing: 3px;
+}
+
+.month .prev {
+  float: left;
+  padding-top: 10px;
+  cursor: pointer;
+}
+
+.month .next {
+  float: right;
+  padding-top: 10px;
+  cursor: pointer;
+}
+
+.weekdays {
+  margin: 0;
+  padding: 10px 0;
+  background-color: #ddd;
+}
+
+.weekdays li {
+  display: inline-block;
+  width: 13.6%;
+  color: #666;
+  text-align: center;
+}
+
+.days {
+  padding: 10px 0;
+  background: #eee;
+  margin: 0;
+}
+
+.days li {
+  list-style-type: none;
+  display: inline-block;
+  width: 13.6%;
+  text-align: center;
+  margin-bottom: 5px;
+  font-size: 11px;
+  color: #777;
+}
+
+.days li .active {
+  padding: 5px;
+  background: #0d6efd;
+  color: white !important;
+}
+
+.event {
+  background-color: #0d6efd;
+  color: rgb(255, 255, 255);
+  border-radius: 50%;
+  padding: 2.5px;
+  cursor: pointer;
+}
+
+@media screen and (max-width: 720px) {
+  .weekdays li,
+  .days li {
+    width: 13.1%;
+  }
+}
+
+@media screen and (max-width: 420px) {
+  .weekdays li,
+  .days li {
+    width: 12.5%;
+  }
+  .days li .active {
+    padding: 2px;
+  }
+}
+
+@media screen and (max-width: 290px) {
+  .weekdays li,
+  .days li {
+    width: 12.2%;
+  }
+}
+
+@media only screen and (max-width: 600px) {
+  .weekdays li,
+  .days li {
+    width: 13.2%;
+  }
+
+  .month {
+    padding: 15px 25px;
+    width: 100%;
+    text-align: center;
+    position: relative;
+  }
+}
+
+
+
+
+.square-box {
+  width: 9px;
+  height:9px;
+  background-color: #0d6efd;
+}
+.circle-box {
+  width: 10px;
+  height: 10px;
+  background-color: #0d6efd;
+  border-radius: 50%;
+}
