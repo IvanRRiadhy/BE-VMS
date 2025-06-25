@@ -25,11 +25,40 @@ import CustomRadio from 'src/components/forms/theme-elements/CustomRadio';
 import Webcam from 'react-webcam';
 import ReactCrop, { Crop } from 'react-image-crop';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { getAllDepartments, getAllDistricts, getAllOrganizations } from 'src/customs/api/admin';
+import {
+  createEmployee,
+  getAllDepartments,
+  getAllDistricts,
+  getAllOrganizations,
+  updateEmployee,
+} from 'src/customs/api/admin';
+import {
+  CreateEmployeeRequest,
+  CreateEmployeeRequestSchema,
+  UpdateEmployeeRequest,
+} from 'src/customs/api/models/Employee';
 
 const steps = ['Personal Info', 'Work Details', 'Access & Address', 'Other Details', 'Photo'];
 
-const FormWizardAddEmployee = () => {
+interface FormEmployeeProps {
+  formData: CreateEmployeeRequest;
+  setFormData: React.Dispatch<React.SetStateAction<CreateEmployeeRequest>>;
+  edittingId?: string;
+  onSuccess?: () => void;
+}
+
+const FormWizardAddEmployee = ({
+  formData,
+  setFormData,
+  edittingId,
+  onSuccess,
+}: FormEmployeeProps) => {
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [loading, setLoading] = useState(false);
+  const [alertType, setAlertType] = useState<'info' | 'success' | 'error'>('info');
+  const [alertMessage, setAlertMessage] = useState<string>(
+    'Complete the following data properly and correctly',
+  );
   const [activeStep, setActiveStep] = useState(0);
   const [skipped, setSkipped] = useState(new Set<number>());
   const [employeePhotoFile, setEmployeePhotoFile] = useState<File | null>(null);
@@ -45,12 +74,30 @@ const FormWizardAddEmployee = () => {
       const orgRes = await getAllOrganizations(token);
       const deptRes = await getAllDepartments(token);
       const distRes = await getAllDistricts(token);
-    setOrganization(orgRes?.collection ?? []);
-    setDepartment(deptRes?.collection ?? []);
-    setDistrict(distRes?.collection ?? []);
+      setOrganization(orgRes?.collection ?? []);
+      setDepartment(deptRes?.collection ?? []);
+      setDistrict(distRes?.collection ?? []);
     };
     fetchData();
   }, [token]);
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      faceimage:
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFcAAABXAQMAAABLBksvAAAABlBMVEX///8AAABVwtN+AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAtUlEQVQ4jc3SMQ7DIAwF0I8YuiUXiJRrsHGl5AQNF4ArsfkaSFyg3TJUdZ0hbQdk1jC9AYT9beBqZ2TeXGUuigfYDXWDal+js2nvWO53Hahn2MD2W0PTUn/866Xp44n7RdH0uPPbSRSaDZeVJpOL4sFbJpsIig1jpdfgNOM2P/z8pKL5aHMOu2bJQcK8ZyiWPBNP5tyBtr0MRUbccSAsHroT13juUtvyb8YCKD7qJ8u5KL7W+QBqIwtw+AKG3gAAAABJRU5ErkJggg==',
+    }));
+  }, []);
+  const handleChange = (
+    e:
+      | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+      | React.ChangeEvent<{ name?: string; value: unknown }>,
+  ) => {
+    const { id, name, value } = e.target as any;
+    setFormData((prev) => ({
+      ...prev,
+      [name || id]: value,
+    }));
+  };
 
   const handleNext = () => {
     let newSkipped = skipped;
@@ -64,6 +111,57 @@ const FormWizardAddEmployee = () => {
 
   const handleBack = () => setActiveStep((prev) => prev - 1);
   const handleReset = () => setActiveStep(0);
+  const handleOnSubmit = async (e: React.FormEvent) => {
+    console.log('Submitting form with data:', formData);
+    e.preventDefault();
+    setLoading(true);
+    setErrors({});
+
+    try {
+      if (!token) {
+        setAlertType('error');
+        setAlertMessage('Something went wrong. Please try again later.');
+
+        setTimeout(() => {
+          setAlertType('info');
+          setAlertMessage('Complete the following data properly and correctly');
+        }, 3000);
+        return;
+      }
+      setFormData((prev) => ({ ...prev, qr_code: formData.card_number }));
+      // const filteredFormData: CreateEmployeeRequest = Object.fromEntries(Object.entries(formData).filter(([key, value]) => value !== undefined));
+      const data: CreateEmployeeRequest = CreateEmployeeRequestSchema.parse(formData);
+      console.log(edittingId);
+      if (edittingId !== '' && edittingId !== undefined) {
+        const editData: UpdateEmployeeRequest = {
+          ...data,
+          is_email_verify: false,
+        };
+        await updateEmployee(edittingId, editData, token);
+      } else {
+        await createEmployee(data, token);
+      }
+
+      localStorage.removeItem('unsavedEmployeeForm');
+      setAlertType('success');
+      setAlertMessage('Employee created successfully!');
+      setTimeout(() => {
+        onSuccess?.();
+      }, 900);
+    } catch (err: any) {
+      if (err?.errors) {
+        setErrors(err.errors);
+      }
+      setAlertType('error');
+      setAlertMessage('Something went wrong. Please try again later.');
+      setTimeout(() => {
+        setAlertType('info');
+        setAlertMessage('Complete the following data properly and correctly');
+      }, 3000);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const StepContent = (step: number) => {
     switch (step) {
@@ -80,9 +178,27 @@ const FormWizardAddEmployee = () => {
               </CustomFormLabel>
               <CustomTextField
                 id="name"
+                value={formData.name}
+                onChange={handleChange}
                 fullWidth
                 variant="outlined"
                 helperText="Make sure the name is correct."
+                required
+              />
+            </Grid2>
+            {/* Person ID */}
+            <Grid2 size={{ xs: 12, sm: 12 }}>
+              <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="nik">
+                <Typography variant="caption">Employee ID :</Typography>
+              </CustomFormLabel>
+              <CustomTextField
+                id="person_id"
+                value={formData.person_id}
+                onChange={handleChange}
+                fullWidth
+                variant="outlined"
+                helperText="Ensure valid ID."
+                required
               />
             </Grid2>
             {/* NIK */}
@@ -91,10 +207,13 @@ const FormWizardAddEmployee = () => {
                 <Typography variant="caption">Employee NIK :</Typography>
               </CustomFormLabel>
               <CustomTextField
-                id="nik"
+                id="identity_id"
+                value={formData.identity_id}
+                onChange={handleChange}
                 fullWidth
                 variant="outlined"
                 helperText="Ensure valid NIK."
+                required
               />
             </Grid2>
 
@@ -105,9 +224,12 @@ const FormWizardAddEmployee = () => {
               </CustomFormLabel>
               <CustomTextField
                 id="email"
+                value={formData.email}
+                onChange={handleChange}
                 fullWidth
                 variant="outlined"
                 helperText="Check email validity."
+                required
               />
             </Grid2>
 
@@ -117,8 +239,26 @@ const FormWizardAddEmployee = () => {
                 <Typography variant="caption">Gender :</Typography>
               </CustomFormLabel>
               <FormControl sx={{ display: 'flex', flexDirection: 'row' }}>
-                <FormControlLabel value="male" label="Male" control={<CustomRadio />} />
-                <FormControlLabel value="female" label="Female" control={<CustomRadio />} />
+                <FormControlLabel
+                  value={1}
+                  label="Male"
+                  control={
+                    <CustomRadio
+                      checked={formData.gender === 1}
+                      onChange={() => setFormData((prev) => ({ ...prev, gender: 1 }))}
+                    />
+                  }
+                />
+                <FormControlLabel
+                  value={2}
+                  label="Female"
+                  control={
+                    <CustomRadio
+                      checked={formData.gender === 2}
+                      onChange={() => setFormData((prev) => ({ ...prev, gender: 2 }))}
+                    />
+                  }
+                />
               </FormControl>
             </Grid2>
           </Grid2>
@@ -127,7 +267,7 @@ const FormWizardAddEmployee = () => {
       case 1:
         return (
           <Grid2 container spacing={2}>
-            <Grid2 mt={2}  size={{ xs: 12, sm: 12 }}>
+            <Grid2 mt={2} size={{ xs: 12, sm: 12 }}>
               <Alert severity="info">Work-related details</Alert>
             </Grid2>
             <Grid2 size={{ xs: 12, sm: 12 }}>
@@ -136,6 +276,8 @@ const FormWizardAddEmployee = () => {
               </CustomFormLabel>
               <CustomTextField
                 id="phone"
+                value={formData.phone}
+                onChange={handleChange}
                 fullWidth
                 variant="outlined"
                 helperText="Enter phone number."
@@ -145,7 +287,15 @@ const FormWizardAddEmployee = () => {
               <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="district">
                 <Typography variant="caption">Employee District :</Typography>
               </CustomFormLabel>
-              <CustomTextField id="district" select fullWidth variant="outlined" defaultValue="">
+              <CustomTextField
+                id="district_id"
+                name="district_id"
+                select
+                value={formData.district_id || ''}
+                onChange={handleChange}
+                fullWidth
+                variant="outlined"
+              >
                 {district?.map((item: any) => (
                   <MenuItem key={item.id} value={item.id}>
                     {item.name}
@@ -157,7 +307,15 @@ const FormWizardAddEmployee = () => {
               <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="org">
                 <Typography variant="caption">Employee Organization :</Typography>
               </CustomFormLabel>
-              <CustomTextField id="org" select fullWidth variant="outlined" defaultValue="">
+              <CustomTextField
+                id="organization_id"
+                name="organization_id"
+                select
+                value={formData.organization_id}
+                onChange={handleChange}
+                fullWidth
+                variant="outlined"
+              >
                 {organization?.map((item: any) => (
                   <MenuItem key={item.id} value={item.id}>
                     {item.name}
@@ -169,7 +327,15 @@ const FormWizardAddEmployee = () => {
               <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="dept">
                 <Typography variant="caption">Employee Department :</Typography>
               </CustomFormLabel>
-              <CustomTextField id="dept" select fullWidth variant="outlined" defaultValue="">
+              <CustomTextField
+                id="department_id"
+                name="department_id"
+                select
+                value={formData.department_id}
+                onChange={handleChange}
+                fullWidth
+                variant="outlined"
+              >
                 {department?.map((item: any) => (
                   <MenuItem key={item.id} value={item.id}>
                     {item.name}
@@ -186,12 +352,35 @@ const FormWizardAddEmployee = () => {
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <Alert severity="info">Access and location info</Alert>
             </Grid2>
-
+            {/* Is Head */}
+            <Grid2 size={{ xs: 12, sm: 12 }}>
+              <FormControlLabel
+                control={
+                  <CustomRadio
+                    checked={formData.is_head === true}
+                    onChange={() => setFormData((prev) => ({ ...prev, is_head: !prev.is_head }))}
+                  />
+                }
+                label="Is Head Employee"
+              />
+            </Grid2>
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="head1">
                 <Typography variant="caption">Employee Head-1 :</Typography>
               </CustomFormLabel>
-              <CustomTextField id="head1" select fullWidth variant="outlined" defaultValue="">
+              <CustomTextField
+                id="head_employee_1"
+                name="head_employee_1"
+                value={formData.head_employee_1}
+                onChange={handleChange}
+                select
+                fullWidth
+                variant="outlined"
+              >
+                {/* Replace with your actual head employee options */}
+                <MenuItem value="">
+                  <em>None</em>
+                </MenuItem>
                 <MenuItem value="A">Head A</MenuItem>
                 <MenuItem value="B">Head B</MenuItem>
                 <MenuItem value="C">Head C</MenuItem>
@@ -201,23 +390,82 @@ const FormWizardAddEmployee = () => {
               <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="head2">
                 <Typography variant="caption">Employee Head-2 :</Typography>
               </CustomFormLabel>
-              <CustomTextField id="head2" select fullWidth variant="outlined" defaultValue="">
+              <CustomTextField
+                id="head_employee_2"
+                name="head_employee_2"
+                value={formData.head_employee_2}
+                onChange={handleChange}
+                select
+                fullWidth
+                variant="outlined"
+              >
+                {/* Replace with your actual head employee options */}
+                <MenuItem value="">
+                  <em>None</em>
+                </MenuItem>
                 <MenuItem value="A">Head A</MenuItem>
                 <MenuItem value="B">Head B</MenuItem>
-                <MenuItem value="C">Head C</MenuItem>55
+                <MenuItem value="C">Head C</MenuItem>
               </CustomTextField>
             </Grid2>
             <Grid2 size={{ xs: 6, sm: 6 }}>
-              <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="card">
+              <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="card_number">
                 <Typography variant="caption">Card Access :</Typography>
               </CustomFormLabel>
-              <CustomTextField id="card" fullWidth variant="outlined" />
+              <CustomTextField
+                id="card_number"
+                value={formData.card_number}
+                onChange={(e: any) => {
+                  setFormData((prev) => ({ ...prev, qr_code: prev.card_number }));
+                  handleChange(e);
+                }}
+                fullWidth
+                variant="outlined"
+              />
             </Grid2>
             <Grid2 size={{ xs: 6, sm: 6 }}>
+              <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="card_number">
+                <Typography variant="caption">BLE Card :</Typography>
+              </CustomFormLabel>
+              <CustomTextField
+                id="ble_card_number"
+                value={formData.ble_card_number}
+                onChange={handleChange}
+                fullWidth
+                variant="outlined"
+              />
+            </Grid2>
+            {/* <Grid2 size={{ xs: 6, sm: 6 }}>
               <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="qr">
                 <Typography variant="caption">QR Access :</Typography>
               </CustomFormLabel>
               <CustomTextField id="qr" fullWidth variant="outlined" />
+            </Grid2> */}
+            {/* Access Area */}
+            <Grid2 size={{ xs: 12, sm: 12 }}>
+              <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="access_area">
+                <Typography variant="caption">Access Area :</Typography>
+              </CustomFormLabel>
+              <CustomTextField
+                id="access_area"
+                value={formData.access_area}
+                onChange={handleChange}
+                fullWidth
+                variant="outlined"
+              />
+            </Grid2>
+            {/* Access Area Special */}
+            <Grid2 size={{ xs: 12, sm: 12 }}>
+              <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="access_area_special">
+                <Typography variant="caption">Access Area Special :</Typography>
+              </CustomFormLabel>
+              <CustomTextField
+                id="access_area_special"
+                value={formData.access_area_special}
+                onChange={handleChange}
+                fullWidth
+                variant="outlined"
+              />
             </Grid2>
           </Grid2>
         );
@@ -233,19 +481,54 @@ const FormWizardAddEmployee = () => {
               <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="dob">
                 <Typography variant="caption">Date of Birth :</Typography>
               </CustomFormLabel>
-              <CustomTextField id="dob" type="date" fullWidth variant="outlined" />
+              <CustomTextField
+                id="birth_date"
+                type="date"
+                value={formData.birth_date}
+                onChange={handleChange}
+                fullWidth
+                variant="outlined"
+              />
             </Grid2>
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="join">
                 <Typography variant="caption">Join Date :</Typography>
               </CustomFormLabel>
-              <CustomTextField id="join" type="date" fullWidth variant="outlined" />
+              <CustomTextField
+                id="join_date"
+                type="date"
+                value={formData.join_date}
+                onChange={handleChange}
+                fullWidth
+                variant="outlined"
+              />
+            </Grid2>
+            <Grid2 size={{ xs: 12, sm: 12 }}>
+              <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="join">
+                <Typography variant="caption">Exit Date :</Typography>
+              </CustomFormLabel>
+              <CustomTextField
+                id="exit_date"
+                type="date"
+                value={formData.exit_date}
+                onChange={handleChange}
+                fullWidth
+                variant="outlined"
+              />
             </Grid2>
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="address">
                 <Typography variant="caption">Employee Address :</Typography>
               </CustomFormLabel>
-              <CustomTextField id="address" multiline rows={3} fullWidth variant="outlined" />
+              <CustomTextField
+                id="address"
+                value={formData.address}
+                onChange={handleChange}
+                multiline
+                rows={3}
+                fullWidth
+                variant="outlined"
+              />
             </Grid2>
           </Grid2>
         );
@@ -272,50 +555,62 @@ const FormWizardAddEmployee = () => {
   };
 
   return (
-      <PageContainer>
-        <Box width="100%">
-          <Stepper activeStep={activeStep}>
-            {steps.map((label, index) => {
-              const stepProps: { completed?: boolean } = {};
-              const labelProps: { optional?: React.ReactNode } = {};
-              if (isStepSkipped(index)) stepProps.completed = false;
-              return (
-                <Step key={label} {...stepProps}>
-                  <StepLabel {...labelProps}>{label}</StepLabel>
-                </Step>
-              );
-            })}
-          </Stepper>
+    <form onSubmit={handleOnSubmit}>
+      <Box width="100%">
+        <Stepper activeStep={activeStep}>
+          {steps.map((label, index) => {
+            const stepProps: { completed?: boolean } = {};
+            const labelProps: { optional?: React.ReactNode } = {};
+            if (isStepSkipped(index)) stepProps.completed = false;
+            return (
+              <Step key={label} {...stepProps}>
+                <StepLabel {...labelProps}>{label}</StepLabel>
+              </Step>
+            );
+          })}
+        </Stepper>
 
-          {activeStep === steps.length ? (
-            <Stack spacing={2} mt={3}>
-              <Alert severity="success">All steps completed - you're finished</Alert>
-              <Box textAlign="right">
-                <Button onClick={handleReset} variant="contained" color="error">
-                  Reset
+        {activeStep === steps.length ? (
+          <Stack spacing={2} mt={3}>
+            <Alert severity="success">All steps completed - you're finished</Alert>
+            <Box textAlign="right">
+              <Button onClick={handleReset} variant="contained" color="error">
+                Reset
+              </Button>
+            </Box>
+          </Stack>
+        ) : (
+          <>
+            <Box mt={3}>{StepContent(activeStep)}</Box>
+            <Box display="flex" flexDirection="row" mt={3}>
+              <Button
+                color="inherit"
+                disabled={activeStep === 0 || loading}
+                onClick={handleBack}
+                sx={{ mr: 1 }}
+              >
+                Back
+              </Button>
+              <Box flex="1 1 auto" />
+              {activeStep !== steps.length - 1 ? (
+                <Button onClick={handleNext} variant="contained" color="secondary">
+                  Next
                 </Button>
-              </Box>
-            </Stack>
-          ) : (
-            <>
-              <Box mt={3}>{StepContent(activeStep)}</Box>
-              <Box display="flex" flexDirection="row" mt={3}>
-                <Button color="inherit" disabled={activeStep === 0} onClick={handleBack} sx={{ mr: 1 }}>
-                  Back
-                </Button>
-                <Box flex="1 1 auto" />
+              ) : (
                 <Button
-                  onClick={handleNext}
+                  color="success"
                   variant="contained"
-                  color={activeStep === steps.length - 1 ? 'success' : 'secondary'}
+                  onClick={handleOnSubmit}
+                  disabled={loading || activeStep !== steps.length - 1}
                 >
-                  {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
+                  {loading ? 'Submitting...' : 'Submit'}
                 </Button>
-              </Box>
-            </>
-          )}
-        </Box>
-      </PageContainer>
+              )}
+            </Box>
+          </>
+        )}
+      </Box>
+    </form>
   );
 };
 

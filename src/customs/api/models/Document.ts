@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+//TYPE
 export type Item = {
     name: string;
     document_text: string;
@@ -11,6 +12,7 @@ export type Item = {
     id: string;
 }
 
+//GET
 export type GetAllDocumentPaginationResponse = {
     RecordsTotal: number;
     RecordsFiltered: number;
@@ -22,6 +24,7 @@ export type GetAllDocumentPaginationResponse = {
     collection: Item[];
 };
 
+//CREATE
 export const CreateDocumentRequestSchema = z.object({
     name: z.string().default(''),
     document_text: z.string().default(''),
@@ -41,3 +44,41 @@ export interface CreateDocumentResponse {
     msg: string;
     collection: Item | null;
 }
+
+//UPDATE
+export interface UpdateDocumentRequest {
+    name: string;
+    document_text: string;
+    document_type: number;
+    file: string;
+    can_signed: number;
+    can_upload: number;
+    can_declined: number;
+}
+
+export interface UpdateDocumentResponse {
+    status: string;
+    status_code: number;
+    title: string;
+    msg: string;
+    collection: Item | null;
+}
+
+export interface ValidationErrorResponse {
+    type: string;
+    title: string;
+    status: number;
+    errors: {
+        [field: string]: string[];
+    };
+    traceId?: string;
+}
+
+//DELETE
+export type DeleteDocumentResponse<T = any> = {
+  status: string;
+  status_code: number;
+  title: string;
+  msg: string;
+  collection: T | null;
+};

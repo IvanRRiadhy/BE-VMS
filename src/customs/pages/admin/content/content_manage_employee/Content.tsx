@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import {
   Box,
+  Button,
   Card,
   Dialog,
+  DialogActions,
   DialogContent,
   DialogTitle,
   Divider,
@@ -25,7 +27,11 @@ import CustomTextField from 'src/components/forms/theme-elements/CustomTextField
 import CustomRadio from 'src/components/forms/theme-elements/CustomRadio';
 import FormWizardAddEmployee from './FormWizardAddEmployee';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { Item } from 'src/customs/api/models/Employee';
+import {
+  CreateEmployeeRequest,
+  CreateEmployeeRequestSchema,
+  Item,
+} from 'src/customs/api/models/Employee';
 import {
   getAllDepartments,
   getAllDistricts,
@@ -45,6 +51,7 @@ const Content = () => {
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [edittingId, setEdittingId] = useState('');
   const cards = [
     {
       title: 'Total Employee',
@@ -169,11 +176,78 @@ const Content = () => {
       Gender: 'Female',
     },
   ];
+  const [formDataAddEmployee, setFormDataAddEmployee] = React.useState<CreateEmployeeRequest>(
+    () => {
+      const saved = localStorage.getItem('unsavedEmployeeData');
+      return saved ? JSON.parse(saved) : CreateEmployeeRequestSchema.parse({});
+    },
+  );
+  useEffect(() => {
+    localStorage.setItem('unsavedEmployeeData', JSON.stringify(formDataAddEmployee));
+  }, [formDataAddEmployee]);
+
   const [openFormAddEmployee, setOpenFormAddEmployee] = React.useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = React.useState(false);
+  const [pendingEditId, setPendingEditId] = React.useState<string | null>(null);
   const handleOpenDialog = () => {
     setOpenFormAddEmployee(true);
   };
   const handleCloseDialog = () => setOpenFormAddEmployee(false);
+
+  const handleAdd = () => {
+    const editing = localStorage.getItem('unsavedEmployeeData');
+    if (editing) {
+      // If editing exists, show confirmation dialog for add
+      setPendingEditId(null); // null means it's an add, not edit
+      setConfirmDialogOpen(true);
+    } else {
+      setEdittingId('');
+      setFormDataAddEmployee(CreateEmployeeRequestSchema.parse({}));
+      handleOpenDialog();
+    }
+  };
+
+  const handleEdit = (id: string) => {
+    const editing = localStorage.getItem('unsavedEmployeeData');
+    if (editing) {
+      const parsed = JSON.parse(editing);
+      if (parsed.id === id) {
+        handleOpenDialog();
+      } else {
+        console.log('ID tidak cocok');
+        setPendingEditId(id);
+        setConfirmDialogOpen(true);
+      }
+    } else {
+       setFormDataAddEmployee(
+        CreateEmployeeRequestSchema.parse(tableData.find((item) => item.id === id) || {}),
+      );
+      handleOpenDialog();
+      console.log('Form data:', edittingId);
+    }
+  };
+
+  const handleConfirmEdit = () => {
+    setConfirmDialogOpen(false);
+    if (pendingEditId) {
+      // Edit existing site
+      setFormDataAddEmployee(
+        tableData.find((item) => item.id === pendingEditId) ||
+          CreateEmployeeRequestSchema.parse({}),
+      );
+    } else {
+      // Add new site
+      setFormDataAddEmployee(CreateEmployeeRequestSchema.parse({}));
+    }
+    handleOpenDialog();
+    setPendingEditId(null);
+  };
+
+  const handleCancelEdit = () => {
+    setEdittingId('');
+    setConfirmDialogOpen(false);
+    setPendingEditId(null);
+  };
 
   return (
     <>
@@ -201,12 +275,15 @@ const Content = () => {
                 filterMoreContent={<FilterMoreContent />}
                 isHaveHeader={false}
                 onCheckedChange={(selected) => console.log('Checked table row:', selected)}
-                onEdit={(row) => console.log('Edit:', row)}
+                onEdit={(row) => {
+                  handleEdit(row.id);
+                  setEdittingId(row.id);
+                }}
                 onDelete={(row) => console.log('Delete:', row)}
                 onSearchKeywordChange={(keyword) => console.log('Search keyword:', keyword)}
                 onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
                 onAddData={() => {
-                  handleOpenDialog();
+                  handleAdd();
                 }}
               />
             </Grid>
@@ -232,8 +309,27 @@ const Content = () => {
         <Divider />
         <DialogContent>
           <br />
-          <FormWizardAddEmployee />
+          <FormWizardAddEmployee
+            formData={formDataAddEmployee}
+            setFormData={setFormDataAddEmployee}
+            edittingId={edittingId}
+            onSuccess={handleCloseDialog}
+          />
         </DialogContent>
+      </Dialog>
+      {/* Dialog Confirm edit */}
+      <Dialog open={confirmDialogOpen} onClose={handleCancelEdit}>
+        <DialogTitle>Unsaved Changes</DialogTitle>
+        <DialogContent>
+          You have unsaved changes for another Employee. Are you sure you want to discard them and
+          edit this Employee?
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelEdit}>Cancel</Button>
+          <Button onClick={handleConfirmEdit} color="primary" variant="contained">
+            Yes, Discard and Continue
+          </Button>
+        </DialogActions>
       </Dialog>
     </>
   );

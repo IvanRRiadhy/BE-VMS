@@ -15,7 +15,7 @@ import { Box } from '@mui/system';
 import React, { useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import { createDocument } from 'src/customs/api/admin';
+import { createDocument, updateDocument } from 'src/customs/api/admin';
 // import { CreateDepartmentRequest, CreateDepartmentSchema } from 'src/customs/api/models/Department';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import {
@@ -28,10 +28,16 @@ import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 interface FormAddDocumentProps {
   formData: CreateDocumentRequest;
   setFormData: React.Dispatch<React.SetStateAction<CreateDocumentRequest>>;
+  edittingId: string;
   onSuccess?: () => void;
 }
 
-const FormAddDocument: React.FC<FormAddDocumentProps> = ({ formData, setFormData, onSuccess }) => {
+const FormAddDocument: React.FC<FormAddDocumentProps> = ({
+  formData,
+  setFormData,
+  edittingId,
+  onSuccess,
+}) => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
   const [alertType, setAlertType] = useState<'info' | 'success' | 'error'>('info');
@@ -72,7 +78,13 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({ formData, setFormData
         can_upload: formData.can_upload,
         can_declined: formData.can_declined,
       };
-      await createDocument(data, token);
+      console.log(edittingId);
+      if (edittingId !== '' && edittingId !== undefined) {
+        await updateDocument(edittingId, data, token);
+      } else {
+        await createDocument(data, token);
+      }
+
       localStorage.removeItem('unsavedDocumentFormAdd');
       setAlertType('success');
       setAlertMessage('Document successfully created!');

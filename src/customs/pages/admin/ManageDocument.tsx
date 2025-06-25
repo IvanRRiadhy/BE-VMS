@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import { FC, useEffect } from 'react';
 import {
   AdminCustomSidebarItemsData,
   AdminNavListingData,
@@ -7,14 +7,22 @@ import PageContainer from 'src/customs/components/container/PageContainer';
 import Content from './content/content_manage_document/Content';
 
 const ManageDocument: FC = () => {
-    return (
-        <PageContainer
-        itemDataCustomNavListing={AdminNavListingData}
-        itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
-        >
-          <Content />
-        </PageContainer>
-    );
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      alert('Unloading...');
+      localStorage.removeItem('unsavedDocumentData');
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
+  return (
+    <PageContainer
+      itemDataCustomNavListing={AdminNavListingData}
+      itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
+    >
+      <Content />
+    </PageContainer>
+  );
 };
 
 export default ManageDocument;

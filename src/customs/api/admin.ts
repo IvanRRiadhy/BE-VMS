@@ -25,8 +25,8 @@ import {
   UpdateDistrictResponse,
 } from './models/District';
 import axiosInstance from './interceptor';
-import { GetAllEmployeePaginationResponse } from './models/Employee';
-import { CreateDocumentRequest, CreateDocumentResponse, GetAllDocumentPaginationResponse } from './models/Document';
+import { CreateEmployeeRequest, CreateEmployeeResponse, GetAllEmployeePaginationResponse, UpdateEmployeeRequest, UpdateEmployeeResponse } from './models/Employee';
+import { CreateDocumentRequest, CreateDocumentResponse, GetAllDocumentPaginationResponse, UpdateDocumentRequest, UpdateDocumentResponse } from './models/Document';
 
 export const getAllDistricts = async (token: string): Promise<GetAllDistrictsPaginationResponse> => {
   const response = await axiosInstance.get(`/district`, {
@@ -291,3 +291,57 @@ export const getAllEmployeePagination = async (
 
   return response.data;
 };
+
+export const createEmployee = async (
+  data: CreateEmployeeRequest,
+  token: string,
+): Promise<CreateEmployeeResponse> => {
+    try {
+      console.log(data);
+    const response = await axiosInstance.post(`/employee`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const updateEmployee = async (
+  employeeId: string,
+  data: UpdateEmployeeRequest,
+  token: string,
+): Promise<UpdateEmployeeResponse> => {
+  try {
+    const response = await axiosInstance.put(`/employee/${employeeId}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const updateDocument = async (
+  documentId: string,
+  data: UpdateDocumentRequest,
+  token: string,
+): Promise<UpdateDocumentResponse> => {
+  try {
+    const response = await axiosInstance.put(`/document/${documentId}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+}

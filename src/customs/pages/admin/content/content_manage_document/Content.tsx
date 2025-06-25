@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import {
   Box,
+  Button,
   Dialog,
+  DialogActions,
   DialogContent,
   DialogTitle,
   Divider,
@@ -32,11 +34,13 @@ const Content = () => {
   const [rowsPerPage, setRowsPerPage] = useState(3);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
+  const [edittingId, setEdittingId] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [formDataAddDocument, setFormDataAddDocument] = useState<CreateDocumentRequest>(() => {
     const saved = localStorage.getItem('unsavedDocumentData');
     return saved ? JSON.parse(saved) : CreateDocumentRequestSchema.parse({});
   });
+
   const cards = [
     {
       title: 'Total Document',
@@ -63,12 +67,71 @@ const Content = () => {
     };
     fetchData();
   }, [token, page, rowsPerPage, sortColumn, refreshTrigger]);
+  useEffect(() => {
+    localStorage.setItem('unsavedDocumentData', JSON.stringify(formDataAddDocument));
+  }, [formDataAddDocument]);
 
   const [openFormAddDocument, setOpenFormAddDocument] = React.useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = React.useState(false);
+  const [pendingEditId, setPendingEditId] = React.useState<string | null>(null);
+
   const handleOpenDialog = () => {
     setOpenFormAddDocument(true);
   };
   const handleCloseDialog = () => setOpenFormAddDocument(false);
+
+  const handleAdd = () => {
+    const editing = localStorage.getItem('unsavedDocumentData');
+    if (editing) {
+      // If editing exists, show confirmation dialog for add
+      setPendingEditId(null); // null means it's an add, not edit
+      setConfirmDialogOpen(true);
+    } else {
+      setFormDataAddDocument(CreateDocumentRequestSchema.parse({}));
+      handleOpenDialog();
+    }
+  };
+
+  const handleEdit = (id: string) => {
+    const editing = localStorage.getItem('unsavedDocumentData');
+    if (editing) {
+      const parsed = JSON.parse(editing);
+      if (parsed.id === id) {
+        handleOpenDialog();
+      } else {
+        console.log('ID tidak cocok');
+        setPendingEditId(id);
+        setConfirmDialogOpen(true);
+      }
+    } else {
+      setFormDataAddDocument(
+        CreateDocumentRequestSchema.parse(tableData.find((item) => item.id === id) || {}),
+      );
+      handleOpenDialog();
+    }
+  };
+
+  const handleConfirmEdit = () => {
+    setConfirmDialogOpen(false);
+    if (pendingEditId) {
+      // Edit existing site
+      setFormDataAddDocument(
+        tableData.find((item) => item.id === pendingEditId) ||
+          CreateDocumentRequestSchema.parse({}),
+      );
+    } else {
+      // Add new site
+      setFormDataAddDocument(CreateDocumentRequestSchema.parse({}));
+    }
+    handleOpenDialog();
+    setPendingEditId(null);
+  };
+
+  const handleCancelEdit = () => {
+    setEdittingId('');
+    setConfirmDialogOpen(false);
+    setPendingEditId(null);
+  };
 
   return (
     <>
@@ -95,12 +158,15 @@ const Content = () => {
                 isHaveFilterMore={false}
                 isHaveHeader={false}
                 onCheckedChange={(selected) => console.log('Checked table row:', selected)}
-                onEdit={(row) => console.log('Edit:', row)}
+                onEdit={(row) => {
+                  handleEdit(row.id);
+                  setEdittingId(row.id);
+                }}
                 onDelete={(row) => console.log('Delete:', row)}
                 onSearchKeywordChange={(keyword) => console.log('Search keyword:', keyword)}
                 onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
                 onAddData={() => {
-                  handleOpenDialog();
+                  handleAdd();
                 }}
               />
             </Grid>
@@ -129,12 +195,27 @@ const Content = () => {
           <FormAddDocument
             formData={formDataAddDocument}
             setFormData={setFormDataAddDocument}
+            edittingId={edittingId}
             onSuccess={() => {
               handleCloseDialog();
               setRefreshTrigger(refreshTrigger + 1);
             }}
           />
         </DialogContent>
+      </Dialog>
+      {/* Dialog Confirm edit */}
+      <Dialog open={confirmDialogOpen} onClose={handleCancelEdit}>
+        <DialogTitle>Unsaved Changes</DialogTitle>
+        <DialogContent>
+          You have unsaved changes for another Document. Are you sure you want to discard them and
+          edit this Document?
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelEdit}>Cancel</Button>
+          <Button onClick={handleConfirmEdit} color="primary" variant="contained">
+            Yes, Discard and Continue
+          </Button>
+        </DialogActions>
       </Dialog>
     </>
   );
