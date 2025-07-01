@@ -14,6 +14,7 @@ import ManageVisitorCard from './customs/pages/admin/ManageVisitorCard';
 import ManageDeviceKiosk from './customs/pages/admin/ManageDeviceKiosk';
 import ManageOperator from './customs/pages/admin/ManageOperator';
 import ManageDocument from './customs/pages/admin/ManageDocument';
+import ManageBrand from './customs/pages/admin/ManageBrand';
 import SettingUser from './customs/pages/admin/SettingUser';
 import FormWizardAddEmployee from './customs/pages/admin/content/content_manage_employee/FormWizardAddEmployee';
 import FormAddUser from './customs/pages/admin/content/content_setting_user/FormAddUser';
@@ -25,6 +26,7 @@ import { useAuth } from './customs/contexts/AuthProvider';
 import { useSession } from './customs/contexts/SessionContext';
 import { setClearTokenCallback } from './customs/api/interceptor';
 import ManageVisitorType from './customs/pages/admin/ManageVisitorType';
+import ManageIntegration from './customs/pages/admin/ManageIntegration';
 
 export function App() {
   const theme = ThemeSettings();
@@ -93,14 +95,14 @@ export function App() {
                 </ProtectedRoute>
               }
             />
-            <Route
+            {/* <Route
               path="admin/manage/employees/add-employee"
               element={
                 <ProtectedRoute>
                   <FormWizardAddEmployee />
                 </ProtectedRoute>
               }
-            />
+            /> */}
             <Route
               path="admin/manage/site-space"
               element={
@@ -146,6 +148,22 @@ export function App() {
               element={
                 <ProtectedRoute>
                   <ManageDocument />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="admin/manage/brand"
+              element={
+                <ProtectedRoute>
+                  <ManageBrand />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="admin/manage/integration"
+              element={
+                <ProtectedRoute>
+                  <ManageIntegration />
                 </ProtectedRoute>
               }
             />

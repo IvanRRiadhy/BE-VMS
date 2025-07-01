@@ -75,6 +75,18 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
         icon: IconPoint,
         href: '/admin/manage/document',
       },
+      {
+        id: uniqueId(),
+        title: 'brand',
+        icon: IconPoint,
+        href: '/admin/manage/brand',
+      },
+      {
+        id: uniqueId(),
+        title: 'integration',
+        icon: IconPoint,
+        href: '/admin/manage/integration',
+      },
     ],
   },
   {

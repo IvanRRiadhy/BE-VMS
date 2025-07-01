@@ -1,16 +1,18 @@
 import { z } from 'zod';
 
 //TYPE
-export type Item = {
-    name: string;
-    document_text: string;
-    document_type: number;
-    file : string;
-    can_signed: number;
-    can_upload: number;
-    can_declined: number;
-    id: string;
-}
+
+export const DocumentItemSchema = z.object({
+      name: z.string(),
+  document_text: z.string(),
+  document_type: z.number(),
+  file: z.string(),
+  can_signed: z.number(),
+  can_upload: z.number(),
+  can_declined: z.number(),
+  id: z.string(),
+})
+export type Item = z.infer<typeof DocumentItemSchema>;
 
 //GET
 export type GetAllDocumentPaginationResponse = {

@@ -27,6 +27,10 @@ import {
 import axiosInstance from './interceptor';
 import { CreateEmployeeRequest, CreateEmployeeResponse, GetAllEmployeePaginationResponse, UpdateEmployeeRequest, UpdateEmployeeResponse } from './models/Employee';
 import { CreateDocumentRequest, CreateDocumentResponse, GetAllDocumentPaginationResponse, UpdateDocumentRequest, UpdateDocumentResponse } from './models/Document';
+import { CreateSiteRequest, CreateSiteResponse, GetAllSitesPaginationResponse, GetAllSitesResponse, UploadImageSiteResponse } from './models/Sites';
+import { CreateSiteDocumentRequest, CreateSiteDocumentResponse } from './models/SiteDocument';
+import { GetAllBrandPaginationResponse, GetAllBrandResponse } from './models/Brand';
+import { CreateIntegrationRequest, CreateIntegrationResponse, DeleteIntegrationResponse, GetAllIntegrationResponse, GetAvailableIntegrationResponse } from './models/Integration';
 
 export const getAllDistricts = async (token: string): Promise<GetAllDistrictsPaginationResponse> => {
   const response = await axiosInstance.get(`/district`, {
@@ -34,19 +38,6 @@ export const getAllDistricts = async (token: string): Promise<GetAllDistrictsPag
   });
   return response.data;
 };
-export const getAllDepartments = async (token: string): Promise<GetAllDepartmetsPaginationResponse> => {
-  const response = await axiosInstance.get(`/department`, {
-    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-  });
-  return response.data;
-};
-export const getAllOrganizations = async (token: string): Promise<GetAllOrgaizationsPaginationResponse> => {
-  const response = await axiosInstance.get(`/organization`, {
-    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-  });
-  return response.data;
-};
-
 export const getAllDistrictsPagination = async (
   token: string,
   start: number,
@@ -59,82 +50,6 @@ export const getAllDistrictsPagination = async (
   });
   return response.data;
 };
-
-export const getAllDepartmentsPagination = async (
-  token: string,
-  start: number,
-  length: number,
-  sortColumn: string,
-): Promise<GetAllDepartmetsPaginationResponse> => {
-  const response = await axiosInstance.get(`/department/dt`, {
-    params: { start, length, sort_column: sortColumn },
-    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-  });
-  return response.data;
-};
-
-export const getAllOrganizatiosPagination = async (
-  token: string,
-  start: number,
-  length: number,
-  sortColumn: string,
-): Promise<GetAllOrgaizationsPaginationResponse> => {
-  const response = await axiosInstance.get(`/organization/dt`, {
-    params: { start, length, sort_column: sortColumn },
-    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-  });
-  return response.data;
-};
-
-export const getAllDocumentPagination = async(
-  token: string,
-  start: number,
-  length: number,
-  sortColumn: string,
-): Promise<GetAllDocumentPaginationResponse> => {
-  const response = await axiosInstance.get(`/document/dt`, {
-    params: { start, length, sort_column: sortColumn },
-    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-  });
-  return response.data;
-};
-
-export const updateDepartment = async (
-  departmentId: string,
-  data: UpdateDepartmentRequest,
-  token: string,
-): Promise<UpdateDepartmentResponse> => {
-  try {
-    const response = await axiosInstance.put(`/department/${departmentId}`, data, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return response.data;
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 400) {
-      throw error.response.data as ValidationErrorResponse;
-    }
-    throw error;
-  }
-};
-
-export const updateOrganization = async (
-  organizationId: string,
-  data: UpdateOrganizationRequest,
-  token: string,
-): Promise<UpdateOrganizationResponse> => {
-  try {
-    const response = await axiosInstance.put(`/organization/${organizationId}`, data, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return response.data;
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 400) {
-      throw error.response.data as ValidationErrorResponse;
-    }
-    throw error;
-  }
-};
-
 export const updateDistrict = async (
   districtId: string,
   data: UpdateDistrictRequest,
@@ -162,44 +77,6 @@ export const deleteDistrict = async (
   });
   return response.data;
 };
-
-export const deleteDepartment = async (
-  departmentId: string,
-  token: string,
-): Promise<DeleteDepartmentResponse> => {
-  const response = await axiosInstance.delete(`/department/${departmentId}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return response.data;
-};
-
-export const deleteOrganization = async (
-  organizationId: string,
-  token: string,
-): Promise<DeleteOrganizationResponse> => {
-  const response = await axiosInstance.delete(`/organization/${organizationId}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return response.data;
-};
-
-export const createDepartment = async (
-  data: CreateDepartmentRequest,
-  token: string,
-): Promise<CreateDepartmentResponse> => {
-  try {
-    const response = await axiosInstance.post(`/department`, data, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return response.data;
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 400) {
-      throw error.response.data as ValidationErrorResponse;
-    }
-    throw error;
-  }
-};
-
 export const createDistrict = async (
   data: CreateDistrictRequest,
   token: string,
@@ -217,6 +94,102 @@ export const createDistrict = async (
   }
 };
 
+export const getAllDepartments = async (token: string): Promise<GetAllDepartmetsPaginationResponse> => {
+  const response = await axiosInstance.get(`/department`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+export const getAllDepartmentsPagination = async (
+  token: string,
+  start: number,
+  length: number,
+  sortColumn: string,
+): Promise<GetAllDepartmetsPaginationResponse> => {
+  const response = await axiosInstance.get(`/department/dt`, {
+    params: { start, length, sort_column: sortColumn },
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+export const updateDepartment = async (
+  departmentId: string,
+  data: UpdateDepartmentRequest,
+  token: string,
+): Promise<UpdateDepartmentResponse> => {
+  try {
+    const response = await axiosInstance.put(`/department/${departmentId}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+export const deleteDepartment = async (
+  departmentId: string,
+  token: string,
+): Promise<DeleteDepartmentResponse> => {
+  const response = await axiosInstance.delete(`/department/${departmentId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+export const createDepartment = async (
+  data: CreateDepartmentRequest,
+  token: string,
+): Promise<CreateDepartmentResponse> => {
+  try {
+    const response = await axiosInstance.post(`/department`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const getAllOrganizations = async (token: string): Promise<GetAllOrgaizationsPaginationResponse> => {
+  const response = await axiosInstance.get(`/organization`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+export const getAllOrganizatiosPagination = async (
+  token: string,
+  start: number,
+  length: number,
+  sortColumn: string,
+): Promise<GetAllOrgaizationsPaginationResponse> => {
+  const response = await axiosInstance.get(`/organization/dt`, {
+    params: { start, length, sort_column: sortColumn },
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+export const updateOrganization = async (
+  organizationId: string,
+  data: UpdateOrganizationRequest,
+  token: string,
+): Promise<UpdateOrganizationResponse> => {
+  try {
+    const response = await axiosInstance.put(`/organization/${organizationId}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
 export const createOrganization = async (
   data: CreateOrganizationRequest,
   token: string,
@@ -233,7 +206,30 @@ export const createOrganization = async (
     throw error;
   }
 };
+export const deleteOrganization = async (
+  organizationId: string,
+  token: string,
+): Promise<DeleteOrganizationResponse> => {
+  const response = await axiosInstance.delete(`/organization/${organizationId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
 
+
+
+export const getAllDocumentPagination = async(
+  token: string,
+  start: number,
+  length: number,
+  sortColumn: string,
+): Promise<GetAllDocumentPaginationResponse> => {
+  const response = await axiosInstance.get(`/document/dt`, {
+    params: { start, length, sort_column: sortColumn },
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
 export const createDocument = async (
   data: CreateDocumentRequest,
   token: string,
@@ -249,7 +245,24 @@ export const createDocument = async (
     }
     throw error;
   }
-}
+};
+export const updateDocument = async (
+  documentId: string,
+  data: UpdateDocumentRequest,
+  token: string,
+): Promise<UpdateDocumentResponse> => {
+  try {
+    const response = await axiosInstance.put(`/document/${documentId}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
 
 export const getAllEmployeePagination = async (
   token: string,
@@ -310,6 +323,8 @@ export const createEmployee = async (
   }
 };
 
+
+
 export const updateEmployee = async (
   employeeId: string,
   data: UpdateEmployeeRequest,
@@ -328,13 +343,192 @@ export const updateEmployee = async (
   }
 };
 
-export const updateDocument = async (
-  documentId: string,
-  data: UpdateDocumentRequest,
+
+export const getAllSitePagination = async(
   token: string,
-): Promise<UpdateDocumentResponse> => {
+  start: number,
+  length: number,
+  sortColumn: string,
+): Promise<GetAllSitesPaginationResponse> => {
+  const response = await axiosInstance.get(`/site/dt`, {
+    params: { start, length, sort_column: sortColumn },
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  console.log(response.data);
+  return response.data;
+}
+
+export const getAllSite = async (
+  token: string,
+): Promise<GetAllSitesResponse> => {
+  const response = await axiosInstance.get(`/site`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+export const createSite = async (
+  data: CreateSiteRequest,
+  token: string,
+): Promise<CreateSiteResponse> => {
   try {
-    const response = await axiosInstance.put(`/document/${documentId}`, data, {
+    const response = await axiosInstance.post(`/site`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    console.log(response.data);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+}
+// export const updateSite = async (
+//   siteId: string,
+//   data: UpdateSiteRequest,
+//   token: string,
+// ): Promise<UpdateSiteResponse> => (
+//   axiosInstance.put(`/site/${siteId}`, data, {
+//     headers: { Authorization: `Bearer ${token}` },
+//   })
+// )
+
+export const uploadImageSite = async (
+  siteId: string,
+  data: File,
+  token: string,
+): Promise<UploadImageSiteResponse> => {
+  try {
+    const formData = new FormData();
+    formData.append('image', data);
+    const response = await axiosInstance.post(`/site/upload/${siteId}`, formData, {
+      headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+    },
+    });
+    console.log('Upload Image Site Response:', response.data);
+    console.log("The Data: ", data);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const createSiteDocument = async (
+  data: CreateSiteDocumentRequest,
+  token: string,
+): Promise<CreateSiteDocumentResponse> => {
+  try {
+    const response = await axiosInstance.post(`/site-document`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const getAllBrand = async (
+  token: string,
+): Promise<GetAllBrandResponse> => {
+  try{
+      const response = await axiosInstance.get(`/brand`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+export const getAllBrandPagination = async (
+  token: string,
+  start: number,
+  length: number,
+  sortColumn: string,
+): Promise<GetAllBrandPaginationResponse> => {
+  try {
+    const response = await axiosInstance.get(`/brand/dt`, {
+      params: { start, length, sort_column: sortColumn },
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const getAllIntegration = async (
+  token: string,
+): Promise<GetAllIntegrationResponse> => {
+  try {
+    const response = await axiosInstance.get(`/integration`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const getAvailableIntegration = async (
+  token: string,
+): Promise<GetAvailableIntegrationResponse> => {
+  try {
+    const response = await axiosInstance.get(`/integration/available`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const createIntegration = async(
+  data: CreateIntegrationRequest,
+  token: string,
+): Promise<CreateIntegrationResponse> => {
+  try {
+    const response = await axiosInstance.post(`/integration`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      console.log('Error creating integration:', error);
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+}
+
+export const deleteIntegration = async (
+  integrationId: string,
+  token: string,
+): Promise<DeleteIntegrationResponse> => {
+  console.log('Deleting integration with ID:', integrationId);
+  console.log('Using token:', token);
+  try {
+    const response = await axiosInstance.delete(`/integration/${integrationId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;

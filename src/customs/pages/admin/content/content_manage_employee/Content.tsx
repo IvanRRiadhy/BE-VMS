@@ -34,9 +34,12 @@ import {
 } from 'src/customs/api/models/Employee';
 import {
   getAllDepartments,
+  getAllDepartmentsPagination,
   getAllDistricts,
+  getAllDistrictsPagination,
   getAllEmployeePagination,
   getAllOrganizations,
+  getAllOrganizatiosPagination,
 } from 'src/customs/api/admin';
 
 const Content = () => {
@@ -69,9 +72,9 @@ const Content = () => {
       try {
         const start = page * rowsPerPage;
         const response = await getAllEmployeePagination(token, start, rowsPerPage, sortColumn);
-        const organization = await getAllOrganizations(token);
-        const department = await getAllDepartments(token);
-        const district = await getAllDistricts(token);
+        const organization = await getAllOrganizatiosPagination(token, start, 99, sortColumn);
+        const department = await getAllDepartmentsPagination(token, start, 99, sortColumn);
+        const district = await getAllDistrictsPagination(token, start, 99, sortColumn);
         console.log('Response from API:', response);
         if (response && organization && department && district) {
           const orgMap = (organization.collection ?? []).reduce(
@@ -219,7 +222,7 @@ const Content = () => {
         setConfirmDialogOpen(true);
       }
     } else {
-       setFormDataAddEmployee(
+      setFormDataAddEmployee(
         CreateEmployeeRequestSchema.parse(tableData.find((item) => item.id === id) || {}),
       );
       handleOpenDialog();

@@ -31,6 +31,7 @@ import BlankCard from 'src/components/shared/BlankCard';
 import { Stack } from '@mui/system';
 import { IconPencil, IconPlus, IconTrash } from '@tabler/icons-react';
 import { AddCircle, CalendarMonth, ChecklistOutlined, Search } from '@mui/icons-material';
+import EditIconOutline from '@mui/icons-material/Edit';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import Calendar from '../calendar/Calendar';
 import { IconAdjustmentsHorizontal } from '@tabler/icons-react';
@@ -457,8 +458,10 @@ export function DynamicTable<T extends { id: string | number }>({
                     {checkedIds.length} Selected
                   </Typography>
                 </Box>
-
-                <DeleteOutlineOutlinedIcon sx={{ fontSize: '1.2rem', cursor: 'pointer' }} />
+                <Box display="flex" alignItems="center" gap={3} pr={2.5}>
+                  <EditIconOutline sx={{ fontSize: '1.2rem', cursor: 'pointer' }} />
+                  <DeleteOutlineOutlinedIcon sx={{ fontSize: '1.2rem', cursor: 'pointer' }} />
+                </Box>
               </Grid2>
             )}
           </Grid2>
@@ -543,7 +546,7 @@ export function DynamicTable<T extends { id: string | number }>({
                         {isHaveBooleanSwitch && typeof row[col] === 'boolean' ? (
                           <Switch
                             checked={row[col] as boolean}
-                            onChange={(_, checked) => onBooleanSwitchChange?.( row.id, col, checked)}
+                            onChange={(_, checked) => onBooleanSwitchChange?.(row.id, col, checked)}
                             color="primary"
                             size="small"
                           />
@@ -610,22 +613,22 @@ export function DynamicTable<T extends { id: string | number }>({
                   </TableRow>
                 ))}
               </TableBody>
-              <TableFooter>
-                <TableRow>
-                  {isHavePagination && (
-                    <TablePagination
-                      rowsPerPageOptions={rowsPerPageOptions}
-                      count={totalCount ?? data.length}
-                      rowsPerPage={rowsPerPage}
-                      page={page}
-                      onPageChange={handleChangePage}
-                      onRowsPerPageChange={handleChangeRowsPerPage}
-                    />
-                  )}
-                </TableRow>
-              </TableFooter>
+              {/* <TableFooter>
+                <TableRow></TableRow>
+              </TableFooter> */}
             </Table>
           </TableContainer>
+          {isHavePagination && (
+            <TablePagination
+              rowsPerPageOptions={rowsPerPageOptions}
+              component="div"
+              count={totalCount ?? data.length}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={handleChangePage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+            />
+          )}
         </CardContent>
       </BlankCard>
       {/* DRAWER CALENDER RANGE FILTER */}

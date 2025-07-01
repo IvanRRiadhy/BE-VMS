@@ -28,8 +28,11 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   createEmployee,
   getAllDepartments,
+  getAllDepartmentsPagination,
   getAllDistricts,
+  getAllDistrictsPagination,
   getAllOrganizations,
+  getAllOrganizatiosPagination,
   updateEmployee,
 } from 'src/customs/api/admin';
 import {
@@ -71,9 +74,9 @@ const FormWizardAddEmployee = ({
   useEffect(() => {
     if (!token) return;
     const fetchData = async () => {
-      const orgRes = await getAllOrganizations(token);
-      const deptRes = await getAllDepartments(token);
-      const distRes = await getAllDistricts(token);
+      const orgRes = await getAllOrganizatiosPagination(token, 0, 99, 'id');
+      const deptRes = await getAllDepartmentsPagination(token, 0, 99, 'id');
+      const distRes = await getAllDistrictsPagination(token, 0, 99, 'id');
       setOrganization(orgRes?.collection ?? []);
       setDepartment(deptRes?.collection ?? []);
       setDistrict(distRes?.collection ?? []);
@@ -132,6 +135,7 @@ const FormWizardAddEmployee = ({
       // const filteredFormData: CreateEmployeeRequest = Object.fromEntries(Object.entries(formData).filter(([key, value]) => value !== undefined));
       const data: CreateEmployeeRequest = CreateEmployeeRequestSchema.parse(formData);
       console.log(edittingId);
+      console.log('Data: ', data);
       if (edittingId !== '' && edittingId !== undefined) {
         const editData: UpdateEmployeeRequest = {
           ...data,

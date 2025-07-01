@@ -15,14 +15,9 @@ import PageContainer from 'src/components/container/PageContainer';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import CloseIcon from '@mui/icons-material/Close';
-import {
-  CreateDocumentRequest,
-  CreateDocumentRequestSchema,
-  Item,
-} from 'src/customs/api/models/Document';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { getAllDocumentPagination } from 'src/customs/api/admin';
-import FormAddDocument from './FormAddDocument';
+import { getAllBrand, getAllBrandPagination } from 'src/customs/api/admin';
+import { CreateBrandRequest, Item, CreateBrandResponse } from 'src/customs/api/models/Brand';
 
 const Content = () => {
   // Pagination state.
@@ -36,28 +31,26 @@ const Content = () => {
   const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [formDataAddDocument, setFormDataAddDocument] = useState<CreateDocumentRequest>(() => {
-    const saved = localStorage.getItem('unsavedDocumentData');
-    return saved ? JSON.parse(saved) : CreateDocumentRequestSchema.parse({});
+  const [formDataAddBrand, setFormDataAddBrand] = useState<CreateBrandRequest>(() => {
+    const saved = localStorage.getItem('unsavedBrandData');
+    return saved ? JSON.parse(saved) : { name: '', type_brand: 0, integration_list_id: '' };
   });
-
   const cards = [
     {
-      title: 'Total Document',
+      title: 'Total Brand',
       subTitle: `${tableData.length}`,
       subTitleSetting: 10,
       color: 'none',
     },
   ];
-
   useEffect(() => {
     if (!token) return;
     const fetchData = async () => {
       setLoading(true);
       try {
-        const response = await getAllDocumentPagination(token, page, rowsPerPage, sortColumn);
+        const response = await getAllBrand(token);
         setTableData(response.collection);
-        setTotalRecords(response.RecordsTotal);
+        setTotalRecords(response.collection.length);
         setIsDataReady(true);
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -67,75 +60,14 @@ const Content = () => {
     };
     fetchData();
   }, [token, page, rowsPerPage, sortColumn, refreshTrigger]);
+
   useEffect(() => {
-    localStorage.setItem('unsavedDocumentData', JSON.stringify(formDataAddDocument));
-  }, [formDataAddDocument]);
-
-  const [openFormAddDocument, setOpenFormAddDocument] = React.useState(false);
-  const [confirmDialogOpen, setConfirmDialogOpen] = React.useState(false);
-  const [pendingEditId, setPendingEditId] = React.useState<string | null>(null);
-
-  const handleOpenDialog = () => {
-    setOpenFormAddDocument(true);
-  };
-  const handleCloseDialog = () => setOpenFormAddDocument(false);
-
-  const handleAdd = () => {
-    const editing = localStorage.getItem('unsavedDocumentData');
-    if (editing) {
-      // If editing exists, show confirmation dialog for add
-      setPendingEditId(null); // null means it's an add, not edit
-      setConfirmDialogOpen(true);
-    } else {
-      setFormDataAddDocument(CreateDocumentRequestSchema.parse({}));
-      handleOpenDialog();
-    }
-  };
-
-  const handleEdit = (id: string) => {
-    const editing = localStorage.getItem('unsavedDocumentData');
-    if (editing) {
-      const parsed = JSON.parse(editing);
-      if (parsed.id === id) {
-        handleOpenDialog();
-      } else {
-        console.log('ID tidak cocok');
-        setPendingEditId(id);
-        setConfirmDialogOpen(true);
-      }
-    } else {
-      setFormDataAddDocument(
-        CreateDocumentRequestSchema.parse(tableData.find((item) => item.id === id) || {}),
-      );
-      handleOpenDialog();
-    }
-  };
-
-  const handleConfirmEdit = () => {
-    setConfirmDialogOpen(false);
-    if (pendingEditId) {
-      // Edit existing site
-      setFormDataAddDocument(
-        tableData.find((item) => item.id === pendingEditId) ||
-          CreateDocumentRequestSchema.parse({}),
-      );
-    } else {
-      // Add new site
-      setFormDataAddDocument(CreateDocumentRequestSchema.parse({}));
-    }
-    handleOpenDialog();
-    setPendingEditId(null);
-  };
-
-  const handleCancelEdit = () => {
-    setEdittingId('');
-    setConfirmDialogOpen(false);
-    setPendingEditId(null);
-  };
+    localStorage.setItem('unsavedBrandData', JSON.stringify(formDataAddBrand));
+  }, [formDataAddBrand]);
 
   return (
     <>
-      <PageContainer title="Manage Document" description="Document page">
+      <PageContainer title="Manage Brand" description="Brand page">
         <Box>
           <Grid container spacing={3}>
             {/* column */}
@@ -159,21 +91,22 @@ const Content = () => {
                 isHaveHeader={false}
                 onCheckedChange={(selected) => console.log('Checked table row:', selected)}
                 onEdit={(row) => {
-                  handleEdit(row.id);
-                  setEdittingId(row.id);
+                  console.log('Edit:', row);
+                  //   handleEdit(row.id);
+                  //   setEdittingId(row.id);
                 }}
                 onDelete={(row) => console.log('Delete:', row)}
                 onSearchKeywordChange={(keyword) => console.log('Search keyword:', keyword)}
                 onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
-                onAddData={() => {
-                  handleAdd();
-                }}
+                // onAddData={() => {
+                //   handleAdd();
+                // }}
               />
             </Grid>
           </Grid>
         </Box>
       </PageContainer>
-      <Dialog open={openFormAddDocument} onClose={handleCloseDialog} fullWidth maxWidth="md">
+      {/* <Dialog open={openFormAddDocument} onClose={handleCloseDialog} fullWidth maxWidth="md">
         <DialogTitle sx={{ position: 'relative', padding: 5 }}>
           Add Document
           <IconButton
@@ -202,9 +135,9 @@ const Content = () => {
             }}
           />
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
       {/* Dialog Confirm edit */}
-      <Dialog open={confirmDialogOpen} onClose={handleCancelEdit}>
+      {/* <Dialog open={confirmDialogOpen} onClose={handleCancelEdit}>
         <DialogTitle>Unsaved Changes</DialogTitle>
         <DialogContent>
           You have unsaved changes for another Document. Are you sure you want to discard them and
@@ -216,7 +149,7 @@ const Content = () => {
             Yes, Discard and Continue
           </Button>
         </DialogActions>
-      </Dialog>
+      </Dialog> */}
     </>
   );
 };

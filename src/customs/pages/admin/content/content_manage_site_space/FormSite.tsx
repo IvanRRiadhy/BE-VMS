@@ -4,36 +4,31 @@ import {
   Alert,
   Typography,
   CircularProgress,
-  FormControl,
-  FormLabel,
-  RadioGroup,
   FormControlLabel,
-  Radio,
   Switch,
-  IconButton,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Paper,
-  TextField,
   Button as MuiButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  Divider,
-  DialogActions,
+  MenuItem,
 } from '@mui/material';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import ReactCrop, { Crop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
 import { Box } from '@mui/system';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { CreateSiteRequest, generateKeyCode } from 'src/customs/api/models/Sites';
+import {
+  CreateSiteRequest,
+  CreateSiteRequestSchema,
+  generateKeyCode,
+  SiteType,
+  TypeApproval,
+} from 'src/customs/api/models/Sites';
 import { IconTrash } from '@tabler/icons-react';
 import { QRCodeCanvas } from 'qrcode.react';
+import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
+import { createSite, uploadImageSite, getAllSitePagination, getAllSite } from 'src/customs/api/admin';
 
 interface FormSiteProps {
   formData: CreateSiteRequest;
@@ -65,6 +60,40 @@ const FormSite = ({ formData, setFormData, onSuccess }: FormSiteProps) => {
     e.preventDefault();
     setLoading(true);
     setErrors({});
+    try {
+      if (!token) {
+        setAlertType('error');
+        setAlertMessage('Something went wrong. Please try again later.');
+
+        setTimeout(() => {
+          setAlertType('info');
+          setAlertMessage('Complete the following data properly and correctly');
+        }, 3000);
+        return;
+      }
+      const data: CreateSiteRequest = CreateSiteRequestSchema.parse(formData);
+      console.log('Setting Data: ', data);
+      await createSite(data, token);
+      handleFileUpload();
+      localStorage.removeItem('unsavedSiteForm');
+      setAlertType('success');
+      setAlertMessage('Site successfully created!');
+      setTimeout(() => {
+        onSuccess?.();
+      }, 900);
+    } catch (err: any) {
+      if (err?.errors) {
+        setErrors(err.errors);
+      }
+      setAlertType('error');
+      setAlertMessage('Something went wrong. Please try again later.');
+      setTimeout(() => {
+        setAlertType('info');
+        setAlertMessage('Complete the following data properly and correctly');
+      }, 3000);
+    } finally {
+      setLoading(false);
+    }
   };
   const [keyDialogOpen, setKeyDialogOpen] = useState(false);
   const handleKeyClick = () => {
@@ -75,6 +104,49 @@ const FormSite = ({ formData, setFormData, onSuccess }: FormSiteProps) => {
     setFormData((prev) => ({ ...prev, code: generateKeyCode() }));
   };
 
+  const [siteImageFile, setSiteImageFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      setSiteImageFile(selectedFile);
+      setPreviewUrl(URL.createObjectURL(selectedFile));
+    }
+  };
+
+  const handleClear = () => {
+    setSiteImageFile(null);
+    setPreviewUrl(null);
+  };
+
+  const handleFileUpload = async () => {
+    if (fileInputRef.current && token) {
+      const allSite = await getAllSitePagination(token, 0, 20, 'id');
+      const otherAllSite = await getAllSite(token);
+      console.log('All sites (pagination):', allSite);
+      console.log('All sites:', allSite);
+      const matchedSite = allSite.collection.find(
+        (site: any) => site.name === formData.name && site.description === formData.description,
+        // add more fields if needed
+      );
+      const otherMatchedSite = otherAllSite.collection.find(
+        (site: any) => site.name === formData.name && site.description === formData.description,
+        // add more fields if needed
+      );
+      if (matchedSite && siteImageFile) {
+        console.log('Matched site id:', matchedSite.id);
+        await uploadImageSite(matchedSite.id, siteImageFile!, token);
+      } else if (otherMatchedSite && siteImageFile) {
+        console.log('Matched site id (other):', otherMatchedSite.id);
+        await uploadImageSite(otherMatchedSite.id, siteImageFile!, token);
+      } else {
+        console.log('No matching site found');
+      }
+    }
+  };
+
   return (
     <>
       <form onSubmit={handleOnSubmit}>
@@ -83,42 +155,93 @@ const FormSite = ({ formData, setFormData, onSuccess }: FormSiteProps) => {
             <Alert severity={alertType}>{alertMessage}</Alert>
           </Grid>
           {/* Location Details */}
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Paper sx={{ p: 3, mb: 2 }}>
+          <Grid size={{ xs: 12, md: 5 }}>
+            {/* <Paper sx={{ p: 3, mb: 2 }}>
               <Typography variant="h6" sx={{ mb: 2, borderLeft: '4px solid #673ab7', pl: 1 }}>
                 Site Access
               </Typography>
               <Button onClick={handleKeyClick}>
                 <Typography variant="h6">Key</Typography>
               </Button>
-            </Paper>
+            </Paper> */}
             <Paper sx={{ p: 3 }}>
               <Typography variant="h6" sx={{ mb: 2, borderLeft: '4px solid #673ab7', pl: 1 }}>
                 Location Details
               </Typography>
-              <CustomFormLabel htmlFor="siteName">Location Name *</CustomFormLabel>
-              <CustomTextField
-                id="siteName"
-                value={formData.siteName}
-                onChange={handleChange}
-                error={Boolean(errors.siteName)}
-                helperText={errors.siteName || ''}
-                fullWidth
-                required
-                sx={{ mb: 2 }}
-              />
-              <CustomFormLabel htmlFor="address">Address</CustomFormLabel>
-              <CustomTextField
-                id="address"
-                value={formData.address}
-                onChange={handleChange}
-                error={Boolean(errors.address)}
-                helperText={errors.address || ''}
-                fullWidth
-                sx={{ mb: 2 }}
-              />
+
               <Grid container spacing={2}>
-                <Grid size={{ xs: 6 }}>
+                <Grid size={6}>
+                  <CustomFormLabel htmlFor="name">Location Name *</CustomFormLabel>
+                  <CustomTextField
+                    id="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    error={Boolean(errors.name)}
+                    helperText={errors.name || ''}
+                    fullWidth
+                    required
+                    sx={{ mb: 2 }}
+                  />
+                  <CustomFormLabel htmlFor="description">Description</CustomFormLabel>
+                  <CustomTextField
+                    id="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    error={Boolean(errors.description)}
+                    helperText={errors.description || ''}
+                    fullWidth
+                    sx={{ mb: 2 }}
+                  />
+                </Grid>
+                <Grid size={6}>
+                  <CustomFormLabel htmlFor="type">Type</CustomFormLabel>
+                  <CustomSelect
+                    id="type"
+                    select
+                    value={formData.type}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setFormData((prev) => ({ ...prev, type: Number(e.target.value) }))
+                    }
+                    fullWidth
+                    sx={{ mb: 2 }}
+                    // SelectProps={{ native: true }}
+                  >
+                    <MenuItem value="" disabled>
+                      Select Type
+                    </MenuItem>
+                    {Object.entries(SiteType)
+                      .filter(([key, value]) => !isNaN(Number(value)))
+                      .map(([key, value]) => (
+                        <MenuItem key={value} value={value}>
+                          {key}
+                        </MenuItem>
+                      ))}
+                  </CustomSelect>
+                  <CustomFormLabel htmlFor="type_approval">Type Approval</CustomFormLabel>
+                  <CustomSelect
+                    id="type_approval"
+                    name="type_approval"
+                    value={formData.type_approval}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setFormData((prev) => ({ ...prev, type_approval: Number(e.target.value) }))
+                    }
+                    fullWidth
+                    sx={{ mb: 2 }}
+                    // SelectProps={{ native: true }}
+                  >
+                    <MenuItem value="" disabled>
+                      Select Type Approval
+                    </MenuItem>
+                    {Object.entries(TypeApproval)
+                      .filter(([key, value]) => !isNaN(Number(value)))
+                      .map(([key, value]) => (
+                        <MenuItem key={value} value={value}>
+                          {key}
+                        </MenuItem>
+                      ))}
+                  </CustomSelect>
+                </Grid>
+                {/* <Grid size={{ xs: 6 }}>
                   <CustomFormLabel htmlFor="city">City</CustomFormLabel>
                   <CustomTextField
                     id="city"
@@ -127,8 +250,8 @@ const FormSite = ({ formData, setFormData, onSuccess }: FormSiteProps) => {
                     fullWidth
                     sx={{ mb: 2 }}
                   />
-                </Grid>
-                <Grid size={{ xs: 6 }}>
+                </Grid> */}
+                {/* <Grid size={{ xs: 6 }}>
                   <CustomFormLabel htmlFor="province">State</CustomFormLabel>
                   <CustomTextField
                     id="province"
@@ -137,8 +260,8 @@ const FormSite = ({ formData, setFormData, onSuccess }: FormSiteProps) => {
                     fullWidth
                     sx={{ mb: 2 }}
                   />
-                </Grid>
-                <Grid size={{ xs: 6 }}>
+                </Grid> */}
+                {/* <Grid size={{ xs: 6 }}>
                   <CustomFormLabel htmlFor="zipCode">Zip Code</CustomFormLabel>
                   <CustomTextField
                     id="zipCode"
@@ -147,123 +270,231 @@ const FormSite = ({ formData, setFormData, onSuccess }: FormSiteProps) => {
                     fullWidth
                     sx={{ mb: 3 }}
                   />
-                </Grid>
+                </Grid> */}
               </Grid>
             </Paper>
           </Grid>
           {/* Language and Timezone */}
           <Grid size={{ xs: 12, md: 4 }}>
             <Paper sx={{ p: 3, mb: 2 }}>
-              <Typography variant="h6" sx={{ mb: 2, borderLeft: '4px solid #673ab7', pl: 1 }}>
+              <Typography variant="h6" sx={{ mb: 5, borderLeft: '4px solid #673ab7', pl: 1 }}>
                 Language and Timezone
               </Typography>
-              <CustomFormLabel htmlFor="timeZone">Timezone *</CustomFormLabel>
+              <CustomFormLabel htmlFor="timezone">Timezone *</CustomFormLabel>
+              <CustomSelect
+                id="timezone"
+                name="timezone"
+                value={formData.timezone}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData((prev) => ({ ...prev, timezone: e.target.value }))
+                }
+                fullWidth
+                sx={{ mb: 2 }}
+                SelectProps={{ native: true }}
+              >
+                <MenuItem value="" disabled>
+                  Select Timezone
+                </MenuItem>
+                {timezoneOptions.map((tz) => (
+                  <MenuItem key={tz.value} value={tz.value}>
+                    {tz.label}
+                  </MenuItem>
+                ))}
+              </CustomSelect>
+              <CustomFormLabel htmlFor="signout_time">Signout Time</CustomFormLabel>
               <CustomTextField
-                id="timeZone"
-                select
-                value={formData.timeZone}
+                id="signout_time"
+                type="time"
+                value={formData.signout_time}
                 onChange={handleChange}
                 fullWidth
                 sx={{ mb: 2 }}
-                SelectProps={{ native: true }}
-              >
-                <option value="">Select Timezone</option>
-                {timezoneOptions.map((tz) => (
-                  <option key={tz.value} value={tz.value}>
-                    {tz.label}
-                  </option>
-                ))}
-              </CustomTextField>
-            </Paper>
-            {/* Privacy Policy Configuration */}
-            <Paper sx={{ p: 3 }}>
-              <Typography variant="h6" sx={{ mb: 2, borderLeft: '4px solid #673ab7', pl: 1 }}>
-                Privacy Policy Configuration
-              </Typography>
-              <CustomFormLabel htmlFor="consentType">Consent Type</CustomFormLabel>
-              <CustomTextField
-                id="consentType"
-                select
-                value={formData.policyConfig.consentType}
-                onChange={(e: any) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    policyConfig: { ...prev.policyConfig, consentType: e.target.value },
-                  }))
-                }
-                fullWidth
-                sx={{ mb: 2 }}
-                SelectProps={{ native: true }}
-              >
-                <option value="explicit">Explicit</option>
-                <option value="implicit">Implicit</option>
-              </CustomTextField>
-
-              <CustomFormLabel htmlFor="document">Privacy Document</CustomFormLabel>
-              <CustomTextField
-                id="document"
-                value={formData.policyConfig.document}
-                onChange={(e: any) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    policyConfig: { ...prev.policyConfig, document: e.target.value },
-                  }))
-                }
-                fullWidth
-                sx={{ mb: 2 }}
-              />
-
-              <CustomFormLabel htmlFor="period">Retention Period (In Days)</CustomFormLabel>
-              <CustomTextField
-                id="period"
-                type="number"
-                value={formData.policyConfig.period}
-                onChange={(e: any) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    policyConfig: { ...prev.policyConfig, period: Number(e.target.value) },
-                  }))
-                }
-                fullWidth
-                sx={{ mb: 10.5 }}
+                inputProps={{ step: 1 }}
               />
             </Paper>
           </Grid>
 
           {/* Right-most settings switches */}
-          <Grid size={{ xs: 12, md: 4 }}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <Paper sx={{ p: 3 }}>
               <Typography variant="h6" sx={{ mb: 2, borderLeft: '4px solid #673ab7', pl: 1 }}>
                 Settings
               </Typography>
-              {[
-                { key: 'facialRecog', label: 'Enable Facial Recognition' },
-                { key: 'signOutEnable', label: 'Enable Sign Out' },
-                { key: 'autoSignOutVisitor', label: 'Auto Sign Out Visitors at Midnight' },
-                { key: 'autoSignOutEmployee', label: 'Auto Sign Out Employees at Midnight' },
-                { key: 'watchlistCheck', label: 'Enable Watchlist Check' },
-                { key: 'contactlessSignin', label: 'Enable Contactless Sign-In' },
-                { key: 'employeeSignEnable', label: 'Enable Employee Sign In/Out' },
-                { key: 'status', label: 'Status' },
-                { key: 'reviewUnregistered', label: 'Review Unregistered Visitors' },
-                { key: 'restrictHost', label: 'Restrict Host by Location' },
-                { key: 'deliveryDropOff', label: 'Enable Delivery Drop-off on iPad' },
-              ].map((setting) => (
-                <Box key={setting.key} sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <Typography sx={{ flex: 1, fontSize: 14 }}>{setting.label}</Typography>
-                  <Switch
-                    checked={formData.settings[setting.key as keyof typeof formData.settings]}
-                    onChange={(_, checked) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        settings: { ...prev.settings, [setting.key]: checked },
-                      }))
-                    }
-                    color="primary"
-                  />
-                </Box>
-              ))}
+              {/* Switches */}
+              <Box>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.can_visited}
+                      onChange={(_, checked) =>
+                        setFormData((prev) => ({ ...prev, can_visited: checked }))
+                      }
+                    />
+                  }
+                  label="Can Visited"
+                />
+              </Box>
+              <Box>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.need_approval}
+                      onChange={(_, checked) =>
+                        setFormData((prev) => ({ ...prev, need_approval: checked }))
+                      }
+                    />
+                  }
+                  label="Need Approval"
+                />
+              </Box>
+              <Box>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.can_signout}
+                      onChange={(_, checked) =>
+                        setFormData((prev) => ({ ...prev, can_signout: checked }))
+                      }
+                    />
+                  }
+                  label="Can Signout"
+                />
+              </Box>
+              <Box>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.auto_signout}
+                      onChange={(_, checked) =>
+                        setFormData((prev) => ({ ...prev, auto_signout: checked }))
+                      }
+                    />
+                  }
+                  label="Auto Signout"
+                />
+              </Box>
+              <Box>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.can_contactless_login}
+                      onChange={(_, checked) =>
+                        setFormData((prev) => ({ ...prev, can_contactless_login: checked }))
+                      }
+                    />
+                  }
+                  label="Can Contactless Login"
+                />
+              </Box>
+              <Box>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.need_document}
+                      onChange={(_, checked) =>
+                        setFormData((prev) => ({ ...prev, need_document: checked }))
+                      }
+                    />
+                  }
+                  label="Need Document"
+                />
+              </Box>
             </Paper>
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Box sx={{ mt: 4 }}>
+              <Typography variant="h6" sx={{ mb: 2, borderLeft: '4px solid #673ab7', pl: 1 }}>
+                Site Image
+              </Typography>
+              <Box
+                sx={{
+                  border: '2px dashed #90caf9',
+                  borderRadius: 2,
+                  padding: 4,
+                  textAlign: 'center',
+                  backgroundColor: '#f5faff',
+                  cursor: 'pointer',
+                  width: '100%',
+                  margin: '0 auto',
+                }}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
+                <Typography variant="subtitle1" sx={{ mt: 1 }}>
+                  Upload Site Image
+                </Typography>
+                <Typography variant="caption" color="textSecondary">
+                  Supports: JPG, JPEG, PNG
+                </Typography>
+                {/* Show file name or short base64 */}
+                {(siteImageFile || formData.image) && (
+                  <Typography
+                    variant="caption"
+                    sx={{ mt: 1, color: '#1976d2', wordBreak: 'break-all' }}
+                  >
+                    {siteImageFile
+                      ? siteImageFile.name
+                      : formData.image
+                      ? `${formData.image.substring(0, 30)}...${formData.image.substring(
+                          formData.image.length - 10,
+                        )}`
+                      : ''}
+                  </Typography>
+                )}
+                {previewUrl && (
+                  <Box
+                    mt={2}
+                    sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+                  >
+                    <img
+                      src={previewUrl}
+                      alt="preview"
+                      style={{
+                        width: 200,
+                        height: 200,
+                        borderRadius: 12,
+                        objectFit: 'cover',
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
+                      }}
+                    />
+                    <Button
+                      color="error"
+                      size="small"
+                      variant="outlined"
+                      sx={{ mt: 2, minWidth: 120 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleClear();
+                      }}
+                      startIcon={<IconTrash />}
+                    >
+                      Remove
+                    </Button>
+                  </Box>
+                )}
+                {/* hidden file input */}
+                <input
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  ref={fileInputRef}
+                  onChange={handleFileSelect}
+                />
+              </Box>
+              {/* Map Link Field */}
+              <Box sx={{ mt: 4, maxWidth: 600, margin: '0' }}>
+                <CustomFormLabel htmlFor="map_link">Map Link (Google Maps)</CustomFormLabel>
+                <CustomTextField
+                  id="map_link"
+                  value={formData.map_link}
+                  onChange={handleChange}
+                  placeholder="https://maps.google.com/..."
+                  fullWidth
+                  sx={{ mb: 2 }}
+                />
+              </Box>
+            </Box>
           </Grid>
           {/* <Button
             sx={{ mt: 2, width: '25%' }}
@@ -277,20 +508,14 @@ const FormSite = ({ formData, setFormData, onSuccess }: FormSiteProps) => {
             {loading ? 'Submitting...' : 'Submit'}
           </Button> */}
         </Grid>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+          <Button color="primary" variant="contained" type="submit" disabled={loading} size="large">
+            {loading ? 'Submitting...' : 'Submit'}
+          </Button>
+        </Box>
       </form>
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-        <Button
-          color="primary"
-          variant="contained"
-          type="submit"
-          disabled={loading}
-          size="large"
-          form="form-site" // optional: if you want to link to a specific form id
-        >
-          {loading ? 'Submitting...' : 'Submit'}
-        </Button>
-      </Box>
-      <Dialog open={keyDialogOpen} onClose={handleKeyDialogClose} maxWidth="xs" fullWidth>
+
+      {/* <Dialog open={keyDialogOpen} onClose={handleKeyDialogClose} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ borderLeft: '4px solid #673ab7', pl: 1, fontWeight: 600 }}>
           Location Key
         </DialogTitle>
@@ -316,7 +541,7 @@ const FormSite = ({ formData, setFormData, onSuccess }: FormSiteProps) => {
             Re-Generate Key
           </Button>
         </DialogActions>
-      </Dialog>
+      </Dialog> */}
       {loading && (
         <Box
           sx={{

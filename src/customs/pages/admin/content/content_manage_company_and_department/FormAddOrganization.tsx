@@ -87,7 +87,7 @@ const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({
         </Grid2>
 
         <CustomFormLabel htmlFor="name" sx={{ my: 1, mx: 1 }}>
-          <Typography variant="caption">Company Name :</Typography>
+          <Typography variant="caption">Organization Name :</Typography>
         </CustomFormLabel>
         <CustomTextField
           id="name"
@@ -100,7 +100,7 @@ const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({
         />
 
         <CustomFormLabel htmlFor="code" sx={{ my: 1, mx: 1 }}>
-          <Typography variant="caption">Company Code :</Typography>
+          <Typography variant="caption">Organization Code :</Typography>
         </CustomFormLabel>
         <CustomTextField
           id="code"
@@ -113,7 +113,7 @@ const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({
         />
 
         <CustomFormLabel htmlFor="host" sx={{ my: 1, mx: 1 }}>
-          <Typography variant="caption">Company Host :</Typography>
+          <Typography variant="caption">Organization Host :</Typography>
         </CustomFormLabel>
         <CustomTextField
           id="host"

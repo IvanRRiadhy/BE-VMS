@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Dialog,
@@ -23,105 +23,78 @@ import {
   generateKeyCode,
 } from 'src/customs/api/models/Sites';
 import { uniqueId } from 'lodash';
+import { useSession } from 'src/customs/contexts/SessionContext';
+import { getAllSitePagination } from 'src/customs/api/admin';
 
 type SiteTableRow = {
   id: string;
-  siteName: string;
-  address: string;
-  status: string;
+  name: string;
+  description: string;
 };
 
 const Content = () => {
   const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const [tableData, setTableData] = useState<Item[]>([]);
+  const [isDataReady, setIsDataReady] = useState(false);
+  const { token } = useSession();
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [sortColumn, setSortColumn] = useState<string>('id');
+  const [loading, setLoading] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [tableRowSite, setTableRowSite] = React.useState<SiteTableRow[]>([]);
 
   const siteData: Item[] = [
     {
       id: '123',
-      siteName: 'Museum Nasional',
-      address: 'Sebuah Jalan',
-      city: 'Jakarta',
-      province: 'DKI Jakarta',
-      zipCode: '12345',
-      timeZone: userTimeZone,
-      code: generateKeyCode(),
-      policyConfig: {
-        consentType: 'explicit',
-        document: '',
-        period: 0,
-      },
-      settings: {
-        facialRecog: false,
-        signOutEnable: false,
-        autoSignOutVisitor: false,
-        autoSignOutEmployee: false,
-        watchlistCheck: false,
-        contactlessSignin: false,
-        employeeSignEnable: false,
-        status: true,
-        reviewUnregistered: false,
-        restrictHost: false,
-        deliveryDropOff: false,
-      },
-    },
-  ];
-  const tableRowSiteSpace = [
-    {
-      id: 1,
+      type: 0,
       name: 'Museum Nasional',
-      description: 'Museum bersejarah di Jakarta',
-      type: 'Museum',
-      visited: true,
-    },
-    {
-      id: 2,
-      name: 'Monas',
-      description: 'Monumen Nasional Indonesia',
-      type: 'Monumen',
-      visited: true,
-    },
-    {
-      id: 3,
-      name: 'Kebun Raya Bogor',
-      description: 'Taman botani terbesar di Indonesia',
-      type: 'Taman',
-      visited: false,
-    },
-    {
-      id: 4,
-      name: 'Candi Borobudur',
-      description: 'Candi Buddha terbesar di dunia',
-      type: 'Candi',
-      visited: true,
-    },
-    {
-      id: 5,
-      name: 'Pantai Kuta',
-      description: 'Pantai terkenal di Bali',
-      type: 'Pantai',
-      visited: false,
-    },
-    {
-      id: 6,
-      name: 'Taman Mini Indonesia Indah',
-      description: 'Taman budaya miniatur Indonesia',
-      type: 'Taman Budaya',
-      visited: true,
-    },
-    {
-      id: 7,
-      name: 'Gunung Bromo',
-      description: 'Gunung berapi aktif yang populer untuk wisata',
-      type: 'Gunung',
-      visited: false,
-    },
-    {
-      id: 8,
-      name: 'Danau Toba',
-      description: 'Danau vulkanik terbesar di Asia Tenggara',
-      type: 'Danau',
-      visited: false,
+      description: 'Sebuah Jalan',
+      image: '/site/aa7aebf1-24da-49de-b53f-edbb7d6f62c1.png',
+      can_visited: true,
+      need_approval: false,
+      type_approval: 0,
+      can_signout: true,
+      auto_signout: true,
+      signout_time: '12:00:00',
+      timezone: userTimeZone,
+      map_link: '',
+      can_contactless_login: true,
+      need_document: false,
     },
   ];
+  useEffect(() => {
+    if (!token) return;
+    const fetchData = async () => {
+      console.log('Fetching data...');
+      setLoading(true);
+      try {
+        const start = page * rowsPerPage;
+        const response = await getAllSitePagination(token, start, rowsPerPage, sortColumn);
+        console.log('Response from API:', response);
+        setTableData(response.collection);
+        setTotalRecords(response.RecordsTotal);
+        setTotalFilteredRecords(response.RecordsFiltered);
+        setIsDataReady(true);
+        console.log('Table data:', tableData);
+        const rows = response.collection.map((item) => ({
+          id: item.id,
+          name: item.name,
+          description: item.description,
+          // status: item.settings.status === true ? 'Active' : 'Inactive',
+        }));
+
+        setTableRowSite(rows);
+      } catch (error) {
+        console.error('Fetch error:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [token, page, rowsPerPage, sortColumn, refreshTrigger]);
 
   const [formDataAddSite, setFormDataAddSite] = React.useState<CreateSiteRequest>(() => {
     const saved = localStorage.getItem('unsavedSiteForm');
@@ -131,21 +104,11 @@ const Content = () => {
     localStorage.setItem('unsavedSiteForm', JSON.stringify(formDataAddSite));
   }, [formDataAddSite]);
 
-  const [tableRowSite, setTableRowSite] = React.useState<SiteTableRow[]>([]);
-
   useEffect(() => {
-    console.log('siteData', siteData);
-    const rows = siteData.map((item) => ({
-      id: item.id,
-      siteName: item.siteName,
-      address: item.address,
-      status: item.settings.status === true ? 'Active' : 'Inactive',
-    }));
-
-    setTableRowSite(rows);
+    console.log('siteData', tableData);
   }, []);
 
-  const cards = [{ title: 'Total Site', subTitle: '10', subTitleSetting: 10, color: 'none' }];
+  const cards = [{ title: 'Total Site', subTitle: `${totalFilteredRecords}`, subTitleSetting: 10, color: 'none' }];
 
   // Create Site space state management
   const [openFormCreateSiteSpace, setOpenFormCreateSiteSpace] = React.useState(false);
@@ -182,7 +145,7 @@ const Content = () => {
       }
     } else {
       setFormDataAddSite(
-        siteData.find((item) => item.id === id) || CreateSiteRequestSchema.parse({}),
+        CreateSiteRequestSchema.parse(tableData.find((item) => item.id === id) || {}),
       );
       handleOpenDialog();
     }
@@ -191,9 +154,11 @@ const Content = () => {
   const handleConfirmEdit = () => {
     setConfirmDialogOpen(false);
     if (pendingEditId) {
+      console.log("Data: ", tableData);
+      console.log('Edit ID:', tableData.find((item) => item.id === pendingEditId));
       // Edit existing site
       setFormDataAddSite(
-        siteData.find((item) => item.id === pendingEditId) || CreateSiteRequestSchema.parse({}),
+        tableData.find((item) => item.id === pendingEditId) || CreateSiteRequestSchema.parse({}),
       );
     } else {
       // Add new site
@@ -221,6 +186,14 @@ const Content = () => {
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
               <DynamicTable
+              isHavePagination={true}
+              totalCount={totalFilteredRecords}
+              defaultRowsPerPage={rowsPerPage}
+              rowsPerPageOptions={[5, 10, 20]}
+              onPaginationChange={(page, rowsPerPage) => {
+                setPage(page);
+                setRowsPerPage(rowsPerPage);
+              }}
                 overflowX={'auto'}
                 data={tableRowSite}
                 isHaveChecked={true}
