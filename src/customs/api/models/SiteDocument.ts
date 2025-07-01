@@ -22,8 +22,8 @@ export type GetAllSiteDocumentResponse = {
 //CREATE
 export const CreateSiteDocumentRequestSchema = z.object({
     site_id: z.string().default(''),
-    documents: z.string().default(''),
-    retentionTime: z.number().default(0),
+    document_id: z.string().default(''),
+    retention_time: z.number().default(0),
 })
 
 export type CreateSiteDocumentRequest = z.infer<typeof CreateSiteDocumentRequestSchema>

@@ -87,6 +87,12 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
         icon: IconPoint,
         href: '/admin/manage/integration',
       },
+      {
+        id: uniqueId(),
+        title: 'access control',
+        icon: IconPoint,
+        href: '/admin/manage/access-control',
+      },
     ],
   },
   {
@@ -95,7 +101,7 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
     icon: IconUserCircle,
     chipColor: 'secondary',
     href: '/admin/visitor',
-  },
+  },  
 
   {
     id: uniqueId(),

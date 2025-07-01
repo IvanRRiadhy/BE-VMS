@@ -9,6 +9,12 @@ import {
   Paper,
   Button as MuiButton,
   MenuItem,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  TableContainer,
 } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import ReactCrop, { Crop } from 'react-image-crop';
@@ -28,15 +34,26 @@ import {
 import { IconTrash } from '@tabler/icons-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
-import { createSite, uploadImageSite, getAllSitePagination, getAllSite } from 'src/customs/api/admin';
+import {
+  createSite,
+  uploadImageSite,
+  getAllSitePagination,
+  getAllSite,
+  getAllDocumentPagination,
+  createSiteDocument,
+} from 'src/customs/api/admin';
+import { CreateSiteDocumentRequest } from 'src/customs/api/models/SiteDocument';
+import { Item as DocumentItem } from 'src/customs/api/models/Document';
+import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 
 interface FormSiteProps {
   formData: CreateSiteRequest;
   setFormData: React.Dispatch<React.SetStateAction<CreateSiteRequest>>;
+  editingId?: string;
   onSuccess?: () => void;
 }
 
-const FormSite = ({ formData, setFormData, onSuccess }: FormSiteProps) => {
+const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps) => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
   const [alertType, setAlertType] = useState<'info' | 'success' | 'error'>('info');
@@ -50,6 +67,21 @@ const FormSite = ({ formData, setFormData, onSuccess }: FormSiteProps) => {
     { value: 'Asia/Jayapura', label: '(UTC+09:00) WIT (Waktu Indonesia Timur)' },
     // ...add more as needed
   ];
+  const [documentlist, setDocumentList] = useState<DocumentItem[]>([]);
+  const [siteDocuments, setSiteDocuments] = useState<CreateSiteDocumentRequest[]>([]);
+  const [newDocument, setNewDocument] = useState<CreateSiteDocumentRequest>({
+    document_id: '',
+    site_id: '',
+    retention_time: 0,
+  });
+  useEffect(() => {
+    if (!token) return;
+    const fetchData = async () => {
+      const docRes = await getAllDocumentPagination(token, 0, 99, 'id');
+      setDocumentList(docRes?.collection ?? []);
+    };
+    fetchData();
+  }, [token]);
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     setFormData((prev) => ({ ...prev, [id]: value }));
@@ -73,7 +105,10 @@ const FormSite = ({ formData, setFormData, onSuccess }: FormSiteProps) => {
       }
       const data: CreateSiteRequest = CreateSiteRequestSchema.parse(formData);
       console.log('Setting Data: ', data);
+      if (editingId && editingId !== '') {
+      }
       await createSite(data, token);
+      await createSiteDocumentsForNewSite();
       handleFileUpload();
       localStorage.removeItem('unsavedSiteForm');
       setAlertType('success');
@@ -143,6 +178,27 @@ const FormSite = ({ formData, setFormData, onSuccess }: FormSiteProps) => {
         await uploadImageSite(otherMatchedSite.id, siteImageFile!, token);
       } else {
         console.log('No matching site found');
+      }
+    }
+  };
+
+  const createSiteDocumentsForNewSite = async () => {
+    if (!token) return;
+    const allSitesRes = await getAllSite(token);
+    const newSite = allSitesRes.collection.find(
+      (site: any) => site.name === formData.name && site.description === formData.description,
+    );
+    if (!newSite) {
+      console.error('New site not found after creation');
+      return;
+    }
+    for (const doc of siteDocuments) {
+      const docWithSideId: CreateSiteDocumentRequest = { ...doc, site_id: newSite.id };
+      console.log('Creating site document with data:', docWithSideId);
+      try {
+        await createSiteDocument(docWithSideId, token);
+      } catch (error) {
+        console.error('Error creating site document:', error);
       }
     }
   };
@@ -290,7 +346,7 @@ const FormSite = ({ formData, setFormData, onSuccess }: FormSiteProps) => {
                 }
                 fullWidth
                 sx={{ mb: 2 }}
-                SelectProps={{ native: true }}
+                selectprops={{ native: true }}
               >
                 <MenuItem value="" disabled>
                   Select Timezone
@@ -402,99 +458,227 @@ const FormSite = ({ formData, setFormData, onSuccess }: FormSiteProps) => {
             </Paper>
           </Grid>
           <Grid size={{ xs: 12, md: 6 }}>
-            <Box sx={{ mt: 4 }}>
-              <Typography variant="h6" sx={{ mb: 2, borderLeft: '4px solid #673ab7', pl: 1 }}>
-                Site Image
-              </Typography>
-              <Box
-                sx={{
-                  border: '2px dashed #90caf9',
-                  borderRadius: 2,
-                  padding: 4,
-                  textAlign: 'center',
-                  backgroundColor: '#f5faff',
-                  cursor: 'pointer',
-                  width: '100%',
-                  margin: '0 auto',
-                }}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
-                <Typography variant="subtitle1" sx={{ mt: 1 }}>
-                  Upload Site Image
+            <Paper sx={{ p: 3 }}>
+              <Box>
+                <Typography variant="h6" sx={{ mb: 2, borderLeft: '4px solid #673ab7', pl: 1 }}>
+                  Site Image
                 </Typography>
-                <Typography variant="caption" color="textSecondary">
-                  Supports: JPG, JPEG, PNG
-                </Typography>
-                {/* Show file name or short base64 */}
-                {(siteImageFile || formData.image) && (
-                  <Typography
-                    variant="caption"
-                    sx={{ mt: 1, color: '#1976d2', wordBreak: 'break-all' }}
-                  >
-                    {siteImageFile
-                      ? siteImageFile.name
-                      : formData.image
-                      ? `${formData.image.substring(0, 30)}...${formData.image.substring(
-                          formData.image.length - 10,
-                        )}`
-                      : ''}
+                <Box
+                  sx={{
+                    border: '2px dashed #90caf9',
+                    borderRadius: 2,
+                    padding: 4,
+                    textAlign: 'center',
+                    backgroundColor: '#f5faff',
+                    cursor: 'pointer',
+                    width: '100%',
+                    margin: '0 auto',
+                  }}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
+                  <Typography variant="subtitle1" sx={{ mt: 1 }}>
+                    Upload Site Image
                   </Typography>
-                )}
-                {previewUrl && (
-                  <Box
-                    mt={2}
-                    sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
-                  >
-                    <img
-                      src={previewUrl}
-                      alt="preview"
-                      style={{
-                        width: 200,
-                        height: 200,
-                        borderRadius: 12,
-                        objectFit: 'cover',
-                        cursor: 'pointer',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
-                      }}
+                  <Typography variant="caption" color="textSecondary">
+                    Supports: JPG, JPEG, PNG
+                  </Typography>
+                  {/* Show file name or short base64 */}
+                  {(siteImageFile || formData.image) && (
+                    <Typography
+                      variant="caption"
+                      sx={{ mt: 1, color: '#1976d2', wordBreak: 'break-all' }}
+                    >
+                      {siteImageFile
+                        ? siteImageFile.name
+                        : formData.image
+                        ? `${formData.image.substring(0, 30)}...${formData.image.substring(
+                            formData.image.length - 10,
+                          )}`
+                        : ''}
+                    </Typography>
+                  )}
+                  {previewUrl && (
+                    <Box
+                      mt={2}
+                      sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+                    >
+                      <img
+                        src={previewUrl}
+                        alt="preview"
+                        style={{
+                          width: 200,
+                          height: 200,
+                          borderRadius: 12,
+                          objectFit: 'cover',
+                          cursor: 'pointer',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
+                        }}
+                      />
+                      <Button
+                        color="error"
+                        size="small"
+                        variant="outlined"
+                        sx={{ mt: 2, minWidth: 120 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleClear();
+                        }}
+                        startIcon={<IconTrash />}
+                      >
+                        Remove
+                      </Button>
+                    </Box>
+                  )}
+                  {/* hidden file input */}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    hidden
+                    ref={fileInputRef}
+                    onChange={handleFileSelect}
+                  />
+                </Box>
+                {/* Map Link Field */}
+                <Box sx={{ mt: 4, maxWidth: 600, margin: '0' }}>
+                  <CustomFormLabel htmlFor="map_link">Map Link (Google Maps)</CustomFormLabel>
+                  <CustomTextField
+                    id="map_link"
+                    value={formData.map_link}
+                    onChange={handleChange}
+                    placeholder="https://maps.google.com/..."
+                    fullWidth
+                    sx={{ mb: 2 }}
+                  />
+                </Box>
+              </Box>
+            </Paper>
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Paper sx={{ p: 3 }}>
+              <Box>
+                <Typography variant="h6" sx={{ borderLeft: '4px solid #673ab7', pl: 1 }}>
+                  Site Document
+                </Typography>
+                <Grid container spacing={2} sx={{ mb: 2 }}>
+                  <Grid size={8}>
+                    <TableContainer
+                      component={Box}
+                      sx={{ maxHeight: 290, overflowY: 'auto', mt: 1 }}
+                    >
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Name</TableCell>
+                            <TableCell>Retention Time (days)</TableCell>
+                            <TableCell align="right"></TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {siteDocuments.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={3} align="center" sx={{ color: '#888' }}>
+                                No documents added
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            siteDocuments.map((doc, idx) => {
+                              const docInfo = documentlist.find((d) => d.id === doc.document_id);
+                              return (
+                                <TableRow key={doc.document_id + idx}>
+                                  <TableCell>{docInfo ? docInfo.name : doc.document_id}</TableCell>
+                                  <TableCell>{doc.retention_time}</TableCell>
+                                  <TableCell align="right">
+                                    <Button
+                                      color="error"
+                                      size="small"
+                                      variant="outlined"
+                                      sx={{
+                                        minWidth: 28,
+                                        width: 28,
+                                        height: 28,
+                                        p: 0,
+                                        fontSize: '1rem',
+                                        lineHeight: 1,
+                                        bgcolor: '#fff5f5',
+                                        borderColor: '#ffcdd2',
+                                        '&:hover': { bgcolor: '#ffcdd2' },
+                                      }}
+                                      onClick={() =>
+                                        setSiteDocuments((prev) => prev.filter((_, i) => i !== idx))
+                                      }
+                                    >
+                                      ×
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })
+                          )}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Grid>
+                  <Grid size={4} sx={{ mt: -3 }}>
+                    {/* Map Link Field */}
+                    <CustomFormLabel htmlFor="map_link">Document</CustomFormLabel>
+                    <CustomSelect
+                      id="document_id"
+                      name="document_id"
+                      value={newDocument.document_id}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setNewDocument((prev) => ({
+                          ...prev,
+                          document_id: e.target.value,
+                        }))
+                      }
+                      fullWidth
+                      sx={{ mb: 2 }}
+                      selectprops={{ native: true }}
+                    >
+                      <option value="" disabled>
+                        Select Document
+                      </option>
+                      {documentlist.map((doc) => (
+                        <option key={doc.id} value={doc.id}>
+                          {doc.name}
+                        </option>
+                      ))}
+                    </CustomSelect>
+                    <CustomFormLabel htmlFor="retention_time">
+                      Retention Time (days)
+                    </CustomFormLabel>
+                    <CustomTextField
+                      id="retention_time"
+                      name="retention_time"
+                      value={newDocument.retention_time}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setNewDocument((prev) => ({
+                          ...prev,
+                          retention_time: Number(e.target.value),
+                        }))
+                      }
+                      type="number"
+                      fullWidth
+                      sx={{ mb: 2 }}
                     />
                     <Button
-                      color="error"
-                      size="small"
-                      variant="outlined"
-                      sx={{ mt: 2, minWidth: 120 }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleClear();
+                      variant="contained"
+                      color="primary"
+                      fullWidth
+                      sx={{ my: 3 }}
+                      disabled={!newDocument.document_id || !newDocument.retention_time}
+                      onClick={() => {
+                        setSiteDocuments((prev) => [...prev, { ...newDocument, site_id: '' }]);
+                        setNewDocument({ document_id: '', site_id: '', retention_time: 0 });
                       }}
-                      startIcon={<IconTrash />}
                     >
-                      Remove
+                      Add Document
                     </Button>
-                  </Box>
-                )}
-                {/* hidden file input */}
-                <input
-                  type="file"
-                  accept="image/*"
-                  hidden
-                  ref={fileInputRef}
-                  onChange={handleFileSelect}
-                />
+                  </Grid>
+                </Grid>
               </Box>
-              {/* Map Link Field */}
-              <Box sx={{ mt: 4, maxWidth: 600, margin: '0' }}>
-                <CustomFormLabel htmlFor="map_link">Map Link (Google Maps)</CustomFormLabel>
-                <CustomTextField
-                  id="map_link"
-                  value={formData.map_link}
-                  onChange={handleChange}
-                  placeholder="https://maps.google.com/..."
-                  fullWidth
-                  sx={{ mb: 2 }}
-                />
-              </Box>
-            </Box>
+            </Paper>
           </Grid>
           {/* <Button
             sx={{ mt: 2, width: '25%' }}

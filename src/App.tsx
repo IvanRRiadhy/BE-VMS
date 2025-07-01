@@ -27,6 +27,7 @@ import { useSession } from './customs/contexts/SessionContext';
 import { setClearTokenCallback } from './customs/api/interceptor';
 import ManageVisitorType from './customs/pages/admin/ManageVisitorType';
 import ManageIntegration from './customs/pages/admin/ManageIntegration';
+import ManageAccessControl from './customs/pages/admin/ManageAccessControl';
 
 export function App() {
   const theme = ThemeSettings();
@@ -164,6 +165,14 @@ export function App() {
               element={
                 <ProtectedRoute>
                   <ManageIntegration />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="admin/manage/access-control"
+              element={
+                <ProtectedRoute>
+                  <ManageAccessControl />
                 </ProtectedRoute>
               }
             />
