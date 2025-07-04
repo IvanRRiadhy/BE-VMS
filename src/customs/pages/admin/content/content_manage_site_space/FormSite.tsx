@@ -458,6 +458,132 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
             </Paper>
           </Grid>
           <Grid size={{ xs: 12, md: 6 }}>
+                        <Paper sx={{ p: 3 }}>
+              <Box>
+                <Typography variant="h6" sx={{ borderLeft: '4px solid #673ab7', pl: 1 }}>
+                  Site Document
+                </Typography>
+                <Grid container spacing={2} sx={{ mb: 2 }}>
+                  <Grid size={8}>
+                    <TableContainer
+                      component={Box}
+                      sx={{ maxHeight: 290, overflowY: 'auto', mt: 1 }}
+                    >
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Name</TableCell>
+                            <TableCell>Retention Time (days)</TableCell>
+                            <TableCell align="right"></TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {siteDocuments.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={3} align="center" sx={{ color: '#888' }}>
+                                No documents added
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            siteDocuments.map((doc, idx) => {
+                              const docInfo = documentlist.find((d) => d.id === doc.document_id);
+                              return (
+                                <TableRow key={doc.document_id + idx}>
+                                  <TableCell>{docInfo ? docInfo.name : doc.document_id}</TableCell>
+                                  <TableCell>{doc.retention_time}</TableCell>
+                                  <TableCell align="right">
+                                    <Button
+                                      color="error"
+                                      size="small"
+                                      variant="outlined"
+                                      sx={{
+                                        minWidth: 28,
+                                        width: 28,
+                                        height: 28,
+                                        p: 0,
+                                        fontSize: '1rem',
+                                        lineHeight: 1,
+                                        bgcolor: '#fff5f5',
+                                        borderColor: '#ffcdd2',
+                                        '&:hover': { bgcolor: '#ffcdd2' },
+                                      }}
+                                      onClick={() =>
+                                        setSiteDocuments((prev) => prev.filter((_, i) => i !== idx))
+                                      }
+                                    >
+                                      ×
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })
+                          )}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Grid>
+                  <Grid size={4} sx={{ mt: -3 }}>
+                    <CustomFormLabel htmlFor="map_link">Document</CustomFormLabel>
+                    <CustomSelect
+                      id="document_id"
+                      name="document_id"
+                      value={newDocument.document_id}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setNewDocument((prev) => ({
+                          ...prev,
+                          document_id: e.target.value,
+                        }))
+                      }
+                      fullWidth
+                      sx={{ mb: 2 }}
+                      selectprops={{ native: true }}
+                    >
+                      <option value="" disabled>
+                        Select Document
+                      </option>
+                      {documentlist.map((doc) => (
+                        <option key={doc.id} value={doc.id}>
+                          {doc.name}
+                        </option>
+                      ))}
+                    </CustomSelect>
+                    <CustomFormLabel htmlFor="retention_time">
+                      Retention Time (days)
+                    </CustomFormLabel>
+                    <CustomTextField
+                      id="retention_time"
+                      name="retention_time"
+                      value={newDocument.retention_time}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setNewDocument((prev) => ({
+                          ...prev,
+                          retention_time: Number(e.target.value),
+                        }))
+                      }
+                      type="number"
+                      fullWidth
+                      sx={{ mb: 2 }}
+                    />
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      fullWidth
+                      sx={{ my: 3 }}
+                      disabled={!newDocument.document_id || !newDocument.retention_time}
+                      onClick={() => {
+                        setSiteDocuments((prev) => [...prev, { ...newDocument, site_id: '' }]);
+                        setNewDocument({ document_id: '', site_id: '', retention_time: 0 });
+                      }}
+                    >
+                      Add Document
+                    </Button>
+                  </Grid>
+                </Grid>
+              </Box>
+            </Paper>
+
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Paper sx={{ p: 3 }}>
               <Box>
                 <Typography variant="h6" sx={{ mb: 2, borderLeft: '4px solid #673ab7', pl: 1 }}>
@@ -551,132 +677,6 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
                     sx={{ mb: 2 }}
                   />
                 </Box>
-              </Box>
-            </Paper>
-          </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Paper sx={{ p: 3 }}>
-              <Box>
-                <Typography variant="h6" sx={{ borderLeft: '4px solid #673ab7', pl: 1 }}>
-                  Site Document
-                </Typography>
-                <Grid container spacing={2} sx={{ mb: 2 }}>
-                  <Grid size={8}>
-                    <TableContainer
-                      component={Box}
-                      sx={{ maxHeight: 290, overflowY: 'auto', mt: 1 }}
-                    >
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>Name</TableCell>
-                            <TableCell>Retention Time (days)</TableCell>
-                            <TableCell align="right"></TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {siteDocuments.length === 0 ? (
-                            <TableRow>
-                              <TableCell colSpan={3} align="center" sx={{ color: '#888' }}>
-                                No documents added
-                              </TableCell>
-                            </TableRow>
-                          ) : (
-                            siteDocuments.map((doc, idx) => {
-                              const docInfo = documentlist.find((d) => d.id === doc.document_id);
-                              return (
-                                <TableRow key={doc.document_id + idx}>
-                                  <TableCell>{docInfo ? docInfo.name : doc.document_id}</TableCell>
-                                  <TableCell>{doc.retention_time}</TableCell>
-                                  <TableCell align="right">
-                                    <Button
-                                      color="error"
-                                      size="small"
-                                      variant="outlined"
-                                      sx={{
-                                        minWidth: 28,
-                                        width: 28,
-                                        height: 28,
-                                        p: 0,
-                                        fontSize: '1rem',
-                                        lineHeight: 1,
-                                        bgcolor: '#fff5f5',
-                                        borderColor: '#ffcdd2',
-                                        '&:hover': { bgcolor: '#ffcdd2' },
-                                      }}
-                                      onClick={() =>
-                                        setSiteDocuments((prev) => prev.filter((_, i) => i !== idx))
-                                      }
-                                    >
-                                      ×
-                                    </Button>
-                                  </TableCell>
-                                </TableRow>
-                              );
-                            })
-                          )}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  </Grid>
-                  <Grid size={4} sx={{ mt: -3 }}>
-                    {/* Map Link Field */}
-                    <CustomFormLabel htmlFor="map_link">Document</CustomFormLabel>
-                    <CustomSelect
-                      id="document_id"
-                      name="document_id"
-                      value={newDocument.document_id}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        setNewDocument((prev) => ({
-                          ...prev,
-                          document_id: e.target.value,
-                        }))
-                      }
-                      fullWidth
-                      sx={{ mb: 2 }}
-                      selectprops={{ native: true }}
-                    >
-                      <option value="" disabled>
-                        Select Document
-                      </option>
-                      {documentlist.map((doc) => (
-                        <option key={doc.id} value={doc.id}>
-                          {doc.name}
-                        </option>
-                      ))}
-                    </CustomSelect>
-                    <CustomFormLabel htmlFor="retention_time">
-                      Retention Time (days)
-                    </CustomFormLabel>
-                    <CustomTextField
-                      id="retention_time"
-                      name="retention_time"
-                      value={newDocument.retention_time}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        setNewDocument((prev) => ({
-                          ...prev,
-                          retention_time: Number(e.target.value),
-                        }))
-                      }
-                      type="number"
-                      fullWidth
-                      sx={{ mb: 2 }}
-                    />
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      fullWidth
-                      sx={{ my: 3 }}
-                      disabled={!newDocument.document_id || !newDocument.retention_time}
-                      onClick={() => {
-                        setSiteDocuments((prev) => [...prev, { ...newDocument, site_id: '' }]);
-                        setNewDocument({ document_id: '', site_id: '', retention_time: 0 });
-                      }}
-                    >
-                      Add Document
-                    </Button>
-                  </Grid>
-                </Grid>
               </Box>
             </Paper>
           </Grid>

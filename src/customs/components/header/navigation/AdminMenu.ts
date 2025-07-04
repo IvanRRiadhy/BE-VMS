@@ -93,6 +93,12 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
         icon: IconPoint,
         href: '/admin/manage/access-control',
       },
+            {
+        id: uniqueId(),
+        title: 'custom field',
+        icon: IconPoint,
+        href: '/admin/manage/custom-field',
+      },
     ],
   },
   {

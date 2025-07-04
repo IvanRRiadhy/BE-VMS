@@ -32,6 +32,7 @@ import { CreateSiteDocumentRequest, CreateSiteDocumentResponse } from './models/
 import { GetAllBrandPaginationResponse, GetAllBrandResponse } from './models/Brand';
 import { CreateIntegrationRequest, CreateIntegrationResponse, DeleteIntegrationResponse, GetAllIntegrationResponse, GetAvailableIntegrationResponse } from './models/Integration';
 import { CreateAccessControlRequest, CreateAccessControlResponse, GetAccessControlPaginationResponse, GetAllAccessControlResponse, UpdateAccessControlRequest, UpdateAccessControlResponse } from './models/AccessControl';
+import { CreateCustomFieldRequest, CreateCustomFieldResponse, GetAllCustomFieldPaginationResponse, GetAllCustomFieldResponse } from './models/CustomField';
 
 // District API
 export const getAllDistricts = async (token: string): Promise<GetAllDistrictsPaginationResponse> => {
@@ -635,4 +636,60 @@ export const updateAccessControl = async (
     }
     throw error;
   }
-}
+};
+
+//Custom Field API
+
+export const getAllCustomField = async (
+  token: string,
+): Promise<GetAllCustomFieldResponse> => {
+  try {
+    const response = await axiosInstance.get(`/custom-field`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const getAllCustomFieldPagination = async (
+  token: string,
+  start: number,
+  length: number,
+  sortColumn: string,
+): Promise<GetAllCustomFieldPaginationResponse> => {
+ try {
+    const response = await axiosInstance.get(`/custom-field/dt`, {
+      params: { start, length, sort_column: sortColumn },
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+ }
+};
+
+export const createCustomField = async (
+  data: CreateCustomFieldRequest,
+  token: string,
+): Promise<CreateCustomFieldResponse> => {
+  try {
+    const response = await axiosInstance.post(`/custom-field`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    console.log(response.data); 
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};

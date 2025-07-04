@@ -28,6 +28,7 @@ import { setClearTokenCallback } from './customs/api/interceptor';
 import ManageVisitorType from './customs/pages/admin/ManageVisitorType';
 import ManageIntegration from './customs/pages/admin/ManageIntegration';
 import ManageAccessControl from './customs/pages/admin/ManageAccessControl';
+import ManageCustomField from './customs/pages/admin/ManageCustomField';
 
 export function App() {
   const theme = ThemeSettings();
@@ -176,6 +177,14 @@ export function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path='admin/manage/custom-field'
+              element={
+                <ProtectedRoute>
+                  <ManageCustomField />
+                </ProtectedRoute>
+              }
+              />
             <Route
               path="admin/setting/users"
               element={

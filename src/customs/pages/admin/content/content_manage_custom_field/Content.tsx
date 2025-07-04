@@ -14,22 +14,25 @@ import PageContainer from 'src/components/container/PageContainer';
 
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import FormSite from './FormSite';
 import CloseIcon from '@mui/icons-material/Close';
-import {
-  CreateSiteRequest,
-  CreateSiteRequestSchema,
-  Item,
-  generateKeyCode,
-} from 'src/customs/api/models/Sites';
-import { uniqueId } from 'lodash';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { getAllSitePagination } from 'src/customs/api/admin';
+import { getAllCustomField, getAllCustomFieldPagination } from 'src/customs/api/admin';
+import {
+  CreateCustomFieldRequest,
+  Item,
+  CreateCustomFieldResponse,
+  multiOptField,
+  FieldType,
+  CreateCustomFieldRequestSchema,
+} from 'src/customs/api/models/CustomField';
+import FormCustomField from './FormCustomField';
 
-type SiteTableRow = {
+type CustomFieldTableRow = {
   id: string;
   name: string;
-  description: string;
+  display_text: string;
+  field_type: string;
+  multiple_option_fields: multiOptField[];
 };
 
 const Content = () => {
@@ -44,27 +47,8 @@ const Content = () => {
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [tableRowSite, setTableRowSite] = React.useState<SiteTableRow[]>([]);
-
-  const siteData: Item[] = [
-    {
-      id: '123',
-      type: 0,
-      name: 'Museum Nasional',
-      description: 'Sebuah Jalan',
-      image: '/site/aa7aebf1-24da-49de-b53f-edbb7d6f62c1.png',
-      can_visited: true,
-      need_approval: false,
-      type_approval: 0,
-      can_signout: true,
-      auto_signout: true,
-      signout_time: '12:00:00',
-      timezone: userTimeZone,
-      map_link: '',
-      can_contactless_login: true,
-      need_document: false,
-    },
-  ];
+  const [tableRowSite, setTableRowSite] = React.useState<CustomFieldTableRow[]>([]);
+  const [edittingId, setEdittingId] = useState('');
   useEffect(() => {
     if (!token) return;
     const fetchData = async () => {
@@ -72,18 +56,19 @@ const Content = () => {
       setLoading(true);
       try {
         const start = page * rowsPerPage;
-        const response = await getAllSitePagination(token, start, rowsPerPage, sortColumn);
+        const response = await getAllCustomFieldPagination(token, start, rowsPerPage, sortColumn);
         console.log('Response from API:', response);
         setTableData(response.collection);
         setTotalRecords(response.RecordsTotal);
         setTotalFilteredRecords(response.RecordsFiltered);
         setIsDataReady(true);
         console.log('Table data:', tableData);
-        const rows = response.collection.map((item) => ({
+        const rows = response.collection.map((item: Item) => ({
           id: item.id,
-          name: item.name,
-          description: item.description,
-          // status: item.settings.status === true ? 'Active' : 'Inactive',
+          name: item.short_name,
+          display_text: item.long_display_text,
+          field_type: FieldType[item.field_type],
+          multiple_option_fields: item.multiple_option_fields,
         }));
 
         setTableRowSite(rows);
@@ -95,57 +80,59 @@ const Content = () => {
     };
     fetchData();
   }, [token, page, rowsPerPage, sortColumn, refreshTrigger]);
-
-  const [formDataAddSite, setFormDataAddSite] = React.useState<CreateSiteRequest>(() => {
-    const saved = localStorage.getItem('unsavedSiteForm');
-    return saved ? JSON.parse(saved) : CreateSiteRequestSchema.parse({});
-  });
+  const [formDataAddCustomField, setFormDataAddCustomField] = useState<CreateCustomFieldRequest>(
+    () => {
+      const saved = localStorage.getItem('unsavedCustomDataData');
+      return saved ? JSON.parse(saved) : {};
+    },
+  );
   useEffect(() => {
-    localStorage.setItem('unsavedSiteForm', JSON.stringify(formDataAddSite));
-  }, [formDataAddSite]);
+    localStorage.setItem('unsavedCustomDataData', JSON.stringify(formDataAddCustomField));
+  }, [formDataAddCustomField]);
 
-  useEffect(() => {
-    console.log('siteData', tableData);
-  }, []);
-
-  const cards = [{ title: 'Total Site', subTitle: `${totalFilteredRecords}`, subTitleSetting: 10, color: 'none' }];
-
-  // Create Site space state management
-  const [openFormCreateSiteSpace, setOpenFormCreateSiteSpace] = React.useState(false);
-  const [confirmDialogOpen, setConfirmDialogOpen] = React.useState(false);
-  const [pendingEditId, setPendingEditId] = React.useState<string | null>(null);
+  const cards = [
+    {
+      title: 'Total Custom Field',
+      subTitle: `${totalFilteredRecords}`,
+      subTitleSetting: 10,
+      color: 'none',
+    },
+  ];
+  //Create Access Control Dialog
+  const [openCreateCustomField, setOpenCreateCustomField] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [pendingEditId, setPendingEditId] = useState<string | null>(null);
 
   const handleOpenDialog = () => {
-    setOpenFormCreateSiteSpace(true);
+    setOpenCreateCustomField(true);
   };
-  const handleCloseModalCreateSiteSpace = () => setOpenFormCreateSiteSpace(false);
+  const handleCloseDialog = () => setOpenCreateCustomField(false);
 
   const handleAdd = () => {
-    const editing = localStorage.getItem('unsavedSiteForm');
+    const editing = localStorage.getItem('unsavedCustomDataData');
     if (editing) {
       // If editing exists, show confirmation dialog for add
       setPendingEditId(null); // null means it's an add, not edit
       setConfirmDialogOpen(true);
     } else {
-      setFormDataAddSite(CreateSiteRequestSchema.parse({}));
+      setFormDataAddCustomField(CreateCustomFieldRequestSchema.parse({}));
       handleOpenDialog();
     }
   };
-
   const handleEdit = (id: string) => {
-    const editing = localStorage.getItem('unsavedSiteForm');
+    const editing = localStorage.getItem('unsavedCustomDataData');
     if (editing) {
       const parsed = JSON.parse(editing);
       if (parsed.id === id) {
         handleOpenDialog();
       } else {
-        console.log('ID tidak cocok');
+        console.log('ID tidak cocok', id);
         setPendingEditId(id);
         setConfirmDialogOpen(true);
       }
     } else {
-      setFormDataAddSite(
-        CreateSiteRequestSchema.parse(tableData.find((item) => item.id === id) || {}),
+      setFormDataAddCustomField(
+        CreateCustomFieldRequestSchema.parse(tableData.find((item) => item.id === id) || {}),
       );
       handleOpenDialog();
     }
@@ -154,15 +141,20 @@ const Content = () => {
   const handleConfirmEdit = () => {
     setConfirmDialogOpen(false);
     if (pendingEditId) {
-      console.log("Data: ", tableData);
-      console.log('Edit ID:', tableData.find((item) => item.id === pendingEditId));
+      console.log('Data: ', tableData);
+      console.log(
+        'Edit ID:',
+        tableData.find((item) => item.id === pendingEditId),
+      );
       // Edit existing site
-      setFormDataAddSite(
-        tableData.find((item) => item.id === pendingEditId) || CreateSiteRequestSchema.parse({}),
+      setFormDataAddCustomField(
+        CreateCustomFieldRequestSchema.parse(
+          tableData.find((item) => item.id === pendingEditId) || {},
+        ),
       );
     } else {
       // Add new site
-      setFormDataAddSite(CreateSiteRequestSchema.parse({}));
+      setFormDataAddCustomField(CreateCustomFieldRequestSchema.parse({}));
     }
     handleOpenDialog();
     setPendingEditId(null);
@@ -173,10 +165,9 @@ const Content = () => {
     setPendingEditId(null);
   };
 
-  // --------------
   return (
     <>
-      <PageContainer title="Manage Site Space" description="Site page">
+      <PageContainer title="Manage Custom Field Space" description="Custom Field page">
         <Box>
           <Grid container spacing={3}>
             {/* column */}
@@ -186,14 +177,14 @@ const Content = () => {
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
               <DynamicTable
-              isHavePagination={true}
-              totalCount={totalFilteredRecords}
-              defaultRowsPerPage={rowsPerPage}
-              rowsPerPageOptions={[5, 10, 20]}
-              onPaginationChange={(page, rowsPerPage) => {
-                setPage(page);
-                setRowsPerPage(rowsPerPage);
-              }}
+                isHavePagination={true}
+                totalCount={totalFilteredRecords}
+                defaultRowsPerPage={rowsPerPage}
+                rowsPerPageOptions={[5, 10, 20]}
+                onPaginationChange={(page, rowsPerPage) => {
+                  setPage(page);
+                  setRowsPerPage(rowsPerPage);
+                }}
                 overflowX={'auto'}
                 data={tableRowSite}
                 isHaveChecked={true}
@@ -218,19 +209,23 @@ const Content = () => {
           </Grid>
         </Box>
       </PageContainer>
-      {/* Dialog create employee */}
       <Dialog
-        open={openFormCreateSiteSpace}
-        onClose={handleCloseModalCreateSiteSpace}
+        open={openCreateCustomField}
+        onClose={handleCloseDialog}
         fullWidth
-        maxWidth="xl"
+        maxWidth={formDataAddCustomField.field_type >= 3 ? 'lg' : 'md'}
       >
         <DialogTitle sx={{ position: 'relative', padding: 5 }}>
-          Add Site Space
+          {edittingId ? 'Edit' : 'Add'} Custom Field
           <IconButton
             aria-label="close"
-            onClick={handleCloseModalCreateSiteSpace}
-            sx={{ position: 'absolute', right: 8, top: 8 }}
+            onClick={handleCloseDialog}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
+              color: (theme) => theme.palette.grey[500],
+            }}
           >
             <CloseIcon />
           </IconButton>
@@ -238,10 +233,13 @@ const Content = () => {
         <Divider />
         <DialogContent>
           <br />
-          <FormSite
-            formData={formDataAddSite}
-            setFormData={setFormDataAddSite}
-            onSuccess={handleCloseModalCreateSiteSpace}
+          <FormCustomField
+            formData={formDataAddCustomField}
+            setFormData={setFormDataAddCustomField}
+            onSuccess={() => {
+              handleCloseDialog();
+              setRefreshTrigger(refreshTrigger + 1);
+            }}
           />
         </DialogContent>
       </Dialog>
@@ -249,8 +247,8 @@ const Content = () => {
       <Dialog open={confirmDialogOpen} onClose={handleCancelEdit}>
         <DialogTitle>Unsaved Changes</DialogTitle>
         <DialogContent>
-          You have unsaved changes for another site. Are you sure you want to discard them and edit
-          this site?
+          You have unsaved changes for another Custom Field. Are you sure you want to discard them
+          and edit this Custom Field?
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCancelEdit}>Cancel</Button>
