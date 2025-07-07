@@ -136,6 +136,7 @@ const Content = () => {
       );
       handleOpenDialog();
     }
+    console.log('Form data:', edittingId);
   };
 
   const handleConfirmEdit = () => {
@@ -197,7 +198,10 @@ const Content = () => {
                 isHaveAddData={true}
                 isHaveHeader={false}
                 onCheckedChange={(selected) => console.log('Checked table row:', selected)}
-                onEdit={(row) => handleEdit(row.id)}
+                onEdit={(row) => {
+                  handleEdit(row.id)
+                  setEdittingId(row.id);
+                }}
                 onDelete={(row) => console.log('Delete:', row)}
                 onSearchKeywordChange={(keyword) => console.log('Search keyword:', keyword)}
                 onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
@@ -240,6 +244,7 @@ const Content = () => {
               handleCloseDialog();
               setRefreshTrigger(refreshTrigger + 1);
             }}
+            editingId={edittingId}
           />
         </DialogContent>
       </Dialog>

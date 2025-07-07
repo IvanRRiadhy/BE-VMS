@@ -31,7 +31,7 @@ import {
   FieldType,
   multiOptField,
 } from 'src/customs/api/models/CustomField';
-import { createCustomField } from 'src/customs/api/admin';
+import { createCustomField, updateCustomField } from 'src/customs/api/admin';
 import { fromPairs, lowerCase } from 'lodash';
 
 interface FormCustomFieldProps {
@@ -98,16 +98,20 @@ const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCu
         }, 3000);
         return;
       }
-    const data: CreateCustomFieldRequest = {
-      ...formData,
-      multiple_option_fields: multiOptionList,
-    };
-    const parsedData = CreateCustomFieldRequestSchema.parse(data);
-
+      const data: CreateCustomFieldRequest = {
+        ...formData,
+        multiple_option_fields: multiOptionList,
+      };
+      const parsedData = CreateCustomFieldRequestSchema.parse(data);
+      console.log(editingId);
       console.log('Setting Data: ', parsedData);
       if (editingId && editingId !== '') {
+        await updateCustomField(token, parsedData, editingId);
+        console.log('Editing ID:', editingId);
+      } else {
+        await createCustomField(parsedData, token);
+        console.log('Creating new custom field');
       }
-      await createCustomField(parsedData, token);
       localStorage.removeItem('unsavedCustomFieldForm');
       setAlertType('success');
       setAlertMessage('Site successfully created!');

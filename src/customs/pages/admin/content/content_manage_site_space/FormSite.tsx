@@ -41,6 +41,7 @@ import {
   getAllSite,
   getAllDocumentPagination,
   createSiteDocument,
+  updateSite,
 } from 'src/customs/api/admin';
 import { CreateSiteDocumentRequest } from 'src/customs/api/models/SiteDocument';
 import { Item as DocumentItem } from 'src/customs/api/models/Document';
@@ -106,8 +107,12 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
       const data: CreateSiteRequest = CreateSiteRequestSchema.parse(formData);
       console.log('Setting Data: ', data);
       if (editingId && editingId !== '') {
-      }
+        await updateSite(token, data, editingId);
+        console.log('Editing ID:', editingId);
+      } else {
       await createSite(data, token);
+      }
+
       await createSiteDocumentsForNewSite();
       handleFileUpload();
       localStorage.removeItem('unsavedSiteForm');

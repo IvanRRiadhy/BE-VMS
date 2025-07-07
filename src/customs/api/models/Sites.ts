@@ -95,3 +95,31 @@ export interface UploadImageSiteResponse {
     msg: string;
     collection: Item | null;
 }
+
+//UPDATE
+export const UpdateSiteRequestSchema = z.object({
+  type: z.number().default(0),
+  name: z.string().default(''),
+  description: z.string().default(''),
+  image: z.string().default(''),
+  can_visited: z.boolean().default(false),
+  need_approval: z.boolean().default(false),
+  type_approval: z.number().default(0),
+  can_signout: z.boolean().default(false),
+  auto_signout: z.boolean().default(false),
+  signout_time: z.string().default(''),
+  timezone: z.string().default(''),
+  map_link: z.string().default(''),
+  can_contactless_login: z.boolean().default(false),
+  need_document: z.boolean().default(false),
+});
+
+export type UpdateSiteRequest = z.infer<typeof UpdateSiteRequestSchema>;
+
+export interface UpdateSiteResponse {
+    status: string;
+    status_code: number;
+    title: string;
+    msg: string;
+    collection: Item | null;
+}

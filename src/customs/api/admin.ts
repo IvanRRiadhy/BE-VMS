@@ -27,12 +27,12 @@ import {
 import axiosInstance from './interceptor';
 import { CreateEmployeeRequest, CreateEmployeeResponse, GetAllEmployeePaginationResponse, UpdateEmployeeRequest, UpdateEmployeeResponse } from './models/Employee';
 import { CreateDocumentRequest, CreateDocumentResponse, GetAllDocumentPaginationResponse, UpdateDocumentRequest, UpdateDocumentResponse } from './models/Document';
-import { CreateSiteRequest, CreateSiteResponse, GetAllSitesPaginationResponse, GetAllSitesResponse, UploadImageSiteResponse } from './models/Sites';
+import { CreateSiteRequest, CreateSiteResponse, GetAllSitesPaginationResponse, GetAllSitesResponse, UpdateSiteRequest, UpdateSiteResponse, UploadImageSiteResponse } from './models/Sites';
 import { CreateSiteDocumentRequest, CreateSiteDocumentResponse } from './models/SiteDocument';
 import { GetAllBrandPaginationResponse, GetAllBrandResponse } from './models/Brand';
 import { CreateIntegrationRequest, CreateIntegrationResponse, DeleteIntegrationResponse, GetAllIntegrationResponse, GetAvailableIntegrationResponse } from './models/Integration';
 import { CreateAccessControlRequest, CreateAccessControlResponse, GetAccessControlPaginationResponse, GetAllAccessControlResponse, UpdateAccessControlRequest, UpdateAccessControlResponse } from './models/AccessControl';
-import { CreateCustomFieldRequest, CreateCustomFieldResponse, GetAllCustomFieldPaginationResponse, GetAllCustomFieldResponse } from './models/CustomField';
+import { CreateCustomFieldRequest, CreateCustomFieldResponse, GetAllCustomFieldPaginationResponse, GetAllCustomFieldResponse, UpdateCustomFieldRequest, UpdateCustomFieldResponse } from './models/CustomField';
 
 // District API
 export const getAllDistricts = async (token: string): Promise<GetAllDistrictsPaginationResponse> => {
@@ -391,15 +391,23 @@ export const createSite = async (
     throw error;
   }
 }
-// export const updateSite = async (
-//   siteId: string,
-//   data: UpdateSiteRequest,
-//   token: string,
-// ): Promise<UpdateSiteResponse> => (
-//   axiosInstance.put(`/site/${siteId}`, data, {
-//     headers: { Authorization: `Bearer ${token}` },
-//   })
-// )
+export const updateSite = async (
+  siteId: string,
+  data: UpdateSiteRequest,
+  token: string,
+): Promise<UpdateSiteResponse> => {
+  try {
+    const response = await axiosInstance.put(`/site/${siteId}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+}
 
 export const uploadImageSite = async (
   siteId: string,
@@ -693,3 +701,21 @@ export const createCustomField = async (
     throw error;
   }
 };
+
+export const updateCustomField = async (
+  token: string,
+  data: UpdateCustomFieldRequest,
+  customFieldId: string,
+) : Promise<UpdateCustomFieldResponse> => {
+  try {
+    const response = await axiosInstance.put(`/custom-field/${customFieldId}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+}
