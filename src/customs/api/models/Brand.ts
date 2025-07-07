@@ -45,3 +45,18 @@ export interface CreateBrandResponse {
   msg: string;
   collection: Item | null;
 }
+
+//UPDATE
+export interface UpdateBrandRequest {
+  name: string;
+  type_brand: number;
+  integration_list_id: string;
+};
+
+export interface UpdateBrandResponse {
+      status: string;
+      status_code: number;
+      title: string;
+      msg: string;
+      collection: Item | null;
+};

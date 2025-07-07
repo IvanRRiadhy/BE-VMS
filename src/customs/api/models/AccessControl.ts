@@ -82,7 +82,7 @@ export interface UpdateAccessControlRequest {
     door_id: string;
     raw: string;
     integration_id: string;
-}
+};
 
 export interface UpdateAccessControlResponse {
     status: string;

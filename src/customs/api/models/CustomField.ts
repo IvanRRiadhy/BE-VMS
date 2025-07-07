@@ -5,15 +5,14 @@ export type multiOptField = {
     value: string;
     name: string;
     id: string;
-}
-
+};
 export type Item = {
     short_name: string;
     long_display_text: string;
     field_type: number;
     multiple_option_fields: multiOptField[];
     id: string;
-}
+};
 
 export enum FieldType {
     Text = 0,
@@ -23,7 +22,7 @@ export enum FieldType {
     Datepicker = 4,
     Radio = 5,
     Checkbox = 6,
-}
+};
 
 //GET
 export type GetAllCustomFieldResponse = {
@@ -67,4 +66,20 @@ export interface CreateCustomFieldResponse {
     title: string;
     msg: string;
     collection: Item | null;
-}
+};
+
+//UPDATE
+export interface UpdateCustomFieldRequest {
+    short_name: string;
+    long_display_text: string;
+    field_type: number;
+    multiple_option_fields: multiOptField[];
+};
+
+export interface UpdateCustomFieldResponse {
+    status: string;
+    status_code: number;
+    title: string;
+    msg: string;
+    collection: Item | null;
+};
