@@ -28,7 +28,7 @@ import axiosInstance from './interceptor';
 import { CreateEmployeeRequest, CreateEmployeeResponse, GetAllEmployeePaginationResponse, UpdateEmployeeRequest, UpdateEmployeeResponse } from './models/Employee';
 import { CreateDocumentRequest, CreateDocumentResponse, GetAllDocumentPaginationResponse, UpdateDocumentRequest, UpdateDocumentResponse } from './models/Document';
 import { CreateSiteRequest, CreateSiteResponse, GetAllSitesPaginationResponse, GetAllSitesResponse, UpdateSiteRequest, UpdateSiteResponse, UploadImageSiteResponse } from './models/Sites';
-import { CreateSiteDocumentRequest, CreateSiteDocumentResponse } from './models/SiteDocument';
+import { CreateSiteDocumentRequest, CreateSiteDocumentResponse, GetAllSiteDocumentResponse } from './models/SiteDocument';
 import { GetAllBrandPaginationResponse, GetAllBrandResponse } from './models/Brand';
 import { CreateIntegrationRequest, CreateIntegrationResponse, DeleteIntegrationResponse, GetAllIntegrationResponse, GetAvailableIntegrationResponse } from './models/Integration';
 import { CreateAccessControlRequest, CreateAccessControlResponse, GetAccessControlPaginationResponse, GetAllAccessControlResponse, UpdateAccessControlRequest, UpdateAccessControlResponse } from './models/AccessControl';
@@ -433,6 +433,22 @@ export const uploadImageSite = async (
     throw error;
   }
 };
+
+export const getAllSiteDocument = async (
+  token: string
+): Promise <GetAllSiteDocumentResponse> => {
+  try {
+    const response = await axiosInstance.get(`/site-document`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+}
 
 export const createSiteDocument = async (
   data: CreateSiteDocumentRequest,

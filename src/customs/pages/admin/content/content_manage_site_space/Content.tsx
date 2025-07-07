@@ -45,7 +45,7 @@ const Content = () => {
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [tableRowSite, setTableRowSite] = React.useState<SiteTableRow[]>([]);
-
+  const [edittingId, setEdittingId] = useState('');
   const siteData: Item[] = [
     {
       id: '123',
@@ -108,7 +108,14 @@ const Content = () => {
     console.log('siteData', tableData);
   }, []);
 
-  const cards = [{ title: 'Total Site', subTitle: `${totalFilteredRecords}`, subTitleSetting: 10, color: 'none' }];
+  const cards = [
+    {
+      title: 'Total Site',
+      subTitle: `${totalFilteredRecords}`,
+      subTitleSetting: 10,
+      color: 'none',
+    },
+  ];
 
   // Create Site space state management
   const [openFormCreateSiteSpace, setOpenFormCreateSiteSpace] = React.useState(false);
@@ -154,8 +161,11 @@ const Content = () => {
   const handleConfirmEdit = () => {
     setConfirmDialogOpen(false);
     if (pendingEditId) {
-      console.log("Data: ", tableData);
-      console.log('Edit ID:', tableData.find((item) => item.id === pendingEditId));
+      console.log('Data: ', tableData);
+      console.log(
+        'Edit ID:',
+        tableData.find((item) => item.id === pendingEditId),
+      );
       // Edit existing site
       setFormDataAddSite(
         tableData.find((item) => item.id === pendingEditId) || CreateSiteRequestSchema.parse({}),
@@ -186,14 +196,14 @@ const Content = () => {
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
               <DynamicTable
-              isHavePagination={true}
-              totalCount={totalFilteredRecords}
-              defaultRowsPerPage={rowsPerPage}
-              rowsPerPageOptions={[5, 10, 20]}
-              onPaginationChange={(page, rowsPerPage) => {
-                setPage(page);
-                setRowsPerPage(rowsPerPage);
-              }}
+                isHavePagination={true}
+                totalCount={totalFilteredRecords}
+                defaultRowsPerPage={rowsPerPage}
+                rowsPerPageOptions={[5, 10, 20]}
+                onPaginationChange={(page, rowsPerPage) => {
+                  setPage(page);
+                  setRowsPerPage(rowsPerPage);
+                }}
                 overflowX={'auto'}
                 data={tableRowSite}
                 isHaveChecked={true}
@@ -206,7 +216,10 @@ const Content = () => {
                 isHaveAddData={true}
                 isHaveHeader={false}
                 onCheckedChange={(selected) => console.log('Checked table row:', selected)}
-                onEdit={(row) => handleEdit(row.id)}
+                onEdit={(row) => {
+                  handleEdit(row.id);
+                  setEdittingId(row.id);
+                }}
                 onDelete={(row) => console.log('Delete:', row)}
                 onSearchKeywordChange={(keyword) => console.log('Search keyword:', keyword)}
                 onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
@@ -226,7 +239,7 @@ const Content = () => {
         maxWidth="xl"
       >
         <DialogTitle sx={{ position: 'relative', padding: 5 }}>
-          Add Site Space
+          {edittingId ? 'Edit' : 'Add'} Site Space
           <IconButton
             aria-label="close"
             onClick={handleCloseModalCreateSiteSpace}
@@ -242,6 +255,7 @@ const Content = () => {
             formData={formDataAddSite}
             setFormData={setFormDataAddSite}
             onSuccess={handleCloseModalCreateSiteSpace}
+            editingId={edittingId}
           />
         </DialogContent>
       </Dialog>

@@ -42,8 +42,13 @@ import {
   getAllDocumentPagination,
   createSiteDocument,
   updateSite,
+  getAllSiteDocument,
 } from 'src/customs/api/admin';
-import { CreateSiteDocumentRequest } from 'src/customs/api/models/SiteDocument';
+import {
+  CreateSiteDocumentRequest,
+  CreateSiteDocumentRequestSchema,
+  Item as SiteDocumentItem,
+} from 'src/customs/api/models/SiteDocument';
 import { Item as DocumentItem } from 'src/customs/api/models/Document';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 
@@ -69,6 +74,7 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
     // ...add more as needed
   ];
   const [documentlist, setDocumentList] = useState<DocumentItem[]>([]);
+  const [filteredSiteDocumentList, setFilteredSiteDocumentList] = useState<SiteDocumentItem[]>([]);
   const [siteDocuments, setSiteDocuments] = useState<CreateSiteDocumentRequest[]>([]);
   const [newDocument, setNewDocument] = useState<CreateSiteDocumentRequest>({
     document_id: '',
@@ -79,7 +85,24 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
     if (!token) return;
     const fetchData = async () => {
       const docRes = await getAllDocumentPagination(token, 0, 99, 'id');
-      setDocumentList(docRes?.collection ?? []);
+      const docs = docRes?.collection ?? [];
+      setDocumentList(docs);
+      const siteDocRes = await getAllSiteDocument(token);
+      if (editingId) {
+        const filteredSiteDocumentList = siteDocRes.collection.filter(
+          (siteDoc: SiteDocumentItem) => siteDoc.site_id === editingId,
+        );
+        console.log('Filtered site document list:', filteredSiteDocumentList);
+        setFilteredSiteDocumentList(filteredSiteDocumentList);
+        const parsedSiteDocuments: CreateSiteDocumentRequest[] = filteredSiteDocumentList.map(
+          (item) => ({
+            site_id: item.site_id,
+            document_id: item.id, // extract from nested documents
+            retention_time: item.retentionTime, // map to snake_case
+          }),
+        );
+        setSiteDocuments(parsedSiteDocuments);
+      }
     };
     fetchData();
   }, [token]);
@@ -110,7 +133,7 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
         await updateSite(token, data, editingId);
         console.log('Editing ID:', editingId);
       } else {
-      await createSite(data, token);
+        await createSite(data, token);
       }
 
       await createSiteDocumentsForNewSite();
@@ -207,6 +230,15 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
       }
     }
   };
+  function formatEnumLabel(label: string) {
+    // Insert a space before all caps and capitalize the first letter
+    return (
+      label
+        .replace(/([A-Z])/g, ' $1')
+        // .replace(/^./, (str) => str.toUpperCase())
+        .trim()
+    );
+  }
 
   return (
     <>
@@ -232,7 +264,9 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
 
               <Grid container spacing={2}>
                 <Grid size={6}>
-                  <CustomFormLabel htmlFor="name">Location Name *</CustomFormLabel>
+                  <CustomFormLabel htmlFor="name" required>
+                    Location Name{' '}
+                  </CustomFormLabel>
                   <CustomTextField
                     id="name"
                     value={formData.name}
@@ -243,7 +277,9 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
                     required
                     sx={{ mb: 2 }}
                   />
-                  <CustomFormLabel htmlFor="description">Description</CustomFormLabel>
+                  <CustomFormLabel htmlFor="description" required>
+                    Description
+                  </CustomFormLabel>
                   <CustomTextField
                     id="description"
                     value={formData.description}
@@ -255,7 +291,9 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
                   />
                 </Grid>
                 <Grid size={6}>
-                  <CustomFormLabel htmlFor="type">Type</CustomFormLabel>
+                  <CustomFormLabel htmlFor="type" required>
+                    Type
+                  </CustomFormLabel>
                   <CustomSelect
                     id="type"
                     select
@@ -274,7 +312,7 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
                       .filter(([key, value]) => !isNaN(Number(value)))
                       .map(([key, value]) => (
                         <MenuItem key={value} value={value}>
-                          {key}
+                          {formatEnumLabel(key)}
                         </MenuItem>
                       ))}
                   </CustomSelect>
@@ -297,7 +335,7 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
                       .filter(([key, value]) => !isNaN(Number(value)))
                       .map(([key, value]) => (
                         <MenuItem key={value} value={value}>
-                          {key}
+                          {formatEnumLabel(key)}
                         </MenuItem>
                       ))}
                   </CustomSelect>
@@ -341,7 +379,9 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
               <Typography variant="h6" sx={{ mb: 5, borderLeft: '4px solid #673ab7', pl: 1 }}>
                 Language and Timezone
               </Typography>
-              <CustomFormLabel htmlFor="timezone">Timezone *</CustomFormLabel>
+              <CustomFormLabel htmlFor="timezone" required>
+                Timezone
+              </CustomFormLabel>
               <CustomSelect
                 id="timezone"
                 name="timezone"
@@ -362,7 +402,7 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
                   </MenuItem>
                 ))}
               </CustomSelect>
-              <CustomFormLabel htmlFor="signout_time">Signout Time</CustomFormLabel>
+              <CustomFormLabel htmlFor="signout_time">Check-out Time</CustomFormLabel>
               <CustomTextField
                 id="signout_time"
                 type="time"
@@ -418,7 +458,7 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
                       }
                     />
                   }
-                  label="Can Signout"
+                  label="Can Check-out"
                 />
               </Box>
               <Box>
@@ -431,7 +471,7 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
                       }
                     />
                   }
-                  label="Auto Signout"
+                  label="Auto Check-out"
                 />
               </Box>
               <Box>
@@ -463,7 +503,7 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
             </Paper>
           </Grid>
           <Grid size={{ xs: 12, md: 6 }}>
-                        <Paper sx={{ p: 3 }}>
+            <Paper sx={{ p: 3 }}>
               <Box>
                 <Typography variant="h6" sx={{ borderLeft: '4px solid #673ab7', pl: 1 }}>
                   Site Document
@@ -483,19 +523,19 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
                           </TableRow>
                         </TableHead>
                         <TableBody>
-                          {siteDocuments.length === 0 ? (
+                          {filteredSiteDocumentList.length === 0 ? (
                             <TableRow>
                               <TableCell colSpan={3} align="center" sx={{ color: '#888' }}>
                                 No documents added
                               </TableCell>
                             </TableRow>
                           ) : (
-                            siteDocuments.map((doc, idx) => {
-                              const docInfo = documentlist.find((d) => d.id === doc.document_id);
+                            filteredSiteDocumentList.map((doc, idx) => {
+                              const docInfo = documentlist.find((d) => d.id === doc.id);
                               return (
-                                <TableRow key={doc.document_id + idx}>
-                                  <TableCell>{docInfo ? docInfo.name : doc.document_id}</TableCell>
-                                  <TableCell>{doc.retention_time}</TableCell>
+                                <TableRow key={doc.id + idx}>
+                                  <TableCell>{docInfo ? docInfo.name : doc.id}</TableCell>
+                                  <TableCell>{doc.retentionTime}</TableCell>
                                   <TableCell align="right">
                                     <Button
                                       color="error"
@@ -586,7 +626,6 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
                 </Grid>
               </Box>
             </Paper>
-
           </Grid>
           <Grid size={{ xs: 12, md: 6 }}>
             <Paper sx={{ p: 3 }}>
