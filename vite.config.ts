@@ -5,7 +5,7 @@ import fs from 'fs/promises';
 import svgr from '@svgr/rollup';
 
 export default defineConfig({
-    base: './',
+  base: './',
 
   server: {
     port: 3000,
