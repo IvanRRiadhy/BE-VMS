@@ -7,9 +7,9 @@ export const DocumentItemSchema = z.object({
   document_text: z.string(),
   document_type: z.number(),
   file: z.string(),
-  can_signed: z.number(),
-  can_upload: z.number(),
-  can_declined: z.number(),
+  can_signed: z.boolean(),
+  can_upload: z.boolean(),
+  can_declined: z.boolean(),
   id: z.string(),
 })
 export type Item = z.infer<typeof DocumentItemSchema>;
@@ -32,9 +32,9 @@ export const CreateDocumentRequestSchema = z.object({
     document_text: z.string().default(''),
     document_type: z.number().default(0),
     file: z.string().default(''),
-    can_signed: z.number().default(0),
-    can_upload: z.number().default(0),
-    can_declined: z.number().default(0),
+    can_signed: z.boolean().default(false),
+    can_upload: z.boolean().default(false),
+    can_declined: z.boolean().default(false),
 });
 
 export type CreateDocumentRequest = z.infer<typeof CreateDocumentRequestSchema>;
@@ -53,9 +53,9 @@ export interface UpdateDocumentRequest {
     document_text: string;
     document_type: number;
     file: string;
-    can_signed: number;
-    can_upload: number;
-    can_declined: number;
+    can_signed: boolean;
+    can_upload: boolean;
+    can_declined: boolean;
 }
 
 export interface UpdateDocumentResponse {

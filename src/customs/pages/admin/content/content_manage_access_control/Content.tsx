@@ -136,20 +136,25 @@ const Content = () => {
       handleOpenDialog();
     }
   };
-  const handleEdit = (id: string) => {
+  const handleEdit = (accessControl: AccessControlTableRow) => {
     const editing = localStorage.getItem('unsavedAccessControlData');
+    console.log('editing', editing)
+    console.log('id', accessControl)
     if (editing) {
       const parsed = JSON.parse(editing);
-      if (parsed.id === id) {
+      const filtered = tableData.filter((item) => item.id === accessControl.id);
+      console.log(filtered);
+      if (parsed.id === accessControl.id) {
+
         handleOpenDialog();
       } else {
-        console.log('ID tidak cocok', id);
-        setPendingEditId(id);
+        console.log('ID tidak cocok', accessControl.id);
+        setPendingEditId(accessControl.id);
         setConfirmDialogOpen(true);
       }
     } else {
       setFormDataAddAccessControl(
-        CreateAccessControlRequestSchema.parse(tableData.find((item) => item.id === id) || {}),
+        CreateAccessControlRequestSchema.parse(tableData.find((item) => item.id === accessControl.id) || {}),
       );
       handleOpenDialog();
     }
@@ -247,7 +252,7 @@ const Content = () => {
                 isHaveAddData={true}
                 isHaveHeader={false}
                 onCheckedChange={(selected) => console.log('Checked table row:', selected)}
-                onEdit={(row) => handleEdit(row.id)}
+                onEdit={(row) => handleEdit(row)}
                 onDelete={(row) => handleDelete(row.id)}
                 onSearchKeywordChange={(keyword) => console.log('Search keyword:', keyword)}
                 onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}

@@ -210,7 +210,7 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
                 defaultValue="no"
                 value={formData.can_declined}
                 onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, can_declined: Number(e.target.value) }))
+                  setFormData((prev) => ({ ...prev, can_declined: e.target.value === '0' }))
                 }
               >
                 <FormControlLabel value={0} control={<Radio />} label="Yes" />

@@ -96,7 +96,7 @@ const Content = () => {
     fetchData();
   }, [token, page, rowsPerPage, sortColumn, refreshTrigger]);
 
-  const [formDataAddSite, setFormDataAddSite] = React.useState<CreateSiteRequest>(() => {
+  const [formDataAddSite, setFormDataAddSite] = React.useState<Item>(() => {
     const saved = localStorage.getItem('unsavedSiteForm');
     return saved ? JSON.parse(saved) : CreateSiteRequestSchema.parse({});
   });
@@ -129,18 +129,25 @@ const Content = () => {
 
   const handleAdd = () => {
     const editing = localStorage.getItem('unsavedSiteForm');
+    console.log(editing)
     if (editing) {
-      // If editing exists, show confirmation dialog for add
+      const parsed = JSON.parse(editing);
+      if (parsed.id !== ''){
+              // If editing exists, show confirmation dialog for add
       setPendingEditId(null); // null means it's an add, not edit
       setConfirmDialogOpen(true);
+      } else {
+        handleOpenDialog();
+      }
     } else {
-      setFormDataAddSite(CreateSiteRequestSchema.parse({}));
+      setFormDataAddSite({ ...CreateSiteRequestSchema.parse({}), id: '' });
       handleOpenDialog();
     }
   };
 
   const handleEdit = (id: string) => {
     const editing = localStorage.getItem('unsavedSiteForm');
+    console.log(editing)
     if (editing) {
       const parsed = JSON.parse(editing);
       if (parsed.id === id) {
@@ -152,7 +159,7 @@ const Content = () => {
       }
     } else {
       setFormDataAddSite(
-        CreateSiteRequestSchema.parse(tableData.find((item) => item.id === id) || {}),
+        {...CreateSiteRequestSchema.parse(tableData.find((item) => item.id === id) || {}), id: id},
       );
       handleOpenDialog();
     }
@@ -168,11 +175,11 @@ const Content = () => {
       );
       // Edit existing site
       setFormDataAddSite(
-        tableData.find((item) => item.id === pendingEditId) || CreateSiteRequestSchema.parse({}),
+        tableData.find((item) => item.id === pendingEditId) || { ...CreateSiteRequestSchema.parse({}), id: '' },
       );
     } else {
       // Add new site
-      setFormDataAddSite(CreateSiteRequestSchema.parse({}));
+      setFormDataAddSite({ ...CreateSiteRequestSchema.parse({}), id: '' });
     }
     handleOpenDialog();
     setPendingEditId(null);

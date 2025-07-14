@@ -1,3 +1,4 @@
+//#region IMPORT
 import axios from 'axios';
 import {
   CreateDepartmentRequest,
@@ -30,11 +31,12 @@ import { CreateDocumentRequest, CreateDocumentResponse, GetAllDocumentPagination
 import { CreateSiteRequest, CreateSiteResponse, GetAllSitesPaginationResponse, GetAllSitesResponse, UpdateSiteRequest, UpdateSiteResponse, UploadImageSiteResponse } from './models/Sites';
 import { CreateSiteDocumentRequest, CreateSiteDocumentResponse, GetAllSiteDocumentResponse } from './models/SiteDocument';
 import { GetAllBrandPaginationResponse, GetAllBrandResponse } from './models/Brand';
-import { CreateIntegrationRequest, CreateIntegrationResponse, DeleteIntegrationResponse, GetAllIntegrationResponse, GetAvailableIntegrationResponse } from './models/Integration';
+import { CreateIntegrationRequest, CreateIntegrationResponse, DeleteIntegrationResponse, GetAllIntegrationResponse, GetAvailableIntegrationResponse, UpdateIntegrationRequest, UpdateIntegrationResponse } from './models/Integration';
 import { CreateAccessControlRequest, CreateAccessControlResponse, GetAccessControlPaginationResponse, GetAllAccessControlResponse, UpdateAccessControlRequest, UpdateAccessControlResponse } from './models/AccessControl';
 import { CreateCustomFieldRequest, CreateCustomFieldResponse, GetAllCustomFieldPaginationResponse, GetAllCustomFieldResponse, UpdateCustomFieldRequest, UpdateCustomFieldResponse } from './models/CustomField';
+//#endregion
 
-// District API
+//#region District API
 export const getAllDistricts = async (token: string): Promise<GetAllDistrictsPaginationResponse> => {
   const response = await axiosInstance.get(`/district`, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
@@ -96,9 +98,9 @@ export const createDistrict = async (
     throw error;
   }
 };
+//#endregion
 
-
-// Department API
+//#region Department API
 export const getAllDepartments = async (token: string): Promise<GetAllDepartmetsPaginationResponse> => {
   const response = await axiosInstance.get(`/department`, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
@@ -159,8 +161,9 @@ export const createDepartment = async (
     throw error;
   }
 };
+//#endregion
 
-// Organization API
+//#region Organization API
 export const getAllOrganizations = async (token: string): Promise<GetAllOrgaizationsPaginationResponse> => {
   const response = await axiosInstance.get(`/organization`, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
@@ -221,9 +224,9 @@ export const deleteOrganization = async (
   });
   return response.data;
 };
+//#endregion
 
-
-// Document API
+//#region Document API
 export const getAllDocumentPagination = async(
   token: string,
   start: number,
@@ -269,8 +272,9 @@ export const updateDocument = async (
     throw error;
   }
 };
+//#endregion
 
-// Employee API
+//#region Employee API
 export const getAllEmployeePagination = async (
   token: string,
   start: number,
@@ -330,8 +334,6 @@ export const createEmployee = async (
   }
 };
 
-
-
 export const updateEmployee = async (
   employeeId: string,
   data: UpdateEmployeeRequest,
@@ -349,8 +351,9 @@ export const updateEmployee = async (
     throw error;
   }
 };
+//#endregion
 
-//Site API
+//#region Site API
 export const getAllSitePagination = async(
   token: string,
   start: number,
@@ -466,8 +469,9 @@ export const createSiteDocument = async (
     throw error;
   }
 };
+//#endregion
 
-//Brand API
+//#region Brand API
 export const getAllBrand = async (
   token: string,
 ): Promise<GetAllBrandResponse> => {
@@ -502,8 +506,9 @@ export const getAllBrandPagination = async (
     throw error;
   }
 };
+//#endregion
 
-//Integration API
+//#region Integration API
 export const getAllIntegration = async (
   token: string,
 ): Promise<GetAllIntegrationResponse> => {
@@ -573,7 +578,27 @@ export const deleteIntegration = async (
   }
 }
 
-//AccessControl API
+export const updateIntegration = async (
+  integrationId: string,
+  data: UpdateIntegrationRequest,
+  token: string,
+): Promise<UpdateIntegrationResponse> => {
+  try {
+    const response = await axiosInstance.put(`/integration/${integrationId}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+}
+
+//#endregion
+
+//#region AccessControl API
 export const getAllAccessControl = async (
   token: string,
 ): Promise<GetAllAccessControlResponse> => {
@@ -661,9 +686,9 @@ export const updateAccessControl = async (
     throw error;
   }
 };
+//#endregion
 
-//Custom Field API
-
+//#region Custom Field API
 export const getAllCustomField = async (
   token: string,
 ): Promise<GetAllCustomFieldResponse> => {
@@ -735,3 +760,4 @@ export const updateCustomField = async (
     throw error;
   }
 }
+//#endregion

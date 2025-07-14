@@ -25,15 +25,16 @@ import {
   CreateIntegrationRequestSchema,
   IntegrationType,
 } from 'src/customs/api/models/Integration';
-import { createIntegration } from 'src/customs/api/admin';
+import { createIntegration, updateIntegration } from 'src/customs/api/admin';
 
 interface FormIntegrationProps {
   formData: CreateIntegrationRequest;
   setFormData: React.Dispatch<React.SetStateAction<CreateIntegrationRequest>>;
   onSuccess?: () => void;
+  editingId?: string;
 }
 
-const FormIntegration = ({ formData, setFormData, onSuccess }: FormIntegrationProps) => {
+const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIntegrationProps) => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
   const [alertType, setAlertType] = useState<'info' | 'success' | 'error'>('info');
@@ -63,7 +64,12 @@ const FormIntegration = ({ formData, setFormData, onSuccess }: FormIntegrationPr
       }
       const data: CreateIntegrationRequest = CreateIntegrationRequestSchema.parse(formData);
       console.log('Setting Data: ', data);
-      await createIntegration(data, token);
+      if (editingId && editingId !== '') {
+        await updateIntegration(editingId, data, token);
+      } else {
+        await createIntegration(data, token);
+      }
+
       localStorage.removeItem('unsavedIntegrationData');
       setAlertType('success');
       setAlertMessage('Site successfully created!');
@@ -109,7 +115,7 @@ const FormIntegration = ({ formData, setFormData, onSuccess }: FormIntegrationPr
               value={formData.name}
               onChange={handleChange}
               fullWidth
-              disabled
+              
             />
             <CustomFormLabel htmlFor="brand_name">Brand Name :</CustomFormLabel>
             <CustomTextField

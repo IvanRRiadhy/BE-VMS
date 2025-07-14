@@ -16,7 +16,11 @@ import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import CloseIcon from '@mui/icons-material/Close';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { deleteIntegration, getAllIntegration, getAvailableIntegration } from 'src/customs/api/admin';
+import {
+  deleteIntegration,
+  getAllIntegration,
+  getAvailableIntegration,
+} from 'src/customs/api/admin';
 import {
   Item,
   AvailableItem,
@@ -166,56 +170,63 @@ const Content = () => {
 
   const handleEdit = (id: string) => {
     const editing = localStorage.getItem('unsavedIntegrationData');
-    if (editing) {
-      const parsedData = JSON.parse(editing);
-      if (parsedData.id && parsedData.id !== id) {
-        console.log('ID tidak cocok');
-        setPendingEditId(id);
-        setConfirmDialogOpen(true);
-      } else {
-        handleOpenDialog();
-      }
-    } else {
-      setFormDataAddIntegration(
-        CreateIntegrationRequestSchema.parse(integrationData.find((item) => item.id === id) || {}),
-      );
-      handleOpenDialog();
-    }
+    // if (editing) {
+    //   const parsedData = JSON.parse(editing);
+    //   if (parsedData.id && parsedData.id !== id) {
+    //     console.log('ID tidak cocok');
+    //     setPendingEditId(id);
+    //     setConfirmDialogOpen(true);
+    //   } else {
+    //     handleOpenDialog();
+    //   }
+    // } else {
+    const integration = integrationData.find((item) => item.id === id);
+    const available = availableIntegration.find(
+      (item) => item.name === integration?.name && item.brand_name === integration?.brand_name,
+    );
+    const integrationWithListId = {
+      ...integration,
+      integration_list_id: available?.id || '',
+    };
+    console.log('Integration data:', integrationWithListId);
+    setFormDataAddIntegration(CreateIntegrationRequestSchema.parse(integrationWithListId));
+    handleOpenDialog();
+    // }
   };
 
-    const handleDelete = async (id: string) => {
-      if (!token) return;
-  
-      Swal.fire({
-        title: 'Are you sure?',
-        text: "You won't be able to revert this!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Yes, delete it!',
-      }).then(async (result) => {
-        if (result.isConfirmed) {
-          try {
-            await deleteIntegration(id, token);
-  
-            setRefreshTrigger((prev) => prev + 1);
-            Swal.fire({
-              title: 'Deleted!',
-              text: 'Your file has been deleted.',
-              icon: 'success',
-            });
-          } catch (error) {
-            console.error(error);
-            Swal.fire({
-              title: 'Error!',
-              text: 'Something went wrong while deleting.',
-              icon: 'error',
-            });
-          }
+  const handleDelete = async (id: string) => {
+    if (!token) return;
+
+    Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, delete it!',
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await deleteIntegration(id, token);
+
+          setRefreshTrigger((prev) => prev + 1);
+          Swal.fire({
+            title: 'Deleted!',
+            text: 'Your file has been deleted.',
+            icon: 'success',
+          });
+        } catch (error) {
+          console.error(error);
+          Swal.fire({
+            title: 'Error!',
+            text: 'Something went wrong while deleting.',
+            icon: 'error',
+          });
         }
-      });
-    };
+      }
+    });
+  };
 
   return (
     <>
@@ -229,7 +240,7 @@ const Content = () => {
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
               <DynamicTable
-                isHavePagination={true}
+                isHavePagination={false}
                 totalCount={totalRecords}
                 defaultRowsPerPage={rowsPerPage}
                 rowsPerPageOptions={[5, 10, 20]}
@@ -242,7 +253,7 @@ const Content = () => {
                 isHaveChecked={true}
                 isHaveAction={true}
                 isHaveSearch={true}
-                isHaveFilter={true}
+                isHaveFilter={false}
                 isHaveExportPdf={true}
                 isHaveExportXlf={false}
                 isHaveFilterDuration={false}
@@ -251,13 +262,13 @@ const Content = () => {
                 isHaveHeader={false}
                 onCheckedChange={(selected) => console.log('Checked table row:', selected)}
                 onEdit={(row) => {
-                  console.log('Edit:', row);
-                  //   handleEdit(row.id);
-                  //   setEdittingId(row.id);
+                  // console.log('Edit:', row);
+                  handleEdit(row.id);
+                  setEdittingId(row.id);
                 }}
                 onDelete={(row) => {
-                    console.log('Delete:', row);
-                    handleDelete(row.id);
+                  console.log('Delete:', row);
+                  handleDelete(row.id);
                 }}
                 onSearchKeywordChange={(keyword) => console.log('Search keyword:', keyword)}
                 onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
@@ -340,6 +351,7 @@ const Content = () => {
               handleCloseDialog();
               setRefreshTrigger(refreshTrigger + 1);
             }}
+            editingId={edittingId}
           />
         </DialogContent>
       </Dialog>

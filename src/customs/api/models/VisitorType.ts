@@ -2,14 +2,14 @@ import {z} from 'zod';
 
 export type Item = {
     id: string;
-    isActive: boolean;
-    visitorType: string;
+    is_Active: boolean;
+    visitor_Type: string;
     document: string;
-    needPhoto: boolean;
-    printBadge: boolean;
+    need_Photo: boolean;
+    print_Badge: boolean;
     wifiCred: boolean;
     captureVisitorId: boolean;
-    showIpad: boolean;
+    show_Ipad: boolean;
     videoURL: string;
     welcomeMessage: string;
     watchlistMessage: string;
@@ -85,14 +85,14 @@ const detailFieldSchema = z.object({
 });
 
 export const CreateVisitorTypeRequestSchema = z.object({
-  isActive: z.boolean().default(true),
-  visitorType: z.string().default(''),
+  is_Active: z.boolean().default(true),
+  visitor_Type: z.string().default(''),
   document: z.string().default(''),
-  needPhoto: z.boolean().default(false),
-  printBadge: z.boolean().default(false),
+  need_Photo: z.boolean().default(false),
+  print_Badge: z.boolean().default(false),
   wifiCred: z.boolean().default(false),
   captureVisitorId: z.boolean().default(false),
-  showIpad: z.boolean().default(false),
+  show_Ipad: z.boolean().default(false),
   videoURL: z.string().default(''),
   welcomeMessage: z.string().default(''),
   watchlistMessage: z.string().default(''),

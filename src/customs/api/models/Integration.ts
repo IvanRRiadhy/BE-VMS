@@ -106,3 +106,28 @@ export type DeleteIntegrationResponse<T = any> = {
   msg: string;
   collection: T | null;
 };
+
+//UPDATE
+export const UpdateIntegrationRequestSchema = z.object({
+    name: z.string().default(''),
+    brand_name: z.string().default(''),
+    brand_type: z.number().default(0),
+    integration_type: z.number().default(0),
+    api_type_auth: z.number().default(0),
+    api_url: z.string().default(''),
+    api_auth_username: z.string().default(''),
+    api_auth_passwd: z.string().default(''),
+    api_key_field: z.string().default(''),
+    api_key_value: z.string().default(''),
+    integration_list_id: z.string().default(''),
+});
+
+export type UpdateIntegrationRequest = z.infer<typeof UpdateIntegrationRequestSchema>;
+
+export interface UpdateIntegrationResponse {
+    status: string;
+    status_code: number;
+    title: string;
+    msg: string;
+    collection: Item | null;
+}

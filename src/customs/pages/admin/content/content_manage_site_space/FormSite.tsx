@@ -15,7 +15,10 @@ import {
   TableCell,
   TableBody,
   TableContainer,
+  Tooltip,
+  IconButton,
 } from '@mui/material';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import ReactCrop, { Crop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
@@ -28,6 +31,7 @@ import {
   CreateSiteRequest,
   CreateSiteRequestSchema,
   generateKeyCode,
+  Item,
   SiteType,
   TypeApproval,
 } from 'src/customs/api/models/Sites';
@@ -53,8 +57,8 @@ import { Item as DocumentItem } from 'src/customs/api/models/Document';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 
 interface FormSiteProps {
-  formData: CreateSiteRequest;
-  setFormData: React.Dispatch<React.SetStateAction<CreateSiteRequest>>;
+  formData: Item;
+  setFormData: React.Dispatch<React.SetStateAction<Item>>;
   editingId?: string;
   onSuccess?: () => void;
 }
@@ -76,6 +80,13 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
   const [documentlist, setDocumentList] = useState<DocumentItem[]>([]);
   const [filteredSiteDocumentList, setFilteredSiteDocumentList] = useState<SiteDocumentItem[]>([]);
   const [siteDocuments, setSiteDocuments] = useState<CreateSiteDocumentRequest[]>([]);
+  const [newDocumentA, setNewDocumentA] = useState<SiteDocumentItem>({
+    id: '',
+    site_id: '',
+    site_name: '',
+    documents: {} as DocumentItem,
+    retentionTime: 0,
+  });
   const [newDocument, setNewDocument] = useState<CreateSiteDocumentRequest>({
     document_id: '',
     site_id: '',
@@ -287,6 +298,7 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
                     error={Boolean(errors.description)}
                     helperText={errors.description || ''}
                     fullWidth
+                    required
                     sx={{ mb: 2 }}
                   />
                 </Grid>
@@ -303,6 +315,7 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
                     }
                     fullWidth
                     sx={{ mb: 2 }}
+                    required
                     // SelectProps={{ native: true }}
                   >
                     <MenuItem value="" disabled>
@@ -316,15 +329,23 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
                         </MenuItem>
                       ))}
                   </CustomSelect>
-                  <CustomFormLabel htmlFor="type_approval">Type Approval</CustomFormLabel>
+                  <CustomFormLabel htmlFor="type_approval" required={formData.need_approval}>
+                    Type Approval
+                  </CustomFormLabel>
                   <CustomSelect
                     id="type_approval"
                     name="type_approval"
                     value={formData.type_approval}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setFormData((prev) => ({ ...prev, type_approval: Number(e.target.value) }))
-                    }
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      const value = Number(e.target.value);
+                      setFormData((prev) => ({
+                        ...prev,
+                        type_approval: value,
+                        need_approval: value !== 0 ? true : false, // auto-set if not 0
+                      }));
+                    }}
                     fullWidth
+                    required={formData.need_approval}
                     sx={{ mb: 2 }}
                     // SelectProps={{ native: true }}
                   >
@@ -432,7 +453,16 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
                       }
                     />
                   }
-                  label="Can Visited"
+                  label={
+                    <Box display="flex" alignItems="center">
+                      Can Visit
+                      <Tooltip title="Visitors can visit the site.">
+                        <IconButton size="small" sx={{ ml: 1 }}>
+                          <InfoOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  }
                 />
               </Box>
               <Box>
@@ -445,7 +475,16 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
                       }
                     />
                   }
-                  label="Need Approval"
+                  label={
+                    <Box display="flex" alignItems="center">
+                      Need Approval
+                      <Tooltip title="Visitors must be approved before visiting the site.">
+                        <IconButton size="small" sx={{ ml: 1 }}>
+                          <InfoOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  }
                 />
               </Box>
               <Box>
@@ -458,7 +497,16 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
                       }
                     />
                   }
-                  label="Can Check-out"
+                  label={
+                    <Box display="flex" alignItems="center">
+                      Can Check-out
+                      <Tooltip title="Visitors must check out before leaving the site.">
+                        <IconButton size="small" sx={{ ml: 1 }}>
+                          <InfoOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  }
                 />
               </Box>
               <Box>
@@ -467,11 +515,24 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
                     <Switch
                       checked={formData.auto_signout}
                       onChange={(_, checked) =>
-                        setFormData((prev) => ({ ...prev, auto_signout: checked }))
+                        setFormData((prev) => ({
+                          ...prev,
+                          auto_signout: checked,
+                          can_signout: checked ? true : prev.can_signout, // force true if checked, leave unchanged if unchecked
+                        }))
                       }
                     />
                   }
-                  label="Auto Check-out"
+                  label={
+                    <Box display="flex" alignItems="center">
+                      Auto Check-out
+                      <Tooltip title="Automatically checks out visitors at a specified time.">
+                        <IconButton size="small" sx={{ ml: 1 }}>
+                          <InfoOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  }
                 />
               </Box>
               <Box>
@@ -484,7 +545,16 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
                       }
                     />
                   }
-                  label="Can Contactless Login"
+                  label={
+                    <Box display="flex" alignItems="center">
+                      Contactless Login
+                      <Tooltip title="Visitors can do contactless login.">
+                        <IconButton size="small" sx={{ ml: 1 }}>
+                          <InfoOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  }
                 />
               </Box>
               <Box>
@@ -497,7 +567,16 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
                       }
                     />
                   }
-                  label="Need Document"
+                  label={
+                    <Box display="flex" alignItems="center">
+                      Need Document
+                      <Tooltip title="Visitors must upload a document before visiting the site.">
+                        <IconButton size="small" sx={{ ml: 1 }}>
+                          <InfoOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  }
                 />
               </Box>
             </Paper>
@@ -531,7 +610,8 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
                             </TableRow>
                           ) : (
                             filteredSiteDocumentList.map((doc, idx) => {
-                              const docInfo = documentlist.find((d) => d.id === doc.id);
+                              const docInfo = documentlist.find((d) => d.id === doc.documents.id);
+                              console.log(docInfo);
                               return (
                                 <TableRow key={doc.id + idx}>
                                   <TableCell>{docInfo ? docInfo.name : doc.id}</TableCell>
@@ -572,24 +652,25 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
                     <CustomSelect
                       id="document_id"
                       name="document_id"
-                      value={newDocument.document_id}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        setNewDocument((prev) => ({
+                      value={newDocumentA.documents.id}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        const selectedDoc = documentlist.find((doc) => doc.id === e.target.value);
+                        setNewDocumentA((prev) => ({
                           ...prev,
-                          document_id: e.target.value,
-                        }))
-                      }
+                          documents: selectedDoc || ({} as DocumentItem),
+                        }));
+                      }}
                       fullWidth
                       sx={{ mb: 2 }}
                       selectprops={{ native: true }}
                     >
-                      <option value="" disabled>
+                      <MenuItem value="" disabled>
                         Select Document
-                      </option>
+                      </MenuItem>
                       {documentlist.map((doc) => (
-                        <option key={doc.id} value={doc.id}>
+                        <MenuItem key={doc.id} value={doc.id}>
                           {doc.name}
-                        </option>
+                        </MenuItem>
                       ))}
                     </CustomSelect>
                     <CustomFormLabel htmlFor="retention_time">
@@ -598,11 +679,11 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
                     <CustomTextField
                       id="retention_time"
                       name="retention_time"
-                      value={newDocument.retention_time}
+                      value={newDocumentA.retentionTime}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        setNewDocument((prev) => ({
+                        setNewDocumentA((prev) => ({
                           ...prev,
-                          retention_time: Number(e.target.value),
+                          retentionTime: Number(e.target.value),
                         }))
                       }
                       type="number"
@@ -614,9 +695,17 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
                       color="primary"
                       fullWidth
                       sx={{ my: 3 }}
-                      disabled={!newDocument.document_id || !newDocument.retention_time}
+                      disabled={!newDocumentA.documents}
                       onClick={() => {
                         setSiteDocuments((prev) => [...prev, { ...newDocument, site_id: '' }]);
+                        setFilteredSiteDocumentList((prev) => [...prev, newDocumentA]);
+                        setNewDocumentA({
+                          id: '',
+                          site_id: '',
+                          site_name: '',
+                          documents: {} as DocumentItem,
+                          retentionTime: 0,
+                        });
                         setNewDocument({ document_id: '', site_id: '', retention_time: 0 });
                       }}
                     >

@@ -24,26 +24,26 @@ import FormVisitorType from './FormVisitorType';
 
 type VisitorTypeTableRow = {
   id: string;
-  visitorType: string;
+  visitor_Type: string;
   documents: string[];
-  isActive: boolean;
-  needPhoto: boolean;
-  printBadge: boolean;
-  showIpad: boolean;
+  is_Active: boolean;
+  need_Photo: boolean;
+  print_Badge: boolean;
+  show_Ipad: boolean;
 };
 
 const Content = () => {
   const visitorTypeData: Item[] = [
     {
       id: '123',
-      isActive: true,
-      visitorType: 'Contractor',
+      is_Active: true,
+      visitor_Type: 'Contractor',
       document: '{KTP}',
-      needPhoto: true,
-      printBadge: false,
+      need_Photo: true,
+      print_Badge: false,
       wifiCred: true,
       captureVisitorId: true,
-      showIpad: true,
+      show_Ipad: true,
       videoURL: '',
       welcomeMessage: 'Welcome to Bio Experience',
       watchlistMessage: 'Ngapain Hayoo??!?',
@@ -80,14 +80,14 @@ const Content = () => {
     },
     {
       id: '124',
-      isActive: true,
-      visitorType: 'Family Member',
+      is_Active: true,
+      visitor_Type: 'Family Member',
       document: '{Kartu Keluarga, KTP}',
-      needPhoto: true,
-      printBadge: false,
+      need_Photo: true,
+      print_Badge: false,
       wifiCred: true,
       captureVisitorId: true,
-      showIpad: false,
+      show_Ipad: false,
       videoURL: '',
       welcomeMessage: 'Welcome to Bio Experience',
       watchlistMessage: 'Ngapain Hayoo??!?',
@@ -124,14 +124,14 @@ const Content = () => {
     },
     {
       id: '125',
-      isActive: true,
-      visitorType: 'Tukang',
+      is_Active: true,
+      visitor_Type: 'Tukang',
       document: '{KTP}',
-      needPhoto: true,
-      printBadge: false,
+      need_Photo: true,
+      print_Badge: false,
       wifiCred: false,
       captureVisitorId: false,
-      showIpad: false,
+      show_Ipad: false,
       videoURL: '',
       welcomeMessage: 'Welcome to Bio Experience',
       watchlistMessage: 'Ngapain Hayoo??!?',
@@ -182,16 +182,16 @@ const Content = () => {
   useEffect(() => {
     const rows = visitorTypeData.map((item) => ({
       id: item.id,
-      visitorType: item.visitorType,
+      visitor_Type: item.visitor_Type,
       documents: item.document
         .replace(/[{}]/g, '')
         .split(',')
         .map((doc) => doc.trim())
         .filter(Boolean),
-      isActive: item.isActive,
-      needPhoto: item.needPhoto,
-      printBadge: item.printBadge,
-      showIpad: item.showIpad,
+      is_Active: item.is_Active,
+      need_Photo: item.need_Photo,
+      print_Badge: item.print_Badge,
+      show_Ipad: item.show_Ipad,
     }));
     setTableRowVisitorType(rows);
   }, []);
