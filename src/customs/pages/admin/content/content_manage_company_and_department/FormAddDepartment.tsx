@@ -80,7 +80,7 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
         </Grid2>
 
         <CustomFormLabel htmlFor="name" sx={{ my: 1, mx: 1 }}>
-          <Typography variant="caption">Department Name :</Typography>
+          <Typography variant="caption">Department Name</Typography>
         </CustomFormLabel>
         <CustomTextField
           id="name"
@@ -93,7 +93,7 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
         />
 
         <CustomFormLabel htmlFor="code" sx={{ my: 1, mx: 1 }}>
-          <Typography variant="caption">Department Code :</Typography>
+          <Typography variant="caption">Department Code</Typography>
         </CustomFormLabel>
         <CustomTextField
           id="code"
@@ -106,7 +106,7 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
         />
 
         <CustomFormLabel htmlFor="host" sx={{ my: 1, mx: 1 }}>
-          <Typography variant="caption">Department Host :</Typography>
+          <Typography variant="caption">Department Host</Typography>
         </CustomFormLabel>
         <CustomTextField
           id="host"

@@ -8,6 +8,7 @@ import Welcome from 'src/layouts/full/shared/welcome/Welcome';
 import TopCards from './TopCards';
 import Heatmap from '../../../../components/head_map/HeadMap';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
+import VideoPlayer from 'src/customs/components/videoplayer';
 
 const headMapData = [
   { id: 1, name: 'ABD GOFFAR', createdAt: '2025-06-12T08:30:00Z' },
@@ -28,67 +29,87 @@ const tableRowColumn = [
   {
     id: 2,
     Name: 'Siti Aminah',
-    'visit Time': '2025-06-13T10:30:00',
+    'Visit Time': '2025-06-13T10:30:00',
     Purpose: 'Interview',
     'Purpose Person': 'Ibu Rina',
   },
   {
     id: 3,
     Name: 'Budi Santoso',
-    'visit Time': '2025-06-13T11:15:00',
+    'Visit Time': '2025-06-13T11:15:00',
     Purpose: 'Pengantaran Dokumen',
     'Purpose Person': 'Pak Dedi',
   },
   {
     id: 4,
     Name: 'Rina Marlina',
-    'visit Time': '2025-06-13T13:45:00',
+    'Visit Time': '2025-06-13T13:45:00',
     Purpose: 'Audit',
     'Purpose Person': 'Bu Intan',
   },
   {
     id: 5,
     Name: 'Fajar Nugroho',
-    'visit Time': '2025-06-13T15:00:00',
+    'Visit Time': '2025-06-13T15:00:00',
     Purpose: 'Maintenance',
     'purpose Person': 'Pak Wahyu',
   },
   {
     id: 6,
     Name: 'Rina Marlina',
-    'visit Time': '2025-06-13T13:45:00',
+    'Visit Time': '2025-06-13T13:45:00',
     Purpose: 'Audit',
     'Purpose Person': 'Bu Intan',
   },
   {
     id: 7,
     Name: 'Fajar Nugroho',
-    'visit Time': '2025-06-13T15:00:00',
+    'Visit Time': '2025-06-13T15:00:00',
     Purpose: 'Maintenance',
     'purpose Person': 'Pak Wahyu',
   },
   {
     id: 8,
     Name: 'Fajar Nugroho',
-    'visit Time': '2025-06-13T15:00:00',
+    'Visit Time': '2025-06-13T15:00:00',
     Purpose: 'Maintenance',
     'purpose Person': 'Pak Wahyu',
   },
   {
     id: 9,
     Name: 'Rina Marlina',
-    'visit Time': '2025-06-13T13:45:00',
+    'Visit Time': '2025-06-13T13:45:00',
     Purpose: 'Audit',
     'Purpose Person': 'Bu Intan',
   },
   {
     id: 10,
     Name: 'Fajar Nugroho',
-    'visit Time': '2025-06-13T15:00:00',
+    'Visit Time': '2025-06-13T15:00:00',
     Purpose: 'Maintenance',
     'purpose Person': 'Pak Wahyu',
   },
 ];
+
+const videoJsOptions = {
+  autoplay: true,
+  controls: true,
+  responsive: true,
+  fluid: false, // pastikan false
+  width: 2300,
+  height: 2500,
+  sources: [
+    {
+      src: 'http://192.168.1.218:8083/stream/27aec28e-6181-4753-9acd-0456a75f0289/channel/0/hlsll/live/index.m3u8',
+      type: 'application/x-mpegURL',
+    },
+  ],
+  html5: {
+    hls: {
+      overrideNative: true,
+    },
+  },
+};
 
 const Content = () => {
   return (
@@ -140,6 +161,7 @@ const Content = () => {
         {/* Welcome Alert In Header view */}
         <Welcome />
       </Box>
+      {/* <VideoPlayer options={videoJsOptions} /> */}
     </PageContainer>
   );
 };

@@ -25,7 +25,7 @@ const FormUpdateOrganization = () => {
         }}
         htmlFor="company-name"
       >
-        <Typography variant="caption">Company Name :</Typography>
+        <Typography variant="caption">Company Name</Typography>
       </CustomFormLabel>
       <CustomTextField
         id="company-name"
@@ -41,7 +41,7 @@ const FormUpdateOrganization = () => {
         }}
         htmlFor="company-host"
       >
-        <Typography variant="caption">Company Host :</Typography>
+        <Typography variant="caption">Company Host</Typography>
       </CustomFormLabel>
       <CustomTextField
         id="company-host"
@@ -57,7 +57,7 @@ const FormUpdateOrganization = () => {
         }}
         htmlFor="company-code"
       >
-        <Typography variant="caption">Company Code :</Typography>
+        <Typography variant="caption">Company Code</Typography>
       </CustomFormLabel>
       <CustomTextField
         id="company-code"

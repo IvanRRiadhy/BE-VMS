@@ -12,7 +12,7 @@ export type Item = {
   email: string;
   gender: number;
   address: string;
-  upload_fr: number;  
+  upload_fr: number;
   qr_code: string;
   faceimage: string;
   access_area: string;
@@ -42,7 +42,6 @@ export type GetAllEmployeePaginationResponse = {
   collection: Item[];
 };
 
-
 //CREATE
 export const CreateEmployeeRequestSchema = z.object({
   person_id: z.string().default(''),
@@ -67,9 +66,9 @@ export const CreateEmployeeRequestSchema = z.object({
   head_employee_1: z.string().default(''),
   head_employee_2: z.string().default(''),
   organization_id: z.string().default(''),
-  department_id: z.string().default(''),  
+  department_id: z.string().default(''),
   district_id: z.string().default(''),
-})
+});
 
 export type CreateEmployeeRequest = z.infer<typeof CreateEmployeeRequestSchema>;
 
@@ -83,7 +82,7 @@ export interface CreateEmployeeResponse {
 
 //UPDATE
 export interface UpdateEmployeeRequest {
-    person_id: string;
+  person_id: string;
   identity_id: string;
   card_number: string;
   ble_card_number: string;
@@ -93,7 +92,7 @@ export interface UpdateEmployeeRequest {
   email: string;
   gender: number;
   address: string;
-  upload_fr: number;  
+  upload_fr: number;
   qr_code: string;
   access_area: string;
   access_area_special: string;

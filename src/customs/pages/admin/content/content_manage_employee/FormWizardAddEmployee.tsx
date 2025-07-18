@@ -88,6 +88,7 @@ const FormWizardAddEmployee = ({
       ...prev,
       faceimage:
         'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFcAAABXAQMAAABLBksvAAAABlBMVEX///8AAABVwtN+AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAtUlEQVQ4jc3SMQ7DIAwF0I8YuiUXiJRrsHGl5AQNF4ArsfkaSFyg3TJUdZ0hbQdk1jC9AYT9beBqZ2TeXGUuigfYDXWDal+js2nvWO53Hahn2MD2W0PTUn/866Xp44n7RdH0uPPbSRSaDZeVJpOL4sFbJpsIig1jpdfgNOM2P/z8pKL5aHMOu2bJQcK8ZyiWPBNP5tyBtr0MRUbccSAsHroT13juUtvyb8YCKD7qJ8u5KL7W+QBqIwtw+AKG3gAAAABJRU5ErkJggg==',
+      // faceimage: '',
     }));
   }, []);
   const handleChange = (
@@ -178,7 +179,7 @@ const FormWizardAddEmployee = ({
             {/* Name */}
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="name">
-                <Typography variant="caption">Employee Name :</Typography>
+                <Typography variant="caption">Employee Name</Typography>
               </CustomFormLabel>
               <CustomTextField
                 id="name"
@@ -193,7 +194,7 @@ const FormWizardAddEmployee = ({
             {/* Person ID */}
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="nik">
-                <Typography variant="caption">Employee ID :</Typography>
+                <Typography variant="caption">Employee ID</Typography>
               </CustomFormLabel>
               <CustomTextField
                 id="person_id"
@@ -208,7 +209,7 @@ const FormWizardAddEmployee = ({
             {/* NIK */}
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="nik">
-                <Typography variant="caption">Employee NIK :</Typography>
+                <Typography variant="caption">Employee NIK</Typography>
               </CustomFormLabel>
               <CustomTextField
                 id="identity_id"
@@ -224,7 +225,7 @@ const FormWizardAddEmployee = ({
             {/* Email */}
             <Grid2 size={{ xs: 6, sm: 6 }}>
               <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="email">
-                <Typography variant="caption">Employee Email :</Typography>
+                <Typography variant="caption">Employee Email</Typography>
               </CustomFormLabel>
               <CustomTextField
                 id="email"
@@ -240,7 +241,7 @@ const FormWizardAddEmployee = ({
             {/* Gender */}
             <Grid2 sx={{ paddingLeft: '25px' }} size={{ xs: 6, sm: 6 }}>
               <CustomFormLabel sx={{ marginY: 1, marginX: 1 }}>
-                <Typography variant="caption">Gender :</Typography>
+                <Typography variant="caption">Gender</Typography>
               </CustomFormLabel>
               <FormControl sx={{ display: 'flex', flexDirection: 'row' }}>
                 <FormControlLabel
@@ -289,7 +290,7 @@ const FormWizardAddEmployee = ({
             </Grid2>
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="district">
-                <Typography variant="caption">Employee District :</Typography>
+                <Typography variant="caption">Employee District</Typography>
               </CustomFormLabel>
               <CustomTextField
                 id="district_id"
@@ -307,9 +308,10 @@ const FormWizardAddEmployee = ({
                 ))}
               </CustomTextField>
             </Grid2>
+            
             <Grid2 size={{ xs: 6, sm: 6 }}>
               <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="org">
-                <Typography variant="caption">Employee Organization :</Typography>
+                <Typography variant="caption">Employee Organization</Typography>
               </CustomFormLabel>
               <CustomTextField
                 id="organization_id"
@@ -327,9 +329,11 @@ const FormWizardAddEmployee = ({
                 ))}
               </CustomTextField>
             </Grid2>
+
+
             <Grid2 size={{ xs: 6, sm: 6 }}>
               <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="dept">
-                <Typography variant="caption">Employee Department :</Typography>
+                <Typography variant="caption">Employee Department</Typography>
               </CustomFormLabel>
               <CustomTextField
                 id="department_id"
@@ -370,7 +374,7 @@ const FormWizardAddEmployee = ({
             </Grid2>
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="head1">
-                <Typography variant="caption">Employee Head-1 :</Typography>
+                <Typography variant="caption">Employee Head-1</Typography>
               </CustomFormLabel>
               <CustomTextField
                 id="head_employee_1"
@@ -392,7 +396,7 @@ const FormWizardAddEmployee = ({
             </Grid2>
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="head2">
-                <Typography variant="caption">Employee Head-2 :</Typography>
+                <Typography variant="caption">Employee Head-2</Typography>
               </CustomFormLabel>
               <CustomTextField
                 id="head_employee_2"
@@ -414,7 +418,7 @@ const FormWizardAddEmployee = ({
             </Grid2>
             <Grid2 size={{ xs: 6, sm: 6 }}>
               <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="card_number">
-                <Typography variant="caption">Card Access :</Typography>
+                <Typography variant="caption">Card Access</Typography>
               </CustomFormLabel>
               <CustomTextField
                 id="card_number"
@@ -429,7 +433,7 @@ const FormWizardAddEmployee = ({
             </Grid2>
             <Grid2 size={{ xs: 6, sm: 6 }}>
               <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="card_number">
-                <Typography variant="caption">BLE Card :</Typography>
+                <Typography variant="caption">BLE Card</Typography>
               </CustomFormLabel>
               <CustomTextField
                 id="ble_card_number"
@@ -448,7 +452,7 @@ const FormWizardAddEmployee = ({
             {/* Access Area */}
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="access_area">
-                <Typography variant="caption">Access Area :</Typography>
+                <Typography variant="caption">Access Area</Typography>
               </CustomFormLabel>
               <CustomTextField
                 id="access_area"
@@ -461,7 +465,7 @@ const FormWizardAddEmployee = ({
             {/* Access Area Special */}
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="access_area_special">
-                <Typography variant="caption">Access Area Special :</Typography>
+                <Typography variant="caption">Access Area Special</Typography>
               </CustomFormLabel>
               <CustomTextField
                 id="access_area_special"
@@ -483,7 +487,7 @@ const FormWizardAddEmployee = ({
 
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="dob">
-                <Typography variant="caption">Date of Birth :</Typography>
+                <Typography variant="caption">Date of Birth</Typography>
               </CustomFormLabel>
               <CustomTextField
                 id="birth_date"
@@ -496,7 +500,7 @@ const FormWizardAddEmployee = ({
             </Grid2>
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="join">
-                <Typography variant="caption">Join Date :</Typography>
+                <Typography variant="caption">Join Date</Typography>
               </CustomFormLabel>
               <CustomTextField
                 id="join_date"
@@ -509,7 +513,7 @@ const FormWizardAddEmployee = ({
             </Grid2>
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="join">
-                <Typography variant="caption">Exit Date :</Typography>
+                <Typography variant="caption">Exit Date</Typography>
               </CustomFormLabel>
               <CustomTextField
                 id="exit_date"
@@ -522,7 +526,7 @@ const FormWizardAddEmployee = ({
             </Grid2>
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="address">
-                <Typography variant="caption">Employee Address :</Typography>
+                <Typography variant="caption">Employee Address</Typography>
               </CustomFormLabel>
               <CustomTextField
                 id="address"

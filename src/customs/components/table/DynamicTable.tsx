@@ -200,7 +200,7 @@ export function DynamicTable<T extends { id: string | number }>({
                 {/* Column 1 */}
                 <Grid2 size={{ xs: 12, sm: 7 }}>
                   <Stack direction={'column'}>
-                    <Typography sx={{ fontSize: '0.9rem' }} variant="subtitle2">
+                    <Typography sx={{ fontSize: '1rem' }} variant="subtitle2">
                       {headerContent.title}
                     </Typography>
                     <Typography mt={1.5} variant="subtitle2">
@@ -214,7 +214,7 @@ export function DynamicTable<T extends { id: string | number }>({
                   size={{ xs: 12, sm: 5 }}
                   display={'flex'}
                   alignItems={'center'}
-                  justifyContent={'end'}
+                  justifyContent={{ xs: 'space-around', sm: 'flex-end' }}
                 >
                   <Tabs
                     value={headerContent.items.findIndex(
@@ -234,8 +234,9 @@ export function DynamicTable<T extends { id: string | number }>({
                       '& .MuiTab-root': {
                         minHeight: '32px',
                         textTransform: 'none',
-                        fontSize: '0.75rem',
+                        fontSize: '0.8rem',
                         px: 2,
+                        marginTop: { xs: 1, sm: 2 },
                       },
                       '& .Mui-selected': {
                         fontWeight: 'bold',
@@ -266,7 +267,11 @@ export function DynamicTable<T extends { id: string | number }>({
               display="flex"
               justifyContent="space-between"
               alignItems="center"
-              sx={{ mb: 3 }}
+              flexWrap={'wrap'}
+              sx={{
+                mb: 3,
+                gap: { xs: 2, sm: 0 }, // gap 2 hanya saat xs (mobile), 0 saat sm ke atas
+              }}
             >
               {/* SEARCH MENU */}
               <Stack direction="row" spacing={2}>

@@ -89,7 +89,7 @@ const FormUpdateDistrict: React.FC<FormUpdateDistrictProps> = ({ data, onSuccess
 
         {/* Name */}
         <CustomFormLabel htmlFor="name" sx={{ my: 1, mx: 1 }}>
-          <Typography variant="caption">District Name :</Typography>
+          <Typography variant="caption">District Name</Typography>
         </CustomFormLabel>
         <CustomTextField
           id="name"
@@ -105,7 +105,7 @@ const FormUpdateDistrict: React.FC<FormUpdateDistrictProps> = ({ data, onSuccess
 
         {/* Host */}
         <CustomFormLabel htmlFor="host" sx={{ my: 1, mx: 1 }}>
-          <Typography variant="caption">District Host :</Typography>
+          <Typography variant="caption">District Host</Typography>
         </CustomFormLabel>
         <CustomTextField
           id="host"
@@ -121,7 +121,7 @@ const FormUpdateDistrict: React.FC<FormUpdateDistrictProps> = ({ data, onSuccess
 
         {/* Code */}
         <CustomFormLabel htmlFor="code" sx={{ my: 1, mx: 1 }}>
-          <Typography variant="caption">District Code :</Typography>
+          <Typography variant="caption">District Code</Typography>
         </CustomFormLabel>
         <CustomTextField
           id="code"

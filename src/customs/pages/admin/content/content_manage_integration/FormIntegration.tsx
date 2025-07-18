@@ -109,7 +109,7 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
             <Typography variant="h6" sx={{ mb: 2, borderLeft: '4px solid #673ab7', pl: 1 }}>
               Integration Details
             </Typography>
-            <CustomFormLabel htmlFor="name">Integration Name :</CustomFormLabel>
+            <CustomFormLabel htmlFor="name">Integration Name</CustomFormLabel>
             <CustomTextField
               id="name"
               value={formData.name}
@@ -117,7 +117,7 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
               fullWidth
               
             />
-            <CustomFormLabel htmlFor="brand_name">Brand Name :</CustomFormLabel>
+            <CustomFormLabel htmlFor="brand_name">Brand Name</CustomFormLabel>
             <CustomTextField
               id="brand_name"
               value={formData.brand_name}
@@ -125,7 +125,7 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
               fullWidth
               disabled
             />
-            <CustomFormLabel htmlFor="brand_type">Brand Type :</CustomFormLabel>
+            <CustomFormLabel htmlFor="brand_type">Brand Type</CustomFormLabel>
             <CustomTextField
               id="brand_type"
               value={formatEnumLabel(BrandType[formData.brand_type])}
@@ -158,7 +158,7 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
             {/* Show Auth Username/Password only for Basic (0) */}
             {formData.api_type_auth === 0 && (
               <>
-                <CustomFormLabel htmlFor="api_auth_username">API Auth Username :</CustomFormLabel>
+                <CustomFormLabel htmlFor="api_auth_username">API Auth Username</CustomFormLabel>
                 <CustomTextField
                   id="api_auth_username"
                   value={formData.api_auth_username}
@@ -167,7 +167,7 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
                   onChange={handleChange}
                   fullWidth
                 />
-                <CustomFormLabel htmlFor="api_auth_password">API Auth Password :</CustomFormLabel>
+                <CustomFormLabel htmlFor="api_auth_password">API Auth Password</CustomFormLabel>
                 <CustomTextField
                   id="api_auth_passwd"
                   type="password"
@@ -181,7 +181,7 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
             )}
             {(formData.api_type_auth === 1 || formData.api_type_auth === 2) && (
               <>
-                <CustomFormLabel htmlFor="api_key_field">API Key Field :</CustomFormLabel>
+                <CustomFormLabel htmlFor="api_key_field">API Key Field</CustomFormLabel>
                 <CustomTextField
                   id="api_key_field"
                   value={formData.api_key_field}
@@ -191,7 +191,7 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
                   fullWidth
                   disabled
                 />
-                <CustomFormLabel htmlFor="api_key_value">API Key Value :</CustomFormLabel>
+                <CustomFormLabel htmlFor="api_key_value">API Key Value</CustomFormLabel>
                 <CustomTextField
                   id="api_key_value"
                   value={formData.api_key_value}

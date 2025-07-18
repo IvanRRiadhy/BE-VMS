@@ -78,7 +78,7 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({ formData, setFormData
 
         {/* District Name */}
         <CustomFormLabel sx={{ my: 1, mx: 1 }} htmlFor="name">
-          <Typography variant="caption">District Name :</Typography>
+          <Typography variant="caption">District Name</Typography>
         </CustomFormLabel>
         <CustomTextField
           id="name"
@@ -94,7 +94,7 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({ formData, setFormData
 
         {/* District Code */}
         <CustomFormLabel sx={{ my: 1, mx: 1 }} htmlFor="code">
-          <Typography variant="caption">District Code :</Typography>
+          <Typography variant="caption">District Code</Typography>
         </CustomFormLabel>
         <CustomTextField
           id="code"
@@ -110,7 +110,7 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({ formData, setFormData
 
         {/* Host */}
         <CustomFormLabel htmlFor="host" sx={{ my: 1, mx: 1 }}>
-          <Typography variant="caption">District Host :</Typography>
+          <Typography variant="caption">District Host</Typography>
         </CustomFormLabel>
         <CustomTextField
           id="host"

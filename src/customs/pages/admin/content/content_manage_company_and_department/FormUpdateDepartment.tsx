@@ -96,7 +96,7 @@ const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({ data, onSuc
 
         {/* Name */}
         <CustomFormLabel htmlFor="name" sx={{ my: 1, mx: 1 }}>
-          <Typography variant="caption">Department Name :</Typography>
+          <Typography variant="caption">Department Name</Typography>
         </CustomFormLabel>
         <CustomTextField
           id="name"
@@ -112,7 +112,7 @@ const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({ data, onSuc
 
         {/* Host */}
         <CustomFormLabel htmlFor="host" sx={{ my: 1, mx: 1 }}>
-          <Typography variant="caption">Department Host :</Typography>
+          <Typography variant="caption">Department Host</Typography>
         </CustomFormLabel>
         <CustomTextField
           id="host"
@@ -128,7 +128,7 @@ const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({ data, onSuc
 
         {/* Code */}
         <CustomFormLabel htmlFor="code" sx={{ my: 1, mx: 1 }}>
-          <Typography variant="caption">Department Code :</Typography>
+          <Typography variant="caption">Department Code</Typography>
         </CustomFormLabel>
         <CustomTextField
           id="code"
