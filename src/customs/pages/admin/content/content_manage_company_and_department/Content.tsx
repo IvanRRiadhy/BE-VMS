@@ -6,6 +6,8 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
+  DialogActions,
+  Button,
   Grid2 as Grid,
   IconButton,
   Skeleton,
@@ -56,6 +58,18 @@ const Content = () => {
   const handleCloseDialog = () => {
     setOpenFormType(null);
     setEditDialogType(null);
+    localStorage.removeItem('unsavedOrganizationFormAdd');
+    setFormDataAddOrganization(CreateOrganizationSchema.parse({})); // ⬅️ ini penting!
+  };
+
+  const handleCancelEdit = () => {
+    setConfirmDialogOpen(false);
+    // setPendingEditId(null);
+  };
+
+  const handleConfirmEdit = () => {
+    handleCloseDialog();
+    setConfirmDialogOpen(false);
   };
 
   // Pagination state.
@@ -63,7 +77,7 @@ const Content = () => {
   const [isDataReady, setIsDataReady] = useState(false);
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
-
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(3);
   const [sortColumn, setSortColumn] = useState<string>('id');
@@ -156,7 +170,13 @@ const Content = () => {
   const [formDataAddDepartment, setFormDataAddDepartment] = useState<CreateDepartmentRequest>(
     () => {
       const saved = localStorage.getItem('unsavedDepartmentFormAdd');
-      return saved ? JSON.parse(saved) : CreateDepartmentSchema.parse({});
+      try {
+        const parsed = saved ? JSON.parse(saved) : {};
+        return CreateDepartmentSchema.parse(parsed);
+      } catch (e) {
+        console.error('Invalid saved data, fallback to default schema.');
+        return CreateDepartmentSchema.parse({});
+      }
     },
   );
 
@@ -178,9 +198,21 @@ const Content = () => {
   const [formDataAddOrganization, setFormDataAddOrganization] = useState<CreateOrganizationRequest>(
     () => {
       const saved = localStorage.getItem('unsavedOrganizationFormAdd');
-      return saved ? JSON.parse(saved) : CreateOrganizationSchema.parse({});
+
+      // return saved ? JSON.parse(saved) : CreateOrganizationSchema.parse({});
+
+      try {
+        const parsed = saved ? JSON.parse(saved) : {};
+        return CreateOrganizationSchema.parse(parsed);
+      } catch (e) {
+        console.error('Invalid saved data, fallback to default schema.');
+        return CreateOrganizationSchema.parse({});
+      }
     },
   );
+
+  const defaultFormData = CreateOrganizationSchema.parse({});
+  const isFormChanged = JSON.stringify(formDataAddOrganization) !== JSON.stringify(defaultFormData);
 
   useEffect(() => {
     localStorage.setItem('unsavedOrganizationFormAdd', JSON.stringify(formDataAddOrganization));
@@ -221,7 +253,7 @@ const Content = () => {
                     isHaveAddData={true}
                     isHaveHeader={true}
                     headerContent={{
-                      title: 'Organization, Department, District',
+                      title: 'Organization | Department | District',
                       subTitle: formatDate(new Date()),
                       items: [
                         { name: 'organization' },
@@ -272,9 +304,10 @@ const Content = () => {
         </Box>
       </PageContainer>
       {/* Dialog view */}
+      {/* Organization */}
       <Dialog
         open={openFormType === 'Organizations'}
-        onClose={handleCloseDialog}
+        // onClose={handleCloseDialog}
         fullWidth
         maxWidth="md"
       >
@@ -282,7 +315,13 @@ const Content = () => {
           Add Organization data
           <IconButton
             aria-label="close"
-            onClick={handleCloseDialog}
+            onClick={() => {
+              if (isFormChanged) {
+                setConfirmDialogOpen(true);
+              } else {
+                handleCloseDialog(); // langsung tutup kalau tidak ada perubahan
+              }
+            }}
             sx={{ position: 'absolute', right: 8, top: 8 }}
           >
             <CloseIcon />
@@ -476,6 +515,20 @@ const Content = () => {
             }}
           />
         </DialogContent>
+      </Dialog>
+
+      <Dialog open={confirmDialogOpen} onClose={handleCancelEdit}>
+        <DialogTitle>Unsaved Changes</DialogTitle>
+        <DialogContent>
+          You have unsaved changes for another site. Are you sure you want to discard them and edit
+          this site?
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelEdit}>Cancel</Button>
+          <Button onClick={handleConfirmEdit} color="primary" variant="contained">
+            Yes, Discard and Continue
+          </Button>
+        </DialogActions>
       </Dialog>
     </>
   );

@@ -53,7 +53,7 @@ const TopCard: React.FC<TopCardsProps> = ({ items, onImageClick, cardMarginBotto
                   justifyContent="space-between"
                 >
                   <Box>
-                    <Typography variant="subtitle2">{card.title}</Typography>
+                    <Typography variant="h5">{card.title}</Typography>
                     <Box
                       sx={{
                         marginTop: 1,

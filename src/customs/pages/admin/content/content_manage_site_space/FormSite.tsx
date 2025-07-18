@@ -71,6 +71,7 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
     'Complete the following data properly and correctly',
   );
   const { token } = useSession();
+
   const timezoneOptions = [
     { value: 'Asia/Jakarta', label: '(UTC+07:00) WIB (Waktu Indonesia Barat)' },
     { value: 'Asia/Makassar', label: '(UTC+08:00) WITA (Waktu Indonesia Tengah)' },
@@ -87,6 +88,11 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
     documents: {} as DocumentItem,
     retentionTime: 0,
   });
+  const [retentionInput, setRetentionInput] = useState('0');
+  useEffect(() => {
+    setRetentionInput(newDocumentA.retentionTime.toString());
+  }, [newDocumentA.retentionTime]);
+
   const [newDocument, setNewDocument] = useState<CreateSiteDocumentRequest>({
     document_id: '',
     site_id: '',
@@ -141,7 +147,8 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
       const data: CreateSiteRequest = CreateSiteRequestSchema.parse(formData);
       console.log('Setting Data: ', data);
       if (editingId && editingId !== '') {
-        await updateSite(token, data, editingId);
+        await updateSite(editingId, data, token);
+
         console.log('Editing ID:', editingId);
       } else {
         await createSite(data, token);
@@ -223,19 +230,30 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
 
   const createSiteDocumentsForNewSite = async () => {
     if (!token) return;
+
+    // Cek duplikat documents.id di dalam siteDocument
+
     const allSitesRes = await getAllSite(token);
     const newSite = allSitesRes.collection.find(
       (site: any) => site.name === formData.name && site.description === formData.description,
     );
+
     if (!newSite) {
       console.error('New site not found after creation');
       return;
     }
+
+    // Tambahkan site_id ke tiap dokumen dan kirim
     for (const doc of siteDocuments) {
-      const docWithSideId: CreateSiteDocumentRequest = { ...doc, site_id: newSite.id };
-      console.log('Creating site document with data:', docWithSideId);
+      const docWithSiteId: CreateSiteDocumentRequest = {
+        ...doc,
+        site_id: newSite.id,
+      };
+
+      console.log('Creating site document with data:', docWithSiteId);
+
       try {
-        await createSiteDocument(docWithSideId, token);
+        await createSiteDocument(docWithSiteId, token);
       } catch (error) {
         console.error('Error creating site document:', error);
       }
@@ -611,11 +629,19 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
                           ) : (
                             filteredSiteDocumentList.map((doc, idx) => {
                               const docInfo = documentlist.find((d) => d.id === doc.documents.id);
-                              console.log(docInfo);
+
                               return (
                                 <TableRow key={doc.id + idx}>
                                   <TableCell>{docInfo ? docInfo.name : doc.id}</TableCell>
-                                  <TableCell>{doc.retentionTime}</TableCell>
+                                  {/* <TableCell>{doc.retentionTime}</TableCell> */}
+                                  {/* if 0 rentionTime so give text forever */}
+                                  {doc.retentionTime === 0 ? (
+                                    <TableCell sx={{ color: '#888' }}>Forever</TableCell>
+                                  ) : (
+                                    <TableCell sx={{ color: '#888' }}>
+                                      {doc.retentionTime} days
+                                    </TableCell>
+                                  )}
                                   <TableCell align="right">
                                     <Button
                                       color="error"
@@ -632,9 +658,14 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
                                         borderColor: '#ffcdd2',
                                         '&:hover': { bgcolor: '#ffcdd2' },
                                       }}
-                                      onClick={() =>
-                                        setSiteDocuments((prev) => prev.filter((_, i) => i !== idx))
-                                      }
+                                      onClick={() => {
+                                        setSiteDocuments((prev) =>
+                                          prev.filter((_, i) => i !== idx),
+                                        );
+                                        setFilteredSiteDocumentList((prev) =>
+                                          prev.filter((_, i) => i !== idx),
+                                        );
+                                      }}
                                     >
                                       ×
                                     </Button>
@@ -652,13 +683,20 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
                     <CustomSelect
                       id="document_id"
                       name="document_id"
-                      value={newDocumentA.documents.id}
+                      value={newDocumentA.documents?.id?.toString() || ''}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        const selectedDoc = documentlist.find((doc) => doc.id === e.target.value);
-                        setNewDocumentA((prev) => ({
-                          ...prev,
-                          documents: selectedDoc || ({} as DocumentItem),
-                        }));
+                        const selectedId = e.target.value;
+
+                        const selectedDoc = documentlist.find(
+                          (doc) => doc.id.toString() === selectedId.toString(),
+                        );
+
+                        if (selectedDoc) {
+                          setNewDocumentA((prev) => ({
+                            ...prev,
+                            documents: selectedDoc,
+                          }));
+                        }
                       }}
                       fullWidth
                       sx={{ mb: 2 }}
@@ -675,18 +713,34 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
                     </CustomSelect>
                     <CustomFormLabel htmlFor="retention_time">
                       Retention Time (days)
+                      <Tooltip title="If the value is 0, the document data will be stored permanently.">
+                        <IconButton size="small" sx={{ ml: 1 }}>
+                          <InfoOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
                     </CustomFormLabel>
                     <CustomTextField
                       id="retention_time"
                       name="retention_time"
-                      value={newDocumentA.retentionTime}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        setNewDocumentA((prev) => ({
-                          ...prev,
-                          retentionTime: Number(e.target.value),
-                        }))
-                      }
-                      type="number"
+                      value={retentionInput}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        const value = e.target.value;
+
+                        // Hanya izinkan angka kosong atau angka murni
+                        if (/^\d*$/.test(value)) {
+                          setRetentionInput(value);
+
+                          setNewDocumentA((prev) => ({
+                            ...prev,
+                            retentionTime: value === '' ? 0 : Number(value),
+                          }));
+                        }
+                      }}
+                      type="text" // text agar bisa kontrol input
+                      inputProps={{
+                        inputMode: 'numeric', // buka keyboard angka
+                        pattern: '[0-9]*', // cegah input selain angka
+                      }}
                       fullWidth
                       sx={{ mb: 2 }}
                     />
@@ -695,10 +749,34 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
                       color="primary"
                       fullWidth
                       sx={{ my: 3 }}
-                      disabled={!newDocumentA.documents}
                       onClick={() => {
-                        setSiteDocuments((prev) => [...prev, { ...newDocument, site_id: '' }]);
+                        const selectedDoc = newDocumentA.documents;
+
+                        if (!selectedDoc || !selectedDoc.id || !selectedDoc.name) {
+                          alert('Dokumen belum dipilih!');
+                          return;
+                        }
+
+                        const isDuplicate = filteredSiteDocumentList.some(
+                          (doc) => doc.documents?.name === selectedDoc.name,
+                        );
+
+                        if (isDuplicate) {
+                          alert(`Dokumen "${selectedDoc.name}" sudah ditambahkan.`);
+                          return;
+                        }
+
+                        setSiteDocuments((prev) => [
+                          ...prev,
+                          {
+                            document_id: selectedDoc.id,
+                            site_id: '',
+                            retention_time: newDocumentA.retentionTime,
+                          },
+                        ]);
+
                         setFilteredSiteDocumentList((prev) => [...prev, newDocumentA]);
+
                         setNewDocumentA({
                           id: '',
                           site_id: '',
@@ -706,7 +784,12 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
                           documents: {} as DocumentItem,
                           retentionTime: 0,
                         });
-                        setNewDocument({ document_id: '', site_id: '', retention_time: 0 });
+
+                        setNewDocument({
+                          document_id: '',
+                          site_id: '',
+                          retention_time: 0,
+                        });
                       }}
                     >
                       Add Document

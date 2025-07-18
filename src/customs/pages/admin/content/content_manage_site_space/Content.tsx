@@ -11,7 +11,7 @@ import {
   IconButton,
 } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
-
+import { useRef } from 'react';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import FormSite from './FormSite';
@@ -46,6 +46,8 @@ const Content = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [tableRowSite, setTableRowSite] = React.useState<SiteTableRow[]>([]);
   const [edittingId, setEdittingId] = useState('');
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+
   const siteData: Item[] = [
     {
       id: '123',
@@ -65,6 +67,17 @@ const Content = () => {
       need_document: false,
     },
   ];
+
+  const [formDataAddSite, setFormDataAddSite] = React.useState<Item>(() => {
+    const saved = localStorage.getItem('unsavedSiteForm');
+    return saved ? JSON.parse(saved) : CreateSiteRequestSchema.parse({});
+  });
+
+  const defaultFormData = CreateSiteRequestSchema.parse({});
+
+  // Cek apakah form berubah
+  const isFormChanged = JSON.stringify(formDataAddSite) !== JSON.stringify(defaultFormData);
+
   useEffect(() => {
     if (!token) return;
     const fetchData = async () => {
@@ -96,17 +109,9 @@ const Content = () => {
     fetchData();
   }, [token, page, rowsPerPage, sortColumn, refreshTrigger]);
 
-  const [formDataAddSite, setFormDataAddSite] = React.useState<Item>(() => {
-    const saved = localStorage.getItem('unsavedSiteForm');
-    return saved ? JSON.parse(saved) : CreateSiteRequestSchema.parse({});
-  });
   useEffect(() => {
     localStorage.setItem('unsavedSiteForm', JSON.stringify(formDataAddSite));
   }, [formDataAddSite]);
-
-  useEffect(() => {
-    console.log('siteData', tableData);
-  }, []);
 
   const cards = [
     {
@@ -121,21 +126,45 @@ const Content = () => {
   const [openFormCreateSiteSpace, setOpenFormCreateSiteSpace] = React.useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = React.useState(false);
   const [pendingEditId, setPendingEditId] = React.useState<string | null>(null);
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        openFormCreateSiteSpace &&
+        dialogRef.current &&
+        !dialogRef.current.contains(event.target as Node)
+      ) {
+        if (isFormChanged) {
+          setConfirmDialogOpen(true); // buka dialog konfirmasi
+        } else {
+          handleCloseModalCreateSiteSpace(); // tutup langsung kalau tidak ada perubahan
+        }
+      }
+    }
 
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [openFormCreateSiteSpace, isFormChanged]);
+  
   const handleOpenDialog = () => {
     setOpenFormCreateSiteSpace(true);
   };
-  const handleCloseModalCreateSiteSpace = () => setOpenFormCreateSiteSpace(false);
+  const handleCloseModalCreateSiteSpace = () => {
+    // localStorage.removeItem('unsavedSiteForm');
+    setOpenFormCreateSiteSpace(false);
+    setEdittingId(''); // Reset
+  };
 
   const handleAdd = () => {
     const editing = localStorage.getItem('unsavedSiteForm');
-    console.log(editing)
+    console.log(editing);
     if (editing) {
       const parsed = JSON.parse(editing);
-      if (parsed.id !== ''){
-              // If editing exists, show confirmation dialog for add
-      setPendingEditId(null); // null means it's an add, not edit
-      setConfirmDialogOpen(true);
+      if (parsed.id !== '') {
+        // If editing exists, show confirmation dialog for add
+        setPendingEditId(null); // null means it's an add, not edit
+        setConfirmDialogOpen(true);
       } else {
         handleOpenDialog();
       }
@@ -147,7 +176,7 @@ const Content = () => {
 
   const handleEdit = (id: string) => {
     const editing = localStorage.getItem('unsavedSiteForm');
-    console.log(editing)
+    console.log(editing);
     if (editing) {
       const parsed = JSON.parse(editing);
       if (parsed.id === id) {
@@ -158,9 +187,10 @@ const Content = () => {
         setConfirmDialogOpen(true);
       }
     } else {
-      setFormDataAddSite(
-        {...CreateSiteRequestSchema.parse(tableData.find((item) => item.id === id) || {}), id: id},
-      );
+      setFormDataAddSite({
+        ...CreateSiteRequestSchema.parse(tableData.find((item) => item.id === id) || {}),
+        id: id,
+      });
       handleOpenDialog();
     }
   };
@@ -175,13 +205,17 @@ const Content = () => {
       );
       // Edit existing site
       setFormDataAddSite(
-        tableData.find((item) => item.id === pendingEditId) || { ...CreateSiteRequestSchema.parse({}), id: '' },
+        tableData.find((item) => item.id === pendingEditId) || {
+          ...CreateSiteRequestSchema.parse({}),
+          id: '',
+        },
       );
     } else {
       // Add new site
       setFormDataAddSite({ ...CreateSiteRequestSchema.parse({}), id: '' });
     }
-    handleOpenDialog();
+    // handleOpenDialog();
+    handleCloseModalCreateSiteSpace();
     setPendingEditId(null);
   };
 
@@ -197,7 +231,7 @@ const Content = () => {
         <Box>
           <Grid container spacing={3}>
             {/* column */}
-            <Grid size={{ xs: 12, lg: 12 }}>
+            <Grid size={{ xs: 4, lg: 4 }}>
               <TopCard items={cards} />
             </Grid>
             {/* column */}
@@ -249,19 +283,29 @@ const Content = () => {
           {edittingId ? 'Edit' : 'Add'} Site Space
           <IconButton
             aria-label="close"
-            onClick={handleCloseModalCreateSiteSpace}
+            onClick={() => {
+              if (isFormChanged) {
+                setConfirmDialogOpen(true);
+              } else {
+                handleCloseModalCreateSiteSpace(); // langsung tutup kalau tidak ada perubahan
+              }
+            }}
             sx={{ position: 'absolute', right: 8, top: 8 }}
           >
             <CloseIcon />
           </IconButton>
         </DialogTitle>
         <Divider />
-        <DialogContent>
+        <DialogContent ref={dialogRef}>
           <br />
           <FormSite
             formData={formDataAddSite}
             setFormData={setFormDataAddSite}
-            onSuccess={handleCloseModalCreateSiteSpace}
+            onSuccess={() => {
+              handleCloseModalCreateSiteSpace();
+              setRefreshTrigger((prev) => prev + 1);
+              // localStorage.removeItem('unsavedSiteForm');
+            }}
             editingId={edittingId}
           />
         </DialogContent>

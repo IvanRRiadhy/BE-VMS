@@ -29,73 +29,73 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
     children: [
       {
         id: uniqueId(),
-        title: 'company & department',
+        title: 'Company & Department',
         icon: IconPoint,
         href: '/admin/manage/companys&deparments',
       },
       {
         id: uniqueId(),
-        title: 'employees',
+        title: 'Employees',
         icon: IconPoint,
         href: '/admin/manage/employees',
       },
       {
         id: uniqueId(),
-        title: 'site space',
+        title: 'Site Space',
         icon: IconPoint,
         href: '/admin/manage/site-space',
       },
       {
         id: uniqueId(),
-        title: 'visitor card',
+        title: 'Visitor Card',
         icon: IconPoint,
         href: '/admin/manage/visitor-card',
       },
-            {
+      {
         id: uniqueId(),
-        title: 'visitor type',
+        title: 'Visitor Type',
         icon: IconPoint,
         href: '/admin/manage/visitor-type',
       },
       {
         id: uniqueId(),
-        title: 'devices kiosk',
+        title: 'Devices Kiosk',
         icon: IconPoint,
         href: '/admin/manage/device-kiosk',
       },
       {
         id: uniqueId(),
-        title: 'operator',
+        title: 'Operator',
         icon: IconPoint,
         href: '/admin/manage/operator',
       },
-            {
+      {
         id: uniqueId(),
-        title: 'document',
+        title: 'Document',
         icon: IconPoint,
         href: '/admin/manage/document',
       },
       {
         id: uniqueId(),
-        title: 'brand',
+        title: 'Brand',
         icon: IconPoint,
         href: '/admin/manage/brand',
       },
       {
         id: uniqueId(),
-        title: 'integration',
+        title: 'Integration',
         icon: IconPoint,
         href: '/admin/manage/integration',
       },
       {
         id: uniqueId(),
-        title: 'access control',
+        title: 'Access Control',
         icon: IconPoint,
         href: '/admin/manage/access-control',
       },
-            {
+      {
         id: uniqueId(),
-        title: 'custom field',
+        title: 'Custom Field',
         icon: IconPoint,
         href: '/admin/manage/custom-field',
       },
@@ -107,7 +107,7 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
     icon: IconUserCircle,
     chipColor: 'secondary',
     href: '/admin/visitor',
-  },  
+  },
 
   {
     id: uniqueId(),
@@ -118,13 +118,13 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
     children: [
       {
         id: uniqueId(),
-        title: 'form',
+        title: 'Form',
         icon: IconPoint,
         href: '/admin/setting/form',
       },
       {
         id: uniqueId(),
-        title: 'users',
+        title: 'Users',
         icon: IconPoint,
         href: '/admin/setting/users',
       },
@@ -167,31 +167,31 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
     children: [
       {
         id: uniqueId(),
-        title: 'company & pepartment',
+        title: 'Company & Department',
         icon: IconPoint,
         href: '/admin/manage/companys&deparments',
       },
       {
         id: uniqueId(),
-        title: 'employees',
+        title: 'Employees',
         icon: IconPoint,
         href: '/admin/manage/employees',
       },
       {
         id: uniqueId(),
-        title: 'site space',
+        title: 'Site Space',
         icon: IconPoint,
         href: '/admin/manage/site-space',
       },
       {
         id: uniqueId(),
-        title: 'visitor card',
+        title: 'Visitor Card',
         icon: IconPoint,
         href: '/admin/manage/visitor-card',
       },
-            {
+      {
         id: uniqueId(),
-        title: 'visitor type',
+        title: 'Visitor type',
         icon: IconPoint,
         href: '/admin/manage/visitor-type',
       },
@@ -207,7 +207,7 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
         icon: IconPoint,
         href: '/admin/manage/operator',
       },
-                  {
+      {
         id: uniqueId(),
         title: 'document',
         icon: IconPoint,

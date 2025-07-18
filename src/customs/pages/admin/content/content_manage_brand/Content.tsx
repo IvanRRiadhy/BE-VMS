@@ -71,7 +71,7 @@ const Content = () => {
         <Box>
           <Grid container spacing={3}>
             {/* column */}
-            <Grid size={{ xs: 12, lg: 12 }}>
+            <Grid size={{ xs: 12, lg: 4 }}>
               <TopCard items={cards} />
             </Grid>
             {/* column */}
@@ -79,23 +79,23 @@ const Content = () => {
               <DynamicTable
                 overflowX={'auto'}
                 data={tableData}
-                isHaveChecked={true}
-                isHaveAction={true}
+                // isHaveChecked={true}
+                // isHaveAction={true}
                 isHaveSearch={true}
                 isHaveFilter={true}
                 isHaveExportPdf={true}
                 isHaveExportXlf={false}
                 isHaveFilterDuration={false}
-                isHaveAddData={true}
+                // isHaveAddData={true}
                 isHaveFilterMore={false}
                 isHaveHeader={false}
-                onCheckedChange={(selected) => console.log('Checked table row:', selected)}
-                onEdit={(row) => {
-                  console.log('Edit:', row);
-                  //   handleEdit(row.id);
-                  //   setEdittingId(row.id);
-                }}
-                onDelete={(row) => console.log('Delete:', row)}
+                // onCheckedChange={(selected) => console.log('Checked table row:', selected)}
+                // onEdit={(row) => {
+                //   console.log('Edit:', row);
+                //   //   handleEdit(row.id);
+                //   //   setEdittingId(row.id);
+                // }}
+                // onDelete={(row) => console.log('Delete:', row)}
                 onSearchKeywordChange={(keyword) => console.log('Search keyword:', keyword)}
                 onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
                 // onAddData={() => {

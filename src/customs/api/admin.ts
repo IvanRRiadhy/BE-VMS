@@ -26,18 +26,147 @@ import {
   UpdateDistrictResponse,
 } from './models/District';
 import axiosInstance from './interceptor';
-import { CreateEmployeeRequest, CreateEmployeeResponse, GetAllEmployeePaginationResponse, UpdateEmployeeRequest, UpdateEmployeeResponse } from './models/Employee';
-import { CreateDocumentRequest, CreateDocumentResponse, GetAllDocumentPaginationResponse, UpdateDocumentRequest, UpdateDocumentResponse } from './models/Document';
-import { CreateSiteRequest, CreateSiteResponse, GetAllSitesPaginationResponse, GetAllSitesResponse, UpdateSiteRequest, UpdateSiteResponse, UploadImageSiteResponse } from './models/Sites';
-import { CreateSiteDocumentRequest, CreateSiteDocumentResponse, GetAllSiteDocumentResponse } from './models/SiteDocument';
+import {
+  CreateEmployeeRequest,
+  CreateEmployeeResponse,
+  GetAllEmployeePaginationResponse,
+  UpdateEmployeeRequest,
+  UpdateEmployeeResponse,
+} from './models/Employee';
+import {
+  CreateDocumentRequest,
+  CreateDocumentResponse,
+  GetAllDocumentPaginationResponse,
+  UpdateDocumentRequest,
+  UpdateDocumentResponse,
+} from './models/Document';
+import {
+  CreateSiteRequest,
+  CreateSiteResponse,
+  GetAllSitesPaginationResponse,
+  GetAllSitesResponse,
+  UpdateSiteRequest,
+  UpdateSiteResponse,
+  UploadImageSiteResponse,
+} from './models/Sites';
+import {
+  CreateSiteDocumentRequest,
+  CreateSiteDocumentResponse,
+  GetAllSiteDocumentResponse,
+} from './models/SiteDocument';
 import { GetAllBrandPaginationResponse, GetAllBrandResponse } from './models/Brand';
-import { CreateIntegrationRequest, CreateIntegrationResponse, DeleteIntegrationResponse, GetAllIntegrationResponse, GetAvailableIntegrationResponse, UpdateIntegrationRequest, UpdateIntegrationResponse } from './models/Integration';
-import { CreateAccessControlRequest, CreateAccessControlResponse, GetAccessControlPaginationResponse, GetAllAccessControlResponse, UpdateAccessControlRequest, UpdateAccessControlResponse } from './models/AccessControl';
-import { CreateCustomFieldRequest, CreateCustomFieldResponse, GetAllCustomFieldPaginationResponse, GetAllCustomFieldResponse, UpdateCustomFieldRequest, UpdateCustomFieldResponse } from './models/CustomField';
+import {
+  CreateIntegrationRequest,
+  CreateIntegrationResponse,
+  DeleteIntegrationResponse,
+  GetAllIntegrationResponse,
+  GetAvailableIntegrationResponse,
+  UpdateIntegrationRequest,
+  UpdateIntegrationResponse,
+} from './models/Integration';
+import {
+  CreateAccessControlRequest,
+  CreateAccessControlResponse,
+  GetAccessControlPaginationResponse,
+  GetAllAccessControlResponse,
+  UpdateAccessControlRequest,
+  UpdateAccessControlResponse,
+} from './models/AccessControl';
+import {
+  CreateCustomFieldRequest,
+  CreateCustomFieldResponse,
+  GetAllCustomFieldPaginationResponse,
+  GetAllCustomFieldResponse,
+  UpdateCustomFieldRequest,
+  UpdateCustomFieldResponse,
+} from './models/CustomField';
+
+import {
+  GetAllVisitorTypePaginationResponse,
+  CreateVisitorTypeResponse,
+  CreateVisitorTypeRequest,
+  DeleteVisitorTypeResponse,
+  UpdateVisitorTypeResponse,
+  UpdateVisitorTypeRequest,
+} from './models/VisitorType';
+
 //#endregion
 
+//#region Visitor Type
+export const getAllVisitorTypePagination = async (
+  token: string,
+  start: number,
+  length: number,
+  sortColumn: string,
+  gender?: number,
+  joinStart?: string,
+  joinEnd?: string,
+  exitStart?: string,
+  exitEnd?: string,
+  isHead?: boolean,
+  document?: string,
+): Promise<GetAllVisitorTypePaginationResponse> => {
+  const params: Record<string, any> = {
+    start,
+    length,
+    sort_column: sortColumn,
+  };
+
+  if (gender) params.gender = gender;
+  if (joinStart) params.join_start = joinStart;
+  if (joinEnd) params.join_end = joinEnd;
+  if (exitStart) params.exit_start = exitStart;
+  if (exitEnd) params.exit_end = exitEnd;
+  if (isHead) params.is_head = isHead;
+  if (document) params.document = document;
+
+  const response = await axiosInstance.get(`/visitor-type/dt`, {
+    params,
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  return response.data;
+};
+
+// getall visitor typepagination
+
+export const createVisitorType = async (
+  token: string,
+  data: CreateVisitorTypeRequest,
+): Promise<CreateVisitorTypeResponse> => {
+  const response = await axiosInstance.post(`/visitor-type`, data, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+export const updateVisitorType = async (
+  token: string,
+  visitorId: string,
+  data: UpdateVisitorTypeRequest,
+): Promise<UpdateVisitorTypeResponse> => {
+  console.log(data);
+  const response = await axiosInstance.put(`/visitor-type/${visitorId}`, data, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+
+  return response.data;
+};
+
+export const deleteVisitorType = async (
+  token: string,
+  visitorId: string,
+): Promise<DeleteVisitorTypeResponse> => {
+  const response = await axiosInstance.delete(`/visitor-type/${visitorId}`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
 //#region District API
-export const getAllDistricts = async (token: string): Promise<GetAllDistrictsPaginationResponse> => {
+export const getAllDistricts = async (
+  token: string,
+): Promise<GetAllDistrictsPaginationResponse> => {
   const response = await axiosInstance.get(`/district`, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });
@@ -101,7 +230,9 @@ export const createDistrict = async (
 //#endregion
 
 //#region Department API
-export const getAllDepartments = async (token: string): Promise<GetAllDepartmetsPaginationResponse> => {
+export const getAllDepartments = async (
+  token: string,
+): Promise<GetAllDepartmetsPaginationResponse> => {
   const response = await axiosInstance.get(`/department`, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });
@@ -164,7 +295,9 @@ export const createDepartment = async (
 //#endregion
 
 //#region Organization API
-export const getAllOrganizations = async (token: string): Promise<GetAllOrgaizationsPaginationResponse> => {
+export const getAllOrganizations = async (
+  token: string,
+): Promise<GetAllOrgaizationsPaginationResponse> => {
   const response = await axiosInstance.get(`/organization`, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });
@@ -227,7 +360,7 @@ export const deleteOrganization = async (
 //#endregion
 
 //#region Document API
-export const getAllDocumentPagination = async(
+export const getAllDocumentPagination = async (
   token: string,
   start: number,
   length: number,
@@ -320,8 +453,8 @@ export const createEmployee = async (
   data: CreateEmployeeRequest,
   token: string,
 ): Promise<CreateEmployeeResponse> => {
-    try {
-      console.log(data);
+  try {
+    console.log(data);
     const response = await axiosInstance.post(`/employee`, data, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -354,7 +487,7 @@ export const updateEmployee = async (
 //#endregion
 
 //#region Site API
-export const getAllSitePagination = async(
+export const getAllSitePagination = async (
   token: string,
   start: number,
   length: number,
@@ -366,11 +499,9 @@ export const getAllSitePagination = async(
   });
   console.log(response.data);
   return response.data;
-}
+};
 
-export const getAllSite = async (
-  token: string,
-): Promise<GetAllSitesResponse> => {
+export const getAllSite = async (token: string): Promise<GetAllSitesResponse> => {
   const response = await axiosInstance.get(`/site`, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });
@@ -393,7 +524,7 @@ export const createSite = async (
     }
     throw error;
   }
-}
+};
 export const updateSite = async (
   siteId: string,
   data: UpdateSiteRequest,
@@ -410,7 +541,7 @@ export const updateSite = async (
     }
     throw error;
   }
-}
+};
 
 export const uploadImageSite = async (
   siteId: string,
@@ -421,13 +552,13 @@ export const uploadImageSite = async (
     const formData = new FormData();
     formData.append('image', data);
     const response = await axiosInstance.post(`/site/upload/${siteId}`, formData, {
-      headers: { 
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data',
-    },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data',
+      },
     });
     console.log('Upload Image Site Response:', response.data);
-    console.log("The Data: ", data);
+    console.log('The Data: ', data);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 400) {
@@ -437,9 +568,7 @@ export const uploadImageSite = async (
   }
 };
 
-export const getAllSiteDocument = async (
-  token: string
-): Promise <GetAllSiteDocumentResponse> => {
+export const getAllSiteDocument = async (token: string): Promise<GetAllSiteDocumentResponse> => {
   try {
     const response = await axiosInstance.get(`/site-document`, {
       headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
@@ -451,7 +580,7 @@ export const getAllSiteDocument = async (
     }
     throw error;
   }
-}
+};
 
 export const createSiteDocument = async (
   data: CreateSiteDocumentRequest,
@@ -472,14 +601,12 @@ export const createSiteDocument = async (
 //#endregion
 
 //#region Brand API
-export const getAllBrand = async (
-  token: string,
-): Promise<GetAllBrandResponse> => {
-  try{
-      const response = await axiosInstance.get(`/brand`, {
-    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-  });
-  return response.data;
+export const getAllBrand = async (token: string): Promise<GetAllBrandResponse> => {
+  try {
+    const response = await axiosInstance.get(`/brand`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 400) {
       throw error.response.data as ValidationErrorResponse;
@@ -509,9 +636,7 @@ export const getAllBrandPagination = async (
 //#endregion
 
 //#region Integration API
-export const getAllIntegration = async (
-  token: string,
-): Promise<GetAllIntegrationResponse> => {
+export const getAllIntegration = async (token: string): Promise<GetAllIntegrationResponse> => {
   try {
     const response = await axiosInstance.get(`/integration`, {
       headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
@@ -541,7 +666,7 @@ export const getAvailableIntegration = async (
   }
 };
 
-export const createIntegration = async(
+export const createIntegration = async (
   data: CreateIntegrationRequest,
   token: string,
 ): Promise<CreateIntegrationResponse> => {
@@ -557,7 +682,7 @@ export const createIntegration = async(
     }
     throw error;
   }
-}
+};
 
 export const deleteIntegration = async (
   integrationId: string,
@@ -576,7 +701,7 @@ export const deleteIntegration = async (
     }
     throw error;
   }
-}
+};
 
 export const updateIntegration = async (
   integrationId: string,
@@ -594,14 +719,12 @@ export const updateIntegration = async (
     }
     throw error;
   }
-}
+};
 
 //#endregion
 
 //#region AccessControl API
-export const getAllAccessControl = async (
-  token: string,
-): Promise<GetAllAccessControlResponse> => {
+export const getAllAccessControl = async (token: string): Promise<GetAllAccessControlResponse> => {
   try {
     const response = await axiosInstance.get(`/access-control`, {
       headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
@@ -689,9 +812,7 @@ export const updateAccessControl = async (
 //#endregion
 
 //#region Custom Field API
-export const getAllCustomField = async (
-  token: string,
-): Promise<GetAllCustomFieldResponse> => {
+export const getAllCustomField = async (token: string): Promise<GetAllCustomFieldResponse> => {
   try {
     const response = await axiosInstance.get(`/custom-field`, {
       headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
@@ -711,7 +832,7 @@ export const getAllCustomFieldPagination = async (
   length: number,
   sortColumn: string,
 ): Promise<GetAllCustomFieldPaginationResponse> => {
- try {
+  try {
     const response = await axiosInstance.get(`/custom-field/dt`, {
       params: { start, length, sort_column: sortColumn },
       headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
@@ -722,7 +843,7 @@ export const getAllCustomFieldPagination = async (
       throw error.response.data as ValidationErrorResponse;
     }
     throw error;
- }
+  }
 };
 
 export const createCustomField = async (
@@ -733,7 +854,7 @@ export const createCustomField = async (
     const response = await axiosInstance.post(`/custom-field`, data, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    console.log(response.data); 
+    console.log(response.data);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 400) {
@@ -747,7 +868,7 @@ export const updateCustomField = async (
   token: string,
   data: UpdateCustomFieldRequest,
   customFieldId: string,
-) : Promise<UpdateCustomFieldResponse> => {
+): Promise<UpdateCustomFieldResponse> => {
   try {
     const response = await axiosInstance.put(`/custom-field/${customFieldId}`, data, {
       headers: { Authorization: `Bearer ${token}` },
@@ -759,5 +880,8 @@ export const updateCustomField = async (
     }
     throw error;
   }
-}
+};
+
+// Visitor Type
+
 //#endregion

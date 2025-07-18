@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   Box,
   Button,
@@ -182,9 +182,19 @@ const Content = () => {
   const [formDataAddEmployee, setFormDataAddEmployee] = React.useState<CreateEmployeeRequest>(
     () => {
       const saved = localStorage.getItem('unsavedEmployeeData');
-      return saved ? JSON.parse(saved) : CreateEmployeeRequestSchema.parse({});
+
+      try {
+        const parsed = saved ? JSON.parse(saved) : {};
+        return CreateEmployeeRequestSchema.parse(parsed);
+      } catch (e) {
+        console.error('Invalid saved data, fallback to default schema.');
+        return CreateEmployeeRequestSchema.parse({});
+      }
     },
   );
+  const defaultFormData = CreateEmployeeRequestSchema.parse({});
+  const isFormChanged = JSON.stringify(formDataAddEmployee) !== JSON.stringify(defaultFormData);
+
   useEffect(() => {
     localStorage.setItem('unsavedEmployeeData', JSON.stringify(formDataAddEmployee));
   }, [formDataAddEmployee]);
@@ -192,29 +202,40 @@ const Content = () => {
   const [openFormAddEmployee, setOpenFormAddEmployee] = React.useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = React.useState(false);
   const [pendingEditId, setPendingEditId] = React.useState<string | null>(null);
-  const handleOpenDialog = () => {
-    setOpenFormAddEmployee(true);
-  };
-  const handleCloseDialog = () => setOpenFormAddEmployee(false);
 
-  const handleAdd = () => {
-    const editing = localStorage.getItem('unsavedEmployeeData');
-    if (editing) {
-      // If editing exists, show confirmation dialog for add
-      setPendingEditId(null); // null means it's an add, not edit
-      setConfirmDialogOpen(true);
-    } else {
-      setEdittingId('');
-      setFormDataAddEmployee(CreateEmployeeRequestSchema.parse({}));
-      handleOpenDialog();
-    }
+  const handleOpenDialog = () => setOpenFormAddEmployee(true);
+  const handleCloseDialog = () => {
+    localStorage.removeItem('unsavedEmployeeData');
+    setOpenFormAddEmployee(false);
   };
+
+  // const handleAdd = () => {
+  //   const editing = localStorage.getItem('unsavedEmployeeData');
+  //   if (editing) {
+  //     // If editing exists, show confirmation dialog for add
+  //     setPendingEditId(null); // null means it's an add, not edit
+  //     setConfirmDialogOpen(true);
+  //   } else {
+  //     setEdittingId('');
+  //     setFormDataAddEmployee(CreateEmployeeRequestSchema.parse({}));
+  //     handleOpenDialog();
+  //   }
+  // };
+
+  const handleAdd = useCallback(() => {
+    const freshForm = CreateEmployeeRequestSchema.parse({});
+    setFormDataAddEmployee(freshForm);
+    localStorage.setItem('unsavedEmployeeData', JSON.stringify(freshForm));
+    setPendingEditId(null);
+    handleOpenDialog();
+  }, []);
 
   const handleEdit = (id: string) => {
     const editing = localStorage.getItem('unsavedEmployeeData');
     if (editing) {
       const parsed = JSON.parse(editing);
       if (parsed.id === id) {
+        setFormDataAddEmployee(parsed);
         handleOpenDialog();
       } else {
         console.log('ID tidak cocok');
@@ -231,19 +252,22 @@ const Content = () => {
   };
 
   const handleConfirmEdit = () => {
+    // setConfirmDialogOpen(false);
+    // if (pendingEditId) {
+    //   // Edit existing site
+    //   setFormDataAddEmployee(
+    //     tableData.find((item) => item.id === pendingEditId) ||
+    //       CreateEmployeeRequestSchema.parse({}),
+    //   );
+    // } else {
+    //   // Add new site
+    //   setFormDataAddEmployee(CreateEmployeeRequestSchema.parse({}));
+    //   handleCloseDialog();
+    // }
+    // // handleOpenDialog();
+    // setPendingEditId(null);
+    handleCloseDialog();
     setConfirmDialogOpen(false);
-    if (pendingEditId) {
-      // Edit existing site
-      setFormDataAddEmployee(
-        tableData.find((item) => item.id === pendingEditId) ||
-          CreateEmployeeRequestSchema.parse({}),
-      );
-    } else {
-      // Add new site
-      setFormDataAddEmployee(CreateEmployeeRequestSchema.parse({}));
-    }
-    handleOpenDialog();
-    setPendingEditId(null);
   };
 
   const handleCancelEdit = () => {
@@ -258,7 +282,7 @@ const Content = () => {
         <Box>
           <Grid container spacing={3}>
             {/* column */}
-            <Grid size={{ xs: 12, lg: 12 }}>
+            <Grid size={{ xs: 12, lg: 4 }}>
               <TopCard items={cards} />
             </Grid>
             {/* column */}
@@ -298,7 +322,13 @@ const Content = () => {
           Add Employee
           <IconButton
             aria-label="close"
-            onClick={handleCloseDialog}
+            onClick={() => {
+              if (isFormChanged) {
+                setConfirmDialogOpen(true);
+              } else {
+                handleCloseDialog(); // langsung tutup kalau tidak ada perubahan
+              }
+            }}
             sx={{
               position: 'absolute',
               right: 8,

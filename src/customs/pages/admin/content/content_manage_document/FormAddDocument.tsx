@@ -148,7 +148,7 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
             <Alert severity={alertType}>{alertMessage}</Alert>
           </Grid2>
           <Grid2 size={6}>
-            <CustomFormLabel htmlFor="name">Department Name :</CustomFormLabel>
+            <CustomFormLabel htmlFor="name">Department Name</CustomFormLabel>
             <CustomTextField
               id="name"
               value={formData.name}
