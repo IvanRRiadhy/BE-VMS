@@ -16,7 +16,7 @@ interface FormUpdateDistrictProps {
 
 const FormUpdateDistrict: React.FC<FormUpdateDistrictProps> = ({ data, onSuccess }) => {
   const [name, setName] = useState('');
-  const [host, setHost] = useState('');
+  // const [host, setHost] = useState('');
   const [code, setCode] = useState('');
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -32,7 +32,7 @@ const FormUpdateDistrict: React.FC<FormUpdateDistrictProps> = ({ data, onSuccess
   useEffect(() => {
     if (data) {
       setName(data.name || '');
-      setHost(data.host || '');
+      // setHost(data.host || '');
       setCode(data.code || '');
     }
   }, [data]);
@@ -55,7 +55,7 @@ const FormUpdateDistrict: React.FC<FormUpdateDistrictProps> = ({ data, onSuccess
         return;
       }
 
-      await updateDistrict(data.id, { name, host, code }, token);
+      await updateDistrict(data.id, { name, code }, token);
 
       setAlertType('success');
       setAlertMessage('District updated successfully.');
@@ -76,7 +76,9 @@ const FormUpdateDistrict: React.FC<FormUpdateDistrictProps> = ({ data, onSuccess
         setAlertMessage('Complete the following data properly and correctly');
       }, 3000);
     } finally {
-      setLoading(false);
+      setTimeout(() => {
+        setLoading(false);
+      }, 800);
     }
   };
 
@@ -94,17 +96,17 @@ const FormUpdateDistrict: React.FC<FormUpdateDistrictProps> = ({ data, onSuccess
         <CustomTextField
           id="name"
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
           error={Boolean(errors.name)}
           helperText={
-            errors.name || 'You have to make sure that the name of this district is true.'
+            errors.name || 'You have to make sure that the name of this department is true.'
           }
-          fullWidth
           variant="outlined"
+          fullWidth
         />
 
         {/* Host */}
-        <CustomFormLabel htmlFor="host" sx={{ my: 1, mx: 1 }}>
+        {/* <CustomFormLabel htmlFor="host" sx={{ my: 1, mx: 1 }}>
           <Typography variant="caption">District Host</Typography>
         </CustomFormLabel>
         <CustomTextField
@@ -117,22 +119,25 @@ const FormUpdateDistrict: React.FC<FormUpdateDistrictProps> = ({ data, onSuccess
           }
           fullWidth
           variant="outlined"
-        />
+        /> */}
 
         {/* Code */}
         <CustomFormLabel htmlFor="code" sx={{ my: 1, mx: 1 }}>
           <Typography variant="caption">District Code</Typography>
         </CustomFormLabel>
+        <CustomFormLabel htmlFor="code" sx={{ my: 1, mx: 1 }}>
+          <Typography variant="caption">Department Code</Typography>
+        </CustomFormLabel>
         <CustomTextField
           id="code"
           value={code}
-          onChange={(e) => setCode(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCode(e.target.value)}
           error={Boolean(errors.code)}
           helperText={
-            errors.code || 'You have to make sure that the code of this district is true.'
+            errors.code || 'You have to make sure that the code of this department is true.'
           }
-          fullWidth
           variant="outlined"
+          fullWidth
         />
 
         <Button sx={{ mt: 2 }} color="primary" variant="contained" type="submit">

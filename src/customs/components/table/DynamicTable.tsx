@@ -58,6 +58,7 @@ type DynamicTableProps<T extends { id: string | number }> = {
   isHaveFilterDuration?: boolean;
   isHaveAddData?: boolean;
   isHaveHeader?: boolean;
+  isHaveImage?: string;
   isHaveBooleanSwitch?: boolean;
   headerContent?: HeaderContent;
   defaultSelectedHeaderItem?: string;
@@ -94,6 +95,7 @@ export function DynamicTable<T extends { id: string | number }>({
   isHaveAddData = false,
   isHaveHeader = false,
   isHaveBooleanSwitch = false,
+  isHaveImage,
   headerContent,
   defaultSelectedHeaderItem,
   isHavePagination,
@@ -127,10 +129,16 @@ export function DynamicTable<T extends { id: string | number }>({
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(defaultRowsPerPage || 10);
 
-  if (!data || data.length === 0) {
-    return <div>Tidak ada data</div>;
-  }
-  const columns = Object.keys(data[0]).filter((k) => k !== 'id') as Extract<keyof T, string>[];
+  // if (!data || data.length === 0) {
+  //   return <div>Tidak ada data</div>;
+  // }
+
+  const columns =
+    data.length > 0
+      ? (Object.keys(data[0]).filter((k) => k !== 'id') as Extract<keyof T, string>[])
+      : [];
+
+  // const columns = Object.keys(data[0]).filter((k) => k !== 'id') as Extract<keyof T, string>[];
 
   const handleCheckAll = (event: React.ChangeEvent<HTMLInputElement>) => {
     const currentPageIds = paginatedData.map((row) => row.id);
@@ -187,6 +195,12 @@ export function DynamicTable<T extends { id: string | number }>({
   };
 
   const paginatedData = isHavePagination ? data : data;
+
+  const toTitleCase = (text: string) => {
+    return text
+      .replace(/_/g, ' ') // ganti underscore jadi spasi
+      .replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1)); // kapital di setiap kata
+  };
 
   // end -----------
   return (
@@ -310,7 +324,9 @@ export function DynamicTable<T extends { id: string | number }>({
                     <Grid2 size={{ xs: 1, lg: 1 }}>
                       <Button
                         variant="contained"
-                        onClick={handleSearch}
+                        onClick={
+                          handleSearch // panggil fungsi kamu
+                        }
                         sx={{
                           height: 36,
                           width: '100%',
@@ -424,7 +440,7 @@ export function DynamicTable<T extends { id: string | number }>({
                       {columns.map((col) => (
                         <MenuItem key={col} value={col}>
                           <Typography fontSize={'0.7rem'} variant="caption">
-                            {col.toLowerCase()}
+                            {toTitleCase(col)}
                           </Typography>
                         </MenuItem>
                       ))}{' '}
@@ -471,157 +487,200 @@ export function DynamicTable<T extends { id: string | number }>({
             )}
           </Grid2>
           <TableContainer>
-            <Table
-              aria-label="simple table"
-              sx={{ minWidth, whiteSpace: 'nowrap' }}
-              stickyHeader={stickyHeader}
-            >
-              <TableHead>
-                <TableRow>
-                  {isHaveChecked && (
-                    <TableCell
-                      padding="checkbox"
-                      sx={{ position: 'sticky', left: 0, zIndex: 2, background: 'white' }}
-                    >
-                      <Checkbox
-                        indeterminate={
-                          paginatedData.some((row) => checkedIds.includes(row.id)) &&
-                          !paginatedData.every((row) => checkedIds.includes(row.id))
-                        }
-                        checked={
-                          paginatedData.length > 0 &&
-                          paginatedData.every((row) => checkedIds.includes(row.id))
-                        }
-                        onChange={handleCheckAll}
-                      />
-                    </TableCell>
-                  )}
-                  <TableCell
+            {paginatedData.length === 0 ? (
+              <Table>
+                <TableHead>
+                  <TableRow
                     sx={{
-                      position: 'sticky',
-                      left: isHaveChecked ? 40 : 0, // 48px is the width of the checkbox cell
-                      zIndex: 2,
-                      background: 'white',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
                     }}
-                  ></TableCell>
-                  {columns.map((col) => (
-                    <TableCell key={col}>
-                      {col
-                        .replace(/_/g, ' ') // Replace underscores with spaces
-                        .replace(/\b\w/g, (char) => char.toUpperCase())}{' '}
-                      {/* Uppercase first letter of each word */}
-                    </TableCell>
-                  ))}
-                  {isHaveAction && (
+                  >
                     <TableCell
-                      sx={{ position: 'sticky', right: 0, background: 'white', zIndex: 2 }}
+                      colSpan={
+                        columns.length +
+                        (isHaveChecked ? 1 : 0) + // checkbox
+                        1 + // NO
+                        (isHaveAction ? 1 : 0) // action
+                      }
+                      sx={{ padding: 0 }} // hilangkan padding agar Box bekerja optimal
                     >
-                      Action
+                      <Box
+                        height={50}
+                        width="100%"
+                        display="flex"
+                        justifyContent="center"
+                        alignItems="center"
+                        sx={{
+                          fontSize: '0.9rem',
+                          color: 'text.secondary',
+                        }}
+                      >
+                        Tidak ada data
+                      </Box>
                     </TableCell>
-                  )}
-                </TableRow>
-              </TableHead>
-
-              <TableBody>
-                {paginatedData.map((row, index) => (
-                  <TableRow key={row.id}>
+                  </TableRow>
+                </TableHead>
+              </Table>
+            ) : (
+              <Table
+                aria-label="simple table"
+                sx={{ minWidth, whiteSpace: 'nowrap' }}
+                stickyHeader={stickyHeader}
+              >
+                <TableHead>
+                  <TableRow>
                     {isHaveChecked && (
                       <TableCell
                         padding="checkbox"
                         sx={{ position: 'sticky', left: 0, zIndex: 2, background: 'white' }}
                       >
                         <Checkbox
-                          checked={checkedIds.includes(row.id)}
-                          onChange={handleCheckRow(row.id)}
+                          indeterminate={
+                            paginatedData.some((row) => checkedIds.includes(row.id)) &&
+                            !paginatedData.every((row) => checkedIds.includes(row.id))
+                          }
+                          checked={
+                            paginatedData.length > 0 &&
+                            paginatedData.every((row) => checkedIds.includes(row.id))
+                          }
+                          onChange={handleCheckAll}
                         />
                       </TableCell>
                     )}
                     <TableCell
                       sx={{
                         position: 'sticky',
-                        left: isHaveChecked ? 40 : 0,
+                        left: isHaveChecked ? 40 : 0, // 48px is the width of the checkbox cell
+                        zIndex: 2,
                         background: 'white',
-                        zIndex: 1,
                       }}
-                    >
-                      {index + 1}
-                    </TableCell>
+                    ></TableCell>
                     {columns.map((col) => (
                       <TableCell key={col}>
-                        {isHaveBooleanSwitch && typeof row[col] === 'boolean' ? (
-                          <Switch
-                            checked={row[col] as boolean}
-                            onChange={(_, checked) => onBooleanSwitchChange?.(row.id, col, checked)}
-                            color="primary"
-                            size="small"
-                          />
-                        ) : (
-                          String(row[col])
-                        )}
+                        {col
+                          .replace(/_/g, ' ') // Replace underscores with spaces
+                          .replace(/\b\w/g, (char) => char.toUpperCase())}{' '}
+                        {/* Uppercase first letter of each word */}
                       </TableCell>
                     ))}
                     {isHaveAction && (
                       <TableCell
-                        sx={{
-                          position: 'sticky',
-                          right: 0,
-                          background: 'white',
-                          zIndex: 2,
-                          display: 'flex',
-                          gap: 1,
-                          alignItems: 'center',
-                        }}
+                        sx={{ position: 'sticky', right: 0, background: 'white', zIndex: 2 }}
                       >
-                        <Box display="flex" alignItems="end">
-                          {/* Tombol Edit (Primary, Kecil) */}
-                          <Tooltip title="Edit">
-                            <IconButton
-                              onClick={() => onEdit?.(row)}
-                              disableRipple
-                              sx={{
-                                color: 'white',
-                                backgroundColor: 'primary.main',
-
-                                width: 28,
-                                height: 28,
-                                padding: 0.5,
-                                borderRadius: '50%',
-                              }}
-                            >
-                              <IconPencil width={14} height={14} />
-                            </IconButton>
-                          </Tooltip>
-
-                          {/* Spacer */}
-                          <Box mx={0.5} />
-
-                          {/* Tombol Delete (Merah, Kecil) */}
-                          <Tooltip title="Delete">
-                            <IconButton
-                              onClick={() => onDelete?.(row)}
-                              disableRipple
-                              sx={{
-                                color: 'white',
-                                backgroundColor: 'error.main',
-                                width: 28,
-                                height: 28,
-                                padding: 0.5,
-                                borderRadius: '50%',
-                              }}
-                            >
-                              <IconTrash width={14} height={14} />
-                            </IconButton>
-                          </Tooltip>
-                        </Box>
+                        Action
                       </TableCell>
                     )}
                   </TableRow>
-                ))}
-              </TableBody>
-              {/* <TableFooter>
+                </TableHead>
+
+                <TableBody>
+                  {paginatedData.map((row, index) => (
+                    <TableRow key={row.id}>
+                      {isHaveChecked && (
+                        <TableCell
+                          padding="checkbox"
+                          sx={{ position: 'sticky', left: 0, zIndex: 2, background: 'white' }}
+                        >
+                          <Checkbox
+                            checked={checkedIds.includes(row.id)}
+                            onChange={handleCheckRow(row.id)}
+                          />
+                        </TableCell>
+                      )}
+                      <TableCell
+                        sx={{
+                          position: 'sticky',
+                          left: isHaveChecked ? 40 : 0,
+                          background: 'white',
+                          zIndex: 1,
+                        }}
+                      >
+                        {index + 1}
+                      </TableCell>
+                      {/* <TableCell>
+                      <> {isHaveImage && <img src={} />} </> 
+                    </TableCell> */}
+                      {columns.map((col) => (
+                        <TableCell key={col}>
+                          {isHaveBooleanSwitch && typeof row[col] === 'boolean' ? (
+                            <Switch
+                              checked={row[col] as boolean}
+                              onChange={(_, checked) =>
+                                onBooleanSwitchChange?.(row.id, col, checked)
+                              }
+                              color="primary"
+                              size="small"
+                            />
+                          ) : (
+                            String(row[col])
+                          )}
+                        </TableCell>
+                      ))}
+                      {isHaveAction && (
+                        <TableCell
+                          sx={{
+                            position: 'sticky',
+                            right: 0,
+                            background: 'white',
+                            zIndex: 2,
+                            display: 'flex',
+                            gap: 1,
+                            alignItems: 'center',
+                          }}
+                        >
+                          <Box display="flex" alignItems="end">
+                            {/* Tombol Edit (Primary, Kecil) */}
+                            <Tooltip title="Edit">
+                              <IconButton
+                                onClick={() => onEdit?.(row)}
+                                disableRipple
+                                sx={{
+                                  color: 'white',
+                                  backgroundColor: 'primary.main',
+
+                                  width: 28,
+                                  height: 28,
+                                  padding: 0.5,
+                                  borderRadius: '50%',
+                                }}
+                              >
+                                <IconPencil width={14} height={14} />
+                              </IconButton>
+                            </Tooltip>
+
+                            {/* Spacer */}
+                            <Box mx={0.5} />
+
+                            {/* Tombol Delete (Merah, Kecil) */}
+                            <Tooltip title="Delete">
+                              <IconButton
+                                onClick={() => onDelete?.(row)}
+                                disableRipple
+                                sx={{
+                                  color: 'white',
+                                  backgroundColor: 'error.main',
+                                  width: 28,
+                                  height: 28,
+                                  padding: 0.5,
+                                  borderRadius: '50%',
+                                }}
+                              >
+                                <IconTrash width={14} height={14} />
+                              </IconButton>
+                            </Tooltip>
+                          </Box>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
+                </TableBody>
+                {/* <TableFooter>
                 <TableRow></TableRow>
               </TableFooter> */}
-            </Table>
+              </Table>
+            )}
           </TableContainer>
           {isHavePagination && (
             <TablePagination

@@ -106,9 +106,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
 
   const [document, setDocument] = useState<any[]>([]);
 
-  const handleBack = () => setActiveStep((prev) => prev - 1);
-  const handleReset = () => setActiveStep(0);
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     console.log(id, value);
@@ -153,9 +150,9 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         return;
       }
 
-      const transformedSections = sectionsData.map((section, id) => ({
-        sort: id,
-        name: newSectionName,
+      const transformedSections = sectionsData.map((section) => ({
+        sort: section.sort,
+        name: section.name,
         status: 1,
         form_visitor: Object.values(section.form_visitor || {}),
         pra_form_visitor: Object.values(section.pra_form_visitor || {}),
@@ -187,57 +184,11 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         setAlertMessage('Complete the following data properly and correctly');
       }, 3000);
     } finally {
-      setLoading(false);
+      setTimeout(() => {
+        setLoading(false);
+      }, 800);
     }
   };
-
-  // const renderDetailRows = (
-  //   details: FormVisitorTypes[],
-  //   onChange: (index: number, field: keyof FormVisitorTypes, value: any) => void,
-  //   onDelete?: (key: string) => void,
-  //   showMandatory = true,
-  // ) =>
-  //   Object.entries(details || {}).map(([key, value]: any) => (
-  //     <TableRow key={key}>
-  //       <TableCell>
-  //         {/* {key === 'short_name' ? 'Short Name' : key.charAt(0).toUpperCase() + key.slice(1)} */}
-  //         <TextField
-  //           size="small"
-  //           value={value.short_name}
-  //           onChange={(e) => onChange(key, 'short_name', e.target.value)}
-  //         />
-  //       </TableCell>
-  //       <TableCell>
-  //         <TextField
-  //           size="small"
-  //           value={value.long_display_text}
-  //           onChange={(e) => onChange(key, 'long_display_text', e.target.value)}
-  //         />
-  //       </TableCell>
-  //       <TableCell align="center">
-  //         <Switch
-  //           checked={!!value.is_enable}
-  //           onChange={(_, checked) => onChange(key, 'is_enable', checked)}
-  //         />
-  //       </TableCell>
-  //       {showMandatory && (
-  //         <TableCell align="center">
-  //           <Switch
-  //             checked={!!value.mandatory}
-  //             onChange={(_, checked) => onChange(key, 'mandatory', checked)}
-  //           />
-  //         </TableCell>
-  //       )}
-  //       {onDelete && (
-  //         <TableCell align="center">
-  //           <IconButton onClick={() => onDelete(key)} size="small">
-  //             <IconTrash fontSize="small" />
-  //           </IconButton>
-  //         </TableCell>
-  //       )}
-  //     </TableRow>
-  //   ));
-
   const renderDetailRows = (
     details: FormVisitorTypes[] | any,
     onChange: (index: number, field: keyof FormVisitorTypes, value: any) => void,
@@ -344,29 +295,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     );
   };
 
-  // const handleAddDetail = (sectionKey: SectionKey) => {
-  //   const newKey = `field_${Date.now()}`; // nama unik, misalnya field_1723456789
-
-  //   setSectionsData((prev) =>
-  //     prev.map((section, index) => {
-  //       if (index === activeStep - 1) {
-  //         return {
-  //           ...section,
-  //           [sectionKey]: {
-  //             ...section[sectionKey],
-  //             [newKey]: {
-  //               display: '',
-  //               status: true,
-  //               mandatory: false,
-  //             },
-  //           },
-  //         };
-  //       }
-  //       return section;
-  //     }),
-  //   );
-  // };
-
   const handleDetailChange = (
     sectionKey: SectionKey,
     index: number,
@@ -415,101 +343,34 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     );
   };
 
-  // const handleDetailChange = (
-  //   section: 'signinDetails' | 'signOutDetails' | 'adminFields',
-  //   key: string,
-  //   field: string,
-  //   value: any,
-  // ) => {
-  //   setFormData((prev) => ({
-  //     ...prev,
-  //     [section]: {
-  //       // ...((prev[section] as Record<string, any>) || {}),
-  //       [key]: {
-  //         // ...(prev[section] as Record<string, any>)?.[key],
-  //         [field]: value,
-  //       },
-  //     },
-  //   }));
-  // };
-
-  // const handleAddDetail = (section: 'signinDetails' | 'signOutDetails' | 'adminFields') => {
-  //   const newKey = window.prompt('Enter field key (e.g. department):');
-  //   if (!newKey) return;
-  //   setFormData((prev) => ({
-  //     ...prev,
-  //     [section]: {
-  //       // ...prev[section],
-  //       [newKey]: {
-  //         display: '',
-  //         status: true,
-  //         mandatory: true,
-  //       },
-  //     },
-  //   }));
-  // };
-
-  // const handleDeleteDetail = (
-  //   section: 'signinDetails' | 'signOutDetails' | 'adminFields',
-  //   key: string,
-  // ) => {
-  //   // setFormData((prev) => {
-  //   //   const updated = { ...prev[section] } as { [key: string]: any };
-  //   //   delete updated[key];
-  //   //   return { ...prev, [section]: updated };
-  //   // });
-  // };
-
-  // const handleAddStepSection = () => {
-  //   const newIndex = dynamicSteps.length + 1;
-  //   const newStepKey = `section_${newIndex}`;
-  //   setDynamicSteps((prev) => [...prev, newStepKey]);
-  //   setFormData((prev) => ({
-  //     ...prev,
-  //     dynamicSections: {
-  //       ...prev.dynamicSections,
-  //       [newStepKey]: {
-  //         signinDetails: {},
-  //         adminFields: {},
-  //         signOutDetails: {},
-  //       },
-  //     },
-  //   }));
-  // };
-
-  const [dynamicSteps, setDynamicSteps] = useState<string[]>([]);
   const [newSectionName, setNewSectionName] = useState('');
   const [sectionsData, setSectionsData] = useState<SectionPageVisitorType[]>([]);
   const [openModal, setOpenModal] = useState(false);
   const handleAddSection = () => {
     if (newSectionName.trim() !== '') {
-      const updatedSteps = [...dynamicSteps, newSectionName];
+      const newSection = {
+        sort: sectionsData.length, // ini opsional, bisa diatur ulang nanti
+        name: newSectionName, // ✅ WAJIB diset di sini
+        status: 1,
+        form_visitor: [],
+        pra_form_visitor: [],
+        signout_form_visitor: [],
+      };
 
-      setDynamicSteps(updatedSteps);
-      setSectionsData((prev) => [
-        ...prev,
-        {
-          id: '',
-          sort: 0,
-          name: '',
-          status: 1,
-          sectionName: newSectionName,
-          form_visitor: [],
-          pra_form_visitor: [],
-          signout_form_visitor: [],
-        },
-      ]);
-
-      // setNewSectionName('');
+      setSectionsData((prev) => [...prev, newSection]);
+      setDynamicSteps((prev) => [...prev, newSectionName]);
       setOpenModal(false);
-
-      // Langsung pindah ke step baru (karena Visitor Type Info = index 0)
-      // setActiveStep(updatedSteps.length);
+      setNewSectionName('');
     }
   };
 
   const staticStep = 'Visitor Type Info';
-  const [draggableSteps, setDraggableSteps] = useState([...dynamicSteps]);
+  const [dynamicSteps, setDynamicSteps] = useState<string[]>([]);
+  const [draggableSteps, setDraggableSteps] = useState<string[]>([]);
+
+  useEffect(() => {
+    setDraggableSteps([...dynamicSteps]);
+  }, [dynamicSteps]);
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
 
@@ -517,27 +378,26 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     const [moved] = reordered.splice(result.source.index, 1);
     reordered.splice(result.destination.index, 0, moved);
     setDraggableSteps(reordered);
+
+    // 🔁 Reorder sectionsData sesuai urutan baru draggableSteps
+    const reorderedSections = reordered.map((sectionName, index) => {
+      const matchedSection = sectionsData.find((s) => s.name === sectionName);
+      return {
+        ...matchedSection!,
+        sort: index, // update nilai sort berdasarkan urutan baru
+      };
+    });
+
+    setSectionsData(reorderedSections);
   };
-  // const handleDragEnd = (result: DropResult) => {
-  //   const { source, destination } = result;
-  //   if (!destination) return;
-
-  //   // Jangan ubah urutan kalau posisi sama
-  //   if (source.index === destination.index) return;
-
-  //   const updated = Array.from(dynamicSteps);
-  //   const [removed] = updated.splice(source.index, 1);
-  //   updated.splice(destination.index, 0, removed);
-  //   setDynamicSteps(updated);
-  // };
 
   const StepContent = (step: number) => {
     if (step === 0) {
       return (
         <Grid container spacing={2} sx={{ mb: 2 }}>
-          <Grid size={12}>
+          {/* <Grid size={12}>
             <Alert severity={alertType}>{alertMessage}</Alert>
-          </Grid>
+          </Grid> */}
           <Grid size={6}>
             <CustomFormLabel htmlFor="visitor-type" sx={{ mt: 1 }}>
               Name
@@ -636,7 +496,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
               inputProps={{ min: 0 }}
             />
           </Grid>
-          <Grid size={6}>
+          <Grid size={12}>
             <CustomFormLabel htmlFor="grace_time" sx={{ mt: 1 }}>
               Grace Time
             </CustomFormLabel>
@@ -651,20 +511,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
               inputProps={{ min: 0 }}
             />
           </Grid>
-          {/* <Grid size={6}>
-            <CustomFormLabel htmlFor="site_visitor_types" sx={{ mt: 1 }}>
-              Site Visitor Type
-            </CustomFormLabel>
-            <CustomTextField
-              id="site_visitor_types"
-              value={formData.site_visitor_types}
-              onChange={handleChange}
-              error={Boolean(errors.site_visitor_types)}
-              helperText={errors.site_visitor_types || ''}
-              fullWidth
-              inputProps={{ min: 0 }}
-            />
-          </Grid> */}
           {/* <br /> */}
           <Grid size={3} mt={1}>
             <FormControl component="fieldset">
@@ -1028,43 +874,12 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
   const isFinalStep = activeStep === allSteps.length - 1;
   return (
     <>
-      {/* <DragDropContext onDragEnd={handleDragEnd}>
-  <Droppable droppableId="stepper" direction="horizontal">
-    {(provided) => (
-      <Stepper
-        activeStep={activeStep}
-        ref={provided.innerRef}
-        {...provided.droppableProps}
-        alternativeLabel
-      >
-        <Step key="Personal Info">
-          <StepLabel>Personal Info</StepLabel>
-        </Step>
-
-        {stepsOrder
-          .slice(1)
-          .map((label, index) => (
-            <Draggable key={label} draggableId={label} index={index + 1}>
-              {(provided) => (
-                <Step
-                  ref={provided.innerRef}
-                  {...provided.draggableProps}
-                  {...provided.dragHandleProps}
-                >
-                  <StepLabel>{label}</StepLabel>
-                </Step>
-              )}
-            </Draggable>
-          ))}
-
-        {provided.placeholder}
-      </Stepper>
-    )}
-  </Droppable>
-</DragDropContext> */}
       <form onSubmit={handleOnSubmit}>
+        <Grid size={12}>
+          <Alert severity={alertType}>{alertMessage}</Alert>
+        </Grid>
         <Box width="100%">
-          <DragDropContext onDragEnd={handleDragEnd}>
+          {/* <DragDropContext onDragEnd={handleDragEnd}>
             <Droppable droppableId="steps" direction="horizontal">
               {(provided: any) => (
                 <Stepper
@@ -1073,12 +888,10 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                   ref={provided.innerRef}
                   {...provided.droppableProps}
                 >
-                  {/* Static Step */}
                   <Step key={staticStep}>
                     <StepLabel>{staticStep}</StepLabel>
                   </Step>
 
-                  {/* Draggable Steps */}
                   {draggableSteps.map((label, index) => (
                     <Draggable key={label} draggableId={label} index={index}>
                       {(provided: any) => (
@@ -1095,6 +908,104 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
 
                   {provided.placeholder}
                 </Stepper>
+              )}
+            </Droppable>
+          </DragDropContext> */}
+
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <Droppable droppableId="stepper" direction="horizontal">
+              {(provided) => (
+                <div
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    padding: '16px 0',
+                  }}
+                >
+                  <Stepper
+                    activeStep={activeStep}
+                    alternativeLabel
+                    sx={{
+                      width: '100%',
+                      '& .MuiStepLabel-label': {
+                        fontSize: '0.875rem',
+                      },
+                      '& .MuiStepIcon-root.Mui-active': {
+                        color: 'primary.main',
+                      },
+                      '& .MuiStepIcon-root.Mui-completed': {
+                        color: 'primary.main',
+                      },
+                    }}
+                  >
+                    {/* Static Step Pertama */}
+                    <Step key="Visitor Type Info">
+                      <StepLabel
+                        sx={{
+                          fontWeight: activeStep === 0 ? 'bold' : 'normal',
+                          color: activeStep === 0 ? 'primary.main' : 'text.secondary',
+                        }}
+                      >
+                        Visitor Type Info
+                      </StepLabel>
+                    </Step>
+
+                    {/* Dynamic Draggable Steps */}
+                    {draggableSteps.map((label, index) => (
+                      <Draggable key={label} draggableId={label} index={index}>
+                        {(provided, snapshot) => (
+                          <Step
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            sx={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              mx: 1,
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                backgroundColor: snapshot.isDragging ? '#1976d2' : '#e3f2fd',
+                                color: snapshot.isDragging ? '#fff' : '#000',
+                                width: 30,
+                                height: 30,
+                                borderRadius: '50%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                mb: 0.5,
+                                fontWeight: 'bold',
+                                border: snapshot.isDragging
+                                  ? '2px solid #1976d2'
+                                  : '1px solid #90caf9',
+                                transition: 'all 0.2s ease',
+                                marginRight: -2,
+                              }}
+                            >
+                              {index + 2}
+                            </Box>
+                            <StepLabel
+                              sx={{
+                                fontSize: '0.875rem',
+                                fontWeight: activeStep === index + 1 ? 'bold' : 'normal',
+                                color: activeStep === index + 1 ? 'primary.main' : 'text.secondary',
+                                textAlign: 'center',
+                                px: 1,
+                              }}
+                            >
+                              {label}
+                            </StepLabel>
+                          </Step>
+                        )}
+                      </Draggable>
+                    ))}
+                  </Stepper>
+                  {provided.placeholder}
+                </div>
               )}
             </Droppable>
           </DragDropContext>

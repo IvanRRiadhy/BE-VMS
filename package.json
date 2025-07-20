@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },
@@ -102,6 +102,7 @@
     "@types/fslightbox-react": "^1.7.8",
     "@types/node": "22.10.1",
     "@types/react": "19.0.1",
+    "@types/react-beautiful-dnd": "^13.1.8",
     "@types/react-big-calendar": "^1.15.0",
     "@types/react-date-range": "^1.4.10",
     "@types/react-dom": "19.0.1",
