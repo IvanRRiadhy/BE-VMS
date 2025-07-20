@@ -38,9 +38,14 @@ import {
   getAllDistricts,
   getAllDistrictsPagination,
   getAllEmployeePagination,
+  getAllEmployeePaginationFilterMore,
   getAllOrganizations,
   getAllOrganizatiosPagination,
+  getAllEmployee,
+  deleteEmployee,
 } from 'src/customs/api/admin';
+
+import Swal from 'sweetalert2';
 
 const Content = () => {
   // Pagination state.
@@ -55,6 +60,7 @@ const Content = () => {
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [edittingId, setEdittingId] = useState('');
+  const [searchKeyword, setSearchKeyword] = useState('');
   const cards = [
     {
       title: 'Total Employee',
@@ -71,11 +77,24 @@ const Content = () => {
       setLoading(true);
       try {
         const start = page * rowsPerPage;
-        const response = await getAllEmployeePagination(token, start, rowsPerPage, sortColumn);
+        const responseGetAll = await getAllEmployee(token);
+        const responseAllFilterMore = await getAllEmployeePaginationFilterMore(
+          token,
+          start,
+          99,
+          sortColumn,
+        );
+
+        const response = await getAllEmployeePagination(
+          token,
+          start,
+          length,
+          sortColumn,
+          searchKeyword,
+        );
         const organization = await getAllOrganizatiosPagination(token, start, 99, sortColumn);
         const department = await getAllDepartmentsPagination(token, start, 99, sortColumn);
         const district = await getAllDistrictsPagination(token, start, 99, sortColumn);
-        console.log('Response from API:', response);
         if (response && organization && department && district) {
           const orgMap = (organization.collection ?? []).reduce(
             (acc: Record<string, string>, org: any) => {
@@ -121,64 +140,8 @@ const Content = () => {
     };
     fetchData();
     // console.log('Fetching data: ', tableData);
-  }, [token, page, rowsPerPage, sortColumn, refreshTrigger]);
+  }, [token, page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword]);
 
-  const tableRowEmployees = [
-    {
-      id: 1,
-      Name: 'Ahmad Pratama',
-      Organization: 'Tech Nusantara',
-      Card: 'EMP-TN-001',
-      Email: 'ahmad.pratama@technusantara.com',
-      Phone: '+62 812 3456 7890',
-      Gender: 'Male',
-    },
-    {
-      id: 2,
-      Name: 'Siti Aisyah',
-      Organization: 'Inovasi Digital',
-      Card: 'EMP-ID-002',
-      Email: 'siti.aisyah@inovasidigital.id',
-      Phone: '+62 813 2233 4455',
-      Gender: 'Female',
-    },
-    {
-      id: 3,
-      Name: 'Budi Santoso',
-      Organization: 'Smart Retail',
-      Card: 'EMP-SR-003',
-      Email: 'budi.santoso@smartretail.co.id',
-      Phone: '+62 814 7788 9900',
-      Gender: 'Male',
-    },
-    {
-      id: 4,
-      Name: 'Dewi Lestari',
-      Organization: 'GoLogistik',
-      Card: 'EMP-GL-004',
-      Email: 'dewi.lestari@gologistik.co.id',
-      Phone: '+62 812 3344 5566',
-      Gender: 'Female',
-    },
-    {
-      id: 5,
-      Name: 'Fajar Nugroho',
-      Organization: 'EduPrime',
-      Card: 'EMP-EP-005',
-      Email: 'fajar.nugroho@eduprime.com',
-      Phone: '+62 815 6677 8899',
-      Gender: 'Male',
-    },
-    {
-      id: 6,
-      Name: 'Indah Permata',
-      Organization: 'AgroTech',
-      Card: 'EMP-AT-006',
-      Email: 'indah.permata@agrotech.id',
-      Phone: '+62 816 9900 1122',
-      Gender: 'Female',
-    },
-  ];
   const [formDataAddEmployee, setFormDataAddEmployee] = React.useState<CreateEmployeeRequest>(
     () => {
       const saved = localStorage.getItem('unsavedEmployeeData');
@@ -276,6 +239,46 @@ const Content = () => {
     setPendingEditId(null);
   };
 
+  const handleDelete = async (id: string) => {
+    if (!token) return;
+
+    Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, delete it!',
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        setLoading(true);
+        try {
+          setLoading(true);
+          await deleteEmployee(id, token);
+
+          setRefreshTrigger((prev) => prev + 1);
+          Swal.fire({
+            title: 'Deleted!',
+            text: 'Your file has been deleted.',
+            icon: 'success',
+          });
+        } catch (error) {
+          console.error(error);
+          Swal.fire({
+            title: 'Error!',
+            text: 'Something went wrong while deleting.',
+            icon: 'error',
+          });
+        } finally {
+          setTimeout(() => {
+            setLoading(false);
+          }, 500);
+        }
+      }
+    });
+  };
+
   return (
     <>
       <PageContainer title="Manage Employee" description="this is Dashboard page">
@@ -306,8 +309,8 @@ const Content = () => {
                   handleEdit(row.id);
                   setEdittingId(row.id);
                 }}
-                onDelete={(row) => console.log('Delete:', row)}
-                onSearchKeywordChange={(keyword) => console.log('Search keyword:', keyword)}
+                onDelete={(row) => handleDelete(row.id)}
+                onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
                 onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
                 onAddData={() => {
                   handleAdd();

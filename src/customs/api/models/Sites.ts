@@ -20,8 +20,6 @@ export type Item = {
   need_document: boolean;
 }
 
-/*************  ✨ Windsurf Command ⭐  *************/
-/*******  02ced495-63e9-4dad-9087-f26af3bd76ad  *******/
 export function generateKeyCode(): string {
     return crypto.randomUUID();
 }
@@ -125,3 +123,12 @@ export interface UpdateSiteResponse {
     msg: string;
     collection: Item | null;
 }
+
+
+export type DeleteSiteResponse<T = any> = {
+    status: string;
+    status_code: number;
+    title: string;
+    msg: string;
+    collection: T | null;
+  };

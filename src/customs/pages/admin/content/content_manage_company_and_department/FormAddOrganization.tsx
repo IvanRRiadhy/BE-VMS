@@ -11,7 +11,7 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 interface CreateOrganizationRequest {
   name: string;
   code: string;
-  host: string;
+  // host: string;
 }
 
 interface FormAddOrganizationProps {
@@ -75,7 +75,9 @@ const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({
         setAlertMessage('Complete the following data properly and correctly');
       }, 3000);
     } finally {
-      setLoading(false);
+      setTimeout(() => {
+        setLoading(false);
+      }, 800);
     }
   };
 
@@ -111,7 +113,7 @@ const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({
           fullWidth
           variant="outlined"
         />
-
+        {/* 
         <CustomFormLabel htmlFor="host" sx={{ my: 1, mx: 1 }}>
           <Typography variant="caption">Organization Host</Typography>
         </CustomFormLabel>
@@ -123,7 +125,7 @@ const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({
           helperText={errors.host || 'You have to make sure that the host of this company is true.'}
           fullWidth
           variant="outlined"
-        />
+        /> */}
 
         <Button sx={{ mt: 2 }} color="primary" variant="contained" type="submit" disabled={loading}>
           {loading ? 'Submitting...' : 'Submit'}

@@ -4,7 +4,7 @@ import { z } from 'zod';
 export interface UpdateOrganizationRequest {
   code: string;
   name: string;
-  host: string;
+  // host: string;
 }
 
 export interface UpdateOrganizationResponse {
@@ -61,7 +61,7 @@ export type GetAllOrgaizationsPaginationResponse = {
 export const CreateOrganizationSchema = z.object({
   code: z.string().default(''),
   name: z.string().default(''),
-  host: z.string().default(''),
+  // host: z.string().default(''),
 });
 
 export type CreateOrganizationRequest = z.infer<typeof CreateOrganizationSchema>;

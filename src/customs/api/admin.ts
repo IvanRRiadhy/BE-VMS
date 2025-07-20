@@ -32,6 +32,7 @@ import {
   GetAllEmployeePaginationResponse,
   UpdateEmployeeRequest,
   UpdateEmployeeResponse,
+  DeleteEmployeeResponse,
 } from './models/Employee';
 import {
   CreateDocumentRequest,
@@ -48,6 +49,7 @@ import {
   UpdateSiteRequest,
   UpdateSiteResponse,
   UploadImageSiteResponse,
+  DeleteSiteResponse,
 } from './models/Sites';
 import {
   CreateSiteDocumentRequest,
@@ -98,27 +100,29 @@ export const getAllVisitorTypePagination = async (
   start: number,
   length: number,
   sortColumn: string,
-  gender?: number,
-  joinStart?: string,
-  joinEnd?: string,
-  exitStart?: string,
-  exitEnd?: string,
-  isHead?: boolean,
-  document?: string,
+  keyword: string = '',
+  // gender?: number,
+  // joinStart?: string,
+  // joinEnd?: string,
+  // exitStart?: string,
+  // exitEnd?: string,
+  // isHead?: boolean,
+  // document?: string,
 ): Promise<GetAllVisitorTypePaginationResponse> => {
   const params: Record<string, any> = {
     start,
     length,
     sort_column: sortColumn,
+    'search[value]': keyword, // ← ini diperbaiki!
   };
 
-  if (gender) params.gender = gender;
-  if (joinStart) params.join_start = joinStart;
-  if (joinEnd) params.join_end = joinEnd;
-  if (exitStart) params.exit_start = exitStart;
-  if (exitEnd) params.exit_end = exitEnd;
-  if (isHead) params.is_head = isHead;
-  if (document) params.document = document;
+  // if (gender) params.gender = gender;
+  // if (joinStart) params.join_start = joinStart;
+  // if (joinEnd) params.join_end = joinEnd;
+  // if (exitStart) params.exit_start = exitStart;
+  // if (exitEnd) params.exit_end = exitEnd;
+  // if (isHead) params.is_head = isHead;
+  // if (document) params.document = document;
 
   const response = await axiosInstance.get(`/visitor-type/dt`, {
     params,
@@ -177,9 +181,15 @@ export const getAllDistrictsPagination = async (
   start: number,
   length: number,
   sortColumn: string,
+  keyword: string = '',
 ): Promise<GetAllDistrictsPaginationResponse> => {
   const response = await axiosInstance.get(`/district/dt`, {
-    params: { start, length, sort_column: sortColumn },
+    params: {
+      start,
+      length,
+      sort_column: sortColumn,
+      'search[value]': keyword, // ← ini yang bikin search jalan
+    },
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });
   return response.data;
@@ -243,9 +253,10 @@ export const getAllDepartmentsPagination = async (
   start: number,
   length: number,
   sortColumn: string,
+  keyword: string = '',
 ): Promise<GetAllDepartmetsPaginationResponse> => {
   const response = await axiosInstance.get(`/department/dt`, {
-    params: { start, length, sort_column: sortColumn },
+    params: { start, length, sort_column: sortColumn, 'search[value]': keyword },
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });
   return response.data;
@@ -308,13 +319,15 @@ export const getAllOrganizatiosPagination = async (
   start: number,
   length: number,
   sortColumn: string,
+  keyword: string = '',
 ): Promise<GetAllOrgaizationsPaginationResponse> => {
   const response = await axiosInstance.get(`/organization/dt`, {
-    params: { start, length, sort_column: sortColumn },
+    params: { start, length, sort_column: sortColumn, 'search[value]': keyword },
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });
   return response.data;
 };
+
 export const updateOrganization = async (
   organizationId: string,
   data: UpdateOrganizationRequest,
@@ -408,7 +421,36 @@ export const updateDocument = async (
 //#endregion
 
 //#region Employee API
+
+export const getAllEmployee = async (token: string): Promise<GetAllEmployeePaginationResponse> => {
+  const response = await axiosInstance.get(`/employee`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
 export const getAllEmployeePagination = async (
+  token: string,
+  start: number,
+  length: number,
+  sortColumn: string,
+  keyword: string = '',
+): Promise<GetAllEmployeePaginationResponse> => {
+  const params: Record<string, any> = {
+    start,
+    length,
+    sort_column: sortColumn,
+    'search[value]': keyword, // ← ini diperbaiki!
+  };
+
+  const response = await axiosInstance.get(`/employee/dt`, {
+    params,
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  return response.data;
+};
+
+export const getAllEmployeePaginationFilterMore = async (
   token: string,
   start: number,
   length: number,
@@ -484,6 +526,16 @@ export const updateEmployee = async (
     throw error;
   }
 };
+
+export const deleteEmployee = async (
+  employeeId: string,
+  token: string,
+): Promise<DeleteEmployeeResponse> => {
+  const response = await axiosInstance.delete(`/employee/${employeeId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
 //#endregion
 
 //#region Site API
@@ -492,12 +544,13 @@ export const getAllSitePagination = async (
   start: number,
   length: number,
   sortColumn: string,
+  keyword: string = '',
 ): Promise<GetAllSitesPaginationResponse> => {
   const response = await axiosInstance.get(`/site/dt`, {
-    params: { start, length, sort_column: sortColumn },
+    params: { start, length, sort_column: sortColumn, 'search[value]': keyword },
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });
-  console.log(response.data);
+  // console.log(response.data);
   return response.data;
 };
 
@@ -541,6 +594,16 @@ export const updateSite = async (
     }
     throw error;
   }
+};
+
+export const deleteSiteSpace = async (
+  siteId: string,
+  token: string,
+): Promise<DeleteSiteResponse> => {
+  const response = await axiosInstance.delete(`/site/${siteId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
 };
 
 export const uploadImageSite = async (
