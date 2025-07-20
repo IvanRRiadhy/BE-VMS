@@ -68,7 +68,9 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
         setAlertMessage('Complete the following data properly and correctly');
       }, 3000);
     } finally {
-      setLoading(false);
+      setTimeout(() => {
+        setLoading(false);
+      }, 800);
     }
   };
 
@@ -105,7 +107,7 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
           variant="outlined"
         />
 
-        <CustomFormLabel htmlFor="host" sx={{ my: 1, mx: 1 }}>
+        {/* <CustomFormLabel htmlFor="host" sx={{ my: 1, mx: 1 }}>
           <Typography variant="caption">Department Host</Typography>
         </CustomFormLabel>
         <CustomTextField
@@ -116,7 +118,7 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
           helperText={errors.host || 'You have to make sure that the host is correct.'}
           fullWidth
           variant="outlined"
-        />
+        /> */}
 
         <Button sx={{ mt: 2 }} color="primary" variant="contained" type="submit" disabled={loading}>
           {loading ? 'Submitting...' : 'Submit'}

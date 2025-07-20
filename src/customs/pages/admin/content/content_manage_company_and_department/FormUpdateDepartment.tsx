@@ -16,13 +16,13 @@ interface FormUpdateDepartmentProps {
 
 const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({ data, onSuccess }) => {
   const [name, setName] = useState('');
-  const [host, setHost] = useState('');
+  // const [host, setHost] = useState('');
   const [code, setCode] = useState('');
 
   useEffect(() => {
     if (data) {
       setName(data.name || '');
-      setHost(data.host || '');
+      // setHost(data.host || '');
       setCode(data.code || '');
     }
   }, [data]);
@@ -54,7 +54,7 @@ const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({ data, onSuc
         data.id,
         {
           name,
-          host,
+          // host,
           code,
         },
         token,
@@ -78,7 +78,9 @@ const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({ data, onSuc
         setAlertMessage('Complete the following data properly and correctly');
       }, 3000);
     } finally {
-      setLoading(false);
+      setTimeout(() => {
+        setLoading(false);
+      }, 800);
     }
   };
 
@@ -111,7 +113,7 @@ const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({ data, onSuc
         />
 
         {/* Host */}
-        <CustomFormLabel htmlFor="host" sx={{ my: 1, mx: 1 }}>
+        {/* <CustomFormLabel htmlFor="host" sx={{ my: 1, mx: 1 }}>
           <Typography variant="caption">Department Host</Typography>
         </CustomFormLabel>
         <CustomTextField
@@ -124,7 +126,7 @@ const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({ data, onSuc
           }
           variant="outlined"
           fullWidth
-        />
+        /> */}
 
         {/* Code */}
         <CustomFormLabel htmlFor="code" sx={{ my: 1, mx: 1 }}>

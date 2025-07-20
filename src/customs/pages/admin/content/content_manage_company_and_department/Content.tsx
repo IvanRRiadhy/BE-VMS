@@ -45,11 +45,33 @@ import {
 } from 'src/customs/api/models/Organization';
 
 const Content = () => {
+  const [totals, setTotals] = useState({
+    organization: 0,
+    department: 0,
+    district: 0,
+  });
+
   const cards = [
-    { title: 'Total Organization', subTitle: '10', subTitleSetting: 10, color: 'none' },
-    { title: 'Total Department', subTitle: '3', subTitleSetting: 3, color: 'none' },
-    { title: 'Total Disctrict', subTitle: '92', subTitleSetting: 92, color: 'none' },
+    {
+      title: 'Total Organization',
+      subTitle: totals.organization.toString(),
+      subTitleSetting: totals.organization,
+      color: 'none',
+    },
+    {
+      title: 'Total Department',
+      subTitle: totals.department.toString(),
+      subTitleSetting: totals.department,
+      color: 'none',
+    },
+    {
+      title: 'Total District',
+      subTitle: totals.district.toString(),
+      subTitleSetting: totals.district,
+      color: 'none',
+    },
   ];
+
   const [selectedType, setSelectedType] = useState('organization');
   const [openFormType, setOpenFormType] = useState<
     'Organizations' | 'Departments' | 'Districts' | null
@@ -83,6 +105,7 @@ const Content = () => {
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [searchKeyword, setSearchKeyword] = useState('');
 
   // Fetch table data when pagination or type changes
   useEffect(() => {
@@ -97,12 +120,30 @@ const Content = () => {
         if (selectedType === 'organization') {
           console.log('fetch sukses');
 
-          response = await getAllOrganizatiosPagination(token, start, rowsPerPage, sortColumn);
+          response = await getAllOrganizatiosPagination(
+            token,
+            start,
+            rowsPerPage,
+            sortColumn,
+            searchKeyword,
+          );
           console.log(response);
         } else if (selectedType === 'department') {
-          response = await getAllDepartmentsPagination(token, start, rowsPerPage, sortColumn);
+          response = await getAllDepartmentsPagination(
+            token,
+            start,
+            rowsPerPage,
+            sortColumn,
+            searchKeyword,
+          );
         } else if (selectedType === 'district') {
-          response = await getAllDistrictsPagination(token, start, rowsPerPage, sortColumn);
+          response = await getAllDistrictsPagination(
+            token,
+            start,
+            rowsPerPage,
+            sortColumn,
+            searchKeyword,
+          );
         }
 
         if (response) {
@@ -117,8 +158,29 @@ const Content = () => {
       }
     };
 
+    fetchTotals();
     fetchData();
-  }, [token, selectedType, page, rowsPerPage, sortColumn, refreshTrigger]);
+  }, [token, selectedType, page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword]);
+
+  const fetchTotals = async () => {
+    if (!token) return;
+
+    try {
+      const [orgRes, depRes, distRes] = await Promise.all([
+        getAllOrganizatiosPagination(token, 0, 1, 'id'),
+        getAllDepartmentsPagination(token, 0, 1, 'id'),
+        getAllDistrictsPagination(token, 0, 1, 'id'),
+      ]);
+
+      setTotals({
+        organization: orgRes.RecordsTotal,
+        department: depRes.RecordsTotal,
+        district: distRes.RecordsTotal,
+      });
+    } catch (error) {
+      console.error('Failed to fetch totals:', error);
+    }
+  };
 
   const [editDialogType, setEditDialogType] = useState<
     'Organizations' | 'Departments' | 'Districts' | null
@@ -211,6 +273,13 @@ const Content = () => {
     },
   );
 
+  // const [filteredData, setFilteredData] = useState(data);
+
+  // const handleKeywordChange = (keyword: string) => {
+  //   const result = data.filter((item) => item.name.toLowerCase().includes(keyword.toLowerCase()));
+  //   setFilteredData(result);
+  // };
+
   const defaultFormData = CreateOrganizationSchema.parse({});
   const isFormChanged = JSON.stringify(formDataAddOrganization) !== JSON.stringify(defaultFormData);
 
@@ -277,7 +346,7 @@ const Content = () => {
                       setEditingRow(row);
                     }}
                     onDelete={(row) => handleDelete(row.id, selectedType)}
-                    onSearchKeywordChange={(keyword) => console.log('Search keyword:', keyword)}
+                    onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
                     onAddData={() => {
                       if (selectedType === 'organization') {
                         setOpenFormType('Organizations');
@@ -442,7 +511,20 @@ const Content = () => {
         </DialogTitle>
         <DialogContent>
           <br />
-          <FormUpdateOrganization />
+          <FormUpdateOrganization
+            data={editingRow}
+            onSuccess={() => {
+              handleCloseDialog();
+              setTimeout(() => {
+                Swal.fire({
+                  title: 'Upadate Successfully!',
+                  text: 'Organization data update successfully.',
+                  icon: 'success',
+                });
+              }, 500);
+              setRefreshTrigger((prev) => prev + 1);
+            }}
+          />
         </DialogContent>
       </Dialog>
 

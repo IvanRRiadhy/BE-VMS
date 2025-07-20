@@ -65,7 +65,9 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({ formData, setFormData
         setAlertMessage('Complete the following data properly and correctly');
       }, 3000);
     } finally {
-      setLoading(false);
+      setTimeout(() => {
+        setLoading(false);
+      }, 800);
     }
   };
 
@@ -109,7 +111,7 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({ formData, setFormData
         />
 
         {/* Host */}
-        <CustomFormLabel htmlFor="host" sx={{ my: 1, mx: 1 }}>
+        {/* <CustomFormLabel htmlFor="host" sx={{ my: 1, mx: 1 }}>
           <Typography variant="caption">District Host</Typography>
         </CustomFormLabel>
         <CustomTextField
@@ -122,7 +124,7 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({ formData, setFormData
           }
           variant="outlined"
           fullWidth
-        />
+        /> */}
 
         <Button sx={{ mt: 2 }} color="primary" variant="contained" type="submit" disabled={loading}>
           {loading ? 'Submitting...' : 'Submit'}

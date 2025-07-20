@@ -24,7 +24,8 @@ import {
 } from 'src/customs/api/models/Sites';
 import { uniqueId } from 'lodash';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { getAllSitePagination } from 'src/customs/api/admin';
+import { deleteSiteSpace, getAllSitePagination } from 'src/customs/api/admin';
+import Swal from 'sweetalert2';
 
 type SiteTableRow = {
   id: string;
@@ -47,26 +48,7 @@ const Content = () => {
   const [tableRowSite, setTableRowSite] = React.useState<SiteTableRow[]>([]);
   const [edittingId, setEdittingId] = useState('');
   const dialogRef = useRef<HTMLDivElement | null>(null);
-
-  const siteData: Item[] = [
-    {
-      id: '123',
-      type: 0,
-      name: 'Museum Nasional',
-      description: 'Sebuah Jalan',
-      image: '/site/aa7aebf1-24da-49de-b53f-edbb7d6f62c1.png',
-      can_visited: true,
-      need_approval: false,
-      type_approval: 0,
-      can_signout: true,
-      auto_signout: true,
-      signout_time: '12:00:00',
-      timezone: userTimeZone,
-      map_link: '',
-      can_contactless_login: true,
-      need_document: false,
-    },
-  ];
+  const [searchKeyword, setSearchKeyword] = useState('');
 
   const [formDataAddSite, setFormDataAddSite] = React.useState<Item>(() => {
     const saved = localStorage.getItem('unsavedSiteForm');
@@ -85,7 +67,13 @@ const Content = () => {
       setLoading(true);
       try {
         const start = page * rowsPerPage;
-        const response = await getAllSitePagination(token, start, rowsPerPage, sortColumn);
+        const response = await getAllSitePagination(
+          token,
+          start,
+          rowsPerPage,
+          sortColumn,
+          searchKeyword,
+        );
         console.log('Response from API:', response);
         setTableData(response.collection);
         setTotalRecords(response.RecordsTotal);
@@ -107,7 +95,7 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, sortColumn, refreshTrigger]);
+  }, [token, page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword]);
 
   useEffect(() => {
     localStorage.setItem('unsavedSiteForm', JSON.stringify(formDataAddSite));
@@ -146,7 +134,7 @@ const Content = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [openFormCreateSiteSpace, isFormChanged]);
-  
+
   const handleOpenDialog = () => {
     setOpenFormCreateSiteSpace(true);
   };
@@ -224,6 +212,40 @@ const Content = () => {
     setPendingEditId(null);
   };
 
+  const handleDelete = async (id: string) => {
+    if (!token) return;
+
+    Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, delete it!',
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await deleteSiteSpace(id, token);
+
+          setRefreshTrigger((prev) => prev + 1);
+          Swal.fire({
+            title: 'Deleted!',
+            text: 'Your file has been deleted.',
+            icon: 'success',
+          });
+        } catch (error) {
+          console.error(error);
+          Swal.fire({
+            title: 'Error!',
+            text: 'Something went wrong while deleting.',
+            icon: 'error',
+          });
+        }
+      }
+    });
+  };
+
   // --------------
   return (
     <>
@@ -261,8 +283,8 @@ const Content = () => {
                   handleEdit(row.id);
                   setEdittingId(row.id);
                 }}
-                onDelete={(row) => console.log('Delete:', row)}
-                onSearchKeywordChange={(keyword) => console.log('Search keyword:', keyword)}
+                onDelete={(row) => handleDelete(row.id)}
+                onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
                 onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
                 onAddData={() => {
                   handleAdd();

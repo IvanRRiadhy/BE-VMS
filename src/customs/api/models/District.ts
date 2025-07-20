@@ -4,7 +4,7 @@ import { z } from 'zod';
 export interface UpdateDistrictRequest {
   code: string;
   name: string;
-  host: string;
+  // host: string;
 }
 
 export interface UpdateDistrictResponse {
@@ -42,7 +42,7 @@ export type DeleteDistrictResponse<T = any> = {
 export type Item = {
   code: string;
   name: string;
-  host: string;
+  // host: string;
   id: string;
 };
 
@@ -62,7 +62,7 @@ export type GetAllDistrictsPaginationResponse = {
 export const CreateDistrictSchema = z.object({
   code: z.string().default(''),
   name: z.string().default(''),
-  host: z.string().default(''),
+  // host: z.string().default(''),
 });
 
 export type CreateDistrictRequest = z.infer<typeof CreateDistrictSchema>;

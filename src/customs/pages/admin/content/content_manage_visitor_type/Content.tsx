@@ -6,6 +6,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  CircularProgress,
   Divider,
   Grid2 as Grid,
   IconButton,
@@ -28,9 +29,13 @@ import {
   getAllVisitorTypePagination,
   getAllDocumentPagination,
   updateVisitorType,
+  deleteVisitorType,
 } from 'src/customs/api/admin';
 
 import { UpdateVisitorTypeRequest } from 'src/customs/api/models/VisitorType';
+import Swal from 'sweetalert2';
+
+import { useRef } from 'react';
 
 type VisitorTypeTableRow = {
   id: string;
@@ -48,142 +53,7 @@ type VisitorTypeTableRow = {
   simple_period: boolean;
 };
 
-import { useRef } from 'react';
-
 const Content = () => {
-  // const visitorTypeData: Item[] = [
-  //   {
-  //     id: '123',
-  //     show_in_form: true,
-  //     visitor_Type: 'Contractor',
-  //     document: '{KTP}',
-  //     need_Photo: true,
-  //     print_Badge: false,
-  //     wifiCred: true,
-  //     captureVisitorId: true,
-  //     show_Ipad: true,
-  //     videoURL: '',
-  //     welcomeMessage: 'Welcome to Bio Experience',
-  //     watchlistMessage: 'Ngapain Hayoo??!?',
-  //     customBadge: '',
-  //     signinDetails: {
-  //       fullName: {
-  //         display: 'Enter Your Full Name',
-  //         status: true,
-  //         mandatory: true,
-  //       },
-  //       email: {
-  //         display: 'Enter Your Email',
-  //         status: true,
-  //         mandatory: true,
-  //       },
-  //       host: {
-  //         display: 'Who is inviting you?',
-  //         status: true,
-  //         mandatory: true,
-  //       },
-  //       company: {
-  //         display: 'Enter Your Company Name',
-  //         status: true,
-  //         mandatory: true,
-  //       },
-  //       phoneNumber: {
-  //         display: 'Enter Your Phone Number',
-  //         status: true,
-  //         mandatory: true,
-  //       },
-  //     },
-  //     signOutDetails: {},
-  //     adminFields: {},
-  //   },
-  //   {
-  //     id: '124',
-  //     show_in_form: true,
-  //     visitor_Type: 'Family Member',
-  //     document: '{Kartu Keluarga, KTP}',
-  //     need_Photo: true,
-  //     print_Badge: false,
-  //     wifiCred: true,
-  //     captureVisitorId: true,
-  //     show_Ipad: false,
-  //     videoURL: '',
-  //     welcomeMessage: 'Welcome to Bio Experience',
-  //     watchlistMessage: 'Ngapain Hayoo??!?',
-  //     customBadge: '',
-  //     signinDetails: {
-  //       fullName: {
-  //         display: 'Enter Your Full Name',
-  //         status: true,
-  //         mandatory: true,
-  //       },
-  //       email: {
-  //         display: 'Enter Your Email',
-  //         status: true,
-  //         mandatory: true,
-  //       },
-  //       host: {
-  //         display: 'Which Employee is your family?',
-  //         status: true,
-  //         mandatory: true,
-  //       },
-  //       company: {
-  //         display: 'Enter Your Company Name',
-  //         status: true,
-  //         mandatory: true,
-  //       },
-  //       phoneNumber: {
-  //         display: 'Enter Your Phone Number',
-  //         status: true,
-  //         mandatory: true,
-  //       },
-  //     },
-  //     signOutDetails: {},
-  //     adminFields: {},
-  //   },
-  //   {
-  //     id: '125',
-  //     visitor_Type: 'Tukang',
-  //     document: '{KTP}',
-  //     need_Photo: true,
-  //     print_Badge: false,
-  //     wifiCred: false,
-  //     captureVisitorId: false,
-  //     show_Ipad: false,
-  //     videoURL: '',
-  //     welcomeMessage: 'Welcome to Bio Experience',
-  //     watchlistMessage: 'Ngapain Hayoo??!?',
-  //     customBadge: '',
-  //     signinDetails: {
-  //       fullName: {
-  //         display: 'Enter Your Full Name',
-  //         status: true,
-  //         mandatory: true,
-  //       },
-  //       email: {
-  //         display: 'Enter Your Email',
-  //         status: true,
-  //         mandatory: true,
-  //       },
-  //       host: {
-  //         display: 'Who is inviting you?',
-  //         status: true,
-  //         mandatory: true,
-  //       },
-  //       company: {
-  //         display: 'Enter Your Company Name',
-  //         status: true,
-  //         mandatory: true,
-  //       },
-  //       phoneNumber: {
-  //         display: 'Enter Your Phone Number',
-  //         status: true,
-  //         mandatory: true,
-  //       },
-  //     },
-  //     signOutDetails: {},
-  //     adminFields: {},
-  //   },
-  // ];
   const { token } = useSession();
   const [visitorData, setVisitorData] = useState<Item[]>([]);
   const [page, setPage] = useState(0);
@@ -195,33 +65,7 @@ const Content = () => {
   const [tableRowVisitorType, setTableRowVisitorType] = React.useState<VisitorTypeTableRow[]>([]);
 
   const [isDataReady, setIsDataReady] = useState(false);
-  // const visitorTypeData: Item[] = [
-  //   {
-  //     id: '123',
-  //     name: 'Contractor',
-  //     description: 'Contractor visitors',
-  //     show_in_form: true,
-  //     duration_visit: 30,
-  //     max_time_visit: 120,
-  //     can_parking: true,
-  //     can_access: true,
-  //     add_to_menu: true,
-  //     need_document: true,
-  //     grace_time: 10,
-  //     direct_visit: true,
-  //     period: 1,
-  //     can_notification_arrival: true,
-  //     is_primary: false,
-  //     is_enable: true,
-  //     vip: false,
-  //     simple_visitor: false,
-  //     simple_period: false,
-  //     site_visitor_types: null,
-  //     visitor_type_documents: [],
-  //     section_page_visitor_types: [],
-  //   },
-  //   // Tambah data lainnya sesuai format di atas
-  // ];
+
   const [formDataAddVisitorType, setFormDataAddVisitorType] = useState<CreateVisitorTypeRequest>(
     () => {
       const saved = localStorage.getItem('unsavedVisitorTypeData');
@@ -236,6 +80,7 @@ const Content = () => {
   const [confirmDialogOpen, setConfirmDialogOpen] = React.useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
   const [openFormCreateSiteSpace, setOpenFormCreateSiteSpace] = React.useState(false);
+  const [searchKeyword, setSearchKeyword] = useState('');
   const dialogRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -271,7 +116,13 @@ const Content = () => {
       setLoading(true);
       try {
         const start = page * rowsPerPage;
-        const response = await getAllVisitorTypePagination(token, start, rowsPerPage, sortColumn);
+        const response = await getAllVisitorTypePagination(
+          token,
+          start,
+          rowsPerPage,
+          sortColumn,
+          searchKeyword,
+        );
         const document = await getAllDocumentPagination(token, start, 99, sortColumn);
         console.log('Response from API:', response);
         if (response && document) {
@@ -282,6 +133,7 @@ const Content = () => {
             },
             {},
           );
+          setVisitorData(response.collection);
           const rows = response.collection.map((item) => ({
             id: item.id,
             name: item.name,
@@ -297,11 +149,14 @@ const Content = () => {
             period: item.period,
             simple_visitor: item.simple_visitor,
             simple_period: item.simple_period,
-            // status: item.settings.status === true ? 'Active' : 'Inactive',
+            can_notification_arrival: item.can_notification_arrival,
+            is_primary: item.is_primary,
+            is_enable: item.is_enable,
           }));
           // setTableData(mappedDocument);
           setTotalRecords(response.RecordsTotal);
           setIsDataReady(true);
+
           setTableRowVisitorType(rows);
         }
       } catch (error) {
@@ -312,7 +167,7 @@ const Content = () => {
     };
     fetchData();
     // console.log('Fetching data: ', tableData);
-  }, [token, page, rowsPerPage, sortColumn, refreshTrigger]);
+  }, [token, page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword]);
 
   const handleOpenDialog = () => {
     setOpenFormCreateVisitorType(true);
@@ -321,33 +176,24 @@ const Content = () => {
     // localStorage.removeItem('unsavedVisitorTypeData'); // Pastikan dihapus hanya saat keluar
     setOpenFormCreateVisitorType(false);
   };
-  // const handleAdd = () => {
-  //   const editing = localStorage.getItem('unsavedVisitorTypeData');
-  //   if (editing) {
-  //     // If editing exists, show confirmation dialog for add
-  //     setPendingEditId(null); // null means it's an add, not edit
-  //     setConfirmDialogOpen(true);
-  //   } else {
-  //     setFormDataAddVisitorType(CreateVisitorTypeRequestSchema.parse({}));
-  //     handleOpenDialog();
-  //   }
-  // };
-  // const [initialFormData, setInitialFormData] = useState<formDataAddVisitorType | null>(null);
 
   const handleAdd = useCallback(() => {
     const freshForm = CreateVisitorTypeRequestSchema.parse({});
+    setEdittingId('');
     setFormDataAddVisitorType(freshForm);
     localStorage.setItem('unsavedVisitorTypeData', JSON.stringify(freshForm));
     setPendingEditId(null);
     handleOpenDialog();
-    // handleOpenDialog();
   }, []);
 
   const handleEdit = (id: string) => {
-    const editing = localStorage.getItem('unsavedVisitorTypeData');
+    console.log('Editing ID:', id);
 
     const existing = visitorData.find((item) => item.id === id);
-    if (!existing) return;
+    if (!existing) {
+      console.warn('No visitor data found for ID:', id);
+      return;
+    }
 
     const parsed = CreateVisitorTypeRequestSchema.parse({
       name: existing.name,
@@ -372,21 +218,23 @@ const Content = () => {
       section_page_visitor_types: existing.section_page_visitor_types ?? [],
     });
 
-    if (editing) {
-      const editingData = JSON.parse(editing);
-      if (editingData.id === id) {
-        setFormDataAddVisitorType(parsed);
-        handleOpenDialog(); // ✅ BUKA FORM SETELAH DATA DISET
-      } else {
+    const editingLocal = localStorage.getItem('unsavedVisitorTypeData');
+
+    if (editingLocal) {
+      const editingData = JSON.parse(editingLocal);
+      if (editingData.id && editingData.id !== id) {
+        console.log('Editing different item than unsaved one. Prompt confirmation.');
         setPendingEditId(id);
         setConfirmDialogOpen(true);
+        return;
       }
-    } else {
-      setFormDataAddVisitorType(parsed);
-      handleOpenDialog(); // ✅ BUKA FORM SETELAH DATA DISET
     }
 
+    // ✅ Ini penting: set edittingId agar title dialog bisa menunjukkan mode Edit
+    setEdittingId(id);
+    setFormDataAddVisitorType(parsed);
     localStorage.setItem('unsavedVisitorTypeData', JSON.stringify({ id, ...parsed }));
+    handleOpenDialog();
   };
 
   // setConfirmDialogOpen(false);
@@ -406,8 +254,43 @@ const Content = () => {
 
   const handleConfirmEdit = () => {
     setConfirmDialogOpen(false);
-    handleCloseDialog();
-    setPendingEditId(null);
+
+    if (pendingEditId) {
+      const nextItem = visitorData.find((item) => item.id === pendingEditId);
+      if (!nextItem) return;
+
+      const parsed = CreateVisitorTypeRequestSchema.parse({
+        name: nextItem.name,
+        description: nextItem.description,
+        show_in_form: nextItem.show_in_form,
+        duration_visit: nextItem.duration_visit,
+        max_time_visit: nextItem.max_time_visit,
+        can_parking: nextItem.can_parking,
+        can_access: nextItem.can_access,
+        add_to_menu: nextItem.add_to_menu,
+        need_document: nextItem.need_document,
+        grace_time: nextItem.grace_time,
+        direct_visit: nextItem.direct_visit,
+        period: nextItem.period,
+        can_notification_arrival: nextItem.can_notification_arrival,
+        is_primary: nextItem.is_primary,
+        is_enable: nextItem.is_enable,
+        vip: nextItem.vip,
+        simple_visitor: nextItem.simple_visitor,
+        simple_period: nextItem.simple_period,
+        visitor_type_documents: nextItem.visitor_type_documents ?? null,
+        section_page_visitor_types: nextItem.section_page_visitor_types ?? [],
+      });
+
+      setEdittingId(pendingEditId);
+      setFormDataAddVisitorType(parsed);
+      localStorage.setItem(
+        'unsavedVisitorTypeData',
+        JSON.stringify({ id: pendingEditId, ...parsed }),
+      );
+      setPendingEditId(null);
+      handleOpenDialog();
+    }
   };
 
   const handleCancelEdit = () => {
@@ -415,11 +298,6 @@ const Content = () => {
     setPendingEditId(null);
   };
 
-  // const handleBooleanSwitch = (rowId: string, col: keyof VisitorTypeTableRow, checked: boolean) => {
-  //   setTableRowVisitorType((prev) =>
-  //     prev.map((row) => (row.id === rowId ? { ...row, [col]: checked } : row)),
-  //   );
-  // };
   const removeEmptyArrays = (obj: Record<string, any>) => {
     return Object.fromEntries(
       Object.entries(obj).filter(([_, value]) => !Array.isArray(value) || value.length > 0),
@@ -435,17 +313,11 @@ const Content = () => {
     if (!token || !row) return;
 
     try {
+      setLoading(true);
       const updatedData: UpdateVisitorTypeRequest = updateVisitorTypeSchmea.parse({
         ...row,
         [col]: checked,
       });
-
-      // // Filter array kosong agar tidak dikirim
-      // const filteredData = removeEmptyArrays(rawData);
-
-      // const updatedData: UpdateVisitorTypeRequest = updateVisitorTypeSchmea.parse(filteredData);
-
-      console.log(updatedData);
       await updateVisitorType(token, rowId, updatedData);
 
       setTableRowVisitorType((prev) =>
@@ -453,7 +325,51 @@ const Content = () => {
       );
     } catch (error) {
       console.error('Error updating data:', error);
+    } finally {
+      setTimeout(() => {
+        setLoading(false);
+      }, 800);
     }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!token) return;
+
+    Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, delete it!',
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        setLoading(true);
+        try {
+          setLoading(true);
+          await deleteVisitorType(token, id);
+
+          setRefreshTrigger((prev) => prev + 1);
+          Swal.fire({
+            title: 'Deleted!',
+            text: 'Your file has been deleted.',
+            icon: 'success',
+          });
+        } catch (error) {
+          console.error(error);
+          Swal.fire({
+            title: 'Error!',
+            text: 'Something went wrong while deleting.',
+            icon: 'error',
+          });
+        } finally {
+          setTimeout(() => {
+            setLoading(false);
+          }, 500);
+        }
+      }
+    });
   };
   return (
     <>
@@ -481,12 +397,10 @@ const Content = () => {
                 isHaveBooleanSwitch={true}
                 onCheckedChange={(selected) => console.log('Checked table row:', selected)}
                 onEdit={(row) => {
-                  console.log('Edit clicked:', row); // 👈 Tambahkan ini
                   handleEdit(row.id);
-                  // setEdittingId(row.id);
                 }}
-                onDelete={(row) => console.log('Delete:', row)}
-                onSearchKeywordChange={(keyword) => console.log('Search keyword:', keyword)}
+                onDelete={(row) => handleDelete(row.id)}
+                onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
                 onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
                 onAddData={() => {
                   handleAdd();
@@ -558,6 +472,25 @@ const Content = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {loading && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            bgcolor: 'rgba(0,0,0,0.4)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 10,
+          }}
+        >
+          <CircularProgress color="inherit" />
+        </Box>
+      )}
     </>
   );
 };
