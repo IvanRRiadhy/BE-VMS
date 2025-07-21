@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   Box,
   Dialog,
@@ -16,7 +16,11 @@ import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import CloseIcon from '@mui/icons-material/Close';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { getAllCustomField, getAllCustomFieldPagination } from 'src/customs/api/admin';
+import {
+  getAllCustomField,
+  getAllCustomFieldPagination,
+  deleteCustomField,
+} from 'src/customs/api/admin';
 import {
   CreateCustomFieldRequest,
   Item,
@@ -26,6 +30,7 @@ import {
   CreateCustomFieldRequestSchema,
 } from 'src/customs/api/models/CustomField';
 import FormCustomField from './FormCustomField';
+import Swal from 'sweetalert2';
 
 type CustomFieldTableRow = {
   id: string;
@@ -49,14 +54,21 @@ const Content = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [tableRowSite, setTableRowSite] = React.useState<CustomFieldTableRow[]>([]);
   const [edittingId, setEdittingId] = useState('');
+  const [searchKeyword, setSearchKeyword] = useState('');
+
   useEffect(() => {
     if (!token) return;
     const fetchData = async () => {
-      console.log('Fetching data...');
       setLoading(true);
       try {
         const start = page * rowsPerPage;
-        const response = await getAllCustomFieldPagination(token, start, rowsPerPage, sortColumn);
+        const response = await getAllCustomFieldPagination(
+          token,
+          start,
+          rowsPerPage,
+          sortColumn,
+          searchKeyword,
+        );
         console.log('Response from API:', response);
         setTableData(response.collection);
         setTotalRecords(response.RecordsTotal);
@@ -79,16 +91,49 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, sortColumn, refreshTrigger]);
+  }, [token, page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword]);
   const [formDataAddCustomField, setFormDataAddCustomField] = useState<CreateCustomFieldRequest>(
     () => {
       const saved = localStorage.getItem('unsavedCustomDataData');
       return saved ? JSON.parse(saved) : {};
     },
   );
+  const defaultFormData = CreateCustomFieldRequestSchema.parse({});
+  const isFormChanged = JSON.stringify(formDataAddCustomField) !== JSON.stringify(defaultFormData);
+
+  // useEffect(() => {
+  //   localStorage.setItem('unsavedCustomDataData', JSON.stringify(formDataAddCustomField));
+  // }, [formDataAddCustomField]);
+
   useEffect(() => {
-    localStorage.setItem('unsavedCustomDataData', JSON.stringify(formDataAddCustomField));
+    const defaultForm = CreateCustomFieldRequestSchema.parse({});
+    const isChanged = JSON.stringify(formDataAddCustomField) !== JSON.stringify(defaultForm);
+
+    if (isChanged) {
+      localStorage.setItem('unsavedCustomDataData', JSON.stringify(formDataAddCustomField));
+    }
   }, [formDataAddCustomField]);
+
+  useEffect(() => {
+    const handleMouseLeave = (e: MouseEvent) => {
+      if (dialogRef.current && !dialogRef.current.contains(e.relatedTarget as Node)) {
+        if (isFormChanged) {
+          setConfirmDialogOpen(true);
+        }
+      }
+    };
+
+    const dialogEl = dialogRef.current;
+    if (dialogEl) {
+      dialogEl.addEventListener('mouseleave', handleMouseLeave);
+    }
+
+    return () => {
+      if (dialogEl) {
+        dialogEl.removeEventListener('mouseleave', handleMouseLeave);
+      }
+    };
+  }, [isFormChanged]);
 
   const cards = [
     {
@@ -102,6 +147,7 @@ const Content = () => {
   const [openCreateCustomField, setOpenCreateCustomField] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   const handleOpenDialog = () => {
     setOpenCreateCustomField(true);
@@ -136,34 +182,72 @@ const Content = () => {
       );
       handleOpenDialog();
     }
-    console.log('Form data:', edittingId);
   };
-
   const handleConfirmEdit = () => {
-    setConfirmDialogOpen(false);
+    setConfirmDialogOpen(false); // Tutup dulu dialog konfirmasi
+    localStorage.removeItem('unsavedCustomDataData'); // Bersihkan data tersimpan
+
     if (pendingEditId) {
-      console.log('Data: ', tableData);
-      console.log(
-        'Edit ID:',
-        tableData.find((item) => item.id === pendingEditId),
-      );
-      // Edit existing site
-      setFormDataAddCustomField(
-        CreateCustomFieldRequestSchema.parse(
-          tableData.find((item) => item.id === pendingEditId) || {},
-        ),
-      );
+      const data = tableData.find((item) => item.id === pendingEditId);
+      setFormDataAddCustomField(CreateCustomFieldRequestSchema.parse(data || {}));
+      setEdittingId(pendingEditId);
     } else {
-      // Add new site
       setFormDataAddCustomField(CreateCustomFieldRequestSchema.parse({}));
+      setEdittingId('');
     }
-    handleOpenDialog();
+
     setPendingEditId(null);
+
+    handleCloseDialog();
   };
 
   const handleCancelEdit = () => {
     setConfirmDialogOpen(false);
     setPendingEditId(null);
+  };
+
+  const handleDialogClose = (_event: object, reason: string) => {
+    if (reason === 'backdropClick') {
+      if (isFormChanged) {
+        setConfirmDialogOpen(true);
+      } else {
+        handleCloseDialog();
+      }
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!token) return;
+
+    Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, delete it!',
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await deleteCustomField(id, token);
+
+          setRefreshTrigger((prev) => prev + 1);
+          Swal.fire({
+            title: 'Deleted!',
+            text: 'Your file has been deleted.',
+            icon: 'success',
+          });
+        } catch (error) {
+          console.error(error);
+          Swal.fire({
+            title: 'Error!',
+            text: 'Something went wrong while deleting.',
+            icon: 'error',
+          });
+        }
+      }
+    });
   };
 
   return (
@@ -199,11 +283,11 @@ const Content = () => {
                 isHaveHeader={false}
                 onCheckedChange={(selected) => console.log('Checked table row:', selected)}
                 onEdit={(row) => {
-                  handleEdit(row.id)
+                  handleEdit(row.id);
                   setEdittingId(row.id);
                 }}
-                onDelete={(row) => console.log('Delete:', row)}
-                onSearchKeywordChange={(keyword) => console.log('Search keyword:', keyword)}
+                onDelete={(row) => handleDelete(row.id)}
+                onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
                 onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
                 onAddData={() => {
                   handleAdd();
@@ -215,7 +299,7 @@ const Content = () => {
       </PageContainer>
       <Dialog
         open={openCreateCustomField}
-        onClose={handleCloseDialog}
+        onClose={handleDialogClose} // sebelumnya: handleCloseDialog
         fullWidth
         maxWidth={formDataAddCustomField.field_type >= 3 ? 'lg' : 'md'}
       >
@@ -223,7 +307,13 @@ const Content = () => {
           {edittingId ? 'Edit' : 'Add'} Custom Field
           <IconButton
             aria-label="close"
-            onClick={handleCloseDialog}
+            onClick={() => {
+              if (isFormChanged) {
+                setConfirmDialogOpen(true);
+              } else {
+                handleCloseDialog();
+              }
+            }}
             sx={{
               position: 'absolute',
               right: 8,
@@ -241,8 +331,22 @@ const Content = () => {
             formData={formDataAddCustomField}
             setFormData={setFormDataAddCustomField}
             onSuccess={() => {
+              localStorage.removeItem('unsavedCustomDataData');
               handleCloseDialog();
               setRefreshTrigger(refreshTrigger + 1);
+              if (edittingId) {
+                Swal.fire({
+                  icon: 'success',
+                  title: 'Success',
+                  text: 'Custom Field successfully updated!',
+                });
+              } else {
+                Swal.fire({
+                  icon: 'success',
+                  title: 'Success',
+                  text: 'Custom Field successfully created!',
+                });
+              }
             }}
             editingId={edittingId}
           />
@@ -251,7 +355,7 @@ const Content = () => {
       {/* Dialog Confirm edit */}
       <Dialog open={confirmDialogOpen} onClose={handleCancelEdit}>
         <DialogTitle>Unsaved Changes</DialogTitle>
-        <DialogContent>
+        <DialogContent ref={dialogRef}>
           You have unsaved changes for another Custom Field. Are you sure you want to discard them
           and edit this Custom Field?
         </DialogContent>

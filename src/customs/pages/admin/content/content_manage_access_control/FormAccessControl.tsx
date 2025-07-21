@@ -20,20 +20,36 @@ import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import {
   CreateAccessControlRequest,
   CreateAccessControlRequestSchema,
+  UpdateAccessControlRequest,
+  UpdateAccessControlRequestSchema,
 } from 'src/customs/api/models/AccessControl';
 import {
   createAccessControl,
+  getAllAccessControlPagination,
   getAllBrand,
   getAllIntegration,
+  getAvailableIntegration,
   updateAccessControl,
 } from 'src/customs/api/admin';
 import { AccessControlType } from 'src/customs/api/models/AccessControl';
 import { Item as BrandItem } from 'src/customs/api/models/Brand';
-import { Item as IntegrationItem } from 'src/customs/api/models/Integration';
+import { AvailableItem as AvailableItem } from 'src/customs/api/models/Integration';
+import { Item as Integrationitem } from 'src/customs/api/models/Integration';
+type AccessControlFormData = {
+  brand_id: string;
+  integration_id: string;
+  type: number;
+  name: string;
+  description: string;
+  channel: string;
+  door_id: string;
+  raw: string;
+  id?: string; // hanya untuk update
+};
 
 interface FormAccessControlProps {
   formData: CreateAccessControlRequest;
-  setFormData: React.Dispatch<React.SetStateAction<CreateAccessControlRequest>>;
+  setFormData: React.Dispatch<React.SetStateAction<AccessControlFormData>>;
   editingId?: string;
   onSuccess?: () => void;
 }
@@ -52,26 +68,72 @@ const FormAccessControl = ({
   );
   const { token } = useSession();
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>,
+    e: React.ChangeEvent<HTMLInputElement | { id?: string; name?: string; value: unknown }>,
   ) => {
-    const name = (e.target as HTMLInputElement).name || (e.target as HTMLInputElement).id;
-    const value = (e.target as HTMLInputElement).value;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const id = (e.target as any).id || (e.target as any).name;
+    const value = e.target.value;
+
+    if (id) {
+      setFormData((prev) => ({
+        ...prev,
+        [id]: value,
+      }));
+    }
   };
+  const [accessList, setAccessList] = useState<CreateAccessControlRequest[]>([]);
   const [brandList, setBrandList] = useState<BrandItem[]>([]);
-  const [integrationList, setIntegrationList] = useState<IntegrationItem[]>([]);
+  const [integrationList, setIntegrationList] = useState<Integrationitem[]>([]);
+
   useEffect(() => {
     if (!token) return;
+
     const fetchData = async () => {
-      const brandRes = await getAllBrand(token);
-      const integrationRes = await getAllIntegration(token);
-      setBrandList(brandRes?.collection ?? []);
-      setIntegrationList(integrationRes?.collection ?? []);
+      try {
+        const brandRes = await getAllBrand(token);
+        const integrationRes = await getAllIntegration(token);
+        const accessRes = await getAllAccessControlPagination(token, 0, 99, 'id', '');
+
+        // Set semua list
+        setBrandList(brandRes?.collection ?? []);
+        setIntegrationList(integrationRes?.collection ?? []);
+
+        // Mode Edit: Isi formData
+        if (editingId) {
+          const target = accessRes?.collection.find((item) => item.id === editingId);
+          if (target) {
+            setFormData({
+              brand_id: target.brand_id,
+              integration_id: target.integration_id,
+              type: target.type,
+              name: target.name,
+              description: target.description,
+              channel: target.channel,
+              door_id: target.door_id,
+              raw: target.raw,
+            });
+          }
+        } else {
+          // Mode Create: Kosongkan formData
+          setFormData({
+            brand_id: '',
+            integration_id: '',
+            type: 0,
+            name: '',
+            description: '',
+            channel: '',
+            door_id: '',
+            raw: '{}',
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
     };
+
     fetchData();
-  }, [token]);
+  }, [token, editingId]);
+
   const handleOnSubmit = async (e: React.FormEvent) => {
-    console.log('Submitting form with data:', formData);
     e.preventDefault();
     setLoading(true);
     setErrors({});
@@ -87,13 +149,20 @@ const FormAccessControl = ({
         return;
       }
       const data: CreateAccessControlRequest = CreateAccessControlRequestSchema.parse(formData);
+      const dataUpdate: UpdateAccessControlRequest =
+        UpdateAccessControlRequestSchema.parse(formData);
       console.log('Setting Data: ', data);
       if (editingId && editingId !== '') {
-        await updateAccessControl(editingId, data, token);
+        console.log('Update Mode');
+        await updateAccessControl(editingId, dataUpdate, token);
+        console.log('Form Data : ', formData);
         setAlertMessage('Access Control successfully updated!');
       } else {
+        console.log('Create Mode');
         await createAccessControl(data, token);
-        setAlertMessage('Access Control successfully created!');
+        setAlertMessage(
+          editingId ? 'Custom field successfully updated!' : 'Custom field successfully created!',
+        );
       }
       localStorage.removeItem('unsavedIntegrationData');
       setAlertType('success');
@@ -112,7 +181,9 @@ const FormAccessControl = ({
         setAlertMessage('Complete the following data properly and correctly');
       }, 3000);
     } finally {
-      setLoading(false);
+      setTimeout(() => {
+        setLoading(false);
+      }, 800);
     }
   };
   function formatEnumLabel(label: string) {
@@ -186,13 +257,14 @@ const FormAccessControl = ({
               Access Control Settings
             </Typography>
             <CustomFormLabel htmlFor="brand-name">Brand Name</CustomFormLabel>
+
             <CustomSelect
               id="brand_id"
               name="brand_id"
-              value={formData.brand_id}
+              value={formData.brand_id || ''}
               onChange={handleChange}
-              error={!!errors.brand_name}
-              helperText={errors.brand_name || ''}
+              error={!!errors.brand_id}
+              helperText={errors.brand_id || ''}
               fullWidth
               required
             >
@@ -208,8 +280,8 @@ const FormAccessControl = ({
               name="integration_id"
               value={formData.integration_id}
               onChange={handleChange}
-              error={!!errors.integration_name}
-              helperText={errors.integration_name || ''}
+              error={!!errors.integration_id}
+              helperText={errors.integration_id || ''}
               fullWidth
               required
             >
@@ -246,6 +318,24 @@ const FormAccessControl = ({
           </Button>
         </Box>
       </form>
+      {loading && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            bgcolor: 'rgba(0,0,0,0.4)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 10,
+          }}
+        >
+          <CircularProgress color="inherit" />
+        </Box>
+      )}
     </>
   );
 };

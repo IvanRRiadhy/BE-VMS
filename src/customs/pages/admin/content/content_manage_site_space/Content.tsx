@@ -79,7 +79,6 @@ const Content = () => {
         setTotalRecords(response.RecordsTotal);
         setTotalFilteredRecords(response.RecordsFiltered);
         setIsDataReady(true);
-        console.log('Table data:', tableData);
         const rows = response.collection.map((item) => ({
           id: item.id,
           name: item.name,

@@ -7,7 +7,6 @@ import ParentCard from 'src/components/shared/ParentCard';
 import { updateDepartment } from 'src/customs/api/admin';
 import { Item } from 'src/customs/api/models/Department';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import Swal from 'sweetalert2';
 
 interface FormUpdateDepartmentProps {
   data: Item | null;
@@ -145,7 +144,7 @@ const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({ data, onSuc
         />
 
         <Button sx={{ mt: 2 }} color="primary" variant="contained" type="submit">
-          Submit
+          {loading ? 'Submitting...' : 'Submit'}
         </Button>
       </form>
       {loading && (

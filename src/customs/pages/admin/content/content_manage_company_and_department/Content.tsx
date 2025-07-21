@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   Box,
   Card,
@@ -51,6 +51,7 @@ const Content = () => {
     district: 0,
   });
 
+  const dialogRef = useRef<HTMLDivElement>(null);
   const cards = [
     {
       title: 'Total Organization',
@@ -80,13 +81,13 @@ const Content = () => {
   const handleCloseDialog = () => {
     setOpenFormType(null);
     setEditDialogType(null);
-    localStorage.removeItem('unsavedOrganizationFormAdd');
-    setFormDataAddOrganization(CreateOrganizationSchema.parse({})); // ⬅️ ini penting!
   };
+
+  const [pendingEditId, setPendingEditId] = useState<string | null>(null);
 
   const handleCancelEdit = () => {
     setConfirmDialogOpen(false);
-    // setPendingEditId(null);
+    setPendingEditId(null);
   };
 
   const handleConfirmEdit = () => {
@@ -106,6 +107,70 @@ const Content = () => {
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [searchKeyword, setSearchKeyword] = useState('');
+
+  const [formDataAddDepartment, setFormDataAddDepartment] = useState<CreateDepartmentRequest>(
+    () => {
+      const saved = localStorage.getItem('unsavedDepartmentFormAdd');
+      // return saved ? JSON.parse(saved) : CreateDepartmentSchema.parse({});
+      try {
+        const parsed = saved ? JSON.parse(saved) : {};
+        return CreateDepartmentSchema.parse(parsed);
+      } catch (e) {
+        console.error('Invalid saved data, fallback to default schema.');
+        return CreateDepartmentSchema.parse({});
+      }
+    },
+  );
+
+  useEffect(() => {
+    const defaultForm = CreateDepartmentSchema.parse({});
+    const isChanged = JSON.stringify(formDataAddDepartment) !== JSON.stringify(defaultForm);
+
+    if (isChanged) {
+      localStorage.setItem('unsavedDepartmentFormAdd', JSON.stringify(formDataAddDepartment));
+    }
+  }, [formDataAddDepartment]);
+
+  // store 02
+  const [formDataAddDistrict, setFormDataAddDistrict] = useState<CreateDistrictRequest>(() => {
+    const saved = localStorage.getItem('unsavedDistrictFormAdd');
+    return saved ? JSON.parse(saved) : CreateDistrictSchema.parse({});
+  });
+
+  useEffect(() => {
+    const defaultForm = CreateDistrictSchema.parse({});
+    const isChanged = JSON.stringify(formDataAddDistrict) !== JSON.stringify(defaultForm);
+
+    if (isChanged) {
+      localStorage.setItem('unsavedDistrictFormAdd', JSON.stringify(formDataAddDistrict));
+    }
+  }, [formDataAddDistrict]);
+
+  // srore 03
+  const [formDataAddOrganization, setFormDataAddOrganization] = useState<CreateOrganizationRequest>(
+    () => {
+      const saved = localStorage.getItem('unsavedOrganizationFormAdd');
+
+      // return saved ? JSON.parse(saved) : CreateOrganizationSchema.parse({});
+
+      try {
+        const parsed = saved ? JSON.parse(saved) : {};
+        return CreateOrganizationSchema.parse(parsed);
+      } catch (e) {
+        console.error('Invalid saved data, fallback to default schema.');
+        return CreateOrganizationSchema.parse({});
+      }
+    },
+  );
+
+  useEffect(() => {
+    const defaultForm = CreateOrganizationSchema.parse({});
+    const isChanged = JSON.stringify(formDataAddOrganization) !== JSON.stringify(defaultForm);
+
+    if (isChanged) {
+      localStorage.setItem('unsavedOrganizationFormAdd', JSON.stringify(formDataAddOrganization));
+    }
+  }, [formDataAddOrganization]);
 
   // Fetch table data when pagination or type changes
   useEffect(() => {
@@ -186,6 +251,41 @@ const Content = () => {
     'Organizations' | 'Departments' | 'Districts' | null
   >(null);
 
+  const defaultFormData = CreateOrganizationSchema.parse({});
+  const isFormChanged = JSON.stringify(formDataAddOrganization) !== JSON.stringify(defaultFormData);
+  const handleDialogClose = (_event: object, reason: string) => {
+    if (reason === 'backdropClick') {
+      if (isFormChanged) {
+        setConfirmDialogOpen(true);
+      } else {
+        handleCloseDialog();
+      }
+    }
+  };
+
+  // ✅ HANDLE KETIKA MOUSE LEAVE DARI DIALOG
+  useEffect(() => {
+    const handleMouseLeave = (e: MouseEvent) => {
+      const current = dialogRef.current;
+      if (current && !current.contains(e.relatedTarget as Node)) {
+        if (isFormChanged) {
+          setConfirmDialogOpen(true);
+        }
+      }
+    };
+
+    const dialogEl = dialogRef.current;
+    if (dialogEl) {
+      dialogEl.addEventListener('mouseleave', handleMouseLeave);
+    }
+
+    return () => {
+      if (dialogEl) {
+        dialogEl.removeEventListener('mouseleave', handleMouseLeave);
+      }
+    };
+  }, [isFormChanged]);
+
   const [editingRow, setEditingRow] = useState<Item | null>(null);
 
   const handleDelete = async (id: string, selectedType: string) => {
@@ -229,49 +329,6 @@ const Content = () => {
   };
 
   // store 01
-  const [formDataAddDepartment, setFormDataAddDepartment] = useState<CreateDepartmentRequest>(
-    () => {
-      const saved = localStorage.getItem('unsavedDepartmentFormAdd');
-      try {
-        const parsed = saved ? JSON.parse(saved) : {};
-        return CreateDepartmentSchema.parse(parsed);
-      } catch (e) {
-        console.error('Invalid saved data, fallback to default schema.');
-        return CreateDepartmentSchema.parse({});
-      }
-    },
-  );
-
-  useEffect(() => {
-    localStorage.setItem('unsavedDepartmentFormAdd', JSON.stringify(formDataAddDepartment));
-  }, [formDataAddDepartment]);
-
-  // store 02
-  const [formDataAddDistrict, setFormDataAddDistrict] = useState<CreateDistrictRequest>(() => {
-    const saved = localStorage.getItem('unsavedDistrictFormAdd');
-    return saved ? JSON.parse(saved) : CreateDistrictSchema.parse({});
-  });
-
-  useEffect(() => {
-    localStorage.setItem('unsavedDistrictFormAdd', JSON.stringify(formDataAddDistrict));
-  }, [formDataAddDistrict]);
-
-  // srore 03
-  const [formDataAddOrganization, setFormDataAddOrganization] = useState<CreateOrganizationRequest>(
-    () => {
-      const saved = localStorage.getItem('unsavedOrganizationFormAdd');
-
-      // return saved ? JSON.parse(saved) : CreateOrganizationSchema.parse({});
-
-      try {
-        const parsed = saved ? JSON.parse(saved) : {};
-        return CreateOrganizationSchema.parse(parsed);
-      } catch (e) {
-        console.error('Invalid saved data, fallback to default schema.');
-        return CreateOrganizationSchema.parse({});
-      }
-    },
-  );
 
   // const [filteredData, setFilteredData] = useState(data);
 
@@ -279,13 +336,6 @@ const Content = () => {
   //   const result = data.filter((item) => item.name.toLowerCase().includes(keyword.toLowerCase()));
   //   setFilteredData(result);
   // };
-
-  const defaultFormData = CreateOrganizationSchema.parse({});
-  const isFormChanged = JSON.stringify(formDataAddOrganization) !== JSON.stringify(defaultFormData);
-
-  useEffect(() => {
-    localStorage.setItem('unsavedOrganizationFormAdd', JSON.stringify(formDataAddOrganization));
-  }, [formDataAddOrganization]);
 
   return (
     <>
@@ -376,7 +426,7 @@ const Content = () => {
       {/* Organization */}
       <Dialog
         open={openFormType === 'Organizations'}
-        // onClose={handleCloseDialog}
+        onClose={handleDialogClose}
         fullWidth
         maxWidth="md"
       >
@@ -402,6 +452,7 @@ const Content = () => {
             formData={formDataAddOrganization}
             setFormData={setFormDataAddOrganization}
             onSuccess={() => {
+              localStorage.removeItem('unsavedOrganizationFormAdd');
               handleCloseDialog();
               setFormDataAddOrganization(CreateOrganizationSchema.parse({}));
               setTimeout(() => {
@@ -440,6 +491,7 @@ const Content = () => {
             formData={formDataAddDepartment}
             setFormData={setFormDataAddDepartment}
             onSuccess={() => {
+              localStorage.removeItem('unsavedDepartmentData');
               handleCloseDialog();
               setFormDataAddDepartment(CreateDepartmentSchema.parse({})); // reset form
               setTimeout(() => {
@@ -478,6 +530,7 @@ const Content = () => {
             formData={formDataAddDistrict}
             setFormData={setFormDataAddDistrict}
             onSuccess={() => {
+              localStorage.removeItem('unsavedDistrictData');
               handleCloseDialog();
               setFormDataAddDistrict(CreateDistrictSchema.parse({}));
               setTimeout(() => {
@@ -509,11 +562,12 @@ const Content = () => {
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <DialogContent>
+        <DialogContent ref={dialogRef}>
           <br />
           <FormUpdateOrganization
             data={editingRow}
             onSuccess={() => {
+              localStorage.removeItem('unsavedOrganizationData');
               handleCloseDialog();
               setTimeout(() => {
                 Swal.fire({
@@ -549,6 +603,7 @@ const Content = () => {
           <FormUpdateDepartment
             data={editingRow}
             onSuccess={() => {
+              localStorage.removeItem('unsavedDepartmentData');
               handleCloseDialog();
               setTimeout(() => {
                 Swal.fire({
@@ -585,6 +640,7 @@ const Content = () => {
           <FormUpdateDistrict
             data={editingRow}
             onSuccess={() => {
+              localStorage.removeItem('unsavedDistrictData');
               handleCloseDialog();
               setTimeout(() => {
                 Swal.fire({
@@ -601,7 +657,7 @@ const Content = () => {
 
       <Dialog open={confirmDialogOpen} onClose={handleCancelEdit}>
         <DialogTitle>Unsaved Changes</DialogTitle>
-        <DialogContent>
+        <DialogContent ref={dialogRef}>
           You have unsaved changes for another site. Are you sure you want to discard them and edit
           this site?
         </DialogContent>

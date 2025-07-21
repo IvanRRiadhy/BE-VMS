@@ -148,7 +148,6 @@ const FormSite = ({ formData, setFormData, editingId, onSuccess }: FormSiteProps
       console.log('Setting Data: ', data);
       if (editingId && editingId !== '') {
         await updateSite(editingId, data, token);
-
         console.log('Editing ID:', editingId);
       } else {
         await createSite(data, token);

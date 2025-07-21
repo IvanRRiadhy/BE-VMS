@@ -14,7 +14,6 @@ import {
 import PageContainer from 'src/components/container/PageContainer';
 
 import CloseIcon from '@mui/icons-material/Close';
-import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import {
   CreateVisitorTypeRequest,
@@ -57,15 +56,12 @@ const Content = () => {
   const { token } = useSession();
   const [visitorData, setVisitorData] = useState<Item[]>([]);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(3);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [totalRecords, setTotalRecords] = useState(0);
   const [tableRowVisitorType, setTableRowVisitorType] = React.useState<VisitorTypeTableRow[]>([]);
-
-  const [isDataReady, setIsDataReady] = useState(false);
-
   const [formDataAddVisitorType, setFormDataAddVisitorType] = useState<CreateVisitorTypeRequest>(
     () => {
       const saved = localStorage.getItem('unsavedVisitorTypeData');
@@ -81,6 +77,7 @@ const Content = () => {
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
   const [openFormCreateSiteSpace, setOpenFormCreateSiteSpace] = React.useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [isDataReady, setIsDataReady] = useState(false);
   const dialogRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -126,13 +123,6 @@ const Content = () => {
         const document = await getAllDocumentPagination(token, start, 99, sortColumn);
         console.log('Response from API:', response);
         if (response && document) {
-          const orgMap = (document.collection ?? []).reduce(
-            (acc: Record<string, string>, org: any) => {
-              acc[org.id] = org.name;
-              return acc;
-            },
-            {},
-          );
           setVisitorData(response.collection);
           const rows = response.collection.map((item) => ({
             id: item.id,
@@ -189,7 +179,7 @@ const Content = () => {
   const handleEdit = (id: string) => {
     console.log('Editing ID:', id);
 
-    const existing = visitorData.find((item) => item.id === id);
+    const existing = visitorData.find((item: any) => item.id === id);
     if (!existing) {
       console.warn('No visitor data found for ID:', id);
       return;
@@ -254,6 +244,7 @@ const Content = () => {
 
   const handleConfirmEdit = () => {
     setConfirmDialogOpen(false);
+    localStorage.removeItem('unsavedCustomDataData'); // Bersihkan data tersimpan
 
     if (pendingEditId) {
       const nextItem = visitorData.find((item) => item.id === pendingEditId);
@@ -290,7 +281,12 @@ const Content = () => {
       );
       setPendingEditId(null);
       handleOpenDialog();
+    } else {
+      setFormDataAddVisitorType(CreateVisitorTypeRequestSchema.parse({}));
+      setEdittingId('');
     }
+    setPendingEditId(null);
+    handleCloseDialog();
   };
 
   const handleCancelEdit = () => {
@@ -331,6 +327,37 @@ const Content = () => {
       }, 800);
     }
   };
+
+  const handleDialogClose = (_event: object, reason: string) => {
+    if (reason === 'backdropClick') {
+      if (isFormChanged) {
+        setConfirmDialogOpen(true);
+      } else {
+        handleCloseDialog();
+      }
+    }
+  };
+
+  useEffect(() => {
+    const handleMouseLeave = (e: MouseEvent) => {
+      if (dialogRef.current && !dialogRef.current.contains(e.relatedTarget as Node)) {
+        if (isFormChanged) {
+          setConfirmDialogOpen(true);
+        }
+      }
+    };
+
+    const dialogEl = dialogRef.current;
+    if (dialogEl) {
+      dialogEl.addEventListener('mouseleave', handleMouseLeave);
+    }
+
+    return () => {
+      if (dialogEl) {
+        dialogEl.removeEventListener('mouseleave', handleMouseLeave);
+      }
+    };
+  }, [isFormChanged]);
 
   const handleDelete = async (id: string) => {
     if (!token) return;
@@ -388,6 +415,13 @@ const Content = () => {
                 isHaveChecked={true}
                 isHaveAction={true}
                 isHaveSearch={true}
+                isHavePagination={true}
+                defaultRowsPerPage={rowsPerPage}
+                rowsPerPageOptions={[5, 10, 20]}
+                onPaginationChange={(page, rowsPerPage) => {
+                  setPage(page);
+                  setRowsPerPage(rowsPerPage);
+                }}
                 isHaveFilter={true}
                 isHaveExportPdf={true}
                 isHaveExportXlf={false}
@@ -398,6 +432,7 @@ const Content = () => {
                 onCheckedChange={(selected) => console.log('Checked table row:', selected)}
                 onEdit={(row) => {
                   handleEdit(row.id);
+                  setEdittingId(row.id);
                 }}
                 onDelete={(row) => handleDelete(row.id)}
                 onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
@@ -415,15 +450,7 @@ const Content = () => {
       </PageContainer>
       <Dialog
         open={openFormCreateVisitorType}
-        onClose={(event, reason) => {
-          if (reason === 'backdropClick') {
-            if (isFormChanged) {
-              setConfirmDialogOpen(true);
-            } else {
-              handleCloseDialog();
-            }
-          }
-        }}
+        onClose={handleDialogClose} // sebelumnya: handleCloseDialog
         maxWidth="lg"
         fullWidth
       >
@@ -450,18 +477,33 @@ const Content = () => {
         </DialogTitle>
         <Divider />
         <DialogContent>
-          <br />
           <FormVisitorType
             formData={formDataAddVisitorType}
             setFormData={setFormDataAddVisitorType}
-            onSuccess={handleCloseDialog}
+            onSuccess={() => {
+              localStorage.removeItem('unsavedVisitorTypeData');
+              handleCloseDialog();
+              if (edittingId) {
+                Swal.fire({
+                  icon: 'success',
+                  title: 'Success',
+                  text: 'Visitor Type successfully updated!',
+                });
+              } else {
+                Swal.fire({
+                  icon: 'success',
+                  title: 'Success',
+                  text: 'Visitor Type successfully created!',
+                });
+              }
+            }}
           />
         </DialogContent>
       </Dialog>
 
       <Dialog open={confirmDialogOpen} onClose={handleCancelEdit}>
         <DialogTitle>Unsaved Changes</DialogTitle>
-        <DialogContent>
+        <DialogContent ref={dialogRef}>
           You have unsaved changes for another site. Are you sure you want to discard them and edit
           this site?
         </DialogContent>

@@ -31,6 +31,7 @@ const Content = () => {
   const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [searchKeyword, setSearchKeyword] = useState('');
   const [formDataAddBrand, setFormDataAddBrand] = useState<CreateBrandRequest>(() => {
     const saved = localStorage.getItem('unsavedBrandData');
     return saved ? JSON.parse(saved) : { name: '', type_brand: 0, integration_list_id: '' };
@@ -48,7 +49,13 @@ const Content = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const response = await getAllBrand(token);
+        const response = await getAllBrandPagination(
+          token,
+          page,
+          rowsPerPage,
+          sortColumn,
+          searchKeyword,
+        );
         setTableData(response.collection);
         setTotalRecords(response.collection.length);
         setIsDataReady(true);
@@ -59,7 +66,7 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, sortColumn, refreshTrigger]);
+  }, [token, page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword]);
 
   useEffect(() => {
     localStorage.setItem('unsavedBrandData', JSON.stringify(formDataAddBrand));
@@ -96,7 +103,7 @@ const Content = () => {
                 //   //   setEdittingId(row.id);
                 // }}
                 // onDelete={(row) => console.log('Delete:', row)}
-                onSearchKeywordChange={(keyword) => console.log('Search keyword:', keyword)}
+                onSearchKeywordChange={(searchKeyword) => setSearchKeyword(searchKeyword)}
                 onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
                 // onAddData={() => {
                 //   handleAdd();

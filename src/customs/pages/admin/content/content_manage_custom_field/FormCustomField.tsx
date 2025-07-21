@@ -83,7 +83,6 @@ const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCu
       .trim();
   }
   const handleOnSubmit = async (e: React.FormEvent) => {
-    console.log('Submitting form with data:', formData);
     e.preventDefault();
     setLoading(true);
     setErrors({});
@@ -107,14 +106,14 @@ const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCu
       console.log('Setting Data: ', parsedData);
       if (editingId && editingId !== '') {
         await updateCustomField(token, parsedData, editingId);
-        console.log('Editing ID:', editingId);
       } else {
         await createCustomField(parsedData, token);
-        console.log('Creating new custom field');
       }
       localStorage.removeItem('unsavedCustomFieldForm');
       setAlertType('success');
-      setAlertMessage('Site successfully created!');
+      setAlertMessage(
+        editingId ? 'Custom field successfully updated!' : 'Custom field successfully created!',
+      );
       setTimeout(() => {
         onSuccess?.();
       }, 900);
@@ -129,7 +128,9 @@ const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCu
         setAlertMessage('Complete the following data properly and correctly');
       }, 3000);
     } finally {
-      setLoading(false);
+      setTimeout(() => {
+        setLoading(false);
+      }, 800);
     }
   };
 
@@ -341,6 +342,24 @@ const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCu
           </Button>
         </Box>
       </form>
+      {loading && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            bgcolor: 'rgba(0,0,0,0.4)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 10,
+          }}
+        >
+          <CircularProgress color="inherit" />
+        </Box>
+      )}
     </>
   );
 };

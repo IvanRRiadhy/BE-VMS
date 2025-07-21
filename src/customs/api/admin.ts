@@ -113,7 +113,7 @@ export const getAllVisitorTypePagination = async (
     start,
     length,
     sort_column: sortColumn,
-    'search[value]': keyword, // ← ini diperbaiki!
+    'search[value]': keyword,
   };
 
   // if (gender) params.gender = gender;
@@ -682,10 +682,11 @@ export const getAllBrandPagination = async (
   start: number,
   length: number,
   sortColumn: string,
+  keyword: string = '',
 ): Promise<GetAllBrandPaginationResponse> => {
   try {
     const response = await axiosInstance.get(`/brand/dt`, {
-      params: { start, length, sort_column: sortColumn },
+      params: { start, length, sort_column: sortColumn, 'search[value]': keyword },
       headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
     });
     return response.data;
@@ -806,10 +807,11 @@ export const getAllAccessControlPagination = async (
   start: number,
   length: number,
   sortColumn: string,
+  searchKeyword: string,
 ): Promise<GetAccessControlPaginationResponse> => {
   try {
     const response = await axiosInstance.get(`/access-control/dt`, {
-      params: { start, length, sort_column: sortColumn },
+      params: { start, length, sort_column: sortColumn, 'search[value]': searchKeyword },
       headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
     });
     return response.data;
@@ -894,10 +896,11 @@ export const getAllCustomFieldPagination = async (
   start: number,
   length: number,
   sortColumn: string,
+  keyword: string,
 ): Promise<GetAllCustomFieldPaginationResponse> => {
   try {
     const response = await axiosInstance.get(`/custom-field/dt`, {
-      params: { start, length, sort_column: sortColumn },
+      params: { start, length, sort_column: sortColumn, 'search[value]': keyword },
       headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
     });
     return response.data;
@@ -943,6 +946,16 @@ export const updateCustomField = async (
     }
     throw error;
   }
+};
+
+export const deleteCustomField = async (
+  customFieldId: string,
+  token: string,
+): Promise<DeleteVisitorTypeResponse> => {
+  const response = await axiosInstance.delete(`/custom-field/${customFieldId}`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
 };
 
 // Visitor Type

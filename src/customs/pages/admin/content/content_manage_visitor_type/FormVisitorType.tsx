@@ -11,6 +11,7 @@ import {
   FormControlLabel,
   Radio,
   Switch,
+  Tooltip,
   MenuItem,
   IconButton,
   Step,
@@ -31,6 +32,7 @@ import {
   Button as MuiButton,
 } from '@mui/material';
 import { Box, width } from '@mui/system';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import React, { useEffect, useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
@@ -130,6 +132,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     const fetchData = async () => {
       const documentRes = await getAllDocumentPagination(token, 0, 99, 'id');
       setDocument(documentRes?.collection ?? []);
+      console.log(documentRes);
     };
     fetchData();
   }, [token]);
@@ -154,9 +157,11 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         sort: section.sort,
         name: section.name,
         status: 1,
-        form_visitor: Object.values(section.form_visitor || {}),
-        pra_form_visitor: Object.values(section.pra_form_visitor || {}),
-        signout_form_visitor: Object.values(section.signout_form_visitor || {}),
+        form_visitor: Array.isArray(section.form_visitor) ? section.form_visitor : [],
+        pra_form_visitor: Array.isArray(section.pra_form_visitor) ? section.pra_form_visitor : [],
+        signout_form_visitor: Array.isArray(section.signout_form_visitor)
+          ? section.signout_form_visitor
+          : [],
       }));
 
       const data: CreateVisitorTypeRequest = {
@@ -368,9 +373,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
   const [dynamicSteps, setDynamicSteps] = useState<string[]>([]);
   const [draggableSteps, setDraggableSteps] = useState<string[]>([]);
 
-  useEffect(() => {
-    setDraggableSteps([...dynamicSteps]);
-  }, [dynamicSteps]);
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
 
@@ -391,365 +393,402 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     setSectionsData(reorderedSections);
   };
 
+  useEffect(() => {
+    if (formData.visitor_type_documents && document.length > 0) {
+      const validIds = formData.visitor_type_documents
+        .map((d) => d.document_id)
+        .filter((id) => document.some((doc) => doc.id === id));
+
+      setFormData((prev) => ({
+        ...prev,
+        visitor_type_documents: validIds.map((id) => ({
+          document_id: id,
+        })),
+      }));
+    }
+  }, [document]);
+
   const StepContent = (step: number) => {
     if (step === 0) {
       return (
         <Grid container spacing={2} sx={{ mb: 2 }}>
-          {/* <Grid size={12}>
-            <Alert severity={alertType}>{alertMessage}</Alert>
-          </Grid> */}
-          <Grid size={6}>
-            <CustomFormLabel htmlFor="visitor-type" sx={{ mt: 1 }}>
-              Name
-            </CustomFormLabel>
-            <CustomTextField
-              id="name"
-              value={formData.name}
-              onChange={handleChange}
-              error={Boolean(errors.name)}
-              helperText={errors.name || ''}
-              fullWidth
-              inputProps={{ min: 0 }}
-            />
-          </Grid>
-          <Grid size={6}>
-            <CustomFormLabel htmlFor="org" sx={{ mt: 1 }}>
-              Document
-            </CustomFormLabel>
-            <CustomSelect
-              id="visitor_type_documents"
-              name="visitor_type_documents"
-              value={(formData.visitor_type_documents ?? []).map((d) => d.document_id)}
-              onChange={handleMultipleChange}
-              fullWidth
-              required
-              multiple
-              variant="outlined"
-              renderValue={(selected: any) =>
-                (selected as string[])
-                  .map((id) => document.find((doc) => doc.id === id)?.name ?? id)
-                  .join(', ')
-              }
-            >
-              {document?.map((item: any) => (
-                <MenuItem key={item.id} value={item.id}>
-                  {item.name}
-                </MenuItem>
-              ))}
-            </CustomSelect>
-          </Grid>
-          <Grid size={6}>
-            <CustomFormLabel htmlFor="visitor-type" sx={{ mt: 1 }}>
-              Description
-            </CustomFormLabel>
-            <CustomTextField
-              id="description"
-              value={formData.description}
-              onChange={handleChange}
-              error={Boolean(errors.description)}
-              helperText={errors.description || ''}
-              fullWidth
-              inputProps={{ min: 0 }}
-            />
-          </Grid>
-          <Grid size={6}>
-            <CustomFormLabel htmlFor="duration_visit" sx={{ mt: 1 }}>
-              Duration Visit
-            </CustomFormLabel>
-            <CustomTextField
-              id="duration_visit"
-              value={formData.duration_visit}
-              onChange={handleChange}
-              error={Boolean(errors.duration_visit)}
-              helperText={errors.duration_visit || ''}
-              fullWidth
-              type="number"
-            />
-          </Grid>
-          <Grid size={6}>
-            <CustomFormLabel htmlFor="duration_visit" sx={{ mt: 1 }}>
-              Max Duration Visit
-            </CustomFormLabel>
-            <CustomTextField
-              id="max_time_visit"
-              value={formData.max_time_visit}
-              onChange={handleChange}
-              error={Boolean(errors.max_time_visit)}
-              helperText={errors.max_time_visit || ''}
-              fullWidth
-              type="number"
-              inputProps={{ min: 0 }}
-            />
-          </Grid>
-          <Grid size={6}>
-            <CustomFormLabel htmlFor="period" sx={{ mt: 1 }}>
-              Period
-            </CustomFormLabel>
-            <CustomTextField
-              id="period"
-              value={formData.period}
-              onChange={handleChange}
-              error={Boolean(errors.period)}
-              helperText={errors.period || ''}
-              fullWidth
-              type="number"
-              inputProps={{ min: 0 }}
-            />
-          </Grid>
-          <Grid size={12}>
-            <CustomFormLabel htmlFor="grace_time" sx={{ mt: 1 }}>
-              Grace Time
-            </CustomFormLabel>
-            <CustomTextField
-              id="grace_time"
-              value={formData.grace_time}
-              onChange={handleChange}
-              error={Boolean(errors.grace_time)}
-              helperText={errors.grace_time || ''}
-              fullWidth
-              type="number"
-              inputProps={{ min: 0 }}
-            />
-          </Grid>
-          {/* <br /> */}
-          <Grid size={3} mt={1}>
-            <FormControl component="fieldset">
-              <FormLabel component="legend">Can Parking</FormLabel>
-              <RadioGroup
-                id="can_parking"
-                row
-                value={formData.can_parking ? '1' : '0'} // ikuti nilai boolean dari state
-                onChange={(e) => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    can_parking: e.target.value === '1', // konversi string ke boolean
-                  }));
-                }}
+          <Grid size={8}>
+            <Typography variant="h6" sx={{ mb: 2, borderLeft: '4px solid #673ab7', pl: 1 }}>
+              Visitor Type
+            </Typography>
+            <Grid size={12}>
+              <CustomFormLabel htmlFor="visitor-type" sx={{ mt: 1 }}>
+                Name
+              </CustomFormLabel>
+              <CustomTextField
+                id="name"
+                value={formData.name}
+                onChange={handleChange}
+                error={Boolean(errors.name)}
+                helperText={errors.name || ''}
+                fullWidth
+                inputProps={{ min: 0 }}
+              />
+            </Grid>
+            <Grid size={12}>
+              <CustomFormLabel htmlFor="org" sx={{ mt: 1 }}>
+                Document
+              </CustomFormLabel>
+              <CustomSelect
+                id="visitor_type_documents"
+                name="visitor_type_documents"
+                value={(formData.visitor_type_documents ?? []).map((d) => d.document_id)}
+                onChange={handleMultipleChange}
+                fullWidth
+                required
+                multiple
+                variant="outlined"
+                renderValue={(selected: any) =>
+                  (selected as string[])
+                    .map((id) => document.find((doc) => doc.id === id)?.name ?? id)
+                    .join(', ')
+                }
               >
-                <FormControlLabel value="0" control={<Radio />} label="No" />
-                <FormControlLabel value="1" control={<Radio />} label="Yes" />
-              </RadioGroup>
-            </FormControl>
+                {document?.map((item: any) => (
+                  <MenuItem key={item.id} value={item.id}>
+                    {item.name}
+                  </MenuItem>
+                ))}
+              </CustomSelect>
+            </Grid>
+            <Grid size={12}>
+              <CustomFormLabel htmlFor="visitor-type" sx={{ mt: 1 }}>
+                Description
+              </CustomFormLabel>
+              <CustomTextField
+                id="description"
+                value={formData.description}
+                onChange={handleChange}
+                error={Boolean(errors.description)}
+                helperText={errors.description || ''}
+                fullWidth
+                inputProps={{ min: 0 }}
+              />
+            </Grid>
+            <Grid size={12}>
+              <CustomFormLabel htmlFor="duration_visit" sx={{ mt: 1 }}>
+                Duration Visit
+              </CustomFormLabel>
+              <CustomTextField
+                id="duration_visit"
+                value={formData.duration_visit}
+                onChange={handleChange}
+                error={Boolean(errors.duration_visit)}
+                helperText={errors.duration_visit || ''}
+                fullWidth
+                type="number"
+              />
+            </Grid>
+            <Grid size={12}>
+              <CustomFormLabel htmlFor="duration_visit" sx={{ mt: 1 }}>
+                Max Duration Visit
+              </CustomFormLabel>
+              <CustomTextField
+                id="max_time_visit"
+                value={formData.max_time_visit}
+                onChange={handleChange}
+                error={Boolean(errors.max_time_visit)}
+                helperText={errors.max_time_visit || ''}
+                fullWidth
+                type="number"
+                inputProps={{ min: 0 }}
+              />
+            </Grid>
+            <Grid size={12}>
+              <CustomFormLabel htmlFor="period" sx={{ mt: 1 }}>
+                Period
+              </CustomFormLabel>
+              <CustomTextField
+                id="period"
+                value={formData.period}
+                onChange={handleChange}
+                error={Boolean(errors.period)}
+                helperText={errors.period || ''}
+                fullWidth
+                type="number"
+                inputProps={{ min: 0 }}
+              />
+            </Grid>
+            <Grid size={12}>
+              <CustomFormLabel htmlFor="grace_time" sx={{ mt: 1 }}>
+                Grace Time
+              </CustomFormLabel>
+              <CustomTextField
+                id="grace_time"
+                value={formData.grace_time}
+                onChange={handleChange}
+                error={Boolean(errors.grace_time)}
+                helperText={errors.grace_time || ''}
+                fullWidth
+                type="number"
+                inputProps={{ min: 0 }}
+              />
+            </Grid>
           </Grid>
-          <Grid size={3} mt={1}>
-            <FormControl component="fieldset">
-              <FormLabel component="legend">Show In Form</FormLabel>
-              <RadioGroup
-                id="show_in_form"
-                row
-                defaultValue={0}
-                value={formData.show_in_form ? '1' : '0'}
-                onChange={(e) => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    show_in_form: e.target.value === '0' ? false : true,
-                  }));
-                }}
-              >
-                <FormControlLabel value={0} control={<Radio />} label="No" />
-                <FormControlLabel value={1} control={<Radio />} label="Yes" />
-              </RadioGroup>
-            </FormControl>
-          </Grid>
-          <Grid size={3} mt={1}>
-            <FormControl component="fieldset">
-              <FormLabel component="legend">Can Access</FormLabel>
-              <RadioGroup
-                id="captureVisitorId"
-                row
-                defaultValue={0}
-                value={formData.can_access ? '1' : '0'}
-                onChange={(e) => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    captureVisitorId: e.target.value === '0' ? false : true,
-                  }));
-                }}
-              >
-                <FormControlLabel value={0} control={<Radio />} label="No" />
-                <FormControlLabel value={1} control={<Radio />} label="Yes" />
-              </RadioGroup>
-            </FormControl>
-          </Grid>
-          <Grid size={3} mt={1}>
-            <FormControl component="fieldset">
-              <FormLabel component="legend">Add To Menu</FormLabel>
-              <RadioGroup
-                id="add_to_menu"
-                row
-                defaultValue={0}
-                value={formData.add_to_menu ? '1' : '0'}
-                onChange={(e) => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    add_to_menu: e.target.value === '0' ? false : true,
-                  }));
-                }}
-              >
-                <FormControlLabel value={0} control={<Radio />} label="No" />
-                <FormControlLabel value={1} control={<Radio />} label="Yes" />
-              </RadioGroup>
-            </FormControl>
-          </Grid>
-          <Grid size={3} mt={1}>
-            <FormControl component="fieldset">
-              <FormLabel component="legend">Need Document</FormLabel>
-              <RadioGroup
-                id="need_document"
-                row
-                defaultValue={0}
-                value={formData.need_document ? '1' : '0'}
-                onChange={(e) => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    need_document: e.target.value === '0' ? false : true,
-                  }));
-                }}
-              >
-                <FormControlLabel value={0} control={<Radio />} label="No" />
-                <FormControlLabel value={1} control={<Radio />} label="Yes" />
-              </RadioGroup>
-            </FormControl>
-          </Grid>
-          <Grid size={3} mt={1}>
-            <FormControl component="fieldset">
-              <FormLabel component="legend">Direct Visit</FormLabel>
-              <RadioGroup
-                id="direct_visit"
-                row
-                defaultValue={0}
-                value={formData.direct_visit ? '1' : '0'}
-                onChange={(e) => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    direct_visit: e.target.value === '0' ? false : true,
-                  }));
-                }}
-              >
-                <FormControlLabel value={0} control={<Radio />} label="No" />
-                <FormControlLabel value={1} control={<Radio />} label="Yes" />
-              </RadioGroup>
-            </FormControl>
-          </Grid>
-          <Grid size={3} mt={1}>
-            <FormControl component="fieldset">
-              <FormLabel component="legend">Can Notification Arrival</FormLabel>
-              <RadioGroup
-                id="can_notification_arrival"
-                row
-                defaultValue={0}
-                value={formData.can_notification_arrival ? '1' : '0'}
-                onChange={(e) => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    can_notification_arrival: e.target.value === '0' ? false : true,
-                  }));
-                }}
-              >
-                <FormControlLabel value={0} control={<Radio />} label="No" />
-                <FormControlLabel value={1} control={<Radio />} label="Yes" />
-              </RadioGroup>
-            </FormControl>
-          </Grid>
-          <Grid size={3} mt={1}>
-            <FormControl component="fieldset">
-              <FormLabel component="legend">Is Primary</FormLabel>
-              <RadioGroup
-                id="is_primary"
-                row
-                defaultValue={0}
-                value={formData.is_primary ? '1' : '0'}
-                onChange={(e) => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    is_primary: e.target.value === '0' ? false : true,
-                  }));
-                }}
-              >
-                <FormControlLabel value={0} control={<Radio />} label="No" />
-                <FormControlLabel value={1} control={<Radio />} label="Yes" />
-              </RadioGroup>
-            </FormControl>
-          </Grid>
-          <Grid size={3} mt={1}>
-            <FormControl component="fieldset">
-              <FormLabel component="legend">Is Enable</FormLabel>
-              <RadioGroup
-                id="is_enable"
-                row
-                defaultValue={0}
-                value={formData.is_enable ? '1' : '0'}
-                onChange={(e) => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    is_enable: e.target.value === '0' ? false : true,
-                  }));
-                }}
-              >
-                <FormControlLabel value={0} control={<Radio />} label="No" />
-                <FormControlLabel value={1} control={<Radio />} label="Yes" />
-              </RadioGroup>
-            </FormControl>
-          </Grid>
-          <Grid size={3} mt={1}>
-            <FormControl component="fieldset">
-              <FormLabel component="legend">Vip</FormLabel>
-              <RadioGroup
-                id="vip"
-                row
-                defaultValue={0}
-                value={formData.vip ? '1' : '0'}
-                onChange={(e) => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    vip: e.target.value === '0' ? false : true,
-                  }));
-                }}
-              >
-                <FormControlLabel value={0} control={<Radio />} label="No" />
-                <FormControlLabel value={1} control={<Radio />} label="Yes" />
-              </RadioGroup>
-            </FormControl>
-          </Grid>
-          <Grid size={3} mt={1}>
-            <FormControl component="fieldset">
-              <FormLabel component="legend">Simple Visitor</FormLabel>
-              <RadioGroup
-                id="simple_visitor"
-                row
-                defaultValue={0}
-                value={formData.simple_visitor ? '1' : '0'}
-                onChange={(e) => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    simple_visitor: e.target.value === '0' ? false : true,
-                  }));
-                }}
-              >
-                <FormControlLabel value={0} control={<Radio />} label="No" />
-                <FormControlLabel value={1} control={<Radio />} label="Yes" />
-              </RadioGroup>
-            </FormControl>
-          </Grid>
-          <Grid size={3} mt={1}>
-            <FormControl component="fieldset">
-              <FormLabel component="legend">Simple Period</FormLabel>
-              <RadioGroup
-                id="simple_period"
-                row
-                defaultValue={0}
-                value={formData.simple_period ? '1' : '0'}
-                onChange={(e) => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    simple_period: e.target.value === '0' ? false : true,
-                  }));
-                }}
-              >
-                <FormControlLabel value={0} control={<Radio />} label="No" />
-                <FormControlLabel value={1} control={<Radio />} label="Yes" />
-              </RadioGroup>
-            </FormControl>
+          <Grid size={4}>
+            <Grid size={12} mt={1}>
+              <Typography variant="h6" sx={{ mb: 2, borderLeft: '4px solid #673ab7', pl: 1 }}>
+                Settings
+              </Typography>
+              <Box>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.can_parking}
+                      onChange={(e) => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          can_parking: e.target.checked,
+                        }));
+                      }}
+                    />
+                  }
+                  label={
+                    <Box display="flex" alignItems="center">
+                      Can Parking
+                      <Tooltip title="Visitors must check out before leaving the site.">
+                        <IconButton size="small" sx={{ ml: 1 }}>
+                          <InfoOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  }
+                />
+              </Box>
+            </Grid>
+            <Grid size={12} mt={1}>
+              <Box>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.show_in_form}
+                      onChange={(e) => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          show_in_form: e.target.value === '0' ? false : true,
+                        }));
+                      }}
+                    />
+                  }
+                  label={
+                    <Box display="flex" alignItems="center">
+                      Show In Form
+                      <Tooltip title="Visitors must check out before leaving the site.">
+                        <IconButton size="small" sx={{ ml: 1 }}>
+                          <InfoOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  }
+                />
+              </Box>
+            </Grid>
+            <Grid size={12} mt={1}>
+              <Box></Box>
+              {/* <FormControl component="fieldset">
+                <FormLabel component="legend">Can Access</FormLabel>
+                <RadioGroup
+                  id="captureVisitorId"
+                  row
+                  defaultValue={0}
+                  value={formData.can_access ? '1' : '0'}
+                  onChange={(e) => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      captureVisitorId: e.target.value === '0' ? false : true,
+                    }));
+                  }}
+                >
+                  <FormControlLabel value={0} control={<Radio />} label="No" />
+                  <FormControlLabel value={1} control={<Radio />} label="Yes" />
+                </RadioGroup>
+              </FormControl> */}
+            </Grid>
+            <Grid size={3} mt={1}>
+              {/* <FormControl component="fieldset">
+                <FormLabel component="legend">Add To Menu</FormLabel>
+                <RadioGroup
+                  id="add_to_menu"
+                  row
+                  defaultValue={0}
+                  value={formData.add_to_menu ? '1' : '0'}
+                  onChange={(e) => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      add_to_menu: e.target.value === '0' ? false : true,
+                    }));
+                  }}
+                >
+                  <FormControlLabel value={0} control={<Radio />} label="No" />
+                  <FormControlLabel value={1} control={<Radio />} label="Yes" />
+                </RadioGroup>
+              </FormControl> */}
+            </Grid>
+            <Grid size={3} mt={1}>
+              <FormControl component="fieldset">
+                <FormLabel component="legend">Need Document</FormLabel>
+                <RadioGroup
+                  id="need_document"
+                  row
+                  defaultValue={0}
+                  value={formData.need_document ? '1' : '0'}
+                  onChange={(e) => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      need_document: e.target.value === '0' ? false : true,
+                    }));
+                  }}
+                >
+                  <FormControlLabel value={0} control={<Radio />} label="No" />
+                  <FormControlLabel value={1} control={<Radio />} label="Yes" />
+                </RadioGroup>
+              </FormControl>
+            </Grid>
+            <Grid size={3} mt={1}>
+              <FormControl component="fieldset">
+                <FormLabel component="legend">Direct Visit</FormLabel>
+                <RadioGroup
+                  id="direct_visit"
+                  row
+                  defaultValue={0}
+                  value={formData.direct_visit ? '1' : '0'}
+                  onChange={(e) => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      direct_visit: e.target.value === '0' ? false : true,
+                    }));
+                  }}
+                >
+                  <FormControlLabel value={0} control={<Radio />} label="No" />
+                  <FormControlLabel value={1} control={<Radio />} label="Yes" />
+                </RadioGroup>
+              </FormControl>
+            </Grid>
+            <Grid size={3} mt={1}>
+              <FormControl component="fieldset">
+                <FormLabel component="legend">Can Notification Arrival</FormLabel>
+                <RadioGroup
+                  id="can_notification_arrival"
+                  row
+                  defaultValue={0}
+                  value={formData.can_notification_arrival ? '1' : '0'}
+                  onChange={(e) => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      can_notification_arrival: e.target.value === '0' ? false : true,
+                    }));
+                  }}
+                >
+                  <FormControlLabel value={0} control={<Radio />} label="No" />
+                  <FormControlLabel value={1} control={<Radio />} label="Yes" />
+                </RadioGroup>
+              </FormControl>
+            </Grid>
+            <Grid size={3} mt={1}>
+              <FormControl component="fieldset">
+                <FormLabel component="legend">Is Primary</FormLabel>
+                <RadioGroup
+                  id="is_primary"
+                  row
+                  defaultValue={0}
+                  value={formData.is_primary ? '1' : '0'}
+                  onChange={(e) => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      is_primary: e.target.value === '0' ? false : true,
+                    }));
+                  }}
+                >
+                  <FormControlLabel value={0} control={<Radio />} label="No" />
+                  <FormControlLabel value={1} control={<Radio />} label="Yes" />
+                </RadioGroup>
+              </FormControl>
+            </Grid>
+            <Grid size={3} mt={1}>
+              <FormControl component="fieldset">
+                <FormLabel component="legend">Is Enable</FormLabel>
+                <RadioGroup
+                  id="is_enable"
+                  row
+                  defaultValue={0}
+                  value={formData.is_enable ? '1' : '0'}
+                  onChange={(e) => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      is_enable: e.target.value === '0' ? false : true,
+                    }));
+                  }}
+                >
+                  <FormControlLabel value={0} control={<Radio />} label="No" />
+                  <FormControlLabel value={1} control={<Radio />} label="Yes" />
+                </RadioGroup>
+              </FormControl>
+            </Grid>
+            <Grid size={3} mt={1}>
+              <FormControl component="fieldset">
+                <FormLabel component="legend">Vip</FormLabel>
+                <RadioGroup
+                  id="vip"
+                  row
+                  defaultValue={0}
+                  value={formData.vip ? '1' : '0'}
+                  onChange={(e) => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      vip: e.target.value === '0' ? false : true,
+                    }));
+                  }}
+                >
+                  <FormControlLabel value={0} control={<Radio />} label="No" />
+                  <FormControlLabel value={1} control={<Radio />} label="Yes" />
+                </RadioGroup>
+              </FormControl>
+            </Grid>
+            <Grid size={3} mt={1}>
+              <FormControl component="fieldset">
+                <FormLabel component="legend">Simple Visitor</FormLabel>
+                <RadioGroup
+                  id="simple_visitor"
+                  row
+                  defaultValue={0}
+                  value={formData.simple_visitor ? '1' : '0'}
+                  onChange={(e) => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      simple_visitor: e.target.value === '0' ? false : true,
+                    }));
+                  }}
+                >
+                  <FormControlLabel value={0} control={<Radio />} label="No" />
+                  <FormControlLabel value={1} control={<Radio />} label="Yes" />
+                </RadioGroup>
+              </FormControl>
+            </Grid>
+            <Grid size={3} mt={1}>
+              <FormControl component="fieldset">
+                <FormLabel component="legend">Simple Period</FormLabel>
+                <RadioGroup
+                  id="simple_period"
+                  row
+                  defaultValue={0}
+                  value={formData.simple_period ? '1' : '0'}
+                  onChange={(e) => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      simple_period: e.target.value === '0' ? false : true,
+                    }));
+                  }}
+                >
+                  <FormControlLabel value={0} control={<Radio />} label="No" />
+                  <FormControlLabel value={1} control={<Radio />} label="Yes" />
+                </RadioGroup>
+              </FormControl>
+            </Grid>
           </Grid>
         </Grid>
       );
@@ -760,7 +799,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
 
     return (
       <div>
-        {/* <Typography variant="h6" gutterBottom>
+        {/* <Typography variant="h12" gutterBottom>
           Section: {currentSection.sectionName}
         </Typography> */}
         {/* Form Visitor */}
@@ -872,6 +911,39 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
 
   const allSteps = ['Visitor Type Info', ...dynamicSteps];
   const isFinalStep = activeStep === allSteps.length - 1;
+  const totalSteps = 1 + draggableSteps.length;
+  const isLastStep = activeStep === totalSteps - 1;
+
+  useEffect(() => {
+    setDraggableSteps([...dynamicSteps]);
+  }, [dynamicSteps]);
+
+  useEffect(() => {
+    if (Array.isArray(formData?.section_page_visitor_types)) {
+      const mappedSections = formData.section_page_visitor_types.map((s, idx) => ({
+        ...s,
+        sort: s.sort ?? idx,
+        form_visitor: s.form_visitor || [],
+        pra_form_visitor: s.pra_form_visitor || [],
+        signout_form_visitor: s.signout_form_visitor || [],
+      }));
+
+      setSectionsData(mappedSections);
+
+      const stepLabels = mappedSections.map((s) => s.name);
+      setDraggableSteps(stepLabels);
+      setActiveStep(0);
+    }
+  }, [formData?.section_page_visitor_types]);
+
+  // if (!draggableSteps || draggableSteps.length === 0) {
+  //   return (
+  //     <Box display="flex" justifyContent="center" alignItems="center" minHeight="120px">
+  //       <CircularProgress size={32} />
+  //     </Box>
+  //   );
+  // }
+
   return (
     <>
       <form onSubmit={handleOnSubmit}>
@@ -879,39 +951,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
           <Alert severity={alertType}>{alertMessage}</Alert>
         </Grid>
         <Box width="100%">
-          {/* <DragDropContext onDragEnd={handleDragEnd}>
-            <Droppable droppableId="steps" direction="horizontal">
-              {(provided: any) => (
-                <Stepper
-                  activeStep={activeStep}
-                  alternativeLabel
-                  ref={provided.innerRef}
-                  {...provided.droppableProps}
-                >
-                  <Step key={staticStep}>
-                    <StepLabel>{staticStep}</StepLabel>
-                  </Step>
-
-                  {draggableSteps.map((label, index) => (
-                    <Draggable key={label} draggableId={label} index={index}>
-                      {(provided: any) => (
-                        <Step
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                        >
-                          <StepLabel>{label}</StepLabel>
-                        </Step>
-                      )}
-                    </Draggable>
-                  ))}
-
-                  {provided.placeholder}
-                </Stepper>
-              )}
-            </Droppable>
-          </DragDropContext> */}
-
           <DragDropContext onDragEnd={handleDragEnd}>
             <Droppable droppableId="stepper" direction="horizontal">
               {(provided) => (
@@ -1026,7 +1065,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
             </Button>
 
             {/* Tombol Next / Submit */}
-            {isFinalStep ? (
+            {isLastStep ? (
               <Button
                 color="success"
                 variant="contained"
