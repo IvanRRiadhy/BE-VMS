@@ -33,6 +33,7 @@ import {
   UpdateEmployeeRequest,
   UpdateEmployeeResponse,
   DeleteEmployeeResponse,
+  UploadImageEmployeeResponse,
 } from './models/Employee';
 import {
   CreateDocumentRequest,
@@ -49,6 +50,7 @@ import {
   UpdateSiteRequest,
   UpdateSiteResponse,
   UploadImageSiteResponse,
+  UpdateSitestRequest,
   DeleteSiteResponse,
 } from './models/Sites';
 import {
@@ -91,8 +93,88 @@ import {
   UpdateVisitorTypeResponse,
   UpdateVisitorTypeRequest,
 } from './models/VisitorType';
+import {
+  GetAllVisitorPaginationResponse,
+  CreateVisitorRequest,
+  CreateVisitorResponse,
+  DeleteVisitorResponse,
+} from './models/Visitor';
 
 //#endregion
+
+//#region Visitor
+// Get  All
+export const getAllVisitor = async (token: string): Promise<GetAllVisitorPaginationResponse> => {
+  const response = await axiosInstance.get('/visitor', {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+// Get By Id
+export const getVisitorById = async (token: string, id: string): Promise<CreateVisitorResponse> => {
+  const response = await axiosInstance.get(`/visitor/${id}`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+// Pagination
+export const getAllVisitorPagination = async (
+  token: string,
+  start: number,
+  length: number,
+  sortColumn: string,
+  keyword: string = '',
+): Promise<GetAllVisitorPaginationResponse> => {
+  const params: Record<string, any> = {
+    start,
+    length,
+    sort_column: sortColumn,
+    'search[value]': keyword,
+  };
+  const response = await axiosInstance.get('/visitor', {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    params,
+  });
+  return response.data;
+};
+
+// Create
+export const createVisitor = async (
+  token: string,
+  data: CreateVisitorRequest,
+): Promise<CreateVisitorResponse> => {
+  const response = await axiosInstance.post('/visitor', data, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+// Update
+export const updateVisitor = async (
+  token: string,
+  id: string,
+  data: CreateVisitorRequest,
+): Promise<UpdateVisitorTypeResponse> => {
+  const response = await axiosInstance.put(`/visitor/${id}`, data, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+// Delete
+export const deleteVisitor = async (
+  token: string,
+  visitId: string,
+): Promise<DeleteVisitorResponse> => {
+  const response = await axiosInstance.delete(`/visitor/${visitId}`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+//end visitor
 
 //#region Visitor Type
 export const getAllVisitorTypePagination = async (
@@ -109,13 +191,6 @@ export const getAllVisitorTypePagination = async (
   // isHead?: boolean,
   // document?: string,
 ): Promise<GetAllVisitorTypePaginationResponse> => {
-  const params: Record<string, any> = {
-    start,
-    length,
-    sort_column: sortColumn,
-    'search[value]': keyword, // ← ini diperbaiki!
-  };
-
   // if (gender) params.gender = gender;
   // if (joinStart) params.join_start = joinStart;
   // if (joinEnd) params.join_end = joinEnd;
@@ -125,8 +200,13 @@ export const getAllVisitorTypePagination = async (
   // if (document) params.document = document;
 
   const response = await axiosInstance.get(`/visitor-type/dt`, {
-    params,
-    headers: { Authorization: `Bearer ${token}` },
+    params: {
+      start,
+      length,
+      sort_column: sortColumn,
+      'search[value]': keyword,
+    },
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });
 
   return response.data;
@@ -428,6 +508,17 @@ export const getAllEmployee = async (token: string): Promise<GetAllEmployeePagin
   });
   return response.data;
 };
+
+export const getEmployeeById = async (
+  employeeId: string,
+  token: string,
+): Promise<GetAllEmployeePaginationResponse> => {
+  const response = await axiosInstance.get(`/employee/${employeeId}`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
 export const getAllEmployeePagination = async (
   token: string,
   start: number,
@@ -435,17 +526,21 @@ export const getAllEmployeePagination = async (
   sortColumn: string,
   keyword: string = '',
 ): Promise<GetAllEmployeePaginationResponse> => {
-  const params: Record<string, any> = {
-    start,
-    length,
-    sort_column: sortColumn,
-    'search[value]': keyword, // ← ini diperbaiki!
-  };
+  // const params: Record<string, any> = {
+  //   start,
+  //   length,
+  //   sort_column: sortColumn,
+  //   'search[value]': keyword, // ← ini memang harus pakai tanda kurung
+  // };
 
   const response = await axiosInstance.get(`/employee/dt`, {
-    params,
-    headers: { Authorization: `Bearer ${token}` },
+    params: { start, length, sort_column: sortColumn, 'search[value]': keyword },
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+    },
   });
+  console.log('response.data:', response.data);
 
   return response.data;
 };
@@ -455,6 +550,7 @@ export const getAllEmployeePaginationFilterMore = async (
   start: number,
   length: number,
   sortColumn: string,
+  keyword: string = '',
   gender?: number,
   joinStart?: string,
   joinEnd?: string,
@@ -470,6 +566,7 @@ export const getAllEmployeePaginationFilterMore = async (
     start,
     length,
     sort_column: sortColumn,
+    'search[value]': keyword, // ← ini diperbaiki!
   };
 
   if (gender !== undefined) params.gender = gender;
@@ -536,6 +633,32 @@ export const deleteEmployee = async (
   });
   return response.data;
 };
+
+export const uploadImageEmployee = async (
+  employeeId: string,
+  data: File,
+  token: string,
+): Promise<UploadImageEmployeeResponse> => {
+  try {
+    const formData = new FormData();
+    formData.append('faceimage', data);
+    const response = await axiosInstance.post(`/employee/upload/${employeeId}`, formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    console.log('Upload Image Site Response:', response.data);
+    console.log('The Data: ', data);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
 //#endregion
 
 //#region Site API
@@ -682,10 +805,11 @@ export const getAllBrandPagination = async (
   start: number,
   length: number,
   sortColumn: string,
+  keyword: string = '',
 ): Promise<GetAllBrandPaginationResponse> => {
   try {
     const response = await axiosInstance.get(`/brand/dt`, {
-      params: { start, length, sort_column: sortColumn },
+      params: { start, length, sort_column: sortColumn, 'search[value]': keyword },
       headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
     });
     return response.data;
@@ -806,10 +930,11 @@ export const getAllAccessControlPagination = async (
   start: number,
   length: number,
   sortColumn: string,
+  keyword?: string,
 ): Promise<GetAccessControlPaginationResponse> => {
   try {
     const response = await axiosInstance.get(`/access-control/dt`, {
-      params: { start, length, sort_column: sortColumn },
+      params: { start, length, sort_column: sortColumn, 'search[value]': keyword },
       headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
     });
     return response.data;
@@ -894,10 +1019,11 @@ export const getAllCustomFieldPagination = async (
   start: number,
   length: number,
   sortColumn: string,
+  keyword?: string,
 ): Promise<GetAllCustomFieldPaginationResponse> => {
   try {
     const response = await axiosInstance.get(`/custom-field/dt`, {
-      params: { start, length, sort_column: sortColumn },
+      params: { start, length, sort_column: sortColumn, 'search[value]': keyword },
       headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
     });
     return response.data;
@@ -943,6 +1069,16 @@ export const updateCustomField = async (
     }
     throw error;
   }
+};
+
+export const deleteCustomField = async (
+  customFieldId: string,
+  token: string,
+): Promise<DeleteVisitorTypeResponse> => {
+  const response = await axiosInstance.delete(`/custom-field/${customFieldId}`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
 };
 
 // Visitor Type

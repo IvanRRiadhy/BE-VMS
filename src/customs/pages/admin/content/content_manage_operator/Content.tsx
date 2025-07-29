@@ -1,11 +1,20 @@
 import React from 'react';
-import { Box, Dialog, DialogContent, DialogTitle, Divider, Grid2 as Grid, IconButton } from '@mui/material';
+import {
+  Box,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  Grid2 as Grid,
+  IconButton,
+} from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
 
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import FormWizardAddOpeator from './FormWizardAddOpeator';
 import CloseIcon from '@mui/icons-material/Close';
+import { IconUser } from '@tabler/icons-react';
 
 const Content = () => {
   const tableRowOperators = [
@@ -75,7 +84,9 @@ const Content = () => {
     },
   ];
 
-  const cards = [{ title: 'Total Opertaor', subTitle: '10', subTitleSetting: 10, color: 'none' }];
+  const cards = [
+    { title: 'Total Operator', subTitle: '10', subTitleSetting: 10, icon: IconUser, color: 'none' },
+  ];
 
   // Create Employee state management
   const [openFormCreateEmployee, setOpenFormCreateEmployee] = React.useState(false);
@@ -92,7 +103,7 @@ const Content = () => {
         <Box>
           <Grid container spacing={3}>
             {/* column */}
-            <Grid size={{ xs: 12, lg: 12 }}>
+            <Grid size={{ xs: 12, lg: 4 }}>
               <TopCard items={cards} />
             </Grid>
             {/* column */}
@@ -138,7 +149,7 @@ const Content = () => {
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <Divider /> 
+        <Divider />
         <DialogContent>
           <br />
           <FormWizardAddOpeator />

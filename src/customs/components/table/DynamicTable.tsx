@@ -40,7 +40,7 @@ type HeaderItem = { name: string };
 
 type HeaderContent = {
   title: string;
-  subTitle: string;
+  subTitle?: string;
   items: HeaderItem[];
 };
 
@@ -49,6 +49,8 @@ type DynamicTableProps<T extends { id: string | number }> = {
   minWidth?: number | string;
   stickyHeader?: boolean;
   data: T[];
+  selectedRows?: T[];
+  selectedRef?: React.MutableRefObject<T[]>;
   isHaveChecked?: boolean;
   isHaveAction?: boolean;
   isHaveSearch?: boolean;
@@ -58,7 +60,7 @@ type DynamicTableProps<T extends { id: string | number }> = {
   isHaveFilterDuration?: boolean;
   isHaveAddData?: boolean;
   isHaveHeader?: boolean;
-  isHaveImage?: string;
+  isHaveImage?: boolean;
   isHaveBooleanSwitch?: boolean;
   headerContent?: HeaderContent;
   defaultSelectedHeaderItem?: string;
@@ -71,7 +73,9 @@ type DynamicTableProps<T extends { id: string | number }> = {
   onHeaderItemClick?: (item: HeaderItem) => void;
   onCheckedChange?: (selected: T[]) => void;
   onEdit?: (row: T) => void;
+  onBatchEdit?: (row: T[]) => void;
   onDelete?: (row: T) => void;
+  onBatchDelete?: (row: T[]) => void;
   onSearchKeywordChange?: (keyword: string) => void;
   onFilterByColumn?: (filter: { column: string }) => void;
   onFilterCalenderChange?: (ranges: any) => void;
@@ -85,6 +89,7 @@ export function DynamicTable<T extends { id: string | number }>({
   minWidth = 'auto',
   stickyHeader = false,
   data,
+  selectedRows,
   isHaveChecked = false,
   isHaveAction = false,
   isHaveSearch = false,
@@ -107,7 +112,9 @@ export function DynamicTable<T extends { id: string | number }>({
   onHeaderItemClick,
   onCheckedChange,
   onEdit,
+  onBatchEdit,
   onDelete,
+  onBatchDelete,
   onSearchKeywordChange,
   onFilterByColumn,
   onFilterCalenderChange,
@@ -122,6 +129,8 @@ export function DynamicTable<T extends { id: string | number }>({
     defaultSelectedHeaderItem ?? null,
   );
   const [showDrawer, setShowDrawer] = React.useState(false);
+
+  const BASE_URL = 'http://192.168.1.116:8000/cdn';
 
   const [showDrawerFilterMore, setShowDrawerFilterMore] = React.useState(false);
 
@@ -142,24 +151,28 @@ export function DynamicTable<T extends { id: string | number }>({
 
   const handleCheckAll = (event: React.ChangeEvent<HTMLInputElement>) => {
     const currentPageIds = paginatedData.map((row) => row.id);
-    const newChecked = event.target.checked
-      ? [...checkedIds, ...currentPageIds.filter((id) => !checkedIds.includes(id))]
-      : checkedIds.filter((id) => !currentPageIds.includes(id));
+    let newCheckedSet = new Set(checkedIds);
 
-    setCheckedIds(newChecked);
+    if (event.target.checked) {
+      currentPageIds.forEach((id) => newCheckedSet.add(id));
+    } else {
+      currentPageIds.forEach((id) => newCheckedSet.delete(id));
+    }
 
-    const selectedRows = data.filter((row) => newChecked.includes(row.id));
-    onCheckedChange?.(selectedRows);
-  };
+    const newChecked = Array.from(newCheckedSet);
 
-  const handleCheckRow = (id: T['id']) => (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newChecked = event.target.checked
-      ? [...checkedIds, id]
-      : checkedIds.filter((cid) => cid !== id);
     setCheckedIds(newChecked);
     onCheckedChange?.(data.filter((row) => newChecked.includes(row.id)));
   };
 
+  const handleCheckRow = (id: string, checked: boolean) => {
+    const newChecked = checked
+      ? [...checkedIds, id]
+      : checkedIds.filter((checkedId) => checkedId !== id);
+
+    setCheckedIds(newChecked);
+    onCheckedChange?.(data.filter((row) => newChecked.includes(row.id)));
+  };
   const handleSearch = () => {
     onSearchKeywordChange?.(searchKeyword);
   };
@@ -202,6 +215,8 @@ export function DynamicTable<T extends { id: string | number }>({
       .replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1)); // kapital di setiap kata
   };
 
+  const imageFields = ['faceimage', 'photo', 'avatar', 'image'];
+
   // end -----------
   return (
     <>
@@ -212,14 +227,65 @@ export function DynamicTable<T extends { id: string | number }>({
             <CardContent>
               <Grid2 container size={{ xs: 12, sm: 12 }}>
                 {/* Column 1 */}
-                <Grid2 size={{ xs: 12, sm: 7 }}>
+                <Grid2
+                  size={{ xs: 12, sm: 12 }}
+                  display={'flex'}
+                  alignItems={'center'}
+                  justifyContent={{ xs: 'space-around', sm: 'flex-start' }}
+                >
                   <Stack direction={'column'}>
-                    <Typography sx={{ fontSize: '1rem' }} variant="subtitle2">
+                    <Typography sx={{ fontSize: '1rem' }} variant="subtitle2" fontWeight={600}>
                       {headerContent.title}
                     </Typography>
-                    <Typography mt={1.5} variant="subtitle2">
+                    {/* <Typography mt={1.5} variant="subtitle2">
                       {headerContent.subTitle}
-                    </Typography>
+                    </Typography> */}
+                    <Tabs
+                      value={headerContent.items.findIndex(
+                        (item) => item.name === selectedHeaderItem,
+                      )}
+                      onChange={(e, newValue) => {
+                        const selectedItem = headerContent.items[newValue];
+                        setSelectedHeaderItem(selectedItem.name);
+                        onHeaderItemClick?.(selectedItem);
+                      }}
+                      textColor="primary"
+                      indicatorColor="primary"
+                      variant="scrollable"
+                      scrollButtons="auto"
+                      sx={{
+                        minHeight: '20px',
+                        '& .MuiTab-root': {
+                          minHeight: '20px',
+                          textTransform: 'none',
+                          fontSize: '0.6rem',
+                          px: 1.5,
+                          marginTop: { xs: 1, sm: 2 },
+                          borderRadius: '999px', // pill shape
+                          border: '1px solid', // default border (akan di override jika selected)
+                          borderColor: 'primary.main',
+                          color: 'primary.main',
+                          transition: 'all 0.3s',
+                          marginRight: 1, // tambahkan jarak antar tab (1 = 8px)
+                        },
+                        '& .MuiTab-root.Mui-selected': {
+                          fontWeight: 'bold',
+                          backgroundColor: 'primary.main',
+                          color: '#ffffff', // putih
+                          border: '1px solid transparent',
+                        },
+                        '& .MuiTabs-indicator': {
+                          display: 'none', // hide default indicator
+                        },
+                      }}
+                    >
+                      {headerContent.items.map((item, idx) => (
+                        <Tab
+                          key={idx}
+                          label={item.name.charAt(0).toUpperCase() + item.name.slice(1)}
+                        />
+                      ))}
+                    </Tabs>
                   </Stack>
                 </Grid2>
 
@@ -229,42 +295,7 @@ export function DynamicTable<T extends { id: string | number }>({
                   display={'flex'}
                   alignItems={'center'}
                   justifyContent={{ xs: 'space-around', sm: 'flex-end' }}
-                >
-                  <Tabs
-                    value={headerContent.items.findIndex(
-                      (item) => item.name === selectedHeaderItem,
-                    )}
-                    onChange={(e, newValue) => {
-                      const selectedItem = headerContent.items[newValue];
-                      setSelectedHeaderItem(selectedItem.name);
-                      onHeaderItemClick?.(selectedItem);
-                    }}
-                    textColor="primary"
-                    indicatorColor="primary"
-                    variant="scrollable"
-                    scrollButtons="auto"
-                    sx={{
-                      minHeight: '32px',
-                      '& .MuiTab-root': {
-                        minHeight: '32px',
-                        textTransform: 'none',
-                        fontSize: '0.8rem',
-                        px: 2,
-                        marginTop: { xs: 1, sm: 2 },
-                      },
-                      '& .Mui-selected': {
-                        fontWeight: 'bold',
-                      },
-                    }}
-                  >
-                    {headerContent.items.map((item, idx) => (
-                      <Tab
-                        key={idx}
-                        label={item.name.charAt(0).toUpperCase() + item.name.slice(1)}
-                      />
-                    ))}
-                  </Tabs>
-                </Grid2>
+                ></Grid2>
               </Grid2>
             </CardContent>
           </BlankCard>
@@ -423,14 +454,6 @@ export function DynamicTable<T extends { id: string | number }>({
                           },
                         },
                       }}
-                      inputProps={{
-                        sx: {
-                          height: 36,
-                          padding: '0 12px',
-                          display: 'flex',
-                          alignItems: 'center',
-                        },
-                      }}
                     >
                       <MenuItem value="">
                         <Typography fontSize={'0.7rem'} variant="caption">
@@ -480,8 +503,22 @@ export function DynamicTable<T extends { id: string | number }>({
                   </Typography>
                 </Box>
                 <Box display="flex" alignItems="center" gap={3} pr={2.5}>
-                  <EditIconOutline sx={{ fontSize: '1.2rem', cursor: 'pointer' }} />
-                  <DeleteOutlineOutlinedIcon sx={{ fontSize: '1.2rem', cursor: 'pointer' }} />
+                  {/* Tombol Edit (batch edit hanya jika perlu) */}
+                  <EditIconOutline
+                    sx={{ fontSize: '1.2rem', cursor: 'pointer' }}
+                    onClick={() => {
+                      if (!Array.isArray(selectedRows) || selectedRows.length === 0) return;
+                      onBatchEdit?.(selectedRows);
+                    }}
+                  />
+
+                  <DeleteOutlineOutlinedIcon
+                    sx={{ fontSize: '1.2rem', cursor: 'pointer' }}
+                    onClick={() => {
+                      if (!Array.isArray(selectedRows) || selectedRows.length === 0) return;
+                      onBatchDelete?.(selectedRows);
+                    }}
+                  />
                 </Box>
               </Grid2>
             )}
@@ -537,13 +574,13 @@ export function DynamicTable<T extends { id: string | number }>({
                         sx={{ position: 'sticky', left: 0, zIndex: 2, background: 'white' }}
                       >
                         <Checkbox
-                          indeterminate={
-                            paginatedData.some((row) => checkedIds.includes(row.id)) &&
-                            !paginatedData.every((row) => checkedIds.includes(row.id))
-                          }
                           checked={
                             paginatedData.length > 0 &&
                             paginatedData.every((row) => checkedIds.includes(row.id))
+                          }
+                          indeterminate={
+                            paginatedData.some((row) => checkedIds.includes(row.id)) &&
+                            !paginatedData.every((row) => checkedIds.includes(row.id))
                           }
                           onChange={handleCheckAll}
                         />
@@ -585,7 +622,7 @@ export function DynamicTable<T extends { id: string | number }>({
                         >
                           <Checkbox
                             checked={checkedIds.includes(row.id)}
-                            onChange={handleCheckRow(row.id)}
+                            onChange={(e) => handleCheckRow(row.id as string, e.target.checked)}
                           />
                         </TableCell>
                       )}
@@ -599,12 +636,66 @@ export function DynamicTable<T extends { id: string | number }>({
                       >
                         {index + 1}
                       </TableCell>
-                      {/* <TableCell>
-                      <> {isHaveImage && <img src={} />} </> 
-                    </TableCell> */}
+
                       {columns.map((col) => (
                         <TableCell key={col}>
-                          {isHaveBooleanSwitch && typeof row[col] === 'boolean' ? (
+                          {isHaveImage &&
+                            imageFields.includes(col) &&
+                            typeof row[col] === 'string' && (
+                              <img
+                                src={(() => {
+                                  const value = row[col];
+                                  if (!value) return '';
+                                  if (value.startsWith('data:image')) return value; // base64
+                                  if (value.startsWith('http')) return value; // full URL
+                                  return `${BASE_URL}${value}`; // relative path
+                                })()}
+                                alt="employee"
+                                style={{
+                                  width: 55,
+                                  height: 55,
+                                  borderRadius: '50%',
+                                  objectFit: 'cover',
+                                }}
+                              />
+                            )}
+
+                          {isHaveBooleanSwitch && typeof row[col] === 'boolean' && (
+                            <Switch
+                              checked={row[col] as boolean}
+                              onChange={(_, checked) =>
+                                onBooleanSwitchChange?.(row.id, col, checked)
+                              }
+                              color="primary"
+                              size="small"
+                            />
+                          )}
+
+                          {!(
+                            (isHaveImage &&
+                              imageFields.includes(col) &&
+                              typeof row[col] === 'string') ||
+                            (isHaveBooleanSwitch && typeof row[col] === 'boolean')
+                          ) && <span>{String(row[col])}</span>}
+
+                          {/* {isHaveImage && col === 'faceimage' ? (
+                            <img
+                              src={(() => {
+                                const value = row[col];
+                                if (typeof value !== 'string' || !value) return '';
+                                if (value.startsWith('data:image')) return value; // base64
+                                if (value.startsWith('http')) return value; // full URL
+                                return `${BASE_URL}${value}`; // relative path
+                              })()}
+                              alt="employee"
+                              style={{
+                                width: 55,
+                                height: 55,
+                                borderRadius: '50%',
+                                objectFit: 'cover',
+                              }}
+                            />
+                          ) : isHaveBooleanSwitch && typeof row[col] === 'boolean' ? (
                             <Switch
                               checked={row[col] as boolean}
                               onChange={(_, checked) =>
@@ -615,7 +706,7 @@ export function DynamicTable<T extends { id: string | number }>({
                             />
                           ) : (
                             String(row[col])
-                          )}
+                          )} */}
                         </TableCell>
                       ))}
                       {isHaveAction && (

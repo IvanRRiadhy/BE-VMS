@@ -2,12 +2,14 @@ import { Box, CardContent, Grid2, Typography } from '@mui/material';
 import BlankCard from 'src/components/shared/BlankCard';
 import { Stack } from '@mui/system';
 import React from 'react';
+import { TablerIconsProps } from '@tabler/icons-react';
 
 interface CardItem {
   title: string;
   subTitle: string;
   subTitleSetting: number | string;
   color?: string;
+  icon?: React.FC<TablerIconsProps>;
 }
 
 interface TopCardsProps {
@@ -53,32 +55,52 @@ const TopCard: React.FC<TopCardsProps> = ({ items, onImageClick, cardMarginBotto
                   justifyContent="space-between"
                 >
                   <Box>
-                    <Typography variant="h5">{card.title}</Typography>
-                    <Box
+                    <Stack direction="row" alignItems="center" spacing={1} gap={1}>
+                      {card.icon && (
+                        <Box
+                          sx={{
+                            backgroundColor: '#5c87ff', // ganti warna sesuai tema
+                            borderRadius: '50%',
+                            padding: 1,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <card.icon size={24} color="#FFFF" />
+                        </Box>
+                      )}
+                      <Box>
+                        <Typography variant="h5">{card.title}</Typography>
+                        {/* <Typography variant="h6" color="textSecondary" fontSize={'1.1rem'}>
+                          {card.subTitle}
+                        </Typography> */}
+                        {typeof card.subTitleSetting === 'string' ? (
+                          <Box
+                            component="img"
+                            src={card.subTitle}
+                            alt={card.title}
+                            sx={{ width: 32, height: 32, objectFit: 'contain', cursor: 'pointer' }}
+                            onClick={() => onImageClick?.(card, index)}
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = '/default-icon.png';
+                            }}
+                          />
+                        ) : (
+                          <Typography variant="h6" color="textSecondary" fontSize={'1.1rem'}>
+                            {card.subTitle}
+                          </Typography>
+                        )}
+                      </Box>
+                    </Stack>
+                    {/* <Box
                       sx={{
                         marginTop: 1,
                         display: 'flex',
                         alignItems: 'center',
                         gap: '8px',
                       }}
-                    >
-                      {typeof card.subTitleSetting === 'string' ? (
-                        <Box
-                          component="img"
-                          src={card.subTitle}
-                          alt={card.title}
-                          sx={{ width: 32, height: 32, objectFit: 'contain', cursor: 'pointer' }}
-                          onClick={() => onImageClick?.(card, index)}
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = '/default-icon.png';
-                          }}
-                        />
-                      ) : (
-                        <Typography variant="h6" color="textSecondary" fontSize={'1.1rem'}>
-                          {card.subTitle}
-                        </Typography>
-                      )}
-                    </Box>
+                    ></Box> */}
                   </Box>
                 </Stack>
               </CardContent>

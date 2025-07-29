@@ -14,6 +14,7 @@ import {
   Divider,
   Grid2,
 } from '@mui/material';
+import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import PageContainer from 'src/components/container/PageContainer';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
@@ -27,11 +28,12 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 
 const steps = [
   'Personal Data',
-  'Upload ID Card',
-  'Upload Visitor Photo',
-  'Purpose Of Visit - Part 1',
-  'Purpose Of Visit - Part 2',
+  // 'Upload ID Card',
+  // 'Upload Visitor Photo',
+  // 'Purpose Of Visit - Part 1',
+  // 'Purpose Of Visit - Part 2',
 ];
+
 
 const FormWizardAddVisitor = () => {
   const [idCardFile, setIdCardFile] = useState<File | null>(null);
@@ -62,223 +64,177 @@ const FormWizardAddVisitor = () => {
         return (
           <Box>
             <Grid2 container spacing={2}>
-              <Grid2 sx={{ mt: 5 }} size={{ xs: 12, sm: 12 }}>
+              <Grid2 sx={{ mt: 2 }} size={{ xs: 12, sm: 12 }}>
                 <Alert severity="info">Complete the following data properly and correctly</Alert>
               </Grid2>
 
-              {/* ID card */}
-              <Grid2 size={{ xs: 6, sm: 6 }}>
-                <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="id_card_number">
-                  <Typography variant="caption">ID card number</Typography>
+              <Grid2>
+                <CustomFormLabel htmlFor="visitor-type" sx={{ mt: 1 }}>
+                  Visitor Type
                 </CustomFormLabel>
-                <CustomTextField
-                  id="id_card_number"
-                  variant="outlined"
-                  fullWidth
-                  helperText="You have to make sure that the ID card number is true."
-                />
-              </Grid2>
-
-              {/* name */}
-              <Grid2 size={{ xs: 6, sm: 6 }}>
-                <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="name">
-                  <Typography variant="caption">Name</Typography>
-                </CustomFormLabel>
-                <CustomTextField
-                  id="name"
-                  variant="outlined"
-                  fullWidth
-                  helperText="You have to make sure that the name of this Visitor is true."
-                />
-              </Grid2>
-
-              {/* email */}
-              <Grid2 size={{ xs: 6, sm: 6 }}>
-                <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="email">
-                  <Typography variant="caption">Email</Typography>
-                </CustomFormLabel>
-                <CustomTextField
-                  id="email"
-                  variant="outlined"
-                  fullWidth
-                  helperText="You have to make sure that the email of this Visitor is true."
-                />
-              </Grid2>
-
-              {/* personal title */}
-              <Grid2 size={{ xs: 6, sm: 6 }}>
-                <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="professional_title">
-                  <Typography variant="caption">Title</Typography>
-                </CustomFormLabel>
-                <CustomTextField
-                  id="professional_title"
-                  select
-                  variant="outlined"
-                  fullWidth
-                  defaultValue=""
-                  helperText="You have to make sure that the title of this Visitor is true."
+                <CustomSelect
+                  id="visitor_type"
+                  name="visitor_type"
+                  value={formdata.visitor_type}
                 >
-                  <MenuItem value="Ibu">Ibu</MenuItem>
-                  <MenuItem value="Bapak">Bapak</MenuItem>
-                  <MenuItem value="Mr">Mr</MenuItem>
-                  <MenuItem value="Mrs">Mrs</MenuItem>
-                </CustomTextField>
+
+                </CustomSelect>
               </Grid2>
             </Grid2>
           </Box>
         );
 
-      case 1:
-        return (
-          <Box>
-            <ImageUploadCard
-              title="You can upload  ID card photo, or using"
-              file={idCardFile}
-              onFileChange={(file) => setIdCardFile(file)}
-            />
-          </Box>
-        );
+      // case 1:
+      //   return (
+      //     <Box>
+      //       <ImageUploadCard
+      //         title="You can upload  ID card photo, or using"
+      //         file={idCardFile}
+      //         onFileChange={(file) => setIdCardFile(file)}
+      //       />
+      //     </Box>
+      //   );
 
-      case 2:
-        return (
-          <Box>
-            <ImageUploadCard
-              title="You can post visitor photo,  or using"
-              file={visitorPhotoFile}
-              onFileChange={(file) => setVisitorPhotoFile(file)}
-            />
-          </Box>
-        );
+      // case 2:
+      //   return (
+      //     <Box>
+      //       <ImageUploadCard
+      //         title="You can post visitor photo,  or using"
+      //         file={visitorPhotoFile}
+      //         onFileChange={(file) => setVisitorPhotoFile(file)}
+      //       />
+      //     </Box>
+      //   );
 
-      case 3:
-        return (
-          <Box>
-            <Grid2 container spacing={2}>
-              <Grid2 sx={{ mt: 5 }} size={{ xs: 12, sm: 12 }}>
-                <Alert severity="info">Complete the following data properly and correctly</Alert>
-              </Grid2>
+      // case 3:
+      //   return (
+      //     <Box>
+      //       <Grid2 container spacing={2}>
+      //         <Grid2 sx={{ mt: 5 }} size={{ xs: 12, sm: 12 }}>
+      //           <Alert severity="info">Complete the following data properly and correctly</Alert>
+      //         </Grid2>
 
-              {/* Name of person */}
-              <Grid2 size={{ xs: 6, sm: 6 }}>
-                <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="name_of_person">
-                  <Typography variant="caption">Name of person</Typography>
-                </CustomFormLabel>
-                <CustomTextField
-                  id="name_of_person"
-                  variant="outlined"
-                  fullWidth
-                  helperText="You have to make sure that the name of this Visitor is true."
-                />
-              </Grid2>
+      //         {/* Name of person */}
+      //         <Grid2 size={{ xs: 6, sm: 6 }}>
+      //           <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="name_of_person">
+      //             <Typography variant="caption">Name of person</Typography>
+      //           </CustomFormLabel>
+      //           <CustomTextField
+      //             id="name_of_person"
+      //             variant="outlined"
+      //             fullWidth
+      //             helperText="You have to make sure that the name of this Visitor is true."
+      //           />
+      //         </Grid2>
 
-              {/* Phone */}
-              <Grid2 size={{ xs: 6, sm: 6 }}>
-                <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="phone">
-                  <Typography variant="caption">Phone</Typography>
-                </CustomFormLabel>
-                <CustomTextField
-                  id="phone"
-                  variant="outlined"
-                  fullWidth
-                  helperText="You have to make sure that the phone of this Visitor is true."
-                />
-              </Grid2>
+      //         {/* Phone */}
+      //         <Grid2 size={{ xs: 6, sm: 6 }}>
+      //           <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="phone">
+      //             <Typography variant="caption">Phone</Typography>
+      //           </CustomFormLabel>
+      //           <CustomTextField
+      //             id="phone"
+      //             variant="outlined"
+      //             fullWidth
+      //             helperText="You have to make sure that the phone of this Visitor is true."
+      //           />
+      //         </Grid2>
 
-              {/* Email */}
-              <Grid2 size={{ xs: 6, sm: 6 }}>
-                <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="email">
-                  <Typography variant="caption">Email</Typography>
-                </CustomFormLabel>
-                <CustomTextField
-                  id="email"
-                  variant="outlined"
-                  fullWidth
-                  helperText="You have to make sure that the email of this Visitor is true."
-                />
-              </Grid2>
+      //         {/* Email */}
+      //         <Grid2 size={{ xs: 6, sm: 6 }}>
+      //           <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="email">
+      //             <Typography variant="caption">Email</Typography>
+      //           </CustomFormLabel>
+      //           <CustomTextField
+      //             id="email"
+      //             variant="outlined"
+      //             fullWidth
+      //             helperText="You have to make sure that the email of this Visitor is true."
+      //           />
+      //         </Grid2>
 
-              {/* Purpose */}
-              <Grid2 size={{ xs: 6, sm: 6 }}>
-                <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="purpose">
-                  <Typography variant="caption">Purpose</Typography>
-                </CustomFormLabel>
-                <CustomTextField
-                  id="purpose"
-                  select
-                  variant="outlined"
-                  fullWidth
-                  defaultValue=""
-                  helperText="You have to make sure that the purpose of this Visitor is true."
-                >
-                  <MenuItem value="Meeting">Meeting</MenuItem>
-                  <MenuItem value="Survey">Survey</MenuItem>
-                  <MenuItem value="Other">Other</MenuItem>
-                </CustomTextField>
-              </Grid2>
-            </Grid2>
-          </Box>
-        );
+      //         {/* Purpose */}
+      //         <Grid2 size={{ xs: 6, sm: 6 }}>
+      //           <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="purpose">
+      //             <Typography variant="caption">Purpose</Typography>
+      //           </CustomFormLabel>
+      //           <CustomTextField
+      //             id="purpose"
+      //             select
+      //             variant="outlined"
+      //             fullWidth
+      //             defaultValue=""
+      //             helperText="You have to make sure that the purpose of this Visitor is true."
+      //           >
+      //             <MenuItem value="Meeting">Meeting</MenuItem>
+      //             <MenuItem value="Survey">Survey</MenuItem>
+      //             <MenuItem value="Other">Other</MenuItem>
+      //           </CustomTextField>
+      //         </Grid2>
+      //       </Grid2>
+      //     </Box>
+      //   );
 
-      case 4:
-        return (
-          <Box>
-            <Grid2 container spacing={2}>
-              {/* Agenda */}
-              <Grid2 size={{ xs: 6, sm: 6 }}>
-                <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="Agenda">
-                  <Typography variant="caption">Agenda</Typography>
-                </CustomFormLabel>
-                <CustomTextField
-                  id="Agenda"
-                  variant="outlined"
-                  fullWidth
-                  helperText="You have to make sure that the agenda of this Visitor is true."
-                />
-              </Grid2>
+      // case 4:
+      //   return (
+      //     <Box>
+      //       <Grid2 container spacing={2}>
+      //         {/* Agenda */}
+      //         <Grid2 size={{ xs: 6, sm: 6 }}>
+      //           <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="Agenda">
+      //             <Typography variant="caption">Agenda</Typography>
+      //           </CustomFormLabel>
+      //           <CustomTextField
+      //             id="Agenda"
+      //             variant="outlined"
+      //             fullWidth
+      //             helperText="You have to make sure that the agenda of this Visitor is true."
+      //           />
+      //         </Grid2>
 
-              {/* Place */}
-              <Grid2 size={{ xs: 6, sm: 6 }}>
-                <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="Place">
-                  <Typography variant="caption">Place</Typography>
-                </CustomFormLabel>
-                <CustomTextField
-                  id="Place"
-                  variant="outlined"
-                  fullWidth
-                  helperText="You have to make sure that the place of this Visitor is true."
-                />
-              </Grid2>
+      //         {/* Place */}
+      //         <Grid2 size={{ xs: 6, sm: 6 }}>
+      //           <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="Place">
+      //             <Typography variant="caption">Place</Typography>
+      //           </CustomFormLabel>
+      //           <CustomTextField
+      //             id="Place"
+      //             variant="outlined"
+      //             fullWidth
+      //             helperText="You have to make sure that the place of this Visitor is true."
+      //           />
+      //         </Grid2>
 
-              {/* Start Date */}
-              <Grid2 size={{ xs: 6, sm: 6 }}>
-                <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="Start">
-                  <Typography variant="caption">Start</Typography>
-                </CustomFormLabel>
-                <CustomTextField
-                  type="date"
-                  id="Start"
-                  variant="outlined"
-                  fullWidth
-                  helperText="You have to make sure that the start date of this Visitor is true."
-                />
-              </Grid2>
+      //         {/* Start Date */}
+      //         <Grid2 size={{ xs: 6, sm: 6 }}>
+      //           <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="Start">
+      //             <Typography variant="caption">Start</Typography>
+      //           </CustomFormLabel>
+      //           <CustomTextField
+      //             type="date"
+      //             id="Start"
+      //             variant="outlined"
+      //             fullWidth
+      //             helperText="You have to make sure that the start date of this Visitor is true."
+      //           />
+      //         </Grid2>
 
-              {/* End Date */}
-              <Grid2 size={{ xs: 6, sm: 6 }}>
-                <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="End">
-                  <Typography variant="caption">End</Typography>
-                </CustomFormLabel>
-                <CustomTextField
-                  type="date"
-                  id="End"
-                  variant="outlined"
-                  fullWidth
-                  helperText="You have to make sure that the end date of this Visitor is true."
-                />
-              </Grid2>
-            </Grid2>
-          </Box>
-        );
+      //         {/* End Date */}
+      //         <Grid2 size={{ xs: 6, sm: 6 }}>
+      //           <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="End">
+      //             <Typography variant="caption">End</Typography>
+      //           </CustomFormLabel>
+      //           <CustomTextField
+      //             type="date"
+      //             id="End"
+      //             variant="outlined"
+      //             fullWidth
+      //             helperText="You have to make sure that the end date of this Visitor is true."
+      //           />
+      //         </Grid2>
+      //       </Grid2>
+      //     </Box>
+      //   );
 
       default:
         return null;
@@ -342,7 +298,7 @@ const FormWizardAddVisitor = () => {
                 variant="contained"
                 color={activeStep === steps.length - 1 ? 'success' : 'secondary'}
               >
-                {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
+                {activeStep === steps.length - 1 ? 'Submit' : 'Next'}
               </Button>
             </Box>
           </>

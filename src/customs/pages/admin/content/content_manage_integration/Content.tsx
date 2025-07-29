@@ -34,6 +34,7 @@ import {
 import { useTheme } from '@mui/material/styles';
 import FormIntegration from './FormIntegration';
 import Swal from 'sweetalert2';
+import { IconWorldCog } from '@tabler/icons-react';
 
 type IntegrationTableRow = {
   id: string;
@@ -113,6 +114,7 @@ const Content = () => {
     {
       title: 'Total Integration',
       subTitle: `${totalRecords}`,
+      icon: IconWorldCog,
       subTitleSetting: 10,
       color: 'none',
     },
@@ -234,7 +236,7 @@ const Content = () => {
         <Box>
           <Grid container spacing={3}>
             {/* column */}
-            <Grid size={{ xs: 12, lg: 12 }}>
+            <Grid size={{ xs: 12, lg: 4 }}>
               <TopCard items={cards} />
             </Grid>
             {/* column */}

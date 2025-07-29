@@ -14,7 +14,6 @@ import {
 import PageContainer from 'src/components/container/PageContainer';
 
 import CloseIcon from '@mui/icons-material/Close';
-import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import {
   CreateVisitorTypeRequest,
@@ -35,37 +34,39 @@ import {
 import { UpdateVisitorTypeRequest } from 'src/customs/api/models/VisitorType';
 import Swal from 'sweetalert2';
 
+import { IconUsersGroup } from '@tabler/icons-react';
 import { useRef } from 'react';
+import TopCard from 'src/customs/components/cards/TopCard';
+import { showErrorAlert, showSuccessAlert } from 'src/customs/components/alerts/alerts';
 
 type VisitorTypeTableRow = {
   id: string;
   name: string;
-  show_in_form: boolean;
-  duration_visit: number;
-  max_time_visit: number;
-  can_parking: boolean;
-  can_access: boolean;
-  add_to_menu: boolean;
-  need_document: boolean;
-  grace_time: number;
+  description: string;
+  // show_in_form: boolean;
+  // duration_visit: number;
+  // max_time_visit: number;
+  // can_parking: boolean;
+  // can_access: boolean;
+  // add_to_menu: boolean;
+  // need_document: boolean;
+  // grace_time: number;
   period: number;
-  simple_visitor: boolean;
-  simple_period: boolean;
+  // simple_visitor: boolean;
+  // simple_period: boolean;
 };
 
 const Content = () => {
   const { token } = useSession();
   const [visitorData, setVisitorData] = useState<Item[]>([]);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(3);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [totalRecords, setTotalRecords] = useState(0);
   const [tableRowVisitorType, setTableRowVisitorType] = React.useState<VisitorTypeTableRow[]>([]);
-
-  const [isDataReady, setIsDataReady] = useState(false);
-
+  const [selectedRows, setSelectedRows] = useState<VisitorTypeTableRow[]>([]);
   const [formDataAddVisitorType, setFormDataAddVisitorType] = useState<CreateVisitorTypeRequest>(
     () => {
       const saved = localStorage.getItem('unsavedVisitorTypeData');
@@ -73,7 +74,6 @@ const Content = () => {
     },
   );
   const [edittingId, setEdittingId] = useState('');
-
   const defaultFormData = CreateVisitorTypeRequestSchema.parse({});
   const isFormChanged = JSON.stringify(formDataAddVisitorType) !== JSON.stringify(defaultFormData);
   const [openFormCreateVisitorType, setOpenFormCreateVisitorType] = React.useState(false);
@@ -81,7 +81,19 @@ const Content = () => {
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
   const [openFormCreateSiteSpace, setOpenFormCreateSiteSpace] = React.useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [isDataReady, setIsDataReady] = useState(false);
   const dialogRef = useRef<HTMLDivElement | null>(null);
+  const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
+
+  const cards = [
+    {
+      title: 'Total Visitor Type',
+      subTitle: `${totalFilteredRecords}`,
+      icon: IconUsersGroup,
+      subTitleSetting: 10,
+      color: 'none',
+    },
+  ];
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -124,41 +136,31 @@ const Content = () => {
           searchKeyword,
         );
         const document = await getAllDocumentPagination(token, start, 99, sortColumn);
-        console.log('Response from API:', response);
-        if (response && document) {
-          const orgMap = (document.collection ?? []).reduce(
-            (acc: Record<string, string>, org: any) => {
-              acc[org.id] = org.name;
-              return acc;
-            },
-            {},
-          );
-          setVisitorData(response.collection);
-          const rows = response.collection.map((item) => ({
-            id: item.id,
-            name: item.name,
-            description: item.description,
-            show_in_form: item.show_in_form,
-            duration_visit: item.duration_visit,
-            max_time_visit: item.max_time_visit,
-            can_parking: item.can_parking,
-            can_access: item.can_access,
-            add_to_menu: item.add_to_menu,
-            need_document: item.need_document,
-            grace_time: item.grace_time,
-            period: item.period,
-            simple_visitor: item.simple_visitor,
-            simple_period: item.simple_period,
-            can_notification_arrival: item.can_notification_arrival,
-            is_primary: item.is_primary,
-            is_enable: item.is_enable,
-          }));
-          // setTableData(mappedDocument);
-          setTotalRecords(response.RecordsTotal);
-          setIsDataReady(true);
-
-          setTableRowVisitorType(rows);
-        }
+        setVisitorData(response.collection);
+        setTotalRecords(response.RecordsTotal);
+        setTotalFilteredRecords(response.RecordsFiltered);
+        setIsDataReady(true);
+        const rows = response.collection.map((item) => ({
+          id: item.id,
+          name: item.name,
+          description: item.description,
+          // show_in_form: item.show_in_form,
+          // duration_visit: item.duration_visit,
+          // max_time_visit: item.max_time_visit,
+          // can_parking: item.can_parking,
+          // can_access: item.can_access,
+          // add_to_menu: item.add_to_menu,
+          // need_document: item.need_document,
+          // grace_time: item.grace_time,
+          period: item.period,
+          // simple_visitor: item.simple_visitor,
+          // simple_period: item.simple_period,
+          // can_notification_arrival: item.can_notification_arrival,
+          // is_primary: item.is_primary,
+          // is_enable: item.is_enable,
+        }));
+        // setTableData(mappedDocument);
+        setTableRowVisitorType(rows);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -166,7 +168,6 @@ const Content = () => {
       }
     };
     fetchData();
-    // console.log('Fetching data: ', tableData);
   }, [token, page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword]);
 
   const handleOpenDialog = () => {
@@ -187,9 +188,7 @@ const Content = () => {
   }, []);
 
   const handleEdit = (id: string) => {
-    console.log('Editing ID:', id);
-
-    const existing = visitorData.find((item) => item.id === id);
+    const existing = visitorData.find((item: any) => item.id === id);
     if (!existing) {
       console.warn('No visitor data found for ID:', id);
       return;
@@ -209,7 +208,7 @@ const Content = () => {
       direct_visit: existing.direct_visit,
       period: existing.period,
       can_notification_arrival: existing.can_notification_arrival,
-      is_primary: existing.is_primary,
+      // is_primary: existing.is_primary,
       is_enable: existing.is_enable,
       vip: existing.vip,
       simple_visitor: existing.simple_visitor,
@@ -223,7 +222,6 @@ const Content = () => {
     if (editingLocal) {
       const editingData = JSON.parse(editingLocal);
       if (editingData.id && editingData.id !== id) {
-        console.log('Editing different item than unsaved one. Prompt confirmation.');
         setPendingEditId(id);
         setConfirmDialogOpen(true);
         return;
@@ -237,23 +235,9 @@ const Content = () => {
     handleOpenDialog();
   };
 
-  // setConfirmDialogOpen(false);
-
-  // // ✅ Ini penting
-  // localStorage.removeItem('unsavedVisitorTypeData');
-
-  // if (pendingEditId) {
-  //   const existingData = visitorTypeData.find((item) => item.id === pendingEditId);
-  //   setFormDataAddVisitorType(existingData || CreateVisitorTypeRequestSchema.parse({}));
-  //   setPendingEditId(null);
-  //   handleOpenDialog();
-  // } else {
-  //   handleCloseDialog();
-  //   setFormDataAddVisitorType(CreateVisitorTypeRequestSchema.parse({}));
-  // }
-
   const handleConfirmEdit = () => {
     setConfirmDialogOpen(false);
+    localStorage.removeItem('unsavedCustomDataData'); // Bersihkan data tersimpan
 
     if (pendingEditId) {
       const nextItem = visitorData.find((item) => item.id === pendingEditId);
@@ -273,7 +257,7 @@ const Content = () => {
         direct_visit: nextItem.direct_visit,
         period: nextItem.period,
         can_notification_arrival: nextItem.can_notification_arrival,
-        is_primary: nextItem.is_primary,
+        // is_primary: nextItem.is_primary,
         is_enable: nextItem.is_enable,
         vip: nextItem.vip,
         simple_visitor: nextItem.simple_visitor,
@@ -290,7 +274,12 @@ const Content = () => {
       );
       setPendingEditId(null);
       handleOpenDialog();
+    } else {
+      setFormDataAddVisitorType(CreateVisitorTypeRequestSchema.parse({}));
+      setEdittingId('');
     }
+    setPendingEditId(null);
+    handleCloseDialog();
   };
 
   const handleCancelEdit = () => {
@@ -324,13 +313,43 @@ const Content = () => {
         prev.map((r) => (r.id === rowId ? { ...r, [col]: checked } : r)),
       );
     } catch (error) {
-      console.error('Error updating data:', error);
     } finally {
       setTimeout(() => {
         setLoading(false);
       }, 800);
     }
   };
+
+  const handleDialogClose = (_event: object, reason: string) => {
+    if (reason === 'backdropClick') {
+      if (isFormChanged) {
+        setConfirmDialogOpen(true);
+      } else {
+        handleCloseDialog();
+      }
+    }
+  };
+
+  useEffect(() => {
+    const handleMouseLeave = (e: MouseEvent) => {
+      if (dialogRef.current && !dialogRef.current.contains(e.relatedTarget as Node)) {
+        if (isFormChanged) {
+          setConfirmDialogOpen(true);
+        }
+      }
+    };
+
+    const dialogEl = dialogRef.current;
+    if (dialogEl) {
+      dialogEl.addEventListener('mouseleave', handleMouseLeave);
+    }
+
+    return () => {
+      if (dialogEl) {
+        dialogEl.removeEventListener('mouseleave', handleMouseLeave);
+      }
+    };
+  }, [isFormChanged]);
 
   const handleDelete = async (id: string) => {
     if (!token) return;
@@ -351,18 +370,10 @@ const Content = () => {
           await deleteVisitorType(token, id);
 
           setRefreshTrigger((prev) => prev + 1);
-          Swal.fire({
-            title: 'Deleted!',
-            text: 'Your file has been deleted.',
-            icon: 'success',
-          });
+          showSuccessAlert('Deleted!', 'Visitor type has been deleted.');
         } catch (error) {
           console.error(error);
-          Swal.fire({
-            title: 'Error!',
-            text: 'Something went wrong while deleting.',
-            icon: 'error',
-          });
+          showErrorAlert('Failed!', 'Failed to delete visitor type.');
         } finally {
           setTimeout(() => {
             setLoading(false);
@@ -371,23 +382,60 @@ const Content = () => {
       }
     });
   };
+
+  const handleBatchDelete = async (rows: VisitorTypeTableRow[]) => {
+    if (!token || rows.length === 0) return;
+
+    const result = await Swal.fire({
+      title: `Are you sure to delete ${rows.length} items?`,
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, delete all!',
+    });
+
+    if (result.isConfirmed) {
+      setLoading(true);
+      try {
+        // Bisa pakai Promise.all untuk hapus semua
+        await Promise.all(rows.map((row) => deleteVisitorType(token, row.id)));
+        setRefreshTrigger((prev) => prev + 1);
+        Swal.fire('Deleted!', 'Selected data has been deleted.', 'success');
+        setSelectedRows([]); // reset selected rows
+      } catch (error) {
+        Swal.fire('Error!', 'Failed to delete some items.', 'error');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
   return (
     <>
       <PageContainer title="Manage Visitor Type" description="Visitor Type Page">
         <Box>
           <Grid container spacing={3}>
             {/* column */}
-            {/* <Grid size={{ xs: 12, lg: 12 }}>
+            <Grid size={{ xs: 12, lg: 4 }}>
               <TopCard items={cards} />
-            </Grid> */}
+            </Grid>
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
               <DynamicTable
                 overflowX={'auto'}
                 data={tableRowVisitorType}
+                selectedRows={selectedRows}
+                totalCount={totalFilteredRecords}
                 isHaveChecked={true}
                 isHaveAction={true}
                 isHaveSearch={true}
+                isHavePagination={true}
+                defaultRowsPerPage={rowsPerPage}
+                rowsPerPageOptions={[5, 10, 20, 50, 100]}
+                onPaginationChange={(page, rowsPerPage) => {
+                  setPage(page);
+                  setRowsPerPage(rowsPerPage);
+                }}
                 isHaveFilter={true}
                 isHaveExportPdf={true}
                 isHaveExportXlf={false}
@@ -395,11 +443,15 @@ const Content = () => {
                 isHaveAddData={true}
                 isHaveHeader={false}
                 isHaveBooleanSwitch={true}
-                onCheckedChange={(selected) => console.log('Checked table row:', selected)}
+                onCheckedChange={(selected) => {
+                  setSelectedRows(selected);
+                }}
                 onEdit={(row) => {
                   handleEdit(row.id);
+                  setEdittingId(row.id);
                 }}
                 onDelete={(row) => handleDelete(row.id)}
+                onBatchDelete={handleBatchDelete}
                 onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
                 onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
                 onAddData={() => {
@@ -415,19 +467,18 @@ const Content = () => {
       </PageContainer>
       <Dialog
         open={openFormCreateVisitorType}
-        onClose={(event, reason) => {
-          if (reason === 'backdropClick') {
-            if (isFormChanged) {
-              setConfirmDialogOpen(true);
-            } else {
-              handleCloseDialog();
-            }
-          }
-        }}
+        onClose={handleDialogClose} // sebelumnya: handleCloseDialog
         maxWidth="lg"
         fullWidth
       >
-        <DialogTitle sx={{ position: 'relative', padding: 5 }}>
+        <DialogTitle
+          sx={{
+            padding: 3,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
           {edittingId ? 'Edit' : 'Add'} Visitor Type
           <IconButton
             aria-label="close"
@@ -439,9 +490,6 @@ const Content = () => {
               }
             }}
             sx={{
-              position: 'absolute',
-              right: 8,
-              top: 8,
               color: (theme) => theme.palette.grey[500],
             }}
           >
@@ -450,18 +498,34 @@ const Content = () => {
         </DialogTitle>
         <Divider />
         <DialogContent>
-          <br />
           <FormVisitorType
             formData={formDataAddVisitorType}
             setFormData={setFormDataAddVisitorType}
-            onSuccess={handleCloseDialog}
+            onSuccess={() => {
+              localStorage.removeItem('unsavedVisitorTypeData');
+              handleCloseDialog();
+              if (edittingId) {
+                Swal.fire({
+                  icon: 'success',
+                  title: 'Success',
+                  text: 'Visitor Type successfully updated!',
+                });
+              } else {
+                Swal.fire({
+                  icon: 'success',
+                  title: 'Success',
+                  text: 'Visitor Type successfully created!',
+                });
+              }
+            }}
+            edittingId={edittingId}
           />
         </DialogContent>
       </Dialog>
 
       <Dialog open={confirmDialogOpen} onClose={handleCancelEdit}>
         <DialogTitle>Unsaved Changes</DialogTitle>
-        <DialogContent>
+        <DialogContent ref={dialogRef}>
           You have unsaved changes for another site. Are you sure you want to discard them and edit
           this site?
         </DialogContent>
@@ -472,7 +536,6 @@ const Content = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
       {loading && (
         <Box
           sx={{
@@ -481,14 +544,14 @@ const Content = () => {
             left: 0,
             width: '100%',
             height: '100%',
-            bgcolor: 'rgba(0,0,0,0.4)',
+            bgcolor: '#ffff',
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            zIndex: 10,
+            zIndex: 20000,
           }}
         >
-          <CircularProgress color="inherit" />
+          <CircularProgress color="primary" />
         </Box>
       )}
     </>

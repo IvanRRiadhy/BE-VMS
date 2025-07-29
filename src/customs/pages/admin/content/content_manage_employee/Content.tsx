@@ -46,24 +46,54 @@ import {
 } from 'src/customs/api/admin';
 
 import Swal from 'sweetalert2';
+import { IconUsers } from '@tabler/icons-react';
+
+// Alert
+import {
+  showConfirmDelete,
+  showSuccessAlert,
+  showErrorAlert,
+} from 'src/customs/components/alerts/alerts';
+
+type EmployeesTableRow = {
+  id: string;
+  name: string;
+  faceimage?: string;
+  organization_id?: string;
+  department_id?: string;
+  district_id?: string;
+};
+
+type EnableField = {
+  gender: boolean;
+  organization_id: boolean;
+  department_id: boolean;
+  district_id: boolean;
+  access_area: boolean;
+  access_area_special: boolean;
+};
 
 const Content = () => {
   // Pagination state.
   const [tableData, setTableData] = useState<Item[]>([]);
+  const [selectedRows, setSelectedRows] = useState<Item[]>([]);
   const [isDataReady, setIsDataReady] = useState(false);
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
-
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(3);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [edittingId, setEdittingId] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
+  const [tableRowEmployee, setTableRowEmployee] = useState<EmployeesTableRow[]>([]);
+
   const cards = [
     {
       title: 'Total Employee',
+      icon: IconUsers,
       subTitle: `${tableData.length}`,
       subTitleSetting: 10,
       color: 'none',
@@ -78,27 +108,28 @@ const Content = () => {
       try {
         const start = page * rowsPerPage;
         const responseGetAll = await getAllEmployee(token);
-        const responseAllFilterMore = await getAllEmployeePaginationFilterMore(
+        const responseEmployeePagination = await getAllEmployeePaginationFilterMore(
           token,
           start,
           99,
           sortColumn,
         );
 
-        const response = await getAllEmployeePagination(
+        const responseEmployee = await getAllEmployeePagination(
           token,
           start,
-          length,
+          rowsPerPage,
           sortColumn,
           searchKeyword,
         );
-        const organization = await getAllOrganizatiosPagination(token, start, 99, sortColumn);
-        const department = await getAllDepartmentsPagination(token, start, 99, sortColumn);
-        const district = await getAllDistrictsPagination(token, start, 99, sortColumn);
-        if (response && organization && department && district) {
+
+        const organization = await getAllOrganizatiosPagination(token, start, 99, sortColumn, '');
+        const department = await getAllDepartmentsPagination(token, start, 99, sortColumn, '');
+        const district = await getAllDistrictsPagination(token, start, 99, sortColumn, '');
+        if (responseEmployee && organization && department && district) {
           const orgMap = (organization.collection ?? []).reduce(
             (acc: Record<string, string>, org: any) => {
-              acc[org.id] = org.name;
+              acc[org.id] = org.name; // id sudah string
               return acc;
             },
             {},
@@ -110,6 +141,7 @@ const Content = () => {
             },
             {},
           );
+
           const distMap = (district.collection ?? []).reduce(
             (acc: Record<string, string>, dist: any) => {
               acc[dist.id] = dist.name;
@@ -118,19 +150,28 @@ const Content = () => {
             {},
           );
           // Map organization_id to organization_name and remove organization_id
-          const mappedEmployees = response.collection.map((emp: any) => {
-            const { organization_id, department_id, district_id, upload_fr, qr_code, ...rest } =
-              emp;
+          const mappedEmployees = responseEmployee.collection.map((emp: any) => {
             return {
-              ...rest,
-              organization_name: orgMap[organization_id] || 'Unknown Organization',
-              department_name: deptMap[department_id] || 'Unknown Department',
-              district_name: distMap[district_id] || 'Unknown District',
+              ...emp, // Jangan exclude field ID
+              organization_name: orgMap[String(emp.organization_id)] || 'Unknown Organization',
+              department_name: deptMap[String(emp.department_id)] || 'Unknown Department',
+              district_name: distMap[String(emp.district_id)] || 'Unknown District',
             };
           });
+          //  Remninder menggunakan GetAll bukan pagination
           setTableData(mappedEmployees);
-          setTotalRecords(response.RecordsTotal);
+          setTotalRecords(responseEmployee.RecordsTotal);
+          setTotalFilteredRecords(responseEmployee.RecordsFiltered);
           setIsDataReady(true);
+          const rows = responseEmployee.collection.map((item) => ({
+            id: item.id,
+            name: item.name,
+            faceimage: item.faceimage,
+            organization: orgMap[String(item.organization_id)] || 'Unknown Organization',
+            department: deptMap[String(item.department_id)] || 'Unknown Department',
+            district: distMap[String(item.district_id)] || 'Unknown District',
+          }));
+          setTableRowEmployee(rows);
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -139,8 +180,18 @@ const Content = () => {
       }
     };
     fetchData();
-    // console.log('Fetching data: ', tableData);
+    console.log('Fetching data: ', tableData);
   }, [token, page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword]);
+
+  const [initialFormData, setInitialFormData] = React.useState<CreateEmployeeRequest>(() => {
+    const saved = localStorage.getItem('unsavedEmployeeData');
+    try {
+      const parsed = saved ? JSON.parse(saved) : {};
+      return CreateEmployeeRequestSchema.parse(parsed);
+    } catch (e) {
+      return CreateEmployeeRequestSchema.parse({});
+    }
+  });
 
   const [formDataAddEmployee, setFormDataAddEmployee] = React.useState<CreateEmployeeRequest>(
     () => {
@@ -155,82 +206,101 @@ const Content = () => {
       }
     },
   );
-  const defaultFormData = CreateEmployeeRequestSchema.parse({});
-  const isFormChanged = JSON.stringify(formDataAddEmployee) !== JSON.stringify(defaultFormData);
 
-  useEffect(() => {
-    localStorage.setItem('unsavedEmployeeData', JSON.stringify(formDataAddEmployee));
+  const [isEditing, setIsEditing] = useState(false);
+
+  const defaultFormData = CreateEmployeeRequestSchema.parse({});
+  const isFormChanged = React.useMemo(() => {
+    return JSON.stringify(formDataAddEmployee) !== JSON.stringify(initialFormData);
   }, [formDataAddEmployee]);
 
-  const [openFormAddEmployee, setOpenFormAddEmployee] = React.useState(false);
-  const [confirmDialogOpen, setConfirmDialogOpen] = React.useState(false);
-  const [pendingEditId, setPendingEditId] = React.useState<string | null>(null);
+  useEffect(() => {
+    if (Object.keys(formDataAddEmployee).length > 0 && !isEditing && isFormChanged) {
+      localStorage.setItem('unsavedEmployeeData', JSON.stringify(formDataAddEmployee));
+    }
+  }, [formDataAddEmployee, isEditing, isFormChanged]);
+
+  const [openFormAddEmployee, setOpenFormAddEmployee] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [pendingEditId, setPendingEditId] = useState<string | null>(null);
+  const [isBatchEdit, setIsBatchEdit] = useState(false);
 
   const handleOpenDialog = () => setOpenFormAddEmployee(true);
   const handleCloseDialog = () => {
     localStorage.removeItem('unsavedEmployeeData');
     setOpenFormAddEmployee(false);
+    setIsBatchEdit(false);
+    setIsEditing(false);
   };
-
-  // const handleAdd = () => {
-  //   const editing = localStorage.getItem('unsavedEmployeeData');
-  //   if (editing) {
-  //     // If editing exists, show confirmation dialog for add
-  //     setPendingEditId(null); // null means it's an add, not edit
-  //     setConfirmDialogOpen(true);
-  //   } else {
-  //     setEdittingId('');
-  //     setFormDataAddEmployee(CreateEmployeeRequestSchema.parse({}));
-  //     handleOpenDialog();
-  //   }
-  // };
 
   const handleAdd = useCallback(() => {
     const freshForm = CreateEmployeeRequestSchema.parse({});
     setFormDataAddEmployee(freshForm);
+    setInitialFormData(freshForm); // <--- set initial form juga
     localStorage.setItem('unsavedEmployeeData', JSON.stringify(freshForm));
     setPendingEditId(null);
     handleOpenDialog();
   }, []);
 
   const handleEdit = (id: string) => {
+    const existingData = tableData.find((item) => item.id === id);
+    if (!existingData) return;
+
     const editing = localStorage.getItem('unsavedEmployeeData');
-    if (editing) {
-      const parsed = JSON.parse(editing);
-      if (parsed.id === id) {
-        setFormDataAddEmployee(parsed);
-        handleOpenDialog();
-      } else {
-        console.log('ID tidak cocok');
-        setPendingEditId(id);
-        setConfirmDialogOpen(true);
-      }
-    } else {
-      setFormDataAddEmployee(
-        CreateEmployeeRequestSchema.parse(tableData.find((item) => item.id === id) || {}),
-      );
+
+    if (!editing) {
+      const parsedData = CreateEmployeeRequestSchema.parse(existingData);
+      setEdittingId(id);
+      setFormDataAddEmployee(parsedData);
+      setInitialFormData(parsedData); // <--- set initial form juga
+      localStorage.setItem('unsavedEmployeeData', JSON.stringify({ ...parsedData, id }));
       handleOpenDialog();
-      console.log('Form data:', edittingId);
+      return;
     }
+
+    const editingData = JSON.parse(editing);
+
+    if (editingData.id === id) {
+      const parsedData = CreateEmployeeRequestSchema.parse(existingData);
+      setEdittingId(id);
+      setFormDataAddEmployee(parsedData);
+      setInitialFormData(parsedData); // <--- set initial form juga
+      handleOpenDialog();
+      return;
+    }
+
+    setPendingEditId(id);
+    setConfirmDialogOpen(true);
   };
 
   const handleConfirmEdit = () => {
-    // setConfirmDialogOpen(false);
-    // if (pendingEditId) {
-    //   // Edit existing site
-    //   setFormDataAddEmployee(
-    //     tableData.find((item) => item.id === pendingEditId) ||
-    //       CreateEmployeeRequestSchema.parse({}),
-    //   );
-    // } else {
-    //   // Add new site
-    //   setFormDataAddEmployee(CreateEmployeeRequestSchema.parse({}));
-    //   handleCloseDialog();
-    // }
-    // // handleOpenDialog();
-    // setPendingEditId(null);
-    handleCloseDialog();
     setConfirmDialogOpen(false);
+    localStorage.removeItem('unsavedEmployeeData');
+
+    if (pendingEditId) {
+      const existingData = tableData.find((item) => item.id === pendingEditId);
+      if (existingData) {
+        const parsedData = {
+          ...CreateEmployeeRequestSchema.parse(existingData),
+          id: pendingEditId,
+        };
+        setEdittingId(pendingEditId);
+        setFormDataAddEmployee(parsedData);
+        setInitialFormData(parsedData); // <--- set initial form juga
+        localStorage.setItem('unsavedEmployeeData', JSON.stringify(parsedData));
+        setPendingEditId(null);
+        setOpenFormAddEmployee(true);
+        setIsEditing(true);
+      }
+    } else {
+      setEdittingId('');
+      const newForm = CreateEmployeeRequestSchema.parse({});
+      setFormDataAddEmployee(newForm);
+      setInitialFormData(newForm); // <--- set initial form juga
+      localStorage.setItem('unsavedEmployeeData', JSON.stringify(newForm));
+      handleCloseDialog();
+      setIsEditing(false);
+    }
   };
 
   const handleCancelEdit = () => {
@@ -242,41 +312,67 @@ const Content = () => {
   const handleDelete = async (id: string) => {
     if (!token) return;
 
-    Swal.fire({
-      title: 'Are you sure?',
-      text: "You won't be able to revert this!",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, delete it!',
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        setLoading(true);
-        try {
-          setLoading(true);
-          await deleteEmployee(id, token);
+    const confirmed = await showConfirmDelete('Are you sure?', "You won't be able to revert this!");
 
-          setRefreshTrigger((prev) => prev + 1);
-          Swal.fire({
-            title: 'Deleted!',
-            text: 'Your file has been deleted.',
-            icon: 'success',
-          });
-        } catch (error) {
-          console.error(error);
-          Swal.fire({
-            title: 'Error!',
-            text: 'Something went wrong while deleting.',
-            icon: 'error',
-          });
-        } finally {
-          setTimeout(() => {
-            setLoading(false);
-          }, 500);
-        }
+    if (confirmed) {
+      setLoading(true);
+      try {
+        await deleteEmployee(id, token);
+        setRefreshTrigger((prev) => prev + 1);
+        showSuccessAlert('Deleted!', 'Employee has been deleted.');
+      } catch (error) {
+        console.error(error);
+        showErrorAlert('Gagal!', 'Failed to delete employee.');
+        setTimeout(() => setLoading(false), 500);
+      } finally {
+        setTimeout(() => setLoading(false), 500);
       }
-    });
+    }
+  };
+
+  const handleBatchDelete = async (rows: EmployeesTableRow[]) => {
+    if (!token || rows.length === 0) return;
+
+    const confirmed = await showConfirmDelete(
+      `Are you sure to delete ${rows.length} items?`,
+      "You won't be able to revert this!",
+    );
+
+    if (confirmed) {
+      setLoading(true);
+      try {
+        await Promise.all(rows.map((row) => deleteEmployee(row.id, token)));
+        setRefreshTrigger((prev) => prev + 1);
+        showSuccessAlert('Deleted!', `${rows.length} items have been deleted.`);
+        setSelectedRows([]); // reset selected rows
+      } catch (error) {
+        console.error(error);
+        showErrorAlert('Error!', 'Failed to delete some items.');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const [enabledFields, setEnabledFields] = React.useState<EnableField>({
+    gender: false,
+    organization_id: false,
+    department_id: false,
+    district_id: false,
+    access_area: false,
+    access_area_special: false,
+  });
+
+  const handleBatchEdit = (rows: any[]) => {
+    const selectedId = rows[0]?.id;
+    setEdittingId(selectedId);
+    setIsBatchEdit(true);
+    handleOpenDialog();
+  };
+
+  const handleSuccess = () => {
+    setRefreshTrigger((prev) => prev + 1);
+    handleCloseDialog();
   };
 
   return (
@@ -292,24 +388,43 @@ const Content = () => {
             <Grid size={{ xs: 12, lg: 12 }}>
               <DynamicTable
                 overflowX={'auto'}
-                data={tableData}
+                data={tableRowEmployee}
+                selectedRows={selectedRows}
+                totalCount={totalFilteredRecords}
                 isHaveChecked={true}
                 isHaveAction={true}
                 isHaveSearch={true}
+                isHaveImage={true}
                 isHaveFilter={true}
                 isHaveExportPdf={true}
+                isHavePagination={true}
+                defaultRowsPerPage={rowsPerPage}
+                rowsPerPageOptions={[5, 10, 20, 50, 100]}
+                onPaginationChange={(page, rowsPerPage) => {
+                  setPage(page);
+                  setRowsPerPage(rowsPerPage);
+                }}
                 isHaveExportXlf={false}
                 isHaveFilterDuration={false}
                 isHaveAddData={true}
                 isHaveFilterMore={true}
                 filterMoreContent={<FilterMoreContent />}
                 isHaveHeader={false}
-                onCheckedChange={(selected) => console.log('Checked table row:', selected)}
+                onCheckedChange={(selected) => {
+                  const fullSelectedItems = tableData.filter((item) =>
+                    selected.some((row: EmployeesTableRow) => row.id === item.id),
+                  );
+                  setSelectedRows(fullSelectedItems);
+                }}
                 onEdit={(row) => {
+                  console.log('Row to edit:', row);
+                  console.log('Table data:', tableData);
                   handleEdit(row.id);
                   setEdittingId(row.id);
                 }}
+                onBatchEdit={handleBatchEdit}
                 onDelete={(row) => handleDelete(row.id)}
+                onBatchDelete={handleBatchDelete}
                 onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
                 onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
                 onAddData={() => {
@@ -321,8 +436,15 @@ const Content = () => {
         </Box>
       </PageContainer>
       <Dialog open={openFormAddEmployee} onClose={handleCloseDialog} fullWidth maxWidth="md">
-        <DialogTitle sx={{ position: 'relative', padding: 5 }}>
-          Add Employee
+        <DialogTitle
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: 4,
+          }}
+        >
+          {isBatchEdit ? 'Batch Edit' : edittingId ? 'Edit' : 'Add'} Employee
           <IconButton
             aria-label="close"
             onClick={() => {
@@ -333,9 +455,6 @@ const Content = () => {
               }
             }}
             sx={{
-              position: 'absolute',
-              right: 8,
-              top: 8,
               color: (theme) => theme.palette.grey[500],
             }}
           >
@@ -349,7 +468,11 @@ const Content = () => {
             formData={formDataAddEmployee}
             setFormData={setFormDataAddEmployee}
             edittingId={edittingId}
-            onSuccess={handleCloseDialog}
+            onSuccess={handleSuccess}
+            isBatchEdit={isBatchEdit}
+            selectedRows={selectedRows}
+            enabledFields={enabledFields}
+            setEnabledFields={setEnabledFields}
           />
         </DialogContent>
       </Dialog>

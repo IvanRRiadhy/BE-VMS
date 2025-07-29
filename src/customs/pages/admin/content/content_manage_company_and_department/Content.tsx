@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   Box,
   Card,
@@ -43,6 +43,18 @@ import {
   CreateOrganizationRequest,
   CreateOrganizationSchema,
 } from 'src/customs/api/models/Organization';
+import { IconBuilding, IconBuildingSkyscraper, IconMapPins } from '@tabler/icons-react';
+// Alert
+import {
+  showConfirmDelete,
+  showSuccessAlert,
+  showErrorAlert,
+} from 'src/customs/components/alerts/alerts';
+import { set } from 'lodash';
+
+type EnableField = {
+  name: boolean;
+};
 
 const Content = () => {
   const [totals, setTotals] = useState({
@@ -51,23 +63,27 @@ const Content = () => {
     district: 0,
   });
 
+  const dialogRef = useRef<HTMLDivElement>(null);
   const cards = [
     {
       title: 'Total Organization',
       subTitle: totals.organization.toString(),
       subTitleSetting: totals.organization,
+      icon: IconBuildingSkyscraper,
       color: 'none',
     },
     {
       title: 'Total Department',
       subTitle: totals.department.toString(),
       subTitleSetting: totals.department,
+      icon: IconBuilding,
       color: 'none',
     },
     {
       title: 'Total District',
       subTitle: totals.district.toString(),
       subTitleSetting: totals.district,
+      icon: IconMapPins,
       color: 'none',
     },
   ];
@@ -78,15 +94,19 @@ const Content = () => {
   >(null);
 
   const handleCloseDialog = () => {
-    setOpenFormType(null);
+    setConfirmDialogOpen(false);
+    setEditingRow(null);
     setEditDialogType(null);
-    localStorage.removeItem('unsavedOrganizationFormAdd');
-    setFormDataAddOrganization(CreateOrganizationSchema.parse({})); // ⬅️ ini penting!
+    setOpenFormType(null);
+    setIsBatchEdit(false); // ✅ tambahkan ini
+    setPendingEditId(null);
   };
+
+  const [pendingEditId, setPendingEditId] = useState<string | null>(null);
 
   const handleCancelEdit = () => {
     setConfirmDialogOpen(false);
-    // setPendingEditId(null);
+    setPendingEditId(null);
   };
 
   const handleConfirmEdit = () => {
@@ -96,16 +116,83 @@ const Content = () => {
 
   // Pagination state.
   const [tableData, setTableData] = useState<Item[]>([]);
+  //selected rows
+  const [selectedRows, setSelectedRows] = useState<Item[]>([]);
   const [isDataReady, setIsDataReady] = useState(false);
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(3);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [isBatchEdit, setIsBatchEdit] = useState(false);
+
+  const [formDataAddDepartment, setFormDataAddDepartment] = useState<CreateDepartmentRequest>(
+    () => {
+      const saved = localStorage.getItem('unsavedDepartmentFormAdd');
+      // return saved ? JSON.parse(saved) : CreateDepartmentSchema.parse({});
+      try {
+        const parsed = saved ? JSON.parse(saved) : {};
+        return CreateDepartmentSchema.parse(parsed);
+      } catch (e) {
+        console.error('Invalid saved data, fallback to default schema.');
+        return CreateDepartmentSchema.parse({});
+      }
+    },
+  );
+
+  useEffect(() => {
+    const defaultForm = CreateDepartmentSchema.parse({});
+    const isChanged = JSON.stringify(formDataAddDepartment) !== JSON.stringify(defaultForm);
+
+    if (isChanged) {
+      localStorage.setItem('unsavedDepartmentFormAdd', JSON.stringify(formDataAddDepartment));
+    }
+  }, [formDataAddDepartment]);
+
+  // store 02
+  const [formDataAddDistrict, setFormDataAddDistrict] = useState<CreateDistrictRequest>(() => {
+    const saved = localStorage.getItem('unsavedDistrictFormAdd');
+    return saved ? JSON.parse(saved) : CreateDistrictSchema.parse({});
+  });
+
+  useEffect(() => {
+    const defaultForm = CreateDistrictSchema.parse({});
+    const isChanged = JSON.stringify(formDataAddDistrict) !== JSON.stringify(defaultForm);
+
+    if (isChanged) {
+      localStorage.setItem('unsavedDistrictFormAdd', JSON.stringify(formDataAddDistrict));
+    }
+  }, [formDataAddDistrict]);
+
+  // srore 03
+  const [formDataAddOrganization, setFormDataAddOrganization] = useState<CreateOrganizationRequest>(
+    () => {
+      const saved = localStorage.getItem('unsavedOrganizationFormAdd');
+
+      // return saved ? JSON.parse(saved) : CreateOrganizationSchema.parse({});
+
+      try {
+        const parsed = saved ? JSON.parse(saved) : {};
+        return CreateOrganizationSchema.parse(parsed);
+      } catch (e) {
+        console.error('Invalid saved data, fallback to default schema.');
+        return CreateOrganizationSchema.parse({});
+      }
+    },
+  );
+
+  useEffect(() => {
+    const defaultForm = CreateOrganizationSchema.parse({});
+    const isChanged = JSON.stringify(formDataAddOrganization) !== JSON.stringify(defaultForm);
+
+    if (isChanged) {
+      localStorage.setItem('unsavedOrganizationFormAdd', JSON.stringify(formDataAddOrganization));
+    }
+  }, [formDataAddOrganization]);
 
   // Fetch table data when pagination or type changes
   useEffect(() => {
@@ -186,106 +273,162 @@ const Content = () => {
     'Organizations' | 'Departments' | 'Districts' | null
   >(null);
 
+  const defaultFormData = CreateOrganizationSchema.parse({});
+  const isFormChanged = JSON.stringify(formDataAddOrganization) !== JSON.stringify(defaultFormData);
+  const handleDialogClose = (_event: object, reason: string) => {
+    if (reason === 'backdropClick') {
+      if (isFormChanged) {
+        setConfirmDialogOpen(true);
+      } else {
+        handleCloseDialog();
+      }
+    }
+  };
+
+  // ✅ HANDLE KETIKA MOUSE LEAVE DARI DIALOG
+  useEffect(() => {
+    const handleMouseLeave = (e: MouseEvent) => {
+      const current = dialogRef.current;
+      if (current && !current.contains(e.relatedTarget as Node)) {
+        if (isFormChanged) {
+          setConfirmDialogOpen(true);
+        }
+      }
+    };
+
+    const dialogEl = dialogRef.current;
+    if (dialogEl) {
+      dialogEl.addEventListener('mouseleave', handleMouseLeave);
+    }
+
+    return () => {
+      if (dialogEl) {
+        dialogEl.removeEventListener('mouseleave', handleMouseLeave);
+      }
+    };
+  }, [isFormChanged]);
+
   const [editingRow, setEditingRow] = useState<Item | null>(null);
 
   const handleDelete = async (id: string, selectedType: string) => {
     if (!token) return;
 
-    Swal.fire({
-      title: 'Are you sure?',
-      text: "You won't be able to revert this!",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, delete it!',
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        try {
-          if (selectedType === 'department') {
-            await deleteDepartment(id, token);
-          } else if (selectedType === 'district') {
-            await deleteDistrict(id, token);
-          } else if (selectedType === 'organization') {
-            await deleteOrganization(id, token);
-          }
+    const confirmed = await showConfirmDelete('Are you sure?', "You won't be able to revert this!");
 
-          setRefreshTrigger((prev) => prev + 1);
-          Swal.fire({
-            title: 'Deleted!',
-            text: 'Your file has been deleted.',
-            icon: 'success',
-          });
-        } catch (error) {
-          console.error(error);
-          Swal.fire({
-            title: 'Error!',
-            text: 'Something went wrong while deleting.',
-            icon: 'error',
-          });
-        }
+    if (!confirmed) return;
+
+    try {
+      switch (selectedType) {
+        case 'department':
+          await deleteDepartment(id, token);
+          break;
+        case 'district':
+          await deleteDistrict(id, token);
+          break;
+        case 'organization':
+          await deleteOrganization(id, token);
+          break;
+        default:
+          throw new Error('Unknown type');
       }
-    });
+
+      setRefreshTrigger((prev) => prev + 1);
+      showSuccessAlert('Deleted!', 'The selected data has been deleted.');
+    } catch (error) {
+      console.error(error);
+      showErrorAlert('Error!', 'Something went wrong while deleting.');
+    }
   };
 
-  // store 01
-  const [formDataAddDepartment, setFormDataAddDepartment] = useState<CreateDepartmentRequest>(
-    () => {
-      const saved = localStorage.getItem('unsavedDepartmentFormAdd');
-      try {
-        const parsed = saved ? JSON.parse(saved) : {};
-        return CreateDepartmentSchema.parse(parsed);
-      } catch (e) {
-        console.error('Invalid saved data, fallback to default schema.');
-        return CreateDepartmentSchema.parse({});
-      }
-    },
-  );
+  const handleBatchDelete = async (rows: Item[]) => {
+    if (!token || rows.length === 0) return;
+
+    const confirmed = await showConfirmDelete(
+      `Are you sure to delete ${rows.length} items?`,
+      "You won't be able to revert this!",
+    );
+
+    if (!confirmed) return;
+    try {
+      setLoading(true);
+      await Promise.all(
+        rows.map((row) => {
+          switch (selectedType) {
+            case 'department':
+              return deleteDepartment(row.id, token);
+            case 'district':
+              return deleteDistrict(row.id, token);
+            case 'organization':
+              return deleteOrganization(row.id, token);
+            default:
+              throw new Error('Unknown type');
+          }
+        }),
+      );
+      setRefreshTrigger((prev) => prev + 1);
+      showSuccessAlert('Deleted!', `${rows.length} items have been deleted.`);
+      setSelectedRows([]); // Clear selected rows
+    } catch (error) {
+      console.error(error);
+      showErrorAlert('Error!', 'Something went wrong while deleting items.');
+    }
+  };
 
   useEffect(() => {
-    localStorage.setItem('unsavedDepartmentFormAdd', JSON.stringify(formDataAddDepartment));
-  }, [formDataAddDepartment]);
+    if (!editingRow && !isBatchEdit) return;
 
-  // store 02
-  const [formDataAddDistrict, setFormDataAddDistrict] = useState<CreateDistrictRequest>(() => {
-    const saved = localStorage.getItem('unsavedDistrictFormAdd');
-    return saved ? JSON.parse(saved) : CreateDistrictSchema.parse({});
+    let type: typeof editDialogType = null;
+    if (selectedType === 'organization') type = 'Organizations';
+    else if (selectedType === 'department') type = 'Departments';
+    else if (selectedType === 'district') type = 'Districts';
+
+    // Tambahkan pengecekan agar tidak membuka dialog jika sudah terbuka
+    if (editDialogType !== type) {
+      setEditDialogType(type);
+    }
+  }, [editingRow, isBatchEdit, selectedType]);
+
+  const handleBatchEdit = () => {
+    if (selectedRows.length === 0) return;
+
+    setIsBatchEdit(true);
+
+    // ✅ Kalau hanya satu yang dipilih, set editingRow
+    if (selectedRows.length === 1) {
+      setEditingRow(selectedRows[0]);
+    } else {
+      setEditingRow(null); // atau biarkan kosong
+    }
+    setTimeout(() => {
+      if (selectedType === 'organization') setEditDialogType('Organizations');
+      else if (selectedType === 'department') setEditDialogType('Departments');
+      else if (selectedType === 'district') setEditDialogType('Districts');
+    }, 0);
+  };
+
+  const handleSuccess = () => {
+    setRefreshTrigger((prev) => prev + 1);
+    handleCloseDialog();
+  };
+
+  useEffect(() => {
+    // Hanya buka dialog jika ada editingRow atau sedang batch edit
+    if (editingRow || isBatchEdit) {
+      if (selectedType === 'organization') {
+        setEditDialogType('Organizations');
+      } else if (selectedType === 'department') {
+        setEditDialogType('Departments');
+      } else if (selectedType === 'district') {
+        setEditDialogType('Districts');
+      }
+    } else {
+      setEditDialogType(null); // Tutup semua dialog edit kalau tidak sedang edit apa pun
+    }
+  }, [editingRow, isBatchEdit, selectedType]);
+
+  const [enabledFields, setEnabledFields] = useState<EnableField>({
+    name: false,
   });
-
-  useEffect(() => {
-    localStorage.setItem('unsavedDistrictFormAdd', JSON.stringify(formDataAddDistrict));
-  }, [formDataAddDistrict]);
-
-  // srore 03
-  const [formDataAddOrganization, setFormDataAddOrganization] = useState<CreateOrganizationRequest>(
-    () => {
-      const saved = localStorage.getItem('unsavedOrganizationFormAdd');
-
-      // return saved ? JSON.parse(saved) : CreateOrganizationSchema.parse({});
-
-      try {
-        const parsed = saved ? JSON.parse(saved) : {};
-        return CreateOrganizationSchema.parse(parsed);
-      } catch (e) {
-        console.error('Invalid saved data, fallback to default schema.');
-        return CreateOrganizationSchema.parse({});
-      }
-    },
-  );
-
-  // const [filteredData, setFilteredData] = useState(data);
-
-  // const handleKeywordChange = (keyword: string) => {
-  //   const result = data.filter((item) => item.name.toLowerCase().includes(keyword.toLowerCase()));
-  //   setFilteredData(result);
-  // };
-
-  const defaultFormData = CreateOrganizationSchema.parse({});
-  const isFormChanged = JSON.stringify(formDataAddOrganization) !== JSON.stringify(defaultFormData);
-
-  useEffect(() => {
-    localStorage.setItem('unsavedOrganizationFormAdd', JSON.stringify(formDataAddOrganization));
-  }, [formDataAddOrganization]);
 
   return (
     <>
@@ -304,14 +447,15 @@ const Content = () => {
                   <DynamicTable
                     isHavePagination
                     totalCount={totalRecords}
-                    defaultRowsPerPage={3}
-                    rowsPerPageOptions={[3]}
+                    defaultRowsPerPage={rowsPerPage}
+                    rowsPerPageOptions={[5, 10, 25, 50]}
                     onPaginationChange={(newPage, newRowsPerPage) => {
                       setPage(newPage);
                       setRowsPerPage(newRowsPerPage);
                     }}
                     overflowX={'auto'}
                     data={tableData}
+                    selectedRows={selectedRows}
                     isHaveChecked={true}
                     isHaveAction={true}
                     isHaveSearch={true}
@@ -320,10 +464,11 @@ const Content = () => {
                     isHaveExportXlf={false}
                     isHaveFilterDuration={false}
                     isHaveAddData={true}
+                    onBatchEdit={handleBatchEdit}
                     isHaveHeader={true}
                     headerContent={{
                       title: 'Organization | Department | District',
-                      subTitle: formatDate(new Date()),
+                      // subTitle: formatDate(new Date()),
                       items: [
                         { name: 'organization' },
                         { name: 'department' },
@@ -334,7 +479,9 @@ const Content = () => {
                     onHeaderItemClick={(item) => {
                       setSelectedType(item.name);
                     }}
-                    onCheckedChange={(selected) => console.log('Checked table row:', selected)}
+                    onCheckedChange={(selected) => {
+                      setSelectedRows(selected);
+                    }}
                     onEdit={(row) => {
                       if (selectedType === 'organization') {
                         setEditDialogType('Organizations');
@@ -346,6 +493,7 @@ const Content = () => {
                       setEditingRow(row);
                     }}
                     onDelete={(row) => handleDelete(row.id, selectedType)}
+                    onBatchDelete={handleBatchDelete}
                     onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
                     onAddData={() => {
                       if (selectedType === 'organization') {
@@ -376,11 +524,11 @@ const Content = () => {
       {/* Organization */}
       <Dialog
         open={openFormType === 'Organizations'}
-        // onClose={handleCloseDialog}
+        onClose={handleDialogClose}
         fullWidth
         maxWidth="md"
       >
-        <DialogTitle>
+        <DialogTitle display={'flex'} justifyContent="space-between" alignItems="center">
           Add Organization data
           <IconButton
             aria-label="close"
@@ -391,17 +539,18 @@ const Content = () => {
                 handleCloseDialog(); // langsung tutup kalau tidak ada perubahan
               }
             }}
-            sx={{ position: 'absolute', right: 8, top: 8 }}
           >
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <DialogContent>
+        <Divider />
+        <DialogContent sx={{ paddingTop: 0 }}>
           <br />
           <FormAddOrganization
             formData={formDataAddOrganization}
             setFormData={setFormDataAddOrganization}
             onSuccess={() => {
+              localStorage.removeItem('unsavedOrganizationFormAdd');
               handleCloseDialog();
               setFormDataAddOrganization(CreateOrganizationSchema.parse({}));
               setTimeout(() => {
@@ -424,22 +573,20 @@ const Content = () => {
         fullWidth
         maxWidth="md"
       >
-        <DialogTitle>
+        <DialogTitle display={'flex'} justifyContent="space-between" alignItems="center">
           Add Department data
-          <IconButton
-            aria-label="close"
-            onClick={handleCloseDialog}
-            sx={{ position: 'absolute', right: 8, top: 8 }}
-          >
+          <IconButton aria-label="close" onClick={handleCloseDialog}>
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <DialogContent>
+        <Divider />
+        <DialogContent sx={{ paddingTop: 0 }}>
           <br />
           <FormAddDepartment
             formData={formDataAddDepartment}
             setFormData={setFormDataAddDepartment}
             onSuccess={() => {
+              localStorage.removeItem('unsavedDepartmentData');
               handleCloseDialog();
               setFormDataAddDepartment(CreateDepartmentSchema.parse({})); // reset form
               setTimeout(() => {
@@ -462,22 +609,22 @@ const Content = () => {
         fullWidth
         maxWidth="md"
       >
-        <DialogTitle>
+        <DialogTitle
+          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+        >
           Add District data
-          <IconButton
-            aria-label="close"
-            onClick={handleCloseDialog}
-            sx={{ position: 'absolute', right: 8, top: 8 }}
-          >
+          <IconButton aria-label="close" onClick={handleCloseDialog}>
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <DialogContent>
+        <Divider />
+        <DialogContent sx={{ paddingTop: 0 }}>
           <br />
           <FormAddDistrict
             formData={formDataAddDistrict}
             setFormData={setFormDataAddDistrict}
             onSuccess={() => {
+              localStorage.removeItem('unsavedDistrictData');
               handleCloseDialog();
               setFormDataAddDistrict(CreateDistrictSchema.parse({}));
               setTimeout(() => {
@@ -495,36 +642,48 @@ const Content = () => {
 
       <Dialog
         open={editDialogType === 'Organizations'}
-        onClose={handleCloseDialog}
+        // onClose={handleCloseDialog}
         fullWidth
         maxWidth="md"
       >
-        <DialogTitle>
+        <DialogTitle
+          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+        >
           Update Organization data
           <IconButton
             aria-label="close"
             onClick={handleCloseDialog}
-            sx={{ position: 'absolute', right: 8, top: 8 }}
+            sx={{
+              color: (theme) => theme.palette.grey[500],
+            }}
           >
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <DialogContent>
+        <Divider />
+        <DialogContent sx={{ paddingTop: 0 }}>
           <br />
-          <FormUpdateOrganization
-            data={editingRow}
-            onSuccess={() => {
-              handleCloseDialog();
-              setTimeout(() => {
-                Swal.fire({
-                  title: 'Upadate Successfully!',
-                  text: 'Organization data update successfully.',
-                  icon: 'success',
-                });
-              }, 500);
-              setRefreshTrigger((prev) => prev + 1);
-            }}
-          />
+          {editDialogType === 'Organizations' && (
+            <FormUpdateOrganization
+              data={editingRow}
+              onSuccess={() => {
+                localStorage.removeItem('unsavedOrganizationData');
+                handleCloseDialog();
+                setTimeout(() => {
+                  Swal.fire({
+                    title: 'Update Successfully!',
+                    text: 'Organization data updated successfully.',
+                    icon: 'success',
+                  });
+                }, 600);
+                setRefreshTrigger((prev) => prev + 1);
+              }}
+              isBatchEdit={isBatchEdit}
+              selectedRows={selectedRows}
+              enabledFields={enabledFields}
+              setEnabledFields={setEnabledFields}
+            />
+          )}
         </DialogContent>
       </Dialog>
 
@@ -534,32 +693,38 @@ const Content = () => {
         fullWidth
         maxWidth="md"
       >
-        <DialogTitle>
+        <DialogTitle
+          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+        >
           Update Department data
-          <IconButton
-            aria-label="close"
-            onClick={handleCloseDialog}
-            sx={{ position: 'absolute', right: 8, top: 8 }}
-          >
+          <IconButton aria-label="close" onClick={handleCloseDialog}>
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <DialogContent>
+        <Divider />
+        <DialogContent sx={{ paddingTop: 0 }}>
           <br />
-          <FormUpdateDepartment
-            data={editingRow}
-            onSuccess={() => {
-              handleCloseDialog();
-              setTimeout(() => {
-                Swal.fire({
-                  title: 'Upadate Successfully!',
-                  text: 'Department data update successfully.',
-                  icon: 'success',
-                });
-              }, 500);
-              setRefreshTrigger((prev) => prev + 1);
-            }}
-          />
+          {editDialogType === 'Departments' && (
+            <FormUpdateDepartment
+              data={editingRow}
+              onSuccess={() => {
+                localStorage.removeItem('unsavedDepartmentData');
+                handleCloseDialog();
+                setTimeout(() => {
+                  Swal.fire({
+                    title: 'Upadate Successfully!',
+                    text: 'Department data update successfully.',
+                    icon: 'success',
+                  });
+                }, 600);
+                setRefreshTrigger((prev) => prev + 1);
+              }}
+              isBatchEdit={isBatchEdit}
+              selectedRows={selectedRows}
+              enabledFields={enabledFields}
+              setEnabledFields={setEnabledFields}
+            />
+          )}
         </DialogContent>
       </Dialog>
 
@@ -569,39 +734,48 @@ const Content = () => {
         fullWidth
         maxWidth="md"
       >
-        <DialogTitle sx={{ position: 'relative', padding: 5 }}>
+        <DialogTitle
+          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+        >
           Update District data
           <IconButton
             aria-label="close"
             onClick={handleCloseDialog}
-            sx={{ position: 'absolute', right: 8, top: 8 }}
+            // sx={{ position: 'absolute', right: 8, top: 8 }}
           >
             <CloseIcon />
           </IconButton>
         </DialogTitle>
         <Divider />
-        <DialogContent>
+        <DialogContent sx={{ paddingTop: 0 }}>
           <br />
-          <FormUpdateDistrict
-            data={editingRow}
-            onSuccess={() => {
-              handleCloseDialog();
-              setTimeout(() => {
-                Swal.fire({
-                  title: 'Upadate Successfully!',
-                  text: 'District data update successfully.',
-                  icon: 'success',
-                });
-              }, 500);
-              setRefreshTrigger((prev) => prev + 1);
-            }}
-          />
+          {editDialogType === 'Districts' && (
+            <FormUpdateDistrict
+              data={editingRow}
+              onSuccess={() => {
+                localStorage.removeItem('unsavedDistrictData');
+                handleCloseDialog();
+                setTimeout(() => {
+                  Swal.fire({
+                    title: 'Upadate Successfully!',
+                    text: 'District data update successfully.',
+                    icon: 'success',
+                  });
+                }, 600);
+                setRefreshTrigger((prev) => prev + 1);
+              }}
+              isBatchEdit={isBatchEdit}
+              selectedRows={selectedRows}
+              enabledFields={enabledFields}
+              setEnabledFields={setEnabledFields}
+            />
+          )}
         </DialogContent>
       </Dialog>
 
       <Dialog open={confirmDialogOpen} onClose={handleCancelEdit}>
         <DialogTitle>Unsaved Changes</DialogTitle>
-        <DialogContent>
+        <DialogContent ref={dialogRef}>
           You have unsaved changes for another site. Are you sure you want to discard them and edit
           this site?
         </DialogContent>

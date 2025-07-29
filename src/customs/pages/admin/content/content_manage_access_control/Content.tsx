@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   Box,
   Button,
@@ -43,6 +43,13 @@ type AccessControlTableRow = {
   integration_name: string;
   id: string;
 };
+import { IconAccessible } from '@tabler/icons-react';
+import {
+  showConfirmDelete,
+  showErrorAlert,
+  showSuccessAlert,
+} from 'src/customs/components/alerts/alerts';
+import { de } from 'date-fns/locale';
 
 const Content = () => {
   const theme = useTheme();
@@ -50,6 +57,7 @@ const Content = () => {
   // Pagination state.
   const [accessControlData, setAccessControlData] = useState<Item[]>([]);
   const [tableData, setTableData] = useState<AccessControlTableRow[]>([]);
+  const [selectedRows, setSelectedRows] = useState<Item[]>([]);
   const [isDataReady, setIsDataReady] = useState(false);
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
@@ -60,6 +68,9 @@ const Content = () => {
   const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const dialogRef = useRef<HTMLDivElement>(null);
+
   function formatEnumLabel(label: string) {
     // Insert a space before all caps and capitalize the first letter
     return label
@@ -72,12 +83,18 @@ const Content = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const response = await getAllAccessControlPagination(token, page, rowsPerPage, sortColumn);
+        const response = await getAllAccessControlPagination(
+          token,
+          page,
+          rowsPerPage,
+          sortColumn,
+          searchKeyword,
+        );
+        setTableData(response.collection);
         setTotalRecords(response.RecordsTotal);
         setTotalFilteredRecords(response.RecordsFiltered);
-        setAccessControlData(response.collection);
         setIsDataReady(true);
-        const rows: AccessControlTableRow[] = response.collection.map((item) => ({
+        const rows = response.collection.map((item: Item) => ({
           brand_name: item.brand_name,
           type: item.type,
           name: item.name,
@@ -96,19 +113,51 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, sortColumn, refreshTrigger]);
+  }, [token, page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword]);
   const [formDataAddAccessControl, setFormDataAddAccessControl] =
     useState<CreateAccessControlRequest>(() => {
       const saved = localStorage.getItem('unsavedAccessControlData');
       return saved ? JSON.parse(saved) : {};
     });
+
+  const defaultFormData = CreateAccessControlRequestSchema.parse({});
+  const isFormChanged =
+    JSON.stringify(formDataAddAccessControl) !== JSON.stringify(defaultFormData);
+
   useEffect(() => {
-    localStorage.setItem('unsavedAccessControlData', JSON.stringify(formDataAddAccessControl));
+    const defaultForm = CreateAccessControlRequestSchema.parse({});
+    const isChanged = JSON.stringify(formDataAddAccessControl) !== JSON.stringify(defaultForm);
+
+    if (isChanged) {
+      localStorage.setItem('unsavedCustomDataData', JSON.stringify(formDataAddAccessControl));
+    }
   }, [formDataAddAccessControl]);
+
+  useEffect(() => {
+    const handleMouseLeave = (e: MouseEvent) => {
+      if (dialogRef.current && !dialogRef.current.contains(e.relatedTarget as Node)) {
+        if (isFormChanged) {
+          setConfirmDialogOpen(true);
+        }
+      }
+    };
+
+    const dialogEl = dialogRef.current;
+    if (dialogEl) {
+      dialogEl.addEventListener('mouseleave', handleMouseLeave);
+    }
+
+    return () => {
+      if (dialogEl) {
+        dialogEl.removeEventListener('mouseleave', handleMouseLeave);
+      }
+    };
+  }, [isFormChanged]);
 
   const cards = [
     {
       title: 'Total Access Control',
+      icon: IconAccessible,
       subTitle: `${totalFilteredRecords}`,
       subTitleSetting: 10,
       color: 'none',
@@ -136,25 +185,23 @@ const Content = () => {
       handleOpenDialog();
     }
   };
-  const handleEdit = (accessControl: AccessControlTableRow) => {
+  const handleEdit = (id: string) => {
     const editing = localStorage.getItem('unsavedAccessControlData');
-    console.log('editing', editing)
-    console.log('id', accessControl)
+
     if (editing) {
       const parsed = JSON.parse(editing);
-      const filtered = tableData.filter((item) => item.id === accessControl.id);
-      console.log(filtered);
-      if (parsed.id === accessControl.id) {
+      const filtered = tableData.filter((item) => item.id === id);
 
+      if (parsed.id === id) {
         handleOpenDialog();
       } else {
-        console.log('ID tidak cocok', accessControl.id);
-        setPendingEditId(accessControl.id);
+        console.log('ID tidak cocok', id);
+        setPendingEditId(id);
         setConfirmDialogOpen(true);
       }
     } else {
       setFormDataAddAccessControl(
-        CreateAccessControlRequestSchema.parse(tableData.find((item) => item.id === accessControl.id) || {}),
+        CreateAccessControlRequestSchema.parse(tableData.find((item) => item.id === id) || {}),
       );
       handleOpenDialog();
     }
@@ -162,23 +209,26 @@ const Content = () => {
 
   const handleConfirmEdit = () => {
     setConfirmDialogOpen(false);
+    localStorage.removeItem('unsavedAccessControlData');
+    setLoading(true);
+
     if (pendingEditId) {
-      console.log('Data: ', tableData);
-      console.log(
-        'Edit ID:',
-        tableData.find((item) => item.id === pendingEditId),
-      );
-      // Edit existing site
-      setFormDataAddAccessControl(
-        CreateAccessControlRequestSchema.parse(
-          tableData.find((item) => item.id === pendingEditId) || {},
-        ),
-      );
+      const data = tableData.find((item) => item.id === pendingEditId);
+      setFormDataAddAccessControl(CreateAccessControlRequestSchema.parse(data) || {});
+      setEdittingId(pendingEditId);
+
+      setTimeout(() => {
+        setLoading(false);
+        handleOpenDialog(); // ✅ buka dialog untuk edit
+      }, 300);
     } else {
-      // Add new site
+      // ❌ JANGAN buka dialog lagi di sini!
       setFormDataAddAccessControl(CreateAccessControlRequestSchema.parse({}));
+      setEdittingId('');
+      setLoading(false);
+      setOpenCreateAccessControl(false); // pastikan tertutup
     }
-    handleOpenDialog();
+
     setPendingEditId(null);
   };
 
@@ -190,49 +240,73 @@ const Content = () => {
   const handleDelete = async (id: string) => {
     if (!token) return;
 
-    Swal.fire({
-      title: 'Are you sure?',
-      text: "You won't be able to revert this!",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, delete it!',
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        try {
-          await deleteAccessControl(id, token);
-          setRefreshTrigger((prev) => prev + 1);
-          Swal.fire({
-            title: 'Deleted!',
-            text: 'Your Access Control has been deleted.',
-            icon: 'success',
-          });
-        } catch (error) {
-          console.error(error);
-          Swal.fire({
-            title: 'Error!',
-            text: 'Something went wrong while deleting.',
-            icon: 'error',
-          });
-        }
+    const confirmed = await showConfirmDelete(
+      'Are you sure you want to delete this Access Control?',
+      "You won't be able to revert this!",
+    );
+
+    if (confirmed) {
+      try {
+        await deleteAccessControl(id, token);
+        setRefreshTrigger((prev) => prev + 1);
+        showSuccessAlert('Deleted!', 'Access Control has been deleted.');
+      } catch (error) {
+        console.error(error);
+        showErrorAlert('Failed to delete Access Control', 'Please try again later.');
+      } finally {
+        setTimeout(() => setLoading(false), 500);
       }
-    });
+    }
+  };
+
+  const handleBatchDelete = async (rows: Item[]) => {
+    if (!token || rows.length === 0) return;
+
+    const confirmed = await showConfirmDelete(
+      `Are you sure to delete ${rows.length} items?`,
+      "You won't be able to revert this!",
+    );
+
+    if (confirmed) {
+      setLoading(true);
+      try {
+        await Promise.all(rows.map((row) => deleteAccessControl(row.id, token)));
+        setRefreshTrigger((prev) => prev + 1);
+        showSuccessAlert('Deleted!', `${rows.length} items have been deleted.`);
+        setSelectedRows([]); // reset selected rows
+      } catch (error) {
+        console.error(error);
+        showErrorAlert('Error!', 'Failed to delete some items.');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleDialogClose = (_event: object, reason: string) => {
+    if (reason === 'backdropClick') {
+      if (isFormChanged) {
+        setConfirmDialogOpen(true);
+      } else {
+        handleCloseDialog();
+      }
+    }
   };
 
   return (
     <>
-      <PageContainer title="Manage Site Space" description="Site page">
+      <PageContainer title="Manage Access Control Space" description="Site page">
         <Box>
           <Grid container spacing={3}>
             {/* column */}
-            <Grid size={{ xs: 12, lg: 12 }}>
+            <Grid size={{ xs: 12, lg: 4 }}>
               <TopCard items={cards} />
             </Grid>
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
               <DynamicTable
                 isHavePagination={true}
+                selectedRows={selectedRows}
                 totalCount={totalFilteredRecords}
                 defaultRowsPerPage={rowsPerPage}
                 rowsPerPageOptions={[5, 10, 20]}
@@ -251,10 +325,21 @@ const Content = () => {
                 isHaveFilterDuration={false}
                 isHaveAddData={true}
                 isHaveHeader={false}
-                onCheckedChange={(selected) => console.log('Checked table row:', selected)}
-                onEdit={(row) => handleEdit(row)}
+                onCheckedChange={(selected) => {
+                  const selectedItem = selected.map((item) => ({
+                    ...item,
+                    brand_id: item.brand_name, // assuming brand_name is the equivalent of brand_id
+                    integration_id: item.integration_name, // assuming integration_name is the equivalent of integration_id
+                  }));
+                  setSelectedRows(selectedItem);
+                }}
+                onEdit={(row) => {
+                  handleEdit(row.id);
+                  setEdittingId(row.id);
+                }}
                 onDelete={(row) => handleDelete(row.id)}
-                onSearchKeywordChange={(keyword) => console.log('Search keyword:', keyword)}
+                onBatchDelete={handleBatchDelete}
+                onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
                 onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
                 onAddData={() => {
                   handleAdd();
@@ -264,12 +349,18 @@ const Content = () => {
           </Grid>
         </Box>
       </PageContainer>
-      <Dialog open={openCreateAccessControl} onClose={handleCloseDialog} fullWidth maxWidth="md">
+      <Dialog open={openCreateAccessControl} onClose={handleDialogClose} fullWidth maxWidth="md">
         <DialogTitle sx={{ position: 'relative', padding: 5 }}>
           {edittingId ? 'Edit' : 'Add'} Access Control
           <IconButton
             aria-label="close"
-            onClick={handleCloseDialog}
+            onClick={() => {
+              if (isFormChanged) {
+                setConfirmDialogOpen(true);
+              } else {
+                handleCloseDialog();
+              }
+            }}
             sx={{
               position: 'absolute',
               right: 8,
@@ -287,16 +378,31 @@ const Content = () => {
             formData={formDataAddAccessControl}
             setFormData={setFormDataAddAccessControl}
             onSuccess={() => {
+              localStorage.removeItem('unsavedAccessControlData');
               handleCloseDialog();
               setRefreshTrigger(refreshTrigger + 1);
+              if (edittingId) {
+                Swal.fire({
+                  icon: 'success',
+                  title: 'Success',
+                  text: 'Access Control successfully updated!',
+                });
+              } else {
+                Swal.fire({
+                  icon: 'success',
+                  title: 'Success',
+                  text: 'Access Control successfully created!',
+                });
+              }
             }}
+            editingId={edittingId}
           />
         </DialogContent>
       </Dialog>
       {/* Dialog Confirm edit */}
       <Dialog open={confirmDialogOpen} onClose={handleCancelEdit}>
         <DialogTitle>Unsaved Changes</DialogTitle>
-        <DialogContent>
+        <DialogContent ref={dialogRef}>
           You have unsaved changes for another Access Control. Are you sure you want to discard them
           and edit this Access Control?
         </DialogContent>

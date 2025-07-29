@@ -89,7 +89,7 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
           value={formData.name}
           onChange={handleChange}
           error={Boolean(errors.name)}
-          helperText={errors.name || 'You have to make sure that the name is correct.'}
+          helperText={errors.name}
           fullWidth
           variant="outlined"
         />
@@ -102,7 +102,7 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
           value={formData.code}
           onChange={handleChange}
           error={Boolean(errors.code)}
-          helperText={errors.code || 'You have to make sure that the code is correct.'}
+          helperText={errors.code}
           fullWidth
           variant="outlined"
         />
@@ -133,7 +133,7 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
             left: 0,
             width: '100%',
             height: '100%',
-            bgcolor: 'rgba(0,0,0,0.4)',
+            bgcolor: '#ffff',
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',

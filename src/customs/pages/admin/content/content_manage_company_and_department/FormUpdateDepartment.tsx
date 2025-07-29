@@ -1,4 +1,12 @@
-import { Button, Grid2, Alert, Typography, CircularProgress } from '@mui/material';
+import {
+  Button,
+  Grid2,
+  Alert,
+  Typography,
+  CircularProgress,
+  FormControlLabel,
+  Switch,
+} from '@mui/material';
 import { Box } from '@mui/system';
 import React, { useEffect, useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
@@ -7,14 +15,28 @@ import ParentCard from 'src/components/shared/ParentCard';
 import { updateDepartment } from 'src/customs/api/admin';
 import { Item } from 'src/customs/api/models/Department';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import Swal from 'sweetalert2';
 
 interface FormUpdateDepartmentProps {
   data: Item | null;
   onSuccess?: () => void;
+  isBatchEdit?: boolean;
+  selectedRows?: Item[];
+  enabledFields?: EnabledFields;
+  setEnabledFields: React.Dispatch<React.SetStateAction<EnabledFields>>;
 }
 
-const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({ data, onSuccess }) => {
+type EnabledFields = {
+  name: boolean;
+};
+
+const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({
+  data,
+  onSuccess,
+  isBatchEdit,
+  selectedRows = [],
+  enabledFields,
+  setEnabledFields,
+}) => {
   const [name, setName] = useState('');
   // const [host, setHost] = useState('');
   const [code, setCode] = useState('');
@@ -39,7 +61,7 @@ const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({ data, onSuc
     setErrors({});
 
     try {
-      if (!data?.id || !token) {
+      if (!token) {
         setAlertType('error');
         setAlertMessage('Something went wrong. Please try again later.');
 
@@ -50,22 +72,49 @@ const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({ data, onSuc
         return;
       }
 
-      await updateDepartment(
-        data.id,
-        {
-          name,
-          // host,
-          code,
-        },
-        token,
-      );
+      if (isBatchEdit && selectedRows.length > 0) {
+        await Promise.all(
+          selectedRows
+            .filter((item) => item && item.id)
+            .map((item) =>
+              updateDepartment(
+                item.id,
+                {
+                  name: name || item.name, // gunakan name dari input form
+                  code: code || item.code, // gunakan code dari input form (walaupun disabled)
+                },
+                token,
+              ),
+            ),
+        );
 
-      setAlertType('success');
-      setAlertMessage('Department updated successfully.');
+        setAlertType('success');
+        setAlertMessage('All organizations updated successfully.');
+        setTimeout(() => {
+          onSuccess?.();
+        }, 900);
 
-      setTimeout(() => {
-        onSuccess?.();
-      }, 900);
+        return;
+      }
+
+      if (data) {
+        await updateDepartment(
+          data.id,
+          {
+            name,
+            // host,
+            code,
+          },
+          token,
+        );
+
+        setAlertType('success');
+        setAlertMessage('Department updated successfully.');
+
+        setTimeout(() => {
+          onSuccess?.();
+        }, 900);
+      }
     } catch (error: any) {
       if (error.errors) {
         setErrors(error.errors);
@@ -96,40 +145,49 @@ const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({ data, onSuc
           <Alert severity={alertType}>{alertMessage}</Alert>
         </Grid2>
 
-        {/* Name */}
-        <CustomFormLabel htmlFor="name" sx={{ my: 1, mx: 1 }}>
-          <Typography variant="caption">Department Name</Typography>
-        </CustomFormLabel>
+        <Box display="flex" alignItems="center" justifyContent="space-between" sx={{ marginX: 1 }}>
+          <CustomFormLabel
+            sx={{
+              marginY: 1,
+              marginX: 1,
+            }}
+            htmlFor="name"
+          >
+            <Typography variant="caption">Organization Name</Typography>
+          </CustomFormLabel>
+          {isBatchEdit && (
+            <FormControlLabel
+              control={
+                <Switch
+                  size="small"
+                  checked={enabledFields?.name || false}
+                  onChange={(e) =>
+                    setEnabledFields((prev) => ({
+                      ...prev,
+                      name: e.target.checked,
+                    }))
+                  }
+                />
+              }
+              label=""
+              labelPlacement="start"
+              sx={{ mt: 2 }}
+            />
+          )}
+        </Box>
         <CustomTextField
           id="name"
           value={name}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
           error={Boolean(errors.name)}
-          helperText={
-            errors.name || 'You have to make sure that the name of this department is true.'
-          }
+          helperText={errors.name}
           variant="outlined"
           fullWidth
+          disabled={isBatchEdit && !enabledFields?.name}
         />
 
-        {/* Host */}
-        {/* <CustomFormLabel htmlFor="host" sx={{ my: 1, mx: 1 }}>
-          <Typography variant="caption">Department Host</Typography>
-        </CustomFormLabel>
-        <CustomTextField
-          id="host"
-          value={host}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setHost(e.target.value)}
-          error={Boolean(errors.host)}
-          helperText={
-            errors.host || 'You have to make sure that the host of this department is true.'
-          }
-          variant="outlined"
-          fullWidth
-        /> */}
-
         {/* Code */}
-        <CustomFormLabel htmlFor="code" sx={{ my: 1, mx: 1 }}>
+        <CustomFormLabel htmlFor="code" sx={{ my: 1, mx: 0 }}>
           <Typography variant="caption">Department Code</Typography>
         </CustomFormLabel>
         <CustomTextField
@@ -137,15 +195,14 @@ const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({ data, onSuc
           value={code}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCode(e.target.value)}
           error={Boolean(errors.code)}
-          helperText={
-            errors.code || 'You have to make sure that the code of this department is true.'
-          }
+          helperText={errors.code}
           variant="outlined"
           fullWidth
+          disabled={isBatchEdit}
         />
 
         <Button sx={{ mt: 2 }} color="primary" variant="contained" type="submit">
-          Submit
+          {loading ? 'Submitting...' : 'Submit'}
         </Button>
       </form>
       {loading && (
@@ -156,7 +213,7 @@ const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({ data, onSuc
             left: 0,
             width: '100%',
             height: '100%',
-            bgcolor: 'rgba(0,0,0,0.4)',
+            bgcolor: '#ffff',
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
