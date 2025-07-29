@@ -19,6 +19,7 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 import { getAllBrand, getAllBrandPagination } from 'src/customs/api/admin';
 import { CreateBrandRequest, Item, CreateBrandResponse } from 'src/customs/api/models/Brand';
 
+import { IconBrandMedium } from '@tabler/icons-react';
 const Content = () => {
   // Pagination state.
   const [tableData, setTableData] = useState<Item[]>([]);
@@ -41,6 +42,7 @@ const Content = () => {
       title: 'Total Brand',
       subTitle: `${tableData.length}`,
       subTitleSetting: 10,
+      icon: IconBrandMedium,  
       color: 'none',
     },
   ];

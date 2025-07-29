@@ -1,4 +1,12 @@
-import { Button, Grid2, Alert, Typography, CircularProgress } from '@mui/material';
+import {
+  Button,
+  Grid2,
+  Alert,
+  Typography,
+  CircularProgress,
+  FormControlLabel,
+  Switch,
+} from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
@@ -10,9 +18,24 @@ import { updateOrganization } from 'src/customs/api/admin';
 interface FormUpdateOrganizationProps {
   data: Item | null;
   onSuccess?: () => void;
+  isBatchEdit?: boolean;
+  selectedRows?: Item[];
+  enabledFields?: EnabledFields;
+  setEnabledFields: React.Dispatch<React.SetStateAction<EnabledFields>>;
 }
 
-const FormUpdateOrganization: React.FC<FormUpdateOrganizationProps> = ({ data, onSuccess }) => {
+type EnabledFields = {
+  name: boolean;
+};
+
+const FormUpdateOrganization: React.FC<FormUpdateOrganizationProps> = ({
+  data,
+  onSuccess,
+  isBatchEdit,
+  selectedRows = [],
+  enabledFields,
+  setEnabledFields,
+}) => {
   const [state, setState] = React.useState({
     checkedB: false,
   });
@@ -24,12 +47,11 @@ const FormUpdateOrganization: React.FC<FormUpdateOrganizationProps> = ({ data, o
   const [loading, setLoading] = React.useState(false);
 
   useEffect(() => {
-    if (data) {
+    if (!isBatchEdit && data) {
       setName(data.name || '');
-      // setHost(data.host || '');
       setCode(data.code || '');
     }
-  }, [data]);
+  }, [data, isBatchEdit]);
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
@@ -40,7 +62,7 @@ const FormUpdateOrganization: React.FC<FormUpdateOrganizationProps> = ({ data, o
     setErrors({});
 
     try {
-      if (!data?.id || !token) {
+      if (!token) {
         setAlertType('error');
         setAlertMessage('Something went wrong. Please try again later.');
 
@@ -51,23 +73,51 @@ const FormUpdateOrganization: React.FC<FormUpdateOrganizationProps> = ({ data, o
         return;
       }
 
-      await updateOrganization(
-        data.id,
-        {
-          name,
-          // host,
-          code,
-        },
-        token,
-      );
+      if (isBatchEdit && selectedRows.length > 0) {
+        await Promise.all(
+          selectedRows
+            .filter((item) => item && item.id)
+            .map((item) =>
+              updateOrganization(
+                item.id,
+                {
+                  name: name || item.name, // gunakan name dari input form
+                  code: code || item.code, // gunakan code dari input form (walaupun disabled)
+                },
+                token,
+              ),
+            ),
+        );
 
-      setAlertType('success');
-      setAlertMessage('Organization updated successfully.');
+        setAlertType('success');
+        setAlertMessage('All organizations updated successfully.');
+        setTimeout(() => {
+          onSuccess?.();
+        }, 900);
 
-      setTimeout(() => {
-        onSuccess?.();
-      }, 900);
+        return;
+      }
+
+      if (data) {
+        await updateOrganization(
+          data.id,
+          {
+            name,
+            // host,
+            code,
+          },
+          token,
+        );
+
+        setAlertType('success');
+        setAlertMessage('Organization updated successfully.');
+
+        setTimeout(() => {
+          onSuccess?.();
+        }, 900);
+      }
     } catch (error: any) {
+      // cek kalau error dari validasi
       if (error.errors) {
         setErrors(error.errors);
       }
@@ -96,42 +146,46 @@ const FormUpdateOrganization: React.FC<FormUpdateOrganizationProps> = ({ data, o
         <Grid2 size={{ xs: 12, sm: 12 }}>
           <Alert severity={alertType}>{alertMessage}</Alert>
         </Grid2>
-        <CustomFormLabel
-          sx={{
-            marginY: 1,
-            marginX: 1,
-          }}
-          htmlFor="company-name"
-        >
-          <Typography variant="caption">Organization Name</Typography>
-        </CustomFormLabel>
+        <Box display="flex" alignItems="center" justifyContent="space-between" sx={{ marginX: 1 }}>
+          <CustomFormLabel
+            sx={{
+              marginY: 1,
+              marginX: 1,
+            }}
+            htmlFor="name"
+          >
+            <Typography variant="caption">Organization Name</Typography>
+          </CustomFormLabel>
+          {isBatchEdit && (
+            <FormControlLabel
+              control={
+                <Switch
+                  size="small"
+                  checked={enabledFields?.name || false}
+                  onChange={(e) =>
+                    setEnabledFields((prev) => ({
+                      ...prev,
+                      name: e.target.checked,
+                    }))
+                  }
+                />
+              }
+              label=""
+              labelPlacement="start"
+              sx={{ mt: 2 }}
+            />
+          )}
+        </Box>
         <CustomTextField
           id="name"
           value={name}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
           error={Boolean(errors.name)}
-          helperText={
-            errors.name || 'You have to make sure that the name of this organization is true.'
-          }
+          helperText={errors.name}
           variant="outlined"
           fullWidth
+          disabled={isBatchEdit && !enabledFields?.name}
         />
-
-        {/* <CustomFormLabel
-        sx={{
-          marginY: 1,
-          marginX: 1,
-        }}
-        htmlFor="company-host"
-      >
-        <Typography variant="caption">Company Host</Typography>
-      </CustomFormLabel>
-      <CustomTextField
-        id="company-host"
-        helperText="You have to make sure that the host of this company is true."
-        variant="outlined"
-        fullWidth
-      /> */}
 
         <CustomFormLabel
           sx={{
@@ -147,11 +201,10 @@ const FormUpdateOrganization: React.FC<FormUpdateOrganizationProps> = ({ data, o
           value={code}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCode(e.target.value)}
           error={Boolean(errors.code)}
-          helperText={
-            errors.code || 'You have to make sure that the code of this organization is true.'
-          }
+          helperText={errors.code}
           variant="outlined"
           fullWidth
+          disabled={isBatchEdit}
         />
 
         <div>
@@ -169,7 +222,7 @@ const FormUpdateOrganization: React.FC<FormUpdateOrganizationProps> = ({ data, o
             left: 0,
             width: '100%',
             height: '100%',
-            bgcolor: 'rgba(0,0,0,0.4)',
+            bgcolor: '#ffff',
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',

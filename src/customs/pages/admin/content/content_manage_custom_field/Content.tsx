@@ -31,6 +31,12 @@ import {
 } from 'src/customs/api/models/CustomField';
 import FormCustomField from './FormCustomField';
 import Swal from 'sweetalert2';
+import { IconSettings } from '@tabler/icons-react';
+import {
+  showConfirmDelete,
+  showErrorAlert,
+  showSuccessAlert,
+} from 'src/customs/components/alerts/alerts';
 
 type CustomFieldTableRow = {
   id: string;
@@ -43,6 +49,7 @@ type CustomFieldTableRow = {
 const Content = () => {
   const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const [tableData, setTableData] = useState<Item[]>([]);
+  const [selectedRows, setSelectedRows] = useState<CustomFieldTableRow[]>([]);
   const [isDataReady, setIsDataReady] = useState(false);
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
@@ -55,13 +62,15 @@ const Content = () => {
   const [tableRowSite, setTableRowSite] = React.useState<CustomFieldTableRow[]>([]);
   const [edittingId, setEdittingId] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
-
+  const [initialFormSnapshot, setInitialFormSnapshot] = useState<string | null>(null);
+  const [shouldTrackChanges, setShouldTrackChanges] = useState(false);
   useEffect(() => {
     if (!token) return;
     const fetchData = async () => {
       setLoading(true);
       try {
         const start = page * rowsPerPage;
+        const responseGet = await getAllCustomField(token);
         const response = await getAllCustomFieldPagination(
           token,
           start,
@@ -104,15 +113,18 @@ const Content = () => {
   // useEffect(() => {
   //   localStorage.setItem('unsavedCustomDataData', JSON.stringify(formDataAddCustomField));
   // }, [formDataAddCustomField]);
-
+  const [isFormInitialized, setIsFormInitialized] = useState(false);
   useEffect(() => {
-    const defaultForm = CreateCustomFieldRequestSchema.parse({});
-    const isChanged = JSON.stringify(formDataAddCustomField) !== JSON.stringify(defaultForm);
+    if (!shouldTrackChanges || !initialFormSnapshot) return;
 
-    if (isChanged) {
-      localStorage.setItem('unsavedCustomDataData', JSON.stringify(formDataAddCustomField));
+    const current = JSON.stringify(formDataAddCustomField);
+
+    if (current !== initialFormSnapshot) {
+      localStorage.setItem('unsavedCustomDataData', current);
+    } else {
+      localStorage.removeItem('unsavedCustomDataData');
     }
-  }, [formDataAddCustomField]);
+  }, [formDataAddCustomField, shouldTrackChanges, initialFormSnapshot]);
 
   useEffect(() => {
     const handleMouseLeave = (e: MouseEvent) => {
@@ -139,6 +151,7 @@ const Content = () => {
     {
       title: 'Total Custom Field',
       subTitle: `${totalFilteredRecords}`,
+      icon: IconSettings,
       subTitleSetting: 10,
       color: 'none',
     },
@@ -147,45 +160,57 @@ const Content = () => {
   const [openCreateCustomField, setOpenCreateCustomField] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
-  const dialogRef = useRef<HTMLDivElement>(null);
 
+  const dialogRef = useRef<HTMLDivElement>(null);
   const handleOpenDialog = () => {
     setOpenCreateCustomField(true);
   };
-  const handleCloseDialog = () => setOpenCreateCustomField(false);
+  const handleCloseDialog = () => {
+    setOpenCreateCustomField(false);
+    setInitialFormSnapshot(null);
+    setShouldTrackChanges(false);
+  };
 
   const handleAdd = () => {
     const editing = localStorage.getItem('unsavedCustomDataData');
-    if (editing) {
-      // If editing exists, show confirmation dialog for add
-      setPendingEditId(null); // null means it's an add, not edit
-      setConfirmDialogOpen(true);
-    } else {
-      setFormDataAddCustomField(CreateCustomFieldRequestSchema.parse({}));
-      handleOpenDialog();
-    }
+    const data = editing ? JSON.parse(editing) : CreateCustomFieldRequestSchema.parse({});
+
+    setFormDataAddCustomField(data);
+    setInitialFormSnapshot(JSON.stringify(data));
+    setEdittingId('');
+    handleOpenDialog();
+
+    // Delay sedikit agar `useEffect` tidak langsung anggap ada perubahan
+    setTimeout(() => setShouldTrackChanges(true), 100);
   };
+
   const handleEdit = (id: string) => {
     const editing = localStorage.getItem('unsavedCustomDataData');
     if (editing) {
       const parsed = JSON.parse(editing);
       if (parsed.id === id) {
+        setEdittingId(id);
+        setFormDataAddCustomField(parsed);
+        setInitialFormSnapshot(JSON.stringify(parsed));
         handleOpenDialog();
+        setTimeout(() => setShouldTrackChanges(true), 100);
       } else {
-        console.log('ID tidak cocok', id);
         setPendingEditId(id);
         setConfirmDialogOpen(true);
       }
     } else {
-      setFormDataAddCustomField(
-        CreateCustomFieldRequestSchema.parse(tableData.find((item) => item.id === id) || {}),
-      );
+      const data = tableData.find((item) => item.id === id) || {};
+      const parsed = CreateCustomFieldRequestSchema.parse(data);
+      setFormDataAddCustomField(parsed);
+      setInitialFormSnapshot(JSON.stringify(parsed));
+      setEdittingId(id);
       handleOpenDialog();
+      setTimeout(() => setShouldTrackChanges(true), 100);
     }
   };
   const handleConfirmEdit = () => {
-    setConfirmDialogOpen(false); // Tutup dulu dialog konfirmasi
-    localStorage.removeItem('unsavedCustomDataData'); // Bersihkan data tersimpan
+    setConfirmDialogOpen(false); // Tutup dialog konfirmasi
+    localStorage.removeItem('unsavedCustomDataData'); // Hapus data yang belum disimpan
 
     if (pendingEditId) {
       const data = tableData.find((item) => item.id === pendingEditId);
@@ -197,8 +222,8 @@ const Content = () => {
     }
 
     setPendingEditId(null);
-
-    handleCloseDialog();
+    setIsFormInitialized(true); // ⬅️ Mulai tracking form baru
+    handleCloseDialog(); // ⬅️ Buka dialog edit yang baru
   };
 
   const handleCancelEdit = () => {
@@ -219,35 +244,45 @@ const Content = () => {
   const handleDelete = async (id: string) => {
     if (!token) return;
 
-    Swal.fire({
-      title: 'Are you sure?',
-      text: "You won't be able to revert this!",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, delete it!',
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        try {
-          await deleteCustomField(id, token);
+    const confirm = await showConfirmDelete('Are you sure? ', "You won't be able to revert this!");
 
-          setRefreshTrigger((prev) => prev + 1);
-          Swal.fire({
-            title: 'Deleted!',
-            text: 'Your file has been deleted.',
-            icon: 'success',
-          });
-        } catch (error) {
-          console.error(error);
-          Swal.fire({
-            title: 'Error!',
-            text: 'Something went wrong while deleting.',
-            icon: 'error',
-          });
-        }
+    if (confirm) {
+      setLoading(true);
+      try {
+        await deleteCustomField(id, token);
+        setRefreshTrigger((prev) => prev + 1);
+        showSuccessAlert('Deleted!', 'Custom Field has been deleted.');
+      } catch (error) {
+        console.error(error);
+        showErrorAlert('Failed!', 'Failed to delete custom field.');
+        setTimeout(() => setLoading(false), 500);
+      } finally {
+        setTimeout(() => setLoading(false), 500);
       }
-    });
+    }
+  };
+
+  const handleBatchDelete = async (rows: CustomFieldTableRow[]) => {
+    if (!token || rows.length === 0) return;
+
+    const confirmed = await showConfirmDelete(
+      `Are you sure to delete ${rows.length} items?`,
+      "You won't be able to revert this!",
+    );
+
+    if (confirmed) {
+      setLoading(true);
+      try {
+        await Promise.all(rows.map((row) => deleteCustomField(row.id, token)));
+        setRefreshTrigger((prev) => prev + 1);
+        showSuccessAlert('Deleted!', `${rows.length} items have been deleted.`);
+      } catch (error) {
+        console.error(error);
+        showErrorAlert('Error!', 'Failed to delete some items.');
+      } finally {
+        setLoading(false);
+      }
+    }
   };
 
   return (
@@ -256,22 +291,23 @@ const Content = () => {
         <Box>
           <Grid container spacing={3}>
             {/* column */}
-            <Grid size={{ xs: 12, lg: 12 }}>
+            <Grid size={{ xs: 12, lg: 4 }}>
               <TopCard items={cards} />
             </Grid>
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
               <DynamicTable
+                overflowX={'auto'}
                 isHavePagination={true}
+                data={tableRowSite}
+                selectedRows={selectedRows}
                 totalCount={totalFilteredRecords}
                 defaultRowsPerPage={rowsPerPage}
-                rowsPerPageOptions={[5, 10, 20]}
+                rowsPerPageOptions={[5, 10, 20, 50, 100]}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);
                 }}
-                overflowX={'auto'}
-                data={tableRowSite}
                 isHaveChecked={true}
                 isHaveAction={true}
                 isHaveSearch={true}
@@ -281,18 +317,21 @@ const Content = () => {
                 isHaveFilterDuration={false}
                 isHaveAddData={true}
                 isHaveHeader={false}
-                onCheckedChange={(selected) => console.log('Checked table row:', selected)}
+                onCheckedChange={(selected) => {
+                  setSelectedRows(selected);
+                }}
                 onEdit={(row) => {
                   handleEdit(row.id);
                   setEdittingId(row.id);
                 }}
                 onDelete={(row) => handleDelete(row.id)}
+                onBatchDelete={handleBatchDelete}
                 onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
                 onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
                 onAddData={() => {
                   handleAdd();
                 }}
-              />{' '}
+              />
             </Grid>
           </Grid>
         </Box>

@@ -87,9 +87,7 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({ formData, setFormData
           value={formData.name}
           onChange={handleChange}
           error={Boolean(errors.name)}
-          helperText={
-            errors.name || 'You have to make sure that the name of this district is true.'
-          }
+          helperText={errors.name}
           variant="outlined"
           fullWidth
         />
@@ -103,9 +101,7 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({ formData, setFormData
           value={formData.code}
           onChange={handleChange}
           error={Boolean(errors.code)}
-          helperText={
-            errors.code || 'You have to make sure that the code of this district is true.'
-          }
+          helperText={errors.code}
           variant="outlined"
           fullWidth
         />
@@ -139,7 +135,7 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({ formData, setFormData
             left: 0,
             width: '100%',
             height: '100%',
-            bgcolor: 'rgba(0,0,0,0.4)',
+            bgcolor: '#ffff',
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',

@@ -23,6 +23,7 @@ import {
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { getAllDocumentPagination } from 'src/customs/api/admin';
 import FormAddDocument from './FormAddDocument';
+import { IconScript } from '@tabler/icons-react';
 
 const Content = () => {
   // Pagination state.
@@ -46,6 +47,7 @@ const Content = () => {
       title: 'Total Document',
       subTitle: `${tableData.length}`,
       subTitleSetting: 10,
+      icon: IconScript,
       color: 'none',
     },
   ];
@@ -139,7 +141,7 @@ const Content = () => {
         <Box>
           <Grid container spacing={3}>
             {/* column */}
-            <Grid size={{ xs: 12, lg: 12 }}>
+            <Grid size={{ xs: 12, lg: 4 }}>
               <TopCard items={cards} />
             </Grid>
             {/* column */}

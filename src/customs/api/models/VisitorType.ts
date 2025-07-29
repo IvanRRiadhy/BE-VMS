@@ -1,28 +1,27 @@
 import { z } from 'zod';
 
-// export interface UpdateVisitorTypeRequest {
-//   code: string;
-//   name: string;
-//   host: string;
-// }
-
 export type FormField = {
-  short_name: string;
-  long_display_text: string;
-  field_type: number;
-  is_primary: boolean;
-  is_enable: boolean;
-  mandatory: boolean;
-  // custom_field_id: string;
+  remarks?: string;
+  sort?: number;
+  short_name?: string;
+  long_display_text?: string;
+  field_type?: number;
+  is_primary?: boolean;
+  is_enable?: boolean;
+  mandatory?: boolean;
+  custom_field_id?: string | null;
+  multiple_option_fields?: any[]; // Atau define type lebih spesifik kalau ada\
+  visitor_form_type?: number;
 };
 
 export type SectionPageVisitorType = {
+  // Id: string;
   sort: number;
   name: string;
-  status: number;
-  form_visitor: FormField[];
-  pra_form_visitor: FormField[];
-  signout_form_visitor: FormField[];
+  status?: number;
+  visit_form: FormField[];
+  pra_form: FormField[];
+  checkout_form: FormField[];
 };
 
 export type VisitorTypeDocument = {
@@ -50,7 +49,7 @@ export type Item = {
   simple_visitor: boolean;
   simple_period: boolean;
   site_visitor_types?: string | null;
-  visitor_type_documents: VisitorTypeDocument[];
+  visitor_type_documents: VisitorTypeDocument[] | null;
   section_page_visitor_types: SectionPageVisitorType[];
 };
 export type GetAllVisitorTypePaginationResponse = {
@@ -65,13 +64,17 @@ export type GetAllVisitorTypePaginationResponse = {
 };
 
 const formVisitorSchema = z.object({
+  sort: z.number().default(0),
   short_name: z.string().default(''),
   long_display_text: z.string().default(''),
   field_type: z.number().default(0),
   is_primary: z.boolean().default(false),
   is_enable: z.boolean().default(false),
   mandatory: z.boolean().default(false),
-  // custom_field_id: z.string().uuid(),
+  remarks: z.string().default(''),
+  custom_field_id: z.string().default(''),
+  multiple_option_fields: z.array(z.any()).default([]).optional(),
+  visitor_form_type: z.number().optional(),
 });
 
 export type FormVisitorTypes = z.infer<typeof formVisitorSchema>;
@@ -80,9 +83,9 @@ const sectionPageVisitorTypeSchema = z.object({
   sort: z.number().default(0),
   name: z.string().default(''),
   status: z.number().default(0),
-  form_visitor: z.array(formVisitorSchema).default([]),
-  pra_form_visitor: z.array(formVisitorSchema).default([]),
-  signout_form_visitor: z.array(formVisitorSchema).default([]),
+  visit_form: z.array(formVisitorSchema).default([]),
+  pra_form: z.array(formVisitorSchema).default([]),
+  checkout_form: z.array(formVisitorSchema).default([]),
 });
 
 export const CreateVisitorTypeRequestSchema = z.object({
@@ -99,7 +102,7 @@ export const CreateVisitorTypeRequestSchema = z.object({
   direct_visit: z.boolean().default(false),
   period: z.number().default(0),
   can_notification_arrival: z.boolean().default(false),
-  is_primary: z.boolean().default(false),
+  is_primary: z.boolean().default(false).optional(),
   is_enable: z.boolean().default(false),
   vip: z.boolean().default(false),
   simple_visitor: z.boolean().default(false),
@@ -141,7 +144,7 @@ export const updateVisitorTypeSchmea = z.object({
   direct_visit: z.boolean().optional(),
   period: z.number().default(0),
   can_notification_arrival: z.boolean().optional(),
-  is_primary: z.boolean().optional(),
+  is_primary: z.boolean().optional().optional(),
   is_enable: z.boolean().optional(),
   vip: z.boolean().optional(),
   simple_visitor: z.boolean().default(false),

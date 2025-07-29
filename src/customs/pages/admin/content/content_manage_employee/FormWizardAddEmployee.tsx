@@ -14,15 +14,17 @@ import {
   FormControlLabel,
   Grid2,
   Typography,
+  Paper,
   Dialog,
   Divider,
+  CircularProgress,
+  Switch,
 } from '@mui/material';
-import PageContainer from 'src/components/container/PageContainer';
-import ParentCard from 'src/components/shared/ParentCard';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomRadio from 'src/components/forms/theme-elements/CustomRadio';
 import Webcam from 'react-webcam';
+import Swal from 'sweetalert2';
 import ReactCrop, { Crop } from 'react-image-crop';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import {
@@ -34,20 +36,39 @@ import {
   getAllOrganizations,
   getAllOrganizatiosPagination,
   updateEmployee,
+  getEmployeeById,
+  getAllEmployeePagination,
+  getAllEmployee,
+  uploadImageEmployee,
 } from 'src/customs/api/admin';
+
 import {
   CreateEmployeeRequest,
   CreateEmployeeRequestSchema,
   UpdateEmployeeRequest,
 } from 'src/customs/api/models/Employee';
-
+import { Item } from 'src/customs/api/models/Employee.ts';
+import { showSuccessAlert } from 'src/customs/components/alerts/alerts';
 const steps = ['Personal Info', 'Work Details', 'Access & Address', 'Other Details', 'Photo'];
+
+type EnabledFields = {
+  organization_id: boolean;
+  department_id: boolean;
+  district_id: boolean;
+  access_area: boolean; // ⬅️ WAJIB ADA
+  access_area_special: boolean;
+  gender: boolean;
+};
 
 interface FormEmployeeProps {
   formData: CreateEmployeeRequest;
   setFormData: React.Dispatch<React.SetStateAction<CreateEmployeeRequest>>;
   edittingId?: string;
   onSuccess?: () => void;
+  isBatchEdit?: boolean;
+  selectedRows?: Item[]; // For batch edit, this will be the selected employee rows
+  enabledFields?: EnabledFields;
+  setEnabledFields: React.Dispatch<React.SetStateAction<EnabledFields>>;
 }
 
 const FormWizardAddEmployee = ({
@@ -55,6 +76,10 @@ const FormWizardAddEmployee = ({
   setFormData,
   edittingId,
   onSuccess,
+  isBatchEdit,
+  selectedRows = [],
+  enabledFields,
+  setEnabledFields,
 }: FormEmployeeProps) => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
@@ -64,33 +89,97 @@ const FormWizardAddEmployee = ({
   );
   const [activeStep, setActiveStep] = useState(0);
   const [skipped, setSkipped] = useState(new Set<number>());
-  const [employeePhotoFile, setEmployeePhotoFile] = useState<File | null>(null);
   const { token } = useSession(); // Assuming you have a session context to get the token
   const [organization, setOrganization] = useState<any[]>([]);
   const [department, setDepartment] = useState<any[]>([]);
   const [district, setDistrict] = useState<any[]>([]);
   const isStepSkipped = (step: number) => skipped.has(step);
+  const [siteImageFile, setSiteImageFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [openCamera, setOpenCamera] = useState(false);
+  const [screenshot, setScreenshot] = useState<string | null>(null);
+  const webcamRef = useRef<Webcam>(null);
+  const handleClear = () => {
+    setScreenshot(null);
+    setPreviewUrl(null);
+    handleFileChange(null as any);
+  };
 
+  const handleCapture = () => {
+    if (webcamRef.current) {
+      const imageSrc = webcamRef.current.getScreenshot();
+      if (imageSrc) {
+        setScreenshot(imageSrc);
+        setPreviewUrl(imageSrc); // <-- tambahkan ini agar masuk preview
+        setFormData((prev) => ({
+          ...prev,
+          faceimage: imageSrc,
+        }));
+      }
+    }
+  };
   useEffect(() => {
-    if (!token) return;
     const fetchData = async () => {
-      const orgRes = await getAllOrganizatiosPagination(token, 0, 99, 'id');
-      const deptRes = await getAllDepartmentsPagination(token, 0, 99, 'id');
-      const distRes = await getAllDistrictsPagination(token, 0, 99, 'id');
-      setOrganization(orgRes?.collection ?? []);
-      setDepartment(deptRes?.collection ?? []);
-      setDistrict(distRes?.collection ?? []);
+      if (!token) return;
+
+      const [orgRes, deptRes, distRes] = await Promise.all([
+        getAllOrganizatiosPagination(token, 0, 99, 'id'),
+        getAllDepartmentsPagination(token, 0, 99, 'id'),
+        getAllDistrictsPagination(token, 0, 99, 'id'),
+      ]);
+
+      // Simpan ke state
+      setOrganization(orgRes.collection ?? []);
+      setDepartment(deptRes.collection ?? []);
+      setDistrict(distRes.collection ?? []);
+
+      // Mapping ID ke Nama
+      const orgMap = (orgRes.collection ?? []).reduce((acc: Record<string, string>, org: any) => {
+        acc[org.id] = org.name;
+        return acc;
+      }, {});
+
+      const deptMap = (deptRes.collection ?? []).reduce(
+        (acc: Record<string, string>, dept: any) => {
+          acc[dept.id] = dept.name;
+          return acc;
+        },
+        {},
+      );
+
+      const distMap = (distRes.collection ?? []).reduce(
+        (acc: Record<string, string>, dist: any) => {
+          acc[dist.id] = dist.name;
+          return acc;
+        },
+        {},
+      );
+      // if (edittingId) {
+      // }
+
+      // Ambil data employee
+      if (edittingId) {
+        const employeeRes = await getEmployeeById(edittingId, token);
+        const employee = employeeRes.collection[0];
+
+        if (employee) {
+          setFormData({
+            ...employee,
+            organization_id: String(employee.organization_id) || '',
+            department_id: String(employee.department_id) || '',
+            district_id: String(employee.district_id) || '',
+          
+          });
+        } else {
+          console.warn('Employee not found for editing ID:', edittingId);
+        }
+      }
     };
+
     fetchData();
-  }, [token]);
-  useEffect(() => {
-    setFormData((prev) => ({
-      ...prev,
-      faceimage:
-        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFcAAABXAQMAAABLBksvAAAABlBMVEX///8AAABVwtN+AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAtUlEQVQ4jc3SMQ7DIAwF0I8YuiUXiJRrsHGl5AQNF4ArsfkaSFyg3TJUdZ0hbQdk1jC9AYT9beBqZ2TeXGUuigfYDXWDal+js2nvWO53Hahn2MD2W0PTUn/866Xp44n7RdH0uPPbSRSaDZeVJpOL4sFbJpsIig1jpdfgNOM2P/z8pKL5aHMOu2bJQcK8ZyiWPBNP5tyBtr0MRUbccSAsHroT13juUtvyb8YCKD7qJ8u5KL7W+QBqIwtw+AKG3gAAAABJRU5ErkJggg==',
-      // faceimage: '',
-    }));
-  }, []);
+  }, [token, edittingId]);
+
   const handleChange = (
     e:
       | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -101,6 +190,26 @@ const FormWizardAddEmployee = ({
       ...prev,
       [name || id]: value,
     }));
+  };
+
+  const resetEnabledFields = () => {
+    setFormData((prev) => ({
+      ...prev,
+      gender: 0,
+      department_id: '',
+      district_id: '',
+      access_area_special: '',
+      access_area: '', // Access area is always enabled
+      organization_id: '',
+    }));
+    setEnabledFields({
+      organization_id: false,
+      department_id: false,
+      district_id: false,
+      access_area_special: false,
+      access_area: false, // Access area is always enabled
+      gender: false,
+    });
   };
 
   const handleNext = () => {
@@ -116,40 +225,91 @@ const FormWizardAddEmployee = ({
   const handleBack = () => setActiveStep((prev) => prev - 1);
   const handleReset = () => setActiveStep(0);
   const handleOnSubmit = async (e: React.FormEvent) => {
-    console.log('Submitting form with data:', formData);
     e.preventDefault();
     setLoading(true);
     setErrors({});
 
     try {
+      // Save form data to localStorage for unsaved changes
       if (!token) {
         setAlertType('error');
         setAlertMessage('Something went wrong. Please try again later.');
-
         setTimeout(() => {
           setAlertType('info');
           setAlertMessage('Complete the following data properly and correctly');
         }, 3000);
         return;
       }
-      setFormData((prev) => ({ ...prev, qr_code: formData.card_number }));
-      // const filteredFormData: CreateEmployeeRequest = Object.fromEntries(Object.entries(formData).filter(([key, value]) => value !== undefined));
-      const data: CreateEmployeeRequest = CreateEmployeeRequestSchema.parse(formData);
-      console.log(edittingId);
-      console.log('Data: ', data);
+
+      // Batch Edit Mode
+      if (isBatchEdit && selectedRows.length > 0) {
+        const updatedFields: Partial<CreateEmployeeRequest> = {};
+
+        // Misal ada field access_area_special dan gender juga
+        if (enabledFields?.organization_id)
+          updatedFields.organization_id = formData.organization_id;
+        if (enabledFields?.department_id) updatedFields.department_id = formData.department_id;
+        if (enabledFields?.district_id) updatedFields.district_id = formData.district_id;
+
+        if (enabledFields?.access_area_special)
+          updatedFields.access_area_special = formData.access_area_special;
+        if (enabledFields?.gender) updatedFields.gender = formData.gender;
+
+        // Kalau gak ada fields aktif, jangan update
+        if (Object.keys(updatedFields).length === 0) {
+          setAlertType('error');
+          setAlertMessage('Please enable at least one field to update.');
+          setTimeout(() => {
+            setAlertType('info');
+            setAlertMessage('Complete the following data properly and correctly');
+          }, 3000);
+          setLoading(false);
+          return;
+        }
+
+        for (const row of selectedRows) {
+          const updatedData: UpdateEmployeeRequest = {
+            ...row,
+            ...updatedFields,
+          };
+          await updateEmployee(row.id, updatedData, token);
+        }
+
+        setAlertType('success');
+        setAlertMessage('Batch update successfully!');
+        showSuccessAlert('Batch update successfully!');
+        resetEnabledFields();
+        onSuccess?.();
+        return;
+      }
+
+      // NORMAL MODE (add/edit biasa)
+      const mergedFormData = {
+        ...formData,
+        qr_code: formData.card_number,
+        faceimage: formData.faceimage,
+      };
+
+      console.log('Merged Form Data:', mergedFormData);
+
+      const data: CreateEmployeeRequest = CreateEmployeeRequestSchema.parse(mergedFormData);
+
+      console.log('test', data);
       if (edittingId !== '' && edittingId !== undefined) {
         const editData: UpdateEmployeeRequest = {
           ...data,
+          qr_code: formData.card_number,
           is_email_verify: false,
         };
         await updateEmployee(edittingId, editData, token);
       } else {
         await createEmployee(data, token);
       }
-
+      handleFileUploads();
       localStorage.removeItem('unsavedEmployeeForm');
       setAlertType('success');
       setAlertMessage('Employee created successfully!');
+      showSuccessAlert('Employee created successfully!');
       setTimeout(() => {
         onSuccess?.();
       }, 900);
@@ -164,10 +324,62 @@ const FormWizardAddEmployee = ({
         setAlertMessage('Complete the following data properly and correctly');
       }, 3000);
     } finally {
-      setLoading(false);
+      setTimeout(() => {
+        setLoading(false);
+      }, 800);
     }
   };
 
+  // Handle Upload Image
+  const handleFileUploads = async () => {
+    if (fileInputRef.current && token) {
+      const allSite = await getAllEmployeePagination(token, 0, 100, 'id');
+      const otherAllSite = await getAllEmployee(token);
+
+      const matchedSite = allSite.collection.find(
+        (employee: any) =>
+          employee.name === formData.name && employee.card_number === formData.card_number,
+      );
+
+      const otherMatchedSite = otherAllSite.collection.find(
+        (employee: any) =>
+          employee.name === formData.name && employee.card_number === formData.card_number,
+      );
+
+      // Upload manual (file input)
+      if ((matchedSite || otherMatchedSite) && siteImageFile) {
+        const id = matchedSite?.id || otherMatchedSite?.id!;
+        console.log('Upload via file input, employee id:', id);
+        await uploadImageEmployee(id, siteImageFile, token);
+      }
+
+      // Upload dari webcam
+      else if ((matchedSite || otherMatchedSite) && formData.faceimage) {
+        const id = matchedSite?.id || otherMatchedSite?.id!;
+        console.log('Upload via webcam, employee id:', id);
+
+        const blob = await fetch(formData.faceimage).then((res) => res.blob());
+        const file = new File([blob], 'webcam.jpg', { type: 'image/jpeg' });
+
+        await uploadImageEmployee(id, file, token);
+      }
+
+      // Tidak ditemukan
+      else {
+        console.log('No matching site found or no image data');
+      }
+    }
+  };
+
+  // Handle Change Image
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      setSiteImageFile(selectedFile);
+      console.log('Slected file:', selectedFile);
+      setPreviewUrl(URL.createObjectURL(selectedFile));
+    }
+  };
   const StepContent = (step: number) => {
     switch (step) {
       case 0:
@@ -178,7 +390,7 @@ const FormWizardAddEmployee = ({
             </Grid2>
             {/* Name */}
             <Grid2 size={{ xs: 12, sm: 12 }}>
-              <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="name">
+              <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="name" required>
                 <Typography variant="caption">Employee Name</Typography>
               </CustomFormLabel>
               <CustomTextField
@@ -186,14 +398,14 @@ const FormWizardAddEmployee = ({
                 value={formData.name}
                 onChange={handleChange}
                 fullWidth
-                variant="outlined"
-                helperText="Make sure the name is correct."
                 required
+                disabled={isBatchEdit}
+                variant="outlined"
               />
             </Grid2>
             {/* Person ID */}
             <Grid2 size={{ xs: 12, sm: 12 }}>
-              <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="nik">
+              <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="nik" required>
                 <Typography variant="caption">Employee ID</Typography>
               </CustomFormLabel>
               <CustomTextField
@@ -202,13 +414,13 @@ const FormWizardAddEmployee = ({
                 onChange={handleChange}
                 fullWidth
                 variant="outlined"
-                helperText="Ensure valid ID."
                 required
+                disabled={isBatchEdit}
               />
             </Grid2>
             {/* NIK */}
             <Grid2 size={{ xs: 12, sm: 12 }}>
-              <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="nik">
+              <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="nik" required>
                 <Typography variant="caption">Employee NIK</Typography>
               </CustomFormLabel>
               <CustomTextField
@@ -217,14 +429,14 @@ const FormWizardAddEmployee = ({
                 onChange={handleChange}
                 fullWidth
                 variant="outlined"
-                helperText="Ensure valid NIK."
                 required
+                disabled={isBatchEdit}
               />
             </Grid2>
 
             {/* Email */}
             <Grid2 size={{ xs: 6, sm: 6 }}>
-              <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="email">
+              <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="email" required>
                 <Typography variant="caption">Employee Email</Typography>
               </CustomFormLabel>
               <CustomTextField
@@ -233,16 +445,40 @@ const FormWizardAddEmployee = ({
                 onChange={handleChange}
                 fullWidth
                 variant="outlined"
-                helperText="Check email validity."
                 required
+                disabled={isBatchEdit}
               />
             </Grid2>
 
             {/* Gender */}
             <Grid2 sx={{ paddingLeft: '25px' }} size={{ xs: 6, sm: 6 }}>
-              <CustomFormLabel sx={{ marginY: 1, marginX: 1 }}>
-                <Typography variant="caption">Gender</Typography>
-              </CustomFormLabel>
+              <Box
+                display="flex"
+                alignItems="center"
+                justifyContent="space-between"
+                sx={{ marginX: 1, marginTop: 0.8 }}
+              >
+                <CustomFormLabel required>
+                  <Typography variant="caption">Gender</Typography>
+                </CustomFormLabel>
+                {isBatchEdit && (
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={enabledFields?.gender}
+                        onChange={(e) =>
+                          setEnabledFields((prev) => ({
+                            ...prev,
+                            gender: e.target.checked,
+                          }))
+                        }
+                      />
+                    }
+                    label=""
+                  />
+                )}
+              </Box>
+
               <FormControl sx={{ display: 'flex', flexDirection: 'row' }}>
                 <FormControlLabel
                   value={1}
@@ -251,6 +487,7 @@ const FormWizardAddEmployee = ({
                     <CustomRadio
                       checked={formData.gender === 1}
                       onChange={() => setFormData((prev) => ({ ...prev, gender: 1 }))}
+                      disabled={isBatchEdit && !enabledFields?.gender}
                     />
                   }
                 />
@@ -261,6 +498,7 @@ const FormWizardAddEmployee = ({
                     <CustomRadio
                       checked={formData.gender === 2}
                       onChange={() => setFormData((prev) => ({ ...prev, gender: 2 }))}
+                      disabled={isBatchEdit && !enabledFields?.gender}
                     />
                   }
                 />
@@ -285,42 +523,98 @@ const FormWizardAddEmployee = ({
                 onChange={handleChange}
                 fullWidth
                 variant="outlined"
-                helperText="Enter phone number."
+                disabled={isBatchEdit}
               />
             </Grid2>
             <Grid2 size={{ xs: 12, sm: 12 }}>
-              <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="district">
-                <Typography variant="caption">Employee District</Typography>
-              </CustomFormLabel>
+              <Box
+                display="flex"
+                alignItems="center"
+                justifyContent="space-between"
+                sx={{ marginX: 1, marginTop: 0.8 }}
+              >
+                <CustomFormLabel sx={{ marginY: 1 }} htmlFor="district_id" required>
+                  <Typography variant="caption">Employee District</Typography>
+                </CustomFormLabel>
+
+                {isBatchEdit && (
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        size="small"
+                        checked={enabledFields?.district_id || false}
+                        onChange={(e) =>
+                          setEnabledFields((prev) => ({
+                            ...prev,
+                            district_id: e.target.checked,
+                          }))
+                        }
+                      />
+                    }
+                    label=""
+                    labelPlacement="start"
+                  />
+                )}
+              </Box>
+
               <CustomTextField
                 id="district_id"
                 name="district_id"
                 select
-                value={formData.district_id || ''}
+                value={String(formData.district_id) || ''}
                 onChange={handleChange}
                 fullWidth
                 variant="outlined"
+                disabled={isBatchEdit && !enabledFields?.district_id}
               >
-                {district?.map((item: any) => (
+                {district.map((item: any) => (
                   <MenuItem key={item.id} value={item.id}>
                     {item.name}
                   </MenuItem>
                 ))}
               </CustomTextField>
             </Grid2>
-            
+
             <Grid2 size={{ xs: 6, sm: 6 }}>
-              <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="org">
-                <Typography variant="caption">Employee Organization</Typography>
-              </CustomFormLabel>
+              <Box
+                display="flex"
+                alignItems="center"
+                justifyContent="space-between"
+                sx={{ marginX: 1, marginTop: 0.8 }}
+              >
+                <CustomFormLabel sx={{ marginY: 1 }} htmlFor="organization_id" required>
+                  <Typography variant="caption">Employee Organization</Typography>
+                </CustomFormLabel>
+
+                {isBatchEdit && (
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        size="small"
+                        checked={enabledFields?.organization_id || false}
+                        onChange={(e) =>
+                          setEnabledFields((prev) => ({
+                            ...prev,
+                            organization_id: e.target.checked,
+                          }))
+                        }
+                      />
+                    }
+                    label=""
+                    labelPlacement="start"
+                  />
+                )}
+              </Box>
+
               <CustomTextField
                 id="organization_id"
                 name="organization_id"
                 select
-                value={formData.organization_id}
+                value={String(formData.organization_id)}
                 onChange={handleChange}
                 fullWidth
                 variant="outlined"
+                disabled={isBatchEdit && !enabledFields?.organization_id}
               >
                 {organization?.map((item: any) => (
                   <MenuItem key={item.id} value={item.id}>
@@ -330,11 +624,37 @@ const FormWizardAddEmployee = ({
               </CustomTextField>
             </Grid2>
 
-
             <Grid2 size={{ xs: 6, sm: 6 }}>
-              <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="dept">
-                <Typography variant="caption">Employee Department</Typography>
-              </CustomFormLabel>
+              <Box
+                display="flex"
+                alignItems="center"
+                justifyContent="space-between"
+                sx={{ marginX: 1, marginTop: 0.8 }}
+              >
+                <CustomFormLabel sx={{ marginY: 1 }} htmlFor="department_id" required>
+                  <Typography variant="caption">Employee Department</Typography>
+                </CustomFormLabel>
+
+                {isBatchEdit && (
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        size="small"
+                        checked={enabledFields?.department_id || false}
+                        onChange={(e) =>
+                          setEnabledFields((prev) => ({
+                            ...prev,
+                            department_id: e.target.checked,
+                          }))
+                        }
+                      />
+                    }
+                    label=""
+                    labelPlacement="start"
+                  />
+                )}
+              </Box>
+
               <CustomTextField
                 id="department_id"
                 name="department_id"
@@ -343,6 +663,7 @@ const FormWizardAddEmployee = ({
                 onChange={handleChange}
                 fullWidth
                 variant="outlined"
+                disabled={isBatchEdit && !enabledFields?.department_id}
               >
                 {department?.map((item: any) => (
                   <MenuItem key={item.id} value={item.id}>
@@ -367,6 +688,7 @@ const FormWizardAddEmployee = ({
                   <CustomRadio
                     checked={formData.is_head === true}
                     onChange={() => setFormData((prev) => ({ ...prev, is_head: !prev.is_head }))}
+                    disabled={isBatchEdit}
                   />
                 }
                 label="Is Head Employee"
@@ -384,6 +706,7 @@ const FormWizardAddEmployee = ({
                 select
                 fullWidth
                 variant="outlined"
+                disabled={isBatchEdit}
               >
                 {/* Replace with your actual head employee options */}
                 <MenuItem value="">
@@ -406,6 +729,7 @@ const FormWizardAddEmployee = ({
                 select
                 fullWidth
                 variant="outlined"
+                disabled={isBatchEdit}
               >
                 {/* Replace with your actual head employee options */}
                 <MenuItem value="">
@@ -429,6 +753,7 @@ const FormWizardAddEmployee = ({
                 }}
                 fullWidth
                 variant="outlined"
+                disabled={isBatchEdit}
               />
             </Grid2>
             <Grid2 size={{ xs: 6, sm: 6 }}>
@@ -441,6 +766,7 @@ const FormWizardAddEmployee = ({
                 onChange={handleChange}
                 fullWidth
                 variant="outlined"
+                disabled={isBatchEdit}
               />
             </Grid2>
             {/* <Grid2 size={{ xs: 6, sm: 6 }}>
@@ -451,27 +777,79 @@ const FormWizardAddEmployee = ({
             </Grid2> */}
             {/* Access Area */}
             <Grid2 size={{ xs: 12, sm: 12 }}>
-              <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="access_area">
-                <Typography variant="caption">Access Area</Typography>
-              </CustomFormLabel>
+              <Box display="flex" alignItems="center" justifyContent="space-between">
+                <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="access_are" required>
+                  <Typography variant="caption">Access Area Special</Typography>
+                </CustomFormLabel>
+
+                {isBatchEdit && (
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        size="small"
+                        checked={enabledFields?.access_area || false}
+                        onChange={(e) =>
+                          setEnabledFields((prev) => ({
+                            ...prev,
+                            access_area: e.target.checked,
+                          }))
+                        }
+                      />
+                    }
+                    label=""
+                    labelPlacement="start"
+                  />
+                )}
+              </Box>
+
               <CustomTextField
-                id="access_area"
+                id="access_are"
                 value={formData.access_area}
                 onChange={handleChange}
                 fullWidth
+                required
+                disabled={isBatchEdit && !enabledFields?.access_area}
                 variant="outlined"
               />
             </Grid2>
             {/* Access Area Special */}
             <Grid2 size={{ xs: 12, sm: 12 }}>
-              <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="access_area_special">
-                <Typography variant="caption">Access Area Special</Typography>
-              </CustomFormLabel>
+              <Box display="flex" alignItems="center" justifyContent="space-between">
+                <CustomFormLabel
+                  sx={{ marginY: 1, marginX: 1 }}
+                  htmlFor="access_area_special"
+                  required
+                >
+                  <Typography variant="caption">Access Area Special</Typography>
+                </CustomFormLabel>
+
+                {isBatchEdit && (
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        size="small"
+                        checked={enabledFields?.access_area_special || false}
+                        onChange={(e) =>
+                          setEnabledFields((prev) => ({
+                            ...prev,
+                            access_area_special: e.target.checked,
+                          }))
+                        }
+                      />
+                    }
+                    label=""
+                    labelPlacement="start"
+                  />
+                )}
+              </Box>
+
               <CustomTextField
                 id="access_area_special"
                 value={formData.access_area_special}
                 onChange={handleChange}
                 fullWidth
+                required
+                disabled={isBatchEdit && !enabledFields?.access_area_special}
                 variant="outlined"
               />
             </Grid2>
@@ -486,7 +864,7 @@ const FormWizardAddEmployee = ({
             </Grid2>
 
             <Grid2 size={{ xs: 12, sm: 12 }}>
-              <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="dob">
+              <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="dob" required>
                 <Typography variant="caption">Date of Birth</Typography>
               </CustomFormLabel>
               <CustomTextField
@@ -496,10 +874,11 @@ const FormWizardAddEmployee = ({
                 onChange={handleChange}
                 fullWidth
                 variant="outlined"
+                disabled={isBatchEdit}
               />
             </Grid2>
             <Grid2 size={{ xs: 12, sm: 12 }}>
-              <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="join">
+              <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="join" required>
                 <Typography variant="caption">Join Date</Typography>
               </CustomFormLabel>
               <CustomTextField
@@ -509,10 +888,11 @@ const FormWizardAddEmployee = ({
                 onChange={handleChange}
                 fullWidth
                 variant="outlined"
+                disabled={isBatchEdit}
               />
             </Grid2>
             <Grid2 size={{ xs: 12, sm: 12 }}>
-              <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="join">
+              <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="join" required>
                 <Typography variant="caption">Exit Date</Typography>
               </CustomFormLabel>
               <CustomTextField
@@ -522,6 +902,7 @@ const FormWizardAddEmployee = ({
                 onChange={handleChange}
                 fullWidth
                 variant="outlined"
+                disabled={isBatchEdit}
               />
             </Grid2>
             <Grid2 size={{ xs: 12, sm: 12 }}>
@@ -536,6 +917,7 @@ const FormWizardAddEmployee = ({
                 rows={3}
                 fullWidth
                 variant="outlined"
+                disabled={isBatchEdit}
               />
             </Grid2>
           </Grid2>
@@ -548,11 +930,170 @@ const FormWizardAddEmployee = ({
               <Alert severity="info">Upload photo</Alert>
             </Grid2>
             <Grid2 size={{ xs: 12, sm: 12 }}>
-              <ImageUploadCard
+              {/* <ImageUploadCard
                 title="Upload employee photo"
-                file={employeePhotoFile}
-                onFileChange={(file) => setEmployeePhotoFile(file)}
-              />
+                file={siteImageFile ?? undefined} // ubah null jadi undefined
+                // setSiteImageFile={(file: any) => {
+                //   setSiteImageFile(file);
+                //   setFormData((prev) => ({ ...prev, faceimage: file }));
+                // }}
+                onFileChange={(file: File) => {
+                  setSiteImageFile(file);
+                  handleFileChange(URL.createObjectURL(file));
+                }}
+                disabled={isBatchEdit}
+              /> */}
+              <Paper sx={{ p: 3 }}>
+                <Box>
+                  <Box
+                    sx={{
+                      border: '2px dashed #90caf9',
+                      borderRadius: 2,
+                      padding: 4,
+                      textAlign: 'center',
+                      backgroundColor: '#f5faff',
+                      cursor: isBatchEdit ? 'not-allowed' : 'pointer',
+                      width: '100%',
+                      margin: '0 auto',
+                      pointerEvents: isBatchEdit ? 'none' : 'auto',
+                      opacity: isBatchEdit ? 0.5 : 1,
+                    }}
+                    onClick={() => !isBatchEdit && fileInputRef.current?.click()}
+                  >
+                    <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
+                    <Typography variant="subtitle1" sx={{ mt: 1 }}>
+                      Upload Employee Image
+                    </Typography>
+
+                    <Typography variant="caption" color="textSecondary">
+                      Supports: JPG, JPEG, PNG
+                    </Typography>
+                    <Typography
+                      variant="subtitle1"
+                      component="span"
+                      color="primary"
+                      sx={{ fontWeight: 600, ml: 1, cursor: 'pointer' }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenCamera(true);
+                      }}
+                    >
+                      Camera
+                    </Typography>
+
+                    <Dialog
+                      open={openCamera}
+                      onClose={() => setOpenCamera(false)}
+                      maxWidth="md"
+                      fullWidth
+                    >
+                      <Box sx={{ p: 3 }}>
+                        <Typography variant="h6" mb={2}>
+                          Take Photo From Camera
+                        </Typography>
+
+                        <Grid2 container spacing={2}>
+                          <Grid2 size={{ xs: 6, sm: 6 }}>
+                            <Webcam
+                              audio={false}
+                              ref={webcamRef}
+                              screenshotFormat="image/jpeg"
+                              videoConstraints={{ facingMode: 'environment' }}
+                              style={{
+                                width: '100%',
+                                borderRadius: 8,
+                                border: '2px solid #ccc',
+                              }}
+                            />
+                          </Grid2>
+
+                          <Grid2 size={{ xs: 6, sm: 6 }}>
+                            {screenshot ? (
+                              <img
+                                src={screenshot}
+                                alt="Captured"
+                                style={{ width: '100%', borderRadius: 8, border: '2px solid #ccc' }}
+                              />
+                            ) : (
+                              <Box
+                                sx={{
+                                  width: '100%',
+                                  height: '100%',
+                                  border: '2px dashed #ccc',
+                                  borderRadius: 8,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  minHeight: 240,
+                                }}
+                              >
+                                <Typography color="text.secondary">
+                                  No Photos Have Been Taken Yet
+                                </Typography>
+                              </Box>
+                            )}
+                          </Grid2>
+                        </Grid2>
+
+                        <Divider sx={{ my: 2 }} />
+
+                        <Box sx={{ textAlign: 'right' }}>
+                          <Button onClick={handleClear} color="warning" sx={{ mr: 2 }}>
+                            Clear Foto
+                          </Button>
+                          <Button
+                            variant="contained"
+                            onClick={(e) => {
+                              e.stopPropagation(); // ✅ cegah trigger upload
+                              handleCapture(); // 📸 ambil foto dari kamera
+                            }}
+                          >
+                            Take Foto
+                          </Button>
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenCamera(false);
+                            }}
+                            sx={{ ml: 2 }}
+                          >
+                            Close
+                          </Button>
+                        </Box>
+                      </Box>
+                    </Dialog>
+
+                    {previewUrl && (
+                      <Box
+                        mt={2}
+                        sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+                      >
+                        <img
+                          src={previewUrl}
+                          alt="preview"
+                          style={{
+                            width: 200,
+                            height: 200,
+                            borderRadius: 12,
+                            objectFit: 'cover',
+                            cursor: 'pointer',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
+                          }}
+                        />
+                      </Box>
+                    )}
+
+                    <input
+                      type="file"
+                      accept="image/*"
+                      hidden
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      disabled={isBatchEdit}
+                    />
+                  </Box>
+                </Box>
+              </Paper>
             </Grid2>
           </Grid2>
         );
@@ -618,282 +1159,263 @@ const FormWizardAddEmployee = ({
           </>
         )}
       </Box>
+      {loading && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            bgcolor: '#ffff',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 2000,
+          }}
+        >
+          <CircularProgress color="primary" />
+        </Box>
+      )}
     </form>
   );
 };
 
 export default FormWizardAddEmployee;
 
-// Post photo.
-type ImageUploadCardProps = {
-  title: string;
-  file: File | null;
-  onFileChange: (file: File) => void;
-};
+// // Post photo.
+// type ImageUploadCardProps = {
+//   title: string;
+//   file?: File | null; // ✅ TERIMA JUGA NULL
+//   onFileChange: (file: File) => void;
+//   disabled?: boolean;
+// };
+// const ImageUploadCard: React.FC<ImageUploadCardProps> = ({
+//   title,
+//   file,
+//   onFileChange,
+//   disabled = false,
+// }) => {
+//   const webcamRef = useRef<Webcam>(null);
+//   const fileInputRef = useRef<HTMLInputElement>(null);
 
-const ImageUploadCard: React.FC<ImageUploadCardProps> = ({ title, file, onFileChange }) => {
-  const webcamRef = useRef<Webcam>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+//   const [openCamera, setOpenCamera] = useState(false);
+//   const [screenshot, setScreenshot] = useState<string | null>(null);
+//   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+//   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+//   const [cropDialogOpen, setCropDialogOpen] = useState(false);
+//   const [siteImageFile, setSiteImageFile] = useState<File | null>(null);
+//   const [crop, setCrop] = useState<Crop>({
+//     unit: '%',
+//     x: 0,
+//     y: 0,
+//     width: 50,
+//     height: 50,
+//   });
 
-  const [openCamera, setOpenCamera] = useState(false);
-  const [screenshot, setScreenshot] = useState<string | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
-  const [cropDialogOpen, setCropDialogOpen] = useState(false);
+//   const [completedCrop, setCompletedCrop] = useState<Crop | null>(null);
+//   const imageRef = useRef<HTMLImageElement | null>(null);
 
-  const [crop, setCrop] = useState<Crop>({
-    unit: '%',
-    x: 0,
-    y: 0,
-    width: 50,
-    height: 50,
-  });
+//   // Convert base64 or File to object URL for preview
+//   useEffect(() => {
+//     if (!file) {
+//       setPreviewUrl(null);
+//       return;
+//     }
 
-  const [completedCrop, setCompletedCrop] = useState<Crop | null>(null);
-  const imageRef = useRef<HTMLImageElement | null>(null);
+//     const url = URL.createObjectURL(file);
+//     setPreviewUrl(url);
 
-  // Convert base64 or File to object URL for preview
-  useEffect(() => {
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
-      return () => URL.revokeObjectURL(url);
-    } else {
-      setPreviewUrl(null);
-    }
-  }, [file]);
+//     return () => {
+//       URL.revokeObjectURL(url);
+//     };
+//   }, [file]);
 
-  const openCropDialog = (imageSrc: string) => {
-    setImageToCrop(imageSrc);
-    setCropDialogOpen(true);
-  };
+//   const openCropDialog = (imageSrc: string) => {
+//     setImageToCrop(imageSrc);
+//     setCropDialogOpen(true);
+//   };
 
-  const getCroppedImage = async () => {
-    if (!completedCrop || !imageRef.current) return;
+//   const getCroppedImage = async () => {
+//     if (!completedCrop || !imageRef.current) return;
 
-    const canvas = document.createElement('canvas');
-    const scaleX = imageRef.current.naturalWidth / imageRef.current.width;
-    const scaleY = imageRef.current.naturalHeight / imageRef.current.height;
-    canvas.width = completedCrop.width!;
-    canvas.height = completedCrop.height!;
-    const ctx = canvas.getContext('2d');
+//     const canvas = document.createElement('canvas');
+//     const scaleX = imageRef.current.naturalWidth / imageRef.current.width;
+//     const scaleY = imageRef.current.naturalHeight / imageRef.current.height;
+//     canvas.width = completedCrop.width!;
+//     canvas.height = completedCrop.height!;
+//     const ctx = canvas.getContext('2d');
 
-    if (!ctx) return;
+//     if (!ctx) return;
 
-    ctx.drawImage(
-      imageRef.current,
-      completedCrop.x! * scaleX,
-      completedCrop.y! * scaleY,
-      completedCrop.width! * scaleX,
-      completedCrop.height! * scaleY,
-      0,
-      0,
-      completedCrop.width!,
-      completedCrop.height!,
-    );
+//     ctx.drawImage(
+//       imageRef.current,
+//       completedCrop.x! * scaleX,
+//       completedCrop.y! * scaleY,
+//       completedCrop.width! * scaleX,
+//       completedCrop.height! * scaleY,
+//       0,
+//       0,
+//       completedCrop.width!,
+//       completedCrop.height!,
+//     );
 
-    return new Promise<File>((resolve) => {
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const croppedFile = new File([blob], `${title.replace(/\s+/g, '_')}_cropped.jpg`, {
-            type: 'image/jpeg',
-          });
-          resolve(croppedFile);
-        }
-      }, 'image/jpeg');
-    });
-  };
+//     return new Promise<File>((resolve) => {
+//       canvas.toBlob((blob) => {
+//         if (blob) {
+//           const croppedFile = new File([blob], `${title.replace(/\s+/g, '_')}_cropped.jpg`, {
+//             type: 'image/jpeg',
+//           });
+//           resolve(croppedFile);
+//         }
+//       }, 'image/jpeg');
+//     });
+//   };
 
-  const handleCapture = () => {
-    const imageSrc = webcamRef.current?.getScreenshot();
-    if (imageSrc) {
-      setScreenshot(imageSrc);
-      openCropDialog(imageSrc);
-    }
-  };
+//   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+//     const selectedFile = e.target.files?.[0];
+//     if (selectedFile) {
+//       setSiteImageFile(selectedFile);
+//       console.log('Slected file:', selectedFile);
+//       setPreviewUrl(URL.createObjectURL(selectedFile));
+//     }
+//   };
 
-  const handleClear = () => {
-    setScreenshot(null);
-    setPreviewUrl(null);
-    onFileChange(null as any);
-  };
+//   // const handleCropSave = async () => {
+//   //   const cropped = await getCroppedImage();
+//   //   if (cropped) {
+//   //     onFileChange(cropped);
+//   //   }
+//   //   setCropDialogOpen(false);
+//   //   setImageToCrop(null);
+//   // };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        openCropDialog(reader.result as string);
-      };
-      reader.readAsDataURL(selectedFile);
-    }
-  };
+//   // const fileToBase64 = (file: File): Promise<string> => {
+//   //   return new Promise((resolve, reject) => {
+//   //     const reader = new FileReader();
+//   //     reader.onload = () => {
+//   //       if (typeof reader.result === 'string') {
+//   //         resolve(reader.result);
+//   //       } else {
+//   //         reject('Failed to read file');
+//   //       }
+//   //     };
+//   //     reader.onerror = () => reject(reader.error);
+//   //     reader.readAsDataURL(file);
+//   //   });
+//   // };
 
-  const handleCropSave = async () => {
-    const cropped = await getCroppedImage();
-    if (cropped) {
-      onFileChange(cropped);
-    }
-    setCropDialogOpen(false);
-    setImageToCrop(null);
-  };
+//   // const handleCropSave = async () => {
+//   //   const croppedFile = await getCroppedImage();
+//   //   if (croppedFile) {
+//   //     const base64 = await fileToBase64(croppedFile);
+//   //     onFileChange(base64);
+//   //     setSiteImageFile?.(croppedFile);
+//   //   }
+//   //   setCropDialogOpen(false);
+//   //   setImageToCrop(null);
+//   // };
 
-  return (
-    <>
-      <Box
-        sx={{
-          border: '2px dashed #90caf9',
-          borderRadius: 2,
-          padding: 4,
-          textAlign: 'center',
-          mt: 5,
-          backgroundColor: '#f5faff',
-          cursor: 'pointer',
-        }}
-        onClick={() => fileInputRef.current?.click()}
-      >
-        <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
-        <Typography variant="subtitle1" sx={{ mt: 1 }}>
-          {title}{' '}
-          <Typography
-            component="span"
-            color="primary"
-            sx={{ fontWeight: 600, ml: 1, cursor: 'pointer' }}
-            onClick={(e) => {
-              e.stopPropagation();
-              setOpenCamera(true);
-            }}
-          >
-            Camera
-          </Typography>
-        </Typography>
-        <Typography variant="caption" color="textSecondary">
-          Supports: JPG, JPEG, PNG
-        </Typography>
+//   return (
+//     <>
+//       <Box
+//         sx={{
+//           border: '2px dashed #90caf9',
+//           borderRadius: 2,
+//           padding: 4,
+//           textAlign: 'center',
+//           mt: 5,
+//           cursor: 'pointer',
+//           backgroundColor: disabled ? '#f5f5f5' : 'white',
+//           opacity: disabled ? 0.6 : 1,
+//           pointerEvents: disabled ? 'none' : 'auto', // blok interaksi kalau disable
+//         }}
+//         onClick={() => fileInputRef.current?.click()}
+//       >
+//         <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
+//         <Typography variant="subtitle1" sx={{ mt: 1 }}>
+//           {title}{' '}
+//           <Typography
+//             component="span"
+//             color="primary"
+//             sx={{ fontWeight: 600, ml: 1, cursor: 'pointer' }}
+//             onClick={(e) => {
+//               e.stopPropagation();
+//               setOpenCamera(true);
+//             }}
+//           >
+//             Camera
+//           </Typography>
+//         </Typography>
+//         <Typography variant="caption" color="textSecondary">
+//           Supports: JPG, JPEG, PNG
+//         </Typography>
 
-        {previewUrl && (
-          <Box mt={2}>
-            <img
-              src={previewUrl}
-              alt="preview"
-              style={{
-                width: 100,
-                height: 100,
-                borderRadius: 8,
-                objectFit: 'cover',
-                cursor: 'pointer',
-              }}
-              onClick={() => openCropDialog(previewUrl)}
-            />
-          </Box>
-        )}
+//         {previewUrl ? (
+//           <Box mt={2}>
+//             <img
+//               src={previewUrl}
+//               alt="preview"
+//               style={{
+//                 width: 100,
+//                 height: 100,
+//                 borderRadius: 8,
+//                 objectFit: 'cover',
+//                 cursor: 'pointer',
+//               }}
+//               // onClick={() => openCropDialog(previewUrl)}
+//             />
+//           </Box>
+//         ) : (
+//           <Box mt={2}>
+//             <Typography color="text.secondary">No photo uploaded</Typography>
+//           </Box>
+//         )}
 
-        {/* hidden file input */}
-        <input type="file" accept="image/*" hidden ref={fileInputRef} onChange={handleFileSelect} />
-      </Box>
+//         {/* hidden file input */}
+//         <input type="file" accept="image/*" hidden ref={fileInputRef} onChange={handleFileUpload} />
+//       </Box>
 
-      {/* Webcam Dialog */}
-      <Dialog open={openCamera} onClose={() => setOpenCamera(false)} maxWidth="md" fullWidth>
-        <Box sx={{ p: 3 }}>
-          <Typography variant="h6" mb={2}>
-            Take Photo From Camera
-          </Typography>
+//       {/* Webcam Dialog */}
 
-          <Grid2 container spacing={2}>
-            <Grid2 size={{ xs: 6, sm: 6 }}>
-              <Webcam
-                audio={false}
-                ref={webcamRef}
-                screenshotFormat="image/jpeg"
-                videoConstraints={{ facingMode: 'environment' }}
-                style={{
-                  width: '100%',
-                  borderRadius: 8,
-                  border: '2px solid #ccc',
-                }}
-              />
-            </Grid2>
+//       {/* Crop Dialog */}
+//       <Dialog
+//         open={cropDialogOpen}
+//         onClose={() => setCropDialogOpen(false)}
+//         maxWidth="md"
+//         fullWidth
+//       >
+//         <Box sx={{ p: 3 }}>
+//           <Typography variant="h6" mb={2}>
+//             Crop Image
+//           </Typography>
 
-            <Grid2 size={{ xs: 6, sm: 6 }}>
-              {screenshot ? (
-                <img
-                  src={screenshot}
-                  alt="Captured"
-                  style={{ width: '100%', borderRadius: 8, border: '2px solid #ccc' }}
-                />
-              ) : (
-                <Box
-                  sx={{
-                    width: '100%',
-                    height: '100%',
-                    border: '2px dashed #ccc',
-                    borderRadius: 8,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    minHeight: 240,
-                  }}
-                >
-                  <Typography color="text.secondary">No Photos Have Been Taken Yet</Typography>
-                </Box>
-              )}
-            </Grid2>
-          </Grid2>
+//           {imageToCrop && (
+//             <ReactCrop
+//               crop={crop}
+//               onChange={(newCrop) => setCrop(newCrop)}
+//               onComplete={(c) => setCompletedCrop(c)}
+//               aspect={1}
+//             >
+//               <img
+//                 src={imageToCrop}
+//                 ref={imageRef}
+//                 alt="crop source"
+//                 style={{ maxWidth: '100%' }}
+//               />
+//             </ReactCrop>
+//           )}
 
-          <Divider sx={{ my: 2 }} />
-
-          <Box sx={{ textAlign: 'right' }}>
-            <Button onClick={handleClear} color="warning" sx={{ mr: 2 }}>
-              Clear Foto
-            </Button>
-            <Button variant="contained" onClick={handleCapture}>
-              Take Foto
-            </Button>
-            <Button onClick={() => setOpenCamera(false)} sx={{ ml: 2 }}>
-              Close
-            </Button>
-          </Box>
-        </Box>
-      </Dialog>
-
-      {/* Crop Dialog */}
-      <Dialog
-        open={cropDialogOpen}
-        onClose={() => setCropDialogOpen(false)}
-        maxWidth="md"
-        fullWidth
-      >
-        <Box sx={{ p: 3 }}>
-          <Typography variant="h6" mb={2}>
-            Crop Image
-          </Typography>
-
-          {imageToCrop && (
-            <ReactCrop
-              crop={crop}
-              onChange={(newCrop) => setCrop(newCrop)}
-              onComplete={(c) => setCompletedCrop(c)}
-              aspect={1}
-            >
-              <img
-                src={imageToCrop}
-                ref={imageRef}
-                alt="crop source"
-                style={{ maxWidth: '100%' }}
-              />
-            </ReactCrop>
-          )}
-
-          <Box sx={{ textAlign: 'right', mt: 2 }}>
-            <Button onClick={() => setCropDialogOpen(false)} sx={{ mr: 2 }}>
-              Cancel
-            </Button>
-            <Button variant="contained" onClick={handleCropSave}>
-              Save Result Crop
-            </Button>
-          </Box>
-        </Box>
-      </Dialog>
-    </>
-  );
-};
+//           {/* <Box sx={{ textAlign: 'right', mt: 2 }}>
+//             <Button onClick={() => setCropDialogOpen(false)} sx={{ mr: 2 }}>
+//               Cancel
+//             </Button>
+//             <Button variant="contained" onClick={handleCropSave}>
+//               Save Result Crop
+//             </Button>
+//           </Box> */}
+//         </Box>
+//       </Dialog>
+//     </>
+//   );
+// };

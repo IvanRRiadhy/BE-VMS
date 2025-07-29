@@ -43,6 +43,13 @@ type AccessControlTableRow = {
   integration_name: string;
   id: string;
 };
+import { IconAccessible } from '@tabler/icons-react';
+import {
+  showConfirmDelete,
+  showErrorAlert,
+  showSuccessAlert,
+} from 'src/customs/components/alerts/alerts';
+import { de } from 'date-fns/locale';
 
 const Content = () => {
   const theme = useTheme();
@@ -50,6 +57,7 @@ const Content = () => {
   // Pagination state.
   const [accessControlData, setAccessControlData] = useState<Item[]>([]);
   const [tableData, setTableData] = useState<AccessControlTableRow[]>([]);
+  const [selectedRows, setSelectedRows] = useState<Item[]>([]);
   const [isDataReady, setIsDataReady] = useState(false);
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
@@ -149,6 +157,7 @@ const Content = () => {
   const cards = [
     {
       title: 'Total Access Control',
+      icon: IconAccessible,
       subTitle: `${totalFilteredRecords}`,
       subTitleSetting: 10,
       color: 'none',
@@ -231,34 +240,47 @@ const Content = () => {
   const handleDelete = async (id: string) => {
     if (!token) return;
 
-    Swal.fire({
-      title: 'Are you sure?',
-      text: "You won't be able to revert this!",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, delete it!',
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        try {
-          await deleteAccessControl(id, token);
-          setRefreshTrigger((prev) => prev + 1);
-          Swal.fire({
-            title: 'Deleted!',
-            text: 'Your Access Control has been deleted.',
-            icon: 'success',
-          });
-        } catch (error) {
-          console.error(error);
-          Swal.fire({
-            title: 'Error!',
-            text: 'Something went wrong while deleting.',
-            icon: 'error',
-          });
-        }
+    const confirmed = await showConfirmDelete(
+      'Are you sure you want to delete this Access Control?',
+      "You won't be able to revert this!",
+    );
+
+    if (confirmed) {
+      try {
+        await deleteAccessControl(id, token);
+        setRefreshTrigger((prev) => prev + 1);
+        showSuccessAlert('Deleted!', 'Access Control has been deleted.');
+      } catch (error) {
+        console.error(error);
+        showErrorAlert('Failed to delete Access Control', 'Please try again later.');
+      } finally {
+        setTimeout(() => setLoading(false), 500);
       }
-    });
+    }
+  };
+
+  const handleBatchDelete = async (rows: Item[]) => {
+    if (!token || rows.length === 0) return;
+
+    const confirmed = await showConfirmDelete(
+      `Are you sure to delete ${rows.length} items?`,
+      "You won't be able to revert this!",
+    );
+
+    if (confirmed) {
+      setLoading(true);
+      try {
+        await Promise.all(rows.map((row) => deleteAccessControl(row.id, token)));
+        setRefreshTrigger((prev) => prev + 1);
+        showSuccessAlert('Deleted!', `${rows.length} items have been deleted.`);
+        setSelectedRows([]); // reset selected rows
+      } catch (error) {
+        console.error(error);
+        showErrorAlert('Error!', 'Failed to delete some items.');
+      } finally {
+        setLoading(false);
+      }
+    }
   };
 
   const handleDialogClose = (_event: object, reason: string) => {
@@ -277,13 +299,14 @@ const Content = () => {
         <Box>
           <Grid container spacing={3}>
             {/* column */}
-            <Grid size={{ xs: 12, lg: 12 }}>
+            <Grid size={{ xs: 12, lg: 4 }}>
               <TopCard items={cards} />
             </Grid>
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
               <DynamicTable
                 isHavePagination={true}
+                selectedRows={selectedRows}
                 totalCount={totalFilteredRecords}
                 defaultRowsPerPage={rowsPerPage}
                 rowsPerPageOptions={[5, 10, 20]}
@@ -302,12 +325,20 @@ const Content = () => {
                 isHaveFilterDuration={false}
                 isHaveAddData={true}
                 isHaveHeader={false}
-                onCheckedChange={(selected) => console.log('Checked table row:', selected)}
+                onCheckedChange={(selected) => {
+                  const selectedItem = selected.map((item) => ({
+                    ...item,
+                    brand_id: item.brand_name, // assuming brand_name is the equivalent of brand_id
+                    integration_id: item.integration_name, // assuming integration_name is the equivalent of integration_id
+                  }));
+                  setSelectedRows(selectedItem);
+                }}
                 onEdit={(row) => {
                   handleEdit(row.id);
                   setEdittingId(row.id);
                 }}
                 onDelete={(row) => handleDelete(row.id)}
+                onBatchDelete={handleBatchDelete}
                 onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
                 onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
                 onAddData={() => {

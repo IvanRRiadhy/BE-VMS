@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import { styled } from '@mui/material/styles';
 import { TextField } from '@mui/material';
@@ -14,6 +14,12 @@ const CustomTextField = styled((props: any) => <TextField {...props} />)(({ them
   },
   '& .Mui-disabled .MuiOutlinedInput-notchedOutline': {
     borderColor: theme.palette.grey[200],
+  },
+  '& .MuiInputBase-root.Mui-disabled': {
+    backgroundColor: '#f0f0f0', // ubah jadi abu-abu terang
+  },
+  '& .MuiInputBase-input.Mui-disabled': {
+    WebkitTextFillColor: '#666', // warna teks agar lebih gelap
   },
 }));
 

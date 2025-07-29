@@ -134,3 +134,19 @@ export type DeleteEmployeeResponse<T = any> = {
   msg: string;
   collection: T | null;
 };
+
+export const BatchEditSchema = z.object({
+  organization_id: z.string(),
+  department_id: z.string(),
+  district_id: z.string(),
+});
+
+export type BatchEditRequest = z.infer<typeof BatchEditSchema>;
+
+export interface UploadImageEmployeeResponse {
+  status: string;
+  status_code: number;
+  title: string;
+  msg: string;
+  collection: Item | null;
+}
