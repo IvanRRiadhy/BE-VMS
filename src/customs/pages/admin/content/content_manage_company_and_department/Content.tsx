@@ -50,10 +50,15 @@ import {
   showSuccessAlert,
   showErrorAlert,
 } from 'src/customs/components/alerts/alerts';
-import { set } from 'lodash';
 
 type EnableField = {
   name: boolean;
+};
+
+type SuccessOpts = {
+  entity: 'department' | 'district' | 'organization';
+  action: 'create' | 'update';
+  keepOpen?: boolean; // kalau mau biarin dialog tetap terbuka
 };
 
 const Content = () => {
@@ -110,8 +115,20 @@ const Content = () => {
   };
 
   const handleConfirmEdit = () => {
-    handleCloseDialog();
-    setConfirmDialogOpen(false);
+    // Reset form data berdasarkan openFormType
+    if (openFormType === 'Organizations') {
+      setFormDataAddOrganization(CreateOrganizationSchema.parse({}));
+      localStorage.removeItem('unsavedOrganizationFormAdd');
+    } else if (openFormType === 'Departments') {
+      setFormDataAddDepartment(CreateDepartmentSchema.parse({}));
+      localStorage.removeItem('unsavedDepartmentFormAdd');
+    } else if (openFormType === 'Districts') {
+      setFormDataAddDistrict(CreateDistrictSchema.parse({}));
+      localStorage.removeItem('unsavedDistrictFormAdd');
+    }
+
+    handleCloseDialog(); // tutup dialog
+    setConfirmDialogOpen(false); // tutup modal konfirmasi
   };
 
   // Pagination state.
@@ -172,9 +189,6 @@ const Content = () => {
   const [formDataAddOrganization, setFormDataAddOrganization] = useState<CreateOrganizationRequest>(
     () => {
       const saved = localStorage.getItem('unsavedOrganizationFormAdd');
-
-      // return saved ? JSON.parse(saved) : CreateOrganizationSchema.parse({});
-
       try {
         const parsed = saved ? JSON.parse(saved) : {};
         return CreateOrganizationSchema.parse(parsed);
@@ -254,9 +268,9 @@ const Content = () => {
 
     try {
       const [orgRes, depRes, distRes] = await Promise.all([
-        getAllOrganizatiosPagination(token, 0, 1, 'id'),
-        getAllDepartmentsPagination(token, 0, 1, 'id'),
-        getAllDistrictsPagination(token, 0, 1, 'id'),
+        getAllOrganizatiosPagination(token, 0, 9999, 'id'),
+        getAllDepartmentsPagination(token, 0, 9999, 'id'),
+        getAllDistrictsPagination(token, 0, 9999, 'id'),
       ]);
 
       setTotals({
@@ -275,13 +289,30 @@ const Content = () => {
 
   const defaultFormData = CreateOrganizationSchema.parse({});
   const isFormChanged = JSON.stringify(formDataAddOrganization) !== JSON.stringify(defaultFormData);
-  const handleDialogClose = (_event: object, reason: string) => {
-    if (reason === 'backdropClick') {
-      if (isFormChanged) {
-        setConfirmDialogOpen(true);
-      } else {
-        handleCloseDialog();
-      }
+  const handleDialogClose = (_event?: object, reason?: string) => {
+    let isChanged = false;
+
+    if (openFormType === 'Organizations') {
+      const defaultData = CreateOrganizationSchema.parse({});
+      isChanged = JSON.stringify(formDataAddOrganization) !== JSON.stringify(defaultData);
+    } else if (openFormType === 'Departments') {
+      const defaultData = CreateDepartmentSchema.parse({});
+      isChanged = JSON.stringify(formDataAddDepartment) !== JSON.stringify(defaultData);
+    } else if (openFormType === 'Districts') {
+      const defaultData = CreateDistrictSchema.parse({});
+      isChanged = JSON.stringify(formDataAddDistrict) !== JSON.stringify(defaultData);
+    }
+
+    if (reason === 'backdropClick' && isChanged) {
+      setConfirmDialogOpen(true);
+      return;
+    }
+
+    if (isChanged) {
+      setConfirmDialogOpen(true);
+    } else {
+      setConfirmDialogOpen(false);
+      setOpenFormType(null);
     }
   };
 
@@ -406,9 +437,47 @@ const Content = () => {
     }, 0);
   };
 
-  const handleSuccess = () => {
-    setRefreshTrigger((prev) => prev + 1);
-    handleCloseDialog();
+  const handleSuccess = ({ entity, action, keepOpen }: SuccessOpts) => {
+    // 1) bersihin localStorage per entitas
+    const lsKey: Record<SuccessOpts['entity'], string> = {
+      department: 'unsavedDepartmentData',
+      district: 'unsavedDistrictData',
+      organization: 'unsavedOrganizationData',
+    };
+    localStorage.removeItem(lsKey[entity]);
+
+    // 2) reset form kalau perlu
+    if (entity === 'department') {
+      setFormDataAddDepartment(CreateDepartmentSchema.parse({}));
+    }
+    if (entity === 'district') {
+      setFormDataAddDistrict(CreateDistrictSchema.parse({}));
+    }
+    if (entity === 'organization') {
+      setFormDataAddOrganization(CreateOrganizationSchema.parse({}));
+    }
+    // organization biasanya edit; tidak ada form add yg perlu direset
+
+    // 3) matikan flag perubahan
+    // setIsFormChanged(false);
+
+    // 4) tutup dialog (kecuali diminta tetap open)
+    if (!keepOpen) handleCloseDialog();
+
+    // 5) notifikasi
+    // const title = action === 'update' ? 'Update Successfully!' : 'Created Successfully!';
+    // const entityLabel =
+    //   entity === 'department' ? 'Department' : entity === 'district' ? 'District' : 'Organization';
+
+    // const text =
+    //   action === 'update'
+    //     ? `${entityLabel} data updated successfully.`
+    //     : `${entityLabel} data added successfully.`;
+
+    // Swal.fire({ title, text, icon: 'success' });
+
+    // 6) trigger refresh table/list
+    setRefreshTrigger((p) => p + 1);
   };
 
   useEffect(() => {
@@ -460,14 +529,14 @@ const Content = () => {
                     isHaveAction={true}
                     isHaveSearch={true}
                     isHaveFilter={true}
-                    isHaveExportPdf={true}
+                    isHaveExportPdf={false}
                     isHaveExportXlf={false}
                     isHaveFilterDuration={false}
                     isHaveAddData={true}
                     onBatchEdit={handleBatchEdit}
                     isHaveHeader={true}
                     headerContent={{
-                      title: 'Organization | Department | District',
+                      title: '',
                       // subTitle: formatDate(new Date()),
                       items: [
                         { name: 'organization' },
@@ -529,7 +598,7 @@ const Content = () => {
         maxWidth="md"
       >
         <DialogTitle display={'flex'} justifyContent="space-between" alignItems="center">
-          Add Organization data
+          Add Organization
           <IconButton
             aria-label="close"
             onClick={() => {
@@ -549,19 +618,9 @@ const Content = () => {
           <FormAddOrganization
             formData={formDataAddOrganization}
             setFormData={setFormDataAddOrganization}
-            onSuccess={() => {
-              localStorage.removeItem('unsavedOrganizationFormAdd');
-              handleCloseDialog();
-              setFormDataAddOrganization(CreateOrganizationSchema.parse({}));
-              setTimeout(() => {
-                Swal.fire({
-                  title: 'Created Successfully!',
-                  text: 'Organization data added successfully.',
-                  icon: 'success',
-                });
-              }, 500);
-              setRefreshTrigger((prev: number) => prev + 1);
-            }}
+            onSuccess={() =>
+              handleSuccess({ entity: 'organization', action: 'create', keepOpen: true })
+            }
           />
         </DialogContent>
       </Dialog>
@@ -569,13 +628,22 @@ const Content = () => {
       {/* Dialog Department */}
       <Dialog
         open={openFormType === 'Departments'}
-        onClose={handleCloseDialog}
+        onClose={handleDialogClose}
         fullWidth
         maxWidth="md"
       >
         <DialogTitle display={'flex'} justifyContent="space-between" alignItems="center">
-          Add Department data
-          <IconButton aria-label="close" onClick={handleCloseDialog}>
+          Add Department
+          <IconButton
+            aria-label="close"
+            onClick={() => {
+              if (isFormChanged) {
+                setConfirmDialogOpen(true);
+              } else {
+                handleCloseDialog(); // langsung tutup kalau tidak ada perubahan
+              }
+            }}
+          >
             <CloseIcon />
           </IconButton>
         </DialogTitle>
@@ -585,19 +653,9 @@ const Content = () => {
           <FormAddDepartment
             formData={formDataAddDepartment}
             setFormData={setFormDataAddDepartment}
-            onSuccess={() => {
-              localStorage.removeItem('unsavedDepartmentData');
-              handleCloseDialog();
-              setFormDataAddDepartment(CreateDepartmentSchema.parse({})); // reset form
-              setTimeout(() => {
-                Swal.fire({
-                  title: 'Created Successfully!',
-                  text: 'Department data added successfully.',
-                  icon: 'success',
-                });
-              }, 500);
-              setRefreshTrigger((prev: number) => prev + 1);
-            }}
+            onSuccess={() =>
+              handleSuccess({ entity: 'department', action: 'create', keepOpen: true })
+            }
           />
         </DialogContent>
       </Dialog>
@@ -605,15 +663,24 @@ const Content = () => {
       {/* Dialog District */}
       <Dialog
         open={openFormType === 'Districts'}
-        onClose={handleCloseDialog}
+        onClose={handleDialogClose}
         fullWidth
         maxWidth="md"
       >
         <DialogTitle
           sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
         >
-          Add District data
-          <IconButton aria-label="close" onClick={handleCloseDialog}>
+          Add District
+          <IconButton
+            aria-label="close"
+            onClick={() => {
+              if (isFormChanged) {
+                setConfirmDialogOpen(true);
+              } else {
+                handleCloseDialog(); // langsung tutup kalau tidak ada perubahan
+              }
+            }}
+          >
             <CloseIcon />
           </IconButton>
         </DialogTitle>
@@ -623,19 +690,9 @@ const Content = () => {
           <FormAddDistrict
             formData={formDataAddDistrict}
             setFormData={setFormDataAddDistrict}
-            onSuccess={() => {
-              localStorage.removeItem('unsavedDistrictData');
-              handleCloseDialog();
-              setFormDataAddDistrict(CreateDistrictSchema.parse({}));
-              setTimeout(() => {
-                Swal.fire({
-                  title: 'Created Successfully!',
-                  text: 'District data added successfully.',
-                  icon: 'success',
-                });
-              }, 500);
-              setRefreshTrigger((prev) => prev + 1);
-            }}
+            onSuccess={() =>
+              handleSuccess({ entity: 'district', action: 'create', keepOpen: true })
+            }
           />
         </DialogContent>
       </Dialog>
@@ -666,22 +723,13 @@ const Content = () => {
           {editDialogType === 'Organizations' && (
             <FormUpdateOrganization
               data={editingRow}
-              onSuccess={() => {
-                localStorage.removeItem('unsavedOrganizationData');
-                handleCloseDialog();
-                setTimeout(() => {
-                  Swal.fire({
-                    title: 'Update Successfully!',
-                    text: 'Organization data updated successfully.',
-                    icon: 'success',
-                  });
-                }, 600);
-                setRefreshTrigger((prev) => prev + 1);
-              }}
               isBatchEdit={isBatchEdit}
               selectedRows={selectedRows}
               enabledFields={enabledFields}
               setEnabledFields={setEnabledFields}
+              onSuccess={() =>
+                handleSuccess({ entity: 'organization', action: 'update', keepOpen: true })
+              }
             />
           )}
         </DialogContent>
@@ -689,7 +737,7 @@ const Content = () => {
 
       <Dialog
         open={editDialogType === 'Departments'}
-        onClose={handleCloseDialog}
+        onClose={handleDialogClose}
         fullWidth
         maxWidth="md"
       >
@@ -707,22 +755,13 @@ const Content = () => {
           {editDialogType === 'Departments' && (
             <FormUpdateDepartment
               data={editingRow}
-              onSuccess={() => {
-                localStorage.removeItem('unsavedDepartmentData');
-                handleCloseDialog();
-                setTimeout(() => {
-                  Swal.fire({
-                    title: 'Upadate Successfully!',
-                    text: 'Department data update successfully.',
-                    icon: 'success',
-                  });
-                }, 600);
-                setRefreshTrigger((prev) => prev + 1);
-              }}
               isBatchEdit={isBatchEdit}
               selectedRows={selectedRows}
               enabledFields={enabledFields}
               setEnabledFields={setEnabledFields}
+              onSuccess={() =>
+                handleSuccess({ entity: 'department', action: 'update', keepOpen: true })
+              }
             />
           )}
         </DialogContent>
@@ -730,7 +769,7 @@ const Content = () => {
 
       <Dialog
         open={editDialogType === 'Districts'}
-        onClose={handleCloseDialog}
+        onClose={handleDialogClose}
         fullWidth
         maxWidth="md"
       >
@@ -752,22 +791,13 @@ const Content = () => {
           {editDialogType === 'Districts' && (
             <FormUpdateDistrict
               data={editingRow}
-              onSuccess={() => {
-                localStorage.removeItem('unsavedDistrictData');
-                handleCloseDialog();
-                setTimeout(() => {
-                  Swal.fire({
-                    title: 'Upadate Successfully!',
-                    text: 'District data update successfully.',
-                    icon: 'success',
-                  });
-                }, 600);
-                setRefreshTrigger((prev) => prev + 1);
-              }}
               isBatchEdit={isBatchEdit}
               selectedRows={selectedRows}
               enabledFields={enabledFields}
               setEnabledFields={setEnabledFields}
+              onSuccess={() =>
+                handleSuccess({ entity: 'district', action: 'update', keepOpen: true })
+              }
             />
           )}
         </DialogContent>

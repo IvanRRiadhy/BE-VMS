@@ -2,30 +2,42 @@
 // @ts-ignore
 import React, { useState } from 'react';
 import { Box, Menu, Avatar, Typography, IconButton, Stack, Tooltip, Fab } from '@mui/material';
-
 import { IconMail, IconPower } from '@tabler/icons-react';
-
 import ProfileImg from 'src/assets/images/profile/user-1.jpg';
+import { useNavigate } from 'react-router-dom';
 
 const Profile = () => {
-  const [anchorEl2, setAnchorEl2] = useState(null);
-  const handleClick2 = (event: any) => {
+  const [anchorEl2, setAnchorEl2] = useState<null | HTMLElement>(null);
+  const navigate = useNavigate();
+
+  const handleClick2 = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl2(event.currentTarget);
   };
+
   const handleClose2 = () => {
     setAnchorEl2(null);
+  };
+
+  const handleLogout = () => {
+    // Hapus token/session dari localStorage
+    // localStorage.removeItem('session'); // ganti sesuai key
+    // localStorage.removeItem('user'); // jika ada
+    // // Tutup menu
+    // handleClose2();
+    // // Arahkan ke halaman login
+    navigate('/');
   };
 
   return (
     <Box>
       <IconButton
         size="large"
-        aria-label="show 11 new notifications"
+        aria-label="profile menu"
         color="inherit"
         aria-controls="msgs-menu"
         aria-haspopup="true"
         sx={{
-          ...(typeof anchorEl2 === 'object' && {
+          ...(Boolean(anchorEl2) && {
             color: 'primary.main',
           }),
         }}
@@ -33,16 +45,14 @@ const Profile = () => {
       >
         <Avatar
           src={ProfileImg}
-          alt={ProfileImg}
+          alt="profile"
           sx={{
             width: 35,
             height: 35,
           }}
         />
       </IconButton>
-      {/* ------------------------------------------- */}
-      {/* Message Dropdown */}
-      {/* ------------------------------------------- */}
+
       <Menu
         id="msgs-menu"
         anchorEl={anchorEl2}
@@ -59,7 +69,7 @@ const Profile = () => {
         }}
       >
         <Stack direction="row" py={0.1} px={1} spacing={1.5} alignItems="center">
-          <Avatar src={ProfileImg} alt={ProfileImg} sx={{ width: 50, height: 50 }} />
+          <Avatar src={ProfileImg} alt="profile" sx={{ width: 50, height: 50 }} />
 
           <Box sx={{ flexGrow: 1 }}>
             <Typography
@@ -86,9 +96,8 @@ const Profile = () => {
             </Typography>
           </Box>
 
-          {/* Tooltip akan berada di paling kanan */}
           <Tooltip title="Log out">
-            <Fab size="small" aria-label="small-bell">
+            <Fab size="small" color="error" onClick={handleLogout}>
               <IconPower width={16} />
             </Fab>
           </Tooltip>

@@ -59,7 +59,7 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
       },
       {
         id: uniqueId(),
-        title: 'Visitor Card',
+        title: 'Card',
         icon: IconCards,
         href: '/admin/manage/visitor-card',
       },
@@ -197,7 +197,7 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
       },
       {
         id: uniqueId(),
-        title: 'Visitor Card',
+        title: 'Card',
         icon: IconCards,
         href: '/admin/manage/visitor-card',
       },

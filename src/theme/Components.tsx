@@ -8,6 +8,8 @@ const components: any = (theme: Theme) => {
       styleOverrides: {
         '*': {
           boxSizing: 'border-box',
+          // scrollbarWidth: 'thin',
+          scrollbarColor: 'rgba(92, 135, 255,0.8) #f0f0f0',
         },
         html: {
           height: '100%',
@@ -22,10 +24,11 @@ const components: any = (theme: Theme) => {
           padding: 0,
         },
         '.ql-container.ql-snow, .ql-toolbar.ql-snow': {
-          border: '0 !important', borderRadius: '7px'
+          border: '0 !important',
+          borderRadius: '7px',
         },
         '.ql-editor, .ql-snow *': {
-          fontFamiy: 'inherit !important'
+          fontFamiy: 'inherit !important',
         },
         '#root': {
           height: '100%',
@@ -39,7 +42,7 @@ const components: any = (theme: Theme) => {
             border: '0px',
           },
         },
-        'pre': {
+        pre: {
           background: `${theme.palette.grey[100]} !important`,
         },
         '.btn-xs': {
@@ -83,8 +86,8 @@ const components: any = (theme: Theme) => {
         '.MuiTimelineConnector-root': {
           width: '1px !important',
         },
-        ' .simplebar-scrollbar:before': {
-          background: `${theme.palette.grey[300]} !important`,
+        '.simplebar-scrollbar:before': {
+          background: `${theme.palette.primary.main} !important`,
         },
         '@keyframes gradient': {
           '0%': {
@@ -447,10 +450,10 @@ const components: any = (theme: Theme) => {
       styleOverrides: {
         root: {
           '& .MuiOutlinedInput-root': {
-            padding: '4px 9px'
-          }
-        }
-      }
+            padding: '4px 9px',
+          },
+        },
+      },
     },
     MuiTooltip: {
       styleOverrides: {

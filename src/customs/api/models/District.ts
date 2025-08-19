@@ -4,7 +4,7 @@ import { z } from 'zod';
 export interface UpdateDistrictRequest {
   code: string;
   name: string;
-  // host: string;
+  host: string;
 }
 
 export interface UpdateDistrictResponse {
@@ -14,6 +14,7 @@ export interface UpdateDistrictResponse {
   msg: string;
   collection: {
     code: string;
+    host: string;
     name: string;
     id: string;
   };
@@ -42,7 +43,7 @@ export type DeleteDistrictResponse<T = any> = {
 export type Item = {
   code: string;
   name: string;
-  // host: string;
+  host: string;
   id: string;
 };
 
@@ -62,10 +63,20 @@ export type GetAllDistrictsPaginationResponse = {
 export const CreateDistrictSchema = z.object({
   code: z.string().default(''),
   name: z.string().default(''),
-  // host: z.string().default(''),
+  host: z.string().default(''),
 });
 
 export type CreateDistrictRequest = z.infer<typeof CreateDistrictSchema>;
+
+export const CreateDistrictSubmitSchema = CreateDistrictSchema.extend({
+  code: z.string().trim().min(1, 'District code is required'),
+  name: z.string().trim().min(1, 'District name is required'),
+  host: z.string().trim().min(1, 'Head of district is required'),
+});
+
+export type CreateDistrictSubmitRequest = z.infer<
+  typeof CreateDistrictSubmitSchema
+>;
 
 export interface CreateDistrictResponse {
   status: string;

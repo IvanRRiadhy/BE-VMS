@@ -103,7 +103,7 @@ const Content = () => {
         <Box>
           <Grid container spacing={3}>
             {/* column */}
-            <Grid size={{ xs: 12, lg: 4 }}>
+            <Grid size={{ xs: 12, lg: 12 }}>
               <TopCard items={cards} />
             </Grid>
             {/* column */}

@@ -28,13 +28,27 @@ import {
   Switch,
 } from '@mui/material';
 import BlankCard from 'src/components/shared/BlankCard';
-import { Stack } from '@mui/system';
-import { IconPencil, IconPlus, IconTrash } from '@tabler/icons-react';
+import { Stack, textAlign } from '@mui/system';
+import {
+  IconLogin2,
+  IconLogout2,
+  IconPencil,
+  IconPlus,
+  IconStar,
+  IconTrash,
+} from '@tabler/icons-react';
 import { AddCircle, CalendarMonth, ChecklistOutlined, Search } from '@mui/icons-material';
 import EditIconOutline from '@mui/icons-material/Edit';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
+import RemoveRedEyeIcon from '@mui/icons-material/RemoveRedEye';
 import Calendar from '../calendar/Calendar';
-import { IconAdjustmentsHorizontal } from '@tabler/icons-react';
+import {
+  IconAdjustmentsHorizontal,
+  IconUserFilled,
+  IconCheck,
+  IconX,
+  IconStarFilled,
+} from '@tabler/icons-react';
 
 type HeaderItem = { name: string };
 
@@ -50,26 +64,43 @@ type DynamicTableProps<T extends { id: string | number }> = {
   stickyHeader?: boolean;
   data: T[];
   selectedRows?: T[];
+  setSelectedRows?: React.Dispatch<React.SetStateAction<T[]>>;
   selectedRef?: React.MutableRefObject<T[]>;
+  isHaveGender?: boolean;
   isHaveChecked?: boolean;
   isHaveAction?: boolean;
+  isHaveActionOnlyEdit?: boolean;
+  isHaveVisitor?: boolean;
+  stickyVisitorCount?: number;
   isHaveSearch?: boolean;
   isHaveFilter?: boolean;
   isHaveExportPdf?: boolean;
   isHaveExportXlf?: boolean;
+  isHaveImportExcel?: boolean;
   isHaveFilterDuration?: boolean;
+  isActionVisitor?: boolean;
   isHaveAddData?: boolean;
   isHaveHeader?: boolean;
+  isHaveEmployee?: boolean;
+  isHaveVerified?: boolean;
   isHaveImage?: boolean;
+  isHaveObjectData?: boolean;
+  isHaveVip?: boolean;
   isHaveBooleanSwitch?: boolean;
   headerContent?: HeaderContent;
   defaultSelectedHeaderItem?: string;
   isHavePagination?: boolean;
   rowsPerPageOptions?: number[];
   defaultRowsPerPage?: number;
+  isHaveIntegration?: boolean;
+  onNameClick?: (row: T) => void;
+  isVip?: (row: T) => boolean;
   totalCount?: number;
   isHaveFilterMore?: boolean;
   filterMoreContent?: React.ReactNode;
+  onView?: (row: T) => void;
+  onEmployeeClick?: (employeeId: string) => void;
+  onImportExcel?: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onHeaderItemClick?: (item: HeaderItem) => void;
   onCheckedChange?: (selected: T[]) => void;
   onEdit?: (row: T) => void;
@@ -90,28 +121,45 @@ export function DynamicTable<T extends { id: string | number }>({
   stickyHeader = false,
   data,
   selectedRows,
+  setSelectedRows,
   isHaveChecked = false,
   isHaveAction = false,
+  isHaveActionOnlyEdit = false,
+  isHaveVisitor = false,
+  stickyVisitorCount = 0,
+  isActionVisitor = false,
   isHaveSearch = false,
   isHaveFilter = false,
   isHaveExportPdf = false,
   isHaveExportXlf = false,
+  isHaveImportExcel = false,
   isHaveFilterDuration = false,
+  isHaveGender = false,
+  isHaveVip = false,
   isHaveAddData = false,
   isHaveHeader = false,
   isHaveBooleanSwitch = false,
+  isHaveVerified = false,
+  isHaveEmployee = false,
   isHaveImage,
+  isHaveObjectData,
   headerContent,
   defaultSelectedHeaderItem,
   isHavePagination,
+  isHaveIntegration,
+  onNameClick,
   rowsPerPageOptions,
   defaultRowsPerPage,
   totalCount,
+  isVip,
   isHaveFilterMore = false,
   filterMoreContent,
+  onEmployeeClick,
+  onImportExcel,
   onHeaderItemClick,
   onCheckedChange,
   onEdit,
+  onView,
   onBatchEdit,
   onDelete,
   onBatchDelete,
@@ -130,7 +178,7 @@ export function DynamicTable<T extends { id: string | number }>({
   );
   const [showDrawer, setShowDrawer] = React.useState(false);
 
-  const BASE_URL = 'http://192.168.1.116:8000/cdn';
+  const BASE_URL = `http://${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/cdn`;
 
   const [showDrawerFilterMore, setShowDrawerFilterMore] = React.useState(false);
 
@@ -216,7 +264,32 @@ export function DynamicTable<T extends { id: string | number }>({
   };
 
   const imageFields = ['faceimage', 'photo', 'avatar', 'image'];
+  const objectFields = ['multiple_option_fields'];
 
+  const GENDER_MAP: Record<string, string> = {
+    '0': 'Female',
+    '1': 'Male',
+    '2': 'Prefer not to say',
+  };
+
+  // 1) Tetapkan lebar kolom yang konsisten
+  const CHECKBOX_COL_WIDTH = 40;
+  const ACTION_COL_WIDTH = 105; // sesuaikan dgn 2 tombol icon + gap
+  const INDEX_COL_WIDTH = 56; // kolom nomor
+  const DATA_COL_WIDTH = 180;
+  const STICKY_DATA_COUNT = 2;
+
+  // 2) Helper: base offset kiri sebelum kolom data
+  const getLeftBase = () =>
+    (isHaveChecked ? CHECKBOX_COL_WIDTH : 0) +
+    (isActionVisitor ? ACTION_COL_WIDTH : 0) +
+    INDEX_COL_WIDTH;
+
+  // 3) Helper: posisi kiri untuk kolom data sticky ke-i
+  const getStickyLeft = (i: number) => getLeftBase() + i * DATA_COL_WIDTH;
+
+  // 4) Helper: apakah kolom data (ke-i) harus sticky
+  const isStickyVisitorCol = (i: number) => isHaveVisitor && i < STICKY_DATA_COUNT;
   // end -----------
   return (
     <>
@@ -224,78 +297,79 @@ export function DynamicTable<T extends { id: string | number }>({
       {isHaveHeader && headerContent && (
         <Box marginBottom={4}>
           <BlankCard>
-            <CardContent>
+            <CardContent sx={{ overflow: 'visible' }}>
               <Grid2 container size={{ xs: 12, sm: 12 }}>
-                {/* Column 1 */}
                 <Grid2
                   size={{ xs: 12, sm: 12 }}
-                  display={'flex'}
-                  alignItems={'center'}
-                  justifyContent={{ xs: 'space-around', sm: 'flex-start' }}
+                  display="flex"
+                  alignItems="center"
+                  justifyContent={{ xs: 'flex-start', sm: 'flex-start' }}
                 >
-                  <Stack direction={'column'}>
+                  <Stack direction="column" sx={{ width: '100%' }}>
                     <Typography sx={{ fontSize: '1rem' }} variant="subtitle2" fontWeight={600}>
                       {headerContent.title}
                     </Typography>
-                    {/* <Typography mt={1.5} variant="subtitle2">
-                      {headerContent.subTitle}
-                    </Typography> */}
+
+                    {/* HAPUS Box overflowX, biarkan scroller Tabs yang kerja */}
                     <Tabs
                       value={headerContent.items.findIndex(
                         (item) => item.name === selectedHeaderItem,
                       )}
-                      onChange={(e, newValue) => {
+                      onChange={(_e, newValue) => {
                         const selectedItem = headerContent.items[newValue];
                         setSelectedHeaderItem(selectedItem.name);
                         onHeaderItemClick?.(selectedItem);
                       }}
-                      textColor="primary"
-                      indicatorColor="primary"
                       variant="scrollable"
                       scrollButtons="auto"
+                      allowScrollButtonsMobile
+                      textColor="primary"
+                      indicatorColor="primary"
                       sx={{
-                        minHeight: '20px',
+                        maxWidth: '100%',
+                        width: '100%',
+                        minHeight: 20,
+                        '& .MuiTabs-scroller': {
+                          overflowX: 'auto !important',
+                          WebkitOverflowScrolling: 'touch',
+                        },
+                        '& .MuiTabs-flexContainer': {
+                          gap: 0.5,
+                        },
                         '& .MuiTab-root': {
-                          minHeight: '20px',
+                          minWidth: 'auto', // penting biar tab tidak “kaku” 72px+
+                          whiteSpace: 'nowrap', // biar label tidak turun baris
+                          minHeight: 20,
                           textTransform: 'none',
                           fontSize: '0.6rem',
                           px: 1.5,
-                          marginTop: { xs: 1, sm: 2 },
-                          borderRadius: '999px', // pill shape
-                          border: '1px solid', // default border (akan di override jika selected)
+                          mt: { xs: 1, sm: 2 },
+                          borderRadius: '999px',
+                          border: '1px solid',
                           borderColor: 'primary.main',
                           color: 'primary.main',
                           transition: 'all 0.3s',
-                          marginRight: 1, // tambahkan jarak antar tab (1 = 8px)
+                          mr: 1,
                         },
                         '& .MuiTab-root.Mui-selected': {
                           fontWeight: 'bold',
                           backgroundColor: 'primary.main',
-                          color: '#ffffff', // putih
+                          color: '#fff',
                           border: '1px solid transparent',
                         },
-                        '& .MuiTabs-indicator': {
-                          display: 'none', // hide default indicator
-                        },
+                        '& .MuiTabs-indicator': { display: 'none' },
                       }}
                     >
                       {headerContent.items.map((item, idx) => (
                         <Tab
                           key={idx}
                           label={item.name.charAt(0).toUpperCase() + item.name.slice(1)}
+                          disableRipple
                         />
                       ))}
                     </Tabs>
                   </Stack>
                 </Grid2>
-
-                {/* Column 2: Loop items */}
-                <Grid2
-                  size={{ xs: 12, sm: 5 }}
-                  display={'flex'}
-                  alignItems={'center'}
-                  justifyContent={{ xs: 'space-around', sm: 'flex-end' }}
-                ></Grid2>
               </Grid2>
             </CardContent>
           </BlankCard>
@@ -374,7 +448,7 @@ export function DynamicTable<T extends { id: string | number }>({
                 )}
               </Stack>
 
-              {/* EXPORT AND FILTER DURATION BUTTON */}
+              {/* EXPORT AND IMPORT AND FILTER DURATION BUTTON */}
               <Stack direction="row" spacing={1} alignItems="center">
                 {isHaveExportPdf && (
                   <Button
@@ -388,6 +462,31 @@ export function DynamicTable<T extends { id: string | number }>({
                       Export pdf
                     </Typography>
                   </Button>
+                )}
+                {isHaveImportExcel && onImportExcel && (
+                  <>
+                    <input
+                      type="file"
+                      accept=".xlsx, .xls, .csv"
+                      id="upload-excel"
+                      style={{ display: 'none' }}
+                      onChange={onImportExcel}
+                    />
+                    <label htmlFor="upload-excel">
+                      <Button
+                        component="span"
+                        size="medium"
+                        variant="contained"
+                        startIcon={<AddCircle />}
+                        color="success"
+                        sx={{ height: 36 }}
+                      >
+                        <Typography variant="caption" fontSize={'0.7rem'}>
+                          Import xls
+                        </Typography>
+                      </Button>
+                    </label>
+                  </>
                 )}
 
                 {isHaveExportXlf && (
@@ -503,8 +602,17 @@ export function DynamicTable<T extends { id: string | number }>({
                   </Typography>
                 </Box>
                 <Box display="flex" alignItems="center" gap={3} pr={2.5}>
+                  {/* View */}
+
+                  {/* <RemoveRedEyeIcon
+                    sx={{ fontSize: '1.2rem', cursor: 'pointer' }}
+                    onClick={() => {
+                      if (!Array.isArray(selectedRows) || selectedRows.length === 0) return;
+                      onBatchView?.(selectedRows);
+                    }} */}
+
                   {/* Tombol Edit (batch edit hanya jika perlu) */}
-                  <EditIconOutline
+                  {/* <EditIconOutline
                     sx={{ fontSize: '1.2rem', cursor: 'pointer' }}
                     onClick={() => {
                       if (!Array.isArray(selectedRows) || selectedRows.length === 0) return;
@@ -514,11 +622,20 @@ export function DynamicTable<T extends { id: string | number }>({
 
                   <DeleteOutlineOutlinedIcon
                     sx={{ fontSize: '1.2rem', cursor: 'pointer' }}
-                    onClick={() => {
+                    onClick={async () => {
                       if (!Array.isArray(selectedRows) || selectedRows.length === 0) return;
-                      onBatchDelete?.(selectedRows);
+
+                      const confirmed = await onBatchDelete?.(selectedRows);
+
+                      // Jika berhasil (misalnya return true), reset selection
+                      if (confirmed) {
+                        setCheckedIds([]);
+                        if (setSelectedRows) {
+                          setSelectedRows([]);
+                        }
+                      }
                     }}
-                  />
+                  /> */}
                 </Box>
               </Grid2>
             )}
@@ -586,29 +703,65 @@ export function DynamicTable<T extends { id: string | number }>({
                         />
                       </TableCell>
                     )}
-                    <TableCell
-                      sx={{
-                        position: 'sticky',
-                        left: isHaveChecked ? 40 : 0, // 48px is the width of the checkbox cell
-                        zIndex: 2,
-                        background: 'white',
-                      }}
-                    ></TableCell>
-                    {columns.map((col) => (
-                      <TableCell key={col}>
-                        {col
-                          .replace(/_/g, ' ') // Replace underscores with spaces
-                          .replace(/\b\w/g, (char) => char.toUpperCase())}{' '}
-                        {/* Uppercase first letter of each word */}
-                      </TableCell>
-                    ))}
-                    {isHaveAction && (
+                    {isHaveAction && isActionVisitor && (
                       <TableCell
-                        sx={{ position: 'sticky', right: 0, background: 'white', zIndex: 2 }}
+                        sx={{
+                          position: 'sticky',
+                          left: isHaveChecked ? CHECKBOX_COL_WIDTH : 0,
+                          zIndex: 4,
+                          background: 'white',
+                          minWidth: ACTION_COL_WIDTH,
+                          maxWidth: ACTION_COL_WIDTH,
+                        }}
                       >
                         Action
                       </TableCell>
                     )}
+
+                    <TableCell
+                      sx={{
+                        position: 'sticky',
+                        left:
+                          (isHaveChecked ? CHECKBOX_COL_WIDTH : 0) +
+                          (isActionVisitor ? ACTION_COL_WIDTH : 0),
+                        zIndex: 4,
+                        background: 'white',
+                        minWidth: INDEX_COL_WIDTH,
+                        maxWidth: INDEX_COL_WIDTH,
+                        // marginRight: '10px',
+                      }}
+                    >
+                      #
+                    </TableCell>
+                    {columns.map((col, idx) => {
+                      const makeSticky = isStickyVisitorCol(idx);
+
+                      return (
+                        <TableCell
+                          key={col}
+                          sx={{
+                            ...(makeSticky && {
+                              position: 'sticky',
+                              left: getStickyLeft(idx),
+                              zIndex: 4, // header > body
+                              background: 'white',
+                              minWidth: DATA_COL_WIDTH,
+                              maxWidth: DATA_COL_WIDTH,
+                            }),
+                          }}
+                        >
+                          {col.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+                        </TableCell>
+                      );
+                    })}
+                    {(isHaveAction && !isActionVisitor) ||
+                      (isHaveActionOnlyEdit && (
+                        <TableCell
+                          sx={{ position: 'sticky', right: 0, background: 'white', zIndex: 2 }}
+                        >
+                          Action
+                        </TableCell>
+                      ))}
                   </TableRow>
                 </TableHead>
 
@@ -618,7 +771,7 @@ export function DynamicTable<T extends { id: string | number }>({
                       {isHaveChecked && (
                         <TableCell
                           padding="checkbox"
-                          sx={{ position: 'sticky', left: 0, zIndex: 2, background: 'white' }}
+                          sx={{ position: 'sticky', left: 0, zIndex: 3, background: 'white' }}
                         >
                           <Checkbox
                             checked={checkedIds.includes(row.id)}
@@ -626,29 +779,174 @@ export function DynamicTable<T extends { id: string | number }>({
                           />
                         </TableCell>
                       )}
+
+                      {isHaveAction && isActionVisitor && (
+                        <TableCell
+                          sx={{
+                            position: 'sticky',
+                            left: isHaveChecked ? CHECKBOX_COL_WIDTH : 0,
+                            zIndex: 3,
+                            background: 'white',
+                            minWidth: ACTION_COL_WIDTH, // ditambah biar muat icon VIP
+                            maxWidth: ACTION_COL_WIDTH,
+                          }}
+                        >
+                          <Box display="flex" alignItems="center" gap={0.3}>
+                            {/* Detail Visitor */}
+                            <Tooltip title="Detail Visitor">
+                              <IconButton
+                                onClick={() => onView?.(row)}
+                                disableRipple
+                                sx={{
+                                  color: 'white',
+                                  backgroundColor: 'gray !important',
+                                  width: 28,
+                                  height: 28,
+                                  padding: 0.5,
+                                  borderRadius: '50%',
+                                  '&:hover': {
+                                    backgroundColor: 'success.dark',
+                                    color: 'white',
+                                  },
+                                }}
+                              >
+                                <RemoveRedEyeIcon width={18} height={18} />
+                              </IconButton>
+                            </Tooltip>
+                            {/* Tombol Checkin */}
+                            <Tooltip title="Check In">
+                              <IconButton
+                                onClick={() => onEdit?.(row)}
+                                disableRipple
+                                sx={{
+                                  color: 'white',
+                                  backgroundColor: '#13DEB9 !important',
+                                  width: 28,
+                                  height: 28,
+                                  padding: 0.5,
+                                  borderRadius: '50%',
+                                  '&:hover': {
+                                    backgroundColor: 'success.dark',
+                                    color: 'white',
+                                  },
+                                }}
+                              >
+                                <IconLogin2 width={18} height={18} />
+                              </IconButton>
+                            </Tooltip>
+
+                            {/* Tombol Checkout */}
+                            <Tooltip title="Check Out">
+                              <IconButton
+                                onClick={() => onDelete?.(row)}
+                                disableRipple
+                                sx={{
+                                  color: 'white',
+                                  backgroundColor: 'error.main',
+                                  width: 28,
+                                  height: 28,
+                                  padding: 0.5,
+                                  borderRadius: '50%',
+                                  // hover
+                                  '&:hover': {
+                                    backgroundColor: 'error.dark',
+                                    color: 'white',
+                                  },
+                                }}
+                              >
+                                <IconLogout2 width={18} height={18} />
+                              </IconButton>
+                            </Tooltip>
+
+                            {/* Ikon VIP */}
+                            {/* {isHaveVip &&
+                              (row.is_vip ? (
+                                <Tooltip title="VIP">
+                                  <IconStarFilled color="gold" />
+                                </Tooltip>
+                              ) : // <Tooltip title="Not VIP">
+                              //   <IconStarFilled color="lightgray" />
+                              // </Tooltip>
+                              null)} */}
+
+                            {/* {isHaveVip && isVip?.(row) && (
+                              <Tooltip title="VIP">
+                                <IconStarFilled color="gold" />
+                              </Tooltip>
+                            )} */}
+                          </Box>
+                        </TableCell>
+                      )}
+
                       <TableCell
                         sx={{
                           position: 'sticky',
-                          left: isHaveChecked ? 40 : 0,
+                          left:
+                            (isHaveChecked ? CHECKBOX_COL_WIDTH : 0) +
+                            (isActionVisitor ? ACTION_COL_WIDTH : 0),
+                          zIndex: 3,
                           background: 'white',
-                          zIndex: 1,
+                          minWidth: INDEX_COL_WIDTH,
+                          maxWidth: INDEX_COL_WIDTH,
                         }}
                       >
-                        {index + 1}
+                        {index + 1 + page * rowsPerPage}
                       </TableCell>
 
-                      {columns.map((col) => (
-                        <TableCell key={col}>
-                          {isHaveImage &&
-                            imageFields.includes(col) &&
-                            typeof row[col] === 'string' && (
+                      {columns.map((col, idx) => {
+                        const makeSticky = isStickyVisitorCol(idx);
+                        return (
+                          <TableCell
+                            key={col}
+                            sx={{
+                              ...(makeSticky && {
+                                position: 'sticky',
+                                left: getStickyLeft(idx),
+                                zIndex: 3, // body < header
+                                background: 'white',
+                                minWidth: DATA_COL_WIDTH,
+                                maxWidth: DATA_COL_WIDTH,
+                              }),
+                            }}
+                          >
+                            {isHaveVip && col === 'is_vip' ? (
+                              row[col] ? (
+                                <Tooltip title="VIP">
+                                  <IconStarFilled color="gold" />
+                                </Tooltip>
+                              ) : (
+                                <Tooltip title="Not VIP">
+                                  <IconStarFilled color="lightgray" />
+                                </Tooltip>
+                              )
+                            ) : isHaveEmployee && col === 'employee_id' ? (
+                              <Tooltip title="View Employee">
+                                <IconButton
+                                  size="small"
+                                  color="primary"
+                                  onClick={() => onEmployeeClick?.(String(row[col] ?? ''))}
+                                  sx={{
+                                    borderRadius: '50%',
+                                    width: 30,
+                                    height: 30,
+                                    backgroundColor: (theme) => theme.palette.grey[100],
+                                  }}
+                                >
+                                  <IconUserFilled />
+                                </IconButton>
+                              </Tooltip>
+                            ) : isHaveGender && col === 'gender' ? (
+                              GENDER_MAP[String(row[col])] ?? String(row[col] ?? '-')
+                            ) : isHaveImage &&
+                              imageFields.includes(col) &&
+                              typeof row[col] === 'string' ? (
                               <img
                                 src={(() => {
                                   const value = row[col];
                                   if (!value) return '';
-                                  if (value.startsWith('data:image')) return value; // base64
-                                  if (value.startsWith('http')) return value; // full URL
-                                  return `${BASE_URL}${value}`; // relative path
+                                  if (value.startsWith('data:image')) return value;
+                                  if (value.startsWith('http')) return value;
+                                  return `${BASE_URL}${value}`;
                                 })()}
                                 alt="employee"
                                 style={{
@@ -658,58 +956,93 @@ export function DynamicTable<T extends { id: string | number }>({
                                   objectFit: 'cover',
                                 }}
                               />
+                            ) : isHaveBooleanSwitch && typeof row[col] === 'boolean' ? (
+                              <Switch
+                                checked={row[col] as boolean}
+                                onChange={(_, checked) =>
+                                  onBooleanSwitchChange?.(row.id, col, checked)
+                                }
+                                color="primary"
+                                size="small"
+                              />
+                            ) : isHaveObjectData &&
+                              objectFields?.includes(col) &&
+                              typeof row[col] === 'object' &&
+                              row[col] !== null ? (
+                              Array.isArray(row[col]) ? (
+                                row[col].map((item: any) => item.name).join(', ')
+                              ) : (
+                                (row[col] as { name?: string }).name ?? '-'
+                              )
+                            ) : (
+                              <>
+                                {isHaveIntegration && col === 'name' && onNameClick ? (
+                                  <Button
+                                    variant="text"
+                                    size="small"
+                                    onClick={() => {
+                                      // e.stopPropagation();
+                                      onNameClick?.(row);
+                                    }}
+                                    sx={{
+                                      p: 1,
+                                      minWidth: 0,
+                                      textTransform: 'none',
+                                      fontSize: '0.875rem',
+                                      textDecoration: 'underline',
+                                    }}
+                                    // target="_blank"
+                                  >
+                                    {String(row[col] ?? '-')}
+                                  </Button>
+                                ) : (
+                                  String(row[col] ?? '-')
+                                )}
+
+                                {isHaveVerified &&
+                                  col === 'email' &&
+                                  (col == 'is_email_verified' ? (
+                                    <Tooltip title="Email Verified">
+                                      <Box
+                                        sx={{
+                                          mt: '10px',
+                                          backgroundColor: 'green',
+                                          borderRadius: '50%',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          marginLeft: '5px',
+                                          p: '2px',
+                                        }}
+                                      >
+                                        <IconCheck color="white" size={16} />
+                                      </Box>
+                                    </Tooltip>
+                                  ) : (
+                                    <Tooltip title="Email Not Verified">
+                                      <Box
+                                        sx={{
+                                          mt: '20px',
+                                          backgroundColor: 'red',
+                                          borderRadius: '50%',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          marginLeft: '5px',
+                                          p: '2px',
+                                        }}
+                                      >
+                                        <IconX color="white" size={16} />
+                                      </Box>
+                                    </Tooltip>
+                                  ))}
+                              </>
                             )}
+                          </TableCell>
+                        );
+                      })}
 
-                          {isHaveBooleanSwitch && typeof row[col] === 'boolean' && (
-                            <Switch
-                              checked={row[col] as boolean}
-                              onChange={(_, checked) =>
-                                onBooleanSwitchChange?.(row.id, col, checked)
-                              }
-                              color="primary"
-                              size="small"
-                            />
-                          )}
-
-                          {!(
-                            (isHaveImage &&
-                              imageFields.includes(col) &&
-                              typeof row[col] === 'string') ||
-                            (isHaveBooleanSwitch && typeof row[col] === 'boolean')
-                          ) && <span>{String(row[col])}</span>}
-
-                          {/* {isHaveImage && col === 'faceimage' ? (
-                            <img
-                              src={(() => {
-                                const value = row[col];
-                                if (typeof value !== 'string' || !value) return '';
-                                if (value.startsWith('data:image')) return value; // base64
-                                if (value.startsWith('http')) return value; // full URL
-                                return `${BASE_URL}${value}`; // relative path
-                              })()}
-                              alt="employee"
-                              style={{
-                                width: 55,
-                                height: 55,
-                                borderRadius: '50%',
-                                objectFit: 'cover',
-                              }}
-                            />
-                          ) : isHaveBooleanSwitch && typeof row[col] === 'boolean' ? (
-                            <Switch
-                              checked={row[col] as boolean}
-                              onChange={(_, checked) =>
-                                onBooleanSwitchChange?.(row.id, col, checked)
-                              }
-                              color="primary"
-                              size="small"
-                            />
-                          ) : (
-                            String(row[col])
-                          )} */}
-                        </TableCell>
-                      ))}
-                      {isHaveAction && (
+                      {isHaveAction && !isActionVisitor && (
                         <TableCell
                           sx={{
                             position: 'sticky',
@@ -729,7 +1062,7 @@ export function DynamicTable<T extends { id: string | number }>({
                                 disableRipple
                                 sx={{
                                   color: 'white',
-                                  backgroundColor: 'primary.main',
+                                  backgroundColor: '#FA896B',
 
                                   width: 28,
                                   height: 28,
@@ -764,12 +1097,44 @@ export function DynamicTable<T extends { id: string | number }>({
                           </Box>
                         </TableCell>
                       )}
+
+                      {isHaveActionOnlyEdit && !isActionVisitor && (
+                        <TableCell
+                          sx={{
+                            position: 'sticky',
+                            right: 0,
+                            background: 'white',
+                            zIndex: 2,
+                            display: 'flex',
+                            gap: 1,
+                            alignItems: 'center',
+                          }}
+                        >
+                          <Box display="flex" alignItems="end">
+                            {/* Tombol Edit (Primary, Kecil) */}
+                            <Tooltip title="Edit">
+                              <IconButton
+                                onClick={() => onEdit?.(row)}
+                                disableRipple
+                                sx={{
+                                  color: 'white',
+                                  backgroundColor: '#FA896B',
+
+                                  width: 28,
+                                  height: 28,
+                                  padding: 0.5,
+                                  borderRadius: '50%',
+                                }}
+                              >
+                                <IconPencil width={14} height={14} />
+                              </IconButton>
+                            </Tooltip>
+                          </Box>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>
-                {/* <TableFooter>
-                <TableRow></TableRow>
-              </TableFooter> */}
               </Table>
             )}
           </TableContainer>

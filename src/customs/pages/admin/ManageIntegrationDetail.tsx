@@ -4,9 +4,9 @@ import {
   AdminNavListingData,
 } from 'src/customs/components/header/navigation/AdminMenu';
 import PageContainer from 'src/customs/components/container/PageContainer';
-import Content from './content/content_manage_integration/Content';
+import Content from './content/content_manage_integration/IntegrationDetail';
 
-const ManageIntegration: FC = () => {
+const ManageIntegrationDetail: FC = () => {
   // useEffect(() => {
   //   const handleBeforeUnload = () => {
   //     alert('Unloading...');
@@ -25,4 +25,4 @@ const ManageIntegration: FC = () => {
   );
 };
 
-export default ManageIntegration;
+export default ManageIntegrationDetail;

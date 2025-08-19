@@ -3,7 +3,7 @@ import { CircularProgress, CssBaseline, ThemeProvider } from '@mui/material';
 import { useSelector } from 'src/store/Store';
 import { ThemeSettings } from './theme/Theme';
 import RTL from './layouts/full/shared/customizer/RTL';
-import { Route, Routes, useLocation } from 'react-router';
+import { Outlet, Route, Routes, useLocation } from 'react-router';
 import { AppState } from './store/Store';
 import Dashboard from './customs/pages/admin/Dashboard';
 import Visitor from './customs/pages/admin/Visitor';
@@ -16,7 +16,6 @@ import ManageOperator from './customs/pages/admin/ManageOperator';
 import ManageDocument from './customs/pages/admin/ManageDocument';
 import ManageBrand from './customs/pages/admin/ManageBrand';
 import SettingUser from './customs/pages/admin/SettingUser';
-import FormWizardAddEmployee from './customs/pages/admin/content/content_manage_employee/FormWizardAddEmployee';
 import FormAddUser from './customs/pages/admin/content/content_setting_user/FormAddUser';
 import Login2 from './views/authentication/auth2/Login2';
 import { useEffect, useState } from 'react';
@@ -29,6 +28,8 @@ import ManageVisitorType from './customs/pages/admin/ManageVisitorType';
 import ManageIntegration from './customs/pages/admin/ManageIntegration';
 import ManageAccessControl from './customs/pages/admin/ManageAccessControl';
 import ManageCustomField from './customs/pages/admin/ManageCustomField';
+import IntegrationDetail from './customs/pages/admin/content/content_manage_integration/IntegrationDetail';
+import ManageIntegrationDetail from './customs/pages/admin/ManageIntegrationDetail';
 
 export function App() {
   const theme = ThemeSettings();
@@ -170,6 +171,14 @@ export function App() {
               }
             />
             <Route
+              path="/admin/manage/integration/:id"
+              element={
+                <ProtectedRoute>
+                  <ManageIntegrationDetail />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="admin/manage/access-control"
               element={
                 <ProtectedRoute>
@@ -178,13 +187,13 @@ export function App() {
               }
             />
             <Route
-              path='admin/manage/custom-field'
+              path="admin/manage/custom-field"
               element={
                 <ProtectedRoute>
                   <ManageCustomField />
                 </ProtectedRoute>
               }
-              />
+            />
             <Route
               path="admin/setting/users"
               element={

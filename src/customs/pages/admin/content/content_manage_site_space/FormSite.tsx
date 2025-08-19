@@ -5,6 +5,7 @@ import {
   Typography,
   CircularProgress,
   FormControlLabel,
+  TextField,
   Switch,
   Paper,
   Button as MuiButton,
@@ -21,10 +22,9 @@ import {
 
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import ReactCrop, { Crop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import { Box } from '@mui/system';
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { useSession } from 'src/customs/contexts/SessionContext';
@@ -34,10 +34,9 @@ import {
   CreateSiteRequestSchema,
   generateKeyCode,
   Item,
-  SiteType,
   TypeApproval,
   UpdateSiteRequest,
-  UpdateSitestRequest,
+  Access,
 } from 'src/customs/api/models/Sites';
 import { IconTrash } from '@tabler/icons-react';
 import { QRCodeCanvas } from 'qrcode.react';
@@ -51,14 +50,20 @@ import {
   createSiteDocument,
   updateSite,
   getAllSiteDocument,
+  getAllAccessControl,
 } from 'src/customs/api/admin';
 import {
   CreateSiteDocumentRequest,
   CreateSiteDocumentRequestSchema,
   Item as SiteDocumentItem,
 } from 'src/customs/api/models/SiteDocument';
+// import { axiosInstance2 } from 'src/customs/api/interceptor';
 import { Item as DocumentItem } from 'src/customs/api/models/Document';
-import { DynamicTable } from 'src/customs/components/table/DynamicTable';
+import { Item as AccessControlItem } from 'src/customs/api/models/AccessControl';
+import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
+
+// const BASE_URL = 'http://' + import.meta.env.VITE_API_HOST;
+const BASE_URL = 'http://192.168.1.116:8000';
 
 type EnabledFields = {
   type: boolean;
@@ -82,6 +87,12 @@ interface FormSiteProps {
   isBatchEdit?: boolean;
   enabledFields?: EnabledFields;
   setEnabledFields: React.Dispatch<React.SetStateAction<EnabledFields>>;
+}
+const ITEM_TYPE = 'ACCESS_ROW';
+
+interface DragItem {
+  index: number;
+  type: string;
 }
 
 const FormSite = ({
@@ -126,6 +137,8 @@ const FormSite = ({
     documents: {} as DocumentItem,
     retentionTime: 0,
   });
+  const [site, setSite] = useState<Item[]>([]);
+  const [accessControl, setAccessControl] = useState<AccessControlItem[]>([]);
   const [retentionInput, setRetentionInput] = useState('0');
   useEffect(() => {
     setRetentionInput(newDocumentA.retentionTime.toString());
@@ -141,6 +154,8 @@ const FormSite = ({
     const fetchData = async () => {
       const docRes = await getAllDocumentPagination(token, 0, 99, 'id');
       const docs = docRes?.collection ?? [];
+      const accessControlRes = await getAllAccessControl(token);
+      setAccessControl(accessControlRes.collection);
       setDocumentList(docs);
       const siteDocRes = await getAllSiteDocument(token);
       if (editingId) {
@@ -273,7 +288,7 @@ const FormSite = ({
       setAlertType('success');
       setAlertMessage('Site successfully created!');
       setTimeout(() => {
-        onSuccess?.();
+        // onSuccess?.();
       }, 900);
     } catch (err: any) {
       if (err?.errors) {
@@ -413,11 +428,148 @@ const FormSite = ({
 
   useEffect(() => {
     if (!siteImageFile && formData.image) {
-      if (formData.image.startsWith('data:image') || formData.image.startsWith('http') || formData.image.startsWith('https')) {
+      // Jika dari backend berupa URL atau base64, set preview
+      if (
+        formData.image.startsWith('data:image') ||
+        formData.image.startsWith('http') ||
+        formData.image.startsWith('https')
+      ) {
         setPreviewUrl(formData.image);
+      } else {
+        // Jika bukan URL atau base64 (misal path lokal dari backend), kamu bisa prepend base URL
+        setPreviewUrl(`${BASE_URL}/cdn${formData.image}`);
       }
     }
   }, [formData.image, siteImageFile]);
+
+  const handleDetailChange = (
+    key: keyof typeof formData,
+    index: number,
+    field: keyof Access,
+    value: any,
+  ) => {
+    const updated = [...(formData[key] as Access[])];
+    (updated[index] as any)[field] = value;
+    setFormData({ ...formData, [key]: updated });
+  };
+  const handleDetailDelete = (fieldKey: keyof Item, index: number) => {
+    const updated = [...site];
+    (updated[0][fieldKey] as any[]).splice(index, 1);
+    setSite(updated);
+  };
+
+  const handleDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+
+    const fromIndex = result.source.index;
+    const toIndex = result.destination.index;
+
+    if (fromIndex !== toIndex && handleMoveAccess) {
+      handleMoveAccess(fromIndex, toIndex);
+    }
+  };
+
+  const handleMoveAccess = (from: number, to: number) => {
+    const updated = [...formData.access];
+    const [moved] = updated.splice(from, 1);
+    updated.splice(to, 0, moved);
+    setFormData((prev) => ({
+      ...prev,
+      access: updated,
+    }));
+  };
+
+  const renderDetailRows = (
+    access: Access[],
+    accessControlList: AccessControlItem[],
+    onChange: (index: number, field: keyof Access, value: any) => void,
+    onDelete?: (index: number) => void,
+  ) => {
+    return access.map((item, index) => (
+      <Draggable key={`access-${index}`} draggableId={`access-${index}`} index={index}>
+        {(provided, snapshot) => (
+          <TableRow
+            ref={provided.innerRef}
+            {...provided.draggableProps}
+            style={{
+              ...provided.draggableProps.style,
+              backgroundColor: snapshot.isDragging ? '#f0f0f0' : undefined,
+              cursor: 'move',
+            }}
+          >
+            <TableCell {...provided.dragHandleProps}>⇅</TableCell>
+            <TableCell>
+              <TextField
+                select
+                fullWidth
+                size="small"
+                value={item.access_control_id}
+                onChange={(e) => {
+                  const selectedId = e.target.value;
+                  const matched = accessControlList.find((a) => a.id === selectedId);
+                  onChange(index, 'access_control_id', selectedId);
+                  if (matched) {
+                    onChange(index, 'name', matched.name);
+                  }
+                }}
+              >
+                <MenuItem value="" disabled>
+                  Select Access
+                </MenuItem>
+                {accessControlList.map((ac) => (
+                  <MenuItem key={ac.id} value={ac.id}>
+                    {ac.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </TableCell>
+            <TableCell>
+              <Switch
+                checked={item.early_access}
+                onChange={(_, checked) => onChange(index, 'early_access', checked)}
+              />
+            </TableCell>
+            {onDelete && (
+              <TableCell>
+                <IconButton onClick={() => onDelete(index)} size="small">
+                  <IconTrash fontSize="small" />
+                </IconButton>
+              </TableCell>
+            )}
+          </TableRow>
+        )}
+      </Draggable>
+    ));
+  };
+
+  // const handleMoveAccess = (from: number, to: number) => {
+  //   const updated = [...formData.access];
+  //   const [movedItem] = updated.splice(from, 1);
+  //   updated.splice(to, 0, movedItem);
+  //   setFormData((prev) => ({
+  //     ...prev,
+  //     access: updated,
+  //   }));
+  // };
+
+  const handleAddDetail = () => {
+    // Default access pertama dari accessControl list
+    const defaultAccess = accessControl[0];
+
+    if (!defaultAccess) return; // tidak menambahkan jika accessControl kosong
+
+    const newAccess: Access = {
+      sort: formData.access.length,
+      access_control_id: defaultAccess.id, // Add this line
+      name: defaultAccess.name,
+      early_access: false,
+    };
+
+    setFormData((prev) => ({
+      ...prev,
+      access: [...(prev.access || []), newAccess],
+    }));
+  };
 
   return (
     <>
@@ -428,14 +580,6 @@ const FormSite = ({
           </Grid>
           {/* Location Details */}
           <Grid size={{ xs: 12, md: 5 }}>
-            {/* <Paper sx={{ p: 3, mb: 2 }}>
-              <Typography variant="h6" sx={{ mb: 2, borderLeft: '4px solid #673ab7', pl: 1 }}>
-                Site Access
-              </Typography>
-              <Button onClick={handleKeyClick}>
-                <Typography variant="h6">Key</Typography>
-              </Button>
-            </Paper> */}
             <Paper sx={{ p: 3 }}>
               <Typography variant="h6" sx={{ mb: 2, borderLeft: '4px solid #673ab7', pl: 1 }}>
                 Location Details
@@ -838,7 +982,53 @@ const FormSite = ({
             </Paper>
           </Grid>
           <Grid size={{ xs: 12, md: 6 }}>
-            {formData.need_document && (
+            <Paper sx={{ p: 3 }}>
+              <Box>
+                <Typography variant="h6" sx={{ borderLeft: '4px solid #673ab7', pl: 1 }}>
+                  Access
+                </Typography>
+                <DragDropContext onDragEnd={handleDragEnd}>
+                  <TableContainer component={Paper} sx={{ mb: 1 }}>
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>*</TableCell>
+                          <TableCell>Name</TableCell>
+                          <TableCell>Early Access</TableCell>
+                          <TableCell>Action</TableCell>
+                        </TableRow>
+                      </TableHead>
+
+                      <Droppable
+                        droppableId="access-droppable"
+                        isDropDisabled={false}
+                        isCombineEnabled={false}
+                        ignoreContainerClipping={true}
+                      >
+                        {(provided) => (
+                          <TableBody ref={provided.innerRef} {...provided.droppableProps}>
+                            {renderDetailRows(
+                              formData.access || [],
+                              accessControl,
+                              (index, field, value) =>
+                                handleDetailChange('access', index, field, value),
+                              (index) => handleDetailDelete('access', index),
+                            )}
+                            {provided.placeholder}
+                          </TableBody>
+                        )}
+                      </Droppable>
+                    </Table>
+                  </TableContainer>
+                </DragDropContext>
+                <MuiButton size="small" onClick={() => handleAddDetail()}>
+                  Add New
+                </MuiButton>
+              </Box>
+            </Paper>
+          </Grid>
+          {formData.need_document && (
+            <Grid size={{ xs: 12, md: 6 }}>
               <Paper sx={{ p: 3 }}>
                 <Box>
                   <Typography variant="h6" sx={{ borderLeft: '4px solid #673ab7', pl: 1 }}>
@@ -1037,8 +1227,8 @@ const FormSite = ({
                   </Grid>
                 </Box>
               </Paper>
-            )}
-          </Grid>
+            </Grid>
+          )}
           <Grid size={{ xs: 12, md: 6 }}>
             <Paper sx={{ p: 3 }}>
               <Box>

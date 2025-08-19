@@ -41,6 +41,7 @@ import {
   GetAllDocumentPaginationResponse,
   UpdateDocumentRequest,
   UpdateDocumentResponse,
+  GetAllDocumentResponse,
 } from './models/Document';
 import {
   CreateSiteRequest,
@@ -65,6 +66,7 @@ import {
   DeleteIntegrationResponse,
   GetAllIntegrationResponse,
   GetAvailableIntegrationResponse,
+  GetIntegrationByIdResponse,
   UpdateIntegrationRequest,
   UpdateIntegrationResponse,
 } from './models/Integration';
@@ -91,6 +93,7 @@ import {
   CreateVisitorTypeRequest,
   DeleteVisitorTypeResponse,
   UpdateVisitorTypeResponse,
+  GetVisitorTypeByIdResponse,
   UpdateVisitorTypeRequest,
 } from './models/VisitorType';
 import {
@@ -100,7 +103,87 @@ import {
   DeleteVisitorResponse,
 } from './models/Visitor';
 
+import {
+  CreateVisitorCardRequest,
+  GetAllVisitorCardPaginationResponse,
+  UpdateVisitorCardRequest,
+  UpdateVisitorCardResponse,
+} from './models/VisitorCard';
+
 //#endregion
+
+//#region Visitor Card
+export const getAllVisitorCard = async (
+  token: string,
+): Promise<GetAllVisitorCardPaginationResponse> => {
+  const response = await axiosInstance.get('/card', {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+export const getAllVisitorCardPagination = async (
+  token: string,
+  start: number,
+  length: number,
+  sortColumn: string,
+  keyword: string = '',
+): Promise<GetAllVisitorCardPaginationResponse> => {
+  const params: Record<string, any> = {
+    start,
+    length,
+    sort_column: sortColumn,
+    'search[value]': keyword,
+  };
+  const response = await axiosInstance.get('/card/dt', {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    params,
+  });
+  return response.data;
+};
+
+// create batch
+
+export const createBatchVisitor = async (
+  token: string,
+  data: CreateVisitorCardRequest[],
+): Promise<CreateVisitorResponse> => {
+  const response = await axiosInstance.post('card/create-batch', data, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+export const createVisitorCard = async (
+  token: string,
+  data: CreateVisitorCardRequest,
+): Promise<CreateVisitorResponse> => {
+  const response = await axiosInstance.post('/card', data, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+export const updateVisitorCard = async (
+  token: string,
+  id: string,
+  data: UpdateVisitorCardRequest,
+): Promise<UpdateVisitorCardResponse> => {
+  const response = await axiosInstance.put(`/card/${id}`, data, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+export const deleteVisitorCard = async (
+  token: string,
+  id: string,
+): Promise<DeleteVisitorResponse> => {
+  const response = await axiosInstance.delete(`/card/${id}`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
 
 //#region Visitor
 // Get  All
@@ -112,7 +195,10 @@ export const getAllVisitor = async (token: string): Promise<GetAllVisitorPaginat
 };
 
 // Get By Id
-export const getVisitorById = async (token: string, id: string): Promise<CreateVisitorResponse> => {
+export const getVisitorById = async (
+  token: string,
+  id: string,
+): Promise<GetAllVisitorTypePaginationResponse> => {
   const response = await axiosInstance.get(`/visitor/${id}`, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });
@@ -145,7 +231,7 @@ export const createVisitor = async (
   token: string,
   data: CreateVisitorRequest,
 ): Promise<CreateVisitorResponse> => {
-  const response = await axiosInstance.post('/visitor', data, {
+  const response = await axiosInstance.post('/visitor/new-visit', data, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });
   return response.data;
@@ -177,6 +263,29 @@ export const deleteVisitor = async (
 //end visitor
 
 //#region Visitor Type
+
+// Get All
+export const getAllVisitorType = async (
+  token: string,
+): Promise<GetAllVisitorTypePaginationResponse> => {
+  const response = await axiosInstance.get('/visitor-type', {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+// Get by id visitor type
+export const getVisitorTypeById = async (
+  token: string,
+  id: string,
+): Promise<GetVisitorTypeByIdResponse> => {
+  const response = await axiosInstance.get(`/visitor-type/${id}`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+// Get Visitor Type Paginaton
 export const getAllVisitorTypePagination = async (
   token: string,
   start: number,
@@ -453,6 +562,15 @@ export const deleteOrganization = async (
 //#endregion
 
 //#region Document API
+
+// Get aLL
+export const getAllDocument = async (token: string): Promise<GetAllDocumentResponse> => {
+  const response = await axiosInstance.get(`/document`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
 export const getAllDocumentPagination = async (
   token: string,
   start: number,
@@ -510,10 +628,10 @@ export const getAllEmployee = async (token: string): Promise<GetAllEmployeePagin
 };
 
 export const getEmployeeById = async (
-  employeeId: string,
+  id: string,
   token: string,
 ): Promise<GetAllEmployeePaginationResponse> => {
-  const response = await axiosInstance.get(`/employee/${employeeId}`, {
+  const response = await axiosInstance.get(`/employee/${id}`, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });
   return response.data;
@@ -551,13 +669,13 @@ export const getAllEmployeePaginationFilterMore = async (
   length: number,
   sortColumn: string,
   keyword: string = '',
-  gender?: number,
-  joinStart?: string,
-  joinEnd?: string,
-  exitStart?: string,
-  exitEnd?: string,
-  statusEmployee?: number,
-  isHead?: boolean,
+  // gender?: number,
+  // joinStart?: string,
+  // joinEnd?: string,
+  // exitStart?: string,
+  // exitEnd?: string,
+  // statusEmployee?: number,
+  // isHead?: boolean,
   organization?: string,
   district?: string,
   department?: string,
@@ -567,18 +685,21 @@ export const getAllEmployeePaginationFilterMore = async (
     length,
     sort_column: sortColumn,
     'search[value]': keyword, // ← ini diperbaiki!
+    organization,
+    district,
+    department,
   };
 
-  if (gender !== undefined) params.gender = gender;
-  if (joinStart) params['join-start'] = joinStart;
-  if (joinEnd) params['join-end'] = joinEnd;
-  if (exitStart) params['exit-start'] = exitStart;
-  if (exitEnd) params['exit-end'] = exitEnd;
-  if (statusEmployee !== undefined) params['status-employee'] = statusEmployee;
-  if (isHead !== undefined) params['is-head'] = isHead;
-  if (organization) params.organization = organization;
-  if (district !== undefined) params.district = district;
-  if (department !== undefined) params.department = department;
+  // if (gender !== undefined) params.gender = gender;
+  // if (joinStart) params['join-start'] = joinStart;
+  // if (joinEnd) params['join-end'] = joinEnd;
+  // if (exitStart) params['exit-start'] = exitStart;
+  // if (exitEnd) params['exit-end'] = exitEnd;
+  // if (statusEmployee !== undefined) params['status-employee'] = statusEmployee;
+  // if (isHead !== undefined) params['is-head'] = isHead;
+  if (organization && organization !== '0') params.organization = organization;
+  if (district && district !== '0') params.district = district;
+  if (department && department !== '0') params.department = department;
 
   const response = await axiosInstance.get(`/employee/dt`, {
     params,
@@ -853,6 +974,23 @@ export const getAvailableIntegration = async (
   }
 };
 
+export const getIntegrationById = async (
+  id: string,
+  token: string,
+): Promise<GetIntegrationByIdResponse> => {
+  try {
+    const response = await axiosInstance.get(`/integration/${id}`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
 export const createIntegration = async (
   data: CreateIntegrationRequest,
   token: string,
@@ -865,6 +1003,29 @@ export const createIntegration = async (
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 400) {
       console.log('Error creating integration:', error);
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+// sync data
+export const syncIntegration = async (
+  integrationId: string,
+  data: CreateIntegrationRequest,
+  token: string,
+): Promise<void> => {
+  try {
+    const response = await axiosInstance.post(
+      `/integration-honeywell/sync/${integrationId}`,
+      null,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
       throw error.response.data as ValidationErrorResponse;
     }
     throw error;
@@ -916,7 +1077,7 @@ export const getAllAccessControl = async (token: string): Promise<GetAllAccessCo
     const response = await axiosInstance.get(`/access-control`, {
       headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
     });
-    return response.data;
+    return response.data as GetAllAccessControlResponse;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 400) {
       throw error.response.data as ValidationErrorResponse;

@@ -71,6 +71,8 @@ interface FormEmployeeProps {
   setEnabledFields: React.Dispatch<React.SetStateAction<EnabledFields>>;
 }
 
+const BASE_URL = 'http://192.168.1.116:8000';
+
 const FormWizardAddEmployee = ({
   formData,
   setFormData,
@@ -155,8 +157,6 @@ const FormWizardAddEmployee = ({
         },
         {},
       );
-      // if (edittingId) {
-      // }
 
       // Ambil data employee
       if (edittingId) {
@@ -169,7 +169,6 @@ const FormWizardAddEmployee = ({
             organization_id: String(employee.organization_id) || '',
             department_id: String(employee.department_id) || '',
             district_id: String(employee.district_id) || '',
-          
           });
         } else {
           console.warn('Employee not found for editing ID:', edittingId);
@@ -289,9 +288,6 @@ const FormWizardAddEmployee = ({
         qr_code: formData.card_number,
         faceimage: formData.faceimage,
       };
-
-      console.log('Merged Form Data:', mergedFormData);
-
       const data: CreateEmployeeRequest = CreateEmployeeRequestSchema.parse(mergedFormData);
 
       console.log('test', data);
@@ -302,14 +298,16 @@ const FormWizardAddEmployee = ({
           is_email_verify: false,
         };
         await updateEmployee(edittingId, editData, token);
+        setAlertType('success');
+        setAlertMessage('Employee successfully updated!');
       } else {
         await createEmployee(data, token);
+        setAlertType('success');
+        setAlertMessage('Employee successfully created!');
+        setFormData(CreateEmployeeRequestSchema.parse({}));
       }
       handleFileUploads();
-      localStorage.removeItem('unsavedEmployeeForm');
-      setAlertType('success');
-      setAlertMessage('Employee created successfully!');
-      showSuccessAlert('Employee created successfully!');
+      localStorage.removeItem('unsavedEmployeeData');
       setTimeout(() => {
         onSuccess?.();
       }, 900);
@@ -380,6 +378,23 @@ const FormWizardAddEmployee = ({
       setPreviewUrl(URL.createObjectURL(selectedFile));
     }
   };
+
+  useEffect(() => {
+    if (!siteImageFile && formData.faceimage) {
+      // Jika dari backend berupa URL atau base64, set preview
+      if (
+        formData.faceimage.startsWith('data:faceimage') ||
+        formData.faceimage.startsWith('http') ||
+        formData.faceimage.startsWith('https')
+      ) {
+        setPreviewUrl(formData.faceimage);
+      } else {
+        // Jika bukan URL atau base64 (misal path lokal dari backend), kamu bisa prepend base URL
+        setPreviewUrl(`${BASE_URL}/cdn${formData.faceimage}`);
+      }
+    }
+  }, [formData.faceimage, siteImageFile]);
+
   const StepContent = (step: number) => {
     switch (step) {
       case 0:
@@ -510,9 +525,9 @@ const FormWizardAddEmployee = ({
       case 1:
         return (
           <Grid2 container spacing={2}>
-            <Grid2 mt={2} size={{ xs: 12, sm: 12 }}>
+            {/* <Grid2 mt={2} size={{ xs: 12, sm: 12 }}>
               <Alert severity="info">Work-related details</Alert>
-            </Grid2>
+            </Grid2> */}
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="phone">
                 <Typography variant="caption">Employee Phone :</Typography>
@@ -678,9 +693,9 @@ const FormWizardAddEmployee = ({
       case 2:
         return (
           <Grid2 container spacing={2}>
-            <Grid2 size={{ xs: 12, sm: 12 }}>
+            {/* <Grid2 size={{ xs: 12, sm: 12 }}>
               <Alert severity="info">Access and location info</Alert>
-            </Grid2>
+            </Grid2> */}
             {/* Is Head */}
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <FormControlLabel
@@ -859,9 +874,9 @@ const FormWizardAddEmployee = ({
       case 3:
         return (
           <Grid2 container spacing={2}>
-            <Grid2 size={{ xs: 12, sm: 12 }}>
+            {/* <Grid2 size={{ xs: 12, sm: 12 }}>
               <Alert severity="info">Other details</Alert>
-            </Grid2>
+            </Grid2> */}
 
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="dob" required>
@@ -927,22 +942,9 @@ const FormWizardAddEmployee = ({
         return (
           <Grid2 container spacing={2}>
             <Grid2 size={{ xs: 12, sm: 12 }}>
-              <Alert severity="info">Upload photo</Alert>
+              <Alert severity={alertType}>{alertMessage}</Alert>
             </Grid2>
             <Grid2 size={{ xs: 12, sm: 12 }}>
-              {/* <ImageUploadCard
-                title="Upload employee photo"
-                file={siteImageFile ?? undefined} // ubah null jadi undefined
-                // setSiteImageFile={(file: any) => {
-                //   setSiteImageFile(file);
-                //   setFormData((prev) => ({ ...prev, faceimage: file }));
-                // }}
-                onFileChange={(file: File) => {
-                  setSiteImageFile(file);
-                  handleFileChange(URL.createObjectURL(file));
-                }}
-                disabled={isBatchEdit}
-              /> */}
               <Paper sx={{ p: 3 }}>
                 <Box>
                   <Box
@@ -1182,240 +1184,3 @@ const FormWizardAddEmployee = ({
 };
 
 export default FormWizardAddEmployee;
-
-// // Post photo.
-// type ImageUploadCardProps = {
-//   title: string;
-//   file?: File | null; // ✅ TERIMA JUGA NULL
-//   onFileChange: (file: File) => void;
-//   disabled?: boolean;
-// };
-// const ImageUploadCard: React.FC<ImageUploadCardProps> = ({
-//   title,
-//   file,
-//   onFileChange,
-//   disabled = false,
-// }) => {
-//   const webcamRef = useRef<Webcam>(null);
-//   const fileInputRef = useRef<HTMLInputElement>(null);
-
-//   const [openCamera, setOpenCamera] = useState(false);
-//   const [screenshot, setScreenshot] = useState<string | null>(null);
-//   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-//   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
-//   const [cropDialogOpen, setCropDialogOpen] = useState(false);
-//   const [siteImageFile, setSiteImageFile] = useState<File | null>(null);
-//   const [crop, setCrop] = useState<Crop>({
-//     unit: '%',
-//     x: 0,
-//     y: 0,
-//     width: 50,
-//     height: 50,
-//   });
-
-//   const [completedCrop, setCompletedCrop] = useState<Crop | null>(null);
-//   const imageRef = useRef<HTMLImageElement | null>(null);
-
-//   // Convert base64 or File to object URL for preview
-//   useEffect(() => {
-//     if (!file) {
-//       setPreviewUrl(null);
-//       return;
-//     }
-
-//     const url = URL.createObjectURL(file);
-//     setPreviewUrl(url);
-
-//     return () => {
-//       URL.revokeObjectURL(url);
-//     };
-//   }, [file]);
-
-//   const openCropDialog = (imageSrc: string) => {
-//     setImageToCrop(imageSrc);
-//     setCropDialogOpen(true);
-//   };
-
-//   const getCroppedImage = async () => {
-//     if (!completedCrop || !imageRef.current) return;
-
-//     const canvas = document.createElement('canvas');
-//     const scaleX = imageRef.current.naturalWidth / imageRef.current.width;
-//     const scaleY = imageRef.current.naturalHeight / imageRef.current.height;
-//     canvas.width = completedCrop.width!;
-//     canvas.height = completedCrop.height!;
-//     const ctx = canvas.getContext('2d');
-
-//     if (!ctx) return;
-
-//     ctx.drawImage(
-//       imageRef.current,
-//       completedCrop.x! * scaleX,
-//       completedCrop.y! * scaleY,
-//       completedCrop.width! * scaleX,
-//       completedCrop.height! * scaleY,
-//       0,
-//       0,
-//       completedCrop.width!,
-//       completedCrop.height!,
-//     );
-
-//     return new Promise<File>((resolve) => {
-//       canvas.toBlob((blob) => {
-//         if (blob) {
-//           const croppedFile = new File([blob], `${title.replace(/\s+/g, '_')}_cropped.jpg`, {
-//             type: 'image/jpeg',
-//           });
-//           resolve(croppedFile);
-//         }
-//       }, 'image/jpeg');
-//     });
-//   };
-
-//   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-//     const selectedFile = e.target.files?.[0];
-//     if (selectedFile) {
-//       setSiteImageFile(selectedFile);
-//       console.log('Slected file:', selectedFile);
-//       setPreviewUrl(URL.createObjectURL(selectedFile));
-//     }
-//   };
-
-//   // const handleCropSave = async () => {
-//   //   const cropped = await getCroppedImage();
-//   //   if (cropped) {
-//   //     onFileChange(cropped);
-//   //   }
-//   //   setCropDialogOpen(false);
-//   //   setImageToCrop(null);
-//   // };
-
-//   // const fileToBase64 = (file: File): Promise<string> => {
-//   //   return new Promise((resolve, reject) => {
-//   //     const reader = new FileReader();
-//   //     reader.onload = () => {
-//   //       if (typeof reader.result === 'string') {
-//   //         resolve(reader.result);
-//   //       } else {
-//   //         reject('Failed to read file');
-//   //       }
-//   //     };
-//   //     reader.onerror = () => reject(reader.error);
-//   //     reader.readAsDataURL(file);
-//   //   });
-//   // };
-
-//   // const handleCropSave = async () => {
-//   //   const croppedFile = await getCroppedImage();
-//   //   if (croppedFile) {
-//   //     const base64 = await fileToBase64(croppedFile);
-//   //     onFileChange(base64);
-//   //     setSiteImageFile?.(croppedFile);
-//   //   }
-//   //   setCropDialogOpen(false);
-//   //   setImageToCrop(null);
-//   // };
-
-//   return (
-//     <>
-//       <Box
-//         sx={{
-//           border: '2px dashed #90caf9',
-//           borderRadius: 2,
-//           padding: 4,
-//           textAlign: 'center',
-//           mt: 5,
-//           cursor: 'pointer',
-//           backgroundColor: disabled ? '#f5f5f5' : 'white',
-//           opacity: disabled ? 0.6 : 1,
-//           pointerEvents: disabled ? 'none' : 'auto', // blok interaksi kalau disable
-//         }}
-//         onClick={() => fileInputRef.current?.click()}
-//       >
-//         <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
-//         <Typography variant="subtitle1" sx={{ mt: 1 }}>
-//           {title}{' '}
-//           <Typography
-//             component="span"
-//             color="primary"
-//             sx={{ fontWeight: 600, ml: 1, cursor: 'pointer' }}
-//             onClick={(e) => {
-//               e.stopPropagation();
-//               setOpenCamera(true);
-//             }}
-//           >
-//             Camera
-//           </Typography>
-//         </Typography>
-//         <Typography variant="caption" color="textSecondary">
-//           Supports: JPG, JPEG, PNG
-//         </Typography>
-
-//         {previewUrl ? (
-//           <Box mt={2}>
-//             <img
-//               src={previewUrl}
-//               alt="preview"
-//               style={{
-//                 width: 100,
-//                 height: 100,
-//                 borderRadius: 8,
-//                 objectFit: 'cover',
-//                 cursor: 'pointer',
-//               }}
-//               // onClick={() => openCropDialog(previewUrl)}
-//             />
-//           </Box>
-//         ) : (
-//           <Box mt={2}>
-//             <Typography color="text.secondary">No photo uploaded</Typography>
-//           </Box>
-//         )}
-
-//         {/* hidden file input */}
-//         <input type="file" accept="image/*" hidden ref={fileInputRef} onChange={handleFileUpload} />
-//       </Box>
-
-//       {/* Webcam Dialog */}
-
-//       {/* Crop Dialog */}
-//       <Dialog
-//         open={cropDialogOpen}
-//         onClose={() => setCropDialogOpen(false)}
-//         maxWidth="md"
-//         fullWidth
-//       >
-//         <Box sx={{ p: 3 }}>
-//           <Typography variant="h6" mb={2}>
-//             Crop Image
-//           </Typography>
-
-//           {imageToCrop && (
-//             <ReactCrop
-//               crop={crop}
-//               onChange={(newCrop) => setCrop(newCrop)}
-//               onComplete={(c) => setCompletedCrop(c)}
-//               aspect={1}
-//             >
-//               <img
-//                 src={imageToCrop}
-//                 ref={imageRef}
-//                 alt="crop source"
-//                 style={{ maxWidth: '100%' }}
-//               />
-//             </ReactCrop>
-//           )}
-
-//           {/* <Box sx={{ textAlign: 'right', mt: 2 }}>
-//             <Button onClick={() => setCropDialogOpen(false)} sx={{ mr: 2 }}>
-//               Cancel
-//             </Button>
-//             <Button variant="contained" onClick={handleCropSave}>
-//               Save Result Crop
-//             </Button>
-//           </Box> */}
-//         </Box>
-//       </Dialog>
-//     </>
-//   );
-// };

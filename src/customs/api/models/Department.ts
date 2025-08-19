@@ -4,7 +4,7 @@ import { z } from 'zod';
 export interface UpdateDepartmentRequest {
   code: string;
   name: string;
-  // host: string;
+  host: string;
 }
 
 export interface UpdateDepartmentResponse {
@@ -42,7 +42,7 @@ export type DeleteDepartmentResponse<T = any> = {
 export type Item = {
   code: string;
   name: string;
-  // host: string;
+  host: string;
   id: string;
 };
 
@@ -61,11 +61,17 @@ export type GetAllDepartmetsPaginationResponse = {
 export const CreateDepartmentSchema = z.object({
   code: z.string().default(''),
   name: z.string().default(''),
-  // host: z.string().default(''),
+  host: z.string().default(''),
 });
 
 export type CreateDepartmentRequest = z.infer<typeof CreateDepartmentSchema>;
 
+export const CreateDepartementSubmitSchema = CreateDepartmentSchema.extend({
+  code: z.string().trim().min(1, 'Department code is required'),
+  name: z.string().trim().min(1, 'Department name is required'),
+  host: z.string().trim().min(1, 'Head of department is required'),
+});
+export type CreateDepartementSubmitRequest = z.infer<typeof CreateDepartementSubmitSchema>;
 export interface CreateDepartmentResponse {
   status: string;
   status_code: number;

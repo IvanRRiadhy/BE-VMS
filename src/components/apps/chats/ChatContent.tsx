@@ -13,7 +13,7 @@ import {
   Stack,
   Badge,
   useMediaQuery,
-  Theme
+  Theme,
 } from '@mui/material';
 import { IconDotsVertical, IconMenu2, IconPhone, IconVideo } from '@tabler/icons-react';
 import { useSelector } from 'src/store/Store';
@@ -23,12 +23,11 @@ import { formatDistanceToNowStrict } from 'date-fns';
 import ChatInsideSidebar from './ChatInsideSidebar';
 import Scrollbar from 'src/components/custom-scroll/Scrollbar';
 
-
 interface ChatContentProps {
   toggleChatSidebar: () => void;
 }
 
-  const ChatContent: React.FC<ChatContentProps> = ({ toggleChatSidebar }) => {
+const ChatContent: React.FC<ChatContentProps> = ({ toggleChatSidebar }) => {
   const [open, setOpen] = React.useState(true);
   const lgUp = useMediaQuery((theme: Theme) => theme.breakpoints.up('lg'));
 

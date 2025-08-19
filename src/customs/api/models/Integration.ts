@@ -73,6 +73,14 @@ export type GetAvailableIntegrationResponse = {
   collection: AvailableItem[];
 };
 
+export type GetIntegrationByIdResponse = {
+  status: string;
+  status_code: number;
+  title: string;
+  msg: string;
+  collection: Item | null;
+};
+
 //CREATE
 export const CreateIntegrationRequestSchema = z.object({
   name: z.string().default(''),

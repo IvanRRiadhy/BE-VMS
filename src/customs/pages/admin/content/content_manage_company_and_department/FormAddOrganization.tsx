@@ -1,18 +1,23 @@
-import { Button, Grid2, Alert, Typography, CircularProgress } from '@mui/material';
+import {
+  Button,
+  Grid2,
+  Alert,
+  Typography,
+  CircularProgress,
+  MenuItem,
+  Autocomplete,
+} from '@mui/material';
 import { Box } from '@mui/system';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import { createOrganization } from 'src/customs/api/admin';
+import { createOrganization, getAllEmployee } from 'src/customs/api/admin';
 import { useSession } from 'src/customs/contexts/SessionContext';
-
-//
-
-interface CreateOrganizationRequest {
-  name: string;
-  code: string;
-  // host: string;
-}
+import {
+  CreateOrganizationRequest,
+  CreateOrganizationSchema,
+  CreateOrganizationSubmitSchema,
+} from 'src/customs/api/models/Organization';
 
 interface FormAddOrganizationProps {
   formData: CreateOrganizationRequest;
@@ -34,9 +39,43 @@ const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({
 
   const { token } = useSession();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target;
-    setFormData((prev) => ({ ...prev, [id]: value }));
+  const [allEmployes, setAllEmployees] = useState<any>([]);
+
+  useEffect(() => {
+    if (!token) return;
+
+    const fetchEmployees = async () => {
+      try {
+        const res = await getAllEmployee(token);
+        setAllEmployees(res?.collection ?? []);
+      } catch (error) {
+        console.error('Failed to fetch employees:', error);
+        setAllEmployees([]);
+      }
+    };
+
+    fetchEmployees();
+  }, [token]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const field = e.target.name || e.target.id; // prioritas name, fallback ke id
+    const { value } = e.target;
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const validateLocal = (data: any) => {
+    const r = CreateOrganizationSubmitSchema.safeParse(data);
+    if (!r.success) {
+      const fe = r.error.flatten().fieldErrors;
+      setErrors({
+        code: fe.code?.[0] ?? '',
+        name: fe.name?.[0] ?? '',
+        host: fe.host?.[0] ?? '',
+      });
+      return null;
+    }
+    setErrors({});
+    return r.data;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -55,7 +94,10 @@ const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({
         return;
       }
 
-      await createOrganization(formData, token);
+      const parsed = validateLocal(formData);
+      if (!parsed) return;
+
+      await createOrganization(parsed, token);
       localStorage.removeItem('unsavedOrganizationFormAdd');
 
       setAlertType('success');
@@ -65,8 +107,13 @@ const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({
         onSuccess?.();
       }, 900);
     } catch (err: any) {
-      if (err?.errors) {
-        setErrors(err.errors);
+      const be = err?.response?.data?.errors;
+      if (be && typeof be === 'object') {
+        setErrors({
+          code: be.Code?.[0] ?? '',
+          name: be.Name?.[0] ?? '',
+          host: be.Host?.[0] ?? '',
+        });
       }
       setAlertType('error');
       setAlertMessage('Something went wrong. Please try again later.');
@@ -88,7 +135,7 @@ const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({
           <Alert severity={alertType}>{alertMessage}</Alert>
         </Grid2>
 
-        <CustomFormLabel htmlFor="name" sx={{ my: 1, mx: 1 }}>
+        <CustomFormLabel htmlFor="name" sx={{ my: 1 }}>
           <Typography variant="caption">Organization Name</Typography>
         </CustomFormLabel>
         <CustomTextField
@@ -101,7 +148,7 @@ const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({
           variant="outlined"
         />
 
-        <CustomFormLabel htmlFor="code" sx={{ my: 1, mx: 1 }}>
+        <CustomFormLabel htmlFor="code" sx={{ my: 1 }}>
           <Typography variant="caption">Organization Code</Typography>
         </CustomFormLabel>
         <CustomTextField
@@ -113,19 +160,42 @@ const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({
           fullWidth
           variant="outlined"
         />
-        {/* 
-        <CustomFormLabel htmlFor="host" sx={{ my: 1, mx: 1 }}>
-          <Typography variant="caption">Organization Host</Typography>
+
+        <CustomFormLabel htmlFor="host" sx={{ my: 1 }}>
+          <Typography variant="caption">Head of Organization</Typography>
         </CustomFormLabel>
-        <CustomTextField
-          id="host"
-          value={formData.host}
-          onChange={handleChange}
-          error={Boolean(errors.host)}
-          helperText={errors.host || 'You have to make sure that the host of this company is true.'}
-          fullWidth
-          variant="outlined"
-        /> */}
+        <Autocomplete
+          freeSolo
+          options={allEmployes.map((emp: any) => ({ id: emp.id, label: emp.name }))}
+          getOptionLabel={(option) => {
+            if (typeof option === 'string') return option; // user mengetik manual
+            return option.label;
+          }}
+          value={
+            // cari object di options yang id-nya sama dengan formData.host
+            allEmployes
+              .map((emp: any) => ({ id: emp.id, label: emp.name }))
+              .find((emp: any) => emp.id === formData.host) ?? ''
+          }
+          onChange={(_, newValue) => {
+            setFormData((prev) => ({
+              ...prev,
+              host: typeof newValue === 'string' ? newValue : newValue?.id ?? '',
+            }));
+          }}
+          onInputChange={(_, inputValue) => {
+            setFormData((prev) => ({ ...prev, host: inputValue }));
+          }}
+          renderInput={(params) => (
+            <CustomTextField
+              {...params}
+              variant="outlined"
+              error={Boolean(errors.host)}
+              helperText={errors.host}
+              fullWidth
+            />
+          )}
+        />
 
         <Button sx={{ mt: 2 }} color="primary" variant="contained" type="submit" disabled={loading}>
           {loading ? 'Submitting...' : 'Submit'}

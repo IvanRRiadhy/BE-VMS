@@ -1,5 +1,4 @@
 import Swal from 'sweetalert2';
-
 /**
  * Show confirmation alert before deleting something
  */

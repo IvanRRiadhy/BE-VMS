@@ -10,8 +10,8 @@ import HeaderHorizontal from 'src/customs/components/header/desktop_screen/Heade
 import HeaderVertical from 'src/customs/components/header/mobile_screen/HeaderVertical';
 
 export interface CustomPageContainerProps {
-  itemDataCustomNavListing: ItemDataCustomNavListing[];
-  itemDataCustomSidebarItems: ItemDataCustomSidebarItems[];
+  itemDataCustomNavListing?: ItemDataCustomNavListing[];
+  itemDataCustomSidebarItems?: ItemDataCustomSidebarItems[];
   children: React.ReactNode; // untuk menerima komponen atau elemen lain
 }
 
@@ -31,8 +31,8 @@ const PageWrapper = styled('div')(() => ({
 }));
 
 const PageContainer: React.FC<CustomPageContainerProps> = ({
-  itemDataCustomNavListing,
-  itemDataCustomSidebarItems,
+  itemDataCustomNavListing = [],
+  itemDataCustomSidebarItems = [],
   children,
 }) => {
   const customizer = useSelector((state: AppState) => state.customizer);

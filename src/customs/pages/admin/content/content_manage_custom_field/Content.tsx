@@ -7,6 +7,9 @@ import {
   DialogActions,
   Button,
   Divider,
+  CircularProgress,
+  Card,
+  Skeleton,
   Grid2 as Grid,
   IconButton,
 } from '@mui/material';
@@ -82,7 +85,7 @@ const Content = () => {
         setTableData(response.collection);
         setTotalRecords(response.RecordsTotal);
         setTotalFilteredRecords(response.RecordsFiltered);
-        setIsDataReady(true);
+
         console.log('Table data:', tableData);
         const rows = response.collection.map((item: Item) => ({
           id: item.id,
@@ -92,7 +95,10 @@ const Content = () => {
           multiple_option_fields: item.multiple_option_fields,
         }));
 
-        setTableRowSite(rows);
+        if (rows) {
+          setTableRowSite(rows);
+          setIsDataReady(true);
+        }
       } catch (error) {
         console.error('Fetch error:', error);
       } finally {
@@ -291,47 +297,56 @@ const Content = () => {
         <Box>
           <Grid container spacing={3}>
             {/* column */}
-            <Grid size={{ xs: 12, lg: 4 }}>
+            <Grid size={{ xs: 12, lg: 12 }}>
               <TopCard items={cards} />
             </Grid>
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
-              <DynamicTable
-                overflowX={'auto'}
-                isHavePagination={true}
-                data={tableRowSite}
-                selectedRows={selectedRows}
-                totalCount={totalFilteredRecords}
-                defaultRowsPerPage={rowsPerPage}
-                rowsPerPageOptions={[5, 10, 20, 50, 100]}
-                onPaginationChange={(page, rowsPerPage) => {
-                  setPage(page);
-                  setRowsPerPage(rowsPerPage);
-                }}
-                isHaveChecked={true}
-                isHaveAction={true}
-                isHaveSearch={true}
-                isHaveFilter={true}
-                isHaveExportPdf={true}
-                isHaveExportXlf={false}
-                isHaveFilterDuration={false}
-                isHaveAddData={true}
-                isHaveHeader={false}
-                onCheckedChange={(selected) => {
-                  setSelectedRows(selected);
-                }}
-                onEdit={(row) => {
-                  handleEdit(row.id);
-                  setEdittingId(row.id);
-                }}
-                onDelete={(row) => handleDelete(row.id)}
-                onBatchDelete={handleBatchDelete}
-                onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-                onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
-                onAddData={() => {
-                  handleAdd();
-                }}
-              />
+              {isDataReady ? (
+                <DynamicTable
+                  overflowX={'auto'}
+                  isHavePagination={true}
+                  data={tableRowSite}
+                  selectedRows={selectedRows}
+                  totalCount={totalFilteredRecords}
+                  defaultRowsPerPage={rowsPerPage}
+                  rowsPerPageOptions={[5, 10, 20, 50, 100]}
+                  onPaginationChange={(page, rowsPerPage) => {
+                    setPage(page);
+                    setRowsPerPage(rowsPerPage);
+                  }}
+                  isHaveChecked={true}
+                  isHaveAction={true}
+                  isHaveSearch={true}
+                  isHaveFilter={true}
+                  isHaveExportPdf={true}
+                  isHaveExportXlf={false}
+                  isHaveFilterDuration={false}
+                  isHaveAddData={true}
+                  isHaveHeader={false}
+                  onCheckedChange={(selected) => {
+                    setSelectedRows(selected);
+                  }}
+                  onEdit={(row) => {
+                    handleEdit(row.id);
+                    setEdittingId(row.id);
+                  }}
+                  onDelete={(row) => handleDelete(row.id)}
+                  onBatchDelete={handleBatchDelete}
+                  onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                  onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
+                  onAddData={() => {
+                    handleAdd();
+                  }}
+                  isHaveObjectData={true}
+                />
+              ) : (
+                <Card sx={{ width: '100%' }}>
+                  <Skeleton />
+                  <Skeleton animation="wave" />
+                  <Skeleton animation={false} />
+                </Card>
+              )}
             </Grid>
           </Grid>
         </Box>
@@ -405,6 +420,24 @@ const Content = () => {
           </Button>
         </DialogActions>
       </Dialog>
+      {loading && (
+        <Box
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            bgcolor: '#fff',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 2000,
+          }}
+        >
+          <CircularProgress color="primary" />
+        </Box>
+      )}
     </>
   );
 };

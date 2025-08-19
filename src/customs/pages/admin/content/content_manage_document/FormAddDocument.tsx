@@ -148,7 +148,7 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
             <Alert severity={alertType}>{alertMessage}</Alert>
           </Grid2>
           <Grid2 size={6}>
-            <CustomFormLabel htmlFor="name">Department Name</CustomFormLabel>
+            <CustomFormLabel htmlFor="name">Document Name</CustomFormLabel>
             <CustomTextField
               id="name"
               value={formData.name}
@@ -205,16 +205,20 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
             <FormControl component="fieldset">
               <FormLabel component="legend">Allow Visitors to Decline</FormLabel>
               <RadioGroup
-                id="can_declined"
+                name="can_declined"
                 row
-                defaultValue="no"
-                value={formData.can_declined}
+                // convert boolean → string supaya matching dengan value di FormControlLabel
+                value={String(formData.can_declined)}
                 onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, can_declined: e.target.value === '0' }))
+                  setFormData((prev) => ({
+                    ...prev,
+                    // ubah string "true"/"false" → boolean
+                    can_declined: e.target.value === 'true',
+                  }))
                 }
               >
-                <FormControlLabel value={0} control={<Radio />} label="Yes" />
-                <FormControlLabel value={1} control={<Radio />} label="No" />
+                <FormControlLabel value="true" control={<Radio />} label="Yes" />
+                <FormControlLabel value="false" control={<Radio />} label="No" />
               </RadioGroup>
             </FormControl>
           </Grid2>

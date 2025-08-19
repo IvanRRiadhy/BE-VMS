@@ -1,9 +1,16 @@
+// @ts-ignore
 import SimpleBar from 'simplebar-react';
 import 'simplebar/dist/simplebar.min.css';
 import { Box, styled, SxProps } from '@mui/material';
 
 const SimpleBarStyle = styled(SimpleBar)(() => ({
   maxHeight: '100%',
+  '& .simplebar-scrollbar:before': {
+    backgroundColor: '#1976d2 !important',
+  },
+  '& .simplebar-track.simplebar-vertical': {
+    backgroundColor: '#1976d2 !important',
+  },
 }));
 
 interface PropsType {

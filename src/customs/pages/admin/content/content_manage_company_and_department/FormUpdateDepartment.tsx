@@ -5,6 +5,7 @@ import {
   Typography,
   CircularProgress,
   FormControlLabel,
+  MenuItem,
   Switch,
 } from '@mui/material';
 import { Box } from '@mui/system';
@@ -13,8 +14,9 @@ import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import ParentCard from 'src/components/shared/ParentCard';
 import { updateDepartment } from 'src/customs/api/admin';
-import { Item } from 'src/customs/api/models/Department';
+import { Item, CreateDepartementSubmitSchema } from 'src/customs/api/models/Department';
 import { useSession } from 'src/customs/contexts/SessionContext';
+import { getAllEmployee } from 'src/customs/api/admin'; // sesuaikan import
 
 interface FormUpdateDepartmentProps {
   data: Item | null;
@@ -37,26 +39,118 @@ const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({
   enabledFields,
   setEnabledFields,
 }) => {
+  const { token } = useSession();
   const [name, setName] = useState('');
-  // const [host, setHost] = useState('');
+  const [host, setHost] = useState('');
   const [code, setCode] = useState('');
 
+  const [allEmployees, setAllEmployees] = useState<any>([]);
+
   useEffect(() => {
-    if (data) {
+    if (!token) return;
+
+    const fetchEmployees = async () => {
+      try {
+        const res = await getAllEmployee(token);
+        setAllEmployees(res?.collection ?? []);
+      } catch (err) {
+        console.error('Failed to fetch employees', err);
+      }
+    };
+
+    fetchEmployees();
+  }, [token]);
+
+  useEffect(() => {
+    if (!isBatchEdit && data) {
       setName(data.name || '');
-      // setHost(data.host || '');
       setCode(data.code || '');
+
+      if (allEmployees.length > 0) {
+        // Kalau data.host sudah berupa id langsung pakai
+        const foundById = allEmployees.find((emp: any) => emp.id === data.host);
+        if (foundById) {
+          setHost(foundById.id);
+          return;
+        }
+
+        // Kalau data.host berupa nama, cari id-nya
+        const foundByName = allEmployees.find((emp: any) => emp.name === data.host);
+        setHost(foundByName ? foundByName.id : '');
+      } else {
+        setHost(data.host || '');
+      }
     }
-  }, [data]);
+  }, [data, isBatchEdit, allEmployees]);
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-
-  const { token } = useSession();
   const [loading, setLoading] = React.useState(false);
+  const [alertType, setAlertType] = useState<'info' | 'success' | 'error'>('info');
+  const [alertMessage, setAlertMessage] = useState<string>(
+    'Complete the following data properly and correctly',
+  );
+
+  const validateLocal = (formValues: any) => {
+    // Untuk batch edit, hanya validasi field yang diaktifkan
+    let dataToValidate = formValues;
+    if (isBatchEdit) {
+      dataToValidate = {
+        ...(enabledFields?.name && { name: formValues.name }),
+        host: formValues.host, // tetap validasi host kalau memang wajib
+        code: formValues.code,
+      };
+    }
+
+    const result = CreateDepartementSubmitSchema.safeParse(dataToValidate);
+    if (!result.success) {
+      const fe = result.error.flatten().fieldErrors;
+      setErrors({
+        code: fe.code?.[0] ?? '',
+        name: fe.name?.[0] ?? '',
+        host: fe.host?.[0] ?? '',
+      });
+      return null;
+    }
+
+    setErrors({});
+    return result.data;
+  };
+
+  const buildPayload = (item: Item) => {
+    const _name = name.trim();
+    const _code = code.trim();
+    const _host = host?.toString().trim(); // pastikan string
+
+    return {
+      name: isBatchEdit
+        ? enabledFields?.name
+          ? _name || item.name
+          : item.name
+        : _name || item.name,
+
+      code: _code || item.code, // code wajib: fallback ke item.code
+      host: _host || item.host || '', // host boleh kosong -> ''
+    };
+  };
+
+  // 2) validasi setelah merge
+  const validateMerged = (payload: any) => {
+    const r = CreateDepartementSubmitSchema.safeParse(payload);
+    if (!r.success) {
+      const fe = r.error.flatten().fieldErrors;
+      setErrors({
+        name: fe.name?.[0] ?? '',
+        code: fe.code?.[0] ?? '',
+        host: fe.host?.[0] ?? '',
+      });
+      return null;
+    }
+    setErrors({});
+    return r.data;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     setLoading(true);
     setErrors({});
 
@@ -64,79 +158,62 @@ const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({
       if (!token) {
         setAlertType('error');
         setAlertMessage('Something went wrong. Please try again later.');
-
-        setTimeout(() => {
-          setAlertType('info');
-          setAlertMessage('Complete the following data properly and correctly');
-        }, 3000);
         return;
       }
 
       if (isBatchEdit && selectedRows.length > 0) {
-        await Promise.all(
+        // Kerjakan per item: merge -> validate -> update
+        const results = await Promise.allSettled(
           selectedRows
-            .filter((item) => item && item.id)
-            .map((item) =>
-              updateDepartment(
-                item.id,
-                {
-                  name: name || item.name, // gunakan name dari input form
-                  code: code || item.code, // gunakan code dari input form (walaupun disabled)
-                },
-                token,
-              ),
-            ),
+            .filter((x) => x?.id)
+            .map(async (item) => {
+              const payload = buildPayload(item);
+              const parsed = validateMerged(payload);
+              if (!parsed) throw new Error('Validation failed');
+              await updateDepartment(item.id, parsed, token);
+            }),
         );
 
-        setAlertType('success');
-        setAlertMessage('All organizations updated successfully.');
-        setTimeout(() => {
+        const failed = results.filter((r) => r.status === 'rejected');
+        if (failed.length) {
+          setAlertType('error');
+          setAlertMessage('something went wrong. Please try again later.');
+        } else {
+          setAlertType('success');
+          setAlertMessage('All organizations updated successfully.');
           onSuccess?.();
-        }, 900);
-
+        }
         return;
       }
 
+      // single edit
       if (data) {
-        await updateDepartment(
-          data.id,
-          {
-            name,
-            // host,
-            code,
-          },
-          token,
-        );
+        const payload = buildPayload(data);
+        const parsed = validateMerged(payload);
+        if (!parsed) return;
+        await updateDepartment(data.id, parsed, token);
 
         setAlertType('success');
-        setAlertMessage('Department updated successfully.');
-
-        setTimeout(() => {
-          onSuccess?.();
-        }, 900);
+        setAlertMessage('Organization updated successfully.');
+        onSuccess?.();
       }
-    } catch (error: any) {
-      if (error.errors) {
-        setErrors(error.errors);
+    } catch (err: any) {
+      const be = err?.response?.data?.errors;
+      if (be && typeof be === 'object') {
+        setErrors({
+          code: be.Code?.[0] ?? '',
+          name: be.Name?.[0] ?? '',
+          host: be.Host?.[0] ?? '',
+        });
       }
-
       setAlertType('error');
       setAlertMessage('Something went wrong. Please try again later.');
-      setTimeout(() => {
-        setAlertType('info');
-        setAlertMessage('Complete the following data properly and correctly');
-      }, 3000);
     } finally {
       setTimeout(() => {
         setLoading(false);
       }, 800);
     }
   };
-
-  const [alertType, setAlertType] = useState<'info' | 'success' | 'error'>('info');
-  const [alertMessage, setAlertMessage] = useState<string>(
-    'Complete the following data properly and correctly',
-  );
 
   return (
     <>
@@ -200,6 +277,30 @@ const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({
           fullWidth
           disabled={isBatchEdit}
         />
+
+        <CustomFormLabel htmlFor="code" sx={{ my: 1, mx: 0 }}>
+          <Typography variant="caption">Department Host</Typography>
+        </CustomFormLabel>
+
+        <CustomTextField
+          id="host"
+          name="host"
+          value={host}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setHost(e.target.value)}
+          error={Boolean(errors.host)}
+          helperText={errors.host}
+          variant="outlined"
+          fullWidth
+          disabled={isBatchEdit}
+          select
+        >
+          <MenuItem value="">Pilih Host</MenuItem>
+          {allEmployees.map((emp: any) => (
+            <MenuItem key={emp.id} value={emp.id}>
+              {emp.name}
+            </MenuItem>
+          ))}
+        </CustomTextField>
 
         <Button sx={{ mt: 2 }} color="primary" variant="contained" type="submit">
           {loading ? 'Submitting...' : 'Submit'}

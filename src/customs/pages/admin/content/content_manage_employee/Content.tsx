@@ -2,7 +2,6 @@ import React, { useEffect, useState, useCallback } from 'react';
 import {
   Box,
   Button,
-  Card,
   Dialog,
   DialogActions,
   DialogContent,
@@ -14,14 +13,15 @@ import {
   Grid2,
   IconButton,
   MenuItem,
+  Skeleton,
   RadioGroup,
+  Card,
   Typography,
 } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
 import CloseIcon from '@mui/icons-material/Close';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { useNavigate } from 'react-router';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import CustomRadio from 'src/components/forms/theme-elements/CustomRadio';
@@ -33,19 +33,15 @@ import {
   Item,
 } from 'src/customs/api/models/Employee';
 import {
-  getAllDepartments,
   getAllDepartmentsPagination,
-  getAllDistricts,
   getAllDistrictsPagination,
   getAllEmployeePagination,
   getAllEmployeePaginationFilterMore,
-  getAllOrganizations,
   getAllOrganizatiosPagination,
   getAllEmployee,
   deleteEmployee,
 } from 'src/customs/api/admin';
 
-import Swal from 'sweetalert2';
 import { IconUsers } from '@tabler/icons-react';
 
 // Alert
@@ -73,6 +69,11 @@ type EnableField = {
   access_area_special: boolean;
 };
 
+interface OptionItem {
+  id: string; // atau 'number' jika ID dari API berupa angka
+  name: string;
+}
+
 const Content = () => {
   // Pagination state.
   const [tableData, setTableData] = useState<Item[]>([]);
@@ -89,6 +90,24 @@ const Content = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [tableRowEmployee, setTableRowEmployee] = useState<EmployeesTableRow[]>([]);
+  // const [organization, setOrganization] = useState<number>(0);
+  // const [department, setDepartment] = useState(0);
+  // const [district, setDistrict] = useState(0);
+  const [organizationData, setOrganizationData] = useState<OptionItem[]>([]);
+  const [departmentData, setDepartmentData] = useState<OptionItem[]>([]);
+  const [districtData, setDistrictData] = useState<OptionItem[]>([]);
+
+  const [filters, setFilters] = useState({
+    // joinStart: '',
+    // joinEnd: '',
+    // exitStart: '',
+    // exitEnd: '',
+    organization: '',
+    department: '',
+    district: '',
+    // gender: '',
+    // status: '',
+  });
 
   const cards = [
     {
@@ -108,13 +127,6 @@ const Content = () => {
       try {
         const start = page * rowsPerPage;
         const responseGetAll = await getAllEmployee(token);
-        const responseEmployeePagination = await getAllEmployeePaginationFilterMore(
-          token,
-          start,
-          99,
-          sortColumn,
-        );
-
         const responseEmployee = await getAllEmployeePagination(
           token,
           start,
@@ -149,21 +161,43 @@ const Content = () => {
             },
             {},
           );
+
+          const employeeRes = await getAllEmployeePaginationFilterMore(
+            token,
+            start,
+            rowsPerPage,
+            sortColumn,
+            searchKeyword,
+            // undefined, // gender
+            // undefined, // joinStart
+            // undefined, // joinEnd
+            // undefined, // exitStart
+            // undefined, // exitEnd
+            // undefined, // statusEmployee
+            // undefined, // isHead
+            String(filters.organization), // ✅ sudah ID
+            String(filters.district),
+            String(filters.department),
+          );
+
           // Map organization_id to organization_name and remove organization_id
-          const mappedEmployees = responseEmployee.collection.map((emp: any) => {
-            return {
-              ...emp, // Jangan exclude field ID
-              organization_name: orgMap[String(emp.organization_id)] || 'Unknown Organization',
-              department_name: deptMap[String(emp.department_id)] || 'Unknown Department',
-              district_name: distMap[String(emp.district_id)] || 'Unknown District',
-            };
-          });
+          // const mappedEmployees = responseEmployee.collection.map((emp: any) => {
+          //   return {
+          //     ...emp, // Jangan exclude field ID
+          //     organization_name: orgMap[String(emp.organization_id)] || 'Unknown Organization',
+          //     department_name: deptMap[String(emp.department_id)] || 'Unknown Department',
+          //     district_name: distMap[String(emp.district_id)] || 'Unknown District',
+          //   };
+          // });
           //  Remninder menggunakan GetAll bukan pagination
-          setTableData(mappedEmployees);
+          setTableData(employeeRes.collection);
           setTotalRecords(responseEmployee.RecordsTotal);
           setTotalFilteredRecords(responseEmployee.RecordsFiltered);
-          setIsDataReady(true);
-          const rows = responseEmployee.collection.map((item) => ({
+          setOrganizationData(organization.collection ?? []);
+          setDepartmentData(department.collection ?? []);
+          setDistrictData(district.collection ?? []);
+
+          const rows = employeeRes.collection.map((item) => ({
             id: item.id,
             name: item.name,
             faceimage: item.faceimage,
@@ -171,7 +205,10 @@ const Content = () => {
             department: deptMap[String(item.department_id)] || 'Unknown Department',
             district: distMap[String(item.district_id)] || 'Unknown District',
           }));
-          setTableRowEmployee(rows);
+          if (rows) {
+            setTableRowEmployee(rows);
+            setIsDataReady(true);
+          }
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -181,7 +218,7 @@ const Content = () => {
     };
     fetchData();
     console.log('Fetching data: ', tableData);
-  }, [token, page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword]);
+  }, [token, page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword, filters]);
 
   const [initialFormData, setInitialFormData] = React.useState<CreateEmployeeRequest>(() => {
     const saved = localStorage.getItem('unsavedEmployeeData');
@@ -215,10 +252,16 @@ const Content = () => {
   }, [formDataAddEmployee]);
 
   useEffect(() => {
-    if (Object.keys(formDataAddEmployee).length > 0 && !isEditing && isFormChanged) {
+    // if (Object.keys(formDataAddEmployee).length > 0 && !isEditing && isFormChanged) {
+    //   localStorage.setItem('unsavedEmployeeData', JSON.stringify(formDataAddEmployee));
+    // }
+    const defaultFormData = CreateEmployeeRequestSchema.parse({});
+    const isChanged = JSON.stringify(formDataAddEmployee) !== JSON.stringify(defaultFormData);
+
+    if (isChanged) {
       localStorage.setItem('unsavedEmployeeData', JSON.stringify(formDataAddEmployee));
     }
-  }, [formDataAddEmployee, isEditing, isFormChanged]);
+  }, [formDataAddEmployee]);
 
   const [openFormAddEmployee, setOpenFormAddEmployee] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -236,7 +279,7 @@ const Content = () => {
   const handleAdd = useCallback(() => {
     const freshForm = CreateEmployeeRequestSchema.parse({});
     setFormDataAddEmployee(freshForm);
-    setInitialFormData(freshForm); // <--- set initial form juga
+    setInitialFormData(freshForm);
     localStorage.setItem('unsavedEmployeeData', JSON.stringify(freshForm));
     setPendingEditId(null);
     handleOpenDialog();
@@ -252,7 +295,7 @@ const Content = () => {
       const parsedData = CreateEmployeeRequestSchema.parse(existingData);
       setEdittingId(id);
       setFormDataAddEmployee(parsedData);
-      setInitialFormData(parsedData); // <--- set initial form juga
+      setInitialFormData(parsedData);
       localStorage.setItem('unsavedEmployeeData', JSON.stringify({ ...parsedData, id }));
       handleOpenDialog();
       return;
@@ -264,7 +307,7 @@ const Content = () => {
       const parsedData = CreateEmployeeRequestSchema.parse(existingData);
       setEdittingId(id);
       setFormDataAddEmployee(parsedData);
-      setInitialFormData(parsedData); // <--- set initial form juga
+      setInitialFormData(parsedData);
       handleOpenDialog();
       return;
     }
@@ -354,6 +397,10 @@ const Content = () => {
     }
   };
 
+  const handleApplyFilter = () => {
+    setRefreshTrigger((prev) => prev + 1); // untuk trigger ulang useEffect
+  };
+
   const [enabledFields, setEnabledFields] = React.useState<EnableField>({
     gender: false,
     organization_id: false,
@@ -372,7 +419,22 @@ const Content = () => {
 
   const handleSuccess = () => {
     setRefreshTrigger((prev) => prev + 1);
-    handleCloseDialog();
+  };
+  // handle dialog close
+  const handleDialogClose = (_event?: object, reason?: string) => {
+    const isChanged = JSON.stringify(formDataAddEmployee) !== JSON.stringify(initialFormData);
+
+    if ((reason === 'backdropClick' || reason === 'closeButton') && isChanged) {
+      setConfirmDialogOpen(true);
+      return;
+    }
+
+    if (isChanged) {
+      setConfirmDialogOpen(true);
+    } else {
+      setConfirmDialogOpen(false);
+      handleCloseDialog();
+    }
   };
 
   return (
@@ -381,61 +443,76 @@ const Content = () => {
         <Box>
           <Grid container spacing={3}>
             {/* column */}
-            <Grid size={{ xs: 12, lg: 4 }}>
+            <Grid size={{ xs: 12, lg: 12 }}>
               <TopCard items={cards} />
             </Grid>
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
-              <DynamicTable
-                overflowX={'auto'}
-                data={tableRowEmployee}
-                selectedRows={selectedRows}
-                totalCount={totalFilteredRecords}
-                isHaveChecked={true}
-                isHaveAction={true}
-                isHaveSearch={true}
-                isHaveImage={true}
-                isHaveFilter={true}
-                isHaveExportPdf={true}
-                isHavePagination={true}
-                defaultRowsPerPage={rowsPerPage}
-                rowsPerPageOptions={[5, 10, 20, 50, 100]}
-                onPaginationChange={(page, rowsPerPage) => {
-                  setPage(page);
-                  setRowsPerPage(rowsPerPage);
-                }}
-                isHaveExportXlf={false}
-                isHaveFilterDuration={false}
-                isHaveAddData={true}
-                isHaveFilterMore={true}
-                filterMoreContent={<FilterMoreContent />}
-                isHaveHeader={false}
-                onCheckedChange={(selected) => {
-                  const fullSelectedItems = tableData.filter((item) =>
-                    selected.some((row: EmployeesTableRow) => row.id === item.id),
-                  );
-                  setSelectedRows(fullSelectedItems);
-                }}
-                onEdit={(row) => {
-                  console.log('Row to edit:', row);
-                  console.log('Table data:', tableData);
-                  handleEdit(row.id);
-                  setEdittingId(row.id);
-                }}
-                onBatchEdit={handleBatchEdit}
-                onDelete={(row) => handleDelete(row.id)}
-                onBatchDelete={handleBatchDelete}
-                onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-                onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
-                onAddData={() => {
-                  handleAdd();
-                }}
-              />
+              {isDataReady ? (
+                <DynamicTable
+                  overflowX={'auto'}
+                  data={tableRowEmployee}
+                  selectedRows={selectedRows}
+                  totalCount={totalFilteredRecords}
+                  isHaveChecked={true}
+                  isHaveAction={true}
+                  isHaveSearch={true}
+                  isHaveImage={true}
+                  isHaveFilter={true}
+                  isHaveExportPdf={true}
+                  isHavePagination={true}
+                  defaultRowsPerPage={rowsPerPage}
+                  rowsPerPageOptions={[5, 10, 20, 50, 100]}
+                  onPaginationChange={(page, rowsPerPage) => {
+                    setPage(page);
+                    setRowsPerPage(rowsPerPage);
+                  }}
+                  isHaveExportXlf={false}
+                  isHaveFilterDuration={false}
+                  isHaveAddData={true}
+                  isHaveFilterMore={true}
+                  filterMoreContent={
+                    <FilterMoreContent
+                      filters={filters}
+                      setFilters={setFilters}
+                      onApplyFilter={handleApplyFilter}
+                      organizationData={organizationData}
+                      departmentData={departmentData}
+                      districtData={districtData}
+                    />
+                  }
+                  isHaveHeader={false}
+                  onCheckedChange={(selected) => {
+                    const fullSelectedItems = tableData.filter((item) =>
+                      selected.some((row: EmployeesTableRow) => row.id === item.id),
+                    );
+                    setSelectedRows(fullSelectedItems);
+                  }}
+                  onEdit={(row) => {
+                    handleEdit(row.id);
+                    setEdittingId(row.id);
+                  }}
+                  onBatchEdit={handleBatchEdit}
+                  onDelete={(row) => handleDelete(row.id)}
+                  onBatchDelete={handleBatchDelete}
+                  onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                  onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
+                  onAddData={() => {
+                    handleAdd();
+                  }}
+                />
+              ) : (
+                <Card sx={{ width: '100%' }}>
+                  <Skeleton />
+                  <Skeleton animation="wave" />
+                  <Skeleton animation={false} />
+                </Card>
+              )}
             </Grid>
           </Grid>
         </Box>
       </PageContainer>
-      <Dialog open={openFormAddEmployee} onClose={handleCloseDialog} fullWidth maxWidth="md">
+      <Dialog open={openFormAddEmployee} onClose={handleDialogClose} fullWidth maxWidth="md">
         <DialogTitle
           sx={{
             display: 'flex',
@@ -496,7 +573,37 @@ const Content = () => {
 
 export default Content;
 
-const FilterMoreContent = () => {
+interface Filters {
+  organization: string;
+  department: string;
+  district: string;
+}
+
+type FilterMoreContentProps = {
+  filters: Filters;
+  setFilters: React.Dispatch<React.SetStateAction<Filters>>;
+  onApplyFilter: () => void;
+  organizationData: OptionItem[];
+  departmentData: OptionItem[];
+  districtData: OptionItem[];
+};
+
+const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
+  filters,
+  setFilters,
+  onApplyFilter,
+  organizationData,
+  departmentData,
+  districtData,
+}) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value } = e.target;
+    setFilters((prev) => ({
+      ...prev,
+      [id as keyof Filters]: value,
+    }));
+  };
+
   return (
     <Box sx={{ padding: 3, margin: 1.5, boxShadow: 0, borderRadius: 2 }}>
       <Typography variant="h6" gutterBottom>
@@ -575,34 +682,39 @@ const FilterMoreContent = () => {
         {/* Dropdown Fields */}
         <Grid2 size={{ xs: 12, sm: 4 }}>
           <CustomFormLabel htmlFor="organization">
-            <Typography variant="caption">Organization :</Typography>
+            <Typography variant="caption">Organization</Typography>
           </CustomFormLabel>
           <CustomTextField
+            id="organization"
+            select
+            value={filters.organization}
+            onChange={(e: any) =>
+              setFilters((prev) => ({
+                ...prev,
+                organization: e.target.value,
+              }))
+            }
+            fullWidth
             InputProps={{
               sx: {
                 fontSize: '0.7rem', // atau 12px
               },
             }}
-            id="organization"
-            select
-            fullWidth
-            variant="outlined"
-            defaultValue=""
           >
-            <MenuItem sx={{ fontSize: '0.75rem' }} value="A">
-              Head A
+            <MenuItem value="">
+              <Typography>None</Typography>
             </MenuItem>
-            <MenuItem sx={{ fontSize: '0.75rem' }} value="B">
-              Head B
-            </MenuItem>
-            <MenuItem sx={{ fontSize: '0.75rem' }} value="C">
-              Head C
-            </MenuItem>
+
+            {organizationData.map((org) => (
+              <MenuItem key={org.id} value={org.id}>
+                {org.name ?? 'Unknown'}
+              </MenuItem>
+            ))}
           </CustomTextField>
         </Grid2>
         <Grid2 size={{ xs: 12, sm: 4 }}>
           <CustomFormLabel htmlFor="department">
-            <Typography variant="caption">Department :</Typography>
+            <Typography variant="caption">Department</Typography>
           </CustomFormLabel>
           <CustomTextField
             InputProps={{
@@ -610,21 +722,28 @@ const FilterMoreContent = () => {
                 fontSize: '0.7rem', // atau 12px
               },
             }}
-            id="department"
+            id="departmentData"
+            name="departmentData"
             select
             fullWidth
             variant="outlined"
             defaultValue=""
+            value={filters.department}
+            onChange={(e: any) =>
+              setFilters((prev) => ({
+                ...prev,
+                department: e.target.value,
+              }))
+            }
           >
-            <MenuItem sx={{ fontSize: '0.75rem' }} value="A">
-              Dept A
+            <MenuItem value="">
+              <Typography>None</Typography>
             </MenuItem>
-            <MenuItem sx={{ fontSize: '0.75rem' }} value="B">
-              Dept B
-            </MenuItem>
-            <MenuItem sx={{ fontSize: '0.75rem' }} value="C">
-              Dept C
-            </MenuItem>
+            {departmentData.map((org) => (
+              <MenuItem key={org.id} value={org.id}>
+                {org.name ?? 'Unknown'}
+              </MenuItem>
+            ))}
           </CustomTextField>
         </Grid2>
         <Grid2 size={{ xs: 12, sm: 4 }}>
@@ -642,16 +761,22 @@ const FilterMoreContent = () => {
             fullWidth
             variant="outlined"
             defaultValue=""
+            value={filters.district}
+            onChange={(e: any) =>
+              setFilters((prev) => ({
+                ...prev,
+                district: e.target.value,
+              }))
+            }
           >
-            <MenuItem sx={{ fontSize: '0.75rem' }} value="A">
-              District A
+            <MenuItem value="">
+              <Typography>None</Typography>
             </MenuItem>
-            <MenuItem sx={{ fontSize: '0.75rem' }} value="B">
-              District B
-            </MenuItem>
-            <MenuItem sx={{ fontSize: '0.75rem' }} value="C">
-              District C
-            </MenuItem>
+            {districtData.map((org) => (
+              <MenuItem key={org.id} value={org.id}>
+                {org.name ?? 'Unknown'}
+              </MenuItem>
+            ))}
           </CustomTextField>
         </Grid2>
 

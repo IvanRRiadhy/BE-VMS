@@ -1,6 +1,13 @@
 import { z } from 'zod';
 
 //TYPE
+export type Access = {
+  sort: number;
+  access_control_id: string;
+  name: string;
+  early_access: boolean;
+};
+
 export type Item = {
   id: string;
   type: number;
@@ -17,6 +24,7 @@ export type Item = {
   map_link: string;
   can_contactless_login: boolean;
   need_document: boolean;
+  access: Access[];
 };
 
 export function generateKeyCode(): string {
@@ -73,6 +81,17 @@ export const CreateSiteRequestSchema = z.object({
   map_link: z.string().default(''),
   can_contactless_login: z.boolean().default(false),
   need_document: z.boolean().default(false),
+  access: z
+    .array(
+      z.object({
+        sort: z.number().optional().default(0),
+        access_control_id: z.string().optional().default(''),
+        name: z.string().optional().default(''),
+        early_access: z.boolean().optional().default(false),
+      }),
+    )
+    .nullable()
+    .optional(),
 });
 
 export const EditSiteRequestSchema = CreateSiteRequestSchema.extend({

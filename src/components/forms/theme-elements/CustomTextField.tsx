@@ -21,6 +21,11 @@ const CustomTextField = styled((props: any) => <TextField {...props} />)(({ them
   '& .MuiInputBase-input.Mui-disabled': {
     WebkitTextFillColor: '#666', // warna teks agar lebih gelap
   },
+  '& .MuiFormHelperText-root': {
+    color: 'red !important', // merah
+    marginLeft: 0, // hilangin margin kiri
+    marginRight: 0, // hilangin margin kanan
+  },
 }));
 
 export default CustomTextField;

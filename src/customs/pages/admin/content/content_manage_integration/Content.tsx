@@ -7,6 +7,8 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
+  Card,
+  Skeleton,
   Grid2 as Grid,
   IconButton,
 } from '@mui/material';
@@ -35,6 +37,7 @@ import { useTheme } from '@mui/material/styles';
 import FormIntegration from './FormIntegration';
 import Swal from 'sweetalert2';
 import { IconWorldCog } from '@tabler/icons-react';
+import { useNavigate } from 'react-router-dom';
 
 type IntegrationTableRow = {
   id: string;
@@ -62,6 +65,8 @@ const Content = () => {
   const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const navigate = useNavigate();
+
   function formatEnumLabel(label: string) {
     // Insert a space before all caps and capitalize the first letter
     return label
@@ -79,7 +84,7 @@ const Content = () => {
         setAvailableIntegration(availableResponse.collection);
         setIntegrationData(response.collection);
         setTotalRecords(response.collection.length);
-        setIsDataReady(true);
+
         const rows: IntegrationTableRow[] = response.collection.map((item) => ({
           id: item.id,
           name: item.name,
@@ -89,7 +94,10 @@ const Content = () => {
           api_type_auth: formatEnumLabel(ApiTypeAuth[item.api_type_auth]),
           api_url: item.api_url || '',
         }));
-        setTableData(rows);
+        if (rows) {
+          setTableData(rows);
+          setIsDataReady(true);
+        }
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -172,16 +180,6 @@ const Content = () => {
 
   const handleEdit = (id: string) => {
     const editing = localStorage.getItem('unsavedIntegrationData');
-    // if (editing) {
-    //   const parsedData = JSON.parse(editing);
-    //   if (parsedData.id && parsedData.id !== id) {
-    //     console.log('ID tidak cocok');
-    //     setPendingEditId(id);
-    //     setConfirmDialogOpen(true);
-    //   } else {
-    //     handleOpenDialog();
-    //   }
-    // } else {
     const integration = integrationData.find((item) => item.id === id);
     const available = availableIntegration.find(
       (item) => item.name === integration?.name && item.brand_name === integration?.brand_name,
@@ -236,48 +234,56 @@ const Content = () => {
         <Box>
           <Grid container spacing={3}>
             {/* column */}
-            <Grid size={{ xs: 12, lg: 4 }}>
+            <Grid size={{ xs: 12, lg: 12 }}>
               <TopCard items={cards} />
             </Grid>
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
-              <DynamicTable
-                isHavePagination={false}
-                totalCount={totalRecords}
-                defaultRowsPerPage={rowsPerPage}
-                rowsPerPageOptions={[5, 10, 20]}
-                onPaginationChange={(page, rowsPerPage) => {
-                  setPage(page);
-                  setRowsPerPage(rowsPerPage);
-                }}
-                overflowX={'auto'}
-                data={tableData}
-                isHaveChecked={true}
-                isHaveAction={true}
-                isHaveSearch={true}
-                isHaveFilter={false}
-                isHaveExportPdf={true}
-                isHaveExportXlf={false}
-                isHaveFilterDuration={false}
-                isHaveAddData={false}
-                isHaveFilterMore={false}
-                isHaveHeader={false}
-                onCheckedChange={(selected) => console.log('Checked table row:', selected)}
-                onEdit={(row) => {
-                  // console.log('Edit:', row);
-                  handleEdit(row.id);
-                  setEdittingId(row.id);
-                }}
-                onDelete={(row) => {
-                  console.log('Delete:', row);
-                  handleDelete(row.id);
-                }}
-                onSearchKeywordChange={(keyword) => console.log('Search keyword:', keyword)}
-                onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
-                // onAddData={() => {
-                //   handleAdd();
-                // }}
-              />
+              {isDataReady ? (
+                <DynamicTable
+                  isHavePagination={false}
+                  totalCount={totalRecords}
+                  defaultRowsPerPage={rowsPerPage}
+                  rowsPerPageOptions={[5, 10, 20]}
+                  onPaginationChange={(page, rowsPerPage) => {
+                    setPage(page);
+                    setRowsPerPage(rowsPerPage);
+                  }}
+                  overflowX={'auto'}
+                  data={tableData}
+                  isHaveChecked={true}
+                  isHaveAction={false}
+                  isHaveSearch={true}
+                  isHaveFilter={false}
+                  isHaveExportPdf={true}
+                  isHaveExportXlf={false}
+                  isHaveFilterDuration={false}
+                  isHaveAddData={false}
+                  isHaveFilterMore={false}
+                  isHaveHeader={false}
+                  isHaveIntegration={true}
+                  onNameClick={(row) => navigate(`/admin/manage/integration/${row.id}`)}
+                  onCheckedChange={(selected) => console.log('Checked table row:', selected)}
+                  onEdit={(row) => {
+                    handleEdit(row.id);
+                    setEdittingId(row.id);
+                  }}
+                  onDelete={(row) => {
+                    handleDelete(row.id);
+                  }}
+                  onSearchKeywordChange={(keyword) => console.log('Search keyword:', keyword)}
+                  onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
+                  // onAddData={() => {
+                  //   handleAdd();
+                  // }}
+                />
+              ) : (
+                <Card sx={{ width: '100%' }}>
+                  <Skeleton />
+                  <Skeleton animation="wave" />
+                  <Skeleton animation={false} />
+                </Card>
+              )}
             </Grid>
             <Grid container size={{ xs: 12, lg: 12 }} sx={{ mt: 4 }} justifyContent={'center'}>
               {availableIntegration.map((integration, index) => (

@@ -6,6 +6,8 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Card,
+  Skeleton,
   Divider,
   Grid2 as Grid,
   IconButton,
@@ -56,7 +58,7 @@ const Content = () => {
 
   // Pagination state.
   const [accessControlData, setAccessControlData] = useState<Item[]>([]);
-  const [tableData, setTableData] = useState<AccessControlTableRow[]>([]);
+  const [tableData, setTableData] = useState<Item[]>([]);
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
   const [isDataReady, setIsDataReady] = useState(false);
   const { token } = useSession();
@@ -90,10 +92,13 @@ const Content = () => {
           sortColumn,
           searchKeyword,
         );
-        setTableData(response.collection);
+        if (response) {
+          setTableData(response.collection);
+          setIsDataReady(true);
+        }
         setTotalRecords(response.RecordsTotal);
         setTotalFilteredRecords(response.RecordsFiltered);
-        setIsDataReady(true);
+
         const rows = response.collection.map((item: Item) => ({
           brand_name: item.brand_name,
           type: item.type,
@@ -105,7 +110,7 @@ const Content = () => {
           integration_name: item.integration_name,
           id: item.id,
         }));
-        setTableData(rows);
+        // setTableData(rows);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -299,52 +304,60 @@ const Content = () => {
         <Box>
           <Grid container spacing={3}>
             {/* column */}
-            <Grid size={{ xs: 12, lg: 4 }}>
+            <Grid size={{ xs: 12, lg: 12 }}>
               <TopCard items={cards} />
             </Grid>
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
-              <DynamicTable
-                isHavePagination={true}
-                selectedRows={selectedRows}
-                totalCount={totalFilteredRecords}
-                defaultRowsPerPage={rowsPerPage}
-                rowsPerPageOptions={[5, 10, 20]}
-                onPaginationChange={(page, rowsPerPage) => {
-                  setPage(page);
-                  setRowsPerPage(rowsPerPage);
-                }}
-                overflowX={'auto'}
-                data={tableData}
-                isHaveChecked={true}
-                isHaveAction={true}
-                isHaveSearch={true}
-                isHaveFilter={true}
-                isHaveExportPdf={true}
-                isHaveExportXlf={false}
-                isHaveFilterDuration={false}
-                isHaveAddData={true}
-                isHaveHeader={false}
-                onCheckedChange={(selected) => {
-                  const selectedItem = selected.map((item) => ({
-                    ...item,
-                    brand_id: item.brand_name, // assuming brand_name is the equivalent of brand_id
-                    integration_id: item.integration_name, // assuming integration_name is the equivalent of integration_id
-                  }));
-                  setSelectedRows(selectedItem);
-                }}
-                onEdit={(row) => {
-                  handleEdit(row.id);
-                  setEdittingId(row.id);
-                }}
-                onDelete={(row) => handleDelete(row.id)}
-                onBatchDelete={handleBatchDelete}
-                onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-                onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
-                onAddData={() => {
-                  handleAdd();
-                }}
-              />{' '}
+              {isDataReady ? (
+                <DynamicTable
+                  isHavePagination={true}
+                  selectedRows={selectedRows}
+                  totalCount={totalFilteredRecords}
+                  defaultRowsPerPage={rowsPerPage}
+                  rowsPerPageOptions={[5, 10, 20]}
+                  onPaginationChange={(page, rowsPerPage) => {
+                    setPage(page);
+                    setRowsPerPage(rowsPerPage);
+                  }}
+                  overflowX={'auto'}
+                  data={tableData}
+                  isHaveChecked={true}
+                  isHaveAction={true}
+                  isHaveSearch={true}
+                  isHaveFilter={true}
+                  isHaveExportPdf={true}
+                  isHaveExportXlf={false}
+                  isHaveFilterDuration={false}
+                  isHaveAddData={true}
+                  isHaveHeader={false}
+                  onCheckedChange={(selected) => {
+                    const selectedItem = selected.map((item) => ({
+                      ...item,
+                      brand_id: item.brand_name, // assuming brand_name is the equivalent of brand_id
+                      integration_id: item.integration_name, // assuming integration_name is the equivalent of integration_id
+                    }));
+                    setSelectedRows(selectedItem);
+                  }}
+                  onEdit={(row) => {
+                    handleEdit(row.id);
+                    setEdittingId(row.id);
+                  }}
+                  onDelete={(row) => handleDelete(row.id)}
+                  onBatchDelete={handleBatchDelete}
+                  onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                  onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
+                  onAddData={() => {
+                    handleAdd();
+                  }}
+                />
+              ) : (
+                <Card sx={{ width: '100%' }}>
+                  <Skeleton />
+                  <Skeleton animation="wave" />
+                  <Skeleton animation={false} />
+                </Card>
+              )}
             </Grid>
           </Grid>
         </Box>

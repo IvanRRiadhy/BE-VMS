@@ -4,12 +4,7 @@ import {
   Alert,
   Typography,
   CircularProgress,
-  FormControl,
-  FormLabel,
-  RadioGroup,
-  Stack,
   FormControlLabel,
-  Radio,
   Switch,
   Tooltip,
   MenuItem,
@@ -29,18 +24,15 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Checkbox,
-  ListItemText,
-  SelectChangeEvent,
   Button as MuiButton,
 } from '@mui/material';
-import { Box, width } from '@mui/system';
+import { Box } from '@mui/system';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import React, { useEffect, useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import CloseIcon from '@mui/icons-material/Close';
+
 import {
   CreateVisitorTypeRequest,
   CreateVisitorTypeRequestSchema,
@@ -53,7 +45,7 @@ import { IconTrash } from '@tabler/icons-react';
 import {
   createVisitorType,
   getAllCustomFieldPagination,
-  getAllDocumentPagination,
+  getAllDocument,
   updateVisitorType,
 } from 'src/customs/api/admin';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
@@ -66,29 +58,6 @@ interface FormVisitorTypeProps {
   edittingId?: string;
   onSuccess?: () => void;
 }
-
-interface CustomFieldItem {
-  id: number;
-  short_name: string;
-  long_display_text: string;
-  field_type: keyof typeof fieldTypeMap;
-  is_enable: boolean;
-  is_primary?: boolean;
-  mandatory: boolean;
-  remarks?: string;
-  multiple_option_fields?: any[];
-  custom_field_id?: string | null;
-}
-
-const fieldTypeMap = {
-  text: 0,
-  number: 1,
-  email: 2,
-  dropdown: 3,
-  datepicker: 4,
-  radio: 5,
-  checkbox: 6,
-};
 
 const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
   formData,
@@ -108,42 +77,8 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
   const [skipped, setSkipped] = useState(new Set<number>());
   const isStepSkipped = (step: number) => skipped.has(step);
   const [document, setDocument] = useState<any[]>([]);
-
+  const [customField, setCustomField] = useState<any[]>([]);
   const [openCustomFieldModal, setOpenCustomFieldModal] = useState(false);
-
-  const handleMoveStep = (fromIndex: number, toIndex: number) => {
-    const updatedSteps = [...dynamicSteps];
-    const [movedStep] = updatedSteps.splice(fromIndex, 1);
-    updatedSteps.splice(toIndex, 0, movedStep);
-
-    const updatedSections = [...sectionsData];
-    const [movedSection] = updatedSections.splice(fromIndex, 1);
-    updatedSections.splice(toIndex, 0, movedSection);
-
-    const reSortedSections = updatedSections.map((section, idx) => ({
-      ...section,
-      sort: idx,
-    }));
-
-    setDynamicSteps(updatedSteps);
-    setSectionsData(reSortedSections);
-  };
-
-  const handleNext = () => {
-    let newSkipped = skipped;
-    if (isStepSkipped(activeStep)) {
-      newSkipped = new Set(newSkipped.values());
-      newSkipped.delete(activeStep);
-    }
-    setActiveStep((prev) => prev + 1);
-    setSkipped(newSkipped);
-  };
-
-  // const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   const { id, value } = e.target;
-  //   console.log(id, value);
-  //   setFormData((prev) => ({ ...prev, [id]: value }));
-  // };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -173,25 +108,22 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
       [name!]: mapped,
     }));
   };
+
   // Get Document
   useEffect(() => {
     if (!token) return;
     const fetchData = async () => {
-      const documentRes = await getAllDocumentPagination(token, 0, 99, 'id');
+      const documentRes = await getAllDocument(token);
       setDocument(documentRes?.collection ?? []);
     };
     fetchData();
   }, [token]);
 
-  const [customField, setCustomField] = useState<any[]>([]);
-
-  const [newCustomField, setNewCustomField] = useState<CustomFieldItem | null>(null);
-
   // Get Custom Field
   useEffect(() => {
     if (!token) return;
     const fetchData = async () => {
-      const customFieldRes = await getAllCustomFieldPagination(token, 0, 99, 'id');
+      const customFieldRes = await getAllCustomFieldPagination(token, 0, 99999, 'id');
       setCustomField(customFieldRes?.collection ?? []);
     };
     fetchData();
@@ -217,6 +149,12 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         sort: section.sort,
         name: section.name,
         status: 1,
+        is_document: section.is_document,
+        can_multiple_used: section.can_multiple_used,
+        foreign_id:
+          section.is_document && section.visit_form?.[0]?.document_id
+            ? section.visit_form[0].document_id
+            : '',
         visit_form: section.visit_form.map((field) => {
           const matchedField = customField.find((f) => f.id === field.custom_field_id);
           return {
@@ -226,16 +164,16 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
             is_primary: field.is_primary ?? false,
             is_enable: field.is_enable ?? false,
             mandatory: field.mandatory ?? false,
-            field_type: fieldTypeMap[(matchedField?.type as keyof typeof fieldTypeMap) ?? 'text'],
+            field_type: field.field_type ?? matchedField?.field_type ?? 0,
             remarks: field.remarks ?? '',
             custom_field_id: field.custom_field_id ?? '',
-            multiple_option_fields: field.multiple_option_fields || [],
-            visitor_form_type: 1, // ✅ visit_form
+            multiple_option_fields: matchedField?.multiple_option_fields ?? [],
+            visitor_form_type: 1,
+            document_id: field.document_id ?? '',
           };
         }),
         pra_form: section.pra_form.map((field) => {
           const matchedField = customField.find((f) => f.id === field.custom_field_id);
-
           return {
             sort: field.sort ?? 0,
             short_name: field.short_name ?? '',
@@ -243,16 +181,18 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
             is_primary: field.is_primary ?? false,
             is_enable: field.is_enable ?? false,
             mandatory: field.mandatory ?? false,
-            field_type: fieldTypeMap[(matchedField?.type as keyof typeof fieldTypeMap) ?? 'text'],
+            field_type: field.field_type ?? matchedField?.field_type ?? 0,
             remarks: field.remarks ?? '',
             custom_field_id: field.custom_field_id ?? '',
-            multiple_option_fields: field.multiple_option_fields ?? [],
-            visitor_form_type: 0, // ✅ pra_form
+            multiple_option_fields: field.multiple_option_fields?.length
+              ? field.multiple_option_fields
+              : matchedField?.multiple_option_fields ?? [],
+            visitor_form_type: 0,
+            document_id: field.document_id ?? '',
           };
         }),
         checkout_form: section.checkout_form.map((field) => {
           const matchedField = customField.find((f) => f.id === field.custom_field_id);
-
           return {
             sort: field.sort ?? 0,
             short_name: field.short_name ?? '',
@@ -260,11 +200,14 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
             is_primary: field.is_primary ?? false,
             is_enable: field.is_enable ?? false,
             mandatory: field.mandatory ?? false,
-            field_type: fieldTypeMap[(matchedField?.type as keyof typeof fieldTypeMap) ?? 'text'],
+            field_type: field.field_type ?? matchedField?.field_type ?? 0,
             remarks: field.remarks ?? '',
             custom_field_id: field.custom_field_id ?? '',
-            multiple_option_fields: field.multiple_option_fields ?? [],
-            visitor_form_type: 2, // ✅ checkout_form
+            multiple_option_fields: field.multiple_option_fields?.length
+              ? field.multiple_option_fields
+              : matchedField?.multiple_option_fields ?? [],
+            visitor_form_type: 2,
+            document_id: field.document_id ?? '',
           };
         }),
       }));
@@ -278,8 +221,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         section_page_visitor_types: transformedSections,
       };
 
-      // ✅ Cek data hasil akhir
-      console.log('Final data to submit:', data);
+      console.log('Submit data : ', data);
 
       const parseData: CreateVisitorTypeRequest = CreateVisitorTypeRequestSchema.parse(data);
 
@@ -297,9 +239,13 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         setAlertType('success');
         setAlertMessage('Visitor type created successfully!');
       }
-      // Opsional: reset form atau kasih notifikasi berhasil
 
-      // navigate('/visitor-type');
+      localStorage.removeItem('unsavedVisitorTypeData');
+      // ✅ delay agar user bisa lihat alert dulu
+      setTimeout(() => {
+        // onSuccess?.(); // Tutup dialog/modal dilakukan di parent saat sukses
+        setLoading(false); // Pastikan loading ditutup setelah onSuccess
+      }, 1000);
     } catch (err: any) {
       if (err?.errors) {
         setErrors(err.errors);
@@ -310,28 +256,17 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         setAlertType('info');
         setAlertMessage('Complete the following data properly and correctly');
       }, 3000);
-    } finally {
-      setTimeout(() => {
-        setLoading(false);
-      }, 800);
+      setLoading(false); // ⛔️ penting: jangan taruh di timeout
     }
   };
-
-  const fieldTypeOptions = [
-    { value: 0, label: 'Text' },
-    { value: 1, label: 'Number' },
-    { value: 2, label: 'Email' },
-    { value: 3, label: 'Dropdown' },
-    { value: 4, label: 'Datepicker' },
-    { value: 5, label: 'Radio' },
-    { value: 6, label: 'Checkbox' },
-  ];
 
   const renderDetailRows = (
     details: FormVisitorTypes[] | any,
     onChange: (index: number, field: keyof FormVisitorTypes, value: any) => void,
     onDelete?: (index: number) => void,
     showMandatory = true,
+    isDocument = false,
+    canMultiple = false,
   ) => {
     if (!Array.isArray(details)) {
       console.error('Expected array for details, but got:', details);
@@ -354,24 +289,36 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
               const matchedField = customField.find((f) => f.short_name === selectedShortName);
 
               onChange(index, 'short_name', selectedShortName);
-              onChange(index, 'remarks', selectedShortName); // samakan remarks
+
               if (matchedField) {
                 onChange(index, 'custom_field_id', matchedField.id); // ambil ID-nya
+                onChange(index, 'remarks', matchedField.remarks); // samakan remarks
+                onChange(index, 'field_type', matchedField.field_type);
                 onChange(
                   index,
-                  'field_type',
-                  fieldTypeMap[(matchedField?.type as keyof typeof fieldTypeMap) ?? 'text'],
-                ); // tambahkan ini
+                  'multiple_option_fields',
+                  matchedField.multiple_option_fields ?? [],
+                );
               }
             }}
             placeholder="Select Field"
             fullWidth
           >
-            {customField.map((field) => (
-              <MenuItem key={field.id} value={field.short_name}>
-                {field.short_name}
-              </MenuItem>
-            ))}
+            {customField
+              .filter((field) => {
+                if (isDocument) {
+                  return field.field_type >= 10 && field.field_type <= 12;
+                } else if (canMultiple) {
+                  return field.field_type >= 0 && field.field_type <= 12;
+                } else {
+                  return field.field_type >= 0 && field.field_type <= 9;
+                }
+              })
+              .map((field) => (
+                <MenuItem key={field.id} value={field.short_name}>
+                  {field.short_name}
+                </MenuItem>
+              ))}
           </TextField>
         </TableCell>
         <TableCell>
@@ -382,29 +329,14 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
             placeholder="Display Text"
           />
         </TableCell>
-        <TableCell align="center" sx={{ marginRight: '10px' }}>
+        <TableCell align="left">
           <Switch
             checked={!!item.is_enable}
             onChange={(_, checked) => onChange(index, 'is_enable', checked)}
           />
         </TableCell>
-        {/* <TableCell>
-          <TextField
-            size="small"
-            defaultValue=""
-            value={item.field_type}
-            onChange={(e) => onChange(index, 'field_type', e.target.value)}
-          > */}
-        {/* {fieldTypeOptions.map((option) => (
-              <MenuItem key={option.value} value={option.value}>2
-                {option.label}
-              </MenuItem>
-            ))} */}
-        {/* </TextField>
-        </TableCell> */}
-
         {showMandatory && (
-          <TableCell align="center">
+          <TableCell align="left">
             <Switch
               checked={!!item.mandatory}
               onChange={(_, checked) => onChange(index, 'mandatory', checked)}
@@ -423,36 +355,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
   };
 
   type SectionKey = 'visit_form' | 'pra_form' | 'checkout_form';
-
-  // const handleAddDetail = (sectionKey: SectionKey) => {
-  //   const newItem = {
-  //     sort: 0,
-  //     short_name: '',
-  //     long_display_text: '',
-  //     is_enable: false,
-  //     is_primary: false,
-  //     field_type: 0,
-  //     remarks: '',
-  //     custom_field_id: '',
-  //     multiple_option_fields: [],
-  //     mandatory: false,
-  //   };
-
-  //   setSectionsData((prev) =>
-  //     prev.map((section, index) => {
-  //       if (index === activeStep - 1) {
-  //         const currentDetails = Array.isArray(section[sectionKey]) ? section[sectionKey] : [];
-
-  //         return {
-  //           ...section,
-
-  //           [sectionKey]: [...currentDetails, newItem],
-  //         };
-  //       }
-  //       return section;
-  //     }),
-  //   );
-  // };
 
   const handleAddDetail = (sectionKey: SectionKey) => {
     setSectionsData((prev) =>
@@ -515,15 +417,18 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     );
   };
 
-  const handleDeleteDetail = (sectionKey: SectionKey, key: any) => {
+  const handleDeleteDetail = (sectionKey: SectionKey, indexToRemove: number) => {
     setSectionsData((prev) =>
       prev.map((section, index) => {
         if (index === activeStep - 1) {
-          const updated = { ...section[sectionKey] };
-          delete updated[key];
+          const originalFields = section[sectionKey];
+          if (!Array.isArray(originalFields)) return section;
+
+          const updatedFields = originalFields.filter((_, idx) => idx !== indexToRemove);
+
           return {
             ...section,
-            [sectionKey]: updated,
+            [sectionKey]: updatedFields,
           };
         }
         return section;
@@ -534,30 +439,55 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
   const [newSectionName, setNewSectionName] = useState('');
   const [sectionsData, setSectionsData] = useState<SectionPageVisitorType[]>([]);
   const [openModal, setOpenModal] = useState(false);
+  const [dynamicSteps, setDynamicSteps] = useState<string[]>([]);
+  const [draggableSteps, setDraggableSteps] = useState<string[]>([]);
+
+  useEffect(() => {
+    // Ambil data lama dari localStorage (jika ada)
+    const stored = localStorage.getItem('unsavedVisitorTypeData');
+    let parsed = {};
+    if (stored) {
+      try {
+        parsed = JSON.parse(stored);
+      } catch {
+        parsed = {};
+      }
+    }
+    // Gabungkan dengan section_page_visitor_types terbaru
+    const updated = {
+      ...parsed,
+      section_page_visitor_types: sectionsData,
+    };
+    localStorage.setItem('unsavedVisitorTypeData', JSON.stringify(updated));
+  }, [sectionsData]);
+
   const handleAddSection = () => {
     if (newSectionName.trim() !== '') {
       const newSection = {
         sort: sectionsData.length,
         name: newSectionName,
         status: 1,
+        is_document: false,
+        can_multiple_used: false,
+        foreign_id: '',
         visit_form: [],
         pra_form: [],
         checkout_form: [],
       };
 
-      setSectionsData((prev) => [...prev, newSection]);
+      const updatedSections = [...sectionsData, newSection];
+
+      // Simpan ke state dan localStorage
+      setSectionsData(updatedSections);
       setDynamicSteps((prev) => [...prev, newSectionName]);
-      setOpenModal(false); // tutup modal section
       setNewSectionName('');
+      setOpenModal(false);
 
       setTimeout(() => {
-        setOpenCustomFieldModal(true); // buka custom field SETELAH modal ditutup
-      }, 300); // beri delay supaya transisi smooth
+        setOpenCustomFieldModal(true);
+      }, 300);
     }
   };
-  const staticStep = 'Visitor Type Info';
-  const [dynamicSteps, setDynamicSteps] = useState<string[]>([]);
-  const [draggableSteps, setDraggableSteps] = useState<string[]>([]);
 
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
@@ -1102,114 +1032,407 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     const currentSection = sectionsData[step - 1]; // dikurangi 1 karena step 0 khusus
     if (!currentSection) return null;
 
+    const handleCustomDocumentChange = (
+      e: React.ChangeEvent<{ value: unknown }>,
+      formType: 'visit_form' | 'pra_form' | 'checkout_form',
+      index: number,
+    ) => {
+      const selectedDocId = e.target.value as string;
+
+      // Temukan custom field berdasarkan id dokumen
+      const selectedField = customField.find((field) => field.id === selectedDocId);
+
+      setSectionsData((prevSections) => {
+        const newSections = [...prevSections];
+        const currentIndex = step - 1;
+
+        // Jika section tidak ada, kembalikan original
+        if (!newSections[currentIndex]) return prevSections;
+
+        if (!newSections[currentIndex][formType]) {
+          newSections[currentIndex][formType] = [];
+        }
+
+        if (!newSections[currentIndex][formType][index]) {
+          // Jika belum ada data di index, inisialisasi
+          newSections[currentIndex][formType][index] = {
+            sort: index,
+            short_name: selectedField?.short_name || '',
+            long_display_text: selectedField?.short_name || '',
+            is_enable: selectedField?.is_enable || false,
+            is_primary: true,
+            field_type: selectedField?.field_type || 9,
+            remarks: selectedField?.short_name || '',
+            mandatory: selectedField?.mandatory || false,
+            custom_field_id: selectedField?.id || '',
+            multiple_option_fields: selectedField?.multiple_option_fields ?? [],
+            document_id: selectedDocId,
+          };
+        } else {
+          // Update data jika sudah ada
+          const field = newSections[currentIndex][formType][index];
+          if (selectedField) {
+            field.short_name = selectedField.short_name;
+            field.long_display_text = selectedField.short_name;
+            field.field_type = selectedField.field_type;
+            field.custom_field_id = selectedField.id;
+            field.multiple_option_fields = selectedField.multiple_option_fields ?? [];
+          }
+          field.document_id = selectedDocId;
+        }
+
+        return newSections;
+      });
+    };
+
     return (
       <div>
-        {/* Visit Form */}
-        <Grid size={12}>
-          <Box mt={3}>
-            <Typography variant="subtitle1" fontWeight={600}>
-              Visit Form
-            </Typography>
-            <TableContainer component={Paper} sx={{ mb: 1 }}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Field Name</TableCell>
-                    <TableCell>Display</TableCell>
-                    <TableCell>Is Enable</TableCell>
-                    {/* <TableCell>Field Type</TableCell> */}
-                    {/* <TableCell>Is Primary</TableCell> */}
-                    <TableCell>Mandatory</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {renderDetailRows(
-                    currentSection.visit_form || [],
-                    (index, field, value) => handleDetailChange('visit_form', index, field, value),
-                    (index) => handleDeleteDetail('visit_form', index),
-                    true,
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-            <MuiButton size="small" onClick={() => handleAddDetail('visit_form')}>
-              Add New
-            </MuiButton>
-          </Box>
-        </Grid>
-        {/* Pra Form */}
-        <Grid size={12}>
-          <Box mt={3}>
-            <Typography variant="subtitle1" fontWeight={600}>
-              Pra Form
-            </Typography>
-            <TableContainer component={Paper} sx={{ mb: 1 }}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Field Name</TableCell>
-                    <TableCell>Display</TableCell>
-                    <TableCell>Is Enable</TableCell>
-                    {/* <TableCell>Field Type</TableCell> */}
-                    {/* <TableCell >Is Primary</TableCell> */}
-                    <TableCell>Mandatory</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {renderDetailRows(
-                    currentSection.pra_form || [],
-                    (key, field, value) =>
-                      handleDetailChange('pra_form' as const, key, field, value),
-                    (key) => handleDeleteDetail('pra_form' as const, key),
-                    true,
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-            <MuiButton size="small" onClick={() => handleAddDetail('pra_form' as const)}>
-              Add New
-            </MuiButton>
-          </Box>
-        </Grid>
-        {/*Checkout Form */}
-        <Grid size={12}>
-          <Box mt={3}>
-            <Typography variant="subtitle1" fontWeight={600}>
-              Checkout Form
-            </Typography>
-            <TableContainer component={Paper} sx={{ mb: 1 }}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Field Name</TableCell>
-                    <TableCell>Display</TableCell>
-                    <TableCell>Is Enable</TableCell>
-                    {/* <TableCell>Field Type</TableCell> */}
-                    {/* <TableCell>Is Primary</TableCell> */}
-                    <TableCell>Mandatory</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {renderDetailRows(
-                    currentSection.checkout_form || [],
-                    (key, field, value) => handleDetailChange('checkout_form', key, field, value),
-                    (key) => handleDeleteDetail('checkout_form', key),
-                    true,
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-            <MuiButton size="small" onClick={() => handleAddDetail('checkout_form')}>
-              Add New
-            </MuiButton>
-          </Box>
-        </Grid>
+        <Box display="flex" alignItems="center" gap={2}>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={currentSection.is_document}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setSectionsData((prev) =>
+                    prev.map((section, idx) =>
+                      idx === step - 1 ? { ...section, is_document: checked } : section,
+                    ),
+                  );
+                }}
+              />
+            }
+            label={
+              <Box display="flex" alignItems="center">
+                Is Document
+              </Box>
+            }
+          />
+          <FormControlLabel
+            control={
+              <Switch
+                checked={currentSection.can_multiple_used}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setSectionsData((prev) =>
+                    prev.map((section, idx) =>
+                      idx === step - 1 ? { ...section, can_multiple_used: checked } : section,
+                    ),
+                  );
+                }}
+              />
+            }
+            label={
+              <Box display="flex" alignItems="center">
+                Can Multi Purpose
+                <Tooltip title="When enabled, this visit type can be used for multiple purposes">
+                  <IconButton size="small" sx={{ ml: 1 }}>
+                    <InfoOutlinedIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            }
+          />
+        </Box>
+        {!currentSection.is_document && !currentSection.can_multiple_used && (
+          <>
+            {/* Visit Form */}
+            <Grid size={12}>
+              <Box mt={3}>
+                <Typography variant="subtitle1" fontWeight={600}>
+                  Visit Form
+                </Typography>
+                <TableContainer component={Paper} sx={{ mb: 1 }}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Field Name</TableCell>
+                        <TableCell>Display</TableCell>
+                        <TableCell>Enabled</TableCell>
+                        <TableCell>Mandatory</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {renderDetailRows(
+                        currentSection.visit_form || [],
+                        (index, field, value) =>
+                          handleDetailChange('visit_form', index, field, value),
+                        (index) => handleDeleteDetail('visit_form', index),
+                        true,
+                        false,
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                <MuiButton size="small" onClick={() => handleAddDetail('visit_form')}>
+                  Add New
+                </MuiButton>
+              </Box>
+            </Grid>
+            {/* Pra Form */}
+            <Grid size={12}>
+              <Box mt={3}>
+                <Typography variant="subtitle1" fontWeight={600}>
+                  Pra Form
+                </Typography>
+                <TableContainer component={Paper} sx={{ mb: 1 }}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Field Name</TableCell>
+                        <TableCell>Display</TableCell>
+                        <TableCell>Enabled</TableCell>
+                        {/* <TableCell>Field Type</TableCell> */}
+                        {/* <TableCell >Is Primary</TableCell> */}
+                        <TableCell>Mandatory</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {renderDetailRows(
+                        currentSection.pra_form || [],
+                        (key, field, value) =>
+                          handleDetailChange('pra_form' as const, key, field, value),
+                        (key) => handleDeleteDetail('pra_form' as const, key),
+                        true,
+                        false,
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                <MuiButton size="small" onClick={() => handleAddDetail('pra_form' as const)}>
+                  Add New
+                </MuiButton>
+              </Box>
+            </Grid>
+            {/*Checkout Form */}
+            <Grid size={12}>
+              <Box mt={3}>
+                <Typography variant="subtitle1" fontWeight={600}>
+                  Checkout Form
+                </Typography>
+                <TableContainer component={Paper} sx={{ mb: 1 }}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Field Name</TableCell>
+                        <TableCell>Display</TableCell>
+                        <TableCell>Enabled</TableCell>
+                        {/* <TableCell>Field Type</TableCell> */}
+                        {/* <TableCell>Is Primary</TableCell> */}
+                        <TableCell>Mandatory</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {renderDetailRows(
+                        currentSection.checkout_form || [],
+                        (key, field, value) =>
+                          handleDetailChange('checkout_form', key, field, value),
+                        (key) => handleDeleteDetail('checkout_form', key),
+                        true,
+                        false,
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                <MuiButton size="small" onClick={() => handleAddDetail('checkout_form')}>
+                  Add New
+                </MuiButton>
+              </Box>
+            </Grid>
+          </>
+        )}
+
+        {currentSection.can_multiple_used && (
+          <>
+            {/* Visit Form */}
+            <Grid size={12}>
+              <Box mt={3}>
+                <Typography variant="subtitle1" fontWeight={600}>
+                  Visit Form
+                </Typography>
+                <TableContainer component={Paper} sx={{ mb: 1 }}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Field Name</TableCell>
+                        <TableCell>Display</TableCell>
+                        <TableCell>Enabled</TableCell>
+                        <TableCell>Mandatory</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {renderDetailRows(
+                        currentSection.visit_form || [],
+                        (index, field, value) =>
+                          handleDetailChange('visit_form', index, field, value),
+                        (index) => handleDeleteDetail('visit_form', index),
+                        true,
+                        false,
+                        true,
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                <MuiButton size="small" onClick={() => handleAddDetail('visit_form')}>
+                  Add New
+                </MuiButton>
+              </Box>
+            </Grid>
+            {/* Pra Form */}
+            <Grid size={12}>
+              <Box mt={3}>
+                <Typography variant="subtitle1" fontWeight={600}>
+                  Pra Form
+                </Typography>
+                <TableContainer component={Paper} sx={{ mb: 1 }}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Field Name</TableCell>
+                        <TableCell>Display</TableCell>
+                        <TableCell>Enabled</TableCell>
+                        {/* <TableCell>Field Type</TableCell> */}
+                        {/* <TableCell >Is Primary</TableCell> */}
+                        <TableCell>Mandatory</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {renderDetailRows(
+                        currentSection.pra_form || [],
+                        (key, field, value) =>
+                          handleDetailChange('pra_form' as const, key, field, value),
+                        (key) => handleDeleteDetail('pra_form' as const, key),
+                        true,
+                        false,
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                <MuiButton size="small" onClick={() => handleAddDetail('pra_form' as const)}>
+                  Add New
+                </MuiButton>
+              </Box>
+            </Grid>
+            {/*Checkout Form */}
+            <Grid size={12}>
+              <Box mt={3}>
+                <Typography variant="subtitle1" fontWeight={600}>
+                  Checkout Form
+                </Typography>
+                <TableContainer component={Paper} sx={{ mb: 1 }}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Field Name</TableCell>
+                        <TableCell>Display</TableCell>
+                        <TableCell>Enabled</TableCell>
+                        {/* <TableCell>Field Type</TableCell> */}
+                        {/* <TableCell>Is Primary</TableCell> */}
+                        <TableCell>Mandatory</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {renderDetailRows(
+                        currentSection.checkout_form || [],
+                        (key, field, value) =>
+                          handleDetailChange('checkout_form', key, field, value),
+                        (key) => handleDeleteDetail('checkout_form', key),
+                        true,
+                        false,
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                <MuiButton size="small" onClick={() => handleAddDetail('checkout_form')}>
+                  Add New
+                </MuiButton>
+              </Box>
+            </Grid>
+          </>
+        )}
+
+        {currentSection.is_document && (
+          <>
+            {/* Visit Form */}
+            <Grid size={12}>
+              <Box mt={3}>
+                <Typography variant="subtitle1" fontWeight={600}>
+                  Visit Form
+                </Typography>
+                <TableContainer component={Paper} sx={{ mb: 1 }}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Field Name</TableCell>
+                        <TableCell>Display</TableCell>
+                        <TableCell>Enabled</TableCell>
+                        {/* <TableCell>Field Type</TableCell> */}
+                        {/* <TableCell>Is Primary</TableCell> */}
+                        <TableCell>Mandatory</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {renderDetailRows(
+                        currentSection.visit_form || [],
+                        (index, field, value) =>
+                          handleDetailChange('visit_form', index, field, value),
+                        (index) => handleDeleteDetail('visit_form', index),
+                        true,
+                        true,
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                <MuiButton size="small" onClick={() => handleAddDetail('visit_form')}>
+                  Add New
+                </MuiButton>
+              </Box>
+            </Grid>
+            <Grid size={12}>
+              <Box mt={1}>
+                {/* <Typography variant="subtitle1" fontWeight={600}>
+                  Visit Form
+                </Typography> */}
+                <Typography variant="subtitle1" fontWeight={600}>
+                  Documents
+                </Typography>
+                <CustomSelect
+                  id="visitor_type_documents"
+                  name="visitor_type_documents"
+                  value={
+                    currentSection.foreign_id ?? currentSection.visit_form?.[0]?.document_id ?? ''
+                  }
+                  onChange={(e: React.ChangeEvent<{ value: unknown }>) =>
+                    handleCustomDocumentChange(e, 'visit_form', 0)
+                  }
+                  fullWidth
+                  required
+                  variant="outlined"
+                  renderValue={(selected: any) => {
+                    // selected bisa berupa id atau object { document_id }
+                    const selectedId =
+                      typeof selected === 'object' && selected !== null
+                        ? (selected as any).document_id
+                        : selected;
+                    const docName = document.find((doc) => doc.id === selectedId)?.name;
+                    return docName ?? 'Pilih Dokumen';
+                  }}
+                >
+                  {document.map((item) => (
+                    <MenuItem key={item.id} value={item.id}>
+                      {item.name}
+                    </MenuItem>
+                  ))}
+                </CustomSelect>
+              </Box>
+            </Grid>
+          </>
+        )}
       </div>
     );
   };
 
-  const allSteps = ['Visitor Type Info', ...dynamicSteps];
-  const isFinalStep = activeStep === allSteps.length - 1;
+  // const allSteps = ['Visitor Type Info', ...dynamicSteps];
   const totalSteps = 1 + draggableSteps.length;
   const isLastStep = activeStep === totalSteps - 1;
 
@@ -1219,13 +1442,16 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
 
   useEffect(() => {
     if (Array.isArray(formData?.section_page_visitor_types)) {
-      const mappedSections = formData.section_page_visitor_types.map((s, idx) => ({
-        ...s,
-        sort: s.sort ?? idx,
-        visit_form: s.visit_form || [],
-        pra_form: s.pra_form || null,
-        checkout_form: s.checkout_form || null,
-      }));
+      const mappedSections = formData.section_page_visitor_types.map((section, idx) => {
+        const existingSection = sectionsData.find((s) => s.name === section.name);
+        return {
+          ...section,
+          sort: section.sort ?? idx,
+          visit_form: section.visit_form ?? existingSection?.visit_form ?? [],
+          pra_form: section.pra_form ?? existingSection?.pra_form ?? [],
+          checkout_form: section.checkout_form ?? existingSection?.checkout_form ?? [],
+        };
+      });
 
       setSectionsData(mappedSections);
 
@@ -1235,28 +1461,20 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     }
   }, [formData?.section_page_visitor_types]);
 
-  // if (!draggableSteps || draggableSteps.length === 0) {
-  //   return (
-  //     <Box display="flex" justifyContent="center" alignItems="center" minHeight="120px">
-  //       <CircularProgress size={32} />
-  //     </Box>
-  //   );
-  // }
-
   return (
     <>
       <form onSubmit={handleOnSubmit}>
         <Grid size={12}>
           <Alert severity={alertType}>{alertMessage}</Alert>
         </Grid>
-        <Box width="100%">
+        <Box width="100%" sx={{ overflow: 'visible' }}>
           <DragDropContext onDragEnd={handleDragEnd}>
             <Droppable
               droppableId="stepper"
               direction="horizontal"
               isDropDisabled={false}
               isCombineEnabled={false}
-              ignoreContainerClipping={false}
+              ignoreContainerClipping={true}
             >
               {(provided) => (
                 <div
@@ -1266,6 +1484,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                     display: 'flex',
                     justifyContent: 'center',
                     padding: '16px 0',
+                    overflowX: 'auto',
                   }}
                 >
                   <Stepper
@@ -1344,8 +1563,13 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                           >
                             <Box
                               sx={{
-                                backgroundColor: snapshot.isDragging ? '#1976d2' : '#e3f2fd',
-                                color: snapshot.isDragging ? '#fff' : '#000',
+                                backgroundColor: snapshot.isDragging
+                                  ? '#1976d2'
+                                  : activeStep === index + 1
+                                  ? 'primary.main'
+                                  : '#9e9e9e',
+                                color:
+                                  snapshot.isDragging || activeStep === index + 1 ? '#fff' : '#fff',
                                 width: 30,
                                 height: 30,
                                 borderRadius: '50%',
@@ -1354,9 +1578,10 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                                 justifyContent: 'center',
                                 mb: 0.5,
                                 fontWeight: 'bold',
-                                border: snapshot.isDragging
-                                  ? '2px solid #1976d2'
-                                  : '1px solid #33393dff',
+                                // border:
+                                //   activeStep === index + 1
+                                //     ? '2px solid #1976d2'
+                                //     : '1px solid #33393dff',
                                 transition: 'all 0.2s ease',
                                 marginRight: -2,
                               }}
@@ -1364,16 +1589,14 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                               {index + 2}
                             </Box>
                             <StepLabel
-                              // onClick={() => setActiveStep(index + 1)}
                               sx={{
                                 fontSize: '0.875rem',
-                                fontWeight: activeStep === index + 1 ? 'bold' : 'bold',
+                                fontWeight: activeStep === index + 1 ? 'bold' : 'normal',
                                 color: activeStep === index + 1 ? 'primary.main' : 'text.secondary',
                                 textAlign: 'center',
                                 px: 1,
-                                cursor: 'pointer', // <-- tambahkan agar terasa clickable
+                                cursor: 'pointer',
                                 marginLeft: 1.25,
-                                // margintop important
                                 marginTop: -1.25,
                               }}
                             >

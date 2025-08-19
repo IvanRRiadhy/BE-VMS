@@ -3,13 +3,15 @@ import BlankCard from 'src/components/shared/BlankCard';
 import { Stack } from '@mui/system';
 import React from 'react';
 import { TablerIconsProps } from '@tabler/icons-react';
+import { useState } from 'react';
 
 interface CardItem {
   title: string;
   subTitle: string;
-  subTitleSetting: number | string;
+  subTitleSetting?: number | string;
   color?: string;
   icon?: React.FC<TablerIconsProps>;
+  onIconClick?: (item: CardItem) => Promise<void> | void;
 }
 
 interface TopCardsProps {
@@ -23,6 +25,17 @@ const defaultColor = '#FFFFFF';
 
 const TopCard: React.FC<TopCardsProps> = ({ items, onImageClick, cardMarginBottom }) => {
   const smSize = 12 / items.length;
+  const [spinning, setSpinningIndex] = useState<number | null>(null);
+  const handleIconClick = async (item: CardItem, index: number) => {
+    if (!item.onIconClick) return;
+    setSpinningIndex(index); // mulai animasi
+
+    try {
+      await item.onIconClick(item); // jalankan callback
+    } finally {
+      setSpinningIndex(null); // berhenti animasi
+    }
+  };
 
   return (
     <Grid2 container spacing={3}>
@@ -33,7 +46,7 @@ const TopCard: React.FC<TopCardsProps> = ({ items, onImageClick, cardMarginBotto
 
         return (
           <Grid2
-            size={{ xs: 12, sm: smSize }}
+            size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
             key={index}
             sx={{ display: 'flex', marginBottom: cardMarginBottom }}
           >
@@ -59,13 +72,17 @@ const TopCard: React.FC<TopCardsProps> = ({ items, onImageClick, cardMarginBotto
                       {card.icon && (
                         <Box
                           sx={{
-                            backgroundColor: '#5c87ff', // ganti warna sesuai tema
+                            backgroundColor: '#5c87ff',
                             borderRadius: '50%',
                             padding: 1,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
+                            cursor: card.onIconClick ? 'pointer' : 'default',
+                            transition: 'transform 0.8s linear',
+                            transform: spinning === index ? 'rotate(360deg)' : 'rotate(0deg)',
                           }}
+                          onClick={() => handleIconClick(card, index)}
                         >
                           <card.icon size={24} color="#FFFF" />
                         </Box>

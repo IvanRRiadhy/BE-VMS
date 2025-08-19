@@ -14,6 +14,14 @@ export const DocumentItemSchema = z.object({
 })
 export type Item = z.infer<typeof DocumentItemSchema>;
 
+export type GetAllDocumentResponse = {
+    status: string;
+    status_code: number;
+    title: string;
+    msg: string;
+    collection: Item[];
+};
+
 //GET
 export type GetAllDocumentPaginationResponse = {
     RecordsTotal: number;
