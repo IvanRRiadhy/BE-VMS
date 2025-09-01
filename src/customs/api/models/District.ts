@@ -86,6 +86,17 @@ export interface CreateDistrictResponse {
   collection: {
     code: string;
     name: string;
+    host: string;
     id: string;
   };
+}
+
+
+// get by id
+export interface GetDistrictByIdResponse{
+  status: string; // "success"
+  status_code: number; // 200
+  title: string;
+  msg: string;
+  collection: Item | null;
 }

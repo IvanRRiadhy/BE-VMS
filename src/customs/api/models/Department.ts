@@ -1,5 +1,13 @@
 import { z } from 'zod';
 
+// GET ALL PAGINATION
+export type Item = {
+  code: string;
+  name: string;
+  host: string;
+  id: string;
+};
+
 // UPDATE
 export interface UpdateDepartmentRequest {
   code: string;
@@ -15,6 +23,7 @@ export interface UpdateDepartmentResponse {
   collection: {
     code: string;
     name: string;
+    host: string;
     id: string;
   };
 }
@@ -36,14 +45,6 @@ export type DeleteDepartmentResponse<T = any> = {
   title: string;
   msg: string;
   collection: T | null;
-};
-
-// GET ALL PAGINATION
-export type Item = {
-  code: string;
-  name: string;
-  host: string;
-  id: string;
 };
 
 export type GetAllDepartmetsPaginationResponse = {
@@ -80,6 +81,7 @@ export interface CreateDepartmentResponse {
   collection: {
     code: string;
     name: string;
+    host: string;
     id: string;
   };
 }

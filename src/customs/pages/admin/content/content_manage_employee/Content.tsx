@@ -65,8 +65,8 @@ type EnableField = {
   organization_id: boolean;
   department_id: boolean;
   district_id: boolean;
-  access_area: boolean;
-  access_area_special: boolean;
+  // access_area: boolean;
+  // access_area_special: boolean;
 };
 
 interface OptionItem {
@@ -97,23 +97,23 @@ const Content = () => {
   const [departmentData, setDepartmentData] = useState<OptionItem[]>([]);
   const [districtData, setDistrictData] = useState<OptionItem[]>([]);
 
-  const [filters, setFilters] = useState({
-    // joinStart: '',
+  const [filters, setFilters] = useState<Filters>({
+    joinStart: '',
     // joinEnd: '',
     // exitStart: '',
-    // exitEnd: '',
+    exitEnd: '',
+    gender: 0,
+    statusEmployee: 0,
     organization: '',
     department: '',
     district: '',
-    // gender: '',
-    // status: '',
   });
 
   const cards = [
     {
       title: 'Total Employee',
       icon: IconUsers,
-      subTitle: `${tableData.length}`,
+      subTitle: `${totalFilteredRecords}`,
       subTitleSetting: 10,
       color: 'none',
     },
@@ -126,6 +126,11 @@ const Content = () => {
       setLoading(true);
       try {
         const start = page * rowsPerPage;
+        const toISODateStart = (d?: string) =>
+          d ? new Date(d + 'T00:00:00').toISOString() : undefined;
+        const toISODateEnd = (d?: string) =>
+          d ? new Date(d + 'T23:59:59').toISOString() : undefined;
+
         const responseGetAll = await getAllEmployee(token);
         const responseEmployee = await getAllEmployeePagination(
           token,
@@ -162,42 +167,59 @@ const Content = () => {
             {},
           );
 
-          const employeeRes = await getAllEmployeePaginationFilterMore(
-            token,
-            start,
-            rowsPerPage,
-            sortColumn,
-            searchKeyword,
-            // undefined, // gender
-            // undefined, // joinStart
-            // undefined, // joinEnd
-            // undefined, // exitStart
-            // undefined, // exitEnd
-            // undefined, // statusEmployee
-            // undefined, // isHead
-            String(filters.organization), // ✅ sudah ID
-            String(filters.district),
-            String(filters.department),
-          );
+          let employeeRes: any;
+          try {
+            employeeRes = await getAllEmployeePaginationFilterMore(
+              token,
+              start,
+              rowsPerPage,
+              sortColumn,
+              searchKeyword,
+              filters.gender === 0 ? undefined : filters.gender,
+              filters.joinStart,
+              filters.exitEnd,
+              filters.statusEmployee === 0 ? undefined : filters.statusEmployee,
+              String(filters.organization),
+              String(filters.district),
+              String(filters.department),
+            );
+          } catch (err: any) {
+            // ←— JIKA HTTP 404, KOSONGKAN STATE & KELUAR
+            if (err?.response?.status === 404 || err?.status === 404) {
+              setTableData([]);
+              setTableRowEmployee([]);
+              setTotalRecords(0);
+              setTotalFilteredRecords(0);
+              setIsDataReady(true);
+              return; // (finally di luar tetap setLoading(false))
+            }
+            throw err; // error lain biar ditangani catch luar
+          }
 
-          // Map organization_id to organization_name and remove organization_id
-          // const mappedEmployees = responseEmployee.collection.map((emp: any) => {
-          //   return {
-          //     ...emp, // Jangan exclude field ID
-          //     organization_name: orgMap[String(emp.organization_id)] || 'Unknown Organization',
-          //     department_name: deptMap[String(emp.department_id)] || 'Unknown Department',
-          //     district_name: distMap[String(emp.district_id)] || 'Unknown District',
-          //   };
-          // });
-          //  Remninder menggunakan GetAll bukan pagination
-          setTableData(employeeRes.collection);
-          setTotalRecords(responseEmployee.RecordsTotal);
-          setTotalFilteredRecords(responseEmployee.RecordsFiltered);
-          setOrganizationData(organization.collection ?? []);
-          setDepartmentData(department.collection ?? []);
-          setDistrictData(district.collection ?? []);
+          // Normalisasi payload yang mengembalikan body 200 tapi isinya "not_found"
+          const safeCollection = Array.isArray(employeeRes?.collection)
+            ? employeeRes.collection
+            : [];
+          const isNotFound =
+            employeeRes?.status_code === 404 ||
+            employeeRes?.status === 'not_found' ||
+            safeCollection.length === 0;
 
-          const rows = employeeRes.collection.map((item) => ({
+          if (isNotFound) {
+            setTableData([]);
+            setTableRowEmployee([]);
+            setTotalRecords(0);
+            setTotalFilteredRecords(0);
+            setIsDataReady(true);
+            return;
+          }
+
+          // Lanjut mapping seperti biasa
+          setTableData(safeCollection);
+          setTotalRecords(employeeRes?.RecordsTotal ?? safeCollection.length ?? 0);
+          setTotalFilteredRecords(employeeRes?.RecordsFiltered ?? safeCollection.length ?? 0);
+
+          const rows = safeCollection.map((item: any) => ({
             id: item.id,
             name: item.name,
             faceimage: item.faceimage,
@@ -205,10 +227,8 @@ const Content = () => {
             department: deptMap[String(item.department_id)] || 'Unknown Department',
             district: distMap[String(item.district_id)] || 'Unknown District',
           }));
-          if (rows) {
-            setTableRowEmployee(rows);
-            setIsDataReady(true);
-          }
+          setTableRowEmployee(rows);
+          setIsDataReady(true);
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -218,7 +238,7 @@ const Content = () => {
     };
     fetchData();
     console.log('Fetching data: ', tableData);
-  }, [token, page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword, filters]);
+  }, [token, page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword]);
 
   const [initialFormData, setInitialFormData] = React.useState<CreateEmployeeRequest>(() => {
     const saved = localStorage.getItem('unsavedEmployeeData');
@@ -398,7 +418,8 @@ const Content = () => {
   };
 
   const handleApplyFilter = () => {
-    setRefreshTrigger((prev) => prev + 1); // untuk trigger ulang useEffect
+    setPage(0);
+    setRefreshTrigger((prev) => prev + 1);
   };
 
   const [enabledFields, setEnabledFields] = React.useState<EnableField>({
@@ -406,8 +427,6 @@ const Content = () => {
     organization_id: false,
     department_id: false,
     district_id: false,
-    access_area: false,
-    access_area_special: false,
   });
 
   const handleBatchEdit = (rows: any[]) => {
@@ -418,7 +437,16 @@ const Content = () => {
   };
 
   const handleSuccess = () => {
+    // refresh table dsb
     setRefreshTrigger((prev) => prev + 1);
+
+    // <<— penting: set baseline = current form
+    setInitialFormData((_) => formDataAddEmployee);
+
+    // opsional: bersihkan atau sinkronkan draft di localStorage
+    // localStorage.setItem('unsavedEmployeeData', JSON.stringify(formDataAddEmployee));
+    // atau kalau tidak mau simpan draft:
+    localStorage.removeItem('unsavedEmployeeData');
   };
   // handle dialog close
   const handleDialogClose = (_event?: object, reason?: string) => {
@@ -444,7 +472,7 @@ const Content = () => {
           <Grid container spacing={3}>
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
-              <TopCard items={cards} />
+              <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
             </Grid>
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
@@ -459,7 +487,7 @@ const Content = () => {
                   isHaveSearch={true}
                   isHaveImage={true}
                   isHaveFilter={true}
-                  isHaveExportPdf={true}
+                  isHaveExportPdf={false}
                   isHavePagination={true}
                   defaultRowsPerPage={rowsPerPage}
                   rowsPerPageOptions={[5, 10, 20, 50, 100]}
@@ -518,7 +546,7 @@ const Content = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: 4,
+            padding: 2,
           }}
         >
           {isBatchEdit ? 'Batch Edit' : edittingId ? 'Edit' : 'Add'} Employee
@@ -574,9 +602,13 @@ const Content = () => {
 export default Content;
 
 interface Filters {
+  gender: number;
   organization: string;
   department: string;
   district: string;
+  joinStart: string;
+  exitEnd: string;
+  statusEmployee: number;
 }
 
 type FilterMoreContentProps = {
@@ -597,15 +629,30 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
   districtData,
 }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { id, value } = e.target;
-    setFilters((prev) => ({
-      ...prev,
-      [id as keyof Filters]: value,
-    }));
+    const { id, value, name } = e.target as any;
+    const key = (id || name) as keyof Filters;
+    setFilters((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') onApplyFilter();
+  };
+
+  const initialFilters: Filters = {
+    gender: 0,
+    organization: '',
+    department: '',
+    district: '',
+    joinStart: '',
+    exitEnd: '',
+    statusEmployee: 0,
   };
 
   return (
-    <Box sx={{ padding: 3, margin: 1.5, boxShadow: 0, borderRadius: 2 }}>
+    <Box
+      sx={{ padding: { xs: 0, lg: 3 }, margin: 1.5, boxShadow: 0, borderRadius: 2 }}
+      onKeyDown={handleKeyDown}
+    >
       <Typography variant="h6" gutterBottom>
         Employee Filter
       </Typography>
@@ -614,7 +661,7 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
         {/* Join Dates */}
         <Grid2 size={{ xs: 12, sm: 6 }}>
           <CustomFormLabel htmlFor="joinStart">
-            <Typography variant="caption">Join Start :</Typography>
+            <Typography variant="caption">Join Start</Typography>
           </CustomFormLabel>
           <CustomTextField
             InputProps={{
@@ -626,9 +673,11 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
             type="date"
             fullWidth
             variant="outlined"
+            value={filters.joinStart}
+            onChange={handleChange}
           />
         </Grid2>
-        <Grid2 size={{ xs: 12, sm: 6 }}>
+        {/* <Grid2 size={{ xs: 12, sm: 6 }}>
           <CustomFormLabel htmlFor="joinEnd">
             <Typography variant="caption">Join End :</Typography>
           </CustomFormLabel>
@@ -643,10 +692,10 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
             fullWidth
             variant="outlined"
           />
-        </Grid2>
+        </Grid2> */}
 
         {/* Exit Dates */}
-        <Grid2 size={{ xs: 12, sm: 6 }}>
+        {/* <Grid2 size={{ xs: 12, sm: 6 }}>
           <CustomFormLabel htmlFor="exitStart">
             <Typography variant="caption">Exit Start :</Typography>
           </CustomFormLabel>
@@ -661,10 +710,10 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
             fullWidth
             variant="outlined"
           />
-        </Grid2>
+        </Grid2> */}
         <Grid2 size={{ xs: 12, sm: 6 }}>
           <CustomFormLabel htmlFor="exitEnd">
-            <Typography variant="caption">Exit End :</Typography>
+            <Typography variant="caption">Exit End</Typography>
           </CustomFormLabel>
           <CustomTextField
             InputProps={{
@@ -676,6 +725,8 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
             type="date"
             fullWidth
             variant="outlined"
+            value={filters.exitEnd}
+            onChange={handleChange}
           />
         </Grid2>
 
@@ -748,7 +799,7 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
         </Grid2>
         <Grid2 size={{ xs: 12, sm: 4 }}>
           <CustomFormLabel htmlFor="district">
-            <Typography variant="caption">District :</Typography>
+            <Typography variant="caption">District</Typography>
           </CustomFormLabel>
           <CustomTextField
             InputProps={{
@@ -783,21 +834,21 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
         {/* Gender Radio Buttons */}
         <Grid2 size={{ xs: 12, sm: 6 }}>
           <CustomFormLabel>
-            <Typography variant="caption">Gender :</Typography>
+            <Typography variant="caption">Gender</Typography>
           </CustomFormLabel>
           <FormControl>
-            <RadioGroup row name="gender">
-              <FormControlLabel
-                sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
-                value="male"
-                control={<CustomRadio />}
-                label="Male"
-              />
+            <RadioGroup row name="gender" value={String(filters.gender)} onChange={handleChange}>
               <FormControlLabel
                 sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
                 value="female"
                 control={<CustomRadio />}
                 label="Female"
+              />
+              <FormControlLabel
+                sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
+                value="male"
+                control={<CustomRadio />}
+                label="Male"
               />
             </RadioGroup>
           </FormControl>
@@ -806,24 +857,48 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
         {/* Status Radio Buttons */}
         <Grid2 size={{ xs: 12, sm: 6 }}>
           <CustomFormLabel>
-            <Typography variant="caption">Status Employee :</Typography>
+            <Typography variant="caption">Status Employee</Typography>
           </CustomFormLabel>
           <FormControl>
-            <RadioGroup row name="status">
+            <RadioGroup
+              row
+              name="statusEmployee"
+              value={String(filters.statusEmployee)} // RadioGroup butuh string
+              onChange={handleChange}
+            >
               <FormControlLabel
                 sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
-                value="active"
+                value="Active"
                 control={<CustomRadio />}
                 label="Active"
               />
               <FormControlLabel
                 sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
-                value="non-active"
+                value="Non Active"
                 control={<CustomRadio />}
                 label="Non Active"
               />
             </RadioGroup>
           </FormControl>
+        </Grid2>
+        {/* Actions */}
+        <Grid2 size={{ xs: 12 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 1,
+              justifyContent: 'flex-end',
+              mt: 1,
+              alignItems: 'center',
+            }}
+          >
+            <Button variant="outlined" onClick={() => setFilters(initialFilters)}>
+              Reset
+            </Button>
+            <Button variant="contained" onClick={onApplyFilter}>
+              Apply
+            </Button>
+          </Box>
         </Grid2>
       </Grid2>
     </Box>

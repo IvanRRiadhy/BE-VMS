@@ -30,7 +30,11 @@ import {
 } from 'src/customs/api/models/VisitorCard';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { useRef } from 'react';
-import { getAllVisitorCardPagination, deleteVisitorCard } from 'src/customs/api/admin';
+import {
+  getAllVisitorCardPagination,
+  deleteVisitorCard,
+  getAllVisitorCard,
+} from 'src/customs/api/admin';
 import {
   showConfirmDelete,
   showErrorAlert,
@@ -95,11 +99,13 @@ const Content = () => {
   const [importErrorTitle, setImportErrorTitle] = React.useState<string>('');
   const [importErrorMsg, setImportErrorMsg] = React.useState<string>('');
   const [importErrorRows, setImportErrorRows] = React.useState<ImportErrorRow[]>([]);
+  const [cardActiveCount, setCardActiveCount] = useState(0);
   const cards = [
     {
       title: 'Total Card',
       icon: IconCards,
-      subTitle: `${tableVisitorCard.length}`,
+      subTitle: `${totalFilteredRecords}`,
+      subTitleSetting: tableVisitorCard.length,
       color: 'none',
     },
     {
@@ -119,17 +125,10 @@ const Content = () => {
     {
       title: 'Total Card Active',
       icon: IconCircleCheck,
-      subTitle: `${tableVisitorCard.filter((v) => v.card_status === 1).length}`,
+      subTitle: `${cardActiveCount}`,
       subTitleSetting: tableVisitorCard.filter((v) => v.card_status === 1).length,
       color: 'none',
     },
-    // {
-    //   title: 'Total Card Non Active',
-    //   icon: IconCircleX,
-    //   subTitle: `${tableVisitorCard.filter((v) => v.card_status === 0).length}`,
-    //   subTitleSetting: tableVisitorCard.filter((v) => v.card_status === 0).length,
-    //   color: 'none',
-    // },
   ];
 
   useEffect(() => {
@@ -138,6 +137,7 @@ const Content = () => {
       setLoading(true);
       try {
         const start = page * rowsPerPage;
+        const res = await getAllVisitorCard(token);
         const response = await getAllVisitorCardPagination(
           token,
           start,
@@ -147,9 +147,13 @@ const Content = () => {
         );
         setTotalRecords(response.RecordsTotal);
         setTotalFilteredRecords(response.RecordsFiltered);
+
         if (response) {
           setTableVisitorCard(response.collection);
           setIsDataReady(true);
+          const activeCount = res.collection.filter((item: any) => item.card_status === 1).length;
+
+          setCardActiveCount(activeCount);
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -176,9 +180,18 @@ const Content = () => {
     return saved ? JSON.parse(saved) : CreateVisitorCardRequestSchema.parse({});
   });
 
-  const defaultFormData = CreateVisitorCardRequestSchema.parse({});
+  const [initialFormData, setInitialFormData] = useState<CreateVisitorCardRequest>(
+    CreateVisitorCardRequestSchema.parse({}),
+  );
 
-  const isFormChanged = JSON.stringify(formAddVisitorCard) !== JSON.stringify(defaultFormData);
+  const isFormChanged = React.useMemo(
+    () => JSON.stringify(formAddVisitorCard) !== JSON.stringify(initialFormData),
+    [formAddVisitorCard, initialFormData],
+  );
+
+  // const defaultFormData = CreateVisitorCardRequestSchema.parse({});
+
+  // const isFormChanged = JSON.stringify(formAddVisitorCard) !== JSON.stringify(defaultFormData);
 
   useEffect(() => {
     if (Object.keys(formAddVisitorCard).length > 0) {
@@ -188,14 +201,6 @@ const Content = () => {
 
   // Handle Add Visitor Card
   const handleAddVisitorCard = useCallback(() => {
-    // try {
-    //   const freshForm = CreateVisitorCardRequestSchema.parse({});
-    //   setFormAddVisitorCard(freshForm);
-    //   localStorage.setItem('unsavedVisitorCardData', JSON.stringify(freshForm));
-    //   handleOpenDialog();
-    // } catch (error) {
-    //   console.error('Error adding visitor card:', error);
-    // }
     let saved = localStorage.getItem('unsavedVisitorCardData');
     let freshForm;
     if (saved) {
@@ -207,6 +212,7 @@ const Content = () => {
 
     setEdittingId('');
     setFormAddVisitorCard(freshForm);
+    setInitialFormData(freshForm);
     setPendingEditId(null);
     handleOpenDialog();
   }, []);
@@ -236,6 +242,7 @@ const Content = () => {
       const parsedData = CreateVisitorCardRequestSchema.parse(existingData);
       setEdittingId(id);
       setFormAddVisitorCard(parsedData);
+      setInitialFormData(parsedData);
       handleOpenDialog();
       return;
     }
@@ -317,46 +324,6 @@ const Content = () => {
     is_employee_used: false,
   });
 
-  // const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   const file = e.target.files?.[0];
-  //   if (!file) return;
-
-  //   const formData = new FormData();
-  //   formData.append('batch', file); // pastikan backend menerima 'file' sebagai key
-
-  //   try {
-  //     setLoading(true);
-  //     const response = await fetch('http://192.168.1.116:8000/api/card/create-batch', {
-  //       method: 'POST',
-  //       headers: {
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //       body: formData,
-  //     });
-
-  //     const text = await response.text(); // ✅ ini aman untuk semua format
-
-  //     let result: any;
-  //     try {
-  //       result = JSON.parse(text); // ✅ hanya parse jika memang JSON
-  //     } catch (err) {
-  //       throw new Error(`Unexpected response: ${text}`);
-  //     }
-
-  //     if (!response.ok) throw new Error(result.message || 'Import failed.');
-
-  //     showSuccessAlert('Success', 'Visitor Card imported successfully');
-  //     setRefreshTrigger((prev) => prev + 1);
-  //   } catch (err: any) {
-  //     console.error('Import error:', err);
-  //     showErrorAlert('Error', err.message || 'Failed to import data.');
-  //   } finally {
-  //     setLoading(false);
-  //     // Reset file input agar bisa upload ulang file yang sama jika perlu
-  //     e.target.value = '';
-  //   }
-  // };
-
   const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -408,28 +375,39 @@ const Content = () => {
     localStorage.removeItem('unsavedVisitorCardData');
     if (pendingEditId) {
       const existingData = tableVisitorCard.find((item) => item.id === pendingEditId);
-
+      const parsed = CreateVisitorCardRequestSchema.parse(existingData ?? {});
       setEdittingId(pendingEditId);
-      setFormAddVisitorCard(CreateVisitorCardRequestSchema.parse(existingData));
-      localStorage.setItem(
-        'unsavedVisitorCardData',
-        JSON.stringify({
-          ...CreateVisitorCardRequestSchema.parse(existingData),
-          id: pendingEditId,
-        }),
-      );
+      setFormAddVisitorCard(parsed);
+      +setInitialFormData(parsed); // ⬅️ baseline baru
       setOpenFormCreateVisitorCard(true);
-    } else {
-      setFormAddVisitorCard(CreateVisitorCardRequestSchema.parse({}));
-      handleOpenDialog();
+      setPendingEditId(null);
+      return;
     }
-    setPendingEditId(null);
+
     handleCloseModalCreateVisitorCard();
+    const empty = CreateVisitorCardRequestSchema.parse({});
+    setFormAddVisitorCard(empty);
+    setInitialFormData(empty);
   };
 
   const handleCancelEditDiscard = () => {
     setConfirmDialogOpen(false);
     setPendingEditId(null);
+  };
+
+  const handleRequestClose = (
+    _e?: object,
+    reason?: 'backdropClick' | 'escapeKeyDown' | 'closeButton',
+  ) => {
+    // Kalau user menutup via klik backdrop / ESC dan form sudah berubah → tampilkan konfirmasi
+    if (
+      isFormChanged &&
+      (reason === 'backdropClick' || reason === 'escapeKeyDown' || reason === 'closeButton')
+    ) {
+      setConfirmDialogOpen(true);
+      return;
+    }
+    handleCloseModalCreateVisitorCard();
   };
 
   return (
@@ -439,7 +417,7 @@ const Content = () => {
           <Grid container spacing={3}>
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
-              <TopCard items={cards} />
+              <TopCard items={cards} size={{ xs: 12, lg: 3 }} />
             </Grid>
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
@@ -461,7 +439,7 @@ const Content = () => {
                   isHaveAction={true}
                   isHaveSearch={true}
                   isHaveFilter={true}
-                  isHaveExportPdf={true}
+                  isHaveExportPdf={false}
                   isHaveExportXlf={false}
                   onImportExcel={handleImportExcel}
                   isHaveImportExcel={true}
@@ -477,7 +455,6 @@ const Content = () => {
                   onDelete={(row) => handleDeleteVisitorCard(row.id)}
                   onBatchDelete={handleBatchDelete}
                   onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-                  onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
                   onAddData={() => {
                     handleAddVisitorCard();
                   }}
@@ -556,23 +533,19 @@ const Content = () => {
         </DialogActions>
       </Dialog>
 
-      <Dialog
-        open={openFormCreateVisitorCard}
-        onClose={handleCloseModalCreateVisitorCard}
-        fullWidth
-        maxWidth="md"
-      >
+      <Dialog open={openFormCreateVisitorCard} onClose={handleRequestClose} fullWidth maxWidth="md">
         <DialogTitle display={'flex'} alignItems={'center'} justifyContent={'space-between'}>
           {isBatchEdit ? 'Batch Edit' : edittingId ? 'Edit' : 'Add'} Card
           <IconButton
             aria-label="close"
-            onClick={() => {
-              if (isFormChanged) {
-                setConfirmDialogOpen(true); // ada perubahan, tampilkan dialog konfirmasi
-              } else {
-                handleCloseModalCreateVisitorCard(); // tidak ada perubahan, langsung tutup
-              }
-            }}
+            // onClick={() => {
+            //   if (isFormChanged) {
+            //     setConfirmDialogOpen(true); // ada perubahan, tampilkan dialog konfirmasi
+            //   } else {
+            //     handleCloseModalCreateVisitorCard(); // tidak ada perubahan, langsung tutup
+            //   }
+            // }}
+            onClick={() => handleRequestClose(undefined, 'closeButton')}
           >
             <CloseIcon />
           </IconButton>

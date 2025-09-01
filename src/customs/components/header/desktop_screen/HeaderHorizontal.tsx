@@ -8,6 +8,7 @@ import Profile from 'src/layouts/full/vertical/header/Profile';
 import { AppState } from 'src/store/Store';
 import Logo from '../../logo/Logo';
 import { styled, useMediaQuery, useTheme } from '@mui/material';
+import Language from 'src/layouts/full/vertical/header/Language';
 
 const HeaderHorizontal = () => {
   const lgDown = useMediaQuery((theme: Theme) => theme.breakpoints.down('lg'));
@@ -67,6 +68,7 @@ const HeaderHorizontal = () => {
         {/* Kanan: Mode, Notifikasi, Profile */}
         <Stack spacing={1} direction="row" alignItems="center">
           <Notifications />
+          <Language/>
           <Profile />
         </Stack>
       </ToolbarStyled>

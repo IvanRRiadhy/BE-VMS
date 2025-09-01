@@ -24,6 +24,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Backdrop,
   Button as MuiButton,
 } from '@mui/material';
 import { Box } from '@mui/system';
@@ -76,7 +77,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
   const [activeStep, setActiveStep] = useState(0);
   const [skipped, setSkipped] = useState(new Set<number>());
   const isStepSkipped = (step: number) => skipped.has(step);
-  const [document, setDocument] = useState<any[]>([]);
+  const [documents, setDocument] = useState<any[]>([]);
   const [customField, setCustomField] = useState<any[]>([]);
   const [openCustomFieldModal, setOpenCustomFieldModal] = useState(false);
 
@@ -109,26 +110,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     }));
   };
 
-  // Get Document
-  useEffect(() => {
-    if (!token) return;
-    const fetchData = async () => {
-      const documentRes = await getAllDocument(token);
-      setDocument(documentRes?.collection ?? []);
-    };
-    fetchData();
-  }, [token]);
-
-  // Get Custom Field
-  useEffect(() => {
-    if (!token) return;
-    const fetchData = async () => {
-      const customFieldRes = await getAllCustomFieldPagination(token, 0, 99999, 'id');
-      setCustomField(customFieldRes?.collection ?? []);
-    };
-    fetchData();
-  }, [token]);
-
   const handleOnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -151,10 +132,12 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         status: 1,
         is_document: section.is_document,
         can_multiple_used: section.can_multiple_used,
-        foreign_id:
-          section.is_document && section.visit_form?.[0]?.document_id
-            ? section.visit_form[0].document_id
-            : '',
+        foreign_id: section.is_document
+          ? section.visit_form?.[0]?.document_id ||
+            section.pra_form?.[0]?.document_id ||
+            section.checkout_form?.[0]?.document_id ||
+            null
+          : null,
         visit_form: section.visit_form.map((field) => {
           const matchedField = customField.find((f) => f.id === field.custom_field_id);
           return {
@@ -221,7 +204,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         section_page_visitor_types: transformedSections,
       };
 
-      console.log('Submit data : ', data);
+      console.log('Submit data : ', JSON.stringify(data, null, 2));
 
       const parseData: CreateVisitorTypeRequest = CreateVisitorTypeRequestSchema.parse(data);
 
@@ -236,6 +219,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         setAlertMessage('Visitor type updated successfully!');
       } else {
         await createVisitorType(token, parseData);
+        // setSectionsData([]);
         setAlertType('success');
         setAlertMessage('Visitor type created successfully!');
       }
@@ -442,25 +426,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
   const [dynamicSteps, setDynamicSteps] = useState<string[]>([]);
   const [draggableSteps, setDraggableSteps] = useState<string[]>([]);
 
-  useEffect(() => {
-    // Ambil data lama dari localStorage (jika ada)
-    const stored = localStorage.getItem('unsavedVisitorTypeData');
-    let parsed = {};
-    if (stored) {
-      try {
-        parsed = JSON.parse(stored);
-      } catch {
-        parsed = {};
-      }
-    }
-    // Gabungkan dengan section_page_visitor_types terbaru
-    const updated = {
-      ...parsed,
-      section_page_visitor_types: sectionsData,
-    };
-    localStorage.setItem('unsavedVisitorTypeData', JSON.stringify(updated));
-  }, [sectionsData]);
-
   const handleAddSection = () => {
     if (newSectionName.trim() !== '') {
       const newSection = {
@@ -509,21 +474,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     setSectionsData(reorderedSections);
   };
 
-  useEffect(() => {
-    if (formData.visitor_type_documents && document.length > 0) {
-      const validIds = formData.visitor_type_documents
-        .map((d) => d.document_id)
-        .filter((id) => document.some((doc) => doc.id === id));
-
-      setFormData((prev) => ({
-        ...prev,
-        visitor_type_documents: validIds.map((id) => ({
-          document_id: id,
-        })),
-      }));
-    }
-  }, [document]);
-
   const StepContent = (step: number) => {
     if (step === 0) {
       return (
@@ -533,7 +483,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
               Visitor Type
             </Typography>
             <Grid size={12}>
-              <CustomFormLabel htmlFor="visitor-type" sx={{ mt: 1 }} required>
+              <CustomFormLabel htmlFor="visitor-type" sx={{ mt: 1 }}>
                 Name
               </CustomFormLabel>
               <CustomTextField
@@ -588,11 +538,11 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                   variant="outlined"
                   renderValue={(selected: any) =>
                     (selected as string[])
-                      .map((id) => document.find((doc) => doc.id === id)?.name ?? id)
+                      .map((id) => documents.find((doc) => doc.id === id)?.name ?? id)
                       .join(', ')
                   }
                 >
-                  {document?.map((item: any) => (
+                  {documents?.map((item: any) => (
                     <MenuItem key={item.id} value={item.id}>
                       {item.name}
                     </MenuItem>
@@ -1032,6 +982,50 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     const currentSection = sectionsData[step - 1]; // dikurangi 1 karena step 0 khusus
     if (!currentSection) return null;
 
+    // const handleCustomDocumentChange = (
+    //   e: React.ChangeEvent<{ value: unknown }>,
+    //   formType: 'visit_form' | 'pra_form' | 'checkout_form',
+    //   index: number,
+    // ) => {
+    //   const selectedDocId = e.target.value as string;
+
+    //   setSectionsData((prevSections) => {
+    //     const newSections = [...prevSections];
+    //     const currentIndex = step - 1;
+
+    //     if (!newSections[currentIndex]) return prevSections;
+
+    //     // ✅ Selalu update foreign_id
+    //     newSections[currentIndex].foreign_id = selectedDocId;
+
+    //     // pastikan array ada
+    //     if (!newSections[currentIndex][formType]) {
+    //       newSections[currentIndex][formType] = [];
+    //     }
+
+    //     // update / inisialisasi field detail
+    //     if (!newSections[currentIndex][formType][index]) {
+    //       newSections[currentIndex][formType][index] = {
+    //         sort: index,
+    //         short_name: '',
+    //         long_display_text: '',
+    //         is_enable: false,
+    //         is_primary: formType === 'visit_form',
+    //         field_type: 9,
+    //         remarks: '',
+    //         mandatory: false,
+    //         custom_field_id: '',
+    //         multiple_option_fields: [],
+    //         document_id: selectedDocId, // mirror ke sini
+    //       };
+    //     } else {
+    //       newSections[currentIndex][formType][index].document_id = selectedDocId;
+    //     }
+
+    //     return newSections;
+    //   });
+    // };
+
     const handleCustomDocumentChange = (
       e: React.ChangeEvent<{ value: unknown }>,
       formType: 'visit_form' | 'pra_form' | 'checkout_form',
@@ -1039,14 +1033,10 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     ) => {
       const selectedDocId = e.target.value as string;
 
-      // Temukan custom field berdasarkan id dokumen
-      const selectedField = customField.find((field) => field.id === selectedDocId);
-
       setSectionsData((prevSections) => {
         const newSections = [...prevSections];
         const currentIndex = step - 1;
 
-        // Jika section tidak ada, kembalikan original
         if (!newSections[currentIndex]) return prevSections;
 
         if (!newSections[currentIndex][formType]) {
@@ -1054,31 +1044,23 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         }
 
         if (!newSections[currentIndex][formType][index]) {
-          // Jika belum ada data di index, inisialisasi
           newSections[currentIndex][formType][index] = {
             sort: index,
-            short_name: selectedField?.short_name || '',
-            long_display_text: selectedField?.short_name || '',
-            is_enable: selectedField?.is_enable || false,
-            is_primary: true,
-            field_type: selectedField?.field_type || 9,
-            remarks: selectedField?.short_name || '',
-            mandatory: selectedField?.mandatory || false,
-            custom_field_id: selectedField?.id || '',
-            multiple_option_fields: selectedField?.multiple_option_fields ?? [],
-            document_id: selectedDocId,
+            short_name: '',
+            long_display_text: '',
+            is_enable: false,
+            is_primary: formType === 'visit_form',
+            field_type: 9,
+            remarks: '',
+            mandatory: false,
+            custom_field_id: '',
+            multiple_option_fields: [],
+            document_id: selectedDocId, // ✅ simpan document_id
+            foreign_id: selectedDocId, // ✅ foreign_id ikut document_id
           };
         } else {
-          // Update data jika sudah ada
-          const field = newSections[currentIndex][formType][index];
-          if (selectedField) {
-            field.short_name = selectedField.short_name;
-            field.long_display_text = selectedField.short_name;
-            field.field_type = selectedField.field_type;
-            field.custom_field_id = selectedField.id;
-            field.multiple_option_fields = selectedField.multiple_option_fields ?? [];
-          }
-          field.document_id = selectedDocId;
+          newSections[currentIndex][formType][index].document_id = selectedDocId;
+          newSections[currentIndex][formType][index].foreign_id = selectedDocId;
         }
 
         return newSections;
@@ -1150,6 +1132,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                         <TableCell>Display</TableCell>
                         <TableCell>Enabled</TableCell>
                         <TableCell>Mandatory</TableCell>
+                        <TableCell>Action</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -1185,6 +1168,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                         {/* <TableCell>Field Type</TableCell> */}
                         {/* <TableCell >Is Primary</TableCell> */}
                         <TableCell>Mandatory</TableCell>
+                        <TableCell>Action</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -1220,6 +1204,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                         {/* <TableCell>Field Type</TableCell> */}
                         {/* <TableCell>Is Primary</TableCell> */}
                         <TableCell>Mandatory</TableCell>
+                        <TableCell>Action</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -1258,6 +1243,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                         <TableCell>Display</TableCell>
                         <TableCell>Enabled</TableCell>
                         <TableCell>Mandatory</TableCell>
+                        <TableCell>Action</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -1294,6 +1280,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                         {/* <TableCell>Field Type</TableCell> */}
                         {/* <TableCell >Is Primary</TableCell> */}
                         <TableCell>Mandatory</TableCell>
+                        <TableCell>Action</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -1369,6 +1356,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                         {/* <TableCell>Field Type</TableCell> */}
                         {/* <TableCell>Is Primary</TableCell> */}
                         <TableCell>Mandatory</TableCell>
+                        <TableCell>Action</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -1388,20 +1376,55 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                 </MuiButton>
               </Box>
             </Grid>
+
+            {/* pra Form */}
+            <Grid size={12}>
+              <Box mt={3}>
+                <Typography variant="subtitle1" fontWeight={600}>
+                  Pra Form
+                </Typography>
+                <TableContainer component={Paper} sx={{ mb: 1 }}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Field Name</TableCell>
+                        <TableCell>Display</TableCell>
+                        <TableCell>Enabled</TableCell>
+                        {/* <TableCell>Field Type</TableCell> */}
+                        {/* <TableCell>Is Primary</TableCell> */}
+                        <TableCell>Mandatory</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {renderDetailRows(
+                        currentSection.pra_form || [],
+                        (index, field, value) =>
+                          handleDetailChange('pra_form', index, field, value),
+                        (index) => handleDeleteDetail('pra_form', index),
+                        true,
+                        true,
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                <MuiButton size="small" onClick={() => handleAddDetail('pra_form')}>
+                  Add New
+                </MuiButton>
+              </Box>
+            </Grid>
+
             <Grid size={12}>
               <Box mt={1}>
                 {/* <Typography variant="subtitle1" fontWeight={600}>
                   Visit Form
                 </Typography> */}
                 <Typography variant="subtitle1" fontWeight={600}>
-                  Documents
+                  Documents Visit Form
                 </Typography>
                 <CustomSelect
                   id="visitor_type_documents"
-                  name="visitor_type_documents"
-                  value={
-                    currentSection.foreign_id ?? currentSection.visit_form?.[0]?.document_id ?? ''
-                  }
+                  name="visitor_type_documents_visit"
+                  value={String(currentSection.visit_form?.[0]?.document_id || '')}
                   onChange={(e: React.ChangeEvent<{ value: unknown }>) =>
                     handleCustomDocumentChange(e, 'visit_form', 0)
                   }
@@ -1409,17 +1432,44 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                   required
                   variant="outlined"
                   renderValue={(selected: any) => {
-                    // selected bisa berupa id atau object { document_id }
-                    const selectedId =
-                      typeof selected === 'object' && selected !== null
-                        ? (selected as any).document_id
-                        : selected;
-                    const docName = document.find((doc) => doc.id === selectedId)?.name;
-                    return docName ?? 'Pilih Dokumen';
+                    const docName = documents.find((d) => String(d.id) === String(selected))?.name;
+                    return docName ?? 'Pilih Dokumen Visit Form';
                   }}
                 >
-                  {document.map((item) => (
-                    <MenuItem key={item.id} value={item.id}>
+                  {(Array.isArray(documents) ? documents : []).map((item) => (
+                    <MenuItem key={item.id} value={String(item.id)}>
+                      {item.name}
+                    </MenuItem>
+                  ))}
+                </CustomSelect>
+              </Box>
+            </Grid>
+
+            <Grid size={12}>
+              <Box mt={1}>
+                {/* <Typography variant="subtitle1" fontWeight={600}>
+                  Pra Form
+                </Typography> */}
+                <Typography variant="subtitle1" fontWeight={600}>
+                  Documents Pra Form
+                </Typography>
+                <CustomSelect
+                  id="visitor_type_documents"
+                  name="visitor_type_documents_pra"
+                  value={String(currentSection.pra_form?.[0]?.document_id || '')}
+                  onChange={(e: React.ChangeEvent<{ value: unknown }>) =>
+                    handleCustomDocumentChange(e, 'pra_form', 0)
+                  }
+                  fullWidth
+                  required
+                  variant="outlined"
+                  renderValue={(selected: any) => {
+                    const docName = documents.find((d) => String(d.id) === String(selected))?.name;
+                    return docName ?? 'Pilih Dokumen Pra Registration';
+                  }}
+                >
+                  {(Array.isArray(documents) ? documents : []).map((item) => (
+                    <MenuItem key={item.id} value={String(item.id)}>
                       {item.name}
                     </MenuItem>
                   ))}
@@ -1440,6 +1490,76 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     setDraggableSteps([...dynamicSteps]);
   }, [dynamicSteps]);
 
+  // Get Document
+  useEffect(() => {
+    if (!token) return;
+    const fetchData = async () => {
+      const documentRes = await getAllDocument(token);
+      setDocument(documentRes?.collection ?? []);
+    };
+    fetchData();
+
+    console.log('🚀 ~ file: FormVisitorType.tsx ~ line 99 ~ useEffect ~ document', document);
+  }, [token]);
+
+  // Get Custom Field
+  useEffect(() => {
+    if (!token) return;
+    const fetchData = async () => {
+      const customFieldRes = await getAllCustomFieldPagination(token, 0, 99999, 'id');
+      setCustomField(customFieldRes?.collection ?? []);
+    };
+    fetchData();
+  }, [token]);
+
+  useEffect(() => {
+    // Ambil data lama dari localStorage (jika ada)
+    const stored = localStorage.getItem('unsavedVisitorTypeData');
+    let parsed = {};
+    if (stored) {
+      try {
+        parsed = JSON.parse(stored);
+      } catch {
+        parsed = {};
+      }
+    }
+    // Gabungkan dengan section_page_visitor_types terbaru
+    const updated = {
+      ...parsed,
+      section_page_visitor_types: sectionsData,
+    };
+    localStorage.setItem('unsavedVisitorTypeData', JSON.stringify(updated));
+  }, [sectionsData]);
+
+  useEffect(() => {
+    if (formData.visitor_type_documents && documents.length > 0) {
+      const validIds = formData.visitor_type_documents
+        .map((d) => d.document_id)
+        .filter((id) => documents.some((doc) => doc.id === id));
+
+      setFormData((prev) => ({
+        ...prev,
+        visitor_type_documents: validIds.map((id) => ({
+          document_id: id,
+        })),
+      }));
+    }
+  }, [documents]);
+  useEffect(() => {
+    if (formData.visitor_type_documents && documents.length > 0) {
+      const validIds = formData.visitor_type_documents
+        .map((d) => d.document_id)
+        .filter((id) => documents.some((doc) => doc.id === id));
+
+      setFormData((prev) => ({
+        ...prev,
+        visitor_type_documents: validIds.map((id) => ({
+          document_id: id,
+        })),
+      }));
+    }
+  }, [documents]);
+
   useEffect(() => {
     if (Array.isArray(formData?.section_page_visitor_types)) {
       const mappedSections = formData.section_page_visitor_types.map((section, idx) => {
@@ -1450,6 +1570,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
           visit_form: section.visit_form ?? existingSection?.visit_form ?? [],
           pra_form: section.pra_form ?? existingSection?.pra_form ?? [],
           checkout_form: section.checkout_form ?? existingSection?.checkout_form ?? [],
+          foreign_id: section.foreign_id ?? existingSection?.foreign_id ?? undefined,
         };
       });
 
@@ -1639,24 +1760,15 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
           </Box>
         </Box>
       </form>
-      {loading && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            bgcolor: 'rgba(0,0,0,0.4)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 10,
-          }}
-        >
-          <CircularProgress color="inherit" />
-        </Box>
-      )}
+      <Backdrop
+        open={loading}
+        sx={{
+          color: '#fff',
+          zIndex: (theme) => theme.zIndex.drawer + 1, // di atas drawer & dialog
+        }}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
 
       <Dialog open={openModal} onClose={() => setOpenModal(false)} maxWidth="sm" fullWidth>
         <DialogTitle>New Section Page Visitor Type</DialogTitle>

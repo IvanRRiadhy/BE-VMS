@@ -94,9 +94,9 @@ export const CreateSiteRequestSchema = z.object({
     .optional(),
 });
 
-export const EditSiteRequestSchema = CreateSiteRequestSchema.extend({
-  id: z.string(),
-});
+// export const EditSiteRequestSchema = CreateSiteRequestSchema.extend({
+//   id: z.string(),
+// });
 
 export type CreateSiteRequest = z.infer<typeof CreateSiteRequestSchema>;
 

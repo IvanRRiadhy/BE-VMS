@@ -59,6 +59,39 @@ export const CreateVisitorCardRequestSchema = z.object({
 
 export type CreateVisitorCardRequest = z.infer<typeof CreateVisitorCardRequestSchema>;
 
+export const CreateVisitorCardSubmitSchema = z
+  .object({
+    name: z.string().min(1, { message: 'Name is required' }),
+    remarks: z.string().min(1, { message: 'Remarks is required' }),
+
+    // toggle
+    is_employee_used: z.boolean().optional(),
+    employee_id: z.string().nullable().optional(),
+
+    // multi-site toggle
+    is_multi_site: z.boolean().optional(),
+    registered_site: z.string().nullable().optional(),
+  })
+  .superRefine((data, ctx) => {
+    // 🔹 Validasi employee
+    if (data.is_employee_used && !data.employee_id) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Employee is required',
+        path: ['employee_id'], // taruh error di field employee_id
+      });
+    }
+
+    // 🔹 Validasi site space
+    if (!data.is_multi_site && !data.registered_site) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Site Space is required',
+        path: ['registered_site'],
+      });
+    }
+  });
+
 export const UpdateVisitorCardRequestSchema = z.object({
   remarks: z.string().optional(),
   name: z.string().optional(),

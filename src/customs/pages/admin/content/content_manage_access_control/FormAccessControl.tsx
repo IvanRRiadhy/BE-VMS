@@ -8,6 +8,7 @@ import {
   Switch,
   Paper,
   Button as MuiButton,
+  Backdrop,
   MenuItem,
 } from '@mui/material';
 import { Box } from '@mui/system';
@@ -313,29 +314,26 @@ const FormAccessControl = ({
           </Grid>
         </Grid>
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-          <Button color="primary" variant="contained" type="submit" disabled={loading} size="large">
+          <Button
+            color="primary"
+            variant="contained"
+            type="submit"
+            disabled={loading}
+            size="medium"
+          >
             {loading ? 'Submitting...' : 'Submit'}
           </Button>
         </Box>
       </form>
-      {loading && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            bgcolor: 'rgba(0,0,0,0.4)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 10,
-          }}
-        >
-          <CircularProgress color="inherit" />
-        </Box>
-      )}
+      <Backdrop
+        open={loading}
+        sx={{
+          color: '#fff',
+          zIndex: (theme) => theme.zIndex.drawer + 1, // di atas drawer & dialog
+        }}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
     </>
   );
 };

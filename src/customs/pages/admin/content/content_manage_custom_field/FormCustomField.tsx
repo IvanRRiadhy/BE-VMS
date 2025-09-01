@@ -16,6 +16,7 @@ import {
   TableRow,
   TableCell,
   TableBody,
+  Backdrop,
 } from '@mui/material';
 import { Box } from '@mui/system';
 import React, { useEffect, useState, useRef } from 'react';
@@ -130,7 +131,7 @@ const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCu
     } finally {
       setTimeout(() => {
         setLoading(false);
-      }, 800);
+      }, 600);
     }
   };
 
@@ -337,7 +338,7 @@ const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCu
           </Grid>
         </Grid>
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-          <Button color="primary" variant="contained" type="submit" disabled={loading} size="large">
+          <Button color="primary" variant="contained" type="submit" disabled={loading} size="medium">
             {loading ? 'Submitting...' : 'Submit'}
           </Button>
         </Box>

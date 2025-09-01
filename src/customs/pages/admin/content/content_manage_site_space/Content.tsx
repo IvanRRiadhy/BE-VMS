@@ -21,7 +21,6 @@ import CloseIcon from '@mui/icons-material/Close';
 import { CreateSiteRequestSchema, Item } from 'src/customs/api/models/Sites';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { deleteSiteSpace, getAllSite, getAllSitePagination } from 'src/customs/api/admin';
-import Swal from 'sweetalert2';
 import { IconSitemap } from '@tabler/icons-react';
 import {
   showConfirmDelete,
@@ -50,7 +49,6 @@ type EnableField = {
 };
 
 const Content = () => {
-  const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const [tableData, setTableData] = useState<Item[]>([]);
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
 
@@ -75,6 +73,7 @@ const Content = () => {
   const [shouldSaveToStorage, setShouldSaveToStorage] = useState(true);
   const [isBatchEdit, setIsBatchEdit] = useState(false);
 
+  const [initialFormSnapshot, setInitialFormSnapshot] = useState<Item | null>(null);
   const [formDataAddSite, setFormDataAddSite] = useState<Item>(() => {
     const saved = localStorage.getItem('unsavedSiteForm');
     return saved ? JSON.parse(saved) : CreateSiteRequestSchema.parse({});
@@ -92,7 +91,27 @@ const Content = () => {
   const defaultFormData = CreateSiteRequestSchema.parse({});
 
   // Cek apakah form berubah
-  const isFormChanged = JSON.stringify(formDataAddSite) !== JSON.stringify(defaultFormData);
+  const isFormChanged = React.useMemo(() => {
+    if (!openFormCreateSiteSpace || !initialFormSnapshot) return false;
+    return JSON.stringify(formDataAddSite) !== JSON.stringify(initialFormSnapshot);
+  }, [openFormCreateSiteSpace, formDataAddSite, initialFormSnapshot]);
+
+  useEffect(() => {
+    if (!shouldSaveToStorage) return;
+    if (!openFormCreateSiteSpace || !initialFormSnapshot) return;
+
+    if (isFormChanged) {
+      localStorage.setItem('unsavedSiteForm', JSON.stringify(formDataAddSite));
+    } else {
+      localStorage.removeItem('unsavedSiteForm');
+    }
+  }, [
+    formDataAddSite,
+    shouldSaveToStorage,
+    openFormCreateSiteSpace,
+    initialFormSnapshot,
+    isFormChanged,
+  ]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -177,43 +196,43 @@ const Content = () => {
     setOpenFormCreateSiteSpace(false);
     setIsBatchEdit(false);
     setIsEditing(false);
+    setInitialFormSnapshot(null);
   };
 
   // Handle Add
   const handleAdd = () => {
     const editing = localStorage.getItem('unsavedSiteForm');
-
     if (editing) {
       const parsed = JSON.parse(editing);
-
-      // Kalau ID kosong → artinya sedang proses ADD, bukan edit
-      if (!parsed.id || parsed.id === '') {
-        setFormDataAddSite(parsed); // load kembali data sebelumnya
+      if (!parsed.id) {
+        setFormDataAddSite(parsed);
+        setInitialFormSnapshot(parsed);
         setEdittingId('');
-        handleOpenDialog(); // langsung buka modal
+        setOpenFormCreateSiteSpace(true);
         return;
       }
-
-      // Kalau ada ID → berarti user lagi ngedit data lain
       setPendingEditId(null);
       setConfirmDialogOpen(true);
       return;
     }
 
-    // Tidak ada data di localStorage → buat form baru
-    setFormDataAddSite({ ...CreateSiteRequestSchema.parse({}), id: '', access: [] });
+    const empty = { ...CreateSiteRequestSchema.parse({}), id: '', access: [] };
+    setFormDataAddSite(empty);
+    setInitialFormSnapshot(empty);
     setEdittingId('');
-    handleOpenDialog();
+    setOpenFormCreateSiteSpace(true);
   };
 
   // Handle Edit
+  // buka EDIT
   const handleEdit = (id: string) => {
     const editing = localStorage.getItem('unsavedSiteForm');
-    console.log(editing);
     if (editing) {
       const parsed = JSON.parse(editing);
       if (parsed.id === id) {
-        handleOpenDialog();
+        setInitialFormSnapshot(parsed);
+        setOpenFormCreateSiteSpace(true);
+        return;
       } else {
         setPendingEditId(id);
         setConfirmDialogOpen(true);
@@ -227,9 +246,10 @@ const Content = () => {
     try {
       const parsedData = { ...CreateSiteRequestSchema.parse(found), id, access: [] };
       setEdittingId(id);
-      setFormDataAddSite(parsedData); // ini akan tersimpan ulang di useEffect
-      localStorage.setItem('unsavedSiteForm', JSON.stringify(parsedData)); // simpan langsung
-      handleOpenDialog();
+      setFormDataAddSite(parsedData);
+      setInitialFormSnapshot(parsedData);
+      localStorage.setItem('unsavedSiteForm', JSON.stringify(parsedData));
+      setOpenFormCreateSiteSpace(true);
     } catch (error) {
       console.error('Error parsing data:', error);
     }
@@ -238,7 +258,7 @@ const Content = () => {
   const handleConfirmEdit = () => {
     setConfirmDialogOpen(false);
     localStorage.removeItem('unsavedSiteForm');
-    setShouldSaveToStorage(false); // jangan trigger autosave
+    setShouldSaveToStorage(false);
 
     if (pendingEditId) {
       const found = tableData.find((item) => item.id === pendingEditId);
@@ -246,27 +266,23 @@ const Content = () => {
         const parsedData = {
           ...CreateSiteRequestSchema.parse(found),
           id: pendingEditId,
-          access: found.access as [], // cast access property to Access[]
+          access: [],
         };
-
-        // 🔁 Set ulang data untuk edit yang baru
         setEdittingId(pendingEditId);
         setFormDataAddSite(parsedData);
-        setShouldSaveToStorage(true); // aktifkan kembali autosave
+        setInitialFormSnapshot(parsedData);
+        setShouldSaveToStorage(true);
         localStorage.setItem('unsavedSiteForm', JSON.stringify(parsedData));
-        handleCloseModalCreateSiteSpace();
+        setOpenFormCreateSiteSpace(true);
         setIsEditing(true);
       }
-    } else if (!pendingEditId) {
+    } else {
+      const empty = { ...CreateSiteRequestSchema.parse({}), id: '', access: [] };
       setEdittingId('');
-      setFormDataAddSite({
-        ...CreateSiteRequestSchema.parse({}),
-        id: '',
-        access: CreateSiteRequestSchema.parse({}).access ?? [],
-      });
-      // Jangan buka modal, hanya close dialog discard saja
-      handleCloseModalCreateSiteSpace();
+      setFormDataAddSite(empty);
+      setInitialFormSnapshot(empty);
       setIsEditing(false);
+      handleCloseModalCreateSiteSpace();
     }
 
     setPendingEditId(null);
@@ -386,7 +402,7 @@ const Content = () => {
           <Grid container spacing={3}>
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
-              <TopCard items={cards} />
+              <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
             </Grid>
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
@@ -408,7 +424,7 @@ const Content = () => {
                   isHaveAction={true}
                   isHaveSearch={true}
                   isHaveFilter={true}
-                  isHaveExportPdf={true}
+                  isHaveExportPdf={false}
                   isHaveExportXlf={false}
                   isHaveFilterDuration={false}
                   isHaveAddData={true}

@@ -4,8 +4,8 @@ import {
   Alert,
   Typography,
   CircularProgress,
-  MenuItem,
   Autocomplete,
+  Backdrop
 } from '@mui/material';
 import { Box } from '@mui/system';
 import React, { useState, useEffect } from 'react';
@@ -15,7 +15,6 @@ import { createDistrict, getAllEmployee } from 'src/customs/api/admin';
 import { CreateDistrictRequest, CreateDistrictSubmitSchema } from 'src/customs/api/models/District';
 import { useSession } from 'src/customs/contexts/SessionContext';
 
-//
 interface FormAddDistrictProps {
   formData: CreateDistrictRequest;
   setFormData: React.Dispatch<React.SetStateAction<CreateDistrictRequest>>;
@@ -33,9 +32,14 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({ formData, setFormData
   const { token } = useSession();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const field = e.target.name || e.target.id; // prioritas name, fallback ke id
+    const field = e.target.name || e.target.id;
     const { value } = e.target;
+
+    // update form
     setFormData((prev) => ({ ...prev, [field]: value }));
+
+    // clear error for this field
+    setErrors((prev) => ({ ...prev, [field]: '' }));
   };
 
   const [allEmployes, setAllEmployees] = useState<any>([]);
@@ -89,7 +93,11 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({ formData, setFormData
       }
 
       const parsed = validateLocal(formData);
-      if (!parsed) return;
+        if (!parsed) {
+          setAlertType('error');
+          setAlertMessage('Please complete the required fields correctly.');
+          return;
+        }
 
       await createDistrict(parsed, token);
       localStorage.removeItem('unsavedDistrictFormAdd');
@@ -117,7 +125,7 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({ formData, setFormData
     } finally {
       setTimeout(() => {
         setLoading(false);
-      }, 800);
+      }, 600);
     }
   };
 
@@ -160,7 +168,9 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({ formData, setFormData
           <Typography variant="caption">Head of District</Typography>
         </CustomFormLabel>
         <Autocomplete
-          freeSolo
+          // freeSolo
+          autoHighlight
+          disablePortal
           options={allEmployes.map((emp: any) => ({ id: emp.id, label: emp.name }))}
           getOptionLabel={(option) => {
             if (typeof option === 'string') return option; // user mengetik manual
@@ -185,6 +195,7 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({ formData, setFormData
             <CustomTextField
               {...params}
               variant="outlined"
+              placeholder=""
               error={Boolean(errors.host)}
               helperText={errors.host}
               fullWidth
@@ -197,24 +208,15 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({ formData, setFormData
         </Button>
       </form>
 
-      {loading && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            bgcolor: '#ffff',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 10,
-          }}
-        >
-          <CircularProgress color="inherit" />
-        </Box>
-      )}
+      <Backdrop
+        open={loading}
+        sx={{
+          color: '#fff',
+          zIndex: (theme) => theme.zIndex.drawer + 1, // di atas drawer & dialog
+        }}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
     </>
   );
 };

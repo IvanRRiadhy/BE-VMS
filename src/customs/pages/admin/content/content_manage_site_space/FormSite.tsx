@@ -15,6 +15,7 @@ import {
   TableRow,
   TableCell,
   TableBody,
+  Backdrop,
   TableContainer,
   Tooltip,
   IconButton,
@@ -64,6 +65,7 @@ import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautif
 
 // const BASE_URL = 'http://' + import.meta.env.VITE_API_HOST;
 const BASE_URL = 'http://192.168.1.116:8000';
+// const BASE_URL = 'http://localhost:8000';
 
 type EnabledFields = {
   type: boolean;
@@ -277,16 +279,19 @@ const FormSite = ({
       console.log('Setting Data: ', data);
       if (editingId && editingId !== '') {
         await updateSite(editingId, data, token);
+        setAlertType('success');
+        setAlertMessage('Site successfully updated!');
         console.log('Editing ID:', editingId);
       } else {
         await createSite(data, token);
+        setAlertType('success');
+        setAlertMessage('Site successfully created!');
       }
 
       await createSiteDocumentsForNewSite();
       handleFileUpload();
       localStorage.removeItem('unsavedSiteForm');
-      setAlertType('success');
-      setAlertMessage('Site successfully created!');
+
       setTimeout(() => {
         // onSuccess?.();
       }, 900);
@@ -301,7 +306,9 @@ const FormSite = ({
         setAlertMessage('Complete the following data properly and correctly');
       }, 3000);
     } finally {
-      setLoading(false);
+      setTimeout(() => {
+        setLoading(false);
+      }, 600);
     }
   };
   const [keyDialogOpen, setKeyDialogOpen] = useState(false);
@@ -452,10 +459,13 @@ const FormSite = ({
     (updated[index] as any)[field] = value;
     setFormData({ ...formData, [key]: updated });
   };
-  const handleDetailDelete = (fieldKey: keyof Item, index: number) => {
-    const updated = [...site];
-    (updated[0][fieldKey] as any[]).splice(index, 1);
-    setSite(updated);
+  const handleDetailDelete = (fieldKey: 'access', index: number) => {
+    setFormData((prev) => {
+      const arr = Array.isArray((prev as any)[fieldKey]) ? [...(prev as any)[fieldKey]] : [];
+      if (index < 0 || index >= arr.length) return prev;
+      arr.splice(index, 1);
+      return { ...prev, [fieldKey]: arr } as any;
+    });
   };
 
   const handleDragEnd = (result: DropResult) => {
@@ -1258,7 +1268,7 @@ const FormSite = ({
                     Supports: JPG, JPEG, PNG
                   </Typography>
                   {/* Show file name or short base64 */}
-                  {(siteImageFile || formData.image) && (
+                  {/* {(siteImageFile || formData.image) && (
                     <Typography
                       variant="caption"
                       sx={{ mt: 1, color: '#1976d2', wordBreak: 'break-all' }}
@@ -1271,7 +1281,7 @@ const FormSite = ({
                           )}`
                         : ''}
                     </Typography>
-                  )}
+                  )} */}
                   {previewUrl && (
                     <Box
                       mt={2}
@@ -1332,30 +1342,27 @@ const FormSite = ({
           </Grid>
         </Grid>
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-          <Button color="primary" variant="contained" type="submit" disabled={loading} size="large">
+          <Button
+            color="primary"
+            variant="contained"
+            type="submit"
+            disabled={loading}
+            size="medium"
+          >
             {loading ? 'Submitting...' : 'Submit'}
           </Button>
         </Box>
       </form>
 
-      {loading && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            bgcolor: '#fffff',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 10,
-          }}
-        >
-          <CircularProgress color="inherit" />
-        </Box>
-      )}
+      <Backdrop
+        open={loading}
+        sx={{
+          color: '#fff',
+          zIndex: (theme) => theme.zIndex.drawer + 1, // di atas drawer & dialog
+        }}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
     </>
   );
 };

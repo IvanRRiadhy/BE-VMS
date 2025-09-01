@@ -5,6 +5,7 @@ import { Avatar, IconButton, Menu, MenuItem, Typography, Stack } from '@mui/mate
 import { useSelector, useDispatch } from 'src/store/Store';
 import { setLanguage } from 'src/store/customizer/CustomizerSlice';
 import FlagEn from 'src/assets/images/flag/icon-flag-en.svg';
+import FlagId from 'src/assets/images/flag/icon-flag-idn.svg';
 import FlagFr from 'src/assets/images/flag/icon-flag-fr.svg';
 import FlagCn from 'src/assets/images/flag/icon-flag-cn.svg';
 import FlagSa from 'src/assets/images/flag/icon-flag-sa.svg';
@@ -19,20 +20,9 @@ const Languages = [
     value: 'en',
   },
   {
-    flagname: '中国人 (Chinese)',
-    icon: FlagCn,
+    flagname: 'Indonesia (ID)',
+    icon: FlagId,
     value: 'ch',
-  },
-  {
-    flagname: 'français (French)',
-    icon: FlagFr,
-    value: 'fr',
-  },
-
-  {
-    flagname: 'عربي (Arabic)',
-    icon: FlagSa,
-    value: 'ar',
   },
 ];
 

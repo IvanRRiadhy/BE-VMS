@@ -10,6 +10,7 @@ import {
   styled,
   Stack,
   Theme,
+  Typography,
 } from '@mui/material';
 
 import { useSelector, useDispatch } from 'src/store/Store';
@@ -99,7 +100,6 @@ const Header = () => {
             )}
           </IconButton>
           <Notifications />
-
           <Profile />
         </Stack>
       </ToolbarStyled>

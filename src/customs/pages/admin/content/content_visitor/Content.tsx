@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Dialog,
@@ -6,7 +6,6 @@ import {
   DialogTitle,
   Divider,
   DialogActions,
-  Paper,
   CircularProgress,
   TextField,
   Card,
@@ -30,30 +29,31 @@ import FormWizardAddVisitor from './FormWizardAddVisitor';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { CreateVisitorRequestSchema, Item } from 'src/customs/api/models/Visitor';
 import Swal from 'sweetalert2';
-import {
-  getAllVisitorPagination,
-  deleteVisitor,
-  getEmployeeById,
-  getVisitorById,
-} from 'src/customs/api/admin';
+import { getAllVisitorPagination, getEmployeeById, getVisitorById } from 'src/customs/api/admin';
 import { CreateVisitorRequest } from 'src/customs/api/models/Visitor';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
+import { Scanner } from '@yudiel/react-qr-scanner';
+import FlipCameraAndroidIcon from '@mui/icons-material/FlipCameraAndroid';
+import FlashOnIcon from '@mui/icons-material/FlashOn';
+import FlashOffIcon from '@mui/icons-material/FlashOff';
 import {
-  IconBadge,
   IconBrandGmail,
   IconBuilding,
   IconBuildingSkyscraper,
   IconCalendarStats,
   IconCards,
-  IconCheck,
+  IconClipboard,
   IconForbid2,
   IconGenderBigender,
   IconIdBadge2,
   IconLogin2,
-  IconLogout,
   IconLogout2,
   IconMapPin,
   IconPhone,
+  IconQrcode,
+  IconUser,
+  IconUserFilled,
+  IconUsers,
   IconX,
 } from '@tabler/icons-react';
 
@@ -107,10 +107,34 @@ const Content = () => {
   }, [formDataAddVisitor]);
 
   const cards = [
-    { title: 'Total Visitor', subTitle: `${totalRecords}`, subTitleSetting: 10, color: 'none' },
-    { title: 'Scan QR Visitor', subTitle: iconScanQR, subTitleSetting: 'image', color: 'none' },
-    { title: 'Add New Visitor', subTitle: iconAdd, subTitleSetting: 'image', color: 'primary' },
-    { title: 'Add Pre Registration', subTitle: iconAdd, subTitleSetting: 'image', color: 'none' },
+    {
+      title: 'Total Visitor',
+      icon: IconUsers,
+      subTitle: `${totalRecords}`,
+      subTitleSetting: 10,
+      color: 'none',
+    },
+    {
+      title: 'Scan QR Visitor',
+      icon: IconQrcode,
+      subTitle: iconScanQR,
+      subTitleSetting: 'image',
+      color: 'none',
+    },
+    {
+      title: 'Add New Visitor',
+      icon: IconUser,
+      subTitle: iconAdd,
+      subTitleSetting: 'image',
+      color: 'none',
+    },
+    {
+      title: 'Add Pre Registration',
+      icon: IconClipboard,
+      subTitle: iconAdd,
+      subTitleSetting: 'image',
+      color: 'none',
+    },
   ];
 
   const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
@@ -127,6 +151,14 @@ const Content = () => {
   const [visitorLoading, setVisitorLoading] = useState(false);
   const [visitorError, setVisitorError] = useState<string | null>(null);
   const [visitorDetail, setVisitorDetail] = useState<any>(null);
+
+  // Qr Scanner
+  const [qrValue, setQrValue] = useState('');
+  const [qrMode, setQrMode] = useState<'manual' | 'scan'>('manual');
+  const [hasDecoded, setHasDecoded] = useState(false); // cegah multi-callback beruntun
+  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
+  const [torchOn, setTorchOn] = useState(false);
+  const scanContainerRef = useRef<HTMLDivElement | null>(null);
 
   // bikin CDN base dari baseURL axios
   const CDN_BASE = `${axiosInstance2?.defaults?.baseURL?.replace(/\/+$/, '') ?? ''}/cdn`;
@@ -299,6 +331,53 @@ const Content = () => {
     handleDialogClose();
   };
 
+  // jenis aksi yang dikonfirmasi
+  type VisitorAction = 'checkin' | 'checkout' | 'deny' | 'block';
+
+  const [confirm, setConfirm] = React.useState<{
+    type: VisitorAction;
+    loading: boolean;
+  } | null>(null);
+
+  // label & warna tombol sesuai aksi
+  const actionMeta: Record<
+    VisitorAction,
+    { title: string; ok: string; color: 'success' | 'error' | 'warning' | 'info' }
+  > = {
+    checkin: { title: 'Confirm Check In', ok: 'Check In', color: 'success' },
+    checkout: { title: 'Confirm Check Out', ok: 'Check Out', color: 'error' },
+    deny: { title: 'Confirm Deny', ok: 'Deny', color: 'warning' },
+    block: { title: 'Confirm Block', ok: 'Block', color: 'info' },
+  };
+
+  const openConfirm = (type: VisitorAction) => setConfirm({ type, loading: false });
+  const closeConfirm = () => {
+    if (!confirm?.loading) setConfirm(null);
+  };
+
+  const runConfirmedAction = async () => {
+    if (!confirm || !token || !visitorDetail?.id) return;
+    setConfirm((c) => (c ? { ...c, loading: true } : c));
+
+    try {
+      // TODO: ganti ke API kamu:
+      // if (confirm.type === 'checkin')  await checkInVisitor(token, visitorDetail.id);
+      // if (confirm.type === 'checkout') await checkOutVisitor(token, visitorDetail.id);
+      // if (confirm.type === 'deny')     await denyVisitor(token, visitorDetail.id);
+      // if (confirm.type === 'block')    await blockVisitor(token, visitorDetail.id);
+
+      // dummy delay biar kelihatan loading
+      await new Promise((r) => setTimeout(r, 400));
+
+      setConfirm(null); // tutup dialog konfirmasi
+      setOpenVisitorDialog(false); // tutup dialog detail visitor
+      setRefreshTrigger((p) => p + 1); // refresh tabel
+    } catch (e) {
+      // gagal -> matikan loading, tetap di dialog konfirmasi
+      setConfirm((c) => (c ? { ...c, loading: false } : c));
+    }
+  };
+
   return (
     <>
       <PageContainer title="Visitor" description="this is Dashboard page">
@@ -312,6 +391,7 @@ const Content = () => {
                 onImageClick={(item, index) => {
                   setOpenDialogIndex(index);
                 }}
+                size={{ xs: 12, lg: 3 }}
               />
             </Grid>
             {/* column */}
@@ -362,7 +442,7 @@ const Content = () => {
                     items: [
                       { name: 'all' },
                       { name: 'pre registration' },
-                      { name: 'district' },
+                      // { name: 'district' },
                       { name: 'checkin' },
                       { name: 'checkout' },
                       { name: 'denied' },
@@ -395,7 +475,7 @@ const Content = () => {
         </Box>
       </PageContainer>
       {/* Add Pre registration */}
-      <Dialog fullWidth maxWidth="lg" open={openDialogIndex === 3} onClose={handleDialogClose}>
+      <Dialog fullWidth maxWidth="xl" open={openDialogIndex === 3} onClose={handleDialogClose}>
         <DialogTitle display="flex" justifyContent={'space-between'} alignItems="center">
           Add Pra Registration
           <IconButton aria-label="close" onClick={handleDialogClose}>
@@ -416,16 +496,16 @@ const Content = () => {
 
       {/* Employee Detail */}
       <Dialog fullWidth maxWidth="sm" open={openEmployeeDialog} onClose={handleCloseEmployeeDialog}>
-        {/* <DialogTitle
+        <DialogTitle
           sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
         >
           Employee Detail
           <IconButton onClick={handleCloseEmployeeDialog}>
             <CloseIcon />
           </IconButton>
-        </DialogTitle> */}
+        </DialogTitle>
         <Divider />
-        <DialogContent sx={{ pt: 2 }}>
+        <DialogContent sx={{ pt: 1 }}>
           {employeeLoading && (
             <Box display="flex" justifyContent="center" alignItems="center" py={6}>
               <CircularProgress />
@@ -460,54 +540,6 @@ const Content = () => {
                   }}
                 />
               </Box>
-
-              {/* Info utama */}
-              {/* <Box gridColumn="2 / 3">
-                <Box fontWeight={700} fontSize={18} mb={0.5}>
-                  {employeeDetail.name ?? '-'}
-                </Box>
-                <Box color="text.secondary" fontSize={14}>
-                  {(employeeDetail.position || employeeDetail.job_title || '-') +
-                    (employeeDetail.department?.name ? ` • ${employeeDetail.department.name}` : '')}
-                </Box>
-                <Box
-                  mt={1.5}
-                  display="grid"
-                  gridTemplateColumns="140px 1fr"
-                  rowGap={0.75}
-                  columnGap={2}
-                >
-                  <Box color="text.secondary">Email</Box>
-                  <Box>{employeeDetail.email ?? '-'}</Box>
-
-                  <Box color="text.secondary">Phone</Box>
-                  <Box>{employeeDetail.phone ?? employeeDetail.mobile ?? '-'}</Box>
-
-                  <Box color="text.secondary">Employee ID</Box>
-                  <Box>{employeeDetail.id ?? '-'}</Box>
-
-                  <Box color="text.secondary">Company</Box>
-                  <Box>
-                    {employeeDetail.company?.name ?? employeeDetail.organization?.name ?? '-'}
-                  </Box>
-
-                  <Box color="text.secondary">Gender</Box>
-                  <Box>
-                    {employeeDetail.gender === 1
-                      ? 'Male'
-                      : employeeDetail.gender === 0
-                      ? 'Female'
-                      : employeeDetail.gender ?? '-'}
-                  </Box>
-
-                  {employeeDetail.address && (
-                    <>
-                      <Box color="text.secondary">Address</Box>
-                      <Box>{employeeDetail.address}</Box>
-                    </>
-                  )}
-                </Box>
-              </Box> */}
             </Box>
           )}
           <Box>
@@ -763,26 +795,296 @@ const Content = () => {
       </Dialog>
 
       {/* QR Code */}
-      <Dialog fullWidth maxWidth="xs" open={openDialogIndex === 1} onClose={handleDialogClose}>
+      <Dialog
+        fullWidth
+        maxWidth="xs"
+        open={openDialogIndex === 1}
+        onClose={() => {
+          // matikan torch kalau menyala (best-effort)
+          try {
+            const video = scanContainerRef.current?.querySelector(
+              'video',
+            ) as HTMLVideoElement | null;
+            const stream = video?.srcObject as MediaStream | null;
+            const track = stream?.getVideoTracks()?.[0];
+            const caps = track?.getCapabilities?.() as any;
+            if (track && caps?.torch && torchOn) {
+              track.applyConstraints({ advanced: [{ facingMode: 'user' }] });
+            }
+          } catch {}
+
+          setTorchOn(false);
+          setFacingMode('environment');
+          setQrMode('manual');
+          setHasDecoded(false);
+          setQrValue('');
+          handleDialogClose();
+        }}
+      >
         <DialogTitle display="flex">
           Scan QR Visitor
           <IconButton
             aria-label="close"
             sx={{ position: 'absolute', right: 8, top: 8 }}
-            onClick={handleDialogClose}
+            onClick={() => {
+              // matikan torch kalau menyala (best-effort)
+              try {
+                const video = scanContainerRef.current?.querySelector(
+                  'video',
+                ) as HTMLVideoElement | null;
+                const stream = video?.srcObject as MediaStream | null;
+                const track = stream?.getVideoTracks()?.[0];
+                const caps = track?.getCapabilities?.() as any;
+                if (track && caps?.torch && torchOn) {
+                  track.applyConstraints({ advanced: [{ facingMode: 'user' }] });
+                }
+              } catch {}
+
+              setTorchOn(false);
+              setFacingMode('environment');
+              setQrMode('manual');
+              setHasDecoded(false);
+              setQrValue('');
+              handleDialogClose();
+            }}
           >
             <CloseIcon />
           </IconButton>
         </DialogTitle>
         <Divider />
+
         <DialogContent>
-          <TextField fullWidth label="Masukkan Kode QR" variant="outlined" size="small" />
-          {/* button submit */}
-          <Box mt={2} display="flex" justifyContent="flex-end">
-            <Button variant="contained" color="primary">
-              Submit
+          {/* Toggle mode */}
+          <Box display="flex" gap={1} mb={2}>
+            <Button
+              variant={qrMode === 'manual' ? 'contained' : 'outlined'}
+              onClick={() => setQrMode('manual')}
+              size="small"
+            >
+              Manual
+            </Button>
+            <Button
+              variant={qrMode === 'scan' ? 'contained' : 'outlined'}
+              onClick={() => {
+                setHasDecoded(false);
+                setQrMode('scan');
+              }}
+              size="small"
+            >
+              Scan Kamera
             </Button>
           </Box>
+
+          {/* MODE: MANUAL */}
+          {qrMode === 'manual' && (
+            <>
+              <TextField
+                fullWidth
+                label="Masukkan Kode QR"
+                variant="outlined"
+                size="small"
+                value={qrValue}
+                onChange={(e) => setQrValue(e.target.value)}
+              />
+              <Box mt={2} display="flex" justifyContent="flex-end">
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => {
+                    console.log('Submit manual:', qrValue);
+                    // handleDialogClose();
+                  }}
+                  disabled={!qrValue}
+                >
+                  Submit
+                </Button>
+              </Box>
+            </>
+          )}
+
+          {/* MODE: SCAN */}
+          {qrMode === 'scan' && (
+            <>
+              <Box
+                ref={scanContainerRef}
+                sx={{
+                  position: 'relative',
+                  borderRadius: 2,
+                  overflow: 'hidden',
+                  bgcolor: 'black',
+                  aspectRatio: '3 / 4', // proporsional untuk mobile
+                }}
+              >
+                <Scanner
+                  constraints={{ facingMode }}
+                  onScan={(result: any) => {
+                    if (!result) return;
+                    if (hasDecoded) return; // cegah spam callback
+                    setHasDecoded(true);
+                    setQrValue(typeof result === 'string' ? result : String(result));
+                  }}
+                  onError={(error: any) => {
+                    console.log('QR error:', error?.message || error);
+                  }}
+                  styles={{
+                    container: { width: '100%', height: '100%' },
+                    video: {
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      border: 'none !important',
+                    },
+                  }}
+                />
+
+                <Box sx={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+                  {/* Kotak scan di tengah (lubang) */}
+                  <Box
+                    sx={{
+                      // ukuran kotak scan (responsif)
+                      '--scanSize': { xs: '70vw', sm: '290px' },
+
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      width: 'var(--scanSize)',
+                      height: 'var(--scanSize)',
+                      transform: 'translate(-50%, -50%)',
+
+                      // ini yang bikin area luar gelap, tengah tetap terang
+                      boxShadow: '0 0 0 9999px rgba(0,0,0,0.55)',
+                      borderRadius: 2, // 0 jika mau siku
+                      outline: '2px solid rgba(255,255,255,0.18)',
+                    }}
+                  >
+                    {/* 4 corner, ditempel di dalam kotak agar selalu pas */}
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        inset: 0,
+                        '& .corner': {
+                          position: 'absolute',
+                          width: 24,
+                          height: 24,
+                          border: '3px solid #00e5ff',
+                        },
+                        '& .tl': { top: 0, left: 0, borderRight: 'none', borderBottom: 'none' },
+                        '& .tr': { top: 0, right: 0, borderLeft: 'none', borderBottom: 'none' },
+                        '& .bl': { bottom: 0, left: 0, borderRight: 'none', borderTop: 'none' },
+                        '& .br': { bottom: 0, right: 0, borderLeft: 'none', borderTop: 'none' },
+                      }}
+                    >
+                      <Box className="corner tl" />
+                      <Box className="corner tr" />
+                      <Box className="corner bl" />
+                      <Box className="corner br" />
+                    </Box>
+
+                    {/* Laser animasi (bergerak di dalam kotak) */}
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        left: 10,
+                        right: 10,
+                        height: 2,
+                        top: 0,
+                        background: 'linear-gradient(90deg, transparent, #00e5ff, transparent)',
+                        animation: 'scanLine 2s linear infinite',
+                        '@keyframes scanLine': {
+                          '0%': { transform: 'translateY(0)' },
+                          '100%': { transform: 'translateY(calc(var(--scanSize) - 2px))' },
+                        },
+                      }}
+                    />
+                  </Box>
+                </Box>
+                {/* Kontrol: Flip & Torch */}
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    left: 0,
+                    right: 0,
+                    bottom: 8,
+                    display: 'flex',
+                    justifyContent: 'center',
+                    gap: 1,
+                  }}
+                >
+                  <Button
+                    onClick={() =>
+                      setFacingMode((f) => (f === 'environment' ? 'user' : 'environment'))
+                    }
+                    variant="contained"
+                    size="small"
+                    sx={{ bgcolor: 'rgba(0,0,0,0.6)' }}
+                    startIcon={<FlipCameraAndroidIcon fontSize="small" />}
+                  >
+                    Flip
+                  </Button>
+
+                  <Button
+                    onClick={async () => {
+                      try {
+                        const video = scanContainerRef.current?.querySelector(
+                          'video',
+                        ) as HTMLVideoElement | null;
+                        const stream = video?.srcObject as MediaStream | null;
+                        const track = stream?.getVideoTracks()?.[0];
+                        const caps = track?.getCapabilities?.() as any;
+                        if (track && caps?.torch) {
+                          await track.applyConstraints({ advanced: [{ torch: !torchOn }] as any });
+                          setTorchOn((t) => !t);
+                        } else {
+                          console.log('Torch not supported on this device.');
+                        }
+                      } catch (e) {
+                        console.log('Torch toggle error:', e);
+                      }
+                    }}
+                    variant="contained"
+                    size="small"
+                    sx={{ bgcolor: 'rgba(0,0,0,0.6)' }}
+                    startIcon={
+                      torchOn ? <FlashOnIcon fontSize="small" /> : <FlashOffIcon fontSize="small" />
+                    }
+                  >
+                    Torch
+                  </Button>
+                </Box>
+              </Box>
+
+              {/* Preview hasil + aksi */}
+              <Box mt={2}>
+                <Typography variant="caption" color="text.secondary">
+                  Hasil: {qrValue || '-'}
+                </Typography>
+              </Box>
+
+              <Box mt={2} display="flex" gap={1} justifyContent="space-between">
+                <Button
+                  variant="outlined"
+                  onClick={() => {
+                    setHasDecoded(false);
+                    setQrValue('');
+                  }}
+                >
+                  Reset
+                </Button>
+                <Box>
+                  <Button
+                    variant="contained"
+                    onClick={() => {
+                      console.log('Submit scan:', qrValue);
+                      // handleDialogClose();
+                    }}
+                    disabled={!qrValue}
+                  >
+                    Submit
+                  </Button>
+                </Box>
+              </Box>
+            </>
+          )}
         </DialogContent>
       </Dialog>
 
@@ -928,16 +1230,18 @@ const Content = () => {
             variant="contained"
             color="success"
             // onClick={handleCheckIn}
+            onClick={() => openConfirm('checkin')}
             startIcon={<IconLogin2 />}
           >
             Check In
           </Button>
-          {/* check out */}
 
+          {/* check out */}
           <Button
             variant="contained"
             color="error"
             // onClick={handleCheckOut}
+            onClick={() => openConfirm('checkout')}
             startIcon={<IconLogout2 />}
           >
             Check Out
@@ -952,18 +1256,56 @@ const Content = () => {
               },
             }}
             // onClick={handleCheckOut}
+            onClick={() => openConfirm('deny')}
             startIcon={<IconX />}
           >
-            Denied
+            Deny
           </Button>
           {/* Block */}
           <Button
             variant="contained"
             sx={{ backgroundColor: '#000' }}
             // onClick={handleCheckOut}
+            onClick={() => openConfirm('block')}
             startIcon={<IconForbid2 />}
           >
             Block
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog Confirm */}
+      <Dialog open={!!confirm} onClose={closeConfirm} fullWidth>
+        <Box display="flex" alignItems="center" justifyContent="space-between" sx={{ px: 0.2 }}>
+          <DialogTitle>{confirm ? actionMeta[confirm.type].title : 'Confirm'}</DialogTitle>
+          <IconButton onClick={closeConfirm}>
+            <CloseIcon />
+          </IconButton>
+        </Box>
+        <Divider />
+        <DialogContent sx={{ pt: 2 }}>
+          <Typography>
+            {`Are you sure you want to ${
+              confirm ? actionMeta[confirm.type].ok.toLowerCase() : 'proceed'
+            } `}
+            <b>{visitorDetail?.name ?? 'this visitor'}</b>?
+          </Typography>
+          {/* btn close */}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeConfirm} disabled={!!confirm?.loading}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            // color={confirm ? actionMeta[confirm.type].color : 'primary'}
+            color="primary"
+            onClick={runConfirmedAction}
+            disabled={!!confirm?.loading}
+            startIcon={confirm?.loading ? <CircularProgress size={16} /> : undefined}
+          >
+            {/* {confirm ? actionMeta[confirm.type].ok : 'Confirm'} */}
+            Submit
           </Button>
         </DialogActions>
       </Dialog>

@@ -5,8 +5,10 @@ import {
   Typography,
   CircularProgress,
   FormControlLabel,
+  Autocomplete,
   MenuItem,
   Switch,
+  Backdrop,
 } from '@mui/material';
 import { Box } from '@mui/system';
 import React, { useEffect, useState } from 'react';
@@ -31,6 +33,8 @@ type EnabledFields = {
   name: boolean;
 };
 
+type EmployeeOption = { id: string; label: string };
+
 const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({
   data,
   onSuccess,
@@ -45,7 +49,19 @@ const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({
   const [code, setCode] = useState('');
 
   const [allEmployees, setAllEmployees] = useState<any>([]);
+  const [employeeOptions, setEmployeeOptions] = useState<EmployeeOption[]>([]);
+  const [hostFallback, setHostFallback] = useState<EmployeeOption | null>(null);
+  const [empLoading, setEmpLoading] = useState(false);
 
+  const toEmpOption = (emp: any) => ({
+    id: String(emp?.id ?? emp?.person_id ?? emp?.identity_id ?? ''),
+    label: String(emp?.name ?? emp?.email ?? emp?.card_number ?? '-'),
+  });
+
+  // hasil map jadi options buat Autocomplete
+  const empOptions = allEmployees.map(toEmpOption);
+
+  const [hostLabel, setHostLabel] = useState('');
   useEffect(() => {
     if (!token) return;
 
@@ -53,36 +69,45 @@ const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({
       try {
         const res = await getAllEmployee(token);
         setAllEmployees(res?.collection ?? []);
+        const opts = (res?.collection ?? []).map((e: any) => ({
+          id: String(e.id),
+          label: e.name ?? e.email ?? String(e.id),
+        }));
+        setEmployeeOptions(opts);
       } catch (err) {
         console.error('Failed to fetch employees', err);
+        setEmployeeOptions([]);
+      } finally {
+        setEmpLoading(false);
       }
     };
 
     fetchEmployees();
   }, [token]);
 
+  const selectedHostOption =
+    employeeOptions.find((o) => o.id === String(data?.host ?? '')) ||
+    hostFallback || // fallback saat options belum selesai load
+    null;
+
   useEffect(() => {
     if (!isBatchEdit && data) {
       setName(data.name || '');
       setCode(data.code || '');
 
-      if (allEmployees.length > 0) {
-        // Kalau data.host sudah berupa id langsung pakai
-        const foundById = allEmployees.find((emp: any) => emp.id === data.host);
-        if (foundById) {
-          setHost(foundById.id);
-          return;
-        }
-
-        // Kalau data.host berupa nama, cari id-nya
-        const foundByName = allEmployees.find((emp: any) => emp.name === data.host);
-        setHost(foundByName ? foundByName.id : '');
+      const h = (data as any).host;
+      if (h && typeof h === 'object') {
+        setHost(String(h.id || '')); // simpan ID untuk submit
+        setHostLabel(h.name || ''); // simpan nama untuk tampilan awal
+      } else if (typeof h === 'string') {
+        setHost(h); // sudah ID
+        setHostLabel(''); // tidak ada nama, biarkan kosong
       } else {
-        setHost(data.host || '');
+        setHost('');
+        setHostLabel('');
       }
     }
-  }, [data, isBatchEdit, allEmployees]);
-
+  }, [data, isBatchEdit]);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = React.useState(false);
   const [alertType, setAlertType] = useState<'info' | 'success' | 'error'>('info');
@@ -116,10 +141,13 @@ const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({
     return result.data;
   };
 
-  const buildPayload = (item: Item) => {
+  const buildPayload = (item: Item | any) => {
     const _name = name.trim();
     const _code = code.trim();
-    const _host = host?.toString().trim(); // pastikan string
+    const _host = host?.toString().trim(); // ID dari state
+
+    const itemHostId =
+      typeof item.host === 'object' ? String(item.host?.id || '') : String(item.host || '');
 
     return {
       name: isBatchEdit
@@ -127,12 +155,10 @@ const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({
           ? _name || item.name
           : item.name
         : _name || item.name,
-
-      code: _code || item.code, // code wajib: fallback ke item.code
-      host: _host || item.host || '', // host boleh kosong -> ''
+      code: _code || item.code,
+      host: _host || itemHostId || '',
     };
   };
-
   // 2) validasi setelah merge
   const validateMerged = (payload: any) => {
     const r = CreateDepartementSubmitSchema.safeParse(payload);
@@ -147,6 +173,25 @@ const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({
     }
     setErrors({});
     return r.data;
+  };
+
+  const validateSingle = () => {
+    const raw = {
+      name: name.trim(),
+      code: code.trim(),
+      host: host.trim(),
+    };
+    const r = CreateDepartementSubmitSchema.safeParse(raw);
+    if (!r.success) {
+      const fe = r.error.flatten().fieldErrors;
+      setErrors({
+        name: fe.name?.[0] ?? '',
+        code: fe.code?.[0] ?? '',
+        host: fe.host?.[0] ?? '',
+      });
+      return null;
+    }
+    return r.data; // { name, code, host } sudah trim & valid
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -189,7 +234,7 @@ const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({
       // single edit
       if (data) {
         const payload = buildPayload(data);
-        const parsed = validateMerged(payload);
+        const parsed = validateSingle();
         if (!parsed) return;
         await updateDepartment(data.id, parsed, token);
 
@@ -211,7 +256,7 @@ const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({
     } finally {
       setTimeout(() => {
         setLoading(false);
-      }, 800);
+      }, 600);
     }
   };
 
@@ -282,48 +327,66 @@ const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({
           <Typography variant="caption">Department Host</Typography>
         </CustomFormLabel>
 
-        <CustomTextField
-          id="host"
-          name="host"
-          value={host}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setHost(e.target.value)}
-          error={Boolean(errors.host)}
-          helperText={errors.host}
-          variant="outlined"
-          fullWidth
+        <Autocomplete
+          // freeSolo
+          autoHighlight
+          disablePortal
+          options={empOptions}
+          filterOptions={(x) => x} // penting: jangan filter client-side (biar simpel/cepat)
+          getOptionLabel={(option) => (typeof option === 'string' ? option : option.label)}
+          isOptionEqualToValue={(opt, val) =>
+            opt.id === (typeof val === 'string' ? val : (val as any)?.id)
+          }
+          // ✅ Kalau ketemu option berdasarkan ID → pakai object option.
+          //    Kalau belum ketemu (data employee belum load / ID tidak ada di list) → tampilkan label string.
+          value={
+            (host && empOptions.find((o: any) => o.id === host)) || (hostLabel ? hostLabel : null)
+          }
+          // ✅ Saat user pilih option dari dropdown
+          onChange={(_, newValue) => {
+            if (typeof newValue === 'string') {
+              // user mengetik manual → hanya ubah label, jangan ubah ID
+              setHostLabel(newValue);
+            } else if (newValue) {
+              // pilih dari opsi
+              setHost(newValue.id); // simpan ID untuk submit
+              setHostLabel(newValue.label);
+            } else {
+              // clear
+              setHost('');
+              setHostLabel('');
+            }
+          }}
+          // ✅ Ketik manual → hanya ubah label tampilan
+          onInputChange={(_, inputValue, reason) => {
+            if (reason === 'input') setHostLabel(inputValue || '');
+          }}
           disabled={isBatchEdit}
-          select
-        >
-          <MenuItem value="">Pilih Host</MenuItem>
-          {allEmployees.map((emp: any) => (
-            <MenuItem key={emp.id} value={emp.id}>
-              {emp.name}
-            </MenuItem>
-          ))}
-        </CustomTextField>
+          noOptionsText="No employees found"
+          renderInput={(params) => (
+            <CustomTextField
+              {...params}
+              variant="outlined"
+              error={Boolean(errors.host)}
+              helperText={errors.host}
+              fullWidth
+            />
+          )}
+        />
 
         <Button sx={{ mt: 2 }} color="primary" variant="contained" type="submit">
           {loading ? 'Submitting...' : 'Submit'}
         </Button>
       </form>
-      {loading && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            bgcolor: '#ffff',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 10,
-          }}
-        >
-          <CircularProgress color="inherit" />
-        </Box>
-      )}
+      <Backdrop
+        open={loading}
+        sx={{
+          color: '#fff',
+          zIndex: (theme) => theme.zIndex.drawer + 1, // di atas drawer & dialog
+        }}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
     </>
   );
 };

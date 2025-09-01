@@ -10,6 +10,8 @@ import { SessionProvider } from './customs/contexts/SessionContext';
 import { BrowserRouter } from 'react-router';
 import { AuthProvider } from './customs/contexts/AuthProvider';
 import { App } from './App';
+// app.css
+import './App.css';
 import 'video.js/dist/video-js.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

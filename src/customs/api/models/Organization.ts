@@ -46,12 +46,6 @@ export type DeleteOrganizationResponse<T = any> = {
   collection: T | null;
 };
 
-// GET ALL PAGINATION
-// export type Item = {
-//   code: string;
-//   name: string;
-//   id: string;
-// };
 
 export type GetAllOrgaizationsPaginationResponse = {
   RecordsTotal: number;

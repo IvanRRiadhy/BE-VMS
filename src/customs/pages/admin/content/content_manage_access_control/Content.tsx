@@ -73,13 +73,16 @@ const Content = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const dialogRef = useRef<HTMLDivElement>(null);
 
-  function formatEnumLabel(label: string) {
-    // Insert a space before all caps and capitalize the first letter
-    return label
-      .replace(/([A-Z])/g, ' $1')
-      .replace(/^./, (str) => str.toUpperCase())
-      .trim();
-  }
+  const cards = [
+    {
+      title: 'Total Access Control',
+      icon: IconAccessible,
+      subTitle: `${totalFilteredRecords}`,
+      subTitleSetting: 10,
+      color: 'none',
+    },
+  ];
+
   useEffect(() => {
     if (!token) return;
     const fetchData = async () => {
@@ -158,16 +161,6 @@ const Content = () => {
       }
     };
   }, [isFormChanged]);
-
-  const cards = [
-    {
-      title: 'Total Access Control',
-      icon: IconAccessible,
-      subTitle: `${totalFilteredRecords}`,
-      subTitleSetting: 10,
-      color: 'none',
-    },
-  ];
 
   //Create Access Control Dialog
   const [openCreateAccessControl, setOpenCreateAccessControl] = useState(false);
@@ -305,7 +298,7 @@ const Content = () => {
           <Grid container spacing={3}>
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
-              <TopCard items={cards} />
+              <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
             </Grid>
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>

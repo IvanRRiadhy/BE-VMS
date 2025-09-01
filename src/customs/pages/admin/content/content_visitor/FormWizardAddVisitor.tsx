@@ -36,6 +36,7 @@ import {
   Divider,
   Tooltip,
   Switch,
+  Backdrop
 } from '@mui/material';
 import axios from 'axios';
 import moment from 'moment';
@@ -54,6 +55,8 @@ import ReactCrop, { Crop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import {
   CreateVisitorRequest,
   CreateVisitorRequestSchema,
@@ -61,6 +64,7 @@ import {
   SectionPageVisitor,
 } from 'src/customs/api/models/Visitor';
 import {
+  createPraRegister,
   createVisitor,
   getAllCustomFieldPagination,
   getAllEmployee,
@@ -151,6 +155,19 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const [removing, setRemoving] = React.useState<Record<string, boolean>>({});
 
   const formsOf = (section: any) => (Array.isArray(section?.[FORM_KEY]) ? section[FORM_KEY] : []);
+
+  const TYPE_REGISTERED: 0 | 1 = FORM_KEY === 'pra_form' ? 0 : 1;
+
+  const [previews, setPreviews] = useState<Record<string, string | null>>({}); // blob/CDN preview
+  const [shots, setShots] = useState<Record<string, string | null>>({}); // dataURL dari camera
+
+  const inferTypeRegistered = (sections: any[]): 0 | 1 => {
+    for (const s of sections) {
+      const forms = formsOf(s) ?? [];
+      if (forms.some((f: any) => f?.visitor_form_type === 0)) return 0; // ada pra_form
+    }
+    return 1; // default visit_form
+  };
 
   const updateSectionForm = (sec: any, updater: (arr: any[]) => any[]) => ({
     ...sec,
@@ -777,118 +794,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 return (
                                   <TableRow key={gIdx}>
                                     {page.form?.map((field, fIdx) => (
-                                      //   <TableCell key={field.custom_field_id || `${gIdx}-${fIdx}`}>
-                                      //   {(() => {
-                                      //     const batchKeys = Object.keys(groupedPages.batch_page);
-                                      //     const formKey = batchKeys[fIdx];
-                                      //     const shared = formKey
-                                      //       ? groupedPages.batch_page[formKey]
-                                      //       : undefined;
-
-                                      //     // ambil hanya jawaban yang relevan dari groupedPages
-                                      //     const pickAns = (f: any) => {
-                                      //       const out: any = {};
-                                      //       if (f?.answer_text != null)
-                                      //         out.answer_text = f.answer_text;
-                                      //       if (f?.answer_datetime != null)
-                                      //         out.answer_datetime = f.answer_datetime;
-                                      //       if (f?.answer_file != null)
-                                      //         out.answer_file = f.answer_file;
-                                      //       return out;
-                                      //     };
-
-                                      //     // proxy: struktur dari "field" + nilai jawaban dari groupedPages
-                                      //     const proxyField = shared
-                                      //       ? { ...field, ...pickAns(shared) }
-                                      //       : field;
-
-                                      //     return renderFieldInput(
-                                      //       proxyField as FormVisitor,
-                                      //       fIdx,
-                                      //       // onChange: update groupedPages (dengan deep clone yang benar)
-                                      //       (idx, fieldKey, value) => {
-                                      //         setGroupedPages((prev) => {
-                                      //           const next = {
-                                      //             ...prev,
-                                      //             batch_page: { ...prev.batch_page },
-                                      //           };
-                                      //           const bKeys = Object.keys(next.batch_page);
-                                      //           const k = bKeys[fIdx];
-                                      //           if (k) {
-                                      //             next.batch_page[k] = {
-                                      //               ...next.batch_page[k],
-                                      //               [fieldKey]: value,
-                                      //             };
-                                      //           }
-                                      //           return next;
-                                      //         });
-                                      //       },
-                                      //       undefined,
-                                      //       {
-                                      //         showLabel: false,
-                                      //         uniqueKey: `${activeStep - 1}:${gIdx}:${fIdx}`,
-                                      //       },
-                                      //     );
-                                      //   })()}
-                                      // </TableCell>
-
-                                      // <TableCell key={field.custom_field_id || `${gIdx}-${fIdx}`}>
-                                      //   {(() => {
-                                      //     // cari entry batch yang match field ini (bukan berdasarkan index)
-                                      //     const matchedKey = Object.keys(
-                                      //       groupedPages.batch_page || {},
-                                      //     ).find((k) =>
-                                      //       sameField(groupedPages.batch_page[k], field),
-                                      //     );
-                                      //     const shared = matchedKey
-                                      //       ? groupedPages.batch_page[matchedKey]
-                                      //       : undefined;
-
-                                      //     // proxy untuk display
-                                      //     const proxyField = shared
-                                      //       ? { ...field, ...pickAns(shared) }
-                                      //       : field;
-
-                                      //     return renderFieldInput(
-                                      //       proxyField as FormVisitor,
-                                      //       fIdx,
-                                      //       (idx, fieldKey, value) => {
-                                      //         setGroupedPages((prev) => {
-                                      //           const bp = prev.batch_page || {};
-                                      //           const key =
-                                      //             Object.keys(bp).find((k) =>
-                                      //               sameField(bp[k], field),
-                                      //             ) ||
-                                      //             // optional: kalau belum ada, buat entri baru dengan identitas field
-                                      //             field.custom_field_id ||
-                                      //             field.remarks ||
-                                      //             String(idx);
-
-                                      //           return {
-                                      //             ...prev,
-                                      //             batch_page: {
-                                      //               ...bp,
-                                      //               [key]: {
-                                      //                 ...(bp[key] || {
-                                      //                   // seed identitas supaya matching berikutnya konsisten
-                                      //                   custom_field_id: field.custom_field_id,
-                                      //                   remarks: field.remarks,
-                                      //                   field_type: field.field_type,
-                                      //                 }),
-                                      //                 [fieldKey]: value,
-                                      //               },
-                                      //             },
-                                      //           };
-                                      //         });
-                                      //       },
-                                      //       undefined,
-                                      //       {
-                                      //         showLabel: false,
-                                      //         uniqueKey: `${activeStep - 1}:${gIdx}:${fIdx}`,
-                                      //       },
-                                      //     );
-                                      //   })()}
-                                      // </TableCell>
                                       <TableCell key={field.custom_field_id || `${gIdx}-${fIdx}`}>
                                         {(() => {
                                           // cari default kolom (template)
@@ -1467,6 +1372,112 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           );
         }
 
+        // case 12: {
+        //   const key = opts?.uniqueKey ?? String(index);
+        //   return (
+        //     <Box
+        //       display={'flex'}
+        //       alignItems={'center'}
+        //       justifyContent={'center'}
+        //       gap={1}
+        //       width={'380px'}
+        //     >
+        //       {/* Pilihan metode upload */}
+        //       <TextField
+        //         select
+        //         size="small"
+        //         value={uploadMethods[key] || 'file'}
+        //         onChange={(e) => handleUploadMethodChange(key, e.target.value)}
+        //         fullWidth
+        //         sx={{ width: '200px' }}
+        //       >
+        //         <MenuItem value="file">Choose File</MenuItem>
+        //         <MenuItem value="camera">Take Photo</MenuItem>
+        //       </TextField>
+
+        //       {/* Render sesuai metode yang dipilih */}
+        //       {(uploadMethods[key] || 'file') === 'camera' ? (
+        //         <CameraUpload
+        //           value={field.answer_file}
+        //           onChange={(url) => onChange(index, 'answer_file', url)}
+        //         />
+        //       ) : (
+        //         // <TextField
+        //         //   size="small"
+        //         //   type="file"
+        //         //   fullWidth
+        //         //   sx={{ width: '250px' }}
+        //         //   onChange={(e) =>
+        //         //     handleFileChangeForField(e as React.ChangeEvent<HTMLInputElement>, (url) =>
+        //         //       onChange(index, 'answer_file', url),
+        //         //     )
+        //         //   }
+        //         // />
+        //         <Box>
+        //           <label htmlFor={key}>
+        //             <Box
+        //               sx={{
+        //                 border: '2px dashed #90caf9',
+        //                 display: 'flex',
+        //                 alignItems: 'center',
+        //                 justifyContent: 'center',
+        //                 gap: 2,
+        //                 borderRadius: 2,
+        //                 p: 0.5,
+        //                 textAlign: 'center',
+        //                 backgroundColor: '#f5faff',
+        //                 cursor: 'pointer',
+        //                 width: '100%',
+        //               }}
+        //             >
+        //               <CloudUploadIcon sx={{ fontSize: 20, color: '#42a5f5' }} />
+        //               <Typography variant="subtitle1">Upload File</Typography>
+        //             </Box>
+        //           </label>
+
+        //           <input
+        //             id={key}
+        //             type="file"
+        //             accept="*"
+        //             hidden
+        //             onChange={(e) =>
+        //               handleFileChangeForField(e as React.ChangeEvent<HTMLInputElement>, (url) =>
+        //                 onChange(index, 'answer_file', url),
+        //               )
+        //             }
+        //           />
+
+        //           {/* INFO + REMOVE */}
+        //           {!!(field as any).answer_file && (
+        //             <Box sx={{ paddingTop: '5px' }} display="flex" alignItems="center" gap={1}>
+        //               <Typography variant="caption" color="text.secondary" noWrap>
+        //                 {String((field as any).answer_file)
+        //                   .split('/')
+        //                   .pop()}
+        //               </Typography>
+
+        //               <IconButton
+        //                 size="small"
+        //                 color="error"
+        //                 disabled={!!removing[key]}
+        //                 onClick={() =>
+        //                   handleRemoveFileForField(
+        //                     (field as any).answer_file,
+        //                     (url) => onChange(index, 'answer_file', url), // kosongkan state
+        //                     key, // reset <input id=key>
+        //                   )
+        //                 }
+        //               >
+        //                 <IconX size={16} />
+        //               </IconButton>
+        //             </Box>
+        //           )}
+        //         </Box>
+        //       )}
+        //     </Box>
+        //   );
+        // }
+
         case 12: {
           const key = opts?.uniqueKey ?? String(index);
           return (
@@ -1477,7 +1488,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
               gap={1}
               width={'380px'}
             >
-              {/* Pilihan metode upload */}
               <TextField
                 select
                 size="small"
@@ -1490,24 +1500,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 <MenuItem value="camera">Take Photo</MenuItem>
               </TextField>
 
-              {/* Render sesuai metode yang dipilih */}
               {(uploadMethods[key] || 'file') === 'camera' ? (
                 <CameraUpload
                   value={field.answer_file}
                   onChange={(url) => onChange(index, 'answer_file', url)}
                 />
               ) : (
-                // <TextField
-                //   size="small"
-                //   type="file"
-                //   fullWidth
-                //   sx={{ width: '250px' }}
-                //   onChange={(e) =>
-                //     handleFileChangeForField(e as React.ChangeEvent<HTMLInputElement>, (url) =>
-                //       onChange(index, 'answer_file', url),
-                //     )
-                //   }
-                // />
                 <Box>
                   <label htmlFor={key}>
                     <Box
@@ -1536,8 +1534,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     accept="*"
                     hidden
                     onChange={(e) =>
-                      handleFileChangeForField(e as React.ChangeEvent<HTMLInputElement>, (url) =>
-                        onChange(index, 'answer_file', url),
+                      handleFileChangeForField(
+                        e as React.ChangeEvent<HTMLInputElement>,
+                        (url) => onChange(index, 'answer_file', url),
+                        key,
                       )
                     }
                   />
@@ -1546,9 +1546,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   {!!(field as any).answer_file && (
                     <Box sx={{ paddingTop: '5px' }} display="flex" alignItems="center" gap={1}>
                       <Typography variant="caption" color="text.secondary" noWrap>
-                        {String((field as any).answer_file)
-                          .split('/')
-                          .pop()}
+                        {uploadNames[key] ?? ''}
                       </Typography>
 
                       <IconButton
@@ -1558,8 +1556,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         onClick={() =>
                           handleRemoveFileForField(
                             (field as any).answer_file,
-                            (url) => onChange(index, 'answer_file', url), // kosongkan state
-                            key, // reset <input id=key>
+                            (url) => onChange(index, 'answer_file', url),
+                            key,
                           )
                         }
                       >
@@ -1599,7 +1597,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   };
 
   // Upload Image && file
-  const [siteImageFile, setSiteImageFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewUrls, setPreviewUrls] = useState<{ [index: number]: string | null }>({});
@@ -1626,6 +1623,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
     try {
       const response = await axios.post('http://192.168.1.116:8000/cdn/upload', formData, {
+        // const response = await axios.post('http://localhost:8000/cdn/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -1642,20 +1640,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       console.error('Upload failed:', error);
       return null;
     }
-  };
-
-  const handleCaptureForField = async (setAnswerFile: (url: string) => void) => {
-    if (!webcamRef.current) return;
-    const imageSrc = webcamRef.current.getScreenshot();
-    if (!imageSrc) return;
-
-    const blob = await fetch(imageSrc).then((res) => res.blob());
-    const path = await uploadFileToCDN(blob);
-    if (!path) return;
-
-    setScreenshot(imageSrc);
-    setPreviewUrl(imageSrc);
-    setAnswerFile(path); // << simpan ke field ini
   };
 
   const handlePDFUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1677,15 +1661,18 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (!file) return;
+
+      // ⬇️ Kalau mau batasi PDF saja, uncomment ini
       // if (file.type !== 'application/pdf') {
       //   console.warn('Hanya file PDF yang diperbolehkan.');
       //   e.target.value = '';
       //   return;
       // }
+
       const path = await uploadFileToCDN(file);
-      // kalau sukses, kirim balik ke onChange (akan update groupedPages di caller kamu)
-      if (path) onChange(idx, 'answer_file', path);
-      // reset supaya pilih file yg sama masih trigger onChange
+      if (path) onChange(idx, 'answer_file', path); // ⬅️ update baris yang benar
+
+      // reset supaya memilih file yang sama tetap memicu onChange
       e.target.value = '';
     };
 
@@ -1718,24 +1705,59 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     if (el) el.value = '';
   };
 
-  const handleRemoveFileForField = async (
-    currentUrl: string,
-    setAnswerFile: (url: string) => void,
-    inputId: string,
-  ) => {
+  // const handleRemoveFileForField = async (
+  //   currentUrl: string,
+  //   setAnswerFile: (url: string) => void,
+  //   inputId: string,
+  // ) => {
+  //   try {
+  //     setRemoving((s) => ({ ...s, [inputId]: true }));
+  //     if (currentUrl) {
+  //       // API kamu: DELETE langsung ke URL file
+  //       await axiosInstance2.delete(`/cdn${currentUrl}`);
+  //       console.log('✅ Berhasil hapus file CDN:', currentUrl);
+  //     }
+  //     setAnswerFile(''); // kosongkan di state form
+  //     resetFileInput(inputId); // supaya bisa upload file yg sama lagi
+  //   } catch (e) {
+  //     console.error('Delete failed:', e);
+  //   } finally {
+  //     setRemoving((s) => ({ ...s, [inputId]: false }));
+  //   }
+  // };
+
+  const BASE_URL = 'http://192.168.1.116:8000';
+  const makeCdnUrl = (rel?: string | null) => {
+    if (!rel) return null;
+    if (/^(data:|blob:|https?:\/\/)/i.test(rel)) return rel;
+    const r = rel.startsWith('/') ? rel : `/${rel}`;
+    return r.startsWith('/cdn/') ? `${BASE_URL}${r}` : `${BASE_URL}/cdn${r}`;
+  };
+
+  // tentukan preview yg ditampilkan:
+  // 1) kalau ada previews[key] (ObjectURL hasil pilih file / kamera) -> pakai itu
+  // 2) else, kalau answer_file punya ekstensi image -> pakai cdn url
+  const getPreviewSrc = (key: string, answerFile?: string) => {
+    if (previews[key]) return previews[key];
+    if (!answerFile) return null;
+
+    const lower = answerFile.toLowerCase();
+    const isImg =
+      /\.(jpg|jpeg|png|webp|gif|bmp)$/.test(lower) ||
+      /^data:image\//.test(lower) ||
+      /^blob:/.test(lower);
+
+    return isImg ? makeCdnUrl(answerFile) : null;
+  };
+
+  // —— optional: helper untuk tampilkan nama file dari answer_file (fallback)
+  const fileNameFromAnswer = (answerFile?: string) => {
+    if (!answerFile) return '';
     try {
-      setRemoving((s) => ({ ...s, [inputId]: true }));
-      if (currentUrl) {
-        // API kamu: DELETE langsung ke URL file
-        await axiosInstance2.delete(`/cdn${currentUrl}`);
-        console.log('✅ Berhasil hapus file CDN:', currentUrl);
-      }
-      setAnswerFile(''); // kosongkan di state form
-      resetFileInput(inputId); // supaya bisa upload file yg sama lagi
-    } catch (e) {
-      console.error('Delete failed:', e);
-    } finally {
-      setRemoving((s) => ({ ...s, [inputId]: false }));
+      const url = new URL(makeCdnUrl(answerFile)!);
+      return url.pathname.split('/').pop() || '';
+    } catch {
+      return String(answerFile).split('/').pop() || '';
     }
   };
   const handleFileChangeForField = async (
@@ -1746,12 +1768,90 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // tampilkan preview lokal dulu (supaya user melihat langsung)
     if (trackKey) {
       setUploadNames((prev) => ({ ...prev, [trackKey]: file.name }));
+      setPreviews((prev) => ({ ...prev, [trackKey]: URL.createObjectURL(file) }));
     }
+
     const path = await uploadFileToCDN(file);
     if (path) setAnswerFile(path);
+    // reset input agar bisa pilih file yg sama lagi
+    e.target.value = '';
   };
+
+  // === GANTI: bersihkan juga previews & nama file ===
+  const handleRemoveFileForField = async (
+    currentUrl: string,
+    setAnswerFile: (url: string) => void,
+    inputId: string, // <- pakai key yg sama dengan id input
+  ) => {
+    try {
+      setRemoving((s) => ({ ...s, [inputId]: true }));
+      if (currentUrl) {
+        await axiosInstance2.delete(`/cdn${currentUrl}`);
+        console.log('✅ Berhasil hapus file CDN:', currentUrl);
+      }
+
+      setAnswerFile('');
+      setPreviews((p) => ({ ...p, [inputId]: null }));
+      setUploadNames((n) => {
+        const { [inputId]: _, ...rest } = n;
+        return rest;
+      });
+      const el = document.getElementById(inputId) as HTMLInputElement | null;
+      if (el) el.value = '';
+    } catch (e) {
+      console.error('Delete failed:', e);
+    } finally {
+      setRemoving((s) => ({ ...s, [inputId]: false }));
+    }
+  };
+
+  // === (opsional) kamera: simpan preview & nama file default ===
+  const handleCaptureForField = async (setAnswerFile: (url: string) => void, trackKey?: string) => {
+    if (!webcamRef.current) return;
+    const imageSrc = webcamRef.current.getScreenshot();
+    if (!imageSrc) return;
+
+    const blob = await fetch(imageSrc).then((res) => res.blob());
+    const path = await uploadFileToCDN(blob);
+    if (!path) return;
+
+    if (trackKey) {
+      setPreviews((prev) => ({ ...prev, [trackKey]: imageSrc }));
+      setUploadNames((prev) => ({ ...prev, [trackKey]: 'camera.jpg' }));
+    }
+    setAnswerFile(path);
+  };
+
+  // const handleCaptureForField = async (setAnswerFile: (url: string) => void) => {
+  //   if (!webcamRef.current) return;
+  //   const imageSrc = webcamRef.current.getScreenshot();
+  //   if (!imageSrc) return;
+
+  //   const blob = await fetch(imageSrc).then((res) => res.blob());
+  //   const path = await uploadFileToCDN(blob);
+  //   if (!path) return;
+
+  //   setScreenshot(imageSrc);
+  //   setPreviewUrl(imageSrc);
+  //   setAnswerFile(path); // << simpan ke field ini
+  // };
+  // const handleFileChangeForField = async (
+  //   e: React.ChangeEvent<HTMLInputElement>,
+  //   setAnswerFile: (url: string) => void,
+  //   trackKey?: string,
+  // ) => {
+  //   const file = e.target.files?.[0];
+  //   if (!file) return;
+
+  //   if (trackKey) {
+  //     setUploadNames((prev) => ({ ...prev, [trackKey]: file.name }));
+  //   }
+  //   const path = await uploadFileToCDN(file);
+  //   if (path) setAnswerFile(path);
+  // };
 
   // const handlePDFUploads = async (
   //   e: React.ChangeEvent<HTMLInputElement>,
@@ -1814,577 +1914,717 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       );
     }
 
-    return details.map((item, index) => (
-      <TableRow key={index}>
-        {/* Display Text (label) */}
-        <TableCell>
-          <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
-            {item.long_display_text}
-            {item.mandatory && (
-              <Typography component="span" color="error" sx={{ ml: 0.5, lineHeight: 1 }}>
-                *
-              </Typography>
-            )}
-          </Typography>
-          {/* Render sesuai field_type */}
-          {(() => {
-            switch (item.field_type) {
-              case 0: // Text
-                return (
-                  <TextField
-                    size="small"
-                    value={item.answer_text}
-                    onChange={(e) => onChange(index, 'answer_text', e.target.value)}
-                    placeholder="Enter text"
-                    fullWidth
-                  />
-                );
-              case 1: // Number
-                return (
-                  <TextField
-                    type="number"
-                    size="small"
-                    value={item.answer_text}
-                    onChange={(e) => onChange(index, 'answer_text', e.target.value)}
-                    placeholder="Enter number"
-                    fullWidth
-                  />
-                );
-              case 2: // Email
-                return (
-                  <TextField
-                    type="email"
-                    size="small"
-                    value={item.answer_text}
-                    onChange={(e) => onChange(index, 'answer_text', e.target.value)}
-                    placeholder="Enter email"
-                    fullWidth
-                  />
-                );
-              case 3: {
-                let options: { value: string; name: string }[] = [];
-
-                if (item.remarks === 'host') {
-                  options = employee.map((emp: any) => ({
-                    value: emp.id,
-                    name: emp.name,
-                  }));
-                } else if (item.remarks === 'site_place') {
-                  options = sites
-                    .filter((site: any) => site.can_visited === true)
-                    .map((site: any) => ({
-                      value: site.id,
-                      name: site.name,
-                    }));
-                } else {
-                  options = (item.multiple_option_fields || []).map((opt: any) =>
-                    typeof opt === 'object' ? opt : { value: opt, name: opt },
-                  );
-                }
-
-                return (
-                  <Autocomplete
-                    size="small"
-                    options={options}
-                    getOptionLabel={(option) => option.name}
-                    inputValue={inputValues[index] || ''}
-                    onInputChange={(_, newInputValue) =>
-                      setInputValues((prev) => ({ ...prev, [index]: newInputValue }))
-                    }
-                    filterOptions={(opts, state) => {
-                      if (state.inputValue.length < 3) return [];
-                      return opts.filter((opt) =>
-                        opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
-                      );
-                    }}
-                    noOptionsText={
-                      (inputValues[index] || '').length < 3
-                        ? 'Ketik minimal 3 karakter untuk mencari'
-                        : 'Tidak ditemukan'
-                    }
-                    value={options.find((opt) => opt.value === item.answer_text) || null}
-                    onChange={(_, newValue) =>
-                      onChange(index, 'answer_text', newValue ? newValue.value : '')
-                    }
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Pilih opsi"
-                        placeholder="Ketik minimal 3 karakter"
-                        fullWidth
-                      />
-                    )}
-                  />
-                );
-              }
-              case 4: // Datepicker
-                return (
-                  <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
-                    <DateTimePicker
-                      value={startTime}
-                      ampm={false}
-                      onChange={setStartTime}
-                      format="ddd, DD - MMM - YYYY, HH:mm"
-                      viewRenderers={{
-                        hours: renderTimeViewClock,
-                        minutes: renderTimeViewClock,
-                        seconds: renderTimeViewClock,
-                      }}
-                      slotProps={{
-                        textField: {
-                          fullWidth: true,
-                        },
-                      }}
-                    />
-                  </LocalizationProvider>
-                );
-              case 5: // Radio
-                return (
-                  <FormControl component="fieldset">
-                    <RadioGroup
+    return details.map((item, index) => {
+      const key = `${activeStep - 1}:${index}`;
+      const previewSrc = getPreviewSrc(key, (item as any).answer_file);
+      const shownName = uploadNames[key] || fileNameFromAnswer((item as any).answer_file);
+      return (
+        <TableRow key={key}>
+          {/* Display Text (label) */}
+          <TableCell>
+            <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
+              {item.long_display_text}
+              {item.mandatory && (
+                <Typography component="span" color="error" sx={{ ml: 0.5, lineHeight: 1 }}>
+                  *
+                </Typography>
+              )}
+            </Typography>
+            {/* Render sesuai field_type */}
+            {(() => {
+              switch (item.field_type) {
+                case 0: // Text
+                  return (
+                    <TextField
+                      size="small"
                       value={item.answer_text}
                       onChange={(e) => onChange(index, 'answer_text', e.target.value)}
-                      sx={{
-                        flexDirection: 'row', // tampil horizontal
-                        flexWrap: 'wrap', // bisa pindah baris
-                        gap: 1, // beri jarak antar item (opsional)
+                      placeholder="Enter text"
+                      fullWidth
+                    />
+                  );
+                case 1: // Number
+                  return (
+                    <TextField
+                      type="number"
+                      size="small"
+                      value={item.answer_text}
+                      onChange={(e) => onChange(index, 'answer_text', e.target.value)}
+                      placeholder="Enter number"
+                      fullWidth
+                    />
+                  );
+                case 2: // Email
+                  return (
+                    <TextField
+                      type="email"
+                      size="small"
+                      value={item.answer_text}
+                      onChange={(e) => onChange(index, 'answer_text', e.target.value)}
+                      placeholder="Enter email"
+                      fullWidth
+                    />
+                  );
+                case 3: {
+                  let options: { value: string; name: string }[] = [];
+
+                  if (item.remarks === 'host') {
+                    options = employee.map((emp: any) => ({
+                      value: emp.id,
+                      name: emp.name,
+                    }));
+                  } else if (item.remarks === 'site_place') {
+                    options = sites
+                      .filter((site: any) => site.can_visited === true)
+                      .map((site: any) => ({
+                        value: site.id,
+                        name: site.name,
+                      }));
+                  } else {
+                    options = (item.multiple_option_fields || []).map((opt: any) =>
+                      typeof opt === 'object' ? opt : { value: opt, name: opt },
+                    );
+                  }
+
+                  return (
+                    <Autocomplete
+                      size="small"
+                      options={options}
+                      getOptionLabel={(option) => option.name}
+                      inputValue={inputValues[index] || ''}
+                      onInputChange={(_, newInputValue) =>
+                        setInputValues((prev) => ({ ...prev, [index]: newInputValue }))
+                      }
+                      filterOptions={(opts, state) => {
+                        if (state.inputValue.length < 3) return [];
+                        return opts.filter((opt) =>
+                          opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
+                        );
                       }}
-                    >
+                      noOptionsText={
+                        (inputValues[index] || '').length < 3
+                          ? 'Ketik minimal 3 karakter untuk mencari'
+                          : 'Tidak ditemukan'
+                      }
+                      value={options.find((opt) => opt.value === item.answer_text) || null}
+                      onChange={(_, newValue) =>
+                        onChange(index, 'answer_text', newValue ? newValue.value : '')
+                      }
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Pilih opsi"
+                          placeholder="Ketik minimal 3 karakter"
+                          fullWidth
+                        />
+                      )}
+                    />
+                  );
+                }
+                case 4: // Datepicker
+                  return (
+                    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
+                      <DateTimePicker
+                        value={startTime}
+                        ampm={false}
+                        onChange={setStartTime}
+                        format="ddd, DD - MMM - YYYY, HH:mm"
+                        viewRenderers={{
+                          hours: renderTimeViewClock,
+                          minutes: renderTimeViewClock,
+                          seconds: renderTimeViewClock,
+                        }}
+                        slotProps={{
+                          textField: {
+                            fullWidth: true,
+                          },
+                        }}
+                      />
+                    </LocalizationProvider>
+                  );
+                case 5: // Radio
+                  return (
+                    <FormControl component="fieldset">
+                      <RadioGroup
+                        value={item.answer_text}
+                        onChange={(e) => onChange(index, 'answer_text', e.target.value)}
+                        sx={{
+                          flexDirection: 'row', // tampil horizontal
+                          flexWrap: 'wrap', // bisa pindah baris
+                          gap: 1, // beri jarak antar item (opsional)
+                        }}
+                      >
+                        {(item.multiple_option_fields || []).map((opt: any, idx: number) => (
+                          <FormControlLabel
+                            key={idx}
+                            value={typeof opt === 'object' ? opt.value : opt}
+                            control={<Radio />}
+                            label={typeof opt === 'object' ? opt.name : opt}
+                          />
+                        ))}
+                      </RadioGroup>
+                    </FormControl>
+                  );
+
+                case 6: // Checkbox
+                  return (
+                    <FormGroup>
                       {(item.multiple_option_fields || []).map((opt: any, idx: number) => (
                         <FormControlLabel
                           key={idx}
-                          value={typeof opt === 'object' ? opt.value : opt}
-                          control={<Radio />}
+                          control={
+                            <Checkbox
+                              checked={item.answer_text?.includes(
+                                typeof opt === 'object' ? opt.value : opt,
+                              )}
+                              onChange={(e) => {
+                                const val = typeof opt === 'object' ? opt.value : opt;
+                                const newValue = e.target.checked
+                                  ? [...(item.answer_text || []), val]
+                                  : (item.answer_text || []).filter((v: string) => v !== val);
+                                onChange(index, 'answer_text', newValue);
+                              }}
+                            />
+                          }
                           label={typeof opt === 'object' ? opt.name : opt}
                         />
                       ))}
-                    </RadioGroup>
-                  </FormControl>
-                );
+                    </FormGroup>
+                  );
 
-              case 6: // Checkbox
-                return (
-                  <FormGroup>
-                    {(item.multiple_option_fields || []).map((opt: any, idx: number) => (
-                      <FormControlLabel
-                        key={idx}
-                        control={
-                          <Checkbox
-                            checked={item.answer_text?.includes(
-                              typeof opt === 'object' ? opt.value : opt,
-                            )}
-                            onChange={(e) => {
-                              const val = typeof opt === 'object' ? opt.value : opt;
-                              const newValue = e.target.checked
-                                ? [...(item.answer_text || []), val]
-                                : (item.answer_text || []).filter((v: string) => v !== val);
-                              onChange(index, 'answer_text', newValue);
-                            }}
-                          />
-                        }
-                        label={typeof opt === 'object' ? opt.name : opt}
-                      />
-                    ))}
-                  </FormGroup>
-                );
-
-              case 8: // TimePicker
-                return (
-                  <TextField
-                    type="time"
-                    size="small"
-                    value={item.answer_datetime}
-                    onChange={(e) => onChange(index, 'answer_datetime', e.target.value)}
-                    fullWidth
-                  />
-                );
-              case 9:
-                return (
-                  <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
-                    <DateTimePicker
-                      value={item.answer_datetime ? dayjs(item.answer_datetime) : null}
-                      ampm={false}
-                      onChange={(newValue) => {
-                        if (newValue) {
-                          const utc = newValue.utc().format(); // hasil: 2025-08-05T10:00:00Z
-                          onChange(index, 'answer_datetime', utc);
-                        }
-                      }}
-                      format="ddd, DD - MMM - YYYY, HH:mm"
-                      viewRenderers={{
-                        hours: renderTimeViewClock,
-                        minutes: renderTimeViewClock,
-                        seconds: renderTimeViewClock,
-                      }}
-                      slotProps={{
-                        textField: {
-                          fullWidth: true,
-                        },
-                      }}
+                case 8: // TimePicker
+                  return (
+                    <TextField
+                      type="time"
+                      size="small"
+                      value={item.answer_datetime}
+                      onChange={(e) => onChange(index, 'answer_datetime', e.target.value)}
+                      fullWidth
                     />
-                  </LocalizationProvider>
-                );
+                  );
+                case 9:
+                  return (
+                    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
+                      <DateTimePicker
+                        value={item.answer_datetime ? dayjs(item.answer_datetime) : null}
+                        ampm={false}
+                        onChange={(newValue) => {
+                          if (newValue) {
+                            const utc = newValue.utc().format(); // hasil: 2025-08-05T10:00:00Z
+                            onChange(index, 'answer_datetime', utc);
+                          }
+                        }}
+                        format="ddd, DD - MMM - YYYY, HH:mm"
+                        viewRenderers={{
+                          hours: renderTimeViewClock,
+                          minutes: renderTimeViewClock,
+                          seconds: renderTimeViewClock,
+                        }}
+                        slotProps={{
+                          textField: {
+                            fullWidth: true,
+                          },
+                        }}
+                      />
+                    </LocalizationProvider>
+                  );
 
-              case 10: // TakePicture (Assuming image capture from device camera)
-                return (
-                  <Box>
-                    <Box
-                      sx={{
-                        border: '2px dashed #90caf9',
-                        borderRadius: 2,
-                        padding: 4,
-                        textAlign: 'center',
-                        backgroundColor: '#f5faff',
-                        cursor: 'pointer',
-                        width: '100%',
-                        pointerEvents: 'auto',
-                        opacity: 1,
-                      }}
-                      // onClick={() => !isBatchEdit && fileInputRef.current?.click()}
-                    >
+                case 10: // TakePicture (Assuming image capture from device camera)
+                  return (
+                    <Box>
                       <Box
                         sx={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          justifyContent: 'center',
+                          border: '2px dashed #90caf9',
+                          borderRadius: 2,
+                          padding: 4,
+                          textAlign: 'center',
+                          backgroundColor: '#f5faff',
                           cursor: 'pointer',
-                          p: 2,
+                          width: '100%',
+                          pointerEvents: 'auto',
+                          opacity: 1,
                         }}
-                        onClick={() => setOpenCamera(true)} // Bisa langsung dibuka saat klik semua bagian
+                        // onClick={() => !isBatchEdit && fileInputRef.current?.click()}
                       >
-                        {/* <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} /> */}
-                        <PhotoCameraIcon sx={{ fontSize: 48, color: '#42a5f5', mr: 0.5 }} />
                         <Box
                           sx={{
                             display: 'flex',
+                            flexDirection: 'column',
                             alignItems: 'center',
-                            mt: 1,
-                          }}
-                        >
-                          <Typography
-                            variant="subtitle1"
-                            component="span"
-                            color="primary"
-                            sx={{ fontWeight: 600 }}
-                          >
-                            Use Camera
-                          </Typography>
-                        </Box>
-                      </Box>
-                      <input
-                        type="file"
-                        accept="*"
-                        hidden
-                        ref={fileInputRef}
-                        onChange={(e) =>
-                          handleFileChangeForField(e, (url) => onChange(index, 'answer_file', url))
-                        }
-                      />
-                    </Box>
-
-                    {previewUrl && (
-                      <Box
-                        mt={2}
-                        sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
-                      >
-                        <img
-                          src={previewUrl}
-                          alt="preview"
-                          style={{
-                            width: 200,
-                            height: 200,
-                            borderRadius: 12,
-                            objectFit: 'cover',
+                            justifyContent: 'center',
                             cursor: 'pointer',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
+                            p: 2,
                           }}
-                        />
-
-                        <MuiButton
-                          color="error"
-                          size="small"
-                          variant="outlined"
-                          sx={{ mt: 2, minWidth: 120 }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            clearFileForField((url) => onChange(index, 'answer_file', url));
-                          }}
-                          startIcon={<IconTrash />}
+                          onClick={() => setOpenCamera(true)} // Bisa langsung dibuka saat klik semua bagian
                         >
-                          Remove
-                        </MuiButton>
-                      </Box>
-                    )}
-
-                    <Dialog
-                      open={openCamera}
-                      onClose={() => setOpenCamera(false)}
-                      maxWidth="md"
-                      fullWidth
-                    >
-                      <Box sx={{ p: 3 }}>
-                        <Typography variant="h6" mb={2}>
-                          Take Photo From Camera
-                        </Typography>
-
-                        <Grid container spacing={2}>
-                          <Grid size={{ xs: 12, sm: 6 }}>
-                            <Webcam
-                              audio={false}
-                              ref={webcamRef}
-                              screenshotFormat="image/jpeg"
-                              videoConstraints={{ facingMode: 'environment' }}
-                              style={{
-                                width: '100%',
-                                borderRadius: 8,
-                                border: '2px solid #ccc',
-                              }}
-                            />
-                          </Grid>
-
-                          <Grid size={{ xs: 12, sm: 6 }}>
-                            {screenshot ? (
-                              <img
-                                src={screenshot}
-                                alt="Captured"
-                                style={{ width: '100%', borderRadius: 8, border: '2px solid #ccc' }}
-                              />
-                            ) : (
-                              <Box
-                                sx={{
-                                  width: '100%',
-                                  height: '100%',
-                                  border: '2px dashed #ccc',
-                                  borderRadius: 8,
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  minHeight: 240,
-                                }}
-                              >
-                                <Typography color="text.secondary">
-                                  No Photos Have Been Taken Yet
-                                </Typography>
-                              </Box>
-                            )}
-                          </Grid>
-                        </Grid>
-
-                        <Divider sx={{ my: 2 }} />
-
-                        <Box sx={{ textAlign: 'right' }}>
-                          <MuiButton
-                            onClick={() =>
-                              clearFileForField((url) => onChange(index, 'answer_file', url))
-                            }
-                            color="warning"
-                            sx={{ mr: 2 }}
-                          >
-                            Clear Foto
-                          </MuiButton>
-                          <MuiButton
-                            variant="contained"
-                            onClick={() =>
-                              handleCaptureForField((url) => onChange(index, 'answer_file', url))
-                            }
-                          >
-                            Take Foto
-                          </MuiButton>
-                          <MuiButton onClick={() => setOpenCamera(false)} sx={{ ml: 2 }}>
-                            Submit
-                          </MuiButton>
-                        </Box>
-                      </Box>
-                    </Dialog>
-                  </Box>
-                );
-
-              case 11: // FileUpload
-                return (
-                  <Box>
-                    <Box
-                      sx={{
-                        border: '2px dashed #90caf9',
-                        borderRadius: 2,
-                        padding: 4,
-                        textAlign: 'center',
-                        backgroundColor: '#f5faff',
-                        cursor: 'pointer',
-                        width: '100%',
-                        pointerEvents: 'auto',
-                        opacity: 1,
-                      }}
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
-                      <Typography variant="subtitle1" sx={{ mt: 1 }}>
-                        Upload File
-                      </Typography>
-
-                      <Typography variant="caption" color="textSecondary">
-                        Supports: PDF, DOCX, JPG, PNG
-                      </Typography>
-
-                      <input
-                        type="file"
-                        accept="*"
-                        hidden
-                        ref={fileInputRef}
-                        onChange={handlePDFUpload}
-                      />
-                    </Box>
-                  </Box>
-                );
-
-              case 12:
-                return (
-                  <Box>
-                    <Box
-                      sx={{
-                        border: '2px dashed #90caf9',
-                        borderRadius: 2,
-                        padding: 4,
-                        textAlign: 'center',
-                        backgroundColor: '#f5faff',
-                        cursor: 'pointer',
-                        width: '100%',
-                        pointerEvents: 'auto',
-                        opacity: 1,
-                      }}
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
-                      <Typography variant="subtitle1" sx={{ mt: 1 }}>
-                        Upload File
-                      </Typography>
-
-                      <Typography variant="caption" color="textSecondary">
-                        Supports: PDF, DOCX, JPG, PNG
-                      </Typography>
-
-                      <Typography
-                        variant="subtitle1"
-                        component="span"
-                        color="primary"
-                        sx={{ fontWeight: 600, ml: 1, cursor: 'pointer' }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setOpenCamera(true);
-                        }}
-                      >
-                        Use Camera
-                      </Typography>
-
-                      <input
-                        type="file"
-                        accept="*"
-                        hidden
-                        ref={fileInputRef}
-                        onChange={(e) =>
-                          handleFileChangeForField(e, (url) => onChange(index, 'answer_file', url))
-                        }
-                      />
-                    </Box>
-
-                    <Dialog
-                      open={openCamera}
-                      onClose={() => setOpenCamera(false)}
-                      maxWidth="md"
-                      fullWidth
-                    >
-                      <Box sx={{ p: 3 }}>
-                        <Typography variant="h6" mb={2}>
-                          Take Photo From Camera
-                        </Typography>
-
-                        <Grid container spacing={2}>
-                          <Grid size={{ xs: 12, sm: 6 }}>
-                            <Webcam
-                              audio={false}
-                              ref={webcamRef}
-                              screenshotFormat="image/jpeg"
-                              videoConstraints={{ facingMode: 'environment' }}
-                              style={{
-                                width: '100%',
-                                borderRadius: 8,
-                                border: '2px solid #ccc',
-                              }}
-                            />
-                          </Grid>
-
-                          <Grid size={{ xs: 12, sm: 6 }}>
-                            {screenshot ? (
-                              <img
-                                src={screenshot}
-                                alt="Captured"
-                                style={{ width: '100%', borderRadius: 8, border: '2px solid #ccc' }}
-                              />
-                            ) : (
-                              <Box
-                                sx={{
-                                  width: '100%',
-                                  height: '100%',
-                                  border: '2px dashed #ccc',
-                                  borderRadius: 8,
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  minHeight: 240,
-                                }}
-                              >
-                                <Typography color="text.secondary">
-                                  No Photos Have Been Taken Yet
-                                </Typography>
-                              </Box>
-                            )}
-                          </Grid>
-                        </Grid>
-
-                        <Divider sx={{ my: 2 }} />
-
-                        <Box sx={{ textAlign: 'right' }}>
-                          <MuiButton
-                            onClick={() =>
-                              clearFileForField((url) => onChange(index, 'answer_file', url))
-                            }
-                            color="warning"
-                            sx={{ mr: 2 }}
-                          >
-                            Clear Foto
-                          </MuiButton>
-                          <MuiButton
-                            variant="contained"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleCaptureForField((url) => onChange(index, 'answer_file', url));
+                          {/* <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} /> */}
+                          <PhotoCameraIcon sx={{ fontSize: 48, color: '#42a5f5', mr: 0.5 }} />
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              mt: 1,
                             }}
                           >
-                            Take Foto
-                          </MuiButton>
-                          <MuiButton onClick={() => setOpenCamera(false)} sx={{ ml: 2 }}>
-                            Close
-                          </MuiButton>
+                            <Typography
+                              variant="subtitle1"
+                              component="span"
+                              color="primary"
+                              sx={{ fontWeight: 600 }}
+                            >
+                              Use Camera
+                            </Typography>
+                          </Box>
                         </Box>
+                        <input
+                          id={`file-${key}`}
+                          type="file"
+                          accept="*"
+                          hidden
+                          ref={fileInputRef}
+                          onChange={(e) =>
+                            handleFileChangeForField(
+                              e as React.ChangeEvent<HTMLInputElement>,
+                              (url) => onChange(index, 'answer_file', url),
+                              key,
+                            )
+                          }
+                        />
                       </Box>
-                    </Dialog>
-                  </Box>
-                );
-              default:
-                return (
-                  <TextField
-                    size="small"
-                    value={item.long_display_text}
-                    onChange={(e) => onChange(index, 'long_display_text', e.target.value)}
-                    placeholder="Enter value"
-                    fullWidth
-                  />
-                );
-            }
-          })()}
-        </TableCell>
-      </TableRow>
-    ));
+
+                      {/* PREVIEW / INFO */}
+                      {(previewSrc || shownName) && (
+                        <Box
+                          mt={1}
+                          display="flex"
+                          alignItems="center"
+                          gap={1}
+                          justifyContent={'center'}
+                        >
+                          {previewSrc ? (
+                            <Box display={'flex'} flexDirection={'column'} alignItems={'center'}>
+                              <img
+                                src={previewSrc}
+                                alt="preview"
+                                style={{
+                                  width: 200,
+                                  height: 200,
+                                  objectFit: 'cover',
+                                  borderRadius: 8,
+                                }}
+                              />
+                              {/* <Typography variant="caption" noWrap>
+                                {shownName}
+                              </Typography> */}
+                              <MuiButton
+                                color="error"
+                                size="small"
+                                variant="outlined"
+                                sx={{ mt: 2, minWidth: 120 }}
+                                onClick={() =>
+                                  handleRemoveFileForField(
+                                    (item as any).answer_file,
+                                    (url) => onChange(index, 'answer_file', url), // kosongkan state
+                                    key, // reset <input id=key>
+                                  )
+                                }
+                                startIcon={<IconTrash />}
+                              >
+                                Remove
+                              </MuiButton>
+                            </Box>
+                          ) : (
+                            <></>
+                          )}
+                        </Box>
+                      )}
+
+                      <Dialog
+                        open={openCamera}
+                        onClose={() => setOpenCamera(false)}
+                        maxWidth="md"
+                        fullWidth
+                      >
+                        <Box sx={{ p: 3 }}>
+                          <Typography variant="h6" mb={2}>
+                            Take Photo From Camera
+                          </Typography>
+
+                          <Grid container spacing={2}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
+                              <Webcam
+                                audio={false}
+                                ref={webcamRef}
+                                screenshotFormat="image/jpeg"
+                                videoConstraints={{ facingMode: 'environment' }}
+                                style={{
+                                  width: '100%',
+                                  borderRadius: 8,
+                                  border: '2px solid #ccc',
+                                }}
+                              />
+                            </Grid>
+
+                            <Grid size={{ xs: 12, sm: 6 }}>
+                              {previews[key] ? (
+                                <img
+                                  src={previews[key] as string}
+                                  alt="Captured"
+                                  style={{
+                                    width: '100%',
+                                    borderRadius: 8,
+                                    border: '2px solid #ccc',
+                                  }}
+                                />
+                              ) : (
+                                <Box
+                                  sx={{
+                                    width: '100%',
+                                    height: '100%',
+                                    border: '2px dashed #ccc',
+                                    borderRadius: 8,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    minHeight: 240,
+                                  }}
+                                >
+                                  <Typography color="text.secondary">
+                                    No Photos Have Been Taken Yet
+                                  </Typography>
+                                </Box>
+                              )}
+                            </Grid>
+                          </Grid>
+
+                          <Divider sx={{ my: 2 }} />
+
+                          <Box sx={{ textAlign: 'right' }}>
+                            <MuiButton
+                              onClick={() =>
+                                handleRemoveFileForField(
+                                  (item as any).answer_file,
+                                  (url) => onChange(index, 'answer_file', url),
+                                  key,
+                                )
+                              }
+                              color="warning"
+                              sx={{ mr: 2 }}
+                            >
+                              Clear Foto
+                            </MuiButton>
+                            <MuiButton
+                              variant="contained"
+                              onClick={() =>
+                                handleCaptureForField(
+                                  (url) => onChange(index, 'answer_file', url),
+                                  key,
+                                )
+                              }
+                            >
+                              Take Foto
+                            </MuiButton>
+                            <MuiButton onClick={() => setOpenCamera(false)} sx={{ ml: 2 }}>
+                              Submit
+                            </MuiButton>
+                          </Box>
+                        </Box>
+                      </Dialog>
+                    </Box>
+                  );
+
+                case 11: {
+                  // FileUpload
+                  return (
+                    <Box>
+                      <Box
+                        sx={{
+                          border: '2px dashed #90caf9',
+                          borderRadius: 2,
+                          padding: 4,
+                          textAlign: 'center',
+                          backgroundColor: '#f5faff',
+                          cursor: 'pointer',
+                          width: '100%',
+                          pointerEvents: 'auto',
+                          opacity: 1,
+                        }}
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
+                        <Typography variant="subtitle1" sx={{ mt: 1 }}>
+                          Upload File
+                        </Typography>
+
+                        <Typography variant="caption" color="textSecondary">
+                          Supports: PDF, DOCX, JPG, PNG
+                        </Typography>
+
+                        {/*preview  */}
+                        {(previewSrc || shownName) && (
+                          <Box
+                            mt={2}
+                            sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+                          >
+                            {previewSrc ? (
+                              <>
+                                <img
+                                  src={previewSrc}
+                                  alt="preview"
+                                  style={{
+                                    width: 200,
+                                    height: 200,
+                                    borderRadius: 12,
+                                    objectFit: 'cover',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
+                                  }}
+                                />
+                                <MuiButton
+                                  color="error"
+                                  size="small"
+                                  variant="outlined"
+                                  sx={{ mt: 2, minWidth: 120 }}
+                                  onClick={() =>
+                                    handleRemoveFileForField(
+                                      (item as any).answer_file,
+                                      (url) => onChange(index, 'answer_file', url), // kosongkan state
+                                      key, // reset <input id=key>
+                                    )
+                                  }
+                                  startIcon={<IconTrash />}
+                                >
+                                  Remove
+                                </MuiButton>
+                              </>
+                            ) : (
+                              <Typography variant="caption" noWrap>
+                                {shownName}
+                              </Typography>
+                            )}
+                          </Box>
+                        )}
+
+                        <input
+                          id={`file-${key}`}
+                          type="file"
+                          accept="*"
+                          hidden
+                          ref={fileInputRef}
+                          onChange={handlePDFUploadFor(index, onChange)}
+                        />
+                      </Box>
+                    </Box>
+                  );
+                }
+
+                case 12: {
+                  return (
+                    <Box>
+                      <Box
+                        sx={{
+                          border: '2px dashed #90caf9',
+                          borderRadius: 2,
+                          padding: 4,
+                          textAlign: 'center',
+                          backgroundColor: '#f5faff',
+                          cursor: 'pointer',
+                          width: '100%',
+                          pointerEvents: 'auto',
+                          opacity: 1,
+                        }}
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
+                        <Typography variant="subtitle1" sx={{ mt: 1 }}>
+                          Upload File
+                        </Typography>
+
+                        <Typography variant="caption" color="textSecondary">
+                          Supports: PDF, DOCX, JPG, PNG
+                        </Typography>
+
+                        <Typography
+                          variant="subtitle1"
+                          component="span"
+                          color="primary"
+                          sx={{ fontWeight: 600, ml: 1, cursor: 'pointer' }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenCamera(true);
+                          }}
+                        >
+                          Use Camera
+                        </Typography>
+
+                        <input
+                          id={`file-${key}`}
+                          type="file"
+                          accept="*"
+                          hidden
+                          ref={fileInputRef}
+                          onChange={(e) =>
+                            handleFileChangeForField(
+                              e as React.ChangeEvent<HTMLInputElement>,
+                              (url) => onChange(index, 'answer_file', url),
+                              key,
+                            )
+                          }
+                        />
+                        {/*preview  */}
+                        {(previewSrc || shownName) && (
+                          <Box
+                            mt={2}
+                            sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+                          >
+                            {previewSrc ? (
+                              <>
+                                <img
+                                  src={previewSrc}
+                                  alt="preview"
+                                  style={{
+                                    width: 200,
+                                    height: 200,
+                                    borderRadius: 12,
+                                    objectFit: 'cover',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
+                                  }}
+                                />
+                                <MuiButton
+                                  color="error"
+                                  size="small"
+                                  variant="outlined"
+                                  sx={{ mt: 2, minWidth: 120 }}
+                                  onClick={() =>
+                                    handleRemoveFileForField(
+                                      (item as any).answer_file,
+                                      (url) => onChange(index, 'answer_file', url), // kosongkan state
+                                      key, // reset <input id=key>
+                                    )
+                                  }
+                                  startIcon={<IconTrash />}
+                                >
+                                  Remove
+                                </MuiButton>
+                              </>
+                            ) : (
+                              <Typography variant="caption" noWrap>
+                                {shownName}
+                              </Typography>
+                            )}
+                          </Box>
+                        )}
+                      </Box>
+
+                      <Dialog
+                        open={openCamera}
+                        onClose={() => setOpenCamera(false)}
+                        maxWidth="md"
+                        fullWidth
+                      >
+                        <Box sx={{ p: 3 }}>
+                          <Typography variant="h6" mb={2}>
+                            Take Photo From Camera
+                          </Typography>
+
+                          <Grid container spacing={2}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
+                              <Webcam
+                                audio={false}
+                                ref={webcamRef}
+                                screenshotFormat="image/jpeg"
+                                videoConstraints={{ facingMode: 'environment' }}
+                                style={{
+                                  width: '100%',
+                                  borderRadius: 8,
+                                  border: '2px solid #ccc',
+                                }}
+                              />
+                            </Grid>
+
+                            <Grid size={{ xs: 12, sm: 6 }}>
+                              {screenshot ? (
+                                <img
+                                  src={screenshot}
+                                  alt="Captured"
+                                  style={{
+                                    width: '100%',
+                                    borderRadius: 8,
+                                    border: '2px solid #ccc',
+                                  }}
+                                />
+                              ) : (
+                                <Box
+                                  sx={{
+                                    width: '100%',
+                                    height: '100%',
+                                    border: '2px dashed #ccc',
+                                    borderRadius: 8,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    minHeight: 240,
+                                  }}
+                                >
+                                  <Typography color="text.secondary">
+                                    No Photos Have Been Taken Yet
+                                  </Typography>
+                                </Box>
+                              )}
+                            </Grid>
+                          </Grid>
+
+                          <Divider sx={{ my: 2 }} />
+
+                          <Box sx={{ textAlign: 'right' }}>
+                            <MuiButton
+                              onClick={() =>
+                                handleRemoveFileForField(
+                                  (item as any).answer_file,
+                                  (url) => onChange(index, 'answer_file', url),
+                                  key,
+                                )
+                              }
+                              color="warning"
+                              sx={{ mr: 2 }}
+                            >
+                              Clear Foto
+                            </MuiButton>
+                            <MuiButton
+                              variant="contained"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCaptureForField((url) => onChange(index, 'answer_file', url));
+                              }}
+                            >
+                              Take Foto
+                            </MuiButton>
+                            <MuiButton onClick={() => setOpenCamera(false)} sx={{ ml: 2 }}>
+                              Close
+                            </MuiButton>
+                          </Box>
+                        </Box>
+                      </Dialog>
+                    </Box>
+                  );
+                }
+                default:
+                  return (
+                    <TextField
+                      size="small"
+                      value={item.long_display_text}
+                      onChange={(e) => onChange(index, 'long_display_text', e.target.value)}
+                      placeholder="Enter value"
+                      fullWidth
+                    />
+                  );
+              }
+            })()}
+          </TableCell>
+        </TableRow>
+      );
+    });
   };
   useEffect(() => {
     if (!token) return;
@@ -2680,14 +2920,124 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     };
   }
 
+  // const handleOnSubmit = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   setErrors({});
+  //   if (!token) return;
+
+  //   try {
+  //     let data: CreateVisitorRequest;
+
+  //     const mapField = (field: FormVisitor, sortIdx: number) => {
+  //       const base: any = {
+  //         sort: field.sort ?? sortIdx,
+  //         short_name: field.short_name ?? '',
+  //         long_display_text: field.long_display_text ?? '',
+  //         field_type: field.field_type ?? 0,
+  //         is_primary: field.is_primary ?? false,
+  //         is_enable: field.is_enable ?? false,
+  //         mandatory: field.mandatory ?? false,
+  //         remarks: field.remarks ?? '',
+  //         custom_field_id: field.custom_field_id ?? '',
+  //         multiple_option_fields: field.multiple_option_fields ?? [],
+  //         visitor_form_type: field.visitor_form_type ?? DEFAULT_VFT,
+  //       };
+  //       if (typeof field.answer_text === 'string' && field.answer_text.trim()) {
+  //         base.answer_text = field.answer_text;
+  //       }
+  //       if (
+  //         [10, 11, 12].includes(base.field_type) &&
+  //         typeof field.answer_file === 'string' &&
+  //         field.answer_file.trim()
+  //       ) {
+  //         base.answer_file = field.answer_file;
+  //       }
+  //       if (
+  //         base.field_type === 9 &&
+  //         typeof field.answer_datetime === 'string' &&
+  //         field.answer_datetime.trim()
+  //       ) {
+  //         base.answer_datetime = field.answer_datetime;
+  //       }
+  //       return base;
+  //     };
+
+  //     if (isGroup) {
+  //       if (!dataVisitor.length) {
+  //         setErrors({ submit: 'Minimal tambah 1 visitor dulu.' });
+  //         return;
+  //       }
+
+  //       const data_visitor = buildGroupedDataVisitor(
+  //         dataVisitor, // boleh kosong, builder akan tetap bikin 1 row
+  //         groupedPages, // ← ini kunci: merge nilai dari sini
+  //         sectionsData,
+  //       );
+
+  //       console.log('data_visitor test:', JSON.stringify(data_visitor, null, 2));
+  //       const data = buildFinalPayload(
+  //         rawSections, // dari API
+  //         groupedPages, // PV shared + template + banyak baris
+  //         dataVisitor,
+  //         {
+  //           visitor_type: formData.visitor_type!,
+  //           is_group: true,
+  //           type_registered: TYPE_REGISTERED,
+  //         },
+  //       );
+  //       console.log('data:', JSON.stringify(data, null, 2));
+  //       const parsed = CreateVisitorRequestSchema.parse(data);
+  //       await createVisitor(token, parsed);
+  //       onSuccess?.();
+  //       return;
+  //     } else {
+  //       // SINGLE (pakai sectionsData)
+  //       const question_page = sectionsData.map((section, sIdx) => ({
+  //         sort: section.sort ?? sIdx,
+  //         name: section.name,
+  //         status: 0,
+  //         is_document: section.is_document ?? false,
+  //         can_multiple_used: section.can_multiple_used ?? false,
+  //         foreign_id: section.foreign_id ?? '',
+  //         self_only: section.self_only ?? false,
+  //         form: formsOf(section).map((f, fIdx) => mapField(f as FormVisitor, fIdx)),
+  //       }));
+
+  //       console.log('question_page:', JSON.stringify(question_page, null, 2));
+
+  //       data = {
+  //         visitor_type: formData.visitor_type ?? '',
+  //         type_registered: TYPE_REGISTERED,
+  //         is_group: false,
+  //         data_visitor: [{ question_page }],
+  //       };
+  //       const parsed = CreateVisitorRequestSchema.parse(data);
+  //       console.log('parsed:', JSON.stringify(parsed, null, 2));
+  //       await createVisitor(token, parsed);
+  //       onSuccess?.();
+  //     }
+
+  //     // Debug kalau mau cek payload
+  //     // console.log('payload:', JSON.stringify(data, null, 2));
+  //   } catch (err: any) {
+  //     console.error(err);
+  //     if (err?.errors) {
+  //       setErrors(err.errors);
+  //     } else if (err?.name === 'ZodError') {
+  //       const fieldErrors: Record<string, string> = {};
+  //       err.errors.forEach((z: any) => (fieldErrors[z.path.join('.')] = z.message));
+  //       setErrors(fieldErrors);
+  //     }
+  //   }
+  // };
+
   const handleOnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
     if (!token) return;
 
     try {
-      let data: CreateVisitorRequest;
-
+      // --- builder field tetap sama ---
       const mapField = (field: FormVisitor, sortIdx: number) => {
         const base: any = {
           sort: field.sort ?? sortIdx,
@@ -2722,36 +3072,22 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         return base;
       };
 
+      // --- bangun payload (single / group) ---
+      let payload: CreateVisitorRequest;
+
       if (isGroup) {
         if (!dataVisitor.length) {
           setErrors({ submit: 'Minimal tambah 1 visitor dulu.' });
           return;
         }
 
-        const data_visitor = buildGroupedDataVisitor(
-          dataVisitor, // boleh kosong, builder akan tetap bikin 1 row
-          groupedPages, // ← ini kunci: merge nilai dari sini
-          sectionsData,
-        );
-
-        console.log('data_visitor test:', JSON.stringify(data_visitor, null, 2));
-        const data = buildFinalPayload(
-          rawSections, // dari API
-          groupedPages, // PV shared + template + banyak baris
-          dataVisitor,
-          {
-            visitor_type: formData.visitor_type!,
-            is_group: true,
-            type_registered: formData.type_registered ?? 0,
-          },
-        );
-        console.log('data:', JSON.stringify(data, null, 2));
-        const parsed = CreateVisitorRequestSchema.parse(data);
-        await createVisitor(token, parsed);
-        onSuccess?.();
-        return;
+        const built = buildFinalPayload(rawSections, groupedPages, dataVisitor, {
+          visitor_type: formData.visitor_type!,
+          is_group: true,
+          type_registered: TYPE_REGISTERED, // ⬅️ kunci
+        });
+        payload = built;
       } else {
-        // SINGLE (pakai sectionsData)
         const question_page = sectionsData.map((section, sIdx) => ({
           sort: section.sort ?? sIdx,
           name: section.name,
@@ -2763,19 +3099,19 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           form: formsOf(section).map((f, fIdx) => mapField(f as FormVisitor, fIdx)),
         }));
 
-        data = {
+        payload = {
           visitor_type: formData.visitor_type ?? '',
-          type_registered: formData.type_registered ?? 0,
+          type_registered: TYPE_REGISTERED, // ⬅️ kunci
           is_group: false,
           data_visitor: [{ question_page }],
         };
-        const parsed = CreateVisitorRequestSchema.parse(data);
-        await createVisitor(token, parsed);
-        onSuccess?.();
       }
 
-      // Debug kalau mau cek payload
-      // console.log('payload:', JSON.stringify(data, null, 2));
+      // --- validasi + pilih endpoint berdasar TYPE_REGISTERED ---
+      const parsed = CreateVisitorRequestSchema.parse(payload);
+      const submitFn = TYPE_REGISTERED === 0 ? createPraRegister : createVisitor;
+      await submitFn(token, parsed); // ⬅️ kirim ke endpoint yang benar
+      onSuccess?.();
     } catch (err: any) {
       console.error(err);
       if (err?.errors) {
@@ -2787,7 +3123,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       }
     }
   };
-
   useEffect(() => {
     setDraggableSteps([...dynamicSteps]);
   }, [dynamicSteps]);
@@ -3264,6 +3599,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       setVtLoading(true);
       try {
         const res = await getVisitorTypeById(token, formData.visitor_type);
+        console.log('res:', res);
         const sections = res?.collection?.section_page_visitor_types ?? [];
         console.log('Sections:', sections);
         setRawSections(sections);
@@ -3560,24 +3896,15 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           </Box>
         </Box>
       </form>
-      {loading && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            bgcolor: '#fffff',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 10,
-          }}
-        >
-          <CircularProgress color="inherit" />
-        </Box>
-      )}
+      <Backdrop
+        open={loading}
+        sx={{
+          color: '#fff',
+          zIndex: (theme) => theme.zIndex.drawer + 1, // di atas drawer & dialog
+        }}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
     </PageContainer>
   );
 };
@@ -3587,8 +3914,8 @@ export default FormWizardAddVisitor;
 // const BASE_URL = 'http://192.168.1.116:8000';
 
 const CameraUpload: React.FC<{
-  value?: string; // full file URL dari CDN (contoh: http://host/pathcdn/visitor/xxx.png)
-  onChange: (url: string) => void; // dipanggil '' saat sudah dihapus
+  value?: string;
+  onChange: (url: string) => void;
 }> = ({ value, onChange }) => {
   const [open, setOpen] = React.useState(false);
   const [previewUrl, setPreviewUrl] = React.useState<string | null>(value || null);
@@ -3610,7 +3937,7 @@ const CameraUpload: React.FC<{
     formData.append('file', file, filename);
     formData.append('path', 'visitor');
     try {
-      const { data } = await axios.post('http://192.168.1.116:8000/cdn/upload', formData, {
+      const { data } = await axiosInstance2.post('/cdn/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       const fileUrl = data?.collection?.file_url;

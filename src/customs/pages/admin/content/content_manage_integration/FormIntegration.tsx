@@ -8,7 +8,8 @@ import {
   Switch,
   Paper,
   Button as MuiButton,
-  MenuItem,
+  Backdrop,
+  Portal,
 } from '@mui/material';
 import { Box } from '@mui/system';
 import React, { useEffect, useState, useRef } from 'react';
@@ -63,7 +64,6 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
         return;
       }
       const data: CreateIntegrationRequest = CreateIntegrationRequestSchema.parse(formData);
-      console.log('Setting Data: ', data);
       if (editingId && editingId !== '') {
         await updateIntegration(editingId, data, token);
       } else {
@@ -87,7 +87,9 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
         setAlertMessage('Complete the following data properly and correctly');
       }, 3000);
     } finally {
-      setLoading(false);
+      setTimeout(() => {
+        setLoading(false);
+      }, 600);
     }
   };
   function formatEnumLabel(label: string) {
@@ -110,13 +112,7 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
               Integration Details
             </Typography>
             <CustomFormLabel htmlFor="name">Integration Name</CustomFormLabel>
-            <CustomTextField
-              id="name"
-              value={formData.name}
-              onChange={handleChange}
-              fullWidth
-              
-            />
+            <CustomTextField id="name" value={formData.name} onChange={handleChange} fullWidth />
             <CustomFormLabel htmlFor="brand_name">Brand Name</CustomFormLabel>
             <CustomTextField
               id="brand_name"
@@ -205,11 +201,28 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
           </Grid>
         </Grid>
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-          <Button color="primary" variant="contained" type="submit" disabled={loading} size="large">
+          <Button
+            color="primary"
+            variant="contained"
+            type="submit"
+            disabled={loading}
+            size="medium"
+          >
             {loading ? 'Submitting...' : 'Submit'}
           </Button>
         </Box>
       </form>
+      <Portal>
+        <Backdrop
+          open={loading}
+          sx={{
+            color: '#fff',
+            zIndex: (t) => (t.zIndex.snackbar ?? 1400) - 1, // di atas modal (1300), di bawah snackbar (1400)
+          }}
+        >
+          <CircularProgress />
+        </Backdrop>
+      </Portal>
     </>
   );
 };

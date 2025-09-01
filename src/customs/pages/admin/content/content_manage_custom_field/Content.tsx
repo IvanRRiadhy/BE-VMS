@@ -298,7 +298,7 @@ const Content = () => {
           <Grid container spacing={3}>
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
-              <TopCard items={cards} />
+              <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
             </Grid>
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
@@ -319,7 +319,7 @@ const Content = () => {
                   isHaveAction={true}
                   isHaveSearch={true}
                   isHaveFilter={true}
-                  isHaveExportPdf={true}
+                  isHaveExportPdf={false}
                   isHaveExportXlf={false}
                   isHaveFilterDuration={false}
                   isHaveAddData={true}

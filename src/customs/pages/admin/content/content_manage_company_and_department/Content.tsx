@@ -27,6 +27,9 @@ import {
   deleteDepartment,
   deleteDistrict,
   deleteOrganization,
+  getOrganizationById,
+  getDepartmentById,
+  getDistrictById,
 } from 'src/customs/api/admin';
 import FormUpdateDistrict from './FormUpdateDistrict';
 import FormUpdateDepartment from './FormUpdateDepartment';
@@ -103,11 +106,9 @@ const Content = () => {
     setEditingRow(null);
     setEditDialogType(null);
     setOpenFormType(null);
-    setIsBatchEdit(false); // ✅ tambahkan ini
+    setIsBatchEdit(false);
     setPendingEditId(null);
   };
-
-  const [pendingEditId, setPendingEditId] = useState<string | null>(null);
 
   const handleCancelEdit = () => {
     setConfirmDialogOpen(false);
@@ -146,7 +147,7 @@ const Content = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [isBatchEdit, setIsBatchEdit] = useState(false);
-
+  const [pendingEditId, setPendingEditId] = useState<string | null>(null);
   const [formDataAddDepartment, setFormDataAddDepartment] = useState<CreateDepartmentRequest>(
     () => {
       const saved = localStorage.getItem('unsavedDepartmentFormAdd');
@@ -219,8 +220,6 @@ const Content = () => {
         let response;
 
         if (selectedType === 'organization') {
-          console.log('fetch sukses');
-
           response = await getAllOrganizatiosPagination(
             token,
             start,
@@ -228,7 +227,7 @@ const Content = () => {
             sortColumn,
             searchKeyword,
           );
-          console.log(response);
+          console.log('test', response);
         } else if (selectedType === 'department') {
           response = await getAllDepartmentsPagination(
             token,
@@ -499,6 +498,43 @@ const Content = () => {
     name: false,
   });
 
+  const fetchDetailById = async (row: Item) => {
+    if (!token) return;
+
+    setLoading(true);
+    try {
+      let res: any;
+
+      if (selectedType === 'organization') {
+        res = await getOrganizationById(row.id, token);
+      } else if (selectedType === 'department') {
+        res = await getDepartmentById(row.id, token);
+      } else if (selectedType === 'district') {
+        res = await getDistrictById(row.id, token);
+      }
+
+      // backend kamu biasanya balikin di res.collection
+      const full = res?.collection ?? res ?? row;
+
+      // simpan ke state untuk dikirim ke FormUpdate*
+      setEditingRow(full);
+
+      // buka dialog sesuai type
+      if (selectedType === 'organization') setEditDialogType('Organizations');
+      else if (selectedType === 'department') setEditDialogType('Departments');
+      else if (selectedType === 'district') setEditDialogType('Districts');
+    } catch (e) {
+      console.error('Fetch detail error:', e);
+      // fallback: tetap buka dengan row seadanya kalau perlu
+      setEditingRow(row);
+      if (selectedType === 'organization') setEditDialogType('Organizations');
+      else if (selectedType === 'department') setEditDialogType('Departments');
+      else if (selectedType === 'district') setEditDialogType('Districts');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <>
       <PageContainer title="Organization & Department" description="this is Dashboard page">
@@ -506,7 +542,7 @@ const Content = () => {
           <Grid container spacing={3}>
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
-              <TopCard items={cards} />
+              <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
             </Grid>
 
             {/* column */}
@@ -527,6 +563,7 @@ const Content = () => {
                     selectedRows={selectedRows}
                     isHaveChecked={true}
                     isHaveAction={true}
+                    isActionVisitor={false}
                     isHaveSearch={true}
                     isHaveFilter={true}
                     isHaveExportPdf={false}
@@ -552,14 +589,8 @@ const Content = () => {
                       setSelectedRows(selected);
                     }}
                     onEdit={(row) => {
-                      if (selectedType === 'organization') {
-                        setEditDialogType('Organizations');
-                      } else if (selectedType === 'department') {
-                        setEditDialogType('Departments');
-                      } else if (selectedType === 'district') {
-                        setEditDialogType('Districts');
-                      }
-                      setEditingRow(row);
+                      // ⬇️ JANGAN langsung setEditingRow(row) — fetch dulu by id
+                      fetchDetailById(row);
                     }}
                     onDelete={(row) => handleDelete(row.id, selectedType)}
                     onBatchDelete={handleBatchDelete}
@@ -723,6 +754,7 @@ const Content = () => {
           {editDialogType === 'Organizations' && (
             <FormUpdateOrganization
               data={editingRow}
+              setData={setEditingRow}
               isBatchEdit={isBatchEdit}
               selectedRows={selectedRows}
               enabledFields={enabledFields}
@@ -822,18 +854,18 @@ const Content = () => {
 
 export default Content;
 
-function formatDate(date: Date): string {
-  const options: Intl.DateTimeFormatOptions = {
-    weekday: 'long',
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-  };
-  const datePart = new Intl.DateTimeFormat('en-GB', options).format(date);
+// function formatDate(date: Date): string {
+//   const options: Intl.DateTimeFormatOptions = {
+//     weekday: 'long',
+//     day: '2-digit',
+//     month: 'long',
+//     year: 'numeric',
+//   };
+//   const datePart = new Intl.DateTimeFormat('en-GB', options).format(date);
 
-  // Format jam dan menit menjadi 2 digit
-  const hours = date.getHours().toString().padStart(2, '0');
-  const minutes = date.getMinutes().toString().padStart(2, '0');
+//   // Format jam dan menit menjadi 2 digit
+//   const hours = date.getHours().toString().padStart(2, '0');
+//   const minutes = date.getMinutes().toString().padStart(2, '0');
 
-  return `${datePart} ${hours}:${minutes}`;
-}
+//   return `${datePart} ${hours}:${minutes}`;
+// }

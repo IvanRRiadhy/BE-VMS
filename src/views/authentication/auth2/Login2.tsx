@@ -18,6 +18,7 @@ import { AxiosError } from 'axios';
 import { useNavigate } from 'react-router';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { useAuth } from 'src/customs/contexts/AuthProvider';
+import { useTranslation } from 'react-i18next';
 
 const Login2 = () => {
   const { isAuthenticated } = useAuth();
@@ -71,6 +72,8 @@ const Login2 = () => {
       setLoading(false);
     }
   }
+
+  const { t } = useTranslation();
 
   return (
     <>

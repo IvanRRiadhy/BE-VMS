@@ -91,25 +91,25 @@ const tableRowColumn = [
   },
 ];
 
-const videoJsOptions = {
-  autoplay: true,
-  controls: true,
-  responsive: true,
-  fluid: false, // pastikan false
-  width: 2300,
-  height: 2500,
-  sources: [
-    {
-      src: 'http://192.168.1.218:8083/stream/27aec28e-6181-4753-9acd-0456a75f0289/channel/0/hlsll/live/index.m3u8',
-      type: 'application/x-mpegURL',
-    },
-  ],
-  html5: {
-    hls: {
-      overrideNative: true,
-    },
-  },
-};
+// const videoJsOptions = {
+//   autoplay: true,
+//   controls: true,
+//   responsive: true,
+//   fluid: false, // pastikan false
+//   width: 2300,
+//   height: 2500,
+//   sources: [
+//     {
+//       src: 'http://192.168.1.218:8083/stream/27aec28e-6181-4753-9acd-0456a75f0289/channel/0/hlsll/live/index.m3u8',
+//       type: 'application/x-mpegURL',
+//     },
+//   ],
+//   html5: {
+//     hls: {
+//       overrideNative: true,
+//     },
+//   },
+// };
 
 const Content = () => {
   return (

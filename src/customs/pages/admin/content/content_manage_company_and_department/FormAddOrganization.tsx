@@ -4,8 +4,8 @@ import {
   Alert,
   Typography,
   CircularProgress,
-  MenuItem,
   Autocomplete,
+  Backdrop,
 } from '@mui/material';
 import { Box } from '@mui/system';
 import React, { useEffect, useState } from 'react';
@@ -15,7 +15,6 @@ import { createOrganization, getAllEmployee } from 'src/customs/api/admin';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   CreateOrganizationRequest,
-  CreateOrganizationSchema,
   CreateOrganizationSubmitSchema,
 } from 'src/customs/api/models/Organization';
 
@@ -58,9 +57,14 @@ const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({
   }, [token]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const field = e.target.name || e.target.id; // prioritas name, fallback ke id
+    const field = e.target.name || e.target.id;
     const { value } = e.target;
+
+    // update form
     setFormData((prev) => ({ ...prev, [field]: value }));
+
+    // clear error for this field
+    setErrors((prev) => ({ ...prev, [field]: '' }));
   };
 
   const validateLocal = (data: any) => {
@@ -95,7 +99,11 @@ const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({
       }
 
       const parsed = validateLocal(formData);
-      if (!parsed) return;
+      if (!parsed) {
+        setAlertType('error');
+        setAlertMessage('Please complete the required fields correctly.');
+        return;
+      }
 
       await createOrganization(parsed, token);
       localStorage.removeItem('unsavedOrganizationFormAdd');
@@ -124,7 +132,7 @@ const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({
     } finally {
       setTimeout(() => {
         setLoading(false);
-      }, 800);
+      }, 600);
     }
   };
 
@@ -165,7 +173,9 @@ const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({
           <Typography variant="caption">Head of Organization</Typography>
         </CustomFormLabel>
         <Autocomplete
-          freeSolo
+          // freeSolo
+          autoHighlight
+          disablePortal
           options={allEmployes.map((emp: any) => ({ id: emp.id, label: emp.name }))}
           getOptionLabel={(option) => {
             if (typeof option === 'string') return option; // user mengetik manual
@@ -190,6 +200,7 @@ const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({
             <CustomTextField
               {...params}
               variant="outlined"
+              placeholder=""
               error={Boolean(errors.host)}
               helperText={errors.host}
               fullWidth
@@ -202,24 +213,15 @@ const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({
         </Button>
       </form>
 
-      {loading && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            bgcolor: '#ffff',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 10,
-          }}
-        >
-          <CircularProgress color="inherit" />
-        </Box>
-      )}
+      <Backdrop
+        open={loading}
+        sx={{
+          color: '#fff',
+          zIndex: (theme) => theme.zIndex.drawer + 1, // di atas drawer & dialog
+        }}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
     </>
   );
 };

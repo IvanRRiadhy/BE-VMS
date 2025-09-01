@@ -5,7 +5,9 @@ import { Box, Menu, Avatar, Typography, IconButton, Stack, Tooltip, Fab } from '
 import { IconMail, IconPower } from '@tabler/icons-react';
 import ProfileImg from 'src/assets/images/profile/user-1.jpg';
 import { useNavigate } from 'react-router-dom';
-
+import { useCallback } from 'react';
+import { useSession } from 'src/customs/contexts/SessionContext';
+import { clear } from 'console';
 const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState<null | HTMLElement>(null);
   const navigate = useNavigate();
@@ -18,15 +20,14 @@ const Profile = () => {
     setAnchorEl2(null);
   };
 
-  const handleLogout = () => {
-    // Hapus token/session dari localStorage
-    // localStorage.removeItem('session'); // ganti sesuai key
-    // localStorage.removeItem('user'); // jika ada
-    // // Tutup menu
-    // handleClose2();
-    // // Arahkan ke halaman login
-    navigate('/');
-  };
+  const { token, clearToken } = useSession();
+
+  const handleLogout = useCallback(() => {
+    // Bersihkan storage
+    clearToken();
+    // Redirect ke login page
+    navigate('/', { replace: true });
+  }, [navigate]);
 
   return (
     <Box>

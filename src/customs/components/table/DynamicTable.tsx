@@ -22,13 +22,13 @@ import {
   Drawer,
   Tab,
   Tabs,
-  TableFooter,
   TablePagination,
   IconButton,
   Switch,
 } from '@mui/material';
 import BlankCard from 'src/components/shared/BlankCard';
-import { Stack, textAlign } from '@mui/system';
+import { RichHtmlCell } from './RichHtmlCell';
+import { Stack } from '@mui/system';
 import {
   IconLogin2,
   IconLogout2,
@@ -53,7 +53,7 @@ import {
 type HeaderItem = { name: string };
 
 type HeaderContent = {
-  title: string;
+  title?: string;
   subTitle?: string;
   items: HeaderItem[];
 };
@@ -93,6 +93,10 @@ type DynamicTableProps<T extends { id: string | number }> = {
   rowsPerPageOptions?: number[];
   defaultRowsPerPage?: number;
   isHaveIntegration?: boolean;
+  isSelectedType?: boolean;
+  htmlFields?: string[];
+  htmlClampLines?: number;
+  htmlMaxWidth?: number | string;
   onNameClick?: (row: T) => void;
   isVip?: (row: T) => boolean;
   totalCount?: number;
@@ -125,8 +129,8 @@ export function DynamicTable<T extends { id: string | number }>({
   isHaveChecked = false,
   isHaveAction = false,
   isHaveActionOnlyEdit = false,
+  isSelectedType = false,
   isHaveVisitor = false,
-  stickyVisitorCount = 0,
   isActionVisitor = false,
   isHaveSearch = false,
   isHaveFilter = false,
@@ -148,6 +152,9 @@ export function DynamicTable<T extends { id: string | number }>({
   isHavePagination,
   isHaveIntegration,
   onNameClick,
+  htmlFields = [],
+  htmlClampLines,
+  htmlMaxWidth,
   rowsPerPageOptions,
   defaultRowsPerPage,
   totalCount,
@@ -291,6 +298,28 @@ export function DynamicTable<T extends { id: string | number }>({
   // 4) Helper: apakah kolom data (ke-i) harus sticky
   const isStickyVisitorCol = (i: number) => isHaveVisitor && i < STICKY_DATA_COUNT;
   // end -----------
+  const headerMap: Record<string, string> = {
+    companies: 'Companies',
+    badge_type: 'Badge Type',
+    clear_codes: 'Clearcodes',
+    badge_status: 'Badge Status',
+    floor_plan: 'Floor Plan',
+    access_control: 'Access Control',
+    organizations: 'Organization',
+    departments: 'Department',
+    access_cctv: 'Access CCTV',
+    districts: 'District',
+    members: 'Member',
+    card: 'Card',
+    visitor: 'Visitor',
+    visitor_blacklist: 'Visitor Blacklist',
+    brand: 'Brand',
+    floor: 'Floor',
+    floor_plan_masked_area: 'Floor Plan Masked Area',
+    floor_plan_device: 'Floor Plan Device',
+    building: 'Building',
+    ble_reader: 'Ble Reader',
+  };
   return (
     <>
       {/* HEADER */}
@@ -363,7 +392,10 @@ export function DynamicTable<T extends { id: string | number }>({
                       {headerContent.items.map((item, idx) => (
                         <Tab
                           key={idx}
-                          label={item.name.charAt(0).toUpperCase() + item.name.slice(1)}
+                          label={
+                            headerMap[item.name] ||
+                            item.name.charAt(0).toUpperCase() + item.name.slice(1)
+                          }
                           disableRipple
                         />
                       ))}
@@ -389,7 +421,7 @@ export function DynamicTable<T extends { id: string | number }>({
               flexWrap={'wrap'}
               sx={{
                 mb: 3,
-                gap: { xs: 2, sm: 0 }, // gap 2 hanya saat xs (mobile), 0 saat sm ke atas
+                gap: { xs: 2, md: 0 }, // gap 2 hanya saat xs (mobile), 0 saat sm ke atas
               }}
             >
               {/* SEARCH MENU */}
@@ -398,12 +430,12 @@ export function DynamicTable<T extends { id: string | number }>({
                   <Grid2
                     container
                     spacing={1.5}
-                    size={{ xs: 12 }}
+                    // size={{ xs: 12 }}
                     display="flex"
                     justifyContent="space-between"
                     alignItems="center"
                   >
-                    <Grid2 size={{ xs: 11, lg: 11 }}>
+                    <Grid2 size={{ xs: 10, lg: 10 }}>
                       <TextField
                         fullWidth
                         variant="outlined"
@@ -426,9 +458,10 @@ export function DynamicTable<T extends { id: string | number }>({
                         }}
                       />
                     </Grid2>
-                    <Grid2 size={{ xs: 1, lg: 1 }}>
+                    <Grid2 size={{ xs: 2, lg: 2 }}>
                       <Button
                         variant="contained"
+                        fullWidth
                         onClick={
                           handleSearch // panggil fungsi kamu
                         }
@@ -612,7 +645,7 @@ export function DynamicTable<T extends { id: string | number }>({
                     }} */}
 
                   {/* Tombol Edit (batch edit hanya jika perlu) */}
-                  {/* <EditIconOutline
+                  <EditIconOutline
                     sx={{ fontSize: '1.2rem', cursor: 'pointer' }}
                     onClick={() => {
                       if (!Array.isArray(selectedRows) || selectedRows.length === 0) return;
@@ -635,7 +668,7 @@ export function DynamicTable<T extends { id: string | number }>({
                         }
                       }
                     }}
-                  /> */}
+                  />
                 </Box>
               </Grid2>
             )}
@@ -754,14 +787,29 @@ export function DynamicTable<T extends { id: string | number }>({
                         </TableCell>
                       );
                     })}
-                    {(isHaveAction && !isActionVisitor) ||
-                      (isHaveActionOnlyEdit && (
-                        <TableCell
-                          sx={{ position: 'sticky', right: 0, background: 'white', zIndex: 2 }}
-                        >
-                          Action
-                        </TableCell>
-                      ))}
+                    {isHaveAction && !isActionVisitor && (
+                      <TableCell
+                        sx={{
+                          position: 'sticky',
+                          right: 0,
+                          bgcolor: 'background.paper',
+                          zIndex: 4, // header > body
+                          p: 0,
+                          verticalAlign: 'middle',
+                          textAlign: 'center',
+                        }}
+                      >
+                        Action
+                      </TableCell>
+                    )}
+
+                    {isHaveActionOnlyEdit && isSelectedType && (
+                      <TableCell
+                        sx={{ position: 'sticky', right: 0, background: 'white', zIndex: 2 }}
+                      >
+                        Action
+                      </TableCell>
+                    )}
                   </TableRow>
                 </TableHead>
 
@@ -919,6 +967,12 @@ export function DynamicTable<T extends { id: string | number }>({
                                   <IconStarFilled color="lightgray" />
                                 </Tooltip>
                               )
+                            ) : htmlFields.includes(col) && typeof row[col] === 'string' ? (
+                              <RichHtmlCell
+                                html={String(row[col] ?? '')}
+                                lines={htmlClampLines}
+                                maxWidth={htmlMaxWidth}
+                              />
                             ) : isHaveEmployee && col === 'employee_id' ? (
                               <Tooltip title="View Employee">
                                 <IconButton
@@ -952,7 +1006,7 @@ export function DynamicTable<T extends { id: string | number }>({
                                 style={{
                                   width: 55,
                                   height: 55,
-                                  borderRadius: '50%',
+                                  // borderRadius: '50%',
                                   objectFit: 'cover',
                                 }}
                               />
@@ -1047,15 +1101,24 @@ export function DynamicTable<T extends { id: string | number }>({
                           sx={{
                             position: 'sticky',
                             right: 0,
-                            background: 'white',
-                            zIndex: 2,
-                            display: 'flex',
-                            gap: 1,
-                            alignItems: 'center',
+                            bgcolor: 'background.paper',
+                            zIndex: 2, // body < header
+                            p: 0, // padding diatur di inner Box
+                            verticalAlign: 'middle', // ikut tinggi baris
                           }}
                         >
-                          <Box display="flex" alignItems="end">
-                            {/* Tombol Edit (Primary, Kecil) */}
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: 1,
+                              px: 1.5,
+                              py: 1.25, // samakan dengan baris lain
+                              height: '100%',
+                            }}
+                          >
+                            {/* Tombol Edit */}
                             <Tooltip title="Edit">
                               <IconButton
                                 onClick={() => onEdit?.(row)}
@@ -1063,21 +1126,18 @@ export function DynamicTable<T extends { id: string | number }>({
                                 sx={{
                                   color: 'white',
                                   backgroundColor: '#FA896B',
-
                                   width: 28,
                                   height: 28,
-                                  padding: 0.5,
+                                  p: 0.5,
                                   borderRadius: '50%',
+                                  '&:hover': { backgroundColor: '#e06f52', color: 'white' },
                                 }}
                               >
                                 <IconPencil width={14} height={14} />
                               </IconButton>
                             </Tooltip>
 
-                            {/* Spacer */}
-                            <Box mx={0.5} />
-
-                            {/* Tombol Delete (Merah, Kecil) */}
+                            {/* Tombol Delete */}
                             <Tooltip title="Delete">
                               <IconButton
                                 onClick={() => onDelete?.(row)}
@@ -1087,8 +1147,9 @@ export function DynamicTable<T extends { id: string | number }>({
                                   backgroundColor: 'error.main',
                                   width: 28,
                                   height: 28,
-                                  padding: 0.5,
+                                  p: 0.5,
                                   borderRadius: '50%',
+                                  '&:hover': { backgroundColor: 'error.dark' },
                                 }}
                               >
                                 <IconTrash width={14} height={14} />
@@ -1098,7 +1159,7 @@ export function DynamicTable<T extends { id: string | number }>({
                         </TableCell>
                       )}
 
-                      {isHaveActionOnlyEdit && !isActionVisitor && (
+                      {isHaveActionOnlyEdit && !isActionVisitor && isSelectedType && (
                         <TableCell
                           sx={{
                             position: 'sticky',

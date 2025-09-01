@@ -1,4 +1,4 @@
-import { CircularProgress, CssBaseline, ThemeProvider } from '@mui/material';
+import { CircularProgress, CssBaseline, ThemeProvider, LinearProgress } from '@mui/material';
 
 import { useSelector } from 'src/store/Store';
 import { ThemeSettings } from './theme/Theme';

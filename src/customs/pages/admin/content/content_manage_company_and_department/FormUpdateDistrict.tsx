@@ -7,16 +7,17 @@ import {
   Switch,
   Autocomplete,
   FormControlLabel,
+  Backdrop
 } from '@mui/material';
 import { Box } from '@mui/system';
 import React, { useEffect, useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import ParentCard from 'src/components/shared/ParentCard';
-import { updateDistrict } from 'src/customs/api/admin';
+import { getAllEmployee, updateDistrict } from 'src/customs/api/admin';
 import { CreateDepartementSubmitSchema, Item } from 'src/customs/api/models/Department';
+import { CreateDistrictSubmitSchema } from 'src/customs/api/models/District';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import Swal from 'sweetalert2';
 
 interface FormUpdateDistrictProps {
   data: Item | null;
@@ -42,6 +43,7 @@ const FormUpdateDistrict: React.FC<FormUpdateDistrictProps> = ({
   const [name, setName] = useState('');
   const [host, setHost] = useState('');
   const [code, setCode] = useState('');
+  const [hostLabel, setHostLabel] = useState('');
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
@@ -53,100 +55,57 @@ const FormUpdateDistrict: React.FC<FormUpdateDistrictProps> = ({
     'Complete the following data properly and correctly',
   );
   const [allEmployees, setAllEmployees] = useState<any>([]);
+
+  const toEmpOption = (emp: any) => ({
+    id: String(emp?.id ?? emp?.person_id ?? emp?.identity_id ?? ''),
+    label: String(emp?.name ?? emp?.email ?? emp?.card_number ?? '-'),
+  });
+
+  // hasil map jadi options buat Autocomplete
+  const empOptions = allEmployees.map(toEmpOption);
+
   useEffect(() => {
     if (!isBatchEdit && data) {
       setName(data.name || '');
       setCode(data.code || '');
 
-      if (allEmployees.length > 0) {
-        // Kalau data.host sudah berupa id langsung pakai
-        const foundById = allEmployees.find((emp: any) => emp.id === data.host);
-        if (foundById) {
-          setHost(foundById.id);
-          return;
-        }
-
-        // Kalau data.host berupa nama, cari id-nya
-        const foundByName = allEmployees.find((emp: any) => emp.name === data.host);
-        setHost(foundByName ? foundByName.id : '');
+      const h = (data as any).host;
+      if (h && typeof h === 'object') {
+        setHost(String(h.id || '')); // simpan ID untuk submit
+        setHostLabel(h.name || ''); // simpan nama untuk tampilan awal
+      } else if (typeof h === 'string') {
+        setHost(h); // sudah ID
+        setHostLabel(''); // tidak ada nama, biarkan kosong
       } else {
-        setHost(data.host || '');
+        setHost('');
+        setHostLabel('');
       }
     }
-  }, [data, isBatchEdit, allEmployees]);
+  }, [data, isBatchEdit]);
 
-  // const handleSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   setLoading(true);
-  //   setErrors({});
+  useEffect(() => {
+    if (!token) return;
 
-  //   try {
-  //     if (!token) {
-  //       setAlertType('error');
-  //       setAlertMessage('Something went wrong. Please try again later.');
+    const fetchEmployees = async () => {
+      try {
+        const res = await getAllEmployee(token);
+        setAllEmployees(res?.collection ?? []);
+      } catch (err) {
+        console.error('Failed to fetch employees', err);
+      }
+    };
 
-  //       setTimeout(() => {
-  //         setAlertType('info');
-  //         setAlertMessage('Complete the following data properly and correctly');
-  //       }, 3000);
-  //       return;
-  //     }
-
-  //     if (isBatchEdit && selectedRows.length > 0) {
-  //       await Promise.all(
-  //         selectedRows
-  //           .filter((item) => item && item.id)
-  //           .map((item) =>
-  //             updateDistrict(
-  //               item.id,
-  //               {
-  //                 name: name || item.name, // gunakan name dari input form
-  //                 host: host || item.host,
-  //                 code: code || item.code, // gunakan code dari input form (walaupun disabled)
-  //               },
-  //               token,
-  //             ),
-  //           ),
-  //       );
-
-  //       setAlertType('success');
-  //       setAlertMessage('All organizations updated successfully.');
-  //       onSuccess?.();
-  //       return;
-  //     }
-
-  //     if (data) {
-  //       await updateDistrict(data.id, { name, host, code }, token);
-
-  //       setAlertType('success');
-  //       setAlertMessage('District updated successfully.');
-  //       setTimeout(() => {
-  //         onSuccess?.();
-  //       }, 900);
-  //     }
-  //   } catch (error: any) {
-  //     if (error.errors) {
-  //       setErrors(error.errors);
-  //     }
-  //     setAlertType('error');
-  //     setAlertMessage('Something went wrong. Please try again later.');
-
-  //     setTimeout(() => {
-  //       setAlertType('info');
-  //       setAlertMessage('Complete the following data properly and correctly');
-  //     }, 3000);
-  //   } finally {
-  //     setTimeout(() => {
-  //       setLoading(false);
-  //     }, 800);
-  //   }
-  // };
+    fetchEmployees();
+  }, [token]);
 
   // 1) helper gabung nilai form + nilai lama item
-  const buildPayload = (item: Item) => {
+  const buildPayload = (item: Item | any) => {
     const _name = name.trim();
     const _code = code.trim();
-    const _host = host?.toString().trim(); // pastikan string
+    const _host = host?.toString().trim(); // ID dari state
+
+    const itemHostId =
+      typeof item.host === 'object' ? String(item.host?.id || '') : String(item.host || '');
 
     return {
       name: isBatchEdit
@@ -154,15 +113,13 @@ const FormUpdateDistrict: React.FC<FormUpdateDistrictProps> = ({
           ? _name || item.name
           : item.name
         : _name || item.name,
-
-      code: _code || item.code, // code wajib: fallback ke item.code
-      host: _host || item.host || '', // host boleh kosong -> ''
+      code: _code || item.code,
+      host: _host || itemHostId || '',
     };
   };
-
   // 2) validasi setelah merge
   const validateMerged = (payload: any) => {
-    const r = CreateDepartementSubmitSchema.safeParse(payload);
+    const r = CreateDistrictSubmitSchema.safeParse(payload);
     if (!r.success) {
       const fe = r.error.flatten().fieldErrors;
       setErrors({
@@ -174,6 +131,25 @@ const FormUpdateDistrict: React.FC<FormUpdateDistrictProps> = ({
     }
     setErrors({});
     return r.data;
+  };
+
+  const validateSingle = () => {
+    const raw = {
+      name: name.trim(),
+      code: code.trim(),
+      host: host.trim(),
+    };
+    const r = CreateDistrictSubmitSchema.safeParse(raw);
+    if (!r.success) {
+      const fe = r.error.flatten().fieldErrors;
+      setErrors({
+        name: fe.name?.[0] ?? '',
+        code: fe.code?.[0] ?? '',
+        host: fe.host?.[0] ?? '',
+      });
+      return null;
+    }
+    return r.data; // { name, code, host } sudah trim & valid
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -216,12 +192,12 @@ const FormUpdateDistrict: React.FC<FormUpdateDistrictProps> = ({
       // single edit
       if (data) {
         const payload = buildPayload(data);
-        const parsed = validateMerged(payload);
+        const parsed = validateSingle();
         if (!parsed) return;
         await updateDistrict(data.id, parsed, token);
 
         setAlertType('success');
-        setAlertMessage('Organization updated successfully.');
+        setAlertMessage('District updated successfully.');
         onSuccess?.();
       }
     } catch (err: any) {
@@ -238,7 +214,7 @@ const FormUpdateDistrict: React.FC<FormUpdateDistrictProps> = ({
     } finally {
       setTimeout(() => {
         setLoading(false);
-      }, 800);
+      }, 600);
     }
   };
 
@@ -246,7 +222,7 @@ const FormUpdateDistrict: React.FC<FormUpdateDistrictProps> = ({
     <>
       <form onSubmit={handleSubmit}>
         <Grid2 size={{ xs: 12, sm: 12 }}>
-          {/* <Alert severity={alertType}>{alertMessage}</Alert> */}
+          <Alert severity={alertType}>{alertMessage}</Alert>
         </Grid2>
 
         <Box display="flex" alignItems="center" justifyContent="space-between" sx={{ marginX: 1 }}>
@@ -310,24 +286,41 @@ const FormUpdateDistrict: React.FC<FormUpdateDistrictProps> = ({
 
         {/* Host */}
         <Autocomplete
-          freeSolo
-          options={allEmployees.map((emp: any) => ({ id: emp.id, label: emp.name }))}
-          getOptionLabel={(option) => {
-            if (typeof option === 'string') return option; // user mengetik manual
-            return option.label;
-          }}
-          value={
-            allEmployees
-              .map((emp: any) => ({ id: emp.id, label: emp.name }))
-              .find((emp: any) => emp.id === host) ?? ''
+          // freeSolo
+          autoHighlight
+          disablePortal
+          options={empOptions}
+          filterOptions={(x) => x} // penting: jangan filter client-side (biar simpel/cepat)
+          getOptionLabel={(option) => (typeof option === 'string' ? option : option.label)}
+          isOptionEqualToValue={(opt, val) =>
+            opt.id === (typeof val === 'string' ? val : (val as any)?.id)
           }
+          // ✅ Kalau ketemu option berdasarkan ID → pakai object option.
+          //    Kalau belum ketemu (data employee belum load / ID tidak ada di list) → tampilkan label string.
+          value={
+            (host && empOptions.find((o: any) => o.id === host)) || (hostLabel ? hostLabel : null)
+          }
+          // ✅ Saat user pilih option dari dropdown
           onChange={(_, newValue) => {
-            setHost(typeof newValue === 'string' ? newValue : newValue?.id ?? '');
+            if (typeof newValue === 'string') {
+              // user mengetik manual → hanya ubah label, jangan ubah ID
+              setHostLabel(newValue);
+            } else if (newValue) {
+              // pilih dari opsi
+              setHost(newValue.id); // simpan ID untuk submit
+              setHostLabel(newValue.label);
+            } else {
+              // clear
+              setHost('');
+              setHostLabel('');
+            }
           }}
-          onInputChange={(_, inputValue) => {
-            setHost(inputValue);
+          // ✅ Ketik manual → hanya ubah label tampilan
+          onInputChange={(_, inputValue, reason) => {
+            if (reason === 'input') setHostLabel(inputValue || '');
           }}
           disabled={isBatchEdit}
+          noOptionsText="No employees found"
           renderInput={(params) => (
             <CustomTextField
               {...params}
@@ -343,25 +336,15 @@ const FormUpdateDistrict: React.FC<FormUpdateDistrictProps> = ({
           Submit
         </Button>
       </form>
-
-      {loading && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            bgcolor: '#ffff',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 2000,
-          }}
-        >
-          <CircularProgress color="primary" />
-        </Box>
-      )}
+      <Backdrop
+        open={loading}
+        sx={{
+          color: '#fff',
+          zIndex: (theme) => theme.zIndex.drawer + 1, // di atas drawer & dialog
+        }}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
     </>
   );
 };

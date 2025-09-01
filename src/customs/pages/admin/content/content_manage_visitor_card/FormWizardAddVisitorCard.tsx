@@ -11,6 +11,8 @@ import {
   Stepper,
   StepLabel,
   Typography,
+  Autocomplete,
+  Backdrop,
   Switch,
 } from '@mui/material';
 import React, { useEffect, useRef, useState } from 'react';
@@ -74,6 +76,7 @@ const FormWizardAddVisitorCard = ({
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const handleNext = () => {
+    if (!validateStep(activeStep)) return;
     let newSkipped = skipped;
     if (isStepSkipped(activeStep)) {
       newSkipped = new Set(newSkipped.values());
@@ -115,10 +118,34 @@ const FormWizardAddVisitorCard = ({
     fetchData();
   }, [token]);
 
+  useEffect(() => {
+    if (formData.is_multi_site) {
+      setErrors((prev) => {
+        const { registered_site, ...rest } = prev;
+        return rest;
+      });
+    }
+  }, [formData.is_multi_site]);
+
+  useEffect(() => {
+    if (!formData.is_employee_used) {
+      setErrors((prev) => {
+        const { employee_id, ...rest } = prev;
+        return rest;
+      });
+    }
+  }, [formData.is_employee_used]);
+
   const handleOnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setErrors({});
+
+    // Validasi sebelum submit
+    if (!validateStep(activeStep)) {
+      setLoading(false);
+      return;
+    }
     try {
       if (!token) {
         setAlertType('error');
@@ -227,6 +254,56 @@ const FormWizardAddVisitorCard = ({
     }));
   };
 
+  // ⬇️ Tambahkan di dalam komponen, dekat state errors / alert
+  const validateStep = (step: number) => {
+    const newErrors: Record<string, string> = {};
+
+    if (step === 0) {
+      // wajib
+      if (!formData.name?.trim()) newErrors.name = 'Name is required';
+      if (!formData.remarks?.trim()) newErrors.remarks = 'Remarks is required';
+
+      // employee (conditional)
+      if (isBatchEdit) {
+        // di batch edit, hanya validasi field yang di-enable
+        if (
+          (enabledFields?.is_employee_used || enabledFields?.employee_id) &&
+          formData.is_employee_used &&
+          !formData.employee_id
+        ) {
+          newErrors.employee_id = 'Employee is required';
+        }
+        if (
+          enabledFields?.registered_site &&
+          !formData.is_multi_site &&
+          !formData.registered_site
+        ) {
+          newErrors.registered_site = 'Site is required';
+        }
+      } else {
+        // normal add/edit
+        if (formData.is_employee_used && !formData.employee_id) {
+          newErrors.employee_id = 'Employee is required';
+        }
+        if (!formData.is_multi_site && !formData.registered_site) {
+          newErrors.registered_site = 'Site is required';
+        }
+      }
+    }
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
+      setAlertType('error');
+      setAlertMessage('Please fix the fields highlighted in red.');
+      return false;
+    }
+
+    setAlertType('info');
+    setAlertMessage('Complete the following data properly and correctly');
+    return true;
+  };
+
   const handleSteps = (step: number) => {
     switch (step) {
       case 0:
@@ -245,6 +322,8 @@ const FormWizardAddVisitorCard = ({
                 variant="outlined"
                 fullWidth
                 disabled={isBatchEdit}
+                error={Boolean(errors?.name)} // kasih border merah kalau error
+                helperText={errors?.name}
               />
             </Grid2>
 
@@ -262,6 +341,8 @@ const FormWizardAddVisitorCard = ({
                 variant="outlined"
                 fullWidth
                 disabled={isBatchEdit}
+                error={Boolean(errors?.remarks)} // kasih border merah kalau error
+                helperText={errors?.remarks}
               />
             </Grid2>
 
@@ -272,6 +353,7 @@ const FormWizardAddVisitorCard = ({
                   flexDirection: 'row',
                   alignItems: 'center',
                   justifyContent: 'space-between',
+                  marginTop: '0px',
                 }}
                 htmlFor="card-type"
               >
@@ -301,23 +383,28 @@ const FormWizardAddVisitorCard = ({
                   }
                 />
               </CustomFormLabel>
-              <CustomTextField
-                name="employee_id"
-                select
-                fullWidth
-                onChange={handleChange}
-                value={formData.employee_id || ''}
+              <Autocomplete
+                id="employee_id"
+                options={employeeRes}
+                getOptionLabel={(option) => option.name ?? ''}
+                value={employeeRes.find((emp) => emp.id === formData.employee_id) || null}
+                onChange={(_, newValue) => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    employee_id: newValue ? newValue.id : '',
+                  }));
+                }}
                 disabled={!enabledFields?.employee_id}
-                error={!!errors?.employee_id}
-                helperText={errors?.employee_id}
-              >
-                <MenuItem value="">Select Employee</MenuItem>
-                {employeeRes.map((emp) => (
-                  <MenuItem key={emp.id} value={emp.id}>
-                    {emp.name}
-                  </MenuItem>
-                ))}
-              </CustomTextField>
+                renderInput={(params) => (
+                  <CustomTextField
+                    {...params}
+                    label=""
+                    error={!!errors?.employee_id}
+                    helperText={errors?.employee_id}
+                    name="employee_id"
+                  />
+                )}
+              />
             </Grid2>
 
             {/* Site Space */}
@@ -329,6 +416,7 @@ const FormWizardAddVisitorCard = ({
                   flexDirection: 'row',
                   alignItems: 'center',
                   justifyContent: 'space-between',
+                  marginTop: '0px',
                 }}
                 htmlFor="card-type"
               >
@@ -339,13 +427,13 @@ const FormWizardAddVisitorCard = ({
                   sx={{ marginRight: 0 }}
                   control={
                     <Switch
-                      checked={formData.is_multi_site || false}
+                      checked={formData.is_multi_site ?? false}
                       onChange={(e) => {
                         const checked = e.target.checked;
                         setFormData((prev) => ({
                           ...prev,
                           is_multi_site: checked,
-                          registered_site: checked ? prev.registered_site : null,
+                          registered_site: checked ? null : prev.registered_site,
                         }));
 
                         setEnabledFields((prev) => ({
@@ -357,23 +445,28 @@ const FormWizardAddVisitorCard = ({
                   }
                 />
               </CustomFormLabel>
-              <CustomTextField
-                name="registered_site"
-                select
+              <Autocomplete
                 fullWidth
-                onChange={handleChange}
-                value={formData.registered_site || ''}
-                disabled={!enabledFields?.registered_site}
-                error={!!errors?.registered_site}
-                helperText={errors?.registered_site}
-              >
-                <MenuItem value="">Select Site</MenuItem>
-                {siteSpaceRes.map((site) => (
-                  <MenuItem key={site.id} value={site.id}>
-                    {site.name}
-                  </MenuItem>
-                ))}
-              </CustomTextField>
+                options={siteSpaceRes} // array data site
+                getOptionLabel={(option) => option.name || ''} // tampilkan nama site
+                value={siteSpaceRes.find((s) => s.id === formData.registered_site) || null}
+                onChange={(event, newValue) => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    registered_site: newValue ? newValue.id : null,
+                  }));
+                }}
+                renderInput={(params) => (
+                  <CustomTextField
+                    {...params}
+                    label=""
+                    name="registered_site"
+                    error={!!errors?.registered_site}
+                    helperText={errors?.registered_site}
+                  />
+                )}
+                disabled={isBatchEdit ? !enabledFields?.registered_site : !!formData.is_multi_site}
+              />
             </Grid2>
           </Grid2>
         );
@@ -387,14 +480,14 @@ const FormWizardAddVisitorCard = ({
 
             {/* Card Type */}
             <Grid2 size={{ xs: 6, sm: 6 }}>
-              <CustomFormLabel htmlFor="card-type">
+              <CustomFormLabel htmlFor="card-type" sx={{ mt: 0 }}>
                 <Typography variant="caption">Card Type</Typography>
               </CustomFormLabel>
               <CustomTextField
                 id="type"
                 name="type"
                 select
-                value={formData.type}
+                value={formData.type ?? ''}
                 onChange={handleChanges}
                 variant="outlined"
                 fullWidth
@@ -408,14 +501,14 @@ const FormWizardAddVisitorCard = ({
             </Grid2>
             {/* Card Status */}
             <Grid2 size={{ xs: 6, sm: 6 }}>
-              <CustomFormLabel htmlFor="card-type">
+              <CustomFormLabel htmlFor="card-type" sx={{ mt: 0 }}>
                 <Typography variant="caption">Card Status</Typography>
               </CustomFormLabel>
               <CustomTextField
                 id="card_status"
                 name="card_status"
                 select
-                value={formData.card_status || ''}
+                value={formData.card_status ?? ''}
                 onChange={handleChanges}
                 variant="outlined"
                 fullWidth
@@ -432,7 +525,7 @@ const FormWizardAddVisitorCard = ({
 
             {/* Card Number */}
             <Grid2 size={{ xs: 12, sm: 12 }}>
-              <CustomFormLabel htmlFor="card_number">
+              <CustomFormLabel htmlFor="card_number" sx={{ mt: 0 }}>
                 <Typography variant="caption">Card Number</Typography>
               </CustomFormLabel>
               <CustomTextField
@@ -450,7 +543,7 @@ const FormWizardAddVisitorCard = ({
 
             {/* Card Barode */}
             <Grid2 size={{ xs: 12, sm: 6 }}>
-              <CustomFormLabel htmlFor="card_barcode">
+              <CustomFormLabel htmlFor="card_barcode" sx={{ mt: 0 }}>
                 <Typography variant="caption">Card Barcode</Typography>
               </CustomFormLabel>
               <CustomTextField
@@ -466,7 +559,7 @@ const FormWizardAddVisitorCard = ({
 
             {/* MAC Address */}
             <Grid2 size={{ xs: 12, sm: 6 }}>
-              <CustomFormLabel htmlFor="card_mac">
+              <CustomFormLabel htmlFor="card_mac" sx={{ mt: 0 }}>
                 <Typography variant="caption">Card MAC</Typography>
               </CustomFormLabel>
               <CustomTextField
@@ -529,7 +622,7 @@ const FormWizardAddVisitorCard = ({
             <Box>{handleSteps(activeStep)}</Box>
             <Box display="flex" flexDirection="row" mt={3}>
               <Button
-                color="inherit"
+                color="primary"
                 disabled={activeStep === 0 || loading}
                 onClick={handleBack}
                 sx={{ mr: 1 }}
@@ -555,24 +648,15 @@ const FormWizardAddVisitorCard = ({
           </>
         </Box>
       </PageContainer>
-      {loading && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            bgcolor: '#ffff',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 2000,
-          }}
-        >
-          <CircularProgress color="primary" />
-        </Box>
-      )}
+      <Backdrop
+        open={loading}
+        sx={{
+          color: '#fff',
+          zIndex: (theme) => theme.zIndex.drawer + 1, // di atas drawer & dialog
+        }}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
     </form>
   );
 };

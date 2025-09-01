@@ -1,13 +1,4 @@
-import {
-  Button,
-  Grid2,
-  Alert,
-  Typography,
-  Autocomplete,
-  CircularProgress,
-  TextField,
-  MenuItem,
-} from '@mui/material';
+import { Button, Grid2, Alert, Typography, Autocomplete, CircularProgress, Backdrop } from '@mui/material';
 import { Box } from '@mui/system';
 import React, { useState, useEffect } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
@@ -16,7 +7,6 @@ import { createDepartment, getAllEmployee } from 'src/customs/api/admin';
 import {
   CreateDepartementSubmitSchema,
   CreateDepartmentRequest,
-  CreateDepartmentSchema,
 } from 'src/customs/api/models/Department';
 import { useSession } from 'src/customs/contexts/SessionContext';
 
@@ -40,9 +30,14 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
   const { token } = useSession();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const field = e.target.name || e.target.id; // prioritas name, fallback ke id
+    const field = e.target.name || e.target.id;
     const { value } = e.target;
+
+    // update form
     setFormData((prev) => ({ ...prev, [field]: value }));
+
+    // clear error for this field
+    setErrors((prev) => ({ ...prev, [field]: '' }));
   };
 
   const validateLocal = (data: any) => {
@@ -96,7 +91,11 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
       }
 
       const parsed = validateLocal(formData);
-      if (!parsed) return;
+      if (!parsed) {
+        setAlertType('error');
+        setAlertMessage('Please complete the required fields correctly.');
+        return;
+      }
 
       await createDepartment(parsed, token);
       localStorage.removeItem('unsavedDepartmentFormAdd');
@@ -107,9 +106,6 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
         onSuccess?.();
       }, 900);
     } catch (err: any) {
-      if (err?.errors) {
-        setErrors(err.errors);
-      }
       const be = err?.response?.data?.errors;
       if (be && typeof be === 'object') {
         setErrors({
@@ -128,7 +124,7 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
     } finally {
       setTimeout(() => {
         setLoading(false);
-      }, 800);
+      }, 600);
     }
   };
 
@@ -169,7 +165,9 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
           <Typography variant="caption">Head of Department</Typography>
         </CustomFormLabel>
         <Autocomplete
-          freeSolo
+          // freeSolo
+          autoHighlight
+          disablePortal
           options={allEmployes.map((emp: any) => ({ id: emp.id, label: emp.name }))}
           getOptionLabel={(option) => {
             if (typeof option === 'string') return option; // user mengetik manual
@@ -182,18 +180,23 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
               .find((emp: any) => emp.id === formData.host) ?? ''
           }
           onChange={(_, newValue) => {
-            setFormData((prev) => ({
-              ...prev,
-              host: typeof newValue === 'string' ? newValue : newValue?.id ?? '',
-            }));
+            const newHost = typeof newValue === 'string' ? newValue : newValue?.id ?? '';
+            setFormData((prev) => ({ ...prev, host: newHost }));
+
+            // clear error langsung
+            setErrors((prev) => ({ ...prev, host: '' }));
           }}
           onInputChange={(_, inputValue) => {
             setFormData((prev) => ({ ...prev, host: inputValue }));
+
+            // clear error langsung
+            setErrors((prev) => ({ ...prev, host: '' }));
           }}
           renderInput={(params) => (
             <CustomTextField
               {...params}
               variant="outlined"
+              placeholder=""
               error={Boolean(errors.host)}
               helperText={errors.host}
               fullWidth
@@ -206,24 +209,15 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
         </Button>
       </form>
 
-      {loading && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            bgcolor: '#ffff',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 10,
-          }}
-        >
-          <CircularProgress color="inherit" />
-        </Box>
-      )}
+      <Backdrop
+        open={loading}
+        sx={{
+          color: '#fff',
+          zIndex: (theme) => theme.zIndex.drawer + 1, // di atas drawer & dialog
+        }}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
     </>
   );
 };

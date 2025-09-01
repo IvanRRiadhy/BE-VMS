@@ -7,7 +7,7 @@ import {
   RevokeTokenResponse,
 } from './models/Users';
 
-const url: string = 'http://192.168.1.116:8000/api';
+const url: string = 'https://2b3ad49cc35f.ngrok-free.app/api';
 
 export const login = async (body: LoginRequest): Promise<LoginResponse> => {
   try {

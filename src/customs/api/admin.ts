@@ -22,6 +22,7 @@ import {
   CreateDistrictResponse,
   DeleteDistrictResponse,
   GetAllDistrictsPaginationResponse,
+  GetDistrictByIdResponse,
   UpdateDistrictRequest,
   UpdateDistrictResponse,
 } from './models/District';
@@ -59,14 +60,32 @@ import {
   CreateSiteDocumentResponse,
   GetAllSiteDocumentResponse,
 } from './models/SiteDocument';
-import { GetAllBrandPaginationResponse, GetAllBrandResponse } from './models/Brand';
+import {
+  GetAllBrandPaginationResponse,
+  GetAllBrandResponse,
+  UpdateBrandResponse,
+} from './models/Brand';
 import {
   CreateIntegrationRequest,
   CreateIntegrationResponse,
   DeleteIntegrationResponse,
   GetAllIntegrationResponse,
   GetAvailableIntegrationResponse,
+  GetBadgeStatusResponse,
+  GetBadgeStatusResponseById,
+  GetBadgeTypeResponse,
+  GetBadgeTypeResponseById,
+  GetClearCodesResponse,
+  GetClearCodesResponseById,
+  GetCompaniesResponse,
+  GetCompaniesResponseById,
   GetIntegrationByIdResponse,
+  UpdateBadgeTypeRequest,
+  UpdateBadgeTypeResponse,
+  UpdateClearcodesRequest,
+  UpdateClearcodesResponse,
+  UpdateCompaniesRequest,
+  UpdateCompaniesResponse,
   UpdateIntegrationRequest,
   UpdateIntegrationResponse,
 } from './models/Integration';
@@ -109,6 +128,7 @@ import {
   UpdateVisitorCardRequest,
   UpdateVisitorCardResponse,
 } from './models/VisitorCard';
+import { join } from 'path';
 
 //#endregion
 
@@ -232,6 +252,17 @@ export const createVisitor = async (
   data: CreateVisitorRequest,
 ): Promise<CreateVisitorResponse> => {
   const response = await axiosInstance.post('/visitor/new-visit', data, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+// Pra Register
+export const createPraRegister = async (
+  token: string,
+  data: CreateVisitorRequest,
+): Promise<CreateVisitorResponse> => {
+  const response = await axiosInstance.post('/visitor/new-pra-invite', data, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });
   return response.data;
@@ -383,6 +414,17 @@ export const getAllDistrictsPagination = async (
   });
   return response.data;
 };
+
+// get by id district
+export const getDistrictById = async (
+  id: string,
+  token: string,
+): Promise<GetDistrictByIdResponse> => {
+  const response = await axiosInstance.get(`/district/${id}`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
 export const updateDistrict = async (
   districtId: string,
   data: UpdateDistrictRequest,
@@ -450,6 +492,16 @@ export const getAllDepartmentsPagination = async (
   });
   return response.data;
 };
+
+// get by id department
+
+export const getDepartmentById = async (departmentId: string, token: string) => {
+  const response = await axiosInstance.get(`/department/${departmentId}`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
 export const updateDepartment = async (
   departmentId: string,
   data: UpdateDepartmentRequest,
@@ -512,6 +564,14 @@ export const getAllOrganizatiosPagination = async (
 ): Promise<GetAllOrgaizationsPaginationResponse> => {
   const response = await axiosInstance.get(`/organization/dt`, {
     params: { start, length, sort_column: sortColumn, 'search[value]': keyword },
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+// get by id organization
+export const getOrganizationById = async (organizationId: string, token: string) => {
+  const response = await axiosInstance.get(`/organization/${organizationId}`, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });
   return response.data;
@@ -616,6 +676,16 @@ export const updateDocument = async (
     throw error;
   }
 };
+
+export const deleteDocument = async (
+  documentId: string,
+  token: string,
+): Promise<DeleteOrganizationResponse> => {
+  const response = await axiosInstance.delete(`/document/${documentId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
 //#endregion
 
 //#region Employee API
@@ -669,12 +739,12 @@ export const getAllEmployeePaginationFilterMore = async (
   length: number,
   sortColumn: string,
   keyword: string = '',
-  // gender?: number,
-  // joinStart?: string,
+  gender?: number,
+  joinStart?: string,
   // joinEnd?: string,
   // exitStart?: string,
-  // exitEnd?: string,
-  // statusEmployee?: number,
+  exitEnd?: string,
+  statusEmployee?: number,
   // isHead?: boolean,
   organization?: string,
   district?: string,
@@ -685,21 +755,26 @@ export const getAllEmployeePaginationFilterMore = async (
     length,
     sort_column: sortColumn,
     'search[value]': keyword, // ← ini diperbaiki!
+    'join-start': joinStart,
+    'exit-end': exitEnd,
+    'status-employee': statusEmployee,
     organization,
     district,
     department,
   };
 
-  // if (gender !== undefined) params.gender = gender;
+  if (gender !== undefined) params.gender = gender;
   // if (joinStart) params['join-start'] = joinStart;
   // if (joinEnd) params['join-end'] = joinEnd;
   // if (exitStart) params['exit-start'] = exitStart;
   // if (exitEnd) params['exit-end'] = exitEnd;
-  // if (statusEmployee !== undefined) params['status-employee'] = statusEmployee;
+  if (statusEmployee !== undefined) params['status-employee'] = statusEmployee;
   // if (isHead !== undefined) params['is-head'] = isHead;
   if (organization && organization !== '0') params.organization = organization;
   if (district && district !== '0') params.district = district;
   if (department && department !== '0') params.department = department;
+  if (joinStart) params.join_start = joinStart;
+  if (exitEnd) params.exit_end = exitEnd;
 
   const response = await axiosInstance.get(`/employee/dt`, {
     params,
@@ -941,6 +1016,20 @@ export const getAllBrandPagination = async (
     throw error;
   }
 };
+
+export const deleteBrand = async (brandId: string, token: string): Promise<UpdateBrandResponse> => {
+  try {
+    const response = await axiosInstance.delete(`/brand/${brandId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
 //#endregion
 
 //#region Integration API
@@ -1010,24 +1099,38 @@ export const createIntegration = async (
 };
 
 // sync data
+type ApiResponse = {
+  status: 'success' | 'fail' | 'not_found' | string;
+  status_code: number;
+  title?: string;
+  msg?: string;
+  collection?: any;
+};
+
 export const syncIntegration = async (
   integrationId: string,
-  data: CreateIntegrationRequest,
   token: string,
-): Promise<void> => {
+): Promise<ApiResponse> => {
   try {
-    const response = await axiosInstance.post(
+    const { data } = await axiosInstance.post(
       `/integration-honeywell/sync/${integrationId}`,
-      null,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      },
+      {}, // pakai {} biar nggak trigger edge-case body null
+      { headers: { Authorization: `Bearer ${token}` } },
     );
-    return response.data;
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 400) {
-      throw error.response.data as ValidationErrorResponse;
+    return data as ApiResponse;
+  } catch (error: any) {
+    if (axios.isAxiosError(error) && error.response) {
+      const d = (error.response.data || {}) as Partial<ApiResponse>;
+      // Normalisasi agar caller selalu dapat objek seragam
+      return {
+        status: d.status ?? 'fail',
+        status_code: d.status_code ?? error.response.status,
+        title: d.title ?? 'fail',
+        msg: d.msg ?? 'Request failed',
+        collection: d.collection ?? null,
+      };
     }
+    // jaringan / non-HTTP error — biarkan meledak supaya ketahuan
     throw error;
   }
 };
@@ -1058,6 +1161,223 @@ export const updateIntegration = async (
 ): Promise<UpdateIntegrationResponse> => {
   try {
     const response = await axiosInstance.put(`/integration/${integrationId}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+// get companies
+export const getCompanies = async (
+  integrationId: string,
+  token: string,
+): Promise<GetCompaniesResponse> => {
+  try {
+    const response = await axiosInstance.get(`/integration-honeywell/company/${integrationId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+// get companies by id
+export const getCompaniesById = async (
+  integrationId: string,
+  id: string,
+  token: string,
+): Promise<GetCompaniesResponseById> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-honeywell/company/${integrationId}/${id}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const updateCompany = async (
+  id: string,
+  data: UpdateCompaniesRequest,
+  token: string,
+): Promise<UpdateCompaniesResponse> => {
+  try {
+    const response = await axiosInstance.put(`/integration-honeywell/company/${id}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+// get badge type
+export const getBadgeType = async (
+  integrationId: string,
+  token: string,
+): Promise<GetBadgeTypeResponse> => {
+  try {
+    const response = await axiosInstance.get(`/integration-honeywell/badge-type/${integrationId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+// get badge type by id
+export const getBadgeTypeById = async (
+  integrationId: string,
+  id: string,
+  token: string,
+): Promise<GetBadgeTypeResponseById> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-honeywell/badge-type/${integrationId}/${id}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const updateBadgeType = async (
+  id: string,
+  data: UpdateBadgeTypeRequest,
+  token: string,
+): Promise<UpdateBadgeTypeResponse> => {
+  try {
+    const response = await axiosInstance.put(`/integration-honeywell/badge-type/${id}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+// get badge status
+export const getBadgeStatus = async (
+  integrationId: string,
+  token: string,
+): Promise<GetBadgeStatusResponse> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-honeywell/badge-status/${integrationId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+//  get badge status by id
+export const getBadgeStatusById = async (
+  integrationId: string,
+  id: string,
+  token: string,
+): Promise<GetBadgeStatusResponseById> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-honeywell/badge-status/${integrationId}/${id}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+// get clearcodes
+export const getClearcodes = async (
+  integrationId: string,
+  token: string,
+): Promise<GetClearCodesResponse> => {
+  try {
+    const response = await axiosInstance.get(`/integration-honeywell/clearcodes/${integrationId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+// get clearcodes by id
+export const getClearcodesById = async (
+  integrationId: string,
+  id: string,
+  token: string,
+): Promise<GetClearCodesResponseById> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-honeywell/clearcodes/${integrationId}/${id}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const updateClearcodes = async (
+  id: string,
+  data: UpdateClearcodesRequest,
+  token: string,
+): Promise<UpdateClearcodesResponse> => {
+  try {
+    const response = await axiosInstance.put(`/integration-honeywell/clearcodes/${id}`, data, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;

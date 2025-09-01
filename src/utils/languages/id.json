@@ -1,0 +1,9 @@
+{
+  "cards": {
+    "visitors": "Pengunjung",
+    "blocked": "Diblokir",
+    "usage": "Penggunaan Kartu",
+    "denied": "Ditolak",
+    "all": "Semua Pengunjung"
+  }
+}

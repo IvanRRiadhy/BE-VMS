@@ -116,6 +116,7 @@ const sectionPageVisitorTypeSchema = z.object({
   status: z.number().default(0),
   is_document: z.boolean().default(false).optional(),
   can_multiple_used: z.boolean().default(false).optional(),
+  foreign_id: z.string().default('').optional().nullable(),
   visit_form: z.array(formVisitorSchema).default([]),
   pra_form: z.array(formVisitorSchema).nullable(),
   checkout_form: z.array(formVisitorSchema).nullable(),

@@ -8,6 +8,8 @@ import {
   DialogTitle,
   Divider,
   Grid2 as Grid,
+  Card,
+  Skeleton,
   IconButton,
 } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
@@ -21,13 +23,19 @@ import {
   Item,
 } from 'src/customs/api/models/Document';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { getAllDocumentPagination } from 'src/customs/api/admin';
+import { deleteDocument, getAllDocumentPagination } from 'src/customs/api/admin';
 import FormAddDocument from './FormAddDocument';
 import { IconScript } from '@tabler/icons-react';
+import {
+  showConfirmDelete,
+  showErrorAlert,
+  showSuccessAlert,
+} from 'src/customs/components/alerts/alerts';
 
 const Content = () => {
   // Pagination state.
   const [tableData, setTableData] = useState<Item[]>([]);
+  const [selectedRows, setSelectedRows] = useState<Item[]>([]);
   const [isDataReady, setIsDataReady] = useState(false);
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
@@ -41,7 +49,7 @@ const Content = () => {
     const saved = localStorage.getItem('unsavedDocumentData');
     return saved ? JSON.parse(saved) : CreateDocumentRequestSchema.parse({});
   });
-
+  const [searchKeyword, setSearchKeyword] = useState('');
   const cards = [
     {
       title: 'Total Document',
@@ -68,40 +76,59 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, sortColumn, refreshTrigger]);
-  useEffect(() => {
-    localStorage.setItem('unsavedDocumentData', JSON.stringify(formDataAddDocument));
-  }, [formDataAddDocument]);
+  }, [token, page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword]);
 
-  const [openFormAddDocument, setOpenFormAddDocument] = React.useState(false);
-  const [confirmDialogOpen, setConfirmDialogOpen] = React.useState(false);
-  const [pendingEditId, setPendingEditId] = React.useState<string | null>(null);
+  const [openFormAddDocument, setOpenFormAddDocument] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [pendingEditId, setPendingEditId] = useState<string | null>(null);
 
   const handleOpenDialog = () => {
+    setIsDirty(false);
     setOpenFormAddDocument(true);
   };
-  const handleCloseDialog = () => setOpenFormAddDocument(false);
+  const handleCloseDialog = () => {
+    setOpenFormAddDocument(false);
+    localStorage.removeItem('unsavedDocumentData');
+  };
+  const defaultDoc = CreateDocumentRequestSchema.parse({});
+
+  const isEmptyDoc = (doc: any) => {
+    if (!doc || typeof doc !== 'object') return true;
+    try {
+      return JSON.stringify(doc) === JSON.stringify(defaultDoc);
+    } catch {
+      return false;
+    }
+  };
+
+  const hasUnsaved = () => {
+    const raw = localStorage.getItem('unsavedDocumentData');
+    if (!raw) return false;
+    try {
+      const parsed = JSON.parse(raw);
+      return !isEmptyDoc(parsed); // hanya true kalau beda dengan default
+    } catch {
+      return false;
+    }
+  };
 
   const handleAdd = () => {
-    const editing = localStorage.getItem('unsavedDocumentData');
-    if (editing) {
-      // If editing exists, show confirmation dialog for add
-      setPendingEditId(null); // null means it's an add, not edit
+    if (hasUnsaved()) {
+      setPendingEditId(null);
       setConfirmDialogOpen(true);
     } else {
       setFormDataAddDocument(CreateDocumentRequestSchema.parse({}));
-      handleOpenDialog();
+      setOpenFormAddDocument(true);
     }
   };
 
   const handleEdit = (id: string) => {
-    const editing = localStorage.getItem('unsavedDocumentData');
-    if (editing) {
-      const parsed = JSON.parse(editing);
-      if (parsed.id === id) {
-        handleOpenDialog();
+    if (hasUnsaved()) {
+      const parsed = JSON.parse(localStorage.getItem('unsavedDocumentData') as string);
+      if (parsed?.id === id) {
+        setOpenFormAddDocument(true);
       } else {
-        console.log('ID tidak cocok');
         setPendingEditId(id);
         setConfirmDialogOpen(true);
       }
@@ -109,23 +136,21 @@ const Content = () => {
       setFormDataAddDocument(
         CreateDocumentRequestSchema.parse(tableData.find((item) => item.id === id) || {}),
       );
-      handleOpenDialog();
+      setOpenFormAddDocument(true);
     }
   };
 
   const handleConfirmEdit = () => {
     setConfirmDialogOpen(false);
     if (pendingEditId) {
-      // Edit existing site
       setFormDataAddDocument(
         tableData.find((item) => item.id === pendingEditId) ||
           CreateDocumentRequestSchema.parse({}),
       );
     } else {
-      // Add new site
       setFormDataAddDocument(CreateDocumentRequestSchema.parse({}));
     }
-    handleOpenDialog();
+    setOpenFormAddDocument(true);
     setPendingEditId(null);
   };
 
@@ -135,6 +160,52 @@ const Content = () => {
     setPendingEditId(null);
   };
 
+  useEffect(() => {
+    if (!openFormAddDocument) return;
+    localStorage.setItem('unsavedDocumentData', JSON.stringify({ ...formDataAddDocument }));
+  }, [formDataAddDocument, openFormAddDocument]);
+
+  // Handle Delete
+  const handleDelete = async (id: string) => {
+    if (!token) return;
+    setLoading(true);
+    try {
+      await deleteDocument(id, token);
+      setRefreshTrigger((prev) => prev + 1);
+      showSuccessAlert('Deleted!', 'Item has been deleted.');
+    } catch (error) {
+      console.error(error);
+      showErrorAlert('Error!', 'Failed to delete item.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle Batch Delete
+  const handleBatchDelete = async (rows: Item[]) => {
+    if (!token || rows.length === 0) return;
+
+    const confirmed = await showConfirmDelete(
+      `Are you sure to delete ${rows.length} items?`,
+      "You won't be able to revert this!",
+    );
+
+    if (confirmed) {
+      setLoading(true);
+      try {
+        await Promise.all(rows.map((row) => deleteDocument(row.id, token)));
+        setRefreshTrigger((prev) => prev + 1);
+        showSuccessAlert('Deleted!', `${rows.length} items have been deleted.`);
+        setSelectedRows([]); // reset selected rows
+      } catch (error) {
+        console.error(error);
+        showErrorAlert('Error!', 'Failed to delete some items.');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
   return (
     <>
       <PageContainer title="Manage Document" description="Document page">
@@ -142,41 +213,54 @@ const Content = () => {
           <Grid container spacing={3}>
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
-              <TopCard items={cards} />
+              <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
             </Grid>
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
-              <DynamicTable
-                overflowX={'auto'}
-                data={tableData}
-                isHaveChecked={true}
-                isHaveAction={true}
-                isHaveSearch={true}
-                isHaveFilter={true}
-                isHaveExportPdf={true}
-                isHaveExportXlf={false}
-                isHaveFilterDuration={false}
-                isHaveAddData={true}
-                isHaveFilterMore={false}
-                isHaveHeader={false}
-                onCheckedChange={(selected) => console.log('Checked table row:', selected)}
-                onEdit={(row) => {
-                  handleEdit(row.id);
-                  setEdittingId(row.id);
-                }}
-                onDelete={(row) => console.log('Delete:', row)}
-                onSearchKeywordChange={(keyword) => console.log('Search keyword:', keyword)}
-                onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
-                onAddData={() => {
-                  handleAdd();
-                }}
-              />
+              {isDataReady ? (
+                <DynamicTable
+                  overflowX={'auto'}
+                  data={tableData}
+                  selectedRows={selectedRows}
+                  isHaveChecked={true}
+                  isHaveAction={true}
+                  isHaveSearch={true}
+                  isHaveFilter={true}
+                  isHaveExportPdf={true}
+                  isHaveExportXlf={false}
+                  isHaveFilterDuration={false}
+                  isHaveAddData={true}
+                  isHaveFilterMore={false}
+                  isHaveHeader={false}
+                  onCheckedChange={(selected) => setSelectedRows(selected)}
+                  onEdit={(row) => {
+                    handleEdit(row.id);
+                    setEdittingId(row.id);
+                  }}
+                  onDelete={(row) => handleDelete(row.id)}
+                  onBatchDelete={handleBatchDelete}
+                  onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                  onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
+                  onAddData={() => {
+                    handleAdd();
+                  }}
+                  htmlFields={['document_text']}
+                  htmlClampLines={4}
+                  htmlMaxWidth={500}
+                />
+              ) : (
+                <Card sx={{ width: '100%' }}>
+                  <Skeleton />
+                  <Skeleton animation="wave" />
+                  <Skeleton animation={false} />
+                </Card>
+              )}
             </Grid>
           </Grid>
         </Box>
       </PageContainer>
       <Dialog open={openFormAddDocument} onClose={handleCloseDialog} fullWidth maxWidth="md">
-        <DialogTitle sx={{ position: 'relative', padding: 5 }}>
+        <DialogTitle sx={{ position: 'relative', padding: 3 }}>
           Add Document
           <IconButton
             aria-label="close"
@@ -192,14 +276,14 @@ const Content = () => {
           </IconButton>
         </DialogTitle>
         <Divider />
-        <DialogContent>
+        <DialogContent sx={{ paddingTop: 0 }}>
           <br />
           <FormAddDocument
             formData={formDataAddDocument}
             setFormData={setFormDataAddDocument}
             edittingId={edittingId}
             onSuccess={() => {
-              handleCloseDialog();
+              // handleCloseDialog();
               setRefreshTrigger(refreshTrigger + 1);
             }}
           />

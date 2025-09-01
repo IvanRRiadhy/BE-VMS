@@ -5,6 +5,7 @@ import { IconPower } from '@tabler/icons-react';
 import { AppState } from 'src/store/Store';
 import { useNavigate } from 'react-router-dom'; // gunakan useNavigate
 import { useCallback } from 'react';
+import { useSession } from 'src/customs/contexts/SessionContext';
 
 export const Profile = () => {
   const customizer = useSelector((state: AppState) => state.customizer);
@@ -12,14 +13,14 @@ export const Profile = () => {
   const hideMenu = lgUp ? customizer.isCollapse && !customizer.isSidebarHover : '';
   const navigate = useNavigate();
 
+  const { token, clearToken } = useSession();
+
   // Fungsi logout
   const handleLogout = useCallback(() => {
-    // Hapus data session/token dari localStorage
-    // localStorage.removeItem('session'); // ganti sesuai key token/session kamu
-    // localStorage.removeItem('user'); // jika ada data user disimpan
-    // // Redirect ke halaman login
-    // navigate('/');
-    console.log('Logout');
+    // Bersihkan storage
+    clearToken();
+    // Redirect ke login page
+    navigate('/', { replace: true });
   }, [navigate]);
 
   return (
