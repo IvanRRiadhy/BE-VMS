@@ -38,10 +38,10 @@ import {
   getAllOrganizations,
   getAllVisitorType,
   getAllAccessControl,
-  syncIntegration,
   updateCompany,
   updateBadgeType,
   updateClearcodes,
+  syncHoneywellIntegration,
 } from 'src/customs/api/admin';
 import {
   Item,
@@ -115,6 +115,51 @@ const Honeywell = ({ id }: { id: string }) => {
     severity: 'success',
   });
 
+  const handleSyncIntegration = async () => {
+    if (!id || !token) {
+      setSyncMsg({ open: true, text: 'Session habis / ID tidak valid.', severity: 'error' });
+      return;
+    }
+
+    try {
+      setSyncing(true);
+      const res = await syncHoneywellIntegration(id as string, token as string);
+      setSyncing(false); // tutup spinner SEGERA
+
+      if (res.status !== 'success') {
+        setSyncMsg({
+          open: true,
+          text: res.msg || 'Sinkronisasi gagal.',
+          severity: 'error',
+        });
+
+        if (res.status_code === 404 && /not connected/i.test(res.msg || '')) {
+          // kasus khusus kalau mau di-handle
+        }
+
+        return; // jangan lanjut refresh list
+      }
+
+      setSyncMsg({
+        open: true,
+        text: res.msg || 'Sinkronisasi berhasil.',
+        severity: 'success',
+      });
+
+      // refresh data tanpa await
+      loadTotals().catch((e) => console.error('loadTotals error:', e));
+      fetchListByType(selectedType).catch((e) => console.error('fetchListByType error:', e));
+    } catch (e: any) {
+      console.error('Sync error:', e);
+      setSyncing(false);
+      setSyncMsg({
+        open: true,
+        text: e?.message || 'Sinkronisasi gagal. Coba lagi nanti.',
+        severity: 'error',
+      });
+    }
+  };
+
   const cards = [
     {
       title: 'Companies',
@@ -150,49 +195,7 @@ const Honeywell = ({ id }: { id: string }) => {
       subTitleSetting: 10,
       icon: IconRefresh,
       color: 'none',
-      onIconClick: async () => {
-        if (!id || !token) {
-          setSyncMsg({ open: true, text: 'Session habis / ID tidak valid.', severity: 'error' });
-          return;
-        }
-        try {
-          setSyncing(true);
-          const res = await syncIntegration(id as string, token as string);
-          setSyncing(false); // tutup spinner SEGERA
-
-          if (res.status !== 'success') {
-            // tampilkan pesan dari server
-            setSyncMsg({
-              open: true,
-              text: res.msg || 'Sinkronisasi gagal.',
-              severity: 'error',
-            });
-
-            // kasus khusus: belum connect Honeywell
-            if (res.status_code === 404 && /not connected/i.test(res.msg || '')) {
-            }
-            return; // jangan lanjut refresh list
-          }
-
-          setSyncMsg({
-            open: true,
-            text: res.msg || 'Sinkronisasi berhasil.',
-            severity: 'success',
-          });
-
-          // refresh data tanpa await (supaya UI tidak “menggantung”)
-          loadTotals().catch((e) => console.error('loadTotals error:', e));
-          fetchListByType(selectedType).catch((e) => console.error('fetchListByType error:', e));
-        } catch (e: any) {
-          console.error('Sync error:', e);
-          setSyncing(false);
-          setSyncMsg({
-            open: true,
-            text: e?.message || 'Sinkronisasi gagal. Coba lagi nanti.',
-            severity: 'error',
-          });
-        }
-      },
+      onIconClick: handleSyncIntegration,
     },
   ];
 
@@ -232,11 +235,11 @@ const Honeywell = ({ id }: { id: string }) => {
       badge_status: bsRes.status === 'fulfilled' ? getCount(bsRes.value) : 0,
     });
 
-    // (opsional) logging biar tau mana yang error
-    if (cRes.status === 'rejected') console.warn('getCompanies failed:', cRes.reason);
-    if (btRes.status === 'rejected') console.warn('getBadgeType failed:', btRes.reason);
-    if (ccRes.status === 'rejected') console.warn('getClearcodes failed:', ccRes.reason);
-    if (bsRes.status === 'rejected') console.warn('getBadgeStatus failed:', bsRes.reason);
+    // // (opsional) logging biar tau mana yang error
+    // if (cRes.status === 'rejected') console.warn('getCompanies failed:', cRes.reason);
+    // if (btRes.status === 'rejected') console.warn('getBadgeType failed:', btRes.reason);
+    // if (ccRes.status === 'rejected') console.warn('getClearcodes failed:', ccRes.reason);
+    // if (bsRes.status === 'rejected') console.warn('getBadgeStatus failed:', bsRes.reason);
   };
 
   // panggil sekali saat token/id siap

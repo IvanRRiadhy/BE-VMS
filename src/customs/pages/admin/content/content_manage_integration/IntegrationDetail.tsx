@@ -4,6 +4,7 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 import Honeywell from './Honeywell';
 import BioPeopleTracking from './BioPeopleTracking';
 import BioPeopleParking from './BioPeopleParking';
+import axiosInstance from 'src/customs/api/interceptor';
 
 const IntegrationDetail = () => {
   const { id } = useParams();
@@ -19,12 +20,21 @@ const IntegrationDetail = () => {
     (async () => {
       try {
         setLoading(true);
-        const res = await fetch(`http://localhost:8000/api/integration/${id}`, {
+        const res = await axiosInstance.get(`/integration/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
           signal: ac.signal,
         });
-        const json = await res.json();
-        if (!res.ok) throw new Error(json?.msg || `HTTP ${res.status}`);
+
+        const json = res.data;
+
+        // const res = await fetch(`http://192.168.1.116:8000/api/integration/${id}`, {
+        //   headers: {
+        //     Authorization: `Bearer ${token}`,
+        //     'Content-Type': 'application/json',
+        //   },
+        //   signal: ac.signal,
+        // });
+        // const json = await res.json();
 
         // ✅ ambil yang benar: collection
         setIntegration(json.collection ?? null);

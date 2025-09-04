@@ -18,6 +18,7 @@ import {
   IconWorldCog,
   IconAccessible,
   IconBrandMedium,
+  IconMailFilled,
 } from '@tabler/icons-react';
 import { uniqueId } from 'lodash';
 import { ItemDataCustomNavListing } from './CustomNavListing';
@@ -98,6 +99,12 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
         title: 'Integration',
         icon: IconWorldCog,
         href: '/admin/manage/integration',
+      },
+      {
+        id: uniqueId(),
+        title: 'Setting Smtp',
+        icon: IconMailFilled,
+        href: '/admin/manage/setting-smtp',
       },
       {
         id: uniqueId(),
@@ -236,6 +243,12 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
         title: 'Integration',
         icon: IconWorldCog,
         href: '/admin/manage/integration',
+      },
+      {
+        id: uniqueId(),
+        title: 'Setting Smtp',
+        icon: IconMailFilled,
+        href: '/admin/manage/setting-smtp',
       },
       {
         id: uniqueId(),

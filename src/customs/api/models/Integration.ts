@@ -1,5 +1,3 @@
-import exp from 'constants';
-import { de } from 'date-fns/locale';
 import _ from 'lodash';
 import { z } from 'zod';
 
@@ -340,8 +338,6 @@ export type CardTracking = {
   checkinAt: string;
   checkoutAt: string;
   statusCard: boolean;
-  application_id: string;
-  tracking_id: string;
 };
 
 export type GetCardTrackingResponse = {
@@ -383,8 +379,6 @@ export const UpdateCardTrackingRequestSchema = z.object({
   checkinAt: z.string().default('').optional(),
   checkoutAt: z.string().default('').optional(),
   statusCard: z.boolean().default(false).optional(),
-  application_id: z.string().default('').optional(),
-  tracking_id: z.string().default('').optional(),
 });
 export type UpdateCardTrackingRequest = z.infer<typeof UpdateCardTrackingRequestSchema>;
 
@@ -410,7 +404,6 @@ export type VisitorTracking = {
   cardId: string;
   uploadFr: number;
   status: string;
-  tracking_id: string;
 };
 
 export type GetVisitorTrackingResponse = {
@@ -467,8 +460,6 @@ export type VisitorBlacklistAreaTracking = {
   visitor_blacklist_area_id: string;
   floorplanMaskedAreaId: string;
   visitorId: string;
-  application_id: string;
-  tracking_id: string;
 };
 export type GetVisitorBlacklistAreaTrackingResponse = {
   status: string;
@@ -497,12 +488,104 @@ export type UpdateVisitorBlacklistAreaTrackingResponse = {
 export const UpdateVisitorBlacklistAreaTrackingRequestSchema = z.object({
   floorplanMaskedAreaId: z.string().default('').optional(),
   visitorId: z.string().default('').optional(),
-  application_id: z.string().default('').optional(),
-  tracking_id: z.string().default('').optional(),
 });
 export type UpdateVisitorBlacklistAreaTrackingRequest = z.infer<
   typeof UpdateVisitorBlacklistAreaTrackingRequestSchema
 >;
+
+// Trx Visitor
+export type TrxVisitorTracking = {
+  id: string;
+  trx_visitor_id: string;
+  checkedInAt: string;
+  checkedOutAt: string;
+  denyAt: string;
+  blockAt: string;
+  unblockAt: string;
+  checkinBy: string;
+  checkoutBy: string;
+  denyBy: string;
+  denyReason: string;
+  blockBy: string;
+  blockReason: string;
+  status: string;
+  invitationCreatedAt: string;
+  vehiclePlateNumber: string;
+  remarks: string;
+  visitorPeriodStart: string;
+  visitorPeriodEnd: string;
+  isInvitationAccepted: string;
+  invitationCode: string;
+  trxStatus: number;
+  maskedAreaId: string;
+  parkingId: string;
+  visitorId: string;
+  visitorGroupCode: number;
+  visitorNumber: string;
+  visitorCode: string;
+  memberIdentity: string;
+  isMember: boolean;
+  agenda: string;
+};
+
+export type GetTrxVisitorTrackingResponse = {
+  status: string;
+  status_code: number;
+  title: string;
+  msg: string;
+  collection: TrxVisitorTracking[] | null;
+};
+
+export type GetTrxVisitorTrackingResponseById = {
+  status: string;
+  status_code: number;
+  title: string;
+  msg: string;
+  collection: TrxVisitorTracking | null;
+};
+
+export type UpdateTrxVisitorTrackingResponse = {
+  status: string;
+  status_code: number;
+  title: string;
+  msg: string;
+  collection: TrxVisitorTracking | null;
+};
+
+export const UpdateTrxVisitorTrackingRequestSchema = z.object({
+  trx_visitor_id: z.string().default('').optional(),
+  checkedInAt: z.string().default('').optional(),
+  checkedOutAt: z.string().default('').optional(),
+  denyAt: z.string().default('').optional(),
+  blockAt: z.string().default('').optional(),
+  unblockAt: z.string().default('').optional(),
+  checkinBy: z.string().default('').optional(),
+  checkoutBy: z.string().default('').optional(),
+  denyBy: z.string().default('').optional(),
+  denyReason: z.string().default('').optional(),
+  blockBy: z.string().default('').optional(),
+  blockReason: z.string().default('').optional(),
+  status: z.string().default('').optional(),
+  invitationCreatedAt: z.string().default('').optional(),
+  vehiclePlateNumber: z.string().default('').optional(),
+  remarks: z.string().default('').optional(),
+  visitorPeriodStart: z.string().default('').optional(),
+  visitorPeriodEnd: z.string().default('').optional(),
+  isInvitationAccepted: z.string().default('').optional(),
+  invitationCode: z.string().default('').optional(),
+  trxStatus: z.number().default(0).optional(),
+  maskedAreaId: z.string().default('').optional(),
+  parkingId: z.string().default('').optional(),
+  visitorId: z.string().default('').optional(),
+  visitorGroupCode: z.number().default(0).optional(),
+  visitorNumber: z.string().default('').optional(),
+  visitorCode: z.string().default('').optional(),
+  memberIdentity: z.string().default('').optional(),
+  isMember: z.boolean().default(false).optional(),
+  agenda: z.string().default('').optional(),
+});
+
+export type UpdateTrxVisitorTrackingRequest = z.infer<typeof UpdateTrxVisitorTrackingRequestSchema>;
 // Member
 export type MemberTracking = {
   id: string;
@@ -526,10 +609,8 @@ export type MemberTracking = {
   exit_date: string;
   head_member1: string;
   head_member2: string;
-  application_id: string;
   status_employee: number;
   status: number;
-  tracking_id: string;
 };
 
 export type GetMemberTrackingResponse = {
@@ -577,10 +658,8 @@ export const UpdateMemberTrackingRequestSchema = z.object({
   exit_date: z.string().default('').optional(),
   head_member1: z.string().default('').optional(),
   head_member2: z.string().default('').optional(),
-  application_id: z.string().default('').optional(),
   status_employee: z.number().default(0).optional(),
   status: z.number().default(0).optional(),
-  tracking_id: z.string().default('').optional(),
 });
 
 export type UpdateMemberTrackingRequest = z.infer<typeof UpdateMemberTrackingRequestSchema>;
@@ -597,9 +676,6 @@ export type AccessControlTracking = {
   doorId: string;
   raw: string;
   integrationId: string;
-  application_id: string;
-  status: number;
-  tracking_id: string;
 };
 
 export type GetAccessControlTrackingResponse = {
@@ -635,9 +711,6 @@ export const UpdateAccessControlTrackingRequestSchema = z.object({
   doorId: z.string().default('').optional(),
   raw: z.string().default('').optional(),
   integrationId: z.string().default('').optional(),
-  application_id: z.string().default('').optional(),
-  status: z.number().default(0).optional(),
-  tracking_id: z.string().default('').optional(),
 });
 export type UpdateAccessControlTrackingRequest = z.infer<
   typeof UpdateAccessControlTrackingRequestSchema
@@ -650,7 +723,6 @@ export type BrandTracking = {
   tag: string;
   appliation_id: string;
   status: number;
-  tracking_id: string;
 };
 
 export type GetBrandTrackingResponse = {
@@ -680,9 +752,7 @@ export type UpdateBrandTrackingResponse = {
 export const UpdateBrandTrackingRequestSchema = z.object({
   name: z.string().default('').optional(),
   tag: z.string().default('').optional(),
-  application_id: z.string().default('').optional(),
   status: z.number().default(0).optional(),
-  tracking_id: z.string().default('').optional(),
 });
 
 export type UpdateBrandTrackingRequest = z.infer<typeof UpdateBrandTrackingRequestSchema>;
@@ -693,10 +763,8 @@ export type OrganizationTracking = {
   organization_id: string;
   name: string;
   code: string;
-  organizationHost: string;
-  application_id: string;
-  status: number;
-  tracking_id: string;
+  host: string;
+  // status: number;
 };
 
 export type GetOrganizationTrackingResponse = {
@@ -724,12 +792,11 @@ export type UpdateOrganizationTrackingResponse = {
 };
 
 export const UpdateOrganizationTrackingRequestSchema = z.object({
+  organization_id: z.string().default('').optional(),
   name: z.string().default('').optional(),
   code: z.string().default('').optional(),
-  organizationHost: z.string().default('').optional(),
-  application_id: z.string().default('').optional(),
-  status: z.number().default(0).optional(),
-  tracking_id: z.string().default('').optional(),
+  host: z.string().default('').optional(),
+  // status: z.number().default(0).optional(),
 });
 export type UpdateOrganizationTrackingRequest = z.infer<
   typeof UpdateOrganizationTrackingRequestSchema
@@ -742,10 +809,7 @@ export type DistrictTracking = {
   name: string;
   code: string;
   districtHost: string;
-  application_id: string;
   status: number;
-  applicationId: string;
-  tracking_id: string;
 };
 export type GetDistrictTrackingResponse = {
   status: string;
@@ -775,10 +839,7 @@ export const UpdateDistrictTrackingRequestSchema = z.object({
   name: z.string().default('').optional(),
   code: z.string().default('').optional(),
   districtHost: z.string().default('').optional(),
-  application_id: z.string().default('').optional(),
   status: z.number().default(0).optional(),
-  applicationId: z.string().default('').optional(),
-  tracking_id: z.string().default('').optional(),
 });
 export type UpdateDistrictTrackingRequest = z.infer<typeof UpdateDistrictTrackingRequestSchema>;
 
@@ -789,9 +850,7 @@ export type DepartmentTracking = {
   name: string;
   code: string;
   departmentHost: string;
-  application_id: string;
   status: number;
-  tracking_id: string;
 };
 
 export type GetDepartmentTrackingResponse = {
@@ -822,9 +881,7 @@ export const UpdateDepartmentTrackingRequestSchema = z.object({
   name: z.string().default('').optional(),
   code: z.string().default('').optional(),
   departmentHost: z.string().default('').optional(),
-  application_id: z.string().default('').optional(),
   status: z.number().default(0).optional(),
-  tracking_id: z.string().default('').optional(),
 });
 export type UpdateDepartmentTrackingRequest = z.infer<typeof UpdateDepartmentTrackingRequestSchema>;
 
@@ -833,9 +890,7 @@ export type BuildingTracking = {
   building_id: string;
   name: string;
   image: string;
-  application_id: string;
   status: number;
-  tracking_id: string;
 };
 
 export type GetBuildingTrackingResponse = {
@@ -865,9 +920,7 @@ export type UpdateBuildingTrackingResponse = {
 export const UpdateBuildingTrackingRequestSchema = z.object({
   name: z.string().default('').optional(),
   image: z.string().default('').optional(),
-  application_id: z.string().default('').optional(),
   status: z.number().default(0).optional(),
-  tracking_id: z.string().default('').optional(),
 });
 
 export type UpdateBuildingTrackingRequest = z.infer<typeof UpdateBuildingTrackingRequestSchema>;
@@ -885,9 +938,7 @@ export type FloorTracking = {
   floorY: number;
   meterPerPx: number;
   engineFloorId: string;
-  application_id: string;
   status: number;
-  tracking_id: string;
 };
 
 export type GetFloorTrackingResponse = {
@@ -924,9 +975,7 @@ export const UpdateFloorTrackingRequestSchema = z.object({
   floorY: z.number().default(0).optional(),
   meterPerPx: z.number().default(0).optional(),
   engineFloorId: z.string().default('').optional(),
-  application_id: z.string().default('').optional(),
   status: z.number().default(0).optional(),
-  tracking_id: z.string().default('').optional(),
 });
 export type UpdateFloorTrackingRequest = z.infer<typeof UpdateFloorTrackingRequestSchema>;
 
@@ -935,11 +984,9 @@ export type FloorPlanTracking = {
   floorplan_id: string;
   name: string;
   floorId: string;
-  application_id: string;
   status: number;
   maskedAreaCount: number;
   deviceCount: number;
-  tracking_id: string;
 };
 
 export type GetFloorPlanTrackingResponse = {
@@ -970,11 +1017,9 @@ export const UpdateFloorPlanTrackingRequestSchema = z.object({
   name: z.string().default('').optional(),
   floorplan_id: z.string().default('').optional(),
   floorId: z.string().default('').optional(),
-  application_id: z.string().default('').optional(),
   status: z.number().default(0).optional(),
   maskedAreaCount: z.number().default(0).optional(),
   deviceCount: z.number().default(0).optional(),
-  tracking_id: z.string().default('').optional(),
 });
 export type UpdateFloorPlanTrackingRequest = z.infer<typeof UpdateFloorPlanTrackingRequestSchema>;
 
@@ -990,8 +1035,6 @@ export type FloorPlanMaskedAreaTracking = {
   restrictedStatus: string;
   engineAreaId: string;
   status: number;
-  application_id: string;
-  tracking_id: string;
 };
 
 export type GetFloorPlanMaskedAreaTrackingResponse = {
@@ -1028,8 +1071,6 @@ export const UpdateFloorPlanMaskedAreaTrackingRequestSchema = z.object({
   restrictedStatus: z.string().default('').optional(),
   engineAreaId: z.string().default('').optional(),
   status: z.number().default(0).optional(),
-  application_id: z.string().default('').optional(),
-  tracking_id: z.string().default('').optional(),
 });
 export type UpdateFloorPlanMaskedAreaTrackingRequest = z.infer<
   typeof UpdateFloorPlanMaskedAreaTrackingRequestSchema
@@ -1052,8 +1093,6 @@ export type FloorPlanDeviceTracking = {
   type: string;
   deviceStatus: string;
   status: number;
-  application_id: string;
-  tracking_id: string;
 };
 
 export type GetFloorPlanDeviceTrackingResponse = {
@@ -1095,8 +1134,6 @@ export const UpdateFloorPlanDeviceTrackingRequestSchema = z.object({
   type: z.string().default('').optional(),
   deviceStatus: z.string().default('').optional(),
   status: z.number().default(0).optional(),
-  application_id: z.string().default('').optional(),
-  tracking_id: z.string().default('').optional(),
 });
 
 export type UpdateFloorPlanDeviceTrackingRequest = z.infer<
@@ -1112,8 +1149,6 @@ export type BleReaderTracking = {
   gmac: string;
   engineReaderId: string;
   status: number;
-  application_id: string;
-  tracking_id: string;
 };
 
 export type GetBleReaderTrackingResponse = {
@@ -1147,8 +1182,6 @@ export const UpdateBleReaderTrackingRequestSchema = z.object({
   gmac: z.string().default('').optional(),
   engineReaderId: z.string().default('').optional(),
   status: z.number().default(0).optional(),
-  application_id: z.string().default('').optional(),
-  tracking_id: z.string().default('').optional(),
 });
 
 export type UpdateBleReaderTrackingRequest = z.infer<typeof UpdateBleReaderTrackingRequestSchema>;
@@ -1174,7 +1207,6 @@ export type AlarmTracking = {
   waitingBy: string;
   investigatedBy: string;
   investigatedResult: string;
-  tracking_id: string;
 };
 
 export type GetAlarmTrackingResponse = {
@@ -1256,6 +1288,15 @@ export type UpdateAlarmWarningTrackingResponse = {
   collection: AlarmWarningTracking | null;
 };
 
+// export const UpdateAlarmWarningTrackingRequestSchema = z.object({
+//   createdAt: z.string().default('').optional(),
+//   updatedAt: z.string().default('').optional(),
+//   deletedAt: z.string().default('').optional(),
+// });
+
+// export type UpdateAlarmWarningTrackingRequest = z.infer<
+//   typeof UpdateAlarmWarningTrackingRequestSchema
+// >;
 // CCTV
 
 export type CctvTracking = {
@@ -1265,8 +1306,6 @@ export type CctvTracking = {
   rtsp: string;
   integrationid: string;
   status: number;
-  application_id: string;
-  tracking_id: string;
 };
 
 export type GetCctvTrackingResponse = {
@@ -1298,7 +1337,36 @@ export const UpdateCctvTrackingRequestSchema = z.object({
   rtsp: z.string().default('').optional(),
   integrationid: z.string().default('').optional(),
   status: z.number().default(0).optional(),
-  application_id: z.string().default('').optional(),
-  tracking_id: z.string().default('').optional(),
 });
 export type UpdateCctvTrackingRequest = z.infer<typeof UpdateCctvTrackingRequestSchema>;
+
+// Tracking Transaction
+
+export type TrackingTransaction = {
+  id: string;
+  brand_id: string;
+  name: string;
+  type: string;
+  description: string;
+  channel: string;
+  door_id: string;
+  raw: string;
+  integration_id: string;
+  status: number;
+};
+
+export type GetTrackingTransactionResponse = {
+  status: string;
+  status_code: number;
+  title: string;
+  msg: string;
+  collection: TrackingTransaction[] | null;
+};
+
+export type GetTrackingTransactionResponseById = {
+  status: string;
+  status_code: number;
+  title: string;
+  msg: string;
+  collection: TrackingTransaction | null;
+};

@@ -565,6 +565,20 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
               />
             </Grid>
             <Grid size={12}>
+              <CustomFormLabel htmlFor="visitor-type" sx={{ mt: 1 }}>
+                QueVisitor
+              </CustomFormLabel>
+              <CustomTextField
+                id="prefix"
+                value={formData.prefix}
+                onChange={handleChange}
+                error={Boolean(errors.prefix)}
+                helperText={errors.prefix || ''}
+                fullWidth
+                inputProps={{ min: 0 }}
+              />
+            </Grid>
+            <Grid size={12}>
               <CustomFormLabel
                 htmlFor="duration_visit"
                 sx={{ mt: 1, display: 'flex', alignItems: 'center' }}

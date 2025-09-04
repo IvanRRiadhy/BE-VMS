@@ -12,6 +12,8 @@ import {
   Divider,
   Grid2 as Grid,
   IconButton,
+  Backdrop,
+  Portal,
 } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
 
@@ -291,6 +293,7 @@ const Content = () => {
         can_notification_arrival: nextItem.can_notification_arrival,
         // is_primary: nextItem.is_primary,
         is_enable: nextItem.is_enable,
+        prefix: nextItem.prefix,
         vip: nextItem.vip,
         simple_visitor: nextItem.simple_visitor,
         simple_period: nextItem.simple_period,
@@ -558,24 +561,17 @@ const Content = () => {
           </Button>
         </DialogActions>
       </Dialog>
-      {loading && (
-        <Box
+      <Portal>
+        <Backdrop
+          open={loading}
           sx={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100vw',
-            height: '100vh',
-            bgcolor: '#fff',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 20000,
+            color: '#fff',
+            zIndex: (t) => (t.zIndex.snackbar ?? 1400) - 1, // di atas modal (1300), di bawah snackbar (1400)
           }}
         >
-          <CircularProgress color="primary" />
-        </Box>
-      )}
+          <CircularProgress />
+        </Backdrop>
+      </Portal>
     </>
   );
 };

@@ -1,3 +1,4 @@
+import { create } from 'lodash';
 //#region IMPORT
 import axios from 'axios';
 import {
@@ -69,25 +70,96 @@ import {
   CreateIntegrationRequest,
   CreateIntegrationResponse,
   DeleteIntegrationResponse,
+  GetAccessControlTrackingResponse,
+  GetAccessControlTrackingResponseById,
+  GetAlarmTrackingResponse,
+  GetAlarmTrackingResponseById,
+  GetAlarmWarningTrackingResponse,
+  GetAlarmWarningTrackingResponseById,
   GetAllIntegrationResponse,
   GetAvailableIntegrationResponse,
   GetBadgeStatusResponse,
   GetBadgeStatusResponseById,
   GetBadgeTypeResponse,
   GetBadgeTypeResponseById,
+  GetBleReaderTrackingResponse,
+  GetBleReaderTrackingResponseById,
+  GetBrandTrackingResponse,
+  GetBrandTrackingResponseById,
+  GetBuildingTrackingResponse,
+  GetBuildingTrackingResponseById,
+  GetCardTrackingResponse,
+  GetCardTrackingResponseById,
+  GetCctvTrackingResponse,
+  GetCctvTrackingResponseById,
   GetClearCodesResponse,
   GetClearCodesResponseById,
   GetCompaniesResponse,
   GetCompaniesResponseById,
+  GetDepartmentTrackingResponse,
+  GetDepartmentTrackingResponseById,
+  GetDistrictTrackingResponse,
+  GetDistrictTrackingResponseById,
+  GetFloorPlanMaskedAreaTrackingResponse,
+  GetFloorPlanMaskedAreaTrackingResponseById,
+  GetFloorPlanTrackingResponse,
+  GetFloorPlanTrackingResponseById,
+  GetFloorTrackingResponse,
+  GetFloorTrackingResponseById,
   GetIntegrationByIdResponse,
+  GetMemberTrackingResponse,
+  GetMemberTrackingResponseById,
+  GetOrganizationTrackingResponse,
+  GetOrganizationTrackingResponseById,
+  GetTrackingTransactionResponse,
+  GetTrackingTransactionResponseById,
+  GetTrxVisitorTrackingResponse,
+  GetTrxVisitorTrackingResponseById,
+  GetVisitorBlacklistAreaTrackingResponse,
+  GetVisitorBlacklistAreaTrackingResponseById,
+  GetVisitorTrackingResponse,
+  GetVisitorTrackingResponseById,
+  UpdateAccessControlTrackingRequest,
+  UpdateAccessControlTrackingResponse,
+  UpdateAlarmTrackingRequest,
+  UpdateAlarmTrackingResponse,
+  UpdateAlarmWarningTrackingResponse,
   UpdateBadgeTypeRequest,
   UpdateBadgeTypeResponse,
+  UpdateBrandTrackingRequest,
+  UpdateBrandTrackingResponse,
+  UpdateBuildingTrackingRequest,
+  UpdateBuildingTrackingResponse,
+  UpdateCardTrackingRequest,
+  UpdateCardTrackingResponse,
+  UpdateCctvTrackingRequest,
+  UpdateCctvTrackingResponse,
   UpdateClearcodesRequest,
   UpdateClearcodesResponse,
   UpdateCompaniesRequest,
   UpdateCompaniesResponse,
+  UpdateDepartmentTrackingRequest,
+  UpdateDepartmentTrackingResponse,
+  UpdateDistrictTrackingRequest,
+  UpdateDistrictTrackingResponse,
+  UpdateFloorPlanMaskedAreaTrackingRequest,
+  UpdateFloorPlanMaskedAreaTrackingResponse,
+  UpdateFloorPlanTrackingRequest,
+  UpdateFloorPlanTrackingResponse,
+  UpdateFloorTrackingRequest,
+  UpdateFloorTrackingResponse,
   UpdateIntegrationRequest,
   UpdateIntegrationResponse,
+  UpdateMemberTrackingRequest,
+  UpdateMemberTrackingResponse,
+  UpdateOrganizationTrackingRequest,
+  UpdateOrganizationTrackingResponse,
+  UpdateTrxVisitorTrackingRequest,
+  UpdateTrxVisitorTrackingResponse,
+  UpdateVisitorBlacklistAreaTrackingRequest,
+  UpdateVisitorBlacklistAreaTrackingResponse,
+  UpdateVisitorTrackingRequest,
+  UpdateVisitorTrackingResponse,
 } from './models/Integration';
 import {
   CreateAccessControlRequest,
@@ -129,6 +201,16 @@ import {
   UpdateVisitorCardResponse,
 } from './models/VisitorCard';
 import { join } from 'path';
+import {
+  CreateEmailRequest,
+  CreateEmailResponse,
+  CreateSettingSmtpRequest,
+  CreateSettingSmtpResponse,
+  GetAllSettingSmtpPaginationResponse,
+  GetAllSettingSmtpResponse,
+  UpdateSettingSmtpRequest,
+  UpdateSettingSmtpResponse,
+} from './models/SettingSmtp';
 
 //#endregion
 
@@ -1107,13 +1189,41 @@ type ApiResponse = {
   collection?: any;
 };
 
-export const syncIntegration = async (
+export const syncHoneywellIntegration = async (
   integrationId: string,
   token: string,
 ): Promise<ApiResponse> => {
   try {
     const { data } = await axiosInstance.post(
       `/integration-honeywell/sync/${integrationId}`,
+      {}, // pakai {} biar nggak trigger edge-case body null
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    return data as ApiResponse;
+  } catch (error: any) {
+    if (axios.isAxiosError(error) && error.response) {
+      const d = (error.response.data || {}) as Partial<ApiResponse>;
+      // Normalisasi agar caller selalu dapat objek seragam
+      return {
+        status: d.status ?? 'fail',
+        status_code: d.status_code ?? error.response.status,
+        title: d.title ?? 'fail',
+        msg: d.msg ?? 'Request failed',
+        collection: d.collection ?? null,
+      };
+    }
+    // jaringan / non-HTTP error — biarkan meledak supaya ketahuan
+    throw error;
+  }
+};
+
+export const syncTrackingBleIntegration = async (
+  integrationId: string,
+  token: string,
+): Promise<ApiResponse> => {
+  try {
+    const { data } = await axiosInstance.post(
+      `/integration-trackingble/sync/${integrationId}`,
       {}, // pakai {} biar nggak trigger edge-case body null
       { headers: { Authorization: `Bearer ${token}` } },
     );
@@ -1172,6 +1282,7 @@ export const updateIntegration = async (
   }
 };
 
+//#region  sHoneywell
 // get companies
 export const getCompanies = async (
   integrationId: string,
@@ -1389,6 +1500,1119 @@ export const updateClearcodes = async (
   }
 };
 
+//#region Tracking Ble
+
+export const getOrganizationTracking = async (
+  integrationId: string,
+  token: string,
+): Promise<GetOrganizationTrackingResponse> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-trackingble/organization/${integrationId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const getOrganizationTrackingById = async (
+  integrationId: string,
+  id: string,
+  token: string,
+): Promise<GetOrganizationTrackingResponseById> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-trackingble/organization/${integrationId}/${id}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const updateOrganizationTracking = async (
+  id: string,
+  data: UpdateOrganizationTrackingRequest,
+  token: string,
+): Promise<UpdateOrganizationTrackingResponse> => {
+  try {
+    const response = await axiosInstance.put(`/integration-trackingble/organization/${id}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+// Department
+export const getDepartmentTracking = async (
+  integrationId: string,
+  token: string,
+): Promise<GetDepartmentTrackingResponse> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-trackingble/department/${integrationId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const getDepartmentTrackingById = async (
+  integrationId: string,
+  id: string,
+  token: string,
+): Promise<GetDepartmentTrackingResponseById> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-trackingble/department/${integrationId}/${id}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const updateDepartmentTracking = async (
+  id: string,
+  data: UpdateDepartmentTrackingRequest,
+  token: string,
+): Promise<UpdateDepartmentTrackingResponse> => {
+  try {
+    const response = await axiosInstance.put(`/integration-trackingble/department/${id}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+// District
+export const getDistrictTracking = async (
+  integrationId: string,
+  token: string,
+): Promise<GetDistrictTrackingResponse> => {
+  try {
+    const response = await axiosInstance.get(`/integration-trackingble/district/${integrationId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const getDistrictTrackingById = async (
+  integrationId: string,
+  id: string,
+  token: string,
+): Promise<GetDistrictTrackingResponseById> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-trackingble/district/${integrationId}/${id}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const updateDistrictTracking = async (
+  id: string,
+  data: UpdateDistrictTrackingRequest,
+  token: string,
+): Promise<UpdateDistrictTrackingResponse> => {
+  try {
+    const response = await axiosInstance.put(`/integration-trackingble/district/${id}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+// Card
+export const getCardTracking = async (
+  integrationId: string,
+  token: string,
+): Promise<GetCardTrackingResponse> => {
+  try {
+    const response = await axiosInstance.get(`/integration-trackingble/card/${integrationId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const getCardTrackingById = async (
+  integrationId: string,
+  id: string,
+  token: string,
+): Promise<GetCardTrackingResponseById> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-trackingble/card/${integrationId}/${id}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const updateCardTracking = async (
+  id: string,
+  data: UpdateCardTrackingRequest,
+  token: string,
+): Promise<UpdateCardTrackingResponse> => {
+  try {
+    const response = await axiosInstance.put(`/integration-trackingble/card/${id}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+// Alarm Record
+
+export const getAlarmTracking = async (
+  integrationId: string,
+  token: string,
+): Promise<GetAlarmTrackingResponse> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-trackingble/alarm-record-tracking/${integrationId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const getAlarmTrackingById = async (
+  integrationId: string,
+  id: string,
+  token: string,
+): Promise<GetAlarmTrackingResponseById> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-trackingble/alarm-record-tracking/${integrationId}/${id}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const updateAlarmTracking = async (
+  id: string,
+  data: UpdateAlarmTrackingRequest,
+  token: string,
+): Promise<UpdateAlarmTrackingResponse> => {
+  try {
+    const response = await axiosInstance.put(
+      `/integration-trackingble/alarm-record-tracking/${id}`,
+      data,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+// Alarm Warning
+
+export const getAlarmWarningTracking = async (
+  integrationId: string,
+  token: string,
+): Promise<GetAlarmWarningTrackingResponse> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-trackingble/alarm-warning/${integrationId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const getAlarmWarningTrackingById = async (
+  integrationId: string,
+  id: string,
+  token: string,
+): Promise<GetAlarmWarningTrackingResponseById> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-trackingble/alarm-warning/${integrationId}/${id}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+// export const updateAlarmWarningTracking = async (
+//   id: string,
+//   data: UpdateAlarmWarningTrackingRequest,
+//   token: string,
+// ): Promise<UpdateAlarmWarningTrackingResponse> => {
+//   try {
+//     const response = await axiosInstance.put(`/integration-trackingble/alarm-warning/${id}`, data, {
+//       headers: { Authorization: `Bearer ${token}` },
+//     });
+//     return response.data;
+//   } catch (error) {
+//     if (axios.isAxiosError(error) && error.response?.status === 400) {
+//       throw error.response.data as ValidationErrorResponse;
+//     }
+//     throw error;
+//   }
+// };
+
+// Floor Plan Masked Area
+export const getFloorPlanMaskedArea = async (
+  integrationId: string,
+  token: string,
+): Promise<GetFloorPlanMaskedAreaTrackingResponse> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-trackingble/floorplan-masked-area/${integrationId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const getFloorPlanMaskedAreaById = async (
+  integrationId: string,
+  id: string,
+  token: string,
+): Promise<GetFloorPlanMaskedAreaTrackingResponseById> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-trackingble/floorplan-masked-area/${integrationId}/${id}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const updateFloorPlanMaskedArea = async (
+  id: string,
+  data: UpdateFloorPlanMaskedAreaTrackingRequest,
+  token: string,
+): Promise<UpdateFloorPlanMaskedAreaTrackingResponse> => {
+  try {
+    const response = await axiosInstance.put(
+      `/integration-trackingble/floorplan-masked-area/${id}`,
+      data,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+// Floor
+
+export const getFloor = async (
+  integrationId: string,
+  token: string,
+): Promise<GetFloorTrackingResponse> => {
+  try {
+    const response = await axiosInstance.get(`/integration-trackingble/floor/${integrationId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const getFloorById = async (
+  integrationId: string,
+  id: string,
+  token: string,
+): Promise<GetFloorTrackingResponseById> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-trackingble/floor/${integrationId}/${id}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const updateFloor = async (
+  id: string,
+  data: UpdateFloorTrackingRequest,
+  token: string,
+): Promise<UpdateFloorTrackingResponse> => {
+  try {
+    const response = await axiosInstance.put(`/integration-trackingble/floor/${id}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+// Floor Plan
+
+export const getFloorPlan = async (
+  integrationId: string,
+  token: string,
+): Promise<GetFloorPlanTrackingResponse> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-trackingble/floorplan/${integrationId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const getFloorPlanById = async (
+  integrationId: string,
+  id: string,
+  token: string,
+): Promise<GetFloorPlanTrackingResponseById> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-trackingble/floorplan/${integrationId}/${id}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const updateFloorPlan = async (
+  id: string,
+  data: UpdateFloorPlanTrackingRequest,
+  token: string,
+): Promise<UpdateFloorPlanTrackingResponse> => {
+  try {
+    const response = await axiosInstance.put(`/integration-trackingble/floorplan/${id}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+// Access CCTV
+
+export const getAccessCCTV = async (
+  integrationId: string,
+  token: string,
+): Promise<GetCctvTrackingResponse> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-trackingble/access-cctv/${integrationId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const getAccessCCTVById = async (
+  integrationId: string,
+  id: string,
+  token: string,
+): Promise<GetCctvTrackingResponseById> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-trackingble/access-cctv/${integrationId}/${id}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const updateAccessCCTV = async (
+  id: string,
+  data: UpdateCctvTrackingRequest,
+  token: string,
+): Promise<UpdateCctvTrackingResponse> => {
+  try {
+    const response = await axiosInstance.put(`/integration-trackingble/access-cctv/${id}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+// Access Control
+
+export const getAccessControl = async (
+  integrationId: string,
+  token: string,
+): Promise<GetAccessControlTrackingResponse> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-trackingble/access-control/${integrationId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const getAccessControlById = async (
+  integrationId: string,
+  id: string,
+  token: string,
+): Promise<GetAccessControlTrackingResponseById> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-trackingble/access-control/${integrationId}/${id}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const updateAccessControlTracking = async (
+  id: string,
+  data: UpdateAccessControlTrackingRequest,
+  token: string,
+): Promise<UpdateAccessControlTrackingResponse> => {
+  try {
+    const response = await axiosInstance.put(
+      `/integration-trackingble/access-control/${id}`,
+      data,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+// Brand
+
+export const getBrandTracking = async (
+  integrationId: string,
+  token: string,
+): Promise<GetBrandTrackingResponse> => {
+  try {
+    const response = await axiosInstance.get(`/integration-trackingble/brand/${integrationId}`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const getBrandTrackingById = async (
+  integrationId: string,
+  id: string,
+  token: string,
+): Promise<GetBrandTrackingResponseById> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-trackingble/brand/${integrationId}/${id}`,
+      {
+        headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const updateBrandTracking = async (
+  id: string,
+  data: UpdateBrandTrackingRequest,
+  token: string,
+): Promise<UpdateBrandTrackingResponse> => {
+  try {
+    const response = await axiosInstance.put(`/integration-trackingble/brand/${id}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+// Ble Reader
+
+export const getBleReaderTracking = async (
+  integrationId: string,
+  token: string,
+): Promise<GetBleReaderTrackingResponse> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-trackingble/ble-reader/${integrationId}`,
+      {
+        headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const getBleReaderTrackingById = async (
+  integrationId: string,
+  id: string,
+  token: string,
+): Promise<GetBleReaderTrackingResponseById> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-trackingble/ble-reader/${integrationId}/${id}`,
+      {
+        headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+// Building
+
+export const getBuildingTracking = async (
+  integrationId: string,
+  token: string,
+): Promise<GetBuildingTrackingResponse> => {
+  try {
+    const response = await axiosInstance.get(`/integration-trackingble/building/${integrationId}`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const getBuildingTrackingById = async (
+  integrationId: string,
+  id: string,
+  token: string,
+): Promise<GetBuildingTrackingResponseById> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-trackingble/building/${integrationId}/${id}`,
+      {
+        headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const updateBuildingTracking = async (
+  id: string,
+  data: UpdateBuildingTrackingRequest,
+  token: string,
+): Promise<UpdateBuildingTrackingResponse> => {
+  try {
+    const response = await axiosInstance.put(`/integration-trackingble/building/${id}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+// Member
+
+export const getMemberTracking = async (
+  integrationId: string,
+  token: string,
+): Promise<GetMemberTrackingResponse> => {
+  try {
+    const response = await axiosInstance.get(`/integration-trackingble/member/${integrationId}`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const getMemberTrackingById = async (
+  integrationId: string,
+  id: string,
+  token: string,
+): Promise<GetMemberTrackingResponseById> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-trackingble/member/${integrationId}/${id}`,
+      {
+        headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const updateMemberTracking = async (
+  id: string,
+  data: UpdateMemberTrackingRequest,
+  token: string,
+): Promise<UpdateMemberTrackingResponse> => {
+  try {
+    const response = await axiosInstance.put(`/integration-trackingble/member/${id}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+// Tracking Transaction
+export const getTrackingTransaction = async (
+  integrationId: string,
+  token: string,
+): Promise<GetTrackingTransactionResponse> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-trackingble/tracking-transaction/${integrationId}`,
+      {
+        headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const getTrackingTransactionById = async (
+  integrationId: string,
+  id: string,
+  token: string,
+): Promise<GetTrackingTransactionResponseById> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-trackingble/tracking-transaction/${integrationId}/${id}`,
+      {
+        headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+// Visitor
+
+export const getVisitorTracking = async (
+  integrationId: string,
+  token: string,
+): Promise<GetVisitorTrackingResponse> => {
+  try {
+    const response = await axiosInstance.get(`/integration-trackingble/visitor/${integrationId}`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const getVisitorTrackingById = async (
+  integrationId: string,
+  id: string,
+  token: string,
+): Promise<GetVisitorTrackingResponseById> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-trackingble/visitor/${integrationId}/${id}`,
+      {
+        headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const updateVisitorTracking = async (
+  id: string,
+  data: UpdateVisitorTrackingRequest,
+  token: string,
+): Promise<UpdateVisitorTrackingResponse> => {
+  try {
+    const response = await axiosInstance.put(`/integration-trackingble/visitor/${id}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+// Visitor Blacklist
+
+export const getVisitorBlacklist = async (
+  integrationId: string,
+  token: string,
+): Promise<GetVisitorBlacklistAreaTrackingResponse> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-trackingble/visitor-blacklist-area/${integrationId}`,
+      {
+        headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const getVisitorBlacklistById = async (
+  integrationId: string,
+  id: string,
+  token: string,
+): Promise<GetVisitorBlacklistAreaTrackingResponseById> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-trackingble/visitor-blacklist-area/${integrationId}/${id}`,
+      {
+        headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const updateVisitorBlacklist = async (
+  id: string,
+  data: UpdateVisitorBlacklistAreaTrackingRequest,
+  token: string,
+): Promise<UpdateVisitorBlacklistAreaTrackingResponse> => {
+  try {
+    const response = await axiosInstance.put(
+      `/integration-trackingble/visitor-blacklist-area/${id}`,
+      data,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+// TRX Visitor
+
+export const getTRXVisitor = async (
+  integrationId: string,
+  token: string,
+): Promise<GetTrxVisitorTrackingResponse> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-trackingble/trx-visitor/${integrationId}`,
+      {
+        headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const getTRXVisitorById = async (
+  integrationId: string,
+  id: string,
+  token: string,
+): Promise<GetTrxVisitorTrackingResponseById> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-trackingble/trx-visitor/${integrationId}/${id}`,
+      {
+        headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const updateTRXVisitor = async (
+  id: string,
+  data: UpdateTrxVisitorTrackingRequest,
+  token: string,
+): Promise<UpdateTrxVisitorTrackingResponse> => {
+  try {
+    const response = await axiosInstance.put(`/integration-trackingble/trx-visitor/${id}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
 //#endregion
 
 //#region AccessControl API
@@ -1563,5 +2787,106 @@ export const deleteCustomField = async (
 };
 
 // Visitor Type
+
+//#endregion
+
+//#region Setting Smtp
+
+export const getAllSmtp = async (token: string): Promise<GetAllSettingSmtpResponse> => {
+  try {
+    const response = await axiosInstance.get(`/setting-smtp`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const getAllPaginationSettingSmtp = async (
+  token: string,
+  start: number,
+  length: number,
+  sortColumn: string,
+  keyword?: string,
+): Promise<GetAllSettingSmtpPaginationResponse> => {
+  try {
+    const response = await axiosInstance.get(`/setting-smtp/dt`, {
+      params: { start, length, sort_column: sortColumn, 'search[value]': keyword },
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const createSmtp = async (
+  data: CreateSettingSmtpRequest,
+  token: string,
+): Promise<CreateSettingSmtpResponse> => {
+  try {
+    const response = await axiosInstance.post(`/setting-smtp`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const updateSmtp = async (
+  token: string,
+  data: UpdateSettingSmtpRequest,
+  smtpId: string,
+): Promise<UpdateSettingSmtpResponse> => {
+  try {
+    const response = await axiosInstance.put(`/setting-smtp/${smtpId}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const deleteSmtp = async (
+  smtpId: string,
+  token: string,
+): Promise<DeleteVisitorTypeResponse> => {
+  const response = await axiosInstance.delete(`/setting-smtp/${smtpId}`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+export const createEmail = async (
+  data: CreateEmailRequest,
+  token: string,
+): Promise<CreateEmailResponse> => {
+  try {
+    const response = await axiosInstance.post(`/email/test-email`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
 
 //#endregion

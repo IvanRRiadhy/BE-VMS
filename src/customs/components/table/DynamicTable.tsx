@@ -312,13 +312,17 @@ export function DynamicTable<T extends { id: string | number }>({
     members: 'Member',
     card: 'Card',
     visitor: 'Visitor',
+    trx_visitor: 'Trx Visitor',
     visitor_blacklist: 'Visitor Blacklist',
     brand: 'Brand',
     floor: 'Floor',
     floor_plan_masked_area: 'Floor Plan Masked Area',
-    floor_plan_device: 'Floor Plan Device',
+    // floor_plan_device: 'Floor Plan Device',
     building: 'Building',
     ble_reader: 'Ble Reader',
+    alarm_record: 'Alarm Record',
+    alarm_warning: 'Alarm Warning',
+    tracking_transaction: 'Tracking Transaction',
   };
   return (
     <>
@@ -358,6 +362,7 @@ export function DynamicTable<T extends { id: string | number }>({
                         maxWidth: '100%',
                         width: '100%',
                         minHeight: 20,
+                        marginTop: '0 !important',
                         '& .MuiTabs-scroller': {
                           overflowX: 'auto !important',
                           WebkitOverflowScrolling: 'touch',
@@ -372,7 +377,7 @@ export function DynamicTable<T extends { id: string | number }>({
                           textTransform: 'none',
                           fontSize: '0.6rem',
                           px: 1.5,
-                          mt: { xs: 1, sm: 2 },
+                          // mt: { xs: 1, sm: 2 },
                           borderRadius: '999px',
                           border: '1px solid',
                           borderColor: 'primary.main',

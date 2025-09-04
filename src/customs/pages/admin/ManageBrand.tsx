@@ -7,14 +7,14 @@ import PageContainer from 'src/customs/components/container/PageContainer';
 import Content from './content/content_manage_brand/Content';
 
 const ManageBrand: FC = () => {
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      alert('Unloading...');
-      localStorage.removeItem('unsavedBrandData');
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, []);
+  // useEffect(() => {
+  //   const handleBeforeUnload = () => {
+  //     alert('Unloading...');
+  //     localStorage.removeItem('unsavedBrandData');
+  //   };
+  //   window.addEventListener('beforeunload', handleBeforeUnload);
+  //   return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  // }, []);
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}

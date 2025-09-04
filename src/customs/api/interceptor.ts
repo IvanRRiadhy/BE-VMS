@@ -1,14 +1,14 @@
 import axios from 'axios';
 
 const axiosInstance = axios.create({
-  baseURL: `https://${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api`,
+  baseURL: `http://${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api`,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
 const axiosInstance2 = axios.create({
-  baseURL: `https://${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}`,
+  baseURL: `http://${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}`,
   headers: {
     'Content-Type': 'application/json',
   },

@@ -30,6 +30,7 @@ import ManageAccessControl from './customs/pages/admin/ManageAccessControl';
 import ManageCustomField from './customs/pages/admin/ManageCustomField';
 import IntegrationDetail from './customs/pages/admin/content/content_manage_integration/IntegrationDetail';
 import ManageIntegrationDetail from './customs/pages/admin/ManageIntegrationDetail';
+import ManageSettingSmtp from './customs/pages/admin/ManageSettingSmtp';
 
 export function App() {
   const theme = ThemeSettings();
@@ -194,6 +195,17 @@ export function App() {
                 </ProtectedRoute>
               }
             />
+
+            {/* Setting smtp */}
+            <Route
+              path="admin/manage/setting-smtp"
+              element={
+                <ProtectedRoute>
+                  <ManageSettingSmtp />
+                </ProtectedRoute>
+              }
+            />
+
             <Route
               path="admin/setting/users"
               element={

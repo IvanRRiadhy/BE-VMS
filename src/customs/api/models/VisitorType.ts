@@ -69,6 +69,7 @@ export type Item = {
   is_enable: boolean;
   vip: boolean;
   simple_visitor: boolean;
+  prefix: string;
   simple_period: boolean;
   site_visitor_types?: string | null;
   visitor_type_documents: VisitorTypeDocument[] | null;
@@ -138,6 +139,7 @@ export const CreateVisitorTypeRequestSchema = z.object({
   can_notification_arrival: z.boolean().default(false),
   is_primary: z.boolean().default(false).optional(),
   is_enable: z.boolean().default(false),
+  prefix: z.string().default(''),
   vip: z.boolean().default(false),
   simple_visitor: z.boolean().default(false),
   simple_period: z.boolean().default(false),
@@ -183,6 +185,7 @@ export const updateVisitorTypeSchmea = z.object({
   vip: z.boolean().optional(),
   simple_visitor: z.boolean().default(false),
   simple_period: z.boolean().default(false),
+  prefix: z.string().default(''),
 
   // Nullable fields from your JSON
   site_visitor_types: z.string().nullable().optional(),
