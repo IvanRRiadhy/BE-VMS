@@ -537,7 +537,7 @@ const Content = () => {
 
   return (
     <>
-      <PageContainer title="Organization & Department" description="this is Dashboard page">
+      <PageContainer title="Company & Department" description="this is Dashboard page">
         <Box>
           <Grid container spacing={3}>
             {/* column */}

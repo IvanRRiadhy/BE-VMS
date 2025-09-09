@@ -27,9 +27,18 @@ import PageContainer from 'src/components/container/PageContainer';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import TopCard from 'src/customs/components/cards/TopCard';
 import {
+  IconAccessible,
+  IconBrandMedium,
   IconBuilding,
+  IconBuildingSkyscraper,
+  IconCards,
   IconDeviceCctv,
+  IconDeviceIpad,
+  IconMapPins,
+  IconMapSearch,
+  IconRectangle,
   IconRefresh,
+  IconStairsUp,
   IconUserOff,
   IconUsers,
 } from '@tabler/icons-react';
@@ -45,6 +54,8 @@ import {
   getAccessControlById,
   getAlarmTracking,
   getAlarmWarningTracking,
+  getAllAccessControl,
+  getAllBrand,
   getAllDepartments,
   getAllDistricts,
   getAllEmployee,
@@ -70,7 +81,6 @@ import {
   getFloorPlanMaskedAreaById,
   getMemberTracking,
   getMemberTrackingById,
-  getOrganizationById,
   getOrganizationTracking,
   getOrganizationTrackingById,
   getTrackingTransaction,
@@ -87,10 +97,6 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import { de } from 'date-fns/locale';
-import { register } from 'module';
-import { create, floor, set } from 'lodash';
-import { access } from 'fs';
 
 const BioPeopleTracking = ({ id }: { id: string }) => {
   const { token } = useSession();
@@ -171,14 +177,7 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
         title: 'Organizations',
         subTitle: String(totals.organizations),
         subTitleSetting: 0,
-        icon: IconBuilding,
-        color: 'none',
-      },
-      {
-        title: 'District',
-        subTitle: String(totals.districts),
-        subTitleSetting: 0,
-        icon: IconBuilding,
+        icon: IconBuildingSkyscraper,
         color: 'none',
       },
       {
@@ -189,17 +188,24 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
         color: 'none',
       },
       {
+        title: 'District',
+        subTitle: String(totals.districts),
+        subTitleSetting: 0,
+        icon: IconMapPins,
+        color: 'none',
+      },
+      {
         title: 'Member',
         subTitle: String(totals.members),
         subTitleSetting: 0,
-        icon: IconBuilding,
+        icon: IconUsers,
         color: 'none',
       },
       {
         title: 'Card',
         subTitle: String(totals.card),
         subTitleSetting: 0,
-        icon: IconBuilding,
+        icon: IconCards,
         color: 'none',
       },
       {
@@ -234,42 +240,42 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
         title: 'Masked Area',
         subTitle: String(totals.floor_plan_masked_area),
         subTitleSetting: 0,
-        icon: IconBuilding,
+        icon: IconRectangle,
         color: 'none',
       },
       {
         title: 'Floor Plan',
         subTitle: String(totals.floor_plan),
         subTitleSetting: 0,
-        icon: IconBuilding,
+        icon: IconMapSearch,
         color: 'none',
       },
       {
         title: 'Floor',
         subTitle: String(totals.floor),
         subTitleSetting: 0,
-        icon: IconBuilding,
+        icon: IconStairsUp,
         color: 'none',
       },
       {
         title: 'Brand',
         subTitle: String(totals.brand),
         subTitleSetting: 0,
-        icon: IconBuilding,
+        icon: IconBrandMedium,
         color: 'none',
       },
       {
         title: 'Access Control',
         subTitle: String(totals.access_control),
         subTitleSetting: 0,
-        icon: IconBuilding,
+        icon: IconAccessible,
         color: 'none',
       },
       {
         title: 'Ble Reader',
         subTitle: String(totals.ble_reader),
         subTitleSetting: 0,
-        icon: IconBuilding,
+        icon: IconDeviceIpad,
         color: 'none',
       },
       {
@@ -652,7 +658,7 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
         // belum ada API by id → pakai row dulu
         const res = await getMemberTrackingById(id as string, String(row.id), token);
         setDetailData(res.collection ?? row);
-      } else if (selectedType === 'brands') {
+      } else if (selectedType === 'brand') {
         const res = await getBrandTrackingById(id as string, String(row.id), token);
         setDetailData(res.collection ?? row);
       } else if (selectedType === 'access_control') {
@@ -701,7 +707,7 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
     else if (selectedType === 'districts') type = 'District';
     else if (selectedType === 'departments') type = 'Department';
     else if (selectedType === 'members') type = 'Member';
-    else if (selectedType === 'brands') type = 'Brand';
+    else if (selectedType === 'brand') type = 'Brand';
     else if (selectedType === 'access_control') type = 'Access Control';
     else if (selectedType === 'floor') type = 'Floor';
     else if (selectedType === 'floor_plan') type = 'Floor Plan';
@@ -926,6 +932,15 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
         headMember2: detailData.headMember2 ?? '',
         statusEmployee: detailData.statusEmployee ?? '',
       });
+    } else if (editDialogType === 'Brand') {
+      setBrandForm({
+        brand_id: detailData.brand_id ?? '',
+        // createdAt: detailData.createdAt ?? '',
+        // updatedAt: detailData.updatedAt ?? '',
+        // deletedAt: detailData.deletedAt ?? '',
+        name: detailData.name ?? '',
+        tag: detailData.tag ?? '',
+      });
     } else {
       setOrganizationForm(null);
       setBuildingForm(null);
@@ -935,6 +950,7 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
       setBleReaderForm(null);
       setAccessControlForm(null);
       setMemberForm(null);
+      setBrandForm(null);
     }
   }, [editDialogType, detailData]);
 
@@ -1001,6 +1017,31 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
           editDialogType === 'Floor'
         ) {
           const res = await getAllSite(token);
+          if (cancelled) return;
+
+          const items =
+            (res.collection ?? []).map((o: any) => ({
+              id: String(o.id),
+              label: o.name ?? '',
+            })) || [];
+
+          setOrgOptions(items);
+          // reset yang lain agar nggak nyangkut
+        } else if (editDialogType === 'Brand') {
+          const res = await getAllBrand(token);
+          if (cancelled) return;
+
+          const items =
+            (res.collection ?? []).map((o: any) => ({
+              id: String(o.id),
+              label: o.name ?? '',
+            })) || [];
+
+          setOrgOptions(items);
+          // reset yang lain agar nggak nyangkut
+        } else if (editDialogType === 'Access Control') {
+          const res = await getAllAccessControl(token);
+
           if (cancelled) return;
 
           const items =

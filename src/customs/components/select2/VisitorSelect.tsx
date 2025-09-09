@@ -65,9 +65,6 @@ const VisitorSelect: React.FC<Props> = ({ onSelect, token }) => {
           visitor.phone.includes(inputValue),
       );
 
-      console.log('Data visitor:', data);
-      console.log('Input value:', inputValue);
-
       // Ambil faceimage dari employee_id (jika ada)
       const enrichedVisitors = await Promise.all(
         data.map(async (visitor: any) => {
@@ -132,10 +129,6 @@ const VisitorSelect: React.FC<Props> = ({ onSelect, token }) => {
         src={data.faceimage}
         alt={data.name}
         style={{ width: 40, height: 40, borderRadius: '50%' }}
-        // onError={(e) => {
-        //   (e.target as HTMLImageElement).src =
-        //     'https://images.unsplash.com/photo-1575936123452-b67c3203c357?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8aW1hZ2V8ZW58MHx8MHx8fDA%3D';
-        // }}
       />
       <div>
         <div style={{ fontWeight: 600 }}>{data.name}</div>
@@ -151,7 +144,7 @@ const VisitorSelect: React.FC<Props> = ({ onSelect, token }) => {
       defaultOptions={false}
       loadOptions={loadOptions}
       onChange={(selectedOption) => selectedOption && onSelect(selectedOption.data)}
-      placeholder="Cari visitor..."
+      placeholder="Cari Visitor..."
       noOptionsMessage={() => 'Visitor tidak ditemukan'}
       formatOptionLabel={formatOptionLabel}
       isClearable

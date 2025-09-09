@@ -1,4 +1,12 @@
-import { Button, Grid2, Alert, Typography, Autocomplete, CircularProgress, Backdrop } from '@mui/material';
+import {
+  Button,
+  Grid2,
+  Alert,
+  Typography,
+  Autocomplete,
+  CircularProgress,
+  Backdrop,
+} from '@mui/material';
 import { Box } from '@mui/system';
 import React, { useState, useEffect } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
@@ -212,7 +220,7 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
       <Backdrop
         open={loading}
         sx={{
-          color: '#fff',
+          color: 'primary',
           zIndex: (theme) => theme.zIndex.drawer + 1, // di atas drawer & dialog
         }}
       >

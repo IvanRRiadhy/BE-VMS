@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Checkbox,
   Table,
@@ -30,6 +30,8 @@ import BlankCard from 'src/components/shared/BlankCard';
 import { RichHtmlCell } from './RichHtmlCell';
 import { Stack } from '@mui/system';
 import {
+  IconEye,
+  IconEyeOff,
   IconLogin2,
   IconLogout2,
   IconPencil,
@@ -87,7 +89,10 @@ type DynamicTableProps<T extends { id: string | number }> = {
   isHaveObjectData?: boolean;
   isHaveVip?: boolean;
   isHaveBooleanSwitch?: boolean;
+  isHaveCard?: boolean;
+  isDataVerified?: boolean;
   headerContent?: HeaderContent;
+  isHavePassword?: boolean;
   defaultSelectedHeaderItem?: string;
   isHavePagination?: boolean;
   rowsPerPageOptions?: number[];
@@ -97,6 +102,7 @@ type DynamicTableProps<T extends { id: string | number }> = {
   htmlFields?: string[];
   htmlClampLines?: number;
   htmlMaxWidth?: number | string;
+  onChooseCard?: (row?: T) => void;
   onNameClick?: (row: T) => void;
   isVip?: (row: T) => boolean;
   totalCount?: number;
@@ -145,13 +151,16 @@ export function DynamicTable<T extends { id: string | number }>({
   isHaveBooleanSwitch = false,
   isHaveVerified = false,
   isHaveEmployee = false,
+  isHaveCard = false,
   isHaveImage,
   isHaveObjectData,
   headerContent,
   defaultSelectedHeaderItem,
+  isHavePassword = false,
   isHavePagination,
   isHaveIntegration,
   onNameClick,
+  isDataVerified = false,
   htmlFields = [],
   htmlClampLines,
   htmlMaxWidth,
@@ -161,6 +170,7 @@ export function DynamicTable<T extends { id: string | number }>({
   isVip,
   isHaveFilterMore = false,
   filterMoreContent,
+  onChooseCard,
   onEmployeeClick,
   onImportExcel,
   onHeaderItemClick,
@@ -324,6 +334,14 @@ export function DynamicTable<T extends { id: string | number }>({
     alarm_warning: 'Alarm Warning',
     tracking_transaction: 'Tracking Transaction',
   };
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [visiblePasswords, setVisiblePasswords] = useState<Record<string | number, boolean>>({});
+
+  const togglePassword = (id: string | number) => {
+    setVisiblePasswords((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
   return (
     <>
       {/* HEADER */}
@@ -639,42 +657,55 @@ export function DynamicTable<T extends { id: string | number }>({
                     {checkedIds.length} Selected
                   </Typography>
                 </Box>
-                <Box display="flex" alignItems="center" gap={3} pr={2.5}>
-                  {/* View */}
 
-                  {/* <RemoveRedEyeIcon
+                {/* View */}
+
+                {/* <RemoveRedEyeIcon
                     sx={{ fontSize: '1.2rem', cursor: 'pointer' }}
                     onClick={() => {
                       if (!Array.isArray(selectedRows) || selectedRows.length === 0) return;
                       onBatchView?.(selectedRows);
                     }} */}
 
-                  {/* Tombol Edit (batch edit hanya jika perlu) */}
-                  <EditIconOutline
-                    sx={{ fontSize: '1.2rem', cursor: 'pointer' }}
-                    onClick={() => {
-                      if (!Array.isArray(selectedRows) || selectedRows.length === 0) return;
-                      onBatchEdit?.(selectedRows);
-                    }}
-                  />
+                {/* Tombol Edit (batch edit hanya jika perlu) */}
+                {!isHaveCard ? (
+                  <Box display="flex" alignItems="center" gap={3} pr={2.5}>
+                    <EditIconOutline
+                      sx={{ fontSize: '1.2rem', cursor: 'pointer' }}
+                      onClick={() => {
+                        if (!Array.isArray(selectedRows) || selectedRows.length === 0) return;
+                        onBatchEdit?.(selectedRows);
+                      }}
+                    />
 
-                  <DeleteOutlineOutlinedIcon
-                    sx={{ fontSize: '1.2rem', cursor: 'pointer' }}
-                    onClick={async () => {
-                      if (!Array.isArray(selectedRows) || selectedRows.length === 0) return;
+                    <DeleteOutlineOutlinedIcon
+                      sx={{ fontSize: '1.2rem', cursor: 'pointer' }}
+                      onClick={async () => {
+                        if (!Array.isArray(selectedRows) || selectedRows.length === 0) return;
 
-                      const confirmed = await onBatchDelete?.(selectedRows);
+                        const confirmed = await onBatchDelete?.(selectedRows);
 
-                      // Jika berhasil (misalnya return true), reset selection
-                      if (confirmed) {
-                        setCheckedIds([]);
-                        if (setSelectedRows) {
-                          setSelectedRows([]);
+                        // Jika berhasil (misalnya return true), reset selection
+                        if (confirmed) {
+                          setCheckedIds([]);
+                          if (setSelectedRows) {
+                            setSelectedRows([]);
+                          }
                         }
-                      }
-                    }}
-                  />
-                </Box>
+                      }}
+                    />
+                  </Box>
+                ) : (
+                  <Button
+                    size="small"
+                    color="primary"
+                    variant="contained"
+                    onClick={() => onChooseCard?.()} // ← buka dialog bulk
+                    // disabled={selectedInvitations.length === 0}
+                  >
+                    Choose Card
+                  </Button>
+                )}
               </Grid2>
             )}
           </Grid2>
@@ -773,6 +804,9 @@ export function DynamicTable<T extends { id: string | number }>({
                     </TableCell>
                     {columns.map((col, idx) => {
                       const makeSticky = isStickyVisitorCol(idx);
+                      const pretty = col
+                        .replace(/_/g, ' ')
+                        .replace(/\b\w/g, (c) => c.toUpperCase());
 
                       return (
                         <TableCell
@@ -781,14 +815,35 @@ export function DynamicTable<T extends { id: string | number }>({
                             ...(makeSticky && {
                               position: 'sticky',
                               left: getStickyLeft(idx),
-                              zIndex: 4, // header > body
+                              zIndex: 4,
                               background: 'white',
                               minWidth: DATA_COL_WIDTH,
                               maxWidth: DATA_COL_WIDTH,
                             }),
                           }}
                         >
-                          {col.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+                          {/* {isCardCol ? (
+                            <Box
+                              display="flex"
+                              alignItems="center"
+                              justifyContent="space-between"
+                              gap={1}
+                            >
+                              <>{pretty}</>
+                              <Button
+                                size="small"
+                                color="primary"
+                                variant="contained"
+                                onClick={() => onChooseCard?.()} // ← buka dialog bulk
+                                // disabled={selectedInvitations.length === 0}
+                              >
+                                Choose Card
+                              </Button>
+                            </Box>
+                          ) : ( */}
+                          {/* pretty */}
+                          {/* )} */}
+                          {pretty}
                         </TableCell>
                       );
                     })}
@@ -1015,6 +1070,71 @@ export function DynamicTable<T extends { id: string | number }>({
                                   objectFit: 'cover',
                                 }}
                               />
+                            ) : col === 'secure' ? (
+                              isDataVerified ? (
+                                <Tooltip title="Verified">
+                                  <IconCheck size={18} color="green" />
+                                </Tooltip>
+                              ) : (
+                                <Tooltip title="Not Verified">
+                                  <IconX size={18} color="red" />
+                                </Tooltip>
+                              )
+                            ) : col === 'password' ? (
+                              <Box
+                                display="inline-flex"
+                                alignItems="center"
+                                gap={0.5}
+                                justifyContent={'center'}
+                              >
+                                {isHavePassword ? (
+                                  visiblePasswords[row.id] ? (
+                                    <>
+                                      <span>{String(row[col] ?? '-')}</span>
+                                      <Tooltip title="Hide Password">
+                                        <IconButton
+                                          size="small"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            togglePassword(row.id);
+                                          }}
+                                        >
+                                          <IconEyeOff size={18} />
+                                        </IconButton>
+                                      </Tooltip>
+                                    </>
+                                  ) : (
+                                    <Tooltip title="Show Password">
+                                      <IconButton
+                                        size="small"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          togglePassword(row.id);
+                                        }}
+                                        sx={{
+                                          bgcolor: 'grey.200', // background
+                                          '&:hover': {
+                                            bgcolor: 'grey.300', // background saat hover
+                                          },
+                                          borderRadius: '50%', // biar bulat
+                                          p: 0.5, // padding supaya icon nggak terlalu mepet
+                                        }}
+                                      >
+                                        <IconEye size={18} />
+                                      </IconButton>
+                                    </Tooltip>
+                                  )
+                                ) : (
+                                  // Jika fitur password tidak diaktifkan, tampilkan masked statis
+                                  '••••••••'
+                                )}
+                              </Box>
+                            ) : isHaveCard && col === 'card' ? (
+                              row[col] ? (
+                                <>{row[col]}</>
+                              ) : (
+                                <>-</>
+                              )
                             ) : isHaveBooleanSwitch && typeof row[col] === 'boolean' ? (
                               <Switch
                                 checked={row[col] as boolean}

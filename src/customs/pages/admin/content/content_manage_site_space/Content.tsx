@@ -27,10 +27,12 @@ import {
   showSuccessAlert,
   showErrorAlert,
 } from 'src/customs/components/alerts/alerts';
+import FilterMoreContent from './FilterMoreContent';
 
 type SiteTableRow = {
   id: string;
   name: string;
+  type: number;
   description: string;
   image: string;
 };
@@ -168,6 +170,7 @@ const Content = () => {
         const rows = response.collection.map((item) => ({
           id: item.id,
           name: item.name,
+          type: item.type,
           description: item.description,
           image: item.image,
         }));
@@ -395,6 +398,23 @@ const Content = () => {
     handleOpenDialog();
   };
 
+  const [filters, setFilters] = useState<any>({
+    joinStart: '',
+    // joinEnd: '',
+    // exitStart: '',
+    exitEnd: '',
+    gender: 0,
+    statusEmployee: 0,
+    organization: '',
+    department: '',
+    district: '',
+  });
+
+  const handleApplyFilter = () => {
+    setPage(0);
+    setRefreshTrigger((prev) => prev + 1);
+  };
+
   return (
     <>
       <PageContainer title="Manage Site Space" description="Site page">
@@ -439,6 +459,14 @@ const Content = () => {
                     handleEdit(row.id);
                     setEdittingId(row.id);
                   }}
+                  isHaveFilterMore={true}
+                  filterMoreContent={
+                    <FilterMoreContent
+                      filters={filters}
+                      setFilters={setFilters}
+                      onApplyFilter={handleApplyFilter}
+                    />
+                  }
                   onBatchEdit={handleBatchEdit}
                   onDelete={(row) => handleDelete(row.id)}
                   onBatchDelete={handleBatchDelete}

@@ -5,7 +5,7 @@ import {
   Typography,
   CircularProgress,
   Autocomplete,
-  Backdrop
+  Backdrop,
 } from '@mui/material';
 import { Box } from '@mui/system';
 import React, { useState, useEffect } from 'react';
@@ -93,11 +93,11 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({ formData, setFormData
       }
 
       const parsed = validateLocal(formData);
-        if (!parsed) {
-          setAlertType('error');
-          setAlertMessage('Please complete the required fields correctly.');
-          return;
-        }
+      if (!parsed) {
+        setAlertType('error');
+        setAlertMessage('Please complete the required fields correctly.');
+        return;
+      }
 
       await createDistrict(parsed, token);
       localStorage.removeItem('unsavedDistrictFormAdd');
@@ -211,7 +211,7 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({ formData, setFormData
       <Backdrop
         open={loading}
         sx={{
-          color: '#fff',
+          color: 'primary',
           zIndex: (theme) => theme.zIndex.drawer + 1, // di atas drawer & dialog
         }}
       >

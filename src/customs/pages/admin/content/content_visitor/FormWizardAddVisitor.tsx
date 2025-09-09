@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
+import type { AlertColor } from '@mui/material/Alert';
 import {
   Box,
   Stepper,
@@ -20,6 +21,10 @@ import {
   Button as MuiButton,
   CircularProgress,
   Autocomplete,
+  DialogTitle,
+  DialogActions,
+  DialogContent,
+  Stack,
   Accordion,
   AccordionSummary,
   TableContainer,
@@ -36,11 +41,16 @@ import {
   Divider,
   Tooltip,
   Switch,
-  Backdrop
+  Backdrop,
+  InputAdornment,
+  Snackbar,
+  Alert,
+  Chip,
+  Portal,
 } from '@mui/material';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import axios from 'axios';
-import moment from 'moment';
-import $, { data } from 'jquery';
+import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import 'select2'; // Select2 secara otomatis akan attach ke jQuery global
 import 'select2/dist/css/select2.min.css';
 import { IconTrash } from '@tabler/icons-react';
@@ -48,21 +58,18 @@ import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import PageContainer from 'src/components/container/PageContainer';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
-import ParentCard from 'src/components/shared/ParentCard';
 import Webcam from 'react-webcam';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ReactCrop, { Crop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import { IconSearch } from '@tabler/icons-react';
 import {
   CreateVisitorRequest,
   CreateVisitorRequestSchema,
   Item,
   SectionPageVisitor,
 } from 'src/customs/api/models/Visitor';
+
 import {
   createPraRegister,
   createVisitor,
@@ -71,7 +78,6 @@ import {
   getAllSite,
   getAllVisitor,
   getAllVisitorType,
-  getVisitorById,
   getVisitorTypeById,
 } from 'src/customs/api/admin';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
@@ -130,7 +136,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const [employee, setEmployee] = useState<any[]>([]);
   const [sites, setSites] = useState<any[]>([]);
   const { token } = useSession();
-
+  const [searchKeyword, setSearchKeyword] = useState('');
   const [idCardFile, setIdCardFile] = useState<File | null>(null);
   const [visitorPhotoFile, setVisitorPhotoFile] = useState<File | null>(null);
   const [activeStep, setActiveStep] = React.useState(0);
@@ -138,7 +144,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const [vtLoading, setVtLoading] = useState(true);
   const [visitorType, setVisitorType] = useState<any[]>([]);
   // const visitor type by id
-
+  const [accessDialogOpen, setAccessDialogOpen] = useState(false);
   const [dynamicSteps, setDynamicSteps] = useState<string[]>([]);
   const [draggableSteps, setDraggableSteps] = useState<string[]>([]);
   const [sectionsData, setSectionsData] = useState<SectionPageVisitorType[]>([]);
@@ -153,21 +159,13 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   // Duplikat Question Page
   const [groupForms, setGroupForms] = useState<Record<number, FormVisitor[][]>>({});
   const [removing, setRemoving] = React.useState<Record<string, boolean>>({});
+  const [nextDialogOpen, setNextDialogOpen] = useState(false);
 
   const formsOf = (section: any) => (Array.isArray(section?.[FORM_KEY]) ? section[FORM_KEY] : []);
 
   const TYPE_REGISTERED: 0 | 1 = FORM_KEY === 'pra_form' ? 0 : 1;
 
   const [previews, setPreviews] = useState<Record<string, string | null>>({}); // blob/CDN preview
-  const [shots, setShots] = useState<Record<string, string | null>>({}); // dataURL dari camera
-
-  const inferTypeRegistered = (sections: any[]): 0 | 1 => {
-    for (const s of sections) {
-      const forms = formsOf(s) ?? [];
-      if (forms.some((f: any) => f?.visitor_form_type === 0)) return 0; // ada pra_form
-    }
-    return 1; // default visit_form
-  };
 
   const updateSectionForm = (sec: any, updater: (arr: any[]) => any[]) => ({
     ...sec,
@@ -179,6 +177,123 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     rowIdx: null,
     forms: [],
   });
+
+  const accessData = [
+    { id: 1, name: 'Lobby' },
+    { id: 2, name: 'Meeting Room' },
+    { id: 3, name: 'Cafeteria' },
+    { id: 4, name: 'Server Room' },
+  ];
+
+  const [checkedItems, setCheckedItems] = useState<number[]>([]);
+
+  const handleToggle = (id: number) => {
+    setCheckedItems((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
+    );
+  };
+
+  const dummyData = [
+    { id: 1, visitor: 'Budi', card: null },
+    { id: 2, visitor: 'Siti', card: null },
+    { id: 3, visitor: 'Andi', card: null },
+  ];
+
+  const dummyCards = [
+    { id: 1, remarks: '001', card_number: '450124', card_mac: '412323', card_name: 'CARD 001' },
+    { id: 2, remarks: '002', card_number: '450123', card_mac: '1232131', card_name: 'CARD 002' },
+    { id: 3, remarks: '003', card_number: '450125', card_mac: '123123', card_name: 'CARD 003' },
+    { id: 4, remarks: '004', card_number: '450126', card_mac: '123123', card_name: 'CARD 004' },
+    { id: 5, remarks: '005', card_number: '450127', card_mac: '123123', card_name: 'CARD 005' },
+    { id: 6, remarks: '006', card_number: '450128', card_mac: '123123', card_name: 'CARD 006' },
+  ];
+
+  // const [snackbarOpen, setSnackbarOpen] = useState(false);
+  // const [snackbarMessage, setSnackbarMessage] = useState('');
+  // const toast = (msg: string) => {
+  //   setSnackbarMessage(msg);
+  //   setSnackbarOpen(false); // reset dulu
+  //   setTimeout(() => setSnackbarOpen(true), 0); // retrigger open
+  // };
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: AlertColor; // 'success' | 'info' | 'warning' | 'error'
+  }>({ open: false, message: '', severity: 'info' });
+
+  // 3) helper supaya snackbar pasti muncul walau pesannya sama
+  const toast = (message: string, severity: AlertColor = 'info') => {
+    setSnackbar((s) => ({ ...s, open: false }));
+    setTimeout(() => setSnackbar({ open: true, message, severity }), 0);
+  };
+
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // filter cards berdasarkan search
+  const filteredCards = dummyCards.filter((card) =>
+    [card.remarks, card.card_number, card.card_mac]
+      .join(' ')
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase()),
+  );
+
+  const [selectedInvitations, setSelectedInvitations] = useState<any[]>([]);
+
+  // utils
+  const flatDeep = (x: any): any[] => (Array.isArray(x) ? x.flat(Infinity) : [x]);
+
+  const normalizeIdsDeep = (payload: any): number[] => {
+    const flat = flatDeep(payload);
+    const ids = flat
+      .map((v) => (typeof v === 'object' && v !== null ? Number(v.id) : Number(v)))
+      .filter((n) => Number.isFinite(n) && n > 0);
+    // dedupe
+    return Array.from(new Set(ids));
+  };
+
+  // handler dari DynamicTable (checkbox)
+  const handleSelectInvitation = (payload: any) => {
+    console.group('onCheckedChange');
+    console.log('raw payload:', payload);
+    const ids = normalizeIdsDeep(payload);
+    console.log('normalized ids:', ids);
+    console.groupEnd();
+
+    // overwrite state (lebih aman utk Select All / pagination)
+    setSelectedInvitations(ids);
+    setSelectedCards((prev) => prev.slice(0, ids.length)); // cap biar <= invitations
+  };
+
+  // kalau klik choose card (dari DynamicTable)
+  const handleOpenChooseCard = () => {
+    if (!selectedInvitations?.length) {
+      toast('Please select at least one invitation first.'); // <— tampilkan snackbar
+      return;
+    }
+    setSelectedCards([]);
+    setOpenChooseCardDialog(true);
+  };
+
+  const handleCloseGrantDialog = () => {
+    setNextDialogOpen(false);
+    setSelectedInvitations([]);
+    setSelectedCards([]);
+  };
+
+  // amankan juga kalau ditutup via ESC/backdrop
+
+  // amankan pagination/reopen Grant dialog
+  useEffect(() => {
+    if (!nextDialogOpen) {
+      setSelectedInvitations([]);
+      setSelectedCards([]);
+    }
+  }, [nextDialogOpen]);
+
+  const handleAccessSubmit = () => {
+    if (!selectedInvitations?.length) {
+    }
+  };
 
   // end PV
 
@@ -335,6 +450,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       f.some((x: any) => x.remarks === 'host') &&
       !section.is_document &&
       section.can_multiple_used
+    )
+      return 'purpose_visit';
+    if (
+      f.some((x: any) => x.remarks === 'host') &&
+      !section.is_document &&
+      !section.can_multiple_used
     )
       return 'purpose_visit';
     if (
@@ -514,7 +635,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       );
     }
     const currentSection = sectionsData[step - 1]; // dikurangi 1 karena step 0 khusus
-    // console.log('Current section:', currentSection);
     if (!currentSection) return null;
 
     const handleDeleteDetail = (sectionKey: SectionKey, indexToRemove: number) => {
@@ -542,7 +662,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       field: keyof FormVisitor,
       value: any,
     ) => {
-      console.log(`Changing [${sectionKey}][${index}].${String(field)} =`, value);
       setSectionsData((prev) =>
         prev.map((section, i) => {
           if (i === activeStep - 1) {
@@ -2353,11 +2472,15 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       >
                         <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
                         <Typography variant="subtitle1" sx={{ mt: 1 }}>
-                          Upload File
+                          Upload your File
                         </Typography>
 
-                        <Typography variant="caption" color="textSecondary">
+                        <Typography variant="body2" color="textSecondary">
                           Supports: PDF, DOCX, JPG, PNG
+                        </Typography>
+
+                        <Typography variant="body2" color="textSecondary" mt={1}>
+                          Maximal Size 5 MB
                         </Typography>
 
                         {/*preview  */}
@@ -2920,117 +3043,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     };
   }
 
-  // const handleOnSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   setErrors({});
-  //   if (!token) return;
-
-  //   try {
-  //     let data: CreateVisitorRequest;
-
-  //     const mapField = (field: FormVisitor, sortIdx: number) => {
-  //       const base: any = {
-  //         sort: field.sort ?? sortIdx,
-  //         short_name: field.short_name ?? '',
-  //         long_display_text: field.long_display_text ?? '',
-  //         field_type: field.field_type ?? 0,
-  //         is_primary: field.is_primary ?? false,
-  //         is_enable: field.is_enable ?? false,
-  //         mandatory: field.mandatory ?? false,
-  //         remarks: field.remarks ?? '',
-  //         custom_field_id: field.custom_field_id ?? '',
-  //         multiple_option_fields: field.multiple_option_fields ?? [],
-  //         visitor_form_type: field.visitor_form_type ?? DEFAULT_VFT,
-  //       };
-  //       if (typeof field.answer_text === 'string' && field.answer_text.trim()) {
-  //         base.answer_text = field.answer_text;
-  //       }
-  //       if (
-  //         [10, 11, 12].includes(base.field_type) &&
-  //         typeof field.answer_file === 'string' &&
-  //         field.answer_file.trim()
-  //       ) {
-  //         base.answer_file = field.answer_file;
-  //       }
-  //       if (
-  //         base.field_type === 9 &&
-  //         typeof field.answer_datetime === 'string' &&
-  //         field.answer_datetime.trim()
-  //       ) {
-  //         base.answer_datetime = field.answer_datetime;
-  //       }
-  //       return base;
-  //     };
-
-  //     if (isGroup) {
-  //       if (!dataVisitor.length) {
-  //         setErrors({ submit: 'Minimal tambah 1 visitor dulu.' });
-  //         return;
-  //       }
-
-  //       const data_visitor = buildGroupedDataVisitor(
-  //         dataVisitor, // boleh kosong, builder akan tetap bikin 1 row
-  //         groupedPages, // ← ini kunci: merge nilai dari sini
-  //         sectionsData,
-  //       );
-
-  //       console.log('data_visitor test:', JSON.stringify(data_visitor, null, 2));
-  //       const data = buildFinalPayload(
-  //         rawSections, // dari API
-  //         groupedPages, // PV shared + template + banyak baris
-  //         dataVisitor,
-  //         {
-  //           visitor_type: formData.visitor_type!,
-  //           is_group: true,
-  //           type_registered: TYPE_REGISTERED,
-  //         },
-  //       );
-  //       console.log('data:', JSON.stringify(data, null, 2));
-  //       const parsed = CreateVisitorRequestSchema.parse(data);
-  //       await createVisitor(token, parsed);
-  //       onSuccess?.();
-  //       return;
-  //     } else {
-  //       // SINGLE (pakai sectionsData)
-  //       const question_page = sectionsData.map((section, sIdx) => ({
-  //         sort: section.sort ?? sIdx,
-  //         name: section.name,
-  //         status: 0,
-  //         is_document: section.is_document ?? false,
-  //         can_multiple_used: section.can_multiple_used ?? false,
-  //         foreign_id: section.foreign_id ?? '',
-  //         self_only: section.self_only ?? false,
-  //         form: formsOf(section).map((f, fIdx) => mapField(f as FormVisitor, fIdx)),
-  //       }));
-
-  //       console.log('question_page:', JSON.stringify(question_page, null, 2));
-
-  //       data = {
-  //         visitor_type: formData.visitor_type ?? '',
-  //         type_registered: TYPE_REGISTERED,
-  //         is_group: false,
-  //         data_visitor: [{ question_page }],
-  //       };
-  //       const parsed = CreateVisitorRequestSchema.parse(data);
-  //       console.log('parsed:', JSON.stringify(parsed, null, 2));
-  //       await createVisitor(token, parsed);
-  //       onSuccess?.();
-  //     }
-
-  //     // Debug kalau mau cek payload
-  //     // console.log('payload:', JSON.stringify(data, null, 2));
-  //   } catch (err: any) {
-  //     console.error(err);
-  //     if (err?.errors) {
-  //       setErrors(err.errors);
-  //     } else if (err?.name === 'ZodError') {
-  //       const fieldErrors: Record<string, string> = {};
-  //       err.errors.forEach((z: any) => (fieldErrors[z.path.join('.')] = z.message));
-  //       setErrors(fieldErrors);
-  //     }
-  //   }
-  // };
-
   const handleOnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
@@ -3112,6 +3124,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       const submitFn = TYPE_REGISTERED === 0 ? createPraRegister : createVisitor;
       await submitFn(token, parsed); // ⬅️ kirim ke endpoint yang benar
       onSuccess?.();
+      setNextDialogOpen(true);
     } catch (err: any) {
       console.error(err);
       if (err?.errors) {
@@ -3716,6 +3729,231 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         return { ...base, form };
       }),
     }));
+
+  const [openChooseCardDialog, setOpenChooseCardDialog] = useState(false);
+  useEffect(() => {
+    if (!openChooseCardDialog) setSelectedCards([]);
+  }, [openChooseCardDialog]);
+  const [selectedCards, setSelectedCards] = useState<string[]>([]);
+
+  const [tableKey, setTableKey] = useState(0);
+
+  const resetSelections = () => {
+    setSelectedInvitations([]);
+    setSelectedCards([]);
+    setTableKey((k) => k + 1); // ← paksa remount DynamicTable
+  };
+
+  const handleCloseChooseCard = () => {
+    setOpenChooseCardDialog(false);
+    resetSelections();
+  };
+
+  type Row = { id: number; visitor: string; card: string | null };
+  const [rows, setRows] = useState<Row[]>(dummyData.map((r) => ({ ...r })));
+
+  const cardIndex = useMemo(() => {
+    const m = new Map<string, (typeof dummyCards)[number]>();
+    dummyCards.forEach((c) => m.set(c.card_number, c));
+    return m;
+  }, [dummyCards]);
+
+  // const handleConfirmChooseCards = () => {
+  //   const ids = normalizeIdsDeep(selectedInvitations);
+
+  //   if (!ids.length || !selectedCards.length) {
+  //     handleCloseChooseCard();
+  //     console.groupEnd();
+  //     return;
+  //   }
+
+  //   const N = Math.min(ids.length, selectedCards.length);
+
+  //   // pair: id ↔ (remarks, card_number)
+  //   const pairs = ids.slice(0, N).map((id, i) => {
+  //     const num = selectedCards[i];
+  //     const meta = cardIndex.get(num);
+  //     return { id, card_number: num, remarks: meta?.remarks ?? '-' };
+  //   });
+
+  //   // snapshot before
+  //   // console.table(rows.map((r) => ({ id: r.id, visitor: r.visitor, card: r.card })));
+
+  //   // commit: isi kolom 'card' dg "remarks — card_number"
+  //   setRows((prev) =>
+  //     prev.map((r) => {
+  //       const p = pairs.find((x) => x.id === r.id);
+  //       if (!p) return r;
+
+  //       // buat salinan row untuk ditampilkan
+  //       const clone: any = { ...r, card: `${p.remarks} - ${p.card_number}` };
+
+  //       // simpan metadata assignment sebagai non-enumerable
+  //       Object.defineProperty(clone, 'assigned_card_number', {
+  //         value: p.card_number,
+  //         enumerable: false, // ← kunci utamanya
+  //         writable: true,
+  //       });
+  //       Object.defineProperty(clone, 'assigned_card_remarks', {
+  //         value: p.remarks,
+  //         enumerable: false, // ← kunci utamanya
+  //         writable: true,
+  //       });
+
+  //       return clone;
+  //     }),
+  //   );
+
+  //   toast(`Assigned ${N} card(s) to ${N} invitation(s).`, 'success');
+
+  //   // optional: kosongkan selection
+  //   setSelectedInvitations([]);
+  //   handleCloseChooseCard();
+  // };
+
+  const handleConfirmChooseCards = () => {
+    const ids = normalizeIdsDeep(selectedInvitations);
+
+    if (!ids.length || !selectedCards.length) {
+      handleCloseChooseCard();
+      console.groupEnd();
+      return;
+    }
+
+    const N = Math.min(ids.length, selectedCards.length);
+
+    // pair: id ↔ (remarks, card_number)
+    const pairs = ids.slice(0, N).map((id, i) => {
+      const num = selectedCards[i];
+      const meta = cardIndex.get(num);
+      return { id, card_number: num, remarks: meta?.remarks ?? '-' };
+    });
+
+    setRows((prev) =>
+      prev.map((r) => {
+        const p = pairs.find((x) => x.id === r.id);
+        if (!p) return r;
+
+        // buat React Node untuk UI atas–bawah di kolom card
+        const cardCell = (
+          <Box display="flex" flexDirection="column">
+            <Typography variant="body2" fontWeight={600}>
+              {p.remarks}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {p.card_number}
+            </Typography>
+          </Box>
+        );
+
+        // buat salinan row untuk ditampilkan
+        const clone: any = { ...r, card: cardCell };
+
+        // simpan metadata assignment sebagai non-enumerable
+        Object.defineProperty(clone, 'assigned_card_number', {
+          value: p.card_number,
+          enumerable: false,
+          writable: true,
+        });
+        Object.defineProperty(clone, 'assigned_card_remarks', {
+          value: p.remarks,
+          enumerable: false,
+          writable: true,
+        });
+
+        return clone;
+      }),
+    );
+
+    toast(`Assigned ${N} card(s) to ${N} invitation(s).`, 'success');
+
+    // optional: kosongkan selection
+    setSelectedInvitations([]);
+    handleCloseChooseCard();
+  };
+
+  const usedCards = useMemo(
+    () =>
+      new Set(
+        rows
+          .map((r) => (r as any).assigned_card_number)
+          .filter(Boolean)
+          .map(String),
+      ),
+    [rows],
+  );
+
+  const assignedByCard = useMemo(() => {
+    const m = new Map<string, string | number>();
+    rows.forEach((r: any) => {
+      if (r.assigned_card_number) {
+        m.set(String(r.assigned_card_number), r.id);
+      }
+    });
+    return m;
+  }, [rows]);
+
+  // id invitation yang sedang dipilih (a,b,c)
+  const selectedIdSet = useMemo(() => {
+    return new Set(normalizeIdsDeep(selectedInvitations).map(String));
+  }, [selectedInvitations]);
+
+  const handleToggleCard = (cardNumber: string) => {
+    const holderRowId = assignedByCard.get(String(cardNumber));
+    const isUsedByOther = !!holderRowId && !selectedIdSet.has(String(holderRowId));
+
+    if (isUsedByOther) return; // hanya return kalau milik visitor lain
+
+    setSelectedCards((prev) => {
+      if (prev.includes(cardNumber)) {
+        // sudah ada → remove
+        return prev.filter((c) => c !== cardNumber);
+      }
+      if (prev.length >= selectedInvitations.length) {
+        toast('You have reached the maximum number of invitations.', 'warning');
+        return prev; // tidak nambah
+      }
+      return [...prev, cardNumber];
+    });
+  };
+
+  // const availableVisibleCards = useMemo(
+  //   () => filteredCards.filter((c) => !usedCards.has(c.card_number)),
+  //   [filteredCards, usedCards],
+  // );
+  const availableVisibleCards = useMemo(() => {
+    return filteredCards.filter((c) => {
+      const holder = assignedByCard.get(String(c.card_number));
+      // singkirkan hanya jika dipegang orang lain
+      return !(holder && !selectedIdSet.has(String(holder)));
+    });
+  }, [filteredCards, assignedByCard, selectedIdSet]);
+
+  const availableCount = availableVisibleCards.length;
+
+  const visibleAvailableNums = availableVisibleCards.map((c) => c.card_number);
+  const visibleSelectedCount = visibleAvailableNums.filter((n) => selectedCards.includes(n)).length;
+
+  const handleSelectAll = () => {
+    const visible = availableVisibleCards.map((c) => c.card_number);
+    const capacity = selectedInvitations.length;
+    const cappedVisibleCount = Math.min(visible.length, capacity);
+    const visibleSelectedCount = visible.filter((n) => selectedCards.includes(n)).length;
+
+    const fullySelected = cappedVisibleCount > 0 && visibleSelectedCount === cappedVisibleCount;
+
+    if (fullySelected) {
+      // klik kedua: hapus semua yg terlihat
+      setSelectedCards((prev) => prev.filter((n) => !visible.includes(n)));
+      toast('Visible cards cleared.', 'info');
+    } else {
+      if (capacity <= 0) return toast('Please select invitations first.', 'warning');
+      // klik pertama: pilih sebanyak kuota dari yg terlihat
+      const toAdd = visible.slice(0, capacity);
+      setSelectedCards(toAdd); // RESET & isi ulang (bukan append)
+      toast(`Selected ${toAdd.length} available card(s).`, 'success');
+    }
+  };
   return (
     <PageContainer>
       <form onSubmit={handleOnSubmit}>
@@ -3876,8 +4114,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 color="success"
                 type="submit"
                 variant="contained"
-                // onClick={handleOnSubmit}
                 disabled={loading}
+                onClick={() => setNextDialogOpen(true)}
               >
                 {loading ? 'Submitting...' : 'Submit'}
               </Button>
@@ -3905,6 +4143,399 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       >
         <CircularProgress color="inherit" />
       </Backdrop>
+
+      {/* Visitor Card */}
+      <Dialog
+        open={nextDialogOpen}
+        onClose={handleCloseGrantDialog}
+        fullWidth
+        maxWidth="md"
+        sx={{
+          '& .MuiDialog-paper': {
+            borderRadius: 3, // sudut lebih rounded
+            boxShadow: '0 8px 24px rgba(0,0,0,0.08)', // bayangan halus
+          },
+        }}
+      >
+        {/* Header */}
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+          sx={{
+            px: 3,
+            py: 2,
+            background: 'linear-gradient(135deg, rgba(2,132,199,0.05), rgba(99,102,241,0.08))',
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+          }}
+        >
+          <DialogTitle sx={{ m: 0, p: 0, fontWeight: 600, fontSize: '1.25rem' }}>
+            Grant Visitor
+          </DialogTitle>
+          <Box display="flex" gap={1}>
+            <MuiButton
+              color="secondary"
+              variant="outlined"
+              onClick={handleCloseGrantDialog}
+              sx={{
+                textTransform: 'none',
+                borderRadius: 2,
+              }}
+            >
+              Cancel
+            </MuiButton>
+            <MuiButton
+              color="primary"
+              variant="contained"
+              onClick={() => setAccessDialogOpen(true)}
+              sx={{
+                textTransform: 'none',
+                borderRadius: 2,
+                boxShadow: '0 4px 8px rgba(99,102,241,0.3)',
+              }}
+            >
+              Grant
+            </MuiButton>
+          </Box>
+        </Box>
+
+        {/* Content */}
+        <DialogContent
+          dividers
+          sx={{
+            p: 3,
+            backgroundColor: 'background.default',
+          }}
+        >
+          <Box
+            sx={{
+              mt: 0,
+              borderRadius: 2,
+              border: '1px solid',
+              borderColor: 'divider',
+              overflow: 'hidden',
+            }}
+          >
+            <DynamicTable
+              key={tableKey}
+              data={rows}
+              isHaveChecked
+              isHaveSearch
+              isHaveCard
+              selectedRows={selectedInvitations}
+              onCheckedChange={handleSelectInvitation}
+              onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+              onChooseCard={handleOpenChooseCard}
+            />
+          </Box>
+        </DialogContent>
+      </Dialog>
+
+      {/* Choose Card  */}
+      <Dialog open={openChooseCardDialog} onClose={handleCloseChooseCard} fullWidth maxWidth="md">
+        <DialogTitle>Choose Card</DialogTitle>
+        {/* closeicon */}
+        <IconButton
+          aria-label="close"
+          onClick={handleCloseChooseCard}
+          sx={{
+            position: 'absolute',
+            right: 8,
+            top: 8,
+            color: (theme) => theme.palette.grey[500],
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
+
+        <DialogContent dividers>
+          {/* Search */}
+          <Box mb={2}>
+            <TextField
+              fullWidth
+              size="small"
+              label=""
+              placeholder="Search card"
+              variant="outlined"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <IconSearch size={20} /> {/* ikon tabler */}
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Box>
+
+          {/* Select All */}
+          <Box mb={2}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={
+                    availableVisibleCards.length > 0 &&
+                    availableVisibleCards.every((c) => selectedCards.includes(c.card_number))
+                  }
+                  indeterminate={
+                    availableVisibleCards.some((c) => selectedCards.includes(c.card_number)) &&
+                    !availableVisibleCards.every((c) => selectedCards.includes(c.card_number))
+                  }
+                  onChange={handleSelectAll}
+                />
+              }
+              label="Select All"
+            />
+          </Box>
+
+          <Grid container spacing={2}>
+            {filteredCards.map((card) => {
+              const holderRowId = assignedByCard.get(String(card.card_number));
+              const isUsedByOther = !!holderRowId && !selectedIdSet.has(String(holderRowId)); // 🔑 hanya lock jika milik orang lain
+              const isAssignedInThisSelection =
+                !!holderRowId && selectedIdSet.has(String(holderRowId));
+              const isChosen = selectedCards.includes(card.card_number);
+
+              // KUNCI HANYA JIKA milik visitor lain
+              const isLocked = isUsedByOther;
+
+              return (
+                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={card.id}>
+                  <Paper
+                    role="button"
+                    tabIndex={isLocked ? -1 : 0}
+                    aria-disabled={isLocked}
+                    aria-pressed={isChosen ? 'true' : 'false'}
+                    onClick={() => !isLocked && handleToggleCard(card.card_number)} // selected => boleh toggle
+                    onKeyDown={(e) => {
+                      if (isLocked) return;
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleToggleCard(card.card_number);
+                      }
+                    }}
+                    sx={(theme) => ({
+                      p: 2,
+                      borderRadius: 2,
+                      position: 'relative',
+                      height: 280,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      textAlign: 'center',
+
+                      // base look
+                      border: '1px solid',
+                      borderColor: isChosen ? 'primary.main' : 'divider',
+                      boxShadow: isChosen ? theme.shadows[6] : theme.shadows[4],
+                      backgroundColor: isChosen ? 'primary.50' : 'background.paper',
+
+                      // visual disabled utk Used saja
+                      cursor: isLocked ? 'not-allowed' : 'pointer',
+                      pointerEvents: isLocked ? 'none' : 'auto', // ✅ kartu “used by THIS selection” tetap bisa diklik
+                      opacity: isUsedByOther ? 0.55 : 1,
+                      filter: isUsedByOther ? 'graysca  le(0.6)' : 'none',
+
+                      // hover/active/focus hanya jika tidak locked
+                      transformOrigin: 'center',
+                      transition: theme.transitions.create(
+                        ['transform', 'box-shadow', 'border-color', 'background-color', 'filter'],
+                        {
+                          duration: theme.transitions.duration.shorter,
+                          easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)',
+                        },
+                      ),
+                      '::before': {
+                        content: '""',
+                        position: 'absolute',
+                        inset: 0,
+                        borderRadius: 'inherit',
+                        background:
+                          'linear-gradient(180deg, rgba(255,255,255,.35) 0%, rgba(255,255,255,0) 40%)',
+                        opacity: 0,
+                        pointerEvents: 'none',
+                        transition: 'opacity 200ms ease',
+                      },
+                      ...(!isLocked && {
+                        '&:hover': {
+                          transform: 'translateY(-3px)',
+                          boxShadow: theme.shadows[8],
+                          borderColor: 'primary.main',
+                          '::before': { opacity: 1 },
+                        },
+                        '&:active': {
+                          transform: 'translateY(-1px) scale(0.995)',
+                          boxShadow: theme.shadows[4],
+                        },
+                        '&:focus-visible': {
+                          outline: '2px solid',
+                          outlineColor: theme.palette.primary.main,
+                          outlineOffset: 2,
+                        },
+                      }),
+                    })}
+                  >
+                    {/* konten */}
+                    <Box flexGrow={1} display="flex" flexDirection="column" justifyContent="center">
+                      <Typography variant="body1" mt={1}>
+                        {card.card_number}
+                      </Typography>
+                      <Typography variant="h1">{card.remarks}</Typography>
+                      <Typography variant="body1" mt={1}>
+                        {card.card_mac}
+                      </Typography>
+                    </Box>
+
+                    <Typography variant="body1" mt={1}>
+                      {card.card_name}
+                    </Typography>
+
+                    {/* checkbox: disable hanya saat Used */}
+                    <FormControlLabel
+                      onClick={(e) => e.stopPropagation()}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      control={
+                        <Checkbox
+                          disabled={isUsedByOther} // ✅ hanya disable jika milik orang lain
+                          checked={isChosen}
+                          onClick={(e) => e.stopPropagation()}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          onChange={() => handleToggleCard(card.card_number)}
+                        />
+                      }
+                      label=""
+                      sx={{ m: 0 }}
+                    />
+
+                    {/* chip status */}
+                    {isUsedByOther && (
+                      <Chip
+                        size="small"
+                        icon={<LockOutlinedIcon fontSize="small" />}
+                        label="Used"
+                        sx={{ position: 'absolute', top: 8, right: 8, opacity: 0.9 }}
+                      />
+                    )}
+                    {isAssignedInThisSelection && (
+                      <Chip
+                        size="small"
+                        color="warning"
+                        variant="outlined"
+                        label="Assigned (this)"
+                        sx={{ position: 'absolute', top: 8, right: 8 }}
+                      />
+                    )}
+                  </Paper>
+                </Grid>
+              );
+            })}
+          </Grid>
+
+          <Box mt={3} display="flex" justifyContent="space-between" alignItems="center">
+            <Box display={'flex'} gap={2}>
+              <Typography variant="body2">
+                Cards chosen: {selectedCards.length} / {availableCount}
+              </Typography>
+              <Typography variant="body2">|</Typography>
+              <Typography variant="body2">
+                Invitations available: {selectedInvitations.length} (max cards you can choose)
+              </Typography>
+            </Box>
+
+            <Box display="flex" gap={1}>
+              <Button onClick={handleCloseChooseCard} color="secondary">
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                disabled={selectedCards.length === 0}
+                onClick={handleConfirmChooseCards}
+              >
+                Choose
+              </Button>
+            </Box>
+          </Box>
+        </DialogContent>
+      </Dialog>
+
+      {/* Access Dialog */}
+      <Dialog
+        open={accessDialogOpen}
+        onClose={() => setAccessDialogOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Access Visitor</DialogTitle>
+        {/* close icon */}
+        <IconButton
+          aria-label="close"
+          onClick={() => setAccessDialogOpen(false)}
+          sx={{
+            position: 'absolute',
+            right: 8,
+            top: 8,
+            color: (theme) => theme.palette.grey[500],
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
+        {/* close icon */}
+
+        <DialogContent dividers>
+          <Stack spacing={1}>
+            {accessData.map((access) => (
+              <FormControlLabel
+                key={access.id}
+                control={
+                  <Checkbox
+                    checked={checkedItems.includes(access.id)}
+                    onChange={() => handleToggle(access.id)}
+                  />
+                }
+                label={access.name}
+              />
+            ))}
+          </Stack>
+          <Divider />
+          <Box display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
+            <Typography variant="subtitle1" mt={2} fontWeight={600}>
+              Grand {checkedItems.length} Access
+            </Typography>
+            {/* button submit */}
+            <Button
+              variant="contained"
+              color="primary"
+              disabled={checkedItems.length === 0}
+              onClick={handleAccessSubmit}
+              sx={{ mt: 2 }}
+              size="medium"
+            >
+              Submit
+            </Button>
+          </Box>
+        </DialogContent>
+      </Dialog>
+      <Portal>
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={3000}
+          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+          sx={{ zIndex: 2000 }}
+        >
+          <Alert
+            onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+            severity={snackbar.severity} // ← beda warna/ikon sesuai severity
+            sx={{ width: '100%' }}
+            variant="filled" // optional: biar lebih kontras
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </Portal>
     </PageContainer>
   );
 };
@@ -3982,7 +4613,6 @@ const CameraUpload: React.FC<{
       setRemoving(true);
       // await axios.delete(value); // <--- sesuai API kamu
       await axiosInstance2.delete(`/cdn${value}`);
-      console.log('✅ Berhasil hapus file CDN:', value);
       clearLocal();
     } catch (e) {
       console.error('Delete failed:', e);
@@ -4020,7 +4650,6 @@ const CameraUpload: React.FC<{
         )}
         <input type="file" hidden ref={fileInputRef} accept="image/*" onChange={handleFile} />
       </Box>
-
       <Dialog open={open} onClose={() => setOpen(false)} maxWidth="md" fullWidth>
         <Box sx={{ p: 3 }}>
           <Typography variant="h6" mb={2}>

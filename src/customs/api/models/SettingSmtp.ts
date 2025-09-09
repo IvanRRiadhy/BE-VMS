@@ -7,7 +7,7 @@ export type Item = {
   host: string;
   user: string;
   password: string;
-  port: string;
+  port: number;
   secure: boolean;
   // testing: string;
   // testing_msg: string;
@@ -23,7 +23,7 @@ export const CreateSettingSmtpSchema = z.object({
   host: z.string().default(''),
   user: z.string().default(''),
   password: z.string().default(''),
-  port: z.string().default(''),
+  port: z.number().default(0),
   secure: z.boolean().default(false),
   // testing: z.string().default(''),
   // testing_msg: z.string().default(''),
@@ -39,7 +39,7 @@ export const UpdateSettingSmtpSchema = z.object({
   host: z.string().default(''),
   user: z.string().default(''),
   password: z.string().default(''),
-  port: z.string().default(''),
+  port: z.number().default(0),
   secure: z.boolean().default(false),
   // testing: z.string().default(''),
   // testing_msg: z.string().default(''),

@@ -18,7 +18,8 @@ import { AxiosError } from 'axios';
 import { useNavigate } from 'react-router';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { useAuth } from 'src/customs/contexts/AuthProvider';
-import { useTranslation } from 'react-i18next';
+import { IconButton, InputAdornment } from '@mui/material';
+import { IconEye, IconEyeOff } from '@tabler/icons-react';
 
 const Login2 = () => {
   const { isAuthenticated } = useAuth();
@@ -73,7 +74,8 @@ const Login2 = () => {
     }
   }
 
-  const { t } = useTranslation();
+  // state untuk toggle password
+  const [showPassword, setShowPassword] = React.useState(false);
 
   return (
     <>
@@ -128,13 +130,25 @@ const Login2 = () => {
                         <CustomFormLabel htmlFor="password">Password</CustomFormLabel>
                         <CustomTextField
                           id="password"
-                          type="password"
+                          type={showPassword ? 'text' : 'password'}
                           variant="outlined"
                           fullWidth
                           value={password}
                           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                             setPassword(e.target.value)
                           }
+                          InputProps={{
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <IconButton
+                                  onClick={() => setShowPassword((prev) => !prev)}
+                                  edge="end"
+                                >
+                                  {showPassword ? <IconEyeOff size={20} /> : <IconEye size={20} />}
+                                </IconButton>
+                              </InputAdornment>
+                            ),
+                          }}
                         />
                       </Box>
                     </Stack>

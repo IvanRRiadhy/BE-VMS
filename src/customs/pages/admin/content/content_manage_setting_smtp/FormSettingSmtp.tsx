@@ -8,28 +8,33 @@ import {
   FormControlLabel,
   Typography,
   Button,
-  Grid,
+  Grid2 as Grid,
   Paper,
   Divider,
 } from '@mui/material';
 import { Item } from 'src/customs/api/models/SettingSmtp';
 import { IconSend } from '@tabler/icons-react';
-
+import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
+import { IconButton, InputAdornment } from '@mui/material';
+import { IconEye, IconEyeOff } from '@tabler/icons-react';
 interface FormSettingSmtpProps {
   formData: Item;
   setFormData: React.Dispatch<React.SetStateAction<any>>;
   editingId: string;
-  onSuccess?: () => void;
+  onSubmit: (data: Item) => void;
+  onCancel?: () => void;
 }
 
 const FormSettingSmtp: React.FC<FormSettingSmtpProps> = ({
   formData,
   setFormData,
   editingId,
-  onSuccess,
+  onSubmit,
+  onCancel,
 }) => {
   const [tabIndex, setTabIndex] = useState(0);
-
+  const [showPassword, setShowPassword] = useState(false);
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev: Item) => ({ ...prev, [name]: value }));
@@ -42,8 +47,7 @@ const FormSettingSmtp: React.FC<FormSettingSmtpProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
-    if (onSuccess) onSuccess();
+    onSubmit(formData); // biar parent yang urus API/alert/close
   };
 
   return (
@@ -61,167 +65,174 @@ const FormSettingSmtp: React.FC<FormSettingSmtpProps> = ({
       </Tabs>
 
       {/* Form Content */}
-      <Box component="form" onSubmit={handleSubmit} sx={{ flex: 1, p: 2 }}>
-        {tabIndex === 0 && (
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
-              <TextField
-                label="Name"
-                name="name"
-                fullWidth
-                value={formData.name}
-                onChange={handleChange}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="From Address"
-                name="from_address"
-                fullWidth
-                value={formData.from_address}
-                onChange={handleChange}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Title Email"
-                name="title_email"
-                fullWidth
-                value={formData.title_email}
-                onChange={handleChange}
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                label="Host"
-                name="host"
-                fullWidth
-                value={formData.host}
-                onChange={handleChange}
-              />
-            </Grid>
-
-            <Grid item xs={6}>
-              <TextField
-                label="Port"
-                name="port"
-                type="number"
-                fullWidth
-                value={formData.port}
-                onChange={handleChange}
-              />
-            </Grid>
-
-            <Grid item xs={6}>
-              <FormControlLabel
-                control={
-                  <Switch checked={formData.secure} onChange={handleSwitchChange} name="secure" />
-                }
-                label="Secure (SSL/TLS)"
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                label="User"
-                name="user"
-                fullWidth
-                value={formData.user}
-                onChange={handleChange}
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                label="Password"
-                name="password"
-                type="password"
-                fullWidth
-                value={formData.password}
-                onChange={handleChange}
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={formData.selected_email}
-                    onChange={handleSwitchChange}
-                    name="selected_email"
-                  />
-                }
-                label="Set as Selected Email"
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <Button variant="contained" color="primary" type="submit" startIcon={<IconSend />}>
-                {editingId ? 'Edit' : 'Submit'}
-              </Button>
-            </Grid>
-          </Grid>
-        )}
-
-        {tabIndex === 1 && (
-          <Grid container spacing={2} paddingX={2}>
-            <Grid item xs={12}>
-              <Typography variant="h4" gutterBottom>
-                Send A Test
+      <form
+        onSubmit={handleSubmit}
+        style={{ padding: 16 }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && (e.target as HTMLElement).tagName !== 'TEXTAREA') {
+            e.preventDefault();
+          }
+        }}
+      >
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12 }}>
+            <CustomFormLabel htmlFor="name" sx={{ marginTop: '0px' }}>
+              <Typography variant="body1" fontWeight={500}>
+                Name
               </Typography>
-              <Typography variant="body2" gutterBottom>
-                Verify your SMTP setup to send a test email
-              </Typography>
-            </Grid>
-
-            <Grid item xs={12}>
-              <Divider />
-            </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                label="User"
-                name="user"
-                fullWidth
-                value={formData.user}
-                onChange={handleChange}
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <Button variant="contained" color="primary" type="submit" startIcon={<IconSend />}>
-                {editingId ? 'Update SMTP' : 'Send Test'}
-              </Button>
-            </Grid>
+            </CustomFormLabel>
+            <CustomTextField
+              id="name"
+              name="name"
+              value={formData.name ?? ''}
+              onChange={handleChange}
+              onKeyDown={(e) => e.stopPropagation()}
+              fullWidth
+            />
           </Grid>
-        )}
 
-        {tabIndex === 2 && (
-          // <Grid container spacing={2}>
-          //   <Grid item xs={12}>
-          //     <TextField
-          //       label="Testing Email"
-          //       name="testing"
-          //       fullWidth
-          //       value={formData.testing}
-          //       onChange={handleChange}
-          //     />
-          //   </Grid>
-          //   <Grid item xs={12}>
-          //     <TextField
-          //       label="Testing Message"
-          //       name="testing_msg"
-          //       multiline
-          //       rows={3}
-          //       fullWidth
-          //       value={formData.testing_msg}
-          //       onChange={handleChange}
-          //     />
-          //   </Grid>
-          // </Grid>
-          null
-        )}
-      </Box>
+          <Grid size={{ xs: 12 }}>
+            <CustomFormLabel htmlFor="from_address" sx={{ marginTop: '0px' }}>
+              <Typography variant="body1" fontWeight={500}>
+                From Address
+              </Typography>
+            </CustomFormLabel>
+            <CustomTextField
+              id="from_address"
+              name="from_address"
+              value={formData.from_address ?? ''}
+              onChange={handleChange}
+              fullWidth
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12 }}>
+            <CustomFormLabel htmlFor="title_email" sx={{ marginTop: '0px' }}>
+              <Typography variant="body1" fontWeight={500}>
+                Title Email
+              </Typography>
+            </CustomFormLabel>
+            <CustomTextField
+              id="title_email"
+              name="title_email"
+              value={formData.title_email || ''}
+              onChange={handleChange}
+              fullWidth
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12 }}>
+            <CustomFormLabel htmlFor="host" sx={{ marginTop: '0px' }}>
+              <Typography variant="body1" fontWeight={500}>
+                Host
+              </Typography>
+            </CustomFormLabel>
+            <CustomTextField
+              id="host"
+              name="host"
+              value={formData.host || ''}
+              onChange={handleChange}
+              fullWidth
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12 }}>
+            <CustomFormLabel htmlFor="port" sx={{ marginTop: '0px' }}>
+              <Typography variant="body1" fontWeight={500}>
+                Port
+              </Typography>
+            </CustomFormLabel>
+            <CustomTextField
+              id="port"
+              name="port"
+              value={formData.port || ''}
+              onChange={handleChange}
+              fullWidth
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12 }}>
+            <CustomFormLabel htmlFor="user" sx={{ marginTop: '0px' }}>
+              <Typography variant="body1" fontWeight={500}>
+                User
+              </Typography>
+            </CustomFormLabel>
+            <CustomTextField
+              id="user"
+              name="user"
+              value={formData.user ?? ''}
+              onChange={handleChange}
+              fullWidth
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12 }}>
+            <CustomFormLabel htmlFor="password" sx={{ marginTop: '0px' }}>
+              <Typography variant="body1" fontWeight={500}>
+                Password
+              </Typography>
+            </CustomFormLabel>
+
+            <CustomTextField
+              id="password"
+              name="password"
+              type={showPassword ? 'text' : 'password'}
+              value={formData.password ?? ''}
+              onChange={handleChange}
+              fullWidth
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton onClick={() => setShowPassword((prev) => !prev)} edge="end">
+                      {showPassword ? <IconEyeOff size={20} /> : <IconEye size={20} />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 6 }}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={formData.secure || false}
+                  onChange={handleSwitchChange}
+                  name="secure"
+                />
+              }
+              label="Secure (SSL/TLS)"
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 6 }}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={formData.selected_email || false}
+                  onChange={handleSwitchChange}
+                  name="selected_email"
+                />
+              }
+              label="Set as Selected Email"
+            />
+          </Grid>
+          <Grid size={{ xs: 12 }}>
+            <Button variant="outlined" onClick={onCancel}>
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              type="submit"
+              startIcon={<IconSend size={18} />}
+              sx={{ ml: 1 }}
+            >
+              {editingId ? 'Edit' : 'Submit'}
+            </Button>
+          </Grid>
+        </Grid>
+      </form>
     </Paper>
   );
 };

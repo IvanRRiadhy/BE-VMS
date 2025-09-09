@@ -45,7 +45,8 @@ export const showSuccessAlert = (
     iconColor: '#10b981',
     confirmButtonColor: '#10b981',
     confirmButtonText: 'Got it!',
-    timer: 2000,
+    timer: 5000,
+    showCloseButton: true,
     timerProgressBar: true,
     showConfirmButton: false,
   });

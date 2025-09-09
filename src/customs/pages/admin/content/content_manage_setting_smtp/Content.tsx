@@ -1,17 +1,15 @@
 import React, { useEffect, useState } from 'react';
+import { flushSync } from 'react-dom';
 import {
   Box,
-  Button,
-  Divider,
   Grid2 as Grid,
   Paper,
   Tab,
   Tabs,
-  TextField,
-  Typography,
-  FormControlLabel,
-  Switch,
-  Autocomplete,
+  Card,
+  Skeleton,
+  CircularProgress,
+  Backdrop,
 } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
 import { IconSend, IconBrandGmail } from '@tabler/icons-react';
@@ -36,8 +34,8 @@ import {
   showErrorAlert,
   showSuccessAlert,
 } from 'src/customs/components/alerts/alerts';
-import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
+import FormSettingSmtp from './FormSettingSmtp';
+import FormSendTestEmail from './FormSendTestEmail';
 
 type SettingSMTPRow = {
   id: number;
@@ -46,7 +44,7 @@ type SettingSMTPRow = {
   host: string;
   user: string;
   password: string;
-  port: string;
+  port: number;
   secure: boolean;
   from_address: string;
   selected_email: boolean;
@@ -73,7 +71,7 @@ const Content = () => {
     from_address: '',
     title_email: '',
     host: '',
-    port: '',
+    port: 0,
     user: '',
     password: '',
     secure: false,
@@ -109,15 +107,6 @@ const Content = () => {
 
   // Fetch data
   useEffect(() => {
-    console.log('useEffect FETCH DATA DIPANGGIL', {
-      token,
-      page,
-      rowsPerPage,
-      sortColumn,
-      searchKeyword,
-      refreshTrigger,
-    });
-
     if (!token) return;
 
     const fetchData = async () => {
@@ -170,19 +159,6 @@ const Content = () => {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev, // merge data lama
-      [name]: value, // update field yang diubah
-    }));
-  };
-
-  const handleSwitchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, checked } = e.target;
-    setFormData((prev: Item) => ({ ...prev, [name]: checked }));
-  };
-
   const handleAdd = () => {
     console.log('handleAdd terpanggil!');
     setEdittingId('');
@@ -198,350 +174,146 @@ const Content = () => {
     setShowForm(true);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handleSubmit = async (data: Item) => {
     try {
-      const validated = CreateSettingSmtpSchema.parse(formData);
+      const validated = CreateSettingSmtpSchema.parse(data);
 
       if (edittingId) {
-        // UPDATE
         await updateSmtp(token as string, validated, edittingId);
         showSuccessAlert('Success!', 'SMTP updated.');
       } else {
-        // CREATE
         await createSmtp(validated, token as string);
         showSuccessAlert('Success!', 'SMTP created.');
       }
 
-      // refresh table
-      setRefreshTrigger((prev) => prev + 1);
-
-      // kembali ke table view
-      setShowForm(false);
-
-      // reset form & id edit
-      setEdittingId('');
+      setRefreshTrigger((p) => p + 1); // refresh table
+      setShowForm(false); // kembali ke tabel
+      setEdittingId(''); // reset state edit
     } catch (error: any) {
       console.error(error);
       showErrorAlert('Error!', error.message);
     }
   };
 
-  const handleSubmitEmail = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Tambah di atas return()
+  const [busyId, setBusyId] = useState<string | number | null>(null);
+
+  const handleBooleanSwitchChange = async (id: number | string, field: string, value: boolean) => {
+    // Abaikan switch lain, kita fokus ke selected_email
+    if (field !== 'selected_email') return;
+    if (!token) return;
 
     try {
-      const validated = CreateEmailSchema.parse(formEmailData);
+      setBusyId(id);
+      // setLoading(true);
+      // Ambil row yang di-toggle
+      const row = smtpData.find((x) => String(x.id) === String(id));
+      if (!row) return;
 
+      // Payload update (pakai data row lama, ganti selected_email)
+      const payload: Item = {
+        id: row.id.toString(),
+        name: row.name,
+        from_address: row.from_address,
+        title_email: row.title_email,
+        host: row.host,
+        port: Number(row.port) || 0,
+        user: row.user,
+        password: row.password,
+        secure: row.secure,
+        selected_email: value,
+      };
+
+      // (opsional) validasi zod
+      const validated = CreateSettingSmtpSchema.parse(payload);
+
+      // Update row yang diklik
+      await updateSmtp(token, validated, row.id.toString());
+
+      // Jika ingin hanya boleh SATU selected_email=true:
+      if (value) {
+        const prev = smtpData.find((x) => x.selected_email && x.id !== row.id);
+        if (prev) {
+          const offPayload: Item = {
+            id: prev.id.toString(),
+            name: prev.name,
+            from_address: prev.from_address,
+            title_email: prev.title_email,
+            host: prev.host,
+            port: Number(prev.port) || 0,
+            user: prev.user,
+            password: prev.password,
+            secure: prev.secure,
+            selected_email: false,
+          };
+          await updateSmtp(token, CreateSettingSmtpSchema.parse(offPayload), prev.id.toString());
+        }
+      }
+
+      // Update UI secara optimistis
+      // setSmtpData((prev) =>
+      //   prev.map((x) =>
+      //     x.id === row.id
+      //       ? { ...x, selected_email: value }
+      //       : value
+      //       ? { ...x, selected_email: false } // pastikan unik
+      //       : x,
+      //   ),
+      // );
+
+      setSmtpData((prev) =>
+        prev.map((x) => (x.id === row.id ? { ...x, selected_email: value } : x)),
+      );
+
+      showSuccessAlert('Updated!', 'Selected email updated.');
+    } catch (err: any) {
+      console.error(err);
+      showErrorAlert('Error!', err?.message ?? 'Failed to update selected email.');
+    } finally {
+      setBusyId(null);
+      // setTimeout(() => setLoading(false), 1000);
+    }
+  };
+
+  const handleSubmitEmail = async (data: ItemEmail) => {
+    if (!token) return;
+
+    try {
+      setLoading(true); // BACKDROP ON
+
+      // Validasi
+      const validated = CreateEmailSchema.parse(data);
+
+      // Cari nama provider dari daftar SMTP yang sudah kamu load
+      const provider = smtpData.find((x) => String(x.id) === String(validated.setting_smtp_id));
+      const providerName = provider?.name ?? 'provider yang dipilih';
+
+      // Kirim email
       await createEmail(validated, token as string);
-      showSuccessAlert('Success!', 'Email has been sent.');
 
-      // refresh table
-      setRefreshTrigger((prev) => prev + 1);
+      setFormEmailData(initialFormEmailData);
 
-      // kembali ke table view
-      setShowForm(false);
+      // Tutup backdrop dulu, baru tampilkan alert
+      flushSync(() => setLoading(false));
+      await showSuccessAlert(
+        'Berhasil!',
+        `Email berhasil dikirim via "${providerName}" ke ${
+          validated.email_sender || '(tanpa alamat)'
+        }`,
+      );
 
-      // reset form & id edit
-      setEdittingId('');
+      setRefreshTrigger((p) => p + 1);
     } catch (error: any) {
-      console.error(error);
-      showErrorAlert('Error!', error.message);
+      flushSync(() => setLoading(false));
+      await showErrorAlert('Error!', error.message);
+    } finally {
+      setTimeout(() => setLoading(false), 500);
     }
   };
 
   const handleCancelForm = () => {
     setShowForm(false);
   };
-
-  // useEffect(() => {
-  //   console.log('useEffect localStorage DIPANGGIL', formData);
-  //   localStorage.setItem('unsavedSmtpData', JSON.stringify(formData));
-  // }, [formData]);
-
-  // Sub components
-  const SmtpProviderForm = () => (
-    <Box>
-      {!showForm ? (
-        <Box sx={{ overflowX: 'auto' }}>
-          <DynamicTable
-            data={smtpData}
-            selectedRows={selectedRows}
-            isHaveChecked={false}
-            isHaveAction={true}
-            isHaveSearch={false}
-            isHaveFilter={false}
-            isHaveExportPdf={false}
-            isHaveAddData={true}
-            isHaveHeader={false}
-            onCheckedChange={(selected) => setSelectedRows(selected)}
-            onEdit={(row) => handleEdit(row.id)}
-            onDelete={(row) => handleDelete(row.id.toString())}
-            onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-            onAddData={handleAdd}
-            isHaveBooleanSwitch={true}
-          />
-        </Box>
-      ) : (
-        <form onSubmit={handleSubmit} style={{ padding: 16 }}>
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12 }}>
-              <CustomFormLabel htmlFor="name" sx={{ marginTop: '0px' }}>
-                <Typography variant="body1" fontWeight={500}>
-                  Name
-                </Typography>
-              </CustomFormLabel>
-              <CustomTextField
-                id="name"
-                name="name"
-                value={formData.name ?? ''}
-                onChange={handleChange}
-                fullWidth
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12 }}>
-              <CustomFormLabel htmlFor="from_address" sx={{ marginTop: '0px' }}>
-                <Typography variant="body1" fontWeight={500}>
-                  From Address
-                </Typography>
-              </CustomFormLabel>
-              <CustomTextField
-                id="from_address"
-                name="from_address"
-                value={formData.from_address ?? ''}
-                onChange={handleChange}
-                fullWidth
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12 }}>
-              <CustomFormLabel htmlFor="title_email" sx={{ marginTop: '0px' }}>
-                <Typography variant="body1" fontWeight={500}>
-                  Title Email
-                </Typography>
-              </CustomFormLabel>
-              <CustomTextField
-                id="title_email"
-                name="title_email"
-                value={formData.title_email || ''}
-                onChange={handleChange}
-                fullWidth
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12 }}>
-              <CustomFormLabel htmlFor="host" sx={{ marginTop: '0px' }}>
-                <Typography variant="body1" fontWeight={500}>
-                  Host
-                </Typography>
-              </CustomFormLabel>
-              <CustomTextField
-                id="host"
-                name="host"
-                value={formData.host || ''}
-                onChange={handleChange}
-                fullWidth
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12 }}>
-              <CustomFormLabel htmlFor="port" sx={{ marginTop: '0px' }}>
-                <Typography variant="body1" fontWeight={500}>
-                  Port
-                </Typography>
-              </CustomFormLabel>
-              <CustomTextField
-                id="port"
-                name="port"
-                value={formData.port || ''}
-                onChange={handleChange}
-                fullWidth
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12 }}>
-              <CustomFormLabel htmlFor="user" sx={{ marginTop: '0px' }}>
-                <Typography variant="body1" fontWeight={500}>
-                  User
-                </Typography>
-              </CustomFormLabel>
-              <CustomTextField
-                id="user"
-                name="user"
-                value={formData.user ?? ''}
-                onChange={handleChange}
-                fullWidth
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12 }}>
-              <CustomFormLabel htmlFor="password" sx={{ marginTop: '0px' }}>
-                <Typography variant="body1" fontWeight={500}>
-                  Password
-                </Typography>
-              </CustomFormLabel>
-              <CustomTextField
-                id="password"
-                name="password"
-                type="password"
-                value={formData.password ?? ''}
-                onChange={handleChange}
-                fullWidth
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 6 }}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={formData.secure || false}
-                    onChange={handleSwitchChange}
-                    name="secure"
-                  />
-                }
-                label="Secure (SSL/TLS)"
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 6 }}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={formData.selected_email || false}
-                    onChange={handleSwitchChange}
-                    name="selected_email"
-                  />
-                }
-                label="Set as Selected Email"
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12 }}>
-              <Button
-                variant="contained"
-                color="primary"
-                type="submit"
-                startIcon={<IconSend size={18} />}
-              >
-                {edittingId ? 'Edit' : 'Submit'}
-              </Button>
-              <Button variant="outlined" sx={{ ml: 1 }} onClick={handleCancelForm}>
-                Cancel
-              </Button>
-            </Grid>
-          </Grid>
-        </form>
-      )}
-    </Box>
-  );
-  const handleChangeEmail = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormEmailData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-  const SendTestForm = () => (
-    <Box component="form" onSubmit={handleSubmitEmail}>
-      <Grid container spacing={2} paddingX={2}>
-        <Grid size={{ xs: 12 }}>
-          <Typography variant="h4" gutterBottom>
-            Send A Test
-          </Typography>
-          <Typography variant="body2" gutterBottom>
-            Verify your SMTP setup by sending a test email
-          </Typography>
-          <Divider />
-        </Grid>
-        <Grid size={{ xs: 12 }}>
-          <CustomFormLabel htmlFor="email_sender" sx={{ marginTop: '0px' }}>
-            <Typography variant="body1" fontWeight={500}>
-              Send To
-            </Typography>
-          </CustomFormLabel>
-          <CustomTextField
-            name="email_sender"
-            fullWidth
-            value={formEmailData?.email_sender ?? ''}
-            onChange={handleChangeEmail}
-          />
-        </Grid>
-        <Grid size={{ xs: 12 }}>
-          <CustomFormLabel sx={{ marginTop: '0px' }}>
-            <Typography variant="body1" fontWeight={500}>
-              Send With
-            </Typography>
-          </CustomFormLabel>
-          <Autocomplete
-            options={smtpData}
-            value={smtpData.find((o) => o.id === Number(formEmailData?.setting_smtp_id)) || null}
-            onChange={(_, newValue) => {
-              if (newValue) {
-                setFormEmailData((prev: any) => ({
-                  ...prev,
-                  setting_smtp_id: newValue.id,
-                }));
-              }
-            }}
-            getOptionLabel={(option) => (option ? `${option.name}` : '')}
-            isOptionEqualToValue={(option, value) => option.id === value.id}
-            renderInput={(params) => <CustomTextField {...params} placeholder="" fullWidth />}
-          />
-        </Grid>
-        <Grid size={{ xs: 12 }}>
-          <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography variant="body1" fontWeight={500}>
-              HTML
-            </Typography>
-            <Switch
-              name="is_html"
-              checked={formEmailData?.is_html || false}
-              onChange={handleSwitchChange}
-            />
-          </Box>
-          <Typography variant="body2" color="gray">
-            Send test email as HTML
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12 }}>
-          <Button
-            variant="contained"
-            color="primary"
-            type="submit"
-            startIcon={<IconSend size={18} />}
-          >
-            Send Test
-          </Button>
-        </Grid>
-      </Grid>
-    </Box>
-  );
-  const SenderReport = () => (
-    <Grid container spacing={2} paddingX={2}>
-      <Grid size={{ xs: 12 }}>
-        <TextField
-          label="Testing Email"
-          name="testing"
-          fullWidth
-          value={(formData as any).testing || ''}
-          onChange={handleChange}
-        />
-      </Grid>
-      <Grid size={{ xs: 12 }}>
-        <TextField
-          label="Testing Message"
-          name="testing_msg"
-          multiline
-          rows={3}
-          fullWidth
-          value={(formData as any).testing_msg || ''}
-          onChange={handleChange}
-        />
-      </Grid>
-    </Grid>
-  );
 
   return (
     <PageContainer title="Manage Setting Smtp" description="Setting Smtp page">
@@ -550,31 +322,111 @@ const Content = () => {
           <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
         </Grid>
 
-        <Paper sx={{ display: 'flex', minHeight: 400, mt: 2, p: 2, overflowX: 'auto' }}>
-          <Tabs
-            orientation="vertical"
-            value={tabIndex}
-            onChange={(_, newValue) => setTabIndex(newValue)}
-            sx={{ borderRight: 1, borderColor: 'divider', minWidth: 180 }}
-          >
-            <Tab label="SMTP Provider" />
-            <Tab label="Send A Test" />
-            <Tab label="Sender Report" />
-          </Tabs>
+        {!showForm ? (
+          <Paper sx={{ display: 'flex', minHeight: 400, mt: 2, p: 2, overflowX: 'auto' }}>
+            <Tabs
+              orientation="vertical"
+              value={tabIndex}
+              onChange={(_, newValue) => setTabIndex(newValue)}
+              sx={{ borderRight: 1, borderColor: 'divider', minWidth: 180 }}
+            >
+              <Tab label="SMTP Provider" />
+              <Tab label="Send A Test" />
+              <Tab label="Sender Report" />
+            </Tabs>
 
-          <Box sx={{ flex: 1 }}>
-            <Box sx={{ display: tabIndex === 0 ? 'block' : 'none' }}>
-              <SmtpProviderForm />
+            <Box sx={{ flex: 1 }}>
+              {tabIndex === 0 && (
+                <Box sx={{ overflowX: 'auto', p: 2 }}>
+                  {isDataReady ? (
+                    <DynamicTable
+                      data={smtpData}
+                      selectedRows={selectedRows}
+                      isHaveChecked={false}
+                      isHaveAction={true}
+                      isHaveSearch={false}
+                      isHaveFilter={false}
+                      isHaveExportPdf={false}
+                      isHaveAddData={true}
+                      isHaveHeader={false}
+                      onCheckedChange={setSelectedRows}
+                      onEdit={(row) => handleEdit(row.id)}
+                      onDelete={(row) => handleDelete(row.id.toString())}
+                      onSearchKeywordChange={setSearchKeyword}
+                      onAddData={handleAdd}
+                      isHaveBooleanSwitch={true}
+                      isDataVerified={true}
+                      onBooleanSwitchChange={handleBooleanSwitchChange}
+                      isHavePassword={true}
+                    />
+                  ) : (
+                    <Card sx={{ width: '100%' }}>
+                      <Skeleton />
+                      <Skeleton animation="wave" />
+                      <Skeleton animation={false} />
+                    </Card>
+                  )}
+                </Box>
+              )}
+
+              {tabIndex === 1 && (
+                // tempatkan Send Test versi table/preview, kalau ada
+                <FormSendTestEmail
+                  formEmailData={formEmailData}
+                  setFormEmailData={setFormEmailData}
+                  smtpOptions={smtpData}
+                  onSubmit={handleSubmitEmail}
+                  // onCancel opsional kalau mau ada tombol Cancel
+                  // onCancel={() => { setFormEmailData(initialFormEmailData); }}
+                  loading={loading}
+                />
+              )}
+
+              {tabIndex === 2 && (
+                <Box sx={{ overflowX: 'auto', p: 2 }}>
+                  <DynamicTable
+                    data={smtpData}
+                    selectedRows={selectedRows}
+                    isHaveChecked={false}
+                    isHaveAction={true}
+                    isHaveSearch={false}
+                    isHaveFilter={false}
+                    isHaveExportPdf={false}
+                    isHaveAddData={true}
+                    isHaveHeader={false}
+                    onCheckedChange={setSelectedRows}
+                    onEdit={(row) => handleEdit(row.id)}
+                    onDelete={(row) => handleDelete(row.id.toString())}
+                    onSearchKeywordChange={setSearchKeyword}
+                    onAddData={handleAdd}
+                    isHaveBooleanSwitch={true}
+                    isDataVerified={true}
+                    onBooleanSwitchChange={handleBooleanSwitchChange}
+                    isHavePassword={true}
+                  />
+                </Box>
+              )}
             </Box>
-            <Box sx={{ display: tabIndex === 1 ? 'block' : 'none' }}>
-              <SendTestForm />
-            </Box>
-            <Box sx={{ display: tabIndex === 2 ? 'block' : 'none' }}>
-              <SenderReport />
-            </Box>
-          </Box>
-        </Paper>
+          </Paper>
+        ) : (
+          <FormSettingSmtp
+            formData={formData}
+            setFormData={setFormData}
+            editingId={edittingId}
+            onSubmit={handleSubmit}
+            onCancel={handleCancelForm}
+          />
+        )}
       </Box>
+      <Backdrop
+        open={loading}
+        sx={{
+          color: '#fff',
+          zIndex: (theme) => theme.zIndex.drawer + 1, // di atas drawer & dialog
+        }}
+      >
+        <CircularProgress color="primary" />
+      </Backdrop>
     </PageContainer>
   );
 };

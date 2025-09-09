@@ -216,7 +216,7 @@ const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({
       <Backdrop
         open={loading}
         sx={{
-          color: '#fff',
+          color: 'primary',
           zIndex: (theme) => theme.zIndex.drawer + 1, // di atas drawer & dialog
         }}
       >

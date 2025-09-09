@@ -12,6 +12,7 @@ import {
   Skeleton,
   Grid2 as Grid,
   IconButton,
+  Backdrop,
   Button,
   Avatar,
   Typography,
@@ -87,8 +88,10 @@ const Content = () => {
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [isDataReady, setIsDataReady] = useState(false);
-  const [confirmDialogOpen, setConfirmDialogOpen] = React.useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
+  // mode konfirmasi: "close-add" atau "edit"
+  const [discardMode, setDiscardMode] = useState<'close-add' | 'edit' | null>(null);
   const [tableRowVisitors, setTableRowVisitors] = useState<Item[]>([]);
   const [tableCustomVisitor, setTableCustomVisitor] = useState<VisitorTableRow[]>([]);
   const [selectedRows, setSelectedRows] = useState<[]>([]);
@@ -101,10 +104,13 @@ const Content = () => {
   const isFormChanged = JSON.stringify(formDataAddVisitor) !== JSON.stringify(defaultFormData);
 
   useEffect(() => {
-    if (Object.keys(formDataAddVisitor).length > 0) {
+    if (isFormChanged) {
       localStorage.setItem('unsavedVisitorData', JSON.stringify(formDataAddVisitor));
+    } else {
+      // kalau balik ke default, hapus jejak draft
+      localStorage.removeItem('unsavedVisitorData');
     }
-  }, [formDataAddVisitor]);
+  }, [formDataAddVisitor, isFormChanged]);
 
   const cards = [
     {
@@ -259,17 +265,12 @@ const Content = () => {
   };
   const handleAdd = () => {
     const saved = localStorage.getItem('unsavedVisitorData');
-    let freshForm;
-    if (saved) {
-      freshForm = JSON.parse(saved);
-    } else {
-      freshForm = CreateVisitorRequestSchema.parse({});
-      localStorage.setItem('unsavedVisitorData', JSON.stringify(freshForm));
-    }
+    const freshForm = saved ? JSON.parse(saved) : defaultFormData;
+
     setEdittingId('');
     setFormDataAddVisitor(freshForm);
-    setPendingEditId('');
-    handleOpenDialog();
+    setPendingEditId(null);
+    setOpenDialog(true);
   };
 
   const handleSuccess = () => {
@@ -277,9 +278,51 @@ const Content = () => {
     // handleCloseDialog();
   };
 
-  const handleCancelEdit = () => {
+  const openDiscardForCloseAdd = () => {
+    setDiscardMode('close-add');
+    setConfirmDialogOpen(true);
+  };
+
+  const openDiscardForEdit = (id: string) => {
+    setPendingEditId(id);
+    setDiscardMode('edit');
+    setConfirmDialogOpen(true);
+  };
+
+  const handleCancelDiscard = () => {
     setConfirmDialogOpen(false);
+    setDiscardMode(null);
     setPendingEditId(null);
+  };
+
+  const confirmDiscardAndClose = () => {
+    // buang draft dan tutup Add
+    localStorage.removeItem('unsavedVisitorData');
+    setFormDataAddVisitor(defaultFormData);
+    setEdittingId('');
+    setOpenDialog(false);
+    setOpenDialogIndex(null);
+    setConfirmDialogOpen(false);
+    setDiscardMode(null);
+  };
+
+  const confirmDiscardAndEdit = () => {
+    localStorage.removeItem('unsavedVisitorData');
+
+    if (pendingEditId) {
+      const existingData = tableRowVisitors.find((x) => x.id === pendingEditId);
+      if (existingData) {
+        const parsed = { ...CreateVisitorRequestSchema.parse(existingData), id: pendingEditId };
+        setEdittingId(pendingEditId);
+        setFormDataAddVisitor(parsed);
+        // tidak usah tulis ke localStorage di sini; biarkan useEffect yang atur
+        setOpenDialog(true); // buka form untuk edit
+      }
+    }
+
+    setPendingEditId(null);
+    setConfirmDialogOpen(false);
+    setDiscardMode(null);
   };
 
   const handleView = async (id: string) => {
@@ -426,15 +469,9 @@ const Content = () => {
                   isActionVisitor={true}
                   stickyVisitorCount={2}
                   isHaveEmployee={true}
-                  onEmployeeClick={
-                    //   (employeeId) => {
-                    //   console.log('employee_id diklik:', employeeId);
-                    //   handleEmployeeClick(employeeId);
-                    // }
-                    () => {
-                      setOpenEmployeeDialog(true);
-                    }
-                  }
+                  onEmployeeClick={() => {
+                    setOpenEmployeeDialog(true);
+                  }}
                   isHaveVerified={true}
                   headerContent={{
                     title: '',
@@ -773,9 +810,9 @@ const Content = () => {
             aria-label="close"
             onClick={() => {
               if (isFormChanged) {
-                setConfirmDialogOpen(true); // ada perubahan, tampilkan dialog konfirmasi
+                openDiscardForCloseAdd(); // <── ini saja
               } else {
-                handleCloseDialog(); // tidak ada perubahan, langsung tutup
+                handleCloseDialog(); // aman langsung tutup
               }
             }}
           >
@@ -1311,38 +1348,30 @@ const Content = () => {
       </Dialog>
 
       {/* Unsaved Changes */}
-      <Dialog open={confirmDialogOpen} onClose={handleCancelEdit}>
+      <Dialog open={confirmDialogOpen} onClose={handleCancelDiscard}>
         <DialogTitle>Unsaved Changes</DialogTitle>
         <DialogContent>
-          You have unsaved changes for another site. Are you sure you want to discard them and edit
-          this site?
+          {discardMode === 'edit'
+            ? 'You have unsaved changes. Discard them and continue editing the selected record?'
+            : 'You have unsaved changes. Discard them and close this form?'}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCancelEdit}>Cancel</Button>
-          <Button onClick={handleConfirmEdit} color="primary" variant="contained">
+          <Button onClick={handleCancelDiscard}>Cancel</Button>
+          <Button
+            onClick={discardMode === 'edit' ? confirmDiscardAndEdit : confirmDiscardAndClose}
+            color="primary"
+            variant="contained"
+          >
             Yes, Discard and Continue
           </Button>
         </DialogActions>
       </Dialog>
-
-      {loading && (
-        <Box
-          sx={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100vw',
-            height: '100vh',
-            bgcolor: '#fff',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 20000,
-          }}
-        >
-          <CircularProgress color="primary" />
-        </Box>
-      )}
+      <Backdrop
+        sx={{ color: 'primary', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        open={loading}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
     </>
   );
 };
