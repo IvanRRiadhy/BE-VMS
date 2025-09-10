@@ -146,6 +146,12 @@ const Content = () => {
     }
   }, [formDataAddSite, shouldSaveToStorage]);
 
+  const [filters, setFilters] = useState<any>({
+    type: -1,
+  });
+
+  const [appliedType, setAppliedType] = useState<number>(-1);
+
   useEffect(() => {
     if (!token) return;
     const fetchData = async () => {
@@ -159,6 +165,7 @@ const Content = () => {
           rowsPerPage,
           sortColumn,
           searchKeyword,
+          appliedType !== -1 ? appliedType : undefined,
         );
         const resGetAll = await getAllSite(token);
         console.log('Response from API:', resGetAll);
@@ -186,7 +193,7 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword]);
+  }, [token, page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword, appliedType]);
 
   // Create Site space state management
 
@@ -398,20 +405,9 @@ const Content = () => {
     handleOpenDialog();
   };
 
-  const [filters, setFilters] = useState<any>({
-    joinStart: '',
-    // joinEnd: '',
-    // exitStart: '',
-    exitEnd: '',
-    gender: 0,
-    statusEmployee: 0,
-    organization: '',
-    department: '',
-    district: '',
-  });
-
   const handleApplyFilter = () => {
     setPage(0);
+    setAppliedType(filters.type);
     setRefreshTrigger((prev) => prev + 1);
   };
 
@@ -449,6 +445,7 @@ const Content = () => {
                   isHaveFilterDuration={false}
                   isHaveAddData={true}
                   isHaveHeader={false}
+                  isSiteSpaceType
                   onCheckedChange={(selected) => {
                     const fullSelectedItems = tableData.filter((item) =>
                       selected.some((row: SiteTableRow) => row.id === item.id),

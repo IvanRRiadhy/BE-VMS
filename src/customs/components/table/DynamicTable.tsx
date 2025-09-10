@@ -93,6 +93,7 @@ type DynamicTableProps<T extends { id: string | number }> = {
   isDataVerified?: boolean;
   headerContent?: HeaderContent;
   isHavePassword?: boolean;
+  isSiteSpaceType?: boolean;
   defaultSelectedHeaderItem?: string;
   isHavePagination?: boolean;
   rowsPerPageOptions?: number[];
@@ -158,6 +159,7 @@ export function DynamicTable<T extends { id: string | number }>({
   defaultSelectedHeaderItem,
   isHavePassword = false,
   isHavePagination,
+  isSiteSpaceType = false,
   isHaveIntegration,
   onNameClick,
   isDataVerified = false,
@@ -287,6 +289,13 @@ export function DynamicTable<T extends { id: string | number }>({
     '0': 'Female',
     '1': 'Male',
     '2': 'Prefer not to say',
+  };
+
+  const SITE_MAP: Record<number, string> = {
+    0: 'Site',
+    1: 'Building',
+    2: 'Floor',
+    3: 'Room',
   };
 
   // 1) Tetapkan lebar kolom yang konsisten
@@ -1051,7 +1060,10 @@ export function DynamicTable<T extends { id: string | number }>({
                               </Tooltip>
                             ) : isHaveGender && col === 'gender' ? (
                               GENDER_MAP[String(row[col])] ?? String(row[col] ?? '-')
-                            ) : isHaveImage &&
+                            ) :  isSiteSpaceType && col === 'type' ?(
+                              SITE_MAP[Number(row[col] ) ] ?? String(row[col] ?? '-')
+                            ): isHaveImage &&
+                            
                               imageFields.includes(col) &&
                               typeof row[col] === 'string' ? (
                               <img

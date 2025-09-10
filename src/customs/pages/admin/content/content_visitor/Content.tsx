@@ -16,6 +16,7 @@ import {
   Button,
   Avatar,
   Typography,
+  Portal,
 } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
@@ -29,7 +30,6 @@ import FormWizardAddInvitation from './FormWizardAddInvitation';
 import FormWizardAddVisitor from './FormWizardAddVisitor';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { CreateVisitorRequestSchema, Item } from 'src/customs/api/models/Visitor';
-import Swal from 'sweetalert2';
 import { getAllVisitorPagination, getEmployeeById, getVisitorById } from 'src/customs/api/admin';
 import { CreateVisitorRequest } from 'src/customs/api/models/Visitor';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
@@ -37,6 +37,7 @@ import { Scanner } from '@yudiel/react-qr-scanner';
 import FlipCameraAndroidIcon from '@mui/icons-material/FlipCameraAndroid';
 import FlashOnIcon from '@mui/icons-material/FlashOn';
 import FlashOffIcon from '@mui/icons-material/FlashOff';
+import FilterMoreContent from './FilterMoreContent';
 import {
   IconBrandGmail,
   IconBuilding,
@@ -53,7 +54,6 @@ import {
   IconPhone,
   IconQrcode,
   IconUser,
-  IconUserFilled,
   IconUsers,
   IconX,
 } from '@tabler/icons-react';
@@ -421,6 +421,18 @@ const Content = () => {
     }
   };
 
+  const [filters, setFilters] = useState<any>({
+    visitor_type: '',
+    site: '',
+    status: '',
+    created_at: '',
+  });
+
+  const handleApplyFilter = () => {
+    setPage(0);
+    setRefreshTrigger((prev) => prev + 1);
+  };
+
   return (
     <>
       <PageContainer title="Visitor" description="this is Dashboard page">
@@ -499,6 +511,14 @@ const Content = () => {
                   onAddData={() => {
                     handleAdd();
                   }}
+                  isHaveFilterMore={true}
+                  filterMoreContent={
+                    <FilterMoreContent
+                      filters={filters}
+                      setFilters={setFilters}
+                      onApplyFilter={handleApplyFilter}
+                    />
+                  }
                 />
               ) : (
                 <Card sx={{ width: '100%' }}>
@@ -1366,12 +1386,14 @@ const Content = () => {
           </Button>
         </DialogActions>
       </Dialog>
-      <Backdrop
-        sx={{ color: 'primary', zIndex: (theme) => theme.zIndex.drawer + 1 }}
-        open={loading}
-      >
-        <CircularProgress color="inherit" />
-      </Backdrop>
+      <Portal>
+        <Backdrop
+          sx={{ color: 'primary', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+          open={loading}
+        >
+          <CircularProgress color="inherit" />
+        </Backdrop>
+      </Portal>
     </>
   );
 };

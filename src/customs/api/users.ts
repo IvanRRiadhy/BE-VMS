@@ -6,8 +6,9 @@ import {
   RefreshTokenResponse,
   RevokeTokenResponse,
 } from './models/Users';
+import axiosInstance from './interceptor';
 
-const url: string = 'http://192.168.1.116:8000/api';
+const url: string = axiosInstance.defaults.baseURL!;
 
 export const login = async (body: LoginRequest): Promise<LoginResponse> => {
   try {

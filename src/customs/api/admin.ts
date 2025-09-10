@@ -1,4 +1,3 @@
-
 //#region IMPORT
 import axios from 'axios';
 import {
@@ -53,7 +52,6 @@ import {
   UpdateSiteRequest,
   UpdateSiteResponse,
   UploadImageSiteResponse,
-  UpdateSitestRequest,
   DeleteSiteResponse,
 } from './models/Sites';
 import {
@@ -946,9 +944,16 @@ export const getAllSitePagination = async (
   length: number,
   sortColumn: string,
   keyword: string = '',
+  type?: number,
 ): Promise<GetAllSitesPaginationResponse> => {
   const response = await axiosInstance.get(`/site/dt`, {
-    params: { start, length, sort_column: sortColumn, 'search[value]': keyword },
+    params: {
+      start,
+      length,
+      sort_column: sortColumn,
+      'search[value]': keyword,
+      ...(type !== undefined ? { type } : {}),
+    },
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });
   // console.log(response.data);

@@ -10,6 +10,7 @@ import {
   Skeleton,
   CircularProgress,
   Backdrop,
+  Portal,
 } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
 import { IconSend, IconBrandGmail } from '@tabler/icons-react';
@@ -205,7 +206,7 @@ const Content = () => {
 
     try {
       setBusyId(id);
-      // setLoading(true);
+      setLoading(true);
       // Ambil row yang di-toggle
       const row = smtpData.find((x) => String(x.id) === String(id));
       if (!row) return;
@@ -250,28 +251,20 @@ const Content = () => {
         }
       }
 
-      // Update UI secara optimistis
-      // setSmtpData((prev) =>
-      //   prev.map((x) =>
-      //     x.id === row.id
-      //       ? { ...x, selected_email: value }
-      //       : value
-      //       ? { ...x, selected_email: false } // pastikan unik
-      //       : x,
-      //   ),
-      // );
-
       setSmtpData((prev) =>
         prev.map((x) => (x.id === row.id ? { ...x, selected_email: value } : x)),
       );
 
-      showSuccessAlert('Updated!', 'Selected email updated.');
+      setTimeout(() => {
+        setLoading(false);
+        showSuccessAlert('Updated!', 'Selected email updated.');
+      }, 800);
     } catch (err: any) {
       console.error(err);
       showErrorAlert('Error!', err?.message ?? 'Failed to update selected email.');
     } finally {
       setBusyId(null);
-      // setTimeout(() => setLoading(false), 1000);
+      setTimeout(() => setLoading(false), 400);
     }
   };
 
@@ -418,15 +411,17 @@ const Content = () => {
           />
         )}
       </Box>
-      <Backdrop
-        open={loading}
-        sx={{
-          color: '#fff',
-          zIndex: (theme) => theme.zIndex.drawer + 1, // di atas drawer & dialog
-        }}
-      >
-        <CircularProgress color="primary" />
-      </Backdrop>
+      <Portal>
+        <Backdrop
+          open={loading}
+          sx={{
+            color: '#fff',
+            zIndex: (theme) => theme.zIndex.drawer + 1, // di atas drawer & dialog
+          }}
+        >
+          <CircularProgress color="primary" />
+        </Backdrop>
+      </Portal>
     </PageContainer>
   );
 };

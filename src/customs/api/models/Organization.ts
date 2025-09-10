@@ -71,7 +71,7 @@ export type CreateOrganizationRequest = z.infer<typeof CreateOrganizationSchema>
 export const CreateOrganizationSubmitSchema = CreateOrganizationSchema.extend({
   code: z.string().trim().min(1, 'Organization code is required'),
   name: z.string().trim().min(1, 'Organization name is required'),
-  host: z.string().trim().min(1, 'Head of organization is required'),
+  // host: z.string().trim().min(1, 'Head of organization is required'),
 });
 
 export type CreateOrganizationSubmitRequest = z.infer<typeof CreateOrganizationSubmitSchema>;
