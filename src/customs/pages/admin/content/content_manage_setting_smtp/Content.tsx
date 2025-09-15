@@ -60,7 +60,7 @@ const Content = () => {
   const [isDataReady, setIsDataReady] = useState(false);
   const [totalRecords, setTotalRecords] = useState(0);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(3);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -98,7 +98,7 @@ const Content = () => {
 
   const cards = [
     {
-      title: 'Total SMTP',
+      title: 'Total SMTP Provider',
       subTitle: `${smtpData.length}`,
       subTitleSetting: 10,
       icon: IconBrandGmail,
@@ -111,9 +111,10 @@ const Content = () => {
     if (!token) return;
 
     const fetchData = async () => {
+      const start = page * rowsPerPage;
       const res = await getAllPaginationSettingSmtp(
         token,
-        page,
+        start,
         rowsPerPage,
         sortColumn,
         searchKeyword,
@@ -315,7 +316,7 @@ const Content = () => {
           <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
         </Grid>
 
-        {!showForm ? (
+        {/* {!showForm ? (
           <Paper sx={{ display: 'flex', minHeight: 400, mt: 2, p: 2, overflowX: 'auto' }}>
             <Tabs
               orientation="vertical"
@@ -333,8 +334,17 @@ const Content = () => {
                 <Box sx={{ overflowX: 'auto', p: 2 }}>
                   {isDataReady ? (
                     <DynamicTable
+                      isHavePagination
+                      isHaveHeaderTitle={true}
+                      titleHeader="SMTP Provider"
                       data={smtpData}
                       selectedRows={selectedRows}
+                      defaultRowsPerPage={rowsPerPage}
+                      rowsPerPageOptions={[5, 10, 25, 50, 100]}
+                      onPaginationChange={(page, rowsPerPage) => {
+                        setPage(page);
+                        setRowsPerPage(rowsPerPage);
+                      }}
                       isHaveChecked={false}
                       isHaveAction={true}
                       isHaveSearch={false}
@@ -409,7 +419,111 @@ const Content = () => {
             onSubmit={handleSubmit}
             onCancel={handleCancelForm}
           />
-        )}
+        )} */}
+        <Paper sx={{ display: 'flex', minHeight: 400, mt: 2, p: 2, overflowX: 'auto' }}>
+          <Tabs
+            orientation="vertical"
+            value={tabIndex}
+            onChange={(_, newValue) => setTabIndex(newValue)}
+            sx={{ borderRight: 1, borderColor: 'divider', minWidth: 180 }}
+          >
+            <Tab label="SMTP Provider" />
+            <Tab label="Send A Test" />
+            <Tab label="Sender Report" />
+          </Tabs>
+
+          <Box sx={{ flex: 1 }}>
+            {/* Tab SMTP Provider */}
+            {tabIndex === 0 && (
+              <Box sx={{ overflowX: 'auto', p: 2 }}>
+                {!showForm ? (
+                  isDataReady ? (
+                    <DynamicTable
+                      isHavePagination
+                      isHaveHeaderTitle={true}
+                      titleHeader="SMTP Provider"
+                      data={smtpData}
+                      selectedRows={selectedRows}
+                      defaultRowsPerPage={rowsPerPage}
+                      rowsPerPageOptions={[5, 10, 25, 50, 100]}
+                      onPaginationChange={(page, rowsPerPage) => {
+                        setPage(page);
+                        setRowsPerPage(rowsPerPage);
+                      }}
+                      isHaveChecked={false}
+                      isHaveAction={true}
+                      isHaveSearch={false}
+                      isHaveFilter={false}
+                      isHaveExportPdf={false}
+                      isHaveAddData={true}
+                      isHaveHeader={false}
+                      onCheckedChange={setSelectedRows}
+                      onEdit={(row) => handleEdit(row.id)}
+                      onDelete={(row) => handleDelete(row.id.toString())}
+                      onSearchKeywordChange={setSearchKeyword}
+                      onAddData={handleAdd}
+                      isHaveBooleanSwitch={true}
+                      isDataVerified={true}
+                      onBooleanSwitchChange={handleBooleanSwitchChange}
+                      isHavePassword={true}
+                    />
+                  ) : (
+                    <Card sx={{ width: '100%' }}>
+                      <Skeleton />
+                      <Skeleton animation="wave" />
+                      <Skeleton animation={false} />
+                    </Card>
+                  )
+                ) : (
+                  <FormSettingSmtp
+                    formData={formData}
+                    setFormData={setFormData}
+                    editingId={edittingId}
+                    onSubmit={handleSubmit}
+                    onCancel={handleCancelForm}
+                  />
+                )}
+              </Box>
+            )}
+
+            {/* Tab Send A Test */}
+            {tabIndex === 1 && (
+              <FormSendTestEmail
+                formEmailData={formEmailData}
+                setFormEmailData={setFormEmailData}
+                smtpOptions={smtpData}
+                onSubmit={handleSubmitEmail}
+                loading={loading}
+              />
+            )}
+
+            {/* Tab Sender Report */}
+            {tabIndex === 2 && (
+              <Box sx={{ overflowX: 'auto', p: 2 }}>
+                <DynamicTable
+                  data={smtpData}
+                  selectedRows={selectedRows}
+                  isHaveChecked={false}
+                  isHaveAction={true}
+                  isHaveSearch={false}
+                  isHaveFilter={false}
+                  isHaveExportPdf={false}
+                  isHaveAddData={true}
+                  isHaveHeader={false}
+                  onCheckedChange={setSelectedRows}
+                  onEdit={(row) => handleEdit(row.id)}
+                  onDelete={(row) => handleDelete(row.id.toString())}
+                  onSearchKeywordChange={setSearchKeyword}
+                  onAddData={handleAdd}
+                  isHaveBooleanSwitch={true}
+                  isDataVerified={true}
+                  onBooleanSwitchChange={handleBooleanSwitchChange}
+                  isHavePassword={true}
+                />
+              </Box>
+            )}
+          </Box>
+        </Paper>
       </Box>
       <Portal>
         <Backdrop

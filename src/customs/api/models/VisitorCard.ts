@@ -4,7 +4,7 @@ export type Item = {
   id: string;
   remarks: string;
   name: string;
-  type: number;
+  type: string;
   card_number: string;
   card_mac: string;
   card_barcode: string;
@@ -23,6 +23,14 @@ export type Item = {
   checkout_at?: string | null;
 };
 
+export type GetAllVisitorCardResponse = {
+  status: string;
+  status_code: number;
+  title: string;
+  msg: string;
+  collection: Item[];
+};
+
 export type GetAllVisitorCardPaginationResponse = {
   RecordsTotal: number;
   RecordsFiltered: number;
@@ -38,7 +46,27 @@ export type GetAllVisitorCardPaginationResponse = {
 export const CreateVisitorCardRequestSchema = z.object({
   remarks: z.string().default(''),
   name: z.string().default(''),
-  type: z.number().default(0),
+  type: z.preprocess((val) => {
+    if (val == null) return null;
+
+    const map: Record<string, number> = {
+      'non access card': 0,
+      'rfid card': 1,
+      rfid: 1,
+      ble: 2,
+    };
+
+    if (typeof val === 'string') {
+      const lower = val.toLowerCase();
+      if (lower in map) return map[lower];
+      const parsed = Number(val);
+      return Number.isNaN(parsed) ? null : parsed;
+    }
+
+    if (typeof val === 'number') return val;
+
+    return null;
+  }, z.number().nullable()),
   card_number: z.string().default(''),
   card_mac: z.string().default(''),
   card_barcode: z.string().default(''),

@@ -25,6 +25,10 @@ export const showConfirmDelete = async (
     hideClass: {
       popup: 'animate__animated animate__fadeOutUp',
     },
+    customClass: {
+      title: 'swal2-title-custom',
+      htmlContainer: 'swal2-text-custom',
+    },
   });
 
   return result.isConfirmed;

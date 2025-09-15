@@ -1,4 +1,3 @@
-import { Create } from '@mui/icons-material';
 import { z } from 'zod';
 
 //TYPE
@@ -33,6 +32,14 @@ export type Item = {
 };
 
 //GET
+
+export type GetAllEmployeeResponse = {
+  status: string;
+  status_code: number;
+  title: string;
+  msg: string;
+  collection: Item[];
+};
 export type GetAllEmployeePaginationResponse = {
   RecordsTotal: number;
   RecordsFiltered: number;
@@ -42,6 +49,14 @@ export type GetAllEmployeePaginationResponse = {
   title: string;
   msg: string;
   collection: Item[];
+};
+
+export type GetAllEmployeeByIdResponse = {
+  status: string;
+  status_code: number;
+  title: string;
+  msg: string;
+  collection: Item | null;
 };
 
 //CREATE
@@ -70,7 +85,7 @@ export const CreateEmployeeRequestSchema = z.object({
   organization_id: z.string().default(''),
   department_id: z.string().default(''),
   district_id: z.string().default(''),
-  status_employee: z.number().default(-1),
+  // status_employee: z.number().default(-1),
 });
 
 export type CreateEmployeeRequest = z.infer<typeof CreateEmployeeRequestSchema>;

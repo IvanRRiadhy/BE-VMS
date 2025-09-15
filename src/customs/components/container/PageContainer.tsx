@@ -68,7 +68,7 @@ const PageContainer: React.FC<CustomPageContainerProps> = ({
               background: '#F4F7FA',
               p: {
                 xs: '10px',
-                md: '30px',
+                md: '20px',
               },
               width: '100%',
             }}

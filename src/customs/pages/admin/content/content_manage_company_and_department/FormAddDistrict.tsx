@@ -6,6 +6,7 @@ import {
   CircularProgress,
   Autocomplete,
   Backdrop,
+  Portal,
 } from '@mui/material';
 import { Box } from '@mui/system';
 import React, { useState, useEffect } from 'react';
@@ -169,6 +170,7 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({ formData, setFormData
         </CustomFormLabel>
         <Autocomplete
           // freeSolo
+          id="host"
           autoHighlight
           disablePortal
           options={allEmployes.map((emp: any) => ({ id: emp.id, label: emp.name }))}
@@ -202,10 +204,17 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({ formData, setFormData
             />
           )}
         />
-
-        <Button sx={{ mt: 2 }} color="primary" variant="contained" type="submit" disabled={loading}>
-          {loading ? 'Submitting...' : 'Submit'}
-        </Button>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Button
+            sx={{ mt: 2 }}
+            color="primary"
+            variant="contained"
+            type="submit"
+            disabled={loading}
+          >
+            Submit
+          </Button>
+        </Box>
       </form>
 
       <Backdrop

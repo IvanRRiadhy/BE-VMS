@@ -14,6 +14,7 @@ import {
   IconButton,
   MenuItem,
   Skeleton,
+  Autocomplete,
   RadioGroup,
   Card,
   Typography,
@@ -96,6 +97,41 @@ const Content = () => {
   const [organizationData, setOrganizationData] = useState<OptionItem[]>([]);
   const [departmentData, setDepartmentData] = useState<OptionItem[]>([]);
   const [districtData, setDistrictData] = useState<OptionItem[]>([]);
+  useEffect(() => {
+    if (!token) return;
+
+    (async () => {
+      try {
+        // ambil semua data untuk dropdown, jangan ikut page/rowsPerPage tabel
+        const [orgRes, deptRes, distRes] = await Promise.all([
+          getAllOrganizatiosPagination(token, 0, 9999, 'name', ''),
+          getAllDepartmentsPagination(token, 0, 9999, 'name', ''),
+          getAllDistrictsPagination(token, 0, 9999, 'name', ''),
+        ]);
+
+        setOrganizationData(
+          (orgRes?.collection ?? []).map((o: any) => ({
+            id: String(o.id),
+            name: o.name ?? '',
+          })),
+        );
+        setDepartmentData(
+          (deptRes?.collection ?? []).map((d: any) => ({
+            id: String(d.id),
+            name: d.name ?? '',
+          })),
+        );
+        setDistrictData(
+          (distRes?.collection ?? []).map((d: any) => ({
+            id: String(d.id),
+            name: d.name ?? '',
+          })),
+        );
+      } catch (e) {
+        console.error('Failed to fetch dropdown options:', e);
+      }
+    })();
+  }, [token]);
 
   const [filters, setFilters] = useState<Filters>({
     joinStart: '',
@@ -305,14 +341,70 @@ const Content = () => {
     handleOpenDialog();
   }, []);
 
+  const coerceEmployee = (s: any) => ({
+    ...s,
+    gender:
+      s?.gender === '' || s?.gender == null
+        ? undefined
+        : typeof s.gender === 'number'
+        ? s.gender
+        : Number(s.gender),
+    status_employee:
+      s?.status_employee === '' || s?.status_employee == null
+        ? undefined
+        : typeof s.status_employee === 'number'
+        ? s.status_employee
+        : Number(s.status_employee),
+    organization_id: String(s?.organization_id ?? ''),
+    department_id: String(s?.department_id ?? ''),
+    district_id: String(s?.district_id ?? ''),
+  });
+
   const handleEdit = (id: string) => {
-    const existingData = tableData.find((item) => item.id === id);
+    const existingData = tableData.find((item) => String(item.id) === String(id));
     if (!existingData) return;
+
+    const toNum = (
+      v: unknown,
+      map: Record<string, number> = {},
+      fallback: number | undefined = 0,
+    ) => {
+      if (v === '' || v == null) return fallback;
+      if (typeof v === 'number' && Number.isFinite(v)) return v;
+      if (typeof v === 'boolean') return v ? 1 : 0;
+      if (typeof v === 'string') {
+        const t = v.trim().toLowerCase();
+        if (t in map) return map[t];
+        const n = Number(t);
+        return Number.isFinite(n) ? n : fallback;
+      }
+      return fallback;
+    };
+
+    const coerceEmployee = (s: any) => ({
+      ...s,
+      // pastikan tidak NaN:
+      gender: toNum(s?.gender, { female: 0, male: 1, f: 0, m: 1, '0': 0, '1': 1 }, 0),
+
+      // kalau backend kirim string "Active"/"Non Active", amankan juga:
+      status_employee: toNum(
+        s?.status_employee,
+        { active: 1, 'non active': 2, nonactive: 2, inactive: 2, '0': 0, '1': 1, '2': 2 },
+        0,
+      ),
+
+      // id relasi → string
+      organization_id: String(s?.organization_id ?? ''),
+      department_id: String(s?.department_id ?? ''),
+      district_id: String(s?.district_id ?? ''),
+    });
+
+    const parseSafe = (raw: any) => CreateEmployeeRequestSchema.parse(coerceEmployee(raw));
 
     const editing = localStorage.getItem('unsavedEmployeeData');
 
     if (!editing) {
-      const parsedData = CreateEmployeeRequestSchema.parse(existingData);
+      const parsedData = parseSafe(existingData);
       setEdittingId(id);
       setFormDataAddEmployee(parsedData);
       setInitialFormData(parsedData);
@@ -324,7 +416,7 @@ const Content = () => {
     const editingData = JSON.parse(editing);
 
     if (editingData.id === id) {
-      const parsedData = CreateEmployeeRequestSchema.parse(existingData);
+      const parsedData = parseSafe(existingData);
       setEdittingId(id);
       setFormDataAddEmployee(parsedData);
       setInitialFormData(parsedData);
@@ -639,13 +731,13 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
   };
 
   const initialFilters: Filters = {
-    gender: 0,
+    gender: -1,
     organization: '',
     department: '',
     district: '',
     joinStart: '',
     exitEnd: '',
-    statusEmployee: 0,
+    statusEmployee: -1,
   };
 
   return (
@@ -653,7 +745,7 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
       sx={{ padding: { xs: 0, lg: 3 }, margin: 1.5, boxShadow: 0, borderRadius: 2 }}
       onKeyDown={handleKeyDown}
     >
-      <Typography variant="h6" gutterBottom>
+      <Typography variant="h5" gutterBottom>
         Employee Filter
       </Typography>
 
@@ -677,40 +769,6 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
             onChange={handleChange}
           />
         </Grid2>
-        {/* <Grid2 size={{ xs: 12, sm: 6 }}>
-          <CustomFormLabel htmlFor="joinEnd">
-            <Typography variant="caption">Join End :</Typography>
-          </CustomFormLabel>
-          <CustomTextField
-            InputProps={{
-              sx: {
-                fontSize: '0.7rem', // atau 12px
-              },
-            }}
-            id="joinEnd"
-            type="date"
-            fullWidth
-            variant="outlined"
-          />
-        </Grid2> */}
-
-        {/* Exit Dates */}
-        {/* <Grid2 size={{ xs: 12, sm: 6 }}>
-          <CustomFormLabel htmlFor="exitStart">
-            <Typography variant="caption">Exit Start :</Typography>
-          </CustomFormLabel>
-          <CustomTextField
-            InputProps={{
-              sx: {
-                fontSize: '0.7rem', // atau 12px
-              },
-            }}
-            id="exitStart"
-            type="date"
-            fullWidth
-            variant="outlined"
-          />
-        </Grid2> */}
         <Grid2 size={{ xs: 12, sm: 6 }}>
           <CustomFormLabel htmlFor="exitEnd">
             <Typography variant="caption">Exit End</Typography>
@@ -732,121 +790,99 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
 
         {/* Dropdown Fields */}
         <Grid2 size={{ xs: 12, sm: 4 }}>
-          <CustomFormLabel htmlFor="organization">
+          <CustomFormLabel htmlFor="organization" sx={{ mt: 0 }}>
             <Typography variant="caption">Organization</Typography>
           </CustomFormLabel>
-          <CustomTextField
-            id="organization"
-            select
-            value={filters.organization}
-            onChange={(e: any) =>
-              setFilters((prev) => ({
-                ...prev,
-                organization: e.target.value,
-              }))
-            }
-            fullWidth
-            InputProps={{
-              sx: {
-                fontSize: '0.7rem', // atau 12px
-              },
-            }}
-          >
-            <MenuItem value="">
-              <Typography>None</Typography>
-            </MenuItem>
 
-            {organizationData.map((org) => (
-              <MenuItem key={org.id} value={org.id}>
-                {org.name ?? 'Unknown'}
-              </MenuItem>
-            ))}
-          </CustomTextField>
+          <Autocomplete
+            id="organization"
+            options={organizationData} // [{ id, name }]
+            value={organizationData.find((o) => o.id === filters.organization) || null}
+            onChange={(_, val) =>
+              setFilters((prev) => ({ ...prev, organization: val ? val.id : '' }))
+            }
+            isOptionEqualToValue={(opt, val) => opt.id === val.id}
+            getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt?.name ?? '')}
+            clearOnEscape
+            renderInput={(params) => (
+              <CustomTextField
+                {...params}
+                placeholder="Select organization"
+                variant="outlined"
+                InputProps={{ ...params.InputProps, sx: { fontSize: '0.7rem' } }}
+              />
+            )}
+          />
         </Grid2>
+
+        {/* Department */}
         <Grid2 size={{ xs: 12, sm: 4 }}>
-          <CustomFormLabel htmlFor="department">
+          <CustomFormLabel htmlFor="department" sx={{ mt: 0 }}>
             <Typography variant="caption">Department</Typography>
           </CustomFormLabel>
-          <CustomTextField
-            InputProps={{
-              sx: {
-                fontSize: '0.7rem', // atau 12px
-              },
-            }}
-            id="departmentData"
-            name="departmentData"
-            select
-            fullWidth
-            variant="outlined"
-            defaultValue=""
-            value={filters.department}
-            onChange={(e: any) =>
-              setFilters((prev) => ({
-                ...prev,
-                department: e.target.value,
-              }))
+
+          <Autocomplete
+            id="department"
+            options={departmentData}
+            value={departmentData.find((o) => o.id === filters.department) || null}
+            onChange={(_, val) =>
+              setFilters((prev) => ({ ...prev, department: val ? val.id : '' }))
             }
-          >
-            <MenuItem value="">
-              <Typography>None</Typography>
-            </MenuItem>
-            {departmentData.map((org) => (
-              <MenuItem key={org.id} value={org.id}>
-                {org.name ?? 'Unknown'}
-              </MenuItem>
-            ))}
-          </CustomTextField>
+            isOptionEqualToValue={(opt, val) => opt.id === val.id}
+            getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt?.name ?? '')}
+            clearOnEscape
+            renderInput={(params) => (
+              <CustomTextField
+                {...params}
+                placeholder="Select department"
+                variant="outlined"
+                InputProps={{ ...params.InputProps, sx: { fontSize: '0.7rem' } }}
+              />
+            )}
+          />
         </Grid2>
+
+        {/* District */}
         <Grid2 size={{ xs: 12, sm: 4 }}>
-          <CustomFormLabel htmlFor="district">
+          <CustomFormLabel htmlFor="district" sx={{ mt: 0 }}>
             <Typography variant="caption">District</Typography>
           </CustomFormLabel>
-          <CustomTextField
-            InputProps={{
-              sx: {
-                fontSize: '0.7rem', // atau 12px
-              },
-            }}
+
+          <Autocomplete
             id="district"
-            select
-            fullWidth
-            variant="outlined"
-            defaultValue=""
-            value={filters.district}
-            onChange={(e: any) =>
-              setFilters((prev) => ({
-                ...prev,
-                district: e.target.value,
-              }))
-            }
-          >
-            <MenuItem value="">
-              <Typography>None</Typography>
-            </MenuItem>
-            {districtData.map((org) => (
-              <MenuItem key={org.id} value={org.id}>
-                {org.name ?? 'Unknown'}
-              </MenuItem>
-            ))}
-          </CustomTextField>
+            options={districtData}
+            value={districtData.find((o) => o.id === filters.district) || null}
+            onChange={(_, val) => setFilters((prev) => ({ ...prev, district: val ? val.id : '' }))}
+            isOptionEqualToValue={(opt, val) => opt.id === val.id}
+            getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt?.name ?? '')}
+            clearOnEscape
+            renderInput={(params) => (
+              <CustomTextField
+                {...params}
+                placeholder="Select district"
+                variant="outlined"
+                InputProps={{ ...params.InputProps, sx: { fontSize: '0.7rem' } }}
+              />
+            )}
+          />
         </Grid2>
 
         {/* Gender Radio Buttons */}
         <Grid2 size={{ xs: 12, sm: 6 }}>
-          <CustomFormLabel>
+          <CustomFormLabel sx={{ marginTop: '0px' }}>
             <Typography variant="caption">Gender</Typography>
           </CustomFormLabel>
           <FormControl>
             <RadioGroup row name="gender" value={String(filters.gender)} onChange={handleChange}>
               <FormControlLabel
                 sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
-                value="female"
+                value="0"
                 control={<CustomRadio />}
                 label="Female"
               />
               <FormControlLabel
                 sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
-                value="male"
+                value="1"
                 control={<CustomRadio />}
                 label="Male"
               />
@@ -856,7 +892,7 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
 
         {/* Status Radio Buttons */}
         <Grid2 size={{ xs: 12, sm: 6 }}>
-          <CustomFormLabel>
+          <CustomFormLabel sx={{ marginTop: '0px' }}>
             <Typography variant="caption">Status Employee</Typography>
           </CustomFormLabel>
           <FormControl>

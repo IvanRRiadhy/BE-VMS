@@ -1,3 +1,4 @@
+import { de } from 'date-fns/locale';
 //#region IMPORT
 import axios from 'axios';
 import {
@@ -13,7 +14,9 @@ import {
   CreateOrganizationRequest,
   CreateOrganizationResponse,
   DeleteOrganizationResponse,
-  GetAllOrgaizationsPaginationResponse,
+  GetAllOrganizationById,
+  GetAllOrganizationPaginationResponse,
+  GetAllOrganizationResponse,
   UpdateOrganizationRequest,
   UpdateOrganizationResponse,
 } from './models/Organization';
@@ -35,6 +38,8 @@ import {
   UpdateEmployeeResponse,
   DeleteEmployeeResponse,
   UploadImageEmployeeResponse,
+  GetAllEmployeeResponse,
+  GetAllEmployeeByIdResponse,
 } from './models/Employee';
 import {
   CreateDocumentRequest,
@@ -195,6 +200,7 @@ import {
 import {
   CreateVisitorCardRequest,
   GetAllVisitorCardPaginationResponse,
+  GetAllVisitorCardResponse,
   UpdateVisitorCardRequest,
   UpdateVisitorCardResponse,
 } from './models/VisitorCard';
@@ -209,13 +215,93 @@ import {
   UpdateSettingSmtpRequest,
   UpdateSettingSmtpResponse,
 } from './models/SettingSmtp';
+import {
+  CreateTimezoneRequest,
+  CreateTimezoneResponse,
+  DeleteTimezoneResponse,
+  GetAllTimezonePaginationResponse,
+  GetAllTimezoneResponse,
+  GetTimezoneByIdResponse,
+  UpdateTimezoneRequest,
+  UpdateTimezoneResponse,
+} from './models/Timezone';
 
 //#endregion
 
-//#region Visitor Card
-export const getAllVisitorCard = async (
+//#region Timezone
+
+export const getAllTimezone = async (token: string): Promise<GetAllTimezoneResponse> => {
+  const response = await axiosInstance.get('/time-access', {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+export const getAllTimezonePagination = async (
   token: string,
-): Promise<GetAllVisitorCardPaginationResponse> => {
+  start: number,
+  length: number,
+  sortColumn: string,
+  keyword: string = '',
+): Promise<GetAllTimezonePaginationResponse> => {
+  const params: Record<string, any> = {
+    start,
+    length,
+    sort_column: sortColumn,
+    'search[value]': keyword,
+  };
+  const response = await axiosInstance.get('/time-access/dt', {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    params,
+  });
+  return response.data;
+};
+
+export const getTimezoneById = async (
+  token: string,
+  id: string,
+): Promise<GetTimezoneByIdResponse> => {
+  const response = await axiosInstance.get(`/time-access/${id}`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+export const createTimezone = async (
+  token: string,
+  data: CreateTimezoneRequest,
+): Promise<CreateTimezoneResponse> => {
+  const response = await axiosInstance.post('/time-access', data, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+export const updateTimezone = async (
+  token: string,
+  id: string,
+  data: UpdateTimezoneRequest,
+): Promise<UpdateTimezoneResponse> => {
+  const response = await axiosInstance.put(`/time-access/${id}`, data, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+export const deleteTimezone = async (
+  token: string,
+  id: string,
+): Promise<DeleteTimezoneResponse> => {
+  const response = await axiosInstance.delete(`/time-access/${id}`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+//#endregion
+
+//#region Card
+export const getAllVisitorCard = async (token: string): Promise<GetAllVisitorCardResponse> => {
   const response = await axiosInstance.get('/card', {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });
@@ -481,6 +567,7 @@ export const getAllDistrictsPagination = async (
   start: number,
   length: number,
   sortColumn: string,
+  // sortDir?: string,
   keyword: string = '',
 ): Promise<GetAllDistrictsPaginationResponse> => {
   const response = await axiosInstance.get(`/district/dt`, {
@@ -488,6 +575,7 @@ export const getAllDistrictsPagination = async (
       start,
       length,
       sort_column: sortColumn,
+      // sort_dir: sortDir,
       'search[value]': keyword, // ← ini yang bikin search jalan
     },
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
@@ -564,6 +652,7 @@ export const getAllDepartmentsPagination = async (
   start: number,
   length: number,
   sortColumn: string,
+  // sortDir?: string,
   keyword: string = '',
 ): Promise<GetAllDepartmetsPaginationResponse> => {
   const response = await axiosInstance.get(`/department/dt`, {
@@ -575,8 +664,8 @@ export const getAllDepartmentsPagination = async (
 
 // get by id department
 
-export const getDepartmentById = async (departmentId: string, token: string) => {
-  const response = await axiosInstance.get(`/department/${departmentId}`, {
+export const getDepartmentById = async (id: string, token: string) => {
+  const response = await axiosInstance.get(`/department/${id}`, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });
   return response.data;
@@ -627,9 +716,7 @@ export const createDepartment = async (
 //#endregion
 
 //#region Organization API
-export const getAllOrganizations = async (
-  token: string,
-): Promise<GetAllOrgaizationsPaginationResponse> => {
+export const getAllOrganizations = async (token: string): Promise<GetAllOrganizationResponse> => {
   const response = await axiosInstance.get(`/organization`, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });
@@ -640,8 +727,9 @@ export const getAllOrganizatiosPagination = async (
   start: number,
   length: number,
   sortColumn: string,
+  // sortDir?: string,
   keyword: string = '',
-): Promise<GetAllOrgaizationsPaginationResponse> => {
+): Promise<GetAllOrganizationPaginationResponse> => {
   const response = await axiosInstance.get(`/organization/dt`, {
     params: { start, length, sort_column: sortColumn, 'search[value]': keyword },
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
@@ -650,8 +738,11 @@ export const getAllOrganizatiosPagination = async (
 };
 
 // get by id organization
-export const getOrganizationById = async (organizationId: string, token: string) => {
-  const response = await axiosInstance.get(`/organization/${organizationId}`, {
+export const getOrganizationById = async (
+  id: string,
+  token: string,
+): Promise<GetAllOrganizationById> => {
+  const response = await axiosInstance.get(`/organization/${id}`, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });
   return response.data;
@@ -770,7 +861,7 @@ export const deleteDocument = async (
 
 //#region Employee API
 
-export const getAllEmployee = async (token: string): Promise<GetAllEmployeePaginationResponse> => {
+export const getAllEmployee = async (token: string): Promise<GetAllEmployeeResponse> => {
   const response = await axiosInstance.get(`/employee`, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });
@@ -780,7 +871,7 @@ export const getAllEmployee = async (token: string): Promise<GetAllEmployeePagin
 export const getEmployeeById = async (
   id: string,
   token: string,
-): Promise<GetAllEmployeePaginationResponse> => {
+): Promise<GetAllEmployeeByIdResponse> => {
   const response = await axiosInstance.get(`/employee/${id}`, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });
@@ -1037,6 +1128,7 @@ export const uploadImageSite = async (
   }
 };
 
+//#region Site Document
 export const getAllSiteDocument = async (token: string): Promise<GetAllSiteDocumentResponse> => {
   try {
     const response = await axiosInstance.get(`/site-document`, {
@@ -1287,7 +1379,7 @@ export const updateIntegration = async (
   }
 };
 
-//#region  sHoneywell
+//#region Honeywell
 // get companies
 export const getCompanies = async (
   integrationId: string,
@@ -1740,7 +1832,7 @@ export const updateCardTracking = async (
   }
 };
 
-// Alarm Record
+//#region Alarm Record
 
 export const getAlarmTracking = async (
   integrationId: string,
@@ -2492,7 +2584,7 @@ export const updateVisitorTracking = async (
   }
 };
 
-// Visitor Blacklist
+//# Visitor Blacklist
 
 export const getVisitorBlacklist = async (
   integrationId: string,

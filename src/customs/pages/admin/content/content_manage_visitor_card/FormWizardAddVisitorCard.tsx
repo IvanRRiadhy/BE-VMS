@@ -184,6 +184,7 @@ const FormWizardAddVisitorCard = ({
                 ...updatedFields,
                 is_employee_used: updatedFields.is_employee_used ?? row.is_employee_used,
                 employee_id: updatedFields.employee_id ?? row.employee_id,
+                type: Number(updatedFields.type) || row.type, // explicitly cast to number
               } as UpdateVisitorCardRequest;
               console.log('📤 Updating card ID:', row.id, updatedData);
               await updateVisitorCard(token as string, row.id, updatedData);
@@ -208,8 +209,9 @@ const FormWizardAddVisitorCard = ({
       const data: CreateVisitorCardRequest = CreateVisitorCardRequestSchema.parse(formData);
 
       if (edittingId !== '' && edittingId !== undefined) {
-        const updatedData = {
+        const updatedData: UpdateVisitorCardRequest = {
           ...data,
+          type: Number(data.type), // cast the type to number
         } as UpdateVisitorCardRequest;
         await updateVisitorCard(token as string, edittingId, updatedData);
         setAlertType('success');
@@ -245,12 +247,12 @@ const FormWizardAddVisitorCard = ({
       setLoading(false);
     }
   };
-  const handleChanges = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChanges = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     const numericFields = ['type', 'card_status'];
     setFormData((prev) => ({
       ...prev,
-      [name]: numericFields.includes(name) ? parseInt(value) : value,
+      [name]: numericFields.includes(name) ? (value === '' ? null : Number(value)) : value,
     }));
   };
 
@@ -636,12 +638,12 @@ const FormWizardAddVisitorCard = ({
                 </Button>
               ) : (
                 <Button
-                  color="success"
+                  color="primary"
                   variant="contained"
                   onClick={handleOnSubmit}
                   disabled={loading || activeStep !== steps.length - 1}
                 >
-                  {loading ? 'Submitting...' : 'Submit'}
+                  Submit
                 </Button>
               )}
             </Box>

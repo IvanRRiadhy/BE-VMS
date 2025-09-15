@@ -1,6 +1,7 @@
 import React from 'react';
 import AsyncSelect from 'react-select/async';
 import { getAllVisitor } from 'src/customs/api/admin';
+import axiosInstance, { axiosInstance2 } from 'src/customs/api/interceptor';
 
 type Visitor = {
   id: string;
@@ -8,7 +9,8 @@ type Visitor = {
   identity_id: string;
   name: string;
   email: string;
-  gender: number;
+  organization: string;
+  gender: string;
   address: string;
   phone: string;
   is_vip: boolean;
@@ -40,11 +42,13 @@ const getFaceImageUrl = (employee_id: string | null) => {
 };
 
 const VisitorSelect: React.FC<Props> = ({ onSelect, token }) => {
+  const BASE_URL = axiosInstance.defaults.baseURL;
+  const BASE_URL2 = axiosInstance2.defaults.baseURL;
   const loadOptions = async (inputValue: string): Promise<OptionType[]> => {
     if (inputValue.length < 3) return [];
 
     try {
-      const res = await fetch(`http://192.168.1.116:8000/api/visitor?search=${inputValue}`, {
+      const res = await fetch(`${BASE_URL}/visitor?search=${inputValue}`, {
         headers: {
           Authorization: `Bearer ${token}`,
           Accept: 'application/json',
@@ -72,15 +76,12 @@ const VisitorSelect: React.FC<Props> = ({ onSelect, token }) => {
 
           if (visitor.employee_id) {
             try {
-              const empRes = await fetch(
-                `http://192.168.1.116:8000/api/employee/${visitor.employee_id}`,
-                {
-                  headers: {
-                    Authorization: `Bearer ${token}`,
-                    Accept: 'application/json',
-                  },
+              const empRes = await fetch(`${BASE_URL}/employee/${visitor.employee_id}`, {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  Accept: 'application/json',
                 },
-              );
+              });
 
               console.log('empRes:', empRes);
 
@@ -88,9 +89,7 @@ const VisitorSelect: React.FC<Props> = ({ onSelect, token }) => {
                 const empJson = await empRes.json();
                 const faceimagePath = empJson.collection?.faceimage;
 
-                faceimage = faceimagePath
-                  ? `http://192.168.1.116:8000/cdn${faceimagePath}`
-                  : faceimage;
+                faceimage = faceimagePath ? `${BASE_URL2}/cdn${faceimagePath}` : faceimage;
               } else {
                 console.warn('Gagal ambil data emp:', empRes.status);
               }
@@ -131,9 +130,9 @@ const VisitorSelect: React.FC<Props> = ({ onSelect, token }) => {
         style={{ width: 40, height: 40, borderRadius: '50%' }}
       />
       <div>
-        <div style={{ fontWeight: 600 }}>{data.name}</div>
-        <div style={{ fontSize: 12 }}>{data.email}</div>
-        <div style={{ fontSize: 12 }}>{data.phone}</div>
+        <div style={{ fontWeight: 600 }}>{data.name ?? ''}</div>
+        <div style={{ fontSize: 12 }}>{data.email ?? ''}</div>
+        <div style={{ fontSize: 12 }}>{data.phone ?? ''}</div>
       </div>
     </div>
   );
@@ -143,7 +142,11 @@ const VisitorSelect: React.FC<Props> = ({ onSelect, token }) => {
       cacheOptions
       defaultOptions={false}
       loadOptions={loadOptions}
-      onChange={(selectedOption) => selectedOption && onSelect(selectedOption.data)}
+      onChange={(selectedOption) => {
+        if (selectedOption) {
+          onSelect(selectedOption.data);
+        }
+      }} 
       placeholder="Cari Visitor..."
       noOptionsMessage={() => 'Visitor tidak ditemukan'}
       formatOptionLabel={formatOptionLabel}

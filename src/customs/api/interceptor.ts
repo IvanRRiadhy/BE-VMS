@@ -1,14 +1,14 @@
 import axios from 'axios';
 
 const axiosInstance = axios.create({
-  baseURL: `http://${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api`,
+  baseURL: `https://biovms-net.piranticerdasindonesia.com/api`,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
 const axiosInstance2 = axios.create({
-  baseURL: `http://${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}`,
+  baseURL: `https://biovms-net.piranticerdasindonesia.com`,
   headers: {
     'Content-Type': 'application/json',
   },

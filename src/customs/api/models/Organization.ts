@@ -46,8 +46,16 @@ export type DeleteOrganizationResponse<T = any> = {
   collection: T | null;
 };
 
+// GET ALL
+export type GetAllOrganizationResponse = {
+  status: string;
+  status_code: number;
+  title: string;
+  msg: string;
+  collection: Item[];
+};
 
-export type GetAllOrgaizationsPaginationResponse = {
+export type GetAllOrganizationPaginationResponse = {
   RecordsTotal: number;
   RecordsFiltered: number;
   Draw: number;
@@ -56,6 +64,14 @@ export type GetAllOrgaizationsPaginationResponse = {
   title: string;
   msg: string;
   collection: Item[];
+};
+
+export type GetAllOrganizationById = {
+  status: string;
+  status_code: number;
+  title: string;
+  msg: string;
+  collection: Item;
 };
 
 // CREATE
@@ -71,7 +87,7 @@ export type CreateOrganizationRequest = z.infer<typeof CreateOrganizationSchema>
 export const CreateOrganizationSubmitSchema = CreateOrganizationSchema.extend({
   code: z.string().trim().min(1, 'Organization code is required'),
   name: z.string().trim().min(1, 'Organization name is required'),
-  // host: z.string().trim().min(1, 'Head of organization is required'),
+  host: z.string().trim().min(1, 'Head of organization is required'),
 });
 
 export type CreateOrganizationSubmitRequest = z.infer<typeof CreateOrganizationSubmitSchema>;

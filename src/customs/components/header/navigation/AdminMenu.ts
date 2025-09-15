@@ -19,6 +19,8 @@ import {
   IconAccessible,
   IconBrandMedium,
   IconMailFilled,
+  IconIdBadge2,
+  IconCalendarCheck,
 } from '@tabler/icons-react';
 import { uniqueId } from 'lodash';
 import { ItemDataCustomNavListing } from './CustomNavListing';
@@ -44,7 +46,7 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
         id: uniqueId(),
         title: 'Company & Department',
         icon: IconBuildingSkyscraper,
-        href: '/admin/manage/companys&deparments',
+        href: '/admin/manage/companys-deparments',
       },
       {
         id: uniqueId(),
@@ -62,7 +64,19 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
         id: uniqueId(),
         title: 'Card',
         icon: IconCards,
-        href: '/admin/manage/visitor-card',
+        href: '/admin/manage/card',
+      },
+      // {
+      //   id: uniqueId(),
+      //   title: 'Group Card Access',
+      //   icon: IconIdBadge2,
+      //   href: '/admin/manage/group-card-access',
+      // },
+      {
+        id: uniqueId(),
+        title: 'Timezone',
+        icon: IconCalendarCheck,
+        href: '/admin/manage/timezone',
       },
       {
         id: uniqueId(),
@@ -188,7 +202,7 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
         id: uniqueId(),
         title: 'Company & Department',
         icon: IconBuildingSkyscraper,
-        href: '/admin/manage/companys&deparments',
+        href: '/admin/manage/companys-deparments',
       },
       {
         id: uniqueId(),
@@ -206,7 +220,19 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
         id: uniqueId(),
         title: 'Card',
         icon: IconCards,
-        href: '/admin/manage/visitor-card',
+        href: '/admin/manage/card',
+      },
+      // {
+      //   id: uniqueId(),
+      //   title: 'Group Card Access',
+      //   icon: IconIdBadge2,
+      //   href: '/admin/manage/group-card-access',
+      // },
+      {
+        id: uniqueId(),
+        title: 'Timezone',
+        icon: IconCalendarCheck,
+        href: '/admin/manage/timezone',
       },
       {
         id: uniqueId(),

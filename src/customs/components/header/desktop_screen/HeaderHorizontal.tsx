@@ -68,7 +68,7 @@ const HeaderHorizontal = () => {
         {/* Kanan: Mode, Notifikasi, Profile */}
         <Stack spacing={1} direction="row" alignItems="center">
           <Notifications />
-          <Language/>
+          <Language />
           <Profile />
         </Stack>
       </ToolbarStyled>

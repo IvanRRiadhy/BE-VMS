@@ -265,7 +265,18 @@ const Content = () => {
   };
   const handleAdd = () => {
     const saved = localStorage.getItem('unsavedVisitorData');
-    const freshForm = saved ? JSON.parse(saved) : defaultFormData;
+    let freshForm;
+
+    if (saved) {
+      try {
+        freshForm = JSON.parse(saved);
+      } catch {
+        freshForm = CreateVisitorRequestSchema.parse({});
+      }
+    } else {
+      // <── penting: pakai parse baru, bukan defaultFormData state lama
+      freshForm = CreateVisitorRequestSchema.parse({});
+    }
 
     setEdittingId('');
     setFormDataAddVisitor(freshForm);
@@ -295,11 +306,14 @@ const Content = () => {
     setPendingEditId(null);
   };
 
-  const confirmDiscardAndClose = () => {
-    // buang draft dan tutup Add
+  const resetFormData = () => {
     localStorage.removeItem('unsavedVisitorData');
     setFormDataAddVisitor(defaultFormData);
     setEdittingId('');
+  };
+
+  const confirmDiscardAndClose = () => {
+    resetFormData();
     setOpenDialog(false);
     setOpenDialogIndex(null);
     setConfirmDialogOpen(false);
@@ -443,7 +457,7 @@ const Content = () => {
               <TopCard
                 cardMarginBottom={1}
                 items={cards}
-                onImageClick={(item, index) => {
+                onImageClick={(_, index) => {
                   setOpenDialogIndex(index);
                 }}
                 size={{ xs: 12, lg: 3 }}
@@ -469,7 +483,7 @@ const Content = () => {
                   isHaveImage={true}
                   isHaveSearch={true}
                   isHaveFilter={true}
-                  isHaveExportPdf={true}
+                  isHaveExportPdf={false}
                   isHaveExportXlf={false}
                   isHaveFilterDuration={true}
                   isHaveVip={true}
@@ -491,7 +505,6 @@ const Content = () => {
                     items: [
                       { name: 'all' },
                       { name: 'pre registration' },
-                      // { name: 'district' },
                       { name: 'checkin' },
                       { name: 'checkout' },
                       { name: 'denied' },
@@ -506,7 +519,7 @@ const Content = () => {
                   onView={(row) => {
                     handleView(row.id);
                   }}
-                  onSearchKeywordChange={(keyword) => console.log('Search keyword:', keyword)}
+                  onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
                   onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
                   onAddData={() => {
                     handleAdd();
@@ -533,7 +546,14 @@ const Content = () => {
       </PageContainer>
       {/* Add Pre registration */}
       <Dialog fullWidth maxWidth="xl" open={openDialogIndex === 3} onClose={handleDialogClose}>
-        <DialogTitle display="flex" justifyContent={'space-between'} alignItems="center">
+        <DialogTitle
+          display="flex"
+          justifyContent={'space-between'}
+          alignItems="center"
+          sx={{
+            background: 'linear-gradient(135deg, rgba(2,132,199,0.05), rgba(99,102,241,0.08))',
+          }}
+        >
           Add Pra Registration
           <IconButton aria-label="close" onClick={handleDialogClose}>
             <CloseIcon />
@@ -824,8 +844,15 @@ const Content = () => {
         onClose={handleDialogClose}
         keepMounted
       >
-        <DialogTitle display="flex" justifyContent={'space-between'} alignItems="center">
-          Add New Visitor
+        <DialogTitle
+          display="flex"
+          justifyContent={'space-between'}
+          alignItems="center"
+          sx={{
+            background: 'linear-gradient(135deg, rgba(2,132,199,0.05), rgba(99,102,241,0.08))',
+          }}
+        >
+          Add Invitation Visitor
           <IconButton
             aria-label="close"
             onClick={() => {
@@ -1368,12 +1395,11 @@ const Content = () => {
       </Dialog>
 
       {/* Unsaved Changes */}
-      <Dialog open={confirmDialogOpen} onClose={handleCancelDiscard}>
+      <Dialog open={confirmDialogOpen} onClose={handleCancelDiscard} fullWidth maxWidth="sm">
         <DialogTitle>Unsaved Changes</DialogTitle>
+
         <DialogContent>
-          {discardMode === 'edit'
-            ? 'You have unsaved changes. Discard them and continue editing the selected record?'
-            : 'You have unsaved changes. Discard them and close this form?'}
+          <Typography>Are you sure you want to discard your changes?</Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCancelDiscard}>Cancel</Button>
@@ -1386,14 +1412,14 @@ const Content = () => {
           </Button>
         </DialogActions>
       </Dialog>
-      <Portal>
+      {/* <Portal>
         <Backdrop
           sx={{ color: 'primary', zIndex: (theme) => theme.zIndex.drawer + 1 }}
           open={loading}
         >
-          <CircularProgress color="inherit" />
+          <CircularProgress color="primary" />
         </Backdrop>
-      </Portal>
+      </Portal> */}
     </>
   );
 };

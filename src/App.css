@@ -70,3 +70,13 @@ div[style*='border-color: transparent rgb(239, 68, 68) rgb(239, 68, 68) transpar
 div[style*='border: 2px dashed rgba(239, 68, 68'] {
   border: white !important;
 }
+
+.swal2-title-custom {
+  font-size: 18px !important;
+  line-height: 1.4 !important;
+}
+
+.swal2-text-custom {
+  font-size: 16px !important;
+  line-height: 1.5 !important;
+}

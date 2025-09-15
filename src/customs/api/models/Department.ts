@@ -70,7 +70,7 @@ export type CreateDepartmentRequest = z.infer<typeof CreateDepartmentSchema>;
 export const CreateDepartementSubmitSchema = CreateDepartmentSchema.extend({
   code: z.string().trim().min(1, 'Department code is required'),
   name: z.string().trim().min(1, 'Department name is required'),
-  // host: z.string().trim().min(1, 'Head of department is required'),
+  host: z.string().trim().min(1, 'Head of department is required'),
 });
 export type CreateDepartementSubmitRequest = z.infer<typeof CreateDepartementSubmitSchema>;
 export interface CreateDepartmentResponse {

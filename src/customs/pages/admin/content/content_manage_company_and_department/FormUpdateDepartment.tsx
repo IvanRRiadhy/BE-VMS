@@ -9,6 +9,7 @@ import {
   MenuItem,
   Switch,
   Backdrop,
+  Portal,
 } from '@mui/material';
 import { Box } from '@mui/system';
 import React, { useEffect, useState } from 'react';
@@ -374,14 +375,16 @@ const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({
           )}
         />
 
-        <Button sx={{ mt: 2 }} color="primary" variant="contained" type="submit">
-          {loading ? 'Submitting...' : 'Submit'}
-        </Button>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Button sx={{ mt: 2 }} color="primary" variant="contained" type="submit">
+            Submit
+          </Button>
+        </Box>
       </form>
       <Backdrop
         open={loading}
         sx={{
-          color: '#fff',
+          color: 'primary',
           zIndex: (theme) => theme.zIndex.drawer + 1, // di atas drawer & dialog
         }}
       >

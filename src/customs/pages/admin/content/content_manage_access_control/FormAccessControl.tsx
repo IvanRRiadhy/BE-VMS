@@ -4,9 +4,7 @@ import {
   Alert,
   Typography,
   CircularProgress,
-  FormControlLabel,
-  Switch,
-  Paper,
+  Autocomplete,
   Button as MuiButton,
   Backdrop,
   MenuItem,
@@ -16,7 +14,6 @@ import React, { useEffect, useState, useRef } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { IconTrash } from '@tabler/icons-react';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import {
   CreateAccessControlRequest,
@@ -29,12 +26,10 @@ import {
   getAllAccessControlPagination,
   getAllBrand,
   getAllIntegration,
-  getAvailableIntegration,
   updateAccessControl,
 } from 'src/customs/api/admin';
 import { AccessControlType } from 'src/customs/api/models/AccessControl';
 import { Item as BrandItem } from 'src/customs/api/models/Brand';
-import { AvailableItem as AvailableItem } from 'src/customs/api/models/Integration';
 import { Item as Integrationitem } from 'src/customs/api/models/Integration';
 type AccessControlFormData = {
   brand_id: string;
@@ -81,7 +76,6 @@ const FormAccessControl = ({
       }));
     }
   };
-  const [accessList, setAccessList] = useState<CreateAccessControlRequest[]>([]);
   const [brandList, setBrandList] = useState<BrandItem[]>([]);
   const [integrationList, setIntegrationList] = useState<Integrationitem[]>([]);
 
@@ -103,9 +97,9 @@ const FormAccessControl = ({
           const target = accessRes?.collection.find((item) => item.id === editingId);
           if (target) {
             setFormData({
-              brand_id: target.brand_id,
-              integration_id: target.integration_id,
-              type: target.type,
+              brand_id: String(target.brand_id),
+              integration_id: String(target.integration_id),
+              type: Number(target.type),
               name: target.name,
               description: target.description,
               channel: target.channel,
@@ -118,7 +112,7 @@ const FormAccessControl = ({
           setFormData({
             brand_id: '',
             integration_id: '',
-            type: 0,
+            type: -1,
             name: '',
             description: '',
             channel: '',
@@ -165,7 +159,7 @@ const FormAccessControl = ({
           editingId ? 'Custom field successfully updated!' : 'Custom field successfully created!',
         );
       }
-      localStorage.removeItem('unsavedIntegrationData');
+      localStorage.removeItem('unsavedAccessControl');
       setAlertType('success');
 
       setTimeout(() => {
@@ -206,7 +200,7 @@ const FormAccessControl = ({
             <Typography variant="h6" sx={{ my: 2, borderLeft: '4px solid #673ab7', pl: 1 }}>
               Access Control Details
             </Typography>
-            <CustomFormLabel htmlFor="access_control_name">Access Control Name</CustomFormLabel>
+            <CustomFormLabel htmlFor="access_control_name">Name</CustomFormLabel>
             <CustomTextField
               id="name"
               value={formData.name}
@@ -259,52 +253,79 @@ const FormAccessControl = ({
             </Typography>
             <CustomFormLabel htmlFor="brand-name">Brand Name</CustomFormLabel>
 
-            <CustomSelect
+            <Autocomplete
               id="brand_id"
-              name="brand_id"
-              value={formData.brand_id || ''}
-              onChange={handleChange}
-              error={!!errors.brand_id}
-              helperText={errors.brand_id || ''}
-              fullWidth
-              required
-            >
-              {brandList.map((brand) => (
-                <MenuItem key={brand.id} value={brand.id}>
-                  {brand.name}
-                </MenuItem>
-              ))}
-            </CustomSelect>
+              options={brandList}
+              getOptionLabel={(option) => option.name}
+              value={
+                brandList.find((brand) => String(brand.id) === String(formData.brand_id)) || null
+              }
+              onChange={(e, newValue) => {
+                handleChange({
+                  target: {
+                    id: 'brand_id',
+                    name: 'brand_id',
+                    value: newValue ? String(newValue.id) : '', // konsisten string
+                  },
+                } as any);
+              }}
+              renderInput={(params) => (
+                <CustomTextField
+                  {...params}
+                  label=""
+                  required
+                  error={!!errors.brand_id}
+                  helperText={errors.brand_id || ''}
+                  fullWidth
+                />
+              )}
+            />
             <CustomFormLabel htmlFor="integration-name">Integration Name</CustomFormLabel>
-            <CustomSelect
+            <Autocomplete
               id="integration_id"
-              name="integration_id"
-              value={formData.integration_id}
-              onChange={handleChange}
-              error={!!errors.integration_id}
-              helperText={errors.integration_id || ''}
-              fullWidth
-              required
-            >
-              {integrationList.map((integration) => (
-                <MenuItem key={integration.id} value={integration.id}>
-                  {integration.name}
-                </MenuItem>
-              ))}
-            </CustomSelect>
-            <CustomFormLabel htmlFor="access_control_type">Access Control type</CustomFormLabel>
+              options={integrationList}
+              getOptionLabel={(option) => option.name}
+              value={
+                integrationList.find(
+                  (integration) => String(integration.id) === String(formData.integration_id),
+                ) || null
+              }
+              onChange={(e, newValue) => {
+                handleChange({
+                  target: {
+                    id: 'integration_id',
+                    name: 'integration_id',
+                    value: newValue ? newValue.id : '',
+                  },
+                } as any);
+              }}
+              renderInput={(params) => (
+                <CustomTextField
+                  {...params}
+                  label=""
+                  required
+                  error={!!errors.integration_id}
+                  helperText={errors.integration_id || ''}
+                  fullWidth
+                />
+              )}
+            />
+            <CustomFormLabel htmlFor="type">Type</CustomFormLabel>
             <CustomSelect
               id="type"
               name="type"
-              value={formData.type}
+              value={Number(formData.type) ?? ''}
               onChange={handleChange}
               error={!!errors.type}
               helperText={errors.type || ''}
               fullWidth
               required
             >
+              <MenuItem value="" disabled>
+                Select Type
+              </MenuItem>
               {Object.entries(AccessControlType)
-                .filter(([k, v]) => isNaN(Number(k)))
+                .filter(([k]) => isNaN(Number(k)))
                 .map(([key, value]) => (
                   <MenuItem key={value} value={value}>
                     {formatEnumLabel(key)}
@@ -321,7 +342,7 @@ const FormAccessControl = ({
             disabled={loading}
             size="medium"
           >
-            {loading ? 'Submitting...' : 'Submit'}
+            Submit
           </Button>
         </Box>
       </form>

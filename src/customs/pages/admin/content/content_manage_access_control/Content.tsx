@@ -124,7 +124,7 @@ const Content = () => {
   }, [token, page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword]);
   const [formDataAddAccessControl, setFormDataAddAccessControl] =
     useState<CreateAccessControlRequest>(() => {
-      const saved = localStorage.getItem('unsavedAccessControlData');
+      const saved = localStorage.getItem('unsavedAccessControl');
       return saved ? JSON.parse(saved) : {};
     });
 
@@ -137,7 +137,7 @@ const Content = () => {
     const isChanged = JSON.stringify(formDataAddAccessControl) !== JSON.stringify(defaultForm);
 
     if (isChanged) {
-      localStorage.setItem('unsavedCustomDataData', JSON.stringify(formDataAddAccessControl));
+      localStorage.setItem('unsavedAccessControl', JSON.stringify(formDataAddAccessControl));
     }
   }, [formDataAddAccessControl]);
 
@@ -173,7 +173,7 @@ const Content = () => {
   const handleCloseDialog = () => setOpenCreateAccessControl(false);
 
   const handleAdd = () => {
-    const editing = localStorage.getItem('unsavedAccessControlData');
+    const editing = localStorage.getItem('unsavedAccessControl');
     if (editing) {
       // If editing exists, show confirmation dialog for add
       setPendingEditId(null); // null means it's an add, not edit
@@ -184,7 +184,7 @@ const Content = () => {
     }
   };
   const handleEdit = (id: string) => {
-    const editing = localStorage.getItem('unsavedAccessControlData');
+    const editing = localStorage.getItem('unsavedAccessControl');
 
     if (editing) {
       const parsed = JSON.parse(editing);
@@ -207,7 +207,7 @@ const Content = () => {
 
   const handleConfirmEdit = () => {
     setConfirmDialogOpen(false);
-    localStorage.removeItem('unsavedAccessControlData');
+    localStorage.removeItem('unsavedAccessControl');
     setLoading(true);
 
     if (pendingEditId) {
@@ -356,7 +356,7 @@ const Content = () => {
         </Box>
       </PageContainer>
       <Dialog open={openCreateAccessControl} onClose={handleDialogClose} fullWidth maxWidth="md">
-        <DialogTitle sx={{ position: 'relative', padding: 5 }}>
+        <DialogTitle sx={{ position: 'relative', padding: 3 }}>
           {edittingId ? 'Edit' : 'Add'} Access Control
           <IconButton
             aria-label="close"
@@ -368,9 +368,9 @@ const Content = () => {
               }
             }}
             sx={{
-              position: 'absolute',
-              right: 8,
-              top: 8,
+              position: 'absolute', 
+              right: 10,
+              top: 12,
               color: (theme) => theme.palette.grey[500],
             }}
           >
@@ -384,7 +384,7 @@ const Content = () => {
             formData={formDataAddAccessControl}
             setFormData={setFormDataAddAccessControl}
             onSuccess={() => {
-              localStorage.removeItem('unsavedAccessControlData');
+              localStorage.removeItem('unsavedAccessControl');
               handleCloseDialog();
               setRefreshTrigger(refreshTrigger + 1);
               if (edittingId) {

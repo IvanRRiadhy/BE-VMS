@@ -145,11 +145,30 @@ const Content = () => {
           sortColumn,
           searchKeyword,
         );
+
         setTotalRecords(response.RecordsTotal);
         setTotalFilteredRecords(response.RecordsFiltered);
 
         if (response) {
-          setTableVisitorCard(response.collection);
+          const mapped = response.collection.map((x: any) => ({
+            id: x.id,
+            name: x.name,
+            card_number: x.card_number,
+            card_mac: x.card_mac,
+            card_barcode: x.card_barcode,
+            card_status: x.card_status,
+            remarks: x.remarks,
+            employee_id: x.employee_id,
+            employee_name: x.employee_name,
+            type: x.type,
+            site_name: x.site_name,
+            is_used: x.is_used,
+            is_employee_used: x.is_employee_used,
+            is_multi_site: x.is_multi_site,
+            checkin_at: x.checkin_at,
+            checkout_at: x.checkout_at,
+          }));
+          setTableVisitorCard(mapped);
           setIsDataReady(true);
           const activeCount = res.collection.filter((item: any) => item.card_status === 1).length;
 
@@ -446,6 +465,7 @@ const Content = () => {
                   isHaveFilterDuration={false}
                   isHaveAddData={true}
                   isHaveHeader={false}
+                  isDataVerified={true}
                   onCheckedChange={(selected) => setSelectedRows(selected)}
                   onEdit={(row) => {
                     handleEdit(row.id);

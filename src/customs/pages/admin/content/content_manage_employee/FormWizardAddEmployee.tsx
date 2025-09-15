@@ -184,11 +184,22 @@ const FormWizardAddEmployee = ({
       if (edittingId) {
         const employeeRes = await getEmployeeById(edittingId, token);
 
-        const employee = employeeRes.collection[0];
+        const employee = employeeRes?.collection ?? null;
 
         if (employee) {
+          const normalizedGender =
+            typeof employee.gender === 'string'
+              ? employee.gender === 'Female'
+                ? 0
+                : employee.gender === 'Male'
+                ? 1
+                : 0
+              : Number(employee.gender ?? 0);
+
           setFormData({
+            ...formData,
             ...employee,
+            gender: normalizedGender,
             organization_id: String(employee.organization_id) || '',
             department_id: String(employee.department_id) || '',
             district_id: String(employee.district_id) || '',
@@ -285,16 +296,6 @@ const FormWizardAddEmployee = ({
       gender: false,
     });
   };
-
-  // const handleNext = () => {
-  //   let newSkipped = skipped;
-  //   if (isStepSkipped(activeStep)) {
-  //     newSkipped = new Set(newSkipped.values());
-  //     newSkipped.delete(activeStep);
-  //   }
-  //   setActiveStep((prev) => prev + 1);
-  //   setSkipped(newSkipped);
-  // };
 
   const handleNext = () => {
     // ✅ Cek step aktif sebelum maju
@@ -394,11 +395,18 @@ const FormWizardAddEmployee = ({
         return;
       }
 
+      console.log('Form data:', formData);
       // NORMAL MODE (add/edit biasa)
       const mergedFormData = normalizeForSubmit({
         ...formData,
         qr_code: formData.card_number,
         faceimage: formData.faceimage,
+        gender:
+          typeof formData.gender === 'string'
+            ? formData.gender === 'Female'
+              ? 0
+              : 1
+            : Number(formData.gender ?? 0),
       });
 
       const result = CreateEmployeeSubmitSchema.safeParse(mergedFormData);
@@ -548,6 +556,7 @@ const FormWizardAddEmployee = ({
 
     // ⬇️ KUNCI: jangan dobel /cdn
     const url = rel.startsWith('/cdn/') ? `${BASE_URL}${rel}` : `${BASE_URL}/cdn${rel}`;
+    console.log('Preview URL:', url);
 
     setPreviewUrl(url);
   }, [formData.faceimage, siteImageFile]);
@@ -615,7 +624,7 @@ const FormWizardAddEmployee = ({
             {/* Email */}
             <Grid2 size={{ xs: 6, sm: 6 }}>
               <CustomFormLabel sx={{ marginY: 1 }} htmlFor="email" required>
-                <Typography variant="caption">Employee Email</Typography>
+                <Typography variant="caption">Email</Typography>
               </CustomFormLabel>
               <CustomTextField
                 id="email"
@@ -636,10 +645,10 @@ const FormWizardAddEmployee = ({
                 display="flex"
                 alignItems="center"
                 justifyContent="space-between"
-                sx={{ marginTop: 0.8 }}
+                sx={{ marginTop: '0px' }}
               >
-                <CustomFormLabel required>
-                  <Typography variant="caption" sx={{ marginLeft: '0' }}>
+                <CustomFormLabel required sx={{ marginY: 1 }}>
+                  <Typography variant="caption" sx={{ marginLeft: '0px', marginTop: '0px' }}>
                     Gender
                   </Typography>
                 </CustomFormLabel>
@@ -661,14 +670,10 @@ const FormWizardAddEmployee = ({
                 )}
               </Box>
 
-              <FormControl
-                error={Boolean(errors.gender)}
-                component="fieldset"
-                sx={{ mt: 0.5 }} // jarak dari label
-              >
+              <FormControl error={Boolean(errors.gender)} component="fieldset">
                 <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2 }}>
                   <FormControlLabel
-                    value={0}
+                    value="0"
                     label="Female"
                     control={
                       <CustomRadio
@@ -682,7 +687,7 @@ const FormWizardAddEmployee = ({
                     }
                   />
                   <FormControlLabel
-                    value={1}
+                    value="1"
                     label="Male"
                     control={
                       <CustomRadio
@@ -1454,12 +1459,12 @@ const FormWizardAddEmployee = ({
                 </Button>
               ) : (
                 <Button
-                  color="success"
+                  color="primary"
                   variant="contained"
                   onClick={handleOnSubmit}
                   disabled={loading || activeStep !== steps.length - 1}
                 >
-                  {loading ? 'Submitting...' : 'Submit'}
+                  Submit
                 </Button>
               )}
             </Box>

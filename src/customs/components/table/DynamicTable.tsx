@@ -52,6 +52,8 @@ import {
   IconStarFilled,
 } from '@tabler/icons-react';
 
+import backgroundnodata from '../../../assets/images/backgrounds/bg_nodata.svg';
+
 type HeaderItem = { name: string };
 
 type HeaderContent = {
@@ -92,6 +94,8 @@ type DynamicTableProps<T extends { id: string | number }> = {
   isHaveCard?: boolean;
   isDataVerified?: boolean;
   headerContent?: HeaderContent;
+  isHaveHeaderTitle?: boolean;
+  titleHeader?: string;
   isHavePassword?: boolean;
   isSiteSpaceType?: boolean;
   defaultSelectedHeaderItem?: string;
@@ -155,6 +159,8 @@ export function DynamicTable<T extends { id: string | number }>({
   isHaveCard = false,
   isHaveImage,
   isHaveObjectData,
+  isHaveHeaderTitle = false,
+  titleHeader,
   headerContent,
   defaultSelectedHeaderItem,
   isHavePassword = false,
@@ -195,15 +201,15 @@ export function DynamicTable<T extends { id: string | number }>({
   const [selectedHeaderItem, setSelectedHeaderItem] = useState<string | null>(
     defaultSelectedHeaderItem ?? null,
   );
-  const [showDrawer, setShowDrawer] = React.useState(false);
+  const [showDrawer, setShowDrawer] = useState(false);
 
-  const BASE_URL = `http://${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/cdn`;
+  const BASE_URL = `https://biovms-net.piranticerdasindonesia.com/cdn`;
 
-  const [showDrawerFilterMore, setShowDrawerFilterMore] = React.useState(false);
+  const [showDrawerFilterMore, setShowDrawerFilterMore] = useState(false);
 
   // Paginaton state.
-  const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(defaultRowsPerPage || 10);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(defaultRowsPerPage || 10);
 
   // if (!data || data.length === 0) {
   //   return <div>Tidak ada data</div>;
@@ -296,6 +302,14 @@ export function DynamicTable<T extends { id: string | number }>({
     1: 'Building',
     2: 'Floor',
     3: 'Room',
+  };
+
+  const CARD_STATUS: Record<number, string> = {
+    0: 'Not Found',
+    1: 'Active',
+    2: 'Lost',
+    3: 'Broken',
+    4: 'Not Return',
   };
 
   // 1) Tetapkan lebar kolom yang konsisten
@@ -510,6 +524,19 @@ export function DynamicTable<T extends { id: string | number }>({
                       </Button>
                     </Grid2>
                   </Grid2>
+                )}
+                {isHaveHeaderTitle && (
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontSize: '1rem',
+                      fontWeight: 600,
+                      color: '',
+                      textTransform: 'capitalize',
+                    }}
+                  >
+                    {titleHeader}
+                  </Typography>
                 )}
               </Stack>
 
@@ -739,17 +766,19 @@ export function DynamicTable<T extends { id: string | number }>({
                       sx={{ padding: 0 }} // hilangkan padding agar Box bekerja optimal
                     >
                       <Box
-                        height={50}
+                        height={150}
                         width="100%"
                         display="flex"
-                        justifyContent="center"
+                        justifyContent="space-around"
                         alignItems="center"
+                        flexDirection="column"
                         sx={{
                           fontSize: '0.9rem',
                           color: 'text.secondary',
                         }}
                       >
-                        Tidak ada data
+                        <img src={backgroundnodata} alt="No Data" height="100" width="100%" />
+                        <Typography variant="body1">No Data available</Typography>
                       </Box>
                     </TableCell>
                   </TableRow>
@@ -1042,6 +1071,8 @@ export function DynamicTable<T extends { id: string | number }>({
                                 lines={htmlClampLines}
                                 maxWidth={htmlMaxWidth}
                               />
+                            ) : col === 'card_status' ? (
+                              CARD_STATUS[Number(row[col])] ?? String(row[col] ?? '-')
                             ) : isHaveEmployee && col === 'employee_id' ? (
                               <Tooltip title="View Employee">
                                 <IconButton
@@ -1060,10 +1091,9 @@ export function DynamicTable<T extends { id: string | number }>({
                               </Tooltip>
                             ) : isHaveGender && col === 'gender' ? (
                               GENDER_MAP[String(row[col])] ?? String(row[col] ?? '-')
-                            ) :  isSiteSpaceType && col === 'type' ?(
-                              SITE_MAP[Number(row[col] ) ] ?? String(row[col] ?? '-')
-                            ): isHaveImage &&
-                            
+                            ) : isSiteSpaceType && col === 'type' ? (
+                              SITE_MAP[Number(row[col])] ?? String(row[col] ?? '-')
+                            ) : isHaveImage &&
                               imageFields.includes(col) &&
                               typeof row[col] === 'string' ? (
                               <img
@@ -1082,22 +1112,54 @@ export function DynamicTable<T extends { id: string | number }>({
                                   objectFit: 'cover',
                                 }}
                               />
-                            ) : col === 'secure' ? (
-                              isDataVerified ? (
-                                <Tooltip title="Verified">
-                                  <IconCheck size={18} color="green" />
-                                </Tooltip>
-                              ) : (
-                                <Tooltip title="Not Verified">
-                                  <IconX size={18} color="red" />
-                                </Tooltip>
-                              )
+                            ) : (isDataVerified && col === 'secure') ||
+                              col === 'is_employee_used' ||
+                              col === 'is_multi_site' ? (
+                              <Box
+                                display="flex"
+                                alignItems="center"
+                                justifyContent="center"
+                                width="100%"
+                              >
+                                {row[col] ? (
+                                  <Tooltip title="Secure Verified">
+                                    <Box
+                                      sx={{
+                                        backgroundColor: 'green',
+                                        borderRadius: '50%',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        p: '2px',
+                                      }}
+                                    >
+                                      <IconCheck color="white" size={16} />
+                                    </Box>
+                                  </Tooltip>
+                                ) : (
+                                  <Tooltip title="Secure Not Verified">
+                                    <Box
+                                      sx={{
+                                        backgroundColor: 'red',
+                                        borderRadius: '50%',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        p: '2px',
+                                      }}
+                                    >
+                                      <IconX color="white" size={16} />
+                                    </Box>
+                                  </Tooltip>
+                                )}
+                              </Box>
                             ) : col === 'password' ? (
                               <Box
                                 display="inline-flex"
                                 alignItems="center"
                                 gap={0.5}
                                 justifyContent={'center'}
+                                width="100%"
                               >
                                 {isHavePassword ? (
                                   visiblePasswords[row.id] ? (
@@ -1148,14 +1210,21 @@ export function DynamicTable<T extends { id: string | number }>({
                                 <>-</>
                               )
                             ) : isHaveBooleanSwitch && typeof row[col] === 'boolean' ? (
-                              <Switch
-                                checked={row[col] as boolean}
-                                onChange={(_, checked) =>
-                                  onBooleanSwitchChange?.(row.id, col, checked)
-                                }
-                                color="primary"
-                                size="small"
-                              />
+                              <Box
+                                display="flex"
+                                alignItems="center"
+                                width={'100%'}
+                                justifyContent={'center'}
+                              >
+                                <Switch
+                                  checked={row[col] as boolean}
+                                  onChange={(_, checked) =>
+                                    onBooleanSwitchChange?.(row.id, col, checked)
+                                  }
+                                  color="primary"
+                                  size="small"
+                                />
+                              </Box>
                             ) : isHaveObjectData &&
                               objectFields?.includes(col) &&
                               typeof row[col] === 'object' &&

@@ -28,9 +28,10 @@ import ManageVisitorType from './customs/pages/admin/ManageVisitorType';
 import ManageIntegration from './customs/pages/admin/ManageIntegration';
 import ManageAccessControl from './customs/pages/admin/ManageAccessControl';
 import ManageCustomField from './customs/pages/admin/ManageCustomField';
-import IntegrationDetail from './customs/pages/admin/content/content_manage_integration/IntegrationDetail';
 import ManageIntegrationDetail from './customs/pages/admin/ManageIntegrationDetail';
 import ManageSettingSmtp from './customs/pages/admin/ManageSettingSmtp';
+import ManageGroupCardAccess from './customs/pages/admin/ManageGroupCardAccess';
+import ManageTimezone from './customs/pages/admin/ManageTimezone';
 
 export function App() {
   const theme = ThemeSettings();
@@ -84,7 +85,7 @@ export function App() {
               }
             />
             <Route
-              path="admin/manage/companys&deparments"
+              path="admin/manage/companys-deparments"
               element={
                 <ProtectedRoute>
                   <ManageCompanyAndDepartment />
@@ -116,10 +117,26 @@ export function App() {
               }
             />
             <Route
-              path="admin/manage/visitor-card"
+              path="admin/manage/card"
               element={
                 <ProtectedRoute>
                   <ManageVisitorCard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="admin/manage/group-card"
+              element={
+                <ProtectedRoute>
+                  <ManageGroupCardAccess />
+                </ProtectedRoute>
+              }
+            />{' '}
+            <Route
+              path="admin/manage/timezone"
+              element={
+                <ProtectedRoute>
+                  <ManageTimezone />
                 </ProtectedRoute>
               }
             />
@@ -195,7 +212,6 @@ export function App() {
                 </ProtectedRoute>
               }
             />
-
             {/* Setting smtp */}
             <Route
               path="admin/manage/setting-smtp"
@@ -205,7 +221,6 @@ export function App() {
                 </ProtectedRoute>
               }
             />
-
             <Route
               path="admin/setting/users"
               element={

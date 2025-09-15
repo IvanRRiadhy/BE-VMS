@@ -82,7 +82,7 @@ const Content = () => {
       'Organization/Company': 'PT. Indo Karya',
       CreateAt: '2025-06-14T09:25:00Z',
     },
-  ];
+    ];
 
   const cards = [
     { title: 'Total Operator', subTitle: '10', subTitleSetting: 10, icon: IconUser, color: 'none' },

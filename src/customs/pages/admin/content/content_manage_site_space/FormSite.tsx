@@ -64,7 +64,7 @@ import { Item as AccessControlItem } from 'src/customs/api/models/AccessControl'
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 
 // const BASE_URL = 'http://' + import.meta.env.VITE_API_HOST;
-const BASE_URL = 'http://192.168.1.116:8000';
+const BASE_URL = 'https://biovms-net.piranticerdasindonesia.com';
 // const BASE_URL = 'http://localhost:8000';
 
 type EnabledFields = {
@@ -1031,7 +1031,12 @@ const FormSite = ({
                     </Table>
                   </TableContainer>
                 </DragDropContext>
-                <MuiButton size="small" onClick={() => handleAddDetail()}>
+                <MuiButton
+                  size="small"
+                  onClick={() => handleAddDetail()}
+                  variant="contained"
+                  color="primary"
+                >
                   Add New
                 </MuiButton>
               </Box>

@@ -71,7 +71,7 @@ export type CreateDistrictRequest = z.infer<typeof CreateDistrictSchema>;
 export const CreateDistrictSubmitSchema = CreateDistrictSchema.extend({
   code: z.string().trim().min(1, 'District code is required'),
   name: z.string().trim().min(1, 'District name is required'),
-  // host: z.string().trim().min(1, 'Head of district is required'),
+  host: z.string().trim().min(1, 'Head of district is required'),
 });
 
 export type CreateDistrictSubmitRequest = z.infer<typeof CreateDistrictSubmitSchema>;

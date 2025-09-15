@@ -4,6 +4,8 @@ import {
   Alert,
   Typography,
   CircularProgress,
+  Portal,
+  Backdrop,
   FormControlLabel,
   Autocomplete,
   Switch,
@@ -75,6 +77,23 @@ const FormUpdateOrganization: React.FC<FormUpdateOrganizationProps> = ({
 
     fetchEmployees();
   }, [token]);
+
+  useEffect(() => {
+    if (host && allEmployees.length > 0) {
+      const match = allEmployees.find(
+        (emp: any) =>
+          String(emp.id) === host ||
+          String(emp.person_id) === host ||
+          String(emp.identity_id) === host,
+      );
+
+      if (match) {
+        setHost(String(match.id ?? match.person_id ?? match.identity_id));
+        setHostLabel(match.name ?? match.email ?? match.card_number ?? '');
+      }
+    }
+  }, [host, allEmployees]);
+
   useEffect(() => {
     if (!isBatchEdit && data) {
       setName(data.name || '');
@@ -332,9 +351,7 @@ const FormUpdateOrganization: React.FC<FormUpdateOrganizationProps> = ({
           }
           // ✅ Kalau ketemu option berdasarkan ID → pakai object option.
           //    Kalau belum ketemu (data employee belum load / ID tidak ada di list) → tampilkan label string.
-          value={
-            (host && empOptions.find((o: any) => o.id === host)) || (hostLabel ? hostLabel : null)
-          }
+          value={empOptions.find((o: any) => o.id === host) || null}
           // ✅ Saat user pilih option dari dropdown
           onChange={(_, newValue) => {
             if (typeof newValue === 'string') {
@@ -367,31 +384,28 @@ const FormUpdateOrganization: React.FC<FormUpdateOrganizationProps> = ({
           )}
         />
 
-        <div>
-          <Button sx={{ mt: 2 }} color="primary" variant="contained" type="submit">
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Button
+            sx={{ mt: 2 }}
+            color="primary"
+            variant="contained"
+            type="submit"
+            disabled={loading}
+          >
             Submit
           </Button>
-        </div>
+        </Box>
       </form>
 
-      {loading && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            bgcolor: '#ffff',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 10,
-          }}
-        >
-          <CircularProgress color="inherit" />
-        </Box>
-      )}
+      <Backdrop
+        open={loading}
+        sx={{
+          color: 'primary',
+          zIndex: (theme) => theme.zIndex.drawer + 1, // di atas drawer & dialog
+        }}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
     </>
   );
 };
