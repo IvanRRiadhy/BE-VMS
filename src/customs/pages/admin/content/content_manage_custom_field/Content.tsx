@@ -250,7 +250,7 @@ const Content = () => {
   const handleDelete = async (id: string) => {
     if (!token) return;
 
-    const confirm = await showConfirmDelete('Are you sure? ', "You won't be able to revert this!");
+    const confirm = await showConfirmDelete('Are you sure you want to delete this? ', "You won't be able to revert this!");
 
     if (confirm) {
       setLoading(true);
@@ -293,7 +293,7 @@ const Content = () => {
 
   return (
     <>
-      <PageContainer title="Manage Custom Field Space" description="Custom Field page">
+      <PageContainer title="Custom Field" description="Custom Field page">
         <Box>
           <Grid container spacing={3}>
             {/* column */}
@@ -316,7 +316,7 @@ const Content = () => {
                     setRowsPerPage(rowsPerPage);
                   }}
                   isHaveChecked={true}
-                  isHaveAction={true}
+                  isHaveAction={false}
                   isHaveSearch={true}
                   isHaveFilter={true}
                   isHaveExportPdf={false}
@@ -334,7 +334,6 @@ const Content = () => {
                   onDelete={(row) => handleDelete(row.id)}
                   onBatchDelete={handleBatchDelete}
                   onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-                  onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
                   onAddData={() => {
                     handleAdd();
                   }}

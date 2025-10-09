@@ -5,23 +5,19 @@ import axiosInstance, { axiosInstance2 } from 'src/customs/api/interceptor';
 
 type Visitor = {
   id: string;
-  visitor_type: string;
-  identity_id: string;
-  name: string;
-  email: string;
-  organization: string;
-  gender: string;
-  address: string;
-  phone: string;
-  is_vip: boolean;
-  is_email_verified: boolean;
-  email_verification_send_at: string;
-  email_verification_token: string;
-  visitor_period_start: string;
-  visitor_period_end: string;
-  is_employee: boolean;
-  employee_id: string | null;
-  section_page_visitor_types: any[];
+  visitor_status: string;
+  visitor: {
+    id: string;
+    identity_id: string;
+    name: string;
+    email: string;
+    organization: string;
+    gender: string;
+    phone: string;
+  };
+  identity_image?: string;
+  selfie_image?: string;
+  nda?: string;
 };
 
 type OptionType = {
@@ -47,6 +43,8 @@ const VisitorSelect: React.FC<Props> = ({ onSelect, token }) => {
   const loadOptions = async (inputValue: string): Promise<OptionType[]> => {
     if (inputValue.length < 3) return [];
 
+    console.log('🔎 Cari visitor dengan keyword:', inputValue);
+
     try {
       const res = await fetch(`${BASE_URL}/visitor?search=${inputValue}`, {
         headers: {
@@ -60,30 +58,34 @@ const VisitorSelect: React.FC<Props> = ({ onSelect, token }) => {
         return [];
       }
       const json = await res.json();
-      const allVisitors: Visitor[] = json.collection;
 
-      const data = allVisitors.filter(
-        (visitor: any) =>
-          visitor.name.toLowerCase().includes(inputValue.toLowerCase()) ||
-          visitor.email.toLowerCase().includes(inputValue.toLowerCase()) ||
-          visitor.phone.includes(inputValue),
-      );
+      const allVisitors: Visitor[] = json.collection;
+      console.log('👥 Total visitor dari API:', allVisitors.length);
+
+      const data = allVisitors.filter((visitor) => {
+        const name = visitor.visitor.name?.toLowerCase() || '';
+        const email = visitor.visitor.email?.toLowerCase() || '';
+        const phone = visitor.visitor.phone?.toLowerCase() || '';
+        const keyword = inputValue.toLowerCase();
+
+        return name.includes(keyword) || email.includes(keyword) || phone.includes(keyword);
+      });
 
       // Ambil faceimage dari employee_id (jika ada)
       const enrichedVisitors = await Promise.all(
         data.map(async (visitor: any) => {
           let faceimage = '';
 
-          if (visitor.employee_id) {
+          if (visitor.host) {
             try {
-              const empRes = await fetch(`${BASE_URL}/employee/${visitor.employee_id}`, {
+              const empRes = await fetch(`${BASE_URL}/employee/${visitor.host}`, {
                 headers: {
                   Authorization: `Bearer ${token}`,
                   Accept: 'application/json',
                 },
               });
 
-              console.log('empRes:', empRes);
+              // console.log('empRes:', empRes);
 
               if (empRes.ok) {
                 const empJson = await empRes.json();
@@ -105,7 +107,7 @@ const VisitorSelect: React.FC<Props> = ({ onSelect, token }) => {
           }
 
           return {
-            label: visitor.name,
+            label: visitor.visitor.name,
             value: visitor.id,
             data: {
               ...visitor,
@@ -125,14 +127,17 @@ const VisitorSelect: React.FC<Props> = ({ onSelect, token }) => {
   const formatOptionLabel = ({ data }: OptionType) => (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
       <img
-        src={data.faceimage}
-        alt={data.name}
+        // src={data.faceimage}
+        src={
+          'https://images.unsplash.com/photo-1575936123452-b67c3203c357?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8aW1hZ2V8ZW58MHx8MHx8fDA%3D'
+        }
+        alt={data.visitor.name}
         style={{ width: 40, height: 40, borderRadius: '50%' }}
       />
       <div>
-        <div style={{ fontWeight: 600 }}>{data.name ?? ''}</div>
-        <div style={{ fontSize: 12 }}>{data.email ?? ''}</div>
-        <div style={{ fontSize: 12 }}>{data.phone ?? ''}</div>
+        <div style={{ fontWeight: 600 }}>{data.visitor.name ?? ''}</div>
+        <div style={{ fontSize: 12 }}>{data.visitor.email ?? ''}</div>
+        <div style={{ fontSize: 12 }}>{data.visitor.phone ?? ''}</div>
       </div>
     </div>
   );
@@ -146,7 +151,7 @@ const VisitorSelect: React.FC<Props> = ({ onSelect, token }) => {
         if (selectedOption) {
           onSelect(selectedOption.data);
         }
-      }} 
+      }}
       placeholder="Cari Visitor..."
       noOptionsMessage={() => 'Visitor tidak ditemukan'}
       formatOptionLabel={formatOptionLabel}

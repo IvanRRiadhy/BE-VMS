@@ -17,6 +17,7 @@ import {
   Grid2,
   Typography,
   Tooltip,
+  Skeleton,
   Fab,
   InputAdornment,
   Drawer,
@@ -32,11 +33,11 @@ import { Stack } from '@mui/system';
 import {
   IconEye,
   IconEyeOff,
+  IconFileText,
   IconLogin2,
   IconLogout2,
   IconPencil,
   IconPlus,
-  IconStar,
   IconTrash,
 } from '@tabler/icons-react';
 import { AddCircle, CalendarMonth, ChecklistOutlined, Search } from '@mui/icons-material';
@@ -51,8 +52,13 @@ import {
   IconX,
   IconStarFilled,
 } from '@tabler/icons-react';
+import { InsertDriveFile } from '@mui/icons-material';
 
 import backgroundnodata from '../../../assets/images/backgrounds/bg_nodata.svg';
+import { axiosInstance2 } from 'src/customs/api/interceptor';
+import dayjs from 'dayjs';
+import moment from 'moment';
+import { boxShadow } from 'html2canvas/dist/types/css/property-descriptors/box-shadow';
 
 type HeaderItem = { name: string };
 
@@ -79,11 +85,13 @@ type DynamicTableProps<T extends { id: string | number }> = {
   isHaveSearch?: boolean;
   isHaveFilter?: boolean;
   isHaveExportPdf?: boolean;
+  isHaveView?: boolean;
   isHaveExportXlf?: boolean;
   isHaveImportExcel?: boolean;
   isHaveFilterDuration?: boolean;
   isActionVisitor?: boolean;
   isHaveAddData?: boolean;
+  height?: number | string;
   isHaveHeader?: boolean;
   isHaveEmployee?: boolean;
   isHaveVerified?: boolean;
@@ -91,6 +99,7 @@ type DynamicTableProps<T extends { id: string | number }> = {
   isHaveObjectData?: boolean;
   isHaveVip?: boolean;
   isHaveBooleanSwitch?: boolean;
+  isHavePdf?: boolean;
   isHaveCard?: boolean;
   isDataVerified?: boolean;
   headerContent?: HeaderContent;
@@ -98,6 +107,7 @@ type DynamicTableProps<T extends { id: string | number }> = {
   titleHeader?: string;
   isHavePassword?: boolean;
   isSiteSpaceType?: boolean;
+  isHavePeriod?: boolean;
   defaultSelectedHeaderItem?: string;
   isHavePagination?: boolean;
   rowsPerPageOptions?: number[];
@@ -106,6 +116,7 @@ type DynamicTableProps<T extends { id: string | number }> = {
   isSelectedType?: boolean;
   htmlFields?: string[];
   htmlClampLines?: number;
+  loading?: boolean;
   htmlMaxWidth?: number | string;
   onChooseCard?: (row?: T) => void;
   onNameClick?: (row: T) => void;
@@ -113,8 +124,10 @@ type DynamicTableProps<T extends { id: string | number }> = {
   totalCount?: number;
   isHaveFilterMore?: boolean;
   filterMoreContent?: React.ReactNode;
+  sortColumns?: string[];
+  onFileClick?: (row: T) => void;
   onView?: (row: T) => void;
-  onEmployeeClick?: (employeeId: string) => void;
+  onEmployeeClick?: (row: T) => void;
   onImportExcel?: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onHeaderItemClick?: (item: HeaderItem) => void;
   onCheckedChange?: (selected: T[]) => void;
@@ -123,7 +136,7 @@ type DynamicTableProps<T extends { id: string | number }> = {
   onDelete?: (row: T) => void;
   onBatchDelete?: (row: T[]) => void;
   onSearchKeywordChange?: (keyword: string) => void;
-  onFilterByColumn?: (filter: { column: string }) => void;
+  onFilterByColumn?: (column: { column: string }) => void;
   onFilterCalenderChange?: (ranges: any) => void;
   onAddData?: (add: boolean) => void;
   onPaginationChange?: (page: number, rowsPerPage: number) => void;
@@ -131,7 +144,6 @@ type DynamicTableProps<T extends { id: string | number }> = {
 };
 
 export function DynamicTable<T extends { id: string | number }>({
-  overflowX = 'unset',
   minWidth = 'auto',
   stickyHeader = false,
   data,
@@ -149,12 +161,14 @@ export function DynamicTable<T extends { id: string | number }>({
   isHaveExportXlf = false,
   isHaveImportExcel = false,
   isHaveFilterDuration = false,
+  height,
   isHaveGender = false,
   isHaveVip = false,
   isHaveAddData = false,
   isHaveHeader = false,
   isHaveBooleanSwitch = false,
   isHaveVerified = false,
+  isHaveView = false,
   isHaveEmployee = false,
   isHaveCard = false,
   isHaveImage,
@@ -165,6 +179,7 @@ export function DynamicTable<T extends { id: string | number }>({
   defaultSelectedHeaderItem,
   isHavePassword = false,
   isHavePagination,
+  isHavePdf,
   isSiteSpaceType = false,
   isHaveIntegration,
   onNameClick,
@@ -175,9 +190,13 @@ export function DynamicTable<T extends { id: string | number }>({
   rowsPerPageOptions,
   defaultRowsPerPage,
   totalCount,
+  isHavePeriod = false,
+  loading = false,
   isVip,
   isHaveFilterMore = false,
   filterMoreContent,
+  sortColumns,
+  onFileClick,
   onChooseCard,
   onEmployeeClick,
   onImportExcel,
@@ -203,7 +222,7 @@ export function DynamicTable<T extends { id: string | number }>({
   );
   const [showDrawer, setShowDrawer] = useState(false);
 
-  const BASE_URL = `https://biovms-net.piranticerdasindonesia.com/cdn`;
+  const BASE_URL = axiosInstance2.defaults.baseURL + '/cdn';
 
   const [showDrawerFilterMore, setShowDrawerFilterMore] = useState(false);
 
@@ -219,6 +238,11 @@ export function DynamicTable<T extends { id: string | number }>({
     data.length > 0
       ? (Object.keys(data[0]).filter((k) => k !== 'id') as Extract<keyof T, string>[])
       : [];
+
+  const columnss =
+    sortColumns && sortColumns.length > 0
+      ? columns.filter((col) => sortColumns.includes(col))
+      : columns;
 
   // const columns = Object.keys(data[0]).filter((k) => k !== 'id') as Extract<keyof T, string>[];
 
@@ -312,6 +336,12 @@ export function DynamicTable<T extends { id: string | number }>({
     4: 'Not Return',
   };
 
+  const DOCUMENT_TYPE: Record<number, string> = {
+    0: 'Card',
+    1: 'Document',
+    2: 'Face',
+  };
+
   // 1) Tetapkan lebar kolom yang konsisten
   const CHECKBOX_COL_WIDTH = 40;
   const ACTION_COL_WIDTH = 105; // sesuaikan dgn 2 tombol icon + gap
@@ -351,6 +381,7 @@ export function DynamicTable<T extends { id: string | number }>({
     floor: 'Floor',
     floor_plan_masked_area: 'Floor Plan Masked Area',
     // floor_plan_device: 'Floor Plan Device',
+    visitor_type: 'Visitor Type',
     building: 'Building',
     ble_reader: 'Ble Reader',
     alarm_record: 'Alarm Record',
@@ -363,6 +394,46 @@ export function DynamicTable<T extends { id: string | number }>({
 
   const togglePassword = (id: string | number) => {
     setVisiblePasswords((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const tooltipLabels: Record<string, { true: string; false: string }> = {
+    is_primary: {
+      true: 'Primary',
+      false: 'Not Primary',
+    },
+    can_signed: {
+      true: 'Can Signed',
+      false: 'Can Not Signed',
+    },
+    can_upload: {
+      true: 'Can Upload',
+      false: 'Can Not Upload',
+    },
+    can_declined: {
+      true: 'Can Declined',
+      false: 'Can Not Declined',
+    },
+    secure: {
+      true: 'Secure Verified',
+      false: 'Secure Not Verified',
+    },
+    is_employee_used: {
+      true: 'Employee Used',
+      false: 'Employee Not Used',
+    },
+    is_multi_site: {
+      true: 'Multi Site Enabled',
+      false: 'Multi Site Disabled',
+    },
+    is_used: {
+      true: 'Active',
+      false: 'Inactive',
+    },
+  };
+
+  const formatDate = (date?: string) => {
+    if (!date) return '-'; // fallback kalau kosong
+    return moment(date).format('DD-MM-YYYY');
   };
 
   return (
@@ -455,8 +526,8 @@ export function DynamicTable<T extends { id: string | number }>({
       )}
 
       {/*  TABLE */}
-      <BlankCard>
-        <CardContent>
+      <BlankCard sx={{ height: { height } }}>
+        <CardContent sx={{ height: { height } }}>
           <Grid2 container sx={{ marginBottom: 0.1 }}>
             {/* ROW 1 */}
             <Grid2
@@ -467,7 +538,7 @@ export function DynamicTable<T extends { id: string | number }>({
               flexWrap={'wrap'}
               sx={{
                 mb: 3,
-                gap: { xs: 2, md: 0 }, // gap 2 hanya saat xs (mobile), 0 saat sm ke atas
+                gap: { xs: 1.5, md: 0 }, // gap 2 hanya saat xs (mobile), 0 saat sm ke atas
               }}
             >
               {/* SEARCH MENU */}
@@ -475,11 +546,12 @@ export function DynamicTable<T extends { id: string | number }>({
                 {isHaveSearch && (
                   <Grid2
                     container
-                    spacing={1.5}
+                    spacing={0.5}
                     // size={{ xs: 12 }}
                     display="flex"
                     justifyContent="space-between"
                     alignItems="center"
+                    flexWrap={'wrap'}
                   >
                     <Grid2 size={{ xs: 10, lg: 10 }}>
                       <TextField
@@ -491,6 +563,11 @@ export function DynamicTable<T extends { id: string | number }>({
                         onKeyDown={handleKeyDown}
                         sx={{
                           height: 36,
+                          width: {
+                            xs: '100%', // mobile tetap penuh
+                            sm: '320px', // layar medium ke atas dibatasi 320px
+                          },
+                          // width: '300px',
                         }}
                         InputProps={{
                           sx: {
@@ -541,7 +618,7 @@ export function DynamicTable<T extends { id: string | number }>({
               </Stack>
 
               {/* EXPORT AND IMPORT AND FILTER DURATION BUTTON */}
-              <Stack direction="row" spacing={1} alignItems="center">
+              <Stack direction="row" spacing={1} alignItems="center" flexWrap={'wrap'} gap={0.5}>
                 {isHaveExportPdf && (
                   <Button
                     size="medium"
@@ -569,12 +646,12 @@ export function DynamicTable<T extends { id: string | number }>({
                         component="span"
                         size="medium"
                         variant="contained"
-                        startIcon={<AddCircle />}
+                        startIcon={<InsertDriveFile sx={{ color: 'white' }} />}
                         color="success"
                         sx={{ height: 36 }}
                       >
                         <Typography variant="caption" fontSize={'0.7rem'}>
-                          Import xls
+                          Import XLS
                         </Typography>
                       </Button>
                     </label>
@@ -625,7 +702,7 @@ export function DynamicTable<T extends { id: string | number }>({
                   </Button>
                 )}
 
-                {isHaveFilter && (
+                {isHaveFilter && columnss.length > 0 && (
                   <FormControl size="small" sx={{ minWidth: 100 }}>
                     <Select
                       displayEmpty
@@ -640,9 +717,7 @@ export function DynamicTable<T extends { id: string | number }>({
                       }}
                       MenuProps={{
                         PaperProps: {
-                          sx: {
-                            fontSize: '0.7rem',
-                          },
+                          sx: { fontSize: '0.7rem' },
                         },
                       }}
                     >
@@ -651,13 +726,13 @@ export function DynamicTable<T extends { id: string | number }>({
                           Sort by column
                         </Typography>
                       </MenuItem>
-                      {columns.map((col) => (
+                      {columnss.map((col) => (
                         <MenuItem key={col} value={col}>
                           <Typography fontSize={'0.7rem'} variant="caption">
                             {toTitleCase(col)}
                           </Typography>
                         </MenuItem>
-                      ))}{' '}
+                      ))}
                     </Select>
                   </FormControl>
                 )}
@@ -696,13 +771,6 @@ export function DynamicTable<T extends { id: string | number }>({
 
                 {/* View */}
 
-                {/* <RemoveRedEyeIcon
-                    sx={{ fontSize: '1.2rem', cursor: 'pointer' }}
-                    onClick={() => {
-                      if (!Array.isArray(selectedRows) || selectedRows.length === 0) return;
-                      onBatchView?.(selectedRows);
-                    }} */}
-
                 {/* Tombol Edit (batch edit hanya jika perlu) */}
                 {!isHaveCard ? (
                   <Box display="flex" alignItems="center" gap={3} pr={2.5}>
@@ -731,17 +799,16 @@ export function DynamicTable<T extends { id: string | number }>({
                       }}
                     />
                   </Box>
-                ) : (
-                  <Button
-                    size="small"
-                    color="primary"
-                    variant="contained"
-                    onClick={() => onChooseCard?.()} // ← buka dialog bulk
-                    // disabled={selectedInvitations.length === 0}
-                  >
-                    Choose Card
-                  </Button>
-                )}
+                ) : // <Button
+                //   size="small"
+                //   color="primary"
+                //   variant="contained"
+                //   onClick={() => onChooseCard?.()} // ← buka dialog bulk
+                //   // disabled={selectedInvitations.length === 0}
+                // >
+                //   Choose Card
+                // </Button>
+                null}
               </Grid2>
             )}
           </Grid2>
@@ -754,6 +821,7 @@ export function DynamicTable<T extends { id: string | number }>({
                       display: 'flex',
                       justifyContent: 'center',
                       alignItems: 'center',
+                      height: 300,
                     }}
                   >
                     <TableCell
@@ -842,7 +910,14 @@ export function DynamicTable<T extends { id: string | number }>({
                     </TableCell>
                     {columns.map((col, idx) => {
                       const makeSticky = isStickyVisitorCol(idx);
-                      const pretty = col
+
+                      // custom label
+                      let label: string = col;
+                      if (label.startsWith('is_')) {
+                        label = label.replace(/^is_/, ''); // hapus "is_"
+                      }
+
+                      const pretty = label
                         .replace(/_/g, ' ')
                         .replace(/\b\w/g, (c) => c.toUpperCase());
 
@@ -851,40 +926,43 @@ export function DynamicTable<T extends { id: string | number }>({
                           key={col}
                           sx={{
                             ...(makeSticky && {
-                              position: 'sticky',
-                              left: getStickyLeft(idx),
-                              zIndex: 4,
+                              position: {
+                                xs: 'static', // default kecil
+                                lg: makeSticky ? 'sticky' : 'static', // sticky hanya di lg
+                              },
+                              left: {
+                                xs: 'auto',
+                                lg: makeSticky ? getStickyLeft(idx) : 'auto',
+                              },
+                              zIndex: {
+                                xs: 'auto',
+                                lg: makeSticky ? 4 : 'auto',
+                              },
                               background: 'white',
                               minWidth: DATA_COL_WIDTH,
                               maxWidth: DATA_COL_WIDTH,
                             }),
                           }}
                         >
-                          {/* {isCardCol ? (
-                            <Box
-                              display="flex"
-                              alignItems="center"
-                              justifyContent="space-between"
-                              gap={1}
-                            >
-                              <>{pretty}</>
-                              <Button
-                                size="small"
-                                color="primary"
-                                variant="contained"
-                                onClick={() => onChooseCard?.()} // ← buka dialog bulk
-                                // disabled={selectedInvitations.length === 0}
-                              >
-                                Choose Card
-                              </Button>
-                            </Box>
-                          ) : ( */}
-                          {/* pretty */}
-                          {/* )} */}
                           {pretty}
                         </TableCell>
                       );
                     })}
+                    {/* {col == 'is_employee_used' && (
+                      <TableCell
+                        sx={{
+                          position: 'sticky',
+                          right: 0,
+                          bgcolor: 'background.paper',
+                          zIndex: 4, // header > body
+                          p: 0,
+                          verticalAlign: 'middle',
+                          textAlign: 'center',
+                        }}
+                      >
+                        Action
+                      </TableCell>
+                    )} */}
                     {isHaveAction && !isActionVisitor && (
                       <TableCell
                         sx={{
@@ -901,111 +979,160 @@ export function DynamicTable<T extends { id: string | number }>({
                       </TableCell>
                     )}
 
-                    {isHaveActionOnlyEdit && isSelectedType && (
+                    {isHaveActionOnlyEdit && (
                       <TableCell
                         sx={{ position: 'sticky', right: 0, background: 'white', zIndex: 2 }}
                       >
                         Action
                       </TableCell>
                     )}
+                    {isHaveCard && (
+                      <TableCell sx={{ position: 'sticky', right: 0, zIndex: 2 }}>
+                        <Button
+                          size="small"
+                          color="primary"
+                          variant="contained"
+                          onClick={() => onChooseCard?.()} // ← buka dialog bulk
+                          // disabled={selectedInvitations.length === 0}
+                        >
+                          Choose Card
+                        </Button>
+                      </TableCell>
+                    )}
                   </TableRow>
                 </TableHead>
 
                 <TableBody>
-                  {paginatedData.map((row, index) => (
-                    <TableRow key={row.id}>
-                      {isHaveChecked && (
+                  {loading ? (
+                    // 1. SKELETON MODE
+                    [...Array(rowsPerPage)].map((_, idx) => (
+                      <TableRow key={`skeleton-${idx}`}>
                         <TableCell
-                          padding="checkbox"
-                          sx={{ position: 'sticky', left: 0, zIndex: 3, background: 'white' }}
+                          colSpan={
+                            columns.length + (isHaveChecked ? 1 : 0) + (isHaveAction ? 1 : 0) + 1
+                          }
                         >
-                          <Checkbox
-                            checked={checkedIds.includes(row.id)}
-                            onChange={(e) => handleCheckRow(row.id as string, e.target.checked)}
-                          />
+                          <Skeleton height={30} />
                         </TableCell>
-                      )}
-
-                      {isHaveAction && isActionVisitor && (
-                        <TableCell
-                          sx={{
-                            position: 'sticky',
-                            left: isHaveChecked ? CHECKBOX_COL_WIDTH : 0,
-                            zIndex: 3,
-                            background: 'white',
-                            minWidth: ACTION_COL_WIDTH, // ditambah biar muat icon VIP
-                            maxWidth: ACTION_COL_WIDTH,
-                          }}
+                      </TableRow>
+                    ))
+                  ) : paginatedData.length === 0 ? (
+                    // 2. NO DATA MODE
+                    <TableRow>
+                      <TableCell
+                        colSpan={
+                          columns.length + (isHaveChecked ? 1 : 0) + 1 + (isHaveAction ? 1 : 0)
+                        }
+                      >
+                        <Box
+                          height={200}
+                          width="100%"
+                          display="flex"
+                          justifyContent="center"
+                          alignItems="center"
+                          flexDirection="column"
+                          sx={{ color: 'text.secondary' }}
                         >
-                          <Box display="flex" alignItems="center" gap={0.3}>
-                            {/* Detail Visitor */}
-                            <Tooltip title="Detail Visitor">
-                              <IconButton
-                                onClick={() => onView?.(row)}
-                                disableRipple
-                                sx={{
-                                  color: 'white',
-                                  backgroundColor: 'gray !important',
-                                  width: 28,
-                                  height: 28,
-                                  padding: 0.5,
-                                  borderRadius: '50%',
-                                  '&:hover': {
-                                    backgroundColor: 'success.dark',
-                                    color: 'white',
-                                  },
-                                }}
-                              >
-                                <RemoveRedEyeIcon width={18} height={18} />
-                              </IconButton>
-                            </Tooltip>
-                            {/* Tombol Checkin */}
-                            <Tooltip title="Check In">
-                              <IconButton
-                                onClick={() => onEdit?.(row)}
-                                disableRipple
-                                sx={{
-                                  color: 'white',
-                                  backgroundColor: '#13DEB9 !important',
-                                  width: 28,
-                                  height: 28,
-                                  padding: 0.5,
-                                  borderRadius: '50%',
-                                  '&:hover': {
-                                    backgroundColor: 'success.dark',
-                                    color: 'white',
-                                  },
-                                }}
-                              >
-                                <IconLogin2 width={18} height={18} />
-                              </IconButton>
-                            </Tooltip>
+                          <img src={backgroundnodata} alt="No Data" height="120" />
+                          <Typography variant="body1">No Data Available</Typography>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    paginatedData.map((row, index) => (
+                      <TableRow key={row.id}>
+                        {isHaveChecked && (
+                          <TableCell
+                            padding="checkbox"
+                            sx={{ position: 'sticky', left: 0, zIndex: 3, background: 'white' }}
+                          >
+                            <Checkbox
+                              checked={checkedIds.includes(row.id)}
+                              onChange={(e) => handleCheckRow(row.id as string, e.target.checked)}
+                            />
+                          </TableCell>
+                        )}
 
-                            {/* Tombol Checkout */}
-                            <Tooltip title="Check Out">
-                              <IconButton
-                                onClick={() => onDelete?.(row)}
-                                disableRipple
-                                sx={{
-                                  color: 'white',
-                                  backgroundColor: 'error.main',
-                                  width: 28,
-                                  height: 28,
-                                  padding: 0.5,
-                                  borderRadius: '50%',
-                                  // hover
-                                  '&:hover': {
-                                    backgroundColor: 'error.dark',
+                        {isHaveAction && isActionVisitor && (
+                          <TableCell
+                            sx={{
+                              position: 'sticky',
+                              left: isHaveChecked ? CHECKBOX_COL_WIDTH : 0,
+                              zIndex: 3,
+                              background: 'white',
+                              minWidth: ACTION_COL_WIDTH, // ditambah biar muat icon VIP
+                              maxWidth: ACTION_COL_WIDTH,
+                            }}
+                          >
+                            <Box display="flex" alignItems="center" gap={0.3}>
+                              {/* Detail Visitor */}
+                              <Tooltip title="Detail Visitor">
+                                <IconButton
+                                  onClick={() => onView?.(row)}
+                                  disableRipple
+                                  sx={{
                                     color: 'white',
-                                  },
-                                }}
-                              >
-                                <IconLogout2 width={18} height={18} />
-                              </IconButton>
-                            </Tooltip>
+                                    backgroundColor: 'gray !important',
+                                    width: 28,
+                                    height: 28,
+                                    padding: 0.5,
+                                    borderRadius: '50%',
+                                    '&:hover': {
+                                      backgroundColor: 'success.dark',
+                                      color: 'white',
+                                    },
+                                  }}
+                                >
+                                  <RemoveRedEyeIcon width={18} height={18} />
+                                </IconButton>
+                              </Tooltip>
+                              {/* Tombol Checkin */}
+                              <Tooltip title="Check In">
+                                <IconButton
+                                  onClick={() => onEdit?.(row)}
+                                  disableRipple
+                                  sx={{
+                                    color: 'white',
+                                    backgroundColor: '#13DEB9 !important',
+                                    width: 28,
+                                    height: 28,
+                                    padding: 0.5,
+                                    borderRadius: '50%',
+                                    '&:hover': {
+                                      backgroundColor: 'success.dark',
+                                      color: 'white',
+                                    },
+                                  }}
+                                >
+                                  <IconLogin2 width={18} height={18} />
+                                </IconButton>
+                              </Tooltip>
 
-                            {/* Ikon VIP */}
-                            {/* {isHaveVip &&
+                              {/* Tombol Checkout */}
+                              <Tooltip title="Check Out">
+                                <IconButton
+                                  onClick={() => onDelete?.(row)}
+                                  disableRipple
+                                  sx={{
+                                    color: 'white',
+                                    backgroundColor: 'error.main',
+                                    width: 28,
+                                    height: 28,
+                                    padding: 0.5,
+                                    borderRadius: '50%',
+                                    // hover
+                                    '&:hover': {
+                                      backgroundColor: 'error.dark',
+                                      color: 'white',
+                                    },
+                                  }}
+                                >
+                                  <IconLogout2 width={18} height={18} />
+                                </IconButton>
+                              </Tooltip>
+
+                              {/* Ikon VIP */}
+                              {/* {isHaveVip &&
                               (row.is_vip ? (
                                 <Tooltip title="VIP">
                                   <IconStarFilled color="gold" />
@@ -1015,392 +1142,495 @@ export function DynamicTable<T extends { id: string | number }>({
                               // </Tooltip>
                               null)} */}
 
-                            {/* {isHaveVip && isVip?.(row) && (
+                              {/* {isHaveVip && isVip?.(row) && (
                               <Tooltip title="VIP">
                                 <IconStarFilled color="gold" />
                               </Tooltip>
                             )} */}
-                          </Box>
+                            </Box>
+                          </TableCell>
+                        )}
+
+                        <TableCell
+                          sx={{
+                            position: 'sticky',
+                            left:
+                              (isHaveChecked ? CHECKBOX_COL_WIDTH : 0) +
+                              (isActionVisitor ? ACTION_COL_WIDTH : 0),
+                            zIndex: 3,
+                            background: 'white',
+                            minWidth: INDEX_COL_WIDTH,
+                            maxWidth: INDEX_COL_WIDTH,
+                          }}
+                        >
+                          {index + 1 + page * rowsPerPage}
                         </TableCell>
-                      )}
 
-                      <TableCell
-                        sx={{
-                          position: 'sticky',
-                          left:
-                            (isHaveChecked ? CHECKBOX_COL_WIDTH : 0) +
-                            (isActionVisitor ? ACTION_COL_WIDTH : 0),
-                          zIndex: 3,
-                          background: 'white',
-                          minWidth: INDEX_COL_WIDTH,
-                          maxWidth: INDEX_COL_WIDTH,
-                        }}
-                      >
-                        {index + 1 + page * rowsPerPage}
-                      </TableCell>
+                        {columns.map((col, idx) => {
+                          const makeSticky = isStickyVisitorCol(idx);
 
-                      {columns.map((col, idx) => {
-                        const makeSticky = isStickyVisitorCol(idx);
-                        return (
-                          <TableCell
-                            key={col}
-                            sx={{
-                              ...(makeSticky && {
-                                position: 'sticky',
-                                left: getStickyLeft(idx),
-                                zIndex: 3, // body < header
-                                background: 'white',
-                                minWidth: DATA_COL_WIDTH,
-                                maxWidth: DATA_COL_WIDTH,
-                              }),
-                            }}
-                          >
-                            {isHaveVip && col === 'is_vip' ? (
-                              row[col] ? (
-                                <Tooltip title="VIP">
-                                  <IconStarFilled color="gold" />
-                                </Tooltip>
-                              ) : (
-                                <Tooltip title="Not VIP">
-                                  <IconStarFilled color="lightgray" />
-                                </Tooltip>
-                              )
-                            ) : htmlFields.includes(col) && typeof row[col] === 'string' ? (
-                              <RichHtmlCell
-                                html={String(row[col] ?? '')}
-                                lines={htmlClampLines}
-                                maxWidth={htmlMaxWidth}
-                              />
-                            ) : col === 'card_status' ? (
-                              CARD_STATUS[Number(row[col])] ?? String(row[col] ?? '-')
-                            ) : isHaveEmployee && col === 'employee_id' ? (
-                              <Tooltip title="View Employee">
-                                <IconButton
-                                  size="small"
-                                  color="primary"
-                                  onClick={() => onEmployeeClick?.(String(row[col] ?? ''))}
-                                  sx={{
-                                    borderRadius: '50%',
-                                    width: 30,
-                                    height: 30,
-                                    backgroundColor: (theme) => theme.palette.grey[100],
-                                  }}
-                                >
-                                  <IconUserFilled />
-                                </IconButton>
-                              </Tooltip>
-                            ) : isHaveGender && col === 'gender' ? (
-                              GENDER_MAP[String(row[col])] ?? String(row[col] ?? '-')
-                            ) : isSiteSpaceType && col === 'type' ? (
-                              SITE_MAP[Number(row[col])] ?? String(row[col] ?? '-')
-                            ) : isHaveImage &&
-                              imageFields.includes(col) &&
-                              typeof row[col] === 'string' ? (
-                              <img
-                                src={(() => {
-                                  const value = row[col];
-                                  if (!value) return '';
-                                  if (value.startsWith('data:image')) return value;
-                                  if (value.startsWith('http')) return value;
-                                  return `${BASE_URL}${value}`;
-                                })()}
-                                alt="employee"
-                                style={{
-                                  width: 55,
-                                  height: 55,
-                                  // borderRadius: '50%',
-                                  objectFit: 'cover',
-                                }}
-                              />
-                            ) : (isDataVerified && col === 'secure') ||
-                              col === 'is_employee_used' ||
-                              col === 'is_multi_site' ? (
-                              <Box
-                                display="flex"
-                                alignItems="center"
-                                justifyContent="center"
-                                width="100%"
-                              >
-                                {row[col] ? (
-                                  <Tooltip title="Secure Verified">
-                                    <Box
-                                      sx={{
-                                        backgroundColor: 'green',
-                                        borderRadius: '50%',
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        p: '2px',
-                                      }}
-                                    >
-                                      <IconCheck color="white" size={16} />
-                                    </Box>
+                          return (
+                            <TableCell
+                              key={col}
+                              sx={{
+                                ...(makeSticky && {
+                                  position: { xs: 'static', lg: 'sticky' },
+                                  left: getStickyLeft(idx),
+                                  zIndex: 3, // body < header
+                                  background: 'white',
+                                  minWidth: DATA_COL_WIDTH,
+                                  maxWidth: DATA_COL_WIDTH,
+                                }),
+                              }}
+                            >
+                              {isHaveVip && col === 'is_vip' ? (
+                                row[col] ? (
+                                  <Tooltip title="VIP">
+                                    <IconStarFilled color="gold" />
                                   </Tooltip>
                                 ) : (
-                                  <Tooltip title="Secure Not Verified">
+                                  <Tooltip title="Not VIP">
+                                    <IconStarFilled color="lightgray" />
+                                  </Tooltip>
+                                )
+                              ) : htmlFields.includes(col) && typeof row[col] === 'string' ? (
+                                <RichHtmlCell
+                                  html={String(row[col] ?? '')}
+                                  lines={htmlClampLines}
+                                  maxWidth={htmlMaxWidth}
+                                />
+                              ) : col === 'card_status' ? (
+                                CARD_STATUS[Number(row[col])] ?? String(row[col] ?? '-')
+                              ) : col === 'document_type' ? (
+                                DOCUMENT_TYPE[Number(row[col])] ?? String(row[col] ?? '-')
+                              ) : (isHavePeriod && col === 'visitor_period_start') ||
+                                col === 'visitor_period_end' ? (
+                                <>
+                                  {formatDate(row[col] as string)}
+                                  <br />
+                                </>
+                              ) : isHaveEmployee && col === 'host' ? (
+                                <Tooltip title="View Employee">
+                                  <IconButton
+                                    size="small"
+                                    color="primary"
+                                    onClick={() => onEmployeeClick?.(row)} // kirim seluruh row
+                                    sx={{
+                                      borderRadius: '50%',
+                                      width: 30,
+                                      height: 30,
+                                      backgroundColor: (theme) => theme.palette.grey[100],
+                                    }}
+                                  >
+                                    <IconUserFilled />
+                                  </IconButton>
+                                </Tooltip>
+                              ) : isHaveGender && col === 'gender' ? (
+                                GENDER_MAP[String(row[col])] ?? String(row[col] ?? '-')
+                              ) : isSiteSpaceType && col === 'type' ? (
+                                SITE_MAP[Number(row[col])] ?? String(row[col] ?? '-')
+                              ) : isHaveImage &&
+                                imageFields.includes(col) &&
+                                typeof row[col] === 'string' ? (
+                                <img
+                                  src={(() => {
+                                    const value = row[col];
+                                    if (!value) return '';
+                                    if (value.startsWith('data:image')) return value;
+                                    if (value.startsWith('http')) return value;
+                                    return `${BASE_URL}${value}`;
+                                  })()}
+                                  alt="employee"
+                                  style={{
+                                    width: 55,
+                                    height: 55,
+                                    // borderRadius: '50%',
+                                    objectFit: 'cover',
+                                  }}
+                                />
+                              ) : (isDataVerified && col === 'secure') ||
+                                col === 'can_upload' ||
+                                col === 'can_signed' ||
+                                col === 'can_declined' ||
+                                col === 'is_primary' ||
+                                col === 'is_employee_used' ||
+                                col === 'is_multi_site' ||
+                                col === 'is_used' ? (
+                                <Box
+                                  display="flex"
+                                  alignItems="center"
+                                  justifyContent="center"
+                                  width="100%"
+                                >
+                                  <Tooltip
+                                    title={
+                                      row[col]
+                                        ? tooltipLabels[col]?.true ?? 'Verified'
+                                        : tooltipLabels[col]?.false ?? 'Not Verified'
+                                    }
+                                  >
                                     <Box
-                                      sx={{
-                                        backgroundColor: 'red',
+                                      sx={(theme) => ({
+                                        backgroundColor: row[col]
+                                          ? theme.palette.success.main
+                                          : theme.palette.error.main,
                                         borderRadius: '50%',
                                         display: 'inline-flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         p: '2px',
-                                      }}
+                                      })}
                                     >
-                                      <IconX color="white" size={16} />
+                                      {row[col] ? (
+                                        <IconCheck color="white" size={16} />
+                                      ) : (
+                                        <IconX color="white" size={16} />
+                                      )}
                                     </Box>
                                   </Tooltip>
-                                )}
-                              </Box>
-                            ) : col === 'password' ? (
-                              <Box
-                                display="inline-flex"
-                                alignItems="center"
-                                gap={0.5}
-                                justifyContent={'center'}
-                                width="100%"
-                              >
-                                {isHavePassword ? (
-                                  visiblePasswords[row.id] ? (
-                                    <>
-                                      <span>{String(row[col] ?? '-')}</span>
-                                      <Tooltip title="Hide Password">
+                                </Box>
+                              ) : isHavePdf && col === 'file' ? (
+                                <Tooltip title="View File">
+                                  <IconButton
+                                    size="small"
+                                    color="primary"
+                                    onClick={() => onFileClick?.(row)} // kirim seluruh row
+                                    sx={{
+                                      borderRadius: '50%',
+                                      width: 30,
+                                      height: 30,
+                                      backgroundColor: (theme) => theme.palette.grey[100],
+                                    }}
+                                  >
+                                    <IconFileText />
+                                  </IconButton>
+                                </Tooltip>
+                              ) : col === 'email' ? (
+                                <Box
+                                  display="inline-flex"
+                                  alignItems="center"
+                                  justifyContent="start"
+                                  textAlign={'left'}
+                                  gap={0.5}
+                                  width="100%"
+                                >
+                                  <span>{(row[col] as React.ReactNode) ?? '-'}</span>
+
+                                  {isHaveVerified &&
+                                    (row[col] == 'is_email_verified' ? (
+                                      <Tooltip title="Email Verified">
+                                        <Box
+                                          sx={{
+                                            backgroundColor: 'green',
+                                            borderRadius: '50%',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            padding: '1px',
+                                          }}
+                                        >
+                                          <IconCheck color="white" size={16} />
+                                        </Box>
+                                      </Tooltip>
+                                    ) : (
+                                      <Tooltip title="Email Not Verified">
+                                        <Box
+                                          sx={{
+                                            backgroundColor: 'red',
+                                            borderRadius: '50%',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            padding: '1px',
+                                          }}
+                                        >
+                                          <IconX color="white" size={16} />
+                                        </Box>
+                                      </Tooltip>
+                                    ))}
+                                </Box>
+                              ) : col === 'password' ? (
+                                <Box
+                                  display="inline-flex"
+                                  alignItems="center"
+                                  gap={0.5}
+                                  justifyContent={'center'}
+                                  width="100%"
+                                >
+                                  {isHavePassword ? (
+                                    visiblePasswords[row.id] ? (
+                                      <>
+                                        <span>{String(row[col] ?? '-')}</span>
+                                        <Tooltip title="Hide Password">
+                                          <IconButton
+                                            size="small"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              togglePassword(row.id);
+                                            }}
+                                          >
+                                            <IconEyeOff size={18} />
+                                          </IconButton>
+                                        </Tooltip>
+                                      </>
+                                    ) : (
+                                      <Tooltip title="Show Password">
                                         <IconButton
                                           size="small"
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             togglePassword(row.id);
                                           }}
+                                          sx={{
+                                            bgcolor: 'grey.200', // background
+                                            '&:hover': {
+                                              bgcolor: 'grey.300', // background saat hover
+                                            },
+                                            borderRadius: '50%', // biar bulat
+                                            p: 0.5, // padding supaya icon nggak terlalu mepet
+                                          }}
                                         >
-                                          <IconEyeOff size={18} />
+                                          <IconEye size={18} />
                                         </IconButton>
                                       </Tooltip>
-                                    </>
+                                    )
                                   ) : (
-                                    <Tooltip title="Show Password">
-                                      <IconButton
-                                        size="small"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          togglePassword(row.id);
-                                        }}
-                                        sx={{
-                                          bgcolor: 'grey.200', // background
-                                          '&:hover': {
-                                            bgcolor: 'grey.300', // background saat hover
-                                          },
-                                          borderRadius: '50%', // biar bulat
-                                          p: 0.5, // padding supaya icon nggak terlalu mepet
-                                        }}
-                                      >
-                                        <IconEye size={18} />
-                                      </IconButton>
-                                    </Tooltip>
-                                  )
+                                    // Jika fitur password tidak diaktifkan, tampilkan masked statis
+                                    '••••••••'
+                                  )}
+                                </Box>
+                              ) : isHaveCard && col === 'card' ? (
+                                row[col] ? (
+                                  <>{row[col]}</>
                                 ) : (
-                                  // Jika fitur password tidak diaktifkan, tampilkan masked statis
-                                  '••••••••'
-                                )}
-                              </Box>
-                            ) : isHaveCard && col === 'card' ? (
-                              row[col] ? (
-                                <>{row[col]}</>
-                              ) : (
-                                <>-</>
-                              )
-                            ) : isHaveBooleanSwitch && typeof row[col] === 'boolean' ? (
-                              <Box
-                                display="flex"
-                                alignItems="center"
-                                width={'100%'}
-                                justifyContent={'center'}
-                              >
-                                <Switch
-                                  checked={row[col] as boolean}
-                                  onChange={(_, checked) =>
-                                    onBooleanSwitchChange?.(row.id, col, checked)
-                                  }
-                                  color="primary"
-                                  size="small"
-                                />
-                              </Box>
-                            ) : isHaveObjectData &&
-                              objectFields?.includes(col) &&
-                              typeof row[col] === 'object' &&
-                              row[col] !== null ? (
-                              Array.isArray(row[col]) ? (
-                                row[col].map((item: any) => item.name).join(', ')
-                              ) : (
-                                (row[col] as { name?: string }).name ?? '-'
-                              )
-                            ) : (
-                              <>
-                                {isHaveIntegration && col === 'name' && onNameClick ? (
-                                  <Button
-                                    variant="text"
+                                  <>-</>
+                                )
+                              ) : isHaveBooleanSwitch && typeof row[col] === 'boolean' ? (
+                                <Box
+                                  display="flex"
+                                  alignItems="center"
+                                  width={'100%'}
+                                  justifyContent={'center'}
+                                >
+                                  <Switch
+                                    checked={row[col] as boolean}
+                                    onChange={(_, checked) =>
+                                      onBooleanSwitchChange?.(row.id, col, checked)
+                                    }
+                                    color="primary"
                                     size="small"
-                                    onClick={() => {
-                                      // e.stopPropagation();
-                                      onNameClick?.(row);
-                                    }}
-                                    sx={{
-                                      p: 1,
-                                      minWidth: 0,
-                                      textTransform: 'none',
-                                      fontSize: '0.875rem',
-                                      textDecoration: 'underline',
-                                    }}
-                                    // target="_blank"
-                                  >
-                                    {String(row[col] ?? '-')}
-                                  </Button>
+                                  />
+                                </Box>
+                              ) : isHaveObjectData &&
+                                objectFields?.includes(col) &&
+                                typeof row[col] === 'object' &&
+                                row[col] !== null ? (
+                                Array.isArray(row[col]) ? (
+                                  row[col].map((item: any) => item.name).join(', ')
                                 ) : (
-                                  String(row[col] ?? '-')
-                                )}
-
-                                {isHaveVerified &&
-                                  col === 'email' &&
-                                  (col == 'is_email_verified' ? (
-                                    <Tooltip title="Email Verified">
-                                      <Box
-                                        sx={{
-                                          mt: '10px',
-                                          backgroundColor: 'green',
-                                          borderRadius: '50%',
-                                          display: 'inline-flex',
-                                          alignItems: 'center',
-                                          justifyContent: 'center',
-                                          marginLeft: '5px',
-                                          p: '2px',
-                                        }}
-                                      >
-                                        <IconCheck color="white" size={16} />
-                                      </Box>
-                                    </Tooltip>
+                                  (row[col] as { name?: string }).name ?? '-'
+                                )
+                              ) : (
+                                <>
+                                  {isHaveIntegration && col === 'name' && onNameClick ? (
+                                    <Button
+                                      variant="text"
+                                      size="small"
+                                      onClick={() => {
+                                        // e.stopPropagation();
+                                        onNameClick?.(row);
+                                      }}
+                                      sx={{
+                                        p: 1,
+                                        minWidth: 0,
+                                        textTransform: 'none',
+                                        fontSize: '0.875rem',
+                                        textDecoration: 'underline',
+                                      }}
+                                      // target="_blank"
+                                    >
+                                      {String(row[col] ?? '-')}
+                                    </Button>
                                   ) : (
-                                    <Tooltip title="Email Not Verified">
-                                      <Box
-                                        sx={{
-                                          mt: '20px',
-                                          backgroundColor: 'red',
-                                          borderRadius: '50%',
-                                          display: 'inline-flex',
-                                          alignItems: 'center',
-                                          justifyContent: 'center',
-                                          marginLeft: '5px',
-                                          p: '2px',
-                                        }}
-                                      >
-                                        <IconX color="white" size={16} />
-                                      </Box>
-                                    </Tooltip>
-                                  ))}
-                              </>
-                            )}
-                          </TableCell>
-                        );
-                      })}
+                                    String(row[col] ?? '-')
+                                  )}
 
-                      {isHaveAction && !isActionVisitor && (
-                        <TableCell
-                          sx={{
-                            position: 'sticky',
-                            right: 0,
-                            bgcolor: 'background.paper',
-                            zIndex: 2, // body < header
-                            p: 0, // padding diatur di inner Box
-                            verticalAlign: 'middle', // ikut tinggi baris
-                          }}
-                        >
-                          <Box
+                                  {/* {isHaveVerified &&
+                                    col === 'email' &&
+                                    (col == 'is_email_verified' ? (
+                                      <Tooltip title="Email Verified">
+                                        <Box
+                                          sx={{
+                                            // mt: '25px',
+                                            backgroundColor: 'green',
+                                            borderRadius: '50%',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            marginLeft: '5px',
+                                            padding: '1px',
+                                          }}
+                                        >
+                                          <IconCheck color="white" size={16} />
+                                        </Box>
+                                      </Tooltip>
+                                    ) : (
+                                      <Tooltip title="Email Not Verified">
+                                        <Box
+                                          sx={{
+                                            // mt: '25px',
+                                            backgroundColor: 'red',
+                                            borderRadius: '50%',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            marginLeft: '5px',
+                                            padding: '1px',
+                                          }}
+                                        >
+                                          <IconX color="white" size={16} />
+                                        </Box>
+                                      </Tooltip>
+                                    ))} */}
+                                </>
+                              )}
+                            </TableCell>
+                          );
+                        })}
+                        {isHaveCard && (
+                          <TableCell>
+                            <Typography variant="body2" color="text.secondary"></Typography>
+                          </TableCell>
+                        )}
+                        {isHaveAction && !isActionVisitor && (
+                          <TableCell
                             sx={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: 1,
-                              px: 1.5,
-                              py: 1.25, // samakan dengan baris lain
-                              height: '100%',
+                              position: 'sticky',
+                              right: 0,
+                              bgcolor: 'background.paper',
+                              zIndex: 2, // body < header
+                              p: 0, // padding diatur di inner Box
+                              verticalAlign: 'middle', // ikut tinggi baris
                             }}
                           >
-                            {/* Tombol Edit */}
-                            <Tooltip title="Edit">
-                              <IconButton
-                                onClick={() => onEdit?.(row)}
-                                disableRipple
-                                sx={{
-                                  color: 'white',
-                                  backgroundColor: '#FA896B',
-                                  width: 28,
-                                  height: 28,
-                                  p: 0.5,
-                                  borderRadius: '50%',
-                                  '&:hover': { backgroundColor: '#e06f52', color: 'white' },
-                                }}
-                              >
-                                <IconPencil width={14} height={14} />
-                              </IconButton>
-                            </Tooltip>
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: 1,
+                                px: 1.5,
+                                py: 1.25, // samakan dengan baris lain
+                                height: '100%',
+                              }}
+                            >
+                              {isHaveView ? (
+                                <Tooltip title="Detail Invitation">
+                                  <IconButton
+                                    onClick={() => onView?.(row)}
+                                    disableRipple
+                                    sx={{
+                                      color: 'white',
+                                      backgroundColor: 'gray !important',
+                                      width: 28,
+                                      height: 28,
+                                      padding: 0.5,
+                                      borderRadius: '50%',
+                                      '&:hover': {
+                                        backgroundColor: 'success.dark',
+                                        color: 'white',
+                                      },
+                                    }}
+                                  >
+                                    <RemoveRedEyeIcon width={18} height={18} />
+                                  </IconButton>
+                                </Tooltip>
+                              ) : (
+                                <>
+                                  <Tooltip title="Edit">
+                                    <IconButton
+                                      onClick={() => onEdit?.(row)}
+                                      disableRipple
+                                      sx={{
+                                        color: 'white',
+                                        backgroundColor: '#FA896B',
+                                        width: 28,
+                                        height: 28,
+                                        p: 0.5,
+                                        borderRadius: '50%',
+                                        '&:hover': { backgroundColor: '#e06f52', color: 'white' },
+                                      }}
+                                    >
+                                      <IconPencil width={14} height={14} />
+                                    </IconButton>
+                                  </Tooltip>
 
-                            {/* Tombol Delete */}
-                            <Tooltip title="Delete">
-                              <IconButton
-                                onClick={() => onDelete?.(row)}
-                                disableRipple
-                                sx={{
-                                  color: 'white',
-                                  backgroundColor: 'error.main',
-                                  width: 28,
-                                  height: 28,
-                                  p: 0.5,
-                                  borderRadius: '50%',
-                                  '&:hover': { backgroundColor: 'error.dark' },
-                                }}
-                              >
-                                <IconTrash width={14} height={14} />
-                              </IconButton>
-                            </Tooltip>
-                          </Box>
-                        </TableCell>
-                      )}
+                                  {/* Tombol Delete */}
+                                  <Tooltip title="Delete">
+                                    <IconButton
+                                      onClick={() => onDelete?.(row)}
+                                      disableRipple
+                                      sx={{
+                                        color: 'white',
+                                        backgroundColor: 'error.main',
+                                        width: 28,
+                                        height: 28,
+                                        p: 0.5,
+                                        borderRadius: '50%',
+                                        '&:hover': {
+                                          backgroundColor: 'rgba(255, 0, 0, 0.7)',
+                                          color: 'white',
+                                        },
+                                      }}
+                                    >
+                                      <IconTrash width={14} height={14} />
+                                    </IconButton>
+                                  </Tooltip>
+                                </>
+                              )}
 
-                      {isHaveActionOnlyEdit && !isActionVisitor && isSelectedType && (
-                        <TableCell
-                          sx={{
-                            position: 'sticky',
-                            right: 0,
-                            background: 'white',
-                            zIndex: 2,
-                            display: 'flex',
-                            gap: 1,
-                            alignItems: 'center',
-                          }}
-                        >
-                          <Box display="flex" alignItems="end">
-                            {/* Tombol Edit (Primary, Kecil) */}
-                            <Tooltip title="Edit">
-                              <IconButton
-                                onClick={() => onEdit?.(row)}
-                                disableRipple
-                                sx={{
-                                  color: 'white',
-                                  backgroundColor: '#FA896B',
+                              {/* Tombol Edit */}
+                            </Box>
+                          </TableCell>
+                        )}
 
-                                  width: 28,
-                                  height: 28,
-                                  padding: 0.5,
-                                  borderRadius: '50%',
-                                }}
-                              >
-                                <IconPencil width={14} height={14} />
-                              </IconButton>
-                            </Tooltip>
-                          </Box>
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))}
+                        {isHaveActionOnlyEdit && !isActionVisitor && isSelectedType && (
+                          <TableCell
+                            sx={{
+                              position: 'sticky',
+                              right: 0,
+                              background: 'white',
+                              zIndex: 2,
+                              display: 'flex',
+                              gap: 1,
+                              alignItems: 'center',
+                            }}
+                          >
+                            <Box display="flex" alignItems="end">
+                              {/* Tombol Edit (Primary, Kecil) */}
+                              <Tooltip title="Edit">
+                                <IconButton
+                                  onClick={() => onEdit?.(row)}
+                                  disableRipple
+                                  sx={{
+                                    color: 'white',
+                                    backgroundColor: '#FA896B',
+
+                                    width: 28,
+                                    height: 28,
+                                    padding: 0.5,
+                                    borderRadius: '50%',
+                                  }}
+                                >
+                                  <IconPencil width={14} height={14} />
+                                </IconButton>
+                              </Tooltip>
+                            </Box>
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             )}
@@ -1414,6 +1644,7 @@ export function DynamicTable<T extends { id: string | number }>({
               page={page}
               onPageChange={handleChangePage}
               onRowsPerPageChange={handleChangeRowsPerPage}
+              sx={{ overflow: 'hidden' }}
             />
           )}
         </CardContent>
@@ -1427,7 +1658,7 @@ export function DynamicTable<T extends { id: string | number }>({
         anchor="right"
         PaperProps={{
           sx: {
-            width: '40vw',
+            width: '30vw',
           },
         }}
         open={showDrawerFilterMore}

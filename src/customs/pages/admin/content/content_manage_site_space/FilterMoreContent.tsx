@@ -57,10 +57,12 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
           </FormControl>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Button variant="contained" color="primary" onClick={onApplyFilter}>
-            Search
-          </Button>
+        <Grid size={{ xs: 12, md: 12 }}>
+          <Box display="flex" justifyContent="flex-end">
+            <Button variant="contained" color="primary" onClick={onApplyFilter}>
+              Apply
+            </Button>
+          </Box>
         </Grid>
       </Grid>
     </Box>

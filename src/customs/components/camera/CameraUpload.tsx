@@ -12,6 +12,7 @@ import {
 
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import { IconTrash } from '@tabler/icons-react';
+import { CameraAlt, CheckCircle, DeleteOutline } from '@mui/icons-material';
 const CameraUpload: React.FC<{
   value?: string;
   onChange: (url: string) => void;
@@ -101,7 +102,7 @@ const CameraUpload: React.FC<{
           gap: 2,
         }}
       >
-        <MuiButton size="small" onClick={() => setOpen(true)} startIcon={<PhotoCameraIcon />}>
+        <MuiButton size="medium" onClick={() => setOpen(true)} startIcon={<PhotoCameraIcon />}>
           Camera
         </MuiButton>
         {previewUrl && ( // <-- tombol Remove hanya muncul jika ada foto
@@ -159,14 +160,34 @@ const CameraUpload: React.FC<{
             </Grid>
           </Grid>
           <Divider sx={{ my: 2 }} />
+
           <Box textAlign="right">
-            <MuiButton color="warning" sx={{ mr: 1 }} onClick={clearLocal}>
+            <MuiButton
+              color="error"
+              variant="outlined"
+              sx={{ mr: 1 }}
+              startIcon={<DeleteOutline />}
+              onClick={clearLocal}
+            >
               Clear
             </MuiButton>
-            <MuiButton variant="contained" onClick={handleCapture}>
+
+            <MuiButton
+              variant="contained"
+              color="primary"
+              startIcon={<CameraAlt />}
+              onClick={handleCapture}
+            >
               Take Photo
             </MuiButton>
-            <MuiButton sx={{ ml: 1 }} onClick={() => setOpen(false)}>
+
+            <MuiButton
+              color="success"
+              variant="contained"
+              sx={{ ml: 1 }}
+              startIcon={<CheckCircle />}
+              onClick={() => setOpen(false)}
+            >
               Submit
             </MuiButton>
           </Box>

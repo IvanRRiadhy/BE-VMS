@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, use } from 'react';
 import {
   Box,
   Dialog,
@@ -11,8 +11,13 @@ import {
   Table,
   TableHead,
   TableBody,
+  Autocomplete,
+  RadioGroup,
   TableCell,
+  Typography,
   TableContainer,
+  FormControl,
+  FormControlLabel,
   Card,
   Divider,
   Grid2 as Grid,
@@ -23,6 +28,8 @@ import CloseIcon from '@mui/icons-material/Close';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import FormWizardAddVisitorCard from './FormWizardAddVisitorCard';
+import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
+import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import {
   CreateVisitorCardRequest,
   CreateVisitorCardRequestSchema,
@@ -49,6 +56,7 @@ import {
   IconUserOff,
 } from '@tabler/icons-react';
 import axiosInstance from 'src/customs/api/interceptor';
+import { useDebounce } from 'src/hooks/useDebounce';
 
 type EnableField = {
   employee_id: boolean;
@@ -86,6 +94,7 @@ const Content = () => {
   const [edittingId, setEdittingId] = useState('');
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const [searchKeyword, setSearchKeyword] = useState('');
+  const debounceSearch = useDebounce(searchKeyword, 500);
   const [totalRecords, setTotalRecords] = useState(0);
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [isDataReady, setIsDataReady] = useState(false);
@@ -93,13 +102,16 @@ const Content = () => {
   const [isBatchEdit, setIsBatchEdit] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   // Create Visitor card state management
-  const [openFormCreateVisitorCard, setOpenFormCreateVisitorCard] = React.useState(false);
+  const [openFormCreateVisitorCard, setOpenFormCreateVisitorCard] = useState(false);
   const BASE_URL = axiosInstance.defaults.baseURL;
-  const [importErrorOpen, setImportErrorOpen] = React.useState(false);
-  const [importErrorTitle, setImportErrorTitle] = React.useState<string>('');
-  const [importErrorMsg, setImportErrorMsg] = React.useState<string>('');
-  const [importErrorRows, setImportErrorRows] = React.useState<ImportErrorRow[]>([]);
+  const [importErrorOpen, setImportErrorOpen] = useState(false);
+  const [importErrorTitle, setImportErrorTitle] = useState<string>('');
+  const [importErrorMsg, setImportErrorMsg] = useState<string>('');
+  const [importErrorRows, setImportErrorRows] = useState<ImportErrorRow[]>([]);
   const [cardActiveCount, setCardActiveCount] = useState(0);
+  const [cardInactiveCount, setCardInactiveCount] = useState(0);
+  const [usedCard, setUsedCard] = useState(0);
+  const [unUsedCard, setUnUsedCard] = useState(0);
   const cards = [
     {
       title: 'Total Card',
@@ -109,17 +121,16 @@ const Content = () => {
       color: 'none',
     },
     {
-      title: 'Total Check In',
+      title: 'Total Used Card',
       icon: IconUserCheck,
-      subTitle: `${tableVisitorCard.filter((v) => v.checkin_at).length}`, // contoh filter
-      subTitleSetting: tableVisitorCard.filter((v) => v.checkin_at).length,
+      subTitle: `${usedCard}`,
       color: 'none',
     },
     {
-      title: 'Total Check Out',
+      title: 'Total Unused Card',
       icon: IconUserOff,
-      subTitle: `${tableVisitorCard.filter((v) => v.checkout_at).length}`,
-      subTitleSetting: tableVisitorCard.filter((v) => v.checkout_at).length,
+      subTitle: `${unUsedCard}`,
+      // subTitleSetting: tableVisitorCard.filter((v) => v.is_used === false).length,
       color: 'none',
     },
     {
@@ -127,6 +138,13 @@ const Content = () => {
       icon: IconCircleCheck,
       subTitle: `${cardActiveCount}`,
       subTitleSetting: tableVisitorCard.filter((v) => v.card_status === 1).length,
+      color: 'none',
+    },
+    {
+      title: 'Total Card Inactive',
+      icon: IconCircleCheck,
+      subTitle: `${cardInactiveCount}`,
+      subTitleSetting: tableVisitorCard.filter((v) => v.card_status === 0).length,
       color: 'none',
     },
   ];
@@ -144,6 +162,8 @@ const Content = () => {
           rowsPerPage,
           sortColumn,
           searchKeyword,
+          filters.type === -1 ? undefined : filters.type,
+          filters.card_status === -1 ? undefined : filters.card_status,
         );
 
         setTotalRecords(response.RecordsTotal);
@@ -158,24 +178,38 @@ const Content = () => {
             card_barcode: x.card_barcode,
             card_status: x.card_status,
             remarks: x.remarks,
-            employee_id: x.employee_id,
+            // employee_id: x.employee_id,
             employee_name: x.employee_name,
             type: x.type,
             site_name: x.site_name,
+            // registered_site: x.registered_site,
             is_used: x.is_used,
             is_employee_used: x.is_employee_used,
             is_multi_site: x.is_multi_site,
-            checkin_at: x.checkin_at,
-            checkout_at: x.checkout_at,
+            // checkin_at: x.checkin_at,
+            // checkout_at: x.checkout_at,
           }));
           setTableVisitorCard(mapped);
           setIsDataReady(true);
           const activeCount = res.collection.filter((item: any) => item.card_status === 1).length;
+          const nonActiveCount = res.collection.filter((item: any) => item.card_status === 0).length;
+          const isUsedCount = res.collection.filter((item: any) => item.is_used === true).length;
+          const isUnusedCount = res.collection.filter((item: any) => item.is_used === false).length;
 
           setCardActiveCount(activeCount);
+          setCardInactiveCount(nonActiveCount);
+          setUsedCard(isUsedCount);
+          setUnUsedCard(isUnusedCount);
         }
-      } catch (error) {
-        console.error('Error fetching data:', error);
+      } catch (error: any) {
+        // ✅ kalau 404 → kosongkan data
+        if (error?.response?.status === 404) {
+          setTableVisitorCard([]);
+          setTotalRecords(0);
+          setTotalFilteredRecords(0);
+        } else {
+          console.error('Error fetching data:', error);
+        }
       } finally {
         setLoading(false);
       }
@@ -237,42 +271,62 @@ const Content = () => {
   }, []);
 
   // Handle Edit Visitor Card
+  // const handleEdit = (id: string) => {
+  //   const existingData = tableVisitorCard.find((item) => item.id === id);
+  //   if (!existingData) return;
+
+  //   const editing = localStorage.getItem('unsavedVisitorCardData');
+
+  //   if (!editing) {
+  //     const parsedData = CreateVisitorCardRequestSchema.parse(existingData);
+  //     setEdittingId(id);
+  //     setFormAddVisitorCard(parsedData);
+  //     localStorage.setItem('unsavedVisitorCardData', JSON.stringify({ ...parsedData, id }));
+  //     handleOpenDialog();
+  //     return;
+  //   }
+
+  //   const editingData = JSON.parse(editing);
+
+  //   const formChanged =
+  //     JSON.stringify(editingData) !== JSON.stringify(CreateVisitorCardRequestSchema.parse({}));
+
+  //   if (editingData.id === id || !formChanged) {
+  //     const parsedData = CreateVisitorCardRequestSchema.parse(existingData);
+  //     setEdittingId(id);
+  //     setFormAddVisitorCard(parsedData);
+  //     setInitialFormData(parsedData);
+  //     handleOpenDialog();
+  //     return;
+  //   }
+
+  //   setPendingEditId(id);
+  //   setConfirmDialogOpen(true);
+  // };
+
   const handleEdit = (id: string) => {
     const existingData = tableVisitorCard.find((item) => item.id === id);
     if (!existingData) return;
 
-    const editing = localStorage.getItem('unsavedVisitorCardData');
+    const parsedData = {
+      ...existingData,
+      registered_site: existingData.registered_site ?? '', // simpan id string
+      type: Number(existingData.type), // Convert to number
+    } as CreateVisitorCardRequest;
 
-    if (!editing) {
-      const parsedData = CreateVisitorCardRequestSchema.parse(existingData);
-      setEdittingId(id);
-      setFormAddVisitorCard(parsedData);
-      localStorage.setItem('unsavedVisitorCardData', JSON.stringify({ ...parsedData, id }));
-      handleOpenDialog();
-      return;
-    }
-
-    const editingData = JSON.parse(editing);
-
-    const formChanged =
-      JSON.stringify(editingData) !== JSON.stringify(CreateVisitorCardRequestSchema.parse({}));
-
-    if (editingData.id === id || !formChanged) {
-      const parsedData = CreateVisitorCardRequestSchema.parse(existingData);
-      setEdittingId(id);
-      setFormAddVisitorCard(parsedData);
-      setInitialFormData(parsedData);
-      handleOpenDialog();
-      return;
-    }
-
-    setPendingEditId(id);
-    setConfirmDialogOpen(true);
+    setEdittingId(id);
+    setFormAddVisitorCard(parsedData);
+    setInitialFormData(parsedData);
+    localStorage.setItem('unsavedVisitorCardData', JSON.stringify({ ...parsedData, id }));
+    handleOpenDialog();
   };
 
   // Handle Delete Visitor Card
   const handleDeleteVisitorCard = async (id: string) => {
-    const confirmed = await showConfirmDelete('Are you sure?', "You won't be able to revert this!");
+    const confirmed = await showConfirmDelete(
+      'Are you sure to delete?',
+      "You won't be able to revert this!",
+    );
 
     if (confirmed) {
       setLoading(true);
@@ -336,7 +390,7 @@ const Content = () => {
     handleOpenDialog();
   };
 
-  const [enabledFields, setEnabledFields] = React.useState<EnableField>({
+  const [enabledFields, setEnabledFields] = useState<EnableField>({
     employee_id: false,
     registered_site: false,
     is_multi_site: false,
@@ -429,14 +483,24 @@ const Content = () => {
     handleCloseModalCreateVisitorCard();
   };
 
+  const [filters, setFilters] = useState<Filters>({
+    type: -1,
+    card_status: -1,
+  });
+
+  const handleApplyFilter = () => {
+    setPage(0);
+    setRefreshTrigger((prev) => prev + 1);
+  };
+
   return (
     <>
-      <PageContainer title="Manage Visitor Card" description="this is Dashboard page">
+      <PageContainer title="Card" description="this is Dashboard page">
         <Box>
           <Grid container spacing={3}>
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
-              <TopCard items={cards} size={{ xs: 12, lg: 3 }} />
+              <TopCard items={cards} size={{ xs: 12, lg: 2.4 }} />
             </Grid>
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
@@ -466,6 +530,8 @@ const Content = () => {
                   isHaveAddData={true}
                   isHaveHeader={false}
                   isDataVerified={true}
+                  sortColumns={['name']}
+                  onFilterByColumn={(column) => setSortColumn(column.column)}
                   onCheckedChange={(selected) => setSelectedRows(selected)}
                   onEdit={(row) => {
                     handleEdit(row.id);
@@ -478,6 +544,14 @@ const Content = () => {
                   onAddData={() => {
                     handleAddVisitorCard();
                   }}
+                  isHaveFilterMore={true}
+                  filterMoreContent={
+                    <FilterMoreContent
+                      filters={filters}
+                      setFilters={setFilters}
+                      onApplyFilter={handleApplyFilter}
+                    />
+                  }
                 />
               ) : (
                 <Card sx={{ width: '100%' }}>
@@ -604,3 +678,122 @@ const Content = () => {
 };
 
 export default Content;
+
+interface Filters {
+  type: number;
+  card_status: number;
+}
+
+type FilterMoreContentProps = {
+  filters: Filters;
+  setFilters: React.Dispatch<React.SetStateAction<Filters>>;
+  onApplyFilter: () => void;
+};
+const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
+  filters,
+  setFilters,
+  onApplyFilter,
+}) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value, name } = e.target as any;
+    const key = (id || name) as keyof Filters;
+    setFilters((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') onApplyFilter();
+  };
+
+  const initialFilters: Filters = {
+    type: -1,
+    card_status: -1,
+  };
+
+  const typeOptions = [
+    { value: -1, label: 'All Types' },
+    { value: 0, label: 'Non Access Card' },
+    { value: 1, label: 'RFID' },
+    { value: 2, label: 'BLE' },
+  ];
+
+  const cardStatusOptions = [
+    { value: -1, label: 'All Status' },
+    { value: 0, label: 'Not Found' },
+    { value: 1, label: 'Active' },
+    { value: 2, label: 'Lost' },
+    { value: 3, label: 'Broken' },
+    { value: 4, label: 'Not Return' },
+  ];
+
+  const getOption = (options: { value: number; label: string }[], val: number) =>
+    options.find((o) => o.value === val) || options[0];
+
+  return (
+    <Box
+      sx={{ padding: { xs: 0, lg: 3 }, margin: 1.5, boxShadow: 0, borderRadius: 2 }}
+      onKeyDown={handleKeyDown}
+    >
+      <Typography variant="h5" gutterBottom>
+        Card Filter
+      </Typography>
+
+      <Grid container spacing={3}>
+        {/* Join Dates */}
+
+        <Grid size={{ xs: 12 }}>
+          <CustomFormLabel sx={{ marginTop: '0px' }}>
+            <Typography variant="caption">Type</Typography>
+          </CustomFormLabel>
+          <Autocomplete
+            size="small"
+            disablePortal
+            options={typeOptions}
+            getOptionLabel={(opt) => opt.label}
+            value={getOption(typeOptions, filters.type)}
+            onChange={(_, newVal) =>
+              setFilters((prev) => ({ ...prev, type: newVal ? newVal.value : -1 }))
+            }
+            renderInput={(params) => <CustomTextField {...params} placeholder="Select type" />}
+          />
+        </Grid>
+
+        {/* Status Radio Buttons */}
+        <Grid size={{ xs: 12 }}>
+          <CustomFormLabel sx={{ marginTop: '0px' }}>
+            <Typography variant="caption">Status</Typography>
+          </CustomFormLabel>
+          <Autocomplete
+            size="small"
+            disablePortal
+            options={cardStatusOptions}
+            getOptionLabel={(opt) => opt.label}
+            value={getOption(cardStatusOptions, filters.card_status)}
+            onChange={(_, newVal) =>
+              setFilters((prev) => ({ ...prev, card_status: newVal ? newVal.value : -1 }))
+            }
+            renderInput={(params) => <CustomTextField {...params} placeholder="Select status" />}
+          />
+        </Grid>
+        {/* Actions */}
+        <Grid size={{ xs: 12 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 1,
+              justifyContent: 'flex-end',
+              mt: 1,
+              alignItems: 'center',
+            }}
+          >
+            <Button variant="outlined" onClick={() => setFilters(initialFilters)}>
+              Reset
+            </Button>
+            <Button variant="contained" onClick={onApplyFilter}>
+              Apply
+            </Button>
+          </Box>
+        </Grid>
+      </Grid>
+    </Box>
+  );
+};

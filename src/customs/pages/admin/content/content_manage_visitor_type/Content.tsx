@@ -41,7 +41,11 @@ import Swal from 'sweetalert2';
 import { IconUsersGroup } from '@tabler/icons-react';
 import { useRef } from 'react';
 import TopCard from 'src/customs/components/cards/TopCard';
-import { showErrorAlert, showSuccessAlert } from 'src/customs/components/alerts/alerts';
+import {
+  showConfirmDelete,
+  showErrorAlert,
+  showSuccessAlert,
+} from 'src/customs/components/alerts/alerts';
 
 type VisitorTypeTableRow = {
   id: string;
@@ -383,33 +387,23 @@ const Content = () => {
   const handleDelete = async (id: string) => {
     if (!token) return;
 
-    Swal.fire({
-      title: 'Are you sure?',
-      text: "You won't be able to revert this!",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, delete it!',
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        setLoading(true);
-        try {
-          setLoading(true);
-          await deleteVisitorType(token, id);
+    // setLoading(true);
+    const confirmed = await showConfirmDelete('Are you sure?', "You won't be able to revert this!");
+    if (!confirmed) return;
+    try {
+      setLoading(true);
+      await deleteVisitorType(token, id);
 
-          setRefreshTrigger((prev) => prev + 1);
-          showSuccessAlert('Deleted!', 'Visitor type has been deleted.');
-        } catch (error) {
-          console.error(error);
-          showErrorAlert('Failed!', 'Failed to delete visitor type.');
-        } finally {
-          setTimeout(() => {
-            setLoading(false);
-          }, 500);
-        }
-      }
-    });
+      setRefreshTrigger((prev) => prev + 1);
+      showSuccessAlert('Deleted!', 'Visitor type has been deleted.');
+    } catch (error) {
+      console.error(error);
+      showErrorAlert('Failed!', 'Failed to delete visitor type.');
+    } finally {
+      setTimeout(() => {
+        setLoading(false);
+      }, 500);
+    }
   };
 
   const handleBatchDelete = async (rows: VisitorTypeTableRow[]) => {
@@ -441,7 +435,7 @@ const Content = () => {
 
   return (
     <>
-      <PageContainer title="Manage Visitor Type" description="Visitor Type Page">
+      <PageContainer title="Visitor Type" description="Visitor Type Page">
         <Box>
           <Grid container spacing={3}>
             {/* column */}
@@ -467,7 +461,7 @@ const Content = () => {
                     setRowsPerPage(rowsPerPage);
                   }}
                   isHaveFilter={true}
-                  isHaveExportPdf={true}
+                  isHaveExportPdf={false}
                   isHaveExportXlf={false}
                   isHaveFilterDuration={false}
                   isHaveAddData={true}
@@ -510,7 +504,7 @@ const Content = () => {
       >
         <DialogTitle
           sx={{
-            padding: 3,
+            padding: 2,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -561,7 +555,7 @@ const Content = () => {
           </Button>
         </DialogActions>
       </Dialog>
-      <Portal>
+      {/* <Portal>
         <Backdrop
           open={loading}
           sx={{
@@ -571,7 +565,7 @@ const Content = () => {
         >
           <CircularProgress />
         </Backdrop>
-      </Portal>
+      </Portal> */}
     </>
   );
 };

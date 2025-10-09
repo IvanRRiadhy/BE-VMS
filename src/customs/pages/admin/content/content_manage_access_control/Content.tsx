@@ -18,7 +18,7 @@ import PageContainer from 'src/components/container/PageContainer';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import CloseIcon from '@mui/icons-material/Close';
-import { useSession } from 'src/customs/contexts/SessionContext';
+import { useAuth } from 'src/customs/contexts/AuthProvider';
 import {
   getAllAccessControl,
   getAllAccessControlPagination,
@@ -27,14 +27,16 @@ import {
 import {
   GetAllAccessControlResponse,
   GetAccessControlPaginationResponse,
-  Item,
+  // Item,
   CreateAccessControlRequest,
   CreateAccessControlRequestSchema,
 } from 'src/customs/api/models/AccessControl';
 import FormAccessControl from './FormAccessControl';
 import Swal from 'sweetalert2';
 
-type AccessControlTableRow = {
+interface Item {
+  brand_id: string;
+  integration_id: string;
   brand_name: string;
   type: number;
   name: string;
@@ -44,14 +46,15 @@ type AccessControlTableRow = {
   raw: string;
   integration_name: string;
   id: string;
-};
+}
+
 import { IconAccessible } from '@tabler/icons-react';
 import {
   showConfirmDelete,
   showErrorAlert,
   showSuccessAlert,
 } from 'src/customs/components/alerts/alerts';
-import { de } from 'date-fns/locale';
+import { useSession } from 'src/customs/contexts/SessionContext';
 
 const Content = () => {
   const theme = useTheme();
@@ -95,14 +98,12 @@ const Content = () => {
           sortColumn,
           searchKeyword,
         );
-        if (response) {
-          setTableData(response.collection);
-          setIsDataReady(true);
-        }
+
         setTotalRecords(response.RecordsTotal);
         setTotalFilteredRecords(response.RecordsFiltered);
 
-        const rows = response.collection.map((item: Item) => ({
+        const rows: Item[] = response.collection.map((item: Item) => ({
+          brand_id: item.brand_id,
           brand_name: item.brand_name,
           type: item.type,
           name: item.name,
@@ -111,9 +112,14 @@ const Content = () => {
           door_id: item.door_id,
           raw: item.raw,
           integration_name: item.integration_name,
+          integration_id: item.integration_id,
           id: item.id,
         }));
-        // setTableData(rows);
+        if (response) {
+          // setTableData(response.collection);
+          setTableData(rows);
+          setIsDataReady(true);
+        }
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -122,24 +128,47 @@ const Content = () => {
     };
     fetchData();
   }, [token, page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword]);
+  // inisialisasi default
+  const defaultFormData: CreateAccessControlRequest = {
+    brand_id: '',
+    brand_name: '',
+    integration_id: '',
+    integration_name: '',
+    type: -1,
+    name: '',
+    description: '',
+    channel: '',
+    door_id: '',
+    raw: '{}',
+  };
+
+  // state awal
   const [formDataAddAccessControl, setFormDataAddAccessControl] =
     useState<CreateAccessControlRequest>(() => {
       const saved = localStorage.getItem('unsavedAccessControl');
-      return saved ? JSON.parse(saved) : {};
+      if (!saved) return defaultFormData;
+      try {
+        const parsed = JSON.parse(saved);
+        return JSON.stringify(parsed) === JSON.stringify(defaultFormData)
+          ? defaultFormData
+          : parsed;
+      } catch {
+        return defaultFormData;
+      }
     });
 
-  const defaultFormData = CreateAccessControlRequestSchema.parse({});
+  // hitung unsaved
   const isFormChanged =
     JSON.stringify(formDataAddAccessControl) !== JSON.stringify(defaultFormData);
 
+  // sync ke localStorage (hanya simpan kalau ada perubahan)
   useEffect(() => {
-    const defaultForm = CreateAccessControlRequestSchema.parse({});
-    const isChanged = JSON.stringify(formDataAddAccessControl) !== JSON.stringify(defaultForm);
-
-    if (isChanged) {
+    if (isFormChanged) {
       localStorage.setItem('unsavedAccessControl', JSON.stringify(formDataAddAccessControl));
+    } else {
+      localStorage.removeItem('unsavedAccessControl');
     }
-  }, [formDataAddAccessControl]);
+  }, [formDataAddAccessControl, isFormChanged]);
 
   useEffect(() => {
     const handleMouseLeave = (e: MouseEvent) => {
@@ -211,20 +240,21 @@ const Content = () => {
     setLoading(true);
 
     if (pendingEditId) {
+      // EDIT mode
       const data = tableData.find((item) => item.id === pendingEditId);
-      setFormDataAddAccessControl(CreateAccessControlRequestSchema.parse(data) || {});
+      setFormDataAddAccessControl(CreateAccessControlRequestSchema.parse(data) || defaultFormData);
       setEdittingId(pendingEditId);
 
       setTimeout(() => {
         setLoading(false);
-        handleOpenDialog(); // ✅ buka dialog untuk edit
+        handleOpenDialog(); // buka dialog edit
       }, 300);
     } else {
-      // ❌ JANGAN buka dialog lagi di sini!
-      setFormDataAddAccessControl(CreateAccessControlRequestSchema.parse({}));
+      // ADD mode (discard unsaved)
+      setFormDataAddAccessControl(defaultFormData); // ✅ reset ke default
       setEdittingId('');
       setLoading(false);
-      setOpenCreateAccessControl(false); // pastikan tertutup
+      setOpenCreateAccessControl(false); // pastikan dialog tertutup
     }
 
     setPendingEditId(null);
@@ -293,7 +323,7 @@ const Content = () => {
 
   return (
     <>
-      <PageContainer title="Manage Access Control Space" description="Site page">
+      <PageContainer title="Access Control" description="Site page">
         <Box>
           <Grid container spacing={3}>
             {/* column */}
@@ -319,7 +349,7 @@ const Content = () => {
                   isHaveAction={true}
                   isHaveSearch={true}
                   isHaveFilter={true}
-                  isHaveExportPdf={true}
+                  isHaveExportPdf={false}
                   isHaveExportXlf={false}
                   isHaveFilterDuration={false}
                   isHaveAddData={true}
@@ -336,6 +366,7 @@ const Content = () => {
                     handleEdit(row.id);
                     setEdittingId(row.id);
                   }}
+                  isDataVerified={true}
                   onDelete={(row) => handleDelete(row.id)}
                   onBatchDelete={handleBatchDelete}
                   onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
@@ -368,7 +399,7 @@ const Content = () => {
               }
             }}
             sx={{
-              position: 'absolute', 
+              position: 'absolute',
               right: 10,
               top: 12,
               color: (theme) => theme.palette.grey[500],

@@ -25,9 +25,26 @@ export const IntegrationItemScheme = z.object({
   api_auth_passwd: z.string(),
   api_key_field: z.string(),
   api_key_value: z.string(),
+  integration_list_id: z.string(),
 });
 
-export type Item = z.infer<typeof IntegrationItemScheme>;
+// export type Item = z.infer<typeof IntegrationItemScheme>;
+export type Item = {
+  id: string;
+  name: string;
+  thumbnail: string;
+  brand_name: string;
+  brand_type: number;
+  integration_type: number;
+  api_type_auth: number;
+  api_url: string;
+  api_auth_username: string;
+  api_auth_passwd: string;
+  api_key_field: string;
+  api_key_value: string;
+  integration_list_id: string;
+};
+
 export type AvailableItem = z.infer<typeof AvailableIntegrationItemSchema>;
 
 export enum BrandType {

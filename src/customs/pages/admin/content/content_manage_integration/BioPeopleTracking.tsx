@@ -131,15 +131,16 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
         return; // jangan lanjut refresh list
       }
 
-      setSyncMsg({
-        open: true,
-        text: res.msg || 'Sinkronisasi berhasil.',
-        severity: 'success',
-      });
-
       // refresh data tanpa await
-      loadTotals().catch((e) => console.error('loadTotals error:', e));
-      fetchListByType(selectedType).catch((e) => console.error('fetchListByType error:', e));
+      if (res.status === 'success') {
+        loadTotals().catch((e) => console.error('loadTotals error:', e));
+        fetchListByType(selectedType).catch((e) => console.error('fetchListByType error:', e));
+        setSyncMsg({
+          open: true,
+          text: res.msg || 'Sinkronisasi berhasil.',
+          severity: 'success',
+        });
+      }
     } catch (e: any) {
       console.error('Sync error:', e);
       setSyncing(false);
@@ -167,36 +168,40 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
     cctv: 0,
     alarm: 0,
     alarm_warning: 0,
+    access_control: 0,
     brand: 0,
-    ble: 0,
+    access_cctv: 0,
+    ble_reader: 0,
+    tracking_transaction: 0,
+    alarm_record: 0,
   });
 
   const cards = useMemo(
     () => [
       {
-        title: 'Organizations',
-        subTitle: String(totals.organizations),
+        title: 'Organization',
+        subTitle: String(totals.organization),
         subTitleSetting: 0,
         icon: IconBuildingSkyscraper,
         color: 'none',
       },
       {
         title: 'Department',
-        subTitle: String(totals.departments),
+        subTitle: String(totals.department),
         subTitleSetting: 0,
         icon: IconBuilding,
         color: 'none',
       },
       {
         title: 'District',
-        subTitle: String(totals.districts),
+        subTitle: String(totals.district),
         subTitleSetting: 0,
         icon: IconMapPins,
         color: 'none',
       },
       {
         title: 'Member',
-        subTitle: String(totals.members),
+        subTitle: String(totals.member),
         subTitleSetting: 0,
         icon: IconUsers,
         color: 'none',
@@ -493,10 +498,10 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
         : 0;
 
     setTotals({
-      organizations: countOf(0),
-      districts: countOf(1),
-      departments: countOf(2),
-      members: countOf(3),
+      organization: countOf(0),
+      district: countOf(1),
+      department: countOf(2),
+      member: countOf(3),
       card: countOf(4),
       visitor: countOf(5),
       visitor_blacklist: countOf(6),
@@ -515,9 +520,9 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
     });
   };
 
-  useEffect(() => {
-    loadTotals();
-  }, [id, token]);
+  // useEffect(() => {
+  //   loadTotals();
+  // }, [id, token]);
 
   const fetchListByType = async (type: string) => {
     if (!token || !id) return;
@@ -1393,7 +1398,7 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
         <Divider />
         <DialogContent sx={{ pt: 2 }}>
           {!organizationForm ? (
-            <Box sx={{ py: 2 }}>Loading…</Box>
+            <Box sx={{ py: 2 }}></Box>
           ) : (
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
               <Box>

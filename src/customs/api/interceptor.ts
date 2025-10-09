@@ -1,14 +1,30 @@
 import axios from 'axios';
 
+// const axiosInstance = axios.create({
+//   baseURL: `http://103.193.15.67:8000/api`,
+//   headers: {
+//     'Content-Type': 'application/json',
+//   },
+//   // withCredentials: true,
+// });
+
+// const axiosInstance2 = axios.create({
+//   baseURL: `http://103.193.15.67:8000`,
+//   headers: {
+//     'Content-Type': 'application/json',
+//   },
+//   // withCredentials: true,
+// });
+
 const axiosInstance = axios.create({
-  baseURL: `https://biovms-net.piranticerdasindonesia.com/api`,
+  baseURL: `http://${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api`,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
 const axiosInstance2 = axios.create({
-  baseURL: `https://biovms-net.piranticerdasindonesia.com`,
+  baseURL: `http://${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}`,
   headers: {
     'Content-Type': 'application/json',
   },

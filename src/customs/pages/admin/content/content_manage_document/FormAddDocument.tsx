@@ -26,6 +26,7 @@ import { CreateDocumentRequest } from 'src/customs/api/models/Document';
 
 import { CKEditor } from '@ckeditor/ckeditor5-react';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+import axiosInstance from 'src/customs/api/interceptor';
 
 interface FormAddDocumentProps {
   formData: CreateDocumentRequest;
@@ -115,7 +116,7 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
     }
   };
 
-  const API_BASE = 'http://192.168.1.116:8000';
+  const API_BASE = axiosInstance.defaults.baseURL || '';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -318,6 +319,12 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
                           editor={ClassicEditor}
                           data={formData.document_text || ''}
                           disabled={loading}
+                          onReady={(editor) => {
+                            const editableElement = editor.ui.view.editable?.element;
+                            if (editableElement) {
+                              editableElement.style.height = '300px';
+                            }
+                          }}
                           onChange={(_, editor) => {
                             const data = editor.getData();
                             setFormData((prev) => ({ ...prev, document_text: data }));
@@ -424,18 +431,18 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
                 </Grid2>
               </Grid2>
             )}
+            <Box display="flex" justifyContent="flex-end" mt={0}>
+              <Button
+                color="primary"
+                variant="contained"
+                type="submit"
+                disabled={loading}
+                startIcon={loading ? <CircularProgress size={18} /> : undefined}
+              >
+                Submit
+              </Button>
+            </Box>
           </Grid2>
-
-          <Button
-            sx={{ mt: 0 }}
-            color="primary"
-            variant="contained"
-            type="submit"
-            disabled={loading}
-            startIcon={loading ? <CircularProgress size={18} /> : undefined}
-          >
-            {loading ? 'Submitting…' : 'Submit'}
-          </Button>
         </Grid2>
       </form>
 

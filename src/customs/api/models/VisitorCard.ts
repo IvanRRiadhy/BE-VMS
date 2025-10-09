@@ -9,7 +9,7 @@ export type Item = {
   card_mac: string;
   card_barcode: string;
   is_employee_used?: boolean | null;
-  employee_id: string | null;
+  employee_id?: string | null;
   employee_name?: string | null;
   is_multi_site?: boolean | null;
   registered_site?: string | null;
@@ -24,6 +24,22 @@ export type Item = {
 };
 
 export type GetAllVisitorCardResponse = {
+  status: string;
+  status_code: number;
+  title: string;
+  msg: string;
+  collection: Item[];
+};
+
+export type GetGetVisitorCardByIdResponse = {
+  status: string;
+  status_code: number;
+  title: string;
+  msg: string;
+  collection: Item | null;
+};
+
+export type GetAvailableCardResponse = {
   status: string;
   status_code: number;
   title: string;
@@ -114,7 +130,7 @@ export const CreateVisitorCardSubmitSchema = z
     if (!data.is_multi_site && !data.registered_site) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'Site Space is required',
+        message: 'Site is required',
         path: ['registered_site'],
       });
     }

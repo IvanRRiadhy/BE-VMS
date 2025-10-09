@@ -52,17 +52,6 @@ const FormSettingSmtp: React.FC<FormSettingSmtpProps> = ({
 
   return (
     <Paper sx={{ display: 'flex', minHeight: 400, marginTop: 2 }}>
-      {/* Vertical Tabs */}
-      {/* <Tabs
-        orientation="vertical"
-        value={tabIndex}
-        onChange={(_, newValue) => setTabIndex(newValue)}
-        sx={{ borderRight: 1, borderColor: 'divider', minWidth: 180 }}
-      >
-        <Tab label="SMTP Provider" />
-        <Tab label="Send A Test" />
-        <Tab label="Sender Report" />
-      </Tabs> */}
 
       {/* Form Content */}
       <form

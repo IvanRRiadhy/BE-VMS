@@ -31,6 +31,7 @@ import {
   showErrorAlert,
   showSuccessAlert,
 } from 'src/customs/components/alerts/alerts';
+import { axiosInstance2 } from 'src/customs/api/interceptor';
 
 const Content = () => {
   // Pagination state.
@@ -40,7 +41,7 @@ const Content = () => {
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(3);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
@@ -65,7 +66,15 @@ const Content = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const response = await getAllDocumentPagination(token, page, rowsPerPage, sortColumn);
+        const start = page * rowsPerPage;
+        const response = await getAllDocumentPagination(
+          token,
+          start,
+          rowsPerPage,
+          sortColumn,
+          searchKeyword,
+        );
+        console.log('Response from API:', response);
         setTableData(response.collection);
         setTotalRecords(response.RecordsTotal);
         setIsDataReady(true);
@@ -82,6 +91,8 @@ const Content = () => {
   const [isDirty, setIsDirty] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
+  const [openPdfDialog, setOpenPdfDialog] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState('');
 
   const handleOpenDialog = () => {
     setIsDirty(false);
@@ -206,32 +217,51 @@ const Content = () => {
     }
   };
 
+  const handleFileClick = (row: Item) => {
+    if (!row.file) return;
+
+    // pastikan file URL lengkap
+    const fileUrl = row.file.startsWith('http')
+      ? row.file
+      : `${axiosInstance2.defaults.baseURL}/cdn/${row.file}`;
+
+    setPdfUrl(fileUrl);
+    setOpenPdfDialog(true);
+  };
+
   return (
     <>
-      <PageContainer title="Manage Document" description="Document page">
+      <PageContainer title="Document" description="Document page">
         <Box>
           <Grid container spacing={3}>
-            {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
               <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
             </Grid>
-            {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
               {isDataReady ? (
                 <DynamicTable
                   overflowX={'auto'}
                   data={tableData}
+                  isHavePagination={true}
                   selectedRows={selectedRows}
+                  defaultRowsPerPage={rowsPerPage}
+                  rowsPerPageOptions={[5, 10, 20]}
+                  onPaginationChange={(page, rowsPerPage) => {
+                    setPage(page);
+                    setRowsPerPage(rowsPerPage);
+                  }}
                   isHaveChecked={true}
                   isHaveAction={true}
                   isHaveSearch={true}
                   isHaveFilter={true}
-                  isHaveExportPdf={true}
+                  isHaveExportPdf={false}
                   isHaveExportXlf={false}
                   isHaveFilterDuration={false}
                   isHaveAddData={true}
                   isHaveFilterMore={false}
                   isHaveHeader={false}
+                  isHavePdf={true}
+                  onFileClick={(row) => handleFileClick(row)}
                   onCheckedChange={(selected) => setSelectedRows(selected)}
                   onEdit={(row) => {
                     handleEdit(row.id);
@@ -289,6 +319,36 @@ const Content = () => {
           />
         </DialogContent>
       </Dialog>
+
+      <Dialog open={openPdfDialog} onClose={() => setOpenPdfDialog(false)} fullWidth maxWidth="lg">
+        <DialogTitle>View PDF</DialogTitle>
+        <IconButton
+          aria-label="close"
+          onClick={() => setOpenPdfDialog(false)}
+          sx={{
+            position: 'absolute',
+            right: 8,
+            top: 8,
+            color: (theme) => theme.palette.grey[500],
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
+
+        <DialogContent sx={{ height: '80vh' }} dividers>
+          <iframe
+            src={pdfUrl}
+            title="PDF Viewer"
+            width="100%"
+            height="100%"
+            style={{ border: 'none' }}
+          />
+        </DialogContent>
+        {/* <DialogActions>
+          <Button onClick={() => setOpenPdfDialog(false)}>Close</Button>
+        </DialogActions> */}
+      </Dialog>
+
       {/* Dialog Confirm edit */}
       <Dialog open={confirmDialogOpen} onClose={handleCancelEdit}>
         <DialogTitle>Unsaved Changes</DialogTitle>

@@ -48,6 +48,7 @@ type EnableField = {
   auto_signout: boolean;
   can_contactless_login: boolean;
   need_document: boolean;
+  is_registered_point: boolean;
 };
 
 const Content = () => {
@@ -226,7 +227,14 @@ const Content = () => {
       return;
     }
 
-    const empty = { ...CreateSiteRequestSchema.parse({}), id: '', access: [] };
+    const empty = {
+      ...CreateSiteRequestSchema.parse({}),
+      id: '',
+      access: [],
+      parking: [],
+      tracking: [],
+      is_registered_point: false,
+    };
     setFormDataAddSite(empty);
     setInitialFormSnapshot(empty);
     setEdittingId('');
@@ -254,7 +262,14 @@ const Content = () => {
     if (!found) return;
 
     try {
-      const parsedData = { ...CreateSiteRequestSchema.parse(found), id, access: [] };
+      const parsedData = {
+        ...CreateSiteRequestSchema.parse(found),
+        id,
+        access: [],
+        parking: [],
+        tracking: [],
+        is_registered_point: false,
+      };
       setEdittingId(id);
       setFormDataAddSite(parsedData);
       setInitialFormSnapshot(parsedData);
@@ -277,6 +292,9 @@ const Content = () => {
           ...CreateSiteRequestSchema.parse(found),
           id: pendingEditId,
           access: [],
+          parking: [],
+          tracking: [],
+          is_registered_point: false,
         };
         setEdittingId(pendingEditId);
         setFormDataAddSite(parsedData);
@@ -287,7 +305,14 @@ const Content = () => {
         setIsEditing(true);
       }
     } else {
-      const empty = { ...CreateSiteRequestSchema.parse({}), id: '', access: [] };
+      const empty = {
+        ...CreateSiteRequestSchema.parse({}),
+        id: '',
+        access: [],
+        parking: [],
+        tracking: [],
+        is_registered_point: false,
+      };
       setEdittingId('');
       setFormDataAddSite(empty);
       setInitialFormSnapshot(empty);
@@ -396,6 +421,7 @@ const Content = () => {
     auto_signout: false,
     can_contactless_login: false,
     need_document: false,
+    is_registered_point: false,
   });
 
   const handleBatchEdit = (rows: any[]) => {
@@ -413,7 +439,7 @@ const Content = () => {
 
   return (
     <>
-      <PageContainer title="Manage Site Space" description="Site page">
+      <PageContainer title="Site Space" description="Site page">
         <Box>
           <Grid container spacing={3}>
             {/* column */}
@@ -439,7 +465,7 @@ const Content = () => {
                   isHaveChecked={true}
                   isHaveAction={true}
                   isHaveSearch={true}
-                  isHaveFilter={true}
+                  isHaveFilter={false}
                   isHaveExportPdf={false}
                   isHaveExportXlf={false}
                   isHaveFilterDuration={false}
@@ -472,6 +498,8 @@ const Content = () => {
                   onAddData={() => {
                     handleAdd();
                   }}
+                  sortColumns={['name']}
+                  onFilterByColumn={(column) => setSortColumn(column.column)}
                 />
               ) : (
                 <Card sx={{ width: '100%' }}>

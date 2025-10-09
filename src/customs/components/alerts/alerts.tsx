@@ -37,22 +37,30 @@ export const showConfirmDelete = async (
 /**
  * Show success alert
  */
-export const showSuccessAlert = (
-  message: string = 'Success!',
+export const showSuccessAlert = async (
+  title: string = 'Success!',
   text: string = 'Operation completed.',
-): void => {
-  Swal.fire({
-    title: message,
+): Promise<void> => {
+  await Swal.fire({
+    title,
     text,
     icon: 'success',
-    background: '#ecfdf5',
-    iconColor: '#10b981',
+    iconColor: '#10b981', // hijau
+    background: '#ffffff', // putih
+    color: '#111827', // teks gelap
     confirmButtonColor: '#10b981',
-    confirmButtonText: 'Got it!',
-    timer: 5000,
+    // confirmButtonText: 'Got it!',
     showCloseButton: true,
-    timerProgressBar: true,
-    showConfirmButton: false,
+    showClass: {
+      popup: 'animate__animated animate__fadeInDown',
+    },
+    hideClass: {
+      popup: 'animate__animated animate__fadeOutUp',
+    },
+    customClass: {
+      title: 'swal2-title-custom',
+      htmlContainer: 'swal2-text-custom',
+    },
   });
 };
 /**

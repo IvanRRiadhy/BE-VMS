@@ -28,7 +28,6 @@ import FormUpdateOrganization from './FormUpdateOrganization';
 
 import { useSession } from 'src/customs/contexts/SessionContext';
 import {
-  getAllOrganizatiosPagination,
   getAllDepartmentsPagination,
   getAllDistrictsPagination,
   deleteDepartment,
@@ -38,6 +37,7 @@ import {
   getDepartmentById,
   getDistrictById,
   getAllEmployee,
+  getAllOrganizationPagination,
 } from 'src/customs/api/admin';
 
 import {
@@ -60,6 +60,8 @@ import {
 
 type EnableField = {
   name: boolean;
+  code: boolean;
+  host: boolean;
 };
 
 type SuccessOpts = {
@@ -120,6 +122,7 @@ const Content = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [sortColumn, setSortColumn] = useState<string>('id');
+  const [sortDir, setSortDir] = useState<string>('desc');
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -134,11 +137,12 @@ const Content = () => {
         let response: any;
 
         if (selectedType === 'organization') {
-          response = await getAllOrganizatiosPagination(
+          response = await getAllOrganizationPagination(
             token,
             start,
             rowsPerPage,
             sortColumn,
+            sortDir,
             searchKeyword,
           );
         } else if (selectedType === 'department') {
@@ -147,6 +151,7 @@ const Content = () => {
             start,
             rowsPerPage,
             sortColumn,
+            sortDir,
             searchKeyword,
           );
         } else {
@@ -155,6 +160,7 @@ const Content = () => {
             start,
             rowsPerPage,
             sortColumn,
+            sortDir,
             searchKeyword,
           );
         }
@@ -189,9 +195,9 @@ const Content = () => {
       if (!token) return;
       try {
         const [orgRes, depRes, distRes] = await Promise.all([
-          getAllOrganizatiosPagination(token, 0, 9999, 'id'),
-          getAllDepartmentsPagination(token, 0, 9999, 'id'),
-          getAllDistrictsPagination(token, 0, 9999, 'id'),
+          getAllOrganizationPagination(token, 0, 99999, 'id'),
+          getAllDepartmentsPagination(token, 0, 99999, 'id'),
+          getAllDistrictsPagination(token, 0, 99999, 'id'),
         ]);
         setTotals({
           organization: orgRes.RecordsTotal,
@@ -205,7 +211,7 @@ const Content = () => {
 
     fetchTotals();
     fetchData();
-  }, [token, selectedType, page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword]);
+  }, [token, selectedType, page, rowsPerPage, sortColumn, sortDir, refreshTrigger, searchKeyword]);
 
   // ======= Single dialog state (Add & Edit) =======
   const [dialog, setDialog] = useState<DialogState>(null);
@@ -216,7 +222,11 @@ const Content = () => {
 
   // Batch edit (kalau dipakai form update)
   const [isBatchEdit, setIsBatchEdit] = useState(false);
-  const [enabledFields, setEnabledFields] = useState<EnableField>({ name: false });
+  const [enabledFields, setEnabledFields] = useState<EnableField>({
+    name: false,
+    code: false,
+    host: false,
+  });
 
   // ======= ADD forms state + draft =======
   const [formDataAddDepartment, setFormDataAddDepartment] = useState<CreateDepartmentRequest>(
@@ -364,12 +374,20 @@ const Content = () => {
     if (!confirmed) return;
 
     try {
-      if (selectedType === 'department') await deleteDepartment(id, token);
-      else if (selectedType === 'district') await deleteDistrict(id, token);
-      else await deleteOrganization(id, token);
+      let successText = '';
+      if (selectedType === 'department') {
+        await deleteDepartment(id, token);
+        successText = 'Department has been successfully deleted.';
+      } else if (selectedType === 'district') {
+        await deleteDistrict(id, token);
+        successText = 'District has been removed successfully.';
+      } else {
+        await deleteOrganization(id, token);
+        successText = 'Organization data has been deleted.';
+      }
 
       setRefreshTrigger((p) => p + 1);
-      showSuccessAlert('Deleted!', 'The selected data has been deleted.');
+      showSuccessAlert('Deleted!', successText);
     } catch (error) {
       console.error(error);
       showErrorAlert('Error!', 'Something went wrong while deleting.');
@@ -435,7 +453,6 @@ const Content = () => {
     if (!keepOpen) {
       closeDialog();
     }
-
     setRefreshTrigger((p) => p + 1);
   };
 
@@ -467,8 +484,8 @@ const Content = () => {
                     isHaveChecked
                     isHaveAction
                     isActionVisitor={false}
-                    isHaveSearch
-                    isHaveFilter
+                    isHaveSearch  
+                    isHaveFilter={false}
                     isHaveExportPdf={false}
                     isHaveExportXlf={false}
                     isHaveFilterDuration={false}
@@ -531,7 +548,11 @@ const Content = () => {
             background: 'linear-gradient(135deg, rgba(2,132,199,0.05), rgba(99,102,241,0.08))',
           }}
         >
-          {dialog?.mode === 'add' ? 'Add' : 'Update'} {entityLabel(dialog?.entity)}
+          {dialog?.mode === 'add' && `Add ${entityLabel(dialog?.entity)}`}
+          {dialog?.mode === 'edit' &&
+            (isBatchEdit
+              ? `Edit Batch ${entityLabel(dialog?.entity)}`
+              : `Edit ${entityLabel(dialog?.entity)}`)}
           <IconButton aria-label="close" onClick={attemptCloseDialog}>
             <CloseIcon />
           </IconButton>

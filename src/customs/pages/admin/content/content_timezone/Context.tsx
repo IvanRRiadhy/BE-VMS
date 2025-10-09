@@ -15,10 +15,6 @@ import {
   useTheme,
 } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
-import CloseIcon from '@mui/icons-material/Close';
-import TimeGridSelector from 'src/customs/components/GridSelector/TimeGridSelector';
-import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
-import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { Item } from 'src/customs/api/models/Timezone';
 import { deleteTimezone, getAllTimezone, getTimezoneById } from 'src/customs/api/admin';
@@ -27,6 +23,7 @@ import { showConfirmDelete, showSuccessAlert } from 'src/customs/components/aler
 import FormTimezone from './FormTimezone';
 import { useDebounce } from 'src/hooks/useDebounce';
 import bg_nodata from '../../../../../assets/images/backgrounds/bg_nodata.svg';
+import { IconClock } from '@tabler/icons-react';
 const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
 
 const dayKeyMap: Record<string, string> = {
@@ -132,23 +129,6 @@ const Content = () => {
     }
   }, [selectedTimezone]);
 
-  // useEffect(() => {
-  //   const savedTz = localStorage.getItem('selectedTimezone');
-  //   const savedSearch = localStorage.getItem('timezoneSearch');
-  //   if (savedTz) setSelectedTimezone(JSON.parse(savedTz));
-  //   if (savedSearch) setSearch(savedSearch);
-  // }, []);
-
-  // // save
-  // useEffect(() => {
-  //   if (selectedTimezone) {
-  //     localStorage.setItem('selectedTimezone', JSON.stringify(selectedTimezone));
-  //   } else {
-  //     localStorage.removeItem('selectedTimezone');
-  //   }
-  //   localStorage.setItem('timezoneSearch', search);
-  // }, [selectedTimezone, search]);
-
   const handleDelete = async (id: string) => {
     if (!token) return;
 
@@ -160,6 +140,7 @@ const Content = () => {
         setRefreshTrigger((prev) => prev + 1);
         showSuccessAlert('Deleted!', 'Time Access has been deleted.');
         setSelectedTimezone(null);
+        localStorage.removeItem('selectedTimezone');
       } catch (error) {
         console.error(error);
       } finally {
@@ -251,14 +232,25 @@ const Content = () => {
                         '&:hover': {
                           backgroundColor: isActive ? 'primary.dark' : '#f5f5f5',
                         },
+                        boxShadow: (theme) => theme.shadows[10],
                       }}
                       onClick={() => handleSelect(v.id)}
                     >
                       <Box>
-                        <Typography variant="body1" fontWeight="600">
-                          {v.name}
-                        </Typography>
-                        <Typography variant="body2">{v.description}</Typography>
+                        <Box display="flex" alignItems="center" gap={1}>
+                          {/* Icon di kiri */}
+                          <Box display="flex" alignItems="center">
+                            <IconClock size={20} color={isActive ? '#fff' : '#000'} />
+                          </Box>
+
+                          {/* Teks */}
+                          <Box>
+                            <Typography variant="body1" fontWeight="600">
+                              {v.name}
+                            </Typography>
+                            <Typography variant="body2">{v.description}</Typography>
+                          </Box>
+                        </Box>
                       </Box>
 
                       <IconButton

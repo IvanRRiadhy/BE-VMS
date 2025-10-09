@@ -1,15 +1,19 @@
 import { z } from 'zod';
 
 //TYPE
-export const BrandItemSchema = z.object({
-  name: z.string(),
-  type_brand: z.number(),
-  integration_list_id: z.string(),
-  id: z.string(),
-});
+// export const BrandItemSchema = z.object({
+//   name: z.string(),
+//   type_brand: z.number(),
+//   integration_list_id: z.string(),
+//   id: z.string(),
+// });
 
-export type Item = z.infer<typeof BrandItemSchema>;
-
+export type Item = {
+  name: string;
+  type_brand: number;
+  integration_list_id: string;
+  id: string;
+}
 //GET
 export type GetAllBrandPaginationResponse = {
   RecordsTotal: number;

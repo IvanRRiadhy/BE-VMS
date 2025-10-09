@@ -169,17 +169,12 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({ formData, setFormData
           <Typography variant="caption">Head of District</Typography>
         </CustomFormLabel>
         <Autocomplete
-          // freeSolo
           id="host"
           autoHighlight
           disablePortal
           options={allEmployes.map((emp: any) => ({ id: emp.id, label: emp.name }))}
-          getOptionLabel={(option) => {
-            if (typeof option === 'string') return option; // user mengetik manual
-            return option.label;
-          }}
+          getOptionLabel={(option) => (typeof option === 'string' ? option : option.label)}
           value={
-            // cari object di options yang id-nya sama dengan formData.host
             allEmployes
               .map((emp: any) => ({ id: emp.id, label: emp.name }))
               .find((emp: any) => emp.id === formData.host) ?? ''
@@ -189,9 +184,13 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({ formData, setFormData
               ...prev,
               host: typeof newValue === 'string' ? newValue : newValue?.id ?? '',
             }));
+            // ⬅️ clear validation error
+            setErrors((prev) => ({ ...prev, host: '' }));
           }}
           onInputChange={(_, inputValue) => {
             setFormData((prev) => ({ ...prev, host: inputValue }));
+            // ⬅️ clear validation error
+            setErrors((prev) => ({ ...prev, host: '' }));
           }}
           renderInput={(params) => (
             <CustomTextField

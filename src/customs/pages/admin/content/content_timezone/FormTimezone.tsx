@@ -6,6 +6,7 @@ import { TimeGridSelector } from 'src/customs/components/GridSelector/TimeGridSe
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { createTimezone, updateTimezone } from 'src/customs/api/admin';
 import { showSuccessAlert, showErrorAlert } from 'src/customs/components/alerts/alerts';
+import { set } from 'lodash';
 
 // tipe untuk props form
 interface FormTimezoneProps {
@@ -54,9 +55,6 @@ const FormTimezone = ({ mode, initialData, onSuccess }: FormTimezoneProps) => {
 
         payload[key] = `${start}:00`;
         payload[key + '_end'] = `${end}:00`;
-      } else {
-        payload[key] = null;
-        payload[key + '_end'] = null;
       }
     });
 
@@ -70,8 +68,14 @@ const FormTimezone = ({ mode, initialData, onSuccess }: FormTimezoneProps) => {
     try {
       setLoading(true);
       const payload = buildPayload();
+      console.log('Payload:', payload);
       if (mode === 'create') {
         await createTimezone(token, payload);
+        setName('');
+        setDescription('');
+        setDays(initialData); // reset grid
+        // localStorage.removeItem(STORAGE_KEY);
+
         setTimeout(() => {
           showSuccessAlert('Created!', 'Timezone berhasil dibuat.');
           onSuccess?.();

@@ -226,7 +226,6 @@ export const TimeGridSelector = ({
   const convertSelectionToTimeBlocks = useCallback(() => {
     const newDays = initializeDays();
 
-    // Group selected cells by day
     const dayGroups: Record<number, number[]> = {};
 
     Object.keys(selectedCells).forEach((cellId) => {
@@ -234,41 +233,38 @@ export const TimeGridSelector = ({
       const dayIndex = parseInt(dayIndexStr, 10);
       const timeIndex = parseInt(timeIndexStr, 10);
 
-      if (!dayGroups[dayIndex]) {
-        dayGroups[dayIndex] = [];
-      }
-
+      if (!dayGroups[dayIndex]) dayGroups[dayIndex] = [];
       dayGroups[dayIndex].push(timeIndex);
     });
 
     Object.entries(dayGroups).forEach(([dayIndexStr, timeIndices]) => {
       const dayIndex = parseInt(dayIndexStr, 10);
       const sortedIndices = timeIndices.sort((a, b) => a - b);
-      if (sortedIndices.length === 0) return;
+      if (!sortedIndices.length) return;
 
       let currentBlockStart = sortedIndices[0];
       for (let i = 1; i < sortedIndices.length; i++) {
         if (sortedIndices[i] !== sortedIndices[i - 1] + 1) {
-          // TUTUP BLOK SEBELUMNYA (INKLUSIF)
           newDays[dayIndex].hours.push({
             id: `block-${dayIndex}-${currentBlockStart}`,
             startTime: timeSlots[currentBlockStart],
-            endTime: timeSlots[sortedIndices[i - 1]], // <-- tadinya +1
+            endTime: timeSlots[sortedIndices[i - 1]],
           });
           currentBlockStart = sortedIndices[i];
         }
       }
 
-      // Add the last block (INKLUSIF)
       newDays[dayIndex].hours.push({
         id: `block-${dayIndex}-${currentBlockStart}`,
         startTime: timeSlots[currentBlockStart],
-        endTime: timeSlots[sortedIndices[sortedIndices.length - 1]], // <-- tadinya +1
+        endTime: timeSlots[sortedIndices[sortedIndices.length - 1]],
       });
     });
 
     setDays(newDays);
     onSelectionChange(newDays);
+
+    return newDays; // ⬅️ penting
   }, [selectedCells, initializeDays, timeSlots, onSelectionChange]);
 
   // Apply the selection
@@ -347,8 +343,13 @@ export const TimeGridSelector = ({
           <Button
             variant="contained"
             onClick={() => {
-              convertSelectionToTimeBlocks();
-              onSubmit?.();
+              const newDays = convertSelectionToTimeBlocks();
+              onSelectionChange(newDays); // submit dulu
+              onSubmit?.(); // optional
+              // ⬅️ reset setelah submit
+              setSelectedCells({});
+              const emptyDays = initializeDays();
+              setDays(emptyDays);
             }}
             size="small"
           >

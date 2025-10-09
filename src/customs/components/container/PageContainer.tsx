@@ -27,7 +27,7 @@ const PageWrapper = styled('div')(() => ({
   flexDirection: 'column',
   zIndex: 1,
   width: '100%',
-  backgroundColor: 'transparent',
+  background: '#ebedefff !important',
 }));
 
 const PageContainer: React.FC<CustomPageContainerProps> = ({
@@ -65,7 +65,7 @@ const PageContainer: React.FC<CustomPageContainerProps> = ({
           <Box
             sx={{
               borderRadius: 0,
-              background: '#F4F7FA',
+              background: '#ebedefff',
               p: {
                 xs: '10px',
                 md: '20px',
@@ -73,7 +73,7 @@ const PageContainer: React.FC<CustomPageContainerProps> = ({
               width: '100%',
             }}
           >
-            <Box sx={{ minHeight: 'calc(100vh - 170px)', background: '#F4F7FA' }}>
+            <Box sx={{ minHeight: 'calc(100vh - 170px)', background: '#ebedefff' }}>
               {React.isValidElement(children) ? <ScrollToTop>{children}</ScrollToTop> : children}{' '}
             </Box>
           </Box>

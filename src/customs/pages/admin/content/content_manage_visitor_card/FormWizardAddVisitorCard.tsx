@@ -128,6 +128,20 @@ const FormWizardAddVisitorCard = ({
   }, [formData.is_multi_site]);
 
   useEffect(() => {
+    if (!formData.registered_site || siteSpaceRes.length === 0) return;
+
+    const siteObj = siteSpaceRes.find((s) => String(s.id) === String(formData.registered_site));
+
+    // kalau ketemu, update formData agar Autocomplete bisa render object yg sesuai
+    if (siteObj) {
+      setFormData((prev) => ({
+        ...prev,
+        registered_site: siteObj.id, // tetap id
+      }));
+    }
+  }, [siteSpaceRes]);
+
+  useEffect(() => {
     if (!formData.is_employee_used) {
       setErrors((prev) => {
         const { employee_id, ...rest } = prev;
@@ -261,13 +275,8 @@ const FormWizardAddVisitorCard = ({
     const newErrors: Record<string, string> = {};
 
     if (step === 0) {
-      // wajib
-      if (!formData.name?.trim()) newErrors.name = 'Name is required';
-      if (!formData.remarks?.trim()) newErrors.remarks = 'Remarks is required';
-
-      // employee (conditional)
       if (isBatchEdit) {
-        // di batch edit, hanya validasi field yang di-enable
+        // ✅ Batch Edit → hanya validasi field yg di-enable
         if (
           (enabledFields?.is_employee_used || enabledFields?.employee_id) &&
           formData.is_employee_used &&
@@ -275,6 +284,7 @@ const FormWizardAddVisitorCard = ({
         ) {
           newErrors.employee_id = 'Employee is required';
         }
+
         if (
           enabledFields?.registered_site &&
           !formData.is_multi_site &&
@@ -282,8 +292,13 @@ const FormWizardAddVisitorCard = ({
         ) {
           newErrors.registered_site = 'Site is required';
         }
+
+        // ⚠️ name & remarks tidak ikut divalidasi di batch edit
       } else {
-        // normal add/edit
+        // ✅ Normal add/edit → selalu validasi
+        if (!formData.name?.trim()) newErrors.name = 'Name is required';
+        if (!formData.remarks?.trim()) newErrors.remarks = 'Remarks is required';
+
         if (formData.is_employee_used && !formData.employee_id) {
           newErrors.employee_id = 'Employee is required';
         }
@@ -422,7 +437,7 @@ const FormWizardAddVisitorCard = ({
                 }}
                 htmlFor="card-type"
               >
-                <Typography variant="caption">Site Space</Typography>
+                <Typography variant="caption">Registered Site</Typography>
                 <FormControlLabel
                   value={formData.is_multi_site}
                   label=""
@@ -447,7 +462,7 @@ const FormWizardAddVisitorCard = ({
                   }
                 />
               </CustomFormLabel>
-              <Autocomplete
+              {/* <Autocomplete
                 fullWidth
                 options={siteSpaceRes} // array data site
                 getOptionLabel={(option) => option.name || ''} // tampilkan nama site
@@ -456,6 +471,31 @@ const FormWizardAddVisitorCard = ({
                   setFormData((prev) => ({
                     ...prev,
                     registered_site: newValue ? newValue.id : null,
+                  }));
+                }}
+                renderInput={(params) => (
+                  <CustomTextField
+                    {...params}
+                    label=""
+                    name="registered_site"
+                    error={!!errors?.registered_site}
+                    helperText={errors?.registered_site}
+                  />
+                )}
+                disabled={isBatchEdit ? !enabledFields?.registered_site : !!formData.is_multi_site}
+              /> */}
+              <Autocomplete
+                fullWidth
+                options={siteSpaceRes}
+                getOptionLabel={(option) => option?.name || ''}
+                value={
+                  siteSpaceRes.find((s) => String(s.id) === String(formData.registered_site)) ||
+                  null
+                }
+                onChange={(_, newValue) => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    registered_site: newValue ? newValue.id : '',
                   }));
                 }}
                 renderInput={(params) => (

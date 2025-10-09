@@ -23,6 +23,7 @@ const HeaderHorizontal = () => {
     boxShadow: 'none',
     padding: '5px',
     width: '100%',
+    borderBottom: '1px solid rgba(0,0,0,0.05)',
     [theme.breakpoints.up('lg')]: {
       minHeight: customizer.TopbarHeight,
     },

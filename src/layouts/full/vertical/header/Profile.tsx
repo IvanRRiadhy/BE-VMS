@@ -24,10 +24,13 @@ const Profile = () => {
 
   const handleLogout = useCallback(() => {
     // Bersihkan storage
+    handleClose2();
     clearToken();
     // Redirect ke login page
-    navigate('/', { replace: true });
-  }, [navigate]);
+    setTimeout(() => {
+      navigate('/', { replace: true });
+    }, 200); //
+  }, [navigate, clearToken]);
 
   return (
     <Box>

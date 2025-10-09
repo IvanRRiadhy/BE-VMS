@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { flushSync } from 'react-dom';
 import {
   Box,
@@ -13,7 +13,7 @@ import {
   Portal,
 } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
-import { IconSend, IconBrandGmail } from '@tabler/icons-react';
+import { IconBrandGmail } from '@tabler/icons-react';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
@@ -88,9 +88,9 @@ const Content = () => {
 
   const [formData, setFormData] = useState<Item>(() => initialFormData);
   const [formEmailData, setFormEmailData] = useState<ItemEmail>(initialFormEmailData);
-  // const [formData, setFormData] = useState<Item>({} as Item);
   const [showForm, setShowForm] = useState(false);
-
+  // Tambah di atas return()
+  const [busyId, setBusyId] = useState<string | number | null>(null);
   // UI states
   const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
@@ -196,9 +196,6 @@ const Content = () => {
       showErrorAlert('Error!', error.message);
     }
   };
-
-  // Tambah di atas return()
-  const [busyId, setBusyId] = useState<string | number | null>(null);
 
   const handleBooleanSwitchChange = async (id: number | string, field: string, value: boolean) => {
     // Abaikan switch lain, kita fokus ke selected_email
@@ -310,116 +307,12 @@ const Content = () => {
   };
 
   return (
-    <PageContainer title="Manage Setting Smtp" description="Setting Smtp page">
+    <PageContainer title="Setting Smtp" description="Setting Smtp page">
       <Box>
         <Grid size={{ xs: 12 }}>
           <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
         </Grid>
 
-        {/* {!showForm ? (
-          <Paper sx={{ display: 'flex', minHeight: 400, mt: 2, p: 2, overflowX: 'auto' }}>
-            <Tabs
-              orientation="vertical"
-              value={tabIndex}
-              onChange={(_, newValue) => setTabIndex(newValue)}
-              sx={{ borderRight: 1, borderColor: 'divider', minWidth: 180 }}
-            >
-              <Tab label="SMTP Provider" />
-              <Tab label="Send A Test" />
-              <Tab label="Sender Report" />
-            </Tabs>
-
-            <Box sx={{ flex: 1 }}>
-              {tabIndex === 0 && (
-                <Box sx={{ overflowX: 'auto', p: 2 }}>
-                  {isDataReady ? (
-                    <DynamicTable
-                      isHavePagination
-                      isHaveHeaderTitle={true}
-                      titleHeader="SMTP Provider"
-                      data={smtpData}
-                      selectedRows={selectedRows}
-                      defaultRowsPerPage={rowsPerPage}
-                      rowsPerPageOptions={[5, 10, 25, 50, 100]}
-                      onPaginationChange={(page, rowsPerPage) => {
-                        setPage(page);
-                        setRowsPerPage(rowsPerPage);
-                      }}
-                      isHaveChecked={false}
-                      isHaveAction={true}
-                      isHaveSearch={false}
-                      isHaveFilter={false}
-                      isHaveExportPdf={false}
-                      isHaveAddData={true}
-                      isHaveHeader={false}
-                      onCheckedChange={setSelectedRows}
-                      onEdit={(row) => handleEdit(row.id)}
-                      onDelete={(row) => handleDelete(row.id.toString())}
-                      onSearchKeywordChange={setSearchKeyword}
-                      onAddData={handleAdd}
-                      isHaveBooleanSwitch={true}
-                      isDataVerified={true}
-                      onBooleanSwitchChange={handleBooleanSwitchChange}
-                      isHavePassword={true}
-                    />
-                  ) : (
-                    <Card sx={{ width: '100%' }}>
-                      <Skeleton />
-                      <Skeleton animation="wave" />
-                      <Skeleton animation={false} />
-                    </Card>
-                  )}
-                </Box>
-              )}
-
-              {tabIndex === 1 && (
-                // tempatkan Send Test versi table/preview, kalau ada
-                <FormSendTestEmail
-                  formEmailData={formEmailData}
-                  setFormEmailData={setFormEmailData}
-                  smtpOptions={smtpData}
-                  onSubmit={handleSubmitEmail}
-                  // onCancel opsional kalau mau ada tombol Cancel
-                  // onCancel={() => { setFormEmailData(initialFormEmailData); }}
-                  loading={loading}
-                />
-              )}
-
-              {tabIndex === 2 && (
-                <Box sx={{ overflowX: 'auto', p: 2 }}>
-                  <DynamicTable
-                    data={smtpData}
-                    selectedRows={selectedRows}
-                    isHaveChecked={false}
-                    isHaveAction={true}
-                    isHaveSearch={false}
-                    isHaveFilter={false}
-                    isHaveExportPdf={false}
-                    isHaveAddData={true}
-                    isHaveHeader={false}
-                    onCheckedChange={setSelectedRows}
-                    onEdit={(row) => handleEdit(row.id)}
-                    onDelete={(row) => handleDelete(row.id.toString())}
-                    onSearchKeywordChange={setSearchKeyword}
-                    onAddData={handleAdd}
-                    isHaveBooleanSwitch={true}
-                    isDataVerified={true}
-                    onBooleanSwitchChange={handleBooleanSwitchChange}
-                    isHavePassword={true}
-                  />
-                </Box>
-              )}
-            </Box>
-          </Paper>
-        ) : (
-          <FormSettingSmtp
-            formData={formData}
-            setFormData={setFormData}
-            editingId={edittingId}
-            onSubmit={handleSubmit}
-            onCancel={handleCancelForm}
-          />
-        )} */}
         <Paper sx={{ display: 'flex', minHeight: 400, mt: 2, p: 2, overflowX: 'auto' }}>
           <Tabs
             orientation="vertical"

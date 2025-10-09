@@ -1,5 +1,5 @@
+import { z, ZodObject, ZodEffects } from 'zod';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Box,
@@ -22,6 +22,8 @@ import {
   CircularProgress,
   Backdrop,
   Switch,
+  Checkbox,
+  StepButton,
 } from '@mui/material';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
@@ -35,7 +37,7 @@ import {
   createEmployee,
   getAllDepartmentsPagination,
   getAllDistrictsPagination,
-  getAllOrganizatiosPagination,
+  getAllOrganizationPagination,
   updateEmployee,
   getEmployeeById,
   getAllEmployeePagination,
@@ -52,7 +54,7 @@ import {
 import { Item } from 'src/customs/api/models/Employee.ts';
 import { showSuccessAlert } from 'src/customs/components/alerts/alerts';
 const steps = ['Personal Info', 'Work Details', 'Access & Address', 'Other Details', 'Photo'];
-import { z } from 'zod';
+
 import { getStepSchema, stepFieldMap } from 'src/customs/api/validations/employeeSchemas';
 
 type EnabledFields = {
@@ -162,17 +164,17 @@ const FormWizardAddEmployee = ({
       }
     }
   };
+
   useEffect(() => {
     const fetchData = async () => {
       if (!token) return;
 
       const [orgRes, deptRes, distRes] = await Promise.all([
-        getAllOrganizatiosPagination(token, 0, 99, 'id'),
+        getAllOrganizationPagination(token, 0, 99, 'id'),
         getAllDepartmentsPagination(token, 0, 99, 'id'),
         getAllDistrictsPagination(token, 0, 99, 'id'),
       ]);
 
-      // Simpan ke state
       setOrganization(orgRes.collection ?? []);
       setDepartment(deptRes.collection ?? []);
       setDistrict(distRes.collection ?? []);
@@ -180,43 +182,39 @@ const FormWizardAddEmployee = ({
       const employeeAll = await getAllEmployee(token);
       setEmployeeAllRes(employeeAll.collection ?? []);
 
-      // Ambil data employee
-      if (edittingId) {
+      // ⛔ JANGAN load detail karyawan ketika batch edit
+      if (edittingId && !isBatchEdit) {
         const employeeRes = await getEmployeeById(edittingId, token);
-
         const employee = employeeRes?.collection ?? null;
-
         if (employee) {
           const normalizedGender =
             typeof employee.gender === 'string'
               ? employee.gender === 'Female'
                 ? 0
-                : employee.gender === 'Male'
-                ? 1
-                : 0
+                : 1
               : Number(employee.gender ?? 0);
 
-          setFormData({
-            ...formData,
+          setFormData((prev) => ({
+            ...prev,
             ...employee,
             gender: normalizedGender,
-            organization_id: String(employee.organization_id) || '',
-            department_id: String(employee.department_id) || '',
-            district_id: String(employee.district_id) || '',
-          });
-        } else {
-          console.warn('Employee not found for editing ID:', edittingId);
+            organization_id: String(employee.organization_id ?? ''),
+            department_id: String(employee.department_id ?? ''),
+            district_id: String(employee.district_id ?? ''),
+          }));
         }
       }
     };
 
     fetchData();
-  }, [token, edittingId]);
+  }, [token, edittingId, isBatchEdit]); // 👈 perhatikan dependencynya
 
   // Ambil subset field dari formData
-  const pick = <T extends object, K extends keyof T>(obj: T, keys: K[]) => {
-    const out = {} as Pick<T, K>;
-    keys.forEach((k) => (out[k] = obj[k]));
+  const pick = (obj: Record<string, any>, keys: readonly string[]) => {
+    const out: Record<string, any> = {};
+    keys.forEach((k) => {
+      if (k in obj) out[k] = obj[k];
+    });
     return out;
   };
 
@@ -225,22 +223,57 @@ const FormWizardAddEmployee = ({
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
 
+  function unwrapZodObject(schema: any): ZodObject<any> | null {
+    if (schema instanceof z.ZodObject) {
+      return schema;
+    }
+    if (schema instanceof z.ZodEffects) {
+      const inner = (schema as ZodEffects<any>)._def.schema;
+      if (inner instanceof z.ZodObject) {
+        return inner;
+      }
+    }
+    return null;
+  }
+
   const validateStep = (step: number): boolean => {
     const schema = getStepSchema(step);
     if (!schema) return true; // step tanpa aturan
 
-    // Ambil field yang divalidasi di step ini
     const fields = stepFieldMap[step] ?? [];
     let payload = pick(formData, fields);
 
-    // Mode Batch Edit: hanya validasi field yang di-enable
+    // Mode Batch Edit
     if (isBatchEdit) {
       const enabledKeys = fields.filter((k) => (enabledFields as any)?.[k] === true);
-      if (enabledKeys.length === 0) return true; // tidak ada yang di-enable → lewati
-      payload = pick(formData, enabledKeys as any);
+      if (enabledKeys.length === 0) return true;
+
+      payload = pick(formData, enabledKeys);
+
+      const baseSchema = unwrapZodObject(schema);
+      if (baseSchema) {
+        const shape: Record<string, true> = {};
+        enabledKeys.forEach((k) => (shape[k] = true));
+
+        const partialSchema = baseSchema.pick(shape);
+        const res = partialSchema.safeParse(payload);
+
+        if (!res.success) {
+          const em = toErrorMap(res.error.issues);
+          setErrors((prev) => ({ ...prev, ...em }));
+          setAlertType('error');
+          setAlertMessage('Please fix the highlighted fields on this step.');
+
+          const firstKey = Object.keys(em)[0];
+          if (firstKey) scrollToField(firstKey);
+          return false;
+        }
+      }
+
+      return true;
     }
 
-    // Normalisasi seperlunya (ID pastikan string)
+    // Normal edit → validasi semua
     if (step === 1) {
       (payload as any).district_id = String((payload as any).district_id ?? '');
       (payload as any).organization_id = String((payload as any).organization_id ?? '');
@@ -250,13 +283,11 @@ const FormWizardAddEmployee = ({
     const res = schema.safeParse(payload);
     if (res.success) return true;
 
-    // Tampilkan error per field
     const em = toErrorMap(res.error.issues);
     setErrors((prev) => ({ ...prev, ...em }));
     setAlertType('error');
     setAlertMessage('Please fix the highlighted fields on this step.');
 
-    // Scroll ke field pertama yang error
     const firstKey = Object.keys(em)[0];
     if (firstKey) scrollToField(firstKey);
 
@@ -277,22 +308,38 @@ const FormWizardAddEmployee = ({
     if (errors[key]) setErrors((prev) => ({ ...prev, [key]: '' }));
   };
 
+  useEffect(() => {
+    if (!isBatchEdit) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      organization_id: '',
+      department_id: '',
+      district_id: '',
+      gender: 0, // atau biarkan '' jika skema mengizinkan
+    }));
+
+    // (opsional) reset switches ke false di parent
+    setEnabledFields?.({
+      organization_id: false,
+      department_id: false,
+      district_id: false,
+      gender: false,
+    });
+  }, [isBatchEdit]);
+
   const resetEnabledFields = () => {
     setFormData((prev) => ({
       ...prev,
       gender: 0,
       department_id: '',
       district_id: '',
-      // access_area_special: '',
-      // access_area: '', // Access area is always enabled
       organization_id: '',
     }));
     setEnabledFields({
       organization_id: false,
       department_id: false,
       district_id: false,
-      // access_area_special: false,
-      // access_area: false, // Access area is always enabled
       gender: false,
     });
   };
@@ -354,21 +401,14 @@ const FormWizardAddEmployee = ({
       }
 
       // Batch Edit Mode
+
       if (isBatchEdit && selectedRows.length > 0) {
-        const updatedFields: Partial<CreateEmployeeRequest> = {};
+        // ambil hanya keys yang aktif
+        const enabledKeys = Object.keys(enabledFields ?? {}).filter(
+          (k) => (enabledFields as any)[k] === true,
+        ) as (keyof CreateEmployeeRequest)[];
 
-        // Misal ada field access_area_special dan gender juga
-        if (enabledFields?.organization_id)
-          updatedFields.organization_id = formData.organization_id;
-        if (enabledFields?.department_id) updatedFields.department_id = formData.department_id;
-        if (enabledFields?.district_id) updatedFields.district_id = formData.district_id;
-
-        // if (enabledFields?.access_area_special)
-        //   updatedFields.access_area_special = formData.access_area_special;
-        if (enabledFields?.gender) updatedFields.gender = formData.gender;
-
-        // Kalau gak ada fields aktif, jangan update
-        if (Object.keys(updatedFields).length === 0) {
+        if (enabledKeys.length === 0) {
           setAlertType('error');
           setAlertMessage('Please enable at least one field to update.');
           setTimeout(() => {
@@ -378,6 +418,37 @@ const FormWizardAddEmployee = ({
           setLoading(false);
           return;
         }
+
+        // ambil payload hanya field ON
+        const payload = pick(formData, enabledKeys);
+
+        // bikin schema subset sesuai field ON
+        const shape: Record<string, true> = {};
+        enabledKeys.forEach((k) => (shape[k as string] = true));
+
+        const baseSchema = unwrapZodObject(CreateEmployeeSubmitSchema);
+        const partialSchema = baseSchema?.pick(shape);
+
+        // validasi
+        if (partialSchema) {
+          const res = partialSchema.safeParse(payload);
+          if (!res.success) {
+            const em = toErrorMap(res.error.issues);
+            setErrors((prev) => ({ ...prev, ...em }));
+            setAlertType('error');
+            setAlertMessage('Please complete the required fields.');
+            const firstKey = Object.keys(em)[0];
+            if (firstKey) scrollToField(firstKey);
+            setLoading(false);
+            return;
+          }
+        }
+
+        // kalau lolos validasi → build updatedFields
+        const updatedFields = enabledKeys.reduce((acc, k) => {
+          (acc as any)[k] = formData[k];
+          return acc;
+        }, {} as Partial<CreateEmployeeRequest>);
 
         for (const row of selectedRows) {
           const updatedData: UpdateEmployeeRequest = {
@@ -389,17 +460,16 @@ const FormWizardAddEmployee = ({
 
         setAlertType('success');
         setAlertMessage('Batch update successfully!');
-        showSuccessAlert('Batch update successfully!');
+        // showSuccessAlert('Batch update successfully!');
         resetEnabledFields();
         onSuccess?.();
         return;
       }
-
       console.log('Form data:', formData);
       // NORMAL MODE (add/edit biasa)
       const mergedFormData = normalizeForSubmit({
         ...formData,
-        qr_code: formData.card_number,
+        // qr_code: formData.card_number,
         faceimage: formData.faceimage,
         gender:
           typeof formData.gender === 'string'
@@ -488,7 +558,7 @@ const FormWizardAddEmployee = ({
   // Handle Upload Image
   const handleFileUploads = async () => {
     if (fileInputRef.current && token) {
-      const allSite = await getAllEmployeePagination(token, 0, 100, 'id');
+      const allSite = await getAllEmployeePagination(token, 0, 9999, 'id');
       const otherAllSite = await getAllEmployee(token);
 
       const matchedSite = allSite.collection.find(
@@ -506,10 +576,7 @@ const FormWizardAddEmployee = ({
         const id = matchedSite?.id || otherMatchedSite?.id!;
         console.log('Upload via file input, employee id:', id);
         await uploadImageEmployee(id, siteImageFile, token);
-      }
-
-      // Upload dari webcam
-      else if ((matchedSite || otherMatchedSite) && formData.faceimage) {
+      } else if ((matchedSite || otherMatchedSite) && formData.faceimage) {
         const id = matchedSite?.id || otherMatchedSite?.id!;
         console.log('Upload via webcam, employee id:', id);
 
@@ -531,8 +598,13 @@ const FormWizardAddEmployee = ({
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
       setSiteImageFile(selectedFile);
-      console.log('Slected file:', selectedFile);
       setPreviewUrl(URL.createObjectURL(selectedFile));
+
+      // ⬅️ update ke formData juga
+      // setFormData((prev) => ({
+      //   ...prev,
+      //   faceimage: selectedFile.name, // atau biar jelas: '' dulu, nanti diupload terpisah
+      // }));
     }
   };
 
@@ -567,7 +639,7 @@ const FormWizardAddEmployee = ({
         return (
           <Grid2 container spacing={2}>
             <Grid2 size={{ xs: 12, sm: 12 }}>
-              <Alert severity="info">Fill in employee personal info</Alert>
+              <Alert severity="info">Complete the following data properly and correctly.</Alert>
             </Grid2>
             {/* Name */}
             <Grid2 size={{ xs: 12, sm: 12 }}>
@@ -589,7 +661,7 @@ const FormWizardAddEmployee = ({
             {/* Person ID */}
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1 }} htmlFor="person_id" required>
-                <Typography variant="caption">Person ID</Typography>
+                <Typography variant="caption">Person ID </Typography>
               </CustomFormLabel>
               <CustomTextField
                 id="person_id"
@@ -606,7 +678,7 @@ const FormWizardAddEmployee = ({
             {/* Identity ID */}
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1 }} htmlFor="identity_id" required>
-                <Typography variant="caption">Identity ID</Typography>
+                <Typography variant="caption">Identity ID (KTP/SIM/Paspor)</Typography>
               </CustomFormLabel>
               <CustomTextField
                 id="identity_id"
@@ -716,8 +788,8 @@ const FormWizardAddEmployee = ({
       case 1:
         return (
           <Grid2 container spacing={2}>
-            <Grid2 mt={2} size={{ xs: 12, sm: 12 }}>
-              <Alert severity="info">Work-related details</Alert>
+            <Grid2 size={{ xs: 12, sm: 12 }}>
+              <Alert severity="info">Complete the following data properly and correctly.</Alert>
             </Grid2>
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1 }} htmlFor="phone">
@@ -737,7 +809,7 @@ const FormWizardAddEmployee = ({
                 display="flex"
                 alignItems="center"
                 justifyContent="space-between"
-                sx={{ marginX: 1, marginTop: 0.8 }}
+                sx={{ marginX: 0, marginTop: 0.8 }}
               >
                 <CustomFormLabel sx={{ marginY: 1 }} htmlFor="district_id" required>
                   <Typography variant="caption">Employee District</Typography>
@@ -775,12 +847,15 @@ const FormWizardAddEmployee = ({
                       .find((opt) => opt.id === cur) || null
                   );
                 })()}
-                onChange={(_, newVal) =>
+                onChange={(_, newVal) => {
                   setFormData((prev) => ({
                     ...prev,
                     district_id: newVal ? newVal.id : '',
-                  }))
-                }
+                  }));
+
+                  // ⬅️ hapus error ketika user pilih value
+                  setErrors((prev) => ({ ...prev, district_id: '' }));
+                }}
                 isOptionEqualToValue={(opt, val) => opt.id === val.id}
                 getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt.label)}
                 disabled={isBatchEdit && !enabledFields?.district_id}
@@ -802,7 +877,7 @@ const FormWizardAddEmployee = ({
                 display="flex"
                 alignItems="center"
                 justifyContent="space-between"
-                sx={{ marginX: 1, marginTop: 0.8 }}
+                sx={{ marginX: 0, marginTop: 0.8 }}
               >
                 <CustomFormLabel sx={{ marginY: 1 }} htmlFor="organization_id" required>
                   <Typography variant="caption">Employee Organization</Typography>
@@ -843,12 +918,13 @@ const FormWizardAddEmployee = ({
                       .find((opt) => opt.id === currentId) || null
                   );
                 })()}
-                onChange={(_, newVal) =>
+                onChange={(_, newVal) => {
                   setFormData((prev) => ({
                     ...prev,
                     organization_id: newVal ? newVal.id : '',
-                  }))
-                }
+                  }));
+                  setErrors((prev) => ({ ...prev, organization_id: '' }));
+                }}
                 isOptionEqualToValue={(opt, val) => opt.id === val.id}
                 getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt.label)}
                 disabled={isBatchEdit && !enabledFields?.organization_id}
@@ -870,7 +946,7 @@ const FormWizardAddEmployee = ({
                 display="flex"
                 alignItems="center"
                 justifyContent="space-between"
-                sx={{ marginX: 1, marginTop: 0.8 }}
+                sx={{ marginX: 0, marginTop: 0.8 }}
               >
                 <CustomFormLabel sx={{ marginY: 1 }} htmlFor="department_id" required>
                   <Typography variant="caption">Employee Department</Typography>
@@ -908,12 +984,13 @@ const FormWizardAddEmployee = ({
                       .find((opt) => opt.id === cur) || null
                   );
                 })()}
-                onChange={(_, newVal) =>
+                onChange={(_, newVal) => {
                   setFormData((prev) => ({
                     ...prev,
                     department_id: newVal ? newVal.id : '',
-                  }))
-                }
+                  }));
+                  setErrors((prev) => ({ ...prev, department_id: '' }));
+                }}
                 isOptionEqualToValue={(opt, val) => opt.id === val.id}
                 getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt.label)}
                 disabled={isBatchEdit && !enabledFields?.department_id}
@@ -936,29 +1013,31 @@ const FormWizardAddEmployee = ({
         return (
           <Grid2 container spacing={2}>
             <Grid2 size={{ xs: 12, sm: 12 }}>
-              <Alert severity="info">Access and location info</Alert>
+              <Alert severity="info">Complete the following data properly and correctly.</Alert>
             </Grid2>
             {/* Is Head */}
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <FormControlLabel
                 control={
-                  <CustomRadio
-                    checked={formData.is_head === true}
-                    onChange={() => setFormData((prev) => ({ ...prev, is_head: !prev.is_head }))}
-                    disabled={isBatchEdit}
+                  <Checkbox
+                    checked={Boolean(formData.is_head)}
+                    onChange={(e) => {
+                      setFormData((prev) => ({ ...prev, is_head: e.target.checked }));
+                      setErrors((prev) => ({ ...prev, is_head: '' }));
+                    }}
                   />
                 }
                 label="Is Head Employee"
                 sx={{
                   '& .MuiFormControlLabel-label': {
-                    fontSize: '0.75rem', // atur sesuai kebutuhan
+                    fontSize: '0.75rem',
                   },
                 }}
               />
             </Grid2>
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1 }} htmlFor="head_employee_1">
-                <Typography variant="caption">Employee Head-1</Typography>
+                <Typography variant="caption">Employee Head - 1</Typography>
               </CustomFormLabel>
               <Autocomplete
                 fullWidth
@@ -1002,7 +1081,7 @@ const FormWizardAddEmployee = ({
             </Grid2>
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1 }} htmlFor="head2">
-                <Typography variant="caption">Employee Head-2</Typography>
+                <Typography variant="caption">Employee Head - 2</Typography>
               </CustomFormLabel>
               <Autocomplete
                 fullWidth
@@ -1163,7 +1242,7 @@ const FormWizardAddEmployee = ({
         return (
           <Grid2 container spacing={2}>
             <Grid2 size={{ xs: 12, sm: 12 }}>
-              <Alert severity="info">Other details</Alert>
+              <Alert severity="info">Complete the following data properly and correctly.</Alert>
             </Grid2>
 
             <Grid2 size={{ xs: 12, sm: 12 }}>
@@ -1418,16 +1497,12 @@ const FormWizardAddEmployee = ({
     <form onSubmit={handleOnSubmit}>
       <Box width="100%">
         <Stepper activeStep={activeStep}>
-          {steps.map((label, index) => {
-            const stepProps: { completed?: boolean } = {};
-            const labelProps: { optional?: React.ReactNode } = {};
-            if (isStepSkipped(index)) stepProps.completed = false;
-            return (
-              <Step key={label} {...stepProps}>
-                <StepLabel {...labelProps}>{label}</StepLabel>
-              </Step>
-            );
-          })}
+          {steps.map((label, index) => (
+            <Step key={label} completed={false}>
+              {/* centang hilang */}
+              <StepButton onClick={() => setActiveStep(index)}>{label}</StepButton>
+            </Step>
+          ))}
         </Stepper>
 
         {activeStep === steps.length ? (

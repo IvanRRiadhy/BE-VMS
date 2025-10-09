@@ -1,4 +1,3 @@
-import { de } from 'date-fns/locale';
 //#region IMPORT
 import axios from 'axios';
 import {
@@ -58,6 +57,13 @@ import {
   UpdateSiteResponse,
   UploadImageSiteResponse,
   DeleteSiteResponse,
+  GetSiteByIdResponse,
+  CreateSiteParkingRequest,
+  CreateSiteTrackingRequest,
+  UpdateSiteTrackingRequest,
+  UpdateSiteTrackingResponse,
+  UpdateSiteParkingRequest,
+  UpdateSiteParkingResponse,
 } from './models/Sites';
 import {
   CreateSiteDocumentRequest,
@@ -167,6 +173,7 @@ import {
 import {
   CreateAccessControlRequest,
   CreateAccessControlResponse,
+  GetAccessControlByIdResponse,
   GetAccessControlPaginationResponse,
   GetAllAccessControlResponse,
   UpdateAccessControlRequest,
@@ -189,22 +196,25 @@ import {
   UpdateVisitorTypeResponse,
   GetVisitorTypeByIdResponse,
   UpdateVisitorTypeRequest,
+  GetAllVisitorTypeResponse,
 } from './models/VisitorType';
 import {
   GetAllVisitorPaginationResponse,
   CreateVisitorRequest,
   CreateVisitorResponse,
   DeleteVisitorResponse,
+  CreateGroupVisitorRequest,
 } from './models/Visitor';
 
 import {
   CreateVisitorCardRequest,
   GetAllVisitorCardPaginationResponse,
   GetAllVisitorCardResponse,
+  GetAvailableCardResponse,
+  GetGetVisitorCardByIdResponse,
   UpdateVisitorCardRequest,
   UpdateVisitorCardResponse,
 } from './models/VisitorCard';
-import { join } from 'path';
 import {
   CreateEmailRequest,
   CreateEmailResponse,
@@ -225,8 +235,182 @@ import {
   UpdateTimezoneRequest,
   UpdateTimezoneResponse,
 } from './models/Timezone';
+import {
+  CreateCheckGiveAccessRequest,
+  CreateCheckGiveAccessResponse,
+  GetAllGrantAccessResponse,
+} from './models/GrantAccess';
+import { GetAllSettingResponse } from './models/Setting';
 
 //#endregion
+
+// #region Setting
+
+export const getSetting = async (token: string): Promise<GetAllSettingResponse> => {
+  const response = await axiosInstance.get('/setting/visitor', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+export const updateSetting = async (token: string, id: string, data: any): Promise<any> => {
+  const response = await axiosInstance.put(`/setting/visitor/${id}`, data, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+//
+
+// #region Dashboard
+export const getTopVisitingPurpose = async (
+  token: string,
+  start_date: string,
+  end_date: string,
+): Promise<any> => {
+  const params = {
+    'start-date': start_date,
+    'end-date': end_date,
+  };
+  const response = await axiosInstance.get('/dashboard/top-visiting-purpose', {
+    headers: { Authorization: `Bearer ${token}` },
+    params,
+  });
+  return response.data;
+};
+
+export const getTopVisitors = async (
+  token: string,
+  start_date: string,
+  end_date: string,
+): Promise<any> => {
+  const params = {
+    'start-date': start_date,
+    'end-date': end_date,
+  };
+  const response = await axiosInstance.get('/dashboard/top-visitors', {
+    headers: { Authorization: `Bearer ${token}` },
+    params,
+  });
+  return response.data;
+};
+
+export const getAvarageDuration = async (
+  token: string,
+  start_date: string,
+  end_date: string,
+): Promise<any> => {
+  const params = {
+    'start-date': start_date,
+    'end-date': end_date,
+  };
+  const response = await axiosInstance.get('/dashboard/average-duration', {
+    headers: { Authorization: `Bearer ${token}` },
+    params,
+  });
+  return response.data;
+};
+
+export const getRepeatsVisitor = async (
+  token: string,
+  start_date: string,
+  end_date: string,
+): Promise<any> => {
+  const params = {
+    'start-date': start_date,
+    'end-date': end_date,
+  };
+  const response = await axiosInstance.get('/dashboard/repeats-visitor', {
+    headers: { Authorization: `Bearer ${token}` },
+    params,
+  });
+  return response.data;
+};
+
+export const getVisitorChart = async (
+  token: string,
+  start_date: string,
+  end_date: string,
+): Promise<any> => {
+  const params = {
+    'start-date': start_date,
+    'end-date': end_date,
+  };
+  const response = await axiosInstance.get('/dashboard/visitor-chart', {
+    headers: { Authorization: `Bearer ${token}` },
+    params,
+  });
+  return response.data;
+};
+
+export const getHeatmaps = async (
+  token: string,
+  start_date: string,
+  end_date: string,
+): Promise<any> => {
+  const params = {
+    'start-date': start_date,
+    'end-date': end_date,
+  };
+  const response = await axiosInstance.get('/dashboard/heatmaps', {
+    headers: { Authorization: `Bearer ${token}` },
+    params,
+  });
+  return response.data;
+};
+
+export const getTodayVisitorCount = async (
+  token: string,
+  start_date: string,
+  end_date: string,
+): Promise<any> => {
+  const response = await axiosInstance.get('/dashboard/today-visitor-count', {
+    headers: { Authorization: `Bearer ${token}` },
+    params: { 'start-date': start_date, 'end-date': end_date },
+  });
+  return response.data;
+};
+
+export const getTodayPraregister = async (
+  token: string,
+  start_date: string,
+  end_date: string,
+): Promise<any> => {
+  const response = await axiosInstance.get('/dashboard/today-praregister', {
+    headers: { Authorization: `Bearer ${token}` },
+    params: { 'start-date': start_date, 'end-date': end_date },
+  });
+  return response.data;
+};
+
+// #region Grant Access
+export const getGrantAccess = async (
+  token: string,
+  site: string,
+): Promise<GetAllGrantAccessResponse> => {
+  const params = {
+    site,
+  };
+  const response = await axiosInstance.get('/visitor/grant-access-card', {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    params,
+  });
+  if (response.data.status === 'error') {
+    throw new Error(response.data.message);
+  }
+  return response.data;
+};
+
+export const createCheckGiveAccess = async (
+  token: string,
+  payload: { data_access: any[] },
+): Promise<CreateCheckGiveAccessResponse> => {
+  const response = await axiosInstance.post('/visitor/checkin-give-access', payload, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+// visitor/checkin-give-access
 
 //#region Timezone
 
@@ -308,12 +492,39 @@ export const getAllVisitorCard = async (token: string): Promise<GetAllVisitorCar
   return response.data;
 };
 
+export const getVisitorCardById = async (
+  token: string,
+  id: string,
+): Promise<GetGetVisitorCardByIdResponse> => {
+  const response = await axiosInstance.get(`/card/${id}`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+export const getAvailableCard = async (
+  token: string,
+  registered_site: string,
+): Promise<GetAvailableCardResponse> => {
+  const params = {
+    'registered-site': registered_site,
+  };
+
+  const response = await axiosInstance.get('/card/available-cards', {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    params,
+  });
+  return response.data;
+};
+
 export const getAllVisitorCardPagination = async (
   token: string,
   start: number,
   length: number,
   sortColumn: string,
   keyword: string = '',
+  type?: number | null,
+  cardStatus?: number, // ← ubah nama jadi camelCase
 ): Promise<GetAllVisitorCardPaginationResponse> => {
   const params: Record<string, any> = {
     start,
@@ -321,10 +532,23 @@ export const getAllVisitorCardPagination = async (
     sort_column: sortColumn,
     'search[value]': keyword,
   };
+
+  if (type !== undefined && type !== null) {
+    params.type = type;
+  }
+
+  if (cardStatus !== undefined && cardStatus !== null) {
+    params['card-status'] = cardStatus; // API tetap butuh format snake-case / kebab-case
+  }
+
   const response = await axiosInstance.get('/card/dt', {
-    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+    },
     params,
   });
+
   return response.data;
 };
 
@@ -390,7 +614,7 @@ export const getVisitorById = async (
   });
   return response.data;
 };
-
+import { format } from 'date-fns';
 // Pagination
 export const getAllVisitorPagination = async (
   token: string,
@@ -398,14 +622,18 @@ export const getAllVisitorPagination = async (
   length: number,
   sortColumn: string,
   keyword: string = '',
+  start_date: string,
+  end_date: string,
 ): Promise<GetAllVisitorPaginationResponse> => {
   const params: Record<string, any> = {
     start,
     length,
     sort_column: sortColumn,
     'search[value]': keyword,
+    'start-date': start_date ? format(new Date(start_date), 'yyyy-MM-dd') : '',
+    'end-date': end_date ? format(new Date(end_date), 'yyyy-MM-dd') : '',
   };
-  const response = await axiosInstance.get('/visitor', {
+  const response = await axiosInstance.get('/visitor/dt', {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
     params,
   });
@@ -422,6 +650,17 @@ export const createVisitor = async (
   });
   return response.data;
 };
+
+export const createVisitors = async (
+  token: string,
+  data: CreateGroupVisitorRequest,
+): Promise<CreateVisitorResponse> => {
+  const response = await axiosInstance.post('/visitor/new-visit', data, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
 
 // Pra Register
 export const createPraRegister = async (
@@ -462,9 +701,7 @@ export const deleteVisitor = async (
 //#region Visitor Type
 
 // Get All
-export const getAllVisitorType = async (
-  token: string,
-): Promise<GetAllVisitorTypePaginationResponse> => {
+export const getAllVisitorType = async (token: string): Promise<GetAllVisitorTypeResponse> => {
   const response = await axiosInstance.get('/visitor-type', {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });
@@ -567,22 +804,30 @@ export const getAllDistrictsPagination = async (
   start: number,
   length: number,
   sortColumn: string,
-  // sortDir?: string,
+  sortDir?: string,
   keyword: string = '',
 ): Promise<GetAllDistrictsPaginationResponse> => {
+  const params: Record<string, any> = {
+    start,
+    length,
+    sort_column: sortColumn,
+    'search[value]': keyword, // tetap ada untuk search
+  };
+
+  if (sortDir) {
+    params.sort_dir = sortDir;
+  }
+
   const response = await axiosInstance.get(`/district/dt`, {
-    params: {
-      start,
-      length,
-      sort_column: sortColumn,
-      // sort_dir: sortDir,
-      'search[value]': keyword, // ← ini yang bikin search jalan
+    params,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
     },
-    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });
+
   return response.data;
 };
-
 // get by id district
 export const getDistrictById = async (
   id: string,
@@ -652,16 +897,30 @@ export const getAllDepartmentsPagination = async (
   start: number,
   length: number,
   sortColumn: string,
-  // sortDir?: string,
+  sortDir?: string,
   keyword: string = '',
 ): Promise<GetAllDepartmetsPaginationResponse> => {
+  const params: Record<string, any> = {
+    start,
+    length,
+    sort_column: sortColumn,
+    'search[value]': keyword,
+  };
+
+  if (sortDir) {
+    params.sort_dir = sortDir;
+  }
+
   const response = await axiosInstance.get(`/department/dt`, {
-    params: { start, length, sort_column: sortColumn, 'search[value]': keyword },
-    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    params,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+    },
   });
+
   return response.data;
 };
-
 // get by id department
 
 export const getDepartmentById = async (id: string, token: string) => {
@@ -722,18 +981,35 @@ export const getAllOrganizations = async (token: string): Promise<GetAllOrganiza
   });
   return response.data;
 };
-export const getAllOrganizatiosPagination = async (
+export const getAllOrganizationPagination = async (
   token: string,
   start: number,
   length: number,
   sortColumn: string,
-  // sortDir?: string,
+  sortDir?: string,
   keyword: string = '',
 ): Promise<GetAllOrganizationPaginationResponse> => {
+  // bikin object params dulu
+  const params: Record<string, any> = {
+    start,
+    length,
+    sort_column: sortColumn,
+    'search[value]': keyword,
+  };
+
+  // tambahkan sortDir hanya kalau ada
+  if (sortDir) {
+    params.sort_dir = sortDir;
+  }
+
   const response = await axiosInstance.get(`/organization/dt`, {
-    params: { start, length, sort_column: sortColumn, 'search[value]': keyword },
-    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    params,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+    },
   });
+
   return response.data;
 };
 
@@ -807,12 +1083,20 @@ export const getAllDocumentPagination = async (
   start: number,
   length: number,
   sortColumn: string,
+  keyword?: string,
 ): Promise<GetAllDocumentPaginationResponse> => {
-  const response = await axiosInstance.get(`/document/dt`, {
-    params: { start, length, sort_column: sortColumn },
-    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-  });
-  return response.data;
+  try {
+    const response = await axiosInstance.get(`/document/dt`, {
+      params: { start, length, sort_column: sortColumn, 'search[value]': keyword },
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
 };
 export const createDocument = async (
   data: CreateDocumentRequest,
@@ -864,6 +1148,13 @@ export const deleteDocument = async (
 export const getAllEmployee = async (token: string): Promise<GetAllEmployeeResponse> => {
   const response = await axiosInstance.get(`/employee`, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+export const getAllEmployees = async (): Promise<GetAllEmployeeResponse> => {
+  const response = await axiosInstance.get(`/employee`, {
+    headers: { Accept: 'application/json' },
   });
   return response.data;
 };
@@ -1058,6 +1349,47 @@ export const getAllSite = async (token: string): Promise<GetAllSitesResponse> =>
   return response.data;
 };
 
+export const getRegisteredSite = async (token: string): Promise<GetAllSitesResponse> => {
+  const response = await axiosInstance.get(`/site/registered-point`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+export const getSiteById = async (id: string, token: string): Promise<GetSiteByIdResponse> => {
+  const response = await axiosInstance.get(`/site/${id}`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+export const getSitesParking = async (token: string): Promise<any> => {
+  const response = await axiosInstance.get(`/site-parking`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+export const getSitesTracking = async (token: string): Promise<any> => {
+  const response = await axiosInstance.get(`/site-tracking`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+export const getSiteParking = async (token: string): Promise<any> => {
+  const response = await axiosInstance.get(`/integration-parking/area`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+export const getSiteTracking = async (token: string): Promise<any> => {
+  const response = await axiosInstance.get(`/integration-trackingble/floorplan-masked-area`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
 export const createSite = async (
   data: CreateSiteRequest,
   token: string,
@@ -1075,6 +1407,86 @@ export const createSite = async (
     throw error;
   }
 };
+
+export const getSiteParkingById = async (id: string, token: string): Promise<any> => {
+  const response = await axiosInstance.get(`/site-parking/${id}`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+export const createSiteParking = async (
+  data: CreateSiteParkingRequest,
+  token: string,
+): Promise<CreateSiteResponse> => {
+  try {
+    const response = await axiosInstance.post(`/site-parking`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    console.log(response.data);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const createSiteTracking = async (
+  data: CreateSiteTrackingRequest,
+  token: string,
+): Promise<CreateSiteResponse> => {
+  try {
+    const response = await axiosInstance.post(`/site-tracking`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    console.log(response.data);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const updateSiteTracking = async (
+  id: string,
+  data: UpdateSiteTrackingRequest,
+  token: string,
+): Promise<UpdateSiteTrackingResponse> => {
+  try {
+    const response = await axiosInstance.put(`/site-tracking/${id}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const updateSiteParking = async (
+  id: string,
+  data: UpdateSiteParkingRequest,
+  token: string,
+): Promise<UpdateSiteParkingResponse> => {
+  try {
+    const response = await axiosInstance.put(`/site-parking/${id}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
 export const updateSite = async (
   siteId: string,
   data: UpdateSiteRequest,
@@ -1209,6 +1621,297 @@ export const deleteBrand = async (brandId: string, token: string): Promise<Updat
     throw error;
   }
 };
+//#endregion
+
+//#region AccessControl API
+export const getAllAccessControl = async (token: string): Promise<GetAllAccessControlResponse> => {
+  try {
+    const response = await axiosInstance.get(`/access-control`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    return response.data as GetAllAccessControlResponse;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const getAccessControlsById = async (
+  id: string,
+  token: string,
+): Promise<GetAccessControlByIdResponse> => {
+  try {
+    const response = await axiosInstance.get(`/access-control/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const getAllAccessControlPagination = async (
+  token: string,
+  start: number,
+  length: number,
+  sortColumn: string,
+  keyword?: string,
+): Promise<GetAccessControlPaginationResponse> => {
+  try {
+    const response = await axiosInstance.get(`/access-control/dt`, {
+      params: { start, length, sort_column: sortColumn, 'search[value]': keyword },
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const createAccessControl = async (
+  data: CreateAccessControlRequest,
+  token: string,
+): Promise<CreateAccessControlResponse> => {
+  try {
+    const response = await axiosInstance.post(`/access-control`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const deleteAccessControl = async (
+  accessControlId: string,
+  token: string,
+): Promise<DeleteIntegrationResponse> => {
+  try {
+    const response = await axiosInstance.delete(`/access-control/${accessControlId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const updateAccessControl = async (
+  accessControlId: string,
+  data: UpdateAccessControlRequest,
+  token: string,
+): Promise<UpdateAccessControlResponse> => {
+  try {
+    const response = await axiosInstance.put(`/access-control/${accessControlId}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+//#endregion
+
+//#region Custom Field API
+export const getAllCustomField = async (token: string): Promise<GetAllCustomFieldResponse> => {
+  try {
+    const response = await axiosInstance.get(`/custom-field`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const getAllCustomFieldPagination = async (
+  token: string,
+  start: number,
+  length: number,
+  sortColumn: string,
+  keyword?: string,
+): Promise<GetAllCustomFieldPaginationResponse> => {
+  try {
+    const response = await axiosInstance.get(`/custom-field/dt`, {
+      params: { start, length, sort_column: sortColumn, 'search[value]': keyword },
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const createCustomField = async (
+  data: CreateCustomFieldRequest,
+  token: string,
+): Promise<CreateCustomFieldResponse> => {
+  try {
+    const response = await axiosInstance.post(`/custom-field`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    console.log(response.data);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const updateCustomField = async (
+  token: string,
+  data: UpdateCustomFieldRequest,
+  customFieldId: string,
+): Promise<UpdateCustomFieldResponse> => {
+  try {
+    const response = await axiosInstance.put(`/custom-field/${customFieldId}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const deleteCustomField = async (
+  customFieldId: string,
+  token: string,
+): Promise<DeleteVisitorTypeResponse> => {
+  const response = await axiosInstance.delete(`/custom-field/${customFieldId}`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+//#endregion
+
+//#region Setting Smtp
+
+export const getAllSmtp = async (token: string): Promise<GetAllSettingSmtpResponse> => {
+  try {
+    const response = await axiosInstance.get(`/setting-smtp`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const getAllPaginationSettingSmtp = async (
+  token: string,
+  start: number,
+  length: number,
+  sortColumn: string,
+  keyword?: string,
+): Promise<GetAllSettingSmtpPaginationResponse> => {
+  try {
+    const response = await axiosInstance.get(`/setting-smtp/dt`, {
+      params: { start, length, sort_column: sortColumn, 'search[value]': keyword },
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const createSmtp = async (
+  data: CreateSettingSmtpRequest,
+  token: string,
+): Promise<CreateSettingSmtpResponse> => {
+  try {
+    const response = await axiosInstance.post(`/setting-smtp`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const updateSmtp = async (
+  token: string,
+  data: UpdateSettingSmtpRequest,
+  smtpId: string,
+): Promise<UpdateSettingSmtpResponse> => {
+  try {
+    const response = await axiosInstance.put(`/setting-smtp/${smtpId}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const deleteSmtp = async (
+  smtpId: string,
+  token: string,
+): Promise<DeleteVisitorTypeResponse> => {
+  const response = await axiosInstance.delete(`/setting-smtp/${smtpId}`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+export const createEmail = async (
+  data: CreateEmailRequest,
+  token: string,
+): Promise<CreateEmailResponse> => {
+  try {
+    const response = await axiosInstance.post(`/email/test-email`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
 //#endregion
 
 //#region Integration API
@@ -2699,282 +3402,6 @@ export const updateTRXVisitor = async (
 ): Promise<UpdateTrxVisitorTrackingResponse> => {
   try {
     const response = await axiosInstance.put(`/integration-trackingble/trx-visitor/${id}`, data, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return response.data;
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 400) {
-      throw error.response.data as ValidationErrorResponse;
-    }
-    throw error;
-  }
-};
-
-//#endregion
-
-//#region AccessControl API
-export const getAllAccessControl = async (token: string): Promise<GetAllAccessControlResponse> => {
-  try {
-    const response = await axiosInstance.get(`/access-control`, {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-    });
-    return response.data as GetAllAccessControlResponse;
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 400) {
-      throw error.response.data as ValidationErrorResponse;
-    }
-    throw error;
-  }
-};
-
-export const getAllAccessControlPagination = async (
-  token: string,
-  start: number,
-  length: number,
-  sortColumn: string,
-  keyword?: string,
-): Promise<GetAccessControlPaginationResponse> => {
-  try {
-    const response = await axiosInstance.get(`/access-control/dt`, {
-      params: { start, length, sort_column: sortColumn, 'search[value]': keyword },
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-    });
-    return response.data;
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 400) {
-      throw error.response.data as ValidationErrorResponse;
-    }
-    throw error;
-  }
-};
-
-export const createAccessControl = async (
-  data: CreateAccessControlRequest,
-  token: string,
-): Promise<CreateAccessControlResponse> => {
-  try {
-    const response = await axiosInstance.post(`/access-control`, data, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return response.data;
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 400) {
-      throw error.response.data as ValidationErrorResponse;
-    }
-    throw error;
-  }
-};
-
-export const deleteAccessControl = async (
-  accessControlId: string,
-  token: string,
-): Promise<DeleteIntegrationResponse> => {
-  try {
-    const response = await axiosInstance.delete(`/access-control/${accessControlId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return response.data;
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 400) {
-      throw error.response.data as ValidationErrorResponse;
-    }
-    throw error;
-  }
-};
-
-export const updateAccessControl = async (
-  accessControlId: string,
-  data: UpdateAccessControlRequest,
-  token: string,
-): Promise<UpdateAccessControlResponse> => {
-  try {
-    const response = await axiosInstance.put(`/access-control/${accessControlId}`, data, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return response.data;
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 400) {
-      throw error.response.data as ValidationErrorResponse;
-    }
-    throw error;
-  }
-};
-//#endregion
-
-//#region Custom Field API
-export const getAllCustomField = async (token: string): Promise<GetAllCustomFieldResponse> => {
-  try {
-    const response = await axiosInstance.get(`/custom-field`, {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-    });
-    return response.data;
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 400) {
-      throw error.response.data as ValidationErrorResponse;
-    }
-    throw error;
-  }
-};
-
-export const getAllCustomFieldPagination = async (
-  token: string,
-  start: number,
-  length: number,
-  sortColumn: string,
-  keyword?: string,
-): Promise<GetAllCustomFieldPaginationResponse> => {
-  try {
-    const response = await axiosInstance.get(`/custom-field/dt`, {
-      params: { start, length, sort_column: sortColumn, 'search[value]': keyword },
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-    });
-    return response.data;
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 400) {
-      throw error.response.data as ValidationErrorResponse;
-    }
-    throw error;
-  }
-};
-
-export const createCustomField = async (
-  data: CreateCustomFieldRequest,
-  token: string,
-): Promise<CreateCustomFieldResponse> => {
-  try {
-    const response = await axiosInstance.post(`/custom-field`, data, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    console.log(response.data);
-    return response.data;
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 400) {
-      throw error.response.data as ValidationErrorResponse;
-    }
-    throw error;
-  }
-};
-
-export const updateCustomField = async (
-  token: string,
-  data: UpdateCustomFieldRequest,
-  customFieldId: string,
-): Promise<UpdateCustomFieldResponse> => {
-  try {
-    const response = await axiosInstance.put(`/custom-field/${customFieldId}`, data, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return response.data;
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 400) {
-      throw error.response.data as ValidationErrorResponse;
-    }
-    throw error;
-  }
-};
-
-export const deleteCustomField = async (
-  customFieldId: string,
-  token: string,
-): Promise<DeleteVisitorTypeResponse> => {
-  const response = await axiosInstance.delete(`/custom-field/${customFieldId}`, {
-    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-  });
-  return response.data;
-};
-
-// Visitor Type
-
-//#endregion
-
-//#region Setting Smtp
-
-export const getAllSmtp = async (token: string): Promise<GetAllSettingSmtpResponse> => {
-  try {
-    const response = await axiosInstance.get(`/setting-smtp`, {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-    });
-    return response.data;
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 400) {
-      throw error.response.data as ValidationErrorResponse;
-    }
-    throw error;
-  }
-};
-
-export const getAllPaginationSettingSmtp = async (
-  token: string,
-  start: number,
-  length: number,
-  sortColumn: string,
-  keyword?: string,
-): Promise<GetAllSettingSmtpPaginationResponse> => {
-  try {
-    const response = await axiosInstance.get(`/setting-smtp/dt`, {
-      params: { start, length, sort_column: sortColumn, 'search[value]': keyword },
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-    });
-    return response.data;
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 400) {
-      throw error.response.data as ValidationErrorResponse;
-    }
-    throw error;
-  }
-};
-
-export const createSmtp = async (
-  data: CreateSettingSmtpRequest,
-  token: string,
-): Promise<CreateSettingSmtpResponse> => {
-  try {
-    const response = await axiosInstance.post(`/setting-smtp`, data, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return response.data;
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 400) {
-      throw error.response.data as ValidationErrorResponse;
-    }
-    throw error;
-  }
-};
-
-export const updateSmtp = async (
-  token: string,
-  data: UpdateSettingSmtpRequest,
-  smtpId: string,
-): Promise<UpdateSettingSmtpResponse> => {
-  try {
-    const response = await axiosInstance.put(`/setting-smtp/${smtpId}`, data, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return response.data;
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 400) {
-      throw error.response.data as ValidationErrorResponse;
-    }
-    throw error;
-  }
-};
-
-export const deleteSmtp = async (
-  smtpId: string,
-  token: string,
-): Promise<DeleteVisitorTypeResponse> => {
-  const response = await axiosInstance.delete(`/setting-smtp/${smtpId}`, {
-    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-  });
-  return response.data;
-};
-
-export const createEmail = async (
-  data: CreateEmailRequest,
-  token: string,
-): Promise<CreateEmailResponse> => {
-  try {
-    const response = await axiosInstance.post(`/email/test-email`, data, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;

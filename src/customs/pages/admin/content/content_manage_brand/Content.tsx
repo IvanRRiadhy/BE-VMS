@@ -15,14 +15,13 @@ import {
   showSuccessAlert,
 } from 'src/customs/components/alerts/alerts';
 const Content = () => {
-  // Pagination state.
   const [tableData, setTableData] = useState<Item[]>([]);
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
   const [isDataReady, setIsDataReady] = useState(false);
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(3);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
@@ -46,9 +45,10 @@ const Content = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
+        const start = page * rowsPerPage;
         const response = await getAllBrandPagination(
           token,
-          page,
+          start,
           rowsPerPage,
           sortColumn,
           searchKeyword,
@@ -83,7 +83,7 @@ const Content = () => {
         await Promise.all(rows.map((row) => deleteBrand(row.id, token)));
         setRefreshTrigger((prev) => prev + 1);
         showSuccessAlert('Deleted!', `${rows.length} items have been deleted.`);
-        setSelectedRows([]); // reset selected rows
+        setSelectedRows([]);
       } catch (error) {
         console.error(error);
         showErrorAlert('Error!', 'Failed to delete some items.');
@@ -95,14 +95,12 @@ const Content = () => {
 
   return (
     <>
-      <PageContainer title="Manage Brand" description="Brand page">
+      <PageContainer title="Brand" description="Brand page">
         <Box>
           <Grid container spacing={3}>
-            {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
               <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
             </Grid>
-            {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
               {isDataReady ? (
                 <DynamicTable
@@ -110,13 +108,11 @@ const Content = () => {
                   data={tableData}
                   selectedRows={selectedRows}
                   isHaveChecked={true}
-                  // isHaveAction={true}
                   isHaveSearch={true}
-                  isHaveFilter={true}
-                  isHaveExportPdf={true}
+                  isHaveFilter={false}
+                  isHaveExportPdf={false}
                   isHaveExportXlf={false}
                   isHaveFilterDuration={false}
-                  // isHaveAddData={true}
                   isHaveFilterMore={false}
                   isHaveHeader={false}
                   onCheckedChange={(selected) => setSelectedRows(selected)}
@@ -134,50 +130,6 @@ const Content = () => {
           </Grid>
         </Box>
       </PageContainer>
-      {/* <Dialog open={openFormAddDocument} onClose={handleCloseDialog} fullWidth maxWidth="md">
-        <DialogTitle sx={{ position: 'relative', padding: 5 }}>
-          Add Document
-          <IconButton
-            aria-label="close"
-            onClick={handleCloseDialog}
-            sx={{
-              position: 'absolute',
-              right: 8,
-              top: 8,
-              color: (theme) => theme.palette.grey[500],
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <Divider />
-        <DialogContent>
-          <br />
-          <FormAddDocument
-            formData={formDataAddDocument}
-            setFormData={setFormDataAddDocument}
-            edittingId={edittingId}
-            onSuccess={() => {
-              handleCloseDialog();
-              setRefreshTrigger(refreshTrigger + 1);
-            }}
-          />
-        </DialogContent>
-      </Dialog> */}
-      {/* Dialog Confirm edit */}
-      {/* <Dialog open={confirmDialogOpen} onClose={handleCancelEdit}>
-        <DialogTitle>Unsaved Changes</DialogTitle>
-        <DialogContent>
-          You have unsaved changes for another Document. Are you sure you want to discard them and
-          edit this Document?
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancelEdit}>Cancel</Button>
-          <Button onClick={handleConfirmEdit} color="primary" variant="contained">
-            Yes, Discard and Continue
-          </Button>
-        </DialogActions>
-      </Dialog> */}
     </>
   );
 };

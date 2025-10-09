@@ -265,7 +265,7 @@ const FilterMoreContentVisitor: React.FC<FilterMoreContentProps> = ({
         </TreeItem>
 
         {/* Status */}
-        <TreeItem
+        {/* <TreeItem
           itemId="3"
           label={
             <Row
@@ -289,7 +289,7 @@ const FilterMoreContentVisitor: React.FC<FilterMoreContentProps> = ({
               }
             />
           ))}
-        </TreeItem>
+        </TreeItem> */}
 
         {/* Created At */}
         {/* <TreeItem
@@ -319,9 +319,9 @@ const FilterMoreContentVisitor: React.FC<FilterMoreContentProps> = ({
         </TreeItem> */}
       </TreeView>
 
-      <Box mt={2}>
-        <Button variant="contained" color="primary" onClick={onApplyFilter}>
-          Search
+      <Box mt={2} display="flex" justifyContent="flex-end">
+        <Button variant="contained" color="primary" onClick={onApplyFilter}  size='small'>
+          Apply
         </Button>
       </Box>
     </Box>

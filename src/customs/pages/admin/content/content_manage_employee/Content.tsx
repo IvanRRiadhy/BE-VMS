@@ -7,25 +7,15 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
-  FormControl,
-  FormControlLabel,
   Grid2 as Grid,
-  Grid2,
   IconButton,
-  MenuItem,
   Skeleton,
-  Autocomplete,
-  RadioGroup,
   Card,
-  Typography,
 } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
 import CloseIcon from '@mui/icons-material/Close';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
-import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import CustomRadio from 'src/components/forms/theme-elements/CustomRadio';
 import FormWizardAddEmployee from './FormWizardAddEmployee';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import {
@@ -38,9 +28,9 @@ import {
   getAllDistrictsPagination,
   getAllEmployeePagination,
   getAllEmployeePaginationFilterMore,
-  getAllOrganizatiosPagination,
   getAllEmployee,
   deleteEmployee,
+  getAllOrganizationPagination,
 } from 'src/customs/api/admin';
 
 import { IconUsers } from '@tabler/icons-react';
@@ -51,6 +41,7 @@ import {
   showSuccessAlert,
   showErrorAlert,
 } from 'src/customs/components/alerts/alerts';
+import FilterMoreContent from './FilterMoreContent';
 
 type EmployeesTableRow = {
   id: string;
@@ -66,13 +57,21 @@ type EnableField = {
   organization_id: boolean;
   department_id: boolean;
   district_id: boolean;
-  // access_area: boolean;
-  // access_area_special: boolean;
 };
 
 interface OptionItem {
   id: string; // atau 'number' jika ID dari API berupa angka
   name: string;
+}
+
+interface Filters {
+  gender: number;
+  organization: string;
+  department: string;
+  district: string;
+  joinStart: string;
+  exitEnd: string;
+  statusEmployee: number;
 }
 
 const Content = () => {
@@ -104,7 +103,7 @@ const Content = () => {
       try {
         // ambil semua data untuk dropdown, jangan ikut page/rowsPerPage tabel
         const [orgRes, deptRes, distRes] = await Promise.all([
-          getAllOrganizatiosPagination(token, 0, 9999, 'name', ''),
+          getAllOrganizationPagination(token, 0, 9999, 'name', ''),
           getAllDepartmentsPagination(token, 0, 9999, 'name', ''),
           getAllDistrictsPagination(token, 0, 9999, 'name', ''),
         ]);
@@ -162,10 +161,6 @@ const Content = () => {
       setLoading(true);
       try {
         const start = page * rowsPerPage;
-        const toISODateStart = (d?: string) =>
-          d ? new Date(d + 'T00:00:00').toISOString() : undefined;
-        const toISODateEnd = (d?: string) =>
-          d ? new Date(d + 'T23:59:59').toISOString() : undefined;
 
         const responseGetAll = await getAllEmployee(token);
         const responseEmployee = await getAllEmployeePagination(
@@ -176,7 +171,7 @@ const Content = () => {
           searchKeyword,
         );
 
-        const organization = await getAllOrganizatiosPagination(token, start, 99, sortColumn, '');
+        const organization = await getAllOrganizationPagination(token, start, 99, sortColumn, '');
         const department = await getAllDepartmentsPagination(token, start, 99, sortColumn, '');
         const district = await getAllDistrictsPagination(token, start, 99, sortColumn, '');
         if (responseEmployee && organization && department && district) {
@@ -273,7 +268,6 @@ const Content = () => {
       }
     };
     fetchData();
-    console.log('Fetching data: ', tableData);
   }, [token, page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword]);
 
   const [initialFormData, setInitialFormData] = React.useState<CreateEmployeeRequest>(() => {
@@ -302,7 +296,6 @@ const Content = () => {
 
   const [isEditing, setIsEditing] = useState(false);
 
-  const defaultFormData = CreateEmployeeRequestSchema.parse({});
   const isFormChanged = React.useMemo(() => {
     return JSON.stringify(formDataAddEmployee) !== JSON.stringify(initialFormData);
   }, [formDataAddEmployee]);
@@ -340,25 +333,6 @@ const Content = () => {
     setPendingEditId(null);
     handleOpenDialog();
   }, []);
-
-  const coerceEmployee = (s: any) => ({
-    ...s,
-    gender:
-      s?.gender === '' || s?.gender == null
-        ? undefined
-        : typeof s.gender === 'number'
-        ? s.gender
-        : Number(s.gender),
-    status_employee:
-      s?.status_employee === '' || s?.status_employee == null
-        ? undefined
-        : typeof s.status_employee === 'number'
-        ? s.status_employee
-        : Number(s.status_employee),
-    organization_id: String(s?.organization_id ?? ''),
-    department_id: String(s?.department_id ?? ''),
-    district_id: String(s?.district_id ?? ''),
-  });
 
   const handleEdit = (id: string) => {
     const existingData = tableData.find((item) => String(item.id) === String(id));
@@ -514,7 +488,7 @@ const Content = () => {
     setRefreshTrigger((prev) => prev + 1);
   };
 
-  const [enabledFields, setEnabledFields] = React.useState<EnableField>({
+  const [enabledFields, setEnabledFields] = useState<EnableField>({
     gender: false,
     organization_id: false,
     department_id: false,
@@ -559,17 +533,16 @@ const Content = () => {
 
   return (
     <>
-      <PageContainer title="Manage Employee" description="this is Dashboard page">
+      <PageContainer title="Employee" description="this is Employee page">
         <Box>
           <Grid container spacing={3}>
-            {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
               <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
             </Grid>
-            {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
               {isDataReady ? (
                 <DynamicTable
+                  loading={loading}
                   overflowX={'auto'}
                   data={tableRowEmployee}
                   selectedRows={selectedRows}
@@ -616,13 +589,13 @@ const Content = () => {
                   onDelete={(row) => handleDelete(row.id)}
                   onBatchDelete={handleBatchDelete}
                   onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-                  onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
                   onAddData={() => {
                     handleAdd();
                   }}
                 />
               ) : (
                 <Card sx={{ width: '100%' }}>
+                  <Skeleton />
                   <Skeleton />
                   <Skeleton animation="wave" />
                   <Skeleton animation={false} />
@@ -673,7 +646,6 @@ const Content = () => {
           />
         </DialogContent>
       </Dialog>
-      {/* Dialog Confirm edit */}
       <Dialog open={confirmDialogOpen} onClose={handleCancelEdit}>
         <DialogTitle>Unsaved Changes</DialogTitle>
         <DialogContent>
@@ -692,251 +664,3 @@ const Content = () => {
 };
 
 export default Content;
-
-interface Filters {
-  gender: number;
-  organization: string;
-  department: string;
-  district: string;
-  joinStart: string;
-  exitEnd: string;
-  statusEmployee: number;
-}
-
-type FilterMoreContentProps = {
-  filters: Filters;
-  setFilters: React.Dispatch<React.SetStateAction<Filters>>;
-  onApplyFilter: () => void;
-  organizationData: OptionItem[];
-  departmentData: OptionItem[];
-  districtData: OptionItem[];
-};
-
-const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
-  filters,
-  setFilters,
-  onApplyFilter,
-  organizationData,
-  departmentData,
-  districtData,
-}) => {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { id, value, name } = e.target as any;
-    const key = (id || name) as keyof Filters;
-    setFilters((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') onApplyFilter();
-  };
-
-  const initialFilters: Filters = {
-    gender: -1,
-    organization: '',
-    department: '',
-    district: '',
-    joinStart: '',
-    exitEnd: '',
-    statusEmployee: -1,
-  };
-
-  return (
-    <Box
-      sx={{ padding: { xs: 0, lg: 3 }, margin: 1.5, boxShadow: 0, borderRadius: 2 }}
-      onKeyDown={handleKeyDown}
-    >
-      <Typography variant="h5" gutterBottom>
-        Employee Filter
-      </Typography>
-
-      <Grid2 container spacing={3}>
-        {/* Join Dates */}
-        <Grid2 size={{ xs: 12, sm: 6 }}>
-          <CustomFormLabel htmlFor="joinStart">
-            <Typography variant="caption">Join Start</Typography>
-          </CustomFormLabel>
-          <CustomTextField
-            InputProps={{
-              sx: {
-                fontSize: '0.7rem', // atau 12px
-              },
-            }}
-            id="joinStart"
-            type="date"
-            fullWidth
-            variant="outlined"
-            value={filters.joinStart}
-            onChange={handleChange}
-          />
-        </Grid2>
-        <Grid2 size={{ xs: 12, sm: 6 }}>
-          <CustomFormLabel htmlFor="exitEnd">
-            <Typography variant="caption">Exit End</Typography>
-          </CustomFormLabel>
-          <CustomTextField
-            InputProps={{
-              sx: {
-                fontSize: '0.7rem', // atau 12px
-              },
-            }}
-            id="exitEnd"
-            type="date"
-            fullWidth
-            variant="outlined"
-            value={filters.exitEnd}
-            onChange={handleChange}
-          />
-        </Grid2>
-
-        {/* Dropdown Fields */}
-        <Grid2 size={{ xs: 12, sm: 4 }}>
-          <CustomFormLabel htmlFor="organization" sx={{ mt: 0 }}>
-            <Typography variant="caption">Organization</Typography>
-          </CustomFormLabel>
-
-          <Autocomplete
-            id="organization"
-            options={organizationData} // [{ id, name }]
-            value={organizationData.find((o) => o.id === filters.organization) || null}
-            onChange={(_, val) =>
-              setFilters((prev) => ({ ...prev, organization: val ? val.id : '' }))
-            }
-            isOptionEqualToValue={(opt, val) => opt.id === val.id}
-            getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt?.name ?? '')}
-            clearOnEscape
-            renderInput={(params) => (
-              <CustomTextField
-                {...params}
-                placeholder="Select organization"
-                variant="outlined"
-                InputProps={{ ...params.InputProps, sx: { fontSize: '0.7rem' } }}
-              />
-            )}
-          />
-        </Grid2>
-
-        {/* Department */}
-        <Grid2 size={{ xs: 12, sm: 4 }}>
-          <CustomFormLabel htmlFor="department" sx={{ mt: 0 }}>
-            <Typography variant="caption">Department</Typography>
-          </CustomFormLabel>
-
-          <Autocomplete
-            id="department"
-            options={departmentData}
-            value={departmentData.find((o) => o.id === filters.department) || null}
-            onChange={(_, val) =>
-              setFilters((prev) => ({ ...prev, department: val ? val.id : '' }))
-            }
-            isOptionEqualToValue={(opt, val) => opt.id === val.id}
-            getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt?.name ?? '')}
-            clearOnEscape
-            renderInput={(params) => (
-              <CustomTextField
-                {...params}
-                placeholder="Select department"
-                variant="outlined"
-                InputProps={{ ...params.InputProps, sx: { fontSize: '0.7rem' } }}
-              />
-            )}
-          />
-        </Grid2>
-
-        {/* District */}
-        <Grid2 size={{ xs: 12, sm: 4 }}>
-          <CustomFormLabel htmlFor="district" sx={{ mt: 0 }}>
-            <Typography variant="caption">District</Typography>
-          </CustomFormLabel>
-
-          <Autocomplete
-            id="district"
-            options={districtData}
-            value={districtData.find((o) => o.id === filters.district) || null}
-            onChange={(_, val) => setFilters((prev) => ({ ...prev, district: val ? val.id : '' }))}
-            isOptionEqualToValue={(opt, val) => opt.id === val.id}
-            getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt?.name ?? '')}
-            clearOnEscape
-            renderInput={(params) => (
-              <CustomTextField
-                {...params}
-                placeholder="Select district"
-                variant="outlined"
-                InputProps={{ ...params.InputProps, sx: { fontSize: '0.7rem' } }}
-              />
-            )}
-          />
-        </Grid2>
-
-        {/* Gender Radio Buttons */}
-        <Grid2 size={{ xs: 12, sm: 6 }}>
-          <CustomFormLabel sx={{ marginTop: '0px' }}>
-            <Typography variant="caption">Gender</Typography>
-          </CustomFormLabel>
-          <FormControl>
-            <RadioGroup row name="gender" value={String(filters.gender)} onChange={handleChange}>
-              <FormControlLabel
-                sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
-                value="0"
-                control={<CustomRadio />}
-                label="Female"
-              />
-              <FormControlLabel
-                sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
-                value="1"
-                control={<CustomRadio />}
-                label="Male"
-              />
-            </RadioGroup>
-          </FormControl>
-        </Grid2>
-
-        {/* Status Radio Buttons */}
-        <Grid2 size={{ xs: 12, sm: 6 }}>
-          <CustomFormLabel sx={{ marginTop: '0px' }}>
-            <Typography variant="caption">Status Employee</Typography>
-          </CustomFormLabel>
-          <FormControl>
-            <RadioGroup
-              row
-              name="statusEmployee"
-              value={String(filters.statusEmployee)} // RadioGroup butuh string
-              onChange={handleChange}
-            >
-              <FormControlLabel
-                sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
-                value="Active"
-                control={<CustomRadio />}
-                label="Active"
-              />
-              <FormControlLabel
-                sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
-                value="Non Active"
-                control={<CustomRadio />}
-                label="Non Active"
-              />
-            </RadioGroup>
-          </FormControl>
-        </Grid2>
-        {/* Actions */}
-        <Grid2 size={{ xs: 12 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              gap: 1,
-              justifyContent: 'flex-end',
-              mt: 1,
-              alignItems: 'center',
-            }}
-          >
-            <Button variant="outlined" onClick={() => setFilters(initialFilters)}>
-              Reset
-            </Button>
-            <Button variant="contained" onClick={onApplyFilter}>
-              Apply
-            </Button>
-          </Box>
-        </Grid2>
-      </Grid2>
-    </Box>
-  );
-};

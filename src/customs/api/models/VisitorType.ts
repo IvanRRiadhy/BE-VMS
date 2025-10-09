@@ -29,7 +29,8 @@ export type DocumentForm = {
 };
 
 export type SectionPageVisitorType = {
-  // Id: string;
+  id?: string | undefined | number;
+  Id?: string;
   sort: number;
   name: string;
   status?: number;
@@ -48,6 +49,7 @@ export type SectionPageVisitorType = {
 
 export type VisitorTypeDocument = {
   document_id?: string;
+  document_name?: string;
 };
 
 export type Item = {
@@ -82,6 +84,14 @@ export type GetVisitorTypeByIdResponse = {
   title: string;
   msg: string;
   collection: Item | null;
+};
+
+export type GetAllVisitorTypeResponse = {
+  status: string;
+  status_code: number;
+  title: string;
+  msg: string;
+  collection: Item[];
 };
 
 export type GetAllVisitorTypePaginationResponse = {
@@ -139,7 +149,7 @@ export const CreateVisitorTypeRequestSchema = z.object({
   can_notification_arrival: z.boolean().default(false),
   is_primary: z.boolean().default(false).optional(),
   is_enable: z.boolean().default(false),
-  prefix: z.string().default(''),
+  // prefix: z.string().default(''),
   vip: z.boolean().default(false),
   simple_visitor: z.boolean().default(false),
   simple_period: z.boolean().default(false),
@@ -180,21 +190,21 @@ export const updateVisitorTypeSchmea = z.object({
   direct_visit: z.boolean().optional(),
   period: z.number().default(0),
   can_notification_arrival: z.boolean().optional(),
-  is_primary: z.boolean().optional().optional(),
+  is_primary: z.boolean().optional(),
   is_enable: z.boolean().optional(),
   vip: z.boolean().optional(),
   simple_visitor: z.boolean().default(false),
   simple_period: z.boolean().default(false),
-  prefix: z.string().default(''),
+  // prefix: z.string().default(''),
 
   // Nullable fields from your JSON
-  site_visitor_types: z.string().nullable().optional(),
+  // site_visitor_types: z.string().nullable().optional(),
   // Nullable fields from your JSON
   visitor_type_documents: z
     .array(z.object({ document_id: z.string().optional() }))
     .nullable()
     .optional(),
-  section_page_visitor_types: z.array(sectionPageVisitorTypeSchema).optional(),
+  section_page_visitor_types: z.array(sectionPageVisitorTypeSchema).optional().default([]),
 });
 
 export type UpdateVisitorTypeRequest = z.infer<typeof updateVisitorTypeSchmea>;

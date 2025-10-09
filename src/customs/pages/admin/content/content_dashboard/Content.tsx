@@ -1,14 +1,41 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import React from 'react';
-import { Box, Grid2 as Grid } from '@mui/material';
+import React, { useEffect, useState, useRef } from 'react';
+import { Box, Button, Grid2 as Grid, Typography } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
-
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import Welcome from 'src/layouts/full/shared/welcome/Welcome';
 import TopCards from './TopCards';
-import Heatmap from '../../../../components/head_map/HeadMap';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import VideoPlayer from 'src/customs/components/videoplayer';
+import TopVisitingPurposeChart from 'src/customs/components/charts/TopVisitingPurposeChart';
+import TopVisitor from 'src/customs/components/charts/TopVisitor';
+import VisitingTypeChart from 'src/customs/components/charts/VisitingTypeChart';
+import VisitorFluctuationChart from 'src/customs/components/charts/VisitorFluctuationChart';
+import VisitorHeatMap from '../../../../components/charts/VisitorHeatMap';
+import AvarageDurationChart from 'src/customs/components/charts/AverageDurationChart';
+import { IconDownload } from '@tabler/icons-react';
+import { useSession } from 'src/customs/contexts/SessionContext';
+import { getTodayPraregister } from 'src/customs/api/admin';
+import { useTranslation } from 'react-i18next';
+
+// Data journey visitor
+const visitorJourney = [
+  {
+    id: 1,
+    title: 'Arrived',
+    description: 'Visitor entered building',
+    time: '08:45',
+    color: 'primary',
+  },
+  {
+    id: 2,
+    title: 'Check-in',
+    description: 'Registered at front desk',
+    time: '08:50',
+    color: 'secondary',
+  },
+  { id: 3, title: 'Meeting', description: 'With HR Department', time: '09:15', color: 'success' },
+  { id: 4, title: 'Check-out', description: 'Left the building', time: '11:30', color: 'error' },
+];
 
 const headMapData = [
   { id: 1, name: 'ABD GOFFAR', createdAt: '2025-06-12T08:30:00Z' },
@@ -54,41 +81,6 @@ const tableRowColumn = [
     Purpose: 'Maintenance',
     'purpose Person': 'Pak Wahyu',
   },
-  {
-    id: 6,
-    Name: 'Rina Marlina',
-    'Visit Time': '2025-06-13T13:45:00',
-    Purpose: 'Audit',
-    'Purpose Person': 'Bu Intan',
-  },
-  {
-    id: 7,
-    Name: 'Fajar Nugroho',
-    'Visit Time': '2025-06-13T15:00:00',
-    Purpose: 'Maintenance',
-    'purpose Person': 'Pak Wahyu',
-  },
-  {
-    id: 8,
-    Name: 'Fajar Nugroho',
-    'Visit Time': '2025-06-13T15:00:00',
-    Purpose: 'Maintenance',
-    'purpose Person': 'Pak Wahyu',
-  },
-  {
-    id: 9,
-    Name: 'Rina Marlina',
-    'Visit Time': '2025-06-13T13:45:00',
-    Purpose: 'Audit',
-    'Purpose Person': 'Bu Intan',
-  },
-  {
-    id: 10,
-    Name: 'Fajar Nugroho',
-    'Visit Time': '2025-06-13T15:00:00',
-    Purpose: 'Maintenance',
-    'purpose Person': 'Pak Wahyu',
-  },
 ];
 
 // const videoJsOptions = {
@@ -110,54 +102,156 @@ const tableRowColumn = [
 //     },
 //   },
 // };
+// const [page, setPage] = useState(0);
+// const [rowsPerPage, setRowsPerPage] = useState(5);
 
 const Content = () => {
+  const { token } = useSession();
+  const { t } = useTranslation();
+
+  const [dataPraregist, setDataPraregist] = useState<any[]>([]);
+  const exportRef = useRef<HTMLDivElement>(null);
+  const handleExportPdf = async () => {
+    if (!exportRef.current) return;
+
+    const canvas = await html2canvas(exportRef.current, { scale: 2 });
+    const imgData = canvas.toDataURL('image/png');
+
+    const pdf = new jsPDF('p', 'mm', 'a4'); // Portrait, A4
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+
+    const imgWidth = pdfWidth - 20; // margin kiri kanan
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+    let heightLeft = imgHeight;
+    let position = 10; // margin atas pertama
+
+    // Halaman pertama
+    pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+    heightLeft -= pdfHeight;
+
+    // Halaman berikutnya
+    while (heightLeft > 0) {
+      position = heightLeft - imgHeight + 10;
+      pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+      heightLeft -= pdfHeight;
+    }
+
+    pdf.save('dashboard.pdf');
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await getTodayPraregister(
+          token!,
+          new Date().toISOString().split('T')[0], // start-date
+          new Date().toISOString().split('T')[0], // end-date
+        );
+        setDataPraregist(response.data || []);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+
+    fetchData();
+  }, [token]);
   return (
     <PageContainer title="Dashboard" description="this is Dashboard page">
       <Box>
-        <Grid container spacing={3}>
-          {/* column */}
-          <Grid size={{ xs: 12, lg: 12 }}>
-            <TopCards />
-          </Grid>
-          {/* column */}
-          <Grid container mt={1} size={{ xs: 12, lg: 12 }}>
-            <Grid size={{ xs: 12, lg: 3 }}>
-              <Heatmap dataCreated={headMapData} title=" Visitors In This Week" />
-            </Grid>
-            <Grid size={{ xs: 12, lg: 9 }}>
-              <DynamicTable
-                overflowX={'auto'}
-                data={tableRowColumn}
-                isHaveChecked={true}
-                isHaveAction={true}
-                isHaveSearch={true}
-                isHaveFilter={true}
-                isHaveExportPdf={true}
-                isHaveExportXlf={false}
-                isHaveFilterDuration={false}
-                isHaveAddData={false}
-                isHaveHeader={false}
-                headerContent={{
-                  title: 'Dashboard',
-                  subTitle: 'Monitoring all visitor data',
-                  items: [{ name: 'department' }, { name: 'employee' }, { name: 'project' }],
-                }}
-                onHeaderItemClick={(item) => {
-                  console.log('Item diklik:', item.name);
-                }}
-                onCheckedChange={(selected) => console.log('Checked:', selected)}
-                onEdit={(row) => console.log('Edit:', row)}
-                onDelete={(row) => console.log('Delete:', row)}
-                onSearchKeywordChange={(keyword) => console.log('Search keyword:', keyword)}
-                onFilterCalenderChange={(ranges) => {
-                  console.log('Range filtered:', ranges);
-                }}
-                isHaveFilterMore={true}
-              />{' '}
-            </Grid>
+        <Grid container spacing={3} alignItems="center" justifyContent="space-between" mb={1}>
+          <Grid
+            size={{ xs: 12, lg: 12 }}
+            display="flex"
+            justifyContent="flex-end"
+            alignItems="start"
+          >
+            <Button
+              size="small"
+              variant="contained"
+              color="error"
+              sx={{ mb: 0 }}
+              startIcon={<IconDownload />}
+              onClick={handleExportPdf}
+            >
+              Export
+            </Button>
           </Grid>
         </Grid>
+        <div ref={exportRef}>
+          <Grid container spacing={3}>
+            {/* column */}
+            <Grid size={{ xs: 12, lg: 12 }}>
+              <TopCards token={token} />
+            </Grid>
+            {/* column */}
+            <Grid container mt={1} size={{ xs: 12, lg: 12 }}>
+              <Grid size={{ xs: 12, md: 6, xl: 3 }}>
+                <VisitingTypeChart />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6, xl: 4 }}>
+                <TopVisitingPurposeChart title="Top Visiting Purpose" />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6, xl: 5 }}>
+                <TopVisitor />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6, lg: 6 }}>
+                <AvarageDurationChart />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6, lg: 6 }}>
+                <Typography variant="h6" sx={{ mb: 2 }}>
+                  {t('visitor_praregist')}
+                </Typography>
+                <DynamicTable
+                  height={420}
+                  isHavePagination
+                  overflowX={'auto'}
+                  data={dataPraregist}
+                  isHaveChecked={false}
+                  isHaveAction={false}
+                  isHaveSearch={false}
+                  isHaveFilter={false}
+                  isHaveExportPdf={false}
+                  isHaveExportXlf={false}
+                  isHaveHeaderTitle={true}
+                  titleHeader=""
+                  // defaultRowsPerPage={rowsPerPage}
+                  rowsPerPageOptions={[5, 10, 20, 50, 100]}
+                  // onPaginationChange={(page, rowsPerPage) => {
+                  //   setPage(page);
+                  //   setRowsPerPage(rowsPerPage);
+                  // }}
+                  isHaveFilterDuration={false}
+                  isHaveAddData={false}
+                  isHaveHeader={false}
+                  isHaveFilterMore={false}
+                  // headerContent={{
+                  //   title: 'Dashboard',
+                  //   subTitle: 'Monitoring all visitor data',
+                  //   items: [{ name: 'department' }, { name: 'employee' }, { name: 'project' }],
+                  // }}
+                  // onHeaderItemClick={(item) => {
+                  //   console.log('Item diklik:', item.name);
+                  // }}
+                  // onCheckedChange={(selected) => console.log('Checked:', selected)}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6, lg: 6 }}>
+                <VisitorFluctuationChart />
+              </Grid>
+
+              <Grid size={{ xs: 12, xl: 6 }}>
+                {/* <Heatmap dataCreated={headMapData} title=" Visitors In This Week" /> */}
+                <VisitorHeatMap />
+              </Grid>
+            </Grid>
+          </Grid>
+        </div>
         {/* Welcome Alert In Header view */}
         <Welcome />
       </Box>

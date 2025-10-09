@@ -22,6 +22,11 @@ const Languages = [
   {
     flagname: 'Indonesia (ID)',
     icon: FlagId,
+    value: 'id',
+  },
+  {
+    flagname: 'China (RRC)',
+    icon: FlagCn,
     value: 'ch',
   },
 ];

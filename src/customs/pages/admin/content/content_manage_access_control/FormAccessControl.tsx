@@ -18,11 +18,14 @@ import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import {
   CreateAccessControlRequest,
   CreateAccessControlRequestSchema,
+  Item,
   UpdateAccessControlRequest,
   UpdateAccessControlRequestSchema,
 } from 'src/customs/api/models/AccessControl';
 import {
   createAccessControl,
+  getAccessControlById,
+  getAccessControlsById,
   getAllAccessControlPagination,
   getAllBrand,
   getAllIntegration,
@@ -31,12 +34,15 @@ import {
 import { AccessControlType } from 'src/customs/api/models/AccessControl';
 import { Item as BrandItem } from 'src/customs/api/models/Brand';
 import { Item as Integrationitem } from 'src/customs/api/models/Integration';
+import { showSuccessAlert } from 'src/customs/components/alerts/alerts';
 type AccessControlFormData = {
   brand_id: string;
   integration_id: string;
+  brand_name: string;
+  integration_name?: string;
   type: number;
   name: string;
-  description: string;
+  description?: string;
   channel: string;
   door_id: string;
   raw: string;
@@ -45,7 +51,7 @@ type AccessControlFormData = {
 
 interface FormAccessControlProps {
   formData: CreateAccessControlRequest;
-  setFormData: React.Dispatch<React.SetStateAction<AccessControlFormData>>;
+  setFormData: React.Dispatch<React.SetStateAction<CreateAccessControlRequest>>;
   editingId?: string;
   onSuccess?: () => void;
 }
@@ -79,53 +85,47 @@ const FormAccessControl = ({
   const [brandList, setBrandList] = useState<BrandItem[]>([]);
   const [integrationList, setIntegrationList] = useState<Integrationitem[]>([]);
 
+  // 1️⃣ Ambil list brand & integration sekali saat token ada
   useEffect(() => {
     if (!token) return;
 
-    const fetchData = async () => {
-      try {
-        const brandRes = await getAllBrand(token);
-        const integrationRes = await getAllIntegration(token);
-        const accessRes = await getAllAccessControlPagination(token, 0, 99, 'id', '');
+    const fetchList = async () => {
+      const [brandRes, integrationRes] = await Promise.all([
+        getAllBrand(token),
+        getAllIntegration(token),
+      ]);
+      setBrandList(brandRes?.collection ?? []);
+      setIntegrationList(integrationRes?.collection ?? []);
+    };
 
-        // Set semua list
-        setBrandList(brandRes?.collection ?? []);
-        setIntegrationList(integrationRes?.collection ?? []);
+    fetchList();
+  }, [token]);
 
-        // Mode Edit: Isi formData
-        if (editingId) {
-          const target = accessRes?.collection.find((item) => item.id === editingId);
-          if (target) {
-            setFormData({
-              brand_id: String(target.brand_id),
-              integration_id: String(target.integration_id),
-              type: Number(target.type),
-              name: target.name,
-              description: target.description,
-              channel: target.channel,
-              door_id: target.door_id,
-              raw: target.raw,
-            });
-          }
-        } else {
-          // Mode Create: Kosongkan formData
-          setFormData({
-            brand_id: '',
-            integration_id: '',
-            type: -1,
-            name: '',
-            description: '',
-            channel: '',
-            door_id: '',
-            raw: '{}',
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching data:', error);
+  // 2️⃣ Ambil detail access kalau sedang mode edit
+  useEffect(() => {
+    if (!token || !editingId) return;
+
+    const fetchDetail = async () => {
+      const accessRes = await getAccessControlsById(editingId, token);
+      const target = accessRes?.collection as Item | undefined;
+      if (target) {
+        console.log('Target for editing:', target);
+        setFormData({
+          brand_id: target.brand_id ?? '',
+          integration_id: target.integration_id ?? '',
+          type: Number(target.type),
+          name: target.name,
+          description: target.description ?? '',
+          channel: target.channel,
+          door_id: target.door_id,
+          raw: target.raw,
+          integration_name: target.integration_name,
+          brand_name: target.brand_name,
+        });
       }
     };
 
-    fetchData();
+    fetchDetail();
   }, [token, editingId]);
 
   const handleOnSubmit = async (e: React.FormEvent) => {
@@ -144,20 +144,31 @@ const FormAccessControl = ({
         return;
       }
       const data: CreateAccessControlRequest = CreateAccessControlRequestSchema.parse(formData);
-      const dataUpdate: UpdateAccessControlRequest =
-        UpdateAccessControlRequestSchema.parse(formData);
+
+      const dataUpdate: UpdateAccessControlRequest = UpdateAccessControlRequestSchema.parse({
+        brand_id: formData.brand_id,
+        integration_id: formData.integration_id,
+        type: formData.type,
+        name: formData.name,
+        description: formData.description,
+        channel: formData.channel,
+        door_id: formData.door_id,
+        raw: formData.raw,
+      });
+      console.log('Data being sent to API:', dataUpdate);
+
       console.log('Setting Data: ', data);
-      if (editingId && editingId !== '') {
-        console.log('Update Mode');
+      if (editingId) {
         await updateAccessControl(editingId, dataUpdate, token);
         console.log('Form Data : ', formData);
-        setAlertMessage('Access Control successfully updated!');
+        showSuccessAlert('Updated!', 'Access control successfully updated!');
       } else {
         console.log('Create Mode');
         await createAccessControl(data, token);
-        setAlertMessage(
-          editingId ? 'Custom field successfully updated!' : 'Custom field successfully created!',
-        );
+        // setAlertMessage(
+        //   editingId ? 'Custom field successfully updated!' : 'Custom field successfully created!',
+        // );
+        showSuccessAlert('Created!', 'Access control successfully created!');
       }
       localStorage.removeItem('unsavedAccessControl');
       setAlertType('success');
@@ -253,63 +264,42 @@ const FormAccessControl = ({
             </Typography>
             <CustomFormLabel htmlFor="brand-name">Brand Name</CustomFormLabel>
 
-            <Autocomplete
+            <CustomSelect
               id="brand_id"
-              options={brandList}
-              getOptionLabel={(option) => option.name}
-              value={
-                brandList.find((brand) => String(brand.id) === String(formData.brand_id)) || null
-              }
-              onChange={(e, newValue) => {
-                handleChange({
-                  target: {
-                    id: 'brand_id',
-                    name: 'brand_id',
-                    value: newValue ? String(newValue.id) : '', // konsisten string
-                  },
-                } as any);
-              }}
-              renderInput={(params) => (
-                <CustomTextField
-                  {...params}
-                  label=""
-                  required
-                  error={!!errors.brand_id}
-                  helperText={errors.brand_id || ''}
-                  fullWidth
-                />
-              )}
-            />
+              name="brand_id"
+              value={formData.brand_id || ''}
+              onChange={handleChange}
+              error={!!errors.brand_id}
+              helperText={errors.brand_id || ''}
+              fullWidth
+            >
+              <MenuItem value="" disabled>
+                Select Brand
+              </MenuItem>
+              {brandList.map((b) => (
+                <MenuItem key={b.id} value={b.id}>
+                  {b.name}
+                </MenuItem>
+              ))}
+            </CustomSelect>
+
             <CustomFormLabel htmlFor="integration-name">Integration Name</CustomFormLabel>
-            <Autocomplete
+            <CustomSelect
               id="integration_id"
-              options={integrationList}
-              getOptionLabel={(option) => option.name}
-              value={
-                integrationList.find(
-                  (integration) => String(integration.id) === String(formData.integration_id),
-                ) || null
-              }
-              onChange={(e, newValue) => {
-                handleChange({
-                  target: {
-                    id: 'integration_id',
-                    name: 'integration_id',
-                    value: newValue ? newValue.id : '',
-                  },
-                } as any);
-              }}
-              renderInput={(params) => (
-                <CustomTextField
-                  {...params}
-                  label=""
-                  required
-                  error={!!errors.integration_id}
-                  helperText={errors.integration_id || ''}
-                  fullWidth
-                />
-              )}
-            />
+              name="integration_id"
+              value={formData.integration_id || ''}
+              onChange={handleChange}
+              fullWidth
+            >
+              <MenuItem value="" disabled>
+                Select Integration
+              </MenuItem>
+              {integrationList.map((integration) => (
+                <MenuItem key={integration.id} value={integration.id}>
+                  {integration.name}
+                </MenuItem>
+              ))}
+            </CustomSelect>
             <CustomFormLabel htmlFor="type">Type</CustomFormLabel>
             <CustomSelect
               id="type"

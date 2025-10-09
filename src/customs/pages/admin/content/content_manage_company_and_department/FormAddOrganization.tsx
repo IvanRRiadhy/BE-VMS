@@ -6,7 +6,6 @@ import {
   CircularProgress,
   Autocomplete,
   Backdrop,
-  Portal,
 } from '@mui/material';
 import { Box } from '@mui/system';
 import React, { useEffect, useState } from 'react';
@@ -18,6 +17,7 @@ import {
   CreateOrganizationRequest,
   CreateOrganizationSubmitSchema,
 } from 'src/customs/api/models/Organization';
+import { showSuccessAlert } from 'src/customs/components/alerts/alerts';
 
 interface FormAddOrganizationProps {
   formData: CreateOrganizationRequest;
@@ -85,6 +85,8 @@ const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // ⬅️ langsung tampilkan backdrop
     setLoading(true);
     setErrors({});
 
@@ -99,18 +101,21 @@ const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({
         return;
       }
 
+      // ⬅️ validasi di sini
       const parsed = validateLocal(formData);
       if (!parsed) {
         setAlertType('error');
         setAlertMessage('Please complete the required fields correctly.');
-        return;
+        return; // ⬅️ otomatis backdrop masih aktif
       }
 
+      // API request
       await createOrganization(parsed, token);
       localStorage.removeItem('unsavedOrganizationFormAdd');
 
       setAlertType('success');
       setAlertMessage('Organization successfully created!');
+      // showSuccessAlert('Organization successfully created!');
 
       setTimeout(() => {
         onSuccess?.();
@@ -131,6 +136,7 @@ const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({
         setAlertMessage('Complete the following data properly and correctly');
       }, 3000);
     } finally {
+      // ⬅️ backdrop ditutup terakhir
       setTimeout(() => {
         setLoading(false);
       }, 600);
@@ -174,17 +180,12 @@ const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({
           <Typography variant="caption">Head of Organization</Typography>
         </CustomFormLabel>
         <Autocomplete
-          // freeSolo
           id="host"
           autoHighlight
           disablePortal
           options={allEmployes.map((emp: any) => ({ id: emp.id, label: emp.name }))}
-          getOptionLabel={(option) => {
-            if (typeof option === 'string') return option; // user mengetik manual
-            return option.label;
-          }}
+          getOptionLabel={(option) => (typeof option === 'string' ? option : option.label)}
           value={
-            // cari object di options yang id-nya sama dengan formData.host
             allEmployes
               .map((emp: any) => ({ id: emp.id, label: emp.name }))
               .find((emp: any) => emp.id === formData.host) ?? ''
@@ -194,9 +195,13 @@ const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({
               ...prev,
               host: typeof newValue === 'string' ? newValue : newValue?.id ?? '',
             }));
+            // ⬅️ clear error
+            setErrors((prev) => ({ ...prev, host: '' }));
           }}
           onInputChange={(_, inputValue) => {
             setFormData((prev) => ({ ...prev, host: inputValue }));
+            // ⬅️ clear error
+            setErrors((prev) => ({ ...prev, host: '' }));
           }}
           renderInput={(params) => (
             <CustomTextField

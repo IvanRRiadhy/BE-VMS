@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Box,
   Button,
   Dialog,
-  DialogActions,
   DialogContent,
   DialogTitle,
   Divider,
@@ -70,7 +69,6 @@ const Content = () => {
   const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const navigate = useNavigate();
 
   function formatEnumLabel(label: string) {
     // Insert a space before all caps and capitalize the first letter
@@ -211,8 +209,9 @@ const Content = () => {
     const editing = localStorage.getItem('unsavedIntegrationData');
     const integration = integrationData.find((item) => item.id === id);
     const available = availableIntegration.find(
-      (item) => item.name === integration?.name && item.brand_name === integration?.brand_name,
+      (item) => item.brand_name === integration?.brand_name && item.name === integration?.name,
     );
+    console.log('Available integration:', available);
     const integrationWithListId = {
       ...integration,
       integration_list_id: available?.id || '',
@@ -220,7 +219,6 @@ const Content = () => {
     console.log('Integration data:', integrationWithListId);
     setFormDataAddIntegration(CreateIntegrationRequestSchema.parse(integrationWithListId));
     handleOpenDialog();
-    // }
   };
 
   const handleDelete = async (id: string) => {
@@ -264,7 +262,7 @@ const Content = () => {
 
   return (
     <>
-      <PageContainer title="Manage Integration" description="Integration page">
+      <PageContainer title="Integration" description="Integration page">
         <Box>
           <Grid container spacing={3}>
             {/* column */}

@@ -1,12 +1,11 @@
-import { FC } from 'react';
-import Content from './content/content_visitor/Content';
+import Content from './content/content_manage_setting_visitor/Content';
 import {
   AdminCustomSidebarItemsData,
   AdminNavListingData,
 } from 'src/customs/components/header/navigation/AdminMenu';
 import PageContainer from 'src/customs/components/container/PageContainer';
 
-const Visitor: FC = () => {
+const ManageSettingVisitor = () => {
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -17,4 +16,4 @@ const Visitor: FC = () => {
   );
 };
 
-export default Visitor;
+export default ManageSettingVisitor;
