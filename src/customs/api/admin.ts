@@ -262,6 +262,19 @@ export const updateSetting = async (token: string, id: string, data: any): Promi
 //
 
 // #region Dashboard
+
+export const getAccessPass = async (
+  token: string,
+): Promise<any> => {
+  const response = await axiosInstance.get('/dashboard/access-pass', {
+    headers: { Authorization: `Bearer ${token}` },
+    // params: { 'start-date': start_date, 'end-date': end_date },
+  });
+  console.log("response", response);
+  return response.data.collection[0];
+};
+
+
 export const getTopVisitingPurpose = async (
   token: string,
   start_date: string,

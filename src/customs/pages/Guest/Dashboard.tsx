@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { act, useEffect, useState } from 'react';
 import GuestLayout from './GuestLayout';
 import PageContainer from 'src/components/container/PageContainer';
 import { Box } from '@mui/system';
@@ -62,6 +62,8 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
+import { Item as AccessPassType } from 'src/customs/api/models/AccessPass';
+import QRCode from 'react-qr-code';
 const items = [
   { icon: <Home />, label: 'Access Pass' },
   { icon: <Event />, label: 'Invitation' },
@@ -114,6 +116,7 @@ const visitors = [
 
 import { addDays } from 'date-fns';
 import Calendar from 'src/customs/components/calendar/Calendar';
+import { getAccessPass } from 'src/customs/api/admin';
 
 const Dashboard = () => {
   // const [open, setOpen] = useState(false);
@@ -222,6 +225,7 @@ const Dashboard = () => {
   const { token } = useSession();
 
   const [activeVisitData, setActiveVisitData] = useState<any[]>([]);
+  const [activeAccessPass, setActiveAccessPass] = useState<AccessPassType>();
 
   useEffect(() => {
     if (!token) return;
@@ -229,6 +233,9 @@ const Dashboard = () => {
       try {
         const res = await getActiveInvitation(token as string);
         setActiveVisitData(res?.collection ?? []);
+        const res2 = await getAccessPass(token as string);
+        setActiveAccessPass(res2);
+        console.log("res2: ",res2)
       } catch (e) {
         console.error(e);
       }
@@ -252,6 +259,43 @@ const Dashboard = () => {
   const handleClick = (event: React.MouseEvent<HTMLElement>) => setAnchorEl(event.currentTarget);
   const handleClose = () => setAnchorEl(null);
   const open = Boolean(anchorEl);
+
+  const formatVisitorPeriodWithTZ = (
+    startUtc: string | null | undefined,
+    endUtc: string | null | undefined,
+    tz: string | null | undefined,
+    locale: string = 'en-US',
+  ): string => {
+    if (!startUtc || !endUtc) return '-';
+
+    try {
+      const start = new Date(startUtc);
+      const end = new Date(endUtc);
+
+      const dateFormatter = new Intl.DateTimeFormat(locale, {
+        weekday: 'short',
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        timeZone: tz ?? 'UTC',
+      });
+
+      const timeFormatter = new Intl.DateTimeFormat(locale, {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        timeZone: tz ?? 'UTC',
+      });
+
+      const datePart = dateFormatter.format(start); // e.g. "Thu, 09 Oct 2025"
+      const startTime = timeFormatter.format(start); // e.g. "17:00"
+      const endTime = timeFormatter.format(end); // e.g. "18:00"
+
+      return `${datePart} | ${startTime} - ${endTime}`;
+    } catch {
+      return '-';
+    }
+  };
 
   return (
     <PageContainer title="Dashboard">
@@ -741,7 +785,8 @@ const Dashboard = () => {
       </Grid> */}
 
       {/* Dialog */}
-      <Dialog open={openAccess} onClose={handleCloseAccess} fullWidth maxWidth="sm">
+      {activeAccessPass && (
+              <Dialog open={openAccess} onClose={handleCloseAccess} fullWidth maxWidth="sm">
         <DialogTitle textAlign={'center'} sx={{ padding: '30px 0' }}>
           Your Access Pass
         </DialogTitle>
@@ -768,10 +813,14 @@ const Dashboard = () => {
               <Avatar />
               <Box>
                 <Typography variant="body1" fontWeight="bold">
-                  Tommy
+                  {activeAccessPass.fullname}
                 </Typography>
                 <Typography variant="body2" color="grey">
-                  Mon, 11 May 2023 | 10:00 - 11:00
+                  {formatVisitorPeriodWithTZ(
+                    activeAccessPass.visitor_period_start,
+                    activeAccessPass.visitor_period_end,
+                    activeAccessPass.tz,
+                  )}
                 </Typography>
               </Box>
             </Box>
@@ -796,7 +845,7 @@ const Dashboard = () => {
                   Invitation Code
                 </Typography>
                 <Typography variant="body1" fontWeight="bold">
-                  729038
+                  {activeAccessPass.invitation_code}
                 </Typography>
               </Grid>
 
@@ -805,7 +854,7 @@ const Dashboard = () => {
                   Card
                 </Typography>
                 <Typography variant="body1" fontWeight="bold">
-                  678921223
+                  {activeAccessPass.card_number}
                 </Typography>
               </Grid>
 
@@ -814,7 +863,7 @@ const Dashboard = () => {
                   Vehicle Plate No.
                 </Typography>
                 <Typography variant="body1" fontWeight="bold">
-                  B 1234 CC
+                  {activeAccessPass.vehicle_plate_number}
                 </Typography>
               </Grid>
 
@@ -823,7 +872,7 @@ const Dashboard = () => {
                   Parking Slot
                 </Typography>
                 <Typography variant="body1" fontWeight="bold">
-                  Slot A1
+                  {activeAccessPass.parking_slot}
                 </Typography>
               </Grid>
             </Grid>
@@ -831,7 +880,7 @@ const Dashboard = () => {
 
           <Box mt={2}>
             <Typography variant="h4" sx={{ fontWeight: 'bold' }} textAlign={'center'}>
-              Gedung HQ
+              {activeAccessPass.site_place_name}
             </Typography>
             <Box
               display="flex"
@@ -851,12 +900,14 @@ const Dashboard = () => {
                 }}
                 my={2}
               >
-                <img
-                  src="https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg"
-                  alt="QRCode"
-                  width="200"
-                  height="200"
-                  style={{ borderRadius: '8px' }}
+                <QRCode
+                  value={activeAccessPass.visitor_number}
+                  size={180}
+                  style={{
+                    height: 'auto',
+                    width: '180px',
+                    borderRadius: 8,
+                  }}
                 />
               </Box>
               <Box display="flex" gap={3} mb={2}>
@@ -864,9 +915,9 @@ const Dashboard = () => {
                 <Typography color="error">Low Battery</Typography>
               </Box>
               <Typography variant="body2" mb={1}>
-                Show this whilte visiting
+                Show this while visiting
               </Typography>
-              <Typography variant="h6">ID : 73A2AFJ1S1KS1</Typography>
+              <Typography variant="h6">ID : {activeAccessPass.visitor_code}</Typography>
             </Box>
           </Box>
         </DialogContent>
@@ -876,6 +927,8 @@ const Dashboard = () => {
           </Button>
         </DialogActions> */}
       </Dialog>
+        )}
+
     </PageContainer>
   );
 };
