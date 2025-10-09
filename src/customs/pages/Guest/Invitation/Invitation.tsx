@@ -40,6 +40,7 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 import { Download } from '@mui/icons-material';
 import QRCode from 'react-qr-code';
 import { format } from 'date-fns';
+import { updateExtend } from 'src/customs/api/admin';
 
 // import { VisitorTrx } from 'src/customs/api/models/Visitor';
 
@@ -122,11 +123,11 @@ const Invitation = () => {
   // daftar opsi durasi dalam menit
   const durationOptions = [15, 30, 45, 60, 90, 120, 150, 180];
 
-  const handleExtend = () => {
-    if (!selectedMinutes) return;
-    console.log(`Extend visit by ${selectedMinutes} minutes`);
-    // onClose();
-  };
+  // const handleExtend = () => {
+  //   if (!selectedMinutes) return;
+  //   console.log(`Extend visit by ${selectedMinutes} minutes`);
+  //   // onClose();
+  // };
 
   const cards = [
     {
@@ -223,6 +224,25 @@ const Invitation = () => {
       console.log('Invitation Detail:', res?.collection);
     } catch (err: any) {
       console.error(err?.message || 'Failed to fetch invitation detail.');
+    }
+  };
+
+  const handleExtend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    // setLoading(true);
+    // setErrors({});
+    try {
+      if (!token) return;
+      if (selectedMinutes) {
+        const result = await updateExtend(token, {
+          id: invitationDetail?.id,
+          period: selectedMinutes,
+          apply_to_all: false,
+        });
+        console.log('extend: ', result);
+      }
+    } catch {
+      console.error('Failed to extend visit.');
     }
   };
 
@@ -607,6 +627,7 @@ const Invitation = () => {
             </form>
           </DialogContent>
         </Dialog>
+
         <Dialog
           open={openExtendVisit}
           onClose={() => setOpenExtendVisit(false)}
@@ -627,32 +648,34 @@ const Invitation = () => {
             <IconX />
           </IconButton>
           <DialogContent dividers>
-            <Box display="flex" flexWrap="wrap" gap={1.5} justifyContent="center" sx={{ mb: 2 }}>
-              {durationOptions.map((minutes) => (
-                <Chip
-                  key={minutes}
-                  label={`${minutes} min`}
-                  clickable
-                  color={selectedMinutes === minutes ? 'primary' : 'default'}
-                  onClick={() => setSelectedMinutes(minutes)}
-                  sx={{
-                    fontWeight: selectedMinutes === minutes ? 600 : 400,
-                    px: 1.5,
-                  }}
-                />
-              ))}
-            </Box>
-            <FormControlLabel
-              control={<Checkbox />}
-              label={
-                <Typography variant="body2" color="text.secondary">
-                  Apply to another visitor
-                </Typography>
-              }
-            />
-            <Button type="submit" variant="contained" sx={{ mt: 2 }} fullWidth>
-              Extend Visit
-            </Button>
+            <form onSubmit={handleExtend}>
+              <Box display="flex" flexWrap="wrap" gap={1.5} justifyContent="center" sx={{ mb: 2 }}>
+                {durationOptions.map((minutes) => (
+                  <Chip
+                    key={minutes}
+                    label={`${minutes} min`}
+                    clickable
+                    color={selectedMinutes === minutes ? 'primary' : 'default'}
+                    onClick={() => setSelectedMinutes(minutes)}
+                    sx={{
+                      fontWeight: selectedMinutes === minutes ? 600 : 400,
+                      px: 1.5,
+                    }}
+                  />
+                ))}
+              </Box>
+              <FormControlLabel
+                control={<Checkbox />}
+                label={
+                  <Typography variant="body2" color="text.secondary">
+                    Apply to another visitor
+                  </Typography>
+                }
+              />
+              <Button type="submit" variant="contained" sx={{ mt: 2 }} fullWidth>
+                Extend Visit
+              </Button>
+            </form>
           </DialogContent>
         </Dialog>
       </PageContainer>

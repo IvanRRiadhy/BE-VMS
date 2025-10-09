@@ -261,6 +261,15 @@ export const updateSetting = async (token: string, id: string, data: any): Promi
 
 //
 
+//#region NEW
+export const updateExtend = async( token: string, data: any): Promise<any> => {
+  const response = await axiosInstance.put(`invitation/extend-period`, data, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+}
+//endregion
+
 // #region Dashboard
 
 export const getAccessPass = async (
