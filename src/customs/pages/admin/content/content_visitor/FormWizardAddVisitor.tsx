@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import type { AlertColor } from '@mui/material/Alert';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
   Box,
   Stepper,
@@ -45,6 +46,8 @@ import {
   Alert,
   Chip,
   Portal,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
@@ -144,6 +147,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   onSuccess,
   formKey = 'visit_form',
 }) => {
+  const THEME = useTheme();
+  const isMobile = useMediaQuery(THEME.breakpoints.down('sm'));
   const FORM_KEY: 'visit_form' | 'pra_form' = formKey;
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
@@ -1556,207 +1561,208 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 return (
                   <Grid>
                     <Box>
-                      <TableContainer component={Paper} sx={{ mb: 1 }}>
-                        <Table
-                          size="small"
-                          sx={{
-                            minWidth: 1000, // paksa lebar minimal biar bisa scroll kalau banyak kolom
-                            tableLayout: 'auto',
-                            '& th, & td': { whiteSpace: 'nowrap' }, // jangan wrap supaya header 1 baris
-                          }}
-                        >
-                          <TableHead>
-                            <TableRow>
-                              {(dataVisitor[0]?.question_page[activeStep - 1]?.form || []).map(
-                                (f, i) => (
-                                  <TableCell key={f.custom_field_id || i}>
-                                    <Typography
-                                      variant="subtitle2"
-                                      fontWeight={600}
-                                      // sx={{ textAlign: 'center' }}
-                                    >
-                                      {f.long_display_text}
-                                    </Typography>
-                                  </TableCell>
-                                ),
-                              )}
-                              <TableCell align="right">
-                                <Typography variant="subtitle2" fontWeight={600}>
-                                  Actions
-                                </Typography>
-                              </TableCell>
-                              {/* <TableCell align="right">
-                                <Typography variant="subtitle2" fontWeight={600}>
-                                  On Self
-                                </Typography>
-                              </TableCell> */}
-                            </TableRow>
-                          </TableHead>
-                          <TableBody sx={{ overflow: 'auto' }}>
-                            {dataVisitor.length > 0 ? (
-                              dataVisitor.map((group, gIdx) => {
-                                const page = group.question_page[activeStep - 1];
-                                if (!page) return null;
+ <TableContainer component={Paper} sx={{ mb: 1 }}>
+    {/* ========== 📱 MOBILE MODE (Accordion) ========== */}
+    {isMobile ? (
+      <>
+        {dataVisitor.length > 0 ? (
+          dataVisitor.map((group, gIdx) => {
+            const page = group.question_page[activeStep - 1];
+            if (!page) return null;
 
-                                return (
-                                  <TableRow key={gIdx}>
-                                    {page.form?.map((field, fIdx) => (
-                                      <TableCell key={field.custom_field_id || `${gIdx}-${fIdx}`}>
-                                        {(() => {
-                                          // cari default kolom (template)
-                                          const matchedKey = Object.keys(
-                                            groupedPages.batch_page || {},
-                                          ).find((k) =>
-                                            sameField(groupedPages.batch_page[k], field),
-                                          );
-                                          const shared = matchedKey
-                                            ? groupedPages.batch_page[matchedKey]
-                                            : undefined;
+            return (
+              <Accordion key={gIdx} sx={{ mb: 1 }}>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Typography fontWeight="bold">
+                    Visitor {gIdx + 1}
+                  </Typography>
+                  {dataVisitor.length > 1 && (
+                    <IconButton
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteGroupRow(gIdx);
+                      }}
+                      sx={{ ml: 1 }}
+                    >
+                      <IconTrash />
+                    </IconButton>
+                  )}
+                </AccordionSummary>
 
-                                          // TAMPIL: pakai nilai baris kalau sudah ada, kalau kosong baru fallback ke default kolom
-                                          const proxyField = hasAns(field)
-                                            ? field
-                                            : shared
-                                            ? { ...field, ...pickAns(shared) }
-                                            : field;
+                <AccordionDetails>
+                  {page.form?.map((field, fIdx) => {
+                    const matchedKey = Object.keys(groupedPages.batch_page || {}).find(
+                      (k) => sameField(groupedPages.batch_page[k], field),
+                    );
+                    const shared = matchedKey
+                      ? groupedPages.batch_page[matchedKey]
+                      : undefined;
+                    const proxyField = hasAns(field)
+                      ? field
+                      : shared
+                      ? { ...field, ...pickAns(shared) }
+                      : field;
 
-                                          return renderFieldInput(
-                                            proxyField as FormVisitor,
-                                            fIdx,
-                                            // SIMPAN: tulis ke dataVisitor (baris & kolom yg aktif)
-                                            (idx, fieldKey, value) => {
-                                              setDataVisitor((prev) => {
-                                                const next = [...prev];
-                                                const s = activeStep - 1;
-                                                if (!next[gIdx]?.question_page?.[s]?.form?.[fIdx])
-                                                  return prev;
-                                                next[gIdx].question_page[s].form[fIdx] = {
-                                                  ...next[gIdx].question_page[s].form[fIdx],
-                                                  [fieldKey]: value,
-                                                };
-                                                return next;
-                                              });
-                                            },
-                                            undefined,
-                                            {
-                                              showLabel: false,
-                                              uniqueKey: `${activeStep - 1}:${gIdx}:${fIdx}`,
-                                            },
-                                          );
-                                        })()}
-                                      </TableCell>
-                                    ))}
+                    return (
+                      <Box key={fIdx} sx={{ mb: 2 }}>
+                        {renderFieldInput(
+                          proxyField,
+                          fIdx,
+                          (idx, fieldKey, value) => {
+                            setDataVisitor((prev) => {
+                              const next = [...prev];
+                              const s = activeStep - 1;
+                              if (!next[gIdx]?.question_page?.[s]?.form?.[fIdx])
+                                return prev;
+                              next[gIdx].question_page[s].form[fIdx] = {
+                                ...next[gIdx].question_page[s].form[fIdx],
+                                [fieldKey]: value,
+                              };
+                              return next;
+                            });
+                          },
+                          undefined,
+                          {
+                            showLabel: true,
+                            uniqueKey: `${activeStep - 1}:${gIdx}:${fIdx}`,
+                          },
+                        )}
+                      </Box>
+                    );
+                  })}
+                </AccordionDetails>
+              </Accordion>
+            );
+          })
+        ) : (
+          <Typography align="center" sx={{ py: 2 }}>
+            No visitor data. Click "Add New" to start.
+          </Typography>
+        )}
 
-                                    <TableCell align="right" key={gIdx}>
-                                      {dataVisitor.length > 1 && (
-                                        <IconButton
-                                          aria-label="delete-row"
-                                          onClick={() => handleDeleteGroupRow(gIdx)}
-                                          size="small"
-                                        >
-                                          <IconTrash />
-                                        </IconButton>
-                                      )}
-                                    </TableCell>
-                                    {/* <TableCell align="right">
-                                      {dataVisitor.length > 1 && (
-                                        <Switch
-                                          checked={hasRowPv(gIdx)}
-                                          onChange={(e) => {
-                                            if (e.target.checked) openPvDialog(gIdx);
-                                            else clearRowPv(gIdx);
-                                          }}
-                                        />
-                                      )}
-                                    </TableCell> */}
-                                  </TableRow>
-                                );
-                              })
-                            ) : (
-                              <TableRow>
-                                <TableCell colSpan={12} align="center">
-                                  No visitor data. Click "Add New" to start.
-                                </TableCell>
-                              </TableRow>
-                            )}
-                            <TableRow>
-                              <TableCell colSpan={12} align="left">
-                                <MuiButton
-                                  size="small"
-                                  onClick={handleAddDetails}
-                                  sx={{ mx: 1, my: 1 }}
-                                  variant="contained"
-                                >
-                                  Add New
-                                </MuiButton>
-                              </TableCell>
-                            </TableRow>
-                          </TableBody>
+        <MuiButton
+          size="small"
+          onClick={handleAddDetails}
+          sx={{ mx: 1, my: 2 }}
+          variant="contained"
+          fullWidth
+        >
+          Add New
+        </MuiButton>
+      </>
+    ) : (
+      /* ========== 💻 DESKTOP MODE (Table) ========== */
+      <Table
+        size="small"
+        sx={{
+          minWidth: 1000,
+          tableLayout: 'auto',
+          '& th, & td': { whiteSpace: 'nowrap' },
+        }}
+      >
+        <TableHead>
+          <TableRow>
+            {(dataVisitor[0]?.question_page[activeStep - 1]?.form || []).map((f, i) => (
+              <TableCell key={f.custom_field_id || i}>
+                <Typography variant="subtitle2" fontWeight={600}>
+                  {f.long_display_text}
+                </Typography>
+              </TableCell>
+            ))}
+            <TableCell align="right">
+              <Typography variant="subtitle2" fontWeight={600}>
+                Actions
+              </Typography>
+            </TableCell>
+          </TableRow>
+        </TableHead>
 
-                          {/* Tombol Add New pakai handler yang baru */}
-                        </Table>
-                        {/* Dialog On Self */}
-                        {/* <Dialog
-                          open={pvDlg.open}
-                          onClose={() => setPvDlg({ open: false, rowIdx: null, forms: [] })}
-                          maxWidth="md"
-                          fullWidth
-                        >
-                          <Box sx={{ p: 2 }}>
-                            <Box
-                              display={'flex'}
-                              justifyContent="space-between"
-                              alignItems={'center'}
-                            >
-                              <Typography variant="h6" sx={{ mb: 2 }}>
-                                Purpose Visit (This Person Only)
-                              </Typography>
-                              <IconButton
-                                onClick={() => setPvDlg({ open: false, rowIdx: null, forms: [] })}
-                              >
-                                <IconX />
-                              </IconButton>
-                            </Box>
+        <TableBody sx={{ overflow: 'auto' }}>
+          {dataVisitor.length > 0 ? (
+            dataVisitor.map((group, gIdx) => {
+              const page = group.question_page[activeStep - 1];
+              if (!page) return null;
 
-                            <Table size="small">
-                              <TableBody>
-                                {pvDlg.forms.map((f, i) => (
-                                  <TableRow key={f.custom_field_id ?? f.remarks ?? i}>
-                                    <TableCell>
-                                
-                                      {renderFieldInput(
-                                        f,
-                                        i,
-                                        (idx, key, val) =>
-                                          setPvDlg((d) => {
-                                            const cp = [...d.forms];
-                                            cp[idx] = { ...cp[idx], [key]: val };
-                                            return { ...d, forms: cp };
-                                          }),
-                                        undefined,
-                                        { showLabel: true, uniqueKey: `pv:${pvDlg.rowIdx}:${i}` },
-                                      )}
-                                    </TableCell>
-                                  </TableRow>
-                                ))}
-                              </TableBody>
-                            </Table>
+              return (
+                <TableRow key={gIdx}>
+                  {page.form?.map((field, fIdx) => {
+                    const matchedKey = Object.keys(groupedPages.batch_page || {}).find(
+                      (k) => sameField(groupedPages.batch_page[k], field),
+                    );
+                    const shared = matchedKey
+                      ? groupedPages.batch_page[matchedKey]
+                      : undefined;
+                    const proxyField = hasAns(field)
+                      ? field
+                      : shared
+                      ? { ...field, ...pickAns(shared) }
+                      : field;
 
-                            <Box
-                              sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 2 }}
-                            >
-                              <Button
-                                onClick={() => setPvDlg({ open: false, rowIdx: null, forms: [] })}
-                              >
-                                Cancel
-                              </Button>
-                              <Button variant="contained" onClick={savePvDialog}>
-                                Save
-                              </Button>
-                            </Box>
-                          </Box>
-                        </Dialog> */}
-                      </TableContainer>
+                    return (
+                      <TableCell key={field.custom_field_id || `${gIdx}-${fIdx}`}>
+                        {renderFieldInput(
+                          proxyField,
+                          fIdx,
+                          (idx, fieldKey, value) => {
+                            setDataVisitor((prev) => {
+                              const next = [...prev];
+                              const s = activeStep - 1;
+                              if (!next[gIdx]?.question_page?.[s]?.form?.[fIdx]) return prev;
+                              next[gIdx].question_page[s].form[fIdx] = {
+                                ...next[gIdx].question_page[s].form[fIdx],
+                                [fieldKey]: value,
+                              };
+                              return next;
+                            });
+                          },
+                          undefined,
+                          {
+                            showLabel: false,
+                            uniqueKey: `${activeStep - 1}:${gIdx}:${fIdx}`,
+                          },
+                        )}
+                      </TableCell>
+                    );
+                  })}
+
+                  <TableCell align="right">
+                    {dataVisitor.length > 1 && (
+                      <IconButton
+                        aria-label="delete-row"
+                        onClick={() => handleDeleteGroupRow(gIdx)}
+                        size="small"
+                      >
+                        <IconTrash />
+                      </IconButton>
+                    )}
+                  </TableCell>
+                </TableRow>
+              );
+            })
+          ) : (
+            <TableRow>
+              <TableCell colSpan={12} align="center">
+                No visitor data. Click "Add New" to start.
+              </TableCell>
+            </TableRow>
+          )}
+          <TableRow>
+            <TableCell colSpan={12} align="left">
+              <MuiButton
+                size="small"
+                onClick={handleAddDetails}
+                sx={{ mx: 1, my: 1 }}
+                variant="contained"
+              >
+                Add New
+              </MuiButton>
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    )}
+  </TableContainer>
                     </Box>
                   </Grid>
                 );
@@ -2192,170 +2198,116 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           );
         }
 
-        case 12: {
-          const key = opts?.uniqueKey ?? String(index);
-          return (
+case 12: {
+  const key = opts?.uniqueKey ?? String(index);
+  return (
+    <Box
+      display="flex"
+      flexDirection={{ xs: 'column', sm: 'column', md: 'row' }} // ⬅️ stack on mobile
+      alignItems={{ xs: 'stretch', md: 'center' }}
+      justifyContent="space-between"
+      gap={1.5}
+      width="100%" // ⬅️ let it adapt instead of fixed width
+      sx={{ maxWidth: 400 }}
+    >
+      <TextField
+        select
+        size="small"
+        value={uploadMethods[key] || 'file'}
+        onChange={(e) => handleUploadMethodChange(key, e.target.value)}
+        fullWidth
+        sx={{
+          width: { xs: '100%', md: '200px' }, // full on mobile
+        }}
+      >
+        <MenuItem value="file">Choose File</MenuItem>
+        <MenuItem value="camera">Take Photo</MenuItem>
+      </TextField>
+
+      {(uploadMethods[key] || 'file') === 'camera' ? (
+        <CameraUpload
+          value={field.answer_file}
+          onChange={(url) => onChange(index, 'answer_file', url)}
+        />
+      ) : (
+        <Box sx={{ width: { xs: '100%', md: '200px' } }}>
+          <label htmlFor={key}>
             <Box
-              display={'flex'}
-              alignItems={''}
-              justifyContent={'space-between'}
-              gap={1}
-              width={'380px'}
+              sx={{
+                border: '2px dashed #90caf9',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 1.5,
+                borderRadius: 2,
+                p: 0.5,
+                textAlign: 'center',
+                backgroundColor: '#f5faff',
+                cursor: 'pointer',
+                width: '100%',
+                transition: '0.2s',
+                '&:hover': { backgroundColor: '#e3f2fd' },
+              }}
             >
-              <TextField
-                select
-                size="small"
-                value={uploadMethods[key] || 'file'}
-                onChange={(e) => handleUploadMethodChange(key, e.target.value)}
-                fullWidth
-                sx={{ width: '200px' }}
-              >
-                <MenuItem value="file">Choose File</MenuItem>
-                <MenuItem value="camera">Take Photo</MenuItem>
-              </TextField>
-
-              {(uploadMethods[key] || 'file') === 'camera' ? (
-                <CameraUpload
-                  value={field.answer_file}
-                  onChange={(url) => onChange(index, 'answer_file', url)}
-                />
-              ) : (
-                // <Box>
-                //   <label htmlFor={key}>
-                //     <Box
-                //       sx={{
-                //         border: '2px dashed #90caf9',
-                //         display: 'flex',
-                //         alignItems: 'center',
-                //         // minHeight: 60,
-                //         justifyContent: 'center',
-                //         gap: 2,
-                //         borderRadius: 2,
-                //         p: 0.5,
-                //         textAlign: 'center',
-                //         backgroundColor: '#f5faff',
-                //         cursor: 'pointer',
-                //         width: '100%',
-                //       }}
-                //     >
-                //       <CloudUploadIcon sx={{ fontSize: 20, color: '#42a5f5' }} />
-                //       <Typography variant="subtitle1">Upload File</Typography>
-                //     </Box>
-                //   </label>
-
-                //   <input
-                //     id={key}
-                //     type="file"
-                //     accept="*"
-                //     hidden
-                //     onChange={(e) =>
-                //       handleFileChangeForField(
-                //         e as React.ChangeEvent<HTMLInputElement>,
-                //         (url) => onChange(index, 'answer_file', url),
-                //         key,
-                //       )
-                //     }
-                //   />
-
-                //   {/* INFO + REMOVE */}
-                //   {!!(field as any).answer_file && (
-                //     <Box sx={{ paddingTop: '5px' }} display="flex" alignItems="center" gap={1}>
-                //       <Typography variant="caption" color="text.secondary" noWrap>
-                //         {uploadNames[key] ?? ''}
-                //       </Typography>
-
-                //       <IconButton
-                //         size="small"
-                //         color="error"
-                //         disabled={!!removing[key]}
-                //         onClick={() =>
-                //           handleRemoveFileForField(
-                //             (field as any).answer_file,
-                //             (url) => onChange(index, 'answer_file', url),
-                //             key,
-                //           )
-                //         }
-                //       >
-                //         <IconX size={16} />
-                //       </IconButton>
-                //     </Box>
-                //   )}
-                // </Box>
-                <Box sx={{ width: '200px' }}>
-                  <label htmlFor={key}>
-                    <Box
-                      sx={{
-                        border: '2px dashed #90caf9',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 2,
-                        borderRadius: 2,
-                        p: 0.5,
-                        textAlign: 'center',
-                        backgroundColor: '#f5faff',
-                        cursor: 'pointer',
-                        width: '100%',
-                      }}
-                    >
-                      <CloudUploadIcon sx={{ fontSize: 20, color: '#42a5f5' }} />
-                      <Typography variant="subtitle1">Upload File</Typography>
-                    </Box>
-                  </label>
-
-                  <input
-                    id={key}
-                    type="file"
-                    accept="*"
-                    hidden
-                    onChange={(e) =>
-                      handleFileChangeForField(
-                        e as React.ChangeEvent<HTMLInputElement>,
-                        (url) => onChange(index, 'answer_file', url),
-                        key,
-                      )
-                    }
-                  />
-
-                  {/* INFO + REMOVE */}
-                  {!!(field as any).answer_file && (
-                    <Box
-                      mt={0.5}
-                      display="flex"
-                      alignItems="center"
-                      justifyContent="space-between"
-                      sx={{ overflow: 'hidden' }}
-                    >
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        noWrap
-                        sx={{ flex: 1, minWidth: 0 }}
-                      >
-                        {uploadNames[key] ?? ''}
-                      </Typography>
-
-                      <IconButton
-                        size="small"
-                        color="error"
-                        disabled={!!removing[key]}
-                        onClick={() =>
-                          handleRemoveFileForField(
-                            (field as any).answer_file,
-                            (url) => onChange(index, 'answer_file', url),
-                            key,
-                          )
-                        }
-                      >
-                        <IconX size={16} />
-                      </IconButton>
-                    </Box>
-                  )}
-                </Box>
-              )}
+              <CloudUploadIcon sx={{ fontSize: 20, color: '#42a5f5' }} />
+              <Typography variant="subtitle1" sx={{ fontSize: { xs: 13, md: 14 } }}>
+                Upload File
+              </Typography>
             </Box>
-          );
-        }
+          </label>
+
+          <input
+            id={key}
+            type="file"
+            accept="*"
+            hidden
+            onChange={(e) =>
+              handleFileChangeForField(
+                e as React.ChangeEvent<HTMLInputElement>,
+                (url) => onChange(index, 'answer_file', url),
+                key,
+              )
+            }
+          />
+
+          {!!(field as any).answer_file && (
+            <Box
+              mt={0.5}
+              display="flex"
+              alignItems="center"
+              justifyContent="space-between"
+              sx={{ overflow: 'hidden' }}
+            >
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                noWrap
+                sx={{ flex: 1, minWidth: 0 }}
+              >
+                {uploadNames[key] ?? ''}
+              </Typography>
+              <IconButton
+                size="small"
+                color="error"
+                disabled={!!removing[key]}
+                onClick={() =>
+                  handleRemoveFileForField(
+                    (field as any).answer_file,
+                    (url) => onChange(index, 'answer_file', url),
+                    key,
+                  )
+                }
+              >
+                <IconX size={16} />
+              </IconButton>
+            </Box>
+          )}
+        </Box>
+      )}
+    </Box>
+  );
+}
+
 
         default:
           return (
