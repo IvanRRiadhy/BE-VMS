@@ -5329,7 +5329,7 @@ case 12: {
             justifyContent="space-between"
             sx={{
               position: 'sticky',
-              bottom: 0,
+              bottom: -20, //Cari angka yang benernya
               backgroundColor: 'white', // kasih background supaya gak tembus konten
               padding: 2,
               zIndex: 10,
