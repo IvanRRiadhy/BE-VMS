@@ -25,6 +25,7 @@ import { Link as RouterLink, useNavigate } from 'react-router';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { useAuth } from 'src/customs/contexts/AuthProvider';
 import { IconEye, IconEyeOff, IconUser, IconUserPlus } from '@tabler/icons-react';
+import { GroupRoleId } from 'src/constant/GroupRoleId';
 
 const Login2 = () => {
   const { isAuthenticated } = useAuth();
@@ -50,11 +51,11 @@ const Login2 = () => {
   // Tabs state
   const [tab, setTab] = useState(0);
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/admin/dashboard');
-    }
-  }, [isAuthenticated, navigate]);
+  // useEffect(() => {
+  //   if (isAuthenticated) {
+  //     navigate('/admin/dashboard');
+  //   }
+  // }, [isAuthenticated, navigate]);
 
   useEffect(() => {
     if (error === true) {
@@ -75,7 +76,6 @@ const Login2 = () => {
     e.preventDefault();
     setLoading(true);
 
-    // Basic client-side captcha check before proceeding
     if (!captchaToken) {
       setCaptchaError(true);
       setLoading(false);
@@ -83,18 +83,23 @@ const Login2 = () => {
     }
 
     const body = { username, password, captchaToken };
-    // const body = { username, password };
 
     try {
       const response = await login(body);
-      // reset captcha after submit
       recaptchaRef.current?.reset();
-      // setCaptchaToken(null);
 
-      saveToken(response.collection.token, 'admin');
-      navigate('/admin/dashboard');
+      const { token, group_id } = response.collection;
+      saveToken(token, group_id);
+
+      console.log('✅ Login success:', group_id);
+
+      if (group_id.toUpperCase() === GroupRoleId.Admin) navigate('/admin/dashboard');
+      else if (group_id.toUpperCase() === GroupRoleId.Manager) navigate('/manager/dashboard');
+      else if (group_id.toUpperCase() === GroupRoleId.Employee) navigate('/employee/dashboard');
+      else if (group_id.toUpperCase() === GroupRoleId.OperatorVMS) navigate('/operator/dashboard');
+      else if (group_id.toUpperCase() === GroupRoleId.Visitor) navigate('/visitor/dashboard');
+      else navigate('/');
     } catch (err) {
-      // jangan set error langsung, tunggu spinner selesai
       setTimeout(() => {
         if (err instanceof AxiosError && err.response) {
           setError(true);

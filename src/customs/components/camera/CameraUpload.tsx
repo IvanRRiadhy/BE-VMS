@@ -8,11 +8,12 @@ import {
   Grid2 as Grid,
   Box,
   Divider,
+  IconButton,
 } from '@mui/material';
 
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import { IconTrash } from '@tabler/icons-react';
-import { CameraAlt, CheckCircle, DeleteOutline } from '@mui/icons-material';
+import { CameraAlt, CheckCircle, Close, DeleteOutline } from '@mui/icons-material';
 const CameraUpload: React.FC<{
   value?: string;
   onChange: (url: string) => void;
@@ -124,6 +125,14 @@ const CameraUpload: React.FC<{
           <Typography variant="h6" mb={2}>
             Take Photo From Camera
           </Typography>
+          {/* close icon */}
+          <IconButton
+            onClick={() => setOpen(false)}
+            sx={{ position: 'absolute', top: 10, right: 10 }}
+            size="large"
+          >
+            <Close />
+          </IconButton>
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, sm: 6 }}>
               <Webcam

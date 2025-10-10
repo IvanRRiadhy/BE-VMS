@@ -47,7 +47,23 @@ import ManageIntegrationDetail from './customs/pages/admin/ManageIntegrationDeta
 import ManageSettingSmtp from './customs/pages/admin/ManageSettingSmtp';
 import ManageGroupCardAccess from './customs/pages/admin/ManageGroupCardAccess';
 import ManageTimezone from './customs/pages/admin/ManageTimezone';
-import ManageSettingVisitor from './customs/pages/admin/ManageSettingVIsitor';
+import ManageSettingVisitor from './customs/pages/admin/ManageSettingVisitor';
+import { GroupRoleId } from './constant/GroupRoleId';
+
+// Employee
+import EmployeeLayout from './customs/pages/Employee/EmployeeLayout';
+import DashboardEmployee from './customs/pages/Employee/Dashboard';
+import ApprovalEmployee from './customs/pages/Employee/Approval';
+
+// Operator
+import OperatorLayout from './customs/pages/Operator/OperatorLayout';
+import DashboardOperator from './customs/pages/Operator/Dashboard';
+import ApprovalOperator from './customs/pages/Operator/Approval';
+
+// Manager
+import ManagerLayout from './customs/pages/Manager/ManagerLayout';
+import DashboardManager from './customs/pages/Manager/Dashboard';
+import ApprovalManager from './customs/pages/Manager/Approval';
 
 export function App() {
   const theme = ThemeSettings();
@@ -87,7 +103,22 @@ export function App() {
               element={
                 isAuthenticated ? (
                   <Navigate
-                    to={authType === 'admin' ? '/admin/dashboard' : '/guest/dashboard'}
+                    to={
+                      !groupId
+                        ? '/guest/dashboard'
+                        : groupId === GroupRoleId.Admin
+                        ? '/admin/dashboard'
+                        : groupId === GroupRoleId.Manager
+                        ? '/manager/dashboard'
+                        : groupId === GroupRoleId.Employee
+                        ? '/employee/dashboard'
+                        : groupId === GroupRoleId.OperatorAdmin ||
+                          groupId === GroupRoleId.OperatorVMS
+                        ? '/operator/dashboard'
+                        : groupId === GroupRoleId.Visitor
+                        ? '/visitor/dashboard'
+                        : '/guest/dashboard'
+                    }
                     replace
                   />
                 ) : (
@@ -103,7 +134,7 @@ export function App() {
             <Route path="/portal/waiting" element={<WaitingPage />} />
 
             {/* Guest group */}
-            <Route element={<ProtectedRoute requireType="guest" />}>
+            <Route element={<ProtectedRoute />}>
               <Route path="/guest" element={<GuestLayout />}>
                 <Route index element={<DashboardLayout />} />
                 <Route path="dashboard" element={<DashboardLayout />} />
@@ -120,7 +151,7 @@ export function App() {
             </Route>
 
             {/* Admin group */}
-            <Route element={<ProtectedRoute requireType="admin" />}>
+            <Route element={<ProtectedRoute allowedGroups={[GroupRoleId.Admin]} />}>
               <Route path="admin/dashboard" element={<Dashboard />} />
               <Route path="admin/visitor" element={<ManageVisitor />} />
               <Route
@@ -145,6 +176,33 @@ export function App() {
               <Route path="admin/settings" element={<ManageSettingVisitor />} />
               <Route path="admin/setting/users" element={<SettingUser />} />
               <Route path="admin/setting/users/add-user" element={<FormAddUser />} />
+            </Route>
+
+            <Route element={<ProtectedRoute allowedGroups={[GroupRoleId.Employee]} />}>
+              <Route path="/employee" element={<EmployeeLayout />}>
+                <Route index path="dashboard" element={<DashboardEmployee />} />
+                <Route path="approval" element={<ApprovalEmployee />} />
+              </Route>
+            </Route>
+            <Route element={<ProtectedRoute allowedGroups={[GroupRoleId.OperatorVMS]} />}>
+              <Route path="/operator" element={<OperatorLayout />}>
+                <Route index path="dashboard" element={<DashboardOperator />} />x
+                <Route path="approval" element={<ApprovalOperator />} />
+              </Route>
+            </Route>
+
+            {/* <Route element={<ProtectedRoute allowedGroups={[GroupRoleId.OperatorAdmin]} />}>
+              <Route path="/operator" element={<OperatorLayout />}>
+                <Route index path="dashboard" element={<DashboardOperator />} />
+                <Route path="approval" element={<ApprovalOperator />} />
+              </Route>
+            </Route> */}
+
+            <Route element={<ProtectedRoute allowedGroups={[GroupRoleId.Manager]} />}>
+              <Route path="/manager" element={<ManagerLayout />}>
+                <Route index path="dashboard" element={<DashboardManager />} />
+                <Route path="approval" element={<ApprovalManager />} />
+              </Route>
             </Route>
           </Routes>
         )}

@@ -18,6 +18,7 @@ import {
   IconMailFilled,
   IconCalendarCheck,
   IconSettingsFilled,
+  IconCheck,
 } from '@tabler/icons-react';
 import { uniqueId } from 'lodash';
 import { ItemDataCustomNavListing } from './CustomNavListing';
@@ -348,5 +349,108 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
     title: 'navigation.faq',
     icon: IconHelp,
     href: '/',
+  },
+];
+
+export const EmployeeNavListingData: ItemDataCustomNavListing[] = [
+  // DASHBOARD.
+  {
+    id: uniqueId(),
+    title: 'Dashboard',
+    icon: IconHome,
+    href: '/employee/dashboard',
+  },
+  {
+    id: uniqueId(),
+    title: 'Approval',
+    icon: IconCheck,
+    chipColor: 'secondary',
+    href: '/employee/approval',
+  },
+];
+
+export const EmployeeCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
+  {
+    navlabel: true,
+    subheader: 'MENU',
+  },
+  {
+    id: uniqueId(),
+    title: 'Dashboard',
+    icon: IconHome,
+    chip: 'Main View',
+    chipColor: 'secondary',
+    href: '/employee/dashboard',
+  },
+  {
+    id: uniqueId(),
+    title: 'Approval',
+    icon: IconCheck,
+    chipColor: 'secondary',
+    href: '/employee/approval',
+  },
+];
+
+export const ManagerNavListingData: ItemDataCustomNavListing[] = [
+  // DASHBOARD.
+  {
+    id: uniqueId(),
+    title: 'Dashboard',
+    icon: IconHome,
+    href: '/manager/dashboard',
+  },
+];
+
+export const ManagerCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
+  {
+    navlabel: true,
+    subheader: 'MENU',
+  },
+  {
+    id: uniqueId(),
+    title: 'Dashboard',
+    icon: IconHome,
+    chip: 'Main View',
+    chipColor: 'secondary',
+    href: '/manager/dashboard',
+  },
+];
+
+export const OperatorNavListingData: ItemDataCustomNavListing[] = [
+  // DASHBOARD.
+  {
+    id: uniqueId(),
+    title: 'Dashboard',
+    icon: IconHome,
+    href: '/operator/dashboard',
+  },
+  {
+    id: uniqueId(),
+    title: 'Approval',
+    icon: IconCheck,
+    chipColor: 'secondary',
+    href: '/operator/approval',
+  },
+];
+
+export const OperatorCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
+  {
+    navlabel: true,
+    subheader: 'MENU',
+  },
+  {
+    id: uniqueId(),
+    title: 'Dashboard',
+    icon: IconHome,
+    chip: 'Main View',
+    chipColor: 'secondary',
+    href: '/manager/dashboard',
+  },
+  {
+    id: uniqueId(),
+    title: 'Approval',
+    icon: IconCheck,
+    chipColor: 'secondary',
+    href: '/manager/approval',
   },
 ];

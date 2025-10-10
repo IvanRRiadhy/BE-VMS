@@ -50,6 +50,8 @@ import {
   IconUsersGroup,
   IconX,
 } from '@tabler/icons-react';
+import { Item as AccessPassType } from 'src/customs/api/models/AccessPass';
+import QRCode from 'react-qr-code';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import VisitorStatusPieChart from './Components/charts/VisitorStatusPieChart';
@@ -114,6 +116,7 @@ const visitors = [
 
 import { addDays } from 'date-fns';
 import Calendar from 'src/customs/components/calendar/Calendar';
+import { getAccessPass } from 'src/customs/api/admin';
 
 const Dashboard = () => {
   // const [open, setOpen] = useState(false);
@@ -222,6 +225,7 @@ const Dashboard = () => {
   const { token } = useSession();
 
   const [activeVisitData, setActiveVisitData] = useState<any[]>([]);
+    const [activeAccessPass, setActiveAccessPass] = useState<AccessPassType>();
 
   useEffect(() => {
     if (!token) return;
@@ -229,6 +233,9 @@ const Dashboard = () => {
       try {
         const res = await getActiveInvitation(token as string);
         setActiveVisitData(res?.collection ?? []);
+        const res2 = await getAccessPass(token as string);
+        setActiveAccessPass(res2);
+        console.log('res2: ', res2);
       } catch (e) {
         console.error(e);
       }
@@ -253,9 +260,46 @@ const Dashboard = () => {
   const handleClose = () => setAnchorEl(null);
   const open = Boolean(anchorEl);
 
+    const formatVisitorPeriodWithTZ = (
+      startUtc: string | null | undefined,
+      endUtc: string | null | undefined,
+      tz: string | null | undefined,
+      locale: string = 'en-US',
+    ): string => {
+      if (!startUtc || !endUtc) return '-';
+
+      try {
+        const start = new Date(startUtc);
+        const end = new Date(endUtc);
+
+        const dateFormatter = new Intl.DateTimeFormat(locale, {
+          weekday: 'short',
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+          timeZone: tz ?? 'UTC',
+        });
+
+        const timeFormatter = new Intl.DateTimeFormat(locale, {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+          timeZone: tz ?? 'UTC',
+        });
+
+        const datePart = dateFormatter.format(start); // e.g. "Thu, 09 Oct 2025"
+        const startTime = timeFormatter.format(start); // e.g. "17:00"
+        const endTime = timeFormatter.format(end); // e.g. "18:00"
+
+        return `${datePart} | ${startTime} - ${endTime}`;
+      } catch {
+        return '-';
+      }
+    };
+
   return (
     <PageContainer title="Dashboard">
-      <Grid container spacing={2} sx={{ mt: 2 }}>
+      <Grid container spacing={2} sx={{ mt: 0 }}>
         {/* <Grid
           size={{ xs: 12, lg: 12 }}
           display="flex"
@@ -347,18 +391,19 @@ const Dashboard = () => {
                   sx={{
                     display: 'inline-block',
                     borderRadius: 2,
+                    padding: 3,
                     boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.2)',
                     backgroundColor: 'white', // biar kontras
                   }}
                 >
-                  <img
-                    src={
-                      'https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg'
-                    }
-                    alt="QRCode"
-                    width="200"
-                    height="200"
-                    style={{ borderRadius: '8px', marginTop: '10px' }}
+                  <QRCode
+                    value={activeAccessPass?.visitor_number || ''}
+                    size={180}
+                    style={{
+                      height: 'auto',
+                      width: '180px',
+                      borderRadius: 8,
+                    }}
                   />
                 </Box>
 
@@ -366,7 +411,7 @@ const Dashboard = () => {
                   Show this while visiting
                 </Typography>
                 <Typography variant="h6" color="primary">
-                  73A2AFJ1S1KS1
+                  {activeAccessPass?.visitor_code}
                 </Typography>
               </Box>
             </CardContent>
@@ -425,10 +470,10 @@ const Dashboard = () => {
               }}
             >
               <Typography variant="body1" fontWeight={500}>
-                Number Of Code
+                Number Of Visitor
               </Typography>
-              <Typography variant="h3" mt={3}>
-                73A2AFJ1S1KS1
+              <Typography variant="h4" mt={3}>
+                {activeAccessPass?.visitor_number}
               </Typography>
             </CardContent>
           </Card>
@@ -741,141 +786,150 @@ const Dashboard = () => {
       </Grid> */}
 
       {/* Dialog */}
-      <Dialog open={openAccess} onClose={handleCloseAccess} fullWidth maxWidth="sm">
-        <DialogTitle textAlign={'center'} sx={{ padding: '30px 0' }}>
-          Your Access Pass
-        </DialogTitle>
-        <IconButton
-          aria-label="close"
-          onClick={handleCloseAccess}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            color: (theme) => theme.palette.grey[500],
-          }}
-        >
-          <IconX />
-        </IconButton>
-        <DialogContent sx={{ paddingTop: 0 }}>
-          <Box
-            display="flex"
-            flexDirection="row"
-            alignItems="center"
-            justifyContent="space-between"
+
+      {activeAccessPass && (
+        <Dialog open={openAccess} onClose={handleCloseAccess} fullWidth maxWidth="sm">
+          <DialogTitle textAlign={'center'} sx={{ padding: '30px 0' }}>
+            Your Access Pass
+          </DialogTitle>
+          <IconButton
+            aria-label="close"
+            onClick={handleCloseAccess}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
+              color: (theme) => theme.palette.grey[500],
+            }}
           >
-            <Box display="flex" gap={2}>
-              <Avatar />
-              <Box>
-                <Typography variant="body1" fontWeight="bold">
-                  Tommy
-                </Typography>
-                <Typography variant="body2" color="grey">
-                  Mon, 11 May 2023 | 10:00 - 11:00
-                </Typography>
-              </Box>
-            </Box>
-
-            <IconButton
-              color="primary"
-              sx={{
-                backgroundColor: 'primary.main',
-                color: 'white',
-                '&:hover': {
-                  backgroundColor: 'primary.dark',
-                },
-              }}
-            >
-              <Download />
-            </IconButton>
-          </Box>
-          <Box mt={3}>
-            <Grid container spacing={2} justifyContent="center">
-              <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
-                <Typography variant="body1" color="textSecondary" fontWeight={500}>
-                  Invitation Code
-                </Typography>
-                <Typography variant="body1" fontWeight="bold">
-                  729038
-                </Typography>
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
-                <Typography variant="body1" color="textSecondary" fontWeight={500}>
-                  Card
-                </Typography>
-                <Typography variant="body1" fontWeight="bold">
-                  678921223
-                </Typography>
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
-                <Typography variant="body1" color="textSecondary" fontWeight={500}>
-                  Vehicle Plate No.
-                </Typography>
-                <Typography variant="body1" fontWeight="bold">
-                  B 1234 CC
-                </Typography>
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
-                <Typography variant="body1" color="textSecondary" fontWeight={500}>
-                  Parking Slot
-                </Typography>
-                <Typography variant="body1" fontWeight="bold">
-                  Slot A1
-                </Typography>
-              </Grid>
-            </Grid>
-          </Box>
-
-          <Box mt={2}>
-            <Typography variant="h4" sx={{ fontWeight: 'bold' }} textAlign={'center'}>
-              Gedung HQ
-            </Typography>
+            <IconX />
+          </IconButton>
+          <DialogContent sx={{ paddingTop: 0 }}>
             <Box
               display="flex"
-              justifyContent="center"
-              mt={1}
-              mb={1}
-              flexDirection={'column'}
-              alignItems={'center'}
+              flexDirection="row"
+              alignItems="center"
+              justifyContent="space-between"
             >
-              <Box
+              <Box display="flex" gap={2}>
+                <Avatar />
+                <Box>
+                  <Typography variant="body1" fontWeight="bold">
+                    {activeAccessPass.fullname || '- '}
+                  </Typography>
+                  <Typography variant="body2" color="grey">
+                    {formatVisitorPeriodWithTZ(
+                      activeAccessPass.visitor_period_start,
+                      activeAccessPass.visitor_period_end,
+                      activeAccessPass.tz,
+                    )}
+                  </Typography>
+                </Box>
+              </Box>
+
+              <IconButton
+                color="primary"
                 sx={{
-                  display: 'inline-block',
-                  p: 1,
-                  borderRadius: 2,
-                  boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.2)',
-                  backgroundColor: 'white', // biar kontras
+                  backgroundColor: 'primary.main',
+                  color: 'white',
+                  '&:hover': {
+                    backgroundColor: 'primary.dark',
+                  },
                 }}
-                my={2}
               >
-                <img
-                  src="https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg"
-                  alt="QRCode"
-                  width="200"
-                  height="200"
-                  style={{ borderRadius: '8px' }}
-                />
-              </Box>
-              <Box display="flex" gap={3} mb={2}>
-                <Typography color="error">Tracked</Typography>
-                <Typography color="error">Low Battery</Typography>
-              </Box>
-              <Typography variant="body2" mb={1}>
-                Show this whilte visiting
-              </Typography>
-              <Typography variant="h6">ID : 73A2AFJ1S1KS1</Typography>
+                <Download />
+              </IconButton>
             </Box>
-          </Box>
-        </DialogContent>
-        {/* <DialogActions>
+            <Box mt={3}>
+              <Grid container spacing={2} justifyContent="center">
+                <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
+                  <Typography variant="body1" color="textSecondary" fontWeight={500}>
+                    Invitation Code
+                  </Typography>
+                  <Typography variant="body1" fontWeight="bold">
+                    {activeAccessPass.invitation_code}
+                  </Typography>
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
+                  <Typography variant="body1" color="textSecondary" fontWeight={500}>
+                    Card
+                  </Typography>
+                  <Typography variant="body1" fontWeight="bold">
+                    {activeAccessPass.card_number || '-'}
+                  </Typography>
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
+                  <Typography variant="body1" color="textSecondary" fontWeight={500}>
+                    Vehicle Plate
+                  </Typography>
+                  <Typography variant="body1" fontWeight="bold">
+                    {activeAccessPass.vehicle_plate_number || '-'}
+                  </Typography>
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
+                  <Typography variant="body1" color="textSecondary" fontWeight={500}>
+                    Parking Slot
+                  </Typography>
+                  <Typography variant="body1" fontWeight="bold">
+                    {activeAccessPass.parking_slot || '-'}
+                  </Typography>
+                </Grid>
+              </Grid>
+            </Box>
+
+            <Box mt={2}>
+              <Typography variant="h4" sx={{ fontWeight: 'bold' }} textAlign={'center'}>
+                {activeAccessPass.site_place_name}
+              </Typography>
+              <Box
+                display="flex"
+                justifyContent="center"
+                mt={1}
+                mb={1}
+                flexDirection={'column'}
+                alignItems={'center'}
+              >
+                <Box
+                  sx={{
+                    display: 'inline-block',
+                    p: 3,
+                    borderRadius: 2,
+                    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.2)',
+                    backgroundColor: 'white', // biar kontras
+                  }}
+                  my={2}
+                >
+                  <QRCode
+                    value={activeAccessPass.visitor_number}
+                    size={180}
+                    style={{
+                      height: 'auto',
+                      width: '180px',
+                      borderRadius: 8,
+                    }}
+                  />
+                </Box>
+                <Box display="flex" gap={3} mb={2}>
+                  <Typography color="error">Tracked</Typography>
+                  <Typography color="error">Low Battery</Typography>
+                </Box>
+                <Typography variant="body2" mb={1}>
+                  Show this while visiting
+                </Typography>
+                <Typography variant="h6">ID : {activeAccessPass.visitor_code}</Typography>
+              </Box>
+            </Box>
+          </DialogContent>
+          {/* <DialogActions>
           <Button onClick={handleClose} color="error" size="small" variant="contained">
             Close
           </Button>
         </DialogActions> */}
-      </Dialog>
+        </Dialog>
+      )}
     </PageContainer>
   );
 };

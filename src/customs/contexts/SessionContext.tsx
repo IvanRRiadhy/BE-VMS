@@ -47,7 +47,8 @@ export type AuthType = 'admin' | 'guest' | null;
 interface SessionContextType {
   token: string | null;
   authType: AuthType;
-  saveToken: (token: string, type: AuthType) => void;
+  groupId: string | null;
+  saveToken: (token: string, groupId?: string) => void;
   clearToken: () => void;
 }
 
@@ -64,25 +65,31 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const [authType, setAuthType] = useState<AuthType>(
     (localStorage.getItem('authType') as AuthType) || null,
   );
+  const [groupId, setGroupId] = useState<string | null>(localStorage.getItem('groupId'));
 
-  const saveToken = (newToken: string, type: AuthType) => {
-    if (!type) throw new Error('authType harus diisi (admin/guest)');
+  const saveToken = (newToken: string, groupId?: string) => {
+    // if (!type) throw new Error('authType harus diisi (admin/guest)');
 
     localStorage.setItem('session', newToken);
-    localStorage.setItem('authType', type);
+    // localStorage.setItem('authType', type);
+    if (groupId) localStorage.setItem('groupId', groupId);
+
     setToken(newToken);
-    setAuthType(type);
+    // setAuthType(type);
+    setGroupId(groupId ?? null);
   };
 
   const clearToken = () => {
     localStorage.removeItem('session');
     localStorage.removeItem('authType');
+    localStorage.removeItem('groupId');
     setToken(null);
     setAuthType(null);
+    setGroupId(null);
   };
 
   return (
-    <SessionContext.Provider value={{ token, authType, saveToken, clearToken }}>
+    <SessionContext.Provider value={{ token, authType, groupId, saveToken, clearToken }}>
       {children}
     </SessionContext.Provider>
   );

@@ -192,3 +192,63 @@ export const getListSite = async (token: string): Promise<any> => {
 };
 
 //endregion
+
+export const getOngoingInvitation = async (token: string): Promise<any> => {
+  try {
+    const response = await axiosInstance.get('/invitation/ongoing-invitation', {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data;
+    }
+    throw error;
+  }
+};
+
+export const getDetailInvitationForm = async (token: string, id: string): Promise<any> => {
+  try {
+    const response = await axiosInstance.get(`/invitation/detail-invitations-form/${id}`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data;
+    }
+    throw error;
+  }
+};
+
+export const updateExtendPeriod = async (token: string, id: string, data: any): Promise<any> => {
+  try {
+    const response = await axiosInstance.put(`/invitation/extend-period/${id}`, data, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data;
+    }
+    throw error;
+  }
+};
+
+export const createVisitorInvitation = async (
+  token: string,
+  id: string,
+  data: any,
+): Promise<any> => {
+  try {
+    const response = await axiosInstance.post(`/invitation/send-invitations/${id}`, data, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data;
+    }
+    throw error;
+  }
+};

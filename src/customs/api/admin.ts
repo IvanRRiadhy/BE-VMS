@@ -243,6 +243,20 @@ import {
 import { GetAllSettingResponse } from './models/Setting';
 
 //#endregion
+export const updateExtend = async (token: string, data: any): Promise<any> => {
+  const response = await axiosInstance.put(`invitation/extend-period`, data, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+export const getAccessPass = async (token: string): Promise<any> => {
+  const response = await axiosInstance.get('/dashboard/access-pass', {
+    headers: { Authorization: `Bearer ${token}` },
+    // params: { 'start-date': start_date, 'end-date': end_date },
+  });
+  console.log('response', response);
+  return response.data.collection[0];
+};
 
 // #region Setting
 
@@ -660,7 +674,6 @@ export const createVisitors = async (
   });
   return response.data;
 };
-
 
 // Pra Register
 export const createPraRegister = async (
