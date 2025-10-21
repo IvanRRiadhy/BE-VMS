@@ -8,7 +8,7 @@ import {
   UpdateDepartmentRequest,
   UpdateDepartmentResponse,
   ValidationErrorResponse,
-} from './models/Department';
+} from './models/Admin/Department';
 import {
   CreateOrganizationRequest,
   CreateOrganizationResponse,
@@ -18,7 +18,7 @@ import {
   GetAllOrganizationResponse,
   UpdateOrganizationRequest,
   UpdateOrganizationResponse,
-} from './models/Organization';
+} from './models/Admin/Organization';
 import {
   CreateDistrictRequest,
   CreateDistrictResponse,
@@ -27,7 +27,7 @@ import {
   GetDistrictByIdResponse,
   UpdateDistrictRequest,
   UpdateDistrictResponse,
-} from './models/District';
+} from './models/Admin/District';
 import axiosInstance from './interceptor';
 import {
   CreateEmployeeRequest,
@@ -39,7 +39,7 @@ import {
   UploadImageEmployeeResponse,
   GetAllEmployeeResponse,
   GetAllEmployeeByIdResponse,
-} from './models/Employee';
+} from './models/Admin/Employee';
 import {
   CreateDocumentRequest,
   CreateDocumentResponse,
@@ -47,7 +47,7 @@ import {
   UpdateDocumentRequest,
   UpdateDocumentResponse,
   GetAllDocumentResponse,
-} from './models/Document';
+} from './models/Admin/Document';
 import {
   CreateSiteRequest,
   CreateSiteResponse,
@@ -64,17 +64,20 @@ import {
   UpdateSiteTrackingResponse,
   UpdateSiteParkingRequest,
   UpdateSiteParkingResponse,
-} from './models/Sites';
+  CreateSiteAccessRequest,
+  UpdateSiteAccessRequest,
+  UpdateSiteAccessResponse,
+} from './models/Admin/Sites';
 import {
   CreateSiteDocumentRequest,
   CreateSiteDocumentResponse,
   GetAllSiteDocumentResponse,
-} from './models/SiteDocument';
+} from './models/Admin/SiteDocument';
 import {
   GetAllBrandPaginationResponse,
   GetAllBrandResponse,
   UpdateBrandResponse,
-} from './models/Brand';
+} from './models/Admin/Brand';
 import {
   CreateIntegrationRequest,
   CreateIntegrationResponse,
@@ -169,7 +172,7 @@ import {
   UpdateVisitorBlacklistAreaTrackingResponse,
   UpdateVisitorTrackingRequest,
   UpdateVisitorTrackingResponse,
-} from './models/Integration';
+} from './models/Admin/Integration';
 import {
   CreateAccessControlRequest,
   CreateAccessControlResponse,
@@ -178,7 +181,7 @@ import {
   GetAllAccessControlResponse,
   UpdateAccessControlRequest,
   UpdateAccessControlResponse,
-} from './models/AccessControl';
+} from './models/Admin/AccessControl';
 import {
   CreateCustomFieldRequest,
   CreateCustomFieldResponse,
@@ -186,7 +189,7 @@ import {
   GetAllCustomFieldResponse,
   UpdateCustomFieldRequest,
   UpdateCustomFieldResponse,
-} from './models/CustomField';
+} from './models/Admin/CustomField';
 
 import {
   GetAllVisitorTypePaginationResponse,
@@ -197,14 +200,14 @@ import {
   GetVisitorTypeByIdResponse,
   UpdateVisitorTypeRequest,
   GetAllVisitorTypeResponse,
-} from './models/VisitorType';
+} from './models/Admin/VisitorType';
 import {
   GetAllVisitorPaginationResponse,
   CreateVisitorRequest,
   CreateVisitorResponse,
   DeleteVisitorResponse,
   CreateGroupVisitorRequest,
-} from './models/Visitor';
+} from './models/Admin/Visitor';
 
 import {
   CreateVisitorCardRequest,
@@ -214,7 +217,7 @@ import {
   GetGetVisitorCardByIdResponse,
   UpdateVisitorCardRequest,
   UpdateVisitorCardResponse,
-} from './models/VisitorCard';
+} from './models/Admin/VisitorCard';
 import {
   CreateEmailRequest,
   CreateEmailResponse,
@@ -224,7 +227,7 @@ import {
   GetAllSettingSmtpResponse,
   UpdateSettingSmtpRequest,
   UpdateSettingSmtpResponse,
-} from './models/SettingSmtp';
+} from './models/Admin/SettingSmtp';
 import {
   CreateTimezoneRequest,
   CreateTimezoneResponse,
@@ -234,13 +237,50 @@ import {
   GetTimezoneByIdResponse,
   UpdateTimezoneRequest,
   UpdateTimezoneResponse,
-} from './models/Timezone';
+} from './models/Admin/Timezone';
 import {
   CreateCheckGiveAccessRequest,
   CreateCheckGiveAccessResponse,
   GetAllGrantAccessResponse,
-} from './models/GrantAccess';
-import { GetAllSettingResponse } from './models/Setting';
+} from './models/Admin/GrantAccess';
+import { GetAllSettingResponse } from './models/Admin/Setting';
+
+//#region User
+
+export const getAllUser = async (token: string): Promise<GetAllUserResponse> => {
+  const response = await axiosInstance.get('/user', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+export const getUserById = async (id: string, token: string): Promise<GetUserByIdResponse> => {
+  const response = await axiosInstance.get(`/user/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+export const createUser = async (token: string, data: any): Promise<any> => {
+  const response = await axiosInstance.post('/user', data, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+export const updateUser = async (token: string, id: string, data: any): Promise<any> => {
+  const response = await axiosInstance.put(`/user/${id}`, data, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+export const deleteUser = async (token: string, id: string): Promise<any> => {
+  const response = await axiosInstance.delete(`/user/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
 
 //#endregion
 export const updateExtend = async (token: string, data: any): Promise<any> => {
@@ -629,6 +669,7 @@ export const getVisitorById = async (
   return response.data;
 };
 import { format } from 'date-fns';
+import { GetAllUserResponse, GetUserByIdResponse } from './models/Admin/User';
 // Pagination
 export const getAllVisitorPagination = async (
   token: string,
@@ -675,12 +716,32 @@ export const createVisitors = async (
   return response.data;
 };
 
+export const createVisitorsGroup = async (
+  token: string,
+  data: CreateGroupVisitorRequest,
+): Promise<CreateVisitorResponse> => {
+  const response = await axiosInstance.post('/visitor/new-visit-group', data, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
 // Pra Register
 export const createPraRegister = async (
   token: string,
   data: CreateVisitorRequest,
 ): Promise<CreateVisitorResponse> => {
   const response = await axiosInstance.post('/visitor/new-pra-invite', data, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+export const createPraRegisterGroup = async (
+  token: string,
+  data: CreateVisitorRequest,
+): Promise<CreateVisitorResponse> => {
+  const response = await axiosInstance.post('/visitor/new-pra-invite/group', data, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });
   return response.data;
@@ -1165,11 +1226,38 @@ export const getAllEmployee = async (token: string): Promise<GetAllEmployeeRespo
   return response.data;
 };
 
-export const getAllEmployees = async (): Promise<GetAllEmployeeResponse> => {
-  const response = await axiosInstance.get(`/employee`, {
-    headers: { Accept: 'application/json' },
+export const getVisitorEmployee = async (token: string): Promise<GetAllEmployeeResponse> => {
+  const response = await axiosInstance.get(`/employee/get-visitor-employee`, {
+    headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
   });
   return response.data;
+};
+
+export const getFormEmployee = async (
+  token: string,
+  status_employee?: string, // 🔹 dibuat opsional
+): Promise<GetAllEmployeeResponse> => {
+  try {
+    const params: Record<string, any> = {};
+
+    // ✅ hanya tambahkan jika ada nilainya
+    if (status_employee) params['status-employee'] = status_employee;
+
+    const response = await axiosInstance.get(`/employee`, {
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      ...(Object.keys(params).length > 0 && { params }),
+    });
+
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data;
+    }
+    throw error;
+  }
 };
 
 export const getEmployeeById = async (
@@ -1389,6 +1477,13 @@ export const getSitesTracking = async (token: string): Promise<any> => {
   return response.data;
 };
 
+export const getSitesAccess = async (token: string): Promise<any> => {
+  const response = await axiosInstance.get(`/site-access`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
 export const getSiteParking = async (token: string): Promise<any> => {
   const response = await axiosInstance.get(`/integration-parking/area`, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
@@ -1446,6 +1541,24 @@ export const createSiteParking = async (
   }
 };
 
+export const createSiteAccess = async (
+  data: CreateSiteAccessRequest,
+  token: string,
+): Promise<CreateSiteResponse> => {
+  try {
+    const response = await axiosInstance.post(`/site-access`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    console.log(response.data);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
 export const createSiteTracking = async (
   data: CreateSiteTrackingRequest,
   token: string,
@@ -1471,6 +1584,24 @@ export const updateSiteTracking = async (
 ): Promise<UpdateSiteTrackingResponse> => {
   try {
     const response = await axiosInstance.put(`/site-tracking/${id}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const updateSiteAccess = async (
+  id: string,
+  data: UpdateSiteAccessRequest,
+  token: string,
+): Promise<UpdateSiteAccessResponse> => {
+  try {
+    const response = await axiosInstance.put(`/site-access/${id}`, data, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;

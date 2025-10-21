@@ -16,7 +16,7 @@ import {
 } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { Item } from 'src/customs/api/models/Timezone';
+import { Item } from 'src/customs/api/models/Admin/Timezone';
 import { deleteTimezone, getAllTimezone, getTimezoneById } from 'src/customs/api/admin';
 import { IconTrash } from '@tabler/icons-react';
 import { showConfirmDelete, showSuccessAlert } from 'src/customs/components/alerts/alerts';

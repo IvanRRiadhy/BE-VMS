@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // const axiosInstance = axios.create({
-//   baseURL: `http://103.193.15.67:8000/api`,
+//   baseURL: `https://raw-rap-derby-puzzles.trycloudflare.com/api`,
 //   headers: {
 //     'Content-Type': 'application/json',
 //   },
@@ -9,7 +9,7 @@ import axios from 'axios';
 // });
 
 // const axiosInstance2 = axios.create({
-//   baseURL: `http://103.193.15.67:8000`,
+//   baseURL: `https://raw-rap-derby-puzzles.trycloudflare.com`,
 //   headers: {
 //     'Content-Type': 'application/json',
 //   },

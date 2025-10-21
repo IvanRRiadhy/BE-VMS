@@ -16,7 +16,7 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   CreateOrganizationRequest,
   CreateOrganizationSubmitSchema,
-} from 'src/customs/api/models/Organization';
+} from 'src/customs/api/models/Admin/Organization';
 import { showSuccessAlert } from 'src/customs/components/alerts/alerts';
 
 interface FormAddOrganizationProps {

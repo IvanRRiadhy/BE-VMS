@@ -64,7 +64,7 @@ import QRCode from 'react-qr-code';
 import { format } from 'date-fns';
 // import CameraUpload from 'src/customs/components/camera/CameraUpload';
 import { DateTimePicker, LocalizationProvider, renderTimeViewClock } from '@mui/x-date-pickers';
-import { FormVisitor } from 'src/customs/api/models/Visitor';
+import { FormVisitor } from 'src/customs/api/models/Admin/Visitor';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
@@ -77,7 +77,7 @@ const Invitation = () => {
   const [selectedRows, setSelectedRows] = useState([]);
   const [isDataReady, setIsDataReady] = useState(false);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [edittingId, setEdittingId] = useState<string | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
@@ -263,31 +263,6 @@ const Invitation = () => {
     }
     return true;
   };
-
-  // 🚀 Handle submit akhir
-  // const handleSubmit = async () => {
-  //   if (!invitationData) return;
-
-  //   // build payload
-  //   const payload = {
-  //     visitor_type:
-  //       invitationData.collection.visitor_type || invitationData.collection.visitor_type_data?.id,
-  //     type_registered: 1,
-  //     is_group: true,
-  //     group_name: invitationData.collection.group_name || 'Group Visitor',
-  //     tz: invitationData.collection.tz || 'Asia/Jakarta',
-  //     registered_site: invitationData.collection.site_place_data?.id || '',
-  //     data_visitor: dataVisitor,
-  //   };
-
-  //   console.log('✅ Final Submit Payload:', payload);
-
-  //   // TODO: panggil API create invitation di sini
-  //   // await createInvitation(token, payload)
-
-  //   alert('Invitation submitted successfully!');
-  //   handleReset();
-  // };
 
   const getSectionType = (section: any) => {
     const f = section.form || [];
@@ -1371,8 +1346,8 @@ const Invitation = () => {
           >
             <IconX />
           </IconButton>
-          <Divider />
-          <DialogContent>
+
+          <DialogContent dividers>
             <form action="">
               <Stack spacing={2} marginTop={1}>
                 <Grid container spacing={2}>

@@ -1,6 +1,6 @@
 import axios from 'axios';
 import axiosInstance from '../interceptor';
-import { ValidationErrorResponse } from '../models/Department';
+import { ValidationErrorResponse } from '../models/Admin/Department';
 import {
   GetAreaParkingResponse,
   GetAreaParkingResponseById,

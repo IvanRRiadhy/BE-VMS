@@ -11,7 +11,7 @@ import {
 import { IconSend } from '@tabler/icons-react';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
-import { ItemEmail } from 'src/customs/api/models/SettingSmtp';
+import { ItemEmail } from 'src/customs/api/models/Admin/SettingSmtp';
 
 type SmtpOption = { id: number; name: string };
 

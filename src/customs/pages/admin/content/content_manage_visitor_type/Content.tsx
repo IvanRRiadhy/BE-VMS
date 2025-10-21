@@ -24,7 +24,8 @@ import {
   CreateVisitorTypeRequestSchema,
   Item,
   updateVisitorTypeSchmea,
-} from 'src/customs/api/models/VisitorType';
+  UpdateVisitorTypeRequest,
+} from 'src/customs/api/models/Admin/VisitorType';
 import FormVisitorType from './FormVisitorType';
 import { useSession } from 'src/customs/contexts/SessionContext';
 
@@ -34,8 +35,6 @@ import {
   deleteVisitorType,
   getVisitorTypeById,
 } from 'src/customs/api/admin';
-
-import { UpdateVisitorTypeRequest } from 'src/customs/api/models/VisitorType';
 import Swal from 'sweetalert2';
 
 import { IconUsersGroup } from '@tabler/icons-react';
@@ -58,7 +57,7 @@ const Content = () => {
   const { token } = useSession();
   const [visitorData, setVisitorData] = useState<Item[]>([]);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);

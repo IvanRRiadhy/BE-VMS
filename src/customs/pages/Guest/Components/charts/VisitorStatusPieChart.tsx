@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { PieChart } from '@mui/x-charts/PieChart';
-import { Card, CardContent, Typography, Box } from '@mui/material';
+import { Card, CardContent, Typography, Box, CardHeader } from '@mui/material';
 
 const visitorStatusData = [
   { id: 0, value: 10, label: 'Checked In', color: '#4caf50' },
@@ -10,7 +10,8 @@ const visitorStatusData = [
 
 export default function VisitorStatusPieChart() {
   return (
-    <Card sx={{ borderRadius: 2, boxShadow: 3, mt: 1 }}>
+    <Card sx={{ borderRadius: 2, boxShadow: 3 }}>
+      <CardHeader title="Visitor Status" />
       <CardContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <Box sx={{ width: 350 }}>
           <PieChart
@@ -34,7 +35,7 @@ export default function VisitorStatusPieChart() {
             display: 'flex',
             justifyContent: 'center',
             flexWrap: 'wrap',
-            mt: -2,
+            mt: 0,
             gap: 2,
           }}
         >

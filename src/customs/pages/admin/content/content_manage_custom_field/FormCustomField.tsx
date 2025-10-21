@@ -31,7 +31,7 @@ import {
   CreateCustomFieldRequestSchema,
   FieldType,
   multiOptField,
-} from 'src/customs/api/models/CustomField';
+} from 'src/customs/api/models/Admin/CustomField';
 import { createCustomField, updateCustomField } from 'src/customs/api/admin';
 import { fromPairs, lowerCase } from 'lodash';
 
@@ -338,7 +338,13 @@ const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCu
           </Grid>
         </Grid>
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-          <Button color="primary" variant="contained" type="submit" disabled={loading} size="medium">
+          <Button
+            color="primary"
+            variant="contained"
+            type="submit"
+            disabled={loading}
+            size="medium"
+          >
             {loading ? 'Submitting...' : 'Submit'}
           </Button>
         </Box>

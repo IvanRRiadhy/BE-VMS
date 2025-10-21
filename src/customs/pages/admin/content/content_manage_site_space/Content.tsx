@@ -18,7 +18,7 @@ import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import FormSite from './FormSite';
 import CloseIcon from '@mui/icons-material/Close';
-import { CreateSiteRequestSchema, Item } from 'src/customs/api/models/Sites';
+import { CreateSiteRequestSchema, Item } from 'src/customs/api/models/Admin/Sites';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { deleteSiteSpace, getAllSite, getAllSitePagination } from 'src/customs/api/admin';
 import { IconSitemap } from '@tabler/icons-react';
@@ -33,8 +33,8 @@ type SiteTableRow = {
   id: string;
   name: string;
   type: number;
-  description: string;
-  image: string;
+  description: string | null;
+  image: string | null;
 };
 
 type EnableField = {
@@ -60,7 +60,7 @@ const Content = () => {
   const [totalRecords, setTotalRecords] = useState(0);
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(15);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -179,8 +179,8 @@ const Content = () => {
           id: item.id,
           name: item.name,
           type: item.type,
-          description: item.description,
-          image: item.image,
+          description: item.description || '',
+          image: item.image || '',
         }));
 
         if (rows) {

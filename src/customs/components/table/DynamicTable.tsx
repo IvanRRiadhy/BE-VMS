@@ -56,9 +56,7 @@ import { InsertDriveFile } from '@mui/icons-material';
 
 import backgroundnodata from '../../../assets/images/backgrounds/bg_nodata.svg';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
-import dayjs from 'dayjs';
 import moment from 'moment';
-import { boxShadow } from 'html2canvas/dist/types/css/property-descriptors/box-shadow';
 
 type HeaderItem = { name: string };
 
@@ -68,7 +66,9 @@ type HeaderContent = {
   items: HeaderItem[];
 };
 
-type DynamicTableProps<T extends { id: string | number }> = {
+type DynamicTableProps<
+  T extends { id: string | number; status?: any; early_access?: any; visitor_give_access?: any },
+> = {
   overflowX?: 'auto' | 'scroll' | 'unset';
   minWidth?: number | string;
   stickyHeader?: boolean;
@@ -79,6 +79,7 @@ type DynamicTableProps<T extends { id: string | number }> = {
   isHaveGender?: boolean;
   isHaveChecked?: boolean;
   isHaveAction?: boolean;
+  isHaveAccess?: boolean;
   isHaveActionOnlyEdit?: boolean;
   isHaveVisitor?: boolean;
   stickyVisitorCount?: number;
@@ -90,6 +91,8 @@ type DynamicTableProps<T extends { id: string | number }> = {
   isHaveImportExcel?: boolean;
   isHaveFilterDuration?: boolean;
   isActionVisitor?: boolean;
+  onAccept?: (row: T) => void;
+  onDenied?: (row: T) => void;
   isHaveAddData?: boolean;
   height?: number | string;
   isHaveHeader?: boolean;
@@ -112,6 +115,7 @@ type DynamicTableProps<T extends { id: string | number }> = {
   isHavePagination?: boolean;
   rowsPerPageOptions?: number[];
   defaultRowsPerPage?: number;
+  isHaveApproval?: boolean;
   isHaveIntegration?: boolean;
   isSelectedType?: boolean;
   htmlFields?: string[];
@@ -121,10 +125,12 @@ type DynamicTableProps<T extends { id: string | number }> = {
   onChooseCard?: (row?: T) => void;
   onNameClick?: (row: T) => void;
   isVip?: (row: T) => boolean;
+  isHaveArrival?: boolean;
   totalCount?: number;
   isHaveFilterMore?: boolean;
   filterMoreContent?: React.ReactNode;
   sortColumns?: string[];
+  onAccessAction?: (row: any, action: 'grant' | 'revoke' | 'block' | 'unblock') => void;
   onFileClick?: (row: T) => void;
   onView?: (row: T) => void;
   onEmployeeClick?: (row: T) => void;
@@ -143,7 +149,9 @@ type DynamicTableProps<T extends { id: string | number }> = {
   onBooleanSwitchChange?: (row: any, field: string, value: boolean) => void;
 };
 
-export function DynamicTable<T extends { id: string | number }>({
+export function DynamicTable<
+  T extends { id: string | number; status?: any; early_access?: any; visitor_give_access?: any },
+>({
   minWidth = 'auto',
   stickyHeader = false,
   data,
@@ -169,6 +177,7 @@ export function DynamicTable<T extends { id: string | number }>({
   isHaveBooleanSwitch = false,
   isHaveVerified = false,
   isHaveView = false,
+  isHaveAccess = false,
   isHaveEmployee = false,
   isHaveCard = false,
   isHaveImage,
@@ -176,6 +185,9 @@ export function DynamicTable<T extends { id: string | number }>({
   isHaveHeaderTitle = false,
   titleHeader,
   headerContent,
+  onAccept,
+  onDenied,
+  isHaveApproval = false,
   defaultSelectedHeaderItem,
   isHavePassword = false,
   isHavePagination,
@@ -186,6 +198,7 @@ export function DynamicTable<T extends { id: string | number }>({
   isDataVerified = false,
   htmlFields = [],
   htmlClampLines,
+  isHaveArrival = false,
   htmlMaxWidth,
   rowsPerPageOptions,
   defaultRowsPerPage,
@@ -196,6 +209,7 @@ export function DynamicTable<T extends { id: string | number }>({
   isHaveFilterMore = false,
   filterMoreContent,
   sortColumns,
+  onAccessAction,
   onFileClick,
   onChooseCard,
   onEmployeeClick,
@@ -234,9 +248,21 @@ export function DynamicTable<T extends { id: string | number }>({
   //   return <div>Tidak ada data</div>;
   // }
 
+  const hiddenColumns = [
+    'id',
+    'can_grant',
+    'can_revoke',
+    'can_block',
+    'visitor_give_access',
+    'access_control_id',
+  ];
+
   const columns =
     data.length > 0
-      ? (Object.keys(data[0]).filter((k) => k !== 'id') as Extract<keyof T, string>[])
+      ? (Object.keys(data[0]).filter((k) => !hiddenColumns.includes(k)) as Extract<
+          keyof T,
+          string
+        >[])
       : [];
 
   const columnss =
@@ -417,6 +443,10 @@ export function DynamicTable<T extends { id: string | number }>({
       true: 'Secure Verified',
       false: 'Secure Not Verified',
     },
+    early_access: {
+      true: 'Early Access',
+      false: 'Not Early Access',
+    },
     is_employee_used: {
       true: 'Employee Used',
       false: 'Employee Not Used',
@@ -431,9 +461,97 @@ export function DynamicTable<T extends { id: string | number }>({
     },
   };
 
-  const formatDate = (date?: string) => {
-    if (!date) return '-'; // fallback kalau kosong
-    return moment(date).format('DD-MM-YYYY');
+const formatDate = (date?: string) => {
+  if (!date) return '-'; // fallback kalau kosong
+  return moment.utc(date).local().format('DD-MM-YYYY HH:mm');
+};
+
+  const getAccessActions = (row: any) => {
+    const { visitor_give_access, can_grant, can_revoke, can_block } = row;
+
+    // kalau semua false → tampil tombol disabled
+    const allDisabled = !can_grant && !can_revoke && !can_block;
+    console.log(allDisabled);
+
+    switch (visitor_give_access) {
+      case 1: // Grant
+        return (
+          <Box display="flex" gap={1}>
+            <Button
+              variant="contained"
+              color="error"
+              size="small"
+              disabled={!can_revoke || allDisabled}
+              onClick={() => onAccessAction?.(row, 'revoke')}
+            >
+              Revoke
+            </Button>
+            <Button
+              variant="contained"
+              sx={{ backgroundColor: '#000' }}
+              size="small"
+              disabled={!can_block || allDisabled}
+              onClick={() => onAccessAction?.(row, 'block')}
+            >
+              Block
+            </Button>
+          </Box>
+        );
+
+      case 2: // Revoke
+        return (
+          //  <Button
+          //    variant="contained"
+          //    color="primary"
+          //    size="small"
+          //    disabled={!can_grant || allDisabled}
+          //    onClick={() => onAccessAction?.(row, 'grant')}
+          //  >
+          //    Grant
+          //  </Button>
+          <></>
+        );
+
+      case 3: // Block
+        return (
+          // <Button
+          //   variant="contained"
+          //   sx={{ backgroundColor: '#8B0000' }}
+          //   size="small"
+          //   disabled={allDisabled}
+          //   onClick={() => onAccessAction?.(row, 'unblock')}
+          // >
+          //   Unblock
+          // </Button>
+          <></>
+        );
+
+      case 4: // Block
+        return (
+          <Button
+            variant="contained"
+            sx={{ backgroundColor: '#000' }}
+            size="small"
+            disabled={allDisabled}
+            onClick={() => onAccessAction?.(row, 'block')}
+          >
+            Block
+          </Button>
+        );
+
+      default: // No Action
+        return (
+          <Button
+            variant="contained"
+            color="primary"
+            size="small"
+            disabled={!can_grant || allDisabled}
+            onClick={() => onAccessAction?.(row, 'grant')}
+          >
+            Grant
+          </Button>
+        );
+    }
   };
 
   return (
@@ -942,27 +1060,16 @@ export function DynamicTable<T extends { id: string | number }>({
                               minWidth: DATA_COL_WIDTH,
                               maxWidth: DATA_COL_WIDTH,
                             }),
+                            // 💡 Tambahkan kondisi text align khusus untuk kolom tertentu
+                            // ...(col.includes('Early Access') && {
+                            //   textAlign: 'center !important',
+                            // }),
                           }}
                         >
                           {pretty}
                         </TableCell>
                       );
                     })}
-                    {/* {col == 'is_employee_used' && (
-                      <TableCell
-                        sx={{
-                          position: 'sticky',
-                          right: 0,
-                          bgcolor: 'background.paper',
-                          zIndex: 4, // header > body
-                          p: 0,
-                          verticalAlign: 'middle',
-                          textAlign: 'center',
-                        }}
-                      >
-                        Action
-                      </TableCell>
-                    )} */}
                     {isHaveAction && !isActionVisitor && (
                       <TableCell
                         sx={{
@@ -986,6 +1093,44 @@ export function DynamicTable<T extends { id: string | number }>({
                         Action
                       </TableCell>
                     )}
+                    {isHaveArrival && (
+                      <TableCell
+                        sx={{ position: 'sticky', right: 0, background: 'white', zIndex: 2 }}
+                      >
+                        <Button variant="contained">Arrival</Button>
+                      </TableCell>
+                    )}
+                    {/* 
+                    {isHaveApproval && (
+                      <TableCell
+                        sx={{
+                          position: 'sticky',
+                          left: isHaveChecked ? CHECKBOX_COL_WIDTH : 0,
+                          zIndex: 2,
+                          background: 'white',
+                          minWidth: ACTION_COL_WIDTH,
+                          maxWidth: ACTION_COL_WIDTH,
+                        }}
+                      >
+                        Action
+                      </TableCell>
+                    )} */}
+
+                    {/* {isHaveAccess && (
+                      <TableCell
+                        sx={{
+                          position: 'sticky',
+                          left: isHaveChecked ? CHECKBOX_COL_WIDTH : 0,
+                          zIndex: 2,
+                          background: 'white',
+                          minWidth: ACTION_COL_WIDTH,
+                          maxWidth: ACTION_COL_WIDTH,
+                        }}
+                      >
+                        Action
+                      </TableCell>
+                    )} */}
+
                     {isHaveCard && (
                       <TableCell sx={{ position: 'sticky', right: 0, zIndex: 2 }}>
                         <Button
@@ -1039,7 +1184,7 @@ export function DynamicTable<T extends { id: string | number }>({
                       </TableCell>
                     </TableRow>
                   ) : (
-                    paginatedData.map((row, index) => (
+                    paginatedData.map((row: any, index) => (
                       <TableRow key={row.id}>
                         {isHaveChecked && (
                           <TableCell
@@ -1203,6 +1348,36 @@ export function DynamicTable<T extends { id: string | number }>({
                                 CARD_STATUS[Number(row[col])] ?? String(row[col] ?? '-')
                               ) : col === 'document_type' ? (
                                 DOCUMENT_TYPE[Number(row[col])] ?? String(row[col] ?? '-')
+                              ) : col === 'status' && isHaveApproval ? (
+                                row[col] === 'Accept' ? (
+                                  <Typography
+                                    sx={{
+                                      color: 'success.main',
+                                      fontWeight: 400,
+                                      backgroundColor: 'success.light',
+                                      textAlign: 'center',
+                                      padding: 0.5,
+                                      borderRadius: '8px',
+                                    }}
+                                    variant="body2"
+                                  >
+                                    Accept
+                                  </Typography>
+                                ) : (
+                                  <Typography
+                                    sx={{
+                                      color: 'error.main',
+                                      fontWeight: 400,
+                                      backgroundColor: 'error.light',
+                                      textAlign: 'center',
+                                      padding: 0.5,
+                                      borderRadius: '8px',
+                                    }}
+                                    variant="body2"
+                                  >
+                                    Deny
+                                  </Typography>
+                                )
                               ) : (isHavePeriod && col === 'visitor_period_start') ||
                                 col === 'visitor_period_end' ? (
                                 <>
@@ -1210,7 +1385,7 @@ export function DynamicTable<T extends { id: string | number }>({
                                   <br />
                                 </>
                               ) : isHaveEmployee && col === 'host' ? (
-                                <Tooltip title="View Employee">
+                                <Tooltip title="View Host">
                                   <IconButton
                                     size="small"
                                     color="primary"
@@ -1255,7 +1430,8 @@ export function DynamicTable<T extends { id: string | number }>({
                                 col === 'is_primary' ||
                                 col === 'is_employee_used' ||
                                 col === 'is_multi_site' ||
-                                col === 'is_used' ? (
+                                col === 'is_used' ||
+                                col === 'early_access' ? (
                                 <Box
                                   display="flex"
                                   alignItems="center"
@@ -1502,15 +1678,16 @@ export function DynamicTable<T extends { id: string | number }>({
                             <Typography variant="body2" color="text.secondary"></Typography>
                           </TableCell>
                         )}
-                        {isHaveAction && !isActionVisitor && (
+
+                        {/* {isHaveApproval && (row as any)?.status == null ? (
                           <TableCell
                             sx={{
                               position: 'sticky',
                               right: 0,
                               bgcolor: 'background.paper',
-                              zIndex: 2, // body < header
-                              p: 0, // padding diatur di inner Box
-                              verticalAlign: 'middle', // ikut tinggi baris
+                              zIndex: 2,
+                              p: 0,
+                              verticalAlign: 'middle',
                             }}
                           >
                             <Box
@@ -1520,12 +1697,286 @@ export function DynamicTable<T extends { id: string | number }>({
                                 justifyContent: 'center',
                                 gap: 1,
                                 px: 1.5,
-                                py: 1.25, // samakan dengan baris lain
+                                py: 1.25,
                                 height: '100%',
                               }}
                             >
-                              {isHaveView ? (
-                                <Tooltip title="Detail Invitation">
+                   
+                              <Tooltip title="Accept">
+                                <Button
+                                  variant="contained"
+                                  color="primary"
+                                  size="small"
+                                  sx={{ minWidth: 64, textTransform: 'none' }}
+                                  onClick={() => onAccept?.(row)}
+                                >
+                                  Accept
+                                </Button>
+                              </Tooltip>
+
+                              <Tooltip title="Deny">
+                                <Button
+                                  variant="contained"
+                                  color="error"
+                                  size="small"
+                                  sx={{ minWidth: 64, textTransform: 'none' }}
+                                  onClick={() => onDenied?.(row)}
+                                >
+                                  Denied
+                                </Button>
+                              </Tooltip>
+                            </Box>
+                          </TableCell>
+                        ) : (
+                          <TableCell></TableCell>
+                          // null
+                        )} */}
+
+                        {/* {isHaveAccess && (
+                          <TableCell>
+                            
+                          </TableCell>
+                        )} */}
+
+                        {isHaveAction && !isActionVisitor && (
+                          <TableCell
+                            sx={{
+                              position: 'sticky',
+                              right: 0,
+                              bgcolor: 'background.paper',
+                              zIndex: 2,
+                              p: 0,
+                              verticalAlign: 'middle',
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: 1,
+                                px: 1.5,
+                                py: 1.25,
+                                height: '100%',
+                              }}
+                            >
+                              {/* ✅ Accept / Denied */}
+                              {/* {isHaveApproval && (row as any)?.is_action == null ? (
+                                <>
+                                  <Tooltip title="Accept Invitation">
+                                    <Button
+                                      variant="contained"
+                                      color="primary"
+                                      size="small"
+                                      sx={{ minWidth: 64, textTransform: 'none' }}
+                                      onClick={() => onAccept?.(row)}
+                                    >
+                                      Accept
+                                    </Button>
+                                  </Tooltip>
+                                  <Tooltip title="Deny Invitation">
+                                    <Button
+                                      variant="contained"
+                                      color="error"
+                                      size="small"
+                                      sx={{ minWidth: 64, textTransform: 'none' }}
+                                      onClick={() => onDenied?.(row)}
+                                    >
+                                      Denied
+                                    </Button>
+                                  </Tooltip>
+                                </>
+                              ) : null} */}
+                              {/* 👁 Detail */}
+                              {isHaveApproval ? (
+                                (row as any)?.status == null ? (
+                                  <TableCell
+                                    sx={{
+                                      position: 'sticky',
+                                      right: 0,
+                                      bgcolor: 'background.paper',
+                                      zIndex: 2,
+                                      p: 0,
+                                      verticalAlign: 'middle',
+                                    }}
+                                  >
+                                    <Box
+                                      sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: 1,
+                                        px: 1.5,
+                                        py: 1.25,
+                                        height: '100%',
+                                      }}
+                                    >
+                                      {/* ✅ Accept / Denied */}
+                                      <Tooltip title="Accept">
+                                        <Button
+                                          variant="contained"
+                                          color="primary"
+                                          size="small"
+                                          sx={{ minWidth: 64, textTransform: 'none' }}
+                                          onClick={() => onAccept?.(row)}
+                                        >
+                                          Accept
+                                        </Button>
+                                      </Tooltip>
+
+                                      <Tooltip title="Deny">
+                                        <Button
+                                          variant="contained"
+                                          color="error"
+                                          size="small"
+                                          sx={{ minWidth: 64, textTransform: 'none' }}
+                                          onClick={() => onDenied?.(row)}
+                                        >
+                                          Denied
+                                        </Button>
+                                      </Tooltip>
+                                    </Box>
+                                  </TableCell>
+                                ) : (
+                                  <TableCell
+                                    sx={{
+                                      position: 'sticky',
+                                      right: 0,
+                                      bgcolor: 'background.paper',
+                                      zIndex: 2,
+                                      p: 0,
+                                      verticalAlign: 'middle',
+                                    }}
+                                  >
+                                    -
+                                  </TableCell>
+                                )
+                              ) : isHaveAccess ? (
+                                <TableCell
+                                  sx={{
+                                    position: 'sticky',
+                                    right: 0,
+                                    bgcolor: 'background.paper',
+                                    zIndex: 2,
+                                    p: 0,
+                                    verticalAlign: '',
+                                    textAlign: 'center',
+                                    display: 'flex',
+                                    alignItems: 'flex-start',
+                                  }}
+                                >
+                                  {/* {(() => {
+                                    // const status = row.visitor_give_access; // 0: none, 1: granted, 2: revoked, 3: blocked
+                                    const earlyAccess = row.early_access == true;
+                                    const code = row.visitor_give_access ?? 0;
+
+                                    // 🔒 Jika early_access = true, otomatis sudah boleh revoke/block walau belum grant
+                                    if (code === 0) {
+                                      return (
+                                        <Box
+                                          display="flex"
+                                          gap={1}
+                                          alignItems={'flex-start !important'}
+                                          justifyContent={'flex-start'}
+                                        >
+                                          <Button
+                                            variant="contained"
+                                            color="error"
+                                            size="small"
+                                            onClick={() => onAccessAction?.(row, 'revoke')}
+                                          >
+                                            Revoke
+                                          </Button>
+                                          <Button
+                                            variant="contained"
+                                            sx={{ backgroundColor: '#000' }}
+                                            size="small"
+                                            onClick={() => onAccessAction?.(row, 'block')}
+                                          >
+                                            Block
+                                          </Button>
+                                        </Box>
+                                      );
+                                    }
+
+    
+
+                             
+                                    if (code === 1) {
+                                      return (
+                                        <Box display="flex" gap={1} p={0}>
+                                          <Button
+                                            variant="contained"
+                                            color="error"
+                                            size="small"
+                                            onClick={() => onAccessAction?.(row, 'revoke')}
+                                          >
+                                            Revoke
+                                          </Button>
+                                          <Button
+                                            variant="contained"
+                                            sx={{ backgroundColor: '#000' }}
+                                            size="small"
+                                            onClick={() => onAccessAction?.(row, 'block')}
+                                          >
+                                            Block
+                                          </Button>
+                                        </Box>
+                                      );
+                                    }
+
+                    
+                                    if (code === 3) {
+                                      return (
+                                        <Button
+                                          variant="contained"
+                                          sx={{ backgroundColor: ' #8B0000' }}
+                                          size="small"
+                                          onClick={() => onAccessAction?.(row, 'unblock')}
+                                        >
+                                          Unblock
+                                        </Button>
+                                      );
+                                    }
+
+                                    if (code === 4) {
+                                      return (
+                                        <Box
+                                          display="flex"
+                                          justifyContent={'flex-start'}
+                                          alignItems={'flex-start'}
+                                        >
+                                          <Button
+                                            variant="contained"
+                                            sx={{ backgroundColor: '#000' }}
+                                            size="small"
+                                            onClick={() => onAccessAction?.(row, 'block')}
+                                          >
+                                            Block
+                                          </Button>
+                                        </Box>
+                                      );
+                                    }
+
+                                    if (code === 2) {
+                                      return (
+                                        <TableCell sx={{ p: '0 !important' }}>
+                                          <Typography></Typography>
+                                        </TableCell>
+                                      );
+                                    }
+
+                                
+                                    return (
+                                      <Typography variant="body2" color="text.secondary">
+                                   
+                                      </Typography>
+                                    );
+                                  })()} */}
+                                  {getAccessActions(row)}
+                                </TableCell>
+                              ) : isHaveView ? (
+                                <Tooltip title="View Invitation">
                                   <IconButton
                                     onClick={() => onView?.(row)}
                                     disableRipple
@@ -1546,7 +1997,8 @@ export function DynamicTable<T extends { id: string | number }>({
                                   </IconButton>
                                 </Tooltip>
                               ) : (
-                                <>
+                                <Box display="flex" gap={0.5}>
+                                  {/* ✏️ Edit */}
                                   <Tooltip title="Edit">
                                     <IconButton
                                       onClick={() => onEdit?.(row)}
@@ -1565,7 +2017,7 @@ export function DynamicTable<T extends { id: string | number }>({
                                     </IconButton>
                                   </Tooltip>
 
-                                  {/* Tombol Delete */}
+                                  {/* 🗑 Delete */}
                                   <Tooltip title="Delete">
                                     <IconButton
                                       onClick={() => onDelete?.(row)}
@@ -1586,10 +2038,8 @@ export function DynamicTable<T extends { id: string | number }>({
                                       <IconTrash width={14} height={14} />
                                     </IconButton>
                                   </Tooltip>
-                                </>
+                                </Box>
                               )}
-
-                              {/* Tombol Edit */}
                             </Box>
                           </TableCell>
                         )}

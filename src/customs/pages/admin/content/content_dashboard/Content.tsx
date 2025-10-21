@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Box, Button, Grid2 as Grid, Typography } from '@mui/material';
+import { Box, Button, Drawer, Grid2 as Grid, Typography } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -12,10 +12,13 @@ import VisitingTypeChart from 'src/customs/components/charts/VisitingTypeChart';
 import VisitorFluctuationChart from 'src/customs/components/charts/VisitorFluctuationChart';
 import VisitorHeatMap from '../../../../components/charts/VisitorHeatMap';
 import AvarageDurationChart from 'src/customs/components/charts/AverageDurationChart';
-import { IconDownload } from '@tabler/icons-react';
+import { IconCalendar, IconDownload } from '@tabler/icons-react';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { getTodayPraregister } from 'src/customs/api/admin';
 import { useTranslation } from 'react-i18next';
+import Calendar from 'src/customs/components/calendar/Calendar';
+import { addDays } from 'date-fns';
+import { useDispatch, useSelector } from 'react-redux';
 
 // Data journey visitor
 const visitorJourney = [
@@ -83,29 +86,11 @@ const tableRowColumn = [
   },
 ];
 
-// const videoJsOptions = {
-//   autoplay: true,
-//   controls: true,
-//   responsive: true,
-//   fluid: false, // pastikan false
-//   width: 2300,
-//   height: 2500,
-//   sources: [
-//     {
-//       src: 'http://192.168.1.218:8083/stream/27aec28e-6181-4753-9acd-0456a75f0289/channel/0/hlsll/live/index.m3u8',
-//       type: 'application/x-mpegURL',
-//     },
-//   ],
-//   html5: {
-//     hls: {
-//       overrideNative: true,
-//     },
-//   },
-// };
-// const [page, setPage] = useState(0);
-// const [rowsPerPage, setRowsPerPage] = useState(5);
-
 const Content = () => {
+  const dispatch = useDispatch();
+  // const { startDate, endDate, isManual } = useSelector((state: RootState) => state.dateRange);
+  const { startDate, endDate, isManual } = useSelector((state: any) => state.dateRange);
+
   const { token } = useSession();
   const { t } = useTranslation();
 
@@ -158,6 +143,20 @@ const Content = () => {
 
     fetchData();
   }, [token]);
+
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const handleClick = (event: React.MouseEvent<HTMLElement>) => setAnchorEl(event.currentTarget);
+  const handleClose = () => setAnchorEl(null);
+  const open = Boolean(anchorEl);
+
+  const [dateRange, setDateRange] = useState([
+    {
+      startDate: new Date(), // hari ini
+      endDate: addDays(new Date(), 7), // 7 hari ke depan
+      key: 'selection',
+    },
+  ]);
+
   return (
     <PageContainer title="Dashboard" description="this is Dashboard page">
       <Box>
@@ -166,20 +165,44 @@ const Content = () => {
             size={{ xs: 12, lg: 12 }}
             display="flex"
             justifyContent="flex-end"
-            alignItems="start"
+            alignItems="center"
+            gap={2}
+            sx={{ mt: 2 }}
           >
             <Button
               size="small"
-              variant="contained"
-              color="error"
-              sx={{ mb: 0 }}
-              startIcon={<IconDownload />}
-              onClick={handleExportPdf}
+              sx={{
+                backgroundColor: 'white',
+                color: 'black',
+                border: '1px solid #d1d1d1',
+                ':hover': { backgroundColor: '#d1d1d1', color: 'black' },
+              }}
+              startIcon={<IconCalendar size={18} />}
+              onClick={handleClick}
             >
+              {`${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`}
+            </Button>
+
+            <Button size="small" variant="contained" color="error" startIcon={<IconDownload />}>
               Export
             </Button>
+
+            <Drawer open={open} anchor="right" onClose={handleClose}>
+              <Calendar
+                onChange={(selection: any) => {
+                  setDateRange([
+                    {
+                      startDate: selection.startDate,
+                      endDate: selection.endDate,
+                      key: 'selection',
+                    },
+                  ]);
+                }}
+              />
+            </Drawer>
           </Grid>
         </Grid>
+
         <div ref={exportRef}>
           <Grid container spacing={3}>
             {/* column */}
@@ -252,10 +275,8 @@ const Content = () => {
             </Grid>
           </Grid>
         </div>
-        {/* Welcome Alert In Header view */}
         <Welcome />
       </Box>
-      {/* <VideoPlayer options={videoJsOptions} /> */}
     </PageContainer>
   );
 };

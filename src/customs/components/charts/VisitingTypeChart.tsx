@@ -5,6 +5,7 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 import { getRepeatsVisitor } from 'src/customs/api/admin';
 import { t } from 'i18next';
 import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
 
 type VisitorTypeData = {
   label: string;
@@ -14,6 +15,7 @@ type VisitorTypeData = {
 
 const VisitingTypeChart = () => {
   const { token } = useSession();
+  const { startDate, endDate } = useSelector((state: any) => state.dateRange);
   const { t, i18n } = useTranslation();
   const [data, setData] = useState<VisitorTypeData[]>([
     { label: t('repeat_visitor'), value: 0, color: '#2196f3' },
@@ -24,13 +26,17 @@ const VisitingTypeChart = () => {
     const fetchData = async () => {
       if (!token) return;
       try {
-        const today = new Date();
-        const end_date = today.toISOString().split('T')[0];
-        const start = new Date(today);
-        start.setDate(today.getDate() - 7);
-        const start_date = start.toISOString().split('T')[0];
+        // const today = new Date();
+        // const end_date = today.toISOString().split('T')[0];
+        // const start = new Date(today);
+        // start.setDate(today.getDate() - 7);
+        // const start_date = start.toISOString().split('T')[0];
 
-        const res = await getRepeatsVisitor(token, start_date, end_date);
+        const res = await getRepeatsVisitor(
+          token,
+          startDate.toISOString().split('T')[0],
+          endDate.toISOString().split('T')[0],
+        );
 
         if (res?.collection) {
           setData([
@@ -44,7 +50,7 @@ const VisitingTypeChart = () => {
     };
 
     fetchData();
-  }, [token, i18n.language]);
+  }, [token, i18n.language, startDate, endDate]);
 
   const total = data.reduce((sum, d) => sum + d.value, 0);
   const repeatPercentage = total > 0 ? ((data[0].value / total) * 100).toFixed(1) : '0';

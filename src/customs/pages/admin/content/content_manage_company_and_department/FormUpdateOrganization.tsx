@@ -12,7 +12,7 @@ import {
 import React, { useState, useEffect } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import { Item, CreateOrganizationSubmitSchema } from 'src/customs/api/models/Organization';
+import { Item, CreateOrganizationSubmitSchema } from 'src/customs/api/models/Admin/Organization';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { Box } from '@mui/system';
 import { updateOrganization, getAllEmployee } from 'src/customs/api/admin';

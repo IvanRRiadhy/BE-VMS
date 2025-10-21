@@ -16,7 +16,7 @@ import { createDepartment, getAllEmployee } from 'src/customs/api/admin';
 import {
   CreateDepartementSubmitSchema,
   CreateDepartmentRequest,
-} from 'src/customs/api/models/Department';
+} from 'src/customs/api/models/Admin/Department';
 import { useSession } from 'src/customs/contexts/SessionContext';
 
 interface FormAddDepartmentProps {

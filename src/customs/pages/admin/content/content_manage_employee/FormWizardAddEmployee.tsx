@@ -50,8 +50,8 @@ import {
   CreateEmployeeRequestSchema,
   CreateEmployeeSubmitSchema,
   UpdateEmployeeRequest,
-} from 'src/customs/api/models/Employee';
-import { Item } from 'src/customs/api/models/Employee.ts';
+} from 'src/customs/api/models/Admin/Employee';
+import { Item } from 'src/customs/api/models/Admin/Employee';
 import { showSuccessAlert } from 'src/customs/components/alerts/alerts';
 const steps = ['Personal Info', 'Work Details', 'Access & Address', 'Other Details', 'Photo'];
 
@@ -241,19 +241,19 @@ const FormWizardAddEmployee = ({
     if (!schema) return true; // step tanpa aturan
 
     const fields = stepFieldMap[step] ?? [];
-    let payload = pick(formData, fields);
+    let payload = pick(formData, fields as any);
 
     // Mode Batch Edit
     if (isBatchEdit) {
       const enabledKeys = fields.filter((k) => (enabledFields as any)?.[k] === true);
       if (enabledKeys.length === 0) return true;
 
-      payload = pick(formData, enabledKeys);
+      payload = pick(formData, enabledKeys as any);
 
       const baseSchema = unwrapZodObject(schema);
       if (baseSchema) {
         const shape: Record<string, true> = {};
-        enabledKeys.forEach((k) => (shape[k] = true));
+        enabledKeys.forEach((k) => (shape[k as string] = true));
 
         const partialSchema = baseSchema.pick(shape);
         const res = partialSchema.safeParse(payload);

@@ -1,22 +1,7 @@
 import { useEffect, useState } from 'react';
 import { flushSync } from 'react-dom';
-import {
-  Box,
-  Grid2 as Grid,
-  Paper,
-  Tab,
-  Tabs,
-  Card,
-  Skeleton,
-  CircularProgress,
-  Backdrop,
-  Portal,
-  Typography,
-  Button,
-  TextField,
-  Autocomplete,
-} from '@mui/material';
-import { Item } from 'src/customs/api/models/Setting';
+import { Box, Grid2 as Grid, Typography, Button, TextField, Autocomplete } from '@mui/material';
+import { Item } from 'src/customs/api/models/Admin/Setting';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import { getAllOrganizations } from 'src/customs/api/admin';
 import { useSession } from 'src/customs/contexts/SessionContext';

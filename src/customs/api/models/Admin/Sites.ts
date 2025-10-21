@@ -2,7 +2,8 @@ import { z } from 'zod';
 
 //TYPE
 export type Access = {
-  site_id: string;
+  id: string;
+  // site_id: string;
   sort: number;
   access_control_id: string;
   name: string;
@@ -39,14 +40,14 @@ export type Item = {
   id: string;
   type: number;
   name: string;
-  description: string;
-  image: string;
+  description: string | null;
+  image: string | null;
   can_visited: boolean;
   need_approval: boolean;
   type_approval: number;
   can_signout: boolean;
   auto_signout: boolean;
-  signout_time: string;
+  signout_time: string | null;
   is_registered_point?: boolean;
   timezone: string;
   map_link: string;
@@ -72,7 +73,7 @@ export enum TypeApproval {
   NoApproval = 0,
   VmsManager = 1,
   VmsManagerAndHost = 2,
-  VmsManagerOrManager = 3,
+  VmsManagerOrHost = 3,
 }
 
 //GET
@@ -107,14 +108,14 @@ export type GetSiteByIdResponse = {
 export const CreateSiteRequestSchema = z.object({
   type: z.number().default(0),
   name: z.string().default(''),
-  description: z.string().default(''),
-  image: z.string().default(''),
+  description: z.string().nullable().optional().default(''),
+  image: z.string().nullable().optional().default(''),
   can_visited: z.boolean().default(false),
   need_approval: z.boolean().default(false),
   type_approval: z.number().default(0),
   can_signout: z.boolean().default(false),
   auto_signout: z.boolean().default(false),
-  signout_time: z.string().default(''),
+  signout_time: z.string().nullable().optional().default(''),
   timezone: z.string().default(''),
   map_link: z.string().default(''),
   can_contactless_login: z.boolean().default(false),
@@ -136,6 +137,13 @@ export const CreateSiteRequestSchema = z.object({
 // export const EditSiteRequestSchema = CreateSiteRequestSchema.extend({
 //   id: z.string(),
 // });
+
+export const CreateSiteAccessSchema = z.object({
+  sort: z.number().optional().default(0),
+  site_id: z.string(),
+  access_control_id: z.string(),
+  early_access: z.boolean().optional().default(false),
+});
 
 export const CreateSiteParkingSchema = z.object({
   sort: z.number().optional().default(0),
@@ -167,6 +175,14 @@ export const UpdateSiteTrackingSchema = z.object({
   early_access: z.boolean().optional().default(false),
 });
 
+export const UpdateSiteAccessSchema = z.object({
+  id: z.string(),
+  sort: z.number().optional().default(0),
+  site_id: z.string(),
+  access_control_id: z.string(),
+  early_access: z.boolean().optional().default(false),
+});
+
 export interface UpdateSiteTrackingResponse {
   status: string;
   status_code: number;
@@ -183,11 +199,22 @@ export interface UpdateSiteParkingResponse {
   collection: Item | null;
 }
 
+export interface UpdateSiteAccessResponse {
+  status: string;
+  status_code: number;
+  title: string;
+  msg: string;
+  collection: Item | null;
+}
+
 export type UpdateSiteParkingRequest = z.infer<typeof UpdateSiteParkingSchema>;
 export type UpdateSiteTrackingRequest = z.infer<typeof UpdateSiteTrackingSchema>;
 
+export type UpdateSiteAccessRequest = z.infer<typeof UpdateSiteAccessSchema>;
+
 export type CreateSiteParkingRequest = z.infer<typeof CreateSiteParkingSchema>;
 export type CreateSiteTrackingRequest = z.infer<typeof CreateSiteTrackingSchema>;
+export type CreateSiteAccessRequest = z.infer<typeof CreateSiteAccessSchema>;
 
 export type CreateSiteRequest = z.infer<typeof CreateSiteRequestSchema>;
 
@@ -213,8 +240,8 @@ export interface UploadImageSiteResponse {
 export const UpdateSiteRequestSchema = z.object({
   type: z.number().default(0),
   name: z.string().default(''),
-  description: z.string().default(''),
-  image: z.string().default(''),
+  description: z.string().nullable().optional().default(''),
+  image: z.string().nullable().optional().default(''),
   can_visited: z.boolean().default(false),
   need_approval: z.boolean().default(false),
   type_approval: z.number().default(0),

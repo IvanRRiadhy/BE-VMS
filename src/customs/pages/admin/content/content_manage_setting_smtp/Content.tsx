@@ -22,7 +22,7 @@ import {
   CreateSettingSmtpSchema,
   Item,
   ItemEmail,
-} from 'src/customs/api/models/SettingSmtp';
+} from 'src/customs/api/models/Admin/SettingSmtp';
 import {
   createEmail,
   createSmtp,

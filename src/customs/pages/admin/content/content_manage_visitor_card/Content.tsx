@@ -34,7 +34,7 @@ import {
   CreateVisitorCardRequest,
   CreateVisitorCardRequestSchema,
   Item,
-} from 'src/customs/api/models/VisitorCard';
+} from 'src/customs/api/models/Admin/VisitorCard';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { useRef } from 'react';
 import {
@@ -84,7 +84,7 @@ const Content = () => {
   const { token } = useSession();
 
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -192,7 +192,9 @@ const Content = () => {
           setTableVisitorCard(mapped);
           setIsDataReady(true);
           const activeCount = res.collection.filter((item: any) => item.card_status === 1).length;
-          const nonActiveCount = res.collection.filter((item: any) => item.card_status === 0).length;
+          const nonActiveCount = res.collection.filter(
+            (item: any) => item.card_status === 0,
+          ).length;
           const isUsedCount = res.collection.filter((item: any) => item.is_used === true).length;
           const isUnusedCount = res.collection.filter((item: any) => item.is_used === false).length;
 

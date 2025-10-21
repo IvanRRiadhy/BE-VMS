@@ -14,8 +14,8 @@ import React, { useEffect, useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { getAllEmployee, updateDistrict } from 'src/customs/api/admin';
-import { Item } from 'src/customs/api/models/Department';
-import { CreateDistrictSubmitSchema } from 'src/customs/api/models/District';
+import { Item } from 'src/customs/api/models/Admin/Department';
+import { CreateDistrictSubmitSchema } from 'src/customs/api/models/Admin/District';
 import { useSession } from 'src/customs/contexts/SessionContext';
 
 interface FormUpdateDistrictProps {

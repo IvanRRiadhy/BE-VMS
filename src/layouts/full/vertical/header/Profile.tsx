@@ -1,16 +1,29 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import React, { useState } from 'react';
-import { Box, Menu, Avatar, Typography, IconButton, Stack, Tooltip, Fab } from '@mui/material';
+import React, { useEffect, useState } from 'react';
+import {
+  Box,
+  Menu,
+  Avatar,
+  Typography,
+  IconButton,
+  Stack,
+  Tooltip,
+  Fab,
+  Button,
+} from '@mui/material';
 import { IconMail, IconPower } from '@tabler/icons-react';
 import ProfileImg from 'src/assets/images/profile/user-1.jpg';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCallback } from 'react';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { clear } from 'console';
+import axiosInstance from 'src/customs/api/interceptor';
+import { getProfile } from 'src/customs/api/users';
 const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState<null | HTMLElement>(null);
   const navigate = useNavigate();
+  const [data, setData] = useState<any>({});
 
   const handleClick2 = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl2(event.currentTarget);
@@ -31,6 +44,19 @@ const Profile = () => {
       navigate('/', { replace: true });
     }, 200); //
   }, [navigate, clearToken]);
+
+  useEffect(() => {
+    if (!token) return;
+
+    const fetchData = async () => {
+      const res = await getProfile(token);
+      setData(res?.collection || {});
+    };
+
+    fetchData();
+  }, [token]);
+
+  const profileUrl = getProfilePathByRole(data.group_name);
 
   return (
     <Box>
@@ -80,13 +106,13 @@ const Profile = () => {
               sx={{ fontSize: '0.8rem' }}
               variant="subtitle2"
               color="textPrimary"
-              fontWeight={500}
+              fontWeight={600}
             >
-              Mathew Anderson
+              {data.fullname || 'John Does'}
             </Typography>
-            <Typography sx={{ fontSize: '0.8rem' }} variant="subtitle2" color="textSecondary">
+            {/* <Typography sx={{ fontSize: '0.8rem' }} variant="subtitle2" color="textSecondary">
               Designer
-            </Typography>
+            </Typography> */}
             <Typography
               sx={{ fontSize: '0.8rem' }}
               variant="subtitle2"
@@ -95,14 +121,19 @@ const Profile = () => {
               alignItems="center"
               gap={1}
             >
-              <IconMail width={15} height={15} />
-              info@modernize.com
+              {/* <IconMail width={15} height={15} /> */}
+              {data.email || 'morV0@example.com'}
             </Typography>
+            <Link to={profileUrl} onClick={handleClose2}>
+              <Typography variant="body2" mt={0.5} color="primary">
+                Edit Profile
+              </Typography>
+            </Link>
           </Box>
 
           <Tooltip title="Log out">
             <Fab size="small" color="error" onClick={handleLogout}>
-              <IconPower width={16} />
+              <IconPower width={18} />
             </Fab>
           </Tooltip>
         </Stack>
@@ -112,3 +143,17 @@ const Profile = () => {
 };
 
 export default Profile;
+
+export const getProfilePathByRole = (groupName?: string): string => {
+  if (!groupName) return '/profile';
+
+  const lower = groupName.toLowerCase();
+
+  if (lower.includes('admin')) return '/admin/profile';
+  if (lower.includes('manager')) return '/manager/profile';
+  if (lower.includes('employee')) return '/employee/profile';
+  if (lower.includes('operator')) return '/operator/profile';
+  if (lower.includes('visitor') || lower.includes('guest')) return '/guest/profile';
+
+  return '/profile';
+};

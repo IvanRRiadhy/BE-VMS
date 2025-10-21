@@ -14,7 +14,7 @@ import React, { useEffect, useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { updateDepartment, getAllEmployee } from 'src/customs/api/admin';
-import { Item, CreateDepartementSubmitSchema } from 'src/customs/api/models/Department';
+import { Item, CreateDepartementSubmitSchema } from 'src/customs/api/models/Admin/Department';
 import { useSession } from 'src/customs/contexts/SessionContext';
 
 interface FormUpdateDepartmentProps {

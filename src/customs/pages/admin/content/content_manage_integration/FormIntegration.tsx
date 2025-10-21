@@ -25,7 +25,7 @@ import {
   CreateIntegrationRequest,
   CreateIntegrationRequestSchema,
   IntegrationType,
-} from 'src/customs/api/models/Integration';
+} from 'src/customs/api/models/Admin/Integration';
 import { createIntegration, updateIntegration } from 'src/customs/api/admin';
 
 interface FormIntegrationProps {

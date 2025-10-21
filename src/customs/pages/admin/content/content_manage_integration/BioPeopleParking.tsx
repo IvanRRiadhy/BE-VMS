@@ -52,33 +52,8 @@ import {
   Item,
   UpdateDepartmentTrackingRequest,
   UpdateOrganizationTrackingRequest,
-} from 'src/customs/api/models/Integration';
-import {
-  getAllVisitorType,
-  getCardTracking,
-  getCardTrackingById,
-  getDepartmentTracking,
-  getDepartmentTrackingById,
-  getDistrictTracking,
-  getDistrictTrackingById,
-  getFloor,
-  getFloorById,
-  getFloorPlan,
-  getFloorPlanById,
-  getFloorPlanMaskedArea,
-  getFloorPlanMaskedAreaById,
-  getMemberTracking,
-  getMemberTrackingById,
-  getOrganizationTracking,
-  getOrganizationTrackingById,
-  getTrackingTransaction,
-  getVisitorTracking,
-  syncTrackingBleIntegration,
-  updateCardTracking,
-  updateDepartmentTracking,
-  updateDistrictTracking,
-  updateOrganizationTracking,
-} from 'src/customs/api/admin';
+} from 'src/customs/api/models/Admin/Integration';
+import { getAllVisitorType } from 'src/customs/api/admin';
 import {
   getAreaParking,
   getAreaParkingById,

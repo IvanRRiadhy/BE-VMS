@@ -12,8 +12,12 @@ import {
   Tab,
   IconButton,
   InputAdornment,
+  CardActions,
 } from '@mui/material';
 import { useSearchParams } from 'react-router-dom';
+
+import { useDispatch } from 'react-redux';
+import { setUser } from '../../../store/apps/user/userSlice';
 
 import PageContainer from 'src/components/container/PageContainer';
 import Logo from 'src/customs/components/logo/Logo';
@@ -30,6 +34,7 @@ import { GroupRoleId } from 'src/constant/GroupRoleId';
 const Login2 = () => {
   const { isAuthenticated } = useAuth();
   const { saveToken } = useSession();
+  const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
@@ -52,18 +57,12 @@ const Login2 = () => {
   const [tab, setTab] = useState(0);
 
   // useEffect(() => {
-  //   if (isAuthenticated) {
-  //     navigate('/admin/dashboard');
+  //   if (error === true) {
+  //     setTimeout(() => {
+  //       setError(false);
+  //     }, 2000);
   //   }
-  // }, [isAuthenticated, navigate]);
-
-  useEffect(() => {
-    if (error === true) {
-      setTimeout(() => {
-        setError(false);
-      }, 2000);
-    }
-  }, [error]);
+  // }, [error]);
 
   // Handle captcha change (token received)
   const onCaptchaChange = (token: string | null) => {
@@ -76,20 +75,32 @@ const Login2 = () => {
     e.preventDefault();
     setLoading(true);
 
-    if (!captchaToken) {
-      setCaptchaError(true);
-      setLoading(false);
-      return;
-    }
+    // if (!captchaToken) {
+    //   setCaptchaError(true);
+    //   setLoading(false);
+    //   return;
+    // }
 
-    const body = { username, password, captchaToken };
+    // const body = { username, password, captchaToken };
+
+    const body = { username, password };
 
     try {
       const response = await login(body);
       recaptchaRef.current?.reset();
 
-      const { token, group_id } = response.collection;
+      // const { token, group_id } = response.collection;
+      const { token, group_id, employee_id, username: userName } = response.collection;
       saveToken(token, group_id);
+
+      dispatch(
+        setUser({
+          // token,
+          // group_id,
+          employee_id,
+          // username: userName,
+        }),
+      );
 
       console.log('✅ Login success:', group_id);
 
@@ -98,7 +109,6 @@ const Login2 = () => {
       else if (group_id.toUpperCase() === GroupRoleId.Employee) navigate('/employee/dashboard');
       else if (group_id.toUpperCase() === GroupRoleId.OperatorVMS) navigate('/operator/dashboard');
       else if (group_id.toUpperCase() === GroupRoleId.Visitor) navigate('/visitor/dashboard');
-      else navigate('/');
     } catch (err) {
       setTimeout(() => {
         if (err instanceof AxiosError && err.response) {
@@ -126,7 +136,7 @@ const Login2 = () => {
     try {
       const res = await AuthVisitor({ code: guestCode });
       console.log('Response guest login:', res);
-      setGuestError(false);
+      // setGuestError(false);
 
       if (!res?.collection) {
         setLoading(false);
@@ -136,21 +146,20 @@ const Login2 = () => {
 
       const status = res.status || '';
       console.log('Status:', status);
-
-      setTimeout(() => {
-        setLoading(false);
-
-        if (status.toLowerCase() === 'process') {
-          navigate(`/portal/waiting?code=${guestCode}`);
-        } else if (status === 'fiil_form') {
-          navigate(`/portal/information?code=${guestCode}`);
-        } else {
-          if (res.collection.token) {
-            saveToken(res.collection.token, 'guest');
-          }
-          navigate('/guest/dashboard');
+      // setLoading(false);
+      if (status.toLowerCase() === 'process') {
+        navigate(`/portal/waiting?code=${guestCode}`);
+      } else if (status.toLowerCase() === 'fiil_form') {
+        navigate(`/portal/information?code=${guestCode}`);
+      } else {
+        if (res.collection.token) {
+          saveToken(res.collection.token, 'guest');
         }
-      }, 500);
+        navigate('/guest/dashboard');
+      }
+      // setTimeout(() => {
+
+      // }, 500);
     } catch (err) {
       console.error('Guest login gagal:', err);
       setGuestError(true);
@@ -182,20 +191,25 @@ const Login2 = () => {
                 display="flex"
                 justifyContent="center"
                 alignItems="center"
-                size={{ xs: 12, sm: 12, lg: 5, xl: 4 }}
+                size={{ xs: 12, sm: 12, lg: 5, xl: 6 }}
               >
                 <Card
-                  elevation={9}
+                  elevation={8}
                   sx={{
                     p: 4,
                     zIndex: 1,
                     width: '100%',
-                    maxWidth: '450px',
+                    maxWidth: '550px',
                     borderRadius: 3,
                   }}
                 >
                   <Box display="flex" alignItems="center" justifyContent="center" mb={1}>
-                    <Logo />
+                    {/* <Logo /> */}
+                    <img
+                      src="https://upload.wikimedia.org/wikipedia/commons/3/39/BI_Logo.png"
+                      width={250}
+                      height={100}
+                    />
                   </Box>
 
                   {/* Tabs Switch */}
@@ -262,7 +276,7 @@ const Login2 = () => {
                         </Box>
 
                         {/* reCAPTCHA v2 Checkbox (visible) - placed under password as requested */}
-                        {showCaptcha && (
+                        {/* {showCaptcha && (
                           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
                             <ReCAPTCHA
                               ref={recaptchaRef}
@@ -275,7 +289,7 @@ const Login2 = () => {
                           <Typography variant="body2" color="error" textAlign="center">
                             Silakan centang captcha sebelum melanjutkan.
                           </Typography>
-                        )}
+                        )} */}
                       </Stack>
 
                       <Box marginTop={3}>
@@ -324,7 +338,7 @@ const Login2 = () => {
                             error={guestError}
                           />
                         </Box>
-                        {showCaptcha && (
+                        {/* {showCaptcha && (
                           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
                             <ReCAPTCHA
                               ref={recaptchaRef}
@@ -337,7 +351,7 @@ const Login2 = () => {
                           <Typography variant="body2" color="error" textAlign="center">
                             Silakan centang captcha sebelum melanjutkan.
                           </Typography>
-                        )}
+                        )} */}
                       </Stack>
 
                       <Box marginTop={3}>
@@ -398,6 +412,9 @@ const Login2 = () => {
                       Contact Us
                     </Typography>
                   </Box>
+                  {/* <CardActions sx={{ justifyContent: 'center' }}>
+                      <Typography>Support By Bio Experience</Typography>
+                    </CardActions> */}
                 </Card>
               </Grid>
             </Grid>

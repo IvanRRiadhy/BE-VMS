@@ -21,7 +21,7 @@ import {
   Item,
   UpdateAccessControlRequest,
   UpdateAccessControlRequestSchema,
-} from 'src/customs/api/models/AccessControl';
+} from 'src/customs/api/models/Admin/AccessControl';
 import {
   createAccessControl,
   getAccessControlById,
@@ -31,9 +31,9 @@ import {
   getAllIntegration,
   updateAccessControl,
 } from 'src/customs/api/admin';
-import { AccessControlType } from 'src/customs/api/models/AccessControl';
-import { Item as BrandItem } from 'src/customs/api/models/Brand';
-import { Item as Integrationitem } from 'src/customs/api/models/Integration';
+import { AccessControlType } from 'src/customs/api/models/Admin/AccessControl';
+import { Item as BrandItem } from 'src/customs/api/models/Admin/Brand';
+import { Item as Integrationitem } from 'src/customs/api/models/Admin/Integration';
 import { showSuccessAlert } from 'src/customs/components/alerts/alerts';
 type AccessControlFormData = {
   brand_id: string;

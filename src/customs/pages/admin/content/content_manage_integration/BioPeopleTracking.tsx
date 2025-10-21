@@ -46,7 +46,7 @@ import {
   Item,
   UpdateDepartmentTrackingRequest,
   UpdateOrganizationTrackingRequest,
-} from 'src/customs/api/models/Integration';
+} from 'src/customs/api/models/Admin/Integration';
 import {
   getAccessCCTV,
   getAccessCCTVById,

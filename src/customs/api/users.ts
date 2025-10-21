@@ -10,8 +10,10 @@ import {
   RevokeTokenResponse,
 } from './models/Users';
 import axiosInstance from './interceptor';
+import { GetProfileResponse } from './models/profile';
 
-const url: string = `http://${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api`;
+ const url: string = `http://${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api`;
+// const url: string = `https://raw-rap-derby-puzzles.trycloudflare.com/api`;
 export const login = async (body: LoginRequest): Promise<LoginResponse> => {
   try {
     const response = await axios.post<LoginResponse>(`${url}/_Auth/RequestToken`, body, {
@@ -71,6 +73,20 @@ export const revokeToken = async (token: string): Promise<RevokeTokenResponse> =
     });
     return response.data;
   } catch (error) {
+    throw error;
+  }
+};
+
+export const getProfile = async (token: string): Promise<GetProfileResponse> => {
+  try {
+    const response = await axiosInstance.get('/profile/me', {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data;
+    }
     throw error;
   }
 };

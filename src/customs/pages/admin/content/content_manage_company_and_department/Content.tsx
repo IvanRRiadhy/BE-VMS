@@ -44,12 +44,12 @@ import {
   CreateDepartmentRequest,
   CreateDepartmentSchema,
   Item,
-} from 'src/customs/api/models/Department';
-import { CreateDistrictRequest, CreateDistrictSchema } from 'src/customs/api/models/District';
+} from 'src/customs/api/models/Admin/Department';
+import { CreateDistrictRequest, CreateDistrictSchema } from 'src/customs/api/models/Admin/District';
 import {
   CreateOrganizationRequest,
   CreateOrganizationSchema,
-} from 'src/customs/api/models/Organization';
+} from 'src/customs/api/models/Admin/Organization';
 
 import { IconBuilding, IconBuildingSkyscraper, IconMapPins } from '@tabler/icons-react';
 import {
@@ -120,7 +120,7 @@ const Content = () => {
   const [isDataReady, setIsDataReady] = useState(false);
   const [totalRecords, setTotalRecords] = useState(0);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [sortDir, setSortDir] = useState<string>('desc');
   const [loading, setLoading] = useState(false);
@@ -168,10 +168,12 @@ const Content = () => {
         if (response) {
           // Map host id -> employee name (kalau ada)
           const employees = await getAllEmployee(token);
-          const employeeMap = employees.collection.reduce((acc: any, emp: any) => {
-            acc[emp.id] = emp.name;
-            return acc;
-          }, {});
+          const employeeMap = Array.isArray(employees?.collection)
+            ? employees.collection.reduce((acc: any, emp: any) => {
+                acc[emp.id] = emp.name;
+                return acc;
+              }, {})
+            : {};
 
           const mapped = (response.collection ?? []).map((item: any) => ({
             id: item.id,
@@ -484,7 +486,7 @@ const Content = () => {
                     isHaveChecked
                     isHaveAction
                     isActionVisitor={false}
-                    isHaveSearch  
+                    isHaveSearch
                     isHaveFilter={false}
                     isHaveExportPdf={false}
                     isHaveExportXlf={false}

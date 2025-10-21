@@ -12,7 +12,7 @@ import {
   Paper,
   Divider,
 } from '@mui/material';
-import { Item } from 'src/customs/api/models/SettingSmtp';
+import { Item } from 'src/customs/api/models/Admin/SettingSmtp';
 import { IconSend } from '@tabler/icons-react';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
@@ -52,7 +52,6 @@ const FormSettingSmtp: React.FC<FormSettingSmtpProps> = ({
 
   return (
     <Paper sx={{ display: 'flex', minHeight: 400, marginTop: 2 }}>
-
       {/* Form Content */}
       <form
         onSubmit={handleSubmit}

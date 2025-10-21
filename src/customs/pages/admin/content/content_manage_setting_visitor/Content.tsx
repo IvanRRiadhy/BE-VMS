@@ -21,7 +21,7 @@ import { IconBrandGmail, IconSettingsFilled } from '@tabler/icons-react';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { Item } from 'src/customs/api/models/Setting';
+import { Item } from 'src/customs/api/models/Admin/Setting';
 import {
   createEmail,
   createSmtp,

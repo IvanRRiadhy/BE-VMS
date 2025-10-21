@@ -31,7 +31,7 @@ import {
   CreateIntegrationRequestSchema,
   CreateIntegrationRequest,
   apiKeyFieldMap,
-} from 'src/customs/api/models/Integration';
+} from 'src/customs/api/models/Admin/Integration';
 import { useTheme } from '@mui/material/styles';
 import FormIntegration from './FormIntegration';
 import { IconWorldCog } from '@tabler/icons-react';
@@ -64,7 +64,7 @@ const Content = () => {
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');

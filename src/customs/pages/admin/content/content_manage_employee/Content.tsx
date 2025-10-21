@@ -22,7 +22,7 @@ import {
   CreateEmployeeRequest,
   CreateEmployeeRequestSchema,
   Item,
-} from 'src/customs/api/models/Employee';
+} from 'src/customs/api/models/Admin/Employee';
 import {
   getAllDepartmentsPagination,
   getAllDistrictsPagination,
@@ -82,7 +82,7 @@ const Content = () => {
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);

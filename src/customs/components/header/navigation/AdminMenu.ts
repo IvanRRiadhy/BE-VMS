@@ -19,6 +19,11 @@ import {
   IconCalendarCheck,
   IconSettingsFilled,
   IconCheck,
+  IconMail,
+  IconCar,
+  IconHistory,
+  IconFile,
+  IconAlarm,
 } from '@tabler/icons-react';
 import { uniqueId } from 'lodash';
 import { ItemDataCustomNavListing } from './CustomNavListing';
@@ -70,6 +75,12 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
       //   icon: IconIdBadge2,
       //   href: '/admin/manage/group-card-access',
       // },
+      {
+        id: uniqueId(),
+        title: 'Scheduler',
+        icon: IconCalendarCheck,
+        href: '/admin/manage/scheduler',
+      },
       {
         id: uniqueId(),
         title: 'navigation.timezone',
@@ -145,6 +156,20 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
     icon: IconSettingsFilled,
     chipColor: 'secondary',
     href: '/admin/settings',
+  },
+  {
+    id: uniqueId(),
+    title: 'User',
+    icon: IconUsers,
+    chipColor: 'secondary',
+    href: '/admin/user',
+  },
+  {
+    id: uniqueId(),
+    title: 'Report',
+    icon: IconUsers,
+    chipColor: 'secondary',
+    href: '/admin/report',
   },
 
   // {
@@ -236,6 +261,12 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
       // },
       {
         id: uniqueId(),
+        title: 'Scheduler',
+        icon: IconCalendarCheck,
+        href: '/admin/manage/scheduler',
+      },
+      {
+        id: uniqueId(),
         title: 'navigation.timezone',
         icon: IconCalendarCheck,
         href: '/admin/manage/timezone',
@@ -310,6 +341,20 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
     chipColor: 'secondary',
     href: '/admin/settings',
   },
+  {
+    id: uniqueId(),
+    title: 'User',
+    icon: IconUsers,
+    chipColor: 'secondary',
+    href: '/admin/user',
+  },
+  {
+    id: uniqueId(),
+    title: 'Report',
+    icon: IconFile,
+    chipColor: 'secondary',
+    href: '/admin/report',
+  },
 
   // {
   //   id: uniqueId(),
@@ -362,10 +407,45 @@ export const EmployeeNavListingData: ItemDataCustomNavListing[] = [
   },
   {
     id: uniqueId(),
+    title: 'Invitation',
+    icon: IconMail,
+    chipColor: 'secondary',
+    href: '/employee/invitation',
+  },
+  {
+    id: uniqueId(),
     title: 'Approval',
     icon: IconCheck,
     chipColor: 'secondary',
     href: '/employee/approval',
+  },
+  {
+    id: uniqueId(),
+    title: 'Visitor',
+    icon: IconUsers,
+    chipColor: 'secondary',
+    href: '/employee/visitor',
+  },
+  {
+    id: uniqueId(),
+    title: 'Report',
+    icon: IconFile,
+    chipColor: 'secondary',
+    href: '/employee/report',
+  },
+  {
+    id: uniqueId(),
+    title: 'Parking',
+    icon: IconCar,
+    chipColor: 'secondary',
+    href: '/employee/parking',
+  },
+  {
+    id: uniqueId(),
+    title: 'History',
+    icon: IconHistory,
+    chipColor: 'secondary',
+    href: '/employee/history',
   },
 ];
 
@@ -384,10 +464,45 @@ export const EmployeeCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
   },
   {
     id: uniqueId(),
+    title: 'Invitation',
+    icon: IconMail,
+    chipColor: 'secondary',
+    href: '/employee/invitation',
+  },
+  {
+    id: uniqueId(),
     title: 'Approval',
     icon: IconCheck,
     chipColor: 'secondary',
     href: '/employee/approval',
+  },
+  {
+    id: uniqueId(),
+    title: 'Visitor',
+    icon: IconUsers,
+    chipColor: 'secondary',
+    href: '/employee/visitor',
+  },
+  {
+    id: uniqueId(),
+    title: 'Report',
+    icon: IconFile,
+    chipColor: 'secondary',
+    href: '/employee/report',
+  },
+  {
+    id: uniqueId(),
+    title: 'Parking',
+    icon: IconCar,
+    chipColor: 'secondary',
+    href: '/employee/parking',
+  },
+  {
+    id: uniqueId(),
+    title: 'History',
+    icon: IconHistory,
+    chipColor: 'secondary',
+    href: '/employee/history',
   },
 ];
 
@@ -398,6 +513,49 @@ export const ManagerNavListingData: ItemDataCustomNavListing[] = [
     title: 'Dashboard',
     icon: IconHome,
     href: '/manager/dashboard',
+  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Invitation',
+  //   icon: IconMail,
+  //   chipColor: 'secondary',
+  //   href: '/manager/invitation',
+  // },
+  {
+    id: uniqueId(),
+    title: 'Approval',
+    icon: IconCheck,
+    chipColor: 'secondary',
+    href: '/manager/approval',
+  },
+  {
+    id: uniqueId(),
+    title: 'Visitor',
+    icon: IconUsers,
+    chipColor: 'secondary',
+    href: '/manager/visitor',
+  },
+
+  {
+    id: uniqueId(),
+    title: 'Report',
+    icon: IconFile,
+    chipColor: 'secondary',
+    href: '/manager/report',
+  },
+  {
+    id: uniqueId(),
+    title: 'Parking',
+    icon: IconCar,
+    chipColor: 'secondary',
+    href: '/manager/parking',
+  },
+  {
+    id: uniqueId(),
+    title: 'History',
+    icon: IconHistory,
+    chipColor: 'secondary',
+    href: '/manager/history',
   },
 ];
 
@@ -410,9 +568,49 @@ export const ManagerCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
     id: uniqueId(),
     title: 'Dashboard',
     icon: IconHome,
-    chip: 'Main View',
-    chipColor: 'secondary',
     href: '/manager/dashboard',
+  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Invitation',
+  //   icon: IconMail,
+  //   chipColor: 'secondary',
+  //   href: '/manager/invitation',
+  // },
+  {
+    id: uniqueId(),
+    title: 'Approval',
+    icon: IconCheck,
+    chipColor: 'secondary',
+    href: '/manager/approval',
+  },
+  {
+    id: uniqueId(),
+    title: 'Visitor',
+    icon: IconUsers,
+    chipColor: 'secondary',
+    href: '/manager/visitor',
+  },
+  {
+    id: uniqueId(),
+    title: 'Report',
+    icon: IconFile,
+    chipColor: 'secondary',
+    href: '/manager/report',
+  },
+  {
+    id: uniqueId(),
+    title: 'Parking',
+    icon: IconCar,
+    chipColor: 'secondary',
+    href: '/manager/parking',
+  },
+  {
+    id: uniqueId(),
+    title: 'History',
+    icon: IconHistory,
+    chipColor: 'secondary',
+    href: '/manager/history',
   },
 ];
 
@@ -426,10 +624,15 @@ export const OperatorNavListingData: ItemDataCustomNavListing[] = [
   },
   {
     id: uniqueId(),
-    title: 'Approval',
-    icon: IconCheck,
-    chipColor: 'secondary',
-    href: '/operator/approval',
+    title: 'Alarm',
+    icon: IconAlarm,
+    href: '/operator/alarm',
+  },
+  {
+    id: uniqueId(),
+    title: 'Operator View',
+    icon: IconAlarm,
+    href: '/operator/view',
   },
 ];
 
@@ -448,9 +651,14 @@ export const OperatorCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
   },
   {
     id: uniqueId(),
-    title: 'Approval',
-    icon: IconCheck,
-    chipColor: 'secondary',
-    href: '/manager/approval',
+    title: 'Alarm',
+    icon: IconAlarm,
+    href: '/operator/alarm',
+  },
+  {
+    id: uniqueId(),
+    title: 'Operator View',
+    icon: IconAlarm,
+    href: '/operator/view',
   },
 ];

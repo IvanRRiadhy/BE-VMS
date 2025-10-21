@@ -21,16 +21,20 @@ export const getInvitation = async (
   token: string,
   start_date?: string,
   end_date?: string,
-  //   site_id?: string,
+  is_praregister_done: boolean = false,
 ): Promise<any> => {
-  const params = {
-    'start-date': start_date,
-    'end-date': end_date,
-    // 'site-id': site_id,
-  };
+  const params: Record<string, string | boolean> = {};
+
+  if (start_date) params['start-date'] = start_date;
+  if (end_date) params['end-date'] = end_date;
+  if (is_praregister_done !== undefined) params['is-praregister-done'] = is_praregister_done;
+
   try {
     const response = await axiosInstance.get('/invitation/invitation-onschedule', {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+      },
       params,
     });
     return response.data;
@@ -41,6 +45,37 @@ export const getInvitation = async (
     throw error;
   }
 };
+
+export const getInvitations = async (
+  token: string,
+  start_date?: string,
+  end_date?: string,
+  // is_praregister_done: boolean = false,
+): Promise<any> => {
+  const params: Record<string, string | boolean> = {};
+
+  if (start_date) params['start-date'] = start_date;
+  if (end_date) params['end-date'] = end_date;
+  // if (is_praregister_done !== undefined) params['is-praregister-done'] = is_praregister_done;
+
+  try {
+    const response = await axiosInstance.get('/invitation/invitation-onschedule', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+      },
+      params,
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data;
+    }
+    throw error;
+  }
+};
+
+
 export type GetInvitationResponse = {
   status: string;
   status_code: number;
@@ -244,6 +279,27 @@ export const createVisitorInvitation = async (
     const response = await axiosInstance.post(`/invitation/send-invitations/${id}`, data, {
       headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
     });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data;
+    }
+    throw error;
+  }
+};
+
+export const submitPraFormEmployee = async (token: string, id: string, data: any): Promise<any> => {
+  try {
+    const response = await axiosInstance.post(
+      `/invitation/submit/pra-form?id=${id}`, // ✅ pakai query param
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+        },
+      },
+    );
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 400) {

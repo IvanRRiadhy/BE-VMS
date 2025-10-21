@@ -46,11 +46,12 @@ import {
   IconDownload,
   IconLogin,
   IconLogout,
+  IconQrcode,
   IconUserPlus,
   IconUsersGroup,
   IconX,
 } from '@tabler/icons-react';
-import { Item as AccessPassType } from 'src/customs/api/models/AccessPass';
+import { Item as AccessPassType } from 'src/customs/api/models/Admin/AccessPass';
 import QRCode from 'react-qr-code';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
@@ -64,55 +65,6 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
-const items = [
-  { icon: <Home />, label: 'Access Pass' },
-  { icon: <Event />, label: 'Invitation' },
-  { icon: <CheckCircle />, label: 'Approval' },
-  { icon: <Report />, label: 'Report' },
-  { icon: <LocalParking />, label: 'Parking' },
-  { icon: <People />, label: 'Visitor' },
-  { icon: <Alarm />, label: 'Alarm' },
-  { icon: <ExitToApp />, label: 'Evacuate' },
-];
-
-const visitors = [
-  {
-    id: 1,
-    name: 'Tommy',
-    date: 'Mon, 11 May 2023',
-    time: '10:00 - 11:00',
-    invitationCode: '729038',
-    groupCode: '678921223',
-    vehicle: 'B 1234 CC',
-    slot: 'Slot A1',
-    building: 'Gedung HQ',
-    qr: 'https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg',
-  },
-  {
-    id: 2,
-    name: 'Sarah',
-    date: 'Tue, 12 May 2023',
-    time: '14:00 - 15:00',
-    invitationCode: '998877',
-    groupCode: '445566778',
-    vehicle: 'B 7890 ZZ',
-    slot: 'Slot B2',
-    building: 'Gedung A',
-    qr: 'https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg',
-  },
-  {
-    id: 3,
-    name: 'John',
-    date: 'Wed, 13 May 2023',
-    time: '16:00 - 17:00',
-    invitationCode: '123456',
-    groupCode: '789012345',
-    vehicle: 'B 4567 XX',
-    slot: 'Slot C3',
-    building: 'Gedung B',
-    qr: 'https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg',
-  },
-];
 
 import { addDays } from 'date-fns';
 import Calendar from 'src/customs/components/calendar/Calendar';
@@ -168,13 +120,7 @@ const Dashboard = () => {
       subTitleSetting: 10,
       color: 'none',
     },
-    {
-      title: 'Cancelled',
-      icon: IconBan,
-      subTitle: `0`,
-      subTitleSetting: 10,
-      color: 'none',
-    },
+
     {
       title: 'Denied',
       icon: IconCircleOff,
@@ -182,50 +128,19 @@ const Dashboard = () => {
       subTitleSetting: 10,
       color: 'none',
     },
-  ];
-
-  const tableRowColumn = [
     {
-      id: 1,
-      Name: 'Andi Prasetyo',
-      'Visit Time': '2025-06-13T09:00:00',
-      Purpose: 'Meeting',
-      'Purpose Person': 'Bapak Joko',
-    },
-    {
-      id: 2,
-      Name: 'Siti Aminah',
-      'Visit Time': '2025-06-13T10:30:00',
-      Purpose: 'Interview',
-      'Purpose Person': 'Ibu Rina',
-    },
-    {
-      id: 3,
-      Name: 'Budi Santoso',
-      'Visit Time': '2025-06-13T11:15:00',
-      Purpose: 'Pengantaran Dokumen',
-      'Purpose Person': 'Pak Dedi',
-    },
-    {
-      id: 4,
-      Name: 'Rina Marlina',
-      'Visit Time': '2025-06-13T13:45:00',
-      Purpose: 'Audit',
-      'Purpose Person': 'Bu Intan',
-    },
-    {
-      id: 5,
-      Name: 'Fajar Nugroho',
-      'Visit Time': '2025-06-13T15:00:00',
-      Purpose: 'Maintenance',
-      'purpose Person': 'Pak Wahyu',
+      title: 'Block',
+      icon: IconBan,
+      subTitle: `0`,
+      subTitleSetting: 10,
+      color: 'none',
     },
   ];
 
   const { token } = useSession();
 
   const [activeVisitData, setActiveVisitData] = useState<any[]>([]);
-    const [activeAccessPass, setActiveAccessPass] = useState<AccessPassType>();
+  const [activeAccessPass, setActiveAccessPass] = useState<AccessPassType>();
 
   useEffect(() => {
     if (!token) return;
@@ -260,72 +175,46 @@ const Dashboard = () => {
   const handleClose = () => setAnchorEl(null);
   const open = Boolean(anchorEl);
 
-    const formatVisitorPeriodWithTZ = (
-      startUtc: string | null | undefined,
-      endUtc: string | null | undefined,
-      tz: string | null | undefined,
-      locale: string = 'en-US',
-    ): string => {
-      if (!startUtc || !endUtc) return '-';
+  const formatVisitorPeriodWithTZ = (
+    startUtc: string | null | undefined,
+    endUtc: string | null | undefined,
+    tz: string | null | undefined,
+    locale: string = 'en-US',
+  ): string => {
+    if (!startUtc || !endUtc) return '-';
 
-      try {
-        const start = new Date(startUtc);
-        const end = new Date(endUtc);
+    try {
+      const start = new Date(startUtc);
+      const end = new Date(endUtc);
 
-        const dateFormatter = new Intl.DateTimeFormat(locale, {
-          weekday: 'short',
-          day: '2-digit',
-          month: 'short',
-          year: 'numeric',
-          timeZone: tz ?? 'UTC',
-        });
+      const dateFormatter = new Intl.DateTimeFormat(locale, {
+        weekday: 'short',
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        timeZone: tz ?? 'UTC',
+      });
 
-        const timeFormatter = new Intl.DateTimeFormat(locale, {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false,
-          timeZone: tz ?? 'UTC',
-        });
+      const timeFormatter = new Intl.DateTimeFormat(locale, {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        timeZone: tz ?? 'UTC',
+      });
 
-        const datePart = dateFormatter.format(start); // e.g. "Thu, 09 Oct 2025"
-        const startTime = timeFormatter.format(start); // e.g. "17:00"
-        const endTime = timeFormatter.format(end); // e.g. "18:00"
+      const datePart = dateFormatter.format(start); // e.g. "Thu, 09 Oct 2025"
+      const startTime = timeFormatter.format(start); // e.g. "17:00"
+      const endTime = timeFormatter.format(end); // e.g. "18:00"
 
-        return `${datePart} | ${startTime} - ${endTime}`;
-      } catch {
-        return '-';
-      }
-    };
+      return `${datePart} | ${startTime} - ${endTime}`;
+    } catch {
+      return '-';
+    }
+  };
 
   return (
     <PageContainer title="Dashboard">
-      <Grid container spacing={2} sx={{ mt: 0 }}>
-        {/* <Grid
-          size={{ xs: 12, lg: 12 }}
-          display="flex"
-          justifyContent="flex-end"
-          alignItems="center"
-          gap={2}
-        >
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DatePicker
-              label="Start date"
-              value={startDate}
-              onChange={(newValue) => setStartDate(newValue)}
-              slotProps={{ textField: { size: 'small', sx: { width: 140 } } }}
-            />
-            <DatePicker
-              label="End date"
-              value={endDate}
-              onChange={(newValue) => setEndDate(newValue)}
-              slotProps={{ textField: { size: 'small', sx: { width: 140 } } }}
-            />
-          </LocalizationProvider>
-
-          <Button size="small" variant="contained" color="error" startIcon={<IconDownload />}>
-            Export
-          </Button>
-        </Grid> */}
+      <Grid container spacing={2} sx={{ mt: 0 }} alignItems={'stretch'}>
         <Grid
           size={{ xs: 12, lg: 12 }}
           display="flex"
@@ -366,125 +255,49 @@ const Dashboard = () => {
             />
           </Drawer>
         </Grid>
-        <Grid size={{ xs: 12, lg: 12 }}>
+        <Grid size={{ xs: 12, lg: 9 }}>
           <TopCard items={cards} size={{ xs: 12, lg: 3 }} />
         </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, md: 4 }} sx={{ padding: 0 }}>
-          <Typography variant="h6" sx={{ mb: 0 }}>
-            Access Pass
-          </Typography>
+        <Grid
+          size={{ xs: 12, md: 3 }}
+          sx={{
+            padding: 0,
+            background: 'white',
+            display: 'flex',
+            justifyContent: 'center',
+            flexDirection: 'column',
+            alignItems: 'center',
+            borderRadius: 2,
+          }}
+        >
           <Card
-            sx={{ borderRadius: 2, boxShadow: 3, mt: 1, cursor: 'pointer', padding: 0 }}
+            sx={{ mb: 0, pt: 0 }}
             onClick={handleOpenAccess}
-          >
-            <CardContent sx={{ display: 'flex', justifyContent: 'center', padding: 1 }}>
-              <Box
-                display="flex"
-                justifyContent="center"
-                mt={1}
-                mb={1}
-                flexDirection="column"
-                alignItems="center"
-              >
-                <Box
-                  sx={{
-                    display: 'inline-block',
-                    borderRadius: 2,
-                    padding: 3,
-                    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.2)',
-                    backgroundColor: 'white', // biar kontras
-                  }}
-                >
-                  <QRCode
-                    value={activeAccessPass?.visitor_number || ''}
-                    size={180}
-                    style={{
-                      height: 'auto',
-                      width: '180px',
-                      borderRadius: 8,
-                    }}
-                  />
-                </Box>
-
-                <Typography variant="body2" mb={1} mt={2}>
-                  Show this while visiting
-                </Typography>
-                <Typography variant="h6" color="primary">
-                  {activeAccessPass?.visitor_code}
-                </Typography>
-              </Box>
-            </CardContent>
-
-            <CardActions
-              sx={{
-                width: '100%', // biar penuh
-                display: 'flex',
-                justifyContent: 'center',
-                bgcolor: 'grey.50',
-                borderTop: '1px solid #eee',
-              }}
-            >
-              {/* <Box
-                sx={{
-                  bgcolor: 'grey.50',
-                  borderTop: '1px solid #eee',
-                  py: 1,
-                  px: 2,
-                  textAlign: 'center',
-                }}
-              > */}
-              <Typography variant="caption" color="text.secondary" fontWeight={500}>
-                Tap to view your Access Pass
-              </Typography>
-              {/* </Box> */}
-            </CardActions>
-          </Card>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 4 }} sx={{ display: 'flex', flexDirection: 'column' }}>
-          <Typography variant="h6" sx={{ mb: 0 }}>
-            Access Number
-          </Typography>
-          <Card
-            sx={{
-              borderRadius: 2,
-              boxShadow: 3,
-              mt: 1,
+            style={{
               cursor: 'pointer',
-              padding: 0,
-              height: '100%', // biar ikut tinggi Grid
               display: 'flex',
-              flexDirection: 'column',
               justifyContent: 'center',
+              alignItems: 'center',
+              gap: 2,
+              flexDirection: 'column',
             }}
-            onClick={handleOpenAccess}
           >
-            <CardContent
-              sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                flexDirection: 'column',
-                alignItems: 'center',
-                height: '100%', // biar konten stretch
-                padding: 2,
+            <Typography variant="h6" sx={{ mb: 0.5 }}>
+              Access Pass
+            </Typography>
+            <QRCode
+              value={activeAccessPass?.visitor_number || ''}
+              size={40}
+              style={{
+                height: 'auto',
+                width: '80px',
+                // borderRadius: 8,
               }}
-            >
-              <Typography variant="body1" fontWeight={500}>
-                Number Of Visitor
-              </Typography>
-              <Typography variant="h4" mt={3}>
-                {activeAccessPass?.visitor_number}
-              </Typography>
-            </CardContent>
+            />
           </Card>
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-          <Typography variant="h6" sx={{ mb: 0 }}>
-            Status Visitor
-          </Typography>
-          <VisitorStatusPieChart />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6 }}>
+
+        <Grid size={{ xs: 12, lg: 8 }}>
           {/* <Typography variant="h6" sx={{ mb: 1 }}>
             Active Visit
           </Typography> */}
@@ -522,43 +335,8 @@ const Dashboard = () => {
             // onCheckedChange={(selected) => console.log('Checked:', selected)}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          {/* <Typography variant="h6" sx={{ mb: 1 }}>
-            Extended Request
-          </Typography> */}
-          <DynamicTable
-            height={420}
-            isHavePagination
-            overflowX={'auto'}
-            data={tableRowColumn}
-            isHaveChecked={false}
-            isHaveAction={false}
-            isHaveSearch={false}
-            isHaveFilter={false}
-            isHaveExportPdf={false}
-            isHaveExportXlf={false}
-            isHaveHeaderTitle={true}
-            titleHeader="Extended Request"
-            // defaultRowsPerPage={rowsPerPage}
-            rowsPerPageOptions={[5, 10, 20, 50, 100]}
-            // onPaginationChange={(page, rowsPerPage) => {
-            //   setPage(page);
-            //   setRowsPerPage(rowsPerPage);
-            // }}
-            isHaveFilterDuration={false}
-            isHaveAddData={false}
-            isHaveHeader={false}
-            isHaveFilterMore={false}
-            // headerContent={{
-            //   title: 'Dashboard',
-            //   subTitle: 'Monitoring all visitor data',
-            //   items: [{ name: 'department' }, { name: 'employee' }, { name: 'project' }],
-            // }}
-            // onHeaderItemClick={(item) => {
-            //   console.log('Item diklik:', item.name);
-            // }}
-            // onCheckedChange={(selected) => console.log('Checked:', selected)}
-          />
+        <Grid size={{ xs: 12, lg: 4 }}>
+          <VisitorStatusPieChart />
         </Grid>
       </Grid>
 

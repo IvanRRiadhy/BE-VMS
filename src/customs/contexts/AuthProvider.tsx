@@ -10,6 +10,7 @@ interface AuthContextType {
   loading: boolean;
   authType: 'admin' | 'guest' | null;
   user: JwtPayload | null;
+  groupId: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -25,7 +26,7 @@ const isTokenValid = (token: string | null): boolean => {
 };
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const { token, authType, saveToken, clearToken } = useSession();
+  const { token, authType, saveToken, clearToken, groupId } = useSession(); // ✅ ambil groupId
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<JwtPayload | null>(null);
@@ -33,12 +34,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const checkAuth = async () => {
       if (isTokenValid(token)) {
+        const decoded = jwtDecode<JwtPayload>(token!);
+        setUser(decoded);
         setIsAuthenticated(true);
       } else if (token) {
         try {
           const res = await refreshToken({ token });
-          // default ke "admin", tapi bisa kamu adjust sesuai kebutuhan
-          saveToken(res.collection.token, authType ?? 'admin');
+          saveToken(res.collection.token, groupId ?? undefined); 
+          const newDecoded = jwtDecode<JwtPayload>(res.collection.token);
+          setUser(newDecoded);
           setIsAuthenticated(true);
         } catch {
           clearToken();
@@ -53,7 +57,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [token]);
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, loading, authType, user }}>
+    <AuthContext.Provider value={{ isAuthenticated, loading, authType, user, groupId }}>
       {children}
     </AuthContext.Provider>
   );

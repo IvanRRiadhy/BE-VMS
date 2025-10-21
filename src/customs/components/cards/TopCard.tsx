@@ -27,7 +27,7 @@ const TopCard: React.FC<TopCardsProps> = ({ items, onImageClick, cardMarginBotto
   const smSize = 12 / items.length;
 
   return (
-    <Grid2 container spacing={3}>
+    <Grid2 container spacing={3} sx={{ height: '100%', alignItems: 'stretch' }}>
       {items.map((card, index) => {
         const isImage = typeof card.subTitleSetting === 'string';
         const cardColor =
@@ -74,7 +74,16 @@ const TopCard: React.FC<TopCardsProps> = ({ items, onImageClick, cardMarginBotto
                         <Box
                           onClick={() => card.onIconClick?.(card)}
                           sx={{
-                            backgroundColor: '#5c87ff', // ganti warna sesuai tema
+                            backgroundColor:
+                              card.title === 'Check In'
+                                ? '#13DEB9' // hijau
+                                : card.title === 'Check Out'
+                                ? '#F44336' // merah
+                                : card.title === 'Unblock'
+                                ? '#8B0000' // merah tua
+                                : card.title === 'Block'
+                                ? '#000000' // hitam
+                                : '#5c87ff', // default biru
                             borderRadius: '50%',
                             color: '#fff',
                             padding: 1,
@@ -84,7 +93,7 @@ const TopCard: React.FC<TopCardsProps> = ({ items, onImageClick, cardMarginBotto
                             cursor: card.onIconClick ? 'pointer' : 'default',
                           }}
                         >
-                          <card.icon size={24} color="#FFFF" />
+                          <card.icon size={24} color="#fff" />
                         </Box>
                       )}
                       <Box>

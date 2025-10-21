@@ -41,7 +41,7 @@ import {
   SectionPageVisitorType,
   UpdateVisitorTypeRequest,
   updateVisitorTypeSchmea,
-} from 'src/customs/api/models/VisitorType';
+} from 'src/customs/api/models/Admin/VisitorType';
 import { IconTrash } from '@tabler/icons-react';
 import {
   createVisitorType,
@@ -147,7 +147,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
             custom_field_id: field.custom_field_id ?? '',
             multiple_option_fields: matchedField?.multiple_option_fields ?? [],
             visitor_form_type: 1,
-            document_id: field.document_id ?? '',
+            document_id: field.document_id ?? null,
           };
         }),
         pra_form: section.pra_form.map((field) => {
@@ -166,7 +166,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
               ? field.multiple_option_fields
               : matchedField?.multiple_option_fields ?? [],
             visitor_form_type: 0,
-            document_id: field.document_id ?? '',
+            document_id: field.document_id ?? null,
           };
         }),
         checkout_form: section.checkout_form.map((field) => {
@@ -185,7 +185,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
               ? field.multiple_option_fields
               : matchedField?.multiple_option_fields ?? [],
             visitor_form_type: 2,
-            document_id: field.document_id ?? '',
+            document_id: field.document_id ?? null,
           };
         }),
       }));
@@ -209,7 +209,11 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
           id: edittingId,
         });
 
-        await updateVisitorType(token, edittingId, parsedUpdateData);
+        console.log('parsedData', JSON.stringify(parsedUpdateData, null, 2));
+
+        const payload =  await updateVisitorType(token, edittingId, parsedUpdateData);
+
+        console.log('payload', payload);
         setAlertType('success');
         setAlertMessage('Visitor type updated successfully!');
       } else {
@@ -432,24 +436,24 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     }
 
     // whitelist rules
-    const WHITELIST: Record<SectionKey, Record<string, string[]>> = {
-      pra_form: {
-        'Purpose Visit': [
-          'host',
-          'agenda',
-          'site_place',
-          'visitor_period_start',
-          'visitor_period_end',
-        ],
-        default: ['name', 'email', 'phone', 'organization'],
-      },
-      checkout_form: {
-        default: ['visitor_code'],
-      },
-      visit_form: {
-        default: [], // bebas (pakai rules field_type)
-      },
-    };
+    // const WHITELIST: Record<SectionKey, Record<string, string[]>> = {
+    //   pra_form: {
+    //     'Purpose Visit': [
+    //       'host',
+    //       'agenda',
+    //       'site_place',
+    //       'visitor_period_start',
+    //       'visitor_period_end',
+    //     ],
+    //     default: ['name', 'email', 'phone', 'organization'],
+    //   },
+    //   checkout_form: {
+    //     default: ['visitor_code'],
+    //   },
+    //   visit_form: {
+    //     default: [], // bebas (pakai rules field_type)
+    //   },
+    // };
 
     return details.map((item, index) => (
       <TableRow key={index}>
@@ -482,18 +486,18 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
               .filter((field) => {
                 if (!sectionKey) return true;
 
-                const whitelist =
-                  WHITELIST[sectionKey]?.[sectionName ?? ''] ??
-                  WHITELIST[sectionKey]?.default ??
-                  [];
+                // const whitelist =
+                //   WHITELIST[sectionKey]?.[sectionName ?? ''] ??
+                //   WHITELIST[sectionKey]?.default ??
+                //   [];
 
-                if (whitelist.length) {
-                  // Cek baik remarks maupun short_name
-                  return (
-                    whitelist.includes(field.remarks?.toLowerCase()) ||
-                    whitelist.includes(field.short_name?.toLowerCase())
-                  );
-                }
+                // if (whitelist.length) {
+                //   // Cek baik remarks maupun short_name
+                //   return (
+                //     whitelist.includes(field.remarks?.toLowerCase()) ||
+                //     whitelist.includes(field.short_name?.toLowerCase())
+                //   );
+                // }
 
                 // fallback rules lama
                 if (isDocument) return field.field_type >= 10 && field.field_type <= 12;
@@ -1855,10 +1859,13 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                         >
                           Visitor Type Info
                           <Button
-                            onClick={() => setOpenModal(true)}
+                            onClick={(e) => {
+                              e.stopPropagation(); // 🚫 hentikan event agar tidak tembus ke StepLabel
+                              setOpenModal(true);
+                            }}
                             sx={{
                               position: 'absolute',
-                              left:0, // atur jarak nempel kanan teks
+                              left: 0,
                               top: '22%',
                               transform: 'translateY(-50%)',
                               minWidth: 0,
@@ -1976,7 +1983,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
             {/* Tombol Next / Submit */}
             {isLastStep ? (
               <Button
-                color="success"
+                color="primary"
                 variant="contained"
                 onClick={handleOnSubmit}
                 disabled={loading}

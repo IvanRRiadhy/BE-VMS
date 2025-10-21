@@ -63,6 +63,7 @@
     "lodash": "^4.17.21",
     "moment": "^2.29.4",
     "moment-timezone": "^0.6.0",
+    "mqtt": "^5.14.1",
     "prop-types": "^15.7.2",
     "qrcode.react": "^4.2.0",
     "react": "^19.1.1",
@@ -103,6 +104,7 @@
     "sweetalert2": "^11.22.0",
     "video.js": "^8.23.3",
     "videojs-contrib-hls": "^5.15.0",
+    "ws": "^8.18.3",
     "yup": "^0.32.11",
     "zod": "^3.25.67"
   },

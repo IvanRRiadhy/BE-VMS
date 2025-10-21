@@ -33,7 +33,11 @@ import CloseIcon from '@mui/icons-material/Close';
 import FormWizardAddInvitation from './FormWizardAddInvitation';
 import FormWizardAddVisitor from './FormWizardAddVisitor';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { CreateVisitorRequestSchema, Item } from 'src/customs/api/models/Visitor';
+import {
+  CreateVisitorRequestSchema,
+  Item,
+  CreateVisitorRequest,
+} from 'src/customs/api/models/Admin/Visitor';
 import {
   getAllDepartments,
   getAllDistricts,
@@ -44,7 +48,6 @@ import {
   getRegisteredSite,
   getVisitorById,
 } from 'src/customs/api/admin';
-import { CreateVisitorRequest } from 'src/customs/api/models/Visitor';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import { Scanner } from '@yudiel/react-qr-scanner';
 import FlipCameraAndroidIcon from '@mui/icons-material/FlipCameraAndroid';
@@ -55,20 +58,32 @@ import {
   IconBrandGmail,
   IconBuilding,
   IconBuildingSkyscraper,
+  IconCalendarEvent,
   IconCalendarStats,
+  IconCalendarTime,
+  IconCalendarUp,
+  IconCar,
   IconCards,
   IconCheck,
+  IconCheckupList,
   IconClipboard,
   IconForbid2,
   IconGenderBigender,
+  IconGenderMale,
+  IconHome,
   IconIdBadge2,
+  IconLicense,
   IconLogin2,
   IconLogout2,
   IconMapPin,
+  IconNumbers,
   IconPhone,
   IconQrcode,
+  IconTicket,
   IconUser,
+  IconUserCheck,
   IconUsers,
+  IconUsersGroup,
   IconX,
 } from '@tabler/icons-react';
 
@@ -93,7 +108,7 @@ type VisitorTableRow = {
 const Content = () => {
   const { token } = useSession();
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -162,7 +177,7 @@ const Content = () => {
     {
       title: 'Total Visitor',
       icon: IconUsers,
-      subTitle: `${totalRecords}`,
+      subTitle: `${totalFilteredRecords}`,
       subTitleSetting: 10,
       color: 'none',
     },
@@ -174,7 +189,7 @@ const Content = () => {
       color: 'none',
     },
     {
-      title: 'Add New Visitor',
+      title: 'Add Invitation',
       icon: IconUser,
       subTitle: iconAdd,
       subTitleSetting: 'image',
@@ -315,7 +330,7 @@ const Content = () => {
       let rows = response.collection.map((item: any) => ({
         id: item.id,
         visitor_type: visitorTypes[item.visitor_type] || item.visitor_type,
-        group_name: item.group_name,
+        // group_name: item.group_name,
         name: item.visitor.name,
         identity_id: item.visitor.identity_id,
         email: item.visitor.email,
@@ -405,12 +420,12 @@ const Content = () => {
 
   const handleSuccess = () => {
     setSelectedSite(null);
-    setFormDataAddVisitor((prev) => ({
+    setFormDataAddVisitor((prev: any) => ({
       ...prev,
       registered_site: '', // reset registered site
     }));
     setRefreshTrigger((prev) => prev + 1);
-    handleCloseDialog();
+    // handleCloseDialog();
   };
 
   const openDiscardForCloseAdd = () => {
@@ -690,7 +705,7 @@ const Content = () => {
         </DialogTitle>
         <Divider />
         <DialogContent>
-          <br />
+          {/* <br /> */}
           <FormWizardAddVisitor
             key={wizardKey}
             formData={formDataAddVisitor}
@@ -1611,8 +1626,8 @@ const Content = () => {
                 variant="fullWidth"
               >
                 <Tab label="Info" />
-                <Tab label="History" />
-                <Tab label="Attachments" />
+                <Tab label="Visit Information" />
+                <Tab label="Purpose Visit" />
               </Tabs>
 
               {/* Tab Panels */}
@@ -1634,44 +1649,238 @@ const Content = () => {
                         <IconBrandGmail />
                         <Box>
                           <CustomFormLabel sx={{ mt: 0 }}>Email</CustomFormLabel>
-                          <Typography>{visitorDetail.email ?? '-'}</Typography>
+                          <Typography>{visitorDetail.visitor.email ?? '-'}</Typography>
                         </Box>
                       </Box>
                     </Grid>
-                    {/* Tambahkan field lain sama seperti sebelumnya */}
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Box display="flex" gap={1} alignItems="flex-start">
+                        <IconPhone />
+                        <Box>
+                          <CustomFormLabel sx={{ mt: 0 }}>Phone</CustomFormLabel>
+                          <Typography>{visitorDetail.visitor.phone ?? '-'}</Typography>
+                        </Box>
+                      </Box>
+                    </Grid>
+
+                    {/* Address */}
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Box display="flex" gap={1} alignItems="flex-start">
+                        <IconHome />
+                        <Box>
+                          <CustomFormLabel sx={{ mt: 0 }}>Address</CustomFormLabel>
+                          <Typography>{visitorDetail.visitor.address ?? '-'}</Typography>
+                        </Box>
+                      </Box>
+                    </Grid>
+
+                    {/* Gender */}
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Box display="flex" gap={1} alignItems="flex-start">
+                        <IconGenderMale />
+                        <Box>
+                          <CustomFormLabel sx={{ mt: 0 }}>Gender</CustomFormLabel>
+                          <Typography>{visitorDetail.visitor.gender ?? '-'}</Typography>
+                        </Box>
+                      </Box>
+                    </Grid>
+
+                    {/* Organization */}
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Box display="flex" gap={1} alignItems="flex-start">
+                        <IconBuildingSkyscraper />
+                        <Box>
+                          <CustomFormLabel sx={{ mt: 0 }}>Organization</CustomFormLabel>
+                          <Typography>{visitorDetail.visitor.organization ?? '-'}</Typography>
+                        </Box>
+                      </Box>
+                    </Grid>
                   </Grid>
                 </Box>
               )}
 
               {tabValue === 1 && (
                 <Box sx={{ mt: 2 }}>
-                  {/* History Table / Content */}
-                  <Typography variant="subtitle1">Visitor History</Typography>
-                  <ul>
-                    {visitorDetail.history?.map((h: any, idx: number) => (
-                      <li key={idx}>
-                        {h.action} - {new Date(h.date).toLocaleString()}
-                      </li>
-                    )) ?? <li>No history</li>}
-                  </ul>
+                  <Grid container spacing={2}>
+                    {/* Visitor Code */}
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Box display="flex" gap={1} alignItems="flex-start">
+                        <IconQrcode />
+                        <Box>
+                          <CustomFormLabel sx={{ mt: 0 }}>Visitor Code</CustomFormLabel>
+                          <Typography
+                            sx={{
+                              overflowWrap: 'break-word',
+                              wordBreak: 'break-word',
+                              whiteSpace: 'normal',
+                            }}
+                          >
+                            {visitorDetail.visitor_code ?? '-'}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Grid>
+
+                    {/* Group Code */}
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Box display="flex" gap={1} alignItems="flex-start">
+                        <IconUsersGroup />
+                        <Box>
+                          <CustomFormLabel sx={{ mt: 0 }}>Group Code</CustomFormLabel>
+                          <Typography>{visitorDetail.group_code ?? '-'}</Typography>
+                        </Box>
+                      </Box>
+                    </Grid>
+
+                    {/* Group Name */}
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Box display="flex" gap={1} alignItems="flex-start">
+                        <IconUser />
+                        <Box>
+                          <CustomFormLabel sx={{ mt: 0 }}>Group Name</CustomFormLabel>
+                          <Typography>{visitorDetail.group_name ?? '-'}</Typography>
+                        </Box>
+                      </Box>
+                    </Grid>
+
+                    {/* Period Start */}
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Box display="flex" gap={1} alignItems="flex-start">
+                        <IconCalendarTime />
+                        <Box>
+                          <CustomFormLabel sx={{ mt: 0 }}>Period Start</CustomFormLabel>
+                          <Typography>{visitorDetail.visitor_period_start ?? '-'}</Typography>
+                        </Box>
+                      </Box>
+                    </Grid>
+
+                    {/* Period End */}
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Box display="flex" gap={1} alignItems="flex-start">
+                        <IconCalendarEvent />
+                        <Box>
+                          <CustomFormLabel sx={{ mt: 0 }}>Period End</CustomFormLabel>
+                          <Typography>{visitorDetail.visitor_period_end ?? '-'}</Typography>
+                        </Box>
+                      </Box>
+                    </Grid>
+
+                    {/* Visitor Number */}
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Box display="flex" gap={1} alignItems="flex-start">
+                        <IconNumbers />
+                        <Box>
+                          <CustomFormLabel sx={{ mt: 0 }}>Visitor Number</CustomFormLabel>
+                          <Typography>{visitorDetail.visitor_number ?? '-'}</Typography>
+                        </Box>
+                      </Box>
+                    </Grid>
+
+                    {/* Invitation Code */}
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Box display="flex" gap={1} alignItems="flex-start">
+                        <IconTicket />
+                        <Box>
+                          <CustomFormLabel sx={{ mt: 0 }}>Invitation Code</CustomFormLabel>
+                          <Typography>{visitorDetail.invitation_code ?? '-'}</Typography>
+                        </Box>
+                      </Box>
+                    </Grid>
+
+                    {/* Visitor Status */}
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Box display="flex" gap={1} alignItems="flex-start">
+                        <IconCheckupList />
+                        <Box>
+                          <CustomFormLabel sx={{ mt: 0 }}>Visitor Status</CustomFormLabel>
+                          <Typography>{visitorDetail.visitor_status ?? '-'}</Typography>
+                        </Box>
+                      </Box>
+                    </Grid>
+
+                    {/* Vehicle Type */}
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Box display="flex" gap={1} alignItems="flex-start">
+                        <IconCar />
+                        <Box>
+                          <CustomFormLabel sx={{ mt: 0 }}>Vehicle Type</CustomFormLabel>
+                          <Typography>{visitorDetail.vehicle_type ?? '-'}</Typography>
+                        </Box>
+                      </Box>
+                    </Grid>
+
+                    {/* Vehicle Plate No. */}
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Box display="flex" gap={1} alignItems="flex-start">
+                        <IconLicense />
+                        <Box>
+                          <CustomFormLabel sx={{ mt: 0 }}>Vehicle Plate No.</CustomFormLabel>
+                          <Typography>{visitorDetail?.vehicle_plate_number ?? '-'}</Typography>
+                        </Box>
+                      </Box>
+                    </Grid>
+                  </Grid>
                 </Box>
               )}
 
               {tabValue === 2 && (
                 <Box sx={{ mt: 2 }}>
-                  {/* Attachments */}
-                  <Typography variant="subtitle1">Attachments</Typography>
-                  {visitorDetail.attachments?.length ? (
-                    visitorDetail.attachments.map((a: any, idx: number) => (
-                      <Box key={idx} mb={1}>
-                        <a href={resolveImg(a.path)} target="_blank" rel="noopener noreferrer">
-                          {a.name}
-                        </a>
+                  <Grid container spacing={2}>
+                    {/* Agenda */}
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Box display="flex" gap={1} alignItems="flex-start">
+                        <IconCalendarEvent />
+                        <Box>
+                          <CustomFormLabel sx={{ mt: 0 }}>Agenda</CustomFormLabel>
+                          <Typography>{visitorDetail.agenda ?? '-'}</Typography>
+                        </Box>
                       </Box>
-                    ))
-                  ) : (
-                    <Typography>No attachments</Typography>
-                  )}
+                    </Grid>
+
+                    {/* PIC Host */}
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Box display="flex" gap={1} alignItems="flex-start">
+                        <IconUserCheck />
+                        <Box>
+                          <CustomFormLabel sx={{ mt: 0 }}>PIC Host</CustomFormLabel>
+                          <Typography>{visitorDetail.host ?? '-'}</Typography>
+                        </Box>
+                      </Box>
+                    </Grid>
+
+                    {/* Period Start */}
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Box display="flex" gap={1} alignItems="flex-start">
+                        <IconCalendarTime />
+                        <Box>
+                          <CustomFormLabel sx={{ mt: 0 }}>Period Start</CustomFormLabel>
+                          <Typography>{visitorDetail.visitor_period_start ?? '-'}</Typography>
+                        </Box>
+                      </Box>
+                    </Grid>
+
+                    {/* Period End */}
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Box display="flex" gap={1} alignItems="flex-start">
+                        <IconCalendarUp />
+                        <Box>
+                          <CustomFormLabel sx={{ mt: 0 }}>Period End</CustomFormLabel>
+                          <Typography>{visitorDetail.visitor_period_end ?? '-'}</Typography>
+                        </Box>
+                      </Box>
+                    </Grid>
+
+                    {/* Registered Site */}
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Box display="flex" gap={1} alignItems="flex-start">
+                        <IconMapPin />
+                        <Box>
+                          <CustomFormLabel sx={{ mt: 0 }}>Registered Site</CustomFormLabel>
+                          <Typography>{visitorDetail.site_place ?? '-'}</Typography>
+                        </Box>
+                      </Box>
+                    </Grid>
+                  </Grid>
                 </Box>
               )}
             </Box>

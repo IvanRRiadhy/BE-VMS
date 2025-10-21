@@ -76,7 +76,16 @@ div[style*='border: 2px dashed rgba(239, 68, 68'] {
   line-height: 1.4 !important;
 }
 
+/* Pastikan SweetAlert selalu di atas semua dialog MUI */
+.swal2-container {
+  z-index: 20000 !important;
+}
+
 .swal2-text-custom {
   font-size: 16px !important;
   line-height: 1.5 !important;
+}
+
+.swal2-dialog-override {
+  z-index: 20001 !important;
 }

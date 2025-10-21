@@ -1,5 +1,5 @@
 import React from 'react';
-import { CreateVisitorRequest } from 'src/customs/api/models/Visitor';
+import { CreateVisitorRequest } from 'src/customs/api/models/Admin/Visitor';
 import FormWizardAddVisitor from './FormWizardAddVisitor.tsx';
 
 type Props = {

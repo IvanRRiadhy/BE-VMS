@@ -2,7 +2,7 @@ import { Box, CardContent, Typography, Grid2 as Grid } from '@mui/material';
 import { Stack } from '@mui/system';
 import { useTranslation } from 'react-i18next';
 import BlankCard from 'src/components/shared/BlankCard';
-import { IconUsers, IconX, IconActivity, IconBan } from '@tabler/icons-react';
+import { IconUsers, IconX, IconActivity, IconBan, IconForbid2, IconLogout, IconLogin } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { getTodayVisitorCount } from 'src/customs/api/admin'; // ✅ pakai API kamu
 
@@ -46,10 +46,10 @@ const TopCards = ({ token }: { token: string | null }) => {
 
   // hanya tampilkan yang kamu mau
   const CardItems = [
-    { title: t('checkin'), subTitle: stats['Checkin'] ?? 0, icon: <IconUsers size={22} /> },
-    { title: t('checkout'), subTitle: stats['Checkout'] ?? 0, icon: <IconActivity size={22} /> },
-    { title: t('canceled'), subTitle: stats['Cancel'] ?? 0, icon: <IconBan size={22} /> },
+    { title: t('checkin'), subTitle: stats['Checkin'] ?? 0, icon: <IconLogin size={22} /> },
+    { title: t('checkout'), subTitle: stats['Checkout'] ?? 0, icon: <IconLogout size={22} /> },
     { title: t('denied'), subTitle: stats['Denied'] ?? 0, icon: <IconX size={22} /> },
+    { title: t('Block'), subTitle: stats['Block'] ?? 0, icon: <IconForbid2 size={22} /> },
   ];
 
   return (

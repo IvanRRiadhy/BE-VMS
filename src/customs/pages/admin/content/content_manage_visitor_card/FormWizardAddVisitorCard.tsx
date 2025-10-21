@@ -26,13 +26,13 @@ import {
   getAllSite,
   updateVisitorCard,
 } from 'src/customs/api/admin';
-import { CreateVisitorCardRequest } from 'src/customs/api/models/VisitorCard';
-import { Item } from 'src/customs/api/models/VisitorCard';
+import { CreateVisitorCardRequest } from 'src/customs/api/models/Admin/VisitorCard';
+import { Item } from 'src/customs/api/models/Admin/VisitorCard';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   CreateVisitorCardRequestSchema,
   UpdateVisitorCardRequest,
-} from 'src/customs/api/models/VisitorCard';
+} from 'src/customs/api/models/Admin/VisitorCard';
 const steps = ['Visitor Card Info', 'Card Details'];
 
 type EnabledFields = {

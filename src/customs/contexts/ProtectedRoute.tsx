@@ -59,6 +59,7 @@
 import { Navigate, Outlet } from 'react-router';
 import { useAuth } from './AuthProvider';
 import { useSession } from './SessionContext';
+import { CircularProgress } from '@mui/material';
 
 interface ProtectedRouteProps {
   allowedGroups?: string[];
@@ -68,7 +69,12 @@ export const ProtectedRoute = ({ allowedGroups }: ProtectedRouteProps) => {
   const { isAuthenticated, loading } = useAuth();
   const { groupId } = useSession();
 
-  if (loading) return <div>Loading...</div>;
+  if (loading)
+    return (
+      <div>
+        <CircularProgress />
+      </div>
+    );
 
   // 🔒 Belum login
   if (!isAuthenticated) return <Navigate to="/" replace />;

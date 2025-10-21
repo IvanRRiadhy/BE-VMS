@@ -47,7 +47,7 @@ import {
   Item,
   UpdateBadgeTypeRequest,
   UpdateClearcodesRequest,
-} from 'src/customs/api/models/Integration';
+} from 'src/customs/api/models/Admin/Integration';
 import {
   IconAccessPoint,
   IconBuilding,

@@ -13,7 +13,7 @@ import React, { useState, useEffect } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { createDistrict, getAllEmployee } from 'src/customs/api/admin';
-import { CreateDistrictRequest, CreateDistrictSubmitSchema } from 'src/customs/api/models/District';
+import { CreateDistrictRequest, CreateDistrictSubmitSchema } from 'src/customs/api/models/Admin/District';
 import { useSession } from 'src/customs/contexts/SessionContext';
 
 interface FormAddDistrictProps {

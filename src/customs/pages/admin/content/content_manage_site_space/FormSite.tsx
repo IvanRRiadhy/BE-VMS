@@ -43,7 +43,9 @@ import {
   CreateSiteParkingRequest,
   CreateSiteTrackingRequest,
   UpdateSiteRequestSchema,
-} from 'src/customs/api/models/Sites';
+  CreateSiteAccessSchema,
+  CreateSiteAccessRequest,
+} from 'src/customs/api/models/Admin/Sites';
 import { IconTrash } from '@tabler/icons-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
@@ -66,15 +68,18 @@ import {
   updateSiteParking,
   getSitesParking,
   getSitesTracking,
+  createSiteAccess,
+  updateSiteAccess,
+  getSitesAccess,
 } from 'src/customs/api/admin';
 import {
   CreateSiteDocumentRequest,
   CreateSiteDocumentRequestSchema,
   Item as SiteDocumentItem,
-} from 'src/customs/api/models/SiteDocument';
+} from 'src/customs/api/models/Admin/SiteDocument';
 // import { axiosInstance2 } from 'src/customs/api/interceptor';
-import { Item as DocumentItem } from 'src/customs/api/models/Document';
-import { Item as AccessControlItem } from 'src/customs/api/models/AccessControl';
+import { Item as DocumentItem } from 'src/customs/api/models/Admin/Document';
+import { Item as AccessControlItem } from 'src/customs/api/models/Admin/AccessControl';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 
 // const BASE_URL = 'http://' + import.meta.env.VITE_API_HOST;
@@ -147,6 +152,7 @@ const FormSite = ({
   const [filteredSiteDocumentList, setFilteredSiteDocumentList] = useState<SiteDocumentItem[]>([]);
   const [siteDocuments, setSiteDocuments] = useState<CreateSiteDocumentRequest[]>([]);
   const [siteParking, setSiteParking] = useState<Parking[]>([]);
+  const [access, setAccess] = useState<Access[]>([]);
   const [siteTracking, setSiteTracking] = useState<Tracking[]>([]);
   const [newDocumentA, setNewDocumentA] = useState<SiteDocumentItem>({
     id: '',
@@ -178,9 +184,11 @@ const FormSite = ({
           getSiteById(editingId, token),
           getSitesParking(token),
           getSitesTracking(token),
+          // getSitesAccess(token),
         ]);
 
         const site = siteRes.collection;
+        // const accessList = accessRes.collection ?? [];
         const parkingList = parkingRes.collection ?? [];
         const trackingList = trackingRes.collection ?? [];
 
@@ -189,8 +197,10 @@ const FormSite = ({
         console.log('🎯 Editing site ID:', editingId);
 
         // simpan semua untuk dropdown
+
         setSiteParking(parkingList);
         setSiteTracking(trackingList);
+        // setAccess(accessList);
 
         // ✅ Filter fleksibel (support nested site.id)
         const normalizedId = editingId.toLowerCase();
@@ -202,6 +212,10 @@ const FormSite = ({
         const filteredTracking = trackingList.filter(
           (t: any) => (t.site_id || t.siteId)?.toLowerCase() === normalizedId,
         );
+
+        // const filteredAccess = accessList.filter(
+        //   (a: any) => (a.site_id || a.siteId)?.toLowerCase() === normalizedId,
+        // );
         console.log('🎯 Normalized ID:', normalizedId);
         console.log('✅ Filtered Parking:', filteredParking);
         console.log('✅ Filtered Tracking:', filteredTracking);
@@ -223,6 +237,15 @@ const FormSite = ({
           name: t.name ?? t.trk_ble_floorplan_masked_area?.name ?? '',
           early_access: t.early_access ?? false,
         }));
+
+        // const mappedAccess = filteredAccess.map((a: any, idx: number) => ({
+        //   id: a.id,
+        //   sort: idx,
+        //   site_id: a.site_id,
+        //   access_control_id: a.access_control_id ?? a.id,
+        //   name: a.name ?? a.access_control?.name ?? '',
+        //   early_access: a.early_access ?? false,
+        // }));
 
         // simpan ke formData agar muncul di tabel
         setFormData((prev) => ({
@@ -316,6 +339,33 @@ const FormSite = ({
       }
 
       await createSiteTracking(docWithSiteId, token as string);
+    }
+  };
+
+  const createSiteAccesss = async (newSiteId: string) => {
+    const trackingData = formData.access || []; // ✅ ambil langsung dari formData
+
+    if (!trackingData.length) {
+      console.warn('⚠️ No tracking data to create.');
+      return;
+    }
+
+    for (const doc of trackingData) {
+      const docWithSiteId: CreateSiteAccessRequest = {
+        ...doc,
+        site_id: newSiteId,
+        access_control_id: doc.access_control_id,
+        early_access: !!doc.early_access,
+      };
+
+      console.log('🚀 Creating Site Tracking:', docWithSiteId);
+
+      if (!docWithSiteId.access_control_id) {
+        console.error('❌ Missing access_control_id for', doc);
+        continue; // skip yang kosong
+      }
+
+      await createSiteAccess(docWithSiteId, token as string);
     }
   };
 
@@ -518,7 +568,7 @@ const FormSite = ({
         }
 
         for (const row of selectedRows) {
-          const updatedData: UpdateSiteRequest = {
+          const updatedData: any = {
             ...row,
             ...updatedFields,
           };
@@ -548,20 +598,41 @@ const FormSite = ({
           if (val === '' || val === null || val === undefined) delete (updateData as any)[key];
         });
 
+        // delete (updateData as any).access;
+        delete (updateData as any).parking;
+        delete (updateData as any).tracking;
+
         console.log('Updating Site:', updateData);
-        const res = await updateSite(editingId, updateData, token);
+        await updateSite(editingId, updateData, token);
 
         // 🔹 Update tracking dan parking satu per satu (bukan by siteId)
         const trackingData = formData.tracking ?? [];
         const parkingData = formData.parking ?? [];
+        const accessData = formData.access ?? [];
 
         for (const track of trackingData) {
-          await updateSiteTracking(track.id, track, token);
+          if (track.id) {
+            await updateSiteTracking(track.id, track, token);
+          } else {
+            await createSiteTracking({ ...track, site_id: editingId }, token);
+          }
         }
 
         for (const park of parkingData) {
-          await updateSiteParking(park.id, park, token);
+          if (park.id) {
+            await updateSiteParking(park.id, park, token);
+          } else {
+            await createSiteParking({ ...park, site_id: editingId }, token);
+          }
         }
+
+        // for (const acc of accessData) {
+        //   if (acc.id) {
+        //     await updateSiteAccess(acc.id, acc, token);
+        //   } else {
+        //     await createSiteAccess({ ...acc, site_id: editingId }, token);
+        //   }
+        // }
 
         setAlertType('success');
         setAlertMessage('Site successfully updated!');
@@ -574,6 +645,7 @@ const FormSite = ({
 
         await createSiteTrackings(newSiteId as string);
         await createSiteParkings(newSiteId as string);
+        await createSiteAccesss(newSiteId as string);
         await createSiteDocumentsForNewSite();
 
         console.log('✅ Created Data:', res);

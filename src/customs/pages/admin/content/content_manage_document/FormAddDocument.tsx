@@ -22,7 +22,7 @@ import CustomTextField from 'src/components/forms/theme-elements/CustomTextField
 import axios from 'axios';
 import { createDocument, updateDocument } from 'src/customs/api/admin';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { CreateDocumentRequest } from 'src/customs/api/models/Document';
+import { CreateDocumentRequest } from 'src/customs/api/models/Admin/Document';
 
 import { CKEditor } from '@ckeditor/ckeditor5-react';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';

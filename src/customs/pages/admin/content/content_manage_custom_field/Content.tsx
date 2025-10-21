@@ -31,7 +31,7 @@ import {
   multiOptField,
   FieldType,
   CreateCustomFieldRequestSchema,
-} from 'src/customs/api/models/CustomField';
+} from 'src/customs/api/models/Admin/CustomField';
 import FormCustomField from './FormCustomField';
 import Swal from 'sweetalert2';
 import { IconSettings } from '@tabler/icons-react';
@@ -58,7 +58,7 @@ const Content = () => {
   const [totalRecords, setTotalRecords] = useState(0);
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -82,12 +82,14 @@ const Content = () => {
           searchKeyword,
         );
         console.log('Response from API:', response);
-        setTableData(response.collection);
-        setTotalRecords(response.RecordsTotal);
-        setTotalFilteredRecords(response.RecordsFiltered);
+        const total = responseGet.collection?.length ?? 0;
+        console.log('Total records:', total);
+        setTableData(responseGet.collection);
+        setTotalRecords(total); // langsung dari jumlah item
+        // setTotalFilteredRecords(responseGet.RecordsFiltered);
 
         console.log('Table data:', tableData);
-        const rows = response.collection.map((item: Item) => ({
+        const rows = responseGet.collection.map((item: Item) => ({
           id: item.id,
           name: item.short_name,
           display_text: item.long_display_text,
@@ -106,7 +108,7 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword]);
+  }, [token, refreshTrigger, searchKeyword]);
   const [formDataAddCustomField, setFormDataAddCustomField] = useState<CreateCustomFieldRequest>(
     () => {
       const saved = localStorage.getItem('unsavedCustomDataData');
@@ -156,7 +158,7 @@ const Content = () => {
   const cards = [
     {
       title: 'Total Custom Field',
-      subTitle: `${totalFilteredRecords}`,
+      subTitle: `${totalRecords}`,
       icon: IconSettings,
       subTitleSetting: 10,
       color: 'none',
@@ -250,7 +252,10 @@ const Content = () => {
   const handleDelete = async (id: string) => {
     if (!token) return;
 
-    const confirm = await showConfirmDelete('Are you sure you want to delete this? ', "You won't be able to revert this!");
+    const confirm = await showConfirmDelete(
+      'Are you sure you want to delete this? ',
+      "You won't be able to revert this!",
+    );
 
     if (confirm) {
       setLoading(true);
@@ -305,20 +310,20 @@ const Content = () => {
               {isDataReady ? (
                 <DynamicTable
                   overflowX={'auto'}
-                  isHavePagination={true}
+                  isHavePagination={false}
                   data={tableRowSite}
                   selectedRows={selectedRows}
                   totalCount={totalFilteredRecords}
-                  defaultRowsPerPage={rowsPerPage}
-                  rowsPerPageOptions={[5, 10, 20, 50, 100]}
-                  onPaginationChange={(page, rowsPerPage) => {
-                    setPage(page);
-                    setRowsPerPage(rowsPerPage);
-                  }}
+                  // defaultRowsPerPage={rowsPerPage}
+                  // rowsPerPageOptions={[5, 10, 20, 50, 100]}
+                  // onPaginationChange={(page, rowsPerPage) => {
+                  //   setPage(page);
+                  //   setRowsPerPage(rowsPerPage);
+                  // }}
                   isHaveChecked={true}
                   isHaveAction={false}
                   isHaveSearch={true}
-                  isHaveFilter={true}
+                  isHaveFilter={false}
                   isHaveExportPdf={false}
                   isHaveExportXlf={false}
                   isHaveFilterDuration={false}

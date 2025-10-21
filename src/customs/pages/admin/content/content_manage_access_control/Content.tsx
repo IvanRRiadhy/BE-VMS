@@ -30,7 +30,7 @@ import {
   // Item,
   CreateAccessControlRequest,
   CreateAccessControlRequestSchema,
-} from 'src/customs/api/models/AccessControl';
+} from 'src/customs/api/models/Admin/AccessControl';
 import FormAccessControl from './FormAccessControl';
 import Swal from 'sweetalert2';
 
@@ -68,7 +68,7 @@ const Content = () => {
   const [totalRecords, setTotalRecords] = useState(0);
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
