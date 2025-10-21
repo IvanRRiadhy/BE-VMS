@@ -50,8 +50,11 @@ const HeaderHorizontal = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {!isMobile && (
-              <Box sx={{ width: lgDown ? '45px' : 'auto', overflow: 'hidden' }}>
-                <Logo />
+              <Box sx={{ width: lgDown ? '0px' : 'none', overflow: 'hidden' }}>
+                <img
+                  src="https://upload.wikimedia.org/wikipedia/commons/3/39/BI_Logo.png"
+                  width={'180px'}
+                />
               </Box>
             )}
           </Box>

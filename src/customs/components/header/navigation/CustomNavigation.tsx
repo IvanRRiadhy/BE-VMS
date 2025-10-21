@@ -88,7 +88,10 @@ const CustomNavigation: React.FC<CustomNavigationProps> = ({
       {/* Logo */}
       {/* ------------------------------------------- */}
       <Box px={2}>
-        <Logo />
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/3/39/BI_Logo.png"
+          width={'180px'}
+        />
       </Box>
       {/* ------------------------------------------- */}
       {/* Sidebar For Mobile */}

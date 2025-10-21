@@ -867,7 +867,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
     fetchVisitorTypeDetails();
   }, [formData.visitor_type, token]);
- 
 
   // const handleSaveGroupVisitor = () => {
   //   if (activeGroupIdx === null) return;
@@ -926,10 +925,54 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   //   });
   // };
 
+  // const handleSaveGroupVisitor = () => {
+  //   if (activeGroupIdx === null) return;
+
+  //   // 🧩 Helper deep clone universal
+  //   const deepClone = (obj: any) => {
+  //     try {
+  //       return structuredClone(obj);
+  //     } catch {
+  //       return JSON.parse(JSON.stringify(obj));
+  //     }
+  //   };
+
+  //   setGroupVisitors((prev) => {
+  //     // clone array utama biar immutable
+  //     const next = [...prev];
+
+  //     // 🧱 Deep clone dataVisitor agar tidak share referensi dengan state global
+  //     const cleanDataVisitor = deepClone(dataVisitor).map((dv: any) => ({
+  //       ...dv,
+  //       question_page: (dv.question_page || []).map((qp: any) => ({
+  //         // pertahankan id section, tapi jangan buat baru kalau sudah ada
+  //         id: qp.id || crypto.randomUUID(),
+  //         sort: qp.sort ?? 0,
+  //         name: qp.name ?? '',
+  //         is_document: qp.is_document ?? false,
+  //         can_multiple_used: qp.can_multiple_used ?? false,
+  //         foreign_id: qp.foreign_id ?? '',
+  //         self_only: qp.self_only ?? false,
+
+  //         // 🔹 semua form di dalamnya di-clone dan id dihapus
+  //         form: (qp.form || []).map(({ id, Id, ...rest }: any) => deepClone(rest)),
+  //       })),
+  //     }));
+
+  //     // 🧩 Replace hanya group aktif
+  //     next[activeGroupIdx] = {
+  //       ...next[activeGroupIdx],
+  //       data_visitor: cleanDataVisitor,
+  //     };
+
+  //     return next;
+  //   });
+  // };
+
   const handleSaveGroupVisitor = () => {
     if (activeGroupIdx === null) return;
+    console.log('💾 Saving existing group:', activeGroupIdx);
 
-    // 🧩 Helper deep clone universal
     const deepClone = (obj: any) => {
       try {
         return structuredClone(obj);
@@ -939,14 +982,15 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     };
 
     setGroupVisitors((prev) => {
-      // clone array utama biar immutable
       const next = [...prev];
+      if (!next[activeGroupIdx]) {
+        console.warn('⚠️ activeGroupIdx invalid, skip save');
+        return prev;
+      }
 
-      // 🧱 Deep clone dataVisitor agar tidak share referensi dengan state global
       const cleanDataVisitor = deepClone(dataVisitor).map((dv: any) => ({
         ...dv,
         question_page: (dv.question_page || []).map((qp: any) => ({
-          // pertahankan id section, tapi jangan buat baru kalau sudah ada
           id: qp.id || crypto.randomUUID(),
           sort: qp.sort ?? 0,
           name: qp.name ?? '',
@@ -954,22 +998,14 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           can_multiple_used: qp.can_multiple_used ?? false,
           foreign_id: qp.foreign_id ?? '',
           self_only: qp.self_only ?? false,
-
-          // 🔹 semua form di dalamnya di-clone dan id dihapus
           form: (qp.form || []).map(({ id, Id, ...rest }: any) => deepClone(rest)),
         })),
       }));
 
-      // 🧩 Replace hanya group aktif
       next[activeGroupIdx] = {
         ...next[activeGroupIdx],
         data_visitor: cleanDataVisitor,
       };
-
-      // console.log(
-      //   `💾 Saved group ${next[activeGroupIdx].group_name || '(no name)'}`,
-      //   cleanDataVisitor,
-      // );
 
       return next;
     });
@@ -4102,7 +4138,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         console.log('🚀 Final Payload (Group):', JSON.stringify(parsed, null, 2));
 
         // Submit ke endpoint group
-        const submitFn = TYPE_REGISTERED === 0 ? createPraRegister : createVisitorsGroup;
+        const submitFn = TYPE_REGISTERED === 0 ? createVisitorsGroup : createVisitorsGroup;
         const backendResponse = await submitFn(token, parsed as any);
         toast('Group visitor created successfully.', 'success');
         const visitors = backendResponse.collection?.visitors || [];

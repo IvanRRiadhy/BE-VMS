@@ -60,34 +60,21 @@ import {
   IconBuildingSkyscraper,
   IconCalendarEvent,
   IconCalendarStats,
-  IconCalendarTime,
-  IconCalendarUp,
   IconCar,
   IconCards,
   IconCheck,
-  IconCheckupList,
   IconClipboard,
-  IconForbid2,
   IconGenderBigender,
-  IconGenderMale,
-  IconHome,
   IconIdBadge2,
-  IconLicense,
-  IconLogin2,
-  IconLogout2,
   IconMapPin,
-  IconNumbers,
   IconPhone,
-  IconQrcode,
-  IconTicket,
-  IconUser,
-  IconUserCheck,
   IconUsers,
 } from '@tabler/icons-react';
 import FormInvitation from './FormInvitation';
 import dayjs from 'dayjs';
 import Praregist from './Praregist';
 import { getInvitation, getInvitationById, getInvitations } from 'src/customs/api/visitor';
+import { useSelector } from 'react-redux';
 
 type VisitorTableRow = {
   id: string;
@@ -207,6 +194,8 @@ const Content = () => {
     },
   ];
 
+  const employeeId = useSelector((state: any) => state.userReducer.data?.employee_id);
+
   const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [openInvitationVisitor, setOpenInvitationVisitor] = useState(false);
@@ -316,7 +305,7 @@ const Content = () => {
   };
 
   useEffect(() => {
-    if (!token) return; // tunggu dictionary siap
+    if (!token) return;
     const fetchData = async () => {
       setLoading(true);
       const start_date = dayjs().subtract(7, 'day').format('YYYY-MM-DD');
@@ -325,22 +314,27 @@ const Content = () => {
       // if (isDataReady) {
       const response = await getInvitations(token as string, start_date, end_date);
 
-      let rows = response.collection.map((item: any) => ({
-        id: item.id,
-        visitor_type: visitorTypes[item.visitor_type] || item.visitor_type,
-        name: item.visitor.name,
-        identity_id: item.visitor.identity_id,
-        email: item.visitor.email,
-        organization: item.visitor.organization,
-        gender: item.visitor.gender,
-        address: item.visitor.address,
-        phone: item.visitor.phone,
-        is_vip: item.visitor.is_vip,
-        visitor_period_start: item.visitor_period_start,
-        visitor_period_end: item.visitor_period_end,
-        host: item.host ?? '-',
-        visitor_status: item.visitor_status,
-      }));
+      let rows = response.collection.map((item: any) => {
+        const isEmployeeHost = item.host === employeeId?.toUpperCase();
+
+        return {
+          id: item.id,
+          visitor_type: visitorTypes[item.visitor_type] || item.visitor_type,
+          name: item.visitor.name,
+          identity_id: item.visitor.identity_id,
+          email: item.visitor.email,
+          organization: item.visitor.organization,
+          gender: item.visitor.gender,
+          address: item.visitor.address,
+          phone: item.visitor.phone,
+          is_vip: item.visitor.is_vip,
+          visitor_period_start: item.visitor_period_start,
+          visitor_period_end: item.visitor_period_end,
+          host: item.host ?? '-',
+          employee: isEmployeeHost ?? '-',
+          visitor_status: item.visitor_status,
+        };
+      });
 
       setTableRowVisitors(response.collection);
       setTotalRecords(response.collection.length);
@@ -350,7 +344,7 @@ const Content = () => {
       setLoading(false);
     };
     fetchData();
-  }, [token, refreshTrigger, searchKeyword, startDate, endDate]);
+  }, [token, refreshTrigger, searchKeyword, startDate, endDate, employeeId]);
 
   useEffect(() => {
     const fetchData = async () => {

@@ -395,9 +395,25 @@ const DashboardEmployee = () => {
         <Grid size={{ xs: 12, lg: 9 }}>
           <TopCard items={cards} size={{ xs: 12, lg: 3 }} />
         </Grid>
-        <Grid size={{ xs: 12, lg: 3 }}>
-          <Box display={'flex'} flexDirection={'column'} width={'100%'} height={'100%'}>
-            <Button variant="contained" color="primary">
+        <Grid size={{ xs: 12, lg: 3 }} sx={{ display: 'flex' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              width: '100%',
+              height: '100%',
+            }}
+          >
+            <Button
+              variant="contained"
+              color="primary"
+              sx={{
+                flexGrow: 1, // ✅ isi seluruh tinggi Box
+                height: '100%', // ✅ pastikan penuh secara eksplisit
+                borderRadius: 2,
+                fontSize: '1.3rem',
+              }}
+            >
               + Send Invitation
             </Button>
           </Box>

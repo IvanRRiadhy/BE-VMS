@@ -461,10 +461,10 @@ export function DynamicTable<
     },
   };
 
-const formatDate = (date?: string) => {
-  if (!date) return '-'; // fallback kalau kosong
-  return moment.utc(date).local().format('DD-MM-YYYY HH:mm');
-};
+  const formatDate = (date?: string) => {
+    if (!date) return '-'; // fallback kalau kosong
+    return moment.utc(date).local().format('DD-MM-YYYY HH:mm');
+  };
 
   const getAccessActions = (row: any) => {
     const { visitor_give_access, can_grant, can_revoke, can_block } = row;
@@ -1400,6 +1400,25 @@ const formatDate = (date?: string) => {
                                     <IconUserFilled />
                                   </IconButton>
                                 </Tooltip>
+                              ) : col === 'employee' ? (
+                                <>
+                                  {/* <Tooltip title="You are the host">
+                                    <IconStarFilled
+                                      color="gold"
+                                      size={16}
+                                      style={{ color: 'gold' }}
+                                    />
+                                  </Tooltip> */}
+                                  {row.employee && (
+                                    <Tooltip title="You are the host">
+                                      <IconStarFilled
+                                        color="gold"
+                                        size={24}
+                                        style={{ color: 'gold' }}
+                                      />
+                                    </Tooltip>
+                                  )}
+                                </>
                               ) : isHaveGender && col === 'gender' ? (
                                 GENDER_MAP[String(row[col])] ?? String(row[col] ?? '-')
                               ) : isSiteSpaceType && col === 'type' ? (

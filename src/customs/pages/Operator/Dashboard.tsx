@@ -28,6 +28,7 @@ import {
 } from '@mui/material';
 import { Box } from '@mui/system';
 import {
+  IconArrowsMaximize,
   IconBan,
   IconBrandGmail,
   IconBuildingSkyscraper,
@@ -88,6 +89,7 @@ import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import Swal from 'sweetalert2';
 import { getPermissionOperator } from '../../api/operator';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
+import { useNavigate } from 'react-router-dom';
 
 const DashboardOperator = () => {
   const cards = [
@@ -96,6 +98,8 @@ const DashboardOperator = () => {
     { title: 'Block', icon: IconCircleOff, subTitle: `0`, subTitleSetting: 10, color: 'none' },
     { title: 'Unblock', icon: IconBan, subTitle: `0`, subTitleSetting: 10, color: 'none' },
   ];
+
+  const navigate = useNavigate();
 
   const [permissionAccess, setPermissionAccess] = useState<any[]>([]);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -185,7 +189,7 @@ const DashboardOperator = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [token]);
   const [relatedVisitors, setRelatedVisitors] = useState<
     {
       id: string;
@@ -205,6 +209,7 @@ const DashboardOperator = () => {
       .toLowerCase()
       .includes(searchTerm.toLowerCase()),
   );
+
   const [visitorStatus, setVisitorStatus] = useState<string | null>(null);
   useEffect(() => {
     if (openDetailQRCode && invitationCode[0]?.visitor_status) {
@@ -1456,9 +1461,34 @@ const DashboardOperator = () => {
                         gap: 2,
                       }}
                     >
-                      <Typography variant="h6" fontWeight="bold" textAlign="center">
-                        Face Image
-                      </Typography>
+                      <Box
+                        sx={{
+                          position: 'relative',
+                          width: '100%',
+                          textAlign: 'center', // biar teks tetap di tengah
+                        }}
+                      >
+                        <Typography variant="h6" fontWeight="bold">
+                          Face Image
+                        </Typography>
+
+                        <IconArrowsMaximize
+                          onClick={() => navigate('/operator/view')}
+                          style={{
+                            position: 'absolute',
+                            right: 0, // ujung kanan
+                            top: '50%', // sejajar secara vertikal
+                            transform: 'translateY(-50%)',
+                            cursor: 'pointer',
+                            width: '28px',
+                            height: '28px',
+                            backgroundColor: '#5D87FF',
+                            padding: '1px',
+                            color: 'white',
+                            borderRadius: '50%',
+                          }}
+                        />
+                      </Box>
 
                       <Box
                         component="img"
@@ -2082,9 +2112,9 @@ const DashboardOperator = () => {
                             <IconCheckupList />
                             <Box>
                               <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>
+                                <Typography>{invitationCode[0]?.visitor_status || '-'}</Typography>{' '}
                                 Visitor Status
                               </CustomFormLabel>
-                              <Typography>{invitationCode[0]?.visitor_status || '-'}</Typography>
                             </Box>
                           </Box>
                         </Grid>

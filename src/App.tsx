@@ -77,6 +77,7 @@ import ReportManager from './customs/pages/Manager/Report';
 import DetailProfile from './layouts/full/vertical/header/DetailProfile';
 import UnauthorizedPage from './customs/components/page/UnauthorizedPage';
 import NotFoundPage from './views/authentication/NotFoundPage';
+import OperatorView from './customs/pages/Operator/OperatorView';
 
 export function App() {
   const theme = ThemeSettings();
@@ -137,6 +138,7 @@ export function App() {
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
           <Route path="/portal/information" element={<GuestInformation />} />
           <Route path="/portal/waiting" element={<WaitingPage />} />
+          <Route path="view" element={<OperatorView />} />
 
           {/* GUEST */}
           <Route element={<ProtectedRoute />}>
@@ -206,6 +208,7 @@ export function App() {
           <Route element={<ProtectedRoute allowedGroups={[GroupRoleId.OperatorVMS]} />}>
             <Route path="/operator" element={<OperatorLayout />}>
               <Route index path="dashboard" element={<DashboardOperator />} />
+              {/* <Route path="view" element={<OperatorView />} /> */}
             </Route>
           </Route>
 

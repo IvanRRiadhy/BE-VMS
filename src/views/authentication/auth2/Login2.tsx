@@ -207,14 +207,14 @@ const Login2 = () => {
                     {/* <Logo /> */}
                     <img
                       src="https://upload.wikimedia.org/wikipedia/commons/3/39/BI_Logo.png"
-                      width={250}
+                      width={300}
                       height={100}
                     />
                   </Box>
 
                   {/* Tabs Switch */}
                   <Tabs value={tab} onChange={(_, v) => setTab(v)} centered sx={{ mb: 2 }}>
-                    <Tab icon={<IconUser size={18} />} iconPosition="start" label="Admin" />
+                    <Tab icon={<IconUser size={18} />} iconPosition="start" label="User" />
                     <Tab
                       icon={<IconUserPlus size={18} />}
                       iconPosition="start"
@@ -321,11 +321,11 @@ const Login2 = () => {
                         Guest/Visitor Access
                       </Typography>
                       <Typography variant="body1" textAlign="center" color="text.secondary">
-                        Masukkan Kode Undangan Anda
+                        Please enter your invitation code
                       </Typography>
                       <Stack spacing={2}>
                         <Box>
-                          <CustomFormLabel htmlFor="guest-id">Kode Undangan</CustomFormLabel>
+                          <CustomFormLabel htmlFor="guest-id">Invitation Code</CustomFormLabel>
                           <CustomTextField
                             id="guest-id"
                             variant="outlined"
@@ -366,7 +366,7 @@ const Login2 = () => {
                           {loading ? (
                             <CircularProgress sx={{ color: 'white' }} size={24} />
                           ) : (
-                            'Verifikasi'
+                            'Verify'
                           )}
                         </Button>
                       </Box>

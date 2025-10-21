@@ -24,6 +24,7 @@ import {
   IconHistory,
   IconFile,
   IconAlarm,
+  IconDashboard,
 } from '@tabler/icons-react';
 import { uniqueId } from 'lodash';
 import { ItemDataCustomNavListing } from './CustomNavListing';
@@ -631,7 +632,7 @@ export const OperatorNavListingData: ItemDataCustomNavListing[] = [
   {
     id: uniqueId(),
     title: 'Operator View',
-    icon: IconAlarm,
+    icon: IconDashboard,
     href: '/operator/view',
   },
 ];
@@ -658,7 +659,7 @@ export const OperatorCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
   {
     id: uniqueId(),
     title: 'Operator View',
-    icon: IconAlarm,
+    icon: IconDashboard,
     href: '/operator/view',
   },
 ];

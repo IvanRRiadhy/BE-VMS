@@ -1,4 +1,4 @@
-import { useMediaQuery, Box, Drawer, Theme } from '@mui/material';
+import { useMediaQuery, Box, Drawer, Theme, Divider } from '@mui/material';
 import { useSelector, useDispatch } from 'src/store/Store';
 import { toggleMobileSidebar } from 'src/store/customizer/CustomizerSlice';
 import { AppState } from 'src/store/Store';
@@ -59,8 +59,12 @@ const CustomGuestNavigation: React.FC<CustomNavigationProps> = ({
       {/* Logo */}
       {/* ------------------------------------------- */}
       <Box px={2}>
-        <Logo />
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/3/39/BI_Logo.png"
+          width={'180px'}
+        />
       </Box>
+    
       {/* ------------------------------------------- */}
       {/* Sidebar For Mobile */}
       {/* ------------------------------------------- */}
