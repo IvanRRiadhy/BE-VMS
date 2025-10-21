@@ -51,6 +51,7 @@ import ManageTimezone from './customs/pages/admin/ManageTimezone';
 import ManageSettingVisitor from './customs/pages/admin/ManageSettingVisitor';
 import ManageScheduler from './customs/pages/admin/ManageScheduler';
 import ManageUser from './customs/pages/admin/ManageUser';
+import ManageReport from './customs/pages/admin/ManageReport';
 
 import EmployeeLayout from './customs/pages/Employee/EmployeeLayout';
 import DashboardEmployee from './customs/pages/Employee/Dashboard';
@@ -182,6 +183,7 @@ export function App() {
             <Route path="admin/settings" element={<ManageSettingVisitor />} />
             <Route path="admin/setting/users" element={<SettingUser />} />
             <Route path="admin/user" element={<ManageUser />} />
+            <Route path="admin/report" element={<ManageReport />} />
             <Route path="admin/setting/users/add-user" element={<FormAddUser />} />
             <Route path="profile" element={<DetailProfile />} />
           </Route>
