@@ -239,10 +239,103 @@ import {
   CreateCheckGiveAccessRequest,
   CreateCheckGiveAccessResponse,
   GetAllGrantAccessResponse,
+<<<<<<< Updated upstream
 } from './models/GrantAccess';
 import { GetAllSettingResponse } from './models/Setting';
 
 //#endregion
+=======
+} from './models/Admin/GrantAccess';
+import { GetAllSettingResponse } from './models/Admin/Setting';
+
+//#region UserAdmin
+export const getAllUserAdmin = async (token: string): Promise<GetAllUserAdminResponse> => {
+  const response = await axiosInstance.get('/user-admin', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+export const getUserAdminById = async (id: string, token: string): Promise<GetUserAdminByIdResponse> => {
+  const response = await axiosInstance.get(`/user-admin/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+}
+
+export const createUserAdmin = async (token: string, data: any): Promise<any> => {
+  const response = await axiosInstance.post('/user-admin', data, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+export const updateUserAdmin = async (token: string, id: string, data: any): Promise<any> => {
+  const response = await axiosInstance.put(`/user-admin/${id}`, data, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+export const deleteUserAdmin = async (token: string, id: string): Promise<any> => {
+  const response = await axiosInstance.delete(`/user-admin/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+//#endregion
+
+//#region User
+
+export const getAllUser = async (token: string): Promise<GetAllUserResponse> => {
+  const response = await axiosInstance.get('/user', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+export const getUserById = async (id: string, token: string): Promise<GetUserByIdResponse> => {
+  const response = await axiosInstance.get(`/user/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+export const createUser = async (token: string, data: any): Promise<any> => {
+  const response = await axiosInstance.post('/user', data, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+export const updateUser = async (token: string, id: string, data: any): Promise<any> => {
+  const response = await axiosInstance.put(`/user/${id}`, data, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+export const deleteUser = async (token: string, id: string): Promise<any> => {
+  const response = await axiosInstance.delete(`/user/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+//#endregion
+
+export const updateExtend = async (token: string, data: any): Promise<any> => {
+  const response = await axiosInstance.put(`invitation/extend-period`, data, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+export const getAccessPass = async (token: string): Promise<any> => {
+  const response = await axiosInstance.get('/dashboard/access-pass', {
+    headers: { Authorization: `Bearer ${token}` },
+    // params: { 'start-date': start_date, 'end-date': end_date },
+  });
+  console.log('response', response);
+  return response.data.collection[0];
+};
+>>>>>>> Stashed changes
 
 // #region Setting
 
@@ -637,6 +730,11 @@ export const getVisitorById = async (
   return response.data;
 };
 import { format } from 'date-fns';
+<<<<<<< Updated upstream
+=======
+import { GetAllUserResponse, GetUserByIdResponse } from './models/Admin/User';
+import { GetAllUserAdminResponse, GetUserAdminByIdResponse } from './models/Admin/UserAdmin';
+>>>>>>> Stashed changes
 // Pagination
 export const getAllVisitorPagination = async (
   token: string,
