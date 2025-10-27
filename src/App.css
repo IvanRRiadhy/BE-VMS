@@ -1,4 +1,4 @@
-#root {
+/* #root {
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
@@ -39,9 +39,53 @@
 
 .read-the-docs {
   color: #888;
+} */
+
+div[style*='border-color: rgb(239, 68, 68) transparent transparent rgb(239, 68, 68)'] {
+  border-color: white transparent transparent white !important;
+  /* border-color: transparent !important; */
 }
 
+/* Corner kanan atas */
+div[style*='border-color: rgb(239, 68, 68) rgb(239, 68, 68) transparent transparent'] {
+  border-color: white white transparent transparent !important;
+}
 
+/* Corner kiri bawah */
+div[style*='border-color: transparent transparent rgb(239, 68, 68) rgb(239, 68, 68)'] {
+  border-color: transparent transparent white white !important;
+}
+
+/* Corner kanan bawah */
+div[style*='border-color: transparent rgb(239, 68, 68) rgb(239, 68, 68) transparent'] {
+  border-color: transparent white white transparent !important;
+}
+
+/* kalau mau semua corner diubah putih */
+/* div[style*='border-color: rgb(239, 68, 68)'] {
+  border-color: white !important;
+} */
+
+/* hapus dashed merah finder */
+div[style*='border: 2px dashed rgba(239, 68, 68'] {
+  border: white !important;
+}
+
+.swal2-title-custom {
+  font-size: 18px !important;
+  line-height: 1.4 !important;
+}
+
+/* Pastikan SweetAlert selalu di atas semua dialog MUI */
 .swal2-container {
-  z-index: 2000 !important; /* atau lebih tinggi dari dialog Anda */
+  z-index: 20000 !important;
+}
+
+.swal2-text-custom {
+  font-size: 16px !important;
+  line-height: 1.5 !important;
+}
+
+.swal2-dialog-override {
+  z-index: 20001 !important;
 }

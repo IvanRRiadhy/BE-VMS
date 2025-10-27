@@ -6,10 +6,11 @@ import { TablerIconsProps } from '@tabler/icons-react';
 
 interface CardItem {
   title: string;
-  subTitle: string;
-  subTitleSetting: number | string;
+  subTitle?: string;
+  subTitleSetting?: number | string;
   color?: string;
   icon?: React.FC<TablerIconsProps>;
+  onIconClick?: (item: CardItem) => Promise<void> | void;
 }
 
 interface TopCardsProps {
@@ -17,15 +18,16 @@ interface TopCardsProps {
   cardColors?: string[];
   onImageClick?: (item: CardItem, index: number) => void;
   cardMarginBottom?: number;
+  size?: { xs: number; lg: number };
 }
 
 const defaultColor = '#FFFFFF';
 
-const TopCard: React.FC<TopCardsProps> = ({ items, onImageClick, cardMarginBottom }) => {
+const TopCard: React.FC<TopCardsProps> = ({ items, onImageClick, cardMarginBottom, size }) => {
   const smSize = 12 / items.length;
 
   return (
-    <Grid2 container spacing={3}>
+    <Grid2 container spacing={3} sx={{ height: '100%', alignItems: 'stretch' }}>
       {items.map((card, index) => {
         const isImage = typeof card.subTitleSetting === 'string';
         const cardColor =
@@ -33,7 +35,8 @@ const TopCard: React.FC<TopCardsProps> = ({ items, onImageClick, cardMarginBotto
 
         return (
           <Grid2
-            size={{ xs: 12, sm: smSize }}
+            // size={{ xs: 12, sm: 6, md: 4, lg: 2.4 }}
+            size={size || { xs: 12, lg: 2.4 }}
             key={index}
             sx={{ display: 'flex', marginBottom: cardMarginBottom }}
           >
@@ -46,6 +49,17 @@ const TopCard: React.FC<TopCardsProps> = ({ items, onImageClick, cardMarginBotto
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'center',
+                  '&::after': {
+                    content: '""',
+                    position: 'absolute',
+                    bottom: 0,
+                    right: 0,
+                    width: '120px',
+                    height: '120px',
+                    background:
+                      'linear-gradient(135deg, transparent 40%, rgba(25,118,210,0.2) 100%)',
+                    pointerEvents: 'none',
+                  },
                 }}
               >
                 <Stack
@@ -58,16 +72,28 @@ const TopCard: React.FC<TopCardsProps> = ({ items, onImageClick, cardMarginBotto
                     <Stack direction="row" alignItems="center" spacing={1} gap={1}>
                       {card.icon && (
                         <Box
+                          onClick={() => card.onIconClick?.(card)}
                           sx={{
-                            backgroundColor: '#5c87ff', // ganti warna sesuai tema
+                            backgroundColor:
+                              card.title === 'Check In'
+                                ? '#13DEB9' // hijau
+                                : card.title === 'Check Out'
+                                ? '#F44336' // merah
+                                : card.title === 'Denied'
+                                ? '#8B0000' // merah tua
+                                : card.title === 'Block'
+                                ? '#000000' // hitam
+                                : '#5c87ff', // default biru
                             borderRadius: '50%',
+                            color: '#fff',
                             padding: 1,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
+                            cursor: card.onIconClick ? 'pointer' : 'default',
                           }}
                         >
-                          <card.icon size={24} color="#FFFF" />
+                          <card.icon size={24} color="#fff" />
                         </Box>
                       )}
                       <Box>

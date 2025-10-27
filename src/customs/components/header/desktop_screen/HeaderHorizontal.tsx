@@ -6,8 +6,9 @@ import { IconMenu2 } from '@tabler/icons-react';
 import Notifications from 'src/layouts/full/vertical/header/Notification';
 import Profile from 'src/layouts/full/vertical/header/Profile';
 import { AppState } from 'src/store/Store';
-import Logo from '../../logo/Logo';
 import { styled, useMediaQuery, useTheme } from '@mui/material';
+import Language from 'src/layouts/full/vertical/header/Language';
+import Logo from 'src/assets/images/logos/bi_logo.png';
 
 const HeaderHorizontal = () => {
   const lgDown = useMediaQuery((theme: Theme) => theme.breakpoints.down('lg'));
@@ -22,6 +23,7 @@ const HeaderHorizontal = () => {
     boxShadow: 'none',
     padding: '5px',
     width: '100%',
+    borderBottom: '1px solid rgba(0,0,0,0.05)',
     [theme.breakpoints.up('lg')]: {
       minHeight: customizer.TopbarHeight,
     },
@@ -48,8 +50,8 @@ const HeaderHorizontal = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {!isMobile && (
-              <Box sx={{ width: lgDown ? '45px' : 'auto', overflow: 'hidden' }}>
-                <Logo />
+              <Box sx={{ width: lgDown ? '0px' : 'none', overflow: 'hidden' }}>
+                <img src={Logo} width={50} height={50} />
               </Box>
             )}
           </Box>
@@ -67,6 +69,7 @@ const HeaderHorizontal = () => {
         {/* Kanan: Mode, Notifikasi, Profile */}
         <Stack spacing={1} direction="row" alignItems="center">
           <Notifications />
+          <Language />
           <Profile />
         </Stack>
       </ToolbarStyled>

@@ -55,7 +55,7 @@ const ThemeColors = [
       primary: {
         main: '#FA896B',
         light: '#FBF2EF',
-        dark: '#F48162',
+        dark: '#FA896B',
       },
       secondary: {
         main: '#0074BA',

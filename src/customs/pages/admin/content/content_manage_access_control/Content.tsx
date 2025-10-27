@@ -6,6 +6,8 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Card,
+  Skeleton,
   Divider,
   Grid2 as Grid,
   IconButton,
@@ -16,7 +18,7 @@ import PageContainer from 'src/components/container/PageContainer';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import CloseIcon from '@mui/icons-material/Close';
-import { useSession } from 'src/customs/contexts/SessionContext';
+import { useAuth } from 'src/customs/contexts/AuthProvider';
 import {
   getAllAccessControl,
   getAllAccessControlPagination,
@@ -25,14 +27,16 @@ import {
 import {
   GetAllAccessControlResponse,
   GetAccessControlPaginationResponse,
-  Item,
+  // Item,
   CreateAccessControlRequest,
   CreateAccessControlRequestSchema,
-} from 'src/customs/api/models/AccessControl';
+} from 'src/customs/api/models/Admin/AccessControl';
 import FormAccessControl from './FormAccessControl';
 import Swal from 'sweetalert2';
 
-type AccessControlTableRow = {
+interface Item {
+  brand_id: string;
+  integration_id: string;
   brand_name: string;
   type: number;
   name: string;
@@ -42,28 +46,29 @@ type AccessControlTableRow = {
   raw: string;
   integration_name: string;
   id: string;
-};
+}
+
 import { IconAccessible } from '@tabler/icons-react';
 import {
   showConfirmDelete,
   showErrorAlert,
   showSuccessAlert,
 } from 'src/customs/components/alerts/alerts';
-import { de } from 'date-fns/locale';
+import { useSession } from 'src/customs/contexts/SessionContext';
 
 const Content = () => {
   const theme = useTheme();
 
   // Pagination state.
   const [accessControlData, setAccessControlData] = useState<Item[]>([]);
-  const [tableData, setTableData] = useState<AccessControlTableRow[]>([]);
+  const [tableData, setTableData] = useState<Item[]>([]);
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
   const [isDataReady, setIsDataReady] = useState(false);
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
@@ -71,13 +76,16 @@ const Content = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const dialogRef = useRef<HTMLDivElement>(null);
 
-  function formatEnumLabel(label: string) {
-    // Insert a space before all caps and capitalize the first letter
-    return label
-      .replace(/([A-Z])/g, ' $1')
-      .replace(/^./, (str) => str.toUpperCase())
-      .trim();
-  }
+  const cards = [
+    {
+      title: 'Total Access Control',
+      icon: IconAccessible,
+      subTitle: `${totalFilteredRecords}`,
+      subTitleSetting: 10,
+      color: 'none',
+    },
+  ];
+
   useEffect(() => {
     if (!token) return;
     const fetchData = async () => {
@@ -90,11 +98,12 @@ const Content = () => {
           sortColumn,
           searchKeyword,
         );
-        setTableData(response.collection);
+
         setTotalRecords(response.RecordsTotal);
         setTotalFilteredRecords(response.RecordsFiltered);
-        setIsDataReady(true);
-        const rows = response.collection.map((item: Item) => ({
+
+        const rows: Item[] = response.collection.map((item: Item) => ({
+          brand_id: item.brand_id,
           brand_name: item.brand_name,
           type: item.type,
           name: item.name,
@@ -103,9 +112,14 @@ const Content = () => {
           door_id: item.door_id,
           raw: item.raw,
           integration_name: item.integration_name,
+          integration_id: item.integration_id,
           id: item.id,
         }));
-        setTableData(rows);
+        if (response) {
+          // setTableData(response.collection);
+          setTableData(rows);
+          setIsDataReady(true);
+        }
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -114,24 +128,47 @@ const Content = () => {
     };
     fetchData();
   }, [token, page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword]);
+  // inisialisasi default
+  const defaultFormData: CreateAccessControlRequest = {
+    brand_id: '',
+    brand_name: '',
+    integration_id: '',
+    integration_name: '',
+    type: -1,
+    name: '',
+    description: '',
+    channel: '',
+    door_id: '',
+    raw: '{}',
+  };
+
+  // state awal
   const [formDataAddAccessControl, setFormDataAddAccessControl] =
     useState<CreateAccessControlRequest>(() => {
-      const saved = localStorage.getItem('unsavedAccessControlData');
-      return saved ? JSON.parse(saved) : {};
+      const saved = localStorage.getItem('unsavedAccessControl');
+      if (!saved) return defaultFormData;
+      try {
+        const parsed = JSON.parse(saved);
+        return JSON.stringify(parsed) === JSON.stringify(defaultFormData)
+          ? defaultFormData
+          : parsed;
+      } catch {
+        return defaultFormData;
+      }
     });
 
-  const defaultFormData = CreateAccessControlRequestSchema.parse({});
+  // hitung unsaved
   const isFormChanged =
     JSON.stringify(formDataAddAccessControl) !== JSON.stringify(defaultFormData);
 
+  // sync ke localStorage (hanya simpan kalau ada perubahan)
   useEffect(() => {
-    const defaultForm = CreateAccessControlRequestSchema.parse({});
-    const isChanged = JSON.stringify(formDataAddAccessControl) !== JSON.stringify(defaultForm);
-
-    if (isChanged) {
-      localStorage.setItem('unsavedCustomDataData', JSON.stringify(formDataAddAccessControl));
+    if (isFormChanged) {
+      localStorage.setItem('unsavedAccessControl', JSON.stringify(formDataAddAccessControl));
+    } else {
+      localStorage.removeItem('unsavedAccessControl');
     }
-  }, [formDataAddAccessControl]);
+  }, [formDataAddAccessControl, isFormChanged]);
 
   useEffect(() => {
     const handleMouseLeave = (e: MouseEvent) => {
@@ -154,16 +191,6 @@ const Content = () => {
     };
   }, [isFormChanged]);
 
-  const cards = [
-    {
-      title: 'Total Access Control',
-      icon: IconAccessible,
-      subTitle: `${totalFilteredRecords}`,
-      subTitleSetting: 10,
-      color: 'none',
-    },
-  ];
-
   //Create Access Control Dialog
   const [openCreateAccessControl, setOpenCreateAccessControl] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -175,7 +202,7 @@ const Content = () => {
   const handleCloseDialog = () => setOpenCreateAccessControl(false);
 
   const handleAdd = () => {
-    const editing = localStorage.getItem('unsavedAccessControlData');
+    const editing = localStorage.getItem('unsavedAccessControl');
     if (editing) {
       // If editing exists, show confirmation dialog for add
       setPendingEditId(null); // null means it's an add, not edit
@@ -186,7 +213,7 @@ const Content = () => {
     }
   };
   const handleEdit = (id: string) => {
-    const editing = localStorage.getItem('unsavedAccessControlData');
+    const editing = localStorage.getItem('unsavedAccessControl');
 
     if (editing) {
       const parsed = JSON.parse(editing);
@@ -209,24 +236,25 @@ const Content = () => {
 
   const handleConfirmEdit = () => {
     setConfirmDialogOpen(false);
-    localStorage.removeItem('unsavedAccessControlData');
+    localStorage.removeItem('unsavedAccessControl');
     setLoading(true);
 
     if (pendingEditId) {
+      // EDIT mode
       const data = tableData.find((item) => item.id === pendingEditId);
-      setFormDataAddAccessControl(CreateAccessControlRequestSchema.parse(data) || {});
+      setFormDataAddAccessControl(CreateAccessControlRequestSchema.parse(data) || defaultFormData);
       setEdittingId(pendingEditId);
 
       setTimeout(() => {
         setLoading(false);
-        handleOpenDialog(); // ✅ buka dialog untuk edit
+        handleOpenDialog(); // buka dialog edit
       }, 300);
     } else {
-      // ❌ JANGAN buka dialog lagi di sini!
-      setFormDataAddAccessControl(CreateAccessControlRequestSchema.parse({}));
+      // ADD mode (discard unsaved)
+      setFormDataAddAccessControl(defaultFormData); // ✅ reset ke default
       setEdittingId('');
       setLoading(false);
-      setOpenCreateAccessControl(false); // pastikan tertutup
+      setOpenCreateAccessControl(false); // pastikan dialog tertutup
     }
 
     setPendingEditId(null);
@@ -295,62 +323,71 @@ const Content = () => {
 
   return (
     <>
-      <PageContainer title="Manage Access Control Space" description="Site page">
+      <PageContainer title="Access Control" description="Site page">
         <Box>
           <Grid container spacing={3}>
             {/* column */}
-            <Grid size={{ xs: 12, lg: 4 }}>
-              <TopCard items={cards} />
+            <Grid size={{ xs: 12, lg: 12 }}>
+              <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
             </Grid>
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
-              <DynamicTable
-                isHavePagination={true}
-                selectedRows={selectedRows}
-                totalCount={totalFilteredRecords}
-                defaultRowsPerPage={rowsPerPage}
-                rowsPerPageOptions={[5, 10, 20]}
-                onPaginationChange={(page, rowsPerPage) => {
-                  setPage(page);
-                  setRowsPerPage(rowsPerPage);
-                }}
-                overflowX={'auto'}
-                data={tableData}
-                isHaveChecked={true}
-                isHaveAction={true}
-                isHaveSearch={true}
-                isHaveFilter={true}
-                isHaveExportPdf={true}
-                isHaveExportXlf={false}
-                isHaveFilterDuration={false}
-                isHaveAddData={true}
-                isHaveHeader={false}
-                onCheckedChange={(selected) => {
-                  const selectedItem = selected.map((item) => ({
-                    ...item,
-                    brand_id: item.brand_name, // assuming brand_name is the equivalent of brand_id
-                    integration_id: item.integration_name, // assuming integration_name is the equivalent of integration_id
-                  }));
-                  setSelectedRows(selectedItem);
-                }}
-                onEdit={(row) => {
-                  handleEdit(row.id);
-                  setEdittingId(row.id);
-                }}
-                onDelete={(row) => handleDelete(row.id)}
-                onBatchDelete={handleBatchDelete}
-                onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-                onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
-                onAddData={() => {
-                  handleAdd();
-                }}
-              />{' '}
+              {isDataReady ? (
+                <DynamicTable
+                  isHavePagination={true}
+                  selectedRows={selectedRows}
+                  totalCount={totalFilteredRecords}
+                  defaultRowsPerPage={rowsPerPage}
+                  rowsPerPageOptions={[5, 10, 20]}
+                  onPaginationChange={(page, rowsPerPage) => {
+                    setPage(page);
+                    setRowsPerPage(rowsPerPage);
+                  }}
+                  overflowX={'auto'}
+                  data={tableData}
+                  isHaveChecked={true}
+                  isHaveAction={true}
+                  isHaveSearch={true}
+                  isHaveFilter={true}
+                  isHaveExportPdf={false}
+                  isHaveExportXlf={false}
+                  isHaveFilterDuration={false}
+                  isHaveAddData={true}
+                  isHaveHeader={false}
+                  onCheckedChange={(selected) => {
+                    const selectedItem = selected.map((item) => ({
+                      ...item,
+                      brand_id: item.brand_name, // assuming brand_name is the equivalent of brand_id
+                      integration_id: item.integration_name, // assuming integration_name is the equivalent of integration_id
+                    }));
+                    setSelectedRows(selectedItem);
+                  }}
+                  onEdit={(row) => {
+                    handleEdit(row.id);
+                    setEdittingId(row.id);
+                  }}
+                  isDataVerified={true}
+                  onDelete={(row) => handleDelete(row.id)}
+                  onBatchDelete={handleBatchDelete}
+                  onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                  onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
+                  onAddData={() => {
+                    handleAdd();
+                  }}
+                />
+              ) : (
+                <Card sx={{ width: '100%' }}>
+                  <Skeleton />
+                  <Skeleton animation="wave" />
+                  <Skeleton animation={false} />
+                </Card>
+              )}
             </Grid>
           </Grid>
         </Box>
       </PageContainer>
       <Dialog open={openCreateAccessControl} onClose={handleDialogClose} fullWidth maxWidth="md">
-        <DialogTitle sx={{ position: 'relative', padding: 5 }}>
+        <DialogTitle sx={{ position: 'relative', padding: 3 }}>
           {edittingId ? 'Edit' : 'Add'} Access Control
           <IconButton
             aria-label="close"
@@ -363,8 +400,8 @@ const Content = () => {
             }}
             sx={{
               position: 'absolute',
-              right: 8,
-              top: 8,
+              right: 10,
+              top: 12,
               color: (theme) => theme.palette.grey[500],
             }}
           >
@@ -378,7 +415,7 @@ const Content = () => {
             formData={formDataAddAccessControl}
             setFormData={setFormDataAddAccessControl}
             onSuccess={() => {
-              localStorage.removeItem('unsavedAccessControlData');
+              localStorage.removeItem('unsavedAccessControl');
               handleCloseDialog();
               setRefreshTrigger(refreshTrigger + 1);
               if (edittingId) {

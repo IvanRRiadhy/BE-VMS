@@ -26,7 +26,7 @@ const HeaderHorizontalNavigationHide = () => {
         to="/apps/email"
         component={Link}
       >
-        Email
+        Email   
       </Button>
     </>
   );

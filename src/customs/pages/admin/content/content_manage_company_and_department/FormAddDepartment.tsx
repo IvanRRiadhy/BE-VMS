@@ -1,10 +1,22 @@
-import { Button, Grid2, Alert, Typography, CircularProgress } from '@mui/material';
+import {
+  Button,
+  Grid2,
+  Alert,
+  Typography,
+  Autocomplete,
+  CircularProgress,
+  Backdrop,
+  Portal,
+} from '@mui/material';
 import { Box } from '@mui/system';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import { createDepartment } from 'src/customs/api/admin';
-import { CreateDepartmentRequest, CreateDepartmentSchema } from 'src/customs/api/models/Department';
+import { createDepartment, getAllEmployee } from 'src/customs/api/admin';
+import {
+  CreateDepartementSubmitSchema,
+  CreateDepartmentRequest,
+} from 'src/customs/api/models/Admin/Department';
 import { useSession } from 'src/customs/contexts/SessionContext';
 
 interface FormAddDepartmentProps {
@@ -26,10 +38,49 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
   );
   const { token } = useSession();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target;
-    setFormData((prev) => ({ ...prev, [id]: value }));
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const field = e.target.name || e.target.id;
+    const { value } = e.target;
+
+    // update form
+    setFormData((prev) => ({ ...prev, [field]: value }));
+
+    // clear error for this field
+    setErrors((prev) => ({ ...prev, [field]: '' }));
   };
+
+  const validateLocal = (data: any) => {
+    const r = CreateDepartementSubmitSchema.safeParse(data);
+    if (!r.success) {
+      const fe = r.error.flatten().fieldErrors;
+      setErrors({
+        code: fe.code?.[0] ?? '',
+        name: fe.name?.[0] ?? '',
+        host: fe.host?.[0] ?? '',
+      });
+      return null;
+    }
+    setErrors({});
+    return r.data;
+  };
+
+  const [allEmployes, setAllEmployees] = useState<any>([]);
+
+  useEffect(() => {
+    if (!token) return;
+
+    const fetchEmployees = async () => {
+      try {
+        const res = await getAllEmployee(token);
+        setAllEmployees(res?.collection ?? []);
+      } catch (error) {
+        console.error('Failed to fetch employees:', error);
+        setAllEmployees([]);
+      }
+    };
+
+    fetchEmployees();
+  }, [token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,7 +99,14 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
         return;
       }
 
-      await createDepartment(formData, token);
+      const parsed = validateLocal(formData);
+      if (!parsed) {
+        setAlertType('error');
+        setAlertMessage('Please complete the required fields correctly.');
+        return;
+      }
+
+      await createDepartment(parsed, token);
       localStorage.removeItem('unsavedDepartmentFormAdd');
       setAlertType('success');
       setAlertMessage('Department successfully created!');
@@ -57,8 +115,13 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
         onSuccess?.();
       }, 900);
     } catch (err: any) {
-      if (err?.errors) {
-        setErrors(err.errors);
+      const be = err?.response?.data?.errors;
+      if (be && typeof be === 'object') {
+        setErrors({
+          code: be.Code?.[0] ?? '',
+          name: be.Name?.[0] ?? '',
+          host: be.Host?.[0] ?? '',
+        });
       }
 
       setAlertType('error');
@@ -70,7 +133,7 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
     } finally {
       setTimeout(() => {
         setLoading(false);
-      }, 800);
+      }, 600);
     }
   };
 
@@ -81,7 +144,7 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
           <Alert severity={alertType}>{alertMessage}</Alert>
         </Grid2>
 
-        <CustomFormLabel htmlFor="name" sx={{ my: 1, mx: 1 }}>
+        <CustomFormLabel htmlFor="name" sx={{ my: 1 }}>
           <Typography variant="caption">Department Name</Typography>
         </CustomFormLabel>
         <CustomTextField
@@ -94,7 +157,7 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
           variant="outlined"
         />
 
-        <CustomFormLabel htmlFor="code" sx={{ my: 1, mx: 1 }}>
+        <CustomFormLabel htmlFor="code" sx={{ my: 1 }}>
           <Typography variant="caption">Department Code</Typography>
         </CustomFormLabel>
         <CustomTextField
@@ -107,42 +170,71 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
           variant="outlined"
         />
 
-        {/* <CustomFormLabel htmlFor="host" sx={{ my: 1, mx: 1 }}>
-          <Typography variant="caption">Department Host</Typography>
+        <CustomFormLabel htmlFor="host" sx={{ my: 1 }}>
+          <Typography variant="caption">Head of Department</Typography>
         </CustomFormLabel>
-        <CustomTextField
+        <Autocomplete
+          // freeSolo
           id="host"
-          value={formData.host}
-          onChange={handleChange}
-          error={Boolean(errors.host)}
-          helperText={errors.host || 'You have to make sure that the host is correct.'}
-          fullWidth
-          variant="outlined"
-        /> */}
+          autoHighlight
+          disablePortal
+          options={allEmployes.map((emp: any) => ({ id: emp.id, label: emp.name }))}
+          getOptionLabel={(option) => {
+            if (typeof option === 'string') return option; // user mengetik manual
+            return option.label;
+          }}
+          value={
+            // cari object di options yang id-nya sama dengan formData.host
+            allEmployes
+              .map((emp: any) => ({ id: emp.id, label: emp.name }))
+              .find((emp: any) => emp.id === formData.host) ?? ''
+          }
+          onChange={(_, newValue) => {
+            const newHost = typeof newValue === 'string' ? newValue : newValue?.id ?? '';
+            setFormData((prev) => ({ ...prev, host: newHost }));
 
-        <Button sx={{ mt: 2 }} color="primary" variant="contained" type="submit" disabled={loading}>
-          {loading ? 'Submitting...' : 'Submit'}
-        </Button>
+            // clear error langsung
+            setErrors((prev) => ({ ...prev, host: '' }));
+          }}
+          onInputChange={(_, inputValue) => {
+            setFormData((prev) => ({ ...prev, host: inputValue }));
+
+            // clear error langsung
+            setErrors((prev) => ({ ...prev, host: '' }));
+          }}
+          renderInput={(params) => (
+            <CustomTextField
+              {...params}
+              variant="outlined"
+              placeholder=""
+              error={Boolean(errors.host)}
+              helperText={errors.host}
+              fullWidth
+            />
+          )}
+        />
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Button
+            sx={{ mt: 2 }}
+            color="primary"
+            variant="contained"
+            type="submit"
+            disabled={loading}
+          >
+            Submit
+          </Button>
+        </Box>
       </form>
 
-      {loading && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            bgcolor: '#ffff',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 10,
-          }}
-        >
-          <CircularProgress color="inherit" />
-        </Box>
-      )}
+      <Backdrop
+        open={loading}
+        sx={{
+          color: 'primary',
+          zIndex: (theme) => theme.zIndex.drawer + 1, // di atas drawer & dialog
+        }}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
     </>
   );
 };

@@ -7,6 +7,9 @@ import {
   DialogActions,
   Button,
   Divider,
+  CircularProgress,
+  Card,
+  Skeleton,
   Grid2 as Grid,
   IconButton,
 } from '@mui/material';
@@ -28,7 +31,7 @@ import {
   multiOptField,
   FieldType,
   CreateCustomFieldRequestSchema,
-} from 'src/customs/api/models/CustomField';
+} from 'src/customs/api/models/Admin/CustomField';
 import FormCustomField from './FormCustomField';
 import Swal from 'sweetalert2';
 import { IconSettings } from '@tabler/icons-react';
@@ -55,7 +58,7 @@ const Content = () => {
   const [totalRecords, setTotalRecords] = useState(0);
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -79,12 +82,14 @@ const Content = () => {
           searchKeyword,
         );
         console.log('Response from API:', response);
-        setTableData(response.collection);
-        setTotalRecords(response.RecordsTotal);
-        setTotalFilteredRecords(response.RecordsFiltered);
-        setIsDataReady(true);
+        const total = responseGet.collection?.length ?? 0;
+        console.log('Total records:', total);
+        setTableData(responseGet.collection);
+        setTotalRecords(total); // langsung dari jumlah item
+        // setTotalFilteredRecords(responseGet.RecordsFiltered);
+
         console.log('Table data:', tableData);
-        const rows = response.collection.map((item: Item) => ({
+        const rows = responseGet.collection.map((item: Item) => ({
           id: item.id,
           name: item.short_name,
           display_text: item.long_display_text,
@@ -92,7 +97,10 @@ const Content = () => {
           multiple_option_fields: item.multiple_option_fields,
         }));
 
-        setTableRowSite(rows);
+        if (rows) {
+          setTableRowSite(rows);
+          setIsDataReady(true);
+        }
       } catch (error) {
         console.error('Fetch error:', error);
       } finally {
@@ -100,7 +108,7 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword]);
+  }, [token, refreshTrigger, searchKeyword]);
   const [formDataAddCustomField, setFormDataAddCustomField] = useState<CreateCustomFieldRequest>(
     () => {
       const saved = localStorage.getItem('unsavedCustomDataData');
@@ -150,7 +158,7 @@ const Content = () => {
   const cards = [
     {
       title: 'Total Custom Field',
-      subTitle: `${totalFilteredRecords}`,
+      subTitle: `${totalRecords}`,
       icon: IconSettings,
       subTitleSetting: 10,
       color: 'none',
@@ -244,7 +252,10 @@ const Content = () => {
   const handleDelete = async (id: string) => {
     if (!token) return;
 
-    const confirm = await showConfirmDelete('Are you sure? ', "You won't be able to revert this!");
+    const confirm = await showConfirmDelete(
+      'Are you sure you want to delete this? ',
+      "You won't be able to revert this!",
+    );
 
     if (confirm) {
       setLoading(true);
@@ -287,51 +298,59 @@ const Content = () => {
 
   return (
     <>
-      <PageContainer title="Manage Custom Field Space" description="Custom Field page">
+      <PageContainer title="Custom Field" description="Custom Field page">
         <Box>
           <Grid container spacing={3}>
             {/* column */}
-            <Grid size={{ xs: 12, lg: 4 }}>
-              <TopCard items={cards} />
+            <Grid size={{ xs: 12, lg: 12 }}>
+              <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
             </Grid>
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
-              <DynamicTable
-                overflowX={'auto'}
-                isHavePagination={true}
-                data={tableRowSite}
-                selectedRows={selectedRows}
-                totalCount={totalFilteredRecords}
-                defaultRowsPerPage={rowsPerPage}
-                rowsPerPageOptions={[5, 10, 20, 50, 100]}
-                onPaginationChange={(page, rowsPerPage) => {
-                  setPage(page);
-                  setRowsPerPage(rowsPerPage);
-                }}
-                isHaveChecked={true}
-                isHaveAction={true}
-                isHaveSearch={true}
-                isHaveFilter={true}
-                isHaveExportPdf={true}
-                isHaveExportXlf={false}
-                isHaveFilterDuration={false}
-                isHaveAddData={true}
-                isHaveHeader={false}
-                onCheckedChange={(selected) => {
-                  setSelectedRows(selected);
-                }}
-                onEdit={(row) => {
-                  handleEdit(row.id);
-                  setEdittingId(row.id);
-                }}
-                onDelete={(row) => handleDelete(row.id)}
-                onBatchDelete={handleBatchDelete}
-                onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-                onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
-                onAddData={() => {
-                  handleAdd();
-                }}
-              />
+              {isDataReady ? (
+                <DynamicTable
+                  overflowX={'auto'}
+                  isHavePagination={false}
+                  data={tableRowSite}
+                  selectedRows={selectedRows}
+                  totalCount={totalFilteredRecords}
+                  // defaultRowsPerPage={rowsPerPage}
+                  // rowsPerPageOptions={[5, 10, 20, 50, 100]}
+                  // onPaginationChange={(page, rowsPerPage) => {
+                  //   setPage(page);
+                  //   setRowsPerPage(rowsPerPage);
+                  // }}
+                  isHaveChecked={true}
+                  isHaveAction={false}
+                  isHaveSearch={true}
+                  isHaveFilter={false}
+                  isHaveExportPdf={false}
+                  isHaveExportXlf={false}
+                  isHaveFilterDuration={false}
+                  isHaveAddData={true}
+                  isHaveHeader={false}
+                  onCheckedChange={(selected) => {
+                    setSelectedRows(selected);
+                  }}
+                  onEdit={(row) => {
+                    handleEdit(row.id);
+                    setEdittingId(row.id);
+                  }}
+                  onDelete={(row) => handleDelete(row.id)}
+                  onBatchDelete={handleBatchDelete}
+                  onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                  onAddData={() => {
+                    handleAdd();
+                  }}
+                  isHaveObjectData={true}
+                />
+              ) : (
+                <Card sx={{ width: '100%' }}>
+                  <Skeleton />
+                  <Skeleton animation="wave" />
+                  <Skeleton animation={false} />
+                </Card>
+              )}
             </Grid>
           </Grid>
         </Box>
@@ -405,6 +424,24 @@ const Content = () => {
           </Button>
         </DialogActions>
       </Dialog>
+      {loading && (
+        <Box
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            bgcolor: '#fff',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 2000,
+          }}
+        >
+          <CircularProgress color="primary" />
+        </Box>
+      )}
     </>
   );
 };

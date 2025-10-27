@@ -12,7 +12,8 @@ export default defineConfig({
     host: true,
     proxy: {
       '/api': {
-        target: 'https://bd1c-182-253-55-5.ngrok-free.app',
+        target: 'http://192.168.1.116:8000',
+        // target: 'http://biovms-net.piranticerdasindonesia.com',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api/, ''),

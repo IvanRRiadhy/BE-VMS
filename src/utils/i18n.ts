@@ -1,33 +1,29 @@
 import i18n from 'i18next';
+import { chain } from 'lodash';
 import { initReactI18next } from 'react-i18next';
-import english from 'src/utils/languages/en.json';
-import french from 'src/utils/languages/fr.json';
-import arabic from 'src/utils/languages/ar.json';
-import chinese from 'src/utils/languages/ch.json';
+import en from 'src/utils/languages/en.json';
+import id from 'src/utils/languages/id.json';
+import ch from 'src/utils/languages/ch.json';
 
 const resources = {
+  id: {
+    translation: id,
+  },
   en: {
-    translation: english,
-  },
-  fr: {
-    translation: french,
-  },
-  ar: {
-    translation: arabic,
+    translation: en,
   },
   ch: {
-    translation: chinese,
+    translation: ch,
   },
 };
 
-i18n
-  .use(initReactI18next) // passes i18n down to react-i18next
-  .init({
-    resources,
-    lng: 'en',
-    interpolation: {
-      escapeValue: false, // react already safes from xss
-    },
-  });
+i18n.use(initReactI18next).init({
+  resources,
+  lng: 'en', // default bahasa
+  fallbackLng: 'id', // kalau key nggak ketemu
+  interpolation: {
+    escapeValue: false,
+  },
+});
 
 export default i18n;

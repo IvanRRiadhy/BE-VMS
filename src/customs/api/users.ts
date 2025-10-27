@@ -1,14 +1,19 @@
 import axios from 'axios';
 import {
+  AuthVisitorRequest,
+  AuthVisitorResponse,
   LoginRequest,
   LoginResponse,
+  PraformRequest,
   RefreshTokenRequest,
   RefreshTokenResponse,
   RevokeTokenResponse,
 } from './models/Users';
+import axiosInstance from './interceptor';
+import { GetProfileResponse } from './models/profile';
 
-const url: string = 'http://192.168.1.116:8000/api';
-
+const url: string = `http://${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api`;
+// const url: string = `https://song-logged-tractor-foot.trycloudflare.com/api`;
 export const login = async (body: LoginRequest): Promise<LoginResponse> => {
   try {
     const response = await axios.post<LoginResponse>(`${url}/_Auth/RequestToken`, body, {
@@ -31,6 +36,36 @@ export const refreshToken = async (body: RefreshTokenRequest): Promise<RefreshTo
   }
 };
 
+export const AuthVisitor = async (body: AuthVisitorRequest): Promise<AuthVisitorResponse> => {
+  try {
+    const response = await axios.post(`${url}/_Auth/VisitorRequest`, body, {
+      headers: { 'Content-Type': 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const SubmitPraForm = async (
+  body: any, // bisa diganti dengan type PraformRequest
+  id: string,
+): Promise<AuthVisitorResponse> => {
+  try {
+    const response = await axios.post(
+      `${url}/_Auth/submit/pra-form`,
+      body, // body JSON lengkap
+      {
+        headers: { 'Content-Type': 'application/json' },
+        params: { id }, // id visitor sebagai query param
+      },
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const revokeToken = async (token: string): Promise<RevokeTokenResponse> => {
   try {
     const response = await axios.get<RevokeTokenResponse>(`${url}/_Auth/RevokeToken`, {
@@ -38,6 +73,20 @@ export const revokeToken = async (token: string): Promise<RevokeTokenResponse> =
     });
     return response.data;
   } catch (error) {
+    throw error;
+  }
+};
+
+export const getProfile = async (token: string): Promise<GetProfileResponse> => {
+  try {
+    const response = await axiosInstance.get('/profile/me', {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data;
+    }
     throw error;
   }
 };

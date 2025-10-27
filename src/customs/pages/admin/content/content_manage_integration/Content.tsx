@@ -1,12 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Box,
   Button,
   Dialog,
-  DialogActions,
   DialogContent,
   DialogTitle,
   Divider,
+  Card,
+  Skeleton,
   Grid2 as Grid,
   IconButton,
 } from '@mui/material';
@@ -30,11 +31,16 @@ import {
   CreateIntegrationRequestSchema,
   CreateIntegrationRequest,
   apiKeyFieldMap,
-} from 'src/customs/api/models/Integration';
+} from 'src/customs/api/models/Admin/Integration';
 import { useTheme } from '@mui/material/styles';
 import FormIntegration from './FormIntegration';
-import Swal from 'sweetalert2';
 import { IconWorldCog } from '@tabler/icons-react';
+import { useNavigate } from 'react-router-dom';
+import {
+  showConfirmDelete,
+  showErrorAlert,
+  showSuccessAlert,
+} from 'src/customs/components/alerts/alerts';
 
 type IntegrationTableRow = {
   id: string;
@@ -51,17 +57,19 @@ const Content = () => {
 
   // Pagination state.
   const [integrationData, setIntegrationData] = useState<Item[]>([]);
+  const [selectedRows, setSelectedRows] = useState<IntegrationTableRow[]>([]);
   const [tableData, setTableData] = useState<IntegrationTableRow[]>([]);
   const [availableIntegration, setAvailableIntegration] = useState<AvailableItem[]>([]);
   const [isDataReady, setIsDataReady] = useState(false);
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+
   function formatEnumLabel(label: string) {
     // Insert a space before all caps and capitalize the first letter
     return label
@@ -71,16 +79,29 @@ const Content = () => {
   }
   useEffect(() => {
     if (!token) return;
+
+    let cancelled = false;
     const fetchData = async () => {
       setLoading(true);
       try {
-        const response = await getAllIntegration(token);
-        const availableResponse = await getAvailableIntegration(token);
-        setAvailableIntegration(availableResponse.collection);
-        setIntegrationData(response.collection);
-        setTotalRecords(response.collection.length);
-        setIsDataReady(true);
-        const rows: IntegrationTableRow[] = response.collection.map((item) => ({
+        const [response, availableResponse] = await Promise.all([
+          getAllIntegration(token),
+          getAvailableIntegration(token),
+        ]);
+
+        // Normalize to arrays
+        const integrations: Item[] = Array.isArray(response?.collection) ? response.collection : [];
+        const availables: AvailableItem[] = Array.isArray(availableResponse?.collection)
+          ? availableResponse.collection
+          : [];
+
+        if (cancelled) return;
+
+        setIntegrationData(integrations);
+        setAvailableIntegration(availables);
+        setTotalRecords(integrations.length);
+
+        const rows: IntegrationTableRow[] = integrations.map((item) => ({
           id: item.id,
           name: item.name,
           brand_name: item.brand_name,
@@ -89,15 +110,30 @@ const Content = () => {
           api_type_auth: formatEnumLabel(ApiTypeAuth[item.api_type_auth]),
           api_url: item.api_url || '',
         }));
+
         setTableData(rows);
+        setIsDataReady(true);
       } catch (error) {
         console.error('Error fetching data:', error);
+        // Reset to safe defaults so the UI still renders
+        if (!cancelled) {
+          setIntegrationData([]);
+          setAvailableIntegration([]);
+          setTableData([]);
+          setTotalRecords(0);
+          setIsDataReady(true);
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
+
     fetchData();
+    return () => {
+      cancelled = true;
+    };
   }, [token, page, rowsPerPage, sortColumn, refreshTrigger]);
+
   const [formDataAddIntegration, setFormDataAddIntegration] = useState<CreateIntegrationRequest>(
     () => {
       const saved = localStorage.getItem('unsavedIntegrationData');
@@ -167,25 +203,15 @@ const Content = () => {
     });
     setFormDataAddIntegration(integration);
     handleOpenDialog();
-    console.log('Integration data:', integration);
   };
 
   const handleEdit = (id: string) => {
     const editing = localStorage.getItem('unsavedIntegrationData');
-    // if (editing) {
-    //   const parsedData = JSON.parse(editing);
-    //   if (parsedData.id && parsedData.id !== id) {
-    //     console.log('ID tidak cocok');
-    //     setPendingEditId(id);
-    //     setConfirmDialogOpen(true);
-    //   } else {
-    //     handleOpenDialog();
-    //   }
-    // } else {
     const integration = integrationData.find((item) => item.id === id);
     const available = availableIntegration.find(
-      (item) => item.name === integration?.name && item.brand_name === integration?.brand_name,
+      (item) => item.brand_name === integration?.brand_name && item.name === integration?.name,
     );
+    console.log('Available integration:', available);
     const integrationWithListId = {
       ...integration,
       integration_list_id: available?.id || '',
@@ -193,91 +219,113 @@ const Content = () => {
     console.log('Integration data:', integrationWithListId);
     setFormDataAddIntegration(CreateIntegrationRequestSchema.parse(integrationWithListId));
     handleOpenDialog();
-    // }
   };
 
   const handleDelete = async (id: string) => {
     if (!token) return;
+    setLoading(true);
+    try {
+      await deleteIntegration(id, token);
+      setRefreshTrigger((prev) => prev + 1);
+      showSuccessAlert('Deleted!', 'The item has been deleted.');
+    } catch (error) {
+      console.error(error);
+      showErrorAlert('Error!', 'Failed to delete the item.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    Swal.fire({
-      title: 'Are you sure?',
-      text: "You won't be able to revert this!",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, delete it!',
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        try {
-          await deleteIntegration(id, token);
+  const handleBatchDelete = async (rows: any[]) => {
+    if (!token || rows.length === 0) return;
 
-          setRefreshTrigger((prev) => prev + 1);
-          Swal.fire({
-            title: 'Deleted!',
-            text: 'Your file has been deleted.',
-            icon: 'success',
-          });
-        } catch (error) {
-          console.error(error);
-          Swal.fire({
-            title: 'Error!',
-            text: 'Something went wrong while deleting.',
-            icon: 'error',
-          });
-        }
+    const confirmed = await showConfirmDelete(
+      `Are you sure to delete ${rows.length} items?`,
+      "You won't be able to revert this!",
+    );
+
+    if (confirmed) {
+      setLoading(true);
+      try {
+        await Promise.all(rows.map((row) => deleteIntegration(row.id, token)));
+        setRefreshTrigger((prev) => prev + 1);
+        showSuccessAlert('Deleted!', `${rows.length} items have been deleted.`);
+        setSelectedRows([]); // reset selected rows
+      } catch (error) {
+        console.error(error);
+        showErrorAlert('Error!', 'Failed to delete some items.');
+      } finally {
+        setLoading(false);
       }
-    });
+    }
   };
 
   return (
     <>
-      <PageContainer title="Manage Integration" description="Integration page">
+      <PageContainer title="Integration" description="Integration page">
         <Box>
           <Grid container spacing={3}>
             {/* column */}
-            <Grid size={{ xs: 12, lg: 4 }}>
-              <TopCard items={cards} />
+            <Grid size={{ xs: 12, lg: 12 }}>
+              <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
             </Grid>
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
-              <DynamicTable
-                isHavePagination={false}
-                totalCount={totalRecords}
-                defaultRowsPerPage={rowsPerPage}
-                rowsPerPageOptions={[5, 10, 20]}
-                onPaginationChange={(page, rowsPerPage) => {
-                  setPage(page);
-                  setRowsPerPage(rowsPerPage);
-                }}
-                overflowX={'auto'}
-                data={tableData}
-                isHaveChecked={true}
-                isHaveAction={true}
-                isHaveSearch={true}
-                isHaveFilter={false}
-                isHaveExportPdf={true}
-                isHaveExportXlf={false}
-                isHaveFilterDuration={false}
-                isHaveAddData={false}
-                isHaveFilterMore={false}
-                isHaveHeader={false}
-                onCheckedChange={(selected) => console.log('Checked table row:', selected)}
-                onEdit={(row) => {
-                  // console.log('Edit:', row);
-                  handleEdit(row.id);
-                  setEdittingId(row.id);
-                }}
-                onDelete={(row) => {
-                  console.log('Delete:', row);
-                  handleDelete(row.id);
-                }}
-                onSearchKeywordChange={(keyword) => console.log('Search keyword:', keyword)}
-                onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
-                // onAddData={() => {
-                //   handleAdd();
-                // }}
-              />
+              {isDataReady ? (
+                <DynamicTable
+                  isHavePagination={false}
+                  totalCount={totalRecords}
+                  defaultRowsPerPage={rowsPerPage}
+                  rowsPerPageOptions={[5, 10, 20]}
+                  onPaginationChange={(page, rowsPerPage) => {
+                    setPage(page);
+                    setRowsPerPage(rowsPerPage);
+                  }}
+                  overflowX={'auto'}
+                  data={tableData}
+                  selectedRows={selectedRows}
+                  isHaveChecked={true}
+                  isHaveAction={true}
+                  isHaveSearch={true}
+                  isHaveFilter={false}
+                  isHaveExportPdf={false}
+                  isHaveExportXlf={false}
+                  isHaveFilterDuration={false}
+                  isHaveAddData={false}
+                  isHaveFilterMore={false}
+                  isHaveHeader={false}
+                  isHaveIntegration={true}
+                  onNameClick={(row) =>
+                    window.open(
+                      `/admin/manage/integration/${row.id}`,
+                      '_blank',
+                      'noopener,noreferrer',
+                    )
+                  }
+                  onCheckedChange={(selected) => {
+                    setSelectedRows(selected);
+                  }}
+                  onEdit={(row) => {
+                    handleEdit(row.id);
+                    setEdittingId(row.id);
+                  }}
+                  onBatchDelete={handleBatchDelete}
+                  onDelete={(row) => {
+                    handleDelete(row.id);
+                  }}
+                  onSearchKeywordChange={(keyword) => console.log('Search keyword:', keyword)}
+                  onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
+                  // onAddData={() => {
+                  //   handleAdd();
+                  // }}
+                />
+              ) : (
+                <Card sx={{ width: '100%' }}>
+                  <Skeleton />
+                  <Skeleton animation="wave" />
+                  <Skeleton animation={false} />
+                </Card>
+              )}
             </Grid>
             <Grid container size={{ xs: 12, lg: 12 }} sx={{ mt: 4 }} justifyContent={'center'}>
               {availableIntegration.map((integration, index) => (
@@ -328,8 +376,8 @@ const Content = () => {
         </Box>
       </PageContainer>
       <Dialog open={openFormAddIntegration} onClose={handleCloseDialog} fullWidth maxWidth="md">
-        <DialogTitle sx={{ position: 'relative', padding: 5 }}>
-          Add Integration
+        <DialogTitle sx={{ position: 'relative', padding: 3 }}>
+          {edittingId ? 'Edit Integration' : 'Add Integration'}
           <IconButton
             aria-label="close"
             onClick={handleCloseDialog}
@@ -344,13 +392,12 @@ const Content = () => {
           </IconButton>
         </DialogTitle>
         <Divider />
-        <DialogContent>
+        <DialogContent sx={{ paddingTop: 0 }}>
           <br />
           <FormIntegration
             formData={formDataAddIntegration}
             setFormData={setFormDataAddIntegration}
             onSuccess={() => {
-              handleCloseDialog();
               setRefreshTrigger(refreshTrigger + 1);
             }}
             editingId={edittingId}

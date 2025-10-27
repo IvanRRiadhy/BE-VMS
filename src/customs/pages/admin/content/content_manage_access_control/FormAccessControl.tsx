@@ -4,10 +4,9 @@ import {
   Alert,
   Typography,
   CircularProgress,
-  FormControlLabel,
-  Switch,
-  Paper,
+  Autocomplete,
   Button as MuiButton,
+  Backdrop,
   MenuItem,
 } from '@mui/material';
 import { Box } from '@mui/system';
@@ -15,32 +14,35 @@ import React, { useEffect, useState, useRef } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { IconTrash } from '@tabler/icons-react';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import {
   CreateAccessControlRequest,
   CreateAccessControlRequestSchema,
+  Item,
   UpdateAccessControlRequest,
   UpdateAccessControlRequestSchema,
-} from 'src/customs/api/models/AccessControl';
+} from 'src/customs/api/models/Admin/AccessControl';
 import {
   createAccessControl,
+  getAccessControlById,
+  getAccessControlsById,
   getAllAccessControlPagination,
   getAllBrand,
   getAllIntegration,
-  getAvailableIntegration,
   updateAccessControl,
 } from 'src/customs/api/admin';
-import { AccessControlType } from 'src/customs/api/models/AccessControl';
-import { Item as BrandItem } from 'src/customs/api/models/Brand';
-import { AvailableItem as AvailableItem } from 'src/customs/api/models/Integration';
-import { Item as Integrationitem } from 'src/customs/api/models/Integration';
+import { AccessControlType } from 'src/customs/api/models/Admin/AccessControl';
+import { Item as BrandItem } from 'src/customs/api/models/Admin/Brand';
+import { Item as Integrationitem } from 'src/customs/api/models/Admin/Integration';
+import { showSuccessAlert } from 'src/customs/components/alerts/alerts';
 type AccessControlFormData = {
   brand_id: string;
   integration_id: string;
+  brand_name: string;
+  integration_name?: string;
   type: number;
   name: string;
-  description: string;
+  description?: string;
   channel: string;
   door_id: string;
   raw: string;
@@ -49,7 +51,7 @@ type AccessControlFormData = {
 
 interface FormAccessControlProps {
   formData: CreateAccessControlRequest;
-  setFormData: React.Dispatch<React.SetStateAction<AccessControlFormData>>;
+  setFormData: React.Dispatch<React.SetStateAction<CreateAccessControlRequest>>;
   editingId?: string;
   onSuccess?: () => void;
 }
@@ -80,57 +82,50 @@ const FormAccessControl = ({
       }));
     }
   };
-  const [accessList, setAccessList] = useState<CreateAccessControlRequest[]>([]);
   const [brandList, setBrandList] = useState<BrandItem[]>([]);
   const [integrationList, setIntegrationList] = useState<Integrationitem[]>([]);
 
+  // 1️⃣ Ambil list brand & integration sekali saat token ada
   useEffect(() => {
     if (!token) return;
 
-    const fetchData = async () => {
-      try {
-        const brandRes = await getAllBrand(token);
-        const integrationRes = await getAllIntegration(token);
-        const accessRes = await getAllAccessControlPagination(token, 0, 99, 'id', '');
+    const fetchList = async () => {
+      const [brandRes, integrationRes] = await Promise.all([
+        getAllBrand(token),
+        getAllIntegration(token),
+      ]);
+      setBrandList(brandRes?.collection ?? []);
+      setIntegrationList(integrationRes?.collection ?? []);
+    };
 
-        // Set semua list
-        setBrandList(brandRes?.collection ?? []);
-        setIntegrationList(integrationRes?.collection ?? []);
+    fetchList();
+  }, [token]);
 
-        // Mode Edit: Isi formData
-        if (editingId) {
-          const target = accessRes?.collection.find((item) => item.id === editingId);
-          if (target) {
-            setFormData({
-              brand_id: target.brand_id,
-              integration_id: target.integration_id,
-              type: target.type,
-              name: target.name,
-              description: target.description,
-              channel: target.channel,
-              door_id: target.door_id,
-              raw: target.raw,
-            });
-          }
-        } else {
-          // Mode Create: Kosongkan formData
-          setFormData({
-            brand_id: '',
-            integration_id: '',
-            type: 0,
-            name: '',
-            description: '',
-            channel: '',
-            door_id: '',
-            raw: '{}',
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching data:', error);
+  // 2️⃣ Ambil detail access kalau sedang mode edit
+  useEffect(() => {
+    if (!token || !editingId) return;
+
+    const fetchDetail = async () => {
+      const accessRes = await getAccessControlsById(editingId, token);
+      const target = accessRes?.collection as Item | undefined;
+      if (target) {
+        console.log('Target for editing:', target);
+        setFormData({
+          brand_id: target.brand_id ?? '',
+          integration_id: target.integration_id ?? '',
+          type: Number(target.type),
+          name: target.name,
+          description: target.description ?? '',
+          channel: target.channel,
+          door_id: target.door_id,
+          raw: target.raw,
+          integration_name: target.integration_name,
+          brand_name: target.brand_name,
+        });
       }
     };
 
-    fetchData();
+    fetchDetail();
   }, [token, editingId]);
 
   const handleOnSubmit = async (e: React.FormEvent) => {
@@ -149,22 +144,33 @@ const FormAccessControl = ({
         return;
       }
       const data: CreateAccessControlRequest = CreateAccessControlRequestSchema.parse(formData);
-      const dataUpdate: UpdateAccessControlRequest =
-        UpdateAccessControlRequestSchema.parse(formData);
+
+      const dataUpdate: UpdateAccessControlRequest = UpdateAccessControlRequestSchema.parse({
+        brand_id: formData.brand_id,
+        integration_id: formData.integration_id,
+        type: formData.type,
+        name: formData.name,
+        description: formData.description,
+        channel: formData.channel,
+        door_id: formData.door_id,
+        raw: formData.raw,
+      });
+      console.log('Data being sent to API:', dataUpdate);
+
       console.log('Setting Data: ', data);
-      if (editingId && editingId !== '') {
-        console.log('Update Mode');
+      if (editingId) {
         await updateAccessControl(editingId, dataUpdate, token);
         console.log('Form Data : ', formData);
-        setAlertMessage('Access Control successfully updated!');
+        showSuccessAlert('Updated!', 'Access control successfully updated!');
       } else {
         console.log('Create Mode');
         await createAccessControl(data, token);
-        setAlertMessage(
-          editingId ? 'Custom field successfully updated!' : 'Custom field successfully created!',
-        );
+        // setAlertMessage(
+        //   editingId ? 'Custom field successfully updated!' : 'Custom field successfully created!',
+        // );
+        showSuccessAlert('Created!', 'Access control successfully created!');
       }
-      localStorage.removeItem('unsavedIntegrationData');
+      localStorage.removeItem('unsavedAccessControl');
       setAlertType('success');
 
       setTimeout(() => {
@@ -205,7 +211,7 @@ const FormAccessControl = ({
             <Typography variant="h6" sx={{ my: 2, borderLeft: '4px solid #673ab7', pl: 1 }}>
               Access Control Details
             </Typography>
-            <CustomFormLabel htmlFor="access_control_name">Access Control Name</CustomFormLabel>
+            <CustomFormLabel htmlFor="access_control_name">Name</CustomFormLabel>
             <CustomTextField
               id="name"
               value={formData.name}
@@ -266,44 +272,50 @@ const FormAccessControl = ({
               error={!!errors.brand_id}
               helperText={errors.brand_id || ''}
               fullWidth
-              required
             >
-              {brandList.map((brand) => (
-                <MenuItem key={brand.id} value={brand.id}>
-                  {brand.name}
+              <MenuItem value="" disabled>
+                Select Brand
+              </MenuItem>
+              {brandList.map((b) => (
+                <MenuItem key={b.id} value={b.id}>
+                  {b.name}
                 </MenuItem>
               ))}
             </CustomSelect>
+
             <CustomFormLabel htmlFor="integration-name">Integration Name</CustomFormLabel>
             <CustomSelect
               id="integration_id"
               name="integration_id"
-              value={formData.integration_id}
+              value={formData.integration_id || ''}
               onChange={handleChange}
-              error={!!errors.integration_id}
-              helperText={errors.integration_id || ''}
               fullWidth
-              required
             >
+              <MenuItem value="" disabled>
+                Select Integration
+              </MenuItem>
               {integrationList.map((integration) => (
                 <MenuItem key={integration.id} value={integration.id}>
                   {integration.name}
                 </MenuItem>
               ))}
             </CustomSelect>
-            <CustomFormLabel htmlFor="access_control_type">Access Control type</CustomFormLabel>
+            <CustomFormLabel htmlFor="type">Type</CustomFormLabel>
             <CustomSelect
               id="type"
               name="type"
-              value={formData.type}
+              value={Number(formData.type) ?? ''}
               onChange={handleChange}
               error={!!errors.type}
               helperText={errors.type || ''}
               fullWidth
               required
             >
+              <MenuItem value="" disabled>
+                Select Type
+              </MenuItem>
               {Object.entries(AccessControlType)
-                .filter(([k, v]) => isNaN(Number(k)))
+                .filter(([k]) => isNaN(Number(k)))
                 .map(([key, value]) => (
                   <MenuItem key={value} value={value}>
                     {formatEnumLabel(key)}
@@ -313,29 +325,26 @@ const FormAccessControl = ({
           </Grid>
         </Grid>
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-          <Button color="primary" variant="contained" type="submit" disabled={loading} size="large">
-            {loading ? 'Submitting...' : 'Submit'}
+          <Button
+            color="primary"
+            variant="contained"
+            type="submit"
+            disabled={loading}
+            size="medium"
+          >
+            Submit
           </Button>
         </Box>
       </form>
-      {loading && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            bgcolor: 'rgba(0,0,0,0.4)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 10,
-          }}
-        >
-          <CircularProgress color="inherit" />
-        </Box>
-      )}
+      <Backdrop
+        open={loading}
+        sx={{
+          color: '#fff',
+          zIndex: (theme) => theme.zIndex.drawer + 1, // di atas drawer & dialog
+        }}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
     </>
   );
 };

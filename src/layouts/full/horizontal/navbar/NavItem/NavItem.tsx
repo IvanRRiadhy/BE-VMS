@@ -7,6 +7,7 @@ import { NavLink } from 'react-router';
 import { ListItemIcon, List, styled, ListItemText, useTheme, ListItemButton } from '@mui/material';
 import { useSelector } from 'src/store/Store';
 import { AppState } from 'src/store/Store';
+import { useTranslation } from 'react-i18next';
 
 type NavGroup = {
   [x: string]: any;
@@ -74,6 +75,8 @@ const NavItem = ({ item, level, pathDirect, onClick }: ItemType) => {
     target: item?.external ? '_blank' : '',
   };
 
+  const { t } = useTranslation();
+
   return (
     <List component="li" disablePadding key={item.id}>
       <ListItemStyled2
@@ -91,7 +94,7 @@ const NavItem = ({ item, level, pathDirect, onClick }: ItemType) => {
         >
           {itemIcon}
         </ListItemIcon>
-        <ListItemText sx={{ fontSize: '0.3rem' }}>{item.title}</ListItemText>
+        <ListItemText sx={{ fontSize: '0.3rem' }}> {item.title && t(item.title)}</ListItemText>
       </ListItemStyled2>
     </List>
   );

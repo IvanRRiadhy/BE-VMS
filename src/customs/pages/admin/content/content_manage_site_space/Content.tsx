@@ -8,6 +8,8 @@ import {
   Button,
   Divider,
   Grid2 as Grid,
+  Skeleton,
+  Card,
   IconButton,
 } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
@@ -16,28 +18,23 @@ import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import FormSite from './FormSite';
 import CloseIcon from '@mui/icons-material/Close';
-import {
-  CreateSiteRequest,
-  CreateSiteRequestSchema,
-  Item,
-  generateKeyCode,
-} from 'src/customs/api/models/Sites';
-import { uniqueId } from 'lodash';
+import { CreateSiteRequestSchema, Item } from 'src/customs/api/models/Admin/Sites';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { deleteSiteSpace, getAllSitePagination } from 'src/customs/api/admin';
-import Swal from 'sweetalert2';
+import { deleteSiteSpace, getAllSite, getAllSitePagination } from 'src/customs/api/admin';
 import { IconSitemap } from '@tabler/icons-react';
 import {
   showConfirmDelete,
   showSuccessAlert,
   showErrorAlert,
 } from 'src/customs/components/alerts/alerts';
+import FilterMoreContent from './FilterMoreContent';
 
 type SiteTableRow = {
   id: string;
   name: string;
-  description: string;
-  image: string;
+  type: number;
+  description: string | null;
+  image: string | null;
 };
 
 type EnableField = {
@@ -51,10 +48,10 @@ type EnableField = {
   auto_signout: boolean;
   can_contactless_login: boolean;
   need_document: boolean;
+  is_registered_point: boolean;
 };
 
 const Content = () => {
-  const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const [tableData, setTableData] = useState<Item[]>([]);
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
 
@@ -63,26 +60,27 @@ const Content = () => {
   const [totalRecords, setTotalRecords] = useState(0);
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(15);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [tableRowSite, setTableRowSite] = useState<SiteTableRow[]>([]);
-  // const [selectedRows, setSelectedRows] = useState<SiteTableRow[]>([]);
   const [edittingId, setEdittingId] = useState('');
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const [searchKeyword, setSearchKeyword] = useState('');
-
-  const [formDataAddSite, setFormDataAddSite] = useState<Item>(() => {
-    const saved = localStorage.getItem('unsavedSiteForm');
-    return saved ? JSON.parse(saved) : CreateSiteRequestSchema.parse({});
-  });
+  const [isEditing, setIsEditing] = useState(false);
 
   const [openFormCreateSiteSpace, setOpenFormCreateSiteSpace] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
   const [shouldSaveToStorage, setShouldSaveToStorage] = useState(true);
   const [isBatchEdit, setIsBatchEdit] = useState(false);
+
+  const [initialFormSnapshot, setInitialFormSnapshot] = useState<Item | null>(null);
+  const [formDataAddSite, setFormDataAddSite] = useState<Item>(() => {
+    const saved = localStorage.getItem('unsavedSiteForm');
+    return saved ? JSON.parse(saved) : CreateSiteRequestSchema.parse({});
+  });
 
   const cards = [
     {
@@ -96,7 +94,27 @@ const Content = () => {
   const defaultFormData = CreateSiteRequestSchema.parse({});
 
   // Cek apakah form berubah
-  const isFormChanged = JSON.stringify(formDataAddSite) !== JSON.stringify(defaultFormData);
+  const isFormChanged = React.useMemo(() => {
+    if (!openFormCreateSiteSpace || !initialFormSnapshot) return false;
+    return JSON.stringify(formDataAddSite) !== JSON.stringify(initialFormSnapshot);
+  }, [openFormCreateSiteSpace, formDataAddSite, initialFormSnapshot]);
+
+  useEffect(() => {
+    if (!shouldSaveToStorage) return;
+    if (!openFormCreateSiteSpace || !initialFormSnapshot) return;
+
+    if (isFormChanged) {
+      localStorage.setItem('unsavedSiteForm', JSON.stringify(formDataAddSite));
+    } else {
+      localStorage.removeItem('unsavedSiteForm');
+    }
+  }, [
+    formDataAddSite,
+    shouldSaveToStorage,
+    openFormCreateSiteSpace,
+    initialFormSnapshot,
+    isFormChanged,
+  ]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -129,6 +147,12 @@ const Content = () => {
     }
   }, [formDataAddSite, shouldSaveToStorage]);
 
+  const [filters, setFilters] = useState<any>({
+    type: -1,
+  });
+
+  const [appliedType, setAppliedType] = useState<number>(-1);
+
   useEffect(() => {
     if (!token) return;
     const fetchData = async () => {
@@ -142,21 +166,27 @@ const Content = () => {
           rowsPerPage,
           sortColumn,
           searchKeyword,
+          appliedType !== -1 ? appliedType : undefined,
         );
-        console.log('Response from API:', response);
+        const resGetAll = await getAllSite(token);
+        console.log('Response from API:', resGetAll);
         setTableData(response.collection);
         setTotalRecords(response.RecordsTotal);
         setTotalFilteredRecords(response.RecordsFiltered);
-        console.log('Table data:', response.RecordsFiltered);
-        setIsDataReady(true);
+        // console.log('Table data:', response.RecordsFiltered);
+
         const rows = response.collection.map((item) => ({
           id: item.id,
           name: item.name,
-          description: item.description,
-          image: item.image,
+          type: item.type,
+          description: item.description || '',
+          image: item.image || '',
         }));
 
-        setTableRowSite(rows);
+        if (rows) {
+          setTableRowSite(rows);
+          setIsDataReady(true);
+        }
       } catch (error) {
         console.error('Fetch error:', error);
       } finally {
@@ -164,57 +194,63 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword]);
+  }, [token, page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword, appliedType]);
 
   // Create Site space state management
 
   const handleOpenDialog = () => {
     setOpenFormCreateSiteSpace(true);
   };
-  const [isEditing, setIsEditing] = useState(false);
 
   const handleCloseModalCreateSiteSpace = () => {
     localStorage.removeItem('unsavedSiteForm');
     setOpenFormCreateSiteSpace(false);
     setIsBatchEdit(false);
     setIsEditing(false);
+    setInitialFormSnapshot(null);
   };
 
   // Handle Add
   const handleAdd = () => {
     const editing = localStorage.getItem('unsavedSiteForm');
-
     if (editing) {
       const parsed = JSON.parse(editing);
-
-      // Kalau ID kosong → artinya sedang proses ADD, bukan edit
-      if (!parsed.id || parsed.id === '') {
-        setFormDataAddSite(parsed); // load kembali data sebelumnya
+      if (!parsed.id) {
+        setFormDataAddSite(parsed);
+        setInitialFormSnapshot(parsed);
         setEdittingId('');
-        handleOpenDialog(); // langsung buka modal
+        setOpenFormCreateSiteSpace(true);
         return;
       }
-
-      // Kalau ada ID → berarti user lagi ngedit data lain
       setPendingEditId(null);
       setConfirmDialogOpen(true);
       return;
     }
 
-    // Tidak ada data di localStorage → buat form baru
-    setFormDataAddSite({ ...CreateSiteRequestSchema.parse({}), id: '' });
+    const empty = {
+      ...CreateSiteRequestSchema.parse({}),
+      id: '',
+      access: [],
+      parking: [],
+      tracking: [],
+      is_registered_point: false,
+    };
+    setFormDataAddSite(empty);
+    setInitialFormSnapshot(empty);
     setEdittingId('');
-    handleOpenDialog();
+    setOpenFormCreateSiteSpace(true);
   };
 
   // Handle Edit
+  // buka EDIT
   const handleEdit = (id: string) => {
     const editing = localStorage.getItem('unsavedSiteForm');
-    console.log(editing);
     if (editing) {
       const parsed = JSON.parse(editing);
       if (parsed.id === id) {
-        handleOpenDialog();
+        setInitialFormSnapshot(parsed);
+        setOpenFormCreateSiteSpace(true);
+        return;
       } else {
         setPendingEditId(id);
         setConfirmDialogOpen(true);
@@ -226,11 +262,19 @@ const Content = () => {
     if (!found) return;
 
     try {
-      const parsedData = { ...CreateSiteRequestSchema.parse(found), id };
+      const parsedData = {
+        ...CreateSiteRequestSchema.parse(found),
+        id,
+        access: [],
+        parking: [],
+        tracking: [],
+        is_registered_point: false,
+      };
       setEdittingId(id);
-      setFormDataAddSite(parsedData); // ini akan tersimpan ulang di useEffect
-      localStorage.setItem('unsavedSiteForm', JSON.stringify(parsedData)); // simpan langsung
-      handleOpenDialog();
+      setFormDataAddSite(parsedData);
+      setInitialFormSnapshot(parsedData);
+      localStorage.setItem('unsavedSiteForm', JSON.stringify(parsedData));
+      setOpenFormCreateSiteSpace(true);
     } catch (error) {
       console.error('Error parsing data:', error);
     }
@@ -239,7 +283,7 @@ const Content = () => {
   const handleConfirmEdit = () => {
     setConfirmDialogOpen(false);
     localStorage.removeItem('unsavedSiteForm');
-    setShouldSaveToStorage(false); // jangan trigger autosave
+    setShouldSaveToStorage(false);
 
     if (pendingEditId) {
       const found = tableData.find((item) => item.id === pendingEditId);
@@ -247,22 +291,33 @@ const Content = () => {
         const parsedData = {
           ...CreateSiteRequestSchema.parse(found),
           id: pendingEditId,
+          access: [],
+          parking: [],
+          tracking: [],
+          is_registered_point: false,
         };
-
-        // 🔁 Set ulang data untuk edit yang baru
         setEdittingId(pendingEditId);
         setFormDataAddSite(parsedData);
-        setShouldSaveToStorage(true); // aktifkan kembali autosave
+        setInitialFormSnapshot(parsedData);
+        setShouldSaveToStorage(true);
         localStorage.setItem('unsavedSiteForm', JSON.stringify(parsedData));
-        handleCloseModalCreateSiteSpace();
+        setOpenFormCreateSiteSpace(true);
         setIsEditing(true);
       }
-    } else if (!pendingEditId) {
+    } else {
+      const empty = {
+        ...CreateSiteRequestSchema.parse({}),
+        id: '',
+        access: [],
+        parking: [],
+        tracking: [],
+        is_registered_point: false,
+      };
       setEdittingId('');
-      setFormDataAddSite({ ...CreateSiteRequestSchema.parse({}), id: '' });
-      // Jangan buka modal, hanya close dialog discard saja
-      handleCloseModalCreateSiteSpace();
+      setFormDataAddSite(empty);
+      setInitialFormSnapshot(empty);
       setIsEditing(false);
+      handleCloseModalCreateSiteSpace();
     }
 
     setPendingEditId(null);
@@ -366,6 +421,7 @@ const Content = () => {
     auto_signout: false,
     can_contactless_login: false,
     need_document: false,
+    is_registered_point: false,
   });
 
   const handleBatchEdit = (rows: any[]) => {
@@ -375,58 +431,83 @@ const Content = () => {
     handleOpenDialog();
   };
 
+  const handleApplyFilter = () => {
+    setPage(0);
+    setAppliedType(filters.type);
+    setRefreshTrigger((prev) => prev + 1);
+  };
+
   return (
     <>
-      <PageContainer title="Manage Site Space" description="Site page">
+      <PageContainer title="Site Space" description="Site page">
         <Box>
           <Grid container spacing={3}>
             {/* column */}
-            <Grid size={{ xs: 4, lg: 4 }}>
-              <TopCard items={cards} />
+            <Grid size={{ xs: 12, lg: 12 }}>
+              <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
             </Grid>
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
-              <DynamicTable
-                isHavePagination={true}
-                totalCount={totalFilteredRecords}
-                defaultRowsPerPage={rowsPerPage}
-                isHaveImage={true}
-                rowsPerPageOptions={[5, 10, 20, 50, 100]}
-                onPaginationChange={(page, rowsPerPage) => {
-                  setPage(page);
-                  setRowsPerPage(rowsPerPage);
-                }}
-                overflowX={'auto'}
-                data={tableRowSite}
-                selectedRows={selectedRows}
-                isHaveChecked={true}
-                isHaveAction={true}
-                isHaveSearch={true}
-                isHaveFilter={true}
-                isHaveExportPdf={true}
-                isHaveExportXlf={false}
-                isHaveFilterDuration={false}
-                isHaveAddData={true}
-                isHaveHeader={false}
-                onCheckedChange={(selected) => {
-                  const fullSelectedItems = tableData.filter((item) =>
-                    selected.some((row: SiteTableRow) => row.id === item.id),
-                  );
-                  setSelectedRows(fullSelectedItems);
-                }}
-                onEdit={(row) => {
-                  handleEdit(row.id);
-                  setEdittingId(row.id);
-                }}
-                onBatchEdit={handleBatchEdit}
-                onDelete={(row) => handleDelete(row.id)}
-                onBatchDelete={handleBatchDelete}
-                onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-                onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
-                onAddData={() => {
-                  handleAdd();
-                }}
-              />{' '}
+              {isDataReady ? (
+                <DynamicTable
+                  isHavePagination={true}
+                  totalCount={totalFilteredRecords}
+                  defaultRowsPerPage={rowsPerPage}
+                  isHaveImage={true}
+                  rowsPerPageOptions={[5, 10, 20, 50, 100]}
+                  onPaginationChange={(page, rowsPerPage) => {
+                    setPage(page);
+                    setRowsPerPage(rowsPerPage);
+                  }}
+                  overflowX={'auto'}
+                  data={tableRowSite}
+                  selectedRows={selectedRows}
+                  isHaveChecked={true}
+                  isHaveAction={true}
+                  isHaveSearch={true}
+                  isHaveFilter={false}
+                  isHaveExportPdf={false}
+                  isHaveExportXlf={false}
+                  isHaveFilterDuration={false}
+                  isHaveAddData={true}
+                  isHaveHeader={false}
+                  isSiteSpaceType
+                  onCheckedChange={(selected) => {
+                    const fullSelectedItems = tableData.filter((item) =>
+                      selected.some((row: SiteTableRow) => row.id === item.id),
+                    );
+                    setSelectedRows(fullSelectedItems);
+                  }}
+                  onEdit={(row) => {
+                    handleEdit(row.id);
+                    setEdittingId(row.id);
+                  }}
+                  isHaveFilterMore={true}
+                  filterMoreContent={
+                    <FilterMoreContent
+                      filters={filters}
+                      setFilters={setFilters}
+                      onApplyFilter={handleApplyFilter}
+                    />
+                  }
+                  onBatchEdit={handleBatchEdit}
+                  onDelete={(row) => handleDelete(row.id)}
+                  onBatchDelete={handleBatchDelete}
+                  onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                  onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
+                  onAddData={() => {
+                    handleAdd();
+                  }}
+                  sortColumns={['name']}
+                  onFilterByColumn={(column) => setSortColumn(column.column)}
+                />
+              ) : (
+                <Card sx={{ width: '100%' }}>
+                  <Skeleton />
+                  <Skeleton animation="wave" />
+                  <Skeleton animation={false} />
+                </Card>
+              )}
             </Grid>
           </Grid>
         </Box>

@@ -2,50 +2,37 @@ import React, { useEffect, useState, useCallback } from 'react';
 import {
   Box,
   Button,
-  Card,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Divider,
-  FormControl,
-  FormControlLabel,
   Grid2 as Grid,
-  Grid2,
   IconButton,
-  MenuItem,
-  RadioGroup,
-  Typography,
+  Skeleton,
+  Card,
 } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
 import CloseIcon from '@mui/icons-material/Close';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { useNavigate } from 'react-router';
-import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
-import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import CustomRadio from 'src/components/forms/theme-elements/CustomRadio';
 import FormWizardAddEmployee from './FormWizardAddEmployee';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   CreateEmployeeRequest,
   CreateEmployeeRequestSchema,
   Item,
-} from 'src/customs/api/models/Employee';
+} from 'src/customs/api/models/Admin/Employee';
 import {
-  getAllDepartments,
   getAllDepartmentsPagination,
-  getAllDistricts,
   getAllDistrictsPagination,
   getAllEmployeePagination,
   getAllEmployeePaginationFilterMore,
-  getAllOrganizations,
-  getAllOrganizatiosPagination,
   getAllEmployee,
   deleteEmployee,
+  getAllOrganizationPagination,
 } from 'src/customs/api/admin';
 
-import Swal from 'sweetalert2';
 import { IconUsers } from '@tabler/icons-react';
 
 // Alert
@@ -54,6 +41,7 @@ import {
   showSuccessAlert,
   showErrorAlert,
 } from 'src/customs/components/alerts/alerts';
+import FilterMoreContent from './FilterMoreContent';
 
 type EmployeesTableRow = {
   id: string;
@@ -69,9 +57,22 @@ type EnableField = {
   organization_id: boolean;
   department_id: boolean;
   district_id: boolean;
-  access_area: boolean;
-  access_area_special: boolean;
 };
+
+interface OptionItem {
+  id: string; // atau 'number' jika ID dari API berupa angka
+  name: string;
+}
+
+interface Filters {
+  gender: number;
+  organization: string;
+  department: string;
+  district: string;
+  joinStart: string;
+  exitEnd: string;
+  statusEmployee: number;
+}
 
 const Content = () => {
   // Pagination state.
@@ -81,7 +82,7 @@ const Content = () => {
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -89,12 +90,65 @@ const Content = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [tableRowEmployee, setTableRowEmployee] = useState<EmployeesTableRow[]>([]);
+  // const [organization, setOrganization] = useState<number>(0);
+  // const [department, setDepartment] = useState(0);
+  // const [district, setDistrict] = useState(0);
+  const [organizationData, setOrganizationData] = useState<OptionItem[]>([]);
+  const [departmentData, setDepartmentData] = useState<OptionItem[]>([]);
+  const [districtData, setDistrictData] = useState<OptionItem[]>([]);
+  useEffect(() => {
+    if (!token) return;
+
+    (async () => {
+      try {
+        // ambil semua data untuk dropdown, jangan ikut page/rowsPerPage tabel
+        const [orgRes, deptRes, distRes] = await Promise.all([
+          getAllOrganizationPagination(token, 0, 9999, 'name', ''),
+          getAllDepartmentsPagination(token, 0, 9999, 'name', ''),
+          getAllDistrictsPagination(token, 0, 9999, 'name', ''),
+        ]);
+
+        setOrganizationData(
+          (orgRes?.collection ?? []).map((o: any) => ({
+            id: String(o.id),
+            name: o.name ?? '',
+          })),
+        );
+        setDepartmentData(
+          (deptRes?.collection ?? []).map((d: any) => ({
+            id: String(d.id),
+            name: d.name ?? '',
+          })),
+        );
+        setDistrictData(
+          (distRes?.collection ?? []).map((d: any) => ({
+            id: String(d.id),
+            name: d.name ?? '',
+          })),
+        );
+      } catch (e) {
+        console.error('Failed to fetch dropdown options:', e);
+      }
+    })();
+  }, [token]);
+
+  const [filters, setFilters] = useState<Filters>({
+    joinStart: '',
+    // joinEnd: '',
+    // exitStart: '',
+    exitEnd: '',
+    gender: 0,
+    statusEmployee: 0,
+    organization: '',
+    department: '',
+    district: '',
+  });
 
   const cards = [
     {
       title: 'Total Employee',
       icon: IconUsers,
-      subTitle: `${tableData.length}`,
+      subTitle: `${totalFilteredRecords}`,
       subTitleSetting: 10,
       color: 'none',
     },
@@ -107,14 +161,8 @@ const Content = () => {
       setLoading(true);
       try {
         const start = page * rowsPerPage;
-        const responseGetAll = await getAllEmployee(token);
-        const responseEmployeePagination = await getAllEmployeePaginationFilterMore(
-          token,
-          start,
-          99,
-          sortColumn,
-        );
 
+        const responseGetAll = await getAllEmployee(token);
         const responseEmployee = await getAllEmployeePagination(
           token,
           start,
@@ -123,7 +171,7 @@ const Content = () => {
           searchKeyword,
         );
 
-        const organization = await getAllOrganizatiosPagination(token, start, 99, sortColumn, '');
+        const organization = await getAllOrganizationPagination(token, start, 99, sortColumn, '');
         const department = await getAllDepartmentsPagination(token, start, 99, sortColumn, '');
         const district = await getAllDistrictsPagination(token, start, 99, sortColumn, '');
         if (responseEmployee && organization && department && district) {
@@ -149,21 +197,60 @@ const Content = () => {
             },
             {},
           );
-          // Map organization_id to organization_name and remove organization_id
-          const mappedEmployees = responseEmployee.collection.map((emp: any) => {
-            return {
-              ...emp, // Jangan exclude field ID
-              organization_name: orgMap[String(emp.organization_id)] || 'Unknown Organization',
-              department_name: deptMap[String(emp.department_id)] || 'Unknown Department',
-              district_name: distMap[String(emp.district_id)] || 'Unknown District',
-            };
-          });
-          //  Remninder menggunakan GetAll bukan pagination
-          setTableData(mappedEmployees);
-          setTotalRecords(responseEmployee.RecordsTotal);
-          setTotalFilteredRecords(responseEmployee.RecordsFiltered);
-          setIsDataReady(true);
-          const rows = responseEmployee.collection.map((item) => ({
+
+          let employeeRes: any;
+          try {
+            employeeRes = await getAllEmployeePaginationFilterMore(
+              token,
+              start,
+              rowsPerPage,
+              sortColumn,
+              searchKeyword,
+              filters.gender === 0 ? undefined : filters.gender,
+              filters.joinStart,
+              filters.exitEnd,
+              filters.statusEmployee === 0 ? undefined : filters.statusEmployee,
+              String(filters.organization),
+              String(filters.district),
+              String(filters.department),
+            );
+          } catch (err: any) {
+            // ←— JIKA HTTP 404, KOSONGKAN STATE & KELUAR
+            if (err?.response?.status === 404 || err?.status === 404) {
+              setTableData([]);
+              setTableRowEmployee([]);
+              setTotalRecords(0);
+              setTotalFilteredRecords(0);
+              setIsDataReady(true);
+              return; // (finally di luar tetap setLoading(false))
+            }
+            throw err; // error lain biar ditangani catch luar
+          }
+
+          // Normalisasi payload yang mengembalikan body 200 tapi isinya "not_found"
+          const safeCollection = Array.isArray(employeeRes?.collection)
+            ? employeeRes.collection
+            : [];
+          const isNotFound =
+            employeeRes?.status_code === 404 ||
+            employeeRes?.status === 'not_found' ||
+            safeCollection.length === 0;
+
+          if (isNotFound) {
+            setTableData([]);
+            setTableRowEmployee([]);
+            setTotalRecords(0);
+            setTotalFilteredRecords(0);
+            setIsDataReady(true);
+            return;
+          }
+
+          // Lanjut mapping seperti biasa
+          setTableData(safeCollection);
+          setTotalRecords(employeeRes?.RecordsTotal ?? safeCollection.length ?? 0);
+          setTotalFilteredRecords(employeeRes?.RecordsFiltered ?? safeCollection.length ?? 0);
+
+          const rows = safeCollection.map((item: any) => ({
             id: item.id,
             name: item.name,
             faceimage: item.faceimage,
@@ -172,6 +259,7 @@ const Content = () => {
             district: distMap[String(item.district_id)] || 'Unknown District',
           }));
           setTableRowEmployee(rows);
+          setIsDataReady(true);
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -180,7 +268,6 @@ const Content = () => {
       }
     };
     fetchData();
-    console.log('Fetching data: ', tableData);
   }, [token, page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword]);
 
   const [initialFormData, setInitialFormData] = React.useState<CreateEmployeeRequest>(() => {
@@ -209,16 +296,21 @@ const Content = () => {
 
   const [isEditing, setIsEditing] = useState(false);
 
-  const defaultFormData = CreateEmployeeRequestSchema.parse({});
   const isFormChanged = React.useMemo(() => {
     return JSON.stringify(formDataAddEmployee) !== JSON.stringify(initialFormData);
   }, [formDataAddEmployee]);
 
   useEffect(() => {
-    if (Object.keys(formDataAddEmployee).length > 0 && !isEditing && isFormChanged) {
+    // if (Object.keys(formDataAddEmployee).length > 0 && !isEditing && isFormChanged) {
+    //   localStorage.setItem('unsavedEmployeeData', JSON.stringify(formDataAddEmployee));
+    // }
+    const defaultFormData = CreateEmployeeRequestSchema.parse({});
+    const isChanged = JSON.stringify(formDataAddEmployee) !== JSON.stringify(defaultFormData);
+
+    if (isChanged) {
       localStorage.setItem('unsavedEmployeeData', JSON.stringify(formDataAddEmployee));
     }
-  }, [formDataAddEmployee, isEditing, isFormChanged]);
+  }, [formDataAddEmployee]);
 
   const [openFormAddEmployee, setOpenFormAddEmployee] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -236,23 +328,60 @@ const Content = () => {
   const handleAdd = useCallback(() => {
     const freshForm = CreateEmployeeRequestSchema.parse({});
     setFormDataAddEmployee(freshForm);
-    setInitialFormData(freshForm); // <--- set initial form juga
+    setInitialFormData(freshForm);
     localStorage.setItem('unsavedEmployeeData', JSON.stringify(freshForm));
     setPendingEditId(null);
     handleOpenDialog();
   }, []);
 
   const handleEdit = (id: string) => {
-    const existingData = tableData.find((item) => item.id === id);
+    const existingData = tableData.find((item) => String(item.id) === String(id));
     if (!existingData) return;
+
+    const toNum = (
+      v: unknown,
+      map: Record<string, number> = {},
+      fallback: number | undefined = 0,
+    ) => {
+      if (v === '' || v == null) return fallback;
+      if (typeof v === 'number' && Number.isFinite(v)) return v;
+      if (typeof v === 'boolean') return v ? 1 : 0;
+      if (typeof v === 'string') {
+        const t = v.trim().toLowerCase();
+        if (t in map) return map[t];
+        const n = Number(t);
+        return Number.isFinite(n) ? n : fallback;
+      }
+      return fallback;
+    };
+
+    const coerceEmployee = (s: any) => ({
+      ...s,
+      // pastikan tidak NaN:
+      gender: toNum(s?.gender, { female: 0, male: 1, f: 0, m: 1, '0': 0, '1': 1 }, 0),
+
+      // kalau backend kirim string "Active"/"Non Active", amankan juga:
+      status_employee: toNum(
+        s?.status_employee,
+        { active: 1, 'non active': 2, nonactive: 2, inactive: 2, '0': 0, '1': 1, '2': 2 },
+        0,
+      ),
+
+      // id relasi → string
+      organization_id: String(s?.organization_id ?? ''),
+      department_id: String(s?.department_id ?? ''),
+      district_id: String(s?.district_id ?? ''),
+    });
+
+    const parseSafe = (raw: any) => CreateEmployeeRequestSchema.parse(coerceEmployee(raw));
 
     const editing = localStorage.getItem('unsavedEmployeeData');
 
     if (!editing) {
-      const parsedData = CreateEmployeeRequestSchema.parse(existingData);
+      const parsedData = parseSafe(existingData);
       setEdittingId(id);
       setFormDataAddEmployee(parsedData);
-      setInitialFormData(parsedData); // <--- set initial form juga
+      setInitialFormData(parsedData);
       localStorage.setItem('unsavedEmployeeData', JSON.stringify({ ...parsedData, id }));
       handleOpenDialog();
       return;
@@ -261,10 +390,10 @@ const Content = () => {
     const editingData = JSON.parse(editing);
 
     if (editingData.id === id) {
-      const parsedData = CreateEmployeeRequestSchema.parse(existingData);
+      const parsedData = parseSafe(existingData);
       setEdittingId(id);
       setFormDataAddEmployee(parsedData);
-      setInitialFormData(parsedData); // <--- set initial form juga
+      setInitialFormData(parsedData);
       handleOpenDialog();
       return;
     }
@@ -354,13 +483,16 @@ const Content = () => {
     }
   };
 
-  const [enabledFields, setEnabledFields] = React.useState<EnableField>({
+  const handleApplyFilter = () => {
+    setPage(0);
+    setRefreshTrigger((prev) => prev + 1);
+  };
+
+  const [enabledFields, setEnabledFields] = useState<EnableField>({
     gender: false,
     organization_id: false,
     department_id: false,
     district_id: false,
-    access_area: false,
-    access_area_special: false,
   });
 
   const handleBatchEdit = (rows: any[]) => {
@@ -371,77 +503,115 @@ const Content = () => {
   };
 
   const handleSuccess = () => {
+    // refresh table dsb
     setRefreshTrigger((prev) => prev + 1);
-    handleCloseDialog();
+
+    // <<— penting: set baseline = current form
+    setInitialFormData((_) => formDataAddEmployee);
+
+    // opsional: bersihkan atau sinkronkan draft di localStorage
+    // localStorage.setItem('unsavedEmployeeData', JSON.stringify(formDataAddEmployee));
+    // atau kalau tidak mau simpan draft:
+    localStorage.removeItem('unsavedEmployeeData');
+  };
+  // handle dialog close
+  const handleDialogClose = (_event?: object, reason?: string) => {
+    const isChanged = JSON.stringify(formDataAddEmployee) !== JSON.stringify(initialFormData);
+
+    if ((reason === 'backdropClick' || reason === 'closeButton') && isChanged) {
+      setConfirmDialogOpen(true);
+      return;
+    }
+
+    if (isChanged) {
+      setConfirmDialogOpen(true);
+    } else {
+      setConfirmDialogOpen(false);
+      handleCloseDialog();
+    }
   };
 
   return (
     <>
-      <PageContainer title="Manage Employee" description="this is Dashboard page">
+      <PageContainer title="Employee" description="this is Employee page">
         <Box>
           <Grid container spacing={3}>
-            {/* column */}
-            <Grid size={{ xs: 12, lg: 4 }}>
-              <TopCard items={cards} />
-            </Grid>
-            {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
-              <DynamicTable
-                overflowX={'auto'}
-                data={tableRowEmployee}
-                selectedRows={selectedRows}
-                totalCount={totalFilteredRecords}
-                isHaveChecked={true}
-                isHaveAction={true}
-                isHaveSearch={true}
-                isHaveImage={true}
-                isHaveFilter={true}
-                isHaveExportPdf={true}
-                isHavePagination={true}
-                defaultRowsPerPage={rowsPerPage}
-                rowsPerPageOptions={[5, 10, 20, 50, 100]}
-                onPaginationChange={(page, rowsPerPage) => {
-                  setPage(page);
-                  setRowsPerPage(rowsPerPage);
-                }}
-                isHaveExportXlf={false}
-                isHaveFilterDuration={false}
-                isHaveAddData={true}
-                isHaveFilterMore={true}
-                filterMoreContent={<FilterMoreContent />}
-                isHaveHeader={false}
-                onCheckedChange={(selected) => {
-                  const fullSelectedItems = tableData.filter((item) =>
-                    selected.some((row: EmployeesTableRow) => row.id === item.id),
-                  );
-                  setSelectedRows(fullSelectedItems);
-                }}
-                onEdit={(row) => {
-                  console.log('Row to edit:', row);
-                  console.log('Table data:', tableData);
-                  handleEdit(row.id);
-                  setEdittingId(row.id);
-                }}
-                onBatchEdit={handleBatchEdit}
-                onDelete={(row) => handleDelete(row.id)}
-                onBatchDelete={handleBatchDelete}
-                onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-                onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
-                onAddData={() => {
-                  handleAdd();
-                }}
-              />
+              <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
+            </Grid>
+            <Grid size={{ xs: 12, lg: 12 }}>
+              {isDataReady ? (
+                <DynamicTable
+                  loading={loading}
+                  overflowX={'auto'}
+                  data={tableRowEmployee}
+                  selectedRows={selectedRows}
+                  totalCount={totalFilteredRecords}
+                  isHaveChecked={true}
+                  isHaveAction={true}
+                  isHaveSearch={true}
+                  isHaveImage={true}
+                  isHaveFilter={true}
+                  isHaveExportPdf={false}
+                  isHavePagination={true}
+                  defaultRowsPerPage={rowsPerPage}
+                  rowsPerPageOptions={[5, 10, 20, 50, 100]}
+                  onPaginationChange={(page, rowsPerPage) => {
+                    setPage(page);
+                    setRowsPerPage(rowsPerPage);
+                  }}
+                  isHaveExportXlf={false}
+                  isHaveFilterDuration={false}
+                  isHaveAddData={true}
+                  isHaveFilterMore={true}
+                  filterMoreContent={
+                    <FilterMoreContent
+                      filters={filters}
+                      setFilters={setFilters}
+                      onApplyFilter={handleApplyFilter}
+                      organizationData={organizationData}
+                      departmentData={departmentData}
+                      districtData={districtData}
+                    />
+                  }
+                  isHaveHeader={false}
+                  onCheckedChange={(selected) => {
+                    const fullSelectedItems = tableData.filter((item) =>
+                      selected.some((row: EmployeesTableRow) => row.id === item.id),
+                    );
+                    setSelectedRows(fullSelectedItems);
+                  }}
+                  onEdit={(row) => {
+                    handleEdit(row.id);
+                    setEdittingId(row.id);
+                  }}
+                  onBatchEdit={handleBatchEdit}
+                  onDelete={(row) => handleDelete(row.id)}
+                  onBatchDelete={handleBatchDelete}
+                  onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                  onAddData={() => {
+                    handleAdd();
+                  }}
+                />
+              ) : (
+                <Card sx={{ width: '100%' }}>
+                  <Skeleton />
+                  <Skeleton />
+                  <Skeleton animation="wave" />
+                  <Skeleton animation={false} />
+                </Card>
+              )}
             </Grid>
           </Grid>
         </Box>
       </PageContainer>
-      <Dialog open={openFormAddEmployee} onClose={handleCloseDialog} fullWidth maxWidth="md">
+      <Dialog open={openFormAddEmployee} onClose={handleDialogClose} fullWidth maxWidth="md">
         <DialogTitle
           sx={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: 4,
+            padding: 2,
           }}
         >
           {isBatchEdit ? 'Batch Edit' : edittingId ? 'Edit' : 'Add'} Employee
@@ -476,7 +646,6 @@ const Content = () => {
           />
         </DialogContent>
       </Dialog>
-      {/* Dialog Confirm edit */}
       <Dialog open={confirmDialogOpen} onClose={handleCancelEdit}>
         <DialogTitle>Unsaved Changes</DialogTitle>
         <DialogContent>
@@ -495,212 +664,3 @@ const Content = () => {
 };
 
 export default Content;
-
-const FilterMoreContent = () => {
-  return (
-    <Box sx={{ padding: 3, margin: 1.5, boxShadow: 0, borderRadius: 2 }}>
-      <Typography variant="h6" gutterBottom>
-        Employee Filter
-      </Typography>
-
-      <Grid2 container spacing={3}>
-        {/* Join Dates */}
-        <Grid2 size={{ xs: 12, sm: 6 }}>
-          <CustomFormLabel htmlFor="joinStart">
-            <Typography variant="caption">Join Start :</Typography>
-          </CustomFormLabel>
-          <CustomTextField
-            InputProps={{
-              sx: {
-                fontSize: '0.7rem', // atau 12px
-              },
-            }}
-            id="joinStart"
-            type="date"
-            fullWidth
-            variant="outlined"
-          />
-        </Grid2>
-        <Grid2 size={{ xs: 12, sm: 6 }}>
-          <CustomFormLabel htmlFor="joinEnd">
-            <Typography variant="caption">Join End :</Typography>
-          </CustomFormLabel>
-          <CustomTextField
-            InputProps={{
-              sx: {
-                fontSize: '0.7rem', // atau 12px
-              },
-            }}
-            id="joinEnd"
-            type="date"
-            fullWidth
-            variant="outlined"
-          />
-        </Grid2>
-
-        {/* Exit Dates */}
-        <Grid2 size={{ xs: 12, sm: 6 }}>
-          <CustomFormLabel htmlFor="exitStart">
-            <Typography variant="caption">Exit Start :</Typography>
-          </CustomFormLabel>
-          <CustomTextField
-            InputProps={{
-              sx: {
-                fontSize: '0.7rem', // atau 12px
-              },
-            }}
-            id="exitStart"
-            type="date"
-            fullWidth
-            variant="outlined"
-          />
-        </Grid2>
-        <Grid2 size={{ xs: 12, sm: 6 }}>
-          <CustomFormLabel htmlFor="exitEnd">
-            <Typography variant="caption">Exit End :</Typography>
-          </CustomFormLabel>
-          <CustomTextField
-            InputProps={{
-              sx: {
-                fontSize: '0.7rem', // atau 12px
-              },
-            }}
-            id="exitEnd"
-            type="date"
-            fullWidth
-            variant="outlined"
-          />
-        </Grid2>
-
-        {/* Dropdown Fields */}
-        <Grid2 size={{ xs: 12, sm: 4 }}>
-          <CustomFormLabel htmlFor="organization">
-            <Typography variant="caption">Organization :</Typography>
-          </CustomFormLabel>
-          <CustomTextField
-            InputProps={{
-              sx: {
-                fontSize: '0.7rem', // atau 12px
-              },
-            }}
-            id="organization"
-            select
-            fullWidth
-            variant="outlined"
-            defaultValue=""
-          >
-            <MenuItem sx={{ fontSize: '0.75rem' }} value="A">
-              Head A
-            </MenuItem>
-            <MenuItem sx={{ fontSize: '0.75rem' }} value="B">
-              Head B
-            </MenuItem>
-            <MenuItem sx={{ fontSize: '0.75rem' }} value="C">
-              Head C
-            </MenuItem>
-          </CustomTextField>
-        </Grid2>
-        <Grid2 size={{ xs: 12, sm: 4 }}>
-          <CustomFormLabel htmlFor="department">
-            <Typography variant="caption">Department :</Typography>
-          </CustomFormLabel>
-          <CustomTextField
-            InputProps={{
-              sx: {
-                fontSize: '0.7rem', // atau 12px
-              },
-            }}
-            id="department"
-            select
-            fullWidth
-            variant="outlined"
-            defaultValue=""
-          >
-            <MenuItem sx={{ fontSize: '0.75rem' }} value="A">
-              Dept A
-            </MenuItem>
-            <MenuItem sx={{ fontSize: '0.75rem' }} value="B">
-              Dept B
-            </MenuItem>
-            <MenuItem sx={{ fontSize: '0.75rem' }} value="C">
-              Dept C
-            </MenuItem>
-          </CustomTextField>
-        </Grid2>
-        <Grid2 size={{ xs: 12, sm: 4 }}>
-          <CustomFormLabel htmlFor="district">
-            <Typography variant="caption">District :</Typography>
-          </CustomFormLabel>
-          <CustomTextField
-            InputProps={{
-              sx: {
-                fontSize: '0.7rem', // atau 12px
-              },
-            }}
-            id="district"
-            select
-            fullWidth
-            variant="outlined"
-            defaultValue=""
-          >
-            <MenuItem sx={{ fontSize: '0.75rem' }} value="A">
-              District A
-            </MenuItem>
-            <MenuItem sx={{ fontSize: '0.75rem' }} value="B">
-              District B
-            </MenuItem>
-            <MenuItem sx={{ fontSize: '0.75rem' }} value="C">
-              District C
-            </MenuItem>
-          </CustomTextField>
-        </Grid2>
-
-        {/* Gender Radio Buttons */}
-        <Grid2 size={{ xs: 12, sm: 6 }}>
-          <CustomFormLabel>
-            <Typography variant="caption">Gender :</Typography>
-          </CustomFormLabel>
-          <FormControl>
-            <RadioGroup row name="gender">
-              <FormControlLabel
-                sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
-                value="male"
-                control={<CustomRadio />}
-                label="Male"
-              />
-              <FormControlLabel
-                sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
-                value="female"
-                control={<CustomRadio />}
-                label="Female"
-              />
-            </RadioGroup>
-          </FormControl>
-        </Grid2>
-
-        {/* Status Radio Buttons */}
-        <Grid2 size={{ xs: 12, sm: 6 }}>
-          <CustomFormLabel>
-            <Typography variant="caption">Status Employee :</Typography>
-          </CustomFormLabel>
-          <FormControl>
-            <RadioGroup row name="status">
-              <FormControlLabel
-                sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
-                value="active"
-                control={<CustomRadio />}
-                label="Active"
-              />
-              <FormControlLabel
-                sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
-                value="non-active"
-                control={<CustomRadio />}
-                label="Non Active"
-              />
-            </RadioGroup>
-          </FormControl>
-        </Grid2>
-      </Grid2>
-    </Box>
-  );
-};

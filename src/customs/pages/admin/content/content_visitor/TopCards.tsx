@@ -129,7 +129,7 @@ const TopCards = () => {
         </DialogTitle>
         <DialogContent>
           <br />
-          <FormWizardAddVisitor />
+          {/* <FormWizardAddVisitor /> */}
         </DialogContent>
       </Dialog>
 
@@ -152,7 +152,7 @@ const TopCards = () => {
         </DialogTitle>
         <DialogContent>
           <br />
-          <FormWizardAddInvitation />
+          {/* <FormWizardAddInvitation /> */}
         </DialogContent>
       </Dialog>
     </>

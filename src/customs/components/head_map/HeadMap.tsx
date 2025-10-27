@@ -54,9 +54,10 @@ const Heatmap: React.FC<HeatmapProps> = ({ dataCreated, title = 'Title Of Headma
         maxWidth: '100%',
         overflowX: 'auto',
         fontSize: 12,
+        height: '400px'
       }}
     >
-      <Typography variant="subtitle2" fontSize={'0.8rem'} sx={{ marginBottom: 1.7, marginTop: 1 }}>
+      <Typography variant="subtitle2" fontSize={'0.9rem'} sx={{ marginBottom: 1.7, marginTop: 1 }} fontWeight={600}>
         {title}
       </Typography>
       <div style={{ display: 'grid', gridTemplateColumns: `50px repeat(7, 28px)`, gap: 2 }}>

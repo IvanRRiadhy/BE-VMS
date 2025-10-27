@@ -89,13 +89,13 @@ const Customizer: FC = () => {
     },
     {
       id: 6,
-      bgColor: '#FA896B',
+      bgColor: '#FF0000',
       disp: 'ORANGE_THEME',
     },
   ];
 
   return (
-    (<div>
+    <div>
       {/* ------------------------------------------- */}
       {/* --Floating Button to open customizer ------ */}
       {/* ------------------------------------------- */}
@@ -308,7 +308,7 @@ const Customizer: FC = () => {
           </Box>
         </Scrollbar>
       </Drawer>
-    </div>)
+    </div>
   );
 };
 

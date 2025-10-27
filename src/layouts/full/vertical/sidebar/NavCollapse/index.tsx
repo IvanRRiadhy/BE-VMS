@@ -80,8 +80,8 @@ const NavCollapse = ({
     marginTop: '13px',
     paddingLeft: hideMenu ? '10px' : level > 2 ? `${level * 15}px` : '10px',
     borderRadius: `${customizer.borderRadius}px`,
-    backgroundColor: open && level < 2 ? theme.palette.primary.light : '',
-    color: open && level < 2 ? theme.palette.primary.main : '',
+    backgroundColor: open && level < 2 ? theme.palette.primary.main : '',
+    color: open && level < 2 ? theme.palette.primary.light : '',
   }));
 
   // If Menu has Children

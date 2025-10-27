@@ -1,57 +1,50 @@
-// contexts/AuthContext.tsx
 import { createContext, useContext, useEffect, useState } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import { refreshToken } from '../api/users';
 import { useSession } from './SessionContext';
-import { useLocation } from 'react-router';
 
-type JwtPayload = {
-  exp: number;
-  [key: string]: any;
-};
+type JwtPayload = { exp: number; [key: string]: any; email: string; username: string };
+
+interface AuthContextType {
+  isAuthenticated: boolean;
+  loading: boolean;
+  authType: 'admin' | 'guest' | null;
+  user: JwtPayload | null;
+  groupId: string | null;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const isTokenValid = (token: string | null): boolean => {
   if (!token) return false;
-
   try {
     const decoded = jwtDecode<JwtPayload>(token);
-
-    if (!decoded.exp) {
-      return false;
-    }
-
-    const now = Math.floor(Date.now() / 1000);
-    const isValid = decoded.exp > now;
-
-    console.log('Token expire time (UTC):', new Date(decoded.exp * 1000).toUTCString());
-    console.log('Current time (UTC):', new Date(now * 1000).toUTCString());
-
-    return isValid;
-  } catch (error) {
-    console.error('Failed to decode token:', error);
+    return decoded.exp ? decoded.exp > Date.now() / 1000 : false;
+  } catch {
     return false;
   }
 };
 
-const AuthContext = createContext<any>(null);
-
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const { token, saveToken, clearToken } = useSession();
-
+  const { token, authType, saveToken, clearToken, groupId } = useSession(); // ✅ ambil groupId
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
-  const location = useLocation();
+  const [user, setUser] = useState<JwtPayload | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
       if (isTokenValid(token)) {
+        const decoded = jwtDecode<JwtPayload>(token!);
+        setUser(decoded);
         setIsAuthenticated(true);
       } else if (token) {
         try {
-          const refreshResponse = await refreshToken({ token });
-          saveToken(refreshResponse.collection.token);
+          const res = await refreshToken({ token });
+          saveToken(res.collection.token, groupId ?? undefined); 
+          const newDecoded = jwtDecode<JwtPayload>(res.collection.token);
+          setUser(newDecoded);
           setIsAuthenticated(true);
-        } catch (error) {
+        } catch {
           clearToken();
           setIsAuthenticated(false);
         }
@@ -61,11 +54,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(false);
     };
     checkAuth();
-  }, [token, location.pathname]);
+  }, [token]);
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, loading }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={{ isAuthenticated, loading, authType, user, groupId }}>
+      {children}
+    </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
+  return ctx;
+};

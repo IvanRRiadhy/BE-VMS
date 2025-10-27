@@ -14,6 +14,7 @@ import NavItem from '../NavItem/NavItem';
 // plugins
 import { IconChevronDown } from '@tabler/icons-react';
 import { AppState } from 'src/store/Store';
+import { useTranslation } from 'react-i18next';
 
 type NavGroupProps = {
   [x: string]: any;
@@ -50,12 +51,11 @@ const NavCollapse = ({
     level > 1 ? <Icon stroke={1.5} size="1rem" /> : <Icon stroke={1.5} size="1.1rem" />;
 
   React.useEffect(() => {
-    setOpen(false);
+    let isActive = false;
     menu.children.forEach((item: any) => {
-      if (item.href === pathname) {
-        setOpen(true);
-      }
+      if (item.href === pathname) isActive = true;
     });
+    setOpen(isActive);
   }, [pathname, menu.children]);
 
   const ListItemStyled = styled(ListItemButton)(() => ({
@@ -97,6 +97,8 @@ const NavCollapse = ({
     component: 'li',
   };
 
+   const { t } = useTranslation();
+
   // If Menu has Children
   const submenus = menu.children?.map((item: any) => {
     if (item.children) {
@@ -120,7 +122,7 @@ const NavCollapse = ({
           pathDirect={pathDirect}
           hideMenu={hideMenu}
           onClick={function (): void {
-            throw new Error('Function not implemented.');
+            // throw new Error('Function not implemented.');
           }}
         />
       );
@@ -128,11 +130,25 @@ const NavCollapse = ({
   });
 
   return (
-    <React.Fragment key={menu.id}>
+    <Box
+      sx={{
+        position: 'relative',
+        '&:hover .SubNav': {
+          display: 'block', // munculkan submenu saat hover
+        },
+        '&:hover .ListItemStyled': {
+          // backgroundColor: 'rgba(0,0,0,0)', // efek hover
+          // boxShadow: (theme) => theme.shadows[2],
+          // color: theme.palette.primary.,
+          backgroundColor: theme.palette.primary.main,
+          color: 'white',
+        },
+      }}
+    >
       <ListItemStyled
         {...listItemProps}
         selected={pathWithoutLastPart === menu.href}
-        className={open ? 'selected' : ''}
+        className="ListItemStyled"
       >
         <ListItemIcon
           sx={{
@@ -144,14 +160,31 @@ const NavCollapse = ({
           {menuIcon}
         </ListItemIcon>
         <ListItemText color="inherit" sx={{ mr: 'auto', fontSize: '0.3rem' }}>
-          {menu.title}
+          {menu.title && t(menu.title)}
         </ListItemText>
         <IconChevronDown size="1rem" />
-        <ListSubMenu component={'ul'} className="SubNav">
-          {submenus}
-        </ListSubMenu>
       </ListItemStyled>
-    </React.Fragment>
+
+      {/* Submenu disembunyikan default */}
+      <ListSubMenu
+        component="ul"
+        className="SubNav"
+        sx={{
+          display: 'none',
+          position: 'absolute',
+          top: '100%',
+          left: 0,
+          backgroundColor: 'white',
+          minWidth: 180,
+          // boxShadow: (theme) => theme.shadows[4],
+          borderRadius: 1,
+          zIndex: 10,
+          p: 1,
+        }}
+      >
+        {submenus}
+      </ListSubMenu>
+    </Box>
   );
 };
 

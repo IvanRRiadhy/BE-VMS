@@ -10,6 +10,7 @@ import {
   styled,
   Stack,
   Theme,
+  Typography,
 } from '@mui/material';
 
 import { useSelector, useDispatch } from 'src/store/Store';
@@ -55,7 +56,7 @@ const Header = () => {
         }}
       >
         <Box sx={{ width: lgDown ? '45px' : 'auto', overflow: 'hidden' }}>
-          <Logo />
+          <img src="https://upload.wikimedia.org/wikipedia/commons/3/39/BI_Logo.png" />
         </Box>
         {/* ------------------------------------------- */}
         {/* Toggle Button Sidebar */}
@@ -99,7 +100,6 @@ const Header = () => {
             )}
           </IconButton>
           <Notifications />
-
           <Profile />
         </Stack>
       </ToolbarStyled>

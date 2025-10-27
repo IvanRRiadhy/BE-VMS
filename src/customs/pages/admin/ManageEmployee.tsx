@@ -7,16 +7,16 @@ import {
 import PageContainer from 'src/customs/components/container/PageContainer';
 
 const ManageEmployee: FC = () => {
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      // alert('Unloading...');
-      localStorage.removeItem('unsavedEmployeeData');
-      // e.preventDefault();
-      // e.returnValue = ''; // Triggers browser's native dialog
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, []);
+  // useEffect(() => {
+  //   const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+  //     // alert('Unloading...');
+  //     localStorage.removeItem('unsavedEmployeeData');
+  //     // e.preventDefault();
+  //     // e.returnValue = ''; // Triggers browser's native dialog
+  //   };
+  //   window.addEventListener('beforeunload', handleBeforeUnload);
+  //   return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  // }, []);
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}

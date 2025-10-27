@@ -256,7 +256,7 @@ const ReactSortingTable = () => {
                   | Go to page:
                   <CustomTextField
                     type="number"
-                    min="1"
+                    min={1}
                     max={table.getPageCount()}
                     defaultValue={table.getState().pagination.pageIndex + 1}
                     onChange={(e: { target: { value: any } }) => {
