@@ -16,6 +16,58 @@ const VisitorFluctuationChart = () => {
   const [dates, setDates] = useState<number[]>([]);
   const [series, setSeries] = useState<VisitorSeries[]>([]);
 
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     if (!token) return;
+
+  //     try {
+  //       const today = new Date();
+  //       const end_date = today.toISOString().split('T')[0];
+  //       const start = new Date(today);
+  //       start.setDate(today.getDate() - 7);
+  //       const start_date = start.toISOString().split('T')[0];
+
+  //       const res = await getVisitorChart(token, start_date, end_date);
+
+  //       const rows = res?.collection ?? [];
+
+  //       const mappedDates = rows.map((d: any) => new Date(d.date).getTime());
+  //       setDates(mappedDates);
+
+  //       setSeries([
+  //         {
+  //           id: 'checkedIn',
+  //           label: 'Checked In',
+  //           data: rows.map((d: any) => d.checkedIn),
+  //           color: '#2196f3',
+  //         },
+  //         {
+  //           id: 'checkedOut',
+  //           label: 'Checked Out',
+  //           data: rows.map((d: any) => d.checkedOut),
+  //           color: '#fb923c',
+  //         },
+  //         {
+  //           id: 'denied',
+  //           label: 'Denied',
+  //           data: rows.map((d: any) => d.denied),
+  //           color: '#ef4444',
+  //         },
+  //         {
+  //           id: 'blocked',
+  //           label: 'Blocked',
+  //           data: rows.map((d: any) => d.blocked),
+  //           color: '#22c55e',
+  //         },
+  //       ]);
+  //     } catch (err) {
+  //       console.error('Error fetching visitor fluctuation:', err);
+  //     }
+  //   };
+
+  //   fetchData();
+  // }, [token]);
+
   useEffect(() => {
     const fetchData = async () => {
       if (!token) return;
@@ -28,45 +80,27 @@ const VisitorFluctuationChart = () => {
         const start_date = start.toISOString().split('T')[0];
 
         const res = await getVisitorChart(token, start_date, end_date);
-
-        // ⚡ contoh struktur response yang diharapkan:
-        // {
-        //   collection: [
-        //     { date: "2025-09-23", checkedIn: 3, checkedOut: 2, denied: 1, blocked: 0 },
-        //     { date: "2025-09-24", checkedIn: 2, checkedOut: 1, denied: 0, blocked: 1 }
-        //   ]
-        // }
-
         const rows = res?.collection ?? [];
 
-        const mappedDates = rows.map((d: any) => new Date(d.date).getTime());
+        // 🔹 Ambil tanggal
+        const mappedDates = rows.map((d: any) => new Date(d.Date).getTime());
         setDates(mappedDates);
 
+        // 🔹 Helper untuk ambil jumlah berdasarkan status name
+        const getCount = (statuses: any[], name: string) =>
+          statuses.find((s) => s.visitor_status?.toLowerCase() === name.toLowerCase())?.Count ?? 0;
+
+        // 🔹 Siapkan data series
+        const checkinSeries = rows.map((r: any) => getCount(r.Status, 'Checkin'));
+        const checkoutSeries = rows.map((r: any) => getCount(r.Status, 'Checkout'));
+        const deniedSeries = rows.map((r: any) => getCount(r.Status, 'Denied'));
+        const blockedSeries = rows.map((r: any) => getCount(r.Status, 'Block'));
+
         setSeries([
-          {
-            id: 'checkedIn',
-            label: 'Checked In',
-            data: rows.map((d: any) => d.checkedIn),
-            color: '#2196f3',
-          },
-          {
-            id: 'checkedOut',
-            label: 'Checked Out',
-            data: rows.map((d: any) => d.checkedOut),
-            color: '#fb923c',
-          },
-          {
-            id: 'denied',
-            label: 'Denied',
-            data: rows.map((d: any) => d.denied),
-            color: '#ef4444',
-          },
-          {
-            id: 'blocked',
-            label: 'Blocked',
-            data: rows.map((d: any) => d.blocked),
-            color: '#22c55e',
-          },
+          { id: 'checkedIn', label: 'Checked In', data: checkinSeries, color: '#2196f3' },
+          { id: 'checkedOut', label: 'Checked Out', data: checkoutSeries, color: '#fb923c' },
+          { id: 'denied', label: 'Denied', data: deniedSeries, color: '#ef4444' },
+          { id: 'blocked', label: 'Blocked', data: blockedSeries, color: '#22c55e' },
         ]);
       } catch (err) {
         console.error('Error fetching visitor fluctuation:', err);
@@ -87,7 +121,7 @@ const VisitorFluctuationChart = () => {
           borderRadius: 3,
           bgcolor: 'background.paper',
           boxShadow: 3,
-          border: '1px solid #d6d3d3ff',
+          // border: '1px solid #d6d3d3ff',
           height: {
             xs: 420, // layar kecil → 420px
             lg: 400, // layar medium ke atas → 400px

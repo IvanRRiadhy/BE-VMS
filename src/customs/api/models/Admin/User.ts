@@ -20,8 +20,8 @@ export type Item = {
   access: string;
   employee_id: string;
   distributor_id: string;
+  is_employee: number;
   menu: any[];
-  groupAccess: GroupAccess[];
   status: number;
 };
 
@@ -31,21 +31,12 @@ export const CreateUserSchema = z.object({
   fullname: z.string().min(3).optional(),
   description: z.string().optional(),
   access: z.string().optional(),
-  
+  password: z.string().optional(),
+  group_id: z.string().optional(),
   employee_id: z.string().optional(),
   distributor_id: z.string().optional(),
-  groupAccess: z
-    .array(
-      z.object({
-        group_id: z.string().uuid().optional(),
-        access_code: z.string().optional(),
-        is_private: z.number().optional(),
-        userId: z.string().nullable().optional(),
-        id: z.string().uuid().optional(),
-        status: z.number().optional(),
-      }),
-    )
-    .optional(),
+  organization_id: z.string().optional(),
+  is_employee: z.number().optional(),
   status: z.number().optional(),
 });
 
@@ -56,21 +47,10 @@ export const UpdateUserSchema = z.object({
   username: z.string().min(3).optional(),
   fullname: z.string().min(3).optional(),
   description: z.string().optional(),
+  organization_id: z.string().optional(),
   access: z.string().optional(),
   employee_id: z.string().optional(),
   distributor_id: z.string().optional(),
-  groupAccess: z
-    .array(
-      z.object({
-        group_id: z.string().uuid().optional(),
-        access_code: z.string().optional(),
-        is_private: z.number().optional(),
-        userId: z.string().nullable().optional(),
-        id: z.string().uuid().optional(),
-        status: z.number().optional(),
-      }),
-    )
-    .optional(),
   status: z.number().optional(),
 });
 

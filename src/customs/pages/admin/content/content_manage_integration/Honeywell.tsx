@@ -547,6 +547,10 @@ const Honeywell = ({ id }: { id: string }) => {
         );
 
         setSyncMsg({ open: true, text: 'Company updated successfully', severity: 'success' });
+        setTimeout(() => {
+          handleCloseDialog();
+        }, 600);
+        return;
         return;
       }
 
@@ -584,6 +588,10 @@ const Honeywell = ({ id }: { id: string }) => {
         severity: 'success',
       });
       // opsional: setIsBatchEdit(false); setSelectedRows([]);
+      setTimeout(() => {
+        handleCloseDialog();
+      }, 600);
+      return;
     } catch (err: any) {
       setSyncMsg({
         open: true,
@@ -593,7 +601,7 @@ const Honeywell = ({ id }: { id: string }) => {
     } finally {
       setTimeout(() => {
         setSaving(false);
-      }, 600);
+      }, 800);
     }
   };
 
@@ -622,6 +630,11 @@ const Honeywell = ({ id }: { id: string }) => {
           prev.map((it) => (String(it.id) === btId ? { ...it, ...payload } : it)),
         );
         setSyncMsg({ open: true, text: 'Badge type updated successfully', severity: 'success' });
+
+        // ✅ Tambahkan jeda sebelum tutup dialog agar smooth
+        setTimeout(() => {
+          handleCloseDialog();
+        }, 600);
         return;
       }
 
@@ -651,14 +664,20 @@ const Honeywell = ({ id }: { id: string }) => {
       setListData((prev) =>
         prev.map((it) => (ids.includes(String(it.id)) ? { ...it, ...payload } : it)),
       );
+
       setSyncMsg({ open: true, text: `Updated ${ids.length} badge types.`, severity: 'success' });
+
+      // ✅ Sama juga: jeda biar smooth
+      setTimeout(() => {
+        handleCloseDialog();
+      }, 600);
     } catch (err) {
       console.error('Save badge type error:', err);
       setSyncMsg({ open: true, text: 'Failed to update badge type', severity: 'error' });
     } finally {
       setTimeout(() => {
         setSaving(false);
-      }, 600);
+      }, 800);
     }
   };
 
@@ -687,6 +706,10 @@ const Honeywell = ({ id }: { id: string }) => {
           prev.map((it) => (String(it.id) === ccId ? { ...it, ...payload } : it)),
         );
         setSyncMsg({ open: true, text: 'Clear code updated successfully', severity: 'success' });
+        setTimeout(() => {
+          handleCloseDialog();
+        }, 600);
+        return;
         return;
       }
 
@@ -717,11 +740,15 @@ const Honeywell = ({ id }: { id: string }) => {
         prev.map((it) => (ids.includes(String(it.id)) ? { ...it, ...payload } : it)),
       );
       setSyncMsg({ open: true, text: `Updated ${ids.length} clear codes.`, severity: 'success' });
+      setTimeout(() => {
+        handleCloseDialog();
+      }, 600);
+      return;
     } catch (err) {
       console.error('Save clear code error:', err);
       setSyncMsg({ open: true, text: 'Failed to update clear code', severity: 'error' });
     } finally {
-      setTimeout(() => setSaving(false), 600);
+      setTimeout(() => setSaving(false), 800);
     }
   };
 

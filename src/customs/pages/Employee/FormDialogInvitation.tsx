@@ -1129,39 +1129,9 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
     ],
   });
 
-  // const handleSubmit = async () => {
-  //   const currentSection = formSections[activeStep];
-  //   if (!validateStep(currentSection)) return;
-  //   if (!invitationData) return;
-
-  //   try {
-  //     onSubmitting?.(true); // 🔹 tampilkan backdrop di parent
-
-  //     const payload = transformToSubmitPayload(invitationData);
-  //     const res = await submitPraFormEmployee(token as string, id, payload);
-
-  //     // sedikit delay agar backdrop tidak hilang terlalu cepat
-  //     await new Promise((resolve) => setTimeout(resolve, 600));
-
-  //     if (res?.success || res?.collection) {
-  //       showSuccessAlert('Successfully Pra Register!', res.message);
-  //       onSubmitted?.();
-  //       // onClose?.();
-  //     } else {
-  //       showErrorAlert('Error!', res.message);
-  //     }
-  //   } catch (err) {
-  //     console.error('❌ Submit error:', err);
-  //     showErrorAlert('Error!');
-  //   } finally {
-  //     onSubmitting?.(false); // 🔹 sembunyikan backdrop di parent
-  //   }
-  // };
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
-    const currentSection = formSections[activeStep];
-    // if (!validateStep(currentSection)) return;
     if (!invitationData) return;
 
     try {
@@ -1177,18 +1147,29 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
         (res.status === 'success' || res.status_code === 200 || res.title === 'success' || res.msg);
 
       if (ok) {
+        // ✅ beri jeda dulu agar spinner terlihat, baru tampilkan snackbar
+        await new Promise((r) => setTimeout(r, 600));
+
         showSuccessAlert('Successfully Pra Register!', res.msg ?? 'Success');
-        await new Promise((r) => setTimeout(r, 4000));
+
+        await new Promise((r) => setTimeout(r, 1000));
+
         onSubmitted?.();
       } else {
+        await new Promise((r) => setTimeout(r, 600));
         showErrorAlert('Error!', res.msg ?? 'Something went wrong');
       }
     } catch (err) {
       console.error('❌ Submit error:', err);
       const errMsg = (err as any)?.response?.data?.msg ?? (err as any)?.message ?? 'Unknown error';
+
+      await new Promise((r) => setTimeout(r, 600));
       showErrorAlert('Error!', errMsg);
     } finally {
-      setSubmitting(false); // 🔹 sembunyikan backdrop
+      // 🔹 beri sedikit jeda agar snackbar sempat muncul dulu sebelum backdrop hilang
+      setTimeout(() => {
+        setSubmitting(false);
+      }, 800);
     }
   };
 
@@ -1224,8 +1205,14 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
             {steps.map((label: string, i: number) => (
               <Step key={i}>
                 <StepLabel
-                  StepIconComponent={CustomStepIcon} // ✅ ganti ke custom icon
+                  StepIconComponent={CustomStepIcon}
                   onClick={() => setActiveStep(i)}
+                  sx={{
+                    '& .MuiStepLabel-label': {
+                      fontSize: '0.9rem', // 👉 ubah ukuran font
+                      fontWeight: 500, // opsional: tebalin dikit
+                    },
+                  }}
                 >
                   {label}
                 </StepLabel>
@@ -1270,7 +1257,7 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
       >
         <Box textAlign="center">
           <CircularProgress color="inherit" />
-          <Typography mt={2}>Submitting your data...</Typography>
+          {/* <Typography mt={2}>Submitting your data...</Typography> */}
         </Box>
       </Backdrop>
     </>

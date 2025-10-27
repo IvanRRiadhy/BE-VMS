@@ -38,6 +38,7 @@ import {
   IconLogout2,
   IconPencil,
   IconPlus,
+  IconSettings,
   IconTrash,
 } from '@tabler/icons-react';
 import { AddCircle, CalendarMonth, ChecklistOutlined, Search } from '@mui/icons-material';
@@ -57,6 +58,7 @@ import { InsertDriveFile } from '@mui/icons-material';
 import backgroundnodata from '../../../assets/images/backgrounds/bg_nodata.svg';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import moment from 'moment';
+import { GroupRoleId } from 'src/constant/GroupRoleId';
 
 type HeaderItem = { name: string };
 
@@ -84,6 +86,7 @@ type DynamicTableProps<
   isHaveVisitor?: boolean;
   stickyVisitorCount?: number;
   isHaveSearch?: boolean;
+  isHaveSettingOperator?: boolean;
   isHaveFilter?: boolean;
   isHaveExportPdf?: boolean;
   isHaveView?: boolean;
@@ -101,6 +104,7 @@ type DynamicTableProps<
   isHaveImage?: boolean;
   isHaveObjectData?: boolean;
   isHaveVip?: boolean;
+  isNoActionTableHead?: boolean;
   isHaveBooleanSwitch?: boolean;
   isHavePdf?: boolean;
   isHaveCard?: boolean;
@@ -126,10 +130,12 @@ type DynamicTableProps<
   onNameClick?: (row: T) => void;
   isVip?: (row: T) => boolean;
   isHaveArrival?: boolean;
+  isActionEmployee?: boolean;
   totalCount?: number;
   isHaveFilterMore?: boolean;
   filterMoreContent?: React.ReactNode;
   sortColumns?: string[];
+  onSettingOperator?: (row: T) => void;
   onAccessAction?: (row: any, action: 'grant' | 'revoke' | 'block' | 'unblock') => void;
   onFileClick?: (row: T) => void;
   onView?: (row: T) => void;
@@ -169,6 +175,7 @@ export function DynamicTable<
   isHaveExportXlf = false,
   isHaveImportExcel = false,
   isHaveFilterDuration = false,
+  isActionEmployee = false,
   height,
   isHaveGender = false,
   isHaveVip = false,
@@ -181,11 +188,13 @@ export function DynamicTable<
   isHaveEmployee = false,
   isHaveCard = false,
   isHaveImage,
+  isHaveSettingOperator = false,
   isHaveObjectData,
   isHaveHeaderTitle = false,
   titleHeader,
   headerContent,
   onAccept,
+  isNoActionTableHead = false,
   onDenied,
   isHaveApproval = false,
   defaultSelectedHeaderItem,
@@ -217,6 +226,7 @@ export function DynamicTable<
   onHeaderItemClick,
   onCheckedChange,
   onEdit,
+  onSettingOperator,
   onView,
   onBatchEdit,
   onDelete,
@@ -461,18 +471,179 @@ export function DynamicTable<
     },
   };
 
+  // const isOperator = (groupId?: string) =>
+  //   !!groupId &&
+  //   [GroupRoleId.OperatorAdmin, GroupRoleId.OperatorVMS].some(
+  //     (id) => id === groupId.toUpperCase(),
+  //   );
+
   const formatDate = (date?: string) => {
     if (!date) return '-'; // fallback kalau kosong
     return moment.utc(date).local().format('DD-MM-YYYY HH:mm');
   };
 
+  // const getAccessActions = (row: any) => {
+  //   const { visitor_give_access, can_grant, can_revoke, can_block } = row;
+
+  //   // kalau semua false → tampil tombol disabled
+  //   const allDisabled = !can_grant && !can_revoke && !can_block;
+  //   console.log(allDisabled);
+
+  //   switch (visitor_give_access) {
+  //     case 1: // Grant
+  //       return (
+  //         <Box display="flex" gap={1}>
+  //           <Button
+  //             variant="contained"
+  //             color="error"
+  //             size="small"
+  //             disabled={!can_revoke || allDisabled}
+  //             onClick={() => onAccessAction?.(row, 'revoke')}
+  //           >
+  //             Revoke
+  //           </Button>
+  //           <Button
+  //             variant="contained"
+  //             sx={{ backgroundColor: '#000' }}
+  //             size="small"
+  //             disabled={!can_block || allDisabled}
+  //             onClick={() => onAccessAction?.(row, 'block')}
+  //           >
+  //             Block
+  //           </Button>
+  //         </Box>
+  //       );
+
+  //     case 2: // Revoke
+  //       return (
+  //         //  <Button
+  //         //    variant="contained"
+  //         //    color="primary"
+  //         //    size="small"
+  //         //    disabled={!can_grant || allDisabled}
+  //         //    onClick={() => onAccessAction?.(row, 'grant')}
+  //         //  >
+  //         //    Grant
+  //         //  </Button>
+  //         <></>
+  //       );
+
+  //     case 3: // Block
+  //       return (
+  //         // <Button
+  //         //   variant="contained"
+  //         //   sx={{ backgroundColor: '#8B0000' }}
+  //         //   size="small"
+  //         //   disabled={allDisabled}
+  //         //   onClick={() => onAccessAction?.(row, 'unblock')}
+  //         // >
+  //         //   Unblock
+  //         // </Button>
+  //         <></>
+  //       );
+
+  //     case 4: // Block
+  //       return (
+  //         <Button
+  //           variant="contained"
+  //           sx={{ backgroundColor: '#000' }}
+  //           size="small"
+  //           disabled={allDisabled}
+  //           onClick={() => onAccessAction?.(row, 'block')}
+  //         >
+  //           Block
+  //         </Button>
+  //       );
+
+  //     default: // No Action
+  //       return (
+  //         <Button
+  //           variant="contained"
+  //           color="primary"
+  //           size="small"
+  //           disabled={!can_grant || allDisabled}
+  //           onClick={() => onAccessAction?.(row, 'grant')}
+  //         >
+  //           Grant
+  //         </Button>
+  //       );
+  //   }
+  // };
+
   const getAccessActions = (row: any) => {
-    const { visitor_give_access, can_grant, can_revoke, can_block } = row;
+    const {
+      visitor_give_access,
+      can_grant,
+      can_revoke,
+      can_block,
+      early_access, // ✅ tambahkan ini (pastikan datanya ada di row)
+    } = row;
 
-    // kalau semua false → tampil tombol disabled
     const allDisabled = !can_grant && !can_revoke && !can_block;
-    console.log(allDisabled);
 
+    // 🟠 1️⃣ Jika early_access true → hanya bisa Revoke & Block
+    // 🟠 1️⃣ Kondisi khusus: early_access === true
+    if (early_access === true) {
+      switch (visitor_give_access) {
+        case 0:
+          return (
+            <Box display="flex" gap={1}>
+              <Button
+                variant="contained"
+                color="error"
+                size="small"
+                disabled={!can_revoke || allDisabled}
+                onClick={() => onAccessAction?.(row, 'revoke')}
+              >
+                Revoke
+              </Button>
+              <Button
+                variant="contained"
+                sx={{ backgroundColor: '#000' }}
+                size="small"
+                disabled={!can_block || allDisabled}
+                onClick={() => onAccessAction?.(row, 'block')}
+              >
+                Block
+              </Button>
+            </Box>
+          );
+
+        case 1: // Grant → boleh Revoke & Block
+          return (
+            <Box display="flex" gap={1}>
+              <Button
+                variant="contained"
+                color="error"
+                size="small"
+                disabled={!can_revoke || allDisabled}
+                onClick={() => onAccessAction?.(row, 'revoke')}
+              >
+                Revoke
+              </Button>
+              <Button
+                variant="contained"
+                sx={{ backgroundColor: '#000' }}
+                size="small"
+                disabled={!can_block || allDisabled}
+                onClick={() => onAccessAction?.(row, 'block')}
+              >
+                Block
+              </Button>
+            </Box>
+          );
+
+        case 2: // Revoke → tidak tampil tombol
+        case 3: // Block → tidak tampil tombol
+          return <></>;
+
+        default:
+          // selain Grant (misal belum di-grant) → tidak bisa apa-apa
+          return <></>;
+      }
+    }
+
+    // 🟢 2️⃣ Normal behavior jika bukan early_access
     switch (visitor_give_access) {
       case 1: // Grant
         return (
@@ -499,34 +670,12 @@ export function DynamicTable<
         );
 
       case 2: // Revoke
-        return (
-          //  <Button
-          //    variant="contained"
-          //    color="primary"
-          //    size="small"
-          //    disabled={!can_grant || allDisabled}
-          //    onClick={() => onAccessAction?.(row, 'grant')}
-          //  >
-          //    Grant
-          //  </Button>
-          <></>
-        );
+        return <></>;
 
       case 3: // Block
-        return (
-          // <Button
-          //   variant="contained"
-          //   sx={{ backgroundColor: '#8B0000' }}
-          //   size="small"
-          //   disabled={allDisabled}
-          //   onClick={() => onAccessAction?.(row, 'unblock')}
-          // >
-          //   Unblock
-          // </Button>
-          <></>
-        );
+        return <></>;
 
-      case 4: // Block
+      case 4: // Unblock (opsional)
         return (
           <Button
             variant="contained"
@@ -553,7 +702,6 @@ export function DynamicTable<
         );
     }
   };
-
   return (
     <>
       {/* HEADER */}
@@ -890,7 +1038,7 @@ export function DynamicTable<
                 {/* View */}
 
                 {/* Tombol Edit (batch edit hanya jika perlu) */}
-                {!isHaveCard ? (
+                {!isHaveCard || isNoActionTableHead == false ? (
                   <Box display="flex" alignItems="center" gap={3} pr={2.5}>
                     <EditIconOutline
                       sx={{ fontSize: '1.2rem', cursor: 'pointer' }}
@@ -1231,50 +1379,53 @@ export function DynamicTable<
                                   <RemoveRedEyeIcon width={18} height={18} />
                                 </IconButton>
                               </Tooltip>
-                              {/* Tombol Checkin */}
-                              <Tooltip title="Check In">
-                                <IconButton
-                                  onClick={() => onEdit?.(row)}
-                                  disableRipple
-                                  sx={{
-                                    color: 'white',
-                                    backgroundColor: '#13DEB9 !important',
-                                    width: 28,
-                                    height: 28,
-                                    padding: 0.5,
-                                    borderRadius: '50%',
-                                    '&:hover': {
-                                      backgroundColor: 'success.dark',
-                                      color: 'white',
-                                    },
-                                  }}
-                                >
-                                  <IconLogin2 width={18} height={18} />
-                                </IconButton>
-                              </Tooltip>
+                              {isActionEmployee == false && (
+                                <>
+                                  {/* Tombol Checkin */}
+                                  <Tooltip title="Check In">
+                                    <IconButton
+                                      onClick={() => onEdit?.(row)}
+                                      disableRipple
+                                      sx={{
+                                        color: 'white',
+                                        backgroundColor: '#13DEB9 !important',
+                                        width: 28,
+                                        height: 28,
+                                        padding: 0.5,
+                                        borderRadius: '50%',
+                                        '&:hover': {
+                                          backgroundColor: 'success.dark',
+                                          color: 'white',
+                                        },
+                                      }}
+                                    >
+                                      <IconLogin2 width={18} height={18} />
+                                    </IconButton>
+                                  </Tooltip>
 
-                              {/* Tombol Checkout */}
-                              <Tooltip title="Check Out">
-                                <IconButton
-                                  onClick={() => onDelete?.(row)}
-                                  disableRipple
-                                  sx={{
-                                    color: 'white',
-                                    backgroundColor: 'error.main',
-                                    width: 28,
-                                    height: 28,
-                                    padding: 0.5,
-                                    borderRadius: '50%',
-                                    // hover
-                                    '&:hover': {
-                                      backgroundColor: 'error.dark',
-                                      color: 'white',
-                                    },
-                                  }}
-                                >
-                                  <IconLogout2 width={18} height={18} />
-                                </IconButton>
-                              </Tooltip>
+                                  {/* Tombol Checkout */}
+                                  <Tooltip title="Check Out">
+                                    <IconButton
+                                      onClick={() => onDelete?.(row)}
+                                      disableRipple
+                                      sx={{
+                                        color: 'white',
+                                        backgroundColor: 'error.main',
+                                        width: 28,
+                                        height: 28,
+                                        padding: 0.5,
+                                        borderRadius: '50%',
+                                        '&:hover': {
+                                          backgroundColor: 'error.dark',
+                                          color: 'white',
+                                        },
+                                      }}
+                                    >
+                                      <IconLogout2 width={18} height={18} />
+                                    </IconButton>
+                                  </Tooltip>
+                                </>
+                              )}
 
                               {/* Ikon VIP */}
                               {/* {isHaveVip &&
@@ -1884,114 +2035,6 @@ export function DynamicTable<
                                     alignItems: 'flex-start',
                                   }}
                                 >
-                                  {/* {(() => {
-                                    // const status = row.visitor_give_access; // 0: none, 1: granted, 2: revoked, 3: blocked
-                                    const earlyAccess = row.early_access == true;
-                                    const code = row.visitor_give_access ?? 0;
-
-                                    // 🔒 Jika early_access = true, otomatis sudah boleh revoke/block walau belum grant
-                                    if (code === 0) {
-                                      return (
-                                        <Box
-                                          display="flex"
-                                          gap={1}
-                                          alignItems={'flex-start !important'}
-                                          justifyContent={'flex-start'}
-                                        >
-                                          <Button
-                                            variant="contained"
-                                            color="error"
-                                            size="small"
-                                            onClick={() => onAccessAction?.(row, 'revoke')}
-                                          >
-                                            Revoke
-                                          </Button>
-                                          <Button
-                                            variant="contained"
-                                            sx={{ backgroundColor: '#000' }}
-                                            size="small"
-                                            onClick={() => onAccessAction?.(row, 'block')}
-                                          >
-                                            Block
-                                          </Button>
-                                        </Box>
-                                      );
-                                    }
-
-    
-
-                             
-                                    if (code === 1) {
-                                      return (
-                                        <Box display="flex" gap={1} p={0}>
-                                          <Button
-                                            variant="contained"
-                                            color="error"
-                                            size="small"
-                                            onClick={() => onAccessAction?.(row, 'revoke')}
-                                          >
-                                            Revoke
-                                          </Button>
-                                          <Button
-                                            variant="contained"
-                                            sx={{ backgroundColor: '#000' }}
-                                            size="small"
-                                            onClick={() => onAccessAction?.(row, 'block')}
-                                          >
-                                            Block
-                                          </Button>
-                                        </Box>
-                                      );
-                                    }
-
-                    
-                                    if (code === 3) {
-                                      return (
-                                        <Button
-                                          variant="contained"
-                                          sx={{ backgroundColor: ' #8B0000' }}
-                                          size="small"
-                                          onClick={() => onAccessAction?.(row, 'unblock')}
-                                        >
-                                          Unblock
-                                        </Button>
-                                      );
-                                    }
-
-                                    if (code === 4) {
-                                      return (
-                                        <Box
-                                          display="flex"
-                                          justifyContent={'flex-start'}
-                                          alignItems={'flex-start'}
-                                        >
-                                          <Button
-                                            variant="contained"
-                                            sx={{ backgroundColor: '#000' }}
-                                            size="small"
-                                            onClick={() => onAccessAction?.(row, 'block')}
-                                          >
-                                            Block
-                                          </Button>
-                                        </Box>
-                                      );
-                                    }
-
-                                    if (code === 2) {
-                                      return (
-                                        <TableCell sx={{ p: '0 !important' }}>
-                                          <Typography></Typography>
-                                        </TableCell>
-                                      );
-                                    }
-
-                                
-                                    return (
-                                      <Typography variant="body2" color="text.secondary">
-                                   
-                                      </Typography>
-                                    );
-                                  })()} */}
                                   {getAccessActions(row)}
                                 </TableCell>
                               ) : isHaveView ? (
@@ -2018,6 +2061,29 @@ export function DynamicTable<
                               ) : (
                                 <Box display="flex" gap={0.5}>
                                   {/* ✏️ Edit */}
+                                  {/* {isHaveSettingOperator && isOperator(row.group_id) && ( */}
+                                  {isHaveSettingOperator &&
+                                    (row.group_id?.toUpperCase() === GroupRoleId.OperatorAdmin ||
+                                      row.group_id?.toUpperCase() === GroupRoleId.OperatorVMS) && 
+                                      (
+                                      <Tooltip title="Setting">
+                                        <IconButton
+                                          onClick={() => onSettingOperator?.(row)}
+                                          disableRipple
+                                          sx={{
+                                            color: 'white',
+                                            backgroundColor: '#000',
+                                            width: 28,
+                                            height: 28,
+                                            p: 0.5,
+                                            borderRadius: '50%',
+                                            '&:hover': { backgroundColor: '#000', color: 'white' },
+                                          }}
+                                        >
+                                          <IconSettings width={14} height={14} />
+                                        </IconButton>
+                                      </Tooltip>
+                                    )}
                                   <Tooltip title="Edit">
                                     <IconButton
                                       onClick={() => onEdit?.(row)}

@@ -23,7 +23,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import PageContainer from 'src/components/container/PageContainer';
-import Logo from 'src/customs/components/logo/Logo';
 import { IconError404, IconMan, IconTrash, IconWoman } from '@tabler/icons-react';
 import { ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { AuthVisitor, SubmitPraForm } from 'src/customs/api/users';
@@ -38,6 +37,7 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { IconX } from '@tabler/icons-react';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { GroupRoleId } from '../../../constant/GroupRoleId';
+import Logo from 'src/assets/images/logos/bi_logo.png';
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -365,52 +365,52 @@ const GuestInformationStepper = () => {
             >
               Use Camera
             </Typography>
+            {(previewSrc || shownName) && (
+              <Box
+                mt={2}
+                display="flex"
+                alignItems="center"
+                gap={1}
+                justifyContent={'center'}
+                flexDirection="column"
+              >
+                {previewSrc && (
+                  <>
+                    <img
+                      src={previewSrc}
+                      alt="preview"
+                      style={{
+                        width: 350,
+                        height: 220,
+                        objectFit: 'cover',
+                        borderRadius: 8,
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+                      }}
+                    />
+                    <Button
+                      color="error"
+                      size="small"
+                      variant="outlined"
+                      sx={{ mt: 2, minWidth: 120 }}
+                      startIcon={<IconTrash />}
+                      onClick={() =>
+                        handleRemoveFileForField(
+                          f.answer_file,
+                          (url) => handleChange(f.remarks, url),
+                          key,
+                        )
+                      }
+                    >
+                      Remove
+                    </Button>
+                  </>
+                )}
+              </Box>
+            )}
           </Box>
         </Box>
 
         {/* PREVIEW FOTO */}
-        {(previewSrc || shownName) && (
-          <Box
-            mt={2}
-            display="flex"
-            alignItems="center"
-            gap={1}
-            justifyContent={'center'}
-            flexDirection="column"
-          >
-            {previewSrc && (
-              <>
-                <img
-                  src={previewSrc}
-                  alt="preview"
-                  style={{
-                    width: 200,
-                    height: 200,
-                    objectFit: 'cover',
-                    borderRadius: 8,
-                    boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
-                  }}
-                />
-                <Button
-                  color="error"
-                  size="small"
-                  variant="outlined"
-                  sx={{ mt: 2, minWidth: 120 }}
-                  startIcon={<IconTrash />}
-                  onClick={() =>
-                    handleRemoveFileForField(
-                      f.answer_file,
-                      (url) => handleChange(f.remarks, url),
-                      key,
-                    )
-                  }
-                >
-                  Remove
-                </Button>
-              </>
-            )}
-          </Box>
-        )}
 
         {/* DIALOG KAMERA */}
         <Dialog open={openCamera} onClose={() => setOpenCamera(false)} maxWidth="md" fullWidth>
@@ -589,7 +589,7 @@ const GuestInformationStepper = () => {
                     src={previewSrc}
                     alt="preview"
                     style={{
-                      width: 200,
+                      width: 350,
                       height: 200,
                       borderRadius: 12,
                       objectFit: 'cover',
@@ -697,7 +697,7 @@ const GuestInformationStepper = () => {
                     src={previewSrc}
                     alt="preview"
                     style={{
-                      width: 200,
+                      width: 350,
                       height: 200,
                       borderRadius: 12,
                       objectFit: 'cover',
@@ -1065,6 +1065,58 @@ const GuestInformationStepper = () => {
     };
   }
 
+  // const handleSubmit = async () => {
+  //   const currentSection = formSections[activeStep];
+  //   if (!validateStep(currentSection)) return;
+
+  //   try {
+  //     setSubmitting(true);
+
+  //     const payload = transformToSubmitPayload(invitationData);
+  //     console.log('Payload siap dikirim:', JSON.stringify(payload, null, 2));
+
+  //     const visitorId = invitationData?.id;
+  //     if (!visitorId) {
+  //       console.error('❌ Visitor ID tidak ditemukan di invitationData');
+  //       return;
+  //     }
+
+  //     // 1️⃣ Submit pra-form ke backend
+  //     const res = await SubmitPraForm(payload, visitorId);
+  //     console.log('Response submit:', JSON.stringify(res || {}, null, 2));
+
+  //     // 2️⃣ Ambil status terbaru via AuthVisitor (karena token dikirim di sini)
+  //     const authRes = await AuthVisitor({ code });
+  //     console.log('AuthVisitor result:', authRes);
+
+  //     // Pastikan tidak menimpa invitationData dengan res lama
+  //     if (authRes?.collection) {
+  //       setInvitationData(authRes.collection);
+  //     }
+
+  //     // 3️⃣ Cek apakah token tersedia dan status visitor sudah success
+  //     const token = authRes?.collection?.token;
+
+  //     if (token) {
+  //       console.log('✅ Token ditemukan & status success → login guest');
+
+  //       // Simpan token + role guest
+  //       saveToken(token, GroupRoleId.Visitor);
+  //       // sessionStorage.setItem('groupId', GroupRoleId.Visitor); // tambahan manual
+
+  //       // Redirect ke dashboard guest
+  //       navigate('/guest/dashboard');
+  //       return;
+  //     }
+  //   } catch (error) {
+  //     console.error('Error submit:', error);
+  //   } finally {
+  //     setTimeout(() => {
+  //       setSubmitting(false);
+  //     }, 500);
+  //   }
+  // };
+
   const handleSubmit = async () => {
     const currentSection = formSections[activeStep];
     if (!validateStep(currentSection)) return;
@@ -1073,48 +1125,40 @@ const GuestInformationStepper = () => {
       setSubmitting(true);
 
       const payload = transformToSubmitPayload(invitationData);
-      console.log('Payload siap dikirim:', JSON.stringify(payload, null, 2));
-
       const visitorId = invitationData?.id;
       if (!visitorId) {
         console.error('❌ Visitor ID tidak ditemukan di invitationData');
         return;
       }
 
-      // 1️⃣ Submit pra-form ke backend
+      // 1️⃣ Kirim pra-form ke backend
       const res = await SubmitPraForm(payload, visitorId);
-      console.log('Response submit:', JSON.stringify(res || {}, null, 2));
+      console.log('✅ SubmitPraForm success:', res);
 
-      // 2️⃣ Ambil status terbaru via AuthVisitor (karena token dikirim di sini)
+      // 2️⃣ Setelah submit, tunggu sejenak agar server proses statusnya
+      await new Promise((r) => setTimeout(r, 500)); // (opsional tapi smooth)
+
+      // 3️⃣ Ambil status terbaru & token
       const authRes = await AuthVisitor({ code });
-      console.log('AuthVisitor result:', authRes);
-
-      // Pastikan tidak menimpa invitationData dengan res lama
-      if (authRes?.collection) {
-        setInvitationData(authRes.collection);
-      }
-
-      // 3️⃣ Cek apakah token tersedia dan status visitor sudah success
       const token = authRes?.collection?.token;
 
       if (token) {
-        console.log('✅ Token ditemukan & status success → login guest');
+        // 4️⃣ Simpan token tanpa trigger reload
+        await saveToken(token, GroupRoleId.Visitor);
 
-        // Simpan token + role guest
-        saveToken(token, GroupRoleId.Visitor);
-        // sessionStorage.setItem('groupId', GroupRoleId.Visitor); // tambahan manual
+        // 5️⃣ Delay sedikit agar backdrop sempat hilang
+        setTimeout(() => {
+          setSubmitting(false);
+          navigate('/guest/dashboard', { replace: true });
+        }, 300);
 
-        // Redirect ke dashboard guest
-        navigate('/guest/dashboard');
         return;
       }
 
-      // 4️⃣ Jika belum success → arahkan ke portal publik
-      // console.warn('⚠️ Belum success atau token kosong → arahkan ke halaman publik');
-      // navigate('/portal/information');
+      // ❌ Fallback jika token tetap tidak ada
+      console.warn('Token tidak ditemukan setelah AuthVisitor.');
     } catch (error) {
       console.error('Error submit:', error);
-    } finally {
       setSubmitting(false);
     }
   };
@@ -1136,10 +1180,11 @@ const GuestInformationStepper = () => {
               flexDirection="column"
               alignItems="center"
             >
-              <Logo />
+              {/* <Logo /> */}
+              <img src={Logo} width={100} height={100} />
               {code && (
-                <Typography variant="subtitle1" fontWeight={600} mt={0}>
-                  Kode Undangan: {code}
+                <Typography variant="subtitle1" fontWeight={600} mt={2}>
+                  Invitation Code: {code}
                 </Typography>
               )}
             </Box>

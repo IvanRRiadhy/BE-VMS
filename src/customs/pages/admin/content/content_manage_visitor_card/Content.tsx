@@ -353,6 +353,7 @@ const Content = () => {
     if (!edittingId) {
       setFormAddVisitorCard(CreateVisitorCardRequestSchema.parse({}));
     }
+    handleCloseModalCreateVisitorCard();
   };
 
   const handleBatchDelete = async (rows: Item[]) => {

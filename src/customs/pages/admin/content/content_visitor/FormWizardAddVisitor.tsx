@@ -73,6 +73,7 @@ import {
 import {
   createCheckGiveAccess,
   createPraRegister,
+  createPraRegisterGroup,
   createVisitor,
   createVisitors,
   createVisitorsGroup,
@@ -110,6 +111,7 @@ import { IconX } from '@tabler/icons-react';
 import { IconArrowRight } from '@tabler/icons-react';
 // import CameraUpload from 'src/customs/components/camera/CameraUpload';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { useQuery } from '@tanstack/react-query';
 
 interface FormVisitorTypeProps {
   formData: CreateVisitorRequest;
@@ -163,7 +165,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const [activeStep, setActiveStep] = React.useState(0);
   const [skipped, setSkipped] = React.useState(new Set());
   const [vtLoading, setVtLoading] = useState(true);
-  const [visitorType, setVisitorType] = useState<any[]>([]);
+  // const [visitorType, setVisitorType] = useState<any[]>([]);
   const [selfOnlyOverrides, setSelfOnlyOverrides] = useState<Record<string, any[]>>({});
   // const visitor type by id
   const [submitted, setSubmitted] = useState(false);
@@ -834,39 +836,39 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     setSectionsData(reorderedSections);
   };
 
-  useEffect(() => {
-    const fetchVisitorTypeDetails = async () => {
-      if (!formData.visitor_type || !token) return;
+  // useEffect(() => {
+  //   const fetchVisitorTypeDetails = async () => {
+  //     if (!formData.visitor_type || !token) return;
 
-      setVtLoading(true); // mulai skeleton
-      const minLoadingTime = 500; // ms, minimal loading terlihat
-      const startTime = Date.now();
+  //     setVtLoading(true); // mulai skeleton
+  //     const minLoadingTime = 500; // ms, minimal loading terlihat
+  //     const startTime = Date.now();
 
-      try {
-        const res = await getVisitorTypeById(token, formData.visitor_type);
-        const selectedType = res?.collection;
+  //     try {
+  //       const res = await getVisitorTypeById(token, formData.visitor_type);
+  //       const selectedType = res?.collection;
 
-        if (selectedType && selectedType.section_page_visitor_types) {
-          const sections = selectedType.section_page_visitor_types;
-          setDraggableSteps(sections.map((s: any) => s.name));
-          setSectionsData(sections);
-        } else {
-          setDraggableSteps([]);
-          setSectionsData([]);
-        }
-      } catch (error) {
-        console.error('Failed to fetch visitor type details', error);
-        setDraggableSteps([]);
-        setSectionsData([]);
-      } finally {
-        const elapsed = Date.now() - startTime;
-        const remaining = Math.max(minLoadingTime - elapsed, 0);
-        setTimeout(() => setVtLoading(false), remaining);
-      }
-    };
+  //       if (selectedType && selectedType.section_page_visitor_types) {
+  //         const sections = selectedType.section_page_visitor_types;
+  //         setDraggableSteps(sections.map((s: any) => s.name));
+  //         setSectionsData(sections);
+  //       } else {
+  //         setDraggableSteps([]);
+  //         setSectionsData([]);
+  //       }
+  //     } catch (error) {
+  //       console.error('Failed to fetch visitor type details', error);
+  //       setDraggableSteps([]);
+  //       setSectionsData([]);
+  //     } finally {
+  //       const elapsed = Date.now() - startTime;
+  //       const remaining = Math.max(minLoadingTime - elapsed, 0);
+  //       setTimeout(() => setVtLoading(false), remaining);
+  //     }
+  //   };
 
-    fetchVisitorTypeDetails();
-  }, [formData.visitor_type, token]);
+  //   fetchVisitorTypeDetails();
+  // }, [formData.visitor_type, token]);
 
   // const handleSaveGroupVisitor = () => {
   //   if (activeGroupIdx === null) return;
@@ -1955,7 +1957,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   };
 
   const fieldKey = (f: any) => f?.custom_field_id || sanitize(f?.remarks) || '';
-  const [uploadNames, setUploadNames] = React.useState<Record<string, string>>({});
+  const [uploadNames, setUploadNames] = useState<Record<string, string>>({});
 
   const renderFieldInput = (
     field: FormVisitor,
@@ -2011,9 +2013,16 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         //   let options: { value: string; name: string }[] = [];
 
         //   if (field.remarks === 'host') {
-        //     options = employee.map((emp: any) => ({ value: emp.id, name: emp.name }));
+        //     options = employee.map((emp: any) => ({
+        //       value: emp.id,
+        //       name: emp.name,
+        //     }));
+        //   } else if (field.remarks === 'employee') {
+        //     options = allVisitorEmployee.map((emp: any) => ({
+        //       value: emp.id,
+        //       name: emp.name,
+        //     }));
         //   } else if (field.remarks === 'site_place') {
-        //     // options = sites.map((site: any) => ({ value: site.id, name: site.name }));
         //     options = sites
         //       .filter((site: any) => site.can_visited === true)
         //       .map((site: any) => ({
@@ -2026,58 +2035,116 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         //     );
         //   }
 
+        //   return (
+        //     <Autocomplete
+        //       size="small"
+        //       options={options}
+        //       getOptionLabel={(option) => option.name}
+        //       inputValue={inputValues[index] || ''}
+        //       onInputChange={(_, newInputValue) =>
+        //         setInputValues((prev) => ({ ...prev, [index]: newInputValue }))
+        //       }
+        //       filterOptions={(opts, state) => {
+        //         if (state.inputValue.length < 3) return [];
+        //         return opts.filter((opt) =>
+        //           opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
+        //         );
+        //       }}
+        //       noOptionsText={
+        //         (inputValues[index] || '').length < 3
+        //           ? 'Ketik minimal 3 karakter untuk mencari'
+        //           : 'Not found'
+        //       }
+        //       value={options.find((opt) => opt.value === field.answer_text) || null}
+        //       onChange={(_, newValue) =>
+        //         onChange(index, 'answer_text', newValue ? newValue.value : '')
+        //       }
+        //       renderInput={(params) => (
+        //         <TextField
+        //           {...params}
+        //           label=""
+        //           placeholder="Ketiks minimal 3 karakter"
+        //           fullWidth
+        //           sx={{ minWidth: 160 }}
+        //         />
+        //       )}
+        //     />
+        //   );
+        // }
+
         case 3: {
           let options: { value: string; name: string }[] = [];
 
-          if (field.remarks === 'host') {
-            options = employee.map((emp: any) => ({
-              value: emp.id,
-              name: emp.name,
-            }));
-          } else if (field.remarks === 'employee') {
-            options = allVisitorEmployee.map((emp: any) => ({
-              value: emp.id,
-              name: emp.name,
-            }));
-          } else if (field.remarks === 'site_place') {
-            options = sites
-              .filter((site: any) => site.can_visited === true)
-              .map((site: any) => ({
-                value: site.id,
-                name: site.name,
+          // 🔹 Build option list berdasarkan remarks
+          switch (field.remarks) {
+            case 'host':
+              options = employee.map((emp: any) => ({
+                value: emp.id,
+                name: emp.name,
               }));
-          } else {
-            options = (field.multiple_option_fields || []).map((opt: any) =>
-              typeof opt === 'object' ? opt : { value: opt, name: opt },
-            );
+              break;
+
+            case 'employee':
+              options = allVisitorEmployee.map((emp: any) => ({
+                value: emp.id,
+                name: emp.name,
+              }));
+              break;
+
+            case 'site_place':
+              options = sites
+                .filter((site: any) => site.can_visited)
+                .map((site: any) => ({
+                  value: site.id,
+                  name: site.name,
+                }));
+              break;
+
+            default:
+              options = (field.multiple_option_fields || []).map((opt: any) =>
+                typeof opt === 'object' ? opt : { value: opt, name: opt },
+              );
+              break;
           }
+
+          // 🔹 Gunakan uniqueKey biar gak tabrakan antar visitor group
+          const uniqueKey = opts?.uniqueKey ?? `${activeStep}:${index}`;
+          const inputVal = inputValues[uniqueKey as any] || '';
 
           return (
             <Autocomplete
               size="small"
+              freeSolo // ✅ Biar tetap bisa diketik dari awal
               options={options}
-              getOptionLabel={(option) => option.name}
-              inputValue={inputValues[index] || ''}
+              getOptionLabel={(option) => (typeof option === 'string' ? option : option.name)}
+              inputValue={inputVal}
               onInputChange={(_, newInputValue) =>
-                setInputValues((prev) => ({ ...prev, [index]: newInputValue }))
+                setInputValues((prev) => ({ ...prev, [uniqueKey]: newInputValue }))
               }
+              // ✅ Filter: hanya aktif kalau >= 3 huruf
               filterOptions={(opts, state) => {
-                if (state.inputValue.length < 3) return [];
-                return opts.filter((opt) =>
-                  opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
-                );
+                const term = (state.inputValue || '').toLowerCase();
+                if (term.length < 3) return [];
+                return opts.filter((opt) => (opt.name || '').toLowerCase().includes(term));
               }}
               noOptionsText={
-                (inputValues[index] || '').length < 3
-                  ? 'Ketik minimal 3 karakter untuk mencari'
-                  : 'Not found'
+                inputVal.length < 3 ? 'Ketik minimal 3 karakter untuk mencari' : 'Tidak ditemukan'
               }
-              value={options.find((opt) => opt.value === field.answer_text) || null}
+              value={
+                options.find(
+                  (opt: { value: string; name: string }) => opt.value === field.answer_text,
+                ) || null
+              }
               onChange={(_, newValue) =>
-                onChange(index, 'answer_text', newValue ? newValue.value : '')
+                onChange(index, 'answer_text', newValue instanceof Object ? newValue.value : '')
               }
               renderInput={(params) => (
-                <TextField {...params} label="" placeholder="Ketik minimal 3 karakter" fullWidth />
+                <TextField
+                  {...params}
+                  placeholder="Ketik minimal 3 karakter"
+                  fullWidth
+                  sx={{ minWidth: 160 }}
+                />
               )}
             />
           );
@@ -2141,7 +2208,34 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             />
           );
 
-        case 6: // Checkbox
+        case 6:
+          if (field.remarks === 'is_employee') {
+            const options = field.multiple_option_fields || [];
+            const value = field.answer_text ?? ''; // '' | 'true' | 'false'
+
+            return (
+              <FormGroup row>
+                {options.map((opt: any, idx: number) => (
+                  <FormControlLabel
+                    key={idx}
+                    control={
+                      <Checkbox
+                        checked={value === opt.value}
+                        onChange={(e) => {
+                          // hanya satu yang aktif dalam waktu bersamaan
+                          const newVal = e.target.checked ? opt.value : '';
+                          onChange(index, 'answer_text', newVal);
+                        }}
+                      />
+                    }
+                    label={opt.name}
+                  />
+                ))}
+              </FormGroup>
+            );
+          }
+
+          // fallback default (checkbox tunggal)
           return (
             <FormControlLabel
               control={
@@ -2153,6 +2247,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
               label=""
             />
           );
+
+        // fallback default checkbox single
 
         case 8: // Time
           return (
@@ -4138,7 +4234,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         console.log('🚀 Final Payload (Group):', JSON.stringify(parsed, null, 2));
 
         // Submit ke endpoint group
-        const submitFn = TYPE_REGISTERED === 0 ? createVisitorsGroup : createVisitorsGroup;
+        const submitFn = TYPE_REGISTERED === 0 ? createPraRegisterGroup : createVisitorsGroup;
         const backendResponse = await submitFn(token, parsed as any);
         toast('Group visitor created successfully.', 'success');
         const visitors = backendResponse.collection?.visitors || [];
@@ -4237,7 +4333,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         if (TYPE_REGISTERED !== 0) {
           setNextDialogOpen(true);
         }
-      }, 1000);
+      }, 700);
 
       localStorage.removeItem('selfOnlyOverrides');
       setSelfOnlyOverrides({});
@@ -4245,7 +4341,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       setTimeout(() => {
         setLoading(false);
         setNextDialogOpen(false);
-      }, 1000);
+      }, 700);
 
       toast('Failed to create visitor.', 'error');
       console.error(err);
@@ -4978,40 +5074,47 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       },
     ];
 
-    // setDataVisitor((prev) =>
-    //   prev.map((x) => ({
-    //     ...x,
-    //     question_page: x.question_page.map((p: any) => ({ ...p, form: [] })),
-    //   })),
-    // );
     setDataVisitor(result);
     return result;
   };
 
+  const {
+    data: visitorType = [],
+    isLoading: vtFetching,
+    isError: vtError,
+  } = useQuery({
+    queryKey: ['visitorType', token],
+    queryFn: async () => {
+      if (!token) return [];
+      const res = await getAllVisitorType(token);
+      return res?.collection ?? [];
+    },
+    staleTime: 10 * 60 * 1000, // cache 10 menit
+    gcTime: 30 * 60 * 1000, // simpan 30 menit di memori
+    refetchOnWindowFocus: false, // tidak refetch tiap ganti tab
+    enabled: !!token, // hanya jalan kalau token sudah siap
+  });
+
+  // ✅ useEffect lain tetap dipakai untuk data lainnya
   useEffect(() => {
     if (!token) return;
     let cancelled = false;
-    const min = 500; // ms biar skeleton minimal kelihatan
+    const min = 500;
 
-    (async () => {
+    const fetchMainData = async () => {
       const t0 = Date.now();
       setVtLoading(true);
-      try {
-        const [customFieldRes, visitorTypeRes, EmployeeRes, siteSpaceRes, visitorRes] =
-          await Promise.all([
-            getAllCustomFieldPagination(token, 0, 99, 'id'),
-            getAllVisitorType(token), // << daftar VT
-            getVisitorEmployee(token),
-            getAllSite(token),
-            getAllVisitor(token),
-          ]);
 
+      try {
+        const siteSpaceRes = await getAllSite(token);
         if (cancelled) return;
-        setCustomField(customFieldRes?.collection ?? []);
-        setVisitorType(visitorTypeRes?.collection ?? []);
-        setEmployee(EmployeeRes?.collection ?? []);
+
         setSites(siteSpaceRes?.collection ?? []);
-        setVisitorDatas(visitorRes?.collection ?? []);
+
+        // lanjut background
+        fetchSecondaryData();
+      } catch (error) {
+        console.error('❌ Error fetching main data:', error);
       } finally {
         const elapsed = Date.now() - t0;
         const wait = Math.max(0, min - elapsed);
@@ -5019,12 +5122,72 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           if (!cancelled) setVtLoading(false);
         }, wait);
       }
-    })();
+    };
+
+    const fetchSecondaryData = async () => {
+      try {
+        const [customFieldRes, employeeRes, allEmployeeRes, visitorRes] = await Promise.all([
+          getAllCustomFieldPagination(token, 0, 99, 'id'),
+          getVisitorEmployee(token),
+          getVisitorEmployee(token),
+          getAllVisitor(token),
+        ]);
+
+        if (cancelled) return;
+
+        setCustomField(customFieldRes?.collection ?? []);
+        setEmployee(employeeRes?.collection ?? []);
+        setAllVisitorEmployee(allEmployeeRes?.collection ?? []);
+        setVisitorDatas(visitorRes?.collection ?? []);
+      } catch (error) {
+        console.error('⚠️ Error fetching secondary data:', error);
+      }
+    };
+
+    fetchMainData();
 
     return () => {
       cancelled = true;
     };
   }, [token]);
+
+  // useEffect(() => {
+  //   if (!token) return;
+  //   let cancelled = false;
+  //   const min = 500; // ms biar skeleton minimal kelihatan
+
+  //   (async () => {
+  //     const t0 = Date.now();
+  //     setVtLoading(true);
+  //     try {
+  //       const [customFieldRes, visitorTypeRes, EmployeeRes, siteSpaceRes, visitorRes] =
+  //         await Promise.all([
+  //           getAllCustomFieldPagination(token, 0, 99, 'id'),
+  //           getAllVisitorType(token), // << daftar VT
+  //           getVisitorEmployee(token),
+  //           getAllSite(token),
+  //           getAllVisitor(token),
+  //         ]);
+
+  //       if (cancelled) return;
+  //       setCustomField(customFieldRes?.collection ?? []);
+  //       setVisitorType(visitorTypeRes?.collection ?? []);
+  //       setEmployee(EmployeeRes?.collection ?? []);
+  //       setSites(siteSpaceRes?.collection ?? []);
+  //       setVisitorDatas(visitorRes?.collection ?? []);
+  //     } finally {
+  //       const elapsed = Date.now() - t0;
+  //       const wait = Math.max(0, min - elapsed);
+  //       setTimeout(() => {
+  //         if (!cancelled) setVtLoading(false);
+  //       }, wait);
+  //     }
+  //   })();
+
+  //   return () => {
+  //     cancelled = true;
+  //   };
+  // }, [token]);
 
   useEffect(() => {
     if (!formData.visitor_type || !token) return;
@@ -5051,13 +5214,14 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         const res = await getVisitorTypeById(token, formData.visitor_type as string);
         let sections = res?.collection?.section_page_visitor_types ?? [];
 
-        if (TYPE_REGISTERED === 0)
+        if (TYPE_REGISTERED === 0 || FORM_KEY == 'pra_form')
           sections = sections.filter((s: any) => (s.pra_form || []).length > 0);
 
         setRawSections(sections);
 
         if (isGroup) {
           const groupSections = buildGroupSections(sections);
+          console.log('group', groupSections);
           setSectionsData(groupSections);
           setDraggableSteps(groupSections.map((s) => s.name));
           seedDataVisitorFromSections(groupSections);
@@ -5079,6 +5243,60 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
     fetchVisitorTypeDetails();
   }, [formData.visitor_type, token]);
+
+  // useEffect(() => {
+  //   if (!formData.visitor_type || !token) return;
+
+  //   const raw = localStorage.getItem('unsavedVisitorData');
+  //   const saved = raw ? JSON.parse(raw) : null;
+  //   const sameType = saved?.visitor_type === formData.visitor_type;
+  //   const sameMode = saved?.is_group === isGroup;
+
+  //   // ✅ Restore jika cocok
+  //   if (sameType && sameMode && saved.sections?.length) {
+  //     setSectionsData(saved.sections);
+  //     setDataVisitor(saved.data_visitor ?? []);
+  //     setGroupedPages(saved.grouped_pages ?? {});
+  //     setDraggableSteps(saved.sections.map((s: any) => s.name));
+  //     setRawSections(saved.sections);
+  //     return;
+  //   }
+
+  //   // 🌐 Kalau tidak cocok → fetch baru
+  //   const fetchVisitorTypeDetails = async () => {
+  //     setVtLoading(true);
+  //     try {
+  //       const res = await getVisitorTypeById(token, formData.visitor_type as string);
+  //       let sections = res?.collection?.section_page_visitor_types ?? [];
+
+  //       if (TYPE_REGISTERED === 0)
+  //         sections = sections.filter((s: any) => (s.pra_form || []).length > 0);
+
+  //       setRawSections(sections);
+
+  //       if (isGroup) {
+  //         const groupSections = buildGroupSections(sections);
+  //         setSectionsData(groupSections);
+  //         setDraggableSteps(groupSections.map((s) => s.name));
+  //         seedDataVisitorFromSections(groupSections);
+  //         setGroupedPages(buildGroupedPages(groupSections));
+  //       } else {
+  //         setSectionsData(sections);
+  //         setDraggableSteps(sections.map((s: any) => s.name));
+  //         setDataVisitor([]);
+  //         setGroupedPages({} as any);
+  //       }
+  //     } catch (err) {
+  //       console.error('Failed to fetch visitor type details', err);
+  //       setSectionsData([]);
+  //       setDraggableSteps([]);
+  //     } finally {
+  //       setVtLoading(false);
+  //     }
+  //   };
+
+  //   fetchVisitorTypeDetails();
+  // }, [formData.visitor_type, token]);
 
   useEffect(() => {
     if (!isGroup) return;

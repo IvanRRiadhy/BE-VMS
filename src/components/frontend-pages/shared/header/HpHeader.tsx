@@ -52,7 +52,7 @@ const HpHeader = () => {
         }}
       >
         <ToolbarStyled>
-          <Logo />
+          {/* <Logo /> */}
           {lgDown ? (
             <IconButton color="inherit" aria-label="menu" onClick={handleDrawerOpen}>
               <IconMenu2 size="20" />

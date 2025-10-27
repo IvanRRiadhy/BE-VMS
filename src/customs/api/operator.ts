@@ -203,3 +203,29 @@ export const createMultipleGrantAccess = async (token: string, data: any): Promi
     return Promise.reject(error);
   }
 };
+
+export const createSubmitCompletePra = async (token: string, data: any): Promise<any> => {
+  try {
+    const response = await axiosInstance.put('/operator-invitation/submit-complete-pra', data, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    return Promise.reject(error);
+  }
+};
+
+export const createSubmitCompletePraMultiple = async (token: string, data: any): Promise<any> => {
+  try {
+    const response = await axiosInstance.put(
+      '/operator-invitation/submit-complete-pra-multiple',
+      data,
+      {
+        headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    return Promise.reject(error);
+  }
+};

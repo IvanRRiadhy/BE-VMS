@@ -64,7 +64,7 @@ const TopVisitor = () => {
         sx={{
           py: 2,
           borderRadius: 3,
-          border: '1px solid #d6d3d3ff',
+          // border: '1px solid #d6d3d3ff',
           bgcolor: 'background.paper',
           boxShadow: 3,
           height: {

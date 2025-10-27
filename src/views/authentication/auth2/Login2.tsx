@@ -20,7 +20,6 @@ import { useDispatch } from 'react-redux';
 import { setUser } from '../../../store/apps/user/userSlice';
 
 import PageContainer from 'src/components/container/PageContainer';
-import Logo from 'src/customs/components/logo/Logo';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { AuthVisitor, login } from 'src/customs/api/users';
@@ -30,6 +29,7 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 import { useAuth } from 'src/customs/contexts/AuthProvider';
 import { IconEye, IconEyeOff, IconUser, IconUserPlus } from '@tabler/icons-react';
 import { GroupRoleId } from 'src/constant/GroupRoleId';
+import Logo from 'src/assets/images/logos/bi_logo.png';
 
 const Login2 = () => {
   const { isAuthenticated } = useAuth();
@@ -205,11 +205,7 @@ const Login2 = () => {
                 >
                   <Box display="flex" alignItems="center" justifyContent="center" mb={1}>
                     {/* <Logo /> */}
-                    <img
-                      src="https://upload.wikimedia.org/wikipedia/commons/3/39/BI_Logo.png"
-                      width={300}
-                      height={100}
-                    />
+                    <img src={Logo} width={100} height={100} />
                   </Box>
 
                   {/* Tabs Switch */}

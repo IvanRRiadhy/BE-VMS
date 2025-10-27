@@ -135,7 +135,7 @@ const VisitorHeatMap = () => {
           borderRadius: 3, // 4px
           overflow: 'hidden', // penting biar sudut chart ikut ke-clip
           boxShadow: 3, // opsional, biar ada bayangan
-          border: '1px solid #d6d3d3ff',
+          // border: '1px solid #d6d3d3ff',
         }}
       >
         <HighchartsReact highcharts={Highcharts} options={options} />

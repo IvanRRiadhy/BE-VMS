@@ -28,9 +28,11 @@ import {
 } from '@mui/material';
 import { Box } from '@mui/system';
 import {
+  IconArrowAutofitRight,
   IconArrowsMaximize,
   IconBan,
   IconBrandGmail,
+  IconBrowser,
   IconBuildingSkyscraper,
   IconCalendarTime,
   IconCalendarUp,
@@ -53,10 +55,13 @@ import {
   IconTicket,
   IconUser,
   IconUsersGroup,
+  IconWindowMaximize,
   IconX,
 } from '@tabler/icons-react';
 import { Scanner } from '@yudiel/react-qr-scanner';
 import moment from 'moment-timezone';
+import LprImage from '../../../assets/images/products/pic_lpr.png';
+import FRImage from '../../../assets/images/products/pic_fr.png';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import QRCode from 'react-qr-code';
@@ -88,7 +93,7 @@ import { Item } from 'src/customs/api/models/Operator/Invitation';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import Swal from 'sweetalert2';
 import { getPermissionOperator } from '../../api/operator';
-import { axiosInstance2 } from 'src/customs/api/interceptor';
+import { axiosInstance2, BASE_URL } from 'src/customs/api/interceptor';
 import { useNavigate } from 'react-router-dom';
 
 const DashboardOperator = () => {
@@ -96,7 +101,7 @@ const DashboardOperator = () => {
     { title: 'Check In', icon: IconLogin, subTitle: `0`, subTitleSetting: 10, color: 'none' },
     { title: 'Check Out', icon: IconLogout, subTitle: `0`, subTitleSetting: 10, color: 'none' },
     { title: 'Block', icon: IconCircleOff, subTitle: `0`, subTitleSetting: 10, color: 'none' },
-    { title: 'Unblock', icon: IconBan, subTitle: `0`, subTitleSetting: 10, color: 'none' },
+    { title: 'Denied', icon: IconBan, subTitle: `0`, subTitleSetting: 10, color: 'none' },
   ];
 
   const navigate = useNavigate();
@@ -179,24 +184,25 @@ const DashboardOperator = () => {
     fetchDataPermission();
   }, [token]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await getAvailableCardOperator(token as string);
-        setAvailableCards(res?.collection ?? []);
-      } catch (e) {
-        console.error(e);
-      }
-    };
-    fetchData();
-  }, [token]);
   const [relatedVisitors, setRelatedVisitors] = useState<
     {
       id: string;
       name: string;
-      avatar: string;
-      vehicle_plate_number: string;
+      selfie_image: string;
+      identity_image: string;
+      organization: string;
+      visitor_number: string;
+      is_driving: boolean;
+      agenda: string;
+      visitor_period_start: string;
+      visitor_period_end: string;
+      email: string;
+      is_praregister_done: boolean;
+      phone: string;
+      gender: string;
+      card: string[];
       visitor_status: string;
+      vehicle_plate_number: string;
     }[]
   >([]);
 
@@ -269,6 +275,19 @@ const DashboardOperator = () => {
     });
   }, [filteredCards, assignedByCard, selectedIdSet]);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await getAvailableCardOperator(token as string);
+        setAvailableCards(res?.collection ?? []);
+      } catch (e) {
+        console.error('❌ Error fetching available cards:', e);
+      }
+    };
+
+    fetchData();
+  }, [token]);
+
   // const handleSubmitQRCode = async () => {
   //   try {
   //     const res = await getInvitationCode(token as string, qrValue);
@@ -303,7 +322,7 @@ const DashboardOperator = () => {
   //     setInvitationCode(data);
   //     setVisitorStatus(data[0]?.visitor_status ?? null);
   //     const acc = data[0]?.access;
-  //     if (acc) {
+  //     if (acc) {A
   //       const arr = Array.isArray(acc) ? acc : [acc];
   //       const mappedAccess = arr.map((a: any) => ({
   //         id: a.id,
@@ -355,15 +374,20 @@ const DashboardOperator = () => {
         const invitationId = invitation.id;
         const relatedRes = await getInvitationOperatorRelated(invitationId, token as string);
         const relatedData = relatedRes.collection ?? [];
-        const mappedVisitors = relatedData.map((v: any) => ({
-          id: v.id ?? '-',
-          name: v.visitor?.name ?? '-',
-          avatar: '',
-          vehicle_plate_number: v.vehicle_plate_number ?? '-',
-          visitor_status: v.visitor_status ?? '-',
-        }));
+        // const mappedVisitors = relatedData.map((v: any) => ({
+        //   id: v.id ?? '-',
+        //   name: v.visitor?.name ?? '-',
+        //   avatar: '',
+        //   vehicle_plate_number: v.vehicle_plate_number ?? '-',
+        //   visitor_status: v.visitor_status ?? '-',
+        //   card:
+        //     Array.isArray(v.card) && v.card.length > 0
+        //       ? { card_number: v.card[0].card_number ?? '-' }
+        //       : null,
+        // }));
+        await fetchRelatedVisitorsByInvitationId(invitationId);
 
-        setRelatedVisitors(mappedVisitors);
+        // setRelatedVisitors(mappedVisitors);
         setInvitationCode(data);
         setVisitorStatus(data[0]?.visitor_status ?? null);
 
@@ -408,15 +432,20 @@ const DashboardOperator = () => {
       // ✅ Ambil data related visitor
       const relatedRes = await getInvitationOperatorRelated(invitationId, token as string);
       const relatedData = relatedRes.collection ?? [];
-      const mappedVisitors = relatedData.map((v: any) => ({
-        id: v.id ?? '-',
-        name: v.visitor?.name ?? '-',
-        avatar: '',
-        vehicle_plate_number: v.vehicle_plate_number ?? '-',
-        visitor_status: v.visitor_status ?? '-',
-      }));
+      // const mappedVisitors = relatedData.map((v: any) => ({
+      //   id: v.id ?? '-',
+      //   name: v.visitor?.name ?? '-',
+      //   avatar: v.selfie_image,
+      //   vehicle_plate_number: v.vehicle_plate_number ?? '-',
+      //   visitor_status: v.visitor_status ?? '-',
+      //   card:
+      //     Array.isArray(v.card) && v.card.length > 0
+      //       ? { card_number: v.card[0].card_number ?? '-' }
+      //       : null,
+      // }));
 
-      setRelatedVisitors(mappedVisitors);
+      // setRelatedVisitors(mappedVisitors);
+      await fetchRelatedVisitorsByInvitationId(invitationId);
       setInvitationCode(data);
       setVisitorStatus(data[0]?.visitor_status ?? null);
 
@@ -452,7 +481,7 @@ const DashboardOperator = () => {
       setOpenDetailQRCode(true);
       handleCloseScanQR();
 
-      setSnackbarMsg('Kode Akses ditemukan.');
+      setSnackbarMsg('Code scanned successfully.');
       setSnackbarType('success');
       setSnackbarOpen(true);
     } catch (e) {
@@ -461,6 +490,34 @@ const DashboardOperator = () => {
       setSnackbarType('error');
       setSnackbarOpen(true);
     }
+  };
+
+  const fetchRelatedVisitorsByInvitationId = async (invitationId: string) => {
+    const relatedRes = await getInvitationOperatorRelated(invitationId, token as string);
+    const relatedData = relatedRes.collection ?? [];
+
+    const mappedVisitors = relatedData.map((v: any) => ({
+      id: v.id ?? '-',
+      name: v.visitor?.name ?? '-',
+      selfie_image: v.selfie_image ?? '-',
+      identity_image: v.identity_image ?? '-',
+      visitor_period_start: v.visitor_period_start ?? '-',
+      visitor_period_end: v.visitor_period_end ?? '-',
+      agenda: v.agenda ?? '-',
+      is_driving: v.is_driving ?? '-',
+      organization: v.visitor?.organization ?? '-',
+      visitor_number: v.visitor_number ?? '-',
+      email: v.visitor?.email ?? '-',
+      phone: v.visitor?.phone ?? '-',
+      gender: v.visitor?.gender ?? '-',
+      address: v.visitor?.address ?? '-',
+      visitor_status: v.visitor_status ?? '-',
+      // card: (v.card ?? []).map((c: any) => c.card_number),
+      card: v.card ?? [],
+      is_praregister_done: v.is_praregister_done ?? false,
+    }));
+
+    setRelatedVisitors(mappedVisitors);
   };
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -480,19 +537,37 @@ const DashboardOperator = () => {
     setSelectedCards((prev) => {
       const normalized = String(cardNumber);
 
-      if (isMultipleVisitor) {
-        // 🟢 MULTIPLE MODE → toggle array biasa
-        if (prev.includes(normalized)) {
-          return prev.filter((c) => c !== normalized);
-        }
-        return [...prev, normalized];
-      } else {
-        // 🔵 SINGLE MODE → hanya satu yang aktif
+      // Kalau single visitor, tetap sama kayak dulu
+      if (!isMultipleVisitor) {
         if (prev.includes(normalized)) {
           return [];
         }
         return [normalized];
       }
+
+      // 🟢 MULTIPLE MODE
+      if (prev.includes(normalized)) {
+        // Unselect kalau diklik lagi
+        return prev.filter((c) => c !== normalized);
+      }
+
+      // 🔒 Batasi jumlah kartu maksimal sesuai jumlah visitor tanpa kartu
+      const visitorsWithoutCard = relatedVisitors.filter((v) => !v.card);
+      const cardLimit = visitorsWithoutCard.length;
+
+      if (prev.length >= cardLimit) {
+        setSnackbarMsg(
+          `You can only choose up to ${cardLimit} card${
+            cardLimit > 1 ? 's' : ''
+          } for ${cardLimit} visitor${cardLimit > 1 ? 's' : ''}.`,
+        );
+        setSnackbarType('info');
+        setSnackbarOpen(true);
+        return prev; // tidak menambah kartu baru
+      }
+
+      // ✅ Tambahkan kartu baru
+      return [...prev, normalized];
     });
   };
 
@@ -704,59 +779,6 @@ const DashboardOperator = () => {
   // const [currentSitePlace, setCurrentSitePlace] = useState<string | null>(null);
   const [loadingAccess, setLoadingAccess] = useState(false);
 
-  // const confirmCheckIn = async (action: 'Checkin' | 'Checkout' | 'Block' | 'Unblock') => {
-  //   const actionLabelMap: Record<string, string> = {
-  //     Checkin: 'check in',
-  //     Checkout: 'check out',
-  //     Block: 'block this visitor',
-  //     Unblock: 'unblock this visitor',
-  //   };
-
-  //   const confirm = await Swal.fire({
-  //     title: `Do you want to ${actionLabelMap[action]}?`,
-  //     icon: 'question',
-  //     showCancelButton: true,
-  //     confirmButtonText: 'Yes',
-  //     cancelButtonText: 'Cancel',
-  //     confirmButtonColor: '#4caf50',
-  //     customClass: {
-  //       title: 'swal2-title-custom',
-  //       htmlContainer: 'swal2-text-custom',
-  //       popup: 'swal2-dialog-override',
-  //     },
-  //   });
-
-  //   if (!confirm.isConfirmed) return;
-
-  //   try {
-  //     const res = await createInvitationActionOperator(token as string, invitationCode[0].id, {
-  //       action,
-  //       reason: '',
-  //     });
-
-  //     console.log('✅ Action Response:', res);
-
-  //     // 🔥 Update state visitor_status di data utama
-  //     setInvitationCode((prev) => {
-  //       if (!prev.length) return prev;
-  //       return prev.map((item, idx) => (idx === 0 ? { ...item, visitor_status: action } : item));
-  //     });
-
-  //     // 🔥 Update juga state visitorStatus agar UI langsung re-render
-  //     setVisitorStatus(action);
-
-  //     // ✅ Snackbar feedback
-  //     setSnackbarMsg(`${action} successfully.`);
-  //     setSnackbarType('success');
-  //     setSnackbarOpen(true);
-  //   } catch (e) {
-  //     console.error('❌ Error createInvitationActionOperator:', e);
-  //     setSnackbarMsg(`Failed to ${action}.`);
-  //     setSnackbarType('error');
-  //     setSnackbarOpen(true);
-  //   }
-  // };
-
   const confirmCheckIn = async (action: 'Checkin' | 'Checkout' | 'Block' | 'Unblock') => {
     const actionLabelMap: Record<string, string> = {
       Checkin: 'check in',
@@ -768,13 +790,6 @@ const DashboardOperator = () => {
     let reason = '';
 
     try {
-      // 🔹 Munculkan backdrop dulu
-      // setLoadingAccess(true);
-
-      // beri waktu React render backdrop dulu
-      // await new Promise((resolve) => setTimeout(resolve, 200));
-
-      // 🔹 Block & Unblock minta alasan
       if (action === 'Block' || action === 'Unblock') {
         const { value: inputReason } = await Swal.fire({
           title: action === 'Block' ? 'Block Visitor' : 'Unblock Visitor',
@@ -961,14 +976,14 @@ const DashboardOperator = () => {
   const selectedVisitorData = useMemo(() => {
     return relatedVisitors
       .filter((_, index) => selected.includes(index))
-      .map((v, i) => ({
+      .map((v) => ({
         id: v.id,
         name: v.name,
         vehicle_plate_number: v.vehicle_plate_number,
         visitor_status: v.visitor_status,
+        card_number: Array.isArray(v.card) && v.card.length > 0 ? v.card : null,
       }));
   }, [relatedVisitors, selected]);
-
   const handleCloseRelated = () => {
     setOpenRelated(false);
     setQrValue('');
@@ -1027,35 +1042,65 @@ const DashboardOperator = () => {
       setSnackbarType('success');
       setSnackbarOpen(true);
 
-      // 🧩 Update UI
+      // // 🧩 Update UI
+      // setAccessData((prev) =>
+      //   prev.map((a) => {
+      //     if (a.access_control_id === accessControlId || a.id === accessControlId) {
+      //       const label =
+      //         actionCode === 1
+      //           ? 'Grant'
+      //           : actionCode === 2
+      //           ? 'Revoke'
+      //           : actionCode === 3
+      //           ? 'Block'
+      //           : 'No Action';
+
+      //       return {
+      //         ...a,
+      //         visitor_give_access: actionCode, // 🔥 sync ke UI
+      //         // status: label,
+      //       };
+      //     }
+      //     return { ...a };
+      //   }),
+      // );
       setAccessData((prev) =>
         prev.map((a) => {
-          if (a.access_control_id === accessControlId || a.id === accessControlId) {
-            const label =
-              actionCode === 1
-                ? 'Grant'
-                : actionCode === 2
-                ? 'Revoke'
-                : actionCode === 3
-                ? 'Block'
-                : 'No Action';
+          // 🔍 pastikan cocok dengan salah satu identifier
+          const match =
+            a.access_control_id === accessControlId ||
+            a.id === accessControlId ||
+            a.id === row.id ||
+            a.access_control_id === row.access_control_id;
 
+          if (match) {
+            console.log(`🟢 Updating row ${a.id} (action: ${action})`);
             return {
               ...a,
-              visitor_give_access: actionCode, // 🔥 sync ke UI
-              // status: label,
+              visitor_give_access: actionMap[action], // langsung sync ke nilai yang benar
             };
           }
-          return { ...a };
+          return a;
         }),
       );
-    } catch (err) {
-      console.error('❌ Access Action Error:', err);
-      setSnackbarMsg(`Failed to ${action}.`);
+    } catch (err: any) {
+      // 🔍 Ambil pesan error dari berbagai kemungkinan lokasi, termasuk 'collection'
+      const backendMsg =
+        err?.response?.data?.collection?.[0] || // ✅ ambil elemen pertama dari array collection
+        err?.response?.data?.message ||
+        err?.response?.data?.msg ||
+        err?.response?.data?.error ||
+        (Array.isArray(err?.response?.data?.errors) ? err.response.data.errors.join('\n') : null) ||
+        err?.message ||
+        'Unknown error occurred.';
+
+      console.warn('⚠️ Backend message parsed:', backendMsg);
+
+      setSnackbarMsg(`${backendMsg}`);
       setSnackbarType('error');
       setSnackbarOpen(true);
     } finally {
-      setTimeout(() => setLoadingAccess(false), 800);
+      setTimeout(() => setLoadingAccess(false), 600);
     }
   };
 
@@ -1081,6 +1126,8 @@ const DashboardOperator = () => {
     );
   };
 
+  const [cardLimit, setCardLimit] = useState<number | null>(null);
+
   const handleChooseMultipleCard = () => {
     if (!invitationCode.length) {
       setSnackbarMsg('No visitor data found. Please scan QR first.');
@@ -1089,7 +1136,23 @@ const DashboardOperator = () => {
       return;
     }
 
+    // 🔍 Hitung visitor yang BELUM punya kartu
+    const visitorsWithoutCard = relatedVisitors.filter((v) => !v.card);
+
+    const maxCards = visitorsWithoutCard.length;
+
+    if (maxCards === 0) {
+      setSnackbarMsg('All selected visitors already have cards assigned.');
+      setSnackbarType('info');
+      setSnackbarOpen(true);
+      return;
+    }
+
+    setSelectedCards([]); // reset dulu
     setOpenChooseCardDialog(true);
+
+    // Simpan batas kartu maksimum agar dipakai saat memilih nanti
+    setCardLimit(maxCards);
   };
 
   const getActionCode = (action: string) => {
@@ -1179,9 +1242,16 @@ const DashboardOperator = () => {
       );
       setSnackbarType('success');
       setSnackbarOpen(true);
-    } catch (err) {
-      console.error('❌ Error createGiveAccessOperator:', err);
-      setSnackbarMsg('Failed to apply access action.');
+    } catch (err: any) {
+      console.error('❌ Access Action Error:', err);
+      let backendMsg =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        (Array.isArray(err?.response?.data?.errors) ? err.response.data.errors.join('\n') : null) ||
+        err?.message ||
+        'Unknown error occurred.';
+
+      setSnackbarMsg(`${backendMsg}`);
       setSnackbarType('error');
       setSnackbarOpen(true);
     } finally {
@@ -1191,54 +1261,112 @@ const DashboardOperator = () => {
 
   // const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    // Pastikan socket hanya dibuat sekali
-    const socket = new WebSocket('ws://localhost:16574/ws');
+  // useEffect(() => {
+  //   // Pastikan socket hanya dibuat sekali
+  //   const socket = new WebSocket('ws://localhost:16574/ws');
 
-    socket.onopen = () => {
-      console.log('✅ WebSocket connected');
-    };
+  //   socket.onopen = () => {
+  //     console.log('✅ WebSocket connected');
+  //   };
 
-    socket.onerror = (err) => {
-      console.error('❌ WebSocket error:', err);
-    };
+  //   socket.onerror = (err) => {
+  //     console.error('❌ WebSocket error:', err);
+  //   };
 
-    socket.onmessage = (event) => {
-      try {
-        // Parse JSON
-        const msg = JSON.parse(event.data);
-        console.log('💬 Console client:', msg);
+  //   socket.onmessage = (event) => {
+  //     try {
+  //       // Parse JSON
+  //       const msg = JSON.parse(event.data);
+  //       console.log('💬 Console client:', msg);
 
-        // Cek tipe data dari server
-        if (msg?.type === 'serial' && msg?.message) {
-          const value = msg.message.toString().trim();
-          console.log('📩 QR Value from socket:', value);
+  //       // Cek tipe data dari server
+  //       if (msg?.type === 'serial' && msg?.message) {
+  //         const value = msg.message.toString().trim();
+  //         console.log('📩 QR Value from socket:', value);
 
-          // 🔥 Update ke state qrValue
-          setQrValue(value);
-          setLoadingAccess(true);
-          // 🔥 Panggil handler QR langsung
-          handleSubmitQRCode(value);
+  //         // 🔥 Update ke state qrValue
+  //         setQrValue(value);
+  //         setLoadingAccess(true);
+  //         // 🔥 Panggil handler QR langsung
+  //         handleSubmitQRCode(value);
 
-          // 🔥 Langsung buka detail QR dialog
-          // setOpenDetailQRCode(true);
-        }
-      } catch (err) {
-        console.error('⚠️ Failed to parse WebSocket message:', event.data, err);
-      } finally {
-        setTimeout(() => setLoadingAccess(false), 600);
-      }
-    };
+  //         // 🔥 Langsung buka detail QR dialog
+  //         // setOpenDetailQRCode(true);
+  //       }
+  //     } catch (err) {
+  //       console.error('⚠️ Failed to parse WebSocket message:', event.data, err);
+  //     } finally {
+  //       setTimeout(() => setLoadingAccess(false), 600);
+  //     }
+  //   };
 
-    socket.onclose = () => {
-      console.warn('🔌 WebSocket disconnected');
-    };
+  //   socket.onclose = () => {
+  //     console.warn('🔌 WebSocket disconnected');
+  //   };
 
-    // cleanup saat komponen unmount
-    return () => {
-      socket.close();
-    };
-  }, [token]); // tergantung token supaya connect ulang setelah login
+  //   // cleanup saat komponen unmount
+  //   return () => {
+  //     socket.close();
+  //   };
+  // }, [token]);
+
+  // const getAllowedActions = (visitor_give_access: number): string[] => {
+  //   switch (visitor_give_access) {
+  //     case 0:
+  //       return ['Grant'];
+  //     case 1:
+  //       return ['Revoke', 'Block'];
+  //     case 2:
+  //       return ['Grant'];
+  //     case 3:
+  //       return [];
+  //     default:
+  //       return [];
+  //   }
+  // };
+  // const selectedAccessStatus = useMemo(() => {
+  //   if (selectedAccessIds.length === 0) return null;
+
+  //   // ambil access pertama yang dipilih
+  //   const selectedAccess = accessData.find((a) => selectedAccessIds.includes(a.access_control_id));
+
+  //   return selectedAccess?.visitor_give_access ?? null;
+  // }, [selectedAccessIds, accessData]);
+
+  // const allowedActions =
+  //   selectedAccessStatus !== null ? getAllowedActions(selectedAccessStatus) : [];
+  const getAllowedActions = (visitor_give_access: number): string[] => {
+    switch (visitor_give_access) {
+      case 0:
+        return ['Grant'];
+      case 1:
+        return ['Revoke', 'Block'];
+      case 2:
+        return ['Grant'];
+      case 3:
+        return [];
+      default:
+        return [];
+    }
+  };
+
+  // Gabungkan beberapa visitor_give_access menjadi intersection
+  const getAllowedActionsForMultiple = (selectedIds: string[]) => {
+    if (!selectedIds.length) return [];
+
+    const actionsList = selectedIds.map((id) => {
+      const access = accessData.find((a) => a.access_control_id === id);
+      return getAllowedActions(access?.visitor_give_access ?? 0);
+    });
+
+    // Ambil irisan antar semua access yang dipilih
+    return actionsList.reduce((acc, curr) => acc.filter((x) => curr.includes(x)));
+  };
+
+  const allowedActions = useMemo(() => {
+    if (selectedAccessIds.length === 0) return [];
+    return getAllowedActionsForMultiple(selectedAccessIds);
+  }, [selectedAccessIds, accessData]);
 
   return (
     <>
@@ -1351,7 +1479,6 @@ const DashboardOperator = () => {
                     }}
                   >
                     {/* Kolom LPR */}
-                    {/* Kolom LPR */}
                     <Grid
                       size={{ xs: 12, lg: 6 }}
                       sx={{
@@ -1374,8 +1501,8 @@ const DashboardOperator = () => {
                         sx={{
                           width: '100%',
                           maxWidth: 420,
-                          height: 220,
-                          border: '3px solid #1976d2', // biru elegan seperti frame kamera
+                          height: 250,
+                          // border: '3px solid #1976d2', // biru elegan seperti frame kamera
                           borderRadius: 2,
                           overflow: 'hidden',
                           position: 'relative',
@@ -1383,60 +1510,9 @@ const DashboardOperator = () => {
                           backgroundColor: '#fff', // latar belakang hitam seperti CCTV feed
                         }}
                       >
-                        {/* Sudut capture ala kamera */}
                         <Box
-                          sx={{
-                            position: 'absolute',
-                            top: 8,
-                            left: 8,
-                            borderTop: '3px solid #00ff99',
-                            borderLeft: '3px solid #00ff99',
-                            width: 24,
-                            height: 24,
-                            borderRadius: 0.5,
-                          }}
-                        />
-                        <Box
-                          sx={{
-                            position: 'absolute',
-                            top: 8,
-                            right: 8,
-                            borderTop: '3px solid #00ff99',
-                            borderRight: '3px solid #00ff99',
-                            width: 24,
-                            height: 24,
-                            borderRadius: 0.5,
-                          }}
-                        />
-                        <Box
-                          sx={{
-                            position: 'absolute',
-                            bottom: 8,
-                            left: 8,
-                            borderBottom: '3px solid #00ff99',
-                            borderLeft: '3px solid #00ff99',
-                            width: 24,
-                            height: 24,
-                            borderRadius: 0.5,
-                          }}
-                        />
-                        <Box
-                          sx={{
-                            position: 'absolute',
-                            bottom: 8,
-                            right: 8,
-                            borderBottom: '3px solid #00ff99',
-                            borderRight: '3px solid #00ff99',
-                            width: 24,
-                            height: 24,
-                            borderRadius: 0.5,
-                          }}
-                        />
-
-                        {/* Gambar */}
-                        {/* <Box
                           component="img"
-                          src="https://images.unsplash.com/photo-1502877338535-766e1452684a?auto=format&fit=crop&w=1470&q=80"
+                          src={LprImage}
                           alt="LPR Preview"
                           sx={{
                             width: '100%',
@@ -1445,7 +1521,7 @@ const DashboardOperator = () => {
                             borderRadius: 1,
                             opacity: 0.95,
                           }}
-                        /> */}
+                        />
                       </Box>
                     </Grid>
 
@@ -1472,7 +1548,7 @@ const DashboardOperator = () => {
                           Face Image
                         </Typography>
 
-                        <IconArrowsMaximize
+                        <IconArrowAutofitRight
                           onClick={() => navigate('/operator/view')}
                           style={{
                             position: 'absolute',
@@ -1480,10 +1556,10 @@ const DashboardOperator = () => {
                             top: '50%', // sejajar secara vertikal
                             transform: 'translateY(-50%)',
                             cursor: 'pointer',
-                            width: '28px',
-                            height: '28px',
+                            width: '30px',
+                            height: '30px',
                             backgroundColor: '#5D87FF',
-                            padding: '1px',
+                            padding: '2px',
                             color: 'white',
                             borderRadius: '50%',
                           }}
@@ -1491,19 +1567,31 @@ const DashboardOperator = () => {
                       </Box>
 
                       <Box
-                        component="img"
-                        src="https://cdn-icons-png.flaticon.com/512/847/847969.png"
-                        alt="Face Image Preview"
                         sx={{
-                          width: '180px',
-                          height: '180px',
-                          borderRadius: '50%',
-                          objectFit: 'cover',
-                          boxShadow: 1,
-                          backgroundColor: '#f5f5f5',
-                          p: 1.5,
+                          width: '100%',
+                          maxWidth: 420,
+                          height: 250,
+                          // border: '3px solid #1976d2', // biru elegan seperti frame kamera
+                          borderRadius: 2,
+                          overflow: 'hidden',
+                          position: 'relative',
+                          boxShadow: 2,
+                          backgroundColor: '#fff', // latar belakang hitam seperti CCTV feed
                         }}
-                      />
+                      >
+                        <Box
+                          component="img"
+                          src={FRImage}
+                          alt="LPR Preview"
+                          sx={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            borderRadius: 1,
+                            opacity: 0.95,
+                          }}
+                        />
+                      </Box>
                     </Grid>
                   </Grid>
                   {/* Contoh konten lain */}
@@ -1532,7 +1620,7 @@ const DashboardOperator = () => {
           </Grid>
         </Grid>
         {/* Scan QR */}
-        <Dialog fullWidth maxWidth="xs" open={openDialogIndex === 1} onClose={handleCloseScanQR}>
+        <Dialog fullWidth maxWidth="sm" open={openDialogIndex === 1} onClose={handleCloseScanQR}>
           <DialogTitle display="flex">
             Scan QR Visitor
             <IconButton
@@ -1703,7 +1791,7 @@ const DashboardOperator = () => {
                     <Box
                       sx={{
                         // ukuran kotak scan (responsif)
-                        '--scanSize': { xs: '70vw', sm: '285px' },
+                        '--scanSize': { xs: '70vw', sm: '370px' },
 
                         position: 'absolute',
                         top: '50%',
@@ -1904,7 +1992,7 @@ const DashboardOperator = () => {
                       <Avatar
                         src={
                           invitationCode[0]?.selfie_image
-                            ? `${axiosInstance2.defaults.baseURL}/cdn${invitationCode[0].selfie_image}`
+                            ? `${BASE_URL}/cdn${invitationCode[0].selfie_image}`
                             : ''
                         }
                         alt="visitor"
@@ -2239,6 +2327,7 @@ const DashboardOperator = () => {
                     data={accessData}
                     isHaveHeaderTitle={true}
                     titleHeader="Access"
+                    isNoActionTableHead={true}
                     isHavePagination={false}
                     overflowX="auto"
                     isHaveApproval={false}
@@ -2316,19 +2405,10 @@ const DashboardOperator = () => {
                     >
                       Block
                     </Button>
-                    {/* <Button
-                         variant="contained"
-                         sx={{ backgroundColor: '#000' }}
-                         onClick={() => confirmCheckIn('block')}
-                         startIcon={<IconForbid2 />}
-                       >
-                         Block
-                       </Button> */}
                   </Box>
                 );
               }
 
-              // Jika sedang diblok
               if (status === 'Block') {
                 return (
                   <Button
@@ -2342,18 +2422,9 @@ const DashboardOperator = () => {
                 );
               }
 
-              // Jika statusnya "Unblock", tampilkan lagi Check In & Block (normal)
               if (status === 'Unblock') {
                 return (
                   <>
-                    {/* <Button
-                      variant="contained"
-                      color="success"
-                      onClick={() => confirmCheckIn('Checkin')}
-                      startIcon={<IconLogin2 />}
-                    >
-                      Check In
-                    </Button> */}
                     <Button
                       variant="contained"
                       sx={{ backgroundColor: '#000' }}
@@ -2496,7 +2567,7 @@ const DashboardOperator = () => {
                   Selected Card: {selectedCards.length > 0 ? selectedCards[0] : '-'}
                 </Typography> */}
                 <Typography variant="body2">
-                  Cards chosen: {selectedCards.length} / {availableCount}
+                  Cards chosen: {selectedCards.length} / {cardLimit || relatedVisitors.length}
                 </Typography>
               </Box>
 
@@ -2516,6 +2587,7 @@ const DashboardOperator = () => {
           </DialogContent>
         </Dialog>
 
+        {/* Related Visitor */}
         <Dialog
           open={openRelated}
           onClose={handleCloseRelated}
@@ -2588,7 +2660,11 @@ const DashboardOperator = () => {
                             );
                           }}
                         >
-                          <Avatar src={v.avatar} alt={v.name} sx={{ width: 60, height: 60 }} />
+                          <Avatar
+                            src={`${BASE_URL}/cdn${v.selfie_image}`}
+                            alt={v.name}
+                            sx={{ width: 60, height: 60 }}
+                          />
                           <Checkbox
                             checked={isSelected}
                             disabled={isDisabled}
@@ -2646,7 +2722,7 @@ const DashboardOperator = () => {
                 {/* Tabel visitor terpilih */}
                 <DynamicTable
                   data={selectedVisitorData}
-                  isHaveChecked={false}
+                  isHaveChecked={true}
                   isHavePagination={false}
                   isHaveHeaderTitle={true}
                   titleHeader="Selected Visitor"
@@ -2722,12 +2798,12 @@ const DashboardOperator = () => {
                     sx={{ width: '20%' }}
                     variant="contained"
                     color="primary"
-                    // disabled={
-                    //   !selectedAction ||
-                    //   relatedVisitors.length === 0 ||
-                    //   disabledIndexes.length === relatedVisitors.length ||
-                    //   selected.length === 0
-                    // }
+                    disabled={
+                      !selectedAction ||
+                      relatedVisitors.length === 0 ||
+                      disabledIndexes.length === relatedVisitors.length ||
+                      selected.length === 0
+                    }
                     onClick={() => confirmMultipleAction(selectedAction as any)}
                   >
                     Apply
@@ -2759,6 +2835,7 @@ const DashboardOperator = () => {
                     isHavePagination={false}
                     isHaveChecked={true}
                     overflowX="auto"
+                    isNoActionTableHead={true}
                     isHaveApproval={false}
                     isHaveAction={false}
                     isHaveAccess={true}
@@ -2776,11 +2853,18 @@ const DashboardOperator = () => {
                     value={selectedActionAccess}
                     onChange={(e: any) => setSelectedActionAccess(e.target.value)}
                     displayEmpty
+                    disabled={!selectedAccessIds.length}
                   >
                     <MenuItem value="">Select Action</MenuItem>
-                    <MenuItem value="Grant">Grant</MenuItem>
-                    <MenuItem value="Revoke">Revoke</MenuItem>
-                    <MenuItem value="Block">Block</MenuItem>
+                    <MenuItem value="Grant" disabled={!allowedActions.includes('Grant')}>
+                      Grant
+                    </MenuItem>
+                    <MenuItem value="Revoke" disabled={!allowedActions.includes('Revoke')}>
+                      Revoke
+                    </MenuItem>
+                    <MenuItem value="Block" disabled={!allowedActions.includes('Block')}>
+                      Block
+                    </MenuItem>
                   </CustomSelect>
 
                   <Button

@@ -161,7 +161,24 @@ const Invitation = () => {
 
         // if (isDataReady) {
         const res = await getInvitation(token as string, start_date, end_date);
-        setTableData(res?.collection ?? []);
+        const rows = res.collection.map((item: any) => ({
+          id: item.id,
+          // visitor_type: item.visitor_type_name,
+          name: item.visitor.name,
+          // identity_id: item.visitor.identity_id,
+          email: item.visitor.email,
+          organization: item.visitor.organization,
+          gender: item.visitor.gender,
+          // address: item.visitor.address,
+          phone: item.visitor.phone,
+          visitor_period_start: item.visitor_period_start,
+          visitor_period_end: item.visitor_period_end,
+          host: item.host_name ?? '-',
+          agenda: item.agenda,
+          site: item.site_place_name,
+          // visitor_status: item.visitor_status,
+        }));
+        setTableData(rows ?? []);
 
         // }
       } catch (e) {
@@ -1299,6 +1316,7 @@ const Invitation = () => {
                 isHaveChecked={true}
                 isHaveAction={true}
                 isHaveSearch={true}
+                isHavePeriod={true}
                 isHaveFilter={false}
                 isHaveExportPdf={false}
                 isHaveExportXlf={false}

@@ -24,6 +24,7 @@ import {
   createVisitorCard,
   getAllEmployee,
   getAllSite,
+  getVisitorEmployee,
   updateVisitorCard,
 } from 'src/customs/api/admin';
 import { CreateVisitorCardRequest } from 'src/customs/api/models/Admin/VisitorCard';
@@ -107,7 +108,7 @@ const FormWizardAddVisitorCard = ({
     if (!token) return;
     const fetchData = async () => {
       try {
-        const employeeRes = await getAllEmployee(token);
+        const employeeRes = await getVisitorEmployee(token);
         const siteSpaceRes = await getAllSite(token);
         setEmployeeRes(employeeRes.collection);
         setSiteSpaceRes(siteSpaceRes.collection);
@@ -673,7 +674,7 @@ const FormWizardAddVisitorCard = ({
               </Button>
               <Box flex="1 1 auto" />
               {activeStep !== steps.length - 1 ? (
-                <Button onClick={handleNext} variant="contained" color="secondary">
+                <Button onClick={handleNext} variant="contained" color="primary">
                   Next
                 </Button>
               ) : (

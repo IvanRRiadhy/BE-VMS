@@ -25,6 +25,7 @@ import {
   IconFile,
   IconAlarm,
   IconDashboard,
+  IconReport,
 } from '@tabler/icons-react';
 import { uniqueId } from 'lodash';
 import { ItemDataCustomNavListing } from './CustomNavListing';
@@ -168,7 +169,7 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
   {
     id: uniqueId(),
     title: 'Report',
-    icon: IconUsers,
+    icon: IconReport,
     chipColor: 'secondary',
     href: '/admin/report',
   },
@@ -352,7 +353,7 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
   {
     id: uniqueId(),
     title: 'Report',
-    icon: IconFile,
+    icon: IconReport,
     chipColor: 'secondary',
     href: '/admin/report',
   },
@@ -430,7 +431,7 @@ export const EmployeeNavListingData: ItemDataCustomNavListing[] = [
   {
     id: uniqueId(),
     title: 'Report',
-    icon: IconFile,
+    icon: IconReport,
     chipColor: 'secondary',
     href: '/employee/report',
   },
@@ -487,7 +488,7 @@ export const EmployeeCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
   {
     id: uniqueId(),
     title: 'Report',
-    icon: IconFile,
+    icon: IconReport,
     chipColor: 'secondary',
     href: '/employee/report',
   },
@@ -540,7 +541,7 @@ export const ManagerNavListingData: ItemDataCustomNavListing[] = [
   {
     id: uniqueId(),
     title: 'Report',
-    icon: IconFile,
+    icon: IconReport,
     chipColor: 'secondary',
     href: '/manager/report',
   },

@@ -245,9 +245,22 @@ import {
 } from './models/Admin/GrantAccess';
 import { GetAllSettingResponse } from './models/Admin/Setting';
 
+
+//#region report
+
+export const generateReport = async (token: string, payload: any): Promise<any> => {
+  const response = await axiosInstance.post(
+    '/report/visitor-transaction',
+    payload, // ✅ kirim body request di sini
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    },
+  );
+  return response.data;
+};
 //#region User
 
-export const getAllUser = async (token: string): Promise<GetAllUserResponse> => {
+export const getAllUser = async (token: string): Promise<any> => {
   const response = await axiosInstance.get('/user', {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -739,9 +752,9 @@ export const createPraRegister = async (
 
 export const createPraRegisterGroup = async (
   token: string,
-  data: CreateVisitorRequest,
+  data: CreateGroupVisitorRequest,
 ): Promise<CreateVisitorResponse> => {
-  const response = await axiosInstance.post('/visitor/new-pra-invite/group', data, {
+  const response = await axiosInstance.post('/visitor/new-pra-invite-group', data, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });
   return response.data;

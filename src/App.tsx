@@ -138,7 +138,7 @@ export function App() {
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
           <Route path="/portal/information" element={<GuestInformation />} />
           <Route path="/portal/waiting" element={<WaitingPage />} />
-          <Route path="view" element={<OperatorView />} />
+          {/* <Route path="view" element={<OperatorView />} /> */}
 
           {/* GUEST */}
           <Route element={<ProtectedRoute />}>
@@ -208,7 +208,7 @@ export function App() {
           <Route element={<ProtectedRoute allowedGroups={[GroupRoleId.OperatorVMS]} />}>
             <Route path="/operator" element={<OperatorLayout />}>
               <Route index path="dashboard" element={<DashboardOperator />} />
-              {/* <Route path="view" element={<OperatorView />} /> */}
+              <Route path="view" element={<OperatorView />} />
             </Route>
           </Route>
 

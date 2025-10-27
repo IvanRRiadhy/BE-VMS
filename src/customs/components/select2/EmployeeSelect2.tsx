@@ -47,7 +47,7 @@ const EmployeeSelect: React.FC<Props> = ({ onSelect, token }) => {
         data: {
           ...emp,
           faceimage: emp.faceimage
-            ? `http://192.168.1.116:8000/cdn/${emp.faceimage.replace(/^\/+/, '')}`
+            ? `http://192.168.1.116:8000/cdn${emp.faceimage.replace(/^\/+/, '')}`
             : 'https://via.placeholder.com/40x40?text=No+Img',
         },
       }));

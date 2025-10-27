@@ -66,7 +66,7 @@ const VisitingTypeChart = () => {
           borderRadius: 3,
           bgcolor: 'background.paper',
           boxShadow: 3,
-          border: '1px solid #d6d3d3ff',
+          // border: '1px solid #d6d3d3ff',
           height: 400,
           display: 'flex',
           flexDirection: 'column',

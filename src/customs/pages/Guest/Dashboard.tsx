@@ -147,7 +147,24 @@ const Dashboard = () => {
     const fetchData = async () => {
       try {
         const res = await getActiveInvitation(token as string);
-        setActiveVisitData(res?.collection ?? []);
+
+        const response = res.collection?.map((item: any) => ({
+          id: item.id,
+          // visitor_type:  item.visitor_type_name,
+          name: item.visitor.name,
+          // identity_id: item.visitor.identity_id,
+          email: item.visitor.email,
+          organization: item.visitor.organization,
+          // gender: item.visitor.gender,
+          // address: item.visitor.address,
+          // phone: item.visitor.phone,
+          // is_vip: item.visitor.is_vip,
+          visitor_period_start: item.visitor_period_start,
+          visitor_period_end: item.visitor_period_end,
+          host: item.host_name ?? '-',
+          // visitor_status: item.visitor_status,
+        }));
+        setActiveVisitData(response ?? []);
         const res2 = await getAccessPass(token as string);
         setActiveAccessPass(res2);
         console.log('res2: ', res2);

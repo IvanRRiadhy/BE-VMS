@@ -15,13 +15,28 @@ import { App } from './App';
 import './App.css';
 import 'video.js/dist/video-js.css';
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+// 🧠 Buat 1 instance global QueryClient
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false, // biar gak refetch tiap pindah tab
+      retry: 1, // jumlah retry kalau gagal
+      staleTime: 1000 * 60, // cache valid 1 menit
+    },
+  },
+});
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <Provider store={store}>
     <PersistGate loading={null} persistor={persistor}>
       <SessionProvider>
         <BrowserRouter>
           <AuthProvider>
-            <App />
+            <QueryClientProvider client={queryClient}>
+              <App />
+            </QueryClientProvider>
           </AuthProvider>
         </BrowserRouter>
       </SessionProvider>

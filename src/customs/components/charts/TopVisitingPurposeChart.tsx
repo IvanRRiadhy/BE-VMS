@@ -2,7 +2,7 @@ import { BarChart } from '@mui/x-charts/BarChart';
 import { Box, Typography, GlobalStyles } from '@mui/material';
 import { useState, useEffect } from 'react';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { getTopVisitingPurpose } from 'src/customs/api/admin'; // pastikan path sesuai
+import { getTopVisitingPurpose } from 'src/customs/api/admin';
 import { useTranslation } from 'react-i18next';
 
 type PurposeData = {
@@ -11,13 +11,11 @@ type PurposeData = {
   color: string;
 };
 
-// helper default warna
 const COLORS = ['#3b82f6', '#f97316', '#22c55e', '#eab308', '#ef4444', '#8b5cf6'];
 
 const TopVisitingPurposeChart = ({ title }: { title: string }) => {
   const { token } = useSession();
   const { t } = useTranslation();
-
   const [dataVisitorPurpose, setDataVisitorPurpose] = useState<PurposeData[]>([]);
 
   useEffect(() => {
@@ -26,14 +24,13 @@ const TopVisitingPurposeChart = ({ title }: { title: string }) => {
     const fetchDataVisitingPurpose = async () => {
       try {
         const today = new Date();
-        const end_date = today.toISOString().split('T')[0]; // yyyy-mm-dd
+        const end_date = today.toISOString().split('T')[0];
         const start = new Date(today);
-        start.setDate(today.getDate() - 7); // 7 hari ke belakang
+        start.setDate(today.getDate() - 7);
         const start_date = start.toISOString().split('T')[0];
 
         const res = await getTopVisitingPurpose(token, start_date, end_date);
 
-        // Map response API ke format chart
         const mapped: PurposeData[] = res.collection.map(
           (item: { id: string; name: string; count: number }, idx: number) => ({
             label: item.name,
@@ -54,23 +51,37 @@ const TopVisitingPurposeChart = ({ title }: { title: string }) => {
   return (
     <>
       <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-        {t('top_visitor_purpose')}
+        {title || t('top_visitor_purpose')}
       </Typography>
+
       <Box
         sx={{
           py: 2,
           borderRadius: 3,
           bgcolor: 'background.paper',
           boxShadow: 3,
-          border: '1px solid #d6d3d3ff',
+          // border: '1px solid #d6d3d3ff',
           height: 400,
           width: '100%',
         }}
       >
+        {/* Hilangkan garis axis */}
         <GlobalStyles
           styles={{
             '.MuiChartsAxis-line': { display: 'none' },
             '.MuiChartsAxis-tick': { stroke: 'none !important' },
+          }}
+        />
+
+        {/* 🎨 CSS injection untuk ubah warna tiap bar */}
+        <GlobalStyles
+          styles={{
+            ...Object.fromEntries(
+              dataVisitorPurpose.map((d, i) => [
+                `.MuiBarElement-root[data-index="${i}"] rect`,
+                { fill: d.color },
+              ]),
+            ),
           }}
         />
 

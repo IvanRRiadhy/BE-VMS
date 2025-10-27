@@ -84,7 +84,7 @@ const tableRowColumn = [
     Purpose: 'Maintenance',
     'purpose Person': 'Pak Wahyu',
   },
-];
+];  
 
 const Content = () => {
   const dispatch = useDispatch();

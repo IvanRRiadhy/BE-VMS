@@ -122,6 +122,7 @@ const DashboardEmployee = () => {
   const [selectedInvitationId, setSelectedInvitationId] = useState<string | null>(null);
   const [alertInvitationData, setAlertInvitationData] = useState<any | null>(null);
   const [openAlertInvitation, setOpenAlertInvitation] = useState(false);
+  const [pendingInvitationCount, setPendingInvitationCount] = useState(0);
 
   const handleOpenScanQR = () => setOpenDialogIndex(1);
   const handleCloseScanQR = () => {
@@ -150,7 +151,7 @@ const DashboardEmployee = () => {
 
         let rows = response.collection.map((item: any) => ({
           id: item.id,
-          // visitor_type: visitorTypes[item.visitor_type] || item.visitor_type,
+          // visitor_type:  item.visitor_type_name,
           name: item.visitor.name,
           // identity_id: item.visitor.identity_id,
           email: item.visitor.email,
@@ -330,15 +331,15 @@ const DashboardEmployee = () => {
 
         setInvitationList(invitationData);
 
-        const notDoneInvitations = invitationData.filter(
-          (inv: any) => inv.is_praregister_done === null,
-        );
+        // const notDoneInvitations = invitationData.filter(
+        //   (inv: any) => inv.is_praregister_done === null,
+        // );
 
-        if (notDoneInvitations.length > 0) {
-          const latest = notDoneInvitations[0];
-          setAlertInvitationData(latest);
-          setOpenAlertInvitation(true);
-        }
+        // if (notDoneInvitations.length > 0) {
+        //   const latest = notDoneInvitations[0];
+        //   setAlertInvitationData(latest);
+        //   setOpenAlertInvitation(true);
+        // }
       } catch (error) {
         console.error('❌ Error fetching invitation:', error);
       }
@@ -374,6 +375,15 @@ const DashboardEmployee = () => {
 
         setInvitationDetailVisitor(mapped);
 
+        const notDoneInvitations = data.filter(
+          (inv: any) => inv.is_praregister_done === null || inv.is_praregister_done === false,
+        );
+
+        if (notDoneInvitations.length > 0) {
+          setPendingInvitationCount(notDoneInvitations.length);
+          setOpenAlertInvitation(true);
+        }
+
         // setInvitationDetailVisitor(filtered);
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -408,10 +418,10 @@ const DashboardEmployee = () => {
               variant="contained"
               color="primary"
               sx={{
-                flexGrow: 1, // ✅ isi seluruh tinggi Box
-                height: '100%', // ✅ pastikan penuh secara eksplisit
+                // flexGrow: 1, // ✅ isi seluruh tinggi Box
+                // height: '100%', // ✅ pastikan penuh secara eksplisit
                 borderRadius: 2,
-                fontSize: '1.3rem',
+                fontSize: '1rem',
               }}
             >
               + Send Invitation
@@ -457,10 +467,11 @@ const DashboardEmployee = () => {
             height={420}
             isHavePagination={false}
             overflowX="auto"
-            isHaveChecked={true}
+            isHaveChecked={false}
             isHaveView={true}
             isHaveAction={true}
             isHaveHeaderTitle
+            isHavePeriod={true}
             onView={(row: any) => handleView(row)}
             titleHeader="Ongoing Invitation"
           />
@@ -488,7 +499,7 @@ const DashboardEmployee = () => {
         >
           <IconX />
         </IconButton>
-
+        {/* 
         <DialogContent>
           <Box
             display="flex"
@@ -525,6 +536,31 @@ const DashboardEmployee = () => {
                 .tz('Asia/Jakarta')
                 .format('HH:mm')}{' '}
               WIB
+            </Typography>
+          </Box>
+        </DialogContent> */}
+        <DialogContent>
+          <Box
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+            flexDirection="column"
+            textAlign="center"
+            py={3}
+          >
+            <IconBellRingingFilled size={60} color="orange" />
+            <Typography variant="h5" mt={2} fontWeight={600}>
+              {pendingInvitationCount > 1
+                ? `${pendingInvitationCount} invitation must be completed`
+                : '1 invitation must be completed'}
+            </Typography>
+
+            {/* <Typography variant="h6" mt={1} color="text.primary">
+              Ada {pendingInvitationCount} undangan yang belum diisi pra-register.
+            </Typography> */}
+
+            <Typography variant="body1" color="text.secondary" mt={1}>
+              You must complete the invitation before it expires
             </Typography>
           </Box>
         </DialogContent>
@@ -567,22 +603,6 @@ const DashboardEmployee = () => {
           )}
         </DialogContent>
       </Dialog>
-      {/* <Backdrop
-        sx={{
-          color: '#fff',
-          zIndex: (theme) => theme.zIndex.modal + 10000, // 🔥 lebih tinggi dari dialog (1300 + 10000 = 11300)
-          position: 'fixed', // menutupi seluruh layar
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-        }}
-        open={submitting}
-      >
-        <Box textAlign="center">
-          <CircularProgress color="inherit" />
-        </Box>
-      </Backdrop> */}
     </PageContainer>
   );
 };

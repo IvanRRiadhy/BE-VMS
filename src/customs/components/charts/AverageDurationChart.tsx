@@ -30,31 +30,30 @@ const AvarageDurationChart = () => {
 
         const res = await getAvarageDuration(token, start_date, end_date);
 
-        // 🔹 misal API response:
-        // {
-        //   collection: {
-        //     avg_minutes: 173,
-        //     buckets: {
-        //       "0-30": 0.5,
-        //       "30-60": 1.2,
-        //       "60-90": 0.8,
-        //       ...
-        //     }
-        //   }
-        // }
+        if (Array.isArray(res?.collection)) {
+          // 🔹 Ubah array API menjadi object buckets { "0-30": 3, "30-60": 1, ">240": 3 }
+          const buckets: Record<string, number> = {};
+          res.collection.forEach((item: { time_average: string; count: number }) => {
+            buckets[item.time_average] = item.count;
+          });
 
-        if (res?.collection) {
-          setAvgMinutes(res.collection.avg_minutes ?? 0);
+          // 🔹 Kalau kamu mau tampilkan total average (jumlah semua count)
+          const total = Object.values(buckets).reduce((acc, val) => acc + val, 0);
+          setAvgMinutes(total);
 
-          const buckets = res.collection.buckets ?? {};
+          // 🔹 Map ke data chart
           const mapped: PurposeData[] = [
-            { label: '0 - 30 minutes', value: buckets['0-30'] ?? 0, color: '#e5e7eb' },
+            { label: '0 - 30 minutes', value: buckets['0-30'] ?? 0, color: '#3b82f5' },
             { label: '30 - 60 minutes', value: buckets['30-60'] ?? 0, color: '#f97316' },
-            { label: '60 - 90 minutes', value: buckets['60-90'] ?? 0, color: '#e5e7eb' },
+            { label: '60 - 90 minutes', value: buckets['60-90'] ?? 0, color: '#94a3b8' },
             { label: '90 - 120 minutes', value: buckets['90-120'] ?? 0, color: '#22c55e' },
-            { label: '120 - 150 minutes', value: buckets['120-150'] ?? 0, color: '#e5e7eb' },
-            { label: '150 - 210 minutes', value: buckets['150-210'] ?? 0, color: '#e5e7eb' },
-            { label: '> 210 minutes', value: buckets['>210'] ?? 0, color: '#e5e7eb' },
+            { label: '120 - 150 minutes', value: buckets['120-150'] ?? 0, color: '#94a3b8' },
+            { label: '150 - 210 minutes', value: buckets['150-210'] ?? 0, color: '#94a3b8' },
+            {
+              label: '> 240 minutes',
+              value: buckets['>240'] ?? buckets['>240'] ?? 0,
+              color: '#ef4444',
+            },
           ];
 
           setData(mapped);
@@ -79,7 +78,7 @@ const AvarageDurationChart = () => {
           bgcolor: 'background.paper',
           boxShadow: 3,
           height: 420,
-          border: '1px solid #d6d3d3ff',
+          // border: '1px solid #d6d3d3ff',
         }}
       >
         <GlobalStyles
@@ -105,11 +104,24 @@ const AvarageDurationChart = () => {
               data: data.map((d) => d.label),
             },
           ]}
+          // xAxis={[
+          //   {
+          //     min: 0,
+          //     valueFormatter: (value) => `${value}`, // tampilkan angka mentah
+          //   },
+          // ]}
           series={[
             {
               data: data.map((d) => d.value),
+              color: '#3b82f5',
+              // label: '',
             },
           ]}
+          // colorMap={{
+          //   type: 'ordinal',
+          //   values: data.map((d) => d.label),
+          //   colors: data.map((d) => d.color),
+          // }}
           margin={{ top: 20, left: 140, right: 40, bottom: 20 }}
           grid={{ horizontal: true, vertical: false }}
         />

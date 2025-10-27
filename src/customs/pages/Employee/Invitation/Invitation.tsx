@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Box,
   Dialog,
@@ -21,6 +21,8 @@ import {
   Alert,
   Tabs,
   Tab,
+  MenuItem,
+  Checkbox,
 } from '@mui/material';
 import type { AlertColor } from '@mui/material/Alert';
 import PageContainer from 'src/components/container/PageContainer';
@@ -73,8 +75,15 @@ import {
 import FormInvitation from './FormInvitation';
 import dayjs from 'dayjs';
 import Praregist from './Praregist';
-import { getInvitation, getInvitationById, getInvitations } from 'src/customs/api/visitor';
+import {
+  getInvitation,
+  getInvitationById,
+  getInvitationRelatedVisitor,
+  getInvitations,
+} from 'src/customs/api/visitor';
 import { useSelector } from 'react-redux';
+import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
+import { useQuery } from '@tanstack/react-query';
 
 type VisitorTableRow = {
   id: string;
@@ -87,11 +96,10 @@ type VisitorTableRow = {
   address: string;
   phone: string;
   is_vip: string;
-  // is_email_verified: string;
-  // email_verification_send_at: string;
   visitor_period_start: string;
   visitor_period_end: string;
   host: string;
+  visitor_status: string;
 };
 
 const Content = () => {
@@ -111,7 +119,7 @@ const Content = () => {
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
   // mode konfirmasi: "close-add" atau "edit"
   const [discardMode, setDiscardMode] = useState<'close-add' | 'edit' | null>(null);
-  const [tableRowVisitors, setTableRowVisitors] = useState<Item[]>([]);
+  const [tableRowVisitors, setTableRowVisitors] = useState<any[]>([]);
   const [tableCustomVisitor, setTableCustomVisitor] = useState<VisitorTableRow[]>([]);
   const [selectedRows, setSelectedRows] = useState<[]>([]);
   const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorRequest>(() => {
@@ -203,9 +211,9 @@ const Content = () => {
   const [flowTarget, setFlowTarget] = useState<'invitation' | 'preReg' | null>(null);
   // Employee Detail
   const [openEmployeeDialog, setOpenEmployeeDialog] = useState(false);
-  const [employeeLoading, setEmployeeLoading] = useState(false);
+  // const [employeeLoading, setEmployeeLoading] = useState(false);
   const [employeeError, setEmployeeError] = useState<string | null>(null);
-  const [employeeDetail, setEmployeeDetail] = useState<any>(null);
+  // const [employeeDetail, setEmployeeDetail] = useState<any>(null);
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
 
@@ -213,7 +221,8 @@ const Content = () => {
   const [openVisitorDialog, setOpenVisitorDialog] = useState(false);
   const [visitorLoading, setVisitorLoading] = useState(false);
   const [visitorError, setVisitorError] = useState<string | null>(null);
-  const [visitorDetail, setVisitorDetail] = useState<any>(null);
+  const [visitorDetail, setVisitorDetail] = useState<any[]>([]);
+  const [openRelatedInvitation, setOpenRelatedInvitation] = useState(false);
 
   // Registered Site
   const [siteData, setSiteData] = useState<any[]>([]);
@@ -249,38 +258,63 @@ const Content = () => {
     setOpenPreRegistration(false);
     resetRegisteredFlow();
   };
-  const handleEmployeeClick = async (employeeId: string) => {
-    if (!token) return;
 
-    console.log('Employee Clicked:', employeeId);
+  // const [openEmployeeDialog, setOpenEmployeeDialog] = useState(false);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
+
+  const handleEmployeeClick = (employeeId: string) => {
+    setSelectedEmployeeId(employeeId);
     setOpenEmployeeDialog(true);
-    setEmployeeLoading(true);
-    setEmployeeError(null);
-    setEmployeeDetail(null);
-
-    try {
-      const res = await getEmployeeById(employeeId, token);
-      // asumsi payload: { collection: {...employee} }
-      setEmployeeDetail(res?.collection ?? null);
-      console.log('Employee Detail:', res);
-    } catch (err: any) {
-      setEmployeeError(err?.message || 'Failed to fetch employee details.');
-    } finally {
-      setEmployeeLoading(false);
-    }
   };
+
+  const {
+    data: employeeDetail,
+    isLoading: employeeLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ['employee', selectedEmployeeId],
+    queryFn: async () => {
+      const res = await getEmployeeById(selectedEmployeeId!, token as string);
+      return res.collection; // ✅ hanya ambil object karyawan
+    },
+    enabled: !!selectedEmployeeId && !!token,
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  });
+
+  // const handleEmployeeClick = async (employeeId: string) => {
+  //   if (!token) return;
+
+  //   console.log('Employee Clicked:', employeeId);
+  //   setOpenEmployeeDialog(true);
+  //   setEmployeeLoading(true);
+  //   setEmployeeError(null);
+  //   setEmployeeDetail(null);
+
+  //   try {
+  //     const res = await getEmployeeById(employeeId, token);
+  //     // asumsi payload: { collection: {...employee} }
+  //     setEmployeeDetail(res?.collection ?? null);
+  //     console.log('Employee Detail:', res);
+  //   } catch (err: any) {
+  //     setEmployeeError(err?.message || 'Failed to fetch employee details.');
+  //   } finally {
+  //     setEmployeeLoading(false);
+  //   }
+  // };
 
   const handleCloseEmployeeDialog = () => {
     setOpenEmployeeDialog(false);
-    setEmployeeDetail(null);
+    // setEmployeeDetail(null);
     setEmployeeError(null);
   };
 
   const [visitorTypes, setVisitorTypes] = useState<{ [key: string]: string }>({});
 
   const [selectedType, setSelectedType] = useState<
-    'all' | 'pre registration' | 'checkin' | 'checkout' | 'denied' | 'blocked'
-  >('all');
+    'All' | 'Preregis' | 'Checkin' | 'Checkout' | 'Denied' | 'Block'
+  >('All');
 
   useEffect(() => {
     const fetchVisitorTypes = async () => {
@@ -296,30 +330,90 @@ const Content = () => {
   }, [token]);
 
   const statusMap: Record<string, string> = {
-    all: 'all',
-    'pre registration': 'pracheckin', // 👈 mapping fix
-    checkin: 'checkin',
-    checkout: 'checkout',
-    denied: 'denied',
-    blocked: 'blocked',
+    All: 'All',
+    Preregis: 'Preregis', // 👈 mapping fix
+    Checkin: 'Checkin',
+    Checkout: 'Checkout',
+    Denied: 'denied',
+    Block: 'Block',
   };
+
+  // const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  // useEffect(() => {
+  //   if (!token) return;
+  //   const fetchData = async () => {
+  //     setLoading(true);
+  //     const start_date = dayjs().subtract(7, 'day').format('YYYY-MM-DD');
+  //     const end_date = dayjs().format('YYYY-MM-DD'); // ✅ hanya sampai hari ini
+
+  //     // if (isDataReady) {
+  //     const response = await getInvitations(token as string, start_date, end_date);
+
+  //     let rows = response.collection.map((item: any) => {
+  //       const isEmployeeHost = item.host === employeeId?.toUpperCase();
+
+  //       return {
+  //         id: item.id,
+  //         visitor_type: visitorTypes[item.visitor_type] || item.visitor_type,
+  //         name: item.visitor.name,
+  //         identity_id: item.visitor.identity_id,
+  //         email: item.visitor.email,
+  //         organization: item.visitor.organization,
+  //         gender: item.visitor.gender,
+  //         address: item.visitor.address,
+  //         phone: item.visitor.phone,
+  //         is_vip: item.visitor.is_vip,
+  //         visitor_period_start: item.visitor_period_start,
+  //         visitor_period_end: item.visitor_period_end,
+  //         host: item.host ?? '-',
+  //         employee: isEmployeeHost ?? '-',
+  //         visitor_status: item.visitor_status,
+  //       };
+  //     });
+
+  //     if (searchKeyword.trim()) {
+  //       const keyword = searchKeyword.toLowerCase();
+  //       rows = rows.filter((r: any) =>
+  //         [r.name, r.email, r.phone, r.organization, r.identity_id].some((val) =>
+  //           String(val || '')
+  //             .toLowerCase()
+  //             .includes(keyword),
+  //         ),
+  //       );
+  //     }
+
+  //     if (selectedType !== 'All') {
+  //       const apiStatus = statusMap[selectedType]; // ambil versi backend
+  //       rows = rows.filter((r: any) => r.visitor_status === apiStatus);
+  //     }
+
+  //     // setTableRowVisitors(response.collection);
+  //     setTotalRecords(response.collection.length);
+  //     // setTotalFilteredRecords(response.RecordsFiltered);
+  //     setTableCustomVisitor(rows);
+  //     setIsDataReady(true);
+  //     setLoading(false);
+  //   };
+  //   fetchData();
+  // }, [token, refreshTrigger, searchKeyword, startDate, endDate, employeeId, selectedType]);
 
   useEffect(() => {
     if (!token) return;
+
     const fetchData = async () => {
       setLoading(true);
       const start_date = dayjs().subtract(7, 'day').format('YYYY-MM-DD');
-      const end_date = dayjs().format('YYYY-MM-DD'); // ✅ hanya sampai hari ini
+      const end_date = dayjs().format('YYYY-MM-DD');
 
-      // if (isDataReady) {
       const response = await getInvitations(token as string, start_date, end_date);
 
-      let rows = response.collection.map((item: any) => {
+      let mapped = response.collection.map((item: any) => {
         const isEmployeeHost = item.host === employeeId?.toUpperCase();
 
         return {
           id: item.id,
-          visitor_type: visitorTypes[item.visitor_type] || item.visitor_type,
+          visitor_type: item.visitor_type_name,
           name: item.visitor.name,
           identity_id: item.visitor.identity_id,
           email: item.visitor.email,
@@ -336,15 +430,51 @@ const Content = () => {
         };
       });
 
-      setTableRowVisitors(response.collection);
-      setTotalRecords(response.collection.length);
-      // setTotalFilteredRecords(response.RecordsFiltered);
-      setTableCustomVisitor(rows);
+      // ✅ simpan data mentah (unfiltered)
+      setTableRowVisitors(mapped);
+      // ✅ tampilkan default (semua)
+      setTableCustomVisitor(mapped);
+
+      setTotalRecords(mapped.length);
       setIsDataReady(true);
       setLoading(false);
     };
+
     fetchData();
-  }, [token, refreshTrigger, searchKeyword, startDate, endDate, employeeId]);
+  }, [token, refreshTrigger, startDate, endDate, employeeId]);
+
+  useEffect(() => {
+    if (!tableRowVisitors.length) return;
+
+    // ambil semua data dulu
+    let filtered = [...tableRowVisitors];
+
+    // 🔍 Keyword search
+    const keyword = searchKeyword.trim().toLowerCase();
+    if (keyword) {
+      filtered = filtered.filter((r) =>
+        [r.name, r.email, r.phone, r.organization, r.identity_id].some((val) =>
+          String(val || '')
+            .toLowerCase()
+            .includes(keyword),
+        ),
+      );
+    }
+
+    // 🔹 Filter status (tab)
+    if (selectedType !== 'All') {
+      const apiStatus = statusMap[selectedType];
+      filtered = filtered.filter((r) => r.visitor_status === apiStatus);
+    }
+
+    // 🔢 Pagination (ambil 10-10)
+    const startIndex = page * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    const paginated = filtered.slice(startIndex, endIndex);
+
+    setTableCustomVisitor(paginated);
+    setTotalFilteredRecords(filtered.length);
+  }, [tableRowVisitors, searchKeyword, selectedType, page, rowsPerPage]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -438,15 +568,15 @@ const Content = () => {
   const handleView = async (id: string) => {
     if (!id || !token) return;
 
-    // setOpenVisitorDialog(true);
+    setOpenRelatedInvitation(true);
     // setVisitorLoading(true);
     // setVisitorError(null);
     // setVisitorDetail(null);
 
     try {
-      const res = await getInvitationById(token, id);
-      // backend kamu ada yang taruh di res.collection, ada juga langsung body
+      const res = await getInvitationRelatedVisitor(id, token);
       setVisitorDetail(res?.collection ?? res ?? null);
+      console.log('Visitor Detail:', res);
     } catch (err: any) {
       setVisitorError(err?.message || 'Failed to fetch visitor detail.');
     } finally {
@@ -454,11 +584,11 @@ const Content = () => {
     }
   };
 
-  const handleCloseVisitorDialog = () => {
-    setOpenVisitorDialog(false);
-    setVisitorDetail(null);
-    setVisitorError(null);
-  };
+  // const handleCloseVisitorDialog = () => {
+  //   setOpenVisitorDialog(false);
+  //   setVisitorDetail(null);
+  //   setVisitorError(null);
+  // };
 
   // jenis aksi yang dikonfirmasi
   type VisitorAction = 'checkin' | 'checkout' | 'deny' | 'block';
@@ -484,23 +614,6 @@ const Content = () => {
     if (!confirm?.loading) setConfirm(null);
   };
 
-  const runConfirmedAction = async () => {
-    if (!confirm || !token || !visitorDetail?.id) return;
-    setConfirm((c) => (c ? { ...c, loading: true } : c));
-
-    try {
-      // dummy delay biar kelihatan loading
-      await new Promise((r) => setTimeout(r, 400));
-
-      setConfirm(null); // tutup dialog konfirmasi
-      setOpenVisitorDialog(false); // tutup dialog detail visitor
-      setRefreshTrigger((p) => p + 1); // refresh tabel
-    } catch (e) {
-      // gagal -> matikan loading, tetap di dialog konfirmasi
-      setConfirm((c) => (c ? { ...c, loading: false } : c));
-    }
-  };
-
   const [filters, setFilters] = useState<any>({
     visitor_type: '',
     site: '',
@@ -511,6 +624,27 @@ const Content = () => {
   const handleApplyFilter = () => {
     setPage(0);
     setRefreshTrigger((prev) => prev + 1);
+  };
+
+  const [selected, setSelected] = useState<number[]>([]);
+  const [selectedAction, setSelectedAction] = useState('');
+  const [disabledIndexes, setDisabledIndexes] = useState<number[]>([]);
+
+  const selectedVisitorData = useMemo(() => {
+    return visitorDetail
+      .filter((_, index) => selected.includes(index))
+      .map((v, i) => ({
+        id: v.id,
+        name: v.visitor.name,
+        vehicle_plate_number: v.vehicle_plate_number,
+        visitor_status: v.visitor_status,
+      }));
+  }, [visitorDetail, selected]);
+
+  const handleCloseRelation = () => {
+    setOpenRelatedInvitation(false);
+    setVisitorDetail([]);
+    setVisitorError(null);
   };
 
   return (
@@ -543,7 +677,7 @@ const Content = () => {
             <Grid size={{ xs: 12, lg: 12 }}>
               {isDataReady ? (
                 <DynamicTable
-                  isHavePagination={false}
+                  isHavePagination={true}
                   overflowX={'auto'}
                   minWidth={2400}
                   stickyHeader={true}
@@ -573,6 +707,7 @@ const Content = () => {
                   isHaveVisitor={true}
                   isActionVisitor={true}
                   stickyVisitorCount={2}
+                  isActionEmployee={true}
                   isHaveEmployee={true}
                   onEmployeeClick={(row) => {
                     handleEmployeeClick(row.host as string);
@@ -582,27 +717,27 @@ const Content = () => {
                     title: '',
                     subTitle: 'Monitoring Data Visitor',
                     items: [
-                      { name: 'all' },
-                      { name: 'pre registration' },
-                      { name: 'checkin' },
-                      { name: 'checkout' },
-                      { name: 'denied' },
-                      { name: 'blocked' },
+                      { name: 'All' },
+                      { name: 'Preregis' },
+                      { name: 'Checkin' },
+                      { name: 'Checkout' },
+                      { name: 'Block' },
+                      { name: 'Denied' },
                     ],
                   }}
                   onHeaderItemClick={(item) => {
                     if (
-                      item.name === 'all' ||
-                      item.name === 'checkin' ||
-                      item.name === 'checkout' ||
-                      item.name === 'pre registration' ||
-                      item.name === 'denied' ||
-                      item.name === 'blocked'
+                      item.name === 'All' ||
+                      item.name === 'Checkin' ||
+                      item.name === 'Checkout' ||
+                      item.name === 'Preregis' ||
+                      item.name === 'Denied' ||
+                      item.name === 'Block'
                     ) {
                       setSelectedType(item.name);
                     }
                   }}
-                  defaultSelectedHeaderItem="all"
+                  defaultSelectedHeaderItem="All"
                   onCheckedChange={(selected) => console.log('Checked table row:', selected)}
                   onView={(row) => {
                     handleView(row.id);
@@ -735,9 +870,244 @@ const Content = () => {
         </DialogTitle>
         <Divider />
         <DialogContent sx={{ pt: 1 }}>
-          {employeeLoading && (
-            <Box display="flex" justifyContent="center" alignItems="center" py={6}>
+          {employeeLoading ? (
+            <Box display="flex" justifyContent="center" alignItems="center" py={6} height={'100%'}>
               <CircularProgress />
+            </Box>
+          ) : (
+            <Box>
+              <Grid
+                container
+                spacing={2}
+                justifyContent="center" // horizontal center
+                alignItems="center" // vertical center
+              >
+                <Grid size={12} display="flex" justifyContent="center" alignItems="center">
+                  {/* avatar */}
+                  <Avatar
+                    alt={employeeDetail?.name || 'Employee'}
+                    src={
+                      'http://192.168.1.116:8000/cdn' + employeeDetail?.faceimage ||
+                      '/static/images/avatar/1.jpg'
+                    }
+                    onError={(e: any) => {
+                      e.currentTarget.onerror = null; // cegah loop
+                      e.currentTarget.src = '/static/images/avatar/1.jpg';
+                    }}
+                    sx={{ width: 120, height: 120, my: 2 }}
+                  />
+                </Grid>
+
+                <Grid
+                  size={{ xs: 12, md: 6 }}
+                  display="flex"
+                  flexDirection="column"
+                  alignItems="start"
+                >
+                  <Box display="flex" alignItems="start" gap={1}>
+                    <IconIdBadge2 />
+                    <Box>
+                      <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
+                        Name
+                      </CustomFormLabel>
+                      <Typography variant="body1">{employeeDetail?.name}</Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+
+                <Grid
+                  size={{ xs: 12, md: 6 }}
+                  display="flex"
+                  flexDirection="column"
+                  alignItems="start"
+                >
+                  <Box display="flex" alignItems="start" gap={1}>
+                    <IconPhone />
+                    <Box>
+                      <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
+                        Phone
+                      </CustomFormLabel>
+                      <Typography variant="body1">{employeeDetail?.phone || '-'}</Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+                <Grid
+                  size={{ xs: 12, md: 6 }}
+                  display="flex"
+                  flexDirection="column"
+                  alignItems="start"
+                >
+                  <Box display="flex" alignItems="start" gap={1}>
+                    <IconBrandGmail />
+                    <Box>
+                      <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
+                        Email
+                      </CustomFormLabel>
+                      <Typography variant="body1">{employeeDetail?.email || '-'}</Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+
+                <Grid
+                  size={{ xs: 12, md: 6 }}
+                  display="flex"
+                  flexDirection="column"
+                  alignItems="start"
+                >
+                  <Box display="flex" alignItems="start" gap={1}>
+                    <IconGenderBigender />
+                    <Box>
+                      <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
+                        Gender
+                      </CustomFormLabel>
+                      <Typography variant="body1">{employeeDetail?.gender || '-'}</Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+                <Grid
+                  size={{ xs: 12, md: 6 }}
+                  display="flex"
+                  flexDirection="column"
+                  alignItems="start"
+                >
+                  <Box display="flex" alignItems="start" gap={1}>
+                    <IconCards />
+                    <Box>
+                      <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
+                        Address
+                      </CustomFormLabel>
+                      <Typography variant="body1">{employeeDetail?.address || '-'}</Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+
+                <Grid
+                  size={{ xs: 12, md: 6 }}
+                  display="flex"
+                  flexDirection="column"
+                  alignItems="start"
+                >
+                  <Box display="flex" alignItems="start" gap={1}>
+                    <IconBuildingSkyscraper />
+                    <Box>
+                      <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
+                        Organization
+                      </CustomFormLabel>
+                      <Typography variant="body1">
+                        {/* {orgDict[employeeDetail?.organization_id] || '-'} */}
+                        {employeeDetail?.organization_id || '-'}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+                <Grid
+                  size={{ xs: 12, md: 6 }}
+                  display="flex"
+                  flexDirection="column"
+                  alignItems="start"
+                >
+                  <Box display="flex" alignItems="start" gap={1}>
+                    <IconBuilding />
+                    <Box>
+                      <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
+                        Department
+                      </CustomFormLabel>
+                      <Typography variant="body1">
+                        {/* {deptDict[employeeDetail?.department_id] || '-'} */}
+                        {employeeDetail?.department_id || '-'}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+                <Grid
+                  size={{ xs: 12, md: 6 }}
+                  display="flex"
+                  flexDirection="column"
+                  alignItems="start"
+                >
+                  <Box display="flex" alignItems="start" gap={1}>
+                    <IconMapPin />
+                    <Box>
+                      <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
+                        District
+                      </CustomFormLabel>
+                      <Typography variant="body1">
+                        {' '}
+                        {/* {distDict[employeeDetail?.district_id] || '-'} */}
+                        {employeeDetail?.district_id || '-'}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+                <Grid
+                  size={{ xs: 12, md: 6 }}
+                  display="flex"
+                  flexDirection="column"
+                  alignItems="start"
+                >
+                  <Box display="flex" alignItems="start" gap={1}>
+                    <IconCheck />
+                    <Box>
+                      <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
+                        Status
+                      </CustomFormLabel>
+                      <Typography variant="body1">
+                        {employeeDetail?.status_employee || '-'}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+                <Grid
+                  size={{ xs: 12, md: 6 }}
+                  display="flex"
+                  flexDirection="column"
+                  alignItems="start"
+                >
+                  <Box display="flex" alignItems="start" gap={1}>
+                    <IconCalendarStats />
+                    <Box>
+                      <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
+                        Birth Date
+                      </CustomFormLabel>
+                      <Typography variant="body1">{employeeDetail?.birth_date}</Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+                <Grid
+                  size={{ xs: 12, md: 6 }}
+                  display="flex"
+                  flexDirection="column"
+                  alignItems="start"
+                >
+                  <Box display="flex" alignItems="start" gap={1}>
+                    <IconCalendarStats />
+                    <Box>
+                      <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
+                        Join Date
+                      </CustomFormLabel>
+                      <Typography variant="body1">{employeeDetail?.join_date}</Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+                <Grid
+                  size={{ xs: 12, md: 6 }}
+                  display="flex"
+                  flexDirection="column"
+                  alignItems="start"
+                >
+                  <Box display="flex" alignItems="start" gap={1}>
+                    <IconCalendarStats />
+                    <Box>
+                      <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
+                        Exit Date
+                      </CustomFormLabel>
+                      <Typography variant="body1">{employeeDetail?.exit_date}</Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+
+                {/* Grid lain sama konsepnya */}
+              </Grid>
             </Box>
           )}
 
@@ -746,10 +1116,9 @@ const Content = () => {
               <Card sx={{ p: 2, color: 'error.main' }}>{employeeError}</Card>
             </Box>
           )}
-
-          {/* {!employeeLoading && !employeeError && employeeDetail && (
+          {/* 
+          {!employeeLoading && !employeeError && employeeDetail && (
             <Box display="grid" gridTemplateColumns="110px 1fr" gap={2}>
-            
               <Box gridColumn="1 / 2">
                 <Box
                   component="img"
@@ -771,239 +1140,6 @@ const Content = () => {
               </Box>
             </Box>
           )} */}
-          <Box>
-            <Grid
-              container
-              spacing={2}
-              justifyContent="center" // horizontal center
-              alignItems="center" // vertical center
-            >
-              <Grid size={12} display="flex" justifyContent="center" alignItems="center">
-                {/* avatar */}
-                <Avatar
-                  alt={employeeDetail?.name || 'Employee'}
-                  src={
-                    employeeDetail?.faceimage ||
-                    employeeDetail?.photo ||
-                    employeeDetail?.avatar ||
-                    '/static/images/avatar/1.jpg'
-                  }
-                  onError={(e: any) => {
-                    e.currentTarget.onerror = null; // cegah loop
-                    e.currentTarget.src = '/static/images/avatar/1.jpg';
-                  }}
-                  sx={{ width: 120, height: 120, my: 2 }}
-                />
-              </Grid>
-
-              <Grid
-                size={{ xs: 12, md: 6 }}
-                display="flex"
-                flexDirection="column"
-                alignItems="start"
-              >
-                <Box display="flex" alignItems="start" gap={1}>
-                  <IconIdBadge2 />
-                  <Box>
-                    <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
-                      Name
-                    </CustomFormLabel>
-                    <Typography variant="body1">{employeeDetail?.name}</Typography>
-                  </Box>
-                </Box>
-              </Grid>
-
-              <Grid
-                size={{ xs: 12, md: 6 }}
-                display="flex"
-                flexDirection="column"
-                alignItems="start"
-              >
-                <Box display="flex" alignItems="start" gap={1}>
-                  <IconPhone />
-                  <Box>
-                    <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
-                      Phone
-                    </CustomFormLabel>
-                    <Typography variant="body1">{employeeDetail?.phone || '-'}</Typography>
-                  </Box>
-                </Box>
-              </Grid>
-              <Grid
-                size={{ xs: 12, md: 6 }}
-                display="flex"
-                flexDirection="column"
-                alignItems="start"
-              >
-                <Box display="flex" alignItems="start" gap={1}>
-                  <IconBrandGmail />
-                  <Box>
-                    <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
-                      Email
-                    </CustomFormLabel>
-                    <Typography variant="body1">{employeeDetail?.email || '-'}</Typography>
-                  </Box>
-                </Box>
-              </Grid>
-
-              <Grid
-                size={{ xs: 12, md: 6 }}
-                display="flex"
-                flexDirection="column"
-                alignItems="start"
-              >
-                <Box display="flex" alignItems="start" gap={1}>
-                  <IconGenderBigender />
-                  <Box>
-                    <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
-                      Gender
-                    </CustomFormLabel>
-                    <Typography variant="body1">{employeeDetail?.gender || '-'}</Typography>
-                  </Box>
-                </Box>
-              </Grid>
-              <Grid
-                size={{ xs: 12, md: 6 }}
-                display="flex"
-                flexDirection="column"
-                alignItems="start"
-              >
-                <Box display="flex" alignItems="start" gap={1}>
-                  <IconCards />
-                  <Box>
-                    <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
-                      Address
-                    </CustomFormLabel>
-                    <Typography variant="body1">{employeeDetail?.address || '-'}</Typography>
-                  </Box>
-                </Box>
-              </Grid>
-
-              <Grid
-                size={{ xs: 12, md: 6 }}
-                display="flex"
-                flexDirection="column"
-                alignItems="start"
-              >
-                <Box display="flex" alignItems="start" gap={1}>
-                  <IconBuildingSkyscraper />
-                  <Box>
-                    <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
-                      Organization
-                    </CustomFormLabel>
-                    <Typography variant="body1">
-                      {orgDict[employeeDetail?.organization_id] || '-'}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Grid>
-              <Grid
-                size={{ xs: 12, md: 6 }}
-                display="flex"
-                flexDirection="column"
-                alignItems="start"
-              >
-                <Box display="flex" alignItems="start" gap={1}>
-                  <IconBuilding />
-                  <Box>
-                    <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
-                      Department
-                    </CustomFormLabel>
-                    <Typography variant="body1">
-                      {deptDict[employeeDetail?.department_id] || '-'}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Grid>
-              <Grid
-                size={{ xs: 12, md: 6 }}
-                display="flex"
-                flexDirection="column"
-                alignItems="start"
-              >
-                <Box display="flex" alignItems="start" gap={1}>
-                  <IconMapPin />
-                  <Box>
-                    <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
-                      District
-                    </CustomFormLabel>
-                    <Typography variant="body1">
-                      {' '}
-                      {distDict[employeeDetail?.district_id] || '-'}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Grid>
-              <Grid
-                size={{ xs: 12, md: 6 }}
-                display="flex"
-                flexDirection="column"
-                alignItems="start"
-              >
-                <Box display="flex" alignItems="start" gap={1}>
-                  <IconCheck />
-                  <Box>
-                    <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
-                      Status
-                    </CustomFormLabel>
-                    <Typography variant="body1">
-                      {employeeDetail?.status_employee || '-'}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Grid>
-              <Grid
-                size={{ xs: 12, md: 6 }}
-                display="flex"
-                flexDirection="column"
-                alignItems="start"
-              >
-                <Box display="flex" alignItems="start" gap={1}>
-                  <IconCalendarStats />
-                  <Box>
-                    <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
-                      Birth Date
-                    </CustomFormLabel>
-                    <Typography variant="body1">{employeeDetail?.birth_date}</Typography>
-                  </Box>
-                </Box>
-              </Grid>
-              <Grid
-                size={{ xs: 12, md: 6 }}
-                display="flex"
-                flexDirection="column"
-                alignItems="start"
-              >
-                <Box display="flex" alignItems="start" gap={1}>
-                  <IconCalendarStats />
-                  <Box>
-                    <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
-                      Join Date
-                    </CustomFormLabel>
-                    <Typography variant="body1">{employeeDetail?.join_date}</Typography>
-                  </Box>
-                </Box>
-              </Grid>
-              <Grid
-                size={{ xs: 12, md: 6 }}
-                display="flex"
-                flexDirection="column"
-                alignItems="start"
-              >
-                <Box display="flex" alignItems="start" gap={1}>
-                  <IconCalendarStats />
-                  <Box>
-                    <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
-                      Exit Date
-                    </CustomFormLabel>
-                    <Typography variant="body1">{employeeDetail?.exit_date}</Typography>
-                  </Box>
-                </Box>
-              </Grid>
-
-              {/* Grid lain sama konsepnya */}
-            </Grid>
-          </Box>
         </DialogContent>
       </Dialog>
 
@@ -1076,852 +1212,221 @@ const Content = () => {
         </DialogContent>
       </Dialog>
 
-      {/* QR Code */}
-      {/* <Dialog
-        fullWidth
-        maxWidth="xs"
-        open={openDialogIndex === 1}
-        onClose={() => {
-          // matikan torch kalau menyala (best-effort)
-          try {
-            const video = scanContainerRef.current?.querySelector(
-              'video',
-            ) as HTMLVideoElement | null;
-            const stream = video?.srcObject as MediaStream | null;
-            const track = stream?.getVideoTracks()?.[0];
-            const caps = track?.getCapabilities?.() as any;
-            if (track && caps?.torch && torchOn) {
-              track.applyConstraints({ advanced: [{ facingMode: 'user' }] });
-            }
-          } catch {}
+      {/* Related Visitor */}
+      <Dialog open={openRelatedInvitation} onClose={handleCloseRelation} fullWidth maxWidth="xl">
+        <DialogTitle>Related Visitor Invitation</DialogTitle>
+        <IconButton
+          aria-label="close"
+          onClick={handleCloseRelation}
+          sx={{
+            position: 'absolute',
+            right: 8,
+            top: 8,
+            color: (theme) => theme.palette.grey[500],
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
 
-          setTorchOn(false);
-          setFacingMode('environment');
-          setQrMode('manual');
-          setHasDecoded(false);
-          setQrValue('');
-          handleDialogClose();
-        }}
-      >
-        <DialogTitle display="flex">
-          Scan QR Visitor
-          <IconButton
-            aria-label="close"
-            sx={{ position: 'absolute', right: 8, top: 8 }}
-            onClick={() => {
-              // matikan torch kalau menyala (best-effort)
-              try {
-                const video = scanContainerRef.current?.querySelector(
-                  'video',
-                ) as HTMLVideoElement | null;
-                const stream = video?.srcObject as MediaStream | null;
-                const track = stream?.getVideoTracks()?.[0];
-                const caps = track?.getCapabilities?.() as any;
-                if (track && caps?.torch && torchOn) {
-                  track.applyConstraints({ advanced: [{ facingMode: 'user' }] });
-                }
-              } catch {}
-
-              setTorchOn(false);
-              setFacingMode('environment');
-              setQrMode('manual');
-              setHasDecoded(false);
-              setQrValue('');
-              handleDialogClose();
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <Divider />
-
-        <DialogContent>
-
-          <Box display="flex" gap={1} mb={2}>
-            <Button
-              variant={qrMode === 'manual' ? 'contained' : 'outlined'}
-              onClick={() => setQrMode('manual')}
-              size="small"
-            >
-              Manual
-            </Button>
-            <Button
-              variant={qrMode === 'scan' ? 'contained' : 'outlined'}
-              onClick={() => {
-                setHasDecoded(false);
-                setQrMode('scan');
-              }}
-              size="small"
-            >
-              Scan Kamera
-            </Button>
-          </Box>
-
-
-          {qrMode === 'manual' && (
-            <>
-              <TextField
-                fullWidth
-                label="Masukkan Kode QR"
-                variant="outlined"
-                size="small"
-                value={qrValue}
-                onChange={(e) => setQrValue(e.target.value)}
-              />
-              <Box mt={2} display="flex" justifyContent="flex-end">
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={() => {
-                    console.log('Submit manual:', qrValue);
-                    // handleDialogClose();
-                  }}
-                  disabled={!qrValue}
-                >
-                  Submit
-                </Button>
-              </Box>
-            </>
-          )}
-
- 
-          {qrMode === 'scan' && (
-            <>
+        <DialogContent dividers>
+          <Grid container spacing={2} alignItems={'stretch'}>
+            {/* Kiri: daftar avatar visitor */}
+            <Grid size={{ xs: 12 }}>
               <Box
-                ref={scanContainerRef}
                 sx={{
-                  position: 'relative',
-                  borderRadius: 2,
-                  overflow: 'hidden',
-                  bgcolor: 'black',
-                  aspectRatio: '3 / 4', // proporsional untuk mobile
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 2,
+                  overflowX: 'auto',
+                  p: 1,
+                  maxWidth: '100%',
+                  '&::-webkit-scrollbar': {
+                    height: 6,
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    backgroundColor: 'rgba(0,0,0,0.3)',
+                    borderRadius: 3,
+                  },
                 }}
               >
-                <Scanner
-                  constraints={{ facingMode }}
-                  onScan={(result: any) => {
-                    if (!result) return;
-                    if (hasDecoded) return; // cegah spam callback
-                    setHasDecoded(true);
-                    setQrValue(typeof result === 'string' ? result : String(result));
-                  }}
-                  onError={(error: any) => {
-                    console.log('QR error:', error?.message || error);
-                  }}
-                  styles={{
-                    container: { width: '100%', height: '100%' },
-                    video: {
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      border: 'none !important',
-                    },
-                  }}
-                />
+                {visitorDetail.length === 0 ? (
+                  <Typography color="text.secondary">No related visitors found</Typography>
+                ) : (
+                  visitorDetail.map((v: any, index: any) => {
+                    const isDisabled = disabledIndexes.includes(index);
+                    const isSelected = selected.includes(index);
 
-                <Box sx={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
-   
-                  <Box
-                    sx={{
-                      // ukuran kotak scan (responsif)
-                      '--scanSize': { xs: '70vw', sm: '290px' },
-
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      width: 'var(--scanSize)',
-                      height: 'var(--scanSize)',
-                      transform: 'translate(-50%, -50%)',
-
-                      // ini yang bikin area luar gelap, tengah tetap terang
-                      boxShadow: '0 0 0 9999px rgba(0,0,0,0.55)',
-                      borderRadius: 2, // 0 jika mau siku
-                      outline: '2px solid rgba(255,255,255,0.18)',
-                    }}
-                  >
-            
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        inset: 0,
-                        '& .corner': {
-                          position: 'absolute',
-                          width: 24,
-                          height: 24,
-                          border: '3px solid #00e5ff',
-                        },
-                        '& .tl': { top: 0, left: 0, borderRight: 'none', borderBottom: 'none' },
-                        '& .tr': { top: 0, right: 0, borderLeft: 'none', borderBottom: 'none' },
-                        '& .bl': { bottom: 0, left: 0, borderRight: 'none', borderTop: 'none' },
-                        '& .br': { bottom: 0, right: 0, borderLeft: 'none', borderTop: 'none' },
-                      }}
-                    >
-                      <Box className="corner tl" />
-                      <Box className="corner tr" />
-                      <Box className="corner bl" />
-                      <Box className="corner br" />
-                    </Box>
-
-         
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        left: 10,
-                        right: 10,
-                        height: 2,
-                        top: 0,
-                        background: 'linear-gradient(90deg, transparent, #00e5ff, transparent)',
-                        animation: 'scanLine 2s linear infinite',
-                        '@keyframes scanLine': {
-                          '0%': { transform: 'translateY(0)' },
-                          '100%': { transform: 'translateY(calc(var(--scanSize) - 2px))' },
-                        },
-                      }}
-                    />
-                  </Box>
-                </Box>
-       
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    left: 0,
-                    right: 0,
-                    bottom: 8,
-                    display: 'flex',
-                    justifyContent: 'center',
-                    gap: 1,
-                  }}
-                >
-                  <Button
-                    onClick={() =>
-                      setFacingMode((f) => (f === 'environment' ? 'user' : 'environment'))
-                    }
-                    variant="contained"
-                    size="small"
-                    sx={{ bgcolor: 'rgba(0,0,0,0.6)' }}
-                    startIcon={<FlipCameraAndroidIcon fontSize="small" />}
-                  >
-                    Flip
-                  </Button>
-
-                  <Button
-                    onClick={async () => {
-                      try {
-                        const video = scanContainerRef.current?.querySelector(
-                          'video',
-                        ) as HTMLVideoElement | null;
-                        const stream = video?.srcObject as MediaStream | null;
-                        const track = stream?.getVideoTracks()?.[0];
-                        const caps = track?.getCapabilities?.() as any;
-                        if (track && caps?.torch) {
-                          await track.applyConstraints({ advanced: [{ torch: !torchOn }] as any });
-                          setTorchOn((t) => !t);
-                        } else {
-                          console.log('Torch not supported on this device.');
-                        }
-                      } catch (e) {
-                        console.log('Torch toggle error:', e);
-                      }
-                    }}
-                    variant="contained"
-                    size="small"
-                    sx={{ bgcolor: 'rgba(0,0,0,0.6)' }}
-                    startIcon={
-                      torchOn ? <FlashOnIcon fontSize="small" /> : <FlashOffIcon fontSize="small" />
-                    }
-                  >
-                    Torch
-                  </Button>
-                </Box>
+                    return (
+                      <Box
+                        key={index}
+                        sx={{
+                          position: 'relative',
+                          cursor: isDisabled ? 'not-allowed' : 'pointer',
+                          opacity: isDisabled ? 0.4 : 1,
+                          textAlign: 'center',
+                          borderRadius: '50%',
+                          transition: 'all 0.2s ease',
+                          flex: '0 0 auto',
+                          '&:hover': { transform: isDisabled ? 'none' : 'scale(1.05)' },
+                        }}
+                        onClick={() => {
+                          if (isDisabled) return;
+                          setSelected((prev) =>
+                            prev.includes(index)
+                              ? prev.filter((i) => i !== index)
+                              : [...prev, index],
+                          );
+                        }}
+                      >
+                        <Avatar
+                          src={'http://localhost:3000/cdn' + v.selfie_image}
+                          alt={v.name}
+                          sx={{ width: 60, height: 60 }}
+                        />
+                        <Checkbox
+                          checked={isSelected}
+                          disabled={isDisabled}
+                          sx={{
+                            position: 'absolute',
+                            top: -6,
+                            right: -6,
+                            bgcolor: 'white',
+                            borderRadius: '50%',
+                            p: 0.2,
+                            '& .MuiSvgIcon-root': { fontSize: 16 },
+                          }}
+                        />
+                        <Typography mt={1} fontSize={14} noWrap width={60}>
+                          {v.visitor.name}
+                        </Typography>
+                      </Box>
+                    );
+                  })
+                )}
               </Box>
 
-     
-              <Box mt={2}>
-                <Typography variant="caption" color="text.secondary">
-                  Hasil: {qrValue || '-'}
-                </Typography>
-              </Box>
-
-              <Box mt={2} display="flex" gap={1} justifyContent="space-between">
+              {/* Tombol select/unselect */}
+              {/* <Box display="flex" justifyContent="flex-start" gap={1}>
                 <Button
+                  size="small"
                   variant="outlined"
-                  onClick={() => {
-                    setHasDecoded(false);
-                    setQrValue('');
-                  }}
+                  onClick={() =>
+                    setSelected(
+                      visitorDetail.map((_, i) => i).filter((i) => !disabledIndexes.includes(i)),
+                    )
+                  }
+                  disabled={visitorDetail.length === 0}
                 >
-                  Reset
+                  Select All
                 </Button>
-                <Box>
-                  <Button
-                    variant="contained"
-                    onClick={() => {
-                      console.log('Submit scan:', qrValue);
-                      // handleDialogClose();
-                    }}
-                    disabled={!qrValue}
-                  >
-                    Submit
-                  </Button>
-                </Box>
-              </Box>
-            </>
-          )}
-        </DialogContent>
-      </Dialog> */}
+                <Button
+                  size="small"
+                  variant="outlined"
+                  color="error"
+                  onClick={() => setSelected([])}
+                  disabled={selected.length === 0}
+                >
+                  Unselect All
+                </Button>
+              </Box> */}
 
-      {/* Visitor Detail Dialog */}
-      {/* <Dialog fullWidth maxWidth="sm" open={openVisitorDialog} onClose={handleCloseVisitorDialog}>
-        <DialogTitle
-          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-        >
-          Visitor Detail
-          <IconButton onClick={handleCloseVisitorDialog}>
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <Divider />
-        <DialogContent sx={{ pt: 2 }}>
-          {visitorLoading && (
-            <Box display="flex" justifyContent="center" alignItems="center" py={6}>
-              <CircularProgress />
-            </Box>
-          )}
+              <Divider sx={{ mt: 2, mb: 2 }} />
 
-          {!visitorLoading && visitorError && (
-            <Card sx={{ p: 2, color: 'error.main' }}>{visitorError}</Card>
-          )}
+              {/* Tabel visitor terpilih */}
+              <DynamicTable
+                data={selectedVisitorData}
+                isHaveChecked={false}
+                isHavePagination={false}
+                isHaveHeaderTitle={true}
+                titleHeader="Selected Visitor"
+              />
 
-          {!visitorLoading && !visitorError && visitorDetail && (
-            <Box>
-             
-              <Box display="flex" alignItems="center" gap={2} mb={2} justifyContent={'center'}>
-                <Avatar
-                  src={
-                    resolveImg(
-                      visitorDetail.faceimage || visitorDetail.photo || visitorDetail.avatar,
-                    ) || undefined
+              {/* Dropdown Action + Apply */}
+              {/* <Box display="flex" alignItems="center" gap={2} mt={2}>
+                <CustomSelect
+                  sx={{ width: '20%' }}
+                  value={selectedAction}
+                  onChange={(e: any) => {
+                    const action = e.target.value;
+                    setSelectedAction(action);
+
+                    // Kalau belum pilih, reset semua
+                    if (!action) {
+                      setDisabledIndexes([]);
+                      setSelected([]);
+                      return;
+                    }
+
+                    const newDisabledIndexes = visitorDetail
+                      .map((v, i) => {
+                        const status = (v.visitor_status || '').trim();
+
+                        if (status === 'Block' && action !== 'Unblock') {
+                          return i;
+                        }
+
+                        switch (action) {
+                          case 'Checkin':
+                            // ❌ Tidak bisa Checkin jika status sudah Checkin atau Checkout
+                            return status === 'Checkin' || status === 'Checkout' ? i : null;
+
+                          case 'Checkout':
+                            // ❌ Tidak bisa Checkout jika status bukan Checkin
+                            // (berarti juga tidak bisa kalau sudah Checkout)
+                            return status !== 'Checkin' ? i : null;
+
+                          case 'Block':
+                            // ❌ Tidak bisa Block kalau sudah Block
+                            return status === 'Block' ? i : null;
+
+                          case 'Unblock':
+                            // ❌ Tidak bisa Unblock kalau bukan Block
+                            return status !== 'Block' ? i : null;
+
+                          default:
+                            return null;
+                        }
+                      })
+                      .filter((x) => x !== null);
+
+                    // console.log('🎯 Action:', action);
+                    // console.log('🚫 Disabled indexes:', newDisabledIndexes);
+
+                    // Update state
+                    setDisabledIndexes(newDisabledIndexes);
+
+                    // Pastikan selected tidak mengandung index yang baru di-disable
+                    setSelected((prev) => prev.filter((i) => !newDisabledIndexes.includes(i)));
+                  }}
+                  displayEmpty
+                >
+                  <MenuItem value="">Select Action</MenuItem>
+                  <MenuItem value="Checkin">Check In</MenuItem>
+                  <MenuItem value="Checkout">Check Out</MenuItem>
+                  <MenuItem value="Block">Block</MenuItem>
+                  <MenuItem value="Unblock">Unblock</MenuItem>
+                </CustomSelect>
+
+                <Button
+                  sx={{ width: '10%' }}
+                  variant="contained"
+                  color="primary"
+                  disabled={
+                    !selectedAction ||
+                    visitorDetail.length === 0 ||
+                    disabledIndexes.length === visitorDetail.length ||
+                    selected.length === 0
                   }
-                  alt={visitorDetail.name || 'visitor'}
-                  sx={{ width: 100, height: 100 }}
-                />
-              </Box>
+                  onClick={() => confirmMultipleAction(selectedAction as any)}
+                >
+                  Apply
+                </Button>
+              </Box> */}
+            </Grid>
 
-   
-              <Grid container spacing={2}>
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Box display="flex" gap={1} alignItems="flex-start">
-                    <IconIdBadge2 />
-                    <Box>
-                      <CustomFormLabel sx={{ mt: 0 }}>Name</CustomFormLabel>
-                      <Typography>{visitorDetail.visitor.name ?? '-'}</Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Box display="flex" gap={1} alignItems="flex-start">
-                    <IconBrandGmail />
-                    <Box>
-                      <CustomFormLabel sx={{ mt: 0 }}>Email</CustomFormLabel>
-                      <Typography>{visitorDetail.email ?? '-'}</Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Box display="flex" gap={1} alignItems="flex-start">
-                    <IconPhone />
-                    <Box>
-                      <CustomFormLabel sx={{ mt: 0 }}>Host</CustomFormLabel>
-                      <Typography>{visitorDetail.host ?? '-'}</Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Box display="flex" gap={1} alignItems="flex-start">
-                    <IconBuildingSkyscraper />
-                    <Box>
-                      <CustomFormLabel sx={{ mt: 0 }}>Organization</CustomFormLabel>
-                      <Typography>{visitorDetail.organization ?? '-'}</Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Box display="flex" gap={1} alignItems="flex-start">
-                    <IconGenderBigender />
-                    <Box>
-                      <CustomFormLabel sx={{ mt: 0 }}>Gender</CustomFormLabel>
-                      <Typography>
-                        {visitorDetail.gender === 1
-                          ? 'Male'
-                          : visitorDetail.gender === 0
-                          ? 'Female'
-                          : visitorDetail.gender ?? '-'}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Box display="flex" gap={1} alignItems="flex-start">
-                    <IconMapPin />
-                    <Box>
-                      <CustomFormLabel sx={{ mt: 0 }}>Address</CustomFormLabel>
-                      <Typography>{visitorDetail.address ?? '-'}</Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Box display="flex" gap={1} alignItems="flex-start">
-                    <IconCalendarStats />
-                    <Box>
-                      <CustomFormLabel sx={{ mt: 0 }}>Visit Start</CustomFormLabel>
-                      <Typography>{visitorDetail.visitor_period_start ?? '-'}</Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Box display="flex" gap={1} alignItems="flex-start">
-                    <IconCalendarStats />
-                    <Box>
-                      <CustomFormLabel sx={{ mt: 0 }}>Visit End</CustomFormLabel>
-                      <Typography>{visitorDetail.visitor_period_end ?? '-'}</Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-              </Grid>
-            </Box>
-          )}
+            {/* Kanan: daftar Access */}
+          </Grid>
         </DialogContent>
-        <DialogActions sx={{ justifyContent: 'center' }}>
-   
-          <Button
-            variant="contained"
-            color="success"
-            // onClick={handleCheckIn}
-            onClick={() => openConfirm('checkin')}
-            startIcon={<IconLogin2 />}
-          >
-            Check In
-          </Button>
-
-      
-          <Button
-            variant="contained"
-            color="error"
-            // onClick={handleCheckOut}
-            onClick={() => openConfirm('checkout')}
-            startIcon={<IconLogout2 />}
-          >
-            Check Out
-          </Button>
-      
-          <Button
-            variant="contained"
-            sx={{
-              backgroundColor: '#f44336',
-              '&:hover': {
-                backgroundColor: '#d32f2f',
-              },
-            }}
-            // onClick={handleCheckOut}
-            onClick={() => openConfirm('deny')}
-            startIcon={<IconX />}
-          >
-            Deny
-          </Button>
-          
-          <Button
-            variant="contained"
-            sx={{ backgroundColor: '#000' }}
-            // onClick={handleCheckOut}
-            onClick={() => openConfirm('block')}
-            startIcon={<IconForbid2 />}
-          >
-            Block
-          </Button>
-        </DialogActions>
-      </Dialog> */}
-
-      {/* <Dialog fullWidth maxWidth="sm" open={openVisitorDialog} onClose={handleCloseVisitorDialog}>
-        <DialogTitle
-          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-        >
-          Visitor Detail
-          <IconButton onClick={handleCloseVisitorDialog}>
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-
-        <Divider />
-
-        <DialogContent sx={{ pt: 2 }}>
-          {visitorLoading && (
-            <Box display="flex" justifyContent="center" alignItems="center" py={6}>
-              <CircularProgress />
-            </Box>
-          )}
-
-          {!visitorLoading && visitorError && (
-            <Card sx={{ p: 2, color: 'error.main' }}>{visitorError}</Card>
-          )}
-
-          {!visitorLoading && !visitorError && visitorDetail && (
-            <Box>
-
-              <Box display="flex" alignItems="center" gap={2} mb={2} justifyContent="center">
-                <Avatar
-                  src={
-                    resolveImg(
-                      visitorDetail.faceimage || visitorDetail.photo || visitorDetail.avatar,
-                    ) || undefined
-                  }
-                  alt={visitorDetail.name || 'visitor'}
-                  sx={{ width: 100, height: 100 }}
-                />
-              </Box>
-
-       
-              <Tabs
-                value={tabValue}
-                onChange={(e, newVal) => setTabValue(newVal)}
-                variant="fullWidth"
-              >
-                <Tab label="Info" />
-                <Tab label="Visit Information" />
-                <Tab label="Purpose Visit" />
-              </Tabs>
-
-       
-              {tabValue === 0 && (
-                <Box sx={{ mt: 2 }}>
-        
-                  <Grid container spacing={2}>
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconIdBadge2 />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Name</CustomFormLabel>
-                          <Typography>{visitorDetail.visitor.name ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconBrandGmail />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Email</CustomFormLabel>
-                          <Typography>{visitorDetail.visitor.email ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconPhone />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Phone</CustomFormLabel>
-                          <Typography>{visitorDetail.visitor.phone ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-
-              
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconHome />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Address</CustomFormLabel>
-                          <Typography>{visitorDetail.visitor.address ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-
-              
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconGenderMale />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Gender</CustomFormLabel>
-                          <Typography>{visitorDetail.visitor.gender ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-
-           
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconBuildingSkyscraper />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Organization</CustomFormLabel>
-                          <Typography>{visitorDetail.visitor.organization ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-                  </Grid>
-                </Box>
-              )}
-
-              {tabValue === 1 && (
-                <Box sx={{ mt: 2 }}>
-                  <Grid container spacing={2}>
-         
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconQrcode />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Visitor Code</CustomFormLabel>
-                          <Typography
-                            sx={{
-                              overflowWrap: 'break-word',
-                              wordBreak: 'break-word',
-                              whiteSpace: 'normal',
-                            }}
-                          >
-                            {visitorDetail.visitor_code ?? '-'}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconUsersGroup />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Group Code</CustomFormLabel>
-                          <Typography>{visitorDetail.group_code ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-
-               
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconUser />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Group Name</CustomFormLabel>
-                          <Typography>{visitorDetail.group_name ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-
-                  
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconCalendarTime />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Period Start</CustomFormLabel>
-                          <Typography>{visitorDetail.visitor_period_start ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-
-             
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconCalendarEvent />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Period End</CustomFormLabel>
-                          <Typography>{visitorDetail.visitor_period_end ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-
-     
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconNumbers />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Visitor Number</CustomFormLabel>
-                          <Typography>{visitorDetail.visitor_number ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-
-        
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconTicket />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Invitation Code</CustomFormLabel>
-                          <Typography>{visitorDetail.invitation_code ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-
-   
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconCheckupList />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Visitor Status</CustomFormLabel>
-                          <Typography>{visitorDetail.visitor_status ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-
-               
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconCar />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Vehicle Type</CustomFormLabel>
-                          <Typography>{visitorDetail.vehicle_type ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-
-             
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconLicense />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Vehicle Plate No.</CustomFormLabel>
-                          <Typography>{visitorDetail?.vehicle_plate_number ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-                  </Grid>
-                </Box>
-              )}
-
-              {tabValue === 2 && (
-                <Box sx={{ mt: 2 }}>
-                  <Grid container spacing={2}>
-             
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconCalendarEvent />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Agenda</CustomFormLabel>
-                          <Typography>{visitorDetail.agenda ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-
-           
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconUserCheck />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>PIC Host</CustomFormLabel>
-                          <Typography>{visitorDetail.host ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconCalendarTime />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Period Start</CustomFormLabel>
-                          <Typography>{visitorDetail.visitor_period_start ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-
-       
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconCalendarUp />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Period End</CustomFormLabel>
-                          <Typography>{visitorDetail.visitor_period_end ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-
-          
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconMapPin />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Registered Site</CustomFormLabel>
-                          <Typography>{visitorDetail.site_place ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-                  </Grid>
-                </Box>
-              )}
-            </Box>
-          )}
-        </DialogContent>
-
-        <DialogActions sx={{ justifyContent: 'center' }}>
-          <Button
-            variant="contained"
-            color="success"
-            onClick={() => openConfirm('checkin')}
-            startIcon={<IconLogin2 />}
-          >
-            Check In
-          </Button>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={() => openConfirm('checkout')}
-            startIcon={<IconLogout2 />}
-          >
-            Check Out
-          </Button>
-          <Button
-            variant="contained"
-            sx={{ backgroundColor: '#f44336', '&:hover': { backgroundColor: '#d32f2f' } }}
-            onClick={() => openConfirm('deny')}
-            startIcon={<IconX />}
-          >
-            Deny
-          </Button>
-          <Button
-            variant="contained"
-            sx={{ backgroundColor: '#000' }}
-            onClick={() => openConfirm('block')}
-            startIcon={<IconForbid2 />}
-          >
-            Block
-          </Button>
-        </DialogActions>
-      </Dialog> */}
-
-      {/* Dialog Confirm */}
-      <Dialog open={!!confirm} onClose={closeConfirm} fullWidth>
-        <Box display="flex" alignItems="center" justifyContent="space-between" sx={{ px: 0.2 }}>
-          <DialogTitle>{confirm ? actionMeta[confirm.type].title : 'Confirm'}</DialogTitle>
-          <IconButton onClick={closeConfirm}>
-            <CloseIcon />
-          </IconButton>
-        </Box>
-        <Divider />
-        <DialogContent sx={{ pt: 2 }}>
-          <Typography>
-            {`Are you sure you want to ${
-              confirm ? actionMeta[confirm.type].ok.toLowerCase() : 'proceed'
-            } `}
-            <b>{visitorDetail?.name ?? 'this visitor'}</b>?
-          </Typography>
-          {/* btn close */}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={closeConfirm} disabled={!!confirm?.loading}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            // color={confirm ? actionMeta[confirm.type].color : 'primary'}
-            color="primary"
-            onClick={runConfirmedAction}
-            disabled={!!confirm?.loading}
-            startIcon={confirm?.loading ? <CircularProgress size={16} /> : undefined}
-          >
-            {/* {confirm ? actionMeta[confirm.type].ok : 'Confirm'} */}
-            Submit
-          </Button>
-        </DialogActions>
       </Dialog>
 
       {/* Unsaved Changes */}

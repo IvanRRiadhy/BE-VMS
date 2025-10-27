@@ -1,7 +1,7 @@
 import React from 'react';
 import { CreateVisitorRequest } from 'src/customs/api/models/Admin/Visitor';
-import FormWizardAddVisitor from './FormInvitation.tsx';
-import FormInvitation from './FormInvitation.tsx';
+import FormInvitation from './FormAddInvitation.tsx';
+// import FormAddInvitation from './FormAddInvitation.tsx';
 
 type Props = {
   formData: CreateVisitorRequest;

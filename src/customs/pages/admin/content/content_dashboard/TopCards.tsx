@@ -2,7 +2,15 @@ import { Box, CardContent, Typography, Grid2 as Grid } from '@mui/material';
 import { Stack } from '@mui/system';
 import { useTranslation } from 'react-i18next';
 import BlankCard from 'src/components/shared/BlankCard';
-import { IconUsers, IconX, IconActivity, IconBan, IconForbid2, IconLogout, IconLogin } from '@tabler/icons-react';
+import {
+  IconUsers,
+  IconX,
+  IconActivity,
+  IconBan,
+  IconForbid2,
+  IconLogout,
+  IconLogin,
+} from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { getTodayVisitorCount } from 'src/customs/api/admin'; // ✅ pakai API kamu
 
@@ -48,9 +56,24 @@ const TopCards = ({ token }: { token: string | null }) => {
   const CardItems = [
     { title: t('checkin'), subTitle: stats['Checkin'] ?? 0, icon: <IconLogin size={22} /> },
     { title: t('checkout'), subTitle: stats['Checkout'] ?? 0, icon: <IconLogout size={22} /> },
-    { title: t('denied'), subTitle: stats['Denied'] ?? 0, icon: <IconX size={22} /> },
     { title: t('Block'), subTitle: stats['Block'] ?? 0, icon: <IconForbid2 size={22} /> },
+    { title: t('Denied'), subTitle: stats['Denied'] ?? 0, icon: <IconX size={22} /> },
   ];
+
+  const getColorByTitle = (title: string) => {
+    switch (title) {
+      case 'Check In':
+        return '#13DEB9'; // hijau
+      case 'Check Out':
+        return '#F44336'; // merah
+      case 'Denied':
+        return '#8B0000'; // merah tua
+      case 'Block':
+        return '#000000'; // hitam
+      default:
+        return '#5c87ff'; // biru default
+    }
+  };
 
   return (
     <Grid container spacing={3}>
@@ -81,7 +104,7 @@ const TopCards = ({ token }: { token: string | null }) => {
               <Stack direction="row" spacing={2} alignItems="center">
                 <Box
                   sx={{
-                    backgroundColor: 'primary.main',
+                    backgroundColor: getColorByTitle(card.title),
                     color: '#fff',
                     borderRadius: '50%',
                     p: 1,

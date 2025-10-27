@@ -425,7 +425,7 @@ const Content = () => {
       registered_site: '', // reset registered site
     }));
     setRefreshTrigger((prev) => prev + 1);
-    // handleCloseDialog();
+    handleCloseDialog();
   };
 
   const openDiscardForCloseAdd = () => {

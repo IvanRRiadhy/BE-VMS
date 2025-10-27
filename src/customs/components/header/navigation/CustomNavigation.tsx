@@ -1,10 +1,10 @@
-import { useMediaQuery, Box, Drawer, Theme, Typography } from '@mui/material';
+import { useMediaQuery, Box, Drawer, Theme, Typography, Divider } from '@mui/material';
 import { useSelector, useDispatch } from 'src/store/Store';
 import { toggleMobileSidebar } from 'src/store/customizer/CustomizerSlice';
 import { AppState } from 'src/store/Store';
 import CustomNavListing, { ItemDataCustomNavListing } from './CustomNavListing';
 import CustomSidebarItems, { ItemDataCustomSidebarItems } from './CustomSidebarItems';
-import Logo from '../../logo/Logo';
+import Logo from 'src/assets/images/logos/bi_logo.png';
 import { useState, useEffect } from 'react';
 
 interface CustomNavigationProps {
@@ -87,12 +87,14 @@ const CustomNavigation: React.FC<CustomNavigationProps> = ({
       {/* ------------------------------------------- */}
       {/* Logo */}
       {/* ------------------------------------------- */}
-      <Box px={2}>
-        <img
+      <Box px={1} py={1} display="flex" justifyContent="center" alignItems="center">
+        {/* <img
           src="https://upload.wikimedia.org/wikipedia/commons/3/39/BI_Logo.png"
           width={'180px'}
-        />
+        /> */}
+        <img src={Logo} width={55} height={55} />
       </Box>
+      <Divider />
       {/* ------------------------------------------- */}
       {/* Sidebar For Mobile */}
       {/* ------------------------------------------- */}

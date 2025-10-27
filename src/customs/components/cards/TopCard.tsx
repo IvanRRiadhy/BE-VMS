@@ -79,7 +79,7 @@ const TopCard: React.FC<TopCardsProps> = ({ items, onImageClick, cardMarginBotto
                                 ? '#13DEB9' // hijau
                                 : card.title === 'Check Out'
                                 ? '#F44336' // merah
-                                : card.title === 'Unblock'
+                                : card.title === 'Denied'
                                 ? '#8B0000' // merah tua
                                 : card.title === 'Block'
                                 ? '#000000' // hitam
