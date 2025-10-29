@@ -38,6 +38,11 @@ import {
   useTheme,
   TextField,
   MenuItem,
+  Portal,
+  Backdrop,
+  CircularProgress,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import PageContainer from 'src/components/container/PageContainer';
@@ -71,6 +76,7 @@ import { axiosInstance2 } from 'src/customs/api/interceptor';
 import MuiButton from 'src/views/forms/form-elements/MuiButton';
 import Webcam from 'react-webcam';
 import { updateExtend } from 'src/customs/api/admin';
+import moment from 'moment-timezone';
 
 const Invitation = () => {
   const { token } = useSession();
@@ -89,7 +95,13 @@ const Invitation = () => {
   const [invitationData, setInvitationData] = useState<any>(null);
   // daftar opsi durasi dalam menit
   const durationOptions = [15, 30, 45, 60, 90, 120, 150, 180];
+  const [extendedEndTime, setExtendedEndTime] = useState<string | null>(null);
   const [dataVisitor, setDataVisitor] = useState<any[]>([]);
+  const [loadingAccess, setLoadingAccess] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMsg, setSnackbarMsg] = useState('');
+  const [snackbarType, setSnackbarType] = useState<'success' | 'error' | 'info'>('info');
+  const [permissionAccess, setPermissionAccess] = useState<any[]>([]);
   // const [steps, setSteps] = useState<string[]>([]);
 
   const cards = [
@@ -135,6 +147,14 @@ const Invitation = () => {
     'Training Karyawan',
     'Rapat Bulanan',
   ];
+
+    const [applyToAll, setApplyToAll] = useState(false);
+  
+  const handleApplyToAllChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const checked = event.target.checked;
+    setApplyToAll(checked);
+    console.log('✅ Apply to another visitor:', checked);
+  };
 
   const [detailVisitorInvitation, setDetailVisitorInvitation] = useState([]);
 
@@ -203,6 +223,7 @@ const Invitation = () => {
     try {
       // 1️⃣ Ambil detail utama
       const res = await getInvitationById(id, token);
+      console.log('res', res);
       setInvitationDetail(res?.collection ?? {});
 
       // 2️⃣ Ambil related visitor (opsional)
@@ -566,6 +587,20 @@ const Invitation = () => {
                   </MenuItem>
                 ))}
               </TextField>
+              // <TextField
+              //   select
+              //   size="small"
+              //   value={String(field.answer_text ?? '')} // ✅ fix di sini
+              //   onChange={(e) => onChange(index, 'answer_text', e.target.value)}
+              //   fullWidth
+              //   sx={{ width: 120 }}
+              // >
+              //   {genderOptions.map((opt) => (
+              //     <MenuItem key={opt.id} value={String(opt.value)}>
+              //       {opt.name}
+              //     </MenuItem>
+              //   ))}
+              // </TextField>
             );
           }
           if (field.remarks === 'vehicle_type') {
@@ -1275,20 +1310,46 @@ const Invitation = () => {
 
   const handleExtend = async (e: React.FormEvent) => {
     e.preventDefault();
-    // setLoading(true);
-    // setErrors({});
+
+    if (!token) return;
+
+    if (!selectedMinutes) {
+      setSnackbarMsg('Please select a duration before extending.');
+      setSnackbarType('info');
+      setSnackbarOpen(true);
+      return;
+    }
+
     try {
-      if (!token) return;
-      if (selectedMinutes) {
-        const result = await updateExtend(token, {
-          id: invitationDetail?.id,
-          period: selectedMinutes,
-          apply_to_all: false,
-        });
-        console.log('extend: ', result);
+      setLoadingAccess(true);
+
+      const result = await updateExtend(token, {
+        id: invitationDetail?.id,
+        period: selectedMinutes,
+        apply_to_all: false,
+      });
+
+      console.log('extend result:', result);
+
+      // ✅ Update UI langsung (tanpa reload)
+      if (invitationDetail?.visitor_period_end) {
+        const baseTime = moment.utc(invitationDetail.visitor_period_end);
+        const newEnd = baseTime.add(selectedMinutes, 'minutes'); // ⬅️ tetap moment UTC lalu konversi lokal saat render
+
+        setExtendedEndTime(newEnd.toISOString());
       }
-    } catch {
-      console.error('Failed to extend visit.');
+
+      // ✅ Snackbar success
+      setSnackbarMsg(`Visit extended by ${selectedMinutes} minutes.`);
+      setSnackbarType('success');
+      setSnackbarOpen(true);
+    } catch (err) {
+      console.error('Failed to extend visit:', err);
+      setSnackbarMsg('Failed to extend visit.');
+      setSnackbarType('error');
+      setSnackbarOpen(true);
+    } finally {
+      setTimeout(() => setLoadingAccess(false), 600);
     }
   };
 
@@ -1485,11 +1546,14 @@ const Invitation = () => {
                       Visit Start
                     </CustomFormLabel>
                     <Typography sx={{ mt: 0 }} variant="body1">
-                      {invitationDetail?.visitor_period_start
-                        ? format(
-                            new Date(invitationDetail.visitor_period_start),
-                            'dd MMM yyyy, HH:mm',
-                          )
+                      {/* {invitationDetail?.visitor_period_end
+                        ? moment(invitationDetail.visitor_period_start).format('DD MMM YYYY, HH:mm')
+                        : '-'} */}
+                      {invitationDetail?.visitor_period_end
+                        ? moment
+                            .utc(invitationDetail.visitor_period_start) // baca sebagai UTC
+                            .local() // ubah ke waktu lokal laptop
+                            .format('DD MMM YYYY, HH:mm')
                         : '-'}
                     </Typography>
                   </Grid>
@@ -1498,12 +1562,19 @@ const Invitation = () => {
                       Visit End
                     </CustomFormLabel>
                     <Typography sx={{ mt: 0 }} variant="body1">
-                      {invitationDetail?.visitor_period_end
-                        ? format(
-                            new Date(invitationDetail.visitor_period_end),
-                            'dd MMM yyyy, HH:mm',
-                          )
-                        : '-'}
+                      {/* {invitationDetail?.visitor_period_end
+                        ? moment(invitationDetail.visitor_period_end).format('DD MMM YYYY, HH:mm')
+                        : '-'} */}
+                      <Typography sx={{ mt: 0 }} variant="body1">
+                        {extendedEndTime
+                          ? moment.utc(extendedEndTime).local().format('DD MMM YYYY, HH:mm')
+                          : invitationDetail?.visitor_period_end
+                          ? moment
+                              .utc(invitationDetail.visitor_period_end)
+                              .local()
+                              .format('DD MMM YYYY, HH:mm')
+                          : '-'}
+                      </Typography>
                     </Typography>
                   </Grid>
                   <Grid size={{ xs: 12, md: 6 }}>
@@ -1628,7 +1699,7 @@ const Invitation = () => {
                             Card
                           </Typography>
                           <Typography sx={{ mt: 0 }} variant="body1" fontWeight={400}>
-                            {invitationDetail?.visitor_card || '-'}
+                            {invitationDetail?.card?.[0]?.card_number || '-'}
                           </Typography>
                         </Box>
                       </Box>
@@ -1697,17 +1768,21 @@ const Invitation = () => {
                   </Grid>
                 </Grid>
               </Stack>
-              <Button
-                onClick={() => setOpenExtendVisit(true)}
-                variant="contained"
-                sx={{ mt: 3 }}
-                fullWidth
-              >
-                <Typography>Extend</Typography>
-              </Button>
+              {moment().isBefore(moment.parseZone(invitationDetail?.visitor_period_end)) ? (
+                <Button
+                  onClick={() => setOpenExtendVisit(true)}
+                  variant="contained"
+                  sx={{ mt: 3 }}
+                  fullWidth
+                >
+                  <Typography>Extend</Typography>
+                </Button>
+              ) : null}
             </form>
           </DialogContent>
         </Dialog>
+
+        {/* Dialog Extend Visi */}
         <Dialog
           open={openExtendVisit}
           onClose={() => setOpenExtendVisit(false)}
@@ -1745,19 +1820,54 @@ const Invitation = () => {
                 ))}
               </Box>
               <FormControlLabel
-                control={<Checkbox />}
+                control={<Checkbox checked={applyToAll} onChange={handleApplyToAllChange} />}
                 label={
                   <Typography variant="body2" color="text.secondary">
                     Apply to another visitor
                   </Typography>
                 }
               />
-              <Button type="submit" variant="contained" sx={{ mt: 2 }} fullWidth>
+              <Button
+                type="submit"
+                variant="contained"
+                sx={{ mt: 2 }}
+                fullWidth
+                disabled={!selectedMinutes}
+              >
                 Extend Visit
               </Button>
             </form>
           </DialogContent>
         </Dialog>
+        <Portal>
+          <Snackbar
+            open={snackbarOpen}
+            autoHideDuration={3000}
+            onClose={() => setSnackbarOpen(false)}
+            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+          >
+            <Alert
+              onClose={() => setSnackbarOpen(false)}
+              severity={snackbarType}
+              sx={{ width: '100%', zIndex: 99999 }}
+            >
+              {snackbarMsg}
+            </Alert>
+          </Snackbar>
+        </Portal>
+        <Portal>
+          <Backdrop
+            sx={{
+              zIndex: 99998,
+              position: 'fixed',
+              margin: '0 auto',
+              color: 'primary',
+            }}
+            open={loadingAccess}
+          >
+            <CircularProgress color="inherit" />
+          </Backdrop>
+        </Portal>
       </PageContainer>
     </>
   );

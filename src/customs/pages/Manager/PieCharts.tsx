@@ -22,7 +22,7 @@ export default function PieCharts() {
                 outerRadius: 100,
               },
             ]}
-            height={215}
+            height={250}
             margin={{ top: 10, bottom: 20, left: 30, right: 30 }}
             // 🚫 matikan legend default
             slotProps={{ legend: { hidden: true } }}

@@ -4,6 +4,7 @@ import { Box, Typography, GlobalStyles } from '@mui/material';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { getAvarageDuration } from 'src/customs/api/admin';
 import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
 
 type PurposeData = {
   label: string;
@@ -16,19 +17,24 @@ const AvarageDurationChart = () => {
   const { t } = useTranslation();
   const [data, setData] = useState<PurposeData[]>([]);
   const [avgMinutes, setAvgMinutes] = useState<number>(0);
+  const { startDate, endDate } = useSelector((state: any) => state.dateRange);
 
   useEffect(() => {
     const fetchData = async () => {
       if (!token) return;
 
       try {
-        const today = new Date();
-        const end_date = today.toISOString().split('T')[0];
-        const start = new Date(today);
-        start.setDate(today.getDate() - 7);
-        const start_date = start.toISOString().split('T')[0];
+        // const today = new Date();
+        // const end_date = today.toISOString().split('T')[0];
+        // const start = new Date(today);
+        // start.setDate(today.getDate() - 7);
+        // const start_date = start.toISOString().split('T')[0];
 
-        const res = await getAvarageDuration(token, start_date, end_date);
+        const res = await getAvarageDuration(
+          token,
+          startDate.toLocaleDateString('en-CA'),
+          endDate.toLocaleDateString('en-CA'),
+        );
 
         if (Array.isArray(res?.collection)) {
           // 🔹 Ubah array API menjadi object buckets { "0-30": 3, "30-60": 1, ">240": 3 }
@@ -64,7 +70,7 @@ const AvarageDurationChart = () => {
     };
 
     fetchData();
-  }, [token]);
+  }, [token, startDate, endDate]);
 
   return (
     <>

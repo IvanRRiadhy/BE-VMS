@@ -34,8 +34,8 @@ const VisitingTypeChart = () => {
 
         const res = await getRepeatsVisitor(
           token,
-          startDate.toISOString().split('T')[0],
-          endDate.toISOString().split('T')[0],
+          startDate.toLocaleDateString('en-CA'),
+          endDate.toLocaleDateString('en-CA'),
         );
 
         if (res?.collection) {

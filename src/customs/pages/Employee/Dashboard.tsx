@@ -22,10 +22,12 @@ import moment from 'moment-timezone';
 import {
   IconBan,
   IconBellRingingFilled,
+  IconCheck,
   IconCircleOff,
   IconLogin,
   IconLogin2,
   IconLogout,
+  IconPlus,
   IconX,
 } from '@tabler/icons-react';
 import { Scanner } from '@yudiel/react-qr-scanner';
@@ -51,14 +53,15 @@ import { getApproval } from 'src/customs/api/employee';
 import dayjs from 'dayjs';
 import { getActiveInvitation, getInvitation, getOngoingInvitation } from 'src/customs/api/visitor';
 import FormDialogInvitation from './FormDialogInvitation';
+import { useNavigate } from 'react-router';
 // import OperatorPieChart from './Charts/OperatorPieChart';
 
 const DashboardEmployee = () => {
   const cards = [
     { title: 'Check In', icon: IconLogin, subTitle: `0`, subTitleSetting: 10, color: 'none' },
     { title: 'Check Out', icon: IconLogout, subTitle: `0`, subTitleSetting: 10, color: 'none' },
+    { title: 'Denied', icon: IconCircleOff, subTitle: `0`, subTitleSetting: 10, color: 'none' },
     { title: 'Block', icon: IconBan, subTitle: `0`, subTitleSetting: 10, color: 'none' },
-    { title: 'Unblock', icon: IconCircleOff, subTitle: `0`, subTitleSetting: 10, color: 'none' },
   ];
 
   const { token } = useSession();
@@ -124,6 +127,8 @@ const DashboardEmployee = () => {
   const [openAlertInvitation, setOpenAlertInvitation] = useState(false);
   const [pendingInvitationCount, setPendingInvitationCount] = useState(0);
 
+  const navigate = useNavigate();
+
   const handleOpenScanQR = () => setOpenDialogIndex(1);
   const handleCloseScanQR = () => {
     try {
@@ -148,6 +153,7 @@ const DashboardEmployee = () => {
     const fetchDataActiveInvtiation = async () => {
       try {
         const response = await getActiveInvitation(token as string);
+        console.log(response);
 
         let rows = response.collection.map((item: any) => ({
           id: item.id,
@@ -256,6 +262,7 @@ const DashboardEmployee = () => {
           null as any,
           null as any,
         );
+        console.log(response.collection);
 
         // // 🚀 Ambil semua invitation
         // const res = await getInvitation(token as string, startDate, endDate);
@@ -282,23 +289,23 @@ const DashboardEmployee = () => {
         const mappedData = response.collection.map((item: any) => {
           const trx = item.trx_visitor || {};
 
-          const visitor_period_start =
-            trx.visitor.visitor_period_start && trx.visitor.visitor_period_start !== 'Invalid date'
-              ? trx.visitor.visitor_period_start
-              : '-';
+          // const visitor_period_start =
+          //   trx.visitor.visitor_period_start && trx.visitor.visitor_period_start !== 'Invalid date'
+          //     ? trx.visitor.visitor_period_start
+          //     : '-';
 
-          const visitor_period_ends =
-            trx.visitor.visitor_period_end && trx.visitor.visitor_period_end !== 'Invalid date'
-              ? trx.visitor.visitor_period_end
-              : '-';
+          // const visitor_period_ends =
+          //   trx.visitor.visitor_period_end && trx.visitor.visitor_period_end !== 'Invalid date'
+          //     ? trx.visitor.visitor_period_end
+          //     : '-';
 
           return {
             id: item.id,
             visitor_name: item.visitor?.name || '-',
             site_place_name: trx.site_place_name || '-',
             agenda: trx.agenda || '-',
-            visitor_period_start,
-            visitor_period_ends,
+            visitor_period_start: trx.visitor_period_start || '-',
+            visitor_period_end: trx.visitor_period_end || '-',
             action_by: item.action_by || '-',
             status: item.action || '-',
           };
@@ -399,6 +406,14 @@ const DashboardEmployee = () => {
     setOpenDialogInvitation(true);
   };
 
+  const moveApproval = () => {
+    navigate('/employee/approval');
+  };
+
+  const moveInvitation = () => {
+    navigate('/employee/invitation');
+  };
+
   return (
     <PageContainer title="Dashboard Employee">
       <Grid container spacing={2} sx={{ mt: 0 }}>
@@ -412,19 +427,33 @@ const DashboardEmployee = () => {
               flexDirection: 'column',
               width: '100%',
               height: '100%',
+              justifyContent: 'space-between',
+              gap: 1,
             }}
           >
             <Button
               variant="contained"
               color="primary"
+              onClick={moveInvitation}
               sx={{
-                // flexGrow: 1, // ✅ isi seluruh tinggi Box
-                // height: '100%', // ✅ pastikan penuh secara eksplisit
-                borderRadius: 2,
+                borderRadius: 1,
                 fontSize: '1rem',
               }}
             >
-              + Send Invitation
+              <IconPlus size={20} />
+              Send Invitation
+            </Button>
+            <Button
+              variant="outlined"
+              color="primary"
+              sx={{
+                backgroundColor: 'white',
+                ':hover': { backgroundColor: 'rgba(232, 232, 232, 0.8)', color: 'primary.main' },
+              }}
+              onClick={moveApproval}
+            >
+              <IconCheck size={30} />
+              Approval
             </Button>
           </Box>
         </Grid>

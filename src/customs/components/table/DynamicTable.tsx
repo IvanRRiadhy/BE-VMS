@@ -87,6 +87,7 @@ type DynamicTableProps<
   stickyVisitorCount?: number;
   isHaveSearch?: boolean;
   isHaveSettingOperator?: boolean;
+  hasFetched?: boolean;
   isHaveFilter?: boolean;
   isHaveExportPdf?: boolean;
   isHaveView?: boolean;
@@ -193,6 +194,7 @@ export function DynamicTable<
   isHaveHeaderTitle = false,
   titleHeader,
   headerContent,
+  hasFetched = false,
   onAccept,
   isNoActionTableHead = false,
   onDenied,
@@ -1305,7 +1307,7 @@ export function DynamicTable<
                             columns.length + (isHaveChecked ? 1 : 0) + (isHaveAction ? 1 : 0) + 1
                           }
                         >
-                          <Skeleton height={30} />
+                          <Skeleton height={20} />
                         </TableCell>
                       </TableRow>
                     ))
@@ -1514,7 +1516,7 @@ export function DynamicTable<
                                   >
                                     Accept
                                   </Typography>
-                                ) : (
+                                ) : row[col] === 'Deny' ? (
                                   <Typography
                                     sx={{
                                       color: 'error.main',
@@ -1528,6 +1530,22 @@ export function DynamicTable<
                                   >
                                     Deny
                                   </Typography>
+                                ) : (
+                                  <>
+                                    <Typography
+                                      sx={{
+                                        color: '#fff',
+                                        fontWeight: 400,
+                                        backgroundColor: 'grey',
+                                        textAlign: 'center',
+                                        padding: 0.5,
+                                        borderRadius: '8px',
+                                      }}
+                                      variant="body2"
+                                    >
+                                      Pending
+                                    </Typography>
+                                  </>
                                 )
                               ) : (isHavePeriod && col === 'visitor_period_start') ||
                                 col === 'visitor_period_end' ? (
@@ -2064,8 +2082,7 @@ export function DynamicTable<
                                   {/* {isHaveSettingOperator && isOperator(row.group_id) && ( */}
                                   {isHaveSettingOperator &&
                                     (row.group_id?.toUpperCase() === GroupRoleId.OperatorAdmin ||
-                                      row.group_id?.toUpperCase() === GroupRoleId.OperatorVMS) && 
-                                      (
+                                      row.group_id?.toUpperCase() === GroupRoleId.OperatorVMS) && (
                                       <Tooltip title="Setting">
                                         <IconButton
                                           onClick={() => onSettingOperator?.(row)}

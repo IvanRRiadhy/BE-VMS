@@ -60,6 +60,8 @@ import { Navigate, Outlet } from 'react-router';
 import { useAuth } from './AuthProvider';
 import { useSession } from './SessionContext';
 import { CircularProgress } from '@mui/material';
+import image from 'src/assets/images/logos/BI_Logo.png';
+import { width } from '@mui/system';
 
 interface ProtectedRouteProps {
   allowedGroups?: string[];
@@ -72,7 +74,8 @@ export const ProtectedRoute = ({ allowedGroups }: ProtectedRouteProps) => {
   if (loading)
     return (
       <div>
-        <CircularProgress />
+        <CircularProgress color="primary" />
+        {/* <img src={image} style={{ width: 50, height: 50 }} /> */}
       </div>
     );
 

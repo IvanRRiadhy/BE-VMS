@@ -1,59 +1,122 @@
-import { BarChart } from '@mui/x-charts/BarChart';
-import { Box, Typography, GlobalStyles } from '@mui/material';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import Chart from 'react-apexcharts';
+import { Box, Typography } from '@mui/material';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { getTopVisitors } from 'src/customs/api/admin';
 import { useTranslation } from 'react-i18next';
-
-type PurposeData = {
-  label: string;
-  value: number;
-  color: string;
-};
-
-const COLORS = [
-  '#f97316', // orange
-  '#22c55e', // green
-  '#3b82f6', // blue
-  '#a855f7', // purple
-  '#ef4444', // red
-  '#14b8a6', // teal
-  '#eab308', // yellow
-];
+import { useSelector } from 'react-redux';
 
 const TopVisitor = () => {
   const { token } = useSession();
   const { t } = useTranslation();
-  const [data, setData] = useState<PurposeData[]>([]);
+  const [labels, setLabels] = useState<string[]>([]);
+  const [values, setValues] = useState<number[]>([]);
+  const { startDate, endDate } = useSelector((state: any) => state.dateRange);
 
   useEffect(() => {
     const fetchData = async () => {
       if (!token) return;
       try {
-        const today = new Date();
-        const end_date = today.toISOString().split('T')[0];
-        const start = new Date(today);
-        start.setDate(today.getDate() - 7);
-        const start_date = start.toISOString().split('T')[0];
+        // const today = new Date();
+        // const end_date = today.toISOString().split('T')[0];
+        // const start = new Date(today);
+        // start.setDate(today.getDate() - 7);
+        // const start_date = start.toISOString().split('T')[0];
 
-        const res = await getTopVisitors(token, start_date, end_date);
-
-        const mapped: PurposeData[] = res.collection.map(
-          (item: { name: string; count: number }, idx: number) => ({
-            label: item.name,
-            value: item.count,
-            color: COLORS[idx % COLORS.length],
-          }),
+        const res = await getTopVisitors(
+          token,
+          startDate.toLocaleDateString('en-CA'),
+          endDate.toLocaleDateString('en-CA'),
         );
 
-        setData(mapped);
+        const sliced = res.collection.slice(0, 10);
+        setLabels(sliced.map((item: any) => item.name));
+        setValues(sliced.map((item: any) => item.count));
       } catch (error) {
         console.error('Error fetching top visitors:', error);
       }
     };
 
     fetchData();
-  }, [token]);
+  }, [token, startDate, endDate]);
+
+  const options: ApexCharts.ApexOptions = {
+    chart: {
+      type: 'bar',
+      toolbar: { show: false },
+      animations: { enabled: true },
+    },
+    plotOptions: {
+      bar: {
+        borderRadius: 8, // 🎯 rounded top
+        borderRadiusApplication: 'end', // hanya bagian atas yang rounded
+        columnWidth: '50%',
+        distributed: false,
+        // endingShape: 'rounded',
+      },
+    },
+    dataLabels: {
+      enabled: false,
+    },
+    // xaxis: {
+    //   categories: labels,
+    //   axisBorder: { show: true },
+    //   axisTicks: { show: false },
+    //   labels: {
+    //     show: true,
+    //     rotate: 0,
+    //     style: { colors: '#6b7280', fontSize: '14px' },
+    //   },
+    // },
+    xaxis: {
+      categories: labels,
+      axisBorder: { show: true },
+      axisTicks: { show: false },
+      labels: {
+        show: true,
+        rotate: 0,
+        style: {
+          colors: '#000',
+          fontSize: '12px',
+        },
+        formatter: (value: string) => {
+          // 🧠 Potong label jadi 2 baris jika terlalu panjang
+          if (value.length > 5) {
+            const words = value.split(' ');
+            if (words.length > 1) {
+              // gabungkan kata jadi 2 baris
+              const half = Math.ceil(words.length / 2);
+              return words.slice(0, half).join(' ') + '\n' + words.slice(half).join(' ');
+            } else {
+              // potong berdasarkan panjang karakter
+              return value.slice(0, 5) + '\n' + value.slice(12);
+            }
+          }
+          return value;
+        },
+      },
+    },
+    yaxis: {
+      labels: {
+        style: { colors: '#6b7280', fontSize: '14px' },
+      },
+    },
+    grid: {
+      borderColor: '#e5e7eb',
+      strokeDashArray: 4,
+    },
+    colors: ['#3b82f6'], // 💙 biru seperti permintaanmu
+    tooltip: {
+      theme: 'light',
+    },
+  };
+
+  const series = [
+    {
+      name: t('Visitors'),
+      data: values,
+    },
+  ];
 
   return (
     <>
@@ -62,45 +125,14 @@ const TopVisitor = () => {
       </Typography>
       <Box
         sx={{
-          py: 2,
+          // py: 2,
           borderRadius: 3,
-          // border: '1px solid #d6d3d3ff',
           bgcolor: 'background.paper',
           boxShadow: 3,
-          height: {
-            xs: 420, // layar kecil → 420px
-            lg: 400, // layar medium ke atas → 400px
-          },
+          p: 2,
         }}
       >
-        <GlobalStyles
-          styles={{
-            '.MuiChartsAxis-line': { display: 'none' },
-            '.MuiChartsAxis-tick': { stroke: 'none !important' },
-          }}
-        />
-
-        {data.length > 0 && (
-          <BarChart
-            layout="horizontal"
-            height={350}
-            yAxis={[
-              {
-                scaleType: 'band',
-                data: data.map((d) => d.label),
-              },
-            ]}
-            // hack: 1 series per bar supaya bisa custom warna
-            series={[
-              {
-                data: data.map((d) => d.value),
-                color: '#3b82f6',
-              },
-            ]}
-            margin={{ top: 20, left: 140, right: 40, bottom: 20 }}
-            grid={{ horizontal: true, vertical: false }}
-          />
-        )}
+        <Chart options={options} series={series} type="bar" height={350} />
       </Box>
     </>
   );

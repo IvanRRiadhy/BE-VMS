@@ -229,3 +229,14 @@ export const createSubmitCompletePraMultiple = async (token: string, data: any):
     return Promise.reject(error);
   }
 };
+
+export const extendPeriodOperator = async (token: string, data: any): Promise<any> => {
+  try {
+    const response = await axiosInstance.put('/operator-invitation/extend-period', data, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    return Promise.reject(error);
+  }
+}

@@ -19,77 +19,12 @@ import { useTranslation } from 'react-i18next';
 import Calendar from 'src/customs/components/calendar/Calendar';
 import { addDays } from 'date-fns';
 import { useDispatch, useSelector } from 'react-redux';
-
-// Data journey visitor
-const visitorJourney = [
-  {
-    id: 1,
-    title: 'Arrived',
-    description: 'Visitor entered building',
-    time: '08:45',
-    color: 'primary',
-  },
-  {
-    id: 2,
-    title: 'Check-in',
-    description: 'Registered at front desk',
-    time: '08:50',
-    color: 'secondary',
-  },
-  { id: 3, title: 'Meeting', description: 'With HR Department', time: '09:15', color: 'success' },
-  { id: 4, title: 'Check-out', description: 'Left the building', time: '11:30', color: 'error' },
-];
-
-const headMapData = [
-  { id: 1, name: 'ABD GOFFAR', createdAt: '2025-06-12T08:30:00Z' },
-  { id: 2, name: 'ILHAM MAULANA', createdAt: '2025-06-13T14:45:00Z' },
-  { id: 3, name: 'ILHAM MAULANA', createdAt: '2025-06-13T14:30:00Z' },
-  { id: 4, name: 'ABD GOFFAR', createdAt: '2025-06-14T08:10:00Z' },
-  { id: 5, name: 'ABD GOFFAR', createdAt: '2025-06-14T08:50:00Z' },
-];
-
-const tableRowColumn = [
-  {
-    id: 1,
-    Name: 'Andi Prasetyo',
-    'Visit Time': '2025-06-13T09:00:00',
-    Purpose: 'Meeting',
-    'Purpose Person': 'Bapak Joko',
-  },
-  {
-    id: 2,
-    Name: 'Siti Aminah',
-    'Visit Time': '2025-06-13T10:30:00',
-    Purpose: 'Interview',
-    'Purpose Person': 'Ibu Rina',
-  },
-  {
-    id: 3,
-    Name: 'Budi Santoso',
-    'Visit Time': '2025-06-13T11:15:00',
-    Purpose: 'Pengantaran Dokumen',
-    'Purpose Person': 'Pak Dedi',
-  },
-  {
-    id: 4,
-    Name: 'Rina Marlina',
-    'Visit Time': '2025-06-13T13:45:00',
-    Purpose: 'Audit',
-    'Purpose Person': 'Bu Intan',
-  },
-  {
-    id: 5,
-    Name: 'Fajar Nugroho',
-    'Visit Time': '2025-06-13T15:00:00',
-    Purpose: 'Maintenance',
-    'purpose Person': 'Pak Wahyu',
-  },
-];  
+import { setDateRange } from 'src/store/apps/Daterange/dateRangeSlice';
 
 const Content = () => {
   const dispatch = useDispatch();
   // const { startDate, endDate, isManual } = useSelector((state: RootState) => state.dateRange);
-  const { startDate, endDate, isManual } = useSelector((state: any) => state.dateRange);
+  const { startDate, endDate } = useSelector((state: any) => state.dateRange);
 
   const { token } = useSession();
   const { t } = useTranslation();
@@ -149,13 +84,13 @@ const Content = () => {
   const handleClose = () => setAnchorEl(null);
   const open = Boolean(anchorEl);
 
-  const [dateRange, setDateRange] = useState([
-    {
-      startDate: new Date(), // hari ini
-      endDate: addDays(new Date(), 7), // 7 hari ke depan
-      key: 'selection',
-    },
-  ]);
+  // const [dateRange, setDateRange] = useState([
+  //   {
+  //     startDate: new Date(), // hari ini
+  //     endDate: addDays(new Date(), 7), // 7 hari ke depan
+  //     key: 'selection',
+  //   },
+  // ]);
 
   return (
     <PageContainer title="Dashboard" description="this is Dashboard page">
@@ -183,22 +118,34 @@ const Content = () => {
               {`${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`}
             </Button>
 
-            <Button size="small" variant="contained" color="error" startIcon={<IconDownload />}>
+            <Button
+              size="small"
+              variant="contained"
+              color="error"
+              startIcon={<IconDownload />}
+              onClick={handleExportPdf}
+            >
               Export
             </Button>
 
             <Drawer open={open} anchor="right" onClose={handleClose}>
-              <Calendar
-                onChange={(selection: any) => {
-                  setDateRange([
-                    {
-                      startDate: selection.startDate,
-                      endDate: selection.endDate,
-                      key: 'selection',
-                    },
-                  ]);
-                }}
-              />
+              <Box sx={{ p: 2 }}>
+                <Typography variant="h6" mb={1}>
+                  Select Date Range
+                </Typography>
+                <Calendar
+                  value={{ startDate, endDate }} // ✅ biar Calendar tahu tanggal aktif saat ini
+                  onChange={(selection: any) => {
+                    dispatch(
+                      setDateRange({
+                        startDate: selection.startDate,
+                        endDate: selection.endDate,
+                      }),
+                    );
+                    handleClose();
+                  }}
+                />
+              </Box>
             </Drawer>
           </Grid>
         </Grid>
@@ -207,7 +154,7 @@ const Content = () => {
           <Grid container spacing={3}>
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
-              <TopCards token={token} />
+              <TopCards />
             </Grid>
             {/* column */}
             <Grid container mt={1} size={{ xs: 12, lg: 12 }}>

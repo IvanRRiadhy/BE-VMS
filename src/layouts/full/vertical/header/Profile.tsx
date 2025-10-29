@@ -36,13 +36,17 @@ const Profile = () => {
   const { token, clearToken } = useSession();
 
   const handleLogout = useCallback(() => {
-    // Bersihkan storage
-    handleClose2();
-    clearToken();
-    // Redirect ke login page
-    setTimeout(() => {
-      navigate('/', { replace: true });
-    }, 200); //
+    handleClose2(); // Tutup menu dropdown
+    clearToken(); // Hapus session/token
+
+    localStorage.clear();
+    sessionStorage.clear();
+
+    // 💾 Simpan pesan ke sessionStorage
+    sessionStorage.setItem('logoutMsg', 'You have been logged out successfully.');
+
+    // 🚪 Redirect ke halaman login
+    navigate('/', { replace: true });
   }, [navigate, clearToken]);
 
   useEffect(() => {

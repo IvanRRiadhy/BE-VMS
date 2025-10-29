@@ -1725,14 +1725,24 @@ const FormSite = ({
                     </Table>
                   </TableContainer>
                 </DragDropContext>
-                <MuiButton
+                {/* <MuiButton
                   size="small"
                   onClick={() => handleAddDetail('parking')}
                   variant="contained"
                   color="primary"
                 >
                   Add New
-                </MuiButton>
+                </MuiButton> */}
+                {(!formData.parking || formData.parking.length === 0) && (
+                  <MuiButton
+                    size="small"
+                    onClick={() => handleAddDetail('parking')}
+                    variant="contained"
+                    color="primary"
+                  >
+                    Add New
+                  </MuiButton>
+                )}
               </Box>
             </Paper>
           </Grid>
@@ -1780,14 +1790,16 @@ const FormSite = ({
                     </Table>
                   </TableContainer>
                 </DragDropContext>
-                <MuiButton
-                  size="small"
-                  onClick={() => handleAddDetail('tracking')}
-                  variant="contained"
-                  color="primary"
-                >
-                  Add New
-                </MuiButton>
+                {(!formData.tracking || formData.tracking.length === 0) && (
+                  <MuiButton
+                    size="small"
+                    onClick={() => handleAddDetail('tracking')}
+                    variant="contained"
+                    color="primary"
+                  >
+                    Add New
+                  </MuiButton>
+                )}
               </Box>
             </Paper>
           </Grid>

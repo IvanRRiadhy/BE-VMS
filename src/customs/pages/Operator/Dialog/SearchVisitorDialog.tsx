@@ -41,6 +41,7 @@ const SearchVisitorDialog: React.FC<Props> = ({ open, onClose, onSearch }) => {
     try {
       const res = await getInvitationCode(token as string, code.trim());
       const data = res.collection?.data ?? [];
+      console.log('data', data);
 
       if (data.length === 0) {
         setErrorMsg('Visitor code not found.');
@@ -70,14 +71,14 @@ const SearchVisitorDialog: React.FC<Props> = ({ open, onClose, onSearch }) => {
       fullWidth
       maxWidth="sm"
       // bisa aktifkan kalau mau di atas, bukan tengah
-      // PaperProps={{
-      //   sx: {
-      //     position: 'absolute',
-      //     top: '10%',
-      //     left: '50%',
-      //     transform: 'translate(-50%, 0)',
-      //   },
-      // }}
+      PaperProps={{
+        sx: {
+          position: 'absolute',
+          top: '15%',
+          left: '50%',
+          transform: 'translate(-50%, 0)',
+        },
+      }}
     >
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <IconSearch size={20} stroke={1.5} />

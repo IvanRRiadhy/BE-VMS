@@ -80,6 +80,13 @@ type ImportErrorRow = {
   };
 };
 
+const typeMap: Record<string, number> = {
+  'Non Access Card': 0,
+  RFID: 1,
+  'RFID Card': 1,
+  BLE: 2,
+};
+
 const Content = () => {
   const { token } = useSession();
 
@@ -116,7 +123,7 @@ const Content = () => {
     {
       title: 'Total Card',
       icon: IconCards,
-      subTitle: `${totalFilteredRecords}`,
+      subTitle: `${totalRecords}`,
       subTitleSetting: tableVisitorCard.length,
       color: 'none',
     },
@@ -182,7 +189,7 @@ const Content = () => {
             employee_name: x.employee_name,
             type: x.type,
             site_name: x.site_name,
-            // registered_site: x.registered_site,
+            registered_site: x.registered_site,
             is_used: x.is_used,
             is_employee_used: x.is_employee_used,
             is_multi_site: x.is_multi_site,
@@ -313,7 +320,7 @@ const Content = () => {
     const parsedData = {
       ...existingData,
       registered_site: existingData.registered_site ?? '', // simpan id string
-      type: Number(existingData.type), // Convert to number
+      type: typeMap[existingData.type] ?? 0, // Convert to number
     } as CreateVisitorCardRequest;
 
     setEdittingId(id);

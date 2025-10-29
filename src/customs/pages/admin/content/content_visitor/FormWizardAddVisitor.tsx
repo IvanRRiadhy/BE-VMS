@@ -4098,7 +4098,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       const tz =
         moment.tz?.guess?.() || Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Jakarta';
 
-      console.log('🕒 Final detected timezone:', tz);
+      // console.log('🕒 Final detected timezone:', tz);
 
       // 🧩 Helper: Format Field
       const mapField = (field: FormVisitor, sortIdx: number) => {
@@ -4137,7 +4137,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         switch (base.field_type) {
           case 9: // Date/Datetime
             if (typeof field.answer_datetime === 'string') {
-              base.answer_datetime = dayjs(field.answer_datetime).utc().toISOString();
+              // base.answer_datetime = dayjs(field.answer_datetime).utc().toISOString();
+              base.answer_datetime = dayjs(field.answer_datetime)
+                .utc()
+                .format('YYYY-MM-DDTHH:mm:ss');
             }
             break;
 
@@ -4294,8 +4297,13 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         // Submit ke endpoint single
         const submitFn = TYPE_REGISTERED === 0 ? createPraRegister : createVisitor;
         const backendResponse = await submitFn(token, parsed);
-        console.log('✅ Visitor created:', backendResponse);
-        toast('Visitor created successfully.', 'success');
+        console.log('Visitor created:', backendResponse);
+        const successMessage =
+          TYPE_REGISTERED === 0
+            ? 'Pre-registration created successfully.'
+            : 'Invitation Visitor created successfully.';
+
+        toast(successMessage, 'success');
 
         // Mapping hasil visitor
         const visitors = backendResponse.collection?.visitors || [];
@@ -4333,10 +4341,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         if (TYPE_REGISTERED !== 0) {
           setNextDialogOpen(true);
         }
-      }, 700);
+      }, 500);
 
-      localStorage.removeItem('selfOnlyOverrides');
-      setSelfOnlyOverrides({});
+      // localStorage.removeItem('selfOnlyOverrides');
+      // setSelfOnlyOverrides({});
     } catch (err: any) {
       setTimeout(() => {
         setLoading(false);

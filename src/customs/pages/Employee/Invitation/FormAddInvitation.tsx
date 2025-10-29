@@ -4066,29 +4066,29 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         toast('Group visitor created successfully.', 'success');
         const visitors = backendResponse.collection?.visitors || [];
 
-        const availableCards = backendResponse.collection?.available_cards || [];
-        setAvailableCards(availableCards);
+        // const availableCards = backendResponse.collection?.available_cards || [];
+        // setAvailableCards(availableCards);
 
-        setRows(
-          visitors.map((v: any, i: number) => ({
-            id: i + 1,
-            visitor: v.visitor?.name,
-            trx_visitor_id: v.visitor_id ?? null,
-            card: null,
-          })),
-        );
+        // setRows(
+        //   visitors.map((v: any, i: number) => ({
+        //     id: i + 1,
+        //     visitor: v.visitor?.name,
+        //     trx_visitor_id: v.visitor_id ?? null,
+        //     card: null,
+        //   })),
+        // );
 
-        // Cek akses site
-        const siteAnswer = getSiteFromForm(false, sectionsData, dataVisitor);
-        if (siteAnswer) {
-          try {
-            const res = await getGrantAccess(token, siteAnswer);
-            setAccessData(res.collection ?? []);
-            console.log('✅ Grant access by site_place:', siteAnswer, res.collection);
-          } catch (err) {
-            console.error('❌ Failed to fetch grant access:', err);
-          }
-        }
+        // // Cek akses site
+        // const siteAnswer = getSiteFromForm(false, sectionsData, dataVisitor);
+        // if (siteAnswer) {
+        //   try {
+        //     const res = await getGrantAccess(token, siteAnswer);
+        //     setAccessData(res.collection ?? []);
+        //     console.log('✅ Grant access by site_place:', siteAnswer, res.collection);
+        //   } catch (err) {
+        //     console.error('❌ Failed to fetch grant access:', err);
+        //   }
+        // }
       }
 
       // 🟦 SINGLE MODE
@@ -4155,8 +4155,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       setTimeout(() => {
         setLoading(false);
         onSuccess?.();
-        setNextDialogOpen(true);
-      }, 1500);
+        // setNextDialogOpen(true);
+      }, 1000);
 
       localStorage.removeItem('selfOnlyOverrides');
       setSelfOnlyOverrides({});

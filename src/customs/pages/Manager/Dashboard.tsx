@@ -23,6 +23,7 @@ import {
   IconCalendarTime,
   IconCalendarUp,
   IconCar,
+  IconCheck,
   IconCheckupList,
   IconCircleOff,
   IconForbid2,
@@ -36,6 +37,7 @@ import {
   IconMapPin,
   IconNumbers,
   IconQrcode,
+  IconReport,
   IconTicket,
   IconUser,
   IconUsersGroup,
@@ -62,6 +64,7 @@ import Heatmap from './Heatmap';
 import PieCharts from './PieCharts';
 import { getApproval } from 'src/customs/api/employee';
 import dayjs from 'dayjs';
+import { useNavigate } from 'react-router';
 // import OperatorPieChart from './Charts/OperatorPieChart';
 
 const DashboardEmployee = () => {
@@ -73,44 +76,6 @@ const DashboardEmployee = () => {
   ];
 
   const { token } = useSession();
-
-  const tableRowColumn = [
-    {
-      id: 1,
-      Name: 'Andi Prasetyo',
-      'Visit Time': '2025-06-13T09:00:00',
-      Purpose: 'Meeting',
-      'Purpose Person': 'Bapak Joko',
-    },
-    {
-      id: 2,
-      Name: 'Siti Aminah',
-      'Visit Time': '2025-06-13T10:30:00',
-      Purpose: 'Interview',
-      'Purpose Person': 'Ibu Rina',
-    },
-    {
-      id: 3,
-      Name: 'Budi Santoso',
-      'Visit Time': '2025-06-13T11:15:00',
-      Purpose: 'Pengantaran Dokumen',
-      'Purpose Person': 'Pak Dedi',
-    },
-    {
-      id: 4,
-      Name: 'Rina Marlina',
-      'Visit Time': '2025-06-13T13:45:00',
-      Purpose: 'Audit',
-      'Purpose Person': 'Bu Intan',
-    },
-    {
-      id: 5,
-      Name: 'Fajar Nugroho',
-      'Visit Time': '2025-06-13T15:00:00',
-      Purpose: 'Maintenance',
-      'Purpose Person': 'Pak Wahyu',
-    },
-  ];
 
   // ✅ state untuk buka tutup dialog QR
   const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
@@ -124,6 +89,8 @@ const DashboardEmployee = () => {
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
   const [torchOn, setTorchOn] = useState(false);
   const scanContainerRef = useRef<HTMLDivElement | null>(null);
+
+  const navigate = useNavigate();
 
   const handleOpenScanQR = () => setOpenDialogIndex(1);
   const handleCloseScanQR = () => {
@@ -167,30 +134,50 @@ const DashboardEmployee = () => {
           null as any,
           null as any,
         );
+        console.log(response.collection);
 
-        console.log('res', response);
+        // // 🚀 Ambil semua invitation
+        // const res = await getInvitation(token as string, startDate, endDate);
 
-        // 🧩 Mapping data ke bentuk siap tampil
+        // const invitationData = res?.collection ?? [];
+        // console.log('Invitation data:', invitationData);
+
+        // // 🧩 Simpan semua data ke state utama
+        // setInvitationList(invitationData);
+
+        // // 🔍 Filter invitation yang belum preregister (is_pregister_done = null)
+        // const notDoneInvitations = invitationData.filter(
+        //   (inv: any) => inv.is_praregister_done === null,
+        // );
+
+        // // ✅ Ambil invitation terakhir (index terbesar)
+        // if (notDoneInvitations.length > 0) {
+        //   const latestIndex = notDoneInvitations.length - 1;
+        //   setAlertInvitationData(notDoneInvitations[latestIndex]);
+        //   setOpenAlertInvitation(true);
+        // }
+
+        // 🧩 Mapping data approval untuk tabel
         const mappedData = response.collection.map((item: any) => {
           const trx = item.trx_visitor || {};
 
-          const visitor_period_start =
-            trx.visitor.visitor_period_start && trx.visitor.visitor_period_start !== 'Invalid date'
-              ? trx.visitor.visitor_period_start
-              : '-';
+          // const visitor_period_start =
+          //   trx.visitor.visitor_period_start && trx.visitor.visitor_period_start !== 'Invalid date'
+          //     ? trx.visitor.visitor_period_start
+          //     : '-';
 
-          const visitor_period_end =
-            trx.visitor.visitor_period_end && trx.visitor.visitor_period_end !== 'Invalid date'
-              ? trx.visitor.visitor_period_end
-              : '-';
+          // const visitor_period_ends =
+          //   trx.visitor.visitor_period_end && trx.visitor.visitor_period_end !== 'Invalid date'
+          //     ? trx.visitor.visitor_period_end
+          //     : '-';
 
           return {
             id: item.id,
             visitor_name: item.visitor?.name || '-',
             site_place_name: trx.site_place_name || '-',
             agenda: trx.agenda || '-',
-            visitor_period_start,
-            visitor_period_end,
+            visitor_period_start: trx.visitor_period_start || '-',
+            visitor_period_end: trx.visitor_period_end || '-',
             action_by: item.action_by || '-',
             status: item.action || '-',
           };
@@ -207,6 +194,14 @@ const DashboardEmployee = () => {
     fetchData();
   }, [token]);
 
+  const moveApproval = () => {
+    navigate('/manager/approval');
+  };
+
+  const moveReport = () => {
+    navigate('/manager/report');
+  };
+
   return (
     <PageContainer title="Dashboard Operator">
       <Grid container spacing={2} sx={{ mt: 0 }}>
@@ -214,21 +209,37 @@ const DashboardEmployee = () => {
           <TopCard items={cards} size={{ xs: 12, lg: 3 }} />
         </Grid>
         <Grid size={{ xs: 12, lg: 3 }}>
-          <Box display={'flex'} flexDirection={'column'} width={'100%'} gap={2}>
-            <Button variant="contained" color="primary">
-              + Send Invitation
+          <Box display={'flex'} flexDirection={'column'} width={'100%'} gap={1}>
+            {/* <Button variant="contained" color="primary" onClick={moveInvitation}>
+              
+              
+              Send Invitation
+            </Button> */}
+            <Button
+              variant="contained"
+              color="primary"
+              // onClick={handleOpenScanQR}
+              onClick={moveApproval}
+              // sx={{
+              //   backgroundColor: 'white',
+              //   ':hover': { backgroundColor: 'rgba(232, 232, 232, 0.8)', color: 'primary.main' },
+              // }}
+            >
+              <IconCheck size={30} />
+              Approval
             </Button>
             <Button
               variant="outlined"
               color="primary"
-              onClick={handleOpenScanQR}
+              // onClick={handleOpenScanQR}
+              onClick={moveReport}
               sx={{
                 backgroundColor: 'white',
                 ':hover': { backgroundColor: 'rgba(232, 232, 232, 0.8)', color: 'primary.main' },
               }}
             >
-              <IconQrcode size={30} />
-              Scan QR
+              <IconReport size={30} />
+              Report
             </Button>
           </Box>
         </Grid>
@@ -334,7 +345,7 @@ const DashboardEmployee = () => {
             height={420}
             isHavePagination
             overflowX="auto"
-            data={tableRowColumn}
+            data={[]}
             isHaveChecked={false}
             isHaveAction={false}
             isHaveHeaderTitle

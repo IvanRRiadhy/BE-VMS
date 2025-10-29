@@ -18,13 +18,14 @@ import {
   TextField,
   IconButton,
   Backdrop,
+  Icon,
 } from '@mui/material';
 import { Grid2 as Grid } from '@mui/material';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import Logo from 'src/customs/components/logo/Logo';
-import { IconMan, IconTrash, IconWoman, IconX } from '@tabler/icons-react';
+import { IconGenderTransgender, IconMan, IconTrash, IconWoman, IconX } from '@tabler/icons-react';
 import { ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { SubmitPraForm } from 'src/customs/api/users';
 import dayjs from 'dayjs';
@@ -918,8 +919,11 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                   <ToggleButton value="1">
                     <IconMan size={16} style={{ marginRight: 6 }} /> Male
                   </ToggleButton>
-                  <ToggleButton value="2">
+                  <ToggleButton value="0">
                     <IconWoman size={16} style={{ marginRight: 6 }} /> Female
+                  </ToggleButton>
+                  <ToggleButton value="2">
+                    <IconGenderTransgender size={16} style={{ marginRight: 6 }} /> Prefer not to say
                   </ToggleButton>
                 </ToggleButtonGroup>
               )}
@@ -1107,9 +1111,9 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
               remarks: f.remarks,
               multiple_option_fields: f.multiple_option_fields ?? [],
               visitor_form_type: f.visitor_form_type ?? 1,
-              answer_text: '',
+              answer_text: null,
               answer_datetime: null,
-              answer_file: '',
+              answer_file: null,
             };
 
             // mapping per tipe
@@ -1131,7 +1135,6 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
     ],
   });
 
-
   const handleSubmit = async (e: any) => {
     e.preventDefault();
     if (!invitationData) return;
@@ -1140,9 +1143,8 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
       setSubmitting(true); // 🔹 tampilkan backdrop internal
 
       const payload = transformToSubmitPayload(invitationData);
+      // console.log('Payload response:', JSON.stringify(payload, null, 2));
       const res = await createSubmitCompletePra(token as string, payload);
-
-      console.log('Payload response:', res);
 
       const ok =
         res &&

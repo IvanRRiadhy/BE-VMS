@@ -229,7 +229,7 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
       <Backdrop
         open={loading}
         sx={{
-          color: 'primary',
+          color: '#fff',
           zIndex: (theme) => theme.zIndex.drawer + 1, // di atas drawer & dialog
         }}
       >

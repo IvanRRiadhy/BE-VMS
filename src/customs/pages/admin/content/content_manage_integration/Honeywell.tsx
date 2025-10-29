@@ -934,12 +934,19 @@ const Honeywell = ({ id }: { id: string }) => {
         <Divider />
         <DialogContent sx={{ pt: 2 }}>
           {!companyForm ? (
-            <Box sx={{ py: 2 }}>Loading…</Box>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+                py: 4,
+              }}
+            >
+              <CircularProgress size={36} thickness={4} />
+            </Box>
           ) : (
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-              {/* === Editable only === */}
-
-              {/* === Editable only === */}
               <Box>
                 <Box
                   sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
@@ -1099,7 +1106,17 @@ const Honeywell = ({ id }: { id: string }) => {
         <Divider />
         <DialogContent sx={{ pt: 2 }}>
           {!badgeTypeForm ? (
-            <Box sx={{ py: 2 }}>Loading…</Box>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+                py: 4,
+              }}
+            >
+              <CircularProgress size={36} thickness={4} />
+            </Box>
           ) : (
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
               {/* === Editable === */}
@@ -1243,7 +1260,17 @@ const Honeywell = ({ id }: { id: string }) => {
         <Divider />
         <DialogContent sx={{ pt: 2 }}>
           {!clearCodeForm ? (
-            <Box sx={{ py: 2 }}>Loading…</Box>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+                py: 4,
+              }}
+            >
+              <CircularProgress size={36} thickness={4} />
+            </Box>
           ) : (
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
               {/* === Editable === */}

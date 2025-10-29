@@ -45,7 +45,7 @@ const Approval = () => {
   const [totalRecords, setTotalRecords] = useState(0);
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-    const [loadingAction, setLoadingAction] = useState(false);
+  const [loadingAction, setLoadingAction] = useState(false);
   const cards = [
     {
       title: 'Total Approval',
@@ -95,8 +95,8 @@ const Approval = () => {
             const trx = item.trx_visitor || {};
 
             let status = '';
-            if (item.is_action === true) status = 'Accept';
-            else if (item.is_action === false) status = 'Deny';
+            if (item.action === 'Accept') status = 'Accept';
+            else if (item.action === 'Deny') status = 'Deny';
             else status = '-';
 
             return {
@@ -104,10 +104,10 @@ const Approval = () => {
               visitor_name: trx.visitor?.name || '-',
               site_place_name: trx.site_place_name || '-',
               agenda: trx.agenda || '-',
-              visitor_period_start: trx.visitor.visitor_period_start || '-',
-              visitor_period_end: trx.visitor.visitor_period_end || '-',
+              visitor_period_start: trx.visitor_period_start || '-',
+              visitor_period_end: trx.visitor_period_end || '-',
               action_by: item.action_by || '-',
-              status: item.action || false,
+              status: item.action,
             };
           }),
         );
@@ -342,7 +342,7 @@ const Approval = () => {
           zIndex: (theme) => theme.zIndex.drawer + 1, // di atas drawer & dialog
         }}
       >
-        <CircularProgress color="primary" />
+        <CircularProgress color="inherit" />
       </Backdrop>
     </>
   );

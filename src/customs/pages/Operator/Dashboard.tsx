@@ -1243,17 +1243,18 @@ const DashboardOperator = () => {
       setSnackbarType('success');
       setSnackbarOpen(true);
     } catch (err: any) {
-      console.error('❌ Access Action Error:', err);
-      let backendMsg =
-        err?.response?.data?.message ||
-        err?.response?.data?.error ||
-        (Array.isArray(err?.response?.data?.errors) ? err.response.data.errors.join('\n') : null) ||
-        err?.message ||
-        'Unknown error occurred.';
+     console.error('❌ Access Action Error:', err);
+     const backendMsg =
+       err?.response?.data?.collection?.[0] ||
+       err?.response?.data?.msg ||
+       err?.response?.data?.message ||
+       err?.response?.data?.error ||
+       err?.message ||
+       'Unknown error occurred.';
 
-      setSnackbarMsg(`${backendMsg}`);
-      setSnackbarType('error');
-      setSnackbarOpen(true);
+     setSnackbarMsg(`${backendMsg}`);
+     setSnackbarType('error');
+     setSnackbarOpen(true);
     } finally {
       setLoadingAccess(false);
     }
@@ -2913,6 +2914,7 @@ const DashboardOperator = () => {
               zIndex: 99999,
               position: 'fixed',
               margin: '0 auto',
+              color: 'primary'
             }}
             open={loadingAccess}
           >

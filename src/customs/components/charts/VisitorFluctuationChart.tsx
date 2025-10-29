@@ -4,6 +4,7 @@ import { Box, Typography } from '@mui/material';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { getVisitorChart } from 'src/customs/api/admin';
 import { t } from 'i18next';
+import { useSelector } from 'react-redux';
 type VisitorSeries = {
   id: string;
   label: string;
@@ -15,6 +16,7 @@ const VisitorFluctuationChart = () => {
   const { token } = useSession();
   const [dates, setDates] = useState<number[]>([]);
   const [series, setSeries] = useState<VisitorSeries[]>([]);
+  const { startDate, endDate } = useSelector((state: any) => state.dateRange);
 
   // useEffect(() => {
   //   const fetchData = async () => {
@@ -73,13 +75,17 @@ const VisitorFluctuationChart = () => {
       if (!token) return;
 
       try {
-        const today = new Date();
-        const end_date = today.toISOString().split('T')[0];
-        const start = new Date(today);
-        start.setDate(today.getDate() - 7);
-        const start_date = start.toISOString().split('T')[0];
+        // const today = new Date();
+        // const end_date = today.toISOString().split('T')[0];
+        // const start = new Date(today);
+        // start.setDate(today.getDate() - 7);
+        // const start_date = start.toISOString().split('T')[0];
 
-        const res = await getVisitorChart(token, start_date, end_date);
+        const res = await getVisitorChart(
+          token,
+          startDate.toLocaleDateString('en-CA'),
+          endDate.toLocaleDateString('en-CA'),
+        );
         const rows = res?.collection ?? [];
 
         // 🔹 Ambil tanggal
@@ -108,7 +114,7 @@ const VisitorFluctuationChart = () => {
     };
 
     fetchData();
-  }, [token]);
+  }, [token, startDate, endDate]);
 
   return (
     <>
