@@ -64,6 +64,7 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import moment from 'moment-timezone';
 import dayjs, { Dayjs } from 'dayjs';
 
 import { addDays } from 'date-fns';
@@ -166,8 +167,9 @@ const Dashboard = () => {
         }));
         setActiveVisitData(response ?? []);
         const res2 = await getAccessPass(token as string);
+        console.log('res', res2);
         setActiveAccessPass(res2);
-        console.log('res2: ', res2);
+        // console.log('res2: ', res2);
       } catch (e) {
         console.error(e);
       }
@@ -192,41 +194,13 @@ const Dashboard = () => {
   const handleClose = () => setAnchorEl(null);
   const open = Boolean(anchorEl);
 
-  const formatVisitorPeriodWithTZ = (
-    startUtc: string | null | undefined,
-    endUtc: string | null | undefined,
-    tz: string | null | undefined,
-    locale: string = 'en-US',
-  ): string => {
-    if (!startUtc || !endUtc) return '-';
+  const formatVisitorPeriodLocal = (start?: string, end?: string) => {
+    if (!start || !end) return '-';
 
-    try {
-      const start = new Date(startUtc);
-      const end = new Date(endUtc);
+    const startLocal = moment(start).local().format('DD MMM YYYY, HH:mm');
+    const endLocal = moment(end).local().format('DD MMM YYYY, HH:mm');
 
-      const dateFormatter = new Intl.DateTimeFormat(locale, {
-        weekday: 'short',
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-        timeZone: tz ?? 'UTC',
-      });
-
-      const timeFormatter = new Intl.DateTimeFormat(locale, {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-        timeZone: tz ?? 'UTC',
-      });
-
-      const datePart = dateFormatter.format(start); // e.g. "Thu, 09 Oct 2025"
-      const startTime = timeFormatter.format(start); // e.g. "17:00"
-      const endTime = timeFormatter.format(end); // e.g. "18:00"
-
-      return `${datePart} | ${startTime} - ${endTime}`;
-    } catch {
-      return '-';
-    }
+    return `${startLocal} - ${endLocal}`;
   };
 
   return (
@@ -330,6 +304,7 @@ const Dashboard = () => {
             isHaveExportPdf={false}
             isHaveExportXlf={false}
             isHaveHeaderTitle={true}
+            isHavePeriod={true}
             titleHeader="Active Visit"
             // defaultRowsPerPage={rowsPerPage}
             rowsPerPageOptions={[5, 10, 20, 50, 100]}
@@ -584,7 +559,7 @@ const Dashboard = () => {
 
       {activeAccessPass && (
         <Dialog open={openAccess} onClose={handleCloseAccess} fullWidth maxWidth="sm">
-          <DialogTitle textAlign={'center'} sx={{ padding: '30px 0' }}>
+          <DialogTitle textAlign={'center'} sx={{ p: 2 }}>
             Your Access Pass
           </DialogTitle>
           <IconButton
@@ -599,7 +574,7 @@ const Dashboard = () => {
           >
             <IconX />
           </IconButton>
-          <DialogContent sx={{ paddingTop: 0 }}>
+          <DialogContent sx={{ paddingTop: 2 }} dividers>
             <Box
               display="flex"
               flexDirection="row"
@@ -610,13 +585,12 @@ const Dashboard = () => {
                 <Avatar />
                 <Box>
                   <Typography variant="body1" fontWeight="bold">
-                    {activeAccessPass.fullname || '- '}
+                    {activeAccessPass.group_name || '- '}
                   </Typography>
                   <Typography variant="body2" color="grey">
-                    {formatVisitorPeriodWithTZ(
-                      activeAccessPass.visitor_period_start,
-                      activeAccessPass.visitor_period_end,
-                      activeAccessPass.tz,
+                    {formatVisitorPeriodLocal(
+                      activeAccessPass.visitor_period_start as string,
+                      activeAccessPass.visitor_period_end as string,
                     )}
                   </Typography>
                 </Box>
@@ -670,6 +644,22 @@ const Dashboard = () => {
                   </Typography>
                   <Typography variant="body1" fontWeight="bold">
                     {activeAccessPass.parking_slot || '-'}
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
+                  <Typography variant="body1" color="textSecondary" fontWeight={500}>
+                    Host
+                  </Typography>
+                  <Typography variant="body1" fontWeight="bold">
+                    {activeAccessPass.host_name || '-'}
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
+                  <Typography variant="body1" color="textSecondary" fontWeight={500}>
+                    Group Code
+                  </Typography>
+                  <Typography variant="body1" fontWeight="bold">
+                    {activeAccessPass.group_code || '-'}
                   </Typography>
                 </Grid>
               </Grid>

@@ -7,6 +7,7 @@ import { getHeatmaps } from 'src/customs/api/admin';
 import { Typography } from '@mui/material';
 import { Box } from '@mui/system';
 import { t } from 'i18next';
+import { useSelector } from 'react-redux';
 
 // ✅ aktifkan modul heatmap
 HC_heatmap(Highcharts);
@@ -15,6 +16,7 @@ const VisitorHeatMap = () => {
   const { token } = useSession();
   const [heatmapData, setHeatmapData] = useState<any[]>([]);
   const [hours, setHours] = useState<string[]>([]);
+  const { startDate, endDate } = useSelector((state: any) => state.dateRange);
 
   const generateHourLabels = () =>
     Array.from({ length: 24 }, (_, i) => {
@@ -26,14 +28,14 @@ const VisitorHeatMap = () => {
   useEffect(() => {
     const fetchHeatmap = async () => {
       try {
-        const end = new Date();
-        const start = new Date();
-        start.setDate(end.getDate() - 6);
+        // const end = new Date();
+        // const start = new Date();
+        // start.setDate(end.getDate() - 6);
 
         const res = await getHeatmaps(
           token!,
-          start.toISOString().split('T')[0],
-          end.toISOString().split('T')[0],
+          startDate.toLocaleDateString('en-CA'),
+          endDate.toLocaleDateString('en-CA'),
         );
 
         const collection = res.collection ?? [];
@@ -58,7 +60,7 @@ const VisitorHeatMap = () => {
     };
 
     if (token) fetchHeatmap();
-  }, [token]);
+  }, [token, startDate, endDate]);
 
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 

@@ -29,7 +29,7 @@ const Heatmap = () => {
     const dummy: any[] = [];
     for (let day = 0; day < 7; day++) {
       for (let hour = 0; hour < 24; hour++) {
-        const value = Math.floor(Math.random() * 30); // acak 0–30 pengunjung
+        const value = 0; // acak 0–30 pengunjung
         dummy.push([hour, day, value]);
       }
     }
@@ -40,9 +40,12 @@ const Heatmap = () => {
   const options: Highcharts.Options = {
     chart: {
       type: 'heatmap',
-      marginTop: 40,
-      marginBottom: 80,
+      // marginTop: 40,
+      // marginBottom: 50,
       plotBorderWidth: 1,
+      style: {
+        height: 420,
+      },
     },
 
     title: { text: 'Heatmap', align: 'center' },
@@ -106,12 +109,16 @@ const Heatmap = () => {
         sx={{
           borderRadius: 3,
           overflow: 'hidden',
-          boxShadow: 3,
-          border: '1px solid #d6d3d3ff',
+          // boxShadow: 3,
+          // border: '1px solid #d6d3d3ff',
           height: '100%',
         }}
       >
-        <HighchartsReact highcharts={Highcharts} options={options} />
+        <HighchartsReact
+          highcharts={Highcharts}
+          options={options}
+          // containerProps={{ style: { width: '100%', height: '100%' } }}
+        />
       </Box>
     </>
   );

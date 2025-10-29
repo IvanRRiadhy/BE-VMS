@@ -211,7 +211,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
 
         console.log('parsedData', JSON.stringify(parsedUpdateData, null, 2));
 
-        const payload =  await updateVisitorType(token, edittingId, parsedUpdateData);
+        const payload = await updateVisitorType(token, edittingId, parsedUpdateData);
 
         console.log('payload', payload);
         setAlertType('success');
@@ -223,11 +223,10 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         setAlertMessage('Visitor type created successfully!');
       }
 
-      localStorage.removeItem('unsavedVisitorTypeData');
-      // ✅ delay agar user bisa lihat alert dulu
+      // localStorage.removeItem('unsavedVisitorTypeData');
       setTimeout(() => {
-        // onSuccess?.(); // Tutup dialog/modal dilakukan di parent saat sukses
-        setLoading(false); // Pastikan loading ditutup setelah onSuccess
+        onSuccess?.();
+        setLoading(false);
       }, 1000);
     } catch (err: any) {
       if (err?.errors) {
@@ -922,6 +921,33 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                     <Box display="flex" alignItems="center">
                       Can Parking
                       <Tooltip title="Visitor will receive a parking slot and access to the parking area.">
+                        <IconButton size="small" sx={{ ml: 1 }}>
+                          <InfoOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  }
+                />
+              </Box>
+            </Grid>
+            <Grid size={12} mt={1}>
+              <Box>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.can_track_ble}
+                      onChange={(e) => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          can_track_ble: e.target.checked,
+                        }));
+                      }}
+                    />
+                  }
+                  label={
+                    <Box display="flex" alignItems="center">
+                      Can Tracking
+                      <Tooltip title="When turned on, this type will be able to track the visitor's location.">
                         <IconButton size="small" sx={{ ml: 1 }}>
                           <InfoOutlinedIcon fontSize="small" />
                         </IconButton>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, CircularProgress, Typography } from '@mui/material';
 import LoadingImage from '../../../assets/images/backgrounds/loading-img.svg';
+import PageContainer from '../container/PageContainer';
 
 const WaitingPage = () => {
   return (

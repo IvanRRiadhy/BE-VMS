@@ -67,6 +67,7 @@ export type Item = {
   direct_visit: boolean;
   period: number;
   can_notification_arrival: boolean;
+  can_track_ble: boolean | null;
   is_primary: boolean;
   is_enable: boolean;
   vip: boolean;
@@ -149,6 +150,7 @@ export const CreateVisitorTypeRequestSchema = z.object({
   can_notification_arrival: z.boolean().default(false),
   is_primary: z.boolean().default(false).optional(),
   is_enable: z.boolean().default(false),
+  can_track_ble: z.boolean().default(false),  
   // prefix: z.string().default(''),
   vip: z.boolean().default(false),
   simple_visitor: z.boolean().default(false),
@@ -183,6 +185,7 @@ export const updateVisitorTypeSchmea = z.object({
   duration_visit: z.number().default(0),
   max_time_visit: z.number().default(0),
   can_parking: z.boolean().default(false),
+  can_track_ble: z.boolean().default(false),
   can_access: z.boolean().default(false),
   add_to_menu: z.boolean().default(false),
   need_document: z.boolean().default(false),

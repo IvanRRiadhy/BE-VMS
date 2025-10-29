@@ -23,6 +23,7 @@ import FilterMoreContent from './FilterMoreContent';
 import Swal from 'sweetalert2';
 import { showErrorAlert, showSuccessAlert } from 'src/customs/components/alerts/alerts';
 import { Item } from 'src/customs/api/models/Employee/Approval';
+import { getApproval } from 'src/customs/api/manager';
 
 interface Filters {
   is_action: boolean | null | undefined;
@@ -77,17 +78,17 @@ const Approval = () => {
       try {
         const start = page * rowsPerPage;
 
-        const res = await getAllApprovalDT(
+        const res = await getApproval(
           token,
-          start,
-          rowsPerPage,
-          sortColumn,
-          searchKeyword, // 🚀 hapus spasi di awal/akhir
-          filters.start_date || undefined,
-          filters.end_date || undefined,
-          filters.is_action ?? undefined,
-          filters.site_approval ?? undefined,
-          filters.approval_type || undefined,
+          // start,
+          // rowsPerPage,
+          // sortColumn,
+          // searchKeyword, // 🚀 hapus spasi di awal/akhir
+          // filters.start_date || undefined,
+          // filters.end_date || undefined,
+          // filters.is_action ?? undefined,
+          // filters.site_approval ?? undefined,
+          // filters.approval_type || undefined,
         );
         console.log(res.collection);
 
@@ -95,21 +96,27 @@ const Approval = () => {
           res.collection.map((item: any) => {
             const trx = item.trx_visitor || {};
 
+            let status = null;
+            if (item.action === 'Accept') status = 'Accept';
+            else if (item.action === 'Deny') status = '-';
+            else if (item.action === 'null') status = 'Pending';
+            else status = '-';
+
             return {
               id: item.id,
               visitor_name: trx.visitor?.name || '-',
               site_place_name: trx.site_place_name || '-',
-              agenda: trx?.agenda || '-',
-              visitor_period_start: trx.visitor?.visitor_period_start || '-',
-              visitor_period_end: trx.visitor?.visitor_period_end || '-',
+              agenda: trx.agenda || '-',
+              visitor_period_start: trx.visitor_period_start || '-',
+              visitor_period_end: trx.visitor_period_end || '-',
               action_by: item.action_by || '-',
-              status: item.action || false,
+              status: item.action,
             };
           }),
         );
         setTotalRecords(res.collection.length);
         // console.log(totalRecords);
-        setTotalFilteredRecords(res.RecordsFiltered);
+        // setTotalFilteredRecords(res.RecordsFiltered);
         setIsDataReady(true);
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -258,7 +265,7 @@ const Approval = () => {
                 isHaveChecked={true}
                 isHaveAction={true}
                 isHaveSearch={true}
-                isHavePeriod
+                isHavePeriod={true}
                 isHaveFilter={false}
                 isHaveExportPdf={false}
                 isHaveExportXlf={false}
@@ -338,7 +345,7 @@ const Approval = () => {
           zIndex: (theme) => theme.zIndex.drawer + 1, // di atas drawer & dialog
         }}
       >
-        <CircularProgress color="primary" />
+        <CircularProgress color="inherit" />
       </Backdrop>
     </>
   );

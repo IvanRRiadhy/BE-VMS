@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 
 export type Item = {
@@ -107,7 +108,6 @@ export const CreateVisitorCardSubmitSchema = z
   .object({
     name: z.string().min(1, { message: 'Name is required' }),
     remarks: z.string().min(1, { message: 'Remarks is required' }),
-
     // toggle
     is_employee_used: z.boolean().optional(),
     employee_id: z.string().nullable().optional(),

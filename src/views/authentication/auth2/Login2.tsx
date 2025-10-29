@@ -13,6 +13,8 @@ import {
   IconButton,
   InputAdornment,
   CardActions,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import { useSearchParams } from 'react-router-dom';
 
@@ -52,6 +54,9 @@ const Login2 = () => {
   const [guestCode, setGuestCode] = useState(searchParams.get('code') || '');
   const [guestError, setGuestError] = useState(false);
   const [showCaptcha, setShowCaptcha] = useState(true);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMsg, setSnackbarMsg] = useState('');
+  const [snackbarType, setSnackbarType] = useState<'success' | 'error' | 'info'>('info');
 
   // Tabs state
   const [tab, setTab] = useState(0);
@@ -138,17 +143,18 @@ const Login2 = () => {
       console.log('Response guest login:', res);
       // setGuestError(false);
 
-      if (!res?.collection) {
-        setLoading(false);
-        setGuestError(true);
-        return;
-      }
+      // if (!res?.collection) {
+      //   setLoading(false);
+      //   setGuestError(true);
+      //   return;
+      // }
 
       const status = res.status || '';
       console.log('Status:', status);
       // setLoading(false);
-      if (status.toLowerCase() === 'process') {
-        navigate(`/portal/waiting?code=${guestCode}`);
+      if (status === 'process') {
+        // navigate(`/portal/waiting?code=${guestCode}`);
+        navigate(`/portal/waiting`);
       } else if (status.toLowerCase() === 'fiil_form') {
         navigate(`/portal/information?code=${guestCode}`);
       } else {
@@ -166,6 +172,19 @@ const Login2 = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // 🔎 Cek apakah ada pesan logout
+    const msg = sessionStorage.getItem('logoutMsg');
+    if (msg) {
+      setSnackbarMsg(msg);
+      setSnackbarType('success');
+      setSnackbarOpen(true);
+
+      // 🧹 Hapus agar tidak tampil ulang
+      sessionStorage.removeItem('logoutMsg');
+    }
+  }, []);
 
   return (
     <>
@@ -415,6 +434,20 @@ const Login2 = () => {
               </Grid>
             </Grid>
           </Box>
+          <Snackbar
+            open={snackbarOpen}
+            autoHideDuration={3000}
+            onClose={() => setSnackbarOpen(false)}
+            anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+          >
+            <Alert
+              onClose={() => setSnackbarOpen(false)}
+              severity={snackbarType}
+              sx={{ width: '100%' }}
+            >
+              {snackbarMsg}
+            </Alert>
+          </Snackbar>
         </PageContainer>
       )}
     </>

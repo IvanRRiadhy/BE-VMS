@@ -45,6 +45,7 @@ import {
   FormControl,
   RadioGroup,
   Radio,
+  Chip,
 } from '@mui/material';
 import { Box, useMediaQuery, useTheme, width } from '@mui/system';
 import moment from 'moment-timezone';
@@ -59,10 +60,13 @@ import {
   IconCards,
   IconCheck,
   IconCheckupList,
+  IconClock,
+  IconCreditCard,
   IconForbid2,
   IconGenderMale,
   IconHistory,
   IconHome,
+  IconKey,
   IconLicense,
   IconLogin2,
   IconLogout,
@@ -71,7 +75,9 @@ import {
   IconPhone,
   IconQrcode,
   IconSearch,
+  IconSend,
   IconTicket,
+  IconTimeDuration0,
   IconTrash,
   IconUser,
   IconUserCheck,
@@ -92,8 +98,10 @@ import {
   createGiveAccessOperator,
   createGrandAccessOperator,
   createInvitationActionOperator,
+  createMultipleGrantAccess,
   createMultipleInvitationActionOperator,
   createSubmitCompletePraMultiple,
+  extendPeriodOperator,
   getAvailableCardOperator,
   getInvitationCode,
   getInvitationOperatorRelated,
@@ -120,11 +128,12 @@ import advancedFormat from 'dayjs/plugin/advancedFormat';
 import utc from 'dayjs/plugin/utc';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import HistoryDialog from './Dialog/HistoryDialog';
-import { getVisitorEmployee } from 'src/customs/api/admin';
+import { getVisitorEmployee, updateExtend } from 'src/customs/api/admin';
 import Webcam from 'react-webcam';
 import FormDialogInvitation from '../Employee/FormDialogInvitation';
 import FormDialogPraregist from './Dialog/FormDialogPraregist';
 import CameraUpload from './Components/CameraUpload';
+import { id, is } from 'date-fns/locale';
 dayjs.extend(utc);
 dayjs.extend(weekday);
 dayjs.extend(localizedFormat);
@@ -154,8 +163,6 @@ const OperatorView = () => {
   }));
 
   const [invitationCode, setInvitationCode] = useState<any[]>([]);
-
-  //
   const [open, setOpen] = useState(false);
   const [tabValue, setTabValue] = useState(0);
   const [qrValue, setQrValue] = useState('');
@@ -200,6 +207,58 @@ const OperatorView = () => {
   const [openAccessData, setOpenAccessData] = useState(false);
   const [accessData, setAccessData] = useState<any[]>([]);
   const [selectedActionAccess, setSelectedActionAccess] = useState<string | null>(null);
+  const [selectedMinutes, setSelectedMinutes] = useState<number | null>(null);
+  const [openExtendVisit, setOpenExtendVisit] = useState(false);
+  const durationOptions = [15, 30, 45, 60, 90, 120, 150, 180];
+  const [extendedEndTime, setExtendedEndTime] = useState<string | null>(null);
+
+  const handleExtend = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!selectedMinutes) return;
+    if (!selectedVisitors || selectedVisitors.length === 0) {
+      setSnackbarMsg('No visitor selected.');
+      setSnackbarType('error');
+      setSnackbarOpen(true);
+      return;
+    }
+
+    try {
+      // payload API
+      const payload = {
+        id: selectedVisitors[0], // ambil visitor ID pertama (atau kirim satu per satu)
+        period: selectedMinutes,
+        apply_to_all: applyToAll, // state checkbox “Apply to another visitor”
+      };
+
+      console.log('📤 Sending extend payload:', payload);
+
+      await extendPeriodOperator(token as string, payload);
+
+      // ✅ update UI lokal
+      setRelatedVisitors((prev) =>
+        prev.map((v) =>
+          selectedVisitors.includes(v.id)
+            ? {
+                ...v,
+                extend_visitor_period: (v.extend_visitor_period ?? 0) + selectedMinutes,
+              }
+            : v,
+        ),
+      );
+
+      setSnackbarMsg(`Visit extended by ${selectedMinutes} minutes`);
+      setSnackbarType('success');
+      setSnackbarOpen(true);
+      setOpenExtendVisit(false);
+      setSelectedMinutes(null);
+    } catch (error) {
+      console.error('❌ Error extending visit:', error);
+      setSnackbarMsg('Failed to extend visit.');
+      setSnackbarType('error');
+      setSnackbarOpen(true);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -226,7 +285,10 @@ const OperatorView = () => {
       phone: string;
       gender: string;
       card: string[];
+      extend_visitor_period: number;
       visitor_status: string;
+      block_by: string;
+      is_block: boolean;
     }[]
   >([]);
   // Tambahkan di atas (bersama useState lain)
@@ -342,7 +404,7 @@ const OperatorView = () => {
     resetSelections();
   };
 
-  const handleChooseCard = () => {
+  const handleChooseCard = async () => {
     if (!invitationCode.length) {
       setSnackbarMsg('No visitor data found. Please scan QR first.');
       setSnackbarType('info');
@@ -350,58 +412,77 @@ const OperatorView = () => {
       return;
     }
 
-    setSelectedCards([]);
-    setOpenChooseCardDialog(true);
+    try {
+      setLoadingAccess(true); // ⏳ Mulai loading
+
+      // const invitationId = invitationCode?.[0]?.id;
+      // if (invitationId) {
+      //   await fetchRelatedVisitorsByInvitationId(invitationId);
+      // }
+
+      // Pastikan daftar kartu dikosongkan (opsional)
+      setSelectedCards([]);
+
+      setOpenChooseCardDialog(true); // 🔓 Buka modal setelah data selesai diambil
+    } catch (error) {
+      console.error('❌ Gagal mengambil data visitor:', error);
+      setSnackbarMsg('Failed to fetch visitor data. Please try again.');
+      setSnackbarType('error');
+      setSnackbarOpen(true);
+    } finally {
+      setTimeout(() => setLoadingAccess(false), 200); // ✅ Hentikan loading setelah sedikit jeda
+    }
   };
 
-  // useEffect(() => {
-  //   // Pastikan socket hanya dibuat sekali
-  //   const socket = new WebSocket('ws://localhost:16574/ws');
+  useEffect(() => {
+    // Pastikan socket hanya dibuat sekali
+    const socket = new WebSocket('ws://localhost:16574/ws');
 
-  //   socket.onopen = () => {
-  //     console.log('✅ WebSocket connected');
-  //   };
+    socket.onopen = () => {
+      console.log('✅ WebSocket connected');
+    };
 
-  //   socket.onerror = (err) => {
-  //     console.error('❌ WebSocket error:', err);
-  //   };
+    socket.onerror = (err) => {
+      console.error('❌ WebSocket error:', err);
+    };
 
-  //   socket.onmessage = (event) => {
-  //     try {
-  //       // Parse JSON
-  //       const msg = JSON.parse(event.data);
-  //       console.log('💬 Console client:', msg);
+    socket.onmessage = (event) => {
+      try {
+        // Parse JSON
+        const msg = JSON.parse(event.data);
+        console.log('💬 Console client:', msg);
 
-  //       // Cek tipe data dari server
-  //       if (msg?.type === 'serial' && msg?.message) {
-  //         const value = msg.message.toString().trim();
-  //         console.log('📩 QR Value from socket:', value);
+        // Cek tipe data dari server
+        if (msg?.type === 'serial' && msg?.message) {
+          const value = msg.message.toString().trim();
+          console.log('📩 QR Value from socket:', value);
 
-  //         // 🔥 Update ke state qrValue
-  //         setQrValue(value);
-  //         setLoadingAccess(true);
-  //         // 🔥 Panggil handler QR langsung
-  //         handleSubmitQRCode(value);
+          // 🔥 Update ke state qrValue
+          setQrValue(value);
+          setLoadingAccess(true);
+          // 🔥 Panggil handler QR langsung
+          handleSubmitQRCode(value);
 
-  //         // 🔥 Langsung buka detail QR dialog
-  //         // setOpenDetailQRCode(true);
-  //       }
-  //     } catch (err) {
-  //       console.error('⚠️ Failed to parse WebSocket message:', event.data, err);
-  //     } finally {
-  //       setTimeout(() => setLoadingAccess(false), 600);
-  //     }
-  //   };
+          // 🔥 Langsung buka detail QR dialog
+          // setOpenDetailQRCode(true);
+        }
+      } catch (err) {
+        console.error('⚠️ Failed to parse WebSocket message:', event.data, err);
+      } finally {
+        setTimeout(() => setLoadingAccess(false), 600);
+      }
+    };
 
-  //   socket.onclose = () => {
-  //     console.warn('🔌 WebSocket disconnected');
-  //   };
+    socket.onclose = () => {
+      console.warn('🔌 WebSocket disconnected');
+    };
 
-  //   // cleanup saat komponen unmount
-  //   return () => {
-  //     socket.close();
-  //   };
-  // }, [token]);
+    // cleanup saat komponen unmount
+    return () => {
+      socket.close();
+    };
+  }, [token]);
+
   useEffect(() => {
     const fetchDataPermission = async () => {
       try {
@@ -426,6 +507,11 @@ const OperatorView = () => {
     fetchData();
   }, [token]);
 
+  const fetchAvailableCards = async () => {
+    const res = await getAvailableCardOperator(token as string);
+    setAvailableCards(res.collection);
+  };
+
   const filteredCards = availableCards.filter((card) =>
     [card.remarks, card.card_number, card.card_mac]
       .join(' ')
@@ -433,15 +519,38 @@ const OperatorView = () => {
       .includes(searchTerm.toLowerCase()),
   );
 
+  // const handleToggleCard = (cardNumber: string) => {
+  //   setSelectedCards((prev) => {
+  //     const normalized = String(cardNumber);
+
+  //     // 🔵 SINGLE MODE → hanya satu yang aktif
+  //     if (prev.includes(normalized)) {
+  //       return [];
+  //     }
+  //     return [normalized];
+  //   });
+  // };
+
   const handleToggleCard = (cardNumber: string) => {
     setSelectedCards((prev) => {
       const normalized = String(cardNumber);
+      const maxCards = selectedVisitors.length || 1;
 
-      // 🔵 SINGLE MODE → hanya satu yang aktif
+      // Jika sudah dipilih → hapus dari array
       if (prev.includes(normalized)) {
-        return [];
+        return prev.filter((c) => c !== normalized);
       }
-      return [normalized];
+
+      // Jika sudah mencapai batas maksimal
+      if (prev.length >= maxCards) {
+        setSnackbarMsg(`You can only select up to ${maxCards} card${maxCards > 1 ? 's' : ''}.`);
+        setSnackbarType('info');
+        setSnackbarOpen(true);
+        return prev; // tidak menambahkan kartu baru
+      }
+
+      // Jika masih bisa → tambahkan
+      return [...prev, normalized];
     });
   };
 
@@ -482,11 +591,21 @@ const OperatorView = () => {
           can_grant: perm?.can_grant ?? false,
           can_revoke: perm?.can_revoke ?? false,
           can_block: perm?.can_block ?? false,
+          disabled: !perm,
         };
       });
 
       console.log('🧩 mergedAccess:', mergedAccess);
       setAccessData(mergedAccess);
+      // if (invitation?.id) {
+      //   setSelectedVisitors((prev) => {
+      //     if (!prev.includes(invitation.id)) {
+      //       const updated = [...prev, invitation.id];
+      //       return updated;
+      //     }
+      //     return prev;
+      //   });
+      // }
       handleCloseScanQR();
 
       setSnackbarMsg('Code scanned successfully.');
@@ -508,6 +627,8 @@ const OperatorView = () => {
       prevSelected.filter((id) => relatedVisitors.some((v) => v.id === id)),
     );
   }, [relatedVisitors]);
+
+  const [allAccessData, setAllAccessData] = useState<any[]>([]);
 
   const fetchRelatedVisitorsByInvitationId = async (invitationId: string) => {
     const relatedRes = await getInvitationOperatorRelated(invitationId, token as string);
@@ -532,9 +653,57 @@ const OperatorView = () => {
       // card: (v.card ?? []).map((c: any) => c.card_number),
       card: v.card ?? [],
       is_praregister_done: v.is_praregister_done ?? false,
+      access: v.access ?? [],
+      block_by: v.block_by ?? null,
+      is_block: v.is_block ?? false,
     }));
 
+    setInvitationCode((prev) =>
+      prev.map((inv) => {
+        if (!inv.card || inv.card.length === 0) {
+          // tambahkan kartu baru ke visitor pertama
+          return {
+            ...inv,
+            card: selectedCards.map((num) => ({ card_number: num })),
+          };
+        }
+        return inv;
+      }),
+    );
+
     setRelatedVisitors(mappedVisitors);
+    console.log('related visitor', mappedVisitors);
+
+    // 🔹 Gabungkan semua access dari semua visitor
+    const allAccess = relatedData.flatMap((v: any) =>
+      (v.access ?? []).map((a: any) => ({
+        id: a.id ?? '-',
+        trx_visitor_id: (a.trx_visitor_id || v.id)?.toLowerCase(), // ✅ pastikan lowercase
+        access_control_id: a.access_control_id?.toLowerCase(),
+        access_control_name: a.access_control_name ?? '-',
+        visitor_give_access: a.visitor_give_access ?? 0,
+        early_access: !!a.early_access,
+      })),
+    );
+
+    console.log('🧩 allAccessData from related visitors:', allAccess);
+    setAllAccessData(allAccess);
+
+    // console.log(
+    //   '🧾 Full allAccessData (debug):',
+    //   allAccess.map((a: any) => ({
+    //     trx_visitor_id: a.trx_visitor_id,
+    //     access_control_id: a.access_control_id,
+    //     access_control_name: a.access_control_name,
+    //     visitor_give_access: a.visitor_give_access,
+    //   })),
+    // );
+
+    // Set visitor pertama sebagai default
+    if (relatedData.length > 0) {
+      const firstVisitorId = relatedData[0].id?.toLowerCase();
+      setSelectedVisitors([firstVisitorId]);
+    }
   };
 
   const formatDateTime = (dateStr?: string) => {
@@ -593,76 +762,6 @@ const OperatorView = () => {
 
   const availableCount = availableVisibleCards.length;
 
-  // const handleConfirmChooseCards = async () => {
-  //   try {
-  //     if (!selectedCards.length) {
-  //       setSnackbarMsg('Please choose at least one card.');
-  //       setSnackbarType('info');
-  //       setSnackbarOpen(true);
-  //       return;
-  //     }
-
-  //     const trxVisitorId = selectedVisitorId;
-
-  //     if (!trxVisitorId) {
-  //       setSnackbarMsg('Missing visitor ID.');
-  //       setSnackbarType('error');
-  //       setSnackbarOpen(true);
-  //       return;
-  //     }
-
-  //     // 🟢 Aktifkan loading sebelum proses dimulai
-  //     setLoadingAccess(true);
-
-  //     // 🔥 Kirim semua kartu ke API
-  //     for (const cardNumber of selectedCards) {
-  //       const payload = {
-  //         card_number: String(cardNumber),
-  //         trx_visitor_id: trxVisitorId,
-  //       };
-  //       console.log('🚀 Grant Access Payload:', payload);
-  //       await createGrandAccessOperator(token as string, payload);
-  //     }
-
-  //     setSnackbarMsg(`Successfully assigned ${selectedCards.length} card(s).`);
-  //     setSnackbarType('success');
-  //     setSnackbarOpen(true);
-
-  //     // 🟢 Refetch data visitor agar sinkron
-  //     // await fetchRelatedVisitorsByInvitationId(invitationCode[0]?.invitation_id);
-
-  //     // setRelatedVisitors((prev) => {
-  //     //   const currentVisitor = prev.find((v) => v.id === trxVisitorId);
-  //     //   if (currentVisitor) {
-  //     //     setInvitationCode((prevCode) => {
-  //     //       if (!prevCode.length) return prevCode;
-  //     //       const updated = [...prevCode];
-  //     //       updated[0] = {
-  //     //         ...updated[0],
-  //     //         card: currentVisitor.card ?? [],
-  //     //       };
-  //     //       return updated;
-  //     //     });
-  //     //   }
-  //     //   return prev;
-  //     // });
-
-  //     // Optional: juga refresh invitation detail kalau UI di kanan perlu update kartu
-  //     // const updatedDetail = await getInvitationDetail(invitationCode[0]?.id, token);
-  //     // setInvitationCode([updatedDetail.collection]);
-
-  //     handleCloseChooseCard();
-  //   } catch (err) {
-  //     console.error('❌ Grant error:', err);
-  //     setSnackbarMsg('Failed to assign card(s).');
-  //     setSnackbarType('error');
-  //     setSnackbarOpen(true);
-  //   } finally {
-  //     // 🔴 Pastikan loading dimatikan setelah proses selesai (sukses/gagal)
-  //     setTimeout(() => setLoadingAccess(false), 500);
-  //   }
-  // };
-
   const handleConfirmChooseCards = async () => {
     try {
       if (!selectedCards.length) {
@@ -672,73 +771,169 @@ const OperatorView = () => {
         return;
       }
 
-      const trxVisitorId = selectedVisitorId;
-
-      if (!trxVisitorId) {
-        setSnackbarMsg('Missing visitor ID.');
-        setSnackbarType('error');
+      if (!selectedVisitors.length) {
+        setSnackbarMsg('No visitor selected.');
+        setSnackbarType('info');
         setSnackbarOpen(true);
         return;
       }
 
-      // 🟢 Aktifkan loading
       setLoadingAccess(true);
 
-      // 🔥 Kirim semua kartu ke API
-      for (const cardNumber of selectedCards) {
-        const payload = {
-          card_number: String(cardNumber),
-          trx_visitor_id: trxVisitorId,
-        };
-        console.log('🚀 Grant Access Payload:', payload);
-        await createGrandAccessOperator(token as string, payload);
+      const alreadyHasCard: string[] = [];
+      const successAssigned: string[] = [];
+      let response: any = null;
+
+      if (selectedVisitors.length > 1) {
+        // 🧩 Multiple visitor (batch)
+        const dataPayload: { card_number: string; trx_visitor_id: string }[] = [];
+        const pairCount = Math.min(selectedVisitors.length, selectedCards.length);
+
+        for (let i = 0; i < pairCount; i++) {
+          const visitorId = selectedVisitors[i];
+          const cardNumber = selectedCards[i];
+          const visitor = relatedVisitors.find(
+            (v) => v.id?.toLowerCase() === visitorId.toLowerCase(),
+          );
+          if (!visitor) continue;
+
+          if (visitor.card && visitor.card.length > 0) {
+            alreadyHasCard.push(visitor.name || visitorId);
+            continue;
+          }
+
+          dataPayload.push({ card_number: String(cardNumber), trx_visitor_id: visitorId });
+          successAssigned.push(visitor.name || visitorId);
+        }
+
+        if (dataPayload.length === 0) {
+          setSnackbarMsg('All selected visitors already have a card.');
+          setSnackbarType('info');
+          setSnackbarOpen(true);
+          setLoadingAccess(false);
+          return;
+        }
+
+        response = await createMultipleGrantAccess(token as string, { data: dataPayload });
+      } else {
+        // 🧍 Single visitor
+        for (const visitorId of selectedVisitors) {
+          const visitor = relatedVisitors.find(
+            (v) => v.id?.toLowerCase() === visitorId.toLowerCase(),
+          );
+          if (!visitor) continue;
+
+          if (visitor.card && visitor.card.length > 0) {
+            alreadyHasCard.push(visitor.name || visitorId);
+            continue;
+          }
+
+          for (const cardNumber of selectedCards) {
+            // await createGrandAccessOperator(token as string, {
+            //   card_number: String(cardNumber),
+            //   trx_visitor_id: visitorId,
+            // });
+            const payload = {
+              card_number: String(cardNumber),
+              trx_visitor_id: visitorId,
+            };
+
+            console.log('Grant Access', JSON.stringify(payload, null, 2));
+
+            response = await createGrandAccessOperator(token as string, payload);
+          }
+
+          successAssigned.push(visitor.name || visitorId);
+        }
       }
 
-      // ✅ Tampilkan feedback sukses
-      setSnackbarMsg(`Successfully assigned ${selectedCards.length} card(s).`);
-      setSnackbarType('success');
-      setSnackbarOpen(true);
-
-      // 🟩 1️⃣ Update data lokal supaya UI langsung berubah (instan UX)
-      setRelatedVisitors((prev) =>
-        prev.map((v) =>
-          v.id === trxVisitorId
-            ? {
-                ...v,
-                card: selectedCards, // ⬅️ langsung array of card_number
-              }
-            : v,
-        ),
-      );
-
-      // 🟦 2️⃣ Update juga invitationCode agar panel kanan ikut berubah
-      setInvitationCode((prev) => {
-        if (!prev.length) return prev;
-        const updated = [...prev];
-        updated[0] = {
-          ...updated[0],
-          card: selectedCards.map((c) => ({ card_number: c })),
-        };
-        return updated;
-      });
-
-      // 🟨 3️⃣ Refetch dari server agar 100% sinkron dengan data real
+      // 🔁 Refresh visitors setelah semua selesai
       const invitationId = invitationCode?.[0]?.id;
       if (invitationId) {
-        console.log('🔄 Refetching visitors after card assignment:', invitationId);
         await fetchRelatedVisitorsByInvitationId(invitationId);
       }
 
-      // ✅ Tutup dialog choose card
+      await fetchAvailableCards();
+
+      if (response?.collection && response.collection.length > 0) {
+        const messages = response.collection.map((item: any) => item.message).join(', ');
+        setSnackbarMsg(`⚠️ ${messages}`);
+        setSnackbarType('error');
+        setSnackbarOpen(true);
+        setLoadingAccess(false);
+        return;
+      }
+
+      // const uniqueAssigned = Array.from(new Set(successAssigned));
+      // const uniqueSkipped = Array.from(new Set(alreadyHasCard));
+
+      // // 🧾 Pesan akhir
+      // let message = '';
+      // if (uniqueAssigned.length > 0) {
+      //   message += `Successfully Assigned ${selectedCards.length} card to:\n`;
+      //   message += uniqueAssigned.map((v) => `- ${v}`).join('\n');
+      // }
+
+      // if (uniqueSkipped.length > 0) {
+      //   message +=
+      //     (message ? '\n\n' : '') +
+      //     `Skipped (already has a card):\n` +
+      //     uniqueSkipped.map((v) => `- ${v}`).join('\n');
+      // }
+
+      // setSnackbarMsg(message || 'No card assigned.');
+      // setSnackbarType(uniqueAssigned.length > 0 ? 'success' : 'info');
+      // setSnackbarOpen(true);
+
+      // handleCloseChooseCard();
+      const uniqueAssigned = Array.from(new Set(successAssigned));
+      const uniqueSkipped = Array.from(new Set(alreadyHasCard));
+
+      // 🧾 Build final message
+      let message = '';
+
+      if (uniqueAssigned.length > 0) {
+        message += `✅ Successfully assigned ${uniqueAssigned.length} card(s):\n`;
+        message += selectedVisitors
+          .map((visitorId, idx) => {
+            const visitor = relatedVisitors.find(
+              (v) => v.id?.toLowerCase() === visitorId.toLowerCase(),
+            );
+            const cardNumber = selectedCards[idx] || '-';
+            if (visitor && !alreadyHasCard.includes(visitor.name || visitorId)) {
+              return `• ${visitor.name || visitorId} - (Card: ${cardNumber})`;
+            }
+            return null;
+          })
+          .filter(Boolean)
+          .join('\n');
+      }
+
+      if (uniqueSkipped.length > 0) {
+        message +=
+          (message ? '\n\n' : '') +
+          `⚠️ Some visitors were skipped because they already have an assigned card:\n` +
+          uniqueSkipped.map((v) => `• ${v}`).join('\n');
+      }
+
+      // If no success or skipped, show generic
+      if (!message) {
+        message = 'No cards were assigned.';
+      }
+
+      // Show Snackbar
+      setSnackbarMsg(message);
+      setSnackbarType(uniqueAssigned.length > 0 ? 'success' : 'info');
+      setSnackbarOpen(true);
+
       handleCloseChooseCard();
     } catch (err) {
-      console.error('❌ Grant error:', err);
+      console.error('Assign card error:', err);
       setSnackbarMsg('Failed to assign card(s).');
       setSnackbarType('error');
       setSnackbarOpen(true);
     } finally {
-      // 🔴 Matikan loading dengan jeda halus
-      setTimeout(() => setLoadingAccess(false), 500);
+      setTimeout(() => setLoadingAccess(false), 600);
     }
   };
   const handleClearAll = () => {
@@ -792,8 +987,12 @@ const OperatorView = () => {
           inputAttributes: { maxlength: '200' },
           showCancelButton: true,
           confirmButtonText: action,
-          confirmButtonColor: action === 'Block' ? '#000' : '#4caf50',
+          confirmButtonColor: action === 'Block' || action === 'Unblock' ? '#000' : '#000',
           cancelButtonText: 'Cancel',
+          customClass: {
+            title: 'swal2-title-custom',
+            popup: 'swal-popup-custom',
+          },
           inputValidator: (value) => {
             if (!value || value.trim().length < 3) {
               return 'Reason must be at least 3 characters long.';
@@ -813,6 +1012,10 @@ const OperatorView = () => {
           confirmButtonText: 'Yes',
           cancelButtonText: 'Cancel',
           confirmButtonColor: '#4caf50',
+          customClass: {
+            title: 'swal2-title-custom',
+            popup: 'swal-popup-custom',
+          },
         });
 
         if (!confirm.isConfirmed) return;
@@ -829,35 +1032,46 @@ const OperatorView = () => {
       console.log('✅ Action Response:', res);
 
       // 🔹 Update local data immediately (for instant UI)
+      // setRelatedVisitors((prev) =>
+      //   prev.map((v) => (v.id === selectedVisitorId ? { ...v, visitor_status: action } : v)),
+      // );
+
       setRelatedVisitors((prev) =>
-        prev.map((v) => (v.id === selectedVisitorId ? { ...v, visitor_status: action } : v)),
+        prev.map((v) =>
+          v.id === selectedVisitorId
+            ? {
+                ...v,
+                visitor_status: action,
+                is_block: action === 'Block' ? true : action === 'Unblock' ? false : v.is_block,
+              }
+            : v,
+        ),
       );
 
-      setInvitationCode((prev) =>
-        prev.length
-          ? [
-              {
-                ...prev[0],
-                visitor_status: action,
-                visitor: {
-                  ...prev[0].visitor,
-                  visitor_status: action,
-                },
-              },
-            ]
-          : prev,
-      );
+      setInvitationCode((prev) => {
+        if (!prev.length) return prev;
+        const updated = {
+          ...prev[0],
+          visitor_status: action,
+          is_block: action === 'Block' ? true : action === 'Unblock' ? false : prev[0].is_block,
+          visitor: {
+            ...prev[0].visitor,
+            visitor_status: action,
+            is_block:
+              action === 'Block' ? true : action === 'Unblock' ? false : prev[0].visitor?.is_block,
+          },
+        };
+        return [JSON.parse(JSON.stringify(updated))];
+      });
 
       setVisitorStatus(action);
 
       // 🔹 Refetch background sync (after small delay)
       const invitationId = invitationCode?.[0]?.id;
       if (invitationId) {
-        setTimeout(async () => {
-          await fetchRelatedVisitorsByInvitationId(invitationId);
-        }, 300);
+        await new Promise((r) => setTimeout(r, 1000)); // tunggu 1 detik
+        await fetchRelatedVisitorsByInvitationId(invitationId);
       }
-
       setSnackbarMsg(`${action} successfully.`);
       setSnackbarType('success');
       setSnackbarOpen(true);
@@ -937,6 +1151,8 @@ const OperatorView = () => {
         identity_image: visitor.identity_image || null,
         card: visitor.card ?? [],
         visitor_status: visitor.visitor_status ?? '-',
+        block_by: visitor.block_by ?? null,
+        is_block: visitor.is_block ?? false,
       },
     ]);
 
@@ -963,7 +1179,13 @@ const OperatorView = () => {
         return;
       }
 
+      setLoadingAccess(true);
+
       handleOpenFillFormDialog(validToFill.map((v) => v.id));
+
+      setTimeout(() => {
+        setLoadingAccess(false);
+      }, 600);
       return;
     }
 
@@ -1045,6 +1267,60 @@ const OperatorView = () => {
           return v;
         }),
       );
+      //  setInvitationCode((prev) => {
+      //    if (!prev.length) return prev;
+
+      //    const currentVisitorId = prev[0]?.visitor?.id || prev[0]?.id;
+      //    const updated = validForApi.find((v) => v.id === currentVisitorId);
+      //    if (!updated) return prev;
+
+      //    let newStatus = updated.visitor_status;
+      //    if (bulkAction === 'checkin') newStatus = 'Checkin';
+      //    else if (bulkAction === 'checkout') newStatus = 'Checkout';
+      //    else if (bulkAction === 'block') newStatus = 'Block';
+      //    else if (bulkAction === 'unblock') newStatus = 'Unblock';
+
+      //    return [
+      //      {
+      //        ...prev[0],
+      //        visitor_status: newStatus,
+      //        visitor: { ...prev[0].visitor, visitor_status: newStatus },
+      //      },
+      //    ];
+      //  });
+
+      setInvitationCode((prev) => {
+        if (!prev.length) return prev;
+
+        const currentVisitorId = prev[0]?.visitor?.id || prev[0]?.id;
+        const updated = validForApi.find((v) => v.id === currentVisitorId);
+        if (!updated) return prev;
+
+        // 🔹 Tentukan status baru
+        let newStatus = updated.visitor_status;
+        if (bulkAction === 'checkin') newStatus = 'Checkin';
+        else if (bulkAction === 'checkout') newStatus = 'Checkout';
+        else if (bulkAction === 'block') newStatus = 'Block';
+        else if (bulkAction === 'unblock') newStatus = 'Unblock';
+
+        // 🔹 Tentukan nilai is_block baru
+        let newIsBlock = prev[0]?.is_block ?? null;
+        if (bulkAction === 'block') newIsBlock = 1;
+        else if (bulkAction === 'unblock') newIsBlock = null;
+
+        return [
+          {
+            ...prev[0],
+            visitor_status: newStatus,
+            is_block: newIsBlock,
+            visitor: {
+              ...prev[0].visitor,
+              visitor_status: newStatus,
+              is_block: newIsBlock,
+            },
+          },
+        ];
+      });
 
       // 🧾 Buat pesan hasil akhir per visitor
       const resultMessages = selectedData.map((v) => {
@@ -1135,9 +1411,10 @@ const OperatorView = () => {
   // ===================================================
   if (selectedData.length === 1) {
     const v = selectedData[0];
+    // console.log('tes', v);
 
     // Jika visitor belum pra-register → tampilkan Fill Form
-    if (v?.visitor_status === 'Preregis' && !v?.is_praregister_done === false) {
+    if (v?.visitor_status === 'Preregis' && !v?.is_praregister_done) {
       actions.add('fill_form');
     }
 
@@ -1145,9 +1422,23 @@ const OperatorView = () => {
     (statusActions[v?.visitor_status as string] || []).forEach((a: any) => actions.add(a));
 
     // Untuk Preregis yang sudah pra-register → tambahkan checkin dan block
-    if (v?.visitor_status === 'Preregis' && v?.is_praregister_done === true) {
+    if (v?.visitor_status === 'Preregis' && v?.is_praregister_done) {
       actions.add('checkin');
       actions.add('block');
+    }
+
+    // const isBlocked = !!(v?.is_block || v?.block_by);
+    const isBlocked = !!v?.is_block;
+
+    if (v?.visitor_status === 'Checkin' && isBlocked) {
+      actions.delete('block');
+      actions.add('unblock');
+      actions.delete('checkout');
+    }
+
+    if (isBlocked) {
+      actions.add('unblock');
+      actions.delete('block');
     }
   }
 
@@ -1155,21 +1446,45 @@ const OperatorView = () => {
   // 🧩 2️⃣ MULTIPLE SELECTION
   // ===================================================
   else if (selectedData.length > 1) {
-    // 🔸 Jika ada Preregis yang belum pra-register
-    if (hasPreregis && preregFalse) {
-      actions.add('fill_form');
-    }
+    // // 🔸 Jika ada Preregis yang belum pra-register
+    // if (hasPreregis && preregFalse) {
+    //   actions.add('fill_form');
+    // }
 
-    // 🔸 Jika ada yang sudah pra-register (boleh checkin/block)
-    if (hasPreregis && preregTrue) {
-      actions.add('checkin');
-      actions.add('block');
-    }
+    // // 🔸 Jika ada yang sudah pra-register (boleh checkin/block)
+    // if (hasPreregis && preregTrue) {
+    //   actions.add('checkin');
+    //   actions.add('block');
+    // }
 
-    // 🔸 Gabungkan semua kemungkinan aksi lain (Checkin, Block, dsb.)
-    for (const status of statuses) {
-      (statusActions[status] || []).forEach((a) => actions.add(a));
-    }
+    // // 🔸 Gabungkan semua kemungkinan aksi lain (Checkin, Block, dsb.)
+    // for (const status of statuses) {
+    //   (statusActions[status] || []).forEach((a) => actions.add(a));
+    // }
+    const baseStatusActions: Record<string, string[]> = {
+      Checkin: ['checkout', 'block'],
+      Checkout: ['block'],
+      Block: ['unblock'],
+      Unblock: ['block'],
+    };
+
+    const actionArrays = selectedData.map((v) => {
+      const status = v?.visitor_status;
+      const isBlocked = !!v?.is_block;
+      const isPreregis = status === 'Preregis';
+
+      if (isPreregis && !v?.is_praregister_done) return ['fill_form'];
+      if (isPreregis && v?.is_praregister_done) return ['checkin', 'block'];
+      if (isBlocked) return ['unblock'];
+
+      return baseStatusActions[status as string] || [];
+    });
+
+    // 🔹 Ambil semua action (union)
+    const union = Array.from(new Set(actionArrays.flat()));
+
+    // 🔹 Tambahkan hasil union ke set actions
+    union.forEach((a) => actions.add(a));
   }
 
   // ===================================================
@@ -1433,6 +1748,14 @@ const OperatorView = () => {
   const [invitationDetail, setInvitationDetail] = useState<any>([]);
 
   const [questionPageTemplate, setQuestionPageTemplate] = useState<any[]>([]);
+
+  const [applyToAll, setApplyToAll] = useState(false);
+
+  const handleApplyToAllChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const checked = event.target.checked;
+    setApplyToAll(checked);
+    console.log('✅ Apply to another visitor:', checked);
+  };
 
   const handleOpenFillFormDialog = async (visitors: any[] | string) => {
     try {
@@ -2234,22 +2557,31 @@ const OperatorView = () => {
 
   const [selectedAccessIds, setSelectedAccessIds] = useState<string[]>([]);
 
-  useEffect(() => {
-    console.table(
-      accessData.map((a) => ({
-        name: a.access_control_name,
-        status: a.visitor_give_access,
-        early: a.early_access,
-        allowed: getAllowedActions(a.visitor_give_access, a.early_access),
-      })),
-    );
-  }, [accessData]);
+  // useEffect(() => {
+  //   console.table(
+  //     accessData.map((a) => ({
+  //       name: a.access_control_name,
+  //       status: a.visitor_give_access,
+  //       early: a.early_access,
+  //       allowed: getAllowedActions(a.visitor_give_access, a.early_access),
+  //     })),
+  //   );
+  // }, [accessData]);
 
   // fungsi dasar (seperti sebelumnya)
   const getAllowedActions = (status: number, earlyAccess: boolean) => {
     if (earlyAccess) {
-      if (status === 2 || status === 3) return []; // already revoked/blocked -> no action
-      return ['Revoke', 'Block']; // early access: only these (if not already 2/3)
+      switch (status) {
+        case 0:
+          return ['Revoke', 'Block']; // early access belum grant
+        case 1:
+          return []; // granted — tetap bisa revoke/block
+        case 2:
+        case 3:
+          return []; // revoked/blocked — tidak bisa apa-apa
+        default:
+          return [];
+      }
     }
 
     switch (status) {
@@ -2258,7 +2590,7 @@ const OperatorView = () => {
       case 1:
         return ['Revoke', 'Block'];
       case 2:
-        return ['Grant', 'Block'];
+        return [];
       case 3:
         return [];
       default:
@@ -2266,48 +2598,157 @@ const OperatorView = () => {
     }
   };
 
-  // Ambil allowed actions untuk satu access_control_id tapi memperhitungkan semua selectedVisitors
+  const getAllowedActionsByPermission = (accessId: string, permissionAccess: any[]) => {
+    const perm = permissionAccess.find(
+      (p) => p.access_control_id?.toLowerCase() === accessId.toLowerCase(),
+    );
+
+    if (!perm) return []; // operator tidak punya izin sama sekali di access ini
+
+    const actions: string[] = [];
+    if (perm.can_grant) actions.push('Grant');
+    if (perm.can_revoke) actions.push('Revoke');
+    if (perm.can_block) actions.push('Block');
+
+    return actions;
+  };
+
+  // 🔹 Ambil allowed actions untuk satu access ID hanya untuk visitor yang dipilih
+  // const getAllowedActionsForAccessId = (
+  //   accessId: string,
+  //   selectedVisitorIds: string[],
+  //   allAccessData: any[],
+
+  // ) => {
+  //   const records = allAccessData.filter(
+  //     (a) =>
+  //       a.access_control_id?.toLowerCase() === accessId.toLowerCase() &&
+  //       selectedVisitorIds.some(
+  //         (v) =>
+  //           v.toLowerCase() === a.trx_visitor_id?.toLowerCase() ||
+  //           v.toLowerCase() === a.trxVisitorId?.toLowerCase(),
+  //       ),
+  //   );
+
+  //   if (!records.length) return [];
+
+  //   const perVisitorActions = records.map((r) =>
+  //     getAllowedActions(r.visitor_give_access ?? 0, !!r.early_access),
+  //   );
+
+  //   return perVisitorActions.reduce(
+  //     (acc, cur) => acc.filter((x) => cur.includes(x)),
+  //     perVisitorActions[0] || [],
+  //   );
+  // };
+
   const getAllowedActionsForAccessId = (
     accessId: string,
     selectedVisitorIds: string[],
     allAccessData: any[],
+    permissionAccess: any[],
   ) => {
-    // ambil semua record yang cocok access_control_id dan trx_visitor_id ada di selectedVisitorIds
     const records = allAccessData.filter(
       (a) =>
-        a.access_control_id === accessId &&
-        selectedVisitorIds.includes(a.trx_visitor_id ?? a.trxVisitorId),
+        a.access_control_id?.toLowerCase() === accessId.toLowerCase() &&
+        selectedVisitorIds.some(
+          (v) =>
+            v.toLowerCase() === a.trx_visitor_id?.toLowerCase() ||
+            v.toLowerCase() === a.trxVisitorId?.toLowerCase(),
+        ),
     );
 
-    if (!records.length) return []; // tidak ada record => tidak boleh apa-apa
+    if (!records.length) return [];
 
-    // untuk tiap visitor record, hitung allowed actions
     const perVisitorActions = records.map((r) =>
       getAllowedActions(r.visitor_give_access ?? 0, !!r.early_access),
     );
 
-    // ambil intersection dari semua perVisitorActions
-    return perVisitorActions.reduce((acc, cur) => acc.filter((x) => cur.includes(x)));
+    // hasil intersection semua visitor
+    const commonActions = perVisitorActions.reduce(
+      (acc, cur) => acc.filter((x) => cur.includes(x)),
+      perVisitorActions[0] || [],
+    );
+
+    // 🔹 Batasi lagi berdasarkan permission operator
+    const permissionActions = getAllowedActionsByPermission(accessId, permissionAccess);
+
+    // ✅ ambil irisan antar dua array
+    return commonActions.filter((action) => permissionActions.includes(action));
   };
 
-  // Ambil allowed actions final untuk beberapa access_control_id yang terpilih
-  const getAllowedActionsForMultiple = (selectedIds: string[], selectedVisitorIds: string[]) => {
+  const getAllowedActionsForMultiple = (
+    selectedIds: string[],
+    selectedVisitorIds: string[],
+    allAccessData: any[],
+    permissionAccess: any[],
+  ) => {
     if (!selectedIds.length || !selectedVisitorIds.length) return [];
 
     const actionsList = selectedIds.map((id) =>
-      getAllowedActionsForAccessId(id, selectedVisitorIds, accessData),
+      getAllowedActionsForAccessId(id, selectedVisitorIds, allAccessData, permissionAccess),
     );
 
-    if (!actionsList.length) return [];
-
-    return actionsList.reduce((acc, curr) => acc.filter((x) => curr.includes(x)));
+    return actionsList.reduce(
+      (acc, curr) => acc.filter((x) => curr.includes(x)),
+      actionsList[0] || [],
+    );
   };
 
-  // Memoized result — pastikan dependencynya lengkap
   const allowedActions = useMemo(() => {
-    if (selectedAccessIds.length === 0 || selectedVisitors.length === 0) return [];
-    return getAllowedActionsForMultiple(selectedAccessIds, selectedVisitors);
-  }, [selectedAccessIds, selectedVisitors, accessData]);
+    if (!selectedAccessIds.length || !selectedVisitors.length) return [];
+
+    // 🟢 Jika lebih dari satu visitor → batasi juga oleh permission
+    if (selectedVisitors.length > 1) {
+      const allActions = ['Grant', 'Revoke', 'Block'];
+
+      // Batasi berdasar permission operator
+      const permissionActions = selectedAccessIds.flatMap((id) =>
+        getAllowedActionsByPermission(id, permissionAccess),
+      );
+
+      // ambil irisan semua permission
+      const commonPermissionActions = allActions.filter((a) =>
+        permissionActions.every((perm) => perm.includes(a)),
+      );
+
+      return commonPermissionActions;
+    }
+
+    // 🔹 Kalau hanya satu visitor → hitung normal
+    return getAllowedActionsForMultiple(
+      selectedAccessIds,
+      selectedVisitors,
+      accessData,
+      permissionAccess,
+    );
+  }, [selectedAccessIds, selectedVisitors, accessData, permissionAccess]);
+
+  // const getAllowedActionsForMultiple = (selectedIds: string[], selectedVisitorIds: string[]) => {
+  //   if (!selectedIds.length || !selectedVisitorIds.length) return [];
+
+  //   const actionsList = selectedIds.map((id) =>
+  //     getAllowedActionsForAccessId(id, selectedVisitorIds, accessData),
+  //   );
+
+  //   return actionsList.reduce(
+  //     (acc, curr) => acc.filter((x) => curr.includes(x)),
+  //     actionsList[0] || [],
+  //   );
+  // };
+
+  // const allowedActions = useMemo(() => {
+  //   // Kalau belum pilih apa pun
+  //   if (!selectedAccessIds.length || !selectedVisitors.length) return [];
+
+  //   // 🟢 Jika lebih dari satu visitor → tampilkan semua action
+  //   if (selectedVisitors.length > 1) {
+  //     return ['Grant', 'Revoke', 'Block'];
+  //   }
+
+  //   // 🔹 Kalau hanya satu visitor → hitung normal
+  //   return getAllowedActionsForMultiple(selectedAccessIds, selectedVisitors);
+  // }, [selectedAccessIds, selectedVisitors, accessData]);
 
   const handleSubmitPramultiple = async () => {
     try {
@@ -2419,6 +2860,10 @@ const OperatorView = () => {
       toast('Successfully submit praregister', 'success');
       console.log('✅ Submit success:', result);
 
+      setSnackbarMsg('Successfully submit praregister');
+      setSnackbarType('success');
+      setSnackbarOpen(true);
+
       // 🟩 Update lokal biar langsung terlihat (UX cepat)
       setRelatedVisitors((prev) =>
         prev.map((v) =>
@@ -2458,54 +2903,324 @@ const OperatorView = () => {
     setSelectedInvitationId(id);
     setOpenDialogInvitation(true);
   };
+
+  // const handleAccessAction = async (
+  //   row: any,
+  //   action: 'no_action' | 'grant' | 'revoke' | 'block' | 'unblock',
+  // ): Promise<void> => {
+  //   return new Promise(async (resolve) => {
+  //     const actionMap = { no_action: 0, grant: 1, revoke: 2, block: 3, unblock: 4 };
+  //     const accessControlId = row?.access_control_id || row?.id;
+  //     const actionCode = actionMap[action];
+
+  //     // 🧩 VALIDASI MULTI-VISITOR
+  //     const validateMultiVisitorAccess = (
+  //       accessId: string,
+  //       selectedVisitorIds: string[],
+  //       allAccessData: any[],
+  //       action: 'grant' | 'revoke' | 'block' | 'no_action' | 'unblock',
+  //     ) => {
+  //       const validVisitors: string[] = [];
+  //       const invalidVisitors: string[] = [];
+  //       const actionText = action.toUpperCase();
+
+  //       selectedVisitorIds.forEach((visitorId) => {
+  //         const record = allAccessData.find(
+  //           (a) =>
+  //             (a.trx_visitor_id?.toLowerCase() === visitorId.toLowerCase() ||
+  //               a.trxVisitorId?.toLowerCase() === visitorId.toLowerCase()) &&
+  //             a.access_control_id?.toLowerCase() === accessId.toLowerCase(),
+  //         );
+
+  //         console.log('🔍 Checking visitor', visitorId, {
+  //           foundRecord: !!record,
+  //           record,
+  //           expectedAccessId: accessId,
+  //         });
+
+  //         if (!record) {
+  //           invalidVisitors.push(`${visitorId} (no record found)`);
+  //           return;
+  //         }
+
+  //         const { visitor_give_access, access_control_name, early_access } = record;
+
+  //         // 🚫 Sudah revoke/block, tidak bisa aksi apapun kecuali no_action/unblock
+  //         if ((visitor_give_access === 2 || visitor_give_access === 3) && action !== 'no_action') {
+  //           invalidVisitors.push(`${access_control_name} (already revoked/blocked)`);
+  //           return;
+  //         }
+
+  //         // 🚫 early_access = true → tidak bisa GRANT
+  //         if (early_access && action === 'grant') {
+  //           invalidVisitors.push(`${access_control_name} (early access, cannot GRANT)`);
+  //           return;
+  //         }
+
+  //         // 🚫 Belum grant → tidak bisa revoke/block *kecuali early_access true*
+  //         if (
+  //           (action === 'revoke' || action === 'block') &&
+  //           visitor_give_access === 0 &&
+  //           !early_access
+  //         ) {
+  //           invalidVisitors.push(`${access_control_name} (not granted yet, cannot ${action})`);
+  //           return;
+  //         }
+
+  //         // 🚫 Sudah grant → tidak bisa grant lagi
+  //         if (action === 'grant' && visitor_give_access === 1) {
+  //           invalidVisitors.push(`${access_control_name} (already granted)`);
+  //           return;
+  //         }
+
+  //         // ✅ Kalau semua lolos → valid
+  //         validVisitors.push(visitorId);
+  //       });
+
+  //       return {
+  //         validVisitors,
+  //         invalidVisitors,
+  //         message:
+  //           invalidVisitors.length > 0
+  //             ? `⚠️ Some visitors cannot perform ${actionText}:\n${invalidVisitors.join('\n')}`
+  //             : null,
+  //       };
+  //     };
+
+  //     try {
+  //       setLoadingAccess(true);
+
+  //       // ✅ Jalankan validasi sebelum kirim ke backend
+  //       const { validVisitors, invalidVisitors, message } = validateMultiVisitorAccess(
+  //         accessControlId,
+  //         selectedVisitors,
+  //         accessData,
+  //         action,
+  //       );
+
+  //       // 🚫 Semua invalid → batalkan aksi
+  //       if (!validVisitors.length) {
+  //         setSnackbarMsg(message || 'No valid visitors to process.');
+  //         setSnackbarType('error');
+  //         setSnackbarOpen(true);
+  //         resolve();
+  //         return;
+  //       }
+
+  //       // ⚠️ Campuran valid + invalid → tampilkan warning tapi lanjut
+  //       if (invalidVisitors.length) {
+  //         setSnackbarMsg(
+  //           '⚠️ Some visitors cannot perform this action:\n' + invalidVisitors.join('\n'),
+  //         );
+  //         setSnackbarType('info');
+  //         setSnackbarOpen(true);
+  //       }
+
+  //       // 📨 Kirim hanya visitor yang valid
+  //       const payload = {
+  //         data_access: validVisitors.map((visitorId) => ({
+  //           access_control_id: accessControlId,
+  //           trx_visitor_id: visitorId,
+  //           action: actionCode,
+  //         })),
+  //       };
+
+  //       const res = await createGiveAccessOperator(token as string, payload);
+  //       console.log('✅ Access Action Response:', JSON.stringify(res, null, 2));
+
+  //       const backendMsg =
+  //         res?.collection?.[0] || res?.msg || res?.message || 'Action executed successfully.';
+
+  //       setSnackbarMsg(`✅ ${backendMsg}`);
+  //       setSnackbarType('success');
+  //       setSnackbarOpen(true);
+
+  //       // 🟢 Update accessData di state agar langsung sinkron
+  //       setAccessData((prev) =>
+  //         prev.map((a) =>
+  //           validVisitors.includes(a.trx_visitor_id) && a.access_control_id === accessControlId
+  //             ? { ...a, visitor_give_access: actionCode }
+  //             : a,
+  //         ),
+  //       );
+
+  //       resolve();
+  //     } catch (err: any) {
+  //       console.error('❌ Access Action Error:', err);
+  //       const backendMsg =
+  //         err?.response?.data?.collection?.[0] ||
+  //         err?.response?.data?.msg ||
+  //         err?.response?.data?.message ||
+  //         err?.response?.data?.error ||
+  //         err?.message ||
+  //         'Unknown error occurred.';
+
+  //       setSnackbarMsg(`${backendMsg}`);
+  //       setSnackbarType('error');
+  //       setSnackbarOpen(true);
+  //       resolve(); // biar loop lanjut
+  //     } finally {
+  //       setTimeout(() => setLoadingAccess(false), 600);
+  //     }
+  //   });
+  // };
+
+  // ✅ GABUNGKAN MULTI VISITOR ACCESS DENGAN TEMPLATE DATA PERTAMA
+  useEffect(() => {
+    if (!selectedVisitors.length) {
+      setAccessData([]);
+      return;
+    }
+
+    // Ambil semua access milik visitor terpilih (case-insensitive)
+    const filtered = allAccessData.filter((a) =>
+      selectedVisitors.some((id) => id.toLowerCase() === a.trx_visitor_id?.toLowerCase()),
+    );
+
+    // 🔹 Gabungkan access berdasarkan access_control_id, tapi simpan semua visitor-nya
+    const mergedAccess = Object.values(
+      filtered.reduce((acc: any, curr: any) => {
+        const key = curr.access_control_id;
+        if (!acc[key]) {
+          acc[key] = {
+            ...curr,
+            visitors: [curr.trx_visitor_id],
+          };
+        } else {
+          acc[key].visitors.push(curr.trx_visitor_id);
+
+          // Ambil visitor_give_access dengan prioritas tertinggi (block > revoke > grant > none)
+          acc[key].visitor_give_access = Math.max(
+            acc[key].visitor_give_access ?? 0,
+            curr.visitor_give_access ?? 0,
+          );
+
+          // Jika salah satu early_access = true, tandai true
+          acc[key].early_access = acc[key].early_access || curr.early_access;
+        }
+        return acc;
+      }, {}),
+    );
+
+    console.log('🎯 Merged accessData (multi visitor-aware):', mergedAccess);
+    setAccessData(mergedAccess);
+  }, [selectedVisitors, allAccessData]);
+
   const validateMultiVisitorAccess = (
     accessId: string,
-    selectedVisitorIds: string[],
+    visitorIds: string[],
     allAccessData: any[],
+    relatedVisitors: any[],
     action: 'grant' | 'revoke' | 'block' | 'no_action' | 'unblock',
   ) => {
-    const invalidVisitors: string[] = [];
+    const validVisitors: { visitorId: string; name: string; accessName: string }[] = [];
+    const invalidVisitors: {
+      visitorId: string;
+      name: string;
+      reason: string;
+      accessName: string;
+    }[] = [];
     const actionText = action.toUpperCase();
 
-    selectedVisitorIds.forEach((visitorId) => {
+    visitorIds.forEach((visitorId) => {
       const record = allAccessData.find(
         (a) =>
-          (a.trx_visitor_id === visitorId || a.trxVisitorId === visitorId) &&
-          a.access_control_id === accessId,
+          a.access_control_id?.toLowerCase() === accessId.toLowerCase() &&
+          (a.trx_visitor_id?.toLowerCase() === visitorId.toLowerCase() ||
+            a.trxVisitorId?.toLowerCase() === visitorId.toLowerCase()),
       );
 
+      const visitorName =
+        relatedVisitors.find((v) => v.id?.toLowerCase() === visitorId.toLowerCase())?.name ||
+        `Visitor ${visitorId.slice(0, 6)}`;
+
       if (!record) {
-        invalidVisitors.push(`${visitorId} (no record found)`);
+        invalidVisitors.push({
+          visitorId,
+          name: visitorName,
+          accessName: '-',
+          reason: 'no access found',
+        });
         return;
       }
 
-      const { visitor_give_access, access_control_name } = record;
+      const { visitor_give_access, access_control_name, early_access } = record;
 
-      // 🚫 Tidak boleh aksi kalau sudah revoke atau block
-      if (visitor_give_access === 2 || visitor_give_access === 3) {
-        invalidVisitors.push(`${access_control_name || visitorId} (already revoked/blocked)`);
+      // 🚫 Sudah revoke/block → skip
+      if ((visitor_give_access === 2 || visitor_give_access === 3) && action !== 'unblock') {
+        invalidVisitors.push({
+          visitorId,
+          name: visitorName,
+          accessName: access_control_name,
+          reason: 'already revoked/blocked',
+        });
+        return;
       }
 
-      // 🚫 Sudah grant → tidak bisa grant lagi
+      // 🚫 early_access → tidak bisa grant
+      if (early_access && action === 'grant') {
+        invalidVisitors.push({
+          visitorId,
+          name: visitorName,
+          accessName: access_control_name,
+          reason: 'early access, cannot grant',
+        });
+        return;
+      }
+
+      // 🚫 belum grant → tidak bisa revoke/block (kecuali early_access)
+      if (
+        (action === 'revoke' || action === 'block') &&
+        visitor_give_access === 0 &&
+        !early_access
+      ) {
+        invalidVisitors.push({
+          visitorId,
+          name: visitorName,
+          accessName: access_control_name,
+          reason: `not granted yet`,
+        });
+        return;
+      }
+
+      // 🚫 sudah grant → tidak bisa grant lagi
       if (action === 'grant' && visitor_give_access === 1) {
-        invalidVisitors.push(`${access_control_name || visitorId} (already granted)`);
+        invalidVisitors.push({
+          visitorId,
+          name: visitorName,
+          accessName: access_control_name,
+          reason: 'already granted',
+        });
+        return;
       }
 
-      // 🚫 Belum grant → tidak bisa revoke atau block
-      if ((action === 'revoke' || action === 'block') && visitor_give_access === 0) {
-        invalidVisitors.push(`${access_control_name || visitorId} (not granted yet)`);
-      }
+      // ✅ Valid
+      validVisitors.push({
+        visitorId,
+        name: visitorName,
+        accessName: access_control_name,
+      });
     });
 
-    console.log('');
+    // 💬 Format pesan simple tapi informatif
+    const lines: string[] = [];
 
-    if (invalidVisitors.length) {
-      return `⚠️ Some visitors cannot perform ${actionText}:\n${invalidVisitors.join('\n')}`;
-    }
+    validVisitors.forEach((v) => {
+      lines.push(`✅ ${v.name} (${v.accessName}): ${actionText}`);
+    });
 
-    return null;
+    invalidVisitors.forEach((v) => {
+      lines.push(`⚠️ ${v.name} (${v.accessName}): Skipped (${v.reason})`);
+    });
+
+    return {
+      validVisitors: validVisitors.map((v) => v.visitorId),
+      invalidVisitors: invalidVisitors.map((v) => v.visitorId),
+      message: lines.join('\n') || null,
+    };
   };
 
+  // ✅ HANDLE ACTION DENGAN VALIDASI MULTI VISITOR
   const handleAccessAction = async (
     row: any,
     action: 'no_action' | 'grant' | 'revoke' | 'block' | 'unblock',
@@ -2515,18 +3230,147 @@ const OperatorView = () => {
       const accessControlId = row?.access_control_id || row?.id;
       const actionCode = actionMap[action];
 
+      // 🧩 VALIDASI MULTI-VISITOR
+      // const validateMultiVisitorAccess = (
+      //   accessId: string,
+      //   visitorIds: string[],
+      //   allAccessData: any[],
+      //   action: 'grant' | 'revoke' | 'block' | 'no_action' | 'unblock',
+      // ) => {
+      //   const validVisitors: string[] = [];
+      //   const invalidVisitors: string[] = [];
+      //   const actionText = action.toUpperCase();
+
+      //   visitorIds.forEach((visitorId) => {
+      //     const record = allAccessData.find(
+      //       (a) =>
+      //         a.access_control_id?.toLowerCase() === accessId.toLowerCase() &&
+      //         (a.trx_visitor_id?.toLowerCase() === visitorId.toLowerCase() ||
+      //           a.trxVisitorId?.toLowerCase() === visitorId.toLowerCase()),
+      //     );
+
+      //     console.log('🔍 Checking visitor', visitorId, {
+      //       foundRecord: !!record,
+      //       record,
+      //       expectedAccessId: accessId,
+      //     });
+
+      //     if (!record) {
+      //       invalidVisitors.push(`${visitorId} (no record found)`);
+      //       return;
+      //     }
+
+      //     const { visitor_give_access, access_control_name, early_access } = record;
+
+      //     // 🚫 Sudah revoke/block, tidak bisa aksi apapun kecuali unblock
+      //     if ((visitor_give_access === 2 || visitor_give_access === 3) && action !== 'unblock') {
+      //       invalidVisitors.push(`${access_control_name} (already revoked/blocked)`);
+      //       return;
+      //     }
+
+      //     // 🚫 early_access = true → tidak bisa GRANT
+      //     if (early_access && action === 'grant') {
+      //       invalidVisitors.push(`${access_control_name} (early access, cannot GRANT)`);
+      //       return;
+      //     }
+
+      //     // 🚫 Belum grant → tidak bisa revoke/block *kecuali early_access true*
+      //     if (
+      //       (action === 'revoke' || action === 'block') &&
+      //       visitor_give_access === 0 &&
+      //       !early_access
+      //     ) {
+      //       invalidVisitors.push(`${access_control_name} (not granted yet, cannot ${action})`);
+      //       return;
+      //     }
+
+      //     // 🚫 Sudah grant → tidak bisa grant lagi
+      //     if (action === 'grant' && visitor_give_access === 1) {
+      //       invalidVisitors.push(`${access_control_name} (already granted)`);
+      //       return;
+      //     }
+
+      //     // ✅ Lolos semua kondisi → valid
+      //     validVisitors.push(visitorId);
+      //   });
+
+      //   return {
+      //     validVisitors,
+      //     invalidVisitors,
+      //     message:
+      //       invalidVisitors.length > 0
+      //         ? `${invalidVisitors.join('\n')}`
+      //         : null,
+      //   };
+      // };
+
       try {
         setLoadingAccess(true);
+
+        // ✅ Visitor yang relevan diambil dari row.visitors (bukan hanya selectedVisitors)
+        // const targetVisitors = row.visitors ?? selectedVisitors;
+        const targetVisitors = allAccessData
+          .filter(
+            (a) =>
+              a.access_control_id?.toLowerCase() === accessControlId.toLowerCase() &&
+              selectedVisitors.some((v) => v.toLowerCase() === a.trx_visitor_id?.toLowerCase()),
+          )
+          .map((a) => a.trx_visitor_id?.toLowerCase());
+
+        console.log(targetVisitors);
+
+        // Jalankan validasi
+        const { validVisitors, invalidVisitors, message } = validateMultiVisitorAccess(
+          accessControlId,
+          targetVisitors,
+          allAccessData,
+          relatedVisitors,
+          action,
+        );
+
+        // if (message) {
+        //   setSnackbarMsg(message);
+        //   setSnackbarType(
+        //     validVisitors.length && invalidVisitors.length
+        //       ? 'info'
+        //       : validVisitors.length
+        //       ? 'success'
+        //       : 'error',
+        //   );
+        //   setSnackbarOpen(true);
+        // }
+
+        // ❌ Semua invalid → stop
+        if (!validVisitors.length) {
+          setSnackbarMsg(message || 'No valid visitors to process.');
+          setSnackbarType('error');
+          setSnackbarOpen(true);
+          resolve();
+          return;
+        }
+
+        // ⚠️ Campuran valid + invalid → tampilkan peringatan tapi lanjut
+        if (invalidVisitors.length) {
+          setSnackbarMsg(
+            '⚠️ Some visitors cannot perform this action:\n' + invalidVisitors.join('\n'),
+          );
+          setSnackbarType('info');
+          setSnackbarOpen(true);
+        }
+
+        // 📨 Payload hanya untuk valid visitors
         const payload = {
-          data_access: selectedVisitors.map((visitorId) => ({
+          data_access: validVisitors.map((visitorId) => ({
             access_control_id: accessControlId,
             trx_visitor_id: visitorId,
             action: actionCode,
           })),
         };
 
+        console.log('📦 Final Payload:', payload);
+
         const res = await createGiveAccessOperator(token as string, payload);
-        console.log('✅ Access Action Response:', res);
+        console.log('✅ Access Action Response:', JSON.stringify(res, null, 2));
 
         const backendMsg =
           res?.collection?.[0] || res?.msg || res?.message || 'Action executed successfully.';
@@ -2535,10 +3379,18 @@ const OperatorView = () => {
         setSnackbarType('success');
         setSnackbarOpen(true);
 
-        // 🟢 Update accessData di sini
+        // 🟢 Update accessData agar sinkron di UI
         setAccessData((prev) =>
           prev.map((a) =>
-            selectedVisitors.includes(a.trx_visitor_id) && a.access_control_id === accessControlId
+            validVisitors.includes(a.trx_visitor_id) && a.access_control_id === accessControlId
+              ? { ...a, visitor_give_access: actionCode }
+              : a,
+          ),
+        );
+
+        setAllAccessData((prev) =>
+          prev.map((a) =>
+            validVisitors.includes(a.trx_visitor_id) && a.access_control_id === accessControlId
               ? { ...a, visitor_give_access: actionCode }
               : a,
           ),
@@ -2555,196 +3407,16 @@ const OperatorView = () => {
           err?.message ||
           'Unknown error occurred.';
 
-        setSnackbarMsg(`❌ Failed to ${action.toUpperCase()}: ${backendMsg}`);
+        setSnackbarMsg(`${backendMsg}`);
         setSnackbarType('error');
         setSnackbarOpen(true);
-        resolve(); // pastikan tetap resolve agar loop lanjut
+        resolve();
       } finally {
         setTimeout(() => setLoadingAccess(false), 600);
       }
     });
   };
 
-  //   const handleAccessAction = async (
-  //     row: any,
-  //     action: 'grant' | 'revoke' | 'block' | 'no_action' | 'unblock',
-  //   ) => {
-  //     const actionMap = { no_action: 0, grant: 1, revoke: 2, block: 3, unblock: 4 };
-  //     const accessControlId = row?.access_control_id || row?.id;
-  //     const actionCode = actionMap[action];
-
-  //     if (!accessControlId) {
-  //       setSnackbarMsg('Access Control ID not found.');
-  //       setSnackbarType('error');
-  //       setSnackbarOpen(true);
-  //       return;
-  //     }
-
-  //     if (!selectedVisitors.length) {
-  //       setSnackbarMsg('Please select at least one visitor first.');
-  //       setSnackbarType('info');
-  //       setSnackbarOpen(true);
-  //       return;
-  //     }
-
-  //     // ✅ Validasi kombinasi multi-visitor
-  //     // const validationError = validateMultiVisitorAccess(
-  //     //   accessControlId,
-  //     //   selectedVisitors,
-  //     //   accessData,
-  //     //   action,
-  //     // );
-
-  //     // if (validationError) {
-  //     //   setSnackbarMsg(validationError);
-  //     //   setSnackbarType('error');
-  //     //   setSnackbarOpen(true);
-  //     //   return;
-  //     // }
-
-  //     const payload = {
-  //       data_access: selectedVisitors.map((visitorId) => ({
-  //         access_control_id: accessControlId,
-  //         trx_visitor_id: visitorId,
-  //         action: actionCode,
-  //       })),
-  //     };
-
-  //     console.log('🚀 Payload Access Action:', payload);
-
-  //     try {
-  //       setLoadingAccess(true);
-  //       const res = await createGiveAccessOperator(token as string, payload);
-  //       console.log('✅ Access Action Response:', res);
-
-  //       setSnackbarMsg(`✅ ${action.toUpperCase()} executed successfully for selected visitors.`);
-  //       setSnackbarType('success');
-  //       setSnackbarOpen(true);
-
-  //       // 🟢 Update accessData agar UI sync
-  //  setAccessData((prev) =>
-  //    prev.map((a) => {
-  //      const match =
-  //        selectedVisitors.includes(a.trx_visitor_id) && a.access_control_id === accessControlId;
-
-  //      if (match) {
-  //        // update visitor_give_access sesuai action baru
-  //        const actionMap = { grant: 1, revoke: 2, block: 3 };
-  //        const newStatus = actionMap[action as keyof typeof actionMap] ?? a.visitor_give_access;
-
-  //        console.log(
-  //          `🔄 Updated ${a.access_control_name}: visitor_give_access ${a.visitor_give_access} → ${newStatus}`,
-  //        );
-
-  //        return { ...a, visitor_give_access: newStatus };
-  //      }
-
-  //      return a;
-  //    }),
-  //  );
-  //     } catch (err: any) {
-  //       console.error('❌ Access Action Error:', err);
-
-  //       // 🔍 Ambil pesan error dari berbagai kemungkinan lokasi, termasuk 'collection'
-  //       const backendMsg =
-  //         err?.response?.data?.collection?.[0] || // ✅ ambil elemen pertama dari array collection
-  //         err?.response?.data?.message ||
-  //         err?.response?.data?.msg ||
-  //         err?.response?.data?.error ||
-  //         (Array.isArray(err?.response?.data?.errors) ? err.response.data.errors.join('\n') : null) ||
-  //         err?.message ||
-  //         'Unknown error occurred.';
-
-  //       console.warn('⚠️ Backend message parsed:', backendMsg);
-
-  //       setSnackbarMsg(`${backendMsg}`);
-  //       setSnackbarType('error');
-  //       setSnackbarOpen(true);
-  //     } finally {
-  //       setTimeout(() => setLoadingAccess(false), 600);
-  //     }
-  //   };
-
-  // const handleAccessAction = async (
-  //   row: any,
-  //   action: 'grant' | 'revoke' | 'block' | 'no_action' | 'unblock',
-  // ) => {
-  //   const actionMap: Record<typeof action, number> = {
-  //     no_action: 0,
-  //     grant: 1,
-  //     revoke: 2,
-  //     block: 3,
-  //     unblock: 4,
-  //   };
-
-  //   const trxVisitorId = row?.trx_visitor_id || row?.trxVisitorId || invitationCode[0]?.id;
-
-  //   // ✅ Ambil ID dari row paling dulu
-  //   const accessControlId =
-  //     row?.access_control_id ||
-  //     (Array.isArray(invitationCode[0]?.access)
-  //       ? invitationCode[0].access.find((x:any) => x.id === row?.id)?.access_control_id
-  //       : undefined);
-
-  //   const actionCode = actionMap[action];
-
-  //   if (!accessControlId) {
-  //     console.warn('⚠️ Access control ID not found in row or fallback:', row);
-  //     setSnackbarMsg('Access Control ID not found.');
-  //     setSnackbarType('error');
-  //     setSnackbarOpen(true);
-  //     return;
-  //   }
-
-  //   const payload = {
-  //     data_access: [
-  //       {
-  //         access_control_id: accessControlId,
-  //         action: actionCode,
-  //         trx_visitor_id: trxVisitorId,
-  //       },
-  //     ],
-  //   };
-
-  //   console.log('🚀 Payload Access Action (accurate):', payload);
-
-  //   try {
-  //     setLoadingAccess(true);
-  //     const res = await createGiveAccessOperator(token as string, payload);
-  //     console.log('✅ Access Action Response:', res);
-
-  //     setSnackbarMsg(`Access ${action} successfully.`);
-  //     setSnackbarType('success');
-  //     setSnackbarOpen(true);
-
-  //     setAccessData((prev) =>
-  //       prev.map((a) => {
-  //         // 🔍 pastikan cocok dengan salah satu identifier
-  //         const match =
-  //           a.access_control_id === accessControlId ||
-  //           a.id === accessControlId ||
-  //           a.id === row.id ||
-  //           a.access_control_id === row.access_control_id;
-
-  //         if (match) {
-  //           console.log(`🟢 Updating row ${a.id} (action: ${action})`);
-  //           return {
-  //             ...a,
-  //             visitor_give_access: actionMap[action], // langsung sync ke nilai yang benar
-  //           };
-  //         }
-  //         return a;
-  //       }),
-  //     );
-  //   } catch (err) {
-  //     console.error('❌ Access Action Error:', err);
-  //     setSnackbarMsg(`Failed to ${action}.`);
-  //     setSnackbarType('error');
-  //     setSnackbarOpen(true);
-  //   } finally {
-  //     setTimeout(() => setLoadingAccess(false), 600);
-  //   }
-  // };
   return (
     <PageContainer
       title={!isFullscreen ? 'Operator View' : undefined}
@@ -2757,9 +3429,9 @@ const OperatorView = () => {
           // flexDirection: mdUp ? 'row' : 'column',
           flexDirection: { xs: 'column', md: 'row' },
           backgroundColor: '#fff',
-          height: isFullscreen ? '100vh' : '100vh', // ✅ kalau fullscreen pakai 100vh
+          height: isFullscreen ? '100vh' : '100%', // ✅ kalau fullscreen pakai 100vh
           width: '100%',
-          overflow: 'hidden',
+          // overflow: 'hidden',
           position: 'relative',
         }}
       >
@@ -2856,8 +3528,8 @@ const OperatorView = () => {
           flexGrow={1}
           p={3}
           sx={{
-            overflow: 'auto',
-            height: '100vh',
+            // overflow: 'hidden',
+            // height: '100vh',
             display: 'flex',
             flexDirection: 'column',
           }}
@@ -2976,6 +3648,37 @@ const OperatorView = () => {
                 height: '100%',
               }}
             >
+              {/* <Grid size={{ xs: 12, lg: 2 }}>
+                <Card
+                  sx={{
+                    borderRadius: 2,
+                    height: '100%',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                    },
+                  }}
+                >
+                  <CardContent
+                    sx={{
+                      p: 3,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      height: '90%',
+                      flexDirection: 'column',
+                    }}
+                  >
+                    <Avatar alt="Natacha" src={''} sx={{ width: 100, height: 100 }} />
+                    <Typography variant="h6" mt={2} sx={{ fontWeight: 600 }}>
+                      Nata
+                    </Typography>
+                    <Box></Box>
+                  </CardContent>
+                </Card>
+              </Grid> */}
               {/* 🧩 Card FR */}
               <Grid size={{ xs: 12, lg: 4.5 }}>
                 <Card
@@ -3276,7 +3979,7 @@ const OperatorView = () => {
                             display={'flex'}
                             justifyContent={'space-between'}
                             flexWrap={'wrap'}
-                            alignItems={'center'}
+                            // alignItems={'center'}
                           >
                             <Box display="flex" gap={2} alignItems="flex-start" flexWrap={'wrap'}>
                               <IconCards />
@@ -3285,22 +3988,34 @@ const OperatorView = () => {
                               </Box>
                             </Box>
                             <Box>
-                              {/* 🔍 Tentukan visitor aktif */}
                               {!invitationCode || invitationCode.length === 0 ? (
-                                // 🟡 Kondisi 3: Belum ada aksi sama sekali (belum ada data invitationCode)
                                 <></>
                               ) : invitationCode[0]?.card && invitationCode[0].card.length > 0 ? (
+                                // ✅ Sudah punya kartu → tampilkan nomor
                                 invitationCode[0].card[0]?.card_number?.trim() ? (
-                                  // ✅ Kondisi 1: Sudah ada card_number
-                                  <Typography sx={{ fontWeight: 600 }}>
-                                    {invitationCode[0].card[0].card_number}
-                                  </Typography>
+                                  <Box>
+                                    <Typography sx={{ fontWeight: 600 }}>
+                                      {invitationCode[0].card[0].card_number}
+                                    </Typography>
+
+                                    {invitationCode[0]?.tracking_ble?.length > 0 &&
+                                      invitationCode[0].tracking_ble[0]?.visitor_give_access ===
+                                        0 && (
+                                        <Button
+                                          sx={{ mt: 1 }}
+                                          variant="contained"
+                                          color="primary"
+                                          startIcon={<IconSend width={18} />}
+                                        >
+                                          Send Tracking
+                                        </Button>
+                                      )}
+                                  </Box>
                                 ) : (
-                                  // 🚫 Kondisi 2: Sudah ada card tapi belum di-scan → tombol hilang (kosong)
                                   <></>
                                 )
-                              ) : (
-                                // 🟦 Kondisi 4: Sudah ada data invitation tapi belum ada card → tampil tombol
+                              ) : invitationCode[0]?.visitor_status === 'Checkin' ? (
+                                // ✅ Tampilkan tombol "Choose Card" hanya kalau sudah Checkin
                                 <Button
                                   variant="contained"
                                   color="primary"
@@ -3309,6 +4024,9 @@ const OperatorView = () => {
                                 >
                                   Choose Card
                                 </Button>
+                              ) : (
+                                // 🚫 Status lain (Preregis, Queue, dsb) → tidak tampilkan apa-apa
+                                <></>
                               )}
                             </Box>
                           </Box>
@@ -3500,9 +4218,21 @@ const OperatorView = () => {
                       return null;
                     })()}
                     {(() => {
-                      const status = visitorStatus ?? invitationCode[0]?.visitor_status;
+                      // const status = visitorStatus ?? invitationCode[0]?.visitor_status;
+                      // const status = visitorStatus;
+                      // const status = invitationCode[0]?.visitor_status;
+                      // console.log(status);
+                      // const blockby = invitationCode[0]?.block_by ?? null;
+                      // console.log(blockby);
+                      //  const blockby = invitationCode[0]?.block_by ?? null;
 
-                      if (!['Checkin', 'Checkout', 'Block', 'Unblock'].includes(status)) {
+                      // const isBlocked = !!blockby;
+                      const data = invitationCode[0];
+                      const status = data?.visitor_status;
+                      const isBlocked = !!data?.is_block;
+                      const blockBy = data?.block_by ?? null;
+
+                      if (!['Checkin', 'Checkout', 'Block', 'Unblock'].includes(status || '')) {
                         return (
                           <>
                             <Button
@@ -3525,17 +4255,9 @@ const OperatorView = () => {
                         );
                       }
 
-                      if (status === 'Checkin') {
+                      if (status === 'Checkin' && !isBlocked) {
                         return (
                           <Box display="flex" gap={1}>
-                            {/* <Button
-                              variant="outlined"
-                              color="success"
-                              onClick={() => handleConfirmStatus('Checkin')}
-                              startIcon={<IconCheck />}
-                            >
-                              Completed
-                            </Button> */}
                             <Button
                               variant="contained"
                               color="error"
@@ -3556,7 +4278,7 @@ const OperatorView = () => {
                         );
                       }
 
-                      if (status === 'Checkout') {
+                      if (status === 'Checkout' && !isBlocked) {
                         return (
                           <Box display="flex" gap={1}>
                             <Button
@@ -3571,7 +4293,7 @@ const OperatorView = () => {
                         );
                       }
 
-                      if (status === 'Block') {
+                      if (isBlocked) {
                         return (
                           <Button
                             variant="contained"
@@ -3584,21 +4306,32 @@ const OperatorView = () => {
                           >
                             Unblock
                           </Button>
+                          // <></>
                         );
                       }
 
-                      if (status === 'Unblock') {
-                        return (
-                          <Button
-                            variant="contained"
-                            sx={{ backgroundColor: '#000' }}
-                            onClick={() => handleConfirmStatus('Block')}
-                            startIcon={<IconForbid2 />}
-                          >
-                            Block
-                          </Button>
-                        );
-                      }
+                      // if (!isBlocked) {
+                      //   return (
+                      //     <Box display="flex" gap={1}>
+                      //       {/* <Button
+                      //         variant="contained"
+                      //         color="error"
+                      //         onClick={() => handleConfirmStatus('Checkout')}
+                      //         startIcon={<IconLogout />}
+                      //       >
+                      //         Check Out
+                      //       </Button> */}
+                      //       <Button
+                      //         variant="contained"
+                      //         sx={{ backgroundColor: '#000' }}
+                      //         onClick={() => handleConfirmStatus('Block')}
+                      //         startIcon={<IconForbid2 />}
+                      //       >
+                      //         Block
+                      //       </Button>
+                      //     </Box>
+                      //   );
+                      // }
 
                       return null;
                     })()}
@@ -3635,7 +4368,6 @@ const OperatorView = () => {
                   />
                 </Box>
                 <Divider sx={{ mt: 1 }} />
-
                 <CardContent
                   sx={{
                     flex: 1,
@@ -3727,7 +4459,7 @@ const OperatorView = () => {
                                 </Box>
                               )}
                             </Box>
-                            <Checkbox
+                            {/* <Checkbox
                               checked={selectedVisitors.includes(visitor.id)}
                               onChange={(e) => {
                                 const isChecked = e.target.checked;
@@ -3750,6 +4482,37 @@ const OperatorView = () => {
                                     setSelectedVisitors([]);
                                   }
                                 }
+                              }}
+                            /> */}
+                            <Checkbox
+                              checked={selectedVisitors.includes(visitor.id)}
+                              onChange={(e) => {
+                                const isChecked = e.target.checked;
+
+                                setSelectedVisitors((prev) => {
+                                  if (selectMultiple) {
+                                    if (isChecked) {
+                                      const updated = Array.from(new Set([...prev, visitor.id]));
+                                      console.log('✅ Added visitor ID:', visitor.id);
+                                      console.log('🧾 Updated visitors (after add):', updated);
+                                      return updated;
+                                    } else {
+                                      const updated = prev.filter((id) => id !== visitor.id);
+                                      console.log('❌ Removed visitor ID:', visitor.id);
+                                      console.log('🧾 Updated visitors (after remove):', updated);
+                                      return updated;
+                                    }
+                                  } else {
+                                    if (isChecked) {
+                                      console.log('🎯 Single visitor selected:', visitor.id);
+                                      handleSelectRelatedVisitor(visitor);
+                                      return [visitor.id];
+                                    } else {
+                                      console.log('🚫 Unselected single visitor:', visitor.id);
+                                      return [];
+                                    }
+                                  }
+                                });
                               }}
                             />
                           </Box>
@@ -3789,11 +4552,12 @@ const OperatorView = () => {
                   <Divider />
                   <Box
                     display={'flex'}
-                    gap="3"
+                    gap={2}
                     width={'100%'}
                     sx={{ mt: 2, justifyContent: 'space-between' }}
+                    flexWrap={'wrap'}
                   >
-                    <Box display="flex" gap={2}>
+                    <Box display="flex" gap={1}>
                       <CustomSelect
                         sx={{ width: '150px' }}
                         value={bulkAction}
@@ -3816,18 +4580,40 @@ const OperatorView = () => {
                         Apply
                       </Button>
                     </Box>
-                    <Box display={'flex'} gap={1} alignItems={'center'}>
-                      <Button variant="outlined" color="primary">
-                        Card
-                      </Button>
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={() => setOpenAccessData(true)}
+                    {invitationCode.length > 0 && (
+                      <Box
+                        display={'flex'}
+                        gap={0.5}
+                        alignItems={'center'}
+                        justifyContent={'flex-end'}
                       >
-                        Access
-                      </Button>
-                    </Box>
+                        <Button
+                          variant="contained"
+                          onClick={() => setOpenExtendVisit(true)}
+                          startIcon={<IconClock size={18} />}
+                          sx={{ backgroundColor: 'purple' }}
+                        >
+                          Extend
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          color="primary"
+                          onClick={handleChooseCard}
+                          startIcon={<IconCreditCard size={18} />}
+                        >
+                          Card
+                        </Button>
+
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={() => setOpenAccessData(true)}
+                          startIcon={<IconKey size={18} />}
+                        >
+                          Access
+                        </Button>
+                      </Box>
+                    )}
                   </Box>
                 </CardActions>
               </Card>
@@ -3855,10 +4641,10 @@ const OperatorView = () => {
                       }}
                     >
                       <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Faceimage</CustomFormLabel>
-                      {invitationCode[0]?.selfie_image ? (
+                      {/* {invitationCode[0]?.selfie_image ? (
                         <img
                           src={`${BASE_URL}/cdn${invitationCode[0].selfie_image}`}
-                          alt="Faceimage"
+                          alt=""
                           style={{
                             width: '100%',
                             height: isFullscreen ? '100%' : '200px',
@@ -3869,7 +4655,41 @@ const OperatorView = () => {
                           }}
                         />
                       ) : (
-                        <></>
+                        <>
+                          <Typography>No Faceimage</Typography>
+                        </>
+                      )} */}
+                      {invitationCode[0]?.selfie_image ? (
+                        <img
+                          src={`${BASE_URL}/cdn${invitationCode[0].selfie_image}`}
+                          alt="Face Image"
+                          style={{
+                            width: '100%',
+                            height: isFullscreen ? '100%' : '200px',
+                            borderRadius: '8px',
+                            objectFit: isFullscreen ? 'contain' : 'cover',
+                          }}
+                          onError={(e) => {
+                            // kalau gagal load (404, rusak, dsb)
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <Box
+                          display="flex"
+                          alignItems="center"
+                          justifyContent="center"
+                          height={isFullscreen ? '100%' : '200px'}
+                          sx={{
+                            borderRadius: '8px',
+                            backgroundColor: '#f9f9f9',
+                            color: '#888',
+                            fontStyle: 'italic',
+                            fontSize: '0.9rem',
+                          }}
+                        >
+                          No Face Image
+                        </Box>
                       )}
                     </CardContent>
                   </Card>
@@ -3895,7 +4715,7 @@ const OperatorView = () => {
                       }}
                     >
                       <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>KTP</CustomFormLabel>
-                      {invitationCode[0]?.identity_image ? (
+                      {/* {invitationCode[0]?.identity_image ? (
                         <img
                           src={`${BASE_URL}/cdn${invitationCode[0].identity_image}`}
                           alt="Faceimage"
@@ -3906,7 +4726,36 @@ const OperatorView = () => {
                             objectFit: isFullscreen ? 'contain' : 'cover',
                           }}
                         />
-                      ) : null}
+                      ) : null} */}
+                      {invitationCode[0]?.identity_image ? (
+                        <img
+                          src={`${BASE_URL}/cdn${invitationCode[0].identity_image}`}
+                          alt="KTP Image"
+                          style={{
+                            width: '100%',
+                            height: isFullscreen ? '100%' : '200px',
+                            borderRadius: '8px',
+                            objectFit: isFullscreen ? 'contain' : 'cover',
+                          }}
+                          onError={(e) => (e.currentTarget.style.display = 'none')}
+                        />
+                      ) : (
+                        <Box
+                          display="flex"
+                          alignItems="center"
+                          justifyContent="center"
+                          height={isFullscreen ? '100%' : '200px'}
+                          sx={{
+                            borderRadius: '8px',
+                            backgroundColor: '#f9f9f9',
+                            color: '#888',
+                            fontStyle: 'italic',
+                            fontSize: '0.9rem',
+                          }}
+                        >
+                          No KTP Image
+                        </Box>
+                      )}
                     </CardContent>
                   </Card>
                 </Grid>
@@ -4223,11 +5072,14 @@ const OperatorView = () => {
           <Grid container spacing={2}>
             {filteredCards.map((card) => {
               const isChosen = selectedCards.includes(card.card_number);
-
+              const isLimitReached =
+                selectedCards.length >= (selectedVisitors.length || 1) && !isChosen;
               return (
                 <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={card.id}>
                   <Paper
-                    onClick={() => handleToggleCard(card.card_number)}
+                    onClick={() => {
+                      handleToggleCard(card.card_number);
+                    }}
                     sx={(theme) => ({
                       p: 2,
                       borderRadius: 2,
@@ -4250,8 +5102,8 @@ const OperatorView = () => {
                         },
                       ),
                       '&:hover': {
-                        transform: 'translateY(-3px)',
-                        boxShadow: theme.shadows[6],
+                        transform: isLimitReached ? 'none' : 'translateY(-3px)',
+                        boxShadow: isLimitReached ? theme.shadows[1] : theme.shadows[6],
                       },
                     })}
                   >
@@ -4263,7 +5115,7 @@ const OperatorView = () => {
                       justifyContent="center"
                       alignItems="center"
                     >
-                      <Typography variant="body1" fontWeight={600}>
+                      {/* <Typography variant="body1" fontWeight={600}>
                         {card.card_number}
                       </Typography>
                       <Typography variant="h1" color="text.secondary">
@@ -4271,7 +5123,42 @@ const OperatorView = () => {
                       </Typography>
                       <Typography variant="body1" color="text.secondary">
                         {card.card_mac || '-'}
+                      </Typography> */}
+                      <Typography variant="h1" color="text.secondary" mt={2}>
+                        {card.remarks || '-'}
                       </Typography>
+                      {/* Baris untuk CARD */}
+                      <Box
+                        display="flex"
+                        justifyContent="space-between"
+                        width="100%"
+                        maxWidth={300}
+                        mt={1}
+                      >
+                        <Typography variant="body1" fontWeight={600}>
+                          Card
+                        </Typography>
+                        <Typography variant="body1" color="text.secondary">
+                          {card.card_number || '-'}
+                        </Typography>
+                      </Box>
+
+                      {/* Baris untuk BLE */}
+                      <Box
+                        display="flex"
+                        justifyContent="space-between"
+                        width="100%"
+                        maxWidth={300}
+                        flexWrap={'wrap'}
+                        gap={1}
+                      >
+                        <Typography variant="body1" fontWeight={600}>
+                          BLE
+                        </Typography>
+                        <Typography variant="body1" fontWeight={500}>
+                          {card.card_mac || '-'}
+                        </Typography>
+                      </Box>
                     </Box>
 
                     <Typography variant="body1">{card.name}</Typography>
@@ -4283,6 +5170,7 @@ const OperatorView = () => {
                       control={
                         <Checkbox
                           checked={isChosen}
+                          disabled={!isChosen}
                           onChange={() => handleToggleCard(card.card_number)}
                         />
                       }
@@ -4565,7 +5453,7 @@ const OperatorView = () => {
         <DialogContent dividers>
           {/* <AccessDataTable visitorId={selectedVisitorIdForAccessData} /> */}
           <DynamicTable
-            data={accessData}
+            data={accessData.map(({ trx_visitor_id, visitors, ...rest }) => rest)}
             isHaveChecked={true}
             isHaveHeaderTitle={true}
             titleHeader="Access"
@@ -4586,6 +5474,15 @@ const OperatorView = () => {
               disabled={!selectedAccessIds.length}
             >
               <MenuItem value="">Select Action</MenuItem>
+              {/* <MenuItem value="grant" disabled={!allowedActions.includes('Grant')}>
+                Grant
+              </MenuItem>
+              <MenuItem value="revoke" disabled={!allowedActions.includes('Revoke')}>
+                Revoke
+              </MenuItem>
+              <MenuItem value="block" disabled={!allowedActions.includes('Block')}>
+                Block
+              </MenuItem> */}
               <MenuItem value="grant" disabled={!allowedActions.includes('Grant')}>
                 Grant
               </MenuItem>
@@ -4596,6 +5493,7 @@ const OperatorView = () => {
                 Block
               </MenuItem>
             </CustomSelect>
+
             <Button
               variant="contained"
               color="primary"
@@ -4607,20 +5505,105 @@ const OperatorView = () => {
                   return;
                 }
 
-                // Jalankan handleAccessAction secara berurutan agar state tidak race
-                for (const id of selectedAccessIds) {
-                  const row = accessData.find((r) => r.access_control_id === id);
-                  if (row) {
-                    await handleAccessAction(row, selectedActionAccess.toLowerCase() as any);
-                  }
+                // 🚨 validasi tambahan: pastikan aksi masih diizinkan
+                if (
+                  !allowedActions.includes(
+                    selectedActionAccess.charAt(0).toUpperCase() + selectedActionAccess.slice(1),
+                  )
+                ) {
+                  setSnackbarMsg(
+                    `Action "${selectedActionAccess}" is not allowed for selected access.`,
+                  );
+                  setSnackbarType('info');
+                  setSnackbarOpen(true);
+                  return;
                 }
+
+                console.log('🧾 Selected Access IDs:', selectedAccessIds);
+
+                for (const id of selectedAccessIds) {
+                  const row = accessData.find(
+                    (r) =>
+                      r.access_control_id?.toLowerCase() === id.toLowerCase() &&
+                      selectedVisitors.some(
+                        (v) =>
+                          v.toLowerCase() === r.trx_visitor_id?.toLowerCase() ||
+                          v.toLowerCase() === r.trxVisitorId?.toLowerCase(),
+                      ),
+                  );
+
+                  if (!row) {
+                    continue;
+                  }
+
+                  await handleAccessAction(row, selectedActionAccess.toLowerCase() as any);
+                }
+                setSelectedActionAccess('');
               }}
               sx={{ mb: 0, mt: 2 }}
-              disabled={!selectedAccessIds.length || !selectedActionAccess}
+              disabled={!selectedActionAccess || allowedActions.length === 0}
             >
               Apply
             </Button>
           </Box>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Extend Visi */}
+      <Dialog
+        open={openExtendVisit}
+        onClose={() => setOpenExtendVisit(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Extend Visit</DialogTitle>
+        <IconButton
+          aria-label="close"
+          onClick={() => setOpenExtendVisit(false)}
+          sx={{
+            position: 'absolute',
+            right: 8,
+            top: 8,
+            color: (theme) => theme.palette.grey[500],
+          }}
+        >
+          <IconX />
+        </IconButton>
+        <DialogContent dividers>
+          <form onSubmit={handleExtend}>
+            <Box display="flex" flexWrap="wrap" gap={1.5} justifyContent="center" sx={{ mb: 2 }}>
+              {durationOptions.map((minutes) => (
+                <Chip
+                  key={minutes}
+                  label={`${minutes} min`}
+                  clickable
+                  color={selectedMinutes === minutes ? 'primary' : 'default'}
+                  onClick={() => setSelectedMinutes(minutes)}
+                  sx={{
+                    fontWeight: selectedMinutes === minutes ? 600 : 400,
+                    px: 1.5,
+                  }}
+                />
+              ))}
+            </Box>
+            <FormControlLabel
+              control={<Checkbox checked={applyToAll} onChange={handleApplyToAllChange} />}
+              label={
+                <Typography variant="body2" color="text.secondary">
+                  Apply to another visitor
+                </Typography>
+              }
+            />
+            <Button
+              type="submit"
+              variant="contained"
+              sx={{ mt: 2 }}
+              fullWidth
+              disabled={!selectedMinutes}
+            >
+              Extend Visit
+            </Button>
+          </form>
         </DialogContent>
       </Dialog>
 
@@ -4665,6 +5648,7 @@ const OperatorView = () => {
             zIndex: 99999,
             position: 'fixed',
             margin: '0 auto',
+            color: 'primary',
           }}
           open={loadingAccess}
         >

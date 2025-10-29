@@ -14,6 +14,7 @@ import {
   Autocomplete,
   Backdrop,
   Switch,
+  FormHelperText,
 } from '@mui/material';
 import React, { useEffect, useRef, useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
@@ -24,6 +25,7 @@ import {
   createVisitorCard,
   getAllEmployee,
   getAllSite,
+  getRegisteredSite,
   getVisitorEmployee,
   updateVisitorCard,
 } from 'src/customs/api/admin';
@@ -34,7 +36,7 @@ import {
   CreateVisitorCardRequestSchema,
   UpdateVisitorCardRequest,
 } from 'src/customs/api/models/Admin/VisitorCard';
-const steps = ['Visitor Card Info', 'Card Details'];
+const steps = ['Card Info', 'Card Details'];
 
 type EnabledFields = {
   employee_id: boolean;
@@ -74,8 +76,10 @@ const FormWizardAddVisitorCard = ({
   );
   const [employeeRes, setEmployeeRes] = useState<any[]>([]);
   const [siteSpaceRes, setSiteSpaceRes] = useState<any[]>([]);
+  const [selectedSite, setSelectedSite] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
   const handleNext = () => {
     if (!validateStep(activeStep)) return;
     let newSkipped = skipped;
@@ -109,7 +113,7 @@ const FormWizardAddVisitorCard = ({
     const fetchData = async () => {
       try {
         const employeeRes = await getVisitorEmployee(token);
-        const siteSpaceRes = await getAllSite(token);
+        const siteSpaceRes = await getRegisteredSite(token);
         setEmployeeRes(employeeRes.collection);
         setSiteSpaceRes(siteSpaceRes.collection);
       } catch (error) {
@@ -131,16 +135,16 @@ const FormWizardAddVisitorCard = ({
   useEffect(() => {
     if (!formData.registered_site || siteSpaceRes.length === 0) return;
 
-    const siteObj = siteSpaceRes.find((s) => String(s.id) === String(formData.registered_site));
+    const foundSite = siteSpaceRes.find(
+      (s) => String(s.id).toLowerCase() === String(formData.registered_site).toLowerCase(),
+    );
 
-    // kalau ketemu, update formData agar Autocomplete bisa render object yg sesuai
-    if (siteObj) {
-      setFormData((prev) => ({
-        ...prev,
-        registered_site: siteObj.id, // tetap id
-      }));
+    if (foundSite) {
+      setSelectedSite(foundSite);
+    } else {
+      console.warn('⚠️ Tidak ditemukan site dengan id:', formData.registered_site);
     }
-  }, [siteSpaceRes]);
+  }, [formData.registered_site, siteSpaceRes]);
 
   useEffect(() => {
     if (!formData.is_employee_used) {
@@ -161,6 +165,16 @@ const FormWizardAddVisitorCard = ({
       setLoading(false);
       return;
     }
+    const typeMap: Record<string | number, number> = {
+      0: 0,
+      1: 1,
+      2: 2,
+      'Non Access Card': 0,
+      RFID: 1,
+      'RFID Card': 1,
+      BLE: 2,
+    };
+
     try {
       if (!token) {
         setAlertType('error');
@@ -199,7 +213,7 @@ const FormWizardAddVisitorCard = ({
                 ...updatedFields,
                 is_employee_used: updatedFields.is_employee_used ?? row.is_employee_used,
                 employee_id: updatedFields.employee_id ?? row.employee_id,
-                type: Number(updatedFields.type) || row.type, // explicitly cast to number
+                type: typeMap[updatedFields.type ?? row.type] ?? row.type,
               } as UpdateVisitorCardRequest;
               console.log('📤 Updating card ID:', row.id, updatedData);
               await updateVisitorCard(token as string, row.id, updatedData);
@@ -223,23 +237,42 @@ const FormWizardAddVisitorCard = ({
 
       const data: CreateVisitorCardRequest = CreateVisitorCardRequestSchema.parse(formData);
 
-      if (edittingId !== '' && edittingId !== undefined) {
+      if (edittingId) {
         const updatedData: UpdateVisitorCardRequest = {
           ...data,
-          type: Number(data.type), // cast the type to number
+          type: typeMap[String(data?.type ?? 0)] ?? 0,
         } as UpdateVisitorCardRequest;
+
         await updateVisitorCard(token as string, edittingId, updatedData);
         setAlertType('success');
         setAlertMessage('Card updated successfully!');
       } else {
-        await createVisitorCard(token as string, data);
+        const createdData: CreateVisitorCardRequest = {
+          ...data,
+          type: typeMap[String(data?.type ?? 0)] ?? 0,
+        };
+        await createVisitorCard(token as string, createdData);
         setAlertType('success');
         setAlertMessage('Card created successfully!');
       }
+
+      // if (edittingId !== '' && edittingId !== undefined) {
+      //   const updatedData: UpdateVisitorCardRequest = {
+      //     ...data,
+      //     type: typeMap[data.type ] ?? 0,
+      //   } as UpdateVisitorCardRequest;
+      //   await updateVisitorCard(token as string, edittingId, updatedData);
+      //   setAlertType('success');
+      //   setAlertMessage('Card updated successfully!');
+      // } else {
+      //   await createVisitorCard(token as string, data);
+      //   setAlertType('success');
+      //   setAlertMessage('Card created successfully!');
+      // }
       setTimeout(() => {
         setLoading(false);
         onSuccess?.();
-      }, 900);
+      }, 800);
     } catch (error: any) {
       // const backendErrors: { [key: string]: string } = {};
 
@@ -262,6 +295,7 @@ const FormWizardAddVisitorCard = ({
       setLoading(false);
     }
   };
+
   const handleChanges = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     const numericFields = ['type', 'card_status'];
@@ -426,7 +460,6 @@ const FormWizardAddVisitorCard = ({
             </Grid2>
 
             {/* Site Space */}
-
             <Grid2 size={{ xs: 12, sm: 6 }}>
               <CustomFormLabel
                 sx={{
@@ -485,7 +518,7 @@ const FormWizardAddVisitorCard = ({
                 )}
                 disabled={isBatchEdit ? !enabledFields?.registered_site : !!formData.is_multi_site}
               /> */}
-              <Autocomplete
+              {/* <Autocomplete
                 fullWidth
                 options={siteSpaceRes}
                 getOptionLabel={(option) => option?.name || ''}
@@ -493,7 +526,32 @@ const FormWizardAddVisitorCard = ({
                   siteSpaceRes.find((s) => String(s.id) === String(formData.registered_site)) ||
                   null
                 }
+                isOptionEqualToValue={(option, value) => String(option.id) === String(value.id)}
                 onChange={(_, newValue) => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    registered_site: newValue ? newValue.id : '',
+                  }));
+                }}
+                renderInput={(params) => (
+                  <CustomTextField
+                    {...params}
+                    label=""
+                    name="registered_site"
+                    error={!!errors?.registered_site}
+                    helperText={errors?.registered_site}
+                  />
+                )}
+                disabled={isBatchEdit ? !enabledFields?.registered_site : !!formData.is_multi_site}
+              /> */}
+              <Autocomplete
+                fullWidth
+                options={siteSpaceRes}
+                getOptionLabel={(option) => option?.name || ''}
+                value={selectedSite}
+                isOptionEqualToValue={(option, value) => String(option.id) === String(value.id)}
+                onChange={(_, newValue) => {
+                  setSelectedSite(newValue);
                   setFormData((prev) => ({
                     ...prev,
                     registered_site: newValue ? newValue.id : '',
@@ -614,6 +672,11 @@ const FormWizardAddVisitorCard = ({
                 fullWidth
                 disabled={isBatchEdit}
               />
+              {/* {formData.type === 2 && ( */}
+              <FormHelperText sx={{ color: 'gray', mt: 0.5 }}>
+                *) MAC Address is required only for BLE Card.
+              </FormHelperText>
+              {/* )} */}
             </Grid2>
           </Grid2>
         );

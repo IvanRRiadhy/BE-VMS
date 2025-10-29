@@ -10,6 +10,7 @@
   "checkin": "Check In",
   "checkout": "Check Out",
   "canceled": "Canceled",
+  "block": "Block",
   "denied": "Denied",
   "visitor": "Visitor",
   "repeat_visitor": "Repeat Visitor",

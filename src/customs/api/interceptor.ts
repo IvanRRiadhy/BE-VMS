@@ -1,38 +1,38 @@
 import axios from 'axios';
 
-// const axiosInstance = axios.create({
-//   baseURL: `https://song-logged-tractor-foot.trycloudflare.com/api`,
-//   headers: {
-//     'Content-Type': 'application/json',
-//   },
-//   // withCredentials: true,
-// });
-
-// const axiosInstance2 = axios.create({
-//   baseURL: `https://song-logged-tractor-foot.trycloudflare.com`,
-//   headers: {
-//     'Content-Type': 'application/json',
-//   },
-//   // withCredentials: true,
-// });
-
-// export const BASE_URL = `https://song-logged-tractor-foot.trycloudflare.com`;
-export const BASE_URL = `http://${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}`;
-
 const axiosInstance = axios.create({
-  baseURL: `http://${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api`,
-
+  baseURL: `https://mysterious-nearby-interests-boats.trycloudflare.com/api`,
   headers: {
     'Content-Type': 'application/json',
   },
+  // withCredentials: true,
 });
 
 const axiosInstance2 = axios.create({
-  baseURL: `http://${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}`,
+  baseURL: `https://mysterious-nearby-interests-boats.trycloudflare.com`,
   headers: {
     'Content-Type': 'application/json',
   },
+  // withCredentials: true,
 });
+
+export const BASE_URL = `https://mysterious-nearby-interests-boats.trycloudflare.com`;
+// export const BASE_URL = `http://${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}`;
+
+// const axiosInstance = axios.create({
+//   baseURL: `http://${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api`,
+
+//   headers: {
+//     'Content-Type': 'application/json',
+//   },
+// });
+
+// const axiosInstance2 = axios.create({
+//   baseURL: `http://${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}`,
+//   headers: {
+//     'Content-Type': 'application/json',
+//   },
+// });
 
 let clearTokenCallback: (() => void) | null = null;
 

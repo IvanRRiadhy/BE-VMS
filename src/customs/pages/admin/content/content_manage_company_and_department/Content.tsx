@@ -126,12 +126,15 @@ const Content = () => {
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [hasFetched, setHasFetched] = useState(false);
 
   useEffect(() => {
     if (!token) return;
 
     const fetchData = async () => {
-      setLoading(true);
+      setLoading(true); // ✅ PENTING! tampilkan skeleton sebelum mulai fetch
+      // setHasFetched(false);
+
       try {
         const start = page * rowsPerPage;
         let response: any;
@@ -166,7 +169,6 @@ const Content = () => {
         }
 
         if (response) {
-          // Map host id -> employee name (kalau ada)
           const employees = await getAllEmployee(token);
           const employeeMap = Array.isArray(employees?.collection)
             ? employees.collection.reduce((acc: any, emp: any) => {
@@ -189,7 +191,10 @@ const Content = () => {
       } catch (error) {
         console.error('Fetch error:', error);
       } finally {
-        setLoading(false);
+        setTimeout(() => {
+          // setHasFetched(true);
+          setLoading(false); // ✅ Matikan skeleton setelah data siap
+        }, 400);
       }
     };
 
@@ -471,62 +476,60 @@ const Content = () => {
             <Grid container mt={1} size={{ xs: 12, lg: 12 }}>
               <Grid size={{ xs: 12, lg: 12 }}>
                 {isDataReady ? (
-                  <DynamicTable
-                    isHavePagination
-                    totalCount={totalRecords}
-                    defaultRowsPerPage={rowsPerPage}
-                    rowsPerPageOptions={[5, 10, 25, 50]}
-                    onPaginationChange={(newPage, newRowsPerPage) => {
-                      setPage(newPage);
-                      setRowsPerPage(newRowsPerPage);
-                    }}
-                    overflowX="auto"
-                    data={tableData}
-                    selectedRows={selectedRows}
-                    isHaveChecked
-                    isHaveAction
-                    isActionVisitor={false}
-                    isHaveSearch
-                    isHaveFilter={false}
-                    isHaveExportPdf={false}
-                    isHaveExportXlf={false}
-                    isHaveFilterDuration={false}
-                    isHaveAddData
-                    onBatchEdit={handleBatchEdit}
-                    isHaveHeader
-                    headerContent={{
-                      title: '',
-                      items: [
-                        { name: 'organization' },
-                        { name: 'department' },
-                        { name: 'district' },
-                      ],
-                    }}
-                    defaultSelectedHeaderItem="organization"
-                    onHeaderItemClick={(item) => {
-                      if (
-                        item.name === 'organization' ||
-                        item.name === 'department' ||
-                        item.name === 'district'
-                      ) {
-                        setSelectedType(item.name);
-                      }
-                    }}
-                    onCheckedChange={(selected) => setSelectedRows(selected)}
-                    onEdit={(row) => openEdit(mapSelectedToEntity, row)}
-                    onDelete={(row) => handleDelete(row.id)}
-                    onBatchDelete={handleBatchDelete}
-                    onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-                    onAddData={() => openAdd(mapSelectedToEntity)}
-                    onFilterByColumn={(column) => setSortColumn(column.column)}
-                  />
-                ) : (
+                <DynamicTable
+                  // loading={loading}
+                  isHavePagination
+                  totalCount={totalRecords}
+                  defaultRowsPerPage={rowsPerPage}
+                  rowsPerPageOptions={[5, 10, 25, 50]}
+                  onPaginationChange={(newPage, newRowsPerPage) => {
+                    setPage(newPage);
+                    setRowsPerPage(newRowsPerPage);
+                  }}
+                  overflowX="auto"
+                  data={tableData}
+                  selectedRows={selectedRows}
+                  isHaveChecked
+                  isHaveAction
+                  isActionVisitor={false}
+                  isHaveSearch
+                  isHaveFilter={false}
+                  hasFetched={hasFetched}
+                  isHaveExportPdf={false}
+                  isHaveExportXlf={false}
+                  isHaveFilterDuration={false}
+                  isHaveAddData
+                  onBatchEdit={handleBatchEdit}
+                  isHaveHeader
+                  headerContent={{
+                    title: '',
+                    items: [{ name: 'organization' }, { name: 'department' }, { name: 'district' }],
+                  }}
+                  defaultSelectedHeaderItem="organization"
+                  onHeaderItemClick={(item) => {
+                    if (
+                      item.name === 'organization' ||
+                      item.name === 'department' ||
+                      item.name === 'district'
+                    ) {
+                      setSelectedType(item.name);
+                    }
+                  }}
+                  onCheckedChange={(selected) => setSelectedRows(selected)}
+                  onEdit={(row) => openEdit(mapSelectedToEntity, row)}
+                  onDelete={(row) => handleDelete(row.id)}
+                  onBatchDelete={handleBatchDelete}
+                  onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                  onAddData={() => openAdd(mapSelectedToEntity)}
+                  onFilterByColumn={(column) => setSortColumn(column.column)}
+                />
+                 ) : (
                   <Card sx={{ width: '100%' }}>
                     <Skeleton />
                     <Skeleton animation="wave" />
                     <Skeleton animation={false} />
                   </Card>
-                )}
+                )} 
               </Grid>
             </Grid>
           </Grid>

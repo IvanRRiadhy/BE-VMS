@@ -2,73 +2,78 @@ import { Box, CardContent, Typography, Grid2 as Grid } from '@mui/material';
 import { Stack } from '@mui/system';
 import { useTranslation } from 'react-i18next';
 import BlankCard from 'src/components/shared/BlankCard';
-import {
-  IconUsers,
-  IconX,
-  IconActivity,
-  IconBan,
-  IconForbid2,
-  IconLogout,
-  IconLogin,
-} from '@tabler/icons-react';
+import { IconX, IconForbid2, IconLogout, IconLogin } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
-import { getTodayVisitorCount } from 'src/customs/api/admin'; // ✅ pakai API kamu
+import { getVisitorChart } from 'src/customs/api/admin';
+import { useSelector } from 'react-redux';
+import { useSession } from 'src/customs/contexts/SessionContext';
 
-interface ApiItem {
+interface VisitorStatusItem {
   visitor_status: string;
   Count: number;
 }
 
-const TopCards = ({ token }: { token: string | null }) => {
+interface ApiDateGroup {
+  Date: string;
+  Status: VisitorStatusItem[];
+}
+
+const TopCards = () => {
   const { t } = useTranslation();
+  const { token } = useSession();
+  const { startDate, endDate } = useSelector((state: any) => state.dateRange);
+
   const [stats, setStats] = useState<Record<string, number>>({});
 
   useEffect(() => {
+    if (!token) return;
+
     const fetchData = async () => {
       try {
-        const end = new Date();
-        const start = new Date();
-        start.setHours(0, 0, 0, 0); // awal hari
-
-        const res = await getTodayVisitorCount(
-          token!,
-          start.toISOString().split('T')[0],
-          end.toISOString().split('T')[0],
+        const res = await getVisitorChart(
+          token,
+          startDate.toISOString().split('T')[0],
+          endDate.toISOString().split('T')[0],
         );
 
-        const collection: ApiItem[] = res.collection ?? [];
+        const collection: ApiDateGroup[] = res.collection ?? [];
 
-        // mapping ke object biar gampang
-        const map: Record<string, number> = {};
-        collection.forEach((c) => {
-          map[c.visitor_status] = c.Count;
+        // 🔧 Gabungkan total count per visitor_status dari semua tanggal
+        const totals: Record<string, number> = {};
+
+        collection.forEach((day) => {
+          day.Status.forEach((item) => {
+            const key = item.visitor_status.trim();
+            totals[key] = (totals[key] || 0) + item.Count;
+          });
         });
-        setStats(map);
+
+        setStats(totals);
       } catch (err) {
         console.error('Failed to fetch visitor count:', err);
       }
     };
 
-    if (token) fetchData();
-  }, [token]);
+     if(token) fetchData();
+  }, [token, startDate, endDate]);
 
-  // hanya tampilkan yang kamu mau
+  // ✅ Data yang akan ditampilkan di kartu
   const CardItems = [
-    { title: t('checkin'), subTitle: stats['Checkin'] ?? 0, icon: <IconLogin size={22} /> },
-    { title: t('checkout'), subTitle: stats['Checkout'] ?? 0, icon: <IconLogout size={22} /> },
-    { title: t('Block'), subTitle: stats['Block'] ?? 0, icon: <IconForbid2 size={22} /> },
-    { title: t('Denied'), subTitle: stats['Denied'] ?? 0, icon: <IconX size={22} /> },
+    { title: 'checkin', subTitle: stats['Checkin'] ?? 0, icon: <IconLogin size={22} /> },
+    { title: 'checkout', subTitle: stats['Checkout'] ?? 0, icon: <IconLogout size={22} /> },
+    { title: 'denied', subTitle: stats['Denied'] ?? 0, icon: <IconX size={22} /> },
+    { title: 'block', subTitle: stats['Block'] ?? 0, icon: <IconForbid2 size={22} /> },
   ];
 
   const getColorByTitle = (title: string) => {
-    switch (title) {
-      case 'Check In':
+    switch (title.toLowerCase()) {
+      case 'checkin':
         return '#13DEB9'; // hijau
-      case 'Check Out':
+      case 'checkout':
         return '#F44336'; // merah
-      case 'Denied':
+      case 'denied':
         return '#8B0000'; // merah tua
-      case 'Block':
+      case 'block':
         return '#000000'; // hitam
       default:
         return '#5c87ff'; // biru default
@@ -116,8 +121,10 @@ const TopCards = ({ token }: { token: string | null }) => {
                   {card.icon}
                 </Box>
                 <Box>
-                  <Typography variant="h5">{t(card.title)}</Typography>
-                  <Typography variant="h6" color="textSecondary" fontWeight={600} mt={0.5}>
+                  <Typography variant="h6" fontWeight={600}>
+                    {t(card.title)}
+                  </Typography>
+                  <Typography variant="h5" color="textSecondary" fontWeight={700} mt={0.5}>
                     {card.subTitle}
                   </Typography>
                 </Box>

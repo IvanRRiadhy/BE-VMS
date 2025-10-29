@@ -38,11 +38,14 @@ import { IconX } from '@tabler/icons-react';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { GroupRoleId } from '../../../constant/GroupRoleId';
 import Logo from 'src/assets/images/logos/bi_logo.png';
+import { Snackbar } from '@mui/material';
+
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
 const GuestInformationStepper = () => {
   const [activeStep, setActiveStep] = useState(0);
+  // const navigate = useNavigate();
   const [formValues, setFormValues] = useState<Record<string, any>>({});
   const [invitationData, setInvitationData] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
@@ -51,6 +54,14 @@ const GuestInformationStepper = () => {
   const [uploadNames, setUploadNames] = React.useState<Record<string, string>>({});
   const [previews, setPreviews] = useState<Record<string, string | null>>({});
   const [removing, setRemoving] = React.useState<Record<string, boolean>>({});
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
+  const showSnackbar = (message: string, severity: 'success' | 'error' | 'info' | 'warning') => {
+    setSnackbar({ open: true, message, severity });
+  };
   const webcamRef = useRef<Webcam>(null);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -913,10 +924,10 @@ const GuestInformationStepper = () => {
                   }}
                 >
                   <ToggleButton value="1">
-                    <IconMan size={16} style={{ marginRight: 6 }} /> Laki-Laki
+                    <IconMan size={16} style={{ marginRight: 6 }} /> Male
                   </ToggleButton>
                   <ToggleButton value="2">
-                    <IconWoman size={16} style={{ marginRight: 6 }} /> Perempuan
+                    <IconWoman size={16} style={{ marginRight: 6 }} /> Female
                   </ToggleButton>
                 </ToggleButtonGroup>
               )}
@@ -934,11 +945,11 @@ const GuestInformationStepper = () => {
                       <FormControlLabel value="false" control={<Radio />} label="No" />
                     </RadioGroup>
                   </FormControl>
-                  {errors[f.remarks] && (
+                  {/* {errors[f.remarks] && (
                     <Typography variant="caption" color="error">
                       {errors[f.remarks]}
                     </Typography>
-                  )}
+                  )} */}
                 </>
               )}
 
@@ -962,16 +973,27 @@ const GuestInformationStepper = () => {
                       <FormControlLabel
                         key={opt.value}
                         value={opt.value}
-                        control={<Radio />}
+                        control={
+                          <Radio
+                          // onClick={() => {
+                          //   // cek apakah radio yang sama diklik ulang
+                          //   if (formValues[f.remarks] === opt.value) {
+                          //     handleChange(f.remarks, '');
+                          //   } else {
+                          //     handleChange(f.remarks, opt.value);
+                          //   }
+                          // }}
+                          />
+                        }
                         label={opt.label}
                       />
                     ))}
                   </RadioGroup>
-                  {errors[f.remarks] && (
+                  {/* {errors[f.remarks] && (
                     <Typography variant="caption" color="error">
                       {errors[f.remarks]}
                     </Typography>
-                  )}
+                  )} */}
                 </FormControl>
               )}
 
@@ -1005,7 +1027,7 @@ const GuestInformationStepper = () => {
 
     return {
       visitor_type: visitor_type, // ← bisa pakai langsung dari API kalau mau
-      type_registered: 1,
+      type_registered: 0,
       is_group: false,
       tz: site_place_data?.timezone ?? 'Asia/Jakarta',
       registered_site: site_place_data?.id,
@@ -1125,6 +1147,7 @@ const GuestInformationStepper = () => {
       setSubmitting(true);
 
       const payload = transformToSubmitPayload(invitationData);
+      console.log('payload', JSON.stringify(payload, null, 2));
       const visitorId = invitationData?.id;
       if (!visitorId) {
         console.error('❌ Visitor ID tidak ditemukan di invitationData');
@@ -1133,7 +1156,7 @@ const GuestInformationStepper = () => {
 
       // 1️⃣ Kirim pra-form ke backend
       const res = await SubmitPraForm(payload, visitorId);
-      console.log('✅ SubmitPraForm success:', res);
+      console.log('✅ SubmitPraForm success:', JSON.stringify(res || {}, null, 2));
 
       // 2️⃣ Setelah submit, tunggu sejenak agar server proses statusnya
       await new Promise((r) => setTimeout(r, 500)); // (opsional tapi smooth)
@@ -1141,21 +1164,27 @@ const GuestInformationStepper = () => {
       // 3️⃣ Ambil status terbaru & token
       const authRes = await AuthVisitor({ code });
       const token = authRes?.collection?.token;
+      const status = authRes?.status || '';
+
+      if (status == 'process') {
+        navigate(`/portal/waiting`);
+      }
 
       if (token) {
         // 4️⃣ Simpan token tanpa trigger reload
         await saveToken(token, GroupRoleId.Visitor);
+        showSnackbar('Successfully Pra Register Visitor', 'success');
 
-        // 5️⃣ Delay sedikit agar backdrop sempat hilang
         setTimeout(() => {
           setSubmitting(false);
+        }, 200);
+
+        setTimeout(() => {
           navigate('/guest/dashboard', { replace: true });
-        }, 300);
+        }, 700); // ⬅️ 0.7 detik cukup untuk efek “smooth”
 
         return;
       }
-
-      // ❌ Fallback jika token tetap tidak ada
       console.warn('Token tidak ditemukan setelah AuthVisitor.');
     } catch (error) {
       console.error('Error submit:', error);
@@ -1252,6 +1281,20 @@ const GuestInformationStepper = () => {
           <CircularProgress color="inherit" />
         </Box>
       </Backdrop>
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert
+          severity={snackbar.severity as any}
+          onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </PageContainer>
   );
 };
