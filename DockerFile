@@ -4,7 +4,7 @@ FROM node:${NODE_VERSION}-alpine as build
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm install --production
+RUN npm install --legacy-peer-deps
 
 COPY . .
 
@@ -12,8 +12,11 @@ FROM node:${NODE_VERSION}-alpine as runtime
 WORKDIR /app
 
 COPY --from=build /app ./
+# COPY --from=build /app/dist ./dist
+
+RUN chown -R node:node /app
 
 USER node
-EXPOSE 3000
-CMD ["npm", "start"]
+EXPOSE 3001
 ENV NODE_ENV=production
+CMD ["npm", "start"]

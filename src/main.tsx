@@ -13,7 +13,6 @@ import { AuthProvider } from './customs/contexts/AuthProvider';
 import { App } from './App';
 // app.css
 import './App.css';
-import 'video.js/dist/video-js.css';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
