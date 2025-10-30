@@ -4,7 +4,6 @@ import PageContainer from 'src/components/container/PageContainer';
 import { Box } from '@mui/system';
 import {
   Card,
-  Divider,
   Typography,
   CardHeader,
   CardContent,
@@ -23,6 +22,8 @@ import {
   Popover,
   Drawer,
 } from '@mui/material';
+
+import Divider from '@mui/material/Divider';
 import {
   Home,
   Event,
@@ -56,7 +57,7 @@ import QRCode from 'react-qr-code';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import VisitorStatusPieChart from './Components/charts/VisitorStatusPieChart';
-import TopCard from 'src/customs/components/cards/TopCard';
+import TopCard from './TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { t } from 'i18next';
 import { getActiveInvitation } from 'src/customs/api/visitor';
@@ -66,6 +67,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import moment from 'moment-timezone';
 import dayjs, { Dayjs } from 'dayjs';
+import { subDays } from 'date-fns';
 
 import { addDays } from 'date-fns';
 import Calendar from 'src/customs/components/calendar/Calendar';
@@ -79,28 +81,15 @@ const Dashboard = () => {
   //   setOpen(true);
   // };
 
-  const handleClickOpenInvitation = () => {
-    setOpenInvitation(true);
-  };
-  const handleCloseInvitation = () => {
-    setOpenInvitation(false);
-  };
-
   const [selectedVisitor, setSelectedVisitor] = useState<any>(null);
+  const { token } = useSession();
 
-  // const handleOpen = (visitor: any) => {
-  //   setSelectedVisitor(visitor);
-  //   setOpen(true);
-  // };
+  const [activeVisitData, setActiveVisitData] = useState<any[]>([]);
+  const [activeAccessPass, setActiveAccessPass] = useState<any>();
   const [openAccess, setOpenAccess] = useState(false);
   const handleOpenAccess = () => {
     setOpenAccess(true);
   };
-
-  // const handleClose = () => {
-  //   setOpen(false);
-  //   setSelectedVisitor(null);
-  // };
 
   const handleCloseAccess = () => {
     setOpenAccess(false);
@@ -138,11 +127,6 @@ const Dashboard = () => {
     },
   ];
 
-  const { token } = useSession();
-
-  const [activeVisitData, setActiveVisitData] = useState<any[]>([]);
-  const [activeAccessPass, setActiveAccessPass] = useState<AccessPassType>();
-
   useEffect(() => {
     if (!token) return;
     const fetchData = async () => {
@@ -166,10 +150,9 @@ const Dashboard = () => {
           // visitor_status: item.visitor_status,
         }));
         setActiveVisitData(response ?? []);
-        const res2 = await getAccessPass(token as string);
-        console.log('res', res2);
-        setActiveAccessPass(res2);
-        // console.log('res2: ', res2);
+        const resAccess = await getAccessPass(token as string);
+        console.log(resAccess);
+        setActiveAccessPass(resAccess);
       } catch (e) {
         console.error(e);
       }
@@ -183,8 +166,8 @@ const Dashboard = () => {
 
   const [dateRange, setDateRange] = useState([
     {
-      startDate: new Date(), // hari ini
-      endDate: addDays(new Date(), 7), // 7 hari ke depan
+      startDate: subDays(new Date(), 7), // ✅ 7 hari ke belakang dari hari ini
+      endDate: new Date(), // ✅ hari ini
       key: 'selection',
     },
   ]);
@@ -194,14 +177,11 @@ const Dashboard = () => {
   const handleClose = () => setAnchorEl(null);
   const open = Boolean(anchorEl);
 
-  const formatVisitorPeriodLocal = (start?: string, end?: string) => {
-    if (!start || !end) return '-';
-
-    const startLocal = moment(start).local().format('DD MMM YYYY, HH:mm');
-    const endLocal = moment(end).local().format('DD MMM YYYY, HH:mm');
-
+  function formatVisitorPeriodLocal(startUtc: string, endUtc: string) {
+    const startLocal = moment.utc(startUtc).tz(moment.tz.guess()).format('YYYY-MM-DD HH:mm');
+    const endLocal = moment.utc(endUtc).tz(moment.tz.guess()).format('YYYY-MM-DD HH:mm');
     return `${startLocal} - ${endLocal}`;
-  };
+  }
 
   return (
     <PageContainer title="Dashboard">
@@ -247,51 +227,55 @@ const Dashboard = () => {
           </Drawer>
         </Grid>
         <Grid size={{ xs: 12, lg: 9 }}>
-          <TopCard items={cards} size={{ xs: 12, lg: 3 }} />
+          <TopCard items={cards} size={{ xs: 12, lg: 6 }} />
         </Grid>
         <Grid
           size={{ xs: 12, md: 3 }}
           sx={{
-            padding: 0,
-            background: 'white',
             display: 'flex',
-            justifyContent: 'center',
             flexDirection: 'column',
-            alignItems: 'center',
-            borderRadius: 2,
           }}
         >
           <Card
-            sx={{ mb: 0, pt: 0 }}
-            onClick={handleOpenAccess}
-            style={{
-              cursor: 'pointer',
+            sx={{
+              flex: 1, // ✅ biar isi Card stretch penuh
               display: 'flex',
-              justifyContent: 'center',
+              justifyContent: '',
               alignItems: 'center',
-              gap: 2,
               flexDirection: 'column',
+              cursor: 'pointer',
+              gap: 1,
             }}
+            onClick={handleOpenAccess}
           >
-            <Typography variant="h6" sx={{ mb: 0.5 }}>
-              Access Pass
-            </Typography>
-            <QRCode
-              value={activeAccessPass?.visitor_number || ''}
-              size={40}
-              style={{
-                height: 'auto',
-                width: '80px',
-                // borderRadius: 8,
+            <Typography variant="h5">Access Pass</Typography>
+            <Box
+              sx={{
+                p: 1, // padding biar QR-nya ada jarak dari pinggir background
+                backgroundColor: '#ffffff', // 🔹 warna background QR
+                borderRadius: 2, // rounded biar halus
+                boxShadow: '0px 2px 8px rgba(0,0,0,0.15)', // optional shadow
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
-            />
+            >
+              <QRCode
+                value={activeAccessPass?.visitor_number || ''}
+                size={40}
+                style={{
+                  height: 'auto',
+                  width: '100px',
+                }}
+              />
+            </Box>
+            <Typography variant="body1" fontWeight={'600'} color="primary">
+              Tap to show detail
+            </Typography>
           </Card>
         </Grid>
 
         <Grid size={{ xs: 12, lg: 8 }}>
-          {/* <Typography variant="h6" sx={{ mb: 1 }}>
-            Active Visit
-          </Typography> */}
           <DynamicTable
             height={420}
             isHavePagination
@@ -316,246 +300,12 @@ const Dashboard = () => {
             isHaveAddData={false}
             isHaveHeader={false}
             isHaveFilterMore={false}
-            // headerContent={{
-            //   title: 'Dashboard',
-            //   subTitle: 'Monitoring all visitor data',
-            //   items: [{ name: 'department' }, { name: 'employee' }, { name: 'project' }],
-            // }}
-            // onHeaderItemClick={(item) => {
-            //   console.log('Item diklik:', item.name);
-            // }}
-            // onCheckedChange={(selected) => console.log('Checked:', selected)}
           />
         </Grid>
         <Grid size={{ xs: 12, lg: 4 }}>
           <VisitorStatusPieChart />
         </Grid>
       </Grid>
-
-      {/* <Typography variant="h6">
-            Active Visit
-          </Typography> */}
-
-      {/* <Grid container spacing={3}>
-        {visitors.map((visitor) => (
-          <Grid size={{ xs: 12, sm: 4 }} key={visitor.id}>
-            <Card
-              sx={{
-                borderRadius: '10px',
-                marginTop: '10px',
-                boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',
-                cursor: 'pointer',
-              }}
-              onClick={() => handleOpen(visitor)}
-            >
-              <CardHeader
-                sx={{ paddingLeft: '0', paddingRight: '0', paddingTop: '5px' }}
-                title="Aula Lantai 3"
-                subheader={
-                  <Box>
-                    <Typography variant="body1" fontWeight={500}>
-                      Occassion
-                    </Typography>
-                    <Box display="flex" gap={1} alignItems="center" justifyContent="space-between">
-                      <Typography variant="caption" sx={{ opacity: 0.7 }}>
-                        {visitor.time}
-                      </Typography>
-                      <Typography variant="caption" sx={{ opacity: 0.7 }}>
-                        {visitor.date}
-                      </Typography>
-                    </Box>
-                  </Box>
-                }
-              />
-              <CardMedia
-                component="img"
-                height="194"
-                image="https://material-ui.com/static/images/cards/paella.jpg"
-                alt="Room Image"
-              />
-              <CardContent sx={{ paddingX: 0.5, paddingTop: 1.5, paddingBottom: '0 !important' }}>
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Box display="flex" gap={1}>
-                    <Button variant="contained" color="error" size="small">
-                      Deny
-                    </Button>
-                    <Button variant="contained" color="primary" size="small">
-                      Approve
-                    </Button>
-                  </Box>
-                  <Typography
-                    variant="body2"
-                    fontWeight={500}
-                    sx={{ backgroundColor: 'grey.200', padding: 1, borderRadius: 2 }}
-                  >
-                    {visitor.name}
-                  </Typography>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-
-      
-        <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
-          {selectedVisitor && (
-            <>
-              <DialogTitle textAlign="center" sx={{ padding: '25px 0' }}>
-                Access Pass
-              </DialogTitle>
-              <IconButton
-                aria-label="close"
-                onClick={handleClose}
-                sx={{
-                  position: 'absolute',
-                  right: 8,
-                  top: 15,
-                  color: (theme) => theme.palette.grey[500],
-                }}
-              >
-                <IconX />
-              </IconButton>
-              <DialogContent sx={{ paddingTop: 0 }}>
-                <Box
-                  display="flex"
-                  flexDirection="row"
-                  alignItems="center"
-                  justifyContent="space-between"
-                >
-                  <Box display="flex" gap={2}>
-                    <Avatar />
-                    <Box>
-                      <Typography variant="body1" fontWeight="bold">
-                        {selectedVisitor.name}
-                      </Typography>
-                      <Typography variant="body2" color="grey">
-                        {selectedVisitor.date} | {selectedVisitor.time}
-                      </Typography>
-                    </Box>
-                  </Box>
-
-                  <IconButton
-                    color="primary"
-                    sx={{
-                      backgroundColor: 'primary.main',
-                      color: 'white',
-                      '&:hover': {
-                        backgroundColor: 'primary.dark',
-                      },
-                    }}
-                  >
-                    <Download />
-                  </IconButton>
-                </Box>
-
-             
-                <Box mt={3}>
-                  <Grid container spacing={2} justifyContent="center">
-                    <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
-                      <Typography variant="body1" color="textSecondary" fontWeight={500}>
-                        Invitation Code
-                      </Typography>
-                      <Typography variant="body1" fontWeight="bold">
-                        {selectedVisitor.invitationCode}
-                      </Typography>
-                    </Grid>
-
-                    <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
-                      <Typography variant="body1" color="textSecondary" fontWeight={500}>
-                        Group Code
-                      </Typography>
-                      <Typography variant="body1" fontWeight="bold">
-                        {selectedVisitor.groupCode}
-                      </Typography>
-                    </Grid>
-
-                    <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
-                      <Typography variant="body1" color="textSecondary" fontWeight={500}>
-                        Vehicle Plate No.
-                      </Typography>
-                      <Typography variant="body1" fontWeight="bold">
-                        {selectedVisitor.vehicle}
-                      </Typography>
-                    </Grid>
-
-                    <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
-                      <Typography variant="body1" color="textSecondary" fontWeight={500}>
-                        Parking Slot
-                      </Typography>
-                      <Typography variant="body1" fontWeight="bold">
-                        {selectedVisitor.slot}
-                      </Typography>
-                    </Grid>
-                  </Grid>
-                </Box>
-
-                <Box mt={2}>
-                  <Typography variant="h4" sx={{ fontWeight: 'bold' }} textAlign="center">
-                    {selectedVisitor.building}
-                  </Typography>
-                  <Box
-                    display="flex"
-                    justifyContent="center"
-                    mt={1}
-                    mb={1}
-                    flexDirection="column"
-                    alignItems="center"
-                  >
-                    <Box
-                      sx={{
-                        display: 'inline-block',
-                        p: 1,
-                        borderRadius: 2,
-                        boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.2)',
-                        backgroundColor: 'white', 
-                      }}
-                    >
-                      <img
-                        src={selectedVisitor.qr}
-                        alt="QRCode"
-                        width="200"
-                        height="200"
-                        style={{ borderRadius: '8px' }}
-                      />
-                    </Box>
-                    <Box display="flex" gap={3} mb={2} mt={2}>
-                      <Typography color="error">Tracked</Typography>
-                      <Typography color="error">Low Battery</Typography>
-                    </Box>
-                    <Typography variant="body2" mb={1}>
-                      Show this while visiting
-                    </Typography>
-                    <Typography variant="h6">ID : 73A2AFJ1S1KS1</Typography>
-                  </Box>
-                  <Divider />
-
-                  <Typography variant="body1" color="textSecondary" fontWeight={600} mt={2}>
-                    Another Visitor
-                  </Typography>
-                  <Box mt={1} display={'flex'} gap={1} alignItems={'center'}>
-                    <Box display="flex" alignItems="center" gap={1} flexDirection={'column'}>
-                      <Avatar />
-                      <Typography variant="body1" fontWeight={500}>
-                        {selectedVisitor.name}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Box>
-              </DialogContent>
-              <DialogActions sx={{ justifyContent: 'center' }}>
-                <Button onClick={handleClose} variant="contained" color="error">
-                  Deny
-                </Button>
-                <Button onClick={handleClose} variant="contained" color="primary">
-                  Approve
-                </Button>
-              </DialogActions>
-            </>
-          )}
-        </Dialog>
-      </Grid> */}
-
-      {/* Dialog */}
 
       {activeAccessPass && (
         <Dialog open={openAccess} onClose={handleCloseAccess} fullWidth maxWidth="sm">
@@ -631,23 +381,6 @@ const Dashboard = () => {
 
                 <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
                   <Typography variant="body1" color="textSecondary" fontWeight={500}>
-                    Vehicle Plate
-                  </Typography>
-                  <Typography variant="body1" fontWeight="bold">
-                    {activeAccessPass.vehicle_plate_number || '-'}
-                  </Typography>
-                </Grid>
-
-                <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
-                  <Typography variant="body1" color="textSecondary" fontWeight={500}>
-                    Parking Slot
-                  </Typography>
-                  <Typography variant="body1" fontWeight="bold">
-                    {activeAccessPass.parking_slot || '-'}
-                  </Typography>
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
-                  <Typography variant="body1" color="textSecondary" fontWeight={500}>
                     Host
                   </Typography>
                   <Typography variant="body1" fontWeight="bold">
@@ -666,13 +399,13 @@ const Dashboard = () => {
             </Box>
 
             <Box mt={2}>
-              <Typography variant="h4" sx={{ fontWeight: 'bold' }} textAlign={'center'}>
+              <Typography variant="h5" sx={{ fontWeight: 'bold' }} textAlign={'center'}>
                 {activeAccessPass.site_place_name}
               </Typography>
               <Box
                 display="flex"
                 justifyContent="center"
-                mt={1}
+                mt={0}
                 mb={1}
                 flexDirection={'column'}
                 alignItems={'center'}
@@ -688,7 +421,7 @@ const Dashboard = () => {
                   my={2}
                 >
                   <QRCode
-                    value={activeAccessPass.visitor_number}
+                    value={activeAccessPass.visitor_number || activeAccessPass.invitation_code}
                     size={180}
                     style={{
                       height: 'auto',
@@ -705,14 +438,51 @@ const Dashboard = () => {
                   Show this while visiting
                 </Typography>
                 <Typography variant="h6">ID : {activeAccessPass.visitor_code}</Typography>
+                <Divider sx={{ width: '100%', my: 2, borderColor: 'grey' }} />
+                <Box display={'flex'} mt={0} gap={3} flexDirection={'row'}>
+                  <Grid size={{ xs: 12, sm: 3 }} textAlign="center">
+                    <Typography variant="body1" color="textSecondary" fontWeight={500}>
+                      Parking Slot
+                    </Typography>
+                    <Typography variant="body1" fontWeight="bold">
+                      {activeAccessPass?.parking_slot || '-'}
+                    </Typography>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
+                    <Typography variant="body1" color="textSecondary" fontWeight={500}>
+                      Parking Area
+                    </Typography>
+                    <Typography variant="body1" fontWeight="bold">
+                      {activeAccessPass?.parking_area || '-'}
+                    </Typography>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
+                    <Typography variant="body1" color="textSecondary" fontWeight={500}>
+                      Vehicle Plate
+                    </Typography>
+                    <Typography variant="body1" fontWeight="bold">
+                      {activeAccessPass.vehicle_plate_number || '-'}
+                    </Typography>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
+                    <Typography variant="body1" color="textSecondary" fontWeight={500}>
+                      Vehicle Type
+                    </Typography>
+                    <Typography
+                      variant="body1"
+                      fontWeight="bold"
+                      sx={{ textTransform: 'capitalize' }}
+                    >
+                      {activeAccessPass.vehicle_type || '-'}
+                    </Typography>
+                  </Grid>
+                </Box>
+                <Button size="small" variant="contained" sx={{ mt: 2 }}>
+                  Parking Blocker
+                </Button>
               </Box>
             </Box>
           </DialogContent>
-          {/* <DialogActions>
-          <Button onClick={handleClose} color="error" size="small" variant="contained">
-            Close
-          </Button>
-        </DialogActions> */}
         </Dialog>
       )}
     </PageContainer>

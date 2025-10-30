@@ -50,7 +50,7 @@ dayjs.extend(timezone);
 interface FormDialogPraregistProps {
   id: string;
   onClose?: () => void;
-  onSubmitted?: () => void;
+  onSubmitted?: (id?: string) => void;
   onSubmitting?: (loading: boolean) => void;
 }
 
@@ -1081,7 +1081,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
 
   const transformToSubmitPayload = (data: any) => ({
     visitor_type: data.visitor_type,
-    type_registered: 1,
+    type_registered: 0,
     trx_visitor_id: id,
     is_group: true, // tergantung kebutuhan
     group_name: data.group_name ?? '',
@@ -1143,7 +1143,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
       setSubmitting(true); // 🔹 tampilkan backdrop internal
 
       const payload = transformToSubmitPayload(invitationData);
-      // console.log('Payload response:', JSON.stringify(payload, null, 2));
+      console.log('Payload response:', JSON.stringify(payload, null, 2));
       const res = await createSubmitCompletePra(token as string, payload);
 
       const ok =
@@ -1158,7 +1158,8 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
 
         await new Promise((r) => setTimeout(r, 1000));
 
-        onSubmitted?.();
+        // onSubmitted?.();
+        onSubmitted?.(invitationData.id);
       } else {
         await new Promise((r) => setTimeout(r, 600));
         showErrorAlert('Error!', res.msg ?? 'Something went wrong');
@@ -1173,7 +1174,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
       // 🔹 beri sedikit jeda agar snackbar sempat muncul dulu sebelum backdrop hilang
       setTimeout(() => {
         setSubmitting(false);
-      }, 800);
+      }, 600);
     }
   };
 

@@ -24,11 +24,11 @@ const Languages = [
     icon: FlagId,
     value: 'id',
   },
-  {
-    flagname: 'China (RRC)',
-    icon: FlagCn,
-    value: 'ch',
-  },
+  // {
+  //   flagname: 'China (RRC)',
+  //   icon: FlagCn,
+  //   value: 'ch',
+  // },
 ];
 
 const Language = () => {

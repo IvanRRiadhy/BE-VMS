@@ -224,7 +224,7 @@ const OperatorView = () => {
     }
 
     try {
-      // payload API
+      setLoadingAccess(true);
       const payload = {
         id: selectedVisitors[0], // ambil visitor ID pertama (atau kirim satu per satu)
         period: selectedMinutes,
@@ -247,6 +247,17 @@ const OperatorView = () => {
         ),
       );
 
+      setInvitationCode((prev) =>
+        prev.map((item) =>
+          selectedVisitors.includes(item.id)
+            ? {
+                ...item,
+                extend_visitor_period: (item.extend_visitor_period ?? 0) + selectedMinutes,
+              }
+            : item,
+        ),
+      );
+
       setSnackbarMsg(`Visit extended by ${selectedMinutes} minutes`);
       setSnackbarType('success');
       setSnackbarOpen(true);
@@ -257,6 +268,8 @@ const OperatorView = () => {
       setSnackbarMsg('Failed to extend visit.');
       setSnackbarType('error');
       setSnackbarOpen(true);
+    } finally {
+      setTimeout(() => setLoadingAccess(false), 600);
     }
   };
 
@@ -644,6 +657,7 @@ const OperatorView = () => {
       agenda: v.agenda ?? '-',
       is_driving: v.is_driving ?? '-',
       organization: v.visitor?.organization ?? '-',
+      extend_visitor_period: v.extend_visitor_period ?? 0,
       visitor_number: v.visitor_number ?? '-',
       email: v.visitor?.email ?? '-',
       phone: v.visitor?.phone ?? '-',
@@ -660,14 +674,21 @@ const OperatorView = () => {
 
     setInvitationCode((prev) =>
       prev.map((inv) => {
-        if (!inv.card || inv.card.length === 0) {
-          // tambahkan kartu baru ke visitor pertama
-          return {
-            ...inv,
-            card: selectedCards.map((num) => ({ card_number: num })),
-          };
-        }
-        return inv;
+        const updatedVisitor = mappedVisitors.find((v: any) => v.id === inv.id);
+        if (!updatedVisitor) return inv;
+
+        return {
+          ...inv,
+          // 🔹 tambahkan update image agar UI langsung berubah
+          selfie_image: updatedVisitor.selfie_image,
+          identity_image: updatedVisitor.identity_image,
+          // 🔹 update field status lainnya juga
+          // is_praregister_done: updatedVisitor.is_praregister_done,
+          // visitor_status: updatedVisitor.visitor_status,
+          // block_by: updatedVisitor.block_by,
+          // is_block: updatedVisitor.is_block,
+          card: updatedVisitor.card?.length > 0 ? updatedVisitor.card : inv.card ?? [],
+        };
       }),
     );
 
@@ -706,14 +727,29 @@ const OperatorView = () => {
     }
   };
 
-  const formatDateTime = (dateStr?: string) => {
+  // const formatDateTime = (dateStr?: string) => {
+  //   if (!dateStr) return '-';
+  //   return (
+  //     moment
+  //       .utc(dateStr) // data asal UTC
+  //       .tz('Asia/Jakarta') // ubah ke zona waktu Jakarta
+  //       .format('DD MMM YYYY, HH:mm') + ' WIB'
+  //   );
+  // };
+
+  const formatDateTime = (dateStr?: string, extendMinutes?: number) => {
     if (!dateStr) return '-';
-    return (
-      moment
-        .utc(dateStr) // data asal UTC
-        .tz('Asia/Jakarta') // ubah ke zona waktu Jakarta
-        .format('DD MMM YYYY, HH:mm') + ' WIB'
-    );
+
+    const baseTime = moment.utc(dateStr);
+
+    // Tambahkan menit hanya kalau ada extend
+    if (extendMinutes && extendMinutes > 0) {
+      baseTime.add(extendMinutes, 'minutes');
+    }
+
+    return baseTime
+      .tz(moment.tz.guess()) // ✅ ubah ke zona waktu lokal user
+      .format('DD MMM YYYY, HH:mm');
   };
 
   type Row = {
@@ -3417,6 +3453,23 @@ const OperatorView = () => {
     });
   };
 
+  const activeVisitor =
+    relatedVisitors.find((v) => v.id === selectedVisitorId) || invitationCode[0];
+
+  const activeSelfie =
+    activeVisitor?.selfie_image &&
+    activeVisitor?.selfie_image !== '-' &&
+    activeVisitor?.selfie_image !== ''
+      ? `${BASE_URL}/cdn${activeVisitor.selfie_image}`
+      : null;
+
+  const activeKTP =
+    activeVisitor?.identity_image &&
+    activeVisitor?.identity_image !== '-' &&
+    activeVisitor?.identity_image !== ''
+      ? `${BASE_URL}/cdn${activeVisitor.identity_image}`
+      : null;
+
   return (
     <PageContainer
       title={!isFullscreen ? 'Operator View' : undefined}
@@ -4173,7 +4226,10 @@ const OperatorView = () => {
                             <Box>
                               <CustomFormLabel sx={{ mt: 0, mb: 0 }}>Period End</CustomFormLabel>
                               <Typography>
-                                {formatDateTime(invitationCode[0]?.visitor_period_end) ?? '-'}
+                                {formatDateTime(
+                                  invitationCode[0]?.visitor_period_end,
+                                  invitationCode[0]?.extend_visitor_period,
+                                )}
                               </Typography>
                             </Box>
                           </Box>
@@ -4540,6 +4596,7 @@ const OperatorView = () => {
                           >
                             {`${formatDateTime(visitor.visitor_period_start)} - ${formatDateTime(
                               visitor.visitor_period_end,
+                              visitor.extend_visitor_period,
                             )}`}
                           </Typography>
                         </Box>
@@ -4644,24 +4701,6 @@ const OperatorView = () => {
                       {/* {invitationCode[0]?.selfie_image ? (
                         <img
                           src={`${BASE_URL}/cdn${invitationCode[0].selfie_image}`}
-                          alt=""
-                          style={{
-                            width: '100%',
-                            height: isFullscreen ? '100%' : '200px',
-                            // maxHeight: '100%',
-                            borderRadius: '8px',
-                            objectFit: isFullscreen ? 'contain' : 'cover',
-                            // overflow: 'hidden',
-                          }}
-                        />
-                      ) : (
-                        <>
-                          <Typography>No Faceimage</Typography>
-                        </>
-                      )} */}
-                      {invitationCode[0]?.selfie_image ? (
-                        <img
-                          src={`${BASE_URL}/cdn${invitationCode[0].selfie_image}`}
                           alt="Face Image"
                           style={{
                             width: '100%',
@@ -4669,10 +4708,40 @@ const OperatorView = () => {
                             borderRadius: '8px',
                             objectFit: isFullscreen ? 'contain' : 'cover',
                           }}
-                          onError={(e) => {
-                            // kalau gagal load (404, rusak, dsb)
-                            e.currentTarget.style.display = 'none';
+                          // onError={(e) => {
+                          //   // kalau gagal load (404, rusak, dsb)
+                          //   e.currentTarget.style.display = 'none';
+                          // }}
+                        />
+                      ) : (
+                        <Box
+                          display="flex"
+                          alignItems="center"
+                          justifyContent="center"
+                          height={isFullscreen ? '100%' : '200px'}
+                          sx={{
+                            borderRadius: '8px',
+                            backgroundColor: '#f9f9f9',
+                            color: '#888',
+                            fontStyle: 'italic',
+                            fontSize: '0.9rem',
                           }}
+                        >
+                          No Face Image
+                        </Box>
+                      )} */}
+
+                      {activeSelfie ? (
+                        <img
+                          src={activeSelfie}
+                          alt="Face Image"
+                          style={{
+                            width: '100%',
+                            height: isFullscreen ? '100%' : '200px',
+                            borderRadius: '8px',
+                            objectFit: isFullscreen ? 'contain' : 'cover',
+                          }}
+                          onError={(e) => (e.currentTarget.style.display = 'none')}
                         />
                       ) : (
                         <Box
@@ -4714,7 +4783,7 @@ const OperatorView = () => {
                         pb: '0 ! important',
                       }}
                     >
-                      <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>KTP</CustomFormLabel>
+                      <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Identity Image</CustomFormLabel>
                       {/* {invitationCode[0]?.identity_image ? (
                         <img
                           src={`${BASE_URL}/cdn${invitationCode[0].identity_image}`}
@@ -4727,10 +4796,39 @@ const OperatorView = () => {
                           }}
                         />
                       ) : null} */}
-                      {invitationCode[0]?.identity_image ? (
+                      {/* {invitationCode[0]?.identity_image ? (
                         <img
                           src={`${BASE_URL}/cdn${invitationCode[0].identity_image}`}
                           alt="KTP Image"
+                          style={{
+                            width: '100%',
+                            height: isFullscreen ? '100%' : '200px',
+                            borderRadius: '8px',
+                            objectFit: isFullscreen ? 'contain' : 'cover',
+                          }}
+                          // onError={(e) => (e.currentTarget.style.display = 'none')}
+                        />
+                      ) : (
+                        <Box
+                          display="flex"
+                          alignItems="center"
+                          justifyContent="center"
+                          height={isFullscreen ? '100%' : '200px'}
+                          sx={{
+                            borderRadius: '8px',
+                            backgroundColor: '#f9f9f9',
+                            color: '#888',
+                            fontStyle: 'italic',
+                            fontSize: '0.9rem',
+                          }}
+                        >
+                          No KTP Image
+                        </Box>
+                      )} */}
+                      {activeKTP ? (
+                        <img
+                          src={activeKTP}
+                          alt="Identity Image"
                           style={{
                             width: '100%',
                             height: isFullscreen ? '100%' : '200px',
@@ -4753,7 +4851,7 @@ const OperatorView = () => {
                             fontSize: '0.9rem',
                           }}
                         >
-                          No KTP Image
+                          No Face Image
                         </Box>
                       )}
                     </CardContent>
@@ -5412,12 +5510,18 @@ const OperatorView = () => {
         <DialogContent dividers>
           {selectedInvitationId ? ( // ✅ pakai ID dari row yang di-klik
             <FormDialogPraregist
-              id={selectedInvitationId}
+              id={selectedInvitationId ?? invitationCode?.[0]?.id}
               onClose={() => setOpenDialogInvitation(false)}
-              onSubmitted={async () => {
+              onSubmitted={async (formId?: string) => {
                 setOpenDialogInvitation(false);
-                // setInvitationDetailVisitor([]); // optional: reload / clear
-                await fetchRelatedVisitorsByInvitationId(invitationCode[0]?.id);
+                // await fetchRelatedVisitorsByInvitationId(invitationCode[0]?.id);
+                const targetId = formId ?? selectedInvitationId ?? invitationCode?.[0]?.id;
+                if (!targetId) {
+                  console.warn('⚠️ No valid invitation ID found to fetch');
+                  return;
+                }
+
+                await fetchRelatedVisitorsByInvitationId(targetId);
               }}
               onSubmitting={setSubmitting}
             />
@@ -5474,15 +5578,6 @@ const OperatorView = () => {
               disabled={!selectedAccessIds.length}
             >
               <MenuItem value="">Select Action</MenuItem>
-              {/* <MenuItem value="grant" disabled={!allowedActions.includes('Grant')}>
-                Grant
-              </MenuItem>
-              <MenuItem value="revoke" disabled={!allowedActions.includes('Revoke')}>
-                Revoke
-              </MenuItem>
-              <MenuItem value="block" disabled={!allowedActions.includes('Block')}>
-                Block
-              </MenuItem> */}
               <MenuItem value="grant" disabled={!allowedActions.includes('Grant')}>
                 Grant
               </MenuItem>
@@ -5601,7 +5696,7 @@ const OperatorView = () => {
               fullWidth
               disabled={!selectedMinutes}
             >
-              Extend Visit
+              Extend
             </Button>
           </form>
         </DialogContent>

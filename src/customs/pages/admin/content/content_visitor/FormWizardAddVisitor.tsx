@@ -4097,10 +4097,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
       const tz =
         moment.tz?.guess?.() || Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Jakarta';
-
-      // console.log('🕒 Final detected timezone:', tz);
-
-      // 🧩 Helper: Format Field
       const mapField = (field: FormVisitor, sortIdx: number) => {
         const base: any = {
           sort: field.sort ?? sortIdx,
@@ -4115,17 +4111,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           multiple_option_fields: field.multiple_option_fields ?? [],
           visitor_form_type: field.visitor_form_type ?? DEFAULT_VFT,
         };
-
-        // if (base.field_type === 9 && typeof field.answer_datetime === 'string') {
-        //   base.answer_datetime = dayjs(field.answer_datetime).utc().toISOString();
-        // } else if ([10, 11, 12].includes(base.field_type)) {
-        //   base.answer_file = field.answer_file?.trim() || '';
-        // } else {
-        //   base.answer_text = field.answer_text?.trim() || '';
-        // }
-
-        // return base;
-        // 🧩 Safe converter
         const safeTrim = (val: any): string => {
           if (val === undefined || val === null) return '';
           if (typeof val === 'string') return val.trim();
@@ -4137,10 +4122,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         switch (base.field_type) {
           case 9: // Date/Datetime
             if (typeof field.answer_datetime === 'string') {
-              // base.answer_datetime = dayjs(field.answer_datetime).utc().toISOString();
-              base.answer_datetime = dayjs(field.answer_datetime)
-                .utc()
-                .format('YYYY-MM-DDTHH:mm:ss');
+              base.answer_datetime = dayjs(field.answer_datetime).utc().toISOString();
+              // base.answer_datetime = dayjs(field.answer_datetime)
+              //   .utc()
+              //   .format('YYYY-MM-DDTHH:mm:ss');
             }
             break;
 
@@ -4212,12 +4197,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
               can_multiple_used: qp.can_multiple_used ?? false,
               foreign_id: qp.foreign_id ?? '',
               self_only: qp.self_only ?? false,
-              // hapus id pada setiap form
               form: (qp.form ?? []).map(({ id, Id, ...rest }: any) => rest),
             })),
           }));
 
-          // 🔥 Hapus id di level group (tidak di-include)
           return {
             group_name: g.group_name ?? '',
             group_code: g.group_code ?? '',

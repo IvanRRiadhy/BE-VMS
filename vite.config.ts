@@ -12,7 +12,7 @@ export default defineConfig({
     host: true,
     proxy: {
       '/api': {
-        target: 'http://192.168.1.116:8000',
+        target: 'http://192.168.1.188:8000',
         // target: 'http://biovms-net.piranticerdasindonesia.com',
         changeOrigin: true,
         secure: false,

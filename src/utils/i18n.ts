@@ -12,9 +12,9 @@ const resources = {
   en: {
     translation: en,
   },
-  ch: {
-    translation: ch,
-  },
+  // ch: {
+  //   translation: ch,
+  // },
 };
 
 i18n.use(initReactI18next).init({

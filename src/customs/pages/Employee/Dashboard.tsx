@@ -22,6 +22,7 @@ import moment from 'moment-timezone';
 import {
   IconBan,
   IconBellRingingFilled,
+  IconCards,
   IconCheck,
   IconCircleOff,
   IconLogin,
@@ -54,6 +55,8 @@ import dayjs from 'dayjs';
 import { getActiveInvitation, getInvitation, getOngoingInvitation } from 'src/customs/api/visitor';
 import FormDialogInvitation from './FormDialogInvitation';
 import { useNavigate } from 'react-router';
+import { getAccessPass } from 'src/customs/api/admin';
+import { Download } from '@mui/icons-material';
 // import OperatorPieChart from './Charts/OperatorPieChart';
 
 const DashboardEmployee = () => {
@@ -126,6 +129,15 @@ const DashboardEmployee = () => {
   const [alertInvitationData, setAlertInvitationData] = useState<any | null>(null);
   const [openAlertInvitation, setOpenAlertInvitation] = useState(false);
   const [pendingInvitationCount, setPendingInvitationCount] = useState(0);
+  const [openAccess, setOpenAccess] = useState(false);
+  const [activeAccessPass, setActiveAccessPass] = useState<any>();
+  const handleOpenAccess = () => {
+    setOpenAccess(true);
+  };
+
+  const handleCloseAccess = () => {
+    setOpenAccess(false);
+  };
 
   const navigate = useNavigate();
 
@@ -400,6 +412,21 @@ const DashboardEmployee = () => {
     fetchData();
   }, [token]);
 
+  useEffect(() => {
+    if (!token) return;
+    const fetchData = async () => {
+      try {
+        const resAccess = await getAccessPass(token as string);
+        console.log('res', resAccess.collection.data);
+        setActiveAccessPass(resAccess.collection);
+      } catch (e) {
+        console.error(e);
+      }
+    };
+
+    fetchData();
+  }, [token]);
+
   const handleView = (row: any) => {
     // misalnya row.id berisi ID invitation
     setSelectedInvitationId(row.id);
@@ -414,13 +441,19 @@ const DashboardEmployee = () => {
     navigate('/employee/invitation');
   };
 
+  function formatVisitorPeriodLocal(startUtc: string, endUtc: string) {
+    const startLocal = moment.utc(startUtc).tz(moment.tz.guess()).format('YYYY-MM-DD HH:mm');
+    const endLocal = moment.utc(endUtc).tz(moment.tz.guess()).format('YYYY-MM-DD HH:mm');
+    return `${startLocal} - ${endLocal}`;
+  }
+
   return (
     <PageContainer title="Dashboard Employee">
       <Grid container spacing={2} sx={{ mt: 0 }}>
         <Grid size={{ xs: 12, lg: 9 }}>
-          <TopCard items={cards} size={{ xs: 12, lg: 3 }} />
+          <TopCard items={cards} size={{ xs: 12, lg: 6 }} />
         </Grid>
-        <Grid size={{ xs: 12, lg: 3 }} sx={{ display: 'flex' }}>
+        {/* <Grid size={{ xs: 12, lg: 3 }} sx={{ display: 'flex' }}>
           <Box
             sx={{
               display: 'flex',
@@ -456,6 +489,104 @@ const DashboardEmployee = () => {
               Approval
             </Button>
           </Box>
+        </Grid> */}
+
+        <Grid
+          size={{ xs: 12, md: 3 }}
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          <Card
+            sx={{
+              flex: 1, // ✅ biar isi Card stretch penuh
+              display: 'flex',
+              justifyContent: '',
+              alignItems: 'center',
+              flexDirection: 'column',
+              cursor: 'pointer',
+              gap: 1,
+            }}
+            onClick={handleOpenAccess}
+          >
+            {/* <Box
+              sx={{
+                p: 1, // padding biar QR-nya ada jarak dari pinggir background
+                backgroundColor: '#ffffff', // 🔹 warna background QR
+                borderRadius: 2, // rounded biar halus
+                boxShadow: '0px 2px 8px rgba(0,0,0,0.15)', // optional shadow
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <QRCode
+                value={activeAccessPass?.visitor_number || ''}
+                size={40}
+                style={{
+                  height: 'auto',
+                  width: '100px',
+                }}
+              />
+            </Box>
+            <Typography variant="body1" fontWeight={'600'} color="primary">
+              Tap to show detail
+            </Typography> */}
+            {activeAccessPass ? (
+              <>
+                <Typography variant="h5">Access Pass</Typography>
+                <Box
+                  sx={{
+                    p: 1,
+                    backgroundColor: '#ffffff',
+                    borderRadius: 2,
+                    boxShadow: '0px 2px 8px rgba(0,0,0,0.15)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <QRCode
+                    value={activeAccessPass.visitor_number || ''}
+                    size={40}
+                    style={{
+                      height: 'auto',
+                      width: '100px',
+                    }}
+                  />
+                </Box>
+                <Typography variant="body1" fontWeight={'600'} color="primary">
+                  Tap to show detail
+                </Typography>
+              </>
+            ) : (
+              <Box
+                sx={{
+                  // p: 1,
+                  // backgroundColor: '#ffffff',
+                  // borderRadius: 2,
+                  // boxShadow: '0px 2px 8px rgba(0,0,0,0.15)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexDirection: 'column',
+                  height: '100%',
+                }}
+              >
+                <IconCards size={40} />
+                <Typography
+                  variant="body1"
+                  color="textSecondary"
+                  fontStyle="italic"
+                  textAlign="center"
+                  mt={1}
+                >
+                  No access pass found
+                </Typography>
+              </Box>
+            )}
+          </Card>
         </Grid>
 
         {/* Tabel */}
@@ -632,6 +763,165 @@ const DashboardEmployee = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {activeAccessPass && (
+        <Dialog open={openAccess} onClose={handleCloseAccess} fullWidth maxWidth="sm">
+          <DialogTitle textAlign={'center'} sx={{ p: 2 }}>
+            Your Access Pass
+          </DialogTitle>
+          <IconButton
+            aria-label="close"
+            onClick={handleCloseAccess}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
+              color: (theme) => theme.palette.grey[500],
+            }}
+          >
+            <IconX />
+          </IconButton>
+          <DialogContent sx={{ paddingTop: 2 }} dividers>
+            <Box
+              display="flex"
+              flexDirection="row"
+              alignItems="center"
+              justifyContent="space-between"
+            >
+              <Box display="flex" gap={2}>
+                <Avatar />
+                <Box>
+                  <Typography variant="body1" fontWeight="bold">
+                    {activeAccessPass.group_name || '- '}
+                  </Typography>
+                  <Typography variant="body2" color="grey">
+                    {formatVisitorPeriodLocal(
+                      activeAccessPass.visitor_period_start as string,
+                      activeAccessPass.visitor_period_end as string,
+                    )}
+                  </Typography>
+                </Box>
+              </Box>
+
+              <IconButton
+                color="primary"
+                sx={{
+                  backgroundColor: 'primary.main',
+                  color: 'white',
+                  '&:hover': {
+                    backgroundColor: 'primary.dark',
+                  },
+                }}
+              >
+                <Download />
+              </IconButton>
+            </Box>
+            <Box mt={3}>
+              <Grid container spacing={2} justifyContent="center">
+                <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
+                  <Typography variant="body1" color="textSecondary" fontWeight={500}>
+                    Invitation Code
+                  </Typography>
+                  <Typography variant="body1" fontWeight="bold">
+                    {activeAccessPass.invitation_code}
+                  </Typography>
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
+                  <Typography variant="body1" color="textSecondary" fontWeight={500}>
+                    Card
+                  </Typography>
+                  <Typography variant="body1" fontWeight="bold">
+                    {activeAccessPass.card_number || '-'}
+                  </Typography>
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
+                  <Typography variant="body1" color="textSecondary" fontWeight={500}>
+                    Host
+                  </Typography>
+                  <Typography variant="body1" fontWeight="bold">
+                    {activeAccessPass.host_name || '-'}
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
+                  <Typography variant="body1" color="textSecondary" fontWeight={500}>
+                    Group Code
+                  </Typography>
+                  <Typography variant="body1" fontWeight="bold">
+                    {activeAccessPass.group_code || '-'}
+                  </Typography>
+                </Grid>
+              </Grid>
+            </Box>
+
+            <Box mt={2}>
+              <Typography variant="h4" sx={{ fontWeight: 'bold' }} textAlign={'center'}>
+                {activeAccessPass.site_place_name}
+              </Typography>
+              <Box
+                display="flex"
+                justifyContent="center"
+                mt={1}
+                mb={1}
+                flexDirection={'column'}
+                alignItems={'center'}
+              >
+                <Box
+                  sx={{
+                    display: 'inline-block',
+                    p: 3,
+                    borderRadius: 2,
+                    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.2)',
+                    backgroundColor: 'white', // biar kontras
+                  }}
+                  my={2}
+                >
+                  <QRCode
+                    value={activeAccessPass.visitor_number}
+                    size={180}
+                    style={{
+                      height: 'auto',
+                      width: '180px',
+                      borderRadius: 8,
+                    }}
+                  />
+                </Box>
+                <Box display="flex" gap={3} mb={2}>
+                  <Typography color="error">Tracked</Typography>
+                  <Typography color="error">Low Battery</Typography>
+                </Box>
+                <Typography variant="body2" mb={1}>
+                  Show this while visiting
+                </Typography>
+                <Typography variant="h6">ID : {activeAccessPass.visitor_code}</Typography>
+                <Divider sx={{ width: '100%', my: 2, borderColor: 'grey' }} />
+                <Box display={'flex'} mt={0} gap={1} flexDirection={'column'}>
+                  <Grid size={{ xs: 12, sm: 6 }} textAlign="center" display={'flex'} gap={1}>
+                    <Typography variant="body1" color="textSecondary" fontWeight={500}>
+                      Parking Slot
+                    </Typography>
+                    <Typography variant="body1" fontWeight="bold">
+                      {activeAccessPass?.parking_slot || '-'}
+                    </Typography>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }} textAlign="center" display={'flex'} gap={1}>
+                    <Typography variant="body1" color="textSecondary" fontWeight={500}>
+                      Vehicle Plate
+                    </Typography>
+                    <Typography variant="body1" fontWeight="bold">
+                      {activeAccessPass.vehicle_plate_number || '-'}
+                    </Typography>
+                  </Grid>
+                </Box>
+                <Button size="small" variant="contained" sx={{ mt: 2 }}>
+                  Parking Blocker
+                </Button>
+              </Box>
+            </Box>
+          </DialogContent>
+        </Dialog>
+      )}
     </PageContainer>
   );
 };
