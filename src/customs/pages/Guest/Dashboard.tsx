@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import GuestLayout from './GuestLayout';
 import PageContainer from 'src/components/container/PageContainer';
 import { Box } from '@mui/system';
@@ -21,6 +21,11 @@ import {
   Autocomplete,
   Popover,
   Drawer,
+  Portal,
+  Backdrop,
+  CircularProgress,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 
 import Divider from '@mui/material/Divider';
@@ -35,12 +40,14 @@ import {
   ExitToApp,
   Download,
   DateRange,
+  Circle,
 } from '@mui/icons-material';
 import AlarmIcon from '@mui/icons-material/Alarm';
 import {
   IconBan,
   IconBellRingingFilled,
   IconCalendar,
+  IconCards,
   IconCheck,
   IconCircleOff,
   IconClipboard,
@@ -60,7 +67,7 @@ import VisitorStatusPieChart from './Components/charts/VisitorStatusPieChart';
 import TopCard from './TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { t } from 'i18next';
-import { getActiveInvitation } from 'src/customs/api/visitor';
+import { getActiveInvitation, openParkingBlocker } from 'src/customs/api/visitor';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -72,6 +79,8 @@ import { subDays } from 'date-fns';
 import { addDays } from 'date-fns';
 import Calendar from 'src/customs/components/calendar/Calendar';
 import { getAccessPass } from 'src/customs/api/admin';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 const Dashboard = () => {
   // const [open, setOpen] = useState(false);
@@ -83,6 +92,7 @@ const Dashboard = () => {
 
   const [selectedVisitor, setSelectedVisitor] = useState<any>(null);
   const { token } = useSession();
+  const [loading, setLoading] = useState(false);
 
   const [activeVisitData, setActiveVisitData] = useState<any[]>([]);
   const [activeAccessPass, setActiveAccessPass] = useState<any>();
@@ -183,6 +193,118 @@ const Dashboard = () => {
     return `${startLocal} - ${endLocal}`;
   }
 
+  const printRef = useRef<HTMLDivElement>(null);
+
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  // const handleDownloadPDF = async () => {
+  //   if (!printRef.current) return;
+  //   setIsGenerating(true);
+
+  //   // Ambil semua elemen yang punya class "no-print"
+  //   const elementsToHide = document.querySelectorAll('.no-print');
+
+  //   // ✅ Cast ke HTMLElement agar .style bisa diakses tanpa error
+  //   elementsToHide.forEach((el) => {
+  //     (el as HTMLElement).style.display = 'none';
+  //   });
+
+  //   try {
+  //     const canvas = await html2canvas(printRef.current, {
+  //       scale: 3, // biar kualitas tinggi (tidak buram)
+  //       useCORS: true,
+  //     });
+
+  //     const imgData = canvas.toDataURL('image/png');
+  //     const pdf = new jsPDF('p', 'mm', 'a4');
+  //     const pdfWidth = pdf.internal.pageSize.getWidth();
+  //     const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+  //     pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+  //     pdf.save(`Access_Pass_${activeAccessPass?.group_name || 'Visitor'}.pdf`);
+  //   } finally {
+  //     // Kembalikan tampilan tombol setelah generate PDF selesai
+  //     elementsToHide.forEach((el) => {
+  //       (el as HTMLElement).style.display = '';
+  //     });
+  //     setIsGenerating(false);
+  //   }
+  // };
+
+  const handleDownloadPDF = async () => {
+    if (!printRef.current) return;
+    setIsGenerating(true);
+
+    try {
+      // Clone elemen untuk PDF (tidak mempengaruhi UI asli)
+      const clone = printRef.current.cloneNode(true) as HTMLElement;
+
+      // Buat logo khusus untuk PDF
+      const logoEl = document.createElement('img');
+      logoEl.src = '/src/assets/images/logos/BI_Logo.png';
+      logoEl.style.width = '100px';
+      logoEl.style.height = '100px';
+      logoEl.style.display = 'block';
+      logoEl.style.margin = '0 auto';
+      clone.prepend(logoEl);
+
+      // Sembunyikan semua elemen "no-print" di clone
+      clone.querySelectorAll('.no-print').forEach((el) => {
+        (el as HTMLElement).style.display = 'none';
+      });
+
+      // Tambahkan clone ke DOM tapi tersembunyi
+      clone.style.position = 'fixed';
+      clone.style.left = '-9999px';
+      document.body.appendChild(clone);
+
+      // Ambil canvas dari clone
+      const canvas = await html2canvas(clone, { scale: 3, useCORS: true });
+      const imgData = canvas.toDataURL('image/png');
+
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`Access Pass ${activeAccessPass?.group_name || 'Visitor'}.pdf`);
+
+      clone.remove();
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const [isParkingLoading, setIsParkingLoading] = useState(false);
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error';
+  }>({ open: false, message: '', severity: 'success' });
+
+  const handleCloseSnackbar = () => setSnackbar({ ...snackbar, open: false });
+
+  const handleOpenParkingBlocker = async () => {
+    if (!activeAccessPass?.id || !token) return;
+    setIsParkingLoading(true);
+    try {
+      const res = await openParkingBlocker(token, { trx_visitor_id: activeAccessPass.id });
+      console.log('res', JSON.stringify(res, null, 2));
+      setSnackbar({
+        open: true,
+        message: 'Parking blocker opened successfully.',
+        severity: 'success',
+      });
+    } catch (error: any) {
+      setSnackbar({
+        open: true,
+        message: 'Failed to open parking blocker.',
+        severity: 'error',
+      });
+    } finally {
+      setTimeout(() => setIsParkingLoading(false), 600);
+    }
+  };
+
   return (
     <PageContainer title="Dashboard">
       <Grid container spacing={2} sx={{ mt: 0 }} alignItems={'stretch'}>
@@ -230,7 +352,7 @@ const Dashboard = () => {
           <TopCard items={cards} size={{ xs: 12, lg: 6 }} />
         </Grid>
         <Grid
-          size={{ xs: 12, md: 3 }}
+          size={{ xs: 12, lg: 3 }}
           sx={{
             display: 'flex',
             flexDirection: 'column',
@@ -248,30 +370,55 @@ const Dashboard = () => {
             }}
             onClick={handleOpenAccess}
           >
-            <Typography variant="h5">Access Pass</Typography>
-            <Box
-              sx={{
-                p: 1, // padding biar QR-nya ada jarak dari pinggir background
-                backgroundColor: '#ffffff', // 🔹 warna background QR
-                borderRadius: 2, // rounded biar halus
-                boxShadow: '0px 2px 8px rgba(0,0,0,0.15)', // optional shadow
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <QRCode
-                value={activeAccessPass?.visitor_number || ''}
-                size={40}
-                style={{
-                  height: 'auto',
-                  width: '100px',
+            {activeAccessPass ? (
+              <>
+                <Typography variant="h5">Access Pass</Typography>
+                <Box
+                  sx={{
+                    p: 1,
+                    backgroundColor: '#ffffff',
+                    borderRadius: 2,
+                    boxShadow: '0px 2px 8px rgba(0,0,0,0.15)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <QRCode
+                    value={activeAccessPass.visitor_number || ''}
+                    size={40}
+                    style={{
+                      height: 'auto',
+                      width: '100px',
+                    }}
+                  />
+                </Box>
+                <Typography variant="body1" fontWeight={'600'} color="primary">
+                  Tap to show detail
+                </Typography>
+              </>
+            ) : (
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexDirection: 'column',
+                  height: '100%',
                 }}
-              />
-            </Box>
-            <Typography variant="body1" fontWeight={'600'} color="primary">
-              Tap to show detail
-            </Typography>
+              >
+                <IconCards size={40} />
+                <Typography
+                  variant="body1"
+                  color="textSecondary"
+                  fontStyle="italic"
+                  textAlign="center"
+                  mt={1}
+                >
+                  No access pass found
+                </Typography>
+              </Box>
+            )}
           </Card>
         </Grid>
 
@@ -324,42 +471,50 @@ const Dashboard = () => {
           >
             <IconX />
           </IconButton>
-          <DialogContent sx={{ paddingTop: 2 }} dividers>
+          <DialogContent
+            sx={{
+              paddingTop: 2,
+              position: 'relative',
+            }}
+            dividers
+            ref={printRef}
+          >
+            <img
+              src="src/assets/images/backgrounds/back-test.jpg"
+              alt="background"
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                zIndex: -1, // biar di belakang
+              }}
+            />
             <Box
               display="flex"
-              flexDirection="row"
-              alignItems="center"
-              justifyContent="space-between"
+              justifyContent="center"
+              className="only-print"
+              sx={{
+                display: 'none', // sembunyikan di layar
+                '@media print': {
+                  display: 'flex', // tampilkan ketika print
+                },
+              }}
             >
-              <Box display="flex" gap={2}>
-                <Avatar />
-                <Box>
-                  <Typography variant="body1" fontWeight="bold">
-                    {activeAccessPass.group_name || '- '}
-                  </Typography>
-                  <Typography variant="body2" color="grey">
-                    {formatVisitorPeriodLocal(
-                      activeAccessPass.visitor_period_start as string,
-                      activeAccessPass.visitor_period_end as string,
-                    )}
-                  </Typography>
-                </Box>
-              </Box>
-
-              <IconButton
-                color="primary"
-                sx={{
-                  backgroundColor: 'primary.main',
-                  color: 'white',
-                  '&:hover': {
-                    backgroundColor: 'primary.dark',
-                  },
+              <img
+                src="/src/assets/images/logos/BI_Logo.png"
+                alt="logo"
+                width={100}
+                height={100}
+                style={{
+                  objectFit: 'contain',
+                  maxHeight: '100px',
                 }}
-              >
-                <Download />
-              </IconButton>
+              />
             </Box>
-            <Box mt={3}>
+            <Box mt={1} zIndex={1} position={'relative'}>
               <Grid container spacing={2} justifyContent="center">
                 <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
                   <Typography variant="body1" color="textSecondary" fontWeight={500}>
@@ -370,7 +525,7 @@ const Dashboard = () => {
                   </Typography>
                 </Grid>
 
-                <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
+                <Grid size={{ xs: 12, sm: 6 }} textAlign="center" position={'relative'}>
                   <Typography variant="body1" color="textSecondary" fontWeight={500}>
                     Card
                   </Typography>
@@ -378,6 +533,25 @@ const Dashboard = () => {
                     {activeAccessPass.card_number || '-'}
                   </Typography>
                 </Grid>
+                {!isGenerating && (
+                  <IconButton
+                    color="primary"
+                    className="no-print"
+                    sx={{
+                      backgroundColor: 'primary.main',
+                      color: 'white',
+                      position: 'absolute',
+                      right: 20,
+                      '&:hover': { backgroundColor: 'primary.dark' },
+                      '@media print': {
+                        display: 'none !important', // pastikan override semua
+                      },
+                    }}
+                    onClick={handleDownloadPDF}
+                  >
+                    <Download />
+                  </IconButton>
+                )}
 
                 <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
                   <Typography variant="body1" color="textSecondary" fontWeight={500}>
@@ -395,10 +569,21 @@ const Dashboard = () => {
                     {activeAccessPass.group_code || '-'}
                   </Typography>
                 </Grid>
+                <Grid size={{ xs: 12, sm: 12 }} textAlign="center">
+                  <Typography variant="body1" color="textSecondary" fontWeight={500}>
+                    Period Visit
+                  </Typography>
+                  <Typography variant="body1" fontWeight="bold">
+                    {formatVisitorPeriodLocal(
+                      activeAccessPass.visitor_period_start as string,
+                      activeAccessPass.visitor_period_end as string,
+                    )}
+                  </Typography>
+                </Grid>
               </Grid>
             </Box>
 
-            <Box mt={2}>
+            <Box mt={1}>
               <Typography variant="h5" sx={{ fontWeight: 'bold' }} textAlign={'center'}>
                 {activeAccessPass.site_place_name}
               </Typography>
@@ -439,15 +624,16 @@ const Dashboard = () => {
                 </Typography>
                 <Typography variant="h6">ID : {activeAccessPass.visitor_code}</Typography>
                 <Divider sx={{ width: '100%', my: 2, borderColor: 'grey' }} />
-                <Box display={'flex'} mt={0} gap={3} flexDirection={'row'}>
-                  <Grid size={{ xs: 12, sm: 3 }} textAlign="center">
-                    <Typography variant="body1" color="textSecondary" fontWeight={500}>
-                      Parking Slot
-                    </Typography>
-                    <Typography variant="body1" fontWeight="bold">
-                      {activeAccessPass?.parking_slot || '-'}
-                    </Typography>
-                  </Grid>
+                <Typography
+                  variant="h5"
+                  color="textSecondary"
+                  fontWeight={700}
+                  mb={1}
+                  textAlign={'start'}
+                >
+                  Parking
+                </Typography>
+                <Grid container spacing={2}>
                   <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
                     <Typography variant="body1" color="textSecondary" fontWeight={500}>
                       Parking Area
@@ -456,6 +642,15 @@ const Dashboard = () => {
                       {activeAccessPass?.parking_area || '-'}
                     </Typography>
                   </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
+                    <Typography variant="body1" color="textSecondary" fontWeight={500}>
+                      Parking Slot
+                    </Typography>
+                    <Typography variant="body1" fontWeight="bold">
+                      {activeAccessPass?.parking_slot || '-'}
+                    </Typography>
+                  </Grid>
+
                   <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
                     <Typography variant="body1" color="textSecondary" fontWeight={500}>
                       Vehicle Plate
@@ -476,15 +671,70 @@ const Dashboard = () => {
                       {activeAccessPass.vehicle_type || '-'}
                     </Typography>
                   </Grid>
-                </Box>
-                <Button size="small" variant="contained" sx={{ mt: 2 }}>
-                  Parking Blocker
-                </Button>
+                </Grid>
+                {!isGenerating && (
+                  <Button
+                    size="small"
+                    variant="contained"
+                    className="no-print"
+                    onClick={handleOpenParkingBlocker}
+                    disabled={isParkingLoading}
+                    sx={{
+                      mt: 2,
+                      width: '100%',
+                      position: 'relative',
+                      '@media print': {
+                        display: 'none',
+                      },
+                    }}
+                  >
+                    {isParkingLoading ? (
+                      <CircularProgress
+                        size={22}
+                        sx={{
+                          color: 'white',
+                        }}
+                      />
+                    ) : (
+                      'Open Parking Blocker'
+                    )}
+                  </Button>
+                )}
               </Box>
             </Box>
           </DialogContent>
         </Dialog>
       )}
+
+      <Portal>
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={3000}
+          onClose={handleCloseSnackbar}
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+          sx={{
+            zIndex: 99999,
+            position: 'fixed',
+          }}
+        >
+          <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} variant="filled">
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </Portal>
+      <Portal>
+        <Backdrop
+          sx={{
+            zIndex: 1,
+            position: 'fixed',
+            margin: '0 auto',
+            color: 'primary',
+          }}
+          open={isGenerating}
+        >
+          <CircularProgress color="inherit" />
+        </Backdrop>
+      </Portal>
     </PageContainer>
   );
 };

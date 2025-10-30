@@ -1,4 +1,5 @@
 import {
+  Alert,
   Avatar,
   Backdrop,
   Button,
@@ -12,6 +13,8 @@ import {
   Divider,
   Grid2 as Grid,
   IconButton,
+  Portal,
+  Snackbar,
   Tab,
   Tabs,
   TextField,
@@ -52,11 +55,18 @@ import Heatmap from './Heatmap';
 import PieCharts from './PieCharts';
 import { getApproval } from 'src/customs/api/employee';
 import dayjs from 'dayjs';
-import { getActiveInvitation, getInvitation, getOngoingInvitation } from 'src/customs/api/visitor';
+import {
+  getActiveInvitation,
+  getInvitation,
+  getOngoingInvitation,
+  openParkingBlocker,
+} from 'src/customs/api/visitor';
 import FormDialogInvitation from './FormDialogInvitation';
 import { useNavigate } from 'react-router';
 import { getAccessPass } from 'src/customs/api/admin';
 import { Download } from '@mui/icons-material';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 // import OperatorPieChart from './Charts/OperatorPieChart';
 
 const DashboardEmployee = () => {
@@ -131,6 +141,8 @@ const DashboardEmployee = () => {
   const [pendingInvitationCount, setPendingInvitationCount] = useState(0);
   const [openAccess, setOpenAccess] = useState(false);
   const [activeAccessPass, setActiveAccessPass] = useState<any>();
+  const printRef = useRef<HTMLDivElement>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
   const handleOpenAccess = () => {
     setOpenAccess(true);
   };
@@ -334,38 +346,29 @@ const DashboardEmployee = () => {
     fetchData();
   }, [token]);
 
-  useEffect(() => {
-    if (!token) return;
+  // useEffect(() => {
+  //   if (!token) return;
 
-    const fetchInvitation = async () => {
-      try {
-        const startDate = dayjs().subtract(0, 'day').format('YYYY-MM-DD');
-        const endDate = dayjs().format('YYYY-MM-DD');
+  //   const fetchInvitation = async () => {
+  //     try {
+  //       const startDate = dayjs().subtract(0, 'day').format('YYYY-MM-DD');
+  //       const endDate = dayjs().format('YYYY-MM-DD');
 
-        console.log('🚀 Fetching invitations...');
-        const res = await getInvitation(token as string, startDate, endDate);
-        const invitationData = res?.collection ?? [];
+  //       console.log('🚀 Fetching invitations...');
+  //       const res = await getInvitation(token as string, startDate, endDate);
+  //       const invitationData = res?.collection ?? [];
 
-        console.log('✅ Invitation response:', invitationData);
+  //       console.log('✅ Invitation response:', invitationData);
 
-        setInvitationList(invitationData);
+  //       setInvitationList(invitationData);
 
-        // const notDoneInvitations = invitationData.filter(
-        //   (inv: any) => inv.is_praregister_done === null,
-        // );
+  //     } catch (error) {
+  //       console.error('❌ Error fetching invitation:', error);
+  //     }
+  //   };
 
-        // if (notDoneInvitations.length > 0) {
-        //   const latest = notDoneInvitations[0];
-        //   setAlertInvitationData(latest);
-        //   setOpenAlertInvitation(true);
-        // }
-      } catch (error) {
-        console.error('❌ Error fetching invitation:', error);
-      }
-    };
-
-    fetchInvitation();
-  }, [token]);
+  //   fetchInvitation();
+  // }, [token]);
 
   useEffect(() => {
     if (!token) return;
@@ -418,7 +421,7 @@ const DashboardEmployee = () => {
       try {
         const resAccess = await getAccessPass(token as string);
         console.log('res', resAccess.collection.data);
-        setActiveAccessPass(resAccess.collection);
+        setActiveAccessPass(resAccess);
       } catch (e) {
         console.error(e);
       }
@@ -433,19 +436,86 @@ const DashboardEmployee = () => {
     setOpenDialogInvitation(true);
   };
 
-  const moveApproval = () => {
-    navigate('/employee/approval');
-  };
-
-  const moveInvitation = () => {
-    navigate('/employee/invitation');
-  };
-
   function formatVisitorPeriodLocal(startUtc: string, endUtc: string) {
     const startLocal = moment.utc(startUtc).tz(moment.tz.guess()).format('YYYY-MM-DD HH:mm');
     const endLocal = moment.utc(endUtc).tz(moment.tz.guess()).format('YYYY-MM-DD HH:mm');
     return `${startLocal} - ${endLocal}`;
   }
+
+  const handleDownloadPDF = async () => {
+    if (!printRef.current) return;
+    setIsGenerating(true);
+
+    try {
+      // Clone elemen untuk PDF (tidak mempengaruhi UI asli)
+      const clone = printRef.current.cloneNode(true) as HTMLElement;
+
+      // Buat logo khusus untuk PDF
+      const logoEl = document.createElement('img');
+      logoEl.src = '/src/assets/images/logos/BI_Logo.png';
+      logoEl.style.width = '100px';
+      logoEl.style.height = '100px';
+      logoEl.style.display = 'block';
+      logoEl.style.margin = '0 auto';
+      clone.prepend(logoEl);
+
+      // Sembunyikan semua elemen "no-print" di clone
+      clone.querySelectorAll('.no-print').forEach((el) => {
+        (el as HTMLElement).style.display = 'none';
+      });
+
+      // Tambahkan clone ke DOM tapi tersembunyi
+      clone.style.position = 'fixed';
+      clone.style.left = '-9999px';
+      document.body.appendChild(clone);
+
+      // Ambil canvas dari clone
+      const canvas = await html2canvas(clone, { scale: 3, useCORS: true });
+      const imgData = canvas.toDataURL('image/png');
+
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`Access Pass ${activeAccessPass?.group_name || 'Visitor'}.pdf`);
+
+      // Hapus clone
+      clone.remove();
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const [isParkingLoading, setIsParkingLoading] = useState(false);
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error';
+  }>({ open: false, message: '', severity: 'success' });
+
+  const handleCloseSnackbar = () => setSnackbar({ ...snackbar, open: false });
+
+  const handleOpenParkingBlocker = async () => {
+    if (!activeAccessPass?.id || !token) return;
+    setIsParkingLoading(true);
+    try {
+      const res = await openParkingBlocker(token, { id: activeAccessPass.id });
+      console.log('res', JSON.stringify(res, null, 2));
+      setSnackbar({
+        open: true,
+        message: 'Parking blocker opened successfully.',
+        severity: 'success',
+      });
+    } catch (error: any) {
+      setSnackbar({
+        open: true,
+        message: error?.message || 'Failed to open parking blocker.',
+        severity: 'error',
+      });
+    } finally {
+      setTimeout(() => setIsParkingLoading(false), 600);
+    }
+  };
 
   return (
     <PageContainer title="Dashboard Employee">
@@ -453,43 +523,6 @@ const DashboardEmployee = () => {
         <Grid size={{ xs: 12, lg: 9 }}>
           <TopCard items={cards} size={{ xs: 12, lg: 6 }} />
         </Grid>
-        {/* <Grid size={{ xs: 12, lg: 3 }} sx={{ display: 'flex' }}>
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              width: '100%',
-              height: '100%',
-              justifyContent: 'space-between',
-              gap: 1,
-            }}
-          >
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={moveInvitation}
-              sx={{
-                borderRadius: 1,
-                fontSize: '1rem',
-              }}
-            >
-              <IconPlus size={20} />
-              Send Invitation
-            </Button>
-            <Button
-              variant="outlined"
-              color="primary"
-              sx={{
-                backgroundColor: 'white',
-                ':hover': { backgroundColor: 'rgba(232, 232, 232, 0.8)', color: 'primary.main' },
-              }}
-              onClick={moveApproval}
-            >
-              <IconCheck size={30} />
-              Approval
-            </Button>
-          </Box>
-        </Grid> */}
 
         <Grid
           size={{ xs: 12, md: 3 }}
@@ -510,29 +543,6 @@ const DashboardEmployee = () => {
             }}
             onClick={handleOpenAccess}
           >
-            {/* <Box
-              sx={{
-                p: 1, // padding biar QR-nya ada jarak dari pinggir background
-                backgroundColor: '#ffffff', // 🔹 warna background QR
-                borderRadius: 2, // rounded biar halus
-                boxShadow: '0px 2px 8px rgba(0,0,0,0.15)', // optional shadow
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <QRCode
-                value={activeAccessPass?.visitor_number || ''}
-                size={40}
-                style={{
-                  height: 'auto',
-                  width: '100px',
-                }}
-              />
-            </Box>
-            <Typography variant="body1" fontWeight={'600'} color="primary">
-              Tap to show detail
-            </Typography> */}
             {activeAccessPass ? (
               <>
                 <Typography variant="h5">Access Pass</Typography>
@@ -563,10 +573,6 @@ const DashboardEmployee = () => {
             ) : (
               <Box
                 sx={{
-                  // p: 1,
-                  // backgroundColor: '#ffffff',
-                  // borderRadius: 2,
-                  // boxShadow: '0px 2px 8px rgba(0,0,0,0.15)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -764,7 +770,7 @@ const DashboardEmployee = () => {
         </DialogContent>
       </Dialog>
 
-      {activeAccessPass && (
+      {/* {activeAccessPass && (
         <Dialog open={openAccess} onClose={handleCloseAccess} fullWidth maxWidth="sm">
           <DialogTitle textAlign={'center'} sx={{ p: 2 }}>
             Your Access Pass
@@ -921,7 +927,288 @@ const DashboardEmployee = () => {
             </Box>
           </DialogContent>
         </Dialog>
+      )} */}
+
+      {activeAccessPass && (
+        <Dialog open={openAccess} onClose={handleCloseAccess} fullWidth maxWidth="sm">
+          <DialogTitle textAlign={'center'} sx={{ p: 2 }}>
+            Your Access Pass
+          </DialogTitle>
+          <IconButton
+            aria-label="close"
+            onClick={handleCloseAccess}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
+              color: (theme) => theme.palette.grey[500],
+            }}
+          >
+            <IconX />
+          </IconButton>
+          <DialogContent
+            sx={{
+              paddingTop: 2,
+              position: 'relative',
+            }}
+            dividers
+            ref={printRef}
+          >
+            <img
+              src="src/assets/images/backgrounds/back-test.jpg"
+              alt="background"
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                zIndex: -1,
+              }}
+            />
+            <Box
+              display="flex"
+              justifyContent="center"
+              className="only-print"
+              sx={{
+                display: 'none',
+                '@media print': {
+                  display: 'flex',
+                },
+              }}
+            >
+              <img
+                src="/src/assets/images/logos/BI_Logo.png"
+                alt="logo"
+                width={100}
+                height={100}
+                style={{
+                  objectFit: 'contain',
+                  maxHeight: '100px',
+                }}
+              />
+            </Box>
+            <Box mt={1} zIndex={1} position={'relative'}>
+              <Grid container spacing={2} justifyContent="center">
+                <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
+                  <Typography variant="body1" color="textSecondary" fontWeight={500}>
+                    Invitation Code
+                  </Typography>
+                  <Typography variant="body1" fontWeight="bold">
+                    {activeAccessPass.invitation_code}
+                  </Typography>
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 6 }} textAlign="center" position={'relative'}>
+                  <Typography variant="body1" color="textSecondary" fontWeight={500}>
+                    Card
+                  </Typography>
+                  <Typography variant="body1" fontWeight="bold">
+                    {activeAccessPass.card_number || '-'}
+                  </Typography>
+                </Grid>
+                {!isGenerating && (
+                  <IconButton
+                    color="primary"
+                    className="no-print"
+                    sx={{
+                      backgroundColor: 'primary.main',
+                      color: 'white',
+                      position: 'absolute',
+                      right: 20,
+                      '&:hover': { backgroundColor: 'primary.dark' },
+                      '@media print': {
+                        display: 'none !important', // pastikan override semua
+                      },
+                    }}
+                    onClick={handleDownloadPDF}
+                  >
+                    <Download />
+                  </IconButton>
+                )}
+
+                <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
+                  <Typography variant="body1" color="textSecondary" fontWeight={500}>
+                    Host
+                  </Typography>
+                  <Typography variant="body1" fontWeight="bold">
+                    {activeAccessPass.host_name || '-'}
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
+                  <Typography variant="body1" color="textSecondary" fontWeight={500}>
+                    Group Code
+                  </Typography>
+                  <Typography variant="body1" fontWeight="bold">
+                    {activeAccessPass.group_code || '-'}
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 12 }} textAlign="center">
+                  <Typography variant="body1" color="textSecondary" fontWeight={500}>
+                    Period Visit
+                  </Typography>
+                  <Typography variant="body1" fontWeight="bold">
+                    {formatVisitorPeriodLocal(
+                      activeAccessPass.visitor_period_start as string,
+                      activeAccessPass.visitor_period_end as string,
+                    )}
+                  </Typography>
+                </Grid>
+              </Grid>
+            </Box>
+
+            <Box mt={1}>
+              <Typography variant="h5" sx={{ fontWeight: 'bold' }} textAlign={'center'}>
+                {activeAccessPass.site_place_name}
+              </Typography>
+              <Box
+                display="flex"
+                justifyContent="center"
+                mt={0}
+                mb={1}
+                flexDirection={'column'}
+                alignItems={'center'}
+              >
+                <Box
+                  sx={{
+                    display: 'inline-block',
+                    p: 3,
+                    borderRadius: 2,
+                    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.2)',
+                    backgroundColor: 'white', // biar kontras
+                  }}
+                  my={2}
+                >
+                  <QRCode
+                    value={activeAccessPass.visitor_number || activeAccessPass.invitation_code}
+                    size={180}
+                    style={{
+                      height: 'auto',
+                      width: '180px',
+                      borderRadius: 8,
+                    }}
+                  />
+                </Box>
+                <Box display="flex" gap={3} mb={2}>
+                  <Typography color="error">Tracked</Typography>
+                  <Typography color="error">Low Battery</Typography>
+                </Box>
+                <Typography variant="body2" mb={1}>
+                  Show this while visiting
+                </Typography>
+                <Typography variant="h6">ID : {activeAccessPass.visitor_code}</Typography>
+                <Divider sx={{ width: '100%', my: 2, borderColor: 'grey' }} />
+                <Typography
+                  variant="h5"
+                  color="textSecondary"
+                  fontWeight={700}
+                  mb={1}
+                  textAlign={'start'}
+                >
+                  Parking
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
+                    <Typography variant="body1" color="textSecondary" fontWeight={500}>
+                      Parking Area
+                    </Typography>
+                    <Typography variant="body1" fontWeight="bold">
+                      {activeAccessPass?.parking_area || '-'}
+                    </Typography>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
+                    <Typography variant="body1" color="textSecondary" fontWeight={500}>
+                      Parking Slot
+                    </Typography>
+                    <Typography variant="body1" fontWeight="bold">
+                      {activeAccessPass?.parking_slot || '-'}
+                    </Typography>
+                  </Grid>
+
+                  <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
+                    <Typography variant="body1" color="textSecondary" fontWeight={500}>
+                      Vehicle Plate
+                    </Typography>
+                    <Typography variant="body1" fontWeight="bold">
+                      {activeAccessPass.vehicle_plate_number || '-'}
+                    </Typography>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
+                    <Typography variant="body1" color="textSecondary" fontWeight={500}>
+                      Vehicle Type
+                    </Typography>
+                    <Typography
+                      variant="body1"
+                      fontWeight="bold"
+                      sx={{ textTransform: 'capitalize' }}
+                    >
+                      {activeAccessPass.vehicle_type || '-'}
+                    </Typography>
+                  </Grid>
+                </Grid>
+                {!isGenerating && (
+                  <Button
+                    size="small"
+                    variant="contained"
+                    className="no-print"
+                    onClick={handleOpenParkingBlocker}
+                    disabled={isParkingLoading}
+                    sx={{
+                      mt: 2,
+                      width: '100%',
+                      position: 'relative',
+                      '@media print': {
+                        display: 'none',
+                      },
+                    }}
+                  >
+                    {isParkingLoading ? (
+                      <CircularProgress
+                        size={22}
+                        sx={{
+                          color: 'white',
+                        }}
+                      />
+                    ) : (
+                      'Open Parking Blocker'
+                    )}
+                  </Button>
+                )}
+              </Box>
+            </Box>
+          </DialogContent>
+        </Dialog>
       )}
+      <Portal>
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={3000}
+          onClose={handleCloseSnackbar}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          sx={{
+            zIndex: 2,
+            position: 'fixed',
+          }}
+        >
+          <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} variant="filled">
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </Portal>
+      <Portal>
+        <Backdrop
+          sx={{
+            zIndex: 1,
+            position: 'fixed',
+            margin: '0 auto',
+            color: 'primary',
+          }}
+          open={isGenerating}
+        >
+          <CircularProgress color="inherit" />
+        </Backdrop>
+      </Portal>
     </PageContainer>
   );
 };

@@ -75,7 +75,6 @@ export const getInvitations = async (
   }
 };
 
-
 export type GetInvitationResponse = {
   status: string;
   status_code: number;
@@ -277,6 +276,20 @@ export const createVisitorInvitation = async (
 ): Promise<any> => {
   try {
     const response = await axiosInstance.post(`/invitation/send-invitations/${id}`, data, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data;
+    }
+    throw error;
+  }
+};
+
+export const openParkingBlocker = async (token: string, data: any): Promise<any> => {
+  try {
+    const response = await axiosInstance.post('/dashboard/parking/open-blocker', data, {
       headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
     });
     return response.data;

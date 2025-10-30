@@ -4648,7 +4648,7 @@ const OperatorView = () => {
                           variant="contained"
                           onClick={() => setOpenExtendVisit(true)}
                           startIcon={<IconClock size={18} />}
-                          sx={{ backgroundColor: 'purple' }}
+                          color="secondary"
                         >
                           Extend
                         </Button>
