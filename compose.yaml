@@ -1,0 +1,10 @@
+services:
+  dev:
+    build:
+      context: .
+    environment:
+      NODE_ENV: production
+    volumes:
+      - .env:/app/.env
+    ports:
+      - 3000:3000

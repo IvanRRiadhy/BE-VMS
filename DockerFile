@@ -1,0 +1,19 @@
+ARG NODE_VERSION=22.14.0
+
+FROM node:${NODE_VERSION}-alpine as build
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install --production
+
+COPY . .
+
+FROM node:${NODE_VERSION}-alpine as runtime
+WORKDIR /app
+
+COPY --from=build /app ./
+
+USER node
+EXPOSE 3000
+CMD ["npm", "start"]
+ENV NODE_ENV=production
