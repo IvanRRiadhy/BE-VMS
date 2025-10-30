@@ -50,7 +50,7 @@ dayjs.extend(timezone);
 interface FormDialogPraregistProps {
   id: string;
   onClose?: () => void;
-  onSubmitted?: () => void;
+  onSubmitted?: (id?: string) => void;
   onSubmitting?: (loading: boolean) => void;
 }
 
@@ -821,6 +821,13 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
     fetchData();
   }, [token]);
 
+  const handleRadioToggle = (remarks: string, value: any) => {
+    setFormValues((prev) => ({
+      ...prev,
+      [remarks]: prev[remarks] === value ? '' : value, // klik 2x = kosong
+    }));
+  };
+
   // ✅ render field per section
   const StepContent = (section: any) => (
     <Box mt={3}>
@@ -934,7 +941,10 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                   <FormControl component="fieldset">
                     <RadioGroup
                       value={formValues[f.remarks] || ''}
-                      onChange={(e) => handleChange(f.remarks, e.target.value)}
+                      onChange={(e) => {
+                        // console.log('🚗 is_driving changed to:', e.target.value);
+                        handleChange(f.remarks, e.target.value);
+                      }}
                       sx={{ flexDirection: 'row', flexWrap: 'wrap', gap: 1 }}
                     >
                       <FormControlLabel value="true" control={<Radio />} label="Yes" />
@@ -1022,7 +1032,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
               {/* 🔹 CASE G: vehicle_type */}
               {f.remarks === 'vehicle_type' && (
                 <FormControl component="fieldset">
-                  <RadioGroup
+                  {/* <RadioGroup
                     value={formValues[f.remarks] || ''}
                     onChange={(e) => handleChange(f.remarks, e.target.value)}
                     sx={{ flexDirection: 'row', flexWrap: 'wrap', gap: 1 }}
@@ -1043,12 +1053,33 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                         label={opt.label}
                       />
                     ))}
+                  </RadioGroup> */}
+                  <RadioGroup
+                    value={formValues[f.remarks] || ''}
+                    sx={{ flexDirection: 'row', flexWrap: 'wrap', gap: 1 }}
+                  >
+                    {[
+                      { value: 'car', label: 'Car' },
+                      { value: 'bus', label: 'Bus' },
+                      { value: 'motor', label: 'Motor' },
+                      { value: 'bicycle', label: 'Bicycle' },
+                      { value: 'truck', label: 'Truck' },
+                      { value: 'private_car', label: 'Private Car' },
+                      { value: 'other', label: 'Other' },
+                    ].map((opt) => (
+                      <FormControlLabel
+                        key={opt.value}
+                        value={opt.value}
+                        control={<Radio onClick={() => handleRadioToggle(f.remarks, opt.value)} />}
+                        label={opt.label}
+                      />
+                    ))}
                   </RadioGroup>
-                  {errors[f.remarks] && (
+                  {/* {errors[f.remarks] && (
                     <Typography variant="caption" color="error">
                       {errors[f.remarks]}
                     </Typography>
-                  )}
+                  )} */}
                 </FormControl>
               )}
 
@@ -1081,7 +1112,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
 
   const transformToSubmitPayload = (data: any) => ({
     visitor_type: data.visitor_type,
-    type_registered: 1,
+    type_registered: 0,
     trx_visitor_id: id,
     is_group: true, // tergantung kebutuhan
     group_name: data.group_name ?? '',
@@ -1140,10 +1171,10 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
     if (!invitationData) return;
 
     try {
-      setSubmitting(true); // 🔹 tampilkan backdrop internal
+      setSubmitting(true);
 
       const payload = transformToSubmitPayload(invitationData);
-      // console.log('Payload response:', JSON.stringify(payload, null, 2));
+      console.log('Payload response:', JSON.stringify(payload, null, 2));
       const res = await createSubmitCompletePra(token as string, payload);
 
       const ok =
@@ -1152,13 +1183,14 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
 
       if (ok) {
         // ✅ beri jeda dulu agar spinner terlihat, baru tampilkan snackbar
-        await new Promise((r) => setTimeout(r, 600));
+        // await new Promise((r) => setTimeout(r, 600));
 
         showSuccessAlert('Successfully Pra Register!', res.msg ?? 'Success');
 
-        await new Promise((r) => setTimeout(r, 1000));
+        // await new Promise((r) => setTimeout(r, 1000));
 
-        onSubmitted?.();
+        // onSubmitted?.();
+        onSubmitted?.(invitationData.id);
       } else {
         await new Promise((r) => setTimeout(r, 600));
         showErrorAlert('Error!', res.msg ?? 'Something went wrong');
@@ -1173,7 +1205,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
       // 🔹 beri sedikit jeda agar snackbar sempat muncul dulu sebelum backdrop hilang
       setTimeout(() => {
         setSubmitting(false);
-      }, 800);
+      }, 600);
     }
   };
 

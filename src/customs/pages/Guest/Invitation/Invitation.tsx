@@ -87,7 +87,7 @@ const Invitation = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [edittingId, setEdittingId] = useState<string | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
-  const [tableData, setTableData] = useState<[]>([]);
+  const [tableData, setTableData] = useState<any[]>([]);
   const [openExtendVisit, setOpenExtendVisit] = useState(false);
   const [selectedMinutes, setSelectedMinutes] = useState<number | null>(null);
   const [invitatioOpenDetail, setInvitatioOpenDetail] = useState(false);
@@ -95,7 +95,7 @@ const Invitation = () => {
   const [invitationData, setInvitationData] = useState<any>(null);
   // daftar opsi durasi dalam menit
   const durationOptions = [15, 30, 45, 60, 90, 120, 150, 180];
-  const [extendedEndTime, setExtendedEndTime] = useState<string | null>(null);
+  const [extendedEndTime, setExtendedEndTime] = useState<any | null>(null);
   const [dataVisitor, setDataVisitor] = useState<any[]>([]);
   const [loadingAccess, setLoadingAccess] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -148,8 +148,8 @@ const Invitation = () => {
     'Rapat Bulanan',
   ];
 
-    const [applyToAll, setApplyToAll] = useState(false);
-  
+  const [applyToAll, setApplyToAll] = useState(false);
+
   const handleApplyToAllChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const checked = event.target.checked;
     setApplyToAll(checked);
@@ -181,23 +181,28 @@ const Invitation = () => {
 
         // if (isDataReady) {
         const res = await getInvitation(token as string, start_date, end_date);
-        const rows = res.collection.map((item: any) => ({
-          id: item.id,
-          // visitor_type: item.visitor_type_name,
-          name: item.visitor.name,
-          // identity_id: item.visitor.identity_id,
-          email: item.visitor.email,
-          organization: item.visitor.organization,
-          gender: item.visitor.gender,
-          // address: item.visitor.address,
-          phone: item.visitor.phone,
-          visitor_period_start: item.visitor_period_start,
-          visitor_period_end: item.visitor_period_end,
-          host: item.host_name ?? '-',
-          agenda: item.agenda,
-          site: item.site_place_name,
-          // visitor_status: item.visitor_status,
-        }));
+        const rows = res.collection.map((item: any) => {
+          // waktu dasar dari backend
+          const baseEnd = moment(item.visitor_period_end);
+
+          // tambahkan extend dari backend (jika ada)
+          const extendedEnd = baseEnd.add(item.extend_visitor_period || 0, 'minutes');
+
+          return {
+            id: item.id,
+            name: item.visitor.name,
+            email: item.visitor.email,
+            organization: item.visitor.organization,
+            gender: item.visitor.gender,
+            phone: item.visitor.phone,
+            visitor_period_start: item.visitor_period_start,
+            visitor_period_end: extendedEnd.format('YYYY-MM-DD HH:mm'), // langsung format lokal
+            host: item.host_name ?? '-',
+            agenda: item.agenda,
+            site: item.site_place_name,
+          };
+        });
+
         setTableData(rows ?? []);
 
         // }
@@ -1310,15 +1315,7 @@ const Invitation = () => {
 
   const handleExtend = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!token) return;
-
-    if (!selectedMinutes) {
-      setSnackbarMsg('Please select a duration before extending.');
-      setSnackbarType('info');
-      setSnackbarOpen(true);
-      return;
-    }
+    if (!token || !selectedMinutes) return;
 
     try {
       setLoadingAccess(true);
@@ -1329,29 +1326,45 @@ const Invitation = () => {
         apply_to_all: false,
       });
 
-      console.log('extend result:', result);
+      // Ambil extend dari backend
 
-      // ✅ Update UI langsung (tanpa reload)
       if (invitationDetail?.visitor_period_end) {
-        const baseTime = moment.utc(invitationDetail.visitor_period_end);
-        const newEnd = baseTime.add(selectedMinutes, 'minutes'); // ⬅️ tetap moment UTC lalu konversi lokal saat render
-
+        const baseTime = moment
+          .utc(invitationDetail.visitor_period_end)
+          .add(invitationDetail.extend_visitor_period || 0, 'minutes'); // tambahkan extend sebelumnya
+        const newEnd = baseTime.add(selectedMinutes, 'minutes'); // tambahkan extend baru
         setExtendedEndTime(newEnd.toISOString());
+        setTableData((prev) =>
+          prev.map((row) =>
+            row.id === invitationDetail.id
+              ? { ...row, visitor_period_end: newEnd.format('YYYY-MM-DD HH:mm') }
+              : row,
+          ),
+        );
       }
 
-      // ✅ Snackbar success
       setSnackbarMsg(`Visit extended by ${selectedMinutes} minutes.`);
       setSnackbarType('success');
       setSnackbarOpen(true);
-    } catch (err) {
-      console.error('Failed to extend visit:', err);
-      setSnackbarMsg('Failed to extend visit.');
+    } catch (err: any) {
+      const message = err?.response?.data?.msg || err?.message || 'Failed to extend visit.';
+      setSnackbarMsg(message);
       setSnackbarType('error');
       setSnackbarOpen(true);
     } finally {
       setTimeout(() => setLoadingAccess(false), 600);
     }
   };
+
+  const finalEndTime = extendedEndTime
+    ? extendedEndTime
+    : invitationDetail?.visitor_period_end
+    ? moment
+        .utc(invitationDetail.visitor_period_end)
+        .add(invitationDetail.extend_visitor_period || 0, 'minutes')
+        .local()
+    : null;
+  console.log('finalEndTime', finalEndTime);
 
   return (
     <>
@@ -1549,7 +1562,7 @@ const Invitation = () => {
                       {/* {invitationDetail?.visitor_period_end
                         ? moment(invitationDetail.visitor_period_start).format('DD MMM YYYY, HH:mm')
                         : '-'} */}
-                      {invitationDetail?.visitor_period_end
+                      {invitationDetail?.visitor_period_start
                         ? moment
                             .utc(invitationDetail.visitor_period_start) // baca sebagai UTC
                             .local() // ubah ke waktu lokal laptop
@@ -1562,19 +1575,7 @@ const Invitation = () => {
                       Visit End
                     </CustomFormLabel>
                     <Typography sx={{ mt: 0 }} variant="body1">
-                      {/* {invitationDetail?.visitor_period_end
-                        ? moment(invitationDetail.visitor_period_end).format('DD MMM YYYY, HH:mm')
-                        : '-'} */}
-                      <Typography sx={{ mt: 0 }} variant="body1">
-                        {extendedEndTime
-                          ? moment.utc(extendedEndTime).local().format('DD MMM YYYY, HH:mm')
-                          : invitationDetail?.visitor_period_end
-                          ? moment
-                              .utc(invitationDetail.visitor_period_end)
-                              .local()
-                              .format('DD MMM YYYY, HH:mm')
-                          : '-'}
-                      </Typography>
+                      {finalEndTime ? moment(finalEndTime).format('DD MMM YYYY, HH:mm') : '-'}
                     </Typography>
                   </Grid>
                   <Grid size={{ xs: 12, md: 6 }}>
@@ -1768,16 +1769,16 @@ const Invitation = () => {
                   </Grid>
                 </Grid>
               </Stack>
-              {moment().isBefore(moment.parseZone(invitationDetail?.visitor_period_end)) ? (
-                <Button
-                  onClick={() => setOpenExtendVisit(true)}
-                  variant="contained"
-                  sx={{ mt: 3 }}
-                  fullWidth
-                >
-                  <Typography>Extend</Typography>
-                </Button>
-              ) : null}
+              {/* {moment().isBefore(moment.parseZone(invitationDetail?.visitor_period_end)) ? ( */}
+              <Button
+                onClick={() => setOpenExtendVisit(true)}
+                variant="contained"
+                sx={{ mt: 3 }}
+                fullWidth
+              >
+                <Typography>Extend</Typography>
+              </Button>
+              {/* ) : null} */}
             </form>
           </DialogContent>
         </Dialog>

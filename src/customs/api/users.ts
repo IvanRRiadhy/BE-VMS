@@ -13,7 +13,7 @@ import axiosInstance from './interceptor';
 import { GetProfileResponse } from './models/profile';
 
 const url: string = `http://${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api`;
-// const url: string = `https://mysterious-nearby-interests-boats.trycloudflare.com/api`;
+// const url: string = `https://programmes-cloudy-litigation-sixth.trycloudflare.com/api`;
 export const login = async (body: LoginRequest): Promise<LoginResponse> => {
   try {
     const response = await axios.post<LoginResponse>(`${url}/_Auth/RequestToken`, body, {
