@@ -50,6 +50,7 @@ export type SectionPageVisitorType = {
 export type VisitorTypeDocument = {
   document_id?: string;
   document_name?: string;
+  identity_type?: number;
 };
 
 export type Item = {
@@ -67,7 +68,7 @@ export type Item = {
   direct_visit: boolean;
   period: number;
   can_notification_arrival: boolean;
-  can_track_ble: boolean | null;
+  can_track_ble?: boolean | null;
   is_primary: boolean;
   is_enable: boolean;
   vip: boolean;
@@ -150,7 +151,8 @@ export const CreateVisitorTypeRequestSchema = z.object({
   can_notification_arrival: z.boolean().default(false),
   is_primary: z.boolean().default(false).optional(),
   is_enable: z.boolean().default(false),
-  can_track_ble: z.boolean().default(false),  
+  // can_track_ble: z.boolean().default(false).optional(),
+  can_track_ble: z.boolean().nullable().optional(),
   // prefix: z.string().default(''),
   vip: z.boolean().default(false),
   simple_visitor: z.boolean().default(false),
@@ -159,7 +161,7 @@ export const CreateVisitorTypeRequestSchema = z.object({
   // site_visitor_types: z.string().nullable().optional(),
   // Nullable fields from your JSON
   visitor_type_documents: z
-    .array(z.object({ document_id: z.string() }))
+    .array(z.object({ document_id: z.string(),identity_type: z.number() }))
     .nullable()
     .optional(),
 
@@ -185,7 +187,7 @@ export const updateVisitorTypeSchmea = z.object({
   duration_visit: z.number().default(0),
   max_time_visit: z.number().default(0),
   can_parking: z.boolean().default(false),
-  can_track_ble: z.boolean().default(false),
+  can_track_ble: z.boolean().nullable().optional(),
   can_access: z.boolean().default(false),
   add_to_menu: z.boolean().default(false),
   need_document: z.boolean().default(false),
@@ -204,7 +206,7 @@ export const updateVisitorTypeSchmea = z.object({
   // site_visitor_types: z.string().nullable().optional(),
   // Nullable fields from your JSON
   visitor_type_documents: z
-    .array(z.object({ document_id: z.string().optional() }))
+    .array(z.object({ document_id: z.string().optional(), identity_type: z.number().optional() }))
     .nullable()
     .optional(),
   section_page_visitor_types: z.array(sectionPageVisitorTypeSchema).optional().default([]),

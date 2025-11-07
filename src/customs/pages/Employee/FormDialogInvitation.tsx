@@ -965,8 +965,8 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
                     }}
                     noOptionsText={
                       (inputValues[f.remarks] || '').length < 3
-                        ? 'Ketik minimal 3 karakter untuk mencari'
-                        : 'Tidak ditemukan'
+                        ? 'Enter at least 3 characters to search.'
+                        : 'Not found'
                     }
                     value={
                       allVisitorEmployee

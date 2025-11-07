@@ -34,6 +34,7 @@ import {
 } from 'src/customs/api/models/Admin/CustomField';
 import { createCustomField, updateCustomField } from 'src/customs/api/admin';
 import { fromPairs, lowerCase } from 'lodash';
+import { showSwal } from 'src/customs/components/alerts/alerts';
 
 interface FormCustomFieldProps {
   formData: CreateCustomFieldRequest;
@@ -88,46 +89,50 @@ const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCu
     setLoading(true);
     setErrors({});
     try {
-      if (!token) {
-        setAlertType('error');
-        setAlertMessage('Something went wrong. Please try again later.');
+      // if (!token) {
+      //   setAlertType('error');
+      //   setAlertMessage('Something went wrong. Please try again later.');
 
-        setTimeout(() => {
-          setAlertType('info');
-          setAlertMessage('Complete the following data properly and correctly');
-        }, 3000);
-        return;
-      }
+      //   setTimeout(() => {
+      //     setAlertType('info');
+      //     setAlertMessage('Complete the following data properly and correctly');
+      //   }, 3000);
+      //   return;
+      // }
       const data: CreateCustomFieldRequest = {
         ...formData,
         multiple_option_fields: multiOptionList,
       };
       const parsedData = CreateCustomFieldRequestSchema.parse(data);
-      console.log(editingId);
-      console.log('Setting Data: ', parsedData);
+      // console.log(editingId);
+      // console.log('Setting Data: ', parsedData);
       if (editingId && editingId !== '') {
-        await updateCustomField(token, parsedData, editingId);
+        await updateCustomField(token as string, parsedData, editingId);
       } else {
-        await createCustomField(parsedData, token);
+        await createCustomField(parsedData, token as string) ;
       }
       localStorage.removeItem('unsavedCustomFieldForm');
-      setAlertType('success');
-      setAlertMessage(
-        editingId ? 'Custom field successfully updated!' : 'Custom field successfully created!',
-      );
+      // setAlertType('success');
+      // setAlertMessage(
+      //   editingId ? 'Custom field successfully updated!' : 'Custom field successfully created!',
+      // );
+      showSwal
+      ('success', editingId ? 'Custom field successfully updated!' : 'Custom field successfully created!');
       setTimeout(() => {
         onSuccess?.();
-      }, 900);
+      },600);
     } catch (err: any) {
       if (err?.errors) {
         setErrors(err.errors);
       }
-      setAlertType('error');
-      setAlertMessage('Something went wrong. Please try again later.');
-      setTimeout(() => {
-        setAlertType('info');
-        setAlertMessage('Complete the following data properly and correctly');
-      }, 3000);
+      // setAlertType('error');
+      // setAlertMessage('Something went wrong. Please try again later.');
+      // setTimeout(() => {
+      //   setAlertType('info');
+      //   setAlertMessage('Complete the following data properly and correctly');
+      // }, 3000);
+      // take error form backend message or static
+
     } finally {
       setTimeout(() => {
         setLoading(false);
@@ -139,9 +144,9 @@ const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCu
     <>
       <form onSubmit={handleOnSubmit}>
         <Grid container spacing={2} sx={{ mb: 2 }}>
-          <Grid size={12} sx={{ mt: -3 }}>
+          {/* <Grid size={12} sx={{ mt: -3 }}>
             <Alert severity={alertType}>{alertMessage}</Alert>
-          </Grid>
+          </Grid> */}
 
           <Grid
             size={{

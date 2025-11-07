@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useLayoutEffect } from 'react';
 import {
   Box,
   Button,
@@ -44,6 +44,7 @@ import {
   showConfirmDelete,
   showErrorAlert,
   showSuccessAlert,
+  showSwal,
 } from 'src/customs/components/alerts/alerts';
 
 type VisitorTypeTableRow = {
@@ -60,6 +61,7 @@ const Content = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
+  const [loadingData, setLoadingData] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [totalRecords, setTotalRecords] = useState(0);
   const [tableRowVisitorType, setTableRowVisitorType] = React.useState<VisitorTypeTableRow[]>([]);
@@ -80,6 +82,9 @@ const Content = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [isDataReady, setIsDataReady] = useState(false);
   const dialogRef = useRef<HTMLDivElement | null>(null);
+  const [documentIdentities, setDocumentIdentities] = useState<
+    { document_id: string; identity_type: number }[]
+  >([]);
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
 
   const cards = [
@@ -119,7 +124,7 @@ const Content = () => {
     }
   }, [formDataAddVisitorType]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!token) return;
     const fetchData = async () => {
       setLoading(true);
@@ -151,9 +156,10 @@ const Content = () => {
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
-        setLoading(false);
+        setTimeout(() => setLoading(false), 300);
       }
     };
+
     fetchData();
   }, [token, page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword]);
 
@@ -180,54 +186,6 @@ const Content = () => {
     handleOpenDialog();
   }, []);
 
-  // const handleEdit = (id: string) => {
-  //   const existing = visitorData.find((item: any) => item.id === id);
-  //   if (!existing) {
-  //     console.warn('No visitor data found for ID:', id);
-  //     return;
-  //   }
-
-  //   const parsed = CreateVisitorTypeRequestSchema.parse({
-  //     name: existing.name,
-  //     description: existing.description,
-  //     show_in_form: existing.show_in_form,
-  //     duration_visit: existing.duration_visit,
-  //     max_time_visit: existing.max_time_visit,
-  //     can_parking: existing.can_parking,
-  //     can_access: existing.can_access,
-  //     add_to_menu: existing.add_to_menu,
-  //     need_document: existing.need_document,
-  //     grace_time: existing.grace_time,
-  //     direct_visit: existing.direct_visit,
-  //     period: existing.period,
-  //     can_notification_arrival: existing.can_notification_arrival,
-  //     // is_primary: existing.is_primary,
-  //     is_enable: existing.is_enable,
-  //     vip: existing.vip,
-  //     simple_visitor: existing.simple_visitor,
-  //     simple_period: existing.simple_period,
-  //     visitor_type_documents: existing.visitor_type_documents ?? null,
-  //     section_page_visitor_types: existing.section_page_visitor_types ?? [],
-  //   });
-
-  //   const editingLocal = localStorage.getItem('unsavedVisitorTypeData');
-
-  //   if (editingLocal) {
-  //     const editingData = JSON.parse(editingLocal);
-  //     if (editingData.id && editingData.id !== id) {
-  //       setPendingEditId(id);
-  //       setConfirmDialogOpen(true);
-  //       return;
-  //     }
-  //   }
-
-  //   // ✅ Ini penting: set edittingId agar title dialog bisa menunjukkan mode Edit
-  //   setEdittingId(id);
-  //   setFormDataAddVisitorType(parsed);
-  //   localStorage.setItem('unsavedVisitorTypeData', JSON.stringify({ id, ...parsed }));
-  //   handleOpenDialog();
-  // };
-
   const normalizeDetail = (d: any) => ({
     ...d,
     // FE kamu butuh array of { document_id }, sementara API mengembalikan objek lengkap
@@ -247,24 +205,43 @@ const Content = () => {
   const handleEdit = async (id: string) => {
     try {
       setLoading(true);
-      const resp = await getVisitorTypeById(token as string, id);
-      const raw = resp?.collection; // <-- ini yang benar
-      if (!raw) throw new Error('Empty collection');
 
-      // Saat EDIT, skip Zod (validasi nanti saat submit)
+      const resp = await getVisitorTypeById(token as string, id);
+      const raw = resp?.collection;
+      if (!raw) throw new Error('No data found.');
+
+      // ⚙️ Normalisasi data form utama
       const hydrated = normalizeDetail(raw);
 
+      // Simpan form utama
       setEdittingId(id);
       setFormDataAddVisitorType(hydrated);
-      localStorage.setItem('unsavedVisitorTypeData', JSON.stringify({ id, ...hydrated }));
-      handleOpenDialog();
 
-      // debug
-      console.log('api visit_form len:', raw.section_page_visitor_types?.[0]?.visit_form?.length);
-      console.log(
-        'hydrated visit_form len:',
-        hydrated.section_page_visitor_types?.[0]?.visit_form?.length,
+      // 🧩 Ambil langsung visitor_type_documents dari raw (bukan dari hydrated)
+      if (Array.isArray(raw.visitor_type_documents)) {
+        const mappedDocs = raw.visitor_type_documents.map((doc: any) => ({
+          document_id: doc.document_id,
+          identity_type: doc.identity_type ?? -1, // bisa null juga
+        }));
+
+        // console.log('✅ Mapped visitor_type_documents:', mappedDocs);
+
+        setDocumentIdentities(mappedDocs);
+      } else {
+        console.warn('⚠️ visitor_type_documents tidak ditemukan di response');
+        setDocumentIdentities([]);
+      }
+
+      localStorage.setItem(
+        'unsavedVisitorTypeData',
+        JSON.stringify({
+          id,
+          ...hydrated,
+          visitor_type_documents: raw.visitor_type_documents ?? [],
+        }),
       );
+
+      handleOpenDialog();
     } catch (err) {
       console.error('Error fetching visitor type detail:', err);
     } finally {
@@ -387,20 +364,24 @@ const Content = () => {
     if (!token) return;
 
     // setLoading(true);
-    const confirmed = await showConfirmDelete('Are you sure?', "You won't be able to revert this!");
+    const confirmed = await showConfirmDelete(
+      'Are you sure to delete this visitor type?',
+      // "You won't be able to revert this!",
+    );
     if (!confirmed) return;
     try {
-      setLoading(true);
+      setLoadingData(true);
       await deleteVisitorType(token, id);
 
       setRefreshTrigger((prev) => prev + 1);
-      showSuccessAlert('Deleted!', 'Visitor type has been deleted.');
+      // showSuccessAlert('Deleted!', 'Visitor type has been deleted.');
+      showSwal('success', 'Visitor type has been deleted.');
     } catch (error) {
       console.error(error);
       showErrorAlert('Failed!', 'Failed to delete visitor type.');
     } finally {
       setTimeout(() => {
-        setLoading(false);
+        setLoadingData(false);
       }, 500);
     }
   };
@@ -443,54 +424,55 @@ const Content = () => {
             </Grid>
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
-              {isDataReady ? (
-                <DynamicTable
-                  overflowX={'auto'}
-                  data={tableRowVisitorType}
-                  selectedRows={selectedRows}
-                  totalCount={totalFilteredRecords}
-                  isHaveChecked={true}
-                  isHaveAction={true}
-                  isHaveSearch={true}
-                  isHavePagination={true}
-                  defaultRowsPerPage={rowsPerPage}
-                  rowsPerPageOptions={[5, 10, 20, 50, 100]}
-                  onPaginationChange={(page, rowsPerPage) => {
-                    setPage(page);
-                    setRowsPerPage(rowsPerPage);
-                  }}
-                  isHaveFilter={true}
-                  isHaveExportPdf={false}
-                  isHaveExportXlf={false}
-                  isHaveFilterDuration={false}
-                  isHaveAddData={true}
-                  isHaveHeader={false}
-                  isHaveBooleanSwitch={true}
-                  onCheckedChange={(selected) => {
-                    setSelectedRows(selected);
-                  }}
-                  onEdit={(row) => {
-                    handleEdit(row.id);
-                    setEdittingId(row.id);
-                  }}
-                  onDelete={(row) => handleDelete(row.id)}
-                  onBatchDelete={handleBatchDelete}
-                  onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-                  onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
-                  onAddData={() => {
-                    handleAdd();
-                  }}
-                  onBooleanSwitchChange={(row, col, checked) =>
-                    handleBooleanSwitch(row, col as keyof VisitorTypeTableRow, checked)
-                  }
-                />
-              ) : (
+              {/* {isDataReady ? ( */}
+              <DynamicTable
+                loading={loading}
+                overflowX={'auto'}
+                data={tableRowVisitorType}
+                selectedRows={selectedRows}
+                totalCount={totalFilteredRecords}
+                isHaveChecked={true}
+                isHaveAction={true}
+                isHaveSearch={true}
+                isHavePagination={true}
+                defaultRowsPerPage={rowsPerPage}
+                rowsPerPageOptions={[5, 10, 20, 50, 100]}
+                onPaginationChange={(page, rowsPerPage) => {
+                  setPage(page);
+                  setRowsPerPage(rowsPerPage);
+                }}
+                isHaveFilter={false}
+                isHaveExportPdf={false}
+                isHaveExportXlf={false}
+                isHaveFilterDuration={false}
+                isHaveAddData={true}
+                isHaveHeader={false}
+                isHaveBooleanSwitch={true}
+                onCheckedChange={(selected) => {
+                  setSelectedRows(selected);
+                }}
+                onEdit={(row) => {
+                  handleEdit(row.id);
+                  setEdittingId(row.id);
+                }}
+                onDelete={(row) => handleDelete(row.id)}
+                onBatchDelete={handleBatchDelete}
+                onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
+                onAddData={() => {
+                  handleAdd();
+                }}
+                onBooleanSwitchChange={(row, col, checked) =>
+                  handleBooleanSwitch(row, col as keyof VisitorTypeTableRow, checked)
+                }
+              />
+              {/* ) : (
                 <Card sx={{ width: '100%' }}>
                   <Skeleton />
                   <Skeleton animation="wave" />
                   <Skeleton animation={false} />
                 </Card>
-              )}
+              )} */}
             </Grid>
           </Grid>
         </Box>
@@ -498,7 +480,7 @@ const Content = () => {
       <Dialog
         open={openFormCreateVisitorType}
         onClose={handleDialogClose} // sebelumnya: handleCloseDialog
-        maxWidth="lg"
+        maxWidth="xl"
         fullWidth
       >
         <DialogTitle
@@ -527,7 +509,7 @@ const Content = () => {
           </IconButton>
         </DialogTitle>
         <Divider />
-        <DialogContent>
+        <DialogContent sx={{ pt: 0.5 }}>
           <FormVisitorType
             formData={formDataAddVisitorType}
             setFormData={setFormDataAddVisitorType}
@@ -537,6 +519,7 @@ const Content = () => {
               setRefreshTrigger((prev) => prev + 1);
             }}
             edittingId={edittingId}
+            initialDocuments={documentIdentities}
           />
         </DialogContent>
       </Dialog>
@@ -554,9 +537,9 @@ const Content = () => {
           </Button>
         </DialogActions>
       </Dialog>
-      {/* <Portal>
+      <Portal>
         <Backdrop
-          open={loading}
+          open={loadingData}
           sx={{
             color: '#fff',
             zIndex: (t) => (t.zIndex.snackbar ?? 1400) - 1, // di atas modal (1300), di bawah snackbar (1400)
@@ -564,7 +547,7 @@ const Content = () => {
         >
           <CircularProgress />
         </Backdrop>
-      </Portal> */}
+      </Portal>
     </>
   );
 };

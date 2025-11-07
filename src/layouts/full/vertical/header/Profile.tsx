@@ -13,7 +13,7 @@ import {
   Button,
 } from '@mui/material';
 import { IconMail, IconPower } from '@tabler/icons-react';
-import ProfileImg from 'src/assets/images/profile/user-1.jpg';
+// import ProfileImg from 'src/assets/images/profile/user-1.jpg';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCallback } from 'react';
 import { useSession } from 'src/customs/contexts/SessionContext';
@@ -49,16 +49,16 @@ const Profile = () => {
     navigate('/', { replace: true });
   }, [navigate, clearToken]);
 
-  useEffect(() => {
-    if (!token) return;
+  // useEffect(() => {
+  //   if (!token) return;
 
-    const fetchData = async () => {
-      const res = await getProfile(token);
-      setData(res?.collection || {});
-    };
+  //   const fetchData = async () => {
+  //     const res = await getProfile(token);
+  //     setData(res?.collection || {});
+  //   };
 
-    fetchData();
-  }, [token]);
+  //   fetchData();
+  // }, [token]);
 
   const profileUrl = getProfilePathByRole(data.group_name);
 
@@ -78,7 +78,7 @@ const Profile = () => {
         onClick={handleClick2}
       >
         <Avatar
-          src={ProfileImg}
+          src={''}
           alt="profile"
           sx={{
             width: 35,
@@ -103,7 +103,7 @@ const Profile = () => {
         }}
       >
         <Stack direction="row" py={0.1} px={1} spacing={1.5} alignItems="center">
-          <Avatar src={ProfileImg} alt="profile" sx={{ width: 50, height: 50 }} />
+          <Avatar src={''} alt="profile" sx={{ width: 50, height: 50 }} />
 
           <Box sx={{ flexGrow: 1 }}>
             <Typography

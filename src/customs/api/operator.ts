@@ -5,6 +5,12 @@ import {
   CreateMultipleInvitationOperatorRequest,
   GetInvitationCodeResponse,
 } from './models/Operator/Invitation';
+import {
+  CreateGroupVisitorRequest,
+  CreateVisitorRequest,
+  CreateVisitorResponse,
+} from './models/Admin/Visitor';
+import { GetAllGrantAccessResponse } from './models/Admin/GrantAccess';
 
 export const getInvitationCode = async (
   token: string,
@@ -18,6 +24,25 @@ export const getInvitationCode = async (
     return response.data;
   } catch (error) {
     // handle the error here
+    return Promise.reject(error);
+  }
+};
+
+export const searchVisitor = async (
+  token: string,
+  params: {
+    code?: string;
+    name?: string;
+    vehicle_plate_number?: string;
+  },
+): Promise<any> => {
+  try {
+    const response = await axiosInstance.get('/operator-invitation/search-operator-view', {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      params,
+    });
+    return response.data;
+  } catch (error) {
     return Promise.reject(error);
   }
 };
@@ -239,4 +264,63 @@ export const extendPeriodOperator = async (token: string, data: any): Promise<an
   } catch (error) {
     return Promise.reject(error);
   }
-}
+};
+
+export const createSingleInvitationOperator = async (
+  token: string,
+  data: CreateVisitorRequest,
+): Promise<CreateVisitorResponse> => {
+  const response = await axiosInstance.post('/operator-invitation/new-visit', data, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+export const createVisitorsGroupOperator = async (
+  token: string,
+  data: CreateGroupVisitorRequest,
+): Promise<CreateVisitorResponse> => {
+  const response = await axiosInstance.post('/operator-invitation/new-visit-group', data, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+// Pra Register
+export const createSinglePraRegisterOperator = async (
+  token: string,
+  data: CreateVisitorRequest,
+): Promise<CreateVisitorResponse> => {
+  const response = await axiosInstance.post('/operator-invitation/new-pra-invite', data, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+export const createPraRegisterGroupOperator = async (
+  token: string,
+  data: CreateGroupVisitorRequest,
+): Promise<CreateVisitorResponse> => {
+  const response = await axiosInstance.post('/operator-invitation/new-pra-invite-group', data, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+
+export const getGrantAccess = async (
+  token: string,
+  site: string,
+): Promise<GetAllGrantAccessResponse> => {
+  const params = {
+    site,
+  };
+  const response = await axiosInstance.get('/visitor/grant-access-card', {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    params,
+  });
+  if (response.data.status === 'error') {
+    throw new Error(response.data.message);
+  }
+  return response.data;
+};

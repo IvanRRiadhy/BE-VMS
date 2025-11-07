@@ -4,7 +4,7 @@ import { toggleMobileSidebar } from 'src/store/customizer/CustomizerSlice';
 import { AppState } from 'src/store/Store';
 import CustomNavListing, { ItemDataCustomNavListing } from './CustomNavListing';
 import CustomSidebarItems, { ItemDataCustomSidebarItems } from './CustomSidebarItems';
-import Logo from 'src/assets/images/logos/bi_logo.png';
+import Logo from 'src/assets/images/logos/BI_Logo.png';
 import { useState, useEffect } from 'react';
 
 interface CustomNavigationProps {

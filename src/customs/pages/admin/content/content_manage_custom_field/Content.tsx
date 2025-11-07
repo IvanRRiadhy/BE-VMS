@@ -81,12 +81,10 @@ const Content = () => {
           sortColumn,
           searchKeyword,
         );
-        console.log('Response from API:', response);
         const total = responseGet.collection?.length ?? 0;
         console.log('Total records:', total);
         setTableData(responseGet.collection);
-        setTotalRecords(total); // langsung dari jumlah item
-        // setTotalFilteredRecords(responseGet.RecordsFiltered);
+        setTotalRecords(total);
 
         console.log('Table data:', tableData);
         const rows = responseGet.collection.map((item: Item) => ({

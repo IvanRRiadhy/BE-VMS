@@ -31,7 +31,9 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 import { useAuth } from 'src/customs/contexts/AuthProvider';
 import { IconEye, IconEyeOff, IconUser, IconUserPlus } from '@tabler/icons-react';
 import { GroupRoleId } from 'src/constant/GroupRoleId';
-import Logo from 'src/assets/images/logos/bi_logo.png';
+import Logo from 'src/assets/images/logos/BI_Logo.png';
+import { useGlobalLoading } from 'src/customs/contexts/GlobalLoadingContext';
+import { fontWeight } from '@mui/system';
 
 const Login2 = () => {
   const { isAuthenticated } = useAuth();
@@ -49,6 +51,8 @@ const Login2 = () => {
   const recaptchaRef = useRef<ReCAPTCHA | null>(null);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaError, setCaptchaError] = useState(false);
+  // const { showLoader, hideLoader } = useGlobalLoading();
+  const { show } = useGlobalLoading();
 
   const [searchParams] = useSearchParams();
   const [guestCode, setGuestCode] = useState(searchParams.get('code') || '');
@@ -92,11 +96,13 @@ const Login2 = () => {
 
     try {
       const response = await login(body);
-      recaptchaRef.current?.reset();
+      // recaptchaRef.current?.reset();
 
       // const { token, group_id } = response.collection;
       const { token, group_id, employee_id, username: userName } = response.collection;
       saveToken(token, group_id);
+
+      // show();
 
       dispatch(
         setUser({
@@ -106,8 +112,6 @@ const Login2 = () => {
           // username: userName,
         }),
       );
-
-      console.log('✅ Login success:', group_id);
 
       if (group_id.toUpperCase() === GroupRoleId.Admin) navigate('/admin/dashboard');
       else if (group_id.toUpperCase() === GroupRoleId.Manager) navigate('/manager/dashboard');
@@ -181,7 +185,6 @@ const Login2 = () => {
       setSnackbarType('success');
       setSnackbarOpen(true);
 
-      // 🧹 Hapus agar tidak tampil ulang
       sessionStorage.removeItem('logoutMsg');
     }
   }, []);
@@ -392,7 +395,7 @@ const Login2 = () => {
                           variant="subtitle1"
                           color="error"
                         >
-                          Kode undangan tidak ditemukan.
+                          Invitation Code not found
                         </Typography>
                       )}
                     </form>
@@ -421,15 +424,22 @@ const Login2 = () => {
                       color="primary"
                       fontWeight={600}
                       component={RouterLink}
-                      to="/register"
+                      to="/"
                       sx={{ marginLeft: 1 }}
                     >
                       Contact Us
                     </Typography>
                   </Box>
-                  {/* <CardActions sx={{ justifyContent: 'center' }}>
-                      <Typography>Support By Bio Experience</Typography>
-                    </CardActions> */}
+
+                  <CardActions sx={{ justifyContent: 'center' }}>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ color: 'grey.600', opacity: 0.7 }}
+                      fontWeight={700}
+                    >
+                      Version 1.02 - <span style={{}}>Build</span> 071125
+                    </Typography>
+                  </CardActions>
                 </Card>
               </Grid>
             </Grid>
@@ -438,7 +448,7 @@ const Login2 = () => {
             open={snackbarOpen}
             autoHideDuration={3000}
             onClose={() => setSnackbarOpen(false)}
-            anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
           >
             <Alert
               onClose={() => setSnackbarOpen(false)}

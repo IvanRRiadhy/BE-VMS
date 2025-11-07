@@ -118,7 +118,7 @@ const Content = () => {
         if (response) {
           // setTableData(response.collection);
           setTableData(rows);
-          setIsDataReady(true);
+          // setIsDataReady(true);
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -332,8 +332,9 @@ const Content = () => {
             </Grid>
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
-              {isDataReady ? (
+              {/* {isDataReady ? ( */}
                 <DynamicTable
+                loading={loading}
                   isHavePagination={true}
                   selectedRows={selectedRows}
                   totalCount={totalFilteredRecords}
@@ -348,7 +349,7 @@ const Content = () => {
                   isHaveChecked={true}
                   isHaveAction={true}
                   isHaveSearch={true}
-                  isHaveFilter={true}
+                  isHaveFilter={false}
                   isHaveExportPdf={false}
                   isHaveExportXlf={false}
                   isHaveFilterDuration={false}
@@ -375,13 +376,13 @@ const Content = () => {
                     handleAdd();
                   }}
                 />
-              ) : (
+              {/* ) : (
                 <Card sx={{ width: '100%' }}>
                   <Skeleton />
                   <Skeleton animation="wave" />
                   <Skeleton animation={false} />
                 </Card>
-              )}
+              )} */}
             </Grid>
           </Grid>
         </Box>

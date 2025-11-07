@@ -15,7 +15,8 @@ import CustomTextField from 'src/components/forms/theme-elements/CustomTextField
 import { Item, CreateOrganizationSubmitSchema } from 'src/customs/api/models/Admin/Organization';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { Box } from '@mui/system';
-import { updateOrganization, getAllEmployee } from 'src/customs/api/admin';
+import { updateOrganization, getAllEmployee, getVisitorEmployee } from 'src/customs/api/admin';
+import { showSwal } from 'src/customs/components/alerts/alerts';
 
 interface FormUpdateOrganizationProps {
   data: Item | null;
@@ -60,7 +61,7 @@ const FormUpdateOrganization: React.FC<FormUpdateOrganizationProps> = ({
     if (!token) return;
     (async () => {
       try {
-        const res = await getAllEmployee(token);
+        const res = await getVisitorEmployee(token);
         setAllEmployees(res?.collection ?? []);
       } catch (err) {
         console.error('Failed to fetch employees', err);
@@ -142,11 +143,11 @@ const FormUpdateOrganization: React.FC<FormUpdateOrganizationProps> = ({
 
     try {
       if (!token) {
-        setAlertType('error');
-        setAlertMessage('Something went wrong. Please try again later.');
+        showSwal('error', 'Something went wrong. Please try again later.');
         return;
       }
 
+      // 🟡 Batch Edit Mode
       if (isBatchEdit && selectedRows.length > 0) {
         const results = await Promise.allSettled(
           selectedRows
@@ -160,26 +161,32 @@ const FormUpdateOrganization: React.FC<FormUpdateOrganizationProps> = ({
         );
 
         const failed = results.filter((r) => r.status === 'rejected');
-        if (failed.length) {
-          setAlertType('error');
-          setAlertMessage('Some organizations failed to update.');
+
+        // ✅ Swal tampil segera
+        if (failed.length > 0) {
+          showSwal('error', 'Some organizations failed to update.');
         } else {
-          setAlertType('success');
-          setAlertMessage('All organizations updated successfully.');
-          onSuccess?.();
+          showSwal('success', 'All organizations updated successfully.', 2000);
         }
+
+        // ✅ Tutup dialog setelah swal muncul
+        setTimeout(() => onSuccess?.(), 800);
         return;
       }
 
+      // 🟢 Single Edit Mode
       if (data) {
         const payload = buildPayload(data);
         const parsed = validateMerged(payload);
         if (!parsed) return;
+
         await updateOrganization(data.id, parsed, token);
 
-        setAlertType('success');
-        setAlertMessage('Organization updated successfully.');
-        onSuccess?.();
+        // ✅ Swal langsung tampil
+        showSwal('success', 'Organization updated successfully.', 2000);
+
+        // ✅ Tutup dialog setelah swal
+        setTimeout(() => onSuccess?.(), 800);
       }
     } catch (err: any) {
       const be = err?.response?.data?.errors;
@@ -190,26 +197,24 @@ const FormUpdateOrganization: React.FC<FormUpdateOrganizationProps> = ({
           host: be.Host?.[0] ?? '',
         });
       }
-      setAlertType('error');
-      setAlertMessage('Something went wrong. Please try again later.');
+
+      // 🔥 Swal error langsung tampil
+      showSwal('error', 'Failed to update organization.');
     } finally {
-      setTimeout(() => {
-        setLoading(false);
-      }, 600);
+      // 🕒 Pastikan backdrop dimatikan
+      setTimeout(() => setLoading(false), 500);
     }
   };
 
   return (
     <>
       <form onSubmit={handleSubmit}>
-        <Grid2 size={{ xs: 12, sm: 12 }}>
+        {/* <Grid2 size={{ xs: 12, sm: 12 }}>
           <Alert severity={alertType}>{alertMessage}</Alert>
-        </Grid2>
-
-        {/* NAME */}
+        </Grid2> */}
         <Box display="flex" alignItems="center" justifyContent="space-between">
           <CustomFormLabel htmlFor="name" sx={{ marginY: 1 }}>
-            <Typography variant="caption">Organization Name</Typography>
+            <Typography variant="body1">Organization Name</Typography>
           </CustomFormLabel>
           {isBatchEdit && (
             <FormControlLabel
@@ -241,11 +246,9 @@ const FormUpdateOrganization: React.FC<FormUpdateOrganizationProps> = ({
           fullWidth
           disabled={isBatchEdit && !enabledFields?.name}
         />
-
-        {/* CODE */}
         <Box display="flex" alignItems="center" justifyContent="space-between">
           <CustomFormLabel htmlFor="code" sx={{ marginY: 1 }}>
-            <Typography variant="caption">Organization Code</Typography>
+            <Typography variant="body1">Organization Code</Typography>
           </CustomFormLabel>
           {isBatchEdit && (
             <FormControlLabel
@@ -277,11 +280,9 @@ const FormUpdateOrganization: React.FC<FormUpdateOrganizationProps> = ({
           fullWidth
           disabled={isBatchEdit && !enabledFields?.code}
         />
-
-        {/* HOST */}
         <Box display="flex" alignItems="center" justifyContent="space-between">
           <CustomFormLabel htmlFor="host" sx={{ marginY: 1 }}>
-            <Typography variant="caption">Head Of Organization</Typography>
+            <Typography variant="body1">Head Of Organization</Typography>
           </CustomFormLabel>
           {isBatchEdit && (
             <FormControlLabel
@@ -305,7 +306,7 @@ const FormUpdateOrganization: React.FC<FormUpdateOrganizationProps> = ({
         </Box>
         <Autocomplete
           autoHighlight
-          disablePortal
+          disablePortal={false}
           options={empOptions}
           filterOptions={(x) => x}
           getOptionLabel={(option) => (typeof option === 'string' ? option : option.label)}

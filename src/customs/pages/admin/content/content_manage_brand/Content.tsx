@@ -102,8 +102,9 @@ const Content = () => {
               <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
             </Grid>
             <Grid size={{ xs: 12, lg: 12 }}>
-              {isDataReady ? (
+              {/* {isDataReady ? ( */}
                 <DynamicTable
+                loading={loading}
                   overflowX={'auto'}
                   data={tableData}
                   selectedRows={selectedRows}
@@ -119,13 +120,13 @@ const Content = () => {
                   onBatchDelete={handleBatchDelete}
                   onSearchKeywordChange={(searchKeyword) => setSearchKeyword(searchKeyword)}
                 />
-              ) : (
+              {/* ) : (
                 <Card sx={{ width: '100%' }}>
                   <Skeleton />
                   <Skeleton animation="wave" />
                   <Skeleton animation={false} />
                 </Card>
-              )}
+              )} */}
             </Grid>
           </Grid>
         </Box>

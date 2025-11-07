@@ -77,12 +77,12 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
       //   icon: IconIdBadge2,
       //   href: '/admin/manage/group-card-access',
       // },
-      {
-        id: uniqueId(),
-        title: 'Scheduler',
-        icon: IconCalendarCheck,
-        href: '/admin/manage/scheduler',
-      },
+      // {
+      //   id: uniqueId(),
+      //   title: 'Scheduler',
+      //   icon: IconCalendarCheck,
+      //   href: '/admin/manage/scheduler',
+      // },
       {
         id: uniqueId(),
         title: 'navigation.timezone',
@@ -261,12 +261,12 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
       //   icon: IconIdBadge2,
       //   href: '/admin/manage/group-card-access',
       // },
-      {
-        id: uniqueId(),
-        title: 'Scheduler',
-        icon: IconCalendarCheck,
-        href: '/admin/manage/scheduler',
-      },
+      // {
+      //   id: uniqueId(),
+      //   title: 'Scheduler',
+      //   icon: IconCalendarCheck,
+      //   href: '/admin/manage/scheduler',
+      // },
       {
         id: uniqueId(),
         title: 'navigation.timezone',
@@ -421,13 +421,13 @@ export const EmployeeNavListingData: ItemDataCustomNavListing[] = [
     chipColor: 'secondary',
     href: '/employee/approval',
   },
-  {
-    id: uniqueId(),
-    title: 'Visitor',
-    icon: IconUsers,
-    chipColor: 'secondary',
-    href: '/employee/visitor',
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Visitor',
+  //   icon: IconUsers,
+  //   chipColor: 'secondary',
+  //   href: '/employee/visitor',
+  // },
   {
     id: uniqueId(),
     title: 'Report',
@@ -478,13 +478,13 @@ export const EmployeeCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
     chipColor: 'secondary',
     href: '/employee/approval',
   },
-  {
-    id: uniqueId(),
-    title: 'Visitor',
-    icon: IconUsers,
-    chipColor: 'secondary',
-    href: '/employee/visitor',
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Visitor',
+  //   icon: IconUsers,
+  //   chipColor: 'secondary',
+  //   href: '/employee/visitor',
+  // },
   {
     id: uniqueId(),
     title: 'Report',
@@ -530,13 +530,13 @@ export const ManagerNavListingData: ItemDataCustomNavListing[] = [
     chipColor: 'secondary',
     href: '/manager/approval',
   },
-  {
-    id: uniqueId(),
-    title: 'Visitor',
-    icon: IconUsers,
-    chipColor: 'secondary',
-    href: '/manager/visitor',
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Visitor',
+  //   icon: IconUsers,
+  //   chipColor: 'secondary',
+  //   href: '/manager/visitor',
+  // },
 
   {
     id: uniqueId(),
@@ -586,13 +586,13 @@ export const ManagerCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
     chipColor: 'secondary',
     href: '/manager/approval',
   },
-  {
-    id: uniqueId(),
-    title: 'Visitor',
-    icon: IconUsers,
-    chipColor: 'secondary',
-    href: '/manager/visitor',
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Visitor',
+  //   icon: IconUsers,
+  //   chipColor: 'secondary',
+  //   href: '/manager/visitor',
+  // },
   {
     id: uniqueId(),
     title: 'Report',
@@ -624,12 +624,12 @@ export const OperatorNavListingData: ItemDataCustomNavListing[] = [
     icon: IconHome,
     href: '/operator/dashboard',
   },
-  {
-    id: uniqueId(),
-    title: 'Alarm',
-    icon: IconAlarm,
-    href: '/operator/alarm',
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Alarm',
+  //   icon: IconAlarm,
+  //   href: '/operator/alarm',
+  // },
   {
     id: uniqueId(),
     title: 'Operator View',
@@ -649,14 +649,14 @@ export const OperatorCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
     icon: IconHome,
     chip: 'Main View',
     chipColor: 'secondary',
-    href: '/manager/dashboard',
+    href: '/operator/dashboard',
   },
-  {
-    id: uniqueId(),
-    title: 'Alarm',
-    icon: IconAlarm,
-    href: '/operator/alarm',
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Alarm',
+  //   icon: IconAlarm,
+  //   href: '/operator/alarm',
+  // },
   {
     id: uniqueId(),
     title: 'Operator View',

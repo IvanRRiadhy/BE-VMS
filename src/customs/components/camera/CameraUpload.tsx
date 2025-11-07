@@ -1,29 +1,24 @@
-import React, { useState, useRef } from 'react';
+import React from 'react';
+import { Box, Typography, Divider, IconButton, Button } from '@mui/material';
+import { Grid2 as Grid } from '@mui/material';
 import Webcam from 'react-webcam';
-import axiosInstance2 from '../../api/interceptor';
-import {
-  Button as MuiButton,
-  Dialog,
-  Typography,
-  Grid2 as Grid,
-  Box,
-  Divider,
-  IconButton,
-} from '@mui/material';
-
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
-import { IconTrash } from '@tabler/icons-react';
-import { CameraAlt, CheckCircle, Close, DeleteOutline } from '@mui/icons-material';
-const CameraUpload: React.FC<{
+import { IconTrash, IconX } from '@tabler/icons-react';
+import Dialog from '@mui/material/Dialog';
+import { axiosInstance2 } from 'src/customs/api/interceptor';
+
+interface CameraUploadProps {
   value?: string;
   onChange: (url: string) => void;
-}> = ({ value, onChange }) => {
-  const [open, setOpen] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(value || null);
-  const [screenshot, setScreenshot] = useState<string | null>(null);
-  const [removing, setRemoving] = useState(false);
-  const webcamRef = useRef<Webcam>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+}
+
+const CameraUpload: React.FC<CameraUploadProps> = ({ value, onChange }) => {
+  const [open, setOpen] = React.useState(false);
+  const [previewUrl, setPreviewUrl] = React.useState<string | null>(value || null);
+  const [screenshot, setScreenshot] = React.useState<string | null>(null);
+  const [removing, setRemoving] = React.useState(false);
+  const webcamRef = React.useRef<Webcam>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const clearLocal = () => {
     setScreenshot(null);
@@ -42,7 +37,6 @@ const CameraUpload: React.FC<{
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       const fileUrl = data?.collection?.file_url;
-      console.log('CDN Response File URL:', fileUrl);
       return fileUrl ? (fileUrl.startsWith('//') ? `http:${fileUrl}` : fileUrl) : null;
     } catch (e) {
       console.error('Upload failed:', e);
@@ -66,22 +60,18 @@ const CameraUpload: React.FC<{
     const file = e.target.files?.[0];
     if (!file) return;
     const cdnUrl = await uploadFileToCDN(file);
-
     if (!cdnUrl) return;
     setPreviewUrl(URL.createObjectURL(file));
     onChange(cdnUrl);
   };
 
-  // ⛔ Hapus file di CDN: DELETE ke URL file (http://host/pathcdn/visitor/xxx.png)
   const handleRemove = async () => {
     if (!value) {
-      // cuma bersihkan local state kalau belum ada URL CDN
       clearLocal();
       return;
     }
     try {
       setRemoving(true);
-      // await axios.delete(value); // <--- sesuai API kamu
       await axiosInstance2.delete(`/cdn${value}`);
       clearLocal();
     } catch (e) {
@@ -96,18 +86,18 @@ const CameraUpload: React.FC<{
       <Box
         sx={{
           borderRadius: 2,
-          p: 0,
+          p: 2,
           textAlign: 'center',
           display: 'flex',
           alignItems: 'center',
           gap: 2,
         }}
       >
-        <MuiButton size="medium" onClick={() => setOpen(true)} startIcon={<PhotoCameraIcon />}>
+        <Button size="small" onClick={() => setOpen(true)} startIcon={<PhotoCameraIcon />}>
           Camera
-        </MuiButton>
-        {previewUrl && ( // <-- tombol Remove hanya muncul jika ada foto
-          <MuiButton
+        </Button>
+        {previewUrl && (
+          <Button
             size="small"
             color="error"
             variant="outlined"
@@ -116,23 +106,24 @@ const CameraUpload: React.FC<{
             disabled={removing}
           >
             {removing ? 'Removing...' : 'Remove'}
-          </MuiButton>
+          </Button>
         )}
         <input type="file" hidden ref={fileInputRef} accept="image/*" onChange={handleFile} />
       </Box>
+
       <Dialog open={open} onClose={() => setOpen(false)} maxWidth="md" fullWidth>
         <Box sx={{ p: 3 }}>
           <Typography variant="h6" mb={2}>
             Take Photo From Camera
           </Typography>
-          {/* close icon */}
           <IconButton
             onClick={() => setOpen(false)}
+            size="small"
             sx={{ position: 'absolute', top: 10, right: 10 }}
-            size="large"
           >
-            <Close />
+            <IconX />
           </IconButton>
+
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, sm: 6 }}>
               <Webcam
@@ -168,37 +159,18 @@ const CameraUpload: React.FC<{
               )}
             </Grid>
           </Grid>
+
           <Divider sx={{ my: 2 }} />
-
           <Box textAlign="right">
-            <MuiButton
-              color="error"
-              variant="outlined"
-              sx={{ mr: 1 }}
-              startIcon={<DeleteOutline />}
-              onClick={clearLocal}
-            >
+            <Button color="warning" sx={{ mr: 1 }} onClick={clearLocal}>
               Clear
-            </MuiButton>
-
-            <MuiButton
-              variant="contained"
-              color="primary"
-              startIcon={<CameraAlt />}
-              onClick={handleCapture}
-            >
+            </Button>
+            <Button variant="contained" onClick={handleCapture}>
               Take Photo
-            </MuiButton>
-
-            <MuiButton
-              color="success"
-              variant="contained"
-              sx={{ ml: 1 }}
-              startIcon={<CheckCircle />}
-              onClick={() => setOpen(false)}
-            >
+            </Button>
+            <Button sx={{ ml: 1 }} onClick={() => setOpen(false)}>
               Submit
-            </MuiButton>
+            </Button>
           </Box>
         </Box>
       </Dialog>

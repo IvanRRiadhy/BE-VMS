@@ -270,6 +270,7 @@ export interface CreateVisitorCollection {
   available_cards: any[];
   registered_site: any;
   visitors: VisitorTrx[];
+  site_lists: any[];
   site_place_data: SitePlaceData;
   host_data: HostData;
   visitor_type_data: VisitorTypeData;

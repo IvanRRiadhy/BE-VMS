@@ -39,53 +39,23 @@ import {
   CreateVisitorRequest,
 } from 'src/customs/api/models/Admin/Visitor';
 import {
-  getAllDepartments,
-  getAllDistricts,
-  getAllOrganizations,
   getAllVisitorPagination,
-  getAllVisitorType,
   getEmployeeById,
   getRegisteredSite,
   getVisitorById,
 } from 'src/customs/api/admin';
-import { axiosInstance2 } from 'src/customs/api/interceptor';
 import { Scanner } from '@yudiel/react-qr-scanner';
 import FlipCameraAndroidIcon from '@mui/icons-material/FlipCameraAndroid';
 import FlashOnIcon from '@mui/icons-material/FlashOn';
 import FlashOffIcon from '@mui/icons-material/FlashOff';
 import FilterMoreContent from './FilterMoreContent';
-import {
-  IconBrandGmail,
-  IconBuilding,
-  IconBuildingSkyscraper,
-  IconCalendarEvent,
-  IconCalendarStats,
-  IconCalendarTime,
-  IconCalendarUp,
-  IconCar,
-  IconCards,
-  IconCheck,
-  IconCheckupList,
-  IconClipboard,
-  IconForbid2,
-  IconGenderBigender,
-  IconGenderMale,
-  IconHome,
-  IconIdBadge2,
-  IconLicense,
-  IconLogin2,
-  IconLogout2,
-  IconMapPin,
-  IconNumbers,
-  IconPhone,
-  IconQrcode,
-  IconTicket,
-  IconUser,
-  IconUserCheck,
-  IconUsers,
-  IconUsersGroup,
-  IconX,
-} from '@tabler/icons-react';
+import { IconClipboard, IconQrcode, IconUser, IconUsers } from '@tabler/icons-react';
+import EmployeeDetailDialog from './Dialog/EmployeeDetailDialog';
+import VisitorDetailDialog from './Dialog/VisitorDetailDialog';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { getInvitationCode } from 'src/customs/api/operator';
+import { showSwal } from 'src/customs/components/alerts/alerts';
+import DetailVisitorDialog from 'src/customs/pages/Operator/Dialog/DetailVisitorDialog';
 
 type VisitorTableRow = {
   id: string;
@@ -95,7 +65,7 @@ type VisitorTableRow = {
   email: string;
   organization: string;
   gender: string;
-  address: string;
+  // address: string;
   phone: string;
   is_vip: string;
   // is_email_verified: string;
@@ -110,11 +80,13 @@ const Content = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState<string>('id');
+  const [sortDir, setSortDir] = useState<string>('desc');
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [totalRecords, setTotalRecords] = useState(0);
+
   const [edittingId, setEdittingId] = useState('');
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
+  const [totalRecords, setTotalRecords] = useState(0);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [isDataReady, setIsDataReady] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -124,60 +96,18 @@ const Content = () => {
   const [tableRowVisitors, setTableRowVisitors] = useState<Item[]>([]);
   const [tableCustomVisitor, setTableCustomVisitor] = useState<VisitorTableRow[]>([]);
   const [selectedRows, setSelectedRows] = useState<[]>([]);
+  const [openDetail, setOpenDetail] = useState(false);
+  const [visitorData, setVisitorData] = useState<any[]>([]);
   const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorRequest>(() => {
     const saved = localStorage.getItem('unsavedVisitorData');
     return saved ? JSON.parse(saved) : CreateVisitorRequestSchema.parse({});
   });
 
-  const [orgDict, setOrgDict] = useState<{ [id: string]: string }>({});
-  const [deptDict, setDeptDict] = useState<{ [id: string]: string }>({});
-  const [distDict, setDistDict] = useState<{ [id: string]: string }>({});
-
-  useEffect(() => {
-    const fetchMasters = async () => {
-      try {
-        const orgRes = await getAllOrganizations(token as string);
-        const deptRes = await getAllDepartments(token as string);
-        const distRes = await getAllDistricts(token as string);
-
-        setOrgDict(Object.fromEntries(orgRes.collection.map((o: any) => [o.id, o.name])));
-        setDeptDict(Object.fromEntries(deptRes.collection.map((d: any) => [d.id, d.name])));
-        setDistDict(Object.fromEntries(distRes.collection.map((d: any) => [d.id, d.name])));
-      } catch (e) {
-        console.error('Failed to fetch master data', e);
-      }
-    };
-    if (token) fetchMasters();
-  }, [token]);
-
-  const [snackbar, setSnackbar] = useState<{
-    open: boolean;
-    message: string;
-    severity: AlertColor; // 'success' | 'info' | 'warning' | 'error'
-  }>({ open: false, message: '', severity: 'info' });
-
-  const toast = (message: string, severity: AlertColor = 'info') => {
-    setSnackbar((s) => ({ ...s, open: false }));
-    setTimeout(() => setSnackbar({ open: true, message, severity }), 0);
-  };
-
-  const defaultFormData = CreateVisitorRequestSchema.parse({});
-  const isFormChanged = JSON.stringify(formDataAddVisitor) !== JSON.stringify(defaultFormData);
-
-  useEffect(() => {
-    if (isFormChanged) {
-      localStorage.setItem('unsavedVisitorData', JSON.stringify(formDataAddVisitor));
-    } else {
-      // kalau balik ke default, hapus jejak draft
-      localStorage.removeItem('unsavedVisitorData');
-    }
-  }, [formDataAddVisitor, isFormChanged]);
-
   const cards = [
     {
       title: 'Total Visitor',
       icon: IconUsers,
-      subTitle: `${totalFilteredRecords}`,
+      subTitle: `${totalRecords}`,
       subTitleSetting: 10,
       color: 'none',
     },
@@ -203,6 +133,29 @@ const Content = () => {
       color: 'none',
     },
   ];
+
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: AlertColor; // 'success' | 'info' | 'warning' | 'error'
+  }>({ open: false, message: '', severity: 'info' });
+
+  const toast = (message: string, severity: AlertColor = 'info') => {
+    setSnackbar((s) => ({ ...s, open: false }));
+    setTimeout(() => setSnackbar({ open: true, message, severity }), 0);
+  };
+
+  const defaultFormData = CreateVisitorRequestSchema.parse({});
+  const isFormChanged = JSON.stringify(formDataAddVisitor) !== JSON.stringify(defaultFormData);
+
+  useEffect(() => {
+    if (isFormChanged) {
+      localStorage.setItem('unsavedVisitorData', JSON.stringify(formDataAddVisitor));
+    } else {
+      // kalau balik ke default, hapus jejak draft
+      localStorage.removeItem('unsavedVisitorData');
+    }
+  }, [formDataAddVisitor, isFormChanged]);
 
   const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
@@ -235,21 +188,9 @@ const Content = () => {
   const scanContainerRef = useRef<HTMLDivElement | null>(null);
   const [wizardKey, setWizardKey] = useState(0);
 
-  // bikin CDN base dari baseURL axios
-  const CDN_BASE = `${axiosInstance2?.defaults?.baseURL?.replace(/\/+$/, '') ?? ''}/cdn`;
-  const resolveImg = (v?: string) => {
-    if (!v) return '';
-    // sudah absolute (http/https, data URL, blob)
-    if (/^(https?:)?\/\/|^data:image\/|^blob:/.test(v)) return v;
-
-    // bereskan path agar tidak dobel /cdn dan tidak double slash
-    const path = v.replace(/^\/+/, '').replace(/^cdn\//, '');
-    return `${CDN_BASE}/${path}`;
-  };
-
   const resetRegisteredFlow = () => {
     setSelectedSite(null);
-    setFormDataAddVisitor(defaultFormData); // reset form data jika perlu
+    setFormDataAddVisitor(defaultFormData);
   };
   const handleDialogClose = () => {
     setOpenDialogIndex(null);
@@ -268,9 +209,7 @@ const Content = () => {
 
     try {
       const res = await getEmployeeById(employeeId, token);
-      // asumsi payload: { collection: {...employee} }
       setEmployeeDetail(res?.collection ?? null);
-      console.log('Employee Detail:', res);
     } catch (err: any) {
       setEmployeeError(err?.message || 'Failed to fetch employee details.');
     } finally {
@@ -284,94 +223,154 @@ const Content = () => {
     setEmployeeError(null);
   };
 
-  const [visitorTypes, setVisitorTypes] = useState<{ [key: string]: string }>({});
-
   const [selectedType, setSelectedType] = useState<
-    'all' | 'pre registration' | 'checkin' | 'checkout' | 'denied' | 'blocked'
-  >('all');
-
-  useEffect(() => {
-    const fetchVisitorTypes = async () => {
-      const res = await getAllVisitorType(token as string); // API master visitor type
-      // ubah array ke object dictionary { id: name }
-      const dict: { [key: string]: string } = {};
-      res.collection.forEach((vt) => {
-        dict[vt.id] = vt.name;
-      });
-      setVisitorTypes(dict);
-    };
-    fetchVisitorTypes();
-  }, [token]);
+    'All' | 'Preregis' | 'Checkin' | 'Checkout' | 'Denied' | 'Block'
+  >('All');
 
   const statusMap: Record<string, string> = {
-    all: 'all',
-    'pre registration': 'pracheckin', // 👈 mapping fix
-    checkin: 'checkin',
-    checkout: 'checkout',
-    denied: 'denied',
-    blocked: 'blocked',
+    All: 'All',
+    Preregis: 'Preregis', // 👈 mapping fix
+    Checkin: 'Checkin',
+    Checkout: 'Checkout',
+    Denied: 'Denied',
+    Block: 'Block',
   };
 
   useEffect(() => {
-    if (!token || Object.keys(visitorTypes).length === 0) return; // tunggu dictionary siap
+    if (!token) return; // tunggu dictionary siap
     const fetchData = async () => {
       setLoading(true);
-      const start = page * rowsPerPage;
-      const response = await getAllVisitorPagination(
-        token,
-        start,
-        rowsPerPage,
-        sortColumn,
-        searchKeyword,
-        startDate,
-        endDate,
-      );
+      setIsDataReady(false);
 
-      let rows = response.collection.map((item: any) => ({
-        id: item.id,
-        visitor_type: visitorTypes[item.visitor_type] || item.visitor_type,
-        // group_name: item.group_name,
-        name: item.visitor.name,
-        identity_id: item.visitor.identity_id,
-        email: item.visitor.email,
-        organization: item.visitor.organization,
-        gender: item.visitor.gender,
-        address: item.visitor.address,
-        phone: item.visitor.phone,
-        is_vip: item.visitor.is_vip,
-        visitor_period_start: item.visitor_period_start,
-        visitor_period_end: item.visitor_period_end,
-        host: item.host ?? '-',
-        visitor_status: item.visitor_status,
-      }));
+      try {
+        const start = page * rowsPerPage;
+        const response = await getAllVisitorPagination(
+          token,
+          start,
+          rowsPerPage,
+          sortDir,
+          searchKeyword,
+          startDate,
+          endDate,
+        );
 
-      console.log('Mapped Rows:', rows);
+        let rows = response.collection.map((item: any) => ({
+          id: item.id,
+          visitor_type: item.visitor_type_name || '-',
+          name: item.visitor_name || '-',
+          identity_id: item.visitor_identity_id || '-',
+          email: item.visitor_email || '-',
+          organization: item.visitor_organization_name || '-',
+          gender: item.visitor_gender || '-',
+          // address: item.visitor_address || '-',
+          phone: item.visitor_phone || '-',
+          is_vip: item.visitor_is_vip || '-',
+          visitor_period_start: item.visitor_period_start || '-',
+          visitor_period_end: item.visitor_period_end || '-',
+          host: item.host ?? '-',
+          visitor_status: item.visitor_status || '-',
+        }));
 
-      if (selectedType !== 'all') {
-        const apiStatus = statusMap[selectedType]; // ambil versi backend
-        rows = rows.filter((r) => r.visitor_status?.toLowerCase() === apiStatus);
+        if (selectedType !== 'All') {
+          const apiStatus = statusMap[selectedType];
+          rows = rows.filter((r) => r.visitor_status === apiStatus);
+        }
+
+        setTableRowVisitors(response.collection);
+        setTotalRecords(response.RecordsTotal);
+        setTotalFilteredRecords(response.RecordsFiltered);
+        setTableCustomVisitor(rows);
+        setIsDataReady(true);
+      } catch (err) {
+        console.error('Failed to fetch visitor data:', err);
+      } finally {
+        setLoading(false);
       }
-
-      setTableRowVisitors(response.collection);
-      setTotalRecords(response.collection.length);
-      setTotalFilteredRecords(response.RecordsFiltered);
-      setTableCustomVisitor(rows);
-      setIsDataReady(true);
-      setLoading(false);
     };
     fetchData();
   }, [
     token,
     page,
     rowsPerPage,
-    sortColumn,
+    // sortColumn,
+    sortDir,
     refreshTrigger,
     searchKeyword,
-    visitorTypes,
     startDate,
     endDate,
     selectedType,
   ]);
+
+  // const start = page * rowsPerPage;
+
+  // const {
+  //   data: visitorResult,
+  //   isLoading,
+  //   isFetching,
+  //   isPlaceholderData,
+  //   refetch,
+  // } = useQuery({
+  //   queryKey: [
+  //     'visitors',
+  //     page,
+  //     rowsPerPage,
+  //     sortDir,
+  //     searchKeyword,
+  //     startDate,
+  //     endDate,
+  //     selectedType,
+  //   ],
+  //   queryFn: async () => {
+  //     const response = await getAllVisitorPagination(
+  //       token!,
+  //       start,
+  //       rowsPerPage,
+  //       sortDir,
+  //       searchKeyword,
+  //       startDate,
+  //       endDate,
+  //     );
+
+  //     // 🔹 Map hasil API jadi format tabel
+  //     let rows = response.collection.map((item: any) => ({
+  //       id: item.id,
+  //       visitor_type: item.visitor_type_name ?? '-',
+  //       name: item.visitor_name ?? '-',
+  //       identity_id: item.visitor_identity_id ?? '-',
+  //       email: item.visitor_email ?? '-',
+  //       organization: item.visitor_organization_name ?? '-',
+  //       gender: item.visitor_gender ?? '-',
+  //       phone: item.visitor_phone ?? '-',
+  //       is_vip: item.visitor_is_vip ?? '-',
+  //       visitor_period_start: item.visitor_period_start ?? '-',
+  //       visitor_period_end: item.visitor_period_end ?? '-',
+  //       host: item.host ?? '-',
+  //       visitor_status: item.visitor_status ?? '-',
+  //     }));
+
+  //     // 🔹 Tambahkan filter berdasarkan selectedType
+  //     if (selectedType !== 'All') {
+  //       const apiStatus = statusMap[selectedType];
+  //       rows = rows.filter((r) => r.visitor_status === apiStatus);
+  //     }
+
+  //     // 🔹 Return data & info pagination
+  //     return {
+  //       rows,
+  //       totalRecords: response.RecordsTotal ?? response.collection.length,
+  //       totalFilteredRecords: response.RecordsFiltered ?? rows.length,
+  //     };
+  //   },
+  //   enabled: !!token,
+  //   staleTime: 60 * 1000,
+  //   gcTime: 5 * 60 * 1000,
+  //   refetchOnWindowFocus: false,
+  //   placeholderData: (prev) => prev, // ✅ langsung tampil data lama
+  // });
+
+  // const tableCustomVisitor = visitorResult?.rows ?? [];
+  // const totalRecords = visitorResult?.totalRecords ?? 0;
+  // const totalFilteredRecords = visitorResult?.totalFilteredRecords ?? 0;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -381,16 +380,8 @@ const Content = () => {
     fetchData();
   }, [token]);
 
-  const handleOpenDialog = () => {
-    setOpenDialog(true);
-  };
-
   const handleCloseDialog = () => {
     setSelectedSite(null);
-    // setFormDataAddVisitor((prev) => ({
-    //   ...prev,
-    //   registered_site: '', // reset registered site
-    // }));
     setOpenDialog(false);
     setOpenInvitationVisitor(false);
     setOpenPreRegistration(false);
@@ -430,12 +421,6 @@ const Content = () => {
 
   const openDiscardForCloseAdd = () => {
     setDiscardMode('close-add');
-    setConfirmDialogOpen(true);
-  };
-
-  const openDiscardForEdit = (id: string) => {
-    setPendingEditId(id);
-    setDiscardMode('edit');
     setConfirmDialogOpen(true);
   };
 
@@ -481,12 +466,6 @@ const Content = () => {
     }
   };
 
-  const handleCloseVisitorDialog = () => {
-    setOpenVisitorDialog(false);
-    setVisitorDetail(null);
-    setVisitorError(null);
-  };
-
   // jenis aksi yang dikonfirmasi
   type VisitorAction = 'checkin' | 'checkout' | 'deny' | 'block';
 
@@ -516,12 +495,6 @@ const Content = () => {
     setConfirm((c) => (c ? { ...c, loading: true } : c));
 
     try {
-      // TODO: ganti ke API kamu:
-      // if (confirm.type === 'checkin')  await checkInVisitor(token, visitorDetail.id);
-      // if (confirm.type === 'checkout') await checkOutVisitor(token, visitorDetail.id);
-      // if (confirm.type === 'deny')     await denyVisitor(token, visitorDetail.id);
-      // if (confirm.type === 'block')    await blockVisitor(token, visitorDetail.id);
-
       // dummy delay biar kelihatan loading
       await new Promise((r) => setTimeout(r, 400));
 
@@ -546,7 +519,51 @@ const Content = () => {
     setRefreshTrigger((prev) => prev + 1);
   };
 
-  const [tabValue, setTabValue] = useState(0);
+  const handleCloseScanQR = () => {
+    try {
+      const video = scanContainerRef.current?.querySelector('video') as HTMLVideoElement | null;
+      const stream = video?.srcObject as MediaStream | null;
+      const track = stream?.getVideoTracks()?.[0];
+      const caps = track?.getCapabilities?.() as any;
+      if (track && caps?.torch && torchOn) {
+        track.applyConstraints({ advanced: [{ facingMode: 'user' }] });
+      }
+    } catch {}
+
+    setTorchOn(false);
+    setFacingMode('environment');
+    setQrMode('manual');
+    setHasDecoded(false);
+    setQrValue('');
+    setOpenDialogIndex(null);
+  };
+
+  const handleSubmitQRCode = async (value: string) => {
+    try {
+      setLoading(true);
+      const res = await getInvitationCode(token as string, value);
+      const data = res.collection?.data ?? [];
+
+      setVisitorData(data);
+      setOpenDetail(true);
+
+      if (data.length === 0) {
+        // setSnackbarMsg('Your code does not exist.');
+        // setSnackbarType('error');
+        // setSnackbarOpen(true);
+        showSwal('error', 'Your code does not exist.');
+        return;
+      }
+    } catch (error) {
+      console.error('❌ Gagal mengambil data visitor:', error);
+      // setSnackbarMsg('Failed to fetch visitor data. Please try again.');
+      // setSnackbarType('error');
+      // setSnackbarOpen(true);
+      showSwal('error', 'Failed to fetch visitor data. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <>
@@ -563,11 +580,10 @@ const Content = () => {
                     setFlowTarget('invitation');
                     setOpenDialogIndex(2);
                   } else if (index === 3) {
-                    // Pra Registration → pilih Registered Site dulu
                     setFlowTarget('preReg');
                     setOpenPreRegistration(true);
                   } else {
-                    setOpenDialogIndex(index); // misal Scan QR dll
+                    setOpenDialogIndex(index);
                   }
                 }}
                 size={{ xs: 12, lg: 3 }}
@@ -575,100 +591,94 @@ const Content = () => {
             </Grid>
 
             <Grid size={{ xs: 12, lg: 12 }}>
-              {isDataReady ? (
-                <DynamicTable
-                  isHavePagination={true}
-                  overflowX={'auto'}
-                  minWidth={2400}
-                  stickyHeader={true}
-                  data={tableCustomVisitor}
-                  totalCount={totalFilteredRecords}
-                  selectedRows={selectedRows}
-                  rowsPerPageOptions={[5, 10, 20, 50, 100]}
-                  onPaginationChange={(page, rowsPerPage) => {
-                    setPage(page);
-                    setRowsPerPage(rowsPerPage);
-                  }}
-                  isHaveChecked={true}
-                  isHaveAction={true}
-                  isHaveImage={true}
-                  isHaveSearch={true}
-                  // isHaveFilter={true}
-                  isHaveExportPdf={false}
-                  isHaveExportXlf={false}
-                  isHaveFilterDuration={true}
-                  isHaveVip={true}
-                  isHavePeriod={true}
-                  // isVip={(row) => row.is_vip === true}
-                  isHaveAddData={false}
-                  isHaveHeader={true}
-                  isHaveGender={true}
-                  isHaveVisitor={true}
-                  isActionVisitor={true}
-                  stickyVisitorCount={2}
-                  isHaveEmployee={true}
-                  onEmployeeClick={(row) => {
-                    handleEmployeeClick(row.host as string);
-                  }}
-                  isHaveVerified={true}
-                  headerContent={{
-                    title: '',
-                    subTitle: 'Monitoring Data Visitor',
-                    items: [
-                      { name: 'all' },
-                      { name: 'pre registration' },
-                      { name: 'checkin' },
-                      { name: 'checkout' },
-                      { name: 'denied' },
-                      { name: 'blocked' },
-                    ],
-                  }}
-                  onHeaderItemClick={(item) => {
-                    if (
-                      item.name === 'all' ||
-                      item.name === 'checkin' ||
-                      item.name === 'checkout' ||
-                      item.name === 'pre registration' ||
-                      item.name === 'denied' ||
-                      item.name === 'blocked'
-                    ) {
-                      setSelectedType(item.name);
-                    }
-                  }}
-                  defaultSelectedHeaderItem="all"
-                  onCheckedChange={(selected) => console.log('Checked table row:', selected)}
-                  onView={(row) => {
-                    handleView(row.id);
-                  }}
-                  onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-                  onFilterCalenderChange={(ranges) => {
-                    if (ranges.startDate && ranges.endDate) {
-                      setStartDate(ranges.startDate.toISOString());
-                      setEndDate(ranges.endDate.toISOString());
-                      setPage(0); // reset ke halaman pertama
-                      setRefreshTrigger((prev) => prev + 1); // trigger fetch
-                    }
-                  }}
-                  onAddData={() => {
-                    handleAdd();
-                  }}
-                  isHaveFilterMore={true}
-                  // isHaveFilter={true}
-                  filterMoreContent={
-                    <FilterMoreContent
-                      filters={filters}
-                      setFilters={setFilters}
-                      onApplyFilter={handleApplyFilter}
-                    />
+              <DynamicTable
+                loading={loading}
+                isHavePagination={true}
+                overflowX={'auto'}
+                minWidth={2400}
+                stickyHeader={true}
+                data={tableCustomVisitor}
+                totalCount={totalFilteredRecords}
+                selectedRows={selectedRows}
+                rowsPerPageOptions={[5, 10, 20, 50, 100]}
+                onPaginationChange={(page, rowsPerPage) => {
+                  setPage(page);
+                  setRowsPerPage(rowsPerPage);
+                }}
+                isHaveChecked={true}
+                isHaveAction={true}
+                isHaveImage={true}
+                isHaveSearch={true}
+                // isHaveFilter={true}
+                isHaveExportPdf={false}
+                isHaveExportXlf={false}
+                isHaveFilterDuration={true}
+                isHaveVip={true}
+                isHavePeriod={true}
+                // isVip={(row) => row.is_vip === true}
+                isHaveAddData={false}
+                isHaveHeader={true}
+                isHaveGender={true}
+                isHaveVisitor={true}
+                isActionVisitor={true}
+                isActionEmployee={true}
+                stickyVisitorCount={2}
+                isHaveEmployee={true}
+                onEmployeeClick={(row) => {
+                  handleEmployeeClick(row.host as string);
+                }}
+                isHaveVerified={true}
+                headerContent={{
+                  title: '',
+                  subTitle: 'Monitoring Data Visitor',
+                  items: [
+                    { name: 'All' },
+                    { name: 'Preregis' },
+                    { name: 'Checkin' },
+                    { name: 'Checkout' },
+                    { name: 'Block' },
+                    { name: 'Denied' },
+                  ],
+                }}
+                onHeaderItemClick={(item) => {
+                  if (
+                    item.name === 'All' ||
+                    item.name === 'Checkin' ||
+                    item.name === 'Checkout' ||
+                    item.name === 'Preregis' ||
+                    item.name === 'Denied' ||
+                    item.name === 'Block'
+                  ) {
+                    setSelectedType(item.name);
                   }
-                />
-              ) : (
-                <Card sx={{ width: '100%' }}>
-                  <Skeleton />
-                  <Skeleton animation="wave" />
-                  <Skeleton animation={false} />
-                </Card>
-              )}
+                }}
+                defaultSelectedHeaderItem="All"
+                onCheckedChange={(selected) => console.log('Checked table row:', selected)}
+                onView={(row) => {
+                  handleView(row.id);
+                }}
+                onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                onFilterCalenderChange={(ranges) => {
+                  if (ranges.startDate && ranges.endDate) {
+                    setStartDate(ranges.startDate.toISOString());
+                    setEndDate(ranges.endDate.toISOString());
+                    setPage(0); // reset ke halaman pertama
+                    setRefreshTrigger((prev) => prev + 1); // trigger fetch
+                  }
+                }}
+                onAddData={() => {
+                  handleAdd();
+                }}
+                isHaveFilterMore={true}
+                // isHaveFilter={true}
+                filterMoreContent={
+                  <FilterMoreContent
+                    filters={filters}
+                    setFilters={setFilters}
+                    onApplyFilter={handleApplyFilter}
+                  />
+                }
+              />
             </Grid>
           </Grid>
         </Box>
@@ -676,18 +686,25 @@ const Content = () => {
       {/* Add New Invitation Visitor */}
       <Dialog
         fullWidth
-        maxWidth="xl"
+        // maxWidth="xl"
         open={openInvitationVisitor}
         onClose={handleDialogClose}
         keepMounted
+        maxWidth={false}
+        PaperProps={{
+          sx: {
+            width: '100vw', // bisa ubah jadi 100vw kalau mau full
+            // maxWidth: '1900px', // misal lebih besar dari xl
+          },
+        }}
       >
         <DialogTitle
           display="flex"
           justifyContent={'space-between'}
           alignItems="center"
-          sx={{
-            background: 'linear-gradient(135deg, rgba(2,132,199,0.05), rgba(99,102,241,0.08))',
-          }}
+          // sx={{
+          //   background: 'linear-gradient(135deg, rgba(2,132,199,0.05), rgba(99,102,241,0.08))',
+          // }}
         >
           Add Invitation Visitor
           <IconButton
@@ -716,20 +733,8 @@ const Content = () => {
         </DialogContent>
       </Dialog>
       {/* Add Pre registration */}
-      <Dialog
-        fullWidth
-        maxWidth="xl"
-        open={openPreRegistration} // ✅ bukan openDialogIndex === 3 lagi
-        onClose={handleDialogClose}
-      >
-        <DialogTitle
-          display="flex"
-          justifyContent={'space-between'}
-          alignItems="center"
-          sx={{
-            background: 'linear-gradient(135deg, rgba(2,132,199,0.05), rgba(99,102,241,0.08))',
-          }}
-        >
+      <Dialog fullWidth maxWidth="xl" open={openPreRegistration} onClose={handleDialogClose}>
+        <DialogTitle display="flex" justifyContent={'space-between'} alignItems="center">
           Add Pra Registration
           <IconButton
             aria-label="close"
@@ -756,289 +761,14 @@ const Content = () => {
           />
         </DialogContent>
       </Dialog>
-      {/* Employee Detail */}
-      <Dialog fullWidth maxWidth="sm" open={openEmployeeDialog} onClose={handleCloseEmployeeDialog}>
-        <DialogTitle
-          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-        >
-          Detail PIC Host
-          <IconButton onClick={handleCloseEmployeeDialog}>
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <Divider />
-        <DialogContent sx={{ pt: 1 }}>
-          {employeeLoading && (
-            <Box display="flex" justifyContent="center" alignItems="center" py={6}>
-              <CircularProgress />
-            </Box>
-          )}
 
-          {!employeeLoading && employeeError && (
-            <Box>
-              <Card sx={{ p: 2, color: 'error.main' }}>{employeeError}</Card>
-            </Box>
-          )}
-
-          {/* {!employeeLoading && !employeeError && employeeDetail && (
-            <Box display="grid" gridTemplateColumns="110px 1fr" gap={2}>
-            
-              <Box gridColumn="1 / 2">
-                <Box
-                  component="img"
-                  src={
-                    resolveImg(
-                      employeeDetail.faceimage || employeeDetail.photo || employeeDetail.avatar,
-                    ) || undefined
-                  }
-                  alt="employee"
-                  onError={(e: any) => (e.currentTarget.style.display = 'none')}
-                  sx={{
-                    width: 96,
-                    height: 96,
-                    borderRadius: '50%',
-                    objectFit: 'cover',
-                    border: '1px solid #eee',
-                  }}
-                />
-              </Box>
-            </Box>
-          )} */}
-          <Box>
-            <Grid
-              container
-              spacing={2}
-              justifyContent="center" // horizontal center
-              alignItems="center" // vertical center
-            >
-              <Grid size={12} display="flex" justifyContent="center" alignItems="center">
-                {/* avatar */}
-                <Avatar
-                  alt={employeeDetail?.name || 'Employee'}
-                  src={
-                    employeeDetail?.faceimage ||
-                    employeeDetail?.photo ||
-                    employeeDetail?.avatar ||
-                    '/static/images/avatar/1.jpg'
-                  }
-                  onError={(e: any) => {
-                    e.currentTarget.onerror = null; // cegah loop
-                    e.currentTarget.src = '/static/images/avatar/1.jpg';
-                  }}
-                  sx={{ width: 120, height: 120, my: 2 }}
-                />
-              </Grid>
-
-              <Grid
-                size={{ xs: 12, md: 6 }}
-                display="flex"
-                flexDirection="column"
-                alignItems="start"
-              >
-                <Box display="flex" alignItems="start" gap={1}>
-                  <IconIdBadge2 />
-                  <Box>
-                    <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
-                      Name
-                    </CustomFormLabel>
-                    <Typography variant="body1">{employeeDetail?.name}</Typography>
-                  </Box>
-                </Box>
-              </Grid>
-
-              <Grid
-                size={{ xs: 12, md: 6 }}
-                display="flex"
-                flexDirection="column"
-                alignItems="start"
-              >
-                <Box display="flex" alignItems="start" gap={1}>
-                  <IconPhone />
-                  <Box>
-                    <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
-                      Phone
-                    </CustomFormLabel>
-                    <Typography variant="body1">{employeeDetail?.phone || '-'}</Typography>
-                  </Box>
-                </Box>
-              </Grid>
-              <Grid
-                size={{ xs: 12, md: 6 }}
-                display="flex"
-                flexDirection="column"
-                alignItems="start"
-              >
-                <Box display="flex" alignItems="start" gap={1}>
-                  <IconBrandGmail />
-                  <Box>
-                    <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
-                      Email
-                    </CustomFormLabel>
-                    <Typography variant="body1">{employeeDetail?.email || '-'}</Typography>
-                  </Box>
-                </Box>
-              </Grid>
-
-              <Grid
-                size={{ xs: 12, md: 6 }}
-                display="flex"
-                flexDirection="column"
-                alignItems="start"
-              >
-                <Box display="flex" alignItems="start" gap={1}>
-                  <IconGenderBigender />
-                  <Box>
-                    <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
-                      Gender
-                    </CustomFormLabel>
-                    <Typography variant="body1">{employeeDetail?.gender || '-'}</Typography>
-                  </Box>
-                </Box>
-              </Grid>
-              <Grid
-                size={{ xs: 12, md: 6 }}
-                display="flex"
-                flexDirection="column"
-                alignItems="start"
-              >
-                <Box display="flex" alignItems="start" gap={1}>
-                  <IconCards />
-                  <Box>
-                    <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
-                      Address
-                    </CustomFormLabel>
-                    <Typography variant="body1">{employeeDetail?.address || '-'}</Typography>
-                  </Box>
-                </Box>
-              </Grid>
-
-              <Grid
-                size={{ xs: 12, md: 6 }}
-                display="flex"
-                flexDirection="column"
-                alignItems="start"
-              >
-                <Box display="flex" alignItems="start" gap={1}>
-                  <IconBuildingSkyscraper />
-                  <Box>
-                    <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
-                      Organization
-                    </CustomFormLabel>
-                    <Typography variant="body1">
-                      {orgDict[employeeDetail?.organization_id] || '-'}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Grid>
-              <Grid
-                size={{ xs: 12, md: 6 }}
-                display="flex"
-                flexDirection="column"
-                alignItems="start"
-              >
-                <Box display="flex" alignItems="start" gap={1}>
-                  <IconBuilding />
-                  <Box>
-                    <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
-                      Department
-                    </CustomFormLabel>
-                    <Typography variant="body1">
-                      {deptDict[employeeDetail?.department_id] || '-'}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Grid>
-              <Grid
-                size={{ xs: 12, md: 6 }}
-                display="flex"
-                flexDirection="column"
-                alignItems="start"
-              >
-                <Box display="flex" alignItems="start" gap={1}>
-                  <IconMapPin />
-                  <Box>
-                    <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
-                      District
-                    </CustomFormLabel>
-                    <Typography variant="body1">
-                      {' '}
-                      {distDict[employeeDetail?.district_id] || '-'}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Grid>
-              <Grid
-                size={{ xs: 12, md: 6 }}
-                display="flex"
-                flexDirection="column"
-                alignItems="start"
-              >
-                <Box display="flex" alignItems="start" gap={1}>
-                  <IconCheck />
-                  <Box>
-                    <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
-                      Status
-                    </CustomFormLabel>
-                    <Typography variant="body1">
-                      {employeeDetail?.status_employee || '-'}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Grid>
-              <Grid
-                size={{ xs: 12, md: 6 }}
-                display="flex"
-                flexDirection="column"
-                alignItems="start"
-              >
-                <Box display="flex" alignItems="start" gap={1}>
-                  <IconCalendarStats />
-                  <Box>
-                    <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
-                      Birth Date
-                    </CustomFormLabel>
-                    <Typography variant="body1">{employeeDetail?.birth_date}</Typography>
-                  </Box>
-                </Box>
-              </Grid>
-              <Grid
-                size={{ xs: 12, md: 6 }}
-                display="flex"
-                flexDirection="column"
-                alignItems="start"
-              >
-                <Box display="flex" alignItems="start" gap={1}>
-                  <IconCalendarStats />
-                  <Box>
-                    <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
-                      Join Date
-                    </CustomFormLabel>
-                    <Typography variant="body1">{employeeDetail?.join_date}</Typography>
-                  </Box>
-                </Box>
-              </Grid>
-              <Grid
-                size={{ xs: 12, md: 6 }}
-                display="flex"
-                flexDirection="column"
-                alignItems="start"
-              >
-                <Box display="flex" alignItems="start" gap={1}>
-                  <IconCalendarStats />
-                  <Box>
-                    <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
-                      Exit Date
-                    </CustomFormLabel>
-                    <Typography variant="body1">{employeeDetail?.exit_date}</Typography>
-                  </Box>
-                </Box>
-              </Grid>
-
-              {/* Grid lain sama konsepnya */}
-            </Grid>
-          </Box>
-        </DialogContent>
-      </Dialog>
+      <EmployeeDetailDialog
+        open={openEmployeeDialog}
+        onClose={handleCloseEmployeeDialog}
+        employeeDetail={employeeDetail}
+        employeeLoading={employeeLoading}
+        employeeError={employeeError}
+      />
 
       {/* Select Registered Site */}
       <Dialog open={openDialogIndex === 2} onClose={handleDialogClose} fullWidth maxWidth="sm">
@@ -1046,9 +776,9 @@ const Content = () => {
           display="flex"
           justifyContent={'space-between'}
           alignItems="center"
-          sx={{
-            background: 'linear-gradient(135deg, rgba(2,132,199,0.05), rgba(99,102,241,0.08))',
-          }}
+          // sx={{
+          //   background: 'linear-gradient(135deg, rgba(2,132,199,0.05), rgba(99,102,241,0.08))',
+          // }}
         >
           Select Registered Site
           <IconButton
@@ -1112,7 +842,7 @@ const Content = () => {
       {/* QR Code */}
       <Dialog
         fullWidth
-        maxWidth="xs"
+        maxWidth="sm"
         open={openDialogIndex === 1}
         onClose={() => {
           // matikan torch kalau menyala (best-effort)
@@ -1195,8 +925,9 @@ const Content = () => {
             <>
               <TextField
                 fullWidth
-                label="Masukkan Kode QR"
+                label=""
                 variant="outlined"
+                placeholder="Input your invitation code"
                 size="small"
                 value={qrValue}
                 onChange={(e) => setQrValue(e.target.value)}
@@ -1205,13 +936,13 @@ const Content = () => {
                 <Button
                   variant="contained"
                   color="primary"
-                  onClick={() => {
-                    console.log('Submit manual:', qrValue);
-                    // handleDialogClose();
+                  onClick={(e) => {
+                    handleSubmitQRCode(qrValue);
+                    // setQrValue('');
                   }}
-                  disabled={!qrValue}
+                  disabled={loading}
                 >
-                  Submit
+                  {loading ? 'Submitting...' : 'Submit'}
                 </Button>
               </Box>
             </>
@@ -1227,16 +958,40 @@ const Content = () => {
                   borderRadius: 2,
                   overflow: 'hidden',
                   bgcolor: 'black',
-                  aspectRatio: '3 / 4', // proporsional untuk mobile
+                  aspectRatio: '3 / 4',
                 }}
               >
                 <Scanner
                   constraints={{ facingMode }}
-                  onScan={(result: any) => {
-                    if (!result) return;
-                    if (hasDecoded) return; // cegah spam callback
+                  onScan={async(result: any) => {
+                    // if (!result) return;
+                    // if (hasDecoded) return; // cegah spam callback
+                    // setHasDecoded(true);
+                    // setQrValue(typeof result === 'string' ? result : String(result));
+                    if (!result || hasDecoded) return;
+
+                    console.log('📸 QR scan raw result:', result);
                     setHasDecoded(true);
-                    setQrValue(typeof result === 'string' ? result : String(result));
+
+                    let value = '';
+                    if (typeof result === 'string') value = result;
+                    else if (Array.isArray(result)) value = result[0]?.rawValue || '';
+                    else if (typeof result === 'object')
+                      value = result.rawValue || JSON.stringify(result);
+
+                    console.log('✅ Extracted QR value:', value);
+                    setQrValue(value);
+
+                    try {
+                      // setIsSubmitting(true);
+                      await handleSubmitQRCode(value);
+                      // onClose();
+                      handleDialogClose();
+                    } catch (err) {
+                      console.error('❌ Error saat submit QR:', err);
+                    } finally {
+                      // setIsSubmitting(false);
+                    }
                   }}
                   onError={(error: any) => {
                     console.log('QR error:', error?.message || error);
@@ -1253,11 +1008,10 @@ const Content = () => {
                 />
 
                 <Box sx={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
-                  {/* Kotak scan di tengah (lubang) */}
                   <Box
                     sx={{
                       // ukuran kotak scan (responsif)
-                      '--scanSize': { xs: '70vw', sm: '290px' },
+                      '--scanSize': { xs: '70vw', sm: '380px' },
 
                       position: 'absolute',
                       top: '50%',
@@ -1367,15 +1121,7 @@ const Content = () => {
                   </Button>
                 </Box>
               </Box>
-
-              {/* Preview hasil + aksi */}
-              <Box mt={2}>
-                <Typography variant="caption" color="text.secondary">
-                  Hasil: {qrValue || '-'}
-                </Typography>
-              </Box>
-
-              <Box mt={2} display="flex" gap={1} justifyContent="space-between">
+              {/* <Box mt={2} display="flex" gap={1} justifyContent="space-between">
                 <Button
                   variant="outlined"
                   onClick={() => {
@@ -1388,540 +1134,34 @@ const Content = () => {
                 <Box>
                   <Button
                     variant="contained"
-                    onClick={() => {
-                      console.log('Submit scan:', qrValue);
-                      // handleDialogClose();
+                    onClick={(e) => {
+                      handleSubmitQRCode(qrValue);
                     }}
                     disabled={!qrValue}
                   >
                     Submit
                   </Button>
                 </Box>
-              </Box>
+              </Box> */}
             </>
           )}
         </DialogContent>
       </Dialog>
 
-      {/* Visitor Detail Dialog */}
-      {/* <Dialog fullWidth maxWidth="sm" open={openVisitorDialog} onClose={handleCloseVisitorDialog}>
-        <DialogTitle
-          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-        >
-          Visitor Detail
-          <IconButton onClick={handleCloseVisitorDialog}>
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <Divider />
-        <DialogContent sx={{ pt: 2 }}>
-          {visitorLoading && (
-            <Box display="flex" justifyContent="center" alignItems="center" py={6}>
-              <CircularProgress />
-            </Box>
-          )}
+      <VisitorDetailDialog
+        open={openVisitorDialog}
+        loading={visitorLoading}
+        error={visitorError}
+        detail={visitorDetail}
+        onClose={() => setOpenVisitorDialog(false)}
+        onConfirm={(action: any) => openConfirm(action)} // callback dari parent
+      />
 
-          {!visitorLoading && visitorError && (
-            <Card sx={{ p: 2, color: 'error.main' }}>{visitorError}</Card>
-          )}
-
-          {!visitorLoading && !visitorError && visitorDetail && (
-            <Box>
-             
-              <Box display="flex" alignItems="center" gap={2} mb={2} justifyContent={'center'}>
-                <Avatar
-                  src={
-                    resolveImg(
-                      visitorDetail.faceimage || visitorDetail.photo || visitorDetail.avatar,
-                    ) || undefined
-                  }
-                  alt={visitorDetail.name || 'visitor'}
-                  sx={{ width: 100, height: 100 }}
-                />
-              </Box>
-
-   
-              <Grid container spacing={2}>
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Box display="flex" gap={1} alignItems="flex-start">
-                    <IconIdBadge2 />
-                    <Box>
-                      <CustomFormLabel sx={{ mt: 0 }}>Name</CustomFormLabel>
-                      <Typography>{visitorDetail.visitor.name ?? '-'}</Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Box display="flex" gap={1} alignItems="flex-start">
-                    <IconBrandGmail />
-                    <Box>
-                      <CustomFormLabel sx={{ mt: 0 }}>Email</CustomFormLabel>
-                      <Typography>{visitorDetail.email ?? '-'}</Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Box display="flex" gap={1} alignItems="flex-start">
-                    <IconPhone />
-                    <Box>
-                      <CustomFormLabel sx={{ mt: 0 }}>Host</CustomFormLabel>
-                      <Typography>{visitorDetail.host ?? '-'}</Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Box display="flex" gap={1} alignItems="flex-start">
-                    <IconBuildingSkyscraper />
-                    <Box>
-                      <CustomFormLabel sx={{ mt: 0 }}>Organization</CustomFormLabel>
-                      <Typography>{visitorDetail.organization ?? '-'}</Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Box display="flex" gap={1} alignItems="flex-start">
-                    <IconGenderBigender />
-                    <Box>
-                      <CustomFormLabel sx={{ mt: 0 }}>Gender</CustomFormLabel>
-                      <Typography>
-                        {visitorDetail.gender === 1
-                          ? 'Male'
-                          : visitorDetail.gender === 0
-                          ? 'Female'
-                          : visitorDetail.gender ?? '-'}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Box display="flex" gap={1} alignItems="flex-start">
-                    <IconMapPin />
-                    <Box>
-                      <CustomFormLabel sx={{ mt: 0 }}>Address</CustomFormLabel>
-                      <Typography>{visitorDetail.address ?? '-'}</Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Box display="flex" gap={1} alignItems="flex-start">
-                    <IconCalendarStats />
-                    <Box>
-                      <CustomFormLabel sx={{ mt: 0 }}>Visit Start</CustomFormLabel>
-                      <Typography>{visitorDetail.visitor_period_start ?? '-'}</Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Box display="flex" gap={1} alignItems="flex-start">
-                    <IconCalendarStats />
-                    <Box>
-                      <CustomFormLabel sx={{ mt: 0 }}>Visit End</CustomFormLabel>
-                      <Typography>{visitorDetail.visitor_period_end ?? '-'}</Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-              </Grid>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ justifyContent: 'center' }}>
-   
-          <Button
-            variant="contained"
-            color="success"
-            // onClick={handleCheckIn}
-            onClick={() => openConfirm('checkin')}
-            startIcon={<IconLogin2 />}
-          >
-            Check In
-          </Button>
-
-      
-          <Button
-            variant="contained"
-            color="error"
-            // onClick={handleCheckOut}
-            onClick={() => openConfirm('checkout')}
-            startIcon={<IconLogout2 />}
-          >
-            Check Out
-          </Button>
-      
-          <Button
-            variant="contained"
-            sx={{
-              backgroundColor: '#f44336',
-              '&:hover': {
-                backgroundColor: '#d32f2f',
-              },
-            }}
-            // onClick={handleCheckOut}
-            onClick={() => openConfirm('deny')}
-            startIcon={<IconX />}
-          >
-            Deny
-          </Button>
-          
-          <Button
-            variant="contained"
-            sx={{ backgroundColor: '#000' }}
-            // onClick={handleCheckOut}
-            onClick={() => openConfirm('block')}
-            startIcon={<IconForbid2 />}
-          >
-            Block
-          </Button>
-        </DialogActions>
-      </Dialog> */}
-
-      <Dialog fullWidth maxWidth="sm" open={openVisitorDialog} onClose={handleCloseVisitorDialog}>
-        <DialogTitle
-          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-        >
-          Visitor Detail
-          <IconButton onClick={handleCloseVisitorDialog}>
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-
-        <Divider />
-
-        <DialogContent sx={{ pt: 2 }}>
-          {visitorLoading && (
-            <Box display="flex" justifyContent="center" alignItems="center" py={6}>
-              <CircularProgress />
-            </Box>
-          )}
-
-          {!visitorLoading && visitorError && (
-            <Card sx={{ p: 2, color: 'error.main' }}>{visitorError}</Card>
-          )}
-
-          {!visitorLoading && !visitorError && visitorDetail && (
-            <Box>
-              {/* Foto Visitor */}
-              <Box display="flex" alignItems="center" gap={2} mb={2} justifyContent="center">
-                <Avatar
-                  src={
-                    resolveImg(
-                      visitorDetail.faceimage || visitorDetail.photo || visitorDetail.avatar,
-                    ) || undefined
-                  }
-                  alt={visitorDetail.name || 'visitor'}
-                  sx={{ width: 100, height: 100 }}
-                />
-              </Box>
-
-              {/* Tabs */}
-              <Tabs
-                value={tabValue}
-                onChange={(e, newVal) => setTabValue(newVal)}
-                variant="fullWidth"
-              >
-                <Tab label="Info" />
-                <Tab label="Visit Information" />
-                <Tab label="Purpose Visit" />
-              </Tabs>
-
-              {/* Tab Panels */}
-              {tabValue === 0 && (
-                <Box sx={{ mt: 2 }}>
-                  {/* Grid Info Visitor */}
-                  <Grid container spacing={2}>
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconIdBadge2 />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Name</CustomFormLabel>
-                          <Typography>{visitorDetail.visitor.name ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconBrandGmail />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Email</CustomFormLabel>
-                          <Typography>{visitorDetail.visitor.email ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconPhone />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Phone</CustomFormLabel>
-                          <Typography>{visitorDetail.visitor.phone ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-
-                    {/* Address */}
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconHome />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Address</CustomFormLabel>
-                          <Typography>{visitorDetail.visitor.address ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-
-                    {/* Gender */}
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconGenderMale />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Gender</CustomFormLabel>
-                          <Typography>{visitorDetail.visitor.gender ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-
-                    {/* Organization */}
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconBuildingSkyscraper />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Organization</CustomFormLabel>
-                          <Typography>{visitorDetail.visitor.organization ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-                  </Grid>
-                </Box>
-              )}
-
-              {tabValue === 1 && (
-                <Box sx={{ mt: 2 }}>
-                  <Grid container spacing={2}>
-                    {/* Visitor Code */}
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconQrcode />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Visitor Code</CustomFormLabel>
-                          <Typography
-                            sx={{
-                              overflowWrap: 'break-word',
-                              wordBreak: 'break-word',
-                              whiteSpace: 'normal',
-                            }}
-                          >
-                            {visitorDetail.visitor_code ?? '-'}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-
-                    {/* Group Code */}
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconUsersGroup />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Group Code</CustomFormLabel>
-                          <Typography>{visitorDetail.group_code ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-
-                    {/* Group Name */}
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconUser />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Group Name</CustomFormLabel>
-                          <Typography>{visitorDetail.group_name ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-
-                    {/* Period Start */}
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconCalendarTime />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Period Start</CustomFormLabel>
-                          <Typography>{visitorDetail.visitor_period_start ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-
-                    {/* Period End */}
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconCalendarEvent />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Period End</CustomFormLabel>
-                          <Typography>{visitorDetail.visitor_period_end ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-
-                    {/* Visitor Number */}
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconNumbers />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Visitor Number</CustomFormLabel>
-                          <Typography>{visitorDetail.visitor_number ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-
-                    {/* Invitation Code */}
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconTicket />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Invitation Code</CustomFormLabel>
-                          <Typography>{visitorDetail.invitation_code ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-
-                    {/* Visitor Status */}
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconCheckupList />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Visitor Status</CustomFormLabel>
-                          <Typography>{visitorDetail.visitor_status ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-
-                    {/* Vehicle Type */}
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconCar />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Vehicle Type</CustomFormLabel>
-                          <Typography>{visitorDetail.vehicle_type ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-
-                    {/* Vehicle Plate No. */}
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconLicense />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Vehicle Plate No.</CustomFormLabel>
-                          <Typography>{visitorDetail?.vehicle_plate_number ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-                  </Grid>
-                </Box>
-              )}
-
-              {tabValue === 2 && (
-                <Box sx={{ mt: 2 }}>
-                  <Grid container spacing={2}>
-                    {/* Agenda */}
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconCalendarEvent />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Agenda</CustomFormLabel>
-                          <Typography>{visitorDetail.agenda ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-
-                    {/* PIC Host */}
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconUserCheck />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>PIC Host</CustomFormLabel>
-                          <Typography>{visitorDetail.host ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-
-                    {/* Period Start */}
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconCalendarTime />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Period Start</CustomFormLabel>
-                          <Typography>{visitorDetail.visitor_period_start ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-
-                    {/* Period End */}
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconCalendarUp />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Period End</CustomFormLabel>
-                          <Typography>{visitorDetail.visitor_period_end ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-
-                    {/* Registered Site */}
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <Box display="flex" gap={1} alignItems="flex-start">
-                        <IconMapPin />
-                        <Box>
-                          <CustomFormLabel sx={{ mt: 0 }}>Registered Site</CustomFormLabel>
-                          <Typography>{visitorDetail.site_place ?? '-'}</Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-                  </Grid>
-                </Box>
-              )}
-            </Box>
-          )}
-        </DialogContent>
-
-        <DialogActions sx={{ justifyContent: 'center' }}>
-          <Button
-            variant="contained"
-            color="success"
-            onClick={() => openConfirm('checkin')}
-            startIcon={<IconLogin2 />}
-          >
-            Check In
-          </Button>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={() => openConfirm('checkout')}
-            startIcon={<IconLogout2 />}
-          >
-            Check Out
-          </Button>
-          <Button
-            variant="contained"
-            sx={{ backgroundColor: '#f44336', '&:hover': { backgroundColor: '#d32f2f' } }}
-            onClick={() => openConfirm('deny')}
-            startIcon={<IconX />}
-          >
-            Deny
-          </Button>
-          <Button
-            variant="contained"
-            sx={{ backgroundColor: '#000' }}
-            onClick={() => openConfirm('block')}
-            startIcon={<IconForbid2 />}
-          >
-            Block
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <DetailVisitorDialog
+        open={openDetail}
+        onClose={() => setOpenDetail(false)}
+        visitorData={visitorData}
+      />
 
       {/* Dialog Confirm */}
       <Dialog open={!!confirm} onClose={closeConfirm} fullWidth>
@@ -1939,7 +1179,6 @@ const Content = () => {
             } `}
             <b>{visitorDetail?.name ?? 'this visitor'}</b>?
           </Typography>
-          {/* btn close */}
         </DialogContent>
         <DialogActions>
           <Button onClick={closeConfirm} disabled={!!confirm?.loading}>
@@ -1979,7 +1218,7 @@ const Content = () => {
           autoHideDuration={3000}
           onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
           anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-          sx={{ zIndex: 2000 }}
+          sx={{ zIndex: 99999 }}
         >
           <Alert
             onClose={() => setSnackbar((s) => ({ ...s, open: false }))}

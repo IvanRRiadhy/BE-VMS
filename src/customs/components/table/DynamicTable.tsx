@@ -267,15 +267,35 @@ export function DynamicTable<
     'can_block',
     'visitor_give_access',
     'access_control_id',
+    'registered_site',
   ];
 
+  const fallbackColumns = React.useMemo(() => {
+    if (data.length > 0) {
+      return Object.keys(data[0]).filter((k) => !hiddenColumns.includes(k));
+    }
+
+    // kolom dummy untuk skeleton
+    const expectedColCount = 5;
+    return Array.from({ length: expectedColCount }, (_, i) => ``);
+  }, [data, hiddenColumns]);
+
+  // gunakan fallback kalau data kosong / sedang loading
   const columns =
-    data.length > 0
-      ? (Object.keys(data[0]).filter((k) => !hiddenColumns.includes(k)) as Extract<
+    loading || data.length === 0
+      ? fallbackColumns
+      : (Object.keys(data[0]).filter((k) => !hiddenColumns.includes(k)) as Extract<
           keyof T,
           string
-        >[])
-      : [];
+        >[]);
+
+  // const columns =
+  //   data.length > 0
+  //     ? (Object.keys(data[0]).filter((k) => !hiddenColumns.includes(k)) as Extract<
+  //         keyof T,
+  //         string
+  //       >[])
+  //     : [];
 
   const columnss =
     sortColumns && sortColumns.length > 0
@@ -1080,8 +1100,14 @@ export function DynamicTable<
               </Grid2>
             )}
           </Grid2>
-          <TableContainer>
-            {paginatedData.length === 0 ? (
+          <TableContainer
+            sx={{
+              overflowX: paginatedData.length === 0 ? 'hidden' : 'auto',
+              overflowY: paginatedData.length === 0 ? 'hidden' : 'auto',
+              width: '100%',
+            }}
+          >
+            {/* {paginatedData.length === 0 ? (
               <Table>
                 <TableHead>
                   <TableRow
@@ -1120,317 +1146,636 @@ export function DynamicTable<
                   </TableRow>
                 </TableHead>
               </Table>
-            ) : (
-              <Table
-                aria-label="simple table"
-                sx={{ minWidth, whiteSpace: 'nowrap' }}
-                stickyHeader={stickyHeader}
-              >
-                <TableHead>
-                  <TableRow>
-                    {isHaveChecked && (
-                      <TableCell
-                        padding="checkbox"
-                        sx={{ position: 'sticky', left: 0, zIndex: 2, background: 'white' }}
-                      >
-                        <Checkbox
-                          checked={
-                            paginatedData.length > 0 &&
-                            paginatedData.every((row) => checkedIds.includes(row.id))
-                          }
-                          indeterminate={
-                            paginatedData.some((row) => checkedIds.includes(row.id)) &&
-                            !paginatedData.every((row) => checkedIds.includes(row.id))
-                          }
-                          onChange={handleCheckAll}
-                        />
-                      </TableCell>
-                    )}
-                    {isHaveAction && isActionVisitor && (
-                      <TableCell
-                        sx={{
-                          position: 'sticky',
-                          left: isHaveChecked ? CHECKBOX_COL_WIDTH : 0,
-                          zIndex: 4,
-                          background: 'white',
-                          minWidth: ACTION_COL_WIDTH,
-                          maxWidth: ACTION_COL_WIDTH,
-                        }}
-                      >
-                        Action
-                      </TableCell>
-                    )}
-
+            ) : ( */}
+            <Table
+              aria-label="simple table"
+              sx={{
+                width: '100%',
+                // tableLayout: 'fixed', // 🔥 kunci utama
+                // whiteSpace: 'normal', // biar teks bisa wrap
+              }}
+              stickyHeader={stickyHeader}
+              // sx={{
+              // width: '100%',
+              // tableLayout: 'fixed', // 🔥 kunci utama
+              // whiteSpace: 'normal', // biar teks bisa wrap
+              // }}
+            >
+              {/* <TableHead>
+                <TableRow>
+                  {isHaveChecked && (
                     <TableCell
                       sx={{
                         position: 'sticky',
-                        left:
-                          (isHaveChecked ? CHECKBOX_COL_WIDTH : 0) +
-                          (isActionVisitor ? ACTION_COL_WIDTH : 0),
-                        zIndex: 4,
+                        left: 0,
+                        zIndex: 2,
                         background: 'white',
-                        minWidth: INDEX_COL_WIDTH,
-                        maxWidth: INDEX_COL_WIDTH,
-                        // marginRight: '10px',
+                        width: 40,
                       }}
                     >
-                      #
+                      <Checkbox
+                        checked={
+                          paginatedData.length > 0 &&
+                          paginatedData.every((r) => checkedIds.includes(r.id))
+                        }
+                        indeterminate={
+                          paginatedData.some((r) => checkedIds.includes(r.id)) &&
+                          !paginatedData.every((r) => checkedIds.includes(r.id))
+                        }
+                        onChange={handleCheckAll}
+                      />
                     </TableCell>
-                    {columns.map((col, idx) => {
-                      const makeSticky = isStickyVisitorCol(idx);
+                  )}
+                  {isHaveAction && isActionVisitor && (
+                    <TableCell
+                      sx={{
+                        position: 'sticky',
+                        left: isHaveChecked ? CHECKBOX_COL_WIDTH : 0,
+                        zIndex: 4,
+                        background: 'white',
+                        minWidth: ACTION_COL_WIDTH,
+                        maxWidth: ACTION_COL_WIDTH,
+                      }}
+                    >
+                      Action
+                    </TableCell>
+                  )}
 
-                      // custom label
-                      let label: string = col;
-                      if (label.startsWith('is_')) {
-                        label = label.replace(/^is_/, ''); // hapus "is_"
-                      }
+                  <TableCell
+                    sx={{
+                      position: 'sticky',
+                      left:
+                        (isHaveChecked ? CHECKBOX_COL_WIDTH : 0) +
+                        (isActionVisitor ? ACTION_COL_WIDTH : 0),
+                      zIndex: 4,
+                      background: 'white',
+                      minWidth: INDEX_COL_WIDTH,
+                      maxWidth: INDEX_COL_WIDTH,
+                      // marginRight: '10px',
+                    }}
+                  >
+                    #
+                  </TableCell>
+                  {columns.map((col, idx) => {
+                    const makeSticky = isStickyVisitorCol(idx);
 
-                      const pretty = label
-                        .replace(/_/g, ' ')
-                        .replace(/\b\w/g, (c) => c.toUpperCase());
+                    // custom label
+                    let label: string = col;
+                    if (label.startsWith('is_')) {
+                      label = label.replace(/^is_/, ''); // hapus "is_"
+                    }
 
-                      return (
+                    const pretty = label
+                      .replace(/_/g, ' ')
+                      .replace(/\b\w/g, (c) => c.toUpperCase());
+
+                    return (
+                      <TableCell
+                        key={col}
+                        sx={{
+                          ...(makeSticky && {
+                            position: {
+                              xs: 'static', // default kecil
+                              lg: makeSticky ? 'sticky' : 'static', // sticky hanya di lg
+                            },
+                            left: {
+                              xs: 'auto',
+                              lg: makeSticky ? getStickyLeft(idx) : 'auto',
+                            },
+                            zIndex: {
+                              xs: 'auto',
+                              lg: makeSticky ? 4 : 'auto',
+                            },
+                            background: 'white',
+                            minWidth: DATA_COL_WIDTH,
+                            maxWidth: DATA_COL_WIDTH,
+                          }),
+                        }}
+                      >
+                        {pretty}
+                      </TableCell>
+                    );
+                  })}
+                  {isHaveAction && !isActionVisitor && (
+                    <TableCell
+                      sx={{
+                        position: 'sticky',
+                        right: 0,
+                        bgcolor: 'background.paper',
+                        zIndex: 4, // header > body
+                        p: 0,
+                        verticalAlign: 'middle',
+                        textAlign: 'center',
+                      }}
+                    >
+                      Action
+                    </TableCell>
+                  )}
+
+                  {isHaveActionOnlyEdit && (
+                    <TableCell
+                      sx={{ position: 'sticky', right: 0, background: 'white', zIndex: 2 }}
+                    >
+                      Action
+                    </TableCell>
+                  )}
+                  {isHaveArrival && (
+                    <TableCell
+                      sx={{ position: 'sticky', right: 0, background: 'white', zIndex: 2 }}
+                    >
+                      <Button variant="contained">Arrival</Button>
+                    </TableCell>
+                  )}
+          
+
+                  {isHaveCard && (
+                    <TableCell sx={{ position: 'sticky', right: 0, zIndex: 2 }}>
+                      <Button
+                        size="small"
+                        color="primary"
+                        variant="contained"
+                        onClick={() => onChooseCard?.()} // ← buka dialog bulk
+                        // disabled={selectedInvitations.length === 0}
+                      >
+                        Choose Card
+                      </Button>
+                    </TableCell>
+                  )}
+                </TableRow>
+              </TableHead> */}
+
+              <TableHead>
+                <TableRow>
+                  {/* ✅ Checkbox */}
+                  {isHaveChecked && (
+                    <TableCell
+                      sx={{
+                        position: 'sticky',
+                        left: 0,
+                        zIndex: 2,
+                        background: 'white',
+                        width: 40,
+                        padding: 0,
+                        textAlign: 'center',
+                      }}
+                    >
+                      {loading ? (
+                        <Skeleton
+                          variant="rectangular"
+                          width={20}
+                          height={20}
+                          animation="wave"
+                          sx={{ marginLeft: '16px' }}
+                        />
+                      ) : (
+                        paginatedData.length > 0 && (
+                          <Checkbox
+                            checked={
+                              paginatedData.length > 0 &&
+                              paginatedData.every((r) => checkedIds.includes(r.id))
+                            }
+                            indeterminate={
+                              paginatedData.some((r) => checkedIds.includes(r.id)) &&
+                              !paginatedData.every((r) => checkedIds.includes(r.id))
+                            }
+                            onChange={handleCheckAll}
+                          />
+                        )
+                      )}
+                    </TableCell>
+                  )}
+
+                  {/* ✅ Action left (Visitor mode) */}
+                  {isHaveAction && isActionVisitor && (
+                    <TableCell
+                      sx={{
+                        position: 'sticky',
+                        left: isHaveChecked ? CHECKBOX_COL_WIDTH : 0,
+                        zIndex: 4,
+                        background: 'white',
+                        minWidth: ACTION_COL_WIDTH,
+                        maxWidth: ACTION_COL_WIDTH,
+                        textAlign: 'center',
+                      }}
+                    >
+                      {loading ? (
+                        <Skeleton variant="text" width="50%" height={18} animation="wave" />
+                      ) : (
+                        paginatedData.length > 0 && 'Action'
+                      )}
+                    </TableCell>
+                  )}
+
+                  {/* {paginatedData.length > 0 && ( */}
+                  <TableCell
+                    sx={{
+                      position: 'sticky',
+                      left:
+                        (isHaveChecked ? CHECKBOX_COL_WIDTH : 0) +
+                        (isActionVisitor ? ACTION_COL_WIDTH : 0),
+                      zIndex: 4,
+                      background: 'white',
+                      minWidth: INDEX_COL_WIDTH,
+                      maxWidth: INDEX_COL_WIDTH,
+                      // textAlign: 'center',
+                    }}
+                  >
+                    {loading ? (
+                      <Skeleton variant="text" width="40%" height={18} animation="wave" />
+                    ) : paginatedData.length > 0 ? (
+                      '#'
+                    ) : (
+                      ''
+                    )}
+                  </TableCell>
+                  {/* )} */}
+
+                  {/* ✅ Dynamic columns */}
+                  {columns.map((colName, idx) => {
+                    const makeSticky = isStickyVisitorCol(idx);
+                    const isEarlyAccess = colName === 'early_access';
+                    let label: string = colName;
+                    if (label.startsWith('is_')) {
+                      label = label.replace(/^is_/, ''); // hapus "is_"
+                    }
+
+                    const pretty = label
+                      .replace(/_/g, ' ')
+                      .replace(/\b\w/g, (c) => c.toUpperCase());
+                    return (
+                      <TableCell
+                        key={`col-${idx}`}
+                        sx={{
+                          ...(makeSticky && {
+                            position: { xs: 'static', lg: 'sticky' },
+                            left: { xs: 'auto', lg: getStickyLeft(idx) },
+                            zIndex: { xs: 'auto', lg: 4 },
+                          }),
+                          background: 'white',
+                          minWidth: DATA_COL_WIDTH,
+                          maxWidth: DATA_COL_WIDTH,
+                          ...(isEarlyAccess && { textAlign: 'center' }),
+                        }}
+                      >
+                        {loading ? (
+                          <Skeleton
+                            variant="text"
+                            width={`${40 + Math.random() * 40}%`}
+                            height={18}
+                            animation="wave"
+                          />
+                        ) : (
+                          // colName.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+                           pretty 
+                        )}
+                      </TableCell>
+                    );
+                  })}
+
+                  {/* ✅ Action right */}
+                  {isHaveAction && !isActionVisitor && (
+                    <TableCell
+                      sx={{
+                        position: 'sticky',
+                        right: 0,
+                        bgcolor: 'background.paper',
+                        zIndex: 4,
+                        textAlign: 'center',
+                      }}
+                    >
+                      {loading ? (
+                        <Skeleton
+                          variant="text"
+                          width="50"
+                          height={18}
+                          animation="wave"
+                          sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+                        />
+                      ) : (
+                        paginatedData.length > 0 && 'Action'
+                      )}
+                    </TableCell>
+                  )}
+
+                  {/* ✅ Action-only edit */}
+                  {isHaveActionOnlyEdit && (
+                    <TableCell
+                      sx={{
+                        position: 'sticky',
+                        right: 0,
+                        background: 'white',
+                        zIndex: 2,
+                        textAlign: 'center',
+                      }}
+                    >
+                      {loading ? (
+                        <Skeleton variant="text" width="40%" height={18} animation="wave" />
+                      ) : (
+                        'Action'
+                      )}
+                    </TableCell>
+                  )}
+
+                  {/* ✅ Arrival button */}
+                  {isHaveArrival && (
+                    <TableCell
+                      sx={{ position: 'sticky', right: 0, background: 'white', zIndex: 2 }}
+                    >
+                      {loading ? (
+                        <Skeleton variant="rectangular" width={80} height={30} animation="wave" />
+                      ) : (
+                        paginatedData.length > 0 && <Button variant="contained">Arrival</Button>
+                      )}
+                    </TableCell>
+                  )}
+
+                  {/* ✅ Choose Card button */}
+                  {isHaveCard && (
+                    <TableCell
+                      sx={{ position: 'sticky', right: 0, background: 'white', zIndex: 2 }}
+                    >
+                      <Button
+                        size="small"
+                        color="primary"
+                        variant="contained"
+                        onClick={() => onChooseCard?.()}
+                      >
+                        Choose Card
+                      </Button>
+                    </TableCell>
+                  )}
+                </TableRow>
+              </TableHead>
+
+              <TableBody>
+                {loading ? (
+                  [...Array(rowsPerPage)].map((_, idx) => (
+                    <TableRow key={`skeleton-${idx}`}>
+                      {/* ✅ Checkbox column */}
+                      {isHaveChecked && (
                         <TableCell
-                          key={col}
+                          padding="checkbox"
+                          align="center"
                           sx={{
-                            ...(makeSticky && {
-                              position: {
-                                xs: 'static', // default kecil
-                                lg: makeSticky ? 'sticky' : 'static', // sticky hanya di lg
-                              },
-                              left: {
-                                xs: 'auto',
-                                lg: makeSticky ? getStickyLeft(idx) : 'auto',
-                              },
-                              zIndex: {
-                                xs: 'auto',
-                                lg: makeSticky ? 4 : 'auto',
-                              },
-                              background: 'white',
-                              minWidth: DATA_COL_WIDTH,
-                              maxWidth: DATA_COL_WIDTH,
-                            }),
-                            // 💡 Tambahkan kondisi text align khusus untuk kolom tertentu
-                            // ...(col.includes('Early Access') && {
-                            //   textAlign: 'center !important',
-                            // }),
+                            position: 'sticky',
+                            background: 'white',
+                            zIndex: 2,
+                            padding: 2,
+                            textAlign: 'center',
+                            verticalAlign: 'middle',
+                            height: '100%',
                           }}
                         >
-                          {pretty}
+                          <Skeleton variant="rectangular" width={20} height={20} animation="wave" />
                         </TableCell>
-                      );
-                    })}
-                    {isHaveAction && !isActionVisitor && (
-                      <TableCell
-                        sx={{
-                          position: 'sticky',
-                          right: 0,
-                          bgcolor: 'background.paper',
-                          zIndex: 4, // header > body
-                          p: 0,
-                          verticalAlign: 'middle',
-                          textAlign: 'center',
-                        }}
-                      >
-                        Action
-                      </TableCell>
-                    )}
+                      )}
 
-                    {isHaveActionOnlyEdit && (
-                      <TableCell
-                        sx={{ position: 'sticky', right: 0, background: 'white', zIndex: 2 }}
-                      >
-                        Action
-                      </TableCell>
-                    )}
-                    {isHaveArrival && (
-                      <TableCell
-                        sx={{ position: 'sticky', right: 0, background: 'white', zIndex: 2 }}
-                      >
-                        <Button variant="contained">Arrival</Button>
-                      </TableCell>
-                    )}
-                    {/* 
-                    {isHaveApproval && (
-                      <TableCell
-                        sx={{
-                          position: 'sticky',
-                          left: isHaveChecked ? CHECKBOX_COL_WIDTH : 0,
-                          zIndex: 2,
-                          background: 'white',
-                          minWidth: ACTION_COL_WIDTH,
-                          maxWidth: ACTION_COL_WIDTH,
-                        }}
-                      >
-                        Action
-                      </TableCell>
-                    )} */}
-
-                    {/* {isHaveAccess && (
-                      <TableCell
-                        sx={{
-                          position: 'sticky',
-                          left: isHaveChecked ? CHECKBOX_COL_WIDTH : 0,
-                          zIndex: 2,
-                          background: 'white',
-                          minWidth: ACTION_COL_WIDTH,
-                          maxWidth: ACTION_COL_WIDTH,
-                        }}
-                      >
-                        Action
-                      </TableCell>
-                    )} */}
-
-                    {isHaveCard && (
-                      <TableCell sx={{ position: 'sticky', right: 0, zIndex: 2 }}>
-                        <Button
-                          size="small"
-                          color="primary"
-                          variant="contained"
-                          onClick={() => onChooseCard?.()} // ← buka dialog bulk
-                          // disabled={selectedInvitations.length === 0}
-                        >
-                          Choose Card
-                        </Button>
-                      </TableCell>
-                    )}
-                  </TableRow>
-                </TableHead>
-
-                <TableBody>
-                  {loading ? (
-                    // 1. SKELETON MODE
-                    [...Array(rowsPerPage)].map((_, idx) => (
-                      <TableRow key={`skeleton-${idx}`}>
+                      {/* ✅ Action visitor left-side (mis. dashboard visitor) */}
+                      {isHaveAction && isActionVisitor && (
                         <TableCell
-                          colSpan={
-                            columns.length + (isHaveChecked ? 1 : 0) + (isHaveAction ? 1 : 0) + 1
-                          }
+                          sx={{
+                            position: 'sticky',
+                            left: isHaveChecked ? CHECKBOX_COL_WIDTH : 0,
+                            background: 'white',
+                            zIndex: 2,
+                            width: ACTION_COL_WIDTH,
+                          }}
                         >
-                          <Skeleton height={20} />
+                          <Box display="flex" gap={0.5} justifyContent="center">
+                            {[...Array(3)].map((__, j) => (
+                              <Skeleton
+                                key={j}
+                                variant="rectangular"
+                                width={28}
+                                height={28}
+                                animation="wave"
+                                sx={{ borderRadius: 1 }}
+                              />
+                            ))}
+                          </Box>
                         </TableCell>
-                      </TableRow>
-                    ))
-                  ) : paginatedData.length === 0 ? (
-                    // 2. NO DATA MODE
-                    <TableRow>
+                      )}
+
+                      {/* ✅ Index (No) */}
                       <TableCell
-                        colSpan={
-                          columns.length + (isHaveChecked ? 1 : 0) + 1 + (isHaveAction ? 1 : 0)
-                        }
+                        sx={{
+                          position: 'sticky',
+                          left:
+                            (isHaveChecked ? CHECKBOX_COL_WIDTH : 0) +
+                            (isActionVisitor ? ACTION_COL_WIDTH : 0),
+                          background: 'white',
+                          zIndex: 1,
+                          width: INDEX_COL_WIDTH,
+                        }}
                       >
-                        <Box
-                          height={200}
-                          width="100%"
-                          display="flex"
-                          justifyContent="center"
-                          alignItems="center"
-                          flexDirection="column"
-                          sx={{ color: 'text.secondary' }}
-                        >
-                          <img src={backgroundnodata} alt="No Data" height="120" />
-                          <Typography variant="body1">No Data Available</Typography>
-                        </Box>
+                        <Skeleton variant="text" width="30%" height={18} animation="wave" />
                       </TableCell>
+
+                      {/* ✅ Main data columns */}
+                      {columns.map((col, i) => (
+                        <TableCell key={i}>
+                          <Box display="flex" alignItems="center" gap={1}>
+                            {/* Skeleton type by column name */}
+                            {col.includes('image') || col.includes('avatar') ? (
+                              <>
+                                <Skeleton
+                                  variant="circular"
+                                  width={32}
+                                  height={32}
+                                  animation="wave"
+                                />
+                                {/* <Skeleton
+                                    variant="text"
+                                    width="50%"
+                                    height={18}
+                                    animation="wave"
+                                  /> */}
+                              </>
+                            ) : col.includes('status') ? (
+                              <Skeleton
+                                variant="rectangular"
+                                width={60}
+                                height={24}
+                                sx={{ borderRadius: 1 }}
+                                animation="wave"
+                              />
+                            ) : (
+                              <Skeleton
+                                variant="text"
+                                width={`${40 + Math.random() * 40}%`}
+                                height={18}
+                                animation="wave"
+                              />
+                            )}
+                          </Box>
+                        </TableCell>
+                      ))}
+
+                      {/* ✅ Action right-side */}
+                      {isHaveAction && !isActionVisitor && (
+                        <TableCell
+                          align="center"
+                          sx={{ position: 'sticky', right: 0, background: 'white', zIndex: 2 }}
+                        >
+                          <Box display="flex" justifyContent="center" gap={0.5}>
+                            {[...Array(3)].map((__, j) => (
+                              <Skeleton
+                                key={j}
+                                variant="rectangular"
+                                width={28}
+                                height={28}
+                                animation="wave"
+                                sx={{ borderRadius: 1 }}
+                              />
+                            ))}
+                          </Box>
+                        </TableCell>
+                      )}
                     </TableRow>
-                  ) : (
-                    paginatedData.map((row: any, index) => (
-                      <TableRow key={row.id}>
-                        {isHaveChecked && (
-                          <TableCell
-                            padding="checkbox"
-                            sx={{ position: 'sticky', left: 0, zIndex: 3, background: 'white' }}
-                          >
-                            <Checkbox
-                              checked={checkedIds.includes(row.id)}
-                              onChange={(e) => handleCheckRow(row.id as string, e.target.checked)}
-                            />
-                          </TableCell>
-                        )}
+                  ))
+                ) : paginatedData.length === 0 && !loading ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={
+                        columns.length + (isHaveChecked ? 1 : 0) + 1 + (isHaveAction ? 1 : 0)
+                      }
+                      sx={{
+                        p: 0,
+                        border: 'none',
+                        height: 250, // tinggi area kosong
+                        verticalAlign: 'middle', // penting
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          height: '100%',
+                          width: '100%',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center', // center vertikal
+                          textAlign: 'center',
+                          color: 'text.secondary',
+                          pointerEvents: 'none', // biar gak ganggu scroll
+                        }}
+                      >
+                        <img
+                          src={backgroundnodata}
+                          alt="No Data"
+                          height="100"
+                          style={{
+                            objectFit: 'contain',
+                            marginBottom: 8,
+                            opacity: 0.85,
+                          }}
+                        />
+                        <Typography variant="body1">No Data Available</Typography>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  paginatedData.map((row: any, index) => (
+                    <TableRow key={row.id}>
+                      {isHaveChecked && (
+                        <TableCell
+                          padding="checkbox"
+                          sx={{ position: 'sticky', left: 0, zIndex: 3, background: 'white' }}
+                        >
+                          <Checkbox
+                            checked={checkedIds.includes(row.id)}
+                            onChange={(e) => handleCheckRow(row.id as string, e.target.checked)}
+                          />
+                        </TableCell>
+                      )}
 
-                        {isHaveAction && isActionVisitor && (
-                          <TableCell
-                            sx={{
-                              position: 'sticky',
-                              left: isHaveChecked ? CHECKBOX_COL_WIDTH : 0,
-                              zIndex: 3,
-                              background: 'white',
-                              minWidth: ACTION_COL_WIDTH, // ditambah biar muat icon VIP
-                              maxWidth: ACTION_COL_WIDTH,
-                            }}
+                      {isHaveAction && isActionVisitor && (
+                        <TableCell
+                          sx={{
+                            position: 'sticky',
+                            left: isHaveChecked ? CHECKBOX_COL_WIDTH : 0,
+                            zIndex: 3,
+                            background: 'white',
+                            minWidth: ACTION_COL_WIDTH, // ditambah biar muat icon VIP
+                            maxWidth: ACTION_COL_WIDTH,
+                          }}
+                        >
+                          <Box
+                            display="flex"
+                            alignItems="center"
+                            gap={0.3}
+                            justifyContent={'center'}
                           >
-                            <Box display="flex" alignItems="center" gap={0.3}>
-                              {/* Detail Visitor */}
-                              <Tooltip title="Detail Visitor">
-                                <IconButton
-                                  onClick={() => onView?.(row)}
-                                  disableRipple
-                                  sx={{
+                            {/* Detail Visitor */}
+                            <Tooltip title="Detail Visitor">
+                              <IconButton
+                                onClick={() => onView?.(row)}
+                                disableRipple
+                                sx={{
+                                  color: 'white',
+                                  backgroundColor: 'gray !important',
+                                  width: 28,
+                                  height: 28,
+                                  padding: 0.5,
+                                  borderRadius: '50%',
+                                  '&:hover': {
+                                    backgroundColor: 'success.dark',
                                     color: 'white',
-                                    backgroundColor: 'gray !important',
-                                    width: 28,
-                                    height: 28,
-                                    padding: 0.5,
-                                    borderRadius: '50%',
-                                    '&:hover': {
-                                      backgroundColor: 'success.dark',
+                                  },
+                                }}
+                              >
+                                <RemoveRedEyeIcon width={18} height={18} />
+                              </IconButton>
+                            </Tooltip>
+                            {isActionEmployee == false && (
+                              <>
+                                {/* Tombol Checkin */}
+                                <Tooltip title="Check In">
+                                  <IconButton
+                                    onClick={() => onEdit?.(row)}
+                                    disableRipple
+                                    sx={{
                                       color: 'white',
-                                    },
-                                  }}
-                                >
-                                  <RemoveRedEyeIcon width={18} height={18} />
-                                </IconButton>
-                              </Tooltip>
-                              {isActionEmployee == false && (
-                                <>
-                                  {/* Tombol Checkin */}
-                                  <Tooltip title="Check In">
-                                    <IconButton
-                                      onClick={() => onEdit?.(row)}
-                                      disableRipple
-                                      sx={{
+                                      backgroundColor: '#13DEB9 !important',
+                                      width: 28,
+                                      height: 28,
+                                      padding: 0.5,
+                                      borderRadius: '50%',
+                                      '&:hover': {
+                                        backgroundColor: 'success.dark',
                                         color: 'white',
-                                        backgroundColor: '#13DEB9 !important',
-                                        width: 28,
-                                        height: 28,
-                                        padding: 0.5,
-                                        borderRadius: '50%',
-                                        '&:hover': {
-                                          backgroundColor: 'success.dark',
-                                          color: 'white',
-                                        },
-                                      }}
-                                    >
-                                      <IconLogin2 width={18} height={18} />
-                                    </IconButton>
-                                  </Tooltip>
+                                      },
+                                    }}
+                                  >
+                                    <IconLogin2 width={18} height={18} />
+                                  </IconButton>
+                                </Tooltip>
 
-                                  {/* Tombol Checkout */}
-                                  <Tooltip title="Check Out">
-                                    <IconButton
-                                      onClick={() => onDelete?.(row)}
-                                      disableRipple
-                                      sx={{
+                                {/* Tombol Checkout */}
+                                <Tooltip title="Check Out">
+                                  <IconButton
+                                    onClick={() => onDelete?.(row)}
+                                    disableRipple
+                                    sx={{
+                                      color: 'white',
+                                      backgroundColor: 'error.main',
+                                      width: 28,
+                                      height: 28,
+                                      padding: 0.5,
+                                      borderRadius: '50%',
+                                      '&:hover': {
+                                        backgroundColor: 'error.dark',
                                         color: 'white',
-                                        backgroundColor: 'error.main',
-                                        width: 28,
-                                        height: 28,
-                                        padding: 0.5,
-                                        borderRadius: '50%',
-                                        '&:hover': {
-                                          backgroundColor: 'error.dark',
-                                          color: 'white',
-                                        },
-                                      }}
-                                    >
-                                      <IconLogout2 width={18} height={18} />
-                                    </IconButton>
-                                  </Tooltip>
-                                </>
-                              )}
+                                      },
+                                    }}
+                                  >
+                                    <IconLogout2 width={18} height={18} />
+                                  </IconButton>
+                                </Tooltip>
+                              </>
+                            )}
 
-                              {/* Ikon VIP */}
-                              {/* {isHaveVip &&
+                            {/* Ikon VIP */}
+                            {/* {isHaveVip &&
                               (row.is_vip ? (
                                 <Tooltip title="VIP">
                                   <IconStarFilled color="gold" />
@@ -1440,386 +1785,390 @@ export function DynamicTable<
                               // </Tooltip>
                               null)} */}
 
-                              {/* {isHaveVip && isVip?.(row) && (
+                            {/* {isHaveVip && isVip?.(row) && (
                               <Tooltip title="VIP">
                                 <IconStarFilled color="gold" />
                               </Tooltip>
                             )} */}
-                            </Box>
-                          </TableCell>
-                        )}
-
-                        <TableCell
-                          sx={{
-                            position: 'sticky',
-                            left:
-                              (isHaveChecked ? CHECKBOX_COL_WIDTH : 0) +
-                              (isActionVisitor ? ACTION_COL_WIDTH : 0),
-                            zIndex: 3,
-                            background: 'white',
-                            minWidth: INDEX_COL_WIDTH,
-                            maxWidth: INDEX_COL_WIDTH,
-                          }}
-                        >
-                          {index + 1 + page * rowsPerPage}
+                          </Box>
                         </TableCell>
+                      )}
 
-                        {columns.map((col, idx) => {
-                          const makeSticky = isStickyVisitorCol(idx);
+                      <TableCell
+                        sx={{
+                          position: 'sticky',
+                          left:
+                            (isHaveChecked ? CHECKBOX_COL_WIDTH : 0) +
+                            (isActionVisitor ? ACTION_COL_WIDTH : 0),
+                          zIndex: 3,
+                          background: 'white',
+                          minWidth: INDEX_COL_WIDTH,
+                          maxWidth: INDEX_COL_WIDTH,
+                        }}
+                      >
+                        {index + 1 + page * rowsPerPage}
+                      </TableCell>
 
-                          return (
-                            <TableCell
-                              key={col}
-                              sx={{
-                                ...(makeSticky && {
-                                  position: { xs: 'static', lg: 'sticky' },
-                                  left: getStickyLeft(idx),
-                                  zIndex: 3, // body < header
-                                  background: 'white',
-                                  minWidth: DATA_COL_WIDTH,
-                                  maxWidth: DATA_COL_WIDTH,
-                                }),
-                              }}
-                            >
-                              {isHaveVip && col === 'is_vip' ? (
-                                row[col] ? (
-                                  <Tooltip title="VIP">
-                                    <IconStarFilled color="gold" />
-                                  </Tooltip>
-                                ) : (
-                                  <Tooltip title="Not VIP">
-                                    <IconStarFilled color="lightgray" />
-                                  </Tooltip>
-                                )
-                              ) : htmlFields.includes(col) && typeof row[col] === 'string' ? (
-                                <RichHtmlCell
-                                  html={String(row[col] ?? '')}
-                                  lines={htmlClampLines}
-                                  maxWidth={htmlMaxWidth}
-                                />
-                              ) : col === 'card_status' ? (
-                                CARD_STATUS[Number(row[col])] ?? String(row[col] ?? '-')
-                              ) : col === 'document_type' ? (
-                                DOCUMENT_TYPE[Number(row[col])] ?? String(row[col] ?? '-')
-                              ) : col === 'status' && isHaveApproval ? (
-                                row[col] === 'Accept' ? (
-                                  <Typography
-                                    sx={{
-                                      color: 'success.main',
-                                      fontWeight: 400,
-                                      backgroundColor: 'success.light',
-                                      textAlign: 'center',
-                                      padding: 0.5,
-                                      borderRadius: '8px',
-                                    }}
-                                    variant="body2"
-                                  >
-                                    Accept
-                                  </Typography>
-                                ) : row[col] === 'Deny' ? (
-                                  <Typography
-                                    sx={{
-                                      color: 'error.main',
-                                      fontWeight: 400,
-                                      backgroundColor: 'error.light',
-                                      textAlign: 'center',
-                                      padding: 0.5,
-                                      borderRadius: '8px',
-                                    }}
-                                    variant="body2"
-                                  >
-                                    Deny
-                                  </Typography>
-                                ) : (
-                                  <>
-                                    <Typography
-                                      sx={{
-                                        color: '#fff',
-                                        fontWeight: 400,
-                                        backgroundColor: 'grey',
-                                        textAlign: 'center',
-                                        padding: 0.5,
-                                        borderRadius: '8px',
-                                      }}
-                                      variant="body2"
-                                    >
-                                      Pending
-                                    </Typography>
-                                  </>
-                                )
-                              ) : (isHavePeriod && col === 'visitor_period_start') ||
-                                col === 'visitor_period_end' ? (
-                                <>
-                                  {formatDate(row[col] as string)}
-                                  <br />
-                                </>
-                              ) : isHaveEmployee && col === 'host' ? (
-                                <Tooltip title="View Host">
-                                  <IconButton
-                                    size="small"
-                                    color="primary"
-                                    onClick={() => onEmployeeClick?.(row)} // kirim seluruh row
-                                    sx={{
-                                      borderRadius: '50%',
-                                      width: 30,
-                                      height: 30,
-                                      backgroundColor: (theme) => theme.palette.grey[100],
-                                    }}
-                                  >
-                                    <IconUserFilled />
-                                  </IconButton>
+                      {columns.map((col, idx) => {
+                        const makeSticky = isStickyVisitorCol(idx);
+
+                        return (
+                          <TableCell
+                            key={col}
+                            sx={{
+                              ...(makeSticky && {
+                                position: { xs: 'static', lg: 'sticky' },
+                                left: getStickyLeft(idx),
+                                zIndex: 3, // body < header
+                                background: 'white',
+                                minWidth: DATA_COL_WIDTH,
+                                maxWidth: DATA_COL_WIDTH,
+                              }),
+                            }}
+                          >
+                            {isHaveVip && col === 'is_vip' ? (
+                              row[col] ? (
+                                <Tooltip title="VIP">
+                                  <IconStarFilled color="gold" />
                                 </Tooltip>
-                              ) : col === 'employee' ? (
+                              ) : (
+                                <Tooltip title="Not VIP">
+                                  <IconStarFilled color="lightgray" />
+                                </Tooltip>
+                              )
+                            ) : htmlFields.includes(col) && typeof row[col] === 'string' ? (
+                              <RichHtmlCell
+                                html={String(row[col] ?? '')}
+                                lines={htmlClampLines}
+                                maxWidth={htmlMaxWidth}
+                              />
+                            ) : col === 'card_status' ? (
+                              CARD_STATUS[Number(row[col])] ?? String(row[col] ?? '-')
+                            ) : col === 'document_type' ? (
+                              DOCUMENT_TYPE[Number(row[col])] ?? String(row[col] ?? '-')
+                            ) : col === 'status' && isHaveApproval ? (
+                              row[col] === 'Accept' ? (
+                                <Typography
+                                  sx={{
+                                    color: 'success.main',
+                                    fontWeight: 400,
+                                    backgroundColor: 'success.light',
+                                    textAlign: 'center',
+                                    padding: 0.5,
+                                    borderRadius: '8px',
+                                  }}
+                                  variant="body2"
+                                >
+                                  Accept
+                                </Typography>
+                              ) : row[col] === 'Deny' ? (
+                                <Typography
+                                  sx={{
+                                    color: 'error.main',
+                                    fontWeight: 400,
+                                    backgroundColor: 'error.light',
+                                    textAlign: 'center',
+                                    padding: 0.5,
+                                    borderRadius: '8px',
+                                  }}
+                                  variant="body2"
+                                >
+                                  Deny
+                                </Typography>
+                              ) : (
                                 <>
-                                  {/* <Tooltip title="You are the host">
+                                  <Typography
+                                    sx={{
+                                      color: '#fff',
+                                      fontWeight: 400,
+                                      backgroundColor: 'grey',
+                                      textAlign: 'center',
+                                      padding: 0.5,
+                                      borderRadius: '8px',
+                                    }}
+                                    variant="body2"
+                                  >
+                                    Pending
+                                  </Typography>
+                                </>
+                              )
+                            ) : (isHavePeriod && col === 'visitor_period_start') ||
+                              col === 'visitor_period_end' ? (
+                              <>
+                                {formatDate(row[col] as string)}
+                                <br />
+                              </>
+                            ) : isHaveEmployee && col === 'host' ? (
+                              <Tooltip title="View Host">
+                                <IconButton
+                                  size="small"
+                                  color="primary"
+                                  onClick={() => onEmployeeClick?.(row)} // kirim seluruh row
+                                  sx={{
+                                    borderRadius: '50%',
+                                    width: 30,
+                                    height: 30,
+                                    backgroundColor: (theme) => theme.palette.grey[100],
+                                  }}
+                                >
+                                  <IconUserFilled />
+                                </IconButton>
+                              </Tooltip>
+                            ) : col === 'employee' ? (
+                              <>
+                                {/* <Tooltip title="You are the host">
                                     <IconStarFilled
                                       color="gold"
                                       size={16}
                                       style={{ color: 'gold' }}
                                     />
                                   </Tooltip> */}
-                                  {row.employee && (
-                                    <Tooltip title="You are the host">
-                                      <IconStarFilled
-                                        color="gold"
-                                        size={24}
-                                        style={{ color: 'gold' }}
-                                      />
-                                    </Tooltip>
-                                  )}
-                                </>
-                              ) : isHaveGender && col === 'gender' ? (
-                                GENDER_MAP[String(row[col])] ?? String(row[col] ?? '-')
-                              ) : isSiteSpaceType && col === 'type' ? (
-                                SITE_MAP[Number(row[col])] ?? String(row[col] ?? '-')
-                              ) : isHaveImage &&
-                                imageFields.includes(col) &&
-                                typeof row[col] === 'string' ? (
-                                <img
-                                  src={(() => {
-                                    const value = row[col];
-                                    if (!value) return '';
-                                    if (value.startsWith('data:image')) return value;
-                                    if (value.startsWith('http')) return value;
-                                    return `${BASE_URL}${value}`;
-                                  })()}
-                                  alt="employee"
-                                  style={{
-                                    width: 55,
-                                    height: 55,
-                                    // borderRadius: '50%',
-                                    objectFit: 'cover',
-                                  }}
-                                />
-                              ) : (isDataVerified && col === 'secure') ||
-                                col === 'can_upload' ||
-                                col === 'can_signed' ||
-                                col === 'can_declined' ||
-                                col === 'is_primary' ||
-                                col === 'is_employee_used' ||
-                                col === 'is_multi_site' ||
-                                col === 'is_used' ||
-                                col === 'early_access' ? (
-                                <Box
-                                  display="flex"
-                                  alignItems="center"
-                                  justifyContent="center"
-                                  width="100%"
-                                >
-                                  <Tooltip
-                                    title={
-                                      row[col]
-                                        ? tooltipLabels[col]?.true ?? 'Verified'
-                                        : tooltipLabels[col]?.false ?? 'Not Verified'
-                                    }
-                                  >
-                                    <Box
-                                      sx={(theme) => ({
-                                        backgroundColor: row[col]
-                                          ? theme.palette.success.main
-                                          : theme.palette.error.main,
-                                        borderRadius: '50%',
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        p: '2px',
-                                      })}
-                                    >
-                                      {row[col] ? (
-                                        <IconCheck color="white" size={16} />
-                                      ) : (
-                                        <IconX color="white" size={16} />
-                                      )}
-                                    </Box>
+                                {row.employee && (
+                                  <Tooltip title="You are the host">
+                                    <IconStarFilled
+                                      color="gold"
+                                      size={24}
+                                      style={{ color: 'gold' }}
+                                    />
                                   </Tooltip>
-                                </Box>
-                              ) : isHavePdf && col === 'file' ? (
-                                <Tooltip title="View File">
-                                  <IconButton
-                                    size="small"
-                                    color="primary"
-                                    onClick={() => onFileClick?.(row)} // kirim seluruh row
-                                    sx={{
+                                )}
+                              </>
+                            ) : isHaveGender && col === 'gender' ? (
+                              GENDER_MAP[String(row[col])] ?? String(row[col] ?? '-')
+                            ) : isSiteSpaceType && col === 'type' ? (
+                              SITE_MAP[Number(row[col])] ?? String(row[col] ?? '-')
+                            ) : isHaveImage &&
+                              imageFields.includes(col) &&
+                              typeof row[col] === 'string' ? (
+                              <img
+                                src={(() => {
+                                  const value = row[col];
+                                  if (!value) return '';
+                                  if (value.startsWith('data:image')) return value;
+                                  if (value.startsWith('http')) return value;
+                                  return `${BASE_URL}${value}`;
+                                })()}
+                                alt="employee"
+                                style={{
+                                  width: 55,
+                                  height: 55,
+                                  // borderRadius: '50%',
+                                  objectFit: 'cover',
+                                }}
+                              />
+                            ) : (isDataVerified && col === 'secure') ||
+                              col === 'can_upload' ||
+                              col === 'can_signed' ||
+                              col === 'can_declined' ||
+                              col === 'is_primary' ||
+                              col === 'is_employee_used' ||
+                              col === 'is_multi_site' ||
+                              col === 'is_used' ||
+                              col === 'early_access' ? (
+                              <Box
+                                display="flex"
+                                alignItems="center"
+                                justifyContent="start"
+                                width="100%"
+                              >
+                                <Tooltip
+                                  title={
+                                    row[col]
+                                      ? tooltipLabels[col]?.true ?? 'Verified'
+                                      : tooltipLabels[col]?.false ?? 'Not Verified'
+                                  }
+                                >
+                                  <Box
+                                    sx={(theme) => ({
+                                      backgroundColor: row[col]
+                                        ? theme.palette.success.main
+                                        : theme.palette.error.main,
                                       borderRadius: '50%',
-                                      width: 30,
-                                      height: 30,
-                                      backgroundColor: (theme) => theme.palette.grey[100],
-                                    }}
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      p: '2px',
+                                    })}
                                   >
-                                    <IconFileText />
-                                  </IconButton>
+                                    {row[col] ? (
+                                      <IconCheck color="white" size={16} />
+                                    ) : (
+                                      <IconX color="white" size={16} />
+                                    )}
+                                  </Box>
                                 </Tooltip>
-                              ) : col === 'email' ? (
-                                <Box
-                                  display="inline-flex"
-                                  alignItems="center"
-                                  justifyContent="start"
-                                  textAlign={'left'}
-                                  gap={0.5}
-                                  width="100%"
+                              </Box>
+                            ) : isHavePdf && col === 'file' ? (
+                              <Tooltip title="View File">
+                                <IconButton
+                                  size="small"
+                                  color="primary"
+                                  onClick={() => onFileClick?.(row)} // kirim seluruh row
+                                  sx={{
+                                    borderRadius: '50%',
+                                    width: 30,
+                                    height: 30,
+                                    backgroundColor: (theme) => theme.palette.grey[100],
+                                  }}
                                 >
-                                  <span>{(row[col] as React.ReactNode) ?? '-'}</span>
+                                  <IconFileText />
+                                </IconButton>
+                              </Tooltip>
+                            ) : col === 'email' ? (
+                              <Box
+                                display="inline-flex"
+                                alignItems="center"
+                                justifyContent="start"
+                                textAlign={'left'}
+                                gap={0.5}
+                                width="100%"
+                                sx={{
+                                  wordBreak: 'break-word',
+                                  whiteSpace: 'normal',
+                                }}
+                              >
+                                <span>{(row[col] as React.ReactNode) ?? '-'}</span>
 
-                                  {isHaveVerified &&
-                                    (row[col] == 'is_email_verified' ? (
-                                      <Tooltip title="Email Verified">
-                                        <Box
-                                          sx={{
-                                            backgroundColor: 'green',
-                                            borderRadius: '50%',
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            padding: '1px',
-                                          }}
-                                        >
-                                          <IconCheck color="white" size={16} />
-                                        </Box>
-                                      </Tooltip>
-                                    ) : (
-                                      <Tooltip title="Email Not Verified">
-                                        <Box
-                                          sx={{
-                                            backgroundColor: 'red',
-                                            borderRadius: '50%',
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            padding: '1px',
-                                          }}
-                                        >
-                                          <IconX color="white" size={16} />
-                                        </Box>
-                                      </Tooltip>
-                                    ))}
-                                </Box>
-                              ) : col === 'password' ? (
-                                <Box
-                                  display="inline-flex"
-                                  alignItems="center"
-                                  gap={0.5}
-                                  justifyContent={'center'}
-                                  width="100%"
-                                >
-                                  {isHavePassword ? (
-                                    visiblePasswords[row.id] ? (
-                                      <>
-                                        <span>{String(row[col] ?? '-')}</span>
-                                        <Tooltip title="Hide Password">
-                                          <IconButton
-                                            size="small"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              togglePassword(row.id);
-                                            }}
-                                          >
-                                            <IconEyeOff size={18} />
-                                          </IconButton>
-                                        </Tooltip>
-                                      </>
-                                    ) : (
-                                      <Tooltip title="Show Password">
+                                {isHaveVerified &&
+                                  (row[col] == 'is_email_verified' ? (
+                                    <Tooltip title="Email Verified">
+                                      <Box
+                                        sx={{
+                                          backgroundColor: 'green',
+                                          borderRadius: '50%',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          padding: '1px',
+                                        }}
+                                      >
+                                        <IconCheck color="white" size={16} />
+                                      </Box>
+                                    </Tooltip>
+                                  ) : (
+                                    <Tooltip title="Email Not Verified">
+                                      <Box
+                                        sx={{
+                                          backgroundColor: 'red',
+                                          borderRadius: '50%',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          padding: '1px',
+                                        }}
+                                      >
+                                        <IconX color="white" size={16} />
+                                      </Box>
+                                    </Tooltip>
+                                  ))}
+                              </Box>
+                            ) : col === 'password' ? (
+                              <Box
+                                display="inline-flex"
+                                alignItems="center"
+                                gap={0.5}
+                                justifyContent={'start'}
+                                width="100%"
+                              >
+                                {isHavePassword ? (
+                                  visiblePasswords[row.id] ? (
+                                    <>
+                                      <span>{String(row[col] ?? '-')}</span>
+                                      <Tooltip title="Hide Password">
                                         <IconButton
                                           size="small"
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             togglePassword(row.id);
                                           }}
-                                          sx={{
-                                            bgcolor: 'grey.200', // background
-                                            '&:hover': {
-                                              bgcolor: 'grey.300', // background saat hover
-                                            },
-                                            borderRadius: '50%', // biar bulat
-                                            p: 0.5, // padding supaya icon nggak terlalu mepet
-                                          }}
                                         >
-                                          <IconEye size={18} />
+                                          <IconEyeOff size={18} />
                                         </IconButton>
                                       </Tooltip>
-                                    )
+                                    </>
                                   ) : (
-                                    // Jika fitur password tidak diaktifkan, tampilkan masked statis
-                                    '••••••••'
-                                  )}
-                                </Box>
-                              ) : isHaveCard && col === 'card' ? (
-                                row[col] ? (
-                                  <>{row[col]}</>
+                                    <Tooltip title="Show Password">
+                                      <IconButton
+                                        size="small"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          togglePassword(row.id);
+                                        }}
+                                        sx={{
+                                          bgcolor: 'grey.200', // background
+                                          '&:hover': {
+                                            bgcolor: 'grey.300', // background saat hover
+                                          },
+                                          borderRadius: '50%', // biar bulat
+                                          p: 0.5, // padding supaya icon nggak terlalu mepet
+                                        }}
+                                      >
+                                        <IconEye size={18} />
+                                      </IconButton>
+                                    </Tooltip>
+                                  )
                                 ) : (
-                                  <>-</>
-                                )
-                              ) : isHaveBooleanSwitch && typeof row[col] === 'boolean' ? (
-                                <Box
-                                  display="flex"
-                                  alignItems="center"
-                                  width={'100%'}
-                                  justifyContent={'center'}
-                                >
-                                  <Switch
-                                    checked={row[col] as boolean}
-                                    onChange={(_, checked) =>
-                                      onBooleanSwitchChange?.(row.id, col, checked)
-                                    }
-                                    color="primary"
-                                    size="small"
-                                  />
-                                </Box>
-                              ) : isHaveObjectData &&
-                                objectFields?.includes(col) &&
-                                typeof row[col] === 'object' &&
-                                row[col] !== null ? (
-                                Array.isArray(row[col]) ? (
-                                  row[col].map((item: any) => item.name).join(', ')
-                                ) : (
-                                  (row[col] as { name?: string }).name ?? '-'
-                                )
+                                  // Jika fitur password tidak diaktifkan, tampilkan masked statis
+                                  '••••••••'
+                                )}
+                              </Box>
+                            ) : isHaveCard && col === 'card' ? (
+                              row[col] ? (
+                                <>{row[col]}</>
                               ) : (
-                                <>
-                                  {isHaveIntegration && col === 'name' && onNameClick ? (
-                                    <Button
-                                      variant="text"
-                                      size="small"
-                                      onClick={() => {
-                                        // e.stopPropagation();
-                                        onNameClick?.(row);
-                                      }}
-                                      sx={{
-                                        p: 1,
-                                        minWidth: 0,
-                                        textTransform: 'none',
-                                        fontSize: '0.875rem',
-                                        textDecoration: 'underline',
-                                      }}
-                                      // target="_blank"
-                                    >
-                                      {String(row[col] ?? '-')}
-                                    </Button>
-                                  ) : (
-                                    String(row[col] ?? '-')
-                                  )}
+                                <>-</>
+                              )
+                            ) : isHaveBooleanSwitch && typeof row[col] === 'boolean' ? (
+                              <Box
+                                display="flex"
+                                alignItems="center"
+                                width={'100%'}
+                                justifyContent={'center'}
+                              >
+                                <Switch
+                                  checked={row[col] as boolean}
+                                  onChange={(_, checked) =>
+                                    onBooleanSwitchChange?.(row.id, col, checked)
+                                  }
+                                  color="primary"
+                                  size="small"
+                                />
+                              </Box>
+                            ) : isHaveObjectData &&
+                              objectFields?.includes(col) &&
+                              typeof row[col] === 'object' &&
+                              row[col] !== null ? (
+                              Array.isArray(row[col]) ? (
+                                row[col].map((item: any) => item.name).join(', ')
+                              ) : (
+                                (row[col] as { name?: string }).name ?? '-'
+                              )
+                            ) : (
+                              <>
+                                {isHaveIntegration && col === 'name' && onNameClick ? (
+                                  <Button
+                                    variant="text"
+                                    size="small"
+                                    onClick={() => {
+                                      // e.stopPropagation();
+                                      onNameClick?.(row);
+                                    }}
+                                    sx={{
+                                      p: 1,
+                                      minWidth: 0,
+                                      textTransform: 'none',
+                                      fontSize: '0.875rem',
+                                      textDecoration: 'underline',
+                                    }}
+                                    // target="_blank"
+                                  >
+                                    {String(row[col] ?? '-')}
+                                  </Button>
+                                ) : (
+                                  String(row[col] ?? '-')
+                                )}
 
-                                  {/* {isHaveVerified &&
+                                {/* {isHaveVerified &&
                                     col === 'email' &&
                                     (col == 'is_email_verified' ? (
                                       <Tooltip title="Email Verified">
@@ -1856,18 +2205,18 @@ export function DynamicTable<
                                         </Box>
                                       </Tooltip>
                                     ))} */}
-                                </>
-                              )}
-                            </TableCell>
-                          );
-                        })}
-                        {isHaveCard && (
-                          <TableCell>
-                            <Typography variant="body2" color="text.secondary"></Typography>
+                              </>
+                            )}
                           </TableCell>
-                        )}
+                        );
+                      })}
+                      {isHaveCard && (
+                        <TableCell>
+                          <Typography variant="body2" color="text.secondary"></Typography>
+                        </TableCell>
+                      )}
 
-                        {/* {isHaveApproval && (row as any)?.status == null ? (
+                      {/* {isHaveApproval && (row as any)?.status == null ? (
                           <TableCell
                             sx={{
                               position: 'sticky',
@@ -1920,36 +2269,36 @@ export function DynamicTable<
                           // null
                         )} */}
 
-                        {/* {isHaveAccess && (
+                      {/* {isHaveAccess && (
                           <TableCell>
                             
                           </TableCell>
                         )} */}
 
-                        {isHaveAction && !isActionVisitor && (
-                          <TableCell
+                      {isHaveAction && !isActionVisitor && (
+                        <TableCell
+                          sx={{
+                            position: 'sticky',
+                            right: 0,
+                            bgcolor: 'background.paper',
+                            zIndex: 2,
+                            p: 0,
+                            verticalAlign: 'middle',
+                          }}
+                        >
+                          <Box
                             sx={{
-                              position: 'sticky',
-                              right: 0,
-                              bgcolor: 'background.paper',
-                              zIndex: 2,
-                              p: 0,
-                              verticalAlign: 'middle',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: 1,
+                              px: 1.5,
+                              py: 1.25,
+                              height: '100%',
                             }}
                           >
-                            <Box
-                              sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: 1,
-                                px: 1.5,
-                                py: 1.25,
-                                height: '100%',
-                              }}
-                            >
-                              {/* ✅ Accept / Denied */}
-                              {/* {isHaveApproval && (row as any)?.is_action == null ? (
+                            {/* ✅ Accept / Denied */}
+                            {/* {isHaveApproval && (row as any)?.is_action == null ? (
                                 <>
                                   <Tooltip title="Accept Invitation">
                                     <Button
@@ -1975,71 +2324,9 @@ export function DynamicTable<
                                   </Tooltip>
                                 </>
                               ) : null} */}
-                              {/* 👁 Detail */}
-                              {isHaveApproval ? (
-                                (row as any)?.status == null ? (
-                                  <TableCell
-                                    sx={{
-                                      position: 'sticky',
-                                      right: 0,
-                                      bgcolor: 'background.paper',
-                                      zIndex: 2,
-                                      p: 0,
-                                      verticalAlign: 'middle',
-                                    }}
-                                  >
-                                    <Box
-                                      sx={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: 1,
-                                        px: 1.5,
-                                        py: 1.25,
-                                        height: '100%',
-                                      }}
-                                    >
-                                      {/* ✅ Accept / Denied */}
-                                      <Tooltip title="Accept">
-                                        <Button
-                                          variant="contained"
-                                          color="primary"
-                                          size="small"
-                                          sx={{ minWidth: 64, textTransform: 'none' }}
-                                          onClick={() => onAccept?.(row)}
-                                        >
-                                          Accept
-                                        </Button>
-                                      </Tooltip>
-
-                                      <Tooltip title="Deny">
-                                        <Button
-                                          variant="contained"
-                                          color="error"
-                                          size="small"
-                                          sx={{ minWidth: 64, textTransform: 'none' }}
-                                          onClick={() => onDenied?.(row)}
-                                        >
-                                          Denied
-                                        </Button>
-                                      </Tooltip>
-                                    </Box>
-                                  </TableCell>
-                                ) : (
-                                  <TableCell
-                                    sx={{
-                                      position: 'sticky',
-                                      right: 0,
-                                      bgcolor: 'background.paper',
-                                      zIndex: 2,
-                                      p: 0,
-                                      verticalAlign: 'middle',
-                                    }}
-                                  >
-                                    -
-                                  </TableCell>
-                                )
-                              ) : isHaveAccess ? (
+                            {/* 👁 Detail */}
+                            {isHaveApproval ? (
+                              (row as any)?.status == null ? (
                                 <TableCell
                                   sx={{
                                     position: 'sticky',
@@ -2047,145 +2334,208 @@ export function DynamicTable<
                                     bgcolor: 'background.paper',
                                     zIndex: 2,
                                     p: 0,
-                                    verticalAlign: '',
-                                    textAlign: 'center',
-                                    display: 'flex',
-                                    alignItems: 'flex-start',
+                                    verticalAlign: 'middle',
                                   }}
                                 >
-                                  {getAccessActions(row)}
-                                </TableCell>
-                              ) : isHaveView ? (
-                                <Tooltip title="View Invitation">
-                                  <IconButton
-                                    onClick={() => onView?.(row)}
-                                    disableRipple
+                                  <Box
                                     sx={{
-                                      color: 'white',
-                                      backgroundColor: 'gray !important',
-                                      width: 28,
-                                      height: 28,
-                                      padding: 0.5,
-                                      borderRadius: '50%',
-                                      '&:hover': {
-                                        backgroundColor: 'success.dark',
-                                        color: 'white',
-                                      },
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      gap: 1,
+                                      px: 1.5,
+                                      py: 1.25,
+                                      height: '100%',
                                     }}
                                   >
-                                    <RemoveRedEyeIcon width={18} height={18} />
-                                  </IconButton>
-                                </Tooltip>
+                                    {/* ✅ Accept / Denied */}
+                                    <Tooltip title="Accept">
+                                      <Button
+                                        variant="contained"
+                                        color="primary"
+                                        size="small"
+                                        sx={{ minWidth: 64, textTransform: 'none' }}
+                                        onClick={() => onAccept?.(row)}
+                                      >
+                                        Accept
+                                      </Button>
+                                    </Tooltip>
+
+                                    <Tooltip title="Deny">
+                                      <Button
+                                        variant="contained"
+                                        color="error"
+                                        size="small"
+                                        sx={{ minWidth: 64, textTransform: 'none' }}
+                                        onClick={() => onDenied?.(row)}
+                                      >
+                                        Denied
+                                      </Button>
+                                    </Tooltip>
+                                  </Box>
+                                </TableCell>
                               ) : (
-                                <Box display="flex" gap={0.5}>
-                                  {/* ✏️ Edit */}
-                                  {/* {isHaveSettingOperator && isOperator(row.group_id) && ( */}
-                                  {isHaveSettingOperator &&
-                                    (row.group_id?.toUpperCase() === GroupRoleId.OperatorAdmin ||
-                                      row.group_id?.toUpperCase() === GroupRoleId.OperatorVMS) && (
-                                      <Tooltip title="Setting">
-                                        <IconButton
-                                          onClick={() => onSettingOperator?.(row)}
-                                          disableRipple
-                                          sx={{
-                                            color: 'white',
-                                            backgroundColor: '#000',
-                                            width: 28,
-                                            height: 28,
-                                            p: 0.5,
-                                            borderRadius: '50%',
-                                            '&:hover': { backgroundColor: '#000', color: 'white' },
-                                          }}
-                                        >
-                                          <IconSettings width={14} height={14} />
-                                        </IconButton>
-                                      </Tooltip>
-                                    )}
-                                  <Tooltip title="Edit">
-                                    <IconButton
-                                      onClick={() => onEdit?.(row)}
-                                      disableRipple
-                                      sx={{
-                                        color: 'white',
-                                        backgroundColor: '#FA896B',
-                                        width: 28,
-                                        height: 28,
-                                        p: 0.5,
-                                        borderRadius: '50%',
-                                        '&:hover': { backgroundColor: '#e06f52', color: 'white' },
-                                      }}
-                                    >
-                                      <IconPencil width={14} height={14} />
-                                    </IconButton>
-                                  </Tooltip>
-
-                                  {/* 🗑 Delete */}
-                                  <Tooltip title="Delete">
-                                    <IconButton
-                                      onClick={() => onDelete?.(row)}
-                                      disableRipple
-                                      sx={{
-                                        color: 'white',
-                                        backgroundColor: 'error.main',
-                                        width: 28,
-                                        height: 28,
-                                        p: 0.5,
-                                        borderRadius: '50%',
-                                        '&:hover': {
-                                          backgroundColor: 'rgba(255, 0, 0, 0.7)',
-                                          color: 'white',
-                                        },
-                                      }}
-                                    >
-                                      <IconTrash width={14} height={14} />
-                                    </IconButton>
-                                  </Tooltip>
-                                </Box>
-                              )}
-                            </Box>
-                          </TableCell>
-                        )}
-
-                        {isHaveActionOnlyEdit && !isActionVisitor && isSelectedType && (
-                          <TableCell
-                            sx={{
-                              position: 'sticky',
-                              right: 0,
-                              background: 'white',
-                              zIndex: 2,
-                              display: 'flex',
-                              gap: 1,
-                              alignItems: 'center',
-                            }}
-                          >
-                            <Box display="flex" alignItems="end">
-                              {/* Tombol Edit (Primary, Kecil) */}
-                              <Tooltip title="Edit">
+                                <TableCell
+                                  sx={{
+                                    position: 'sticky',
+                                    right: 0,
+                                    bgcolor: 'background.paper',
+                                    zIndex: 2,
+                                    p: 0,
+                                    verticalAlign: 'middle',
+                                  }}
+                                >
+                                  -
+                                </TableCell>
+                              )
+                            ) : isHaveAccess ? (
+                              <TableCell
+                                sx={{
+                                  position: 'sticky',
+                                  right: 0,
+                                  bgcolor: 'background.paper',
+                                  zIndex: 2,
+                                  p: 0,
+                                  verticalAlign: '',
+                                  textAlign: 'center',
+                                  display: 'flex',
+                                  alignItems: 'flex-start',
+                                }}
+                              >
+                                {getAccessActions(row)}
+                              </TableCell>
+                            ) : isHaveView ? (
+                              <Tooltip title="View Invitation">
                                 <IconButton
-                                  onClick={() => onEdit?.(row)}
+                                  onClick={() => onView?.(row)}
                                   disableRipple
                                   sx={{
                                     color: 'white',
-                                    backgroundColor: '#FA896B',
-
+                                    backgroundColor: 'gray !important',
                                     width: 28,
                                     height: 28,
                                     padding: 0.5,
                                     borderRadius: '50%',
+                                    '&:hover': {
+                                      backgroundColor: 'success.dark',
+                                      color: 'white',
+                                    },
                                   }}
                                 >
-                                  <IconPencil width={14} height={14} />
+                                  <RemoveRedEyeIcon width={18} height={18} />
                                 </IconButton>
                               </Tooltip>
-                            </Box>
-                          </TableCell>
-                        )}
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            )}
+                            ) : (
+                              <Box display="flex" gap={0.5}>
+                                {/* ✏️ Edit */}
+                                {/* {isHaveSettingOperator && isOperator(row.group_id) && ( */}
+                                {isHaveSettingOperator &&
+                                  (row.group_id?.toUpperCase() === GroupRoleId.OperatorAdmin ||
+                                    row.group_id?.toUpperCase() === GroupRoleId.OperatorVMS) && (
+                                    <Tooltip title="Setting">
+                                      <IconButton
+                                        onClick={() => onSettingOperator?.(row)}
+                                        disableRipple
+                                        sx={{
+                                          color: 'white',
+                                          backgroundColor: '#000',
+                                          width: 28,
+                                          height: 28,
+                                          p: 0.5,
+                                          borderRadius: '50%',
+                                          '&:hover': { backgroundColor: '#000', color: 'white' },
+                                        }}
+                                      >
+                                        <IconSettings width={14} height={14} />
+                                      </IconButton>
+                                    </Tooltip>
+                                  )}
+                                <Tooltip title="Edit">
+                                  <IconButton
+                                    onClick={() => onEdit?.(row)}
+                                    disableRipple
+                                    sx={{
+                                      color: 'white',
+                                      backgroundColor: '#FA896B',
+                                      width: 28,
+                                      height: 28,
+                                      p: 0.5,
+                                      borderRadius: '50%',
+                                      '&:hover': { backgroundColor: '#e06f52', color: 'white' },
+                                    }}
+                                  >
+                                    <IconPencil width={14} height={14} />
+                                  </IconButton>
+                                </Tooltip>
+
+                                {/* 🗑 Delete */}
+                                <Tooltip title="Delete">
+                                  <IconButton
+                                    onClick={() => onDelete?.(row)}
+                                    disableRipple
+                                    sx={{
+                                      color: 'white',
+                                      backgroundColor: 'error.main',
+                                      width: 28,
+                                      height: 28,
+                                      p: 0.5,
+                                      borderRadius: '50%',
+                                      '&:hover': {
+                                        backgroundColor: 'rgba(255, 0, 0, 0.7)',
+                                        color: 'white',
+                                      },
+                                    }}
+                                  >
+                                    <IconTrash width={14} height={14} />
+                                  </IconButton>
+                                </Tooltip>
+                              </Box>
+                            )}
+                          </Box>
+                        </TableCell>
+                      )}
+
+                      {isHaveActionOnlyEdit && !isActionVisitor && isSelectedType && (
+                        <TableCell
+                          sx={{
+                            position: 'sticky',
+                            right: 0,
+                            background: 'white',
+                            zIndex: 2,
+                            display: 'flex',
+                            gap: 1,
+                            alignItems: 'center',
+                          }}
+                        >
+                          <Box display="flex" alignItems="end">
+                            {/* Tombol Edit (Primary, Kecil) */}
+                            <Tooltip title="Edit">
+                              <IconButton
+                                onClick={() => onEdit?.(row)}
+                                disableRipple
+                                sx={{
+                                  color: 'white',
+                                  backgroundColor: '#FA896B',
+
+                                  width: 28,
+                                  height: 28,
+                                  padding: 0.5,
+                                  borderRadius: '50%',
+                                }}
+                              >
+                                <IconPencil width={14} height={14} />
+                              </IconButton>
+                            </Tooltip>
+                          </Box>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+
+            {/* )} */}
           </TableContainer>
           {isHavePagination && (
             <TablePagination

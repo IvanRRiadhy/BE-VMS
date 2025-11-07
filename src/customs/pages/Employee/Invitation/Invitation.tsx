@@ -179,20 +179,6 @@ const Content = () => {
       subTitleSetting: 10,
       color: 'none',
     },
-    // {
-    //   title: 'Scan QR Visitor',
-    //   icon: IconQrcode,
-    //   subTitle: iconScanQR,
-    //   subTitleSetting: 'image',
-    //   color: 'none',
-    // },
-    // {
-    //   title: 'Add Invitation',
-    //   icon: IconUser,
-    //   subTitle: iconAdd,
-    //   subTitleSetting: 'image',
-    //   color: 'none',
-    // },
     {
       title: 'Add Pre Registration',
       icon: IconClipboard,
@@ -316,18 +302,18 @@ const Content = () => {
     'All' | 'Preregis' | 'Checkin' | 'Checkout' | 'Denied' | 'Block'
   >('All');
 
-  useEffect(() => {
-    const fetchVisitorTypes = async () => {
-      const res = await getAllVisitorType(token as string); // API master visitor type
-      // ubah array ke object dictionary { id: name }
-      const dict: { [key: string]: string } = {};
-      res.collection.forEach((vt) => {
-        dict[vt.id] = vt.name;
-      });
-      setVisitorTypes(dict);
-    };
-    fetchVisitorTypes();
-  }, [token]);
+  // useEffect(() => {
+  //   const fetchVisitorTypes = async () => {
+  //     const res = await getAllVisitorType(token as string); // API master visitor type
+  //     // ubah array ke object dictionary { id: name }
+  //     const dict: { [key: string]: string } = {};
+  //     res.collection.forEach((vt) => {
+  //       dict[vt.id] = vt.name;
+  //     });
+  //     setVisitorTypes(dict);
+  //   };
+  //   fetchVisitorTypes();
+  // }, [token]);
 
   const statusMap: Record<string, string> = {
     All: 'All',
@@ -413,22 +399,27 @@ const Content = () => {
 
         return {
           id: item.id,
-          visitor_type: item.visitor_type_name,
-          name: item.visitor.name,
-          identity_id: item.visitor.identity_id,
-          email: item.visitor.email,
-          organization: item.visitor.organization,
-          gender: item.visitor.gender,
-          address: item.visitor.address,
-          phone: item.visitor.phone,
-          is_vip: item.visitor.is_vip,
-          visitor_period_start: item.visitor_period_start,
-          visitor_period_end: item.visitor_period_end,
+          visitor_type: item.visitor_type_name || '-',
+          name: item.visitor_name || '-',
+          identity_id: item.visitor_identity_id || '-',
+          email: item.visitor_email || '-',
+          organization: item.visitor_organization || '-',
+          gender: item.visitor_gender || '-',
+          address: item.visitor_address || '-',
+          phone: item.visitor_phone || '-',
+          is_vip: item.visitor_is_vip || '-',
+          visitor_period_start: item.visitor_period_start || '-',
+          visitor_period_end: item.visitor_period_end || '-',
           host: item.host ?? '-',
           employee: isEmployeeHost ?? '-',
-          visitor_status: item.visitor_status,
+          visitor_status: item.visitor_status || '-',
         };
       });
+
+      if (selectedType !== 'All') {
+        const apiStatus = statusMap[selectedType]; // ambil versi backend
+        mapped = mapped.filter((r: any) => r.visitor_status === apiStatus);
+      }
 
       // ✅ simpan data mentah (unfiltered)
       setTableRowVisitors(mapped);
@@ -441,7 +432,7 @@ const Content = () => {
     };
 
     fetchData();
-  }, [token, refreshTrigger, startDate, endDate, employeeId]);
+  }, [token, refreshTrigger, startDate, endDate, employeeId, selectedType]);
 
   useEffect(() => {
     if (!tableRowVisitors.length) return;
@@ -675,102 +666,103 @@ const Content = () => {
             </Grid>
 
             <Grid size={{ xs: 12, lg: 12 }}>
-              {isDataReady ? (
-                <DynamicTable
-                  isHavePagination={true}
-                  overflowX={'auto'}
-                  minWidth={2400}
-                  stickyHeader={true}
-                  data={tableCustomVisitor}
-                  defaultRowsPerPage={rowsPerPage}
-                  totalCount={totalFilteredRecords}
-                  selectedRows={selectedRows}
-                  rowsPerPageOptions={[5, 10, 20, 50, 100]}
-                  onPaginationChange={(page, rowsPerPage) => {
-                    setPage(page);
-                    setRowsPerPage(rowsPerPage);
-                  }}
-                  isHaveChecked={true}
-                  isHaveAction={true}
-                  isHaveImage={true}
-                  isHaveSearch={true}
-                  // isHaveFilter={true}
-                  isHaveExportPdf={false}
-                  isHaveExportXlf={false}
-                  isHaveFilterDuration={false}
-                  isHaveVip={true}
-                  isHavePeriod={true}
-                  // isVip={(row) => row.is_vip === true}
-                  isHaveAddData={false}
-                  isHaveHeader={true}
-                  isHaveGender={true}
-                  isHaveVisitor={true}
-                  isActionVisitor={true}
-                  stickyVisitorCount={2}
-                  isActionEmployee={true}
-                  isHaveEmployee={true}
-                  onEmployeeClick={(row) => {
-                    handleEmployeeClick(row.host as string);
-                  }}
-                  isHaveVerified={true}
-                  headerContent={{
-                    title: '',
-                    subTitle: 'Monitoring Data Visitor',
-                    items: [
-                      { name: 'All' },
-                      { name: 'Preregis' },
-                      { name: 'Checkin' },
-                      { name: 'Checkout' },
-                      { name: 'Block' },
-                      { name: 'Denied' },
-                    ],
-                  }}
-                  onHeaderItemClick={(item) => {
-                    if (
-                      item.name === 'All' ||
-                      item.name === 'Checkin' ||
-                      item.name === 'Checkout' ||
-                      item.name === 'Preregis' ||
-                      item.name === 'Denied' ||
-                      item.name === 'Block'
-                    ) {
-                      setSelectedType(item.name);
-                    }
-                  }}
-                  defaultSelectedHeaderItem="All"
-                  onCheckedChange={(selected) => console.log('Checked table row:', selected)}
-                  onView={(row) => {
-                    handleView(row.id);
-                  }}
-                  onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-                  onFilterCalenderChange={(ranges) => {
-                    if (ranges.startDate && ranges.endDate) {
-                      setStartDate(ranges.startDate.toISOString());
-                      setEndDate(ranges.endDate.toISOString());
-                      setPage(0); // reset ke halaman pertama
-                      setRefreshTrigger((prev) => prev + 1); // trigger fetch
-                    }
-                  }}
-                  onAddData={() => {
-                    handleAdd();
-                  }}
-                  isHaveFilterMore={false}
-                  // isHaveFilter={true}
-                  // filterMoreContent={
-                  //   <FilterMoreContent
-                  //     filters={filters}
-                  //     setFilters={setFilters}
-                  //     onApplyFilter={handleApplyFilter}
-                  //   />
-                  // }
-                />
-              ) : (
+              {/* {isDataReady ? ( */}
+              <DynamicTable
+                loading={loading}
+                isHavePagination={true}
+                overflowX={'auto'}
+                minWidth={2400}
+                stickyHeader={true}
+                data={tableCustomVisitor}
+                defaultRowsPerPage={rowsPerPage}
+                totalCount={totalFilteredRecords}
+                selectedRows={selectedRows}
+                rowsPerPageOptions={[5, 10, 20, 50, 100]}
+                onPaginationChange={(page, rowsPerPage) => {
+                  setPage(page);
+                  setRowsPerPage(rowsPerPage);
+                }}
+                isHaveChecked={true}
+                isHaveAction={true}
+                isHaveImage={true}
+                isHaveSearch={true}
+                // isHaveFilter={true}
+                isHaveExportPdf={false}
+                isHaveExportXlf={false}
+                isHaveFilterDuration={false}
+                isHaveVip={true}
+                isHavePeriod={true}
+                // isVip={(row) => row.is_vip === true}
+                isHaveAddData={false}
+                isHaveHeader={true}
+                isHaveGender={true}
+                isHaveVisitor={true}
+                isActionVisitor={true}
+                stickyVisitorCount={2}
+                isActionEmployee={true}
+                isHaveEmployee={true}
+                onEmployeeClick={(row) => {
+                  handleEmployeeClick(row.host as string);
+                }}
+                isHaveVerified={true}
+                headerContent={{
+                  title: '',
+                  subTitle: 'Monitoring Data Visitor',
+                  items: [
+                    { name: 'All' },
+                    { name: 'Preregis' },
+                    { name: 'Checkin' },
+                    { name: 'Checkout' },
+                    { name: 'Block' },
+                    { name: 'Denied' },
+                  ],
+                }}
+                onHeaderItemClick={(item) => {
+                  if (
+                    item.name === 'All' ||
+                    item.name === 'Checkin' ||
+                    item.name === 'Checkout' ||
+                    item.name === 'Preregis' ||
+                    item.name === 'Denied' ||
+                    item.name === 'Block'
+                  ) {
+                    setSelectedType(item.name);
+                  }
+                }}
+                defaultSelectedHeaderItem="All"
+                onCheckedChange={(selected) => console.log('Checked table row:', selected)}
+                onView={(row) => {
+                  handleView(row.id);
+                }}
+                onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                onFilterCalenderChange={(ranges) => {
+                  if (ranges.startDate && ranges.endDate) {
+                    setStartDate(ranges.startDate.toISOString());
+                    setEndDate(ranges.endDate.toISOString());
+                    setPage(0); // reset ke halaman pertama
+                    setRefreshTrigger((prev) => prev + 1); // trigger fetch
+                  }
+                }}
+                onAddData={() => {
+                  handleAdd();
+                }}
+                isHaveFilterMore={false}
+                // isHaveFilter={true}
+                // filterMoreContent={
+                //   <FilterMoreContent
+                //     filters={filters}
+                //     setFilters={setFilters}
+                //     onApplyFilter={handleApplyFilter}
+                //   />
+                // }
+              />
+              {/* ) : (
                 <Card sx={{ width: '100%' }}>
                   <Skeleton />
                   <Skeleton animation="wave" />
                   <Skeleton animation={false} />
                 </Card>
-              )}
+              )} */}
             </Grid>
           </Grid>
         </Box>
@@ -828,9 +820,9 @@ const Content = () => {
           display="flex"
           justifyContent={'space-between'}
           alignItems="center"
-          sx={{
-            background: 'linear-gradient(135deg, rgba(2,132,199,0.05), rgba(99,102,241,0.08))',
-          }}
+          // sx={{
+          //   background: 'linear-gradient(135deg, rgba(2,132,199,0.05), rgba(99,102,241,0.08))',
+          // }}
         >
           Add Pra Registration
           <IconButton

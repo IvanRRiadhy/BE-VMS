@@ -27,6 +27,7 @@ import { CreateDocumentRequest } from 'src/customs/api/models/Admin/Document';
 import { CKEditor } from '@ckeditor/ckeditor5-react';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 import axiosInstance from 'src/customs/api/interceptor';
+import { showSwal } from 'src/customs/components/alerts/alerts';
 
 interface FormAddDocumentProps {
   formData: CreateDocumentRequest;
@@ -160,11 +161,12 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
       }
 
       localStorage.removeItem('unsavedDocumentFormAdd');
-      setAlertType('success');
-      setAlertMessage('Document successfully created!');
+      // setAlertType('success');
+      // setAlertMessage('Document successfully created!');
+      showSwal('success', 'Document successfully created!');
       setTimeout(() => {
         onSuccess?.();
-      }, 900);
+      }, 600);
     } catch (err: any) {
       if (err?.errors) setErrors(err.errors);
       setAlertType('error');
@@ -189,9 +191,9 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
     <>
       <form onSubmit={handleSubmit}>
         <Grid2 container spacing={2} sx={{ mb: 2 }}>
-          <Grid2 size={12}>
+          {/* <Grid2 size={12}>
             <Alert severity={alertType}>{alertMessage}</Alert>
-          </Grid2>
+          </Grid2> */}
 
           <Grid2 size={{ xs: 12, lg: 12 }}>
             <CustomFormLabel htmlFor="name" sx={{ mt: 0 }}>

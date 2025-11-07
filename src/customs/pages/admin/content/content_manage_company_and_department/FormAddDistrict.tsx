@@ -12,8 +12,12 @@ import { Box } from '@mui/system';
 import React, { useState, useEffect } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import { createDistrict, getAllEmployee } from 'src/customs/api/admin';
-import { CreateDistrictRequest, CreateDistrictSubmitSchema } from 'src/customs/api/models/Admin/District';
+import { createDistrict, getAllEmployee, getVisitorEmployee } from 'src/customs/api/admin';
+import {
+  CreateDistrictRequest,
+  CreateDistrictSubmitSchema,
+} from 'src/customs/api/models/Admin/District';
+import { showSwal } from 'src/customs/components/alerts/alerts';
 import { useSession } from 'src/customs/contexts/SessionContext';
 
 interface FormAddDistrictProps {
@@ -50,7 +54,7 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({ formData, setFormData
 
     const fetchEmployees = async () => {
       try {
-        const res = await getAllEmployee(token);
+        const res = await getVisitorEmployee(token);
         setAllEmployees(res?.collection ?? []);
       } catch (error) {
         console.error('Failed to fetch employees:', error);
@@ -82,10 +86,15 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({ formData, setFormData
     setErrors({});
 
     try {
-      if (!token) {
-        setAlertType('error');
-        setAlertMessage('Something went wrong. Please try again later.');
+      // if (!token) {
+      //   showSwal('error', 'Something went wrong. Please try again later.');
+      //   return;
+      // }
 
+      const parsed = validateLocal(formData);
+      if (!parsed) {
+        setAlertType('error');
+        setAlertMessage('Please complete the required fields correctly.');
         setTimeout(() => {
           setAlertType('info');
           setAlertMessage('Complete the following data properly and correctly');
@@ -93,21 +102,17 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({ formData, setFormData
         return;
       }
 
-      const parsed = validateLocal(formData);
-      if (!parsed) {
-        setAlertType('error');
-        setAlertMessage('Please complete the required fields correctly.');
-        return;
-      }
-
-      await createDistrict(parsed, token);
+      await createDistrict(parsed, token as string);
       localStorage.removeItem('unsavedDistrictFormAdd');
-      setAlertType('success');
-      setAlertMessage('Department successfully created.');
 
-      setTimeout(() => {
+      // ✅ Tutup backdrop & dialog dulu sebelum swal
+      setLoading(false);
+      await new Promise<void>((resolve) => {
         onSuccess?.();
-      }, 900);
+        setTimeout(resolve, 600);
+      });
+
+      showSwal('success', 'District successfully created!', 3000);
     } catch (err: any) {
       const be = err?.response?.data?.errors;
       if (be && typeof be === 'object') {
@@ -117,29 +122,23 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({ formData, setFormData
           host: be.Host?.[0] ?? '',
         });
       }
-      setAlertType('error');
-      setAlertMessage('Something went wrong. Please try again later.');
-      setTimeout(() => {
-        setAlertType('info');
-        setAlertMessage('Complete the following data properly and correctly');
-      }, 3000);
+
+      showSwal('error', 'Failed to create district.', 3000);
     } finally {
-      setTimeout(() => {
-        setLoading(false);
-      }, 600);
+      setTimeout(() => setLoading(false), 600);
     }
   };
 
   return (
     <>
       <form onSubmit={handleSubmit}>
-        <Grid2 size={{ xs: 12, sm: 12 }}>
+        {/* <Grid2 size={{ xs: 12, sm: 12 }}>
           <Alert severity={alertType}>{alertMessage}</Alert>
-        </Grid2>
+        </Grid2> */}
 
         {/* District Name */}
         <CustomFormLabel sx={{ my: 1 }} htmlFor="name">
-          <Typography variant="caption">District Name</Typography>
+          <Typography variant="body1">District Name</Typography>
         </CustomFormLabel>
         <CustomTextField
           id="name"
@@ -153,7 +152,7 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({ formData, setFormData
 
         {/* District Code */}
         <CustomFormLabel sx={{ my: 1 }} htmlFor="code">
-          <Typography variant="caption">District Code</Typography>
+          <Typography variant="body1">District Code</Typography>
         </CustomFormLabel>
         <CustomTextField
           id="code"
@@ -166,12 +165,12 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({ formData, setFormData
         />
 
         <CustomFormLabel htmlFor="host" sx={{ my: 1 }}>
-          <Typography variant="caption">Head of District</Typography>
+          <Typography variant="body1">Head of District</Typography>
         </CustomFormLabel>
         <Autocomplete
           id="host"
           autoHighlight
-          disablePortal
+          disablePortal={false}
           options={allEmployes.map((emp: any) => ({ id: emp.id, label: emp.name }))}
           getOptionLabel={(option) => (typeof option === 'string' ? option : option.label)}
           value={

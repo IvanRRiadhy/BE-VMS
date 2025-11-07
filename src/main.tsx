@@ -5,39 +5,51 @@ import { Provider } from 'react-redux';
 import ReactDOM from 'react-dom/client';
 import { store, persistor } from './store/Store';
 import './utils/i18n';
-import './_mockApis';
 import { SessionProvider } from './customs/contexts/SessionContext';
 import { PersistGate } from 'redux-persist/integration/react';
-import { BrowserRouter } from 'react-router';
+import { BrowserRouter, createBrowserRouter } from 'react-router';
 import { AuthProvider } from './customs/contexts/AuthProvider';
-import { App } from './App';
-// app.css
+import App from './App';
 import './App.css';
-
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { GlobalLoadingProvider } from './customs/contexts/GlobalLoadingContext';
+import Spinner from './views/spinner/Spinner';
 
-// 🧠 Buat 1 instance global QueryClient
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      refetchOnWindowFocus: false, // biar gak refetch tiap pindah tab
-      retry: 1, // jumlah retry kalau gagal
-      staleTime: 1000 * 60, // cache valid 1 menit
+      staleTime: 1000 * 30,
+      gcTime: 1000 * 60 * 5,
+      refetchOnWindowFocus: false,
     },
   },
 });
 
+// import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+
+// Buat router data-based
+// const router = createBrowserRouter([
+//   {
+//     path: '*',
+//     element: <App />,
+//   },
+// ]);
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <Provider store={store}>
-    <PersistGate loading={null} persistor={persistor}>
+    <PersistGate loading={<Spinner />} persistor={persistor}>
       <SessionProvider>
-        <BrowserRouter>
+        <GlobalLoadingProvider>
+          {/* <BrowserRouter> */}
           <AuthProvider>
             <QueryClientProvider client={queryClient}>
-              <App />
+              <Suspense fallback={<Spinner />}>
+                <App />
+              </Suspense>
             </QueryClientProvider>
           </AuthProvider>
-        </BrowserRouter>
+          {/* </BrowserRouter> */}
+        </GlobalLoadingProvider>
       </SessionProvider>
     </PersistGate>
   </Provider>,

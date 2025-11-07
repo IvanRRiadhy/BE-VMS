@@ -52,7 +52,7 @@ import {
   UpdateEmployeeRequest,
 } from 'src/customs/api/models/Admin/Employee';
 import { Item } from 'src/customs/api/models/Admin/Employee';
-import { showSuccessAlert } from 'src/customs/components/alerts/alerts';
+import { showSuccessAlert, showSwal } from 'src/customs/components/alerts/alerts';
 const steps = ['Personal Info', 'Work Details', 'Access & Address', 'Other Details', 'Photo'];
 
 import { getStepSchema, stepFieldMap } from 'src/customs/api/validations/employeeSchemas';
@@ -207,7 +207,7 @@ const FormWizardAddEmployee = ({
     };
 
     fetchData();
-  }, [token, edittingId, isBatchEdit]); // 👈 perhatikan dependencynya
+  }, [token, edittingId, isBatchEdit]); 
 
   // Ambil subset field dari formData
   const pick = (obj: Record<string, any>, keys: readonly string[]) => {
@@ -400,8 +400,6 @@ const FormWizardAddEmployee = ({
         return;
       }
 
-      // Batch Edit Mode
-
       if (isBatchEdit && selectedRows.length > 0) {
         // ambil hanya keys yang aktif
         const enabledKeys = Object.keys(enabledFields ?? {}).filter(
@@ -458,8 +456,7 @@ const FormWizardAddEmployee = ({
           await updateEmployee(row.id, updatedData, token);
         }
 
-        setAlertType('success');
-        setAlertMessage('Batch update successfully!');
+        showSwal('success', 'Batch update successfully!', 2000);
         // showSuccessAlert('Batch update successfully!');
         resetEnabledFields();
         onSuccess?.();
@@ -469,7 +466,6 @@ const FormWizardAddEmployee = ({
       // NORMAL MODE (add/edit biasa)
       const mergedFormData = normalizeForSubmit({
         ...formData,
-        // qr_code: formData.card_number,
         faceimage: formData.faceimage,
         gender:
           typeof formData.gender === 'string'
@@ -523,73 +519,98 @@ const FormWizardAddEmployee = ({
             await uploadImageEmployee(edittingId, file, token);
           }
         }
-
-        setAlertType('success');
-        setAlertMessage('Employee successfully updated!');
+        showSwal('success', 'Employee successfully updated!', 3000);
       } else {
         await createEmployee(data, token);
         handleFileUploads();
-        setAlertType('success');
-        setAlertMessage('Employee successfully created!');
+        showSwal('success', 'Employee successfully created!', 3000);
         setFormData(CreateEmployeeRequestSchema.parse({}));
       }
-
-      localStorage.removeItem('unsavedEmployeeData');
       setTimeout(() => {
         onSuccess?.();
-      }, 900);
+      }, 600);
     } catch (err: any) {
       if (err?.errors) {
         setErrors(err.errors);
       }
-      setAlertType('error');
-      setAlertMessage('Something went wrong. Please try again later.');
-      setTimeout(() => {
-        setAlertType('info');
-        setAlertMessage('Complete the following data properly and correctly');
-      }, 3000);
+      showSwal('error', err?.message ?? 'Failed to submit. Please try again.', 2000);
     } finally {
       setTimeout(() => {
         setLoading(false);
-      }, 600);
+      }, 650);
     }
   };
 
   // Handle Upload Image
+  // const handleFileUploads = async () => {
+  //   if (fileInputRef.current && token) {
+  //     // const allSite = await getAllEmployeePagination(token, 0, 9999, 'id');
+  //     const allSite = await getAllEmployeePagination(token, 0, 9999, 'id');
+  //     const otherAllSite = await getAllEmployee(token);
+
+  //     const matchedSite = allSite.collection.find(
+  //       (employee: any) =>
+  //         employee.name === formData.name && employee.card_number === formData.card_number,
+  //     );
+
+  //     const otherMatchedSite = otherAllSite.collection.find(
+  //       (employee: any) =>
+  //         employee.name === formData.name && employee.card_number === formData.card_number,
+  //     );
+
+  //     // Upload manual (file input)
+  //     if ((matchedSite || otherMatchedSite) && siteImageFile) {
+  //       const id = matchedSite?.id || otherMatchedSite?.id!;
+  //       console.log('Upload via file input, employee id:', id);
+  //       await uploadImageEmployee(id, siteImageFile, token);
+  //     } else if ((matchedSite || otherMatchedSite) && formData.faceimage) {
+  //       const id = matchedSite?.id || otherMatchedSite?.id!;
+  //       console.log('Upload via webcam, employee id:', id);
+
+  //       const blob = await fetch(formData.faceimage).then((res) => res.blob());
+  //       const file = new File([blob], 'webcam.jpg', { type: 'image/jpeg' });
+
+  //       await uploadImageEmployee(id, file, token);
+  //     }
+
+  //     // Tidak ditemukan
+  //     else {
+  //       console.log('No matching site found or no image data');
+  //     }
+  //   }
+  // };
+
   const handleFileUploads = async () => {
-    if (fileInputRef.current && token) {
-      const allSite = await getAllEmployeePagination(token, 0, 9999, 'id');
-      const otherAllSite = await getAllEmployee(token);
+    if (fileInputRef.current && token && edittingId) {
+      try {
+        const siteById = await getEmployeeById(edittingId, token);
 
-      const matchedSite = allSite.collection.find(
-        (employee: any) =>
-          employee.name === formData.name && employee.card_number === formData.card_number,
-      );
+        if (!siteById) {
+          console.log('Employee not found');
+          return;
+        }
 
-      const otherMatchedSite = otherAllSite.collection.find(
-        (employee: any) =>
-          employee.name === formData.name && employee.card_number === formData.card_number,
-      );
+        // Upload via file input (manual)
+        if (siteImageFile) {
+          console.log('Upload via file input, employee id:', siteById.id);
+          await uploadImageEmployee(siteById.id, siteImageFile, token);
+        }
+        // Upload via webcam (base64)
+        else if (formData.faceimage) {
+          console.log('Upload via webcam, employee id:', siteById.id);
 
-      // Upload manual (file input)
-      if ((matchedSite || otherMatchedSite) && siteImageFile) {
-        const id = matchedSite?.id || otherMatchedSite?.id!;
-        console.log('Upload via file input, employee id:', id);
-        await uploadImageEmployee(id, siteImageFile, token);
-      } else if ((matchedSite || otherMatchedSite) && formData.faceimage) {
-        const id = matchedSite?.id || otherMatchedSite?.id!;
-        console.log('Upload via webcam, employee id:', id);
+          const blob = await fetch(formData.faceimage).then((res) => res.blob());
+          const file = new File([blob], 'webcam.jpg', { type: 'image/jpeg' });
 
-        const blob = await fetch(formData.faceimage).then((res) => res.blob());
-        const file = new File([blob], 'webcam.jpg', { type: 'image/jpeg' });
-
-        await uploadImageEmployee(id, file, token);
+          await uploadImageEmployee(siteById.id, file, token);
+        } else {
+          console.log('No image data found to upload');
+        }
+      } catch (error) {
+        console.error('Error during file upload:', error);
       }
-
-      // Tidak ditemukan
-      else {
-        console.log('No matching site found or no image data');
-      }
+    } else {
+      console.log('No token, no file input, or no edittingId provided');
     }
   };
 
@@ -638,9 +659,9 @@ const FormWizardAddEmployee = ({
       case 0:
         return (
           <Grid2 container spacing={2}>
-            <Grid2 size={{ xs: 12, sm: 12 }}>
+            {/* <Grid2 size={{ xs: 12, sm: 12 }}>
               <Alert severity="info">Complete the following data properly and correctly.</Alert>
-            </Grid2>
+            </Grid2> */}
             {/* Name */}
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1 }} htmlFor="name" required>
@@ -788,9 +809,9 @@ const FormWizardAddEmployee = ({
       case 1:
         return (
           <Grid2 container spacing={2}>
-            <Grid2 size={{ xs: 12, sm: 12 }}>
+            {/* <Grid2 size={{ xs: 12, sm: 12 }}>
               <Alert severity="info">Complete the following data properly and correctly.</Alert>
-            </Grid2>
+            </Grid2> */}
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1 }} htmlFor="phone">
                 <Typography variant="caption">Employee Phone</Typography>
@@ -1012,9 +1033,9 @@ const FormWizardAddEmployee = ({
       case 2:
         return (
           <Grid2 container spacing={2}>
-            <Grid2 size={{ xs: 12, sm: 12 }}>
+            {/* <Grid2 size={{ xs: 12, sm: 12 }}>
               <Alert severity="info">Complete the following data properly and correctly.</Alert>
-            </Grid2>
+            </Grid2> */}
             {/* Is Head */}
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <FormControlLabel
@@ -1241,9 +1262,9 @@ const FormWizardAddEmployee = ({
       case 3:
         return (
           <Grid2 container spacing={2}>
-            <Grid2 size={{ xs: 12, sm: 12 }}>
+            {/* <Grid2 size={{ xs: 12, sm: 12 }}>
               <Alert severity="info">Complete the following data properly and correctly.</Alert>
-            </Grid2>
+            </Grid2> */}
 
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1 }} htmlFor="dob" required>
@@ -1314,9 +1335,9 @@ const FormWizardAddEmployee = ({
       case 4:
         return (
           <Grid2 container spacing={2}>
-            <Grid2 size={{ xs: 12, sm: 12 }}>
+            {/* <Grid2 size={{ xs: 12, sm: 12 }}>
               <Alert severity={alertType}>{alertMessage}</Alert>
-            </Grid2>
+            </Grid2> */}
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <Paper sx={{ p: 3 }}>
                 <Box>

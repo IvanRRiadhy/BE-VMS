@@ -63,7 +63,7 @@ import { Item as AccessPassType } from 'src/customs/api/models/Admin/AccessPass'
 import QRCode from 'react-qr-code';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
-import VisitorStatusPieChart from './Components/charts/VisitorStatusPieChart';
+import VisitorStatusPieChart from 'src/customs/pages/Guest/Components/charts/VisitorStatusPieChart';
 import TopCard from './TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { t } from 'i18next';
@@ -348,11 +348,11 @@ const Dashboard = () => {
             />
           </Drawer>
         </Grid>
-        <Grid size={{ xs: 12, lg: 9 }}>
+        <Grid size={{ xs: 12, xl: 9 }}>
           <TopCard items={cards} size={{ xs: 12, lg: 6 }} />
         </Grid>
         <Grid
-          size={{ xs: 12, lg: 3 }}
+          size={{ xs: 12, xl: 3 }}
           sx={{
             display: 'flex',
             flexDirection: 'column',

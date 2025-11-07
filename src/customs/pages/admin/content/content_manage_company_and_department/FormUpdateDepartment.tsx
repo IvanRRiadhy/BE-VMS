@@ -13,8 +13,9 @@ import { Box } from '@mui/system';
 import React, { useEffect, useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import { updateDepartment, getAllEmployee } from 'src/customs/api/admin';
+import { updateDepartment, getAllEmployee, getVisitorEmployee } from 'src/customs/api/admin';
 import { Item, CreateDepartementSubmitSchema } from 'src/customs/api/models/Admin/Department';
+import { showSwal } from 'src/customs/components/alerts/alerts';
 import { useSession } from 'src/customs/contexts/SessionContext';
 
 interface FormUpdateDepartmentProps {
@@ -66,7 +67,7 @@ const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({
     if (!token) return;
     (async () => {
       try {
-        const res = await getAllEmployee(token);
+        const res = await getVisitorEmployee(token);
         setAllEmployees(res?.collection ?? []);
       } catch (err) {
         console.error('Failed to fetch employees', err);
@@ -160,11 +161,11 @@ const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({
 
     try {
       if (!token) {
-        setAlertType('error');
-        setAlertMessage('Something went wrong. Please try again later.');
+        showSwal('error', 'Something went wrong. Please try again later.');
         return;
       }
 
+      // 🟡 Batch Edit Mode
       if (isBatchEdit && selectedRows.length > 0) {
         const results = await Promise.allSettled(
           selectedRows
@@ -178,26 +179,35 @@ const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({
         );
 
         const failed = results.filter((r) => r.status === 'rejected');
+
+        // ✅ Tampilkan swal langsung
         if (failed.length) {
-          setAlertType('error');
-          setAlertMessage('Some departments failed to update.');
+          showSwal('error', 'Some departments failed to update.');
         } else {
-          setAlertType('success');
-          setAlertMessage('All departments updated successfully.');
-          onSuccess?.();
+          showSwal('success', 'All departments updated successfully.', 3000);
         }
+
+        setTimeout(() => {
+          onSuccess?.();
+        }, 600);
+
         return;
       }
 
+      // 🟢 Single Edit Mode
       if (data) {
         const payload = buildPayload(data);
         const parsed = validateSingle();
         if (!parsed) return;
+
         await updateDepartment(data.id, parsed, token);
 
-        setAlertType('success');
-        setAlertMessage('Department updated successfully.');
-        onSuccess?.();
+        // ✅ Swal langsung tampil
+        showSwal('success', 'Department updated successfully.', 3000);
+
+        setTimeout(() => {
+          onSuccess?.();
+        }, 600);
       }
     } catch (err: any) {
       const be = err?.response?.data?.errors;
@@ -208,26 +218,25 @@ const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({
           host: be.Host?.[0] ?? '',
         });
       }
-      setAlertType('error');
-      setAlertMessage('Something went wrong. Please try again later.');
+
+      // 🔥 Error swal langsung muncul
+      showSwal('error', 'Failed to update department.');
     } finally {
+      // ⏳ Pastikan backdrop dimatikan
       setTimeout(() => {
         setLoading(false);
-      }, 600);
+      }, 500);
     }
   };
-
   return (
     <>
       <form onSubmit={handleSubmit}>
-        <Grid2 size={{ xs: 12, sm: 12 }}>
+        {/* <Grid2 size={{ xs: 12, sm: 12 }}>
           <Alert severity={alertType}>{alertMessage}</Alert>
-        </Grid2>
-
-        {/* NAME */}
+        </Grid2> */}
         <Box display="flex" alignItems="center" justifyContent="space-between">
           <CustomFormLabel htmlFor="name" sx={{ marginY: 1 }}>
-            <Typography variant="caption">Department Name</Typography>
+            <Typography variant="body1">Department Name</Typography>
           </CustomFormLabel>
           {isBatchEdit && (
             <FormControlLabel
@@ -260,10 +269,9 @@ const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({
           disabled={isBatchEdit && !enabledFields?.name}
         />
 
-        {/* CODE */}
         <Box display="flex" alignItems="center" justifyContent="space-between">
           <CustomFormLabel htmlFor="code" sx={{ marginY: 1 }}>
-            <Typography variant="caption">Department Code</Typography>
+            <Typography variant="body1">Department Code</Typography>
           </CustomFormLabel>
           {isBatchEdit && (
             <FormControlLabel
@@ -296,10 +304,9 @@ const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({
           disabled={isBatchEdit && !enabledFields?.code}
         />
 
-        {/* HOST */}
         <Box display="flex" alignItems="center" justifyContent="space-between">
           <CustomFormLabel htmlFor="host" sx={{ marginY: 1 }}>
-            <Typography variant="caption">Head of Department</Typography>
+            <Typography variant="body1">Head of Department</Typography>
           </CustomFormLabel>
           {isBatchEdit && (
             <FormControlLabel
@@ -323,7 +330,7 @@ const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({
         </Box>
         <Autocomplete
           autoHighlight
-          disablePortal
+          disablePortal={false}
           options={empOptions}
           filterOptions={(x) => x}
           getOptionLabel={(option) => (typeof option === 'string' ? option : option.label)}

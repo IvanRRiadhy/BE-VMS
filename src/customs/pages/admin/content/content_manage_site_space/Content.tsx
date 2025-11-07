@@ -26,6 +26,7 @@ import {
   showConfirmDelete,
   showSuccessAlert,
   showErrorAlert,
+  showSwal,
 } from 'src/customs/components/alerts/alerts';
 import FilterMoreContent from './FilterMoreContent';
 
@@ -69,6 +70,7 @@ const Content = () => {
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [sortDir, setSortDir] = useState<string>('desc');
 
   const [openFormCreateSiteSpace, setOpenFormCreateSiteSpace] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -156,7 +158,6 @@ const Content = () => {
   useEffect(() => {
     if (!token) return;
     const fetchData = async () => {
-      console.log('Fetching data...');
       setLoading(true);
       try {
         const start = page * rowsPerPage;
@@ -164,6 +165,7 @@ const Content = () => {
           token,
           start,
           rowsPerPage,
+          sortDir,
           sortColumn,
           searchKeyword,
           appliedType !== -1 ? appliedType : undefined,
@@ -183,10 +185,10 @@ const Content = () => {
           image: item.image || '',
         }));
 
-        if (rows) {
+        // if (rows) {
           setTableRowSite(rows);
-          setIsDataReady(true);
-        }
+          // setIsDataReady(true);
+        // }
       } catch (error) {
         console.error('Fetch error:', error);
       } finally {
@@ -334,7 +336,7 @@ const Content = () => {
 
     const confirm = await showConfirmDelete(
       'Are you sure you want to delete this site space?',
-      "You won't be able to revert this!",
+      "",
     );
 
     if (confirm) {
@@ -342,13 +344,15 @@ const Content = () => {
       try {
         await deleteSiteSpace(id, token);
         setRefreshTrigger((prev) => prev + 1);
-        showSuccessAlert('Deleted!', 'Site space has been deleted.');
+        // showSuccessAlert('Deleted!', 'Site space has been deleted.');
+        showSwal('success', 'Site space has been deleted.');
       } catch (error) {
-        console.error(error);
+        // console.error(error);
         showErrorAlert('Failed!', 'Failed to delete site space.');
+        showSwal('error', 'Failed to delete site space.');
         setTimeout(() => setLoading(false), 500);
       } finally {
-        setTimeout(() => setLoading(false), 500);
+        setTimeout(() => setLoading(false), 600);
       }
     }
   };
@@ -358,8 +362,8 @@ const Content = () => {
     if (!token || rows.length === 0) return;
 
     const confirmed = await showConfirmDelete(
-      `Are you sure to delete ${rows.length} items?`,
-      "You won't be able to revert this!",
+      `Are you sure to delete ${rows.length} site space?`,
+      "",
     );
 
     if (confirmed) {
@@ -368,11 +372,13 @@ const Content = () => {
         await Promise.all(rows.map((row) => deleteSiteSpace(row.id, token)));
         setRefreshTrigger((prev) => prev + 1);
         setSelectedRows([]); // <<< Reset setelah delete
-        showSuccessAlert('Deleted!', `${rows.length} items have been deleted.`);
+        // showSuccessAlert('Deleted!', `${rows.length} items have been deleted.`);
+        showSwal('success', `${rows.length} site space have been deleted.`);
         setSelectedRows([]); // reset selected rows
       } catch (error) {
         console.error(error);
-        showErrorAlert('Error!', 'Failed to delete some items.');
+        // showErrorAlert('Error!', 'Failed to delete some items.');
+        showSwal('error', 'Failed to delete some items.');
       } finally {
         setLoading(false);
       }
@@ -448,66 +454,67 @@ const Content = () => {
             </Grid>
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
-              {isDataReady ? (
-                <DynamicTable
-                  isHavePagination={true}
-                  totalCount={totalFilteredRecords}
-                  defaultRowsPerPage={rowsPerPage}
-                  isHaveImage={true}
-                  rowsPerPageOptions={[5, 10, 20, 50, 100]}
-                  onPaginationChange={(page, rowsPerPage) => {
-                    setPage(page);
-                    setRowsPerPage(rowsPerPage);
-                  }}
-                  overflowX={'auto'}
-                  data={tableRowSite}
-                  selectedRows={selectedRows}
-                  isHaveChecked={true}
-                  isHaveAction={true}
-                  isHaveSearch={true}
-                  isHaveFilter={false}
-                  isHaveExportPdf={false}
-                  isHaveExportXlf={false}
-                  isHaveFilterDuration={false}
-                  isHaveAddData={true}
-                  isHaveHeader={false}
-                  isSiteSpaceType
-                  onCheckedChange={(selected) => {
-                    const fullSelectedItems = tableData.filter((item) =>
-                      selected.some((row: SiteTableRow) => row.id === item.id),
-                    );
-                    setSelectedRows(fullSelectedItems);
-                  }}
-                  onEdit={(row) => {
-                    handleEdit(row.id);
-                    setEdittingId(row.id);
-                  }}
-                  isHaveFilterMore={true}
-                  filterMoreContent={
-                    <FilterMoreContent
-                      filters={filters}
-                      setFilters={setFilters}
-                      onApplyFilter={handleApplyFilter}
-                    />
-                  }
-                  onBatchEdit={handleBatchEdit}
-                  onDelete={(row) => handleDelete(row.id)}
-                  onBatchDelete={handleBatchDelete}
-                  onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-                  onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
-                  onAddData={() => {
-                    handleAdd();
-                  }}
-                  sortColumns={['name']}
-                  onFilterByColumn={(column) => setSortColumn(column.column)}
-                />
-              ) : (
+              {/* {isDataReady ? ( */}
+              <DynamicTable
+                loading={loading}
+                isHavePagination={true}
+                totalCount={totalFilteredRecords}
+                defaultRowsPerPage={rowsPerPage}
+                isHaveImage={true}
+                rowsPerPageOptions={[5, 10, 20, 50, 100]}
+                onPaginationChange={(page, rowsPerPage) => {
+                  setPage(page);
+                  setRowsPerPage(rowsPerPage);
+                }}
+                overflowX={'auto'}
+                data={tableRowSite}
+                selectedRows={selectedRows}
+                isHaveChecked={true}
+                isHaveAction={true}
+                isHaveSearch={true}
+                isHaveFilter={false}
+                isHaveExportPdf={false}
+                isHaveExportXlf={false}
+                isHaveFilterDuration={false}
+                isHaveAddData={true}
+                isHaveHeader={false}
+                isSiteSpaceType
+                onCheckedChange={(selected) => {
+                  const fullSelectedItems = tableData.filter((item) =>
+                    selected.some((row: SiteTableRow) => row.id === item.id),
+                  );
+                  setSelectedRows(fullSelectedItems);
+                }}
+                onEdit={(row) => {
+                  handleEdit(row.id);
+                  setEdittingId(row.id);
+                }}
+                isHaveFilterMore={true}
+                filterMoreContent={
+                  <FilterMoreContent
+                    filters={filters}
+                    setFilters={setFilters}
+                    onApplyFilter={handleApplyFilter}
+                  />
+                }
+                onBatchEdit={handleBatchEdit}
+                onDelete={(row) => handleDelete(row.id)}
+                onBatchDelete={handleBatchDelete}
+                onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
+                onAddData={() => {
+                  handleAdd();
+                }}
+                sortColumns={['name']}
+                onFilterByColumn={(column) => setSortColumn(column.column)}
+              />
+              {/* ) : (
                 <Card sx={{ width: '100%' }}>
                   <Skeleton />
                   <Skeleton animation="wave" />
                   <Skeleton animation={false} />
                 </Card>
-              )}
+              )} */}
             </Grid>
           </Grid>
         </Box>

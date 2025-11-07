@@ -46,6 +46,7 @@ import {
   RadioGroup,
   Radio,
   Chip,
+  Tooltip,
 } from '@mui/material';
 import { Box, useMediaQuery, useTheme, width } from '@mui/system';
 import moment from 'moment-timezone';
@@ -60,6 +61,7 @@ import {
   IconCards,
   IconCheck,
   IconCheckupList,
+  IconClipboard,
   IconClock,
   IconCreditCard,
   IconForbid2,
@@ -75,10 +77,7 @@ import {
   IconPhone,
   IconQrcode,
   IconSearch,
-  IconSend,
   IconTicket,
-  IconTimeDuration0,
-  IconTrash,
   IconUser,
   IconUserCheck,
   IconUsersGroup,
@@ -109,15 +108,19 @@ import {
 } from 'src/customs/api/operator';
 import { BASE_URL, axiosInstance2 } from 'src/customs/api/interceptor';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import LprImage from '../../../assets/images/products/pic_lpr.png';
-import FRImage from '../../../assets/images/products/pic_fr.png';
+import LprImage from 'src/assets/images/products/pic_lpr.png';
+import FRImage from 'src/assets/images/products/pic_fr.png';
 import SearchVisitorDialog from './Dialog/SearchVisitorDialog';
 import DetailVisitorDialog from './Dialog/DetailVisitorDialog';
 import Swal from 'sweetalert2';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
-import { Check } from '@mui/icons-material';
 import { getDetailInvitationForm } from 'src/customs/api/visitor';
-import { FormVisitor, SectionPageVisitor } from 'src/customs/api/models/Admin/Visitor';
+import {
+  CreateVisitorRequest,
+  CreateVisitorRequestSchema,
+  FormVisitor,
+  SectionPageVisitor,
+} from 'src/customs/api/models/Admin/Visitor';
 // import CameraUpload from 'src/customs/components/camera/CameraUpload';
 import { DateTimePicker, LocalizationProvider, renderTimeViewClock } from '@mui/x-date-pickers';
 import dayjs, { Dayjs, tz } from 'dayjs';
@@ -128,12 +131,16 @@ import advancedFormat from 'dayjs/plugin/advancedFormat';
 import utc from 'dayjs/plugin/utc';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import HistoryDialog from './Dialog/HistoryDialog';
-import { getVisitorEmployee, updateExtend } from 'src/customs/api/admin';
+import { getAllSite, getRegisteredSite, getVisitorEmployee, updateExtend } from 'src/customs/api/admin';
 import Webcam from 'react-webcam';
 import FormDialogInvitation from '../Employee/FormDialogInvitation';
 import FormDialogPraregist from './Dialog/FormDialogPraregist';
 import CameraUpload from './Components/CameraUpload';
-import { id, is } from 'date-fns/locale';
+import { showSwal } from 'src/customs/components/alerts/alerts';
+import FormWizardAddVisitor from './Invitation/FormWizardAddVisitor';
+import FormWizardAddInvitation from './Invitation/FormWizardAddInvitation';
+import ScanQrVisitorDialog from './Dialog/ScanQrVisitorDialog';
+import { json } from 'stream/consumers';
 dayjs.extend(utc);
 dayjs.extend(weekday);
 dayjs.extend(localizedFormat);
@@ -163,6 +170,8 @@ const OperatorView = () => {
   }));
 
   const [invitationCode, setInvitationCode] = useState<any[]>([]);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const [open, setOpen] = useState(false);
   const [tabValue, setTabValue] = useState(0);
   const [qrValue, setQrValue] = useState('');
@@ -170,13 +179,16 @@ const OperatorView = () => {
   const [hasDecoded, setHasDecoded] = useState(false);
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
   const [torchOn, setTorchOn] = useState(false);
+  const [wizardKey, setWizardKey] = useState(0);
   const scanContainerRef = useRef<HTMLDivElement | null>(null);
+
   const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [scannerKey, setScannerKey] = useState(0);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMsg, setSnackbarMsg] = useState('');
   const [snackbarType, setSnackbarType] = useState<'success' | 'error' | 'info'>('info');
+  const [openInvitationVisitor, setOpenInvitationVisitor] = useState(false);
   const [permissionAccess, setPermissionAccess] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [openDetailSearching, setOpenDetailSearching] = useState(false);
@@ -194,10 +206,11 @@ const OperatorView = () => {
   const [selectedVisitors, setSelectedVisitors] = useState<string[]>([]);
   const [selectedInvitationId, setSelectedInvitationId] = useState<string | null>(null);
   const [bulkAction, setBulkAction] = useState('');
-  const [removing, setRemoving] = React.useState<Record<string, boolean>>({});
+  const [openPreRegistration, setOpenPreRegistration] = useState(false);
+  const [removing, setRemoving] = useState<Record<string, boolean>>({});
   const [inputValues, setInputValues] = useState<{ [key: number]: string }>({});
   const [uploadNames, setUploadNames] = useState<Record<string, string>>({});
-  const [activeStep, setActiveStep] = React.useState(0);
+  const [activeStep, setActiveStep] = useState(0);
   const [previews, setPreviews] = useState<Record<string, string | null>>({});
   const [uploadMethods, setUploadMethods] = useState<Record<string, 'file' | 'camera'>>({});
   const [allVisitorEmployee, setAllVisitorEmployee] = useState<any[]>([]);
@@ -211,6 +224,29 @@ const OperatorView = () => {
   const [openExtendVisit, setOpenExtendVisit] = useState(false);
   const durationOptions = [15, 30, 45, 60, 90, 120, 150, 180];
   const [extendedEndTime, setExtendedEndTime] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [openFillForm, setOpenFillForm] = useState(false);
+  const [fillFormData, setFillFormData] = useState<any[]>([]);
+  const [fillFormActiveStep, setFillFormActiveStep] = useState(0);
+  const [fillFormGroupedPages, setFillFormGroupedPages] = useState<any>({});
+  const [fillFormDataVisitor, setFillFormDataVisitor] = useState<any[]>([]);
+  const [dataVisitor, setDataVisitor] = useState<{ question_page: SectionPageVisitor[] }[]>([]);
+  const [selectedSite, setSelectedSite] = useState<any | null>(null);
+  const [flowTarget, setFlowTarget] = useState<'invitation' | 'preReg' | null>(null);
+  const [siteData, setSiteData] = useState<any[]>([]);
+  const [accessDialogOpen, setAccessDialogOpen] = useState(false);
+  const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorRequest>(() => {
+    const saved = localStorage.getItem('unsavedVisitorData');
+    return saved ? JSON.parse(saved) : CreateVisitorRequestSchema.parse({});
+  });
+
+  const [dialogContainer, setDialogContainer] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (containerRef.current) {
+      setDialogContainer(containerRef.current);
+    }
+  }, [containerRef.current]);
 
   const handleExtend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -273,6 +309,16 @@ const OperatorView = () => {
     }
   };
 
+  const handleSuccess = () => {
+    setSelectedSite(null);
+    setFormDataAddVisitor((prev: any) => ({
+      ...prev,
+      registered_site: '', // reset registered site
+    }));
+    // setRefreshTrigger((prev) => prev + 1);
+    handleCloseDialog();
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       const res = await getVisitorEmployee(token as string);
@@ -280,6 +326,14 @@ const OperatorView = () => {
     };
     fetchData();
   }, [token]);
+
+  const [tableKey, setTableKey] = useState(0);
+  const [nextDialogOpen, setNextDialogOpen] = useState(false);
+  const handleCloseGrantDialog = () => {
+    setNextDialogOpen(false);
+    setSelectedInvitations([]);
+    setSelectedCards([]);
+  };
 
   const [relatedVisitors, setRelatedVisitors] = useState<
     {
@@ -304,9 +358,6 @@ const OperatorView = () => {
       is_block: boolean;
     }[]
   >([]);
-  // Tambahkan di atas (bersama useState lain)
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -358,6 +409,9 @@ const OperatorView = () => {
       setPreviews((prev) => ({ ...prev, [trackKey]: URL.createObjectURL(file) }));
     }
 
+    // console.log('🟢 Before uploadNames:', uploadNames);
+    // console.log('🟢 Set uploadNames for key', trackKey, '->', file.name);
+
     const path = await uploadFileToCDN(file);
     if (path) setAnswerFile(path);
     // reset input agar bisa pilih file yg sama lagi
@@ -384,6 +438,16 @@ const OperatorView = () => {
     }
   };
 
+  const handleCloseDialog = () => {
+    localStorage.removeItem('unsavedVisitorData');
+    setSelectedSite(null);
+    // setOpenDialog(false);
+    setFormDataAddVisitor(CreateVisitorRequestSchema.parse({}));
+    setOpenInvitationVisitor(false);
+    setOpenPreRegistration(false);
+    setOpenDialogIndex(null);
+  };
+
   const handleCloseScanQR = () => {
     try {
       const video = scanContainerRef.current?.querySelector('video') as HTMLVideoElement | null;
@@ -402,7 +466,6 @@ const OperatorView = () => {
     setQrValue('');
     setOpenDialogIndex(null);
   };
-  useEffect(() => {}, [token]);
 
   const resetSelections = () => {
     // setSelectedInvitations([]);
@@ -411,6 +474,14 @@ const OperatorView = () => {
   };
 
   const [selectedInvitations, setSelectedInvitations] = useState<any[]>([]);
+
+  const handleSelectInvitation = (payload: Row[]) => {
+    console.group('onCheckedChange');
+    console.log('raw payload (rows):', payload);
+    console.groupEnd();
+
+    setSelectedInvitations(payload); // langsung array of row
+  };
 
   const handleCloseChooseCard = () => {
     setOpenChooseCardDialog(false);
@@ -448,55 +519,6 @@ const OperatorView = () => {
   };
 
   useEffect(() => {
-    // Pastikan socket hanya dibuat sekali
-    const socket = new WebSocket('ws://localhost:16574/ws');
-
-    socket.onopen = () => {
-      console.log('✅ WebSocket connected');
-    };
-
-    socket.onerror = (err) => {
-      console.error('❌ WebSocket error:', err);
-    };
-
-    socket.onmessage = (event) => {
-      try {
-        // Parse JSON
-        const msg = JSON.parse(event.data);
-        console.log('💬 Console client:', msg);
-
-        // Cek tipe data dari server
-        if (msg?.type === 'serial' && msg?.message) {
-          const value = msg.message.toString().trim();
-          console.log('📩 QR Value from socket:', value);
-
-          // 🔥 Update ke state qrValue
-          setQrValue(value);
-          setLoadingAccess(true);
-          // 🔥 Panggil handler QR langsung
-          handleSubmitQRCode(value);
-
-          // 🔥 Langsung buka detail QR dialog
-          // setOpenDetailQRCode(true);
-        }
-      } catch (err) {
-        console.error('⚠️ Failed to parse WebSocket message:', event.data, err);
-      } finally {
-        setTimeout(() => setLoadingAccess(false), 600);
-      }
-    };
-
-    socket.onclose = () => {
-      console.warn('🔌 WebSocket disconnected');
-    };
-
-    // cleanup saat komponen unmount
-    return () => {
-      socket.close();
-    };
-  }, [token]);
-
-  useEffect(() => {
     const fetchDataPermission = async () => {
       try {
         const res = await getPermissionOperator(token as string);
@@ -517,8 +539,20 @@ const OperatorView = () => {
         console.error(e);
       }
     };
+
+    if (openChooseCardDialog) {
+      fetchData(); // ✅ refresh setiap kali dialog dibuka
+    }
+  }, [token, openChooseCardDialog]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const response = await getRegisteredSite(token as string);
+      // const response = await getAllSite(token as string);
+      setSiteData(response.collection);
+    };
     fetchData();
-  }, [token]);
+  }, []);
 
   const fetchAvailableCards = async () => {
     const res = await getAvailableCardOperator(token as string);
@@ -531,18 +565,6 @@ const OperatorView = () => {
       .toLowerCase()
       .includes(searchTerm.toLowerCase()),
   );
-
-  // const handleToggleCard = (cardNumber: string) => {
-  //   setSelectedCards((prev) => {
-  //     const normalized = String(cardNumber);
-
-  //     // 🔵 SINGLE MODE → hanya satu yang aktif
-  //     if (prev.includes(normalized)) {
-  //       return [];
-  //     }
-  //     return [normalized];
-  //   });
-  // };
 
   const handleToggleCard = (cardNumber: string) => {
     setSelectedCards((prev) => {
@@ -581,12 +603,25 @@ const OperatorView = () => {
       const invitation = data[0];
       const invitationId = invitation.id;
 
-      await fetchRelatedVisitorsByInvitationId(invitationId);
       setInvitationCode(data);
       setVisitorStatus(data[0]?.visitor_status ?? null);
       setSelectedVisitorNumber(data[0]?.visitor_number ?? null);
       setScannedVisitorNumber(data[0]?.visitor_number ?? null);
+
+      await fetchRelatedVisitorsByInvitationId(invitationId);
+
+      setInvitationCode((prev) =>
+        prev.map((inv) => {
+          if (inv.id?.toLowerCase() !== invitationId.toLowerCase()) return inv;
+          const matchedVisitor = relatedVisitors.find(
+            (v) => v.id?.toLowerCase() === invitationId.toLowerCase(),
+          );
+          return matchedVisitor ? { ...inv, card: matchedVisitor.card ?? [] } : inv;
+        }),
+      );
+
       const accessList = Array.isArray(invitation.access) ? invitation.access : [invitation.access];
+      // console.log('🧩 accessList:', accessList);
 
       const filteredAccess = accessList.filter((a: any) =>
         permissionAccess.some((p: any) => p.access_control_id === a.access_control_id),
@@ -608,24 +643,26 @@ const OperatorView = () => {
         };
       });
 
-      console.log('🧩 mergedAccess:', mergedAccess);
-      setAccessData(mergedAccess);
-      // if (invitation?.id) {
-      //   setSelectedVisitors((prev) => {
-      //     if (!prev.includes(invitation.id)) {
-      //       const updated = [...prev, invitation.id];
-      //       return updated;
-      //     }
-      //     return prev;
-      //   });
-      // }
+      // console.log('🧩 mergedAccess:', mergedAccess);
+      setAccessData([...mergedAccess]);
+      if (invitation?.id) {
+        setSelectedVisitors((prev) => {
+          if (!prev.includes(invitation.id)) {
+            const updated = [...prev, invitation.id];
+            return updated;
+          }
+          return prev;
+        });
+      }
       handleCloseScanQR();
 
-      setSnackbarMsg('Code scanned successfully.');
-      setSnackbarType('success');
-      setSnackbarOpen(true);
+      showSwal('success', 'Code scanned successfully.', 3000);
+
+      // setSnackbarMsg('Code scanned successfully.');
+      // setSnackbarType('success');
+      // setSnackbarOpen(true);
     } catch (e) {
-      console.error('Error fetching invitation code:', e);
+      // console.error('Error fetching invitation code:', e);
       setSnackbarMsg('Your code does not exist.');
       setSnackbarType('error');
       setSnackbarOpen(true);
@@ -674,7 +711,12 @@ const OperatorView = () => {
 
     setInvitationCode((prev) =>
       prev.map((inv) => {
-        const updatedVisitor = mappedVisitors.find((v: any) => v.id === inv.id);
+        const updatedVisitor = mappedVisitors.find(
+          (v: any) =>
+            v.id?.toLowerCase() === inv.id?.toLowerCase() ||
+            v.trx_visitor_id?.toLowerCase?.() === inv.id?.toLowerCase(),
+        );
+
         if (!updatedVisitor) return inv;
 
         return {
@@ -707,19 +749,8 @@ const OperatorView = () => {
       })),
     );
 
-    console.log('🧩 allAccessData from related visitors:', allAccess);
+    // console.log('🧩 allAccessData from related visitors:', allAccess);
     setAllAccessData(allAccess);
-
-    // console.log(
-    //   '🧾 Full allAccessData (debug):',
-    //   allAccess.map((a: any) => ({
-    //     trx_visitor_id: a.trx_visitor_id,
-    //     access_control_id: a.access_control_id,
-    //     access_control_name: a.access_control_name,
-    //     visitor_give_access: a.visitor_give_access,
-    //   })),
-    // );
-
     // Set visitor pertama sebagai default
     if (relatedData.length > 0) {
       const firstVisitorId = relatedData[0].id?.toLowerCase();
@@ -761,7 +792,14 @@ const OperatorView = () => {
     assigned_card_remarks?: string | null;
   };
 
+  const [searchKeyword, setSearchKeyword] = useState('');
+
   const [rows, setRows] = useState<Row[]>([]);
+
+  const filteredRows = useMemo(() => {
+    if (!searchKeyword) return rows;
+    return rows.filter((r) => r.visitor?.toLowerCase().includes(searchKeyword.toLowerCase()));
+  }, [rows, searchKeyword]);
 
   const assignedByCard = useMemo(() => {
     const m = new Map<string, string | number>();
@@ -807,12 +845,12 @@ const OperatorView = () => {
         return;
       }
 
-      if (!selectedVisitors.length) {
-        setSnackbarMsg('No visitor selected.');
-        setSnackbarType('info');
-        setSnackbarOpen(true);
-        return;
-      }
+      // if (!selectedVisitors.length) {
+      //   setSnackbarMsg('No visitor selected.');
+      //   setSnackbarType('info');
+      //   setSnackbarOpen(true);
+      //   return;
+      // }
 
       setLoadingAccess(true);
 
@@ -852,31 +890,71 @@ const OperatorView = () => {
 
         response = await createMultipleGrantAccess(token as string, { data: dataPayload });
       } else {
-        // 🧍 Single visitor
-        for (const visitorId of selectedVisitors) {
-          const visitor = relatedVisitors.find(
-            (v) => v.id?.toLowerCase() === visitorId.toLowerCase(),
-          );
-          if (!visitor) continue;
+        // // 🧍 Single visitor
+        // for (const visitorId of selectedVisitors) {
+        //   const visitor = relatedVisitors.find(
+        //     (v) => v.id?.toLowerCase() === visitorId.toLowerCase(),
+        //   );
+        //   if (!visitor) continue;
 
-          if (visitor.card && visitor.card.length > 0) {
-            alreadyHasCard.push(visitor.name || visitorId);
-            continue;
-          }
+        //   if (visitor.card && visitor.card.length > 0) {
+        //     alreadyHasCard.push(visitor.name || visitorId);
+        //     continue;
+        //   }
 
+        //   for (const cardNumber of selectedCards) {
+        //     // await createGrandAccessOperator(token as string, {
+        //     //   card_number: String(cardNumber),
+        //     //   trx_visitor_id: visitorId,
+        //     // });
+        //     const payload = {
+        //       card_number: String(cardNumber),
+        //       trx_visitor_id: visitorId,
+        //     };
+
+        //     // console.log('Grant Access', JSON.stringify(payload, null, 2));
+
+        //     response = await createGrandAccessOperator(token as string, payload);
+        //     console.log('response : ',JSON.stringify(response, null , 2));
+        //   }
+
+        //   successAssigned.push(visitor.name || visitorId);
+        // }
+
+        // 🧍 Single visitor (selected OR scanned)
+        const visitorId = invitationCode[0]?.id;
+
+        if (!visitorId) {
+          setSnackbarMsg('No visitor found to assign card.');
+          setSnackbarType('info');
+          setSnackbarOpen(true);
+          setLoadingAccess(false);
+          return;
+        }
+
+        const visitor = relatedVisitors.find(
+          (v) => v.id?.toLowerCase() === visitorId.toLowerCase(),
+        );
+
+        if (!visitor) {
+          setSnackbarMsg('Visitor not found.');
+          setSnackbarType('error');
+          setSnackbarOpen(true);
+          setLoadingAccess(false);
+          return;
+        }
+
+        if (visitor.card && visitor.card.length > 0) {
+          alreadyHasCard.push(visitor.name || visitorId);
+        } else {
           for (const cardNumber of selectedCards) {
-            // await createGrandAccessOperator(token as string, {
-            //   card_number: String(cardNumber),
-            //   trx_visitor_id: visitorId,
-            // });
             const payload = {
               card_number: String(cardNumber),
               trx_visitor_id: visitorId,
             };
 
-            console.log('Grant Access', JSON.stringify(payload, null, 2));
-
             response = await createGrandAccessOperator(token as string, payload);
+            // console.log('response:', JSON.stringify(response, null, 2));
           }
 
           successAssigned.push(visitor.name || visitorId);
@@ -891,35 +969,30 @@ const OperatorView = () => {
 
       await fetchAvailableCards();
 
-      if (response?.collection && response.collection.length > 0) {
-        const messages = response.collection.map((item: any) => item.message).join(', ');
-        setSnackbarMsg(`⚠️ ${messages}`);
-        setSnackbarType('error');
-        setSnackbarOpen(true);
-        setLoadingAccess(false);
-        return;
-      }
-
-      // const uniqueAssigned = Array.from(new Set(successAssigned));
-      // const uniqueSkipped = Array.from(new Set(alreadyHasCard));
-
-      // // 🧾 Pesan akhir
-      // let message = '';
-      // if (uniqueAssigned.length > 0) {
-      //   message += `Successfully Assigned ${selectedCards.length} card to:\n`;
-      //   message += uniqueAssigned.map((v) => `- ${v}`).join('\n');
+      // if (response?.collection && response.collection.length > 0) {
+      //   const messages = response.collection.map((item: any) => item.message).join(', ');
+      //   setSnackbarMsg(`⚠️ ${messages}`);
+      //   setSnackbarType('error');
+      //   setSnackbarOpen(true);
+      //   setLoadingAccess(false);
+      //   return;
       // }
 
-      // if (uniqueSkipped.length > 0) {
-      //   message +=
-      //     (message ? '\n\n' : '') +
-      //     `Skipped (already has a card):\n` +
-      //     uniqueSkipped.map((v) => `- ${v}`).join('\n');
-      // }
+      // setInvitationCode((prev) => {
+      //   if (!prev || prev.length === 0) return prev;
 
-      // setSnackbarMsg(message || 'No card assigned.');
-      // setSnackbarType(uniqueAssigned.length > 0 ? 'success' : 'info');
-      // setSnackbarOpen(true);
+      //   const updated = { ...prev[0] };
+
+      //   // Jika belum ada card array, buat baru
+      //   updated.card = [
+      //     ...(updated.card || []),
+      //     ...selectedCards.map((num) => ({
+      //       card_number: String(num),
+      //     })),
+      //   ];
+
+      //   return [updated];
+      // });
 
       // handleCloseChooseCard();
       const uniqueAssigned = Array.from(new Set(successAssigned));
@@ -928,14 +1001,37 @@ const OperatorView = () => {
       // 🧾 Build final message
       let message = '';
 
+      // if (uniqueAssigned.length > 0) {
+      //   message += `Successfully assigned ${uniqueAssigned.length} card(s):\n`;
+      //   message += selectedVisitors
+      //     .map((visitorId, idx) => {
+      //       const visitor = relatedVisitors.find(
+      //         (v) => v.id?.toLowerCase() === visitorId.toLowerCase(),
+      //       );
+      //       const cardNumber = selectedCards[idx] || '-';
+      //       if (visitor && !alreadyHasCard.includes(visitor.name || visitorId)) {
+      //         return `• ${visitor.name || visitorId} - (Card: ${cardNumber})`;
+      //       }
+      //       return null;
+      //     })
+      //     .filter(Boolean)
+      //     .join('\n');
+      // }
+
       if (uniqueAssigned.length > 0) {
-        message += `✅ Successfully assigned ${uniqueAssigned.length} card(s):\n`;
-        message += selectedVisitors
+        message += `Successfully assigned ${uniqueAssigned.length} card(s):\n`;
+
+        // 🧩 Fallback kalau selectedVisitors kosong → pakai invitationCode
+        const visitorListForMessage =
+          selectedVisitors.length > 0 ? selectedVisitors : invitationCode?.map((i) => i.id) || [];
+
+        message += visitorListForMessage
           .map((visitorId, idx) => {
             const visitor = relatedVisitors.find(
-              (v) => v.id?.toLowerCase() === visitorId.toLowerCase(),
+              (v) => v.id?.toLowerCase() === visitorId?.toLowerCase(),
             );
-            const cardNumber = selectedCards[idx] || '-';
+            const cardNumber = selectedCards[idx] || selectedCards[0] || '-';
+
             if (visitor && !alreadyHasCard.includes(visitor.name || visitorId)) {
               return `• ${visitor.name || visitorId} - (Card: ${cardNumber})`;
             }
@@ -958,9 +1054,28 @@ const OperatorView = () => {
       }
 
       // Show Snackbar
-      setSnackbarMsg(message);
-      setSnackbarType(uniqueAssigned.length > 0 ? 'success' : 'info');
-      setSnackbarOpen(true);
+      showSwal('success', message);
+      // setSnackbarMsg(message);
+      // setSnackbarType(uniqueAssigned.length > 0 ? 'success' : 'info');
+      // setSnackbarOpen(true);
+
+      setInvitationCode((prev) => {
+        if (!prev || prev.length === 0) return prev;
+
+        return prev.map((inv) =>
+          selectedVisitors.some((vId) => vId.toLowerCase() === inv.id?.toLowerCase())
+            ? {
+                ...inv,
+                card: [
+                  {
+                    ...(inv.card?.[0] || {}),
+                    card_number: selectedCards[0],
+                  },
+                ],
+              }
+            : inv,
+        );
+      });
 
       handleCloseChooseCard();
     } catch (err) {
@@ -973,33 +1088,22 @@ const OperatorView = () => {
     }
   };
   const handleClearAll = () => {
-    // Reset input & search
     setQrValue('');
     setSearch('');
     setQrMode('manual');
     setHasDecoded(false);
-
-    // Reset hasil visitor
     setInvitationCode([]);
     setRelatedVisitors([]);
-
-    // Reset dialog & tab
     setOpen(false);
     setOpenDialogIndex(null);
     setOpenDetailSearching(false);
     setTabValue(0);
-
-    // Reset kamera & torch
     setFacingMode('environment');
     setTorchOn(false);
-
-    // Kalau kamu pakai redux:
-    // dispatch(resetVisitorState());
-
-    console.log('✅ All data cleared!');
   };
 
   const handleConfirmStatus = async (action: 'Checkin' | 'Checkout' | 'Block' | 'Unblock') => {
+    const id = invitationCode?.[0]?.id ?? selectedVisitorId;
     const actionLabelMap: Record<string, string> = {
       Checkin: 'check in',
       Checkout: 'check out',
@@ -1010,9 +1114,12 @@ const OperatorView = () => {
     let reason = '';
 
     try {
-      // 🔹 Ask reason for Block/Unblock
       if (action === 'Block' || action === 'Unblock') {
         const { value: inputReason } = await Swal.fire({
+          imageUrl: '/src/assets/images/logos/BI_Logo.png',
+          imageWidth: 80,
+          imageHeight: 80,
+          imageAlt: 'BI Logo',
           title: action === 'Block' ? 'Block Visitor' : 'Unblock Visitor',
           text:
             action === 'Block'
@@ -1025,6 +1132,7 @@ const OperatorView = () => {
           confirmButtonText: action,
           confirmButtonColor: action === 'Block' || action === 'Unblock' ? '#000' : '#000',
           cancelButtonText: 'Cancel',
+          reverseButtons: true,
           customClass: {
             title: 'swal2-title-custom',
             popup: 'swal-popup-custom',
@@ -1043,11 +1151,15 @@ const OperatorView = () => {
         // 🔹 Normal confirm dialog
         const confirm = await Swal.fire({
           title: `Do you want to ${actionLabelMap[action]}?`,
-          icon: 'question',
+          imageUrl: '/src/assets/images/logos/BI_Logo.png',
+          imageWidth: 80,
+          imageHeight: 80,
+          imageAlt: 'BI Logo',
           showCancelButton: true,
           confirmButtonText: 'Yes',
           cancelButtonText: 'Cancel',
           confirmButtonColor: '#4caf50',
+          reverseButtons: true,
           customClass: {
             title: 'swal2-title-custom',
             popup: 'swal-popup-custom',
@@ -1060,17 +1172,12 @@ const OperatorView = () => {
       setLoadingAccess(true);
 
       // 🔥 API call
-      const res = await createInvitationActionOperator(token as string, selectedVisitorId!, {
+      const res = await createInvitationActionOperator(token as string, id!, {
         action,
         reason,
       });
 
-      console.log('✅ Action Response:', res);
-
-      // 🔹 Update local data immediately (for instant UI)
-      // setRelatedVisitors((prev) =>
-      //   prev.map((v) => (v.id === selectedVisitorId ? { ...v, visitor_status: action } : v)),
-      // );
+      // console.log('✅ Action Response:', res);
 
       setRelatedVisitors((prev) =>
         prev.map((v) =>
@@ -1105,21 +1212,22 @@ const OperatorView = () => {
       // 🔹 Refetch background sync (after small delay)
       const invitationId = invitationCode?.[0]?.id;
       if (invitationId) {
-        await new Promise((r) => setTimeout(r, 1000)); // tunggu 1 detik
+        await new Promise((r) => setTimeout(r, 600)); // tunggu 1 detik
         await fetchRelatedVisitorsByInvitationId(invitationId);
       }
-      setSnackbarMsg(`${action} successfully.`);
-      setSnackbarType('success');
-      setSnackbarOpen(true);
+      // setSnackbarMsg(`${action} successfully.`);
+      // setSnackbarType('success');
+      // setSnackbarOpen(true);
+      showSwal('success', `${action} successfully.`);
     } catch (e) {
-      console.error('❌ Error createInvitationActionOperator:', e);
+      // console.error('❌ Error createInvitationActionOperator:', e);
       setSnackbarMsg(`Failed to ${action}.`);
       setSnackbarType('error');
       setSnackbarOpen(true);
     } finally {
-      setTimeout(() => {
-        setLoadingAccess(false);
-      }, 600);
+      // setTimeout(() => {
+      setLoadingAccess(false);
+      // }, 600);
     }
   };
 
@@ -1134,7 +1242,7 @@ const OperatorView = () => {
       setRemoving((s) => ({ ...s, [inputId]: true }));
       if (currentUrl) {
         await axiosInstance2.delete(`/cdn${currentUrl}`);
-        console.log('✅ Berhasil hapus file CDN:', currentUrl);
+        // console.log('✅ Berhasil hapus file CDN:', currentUrl);
       }
 
       setAnswerFile('');
@@ -1257,8 +1365,9 @@ const OperatorView = () => {
         inputPlaceholder: 'Enter reason...',
         inputAttributes: { maxlength: '200' },
         showCancelButton: true,
+        reverseButtons: true,
         confirmButtonText: bulkAction === 'block' ? 'Block' : 'Unblock',
-        confirmButtonColor: bulkAction === 'block' ? '#000' : '#4caf50',
+        confirmButtonColor: bulkAction === 'block' ? '#000' : '#000',
         cancelButtonText: 'Cancel',
         inputValidator: (value) => {
           if (!value || value.trim().length < 3) {
@@ -1303,27 +1412,6 @@ const OperatorView = () => {
           return v;
         }),
       );
-      //  setInvitationCode((prev) => {
-      //    if (!prev.length) return prev;
-
-      //    const currentVisitorId = prev[0]?.visitor?.id || prev[0]?.id;
-      //    const updated = validForApi.find((v) => v.id === currentVisitorId);
-      //    if (!updated) return prev;
-
-      //    let newStatus = updated.visitor_status;
-      //    if (bulkAction === 'checkin') newStatus = 'Checkin';
-      //    else if (bulkAction === 'checkout') newStatus = 'Checkout';
-      //    else if (bulkAction === 'block') newStatus = 'Block';
-      //    else if (bulkAction === 'unblock') newStatus = 'Unblock';
-
-      //    return [
-      //      {
-      //        ...prev[0],
-      //        visitor_status: newStatus,
-      //        visitor: { ...prev[0].visitor, visitor_status: newStatus },
-      //      },
-      //    ];
-      //  });
 
       setInvitationCode((prev) => {
         if (!prev.length) return prev;
@@ -1365,24 +1453,23 @@ const OperatorView = () => {
 
         switch (bulkAction) {
           case 'checkin':
-            if (!done)
-              return `⚠️ ${v.name} belum melakukan pra-registrasi, isi form terlebih dahulu.`;
-            if (status === 'Checkin') return `✅ ${v.name} sudah Check In sebelumnya.`;
-            if (status === 'Preregis') return `✅ ${v.name} berhasil Check In.`;
-            return `⚠️ ${v.name} tidak bisa Checkin karena status telah ${status}.`;
+            if (!done) return `${v.name} doesn't do preregistration, please do it first.`;
+            if (status === 'Checkin') return `${v.name} already Check in before.`;
+            if (status === 'Preregis') return ` ${v.name} successfully Check In.`;
+            return `${v.name} cannot  Checkin because status is ${status}.`;
 
           case 'checkout':
-            if (status === 'Checkin') return `✅ ${v.name} berhasil Check Out.`;
+            if (status === 'Checkin') return ` ${v.name} successfully Check Out.`;
             if (status === 'Preregis')
-              return `⚠️ ${v.name} belum melakukan pra-registrasi, isi form terlebih dahulu.`;
-            if (status === 'Checkout') return `✅ ${v.name} sudah Check Out sebelumnya.`;
-            return `⚠️ ${v.name} belum Check In, jadi tidak bisa Check Out.`;
+              return `${v.name} haven't completed pre-registration yet. Please fill out the form first.`;
+            if (status === 'Checkout') return ` ${v.name} already Check Out before.`;
+            return `${v.name}  cannot Checkin because status is ${status}. `;
 
           case 'block':
-            return `✅ ${v.name} berhasil diblokir.`;
+            return ` ${v.name} successfully block.`;
 
           case 'unblock':
-            return `✅ ${v.name} berhasil di-unblock.`;
+            return `${v.name} successfully unblock.`;
 
           default:
             return `${v.name} dilewati.`;
@@ -1390,11 +1477,11 @@ const OperatorView = () => {
       });
 
       // 🔔 Tampilkan semua pesan sekaligus di snackbar
-      setSnackbarMsg(resultMessages.join('\n'));
-      setSnackbarType('info');
-      setSnackbarOpen(true);
+      showSwal('success', resultMessages.join('\n'));
+      // setSnackbarMsg(resultMessages.join('\n'));
+      // setSnackbarType('info');
+      // setSnackbarOpen(true);
 
-      // Reset
       setSelectedVisitors([]);
       setBulkAction('');
 
@@ -1406,8 +1493,8 @@ const OperatorView = () => {
         }, 500);
       }
     } catch (error: any) {
-      console.error('❌ Multiple Action Failed:', error);
-      toast('Gagal melakukan aksi massal. Coba lagi.', 'error');
+      console.error('Multiple Action Failed:', error);
+      toast('Failed to perform multiple action', 'error');
     } finally {
       setTimeout(() => setLoadingAccess(false), 600);
     }
@@ -1430,14 +1517,6 @@ const OperatorView = () => {
     Block: ['unblock'],
     Unblock: ['block'],
   };
-
-  // 🧩 Ambil semua status unik
-  const statuses = new Set(selectedData.map((v: any) => v.visitor_status));
-
-  // 🟩 Cek kondisi praregister
-  const hasPreregis = selectedData.some((v: any) => v.visitor_status === 'Preregis');
-  const preregTrue = selectedData.some((v: any) => v.is_praregister_done === true);
-  const preregFalse = selectedData.some((v: any) => v.is_praregister_done === false);
 
   // 🧮 Set hasil aksi
   let actions = new Set<string>();
@@ -1522,17 +1601,10 @@ const OperatorView = () => {
     // 🔹 Tambahkan hasil union ke set actions
     union.forEach((a) => actions.add(a));
   }
-
-  // ===================================================
-  // 🧩 3️⃣ Fallback (tidak ada aksi valid)
-  // ===================================================
   if (actions.size === 0) {
-    actions.add('fill_form'); // minimal fallback
+    actions.add('fill_form');
   }
 
-  // ===================================================
-  // 🏷️ Dropdown Display Map
-  // ===================================================
   const labelMap: Record<string, string> = {
     fill_form: 'Fill Form',
     checkin: 'Check In',
@@ -1546,16 +1618,6 @@ const OperatorView = () => {
     label: labelMap[a] || a,
     value: a,
   }));
-
-  // ============================================================
-  // 🧩 State & handler
-  // ============================================================
-  const [openFillForm, setOpenFillForm] = useState(false);
-  const [fillFormData, setFillFormData] = useState<any[]>([]);
-  const [fillFormActiveStep, setFillFormActiveStep] = useState(0);
-  const [fillFormGroupedPages, setFillFormGroupedPages] = useState<any>({});
-  const [fillFormDataVisitor, setFillFormDataVisitor] = useState<any[]>([]);
-  const [dataVisitor, setDataVisitor] = useState<{ question_page: SectionPageVisitor[] }[]>([]);
 
   const sanitizeRemarks = (r?: string | null) => {
     const v = (r ?? '').trim().toLowerCase();
@@ -1912,6 +1974,23 @@ const OperatorView = () => {
   ) => {
     const showLabel = opts?.showLabel ?? true;
 
+    const isDrivingField = fillFormDataVisitor
+      ?.flatMap((v) => v.question_page)
+      ?.flatMap((q) => q.form || [])
+      ?.find((f) => f.remarks === 'is_driving');
+
+    const isDriving =
+      isDrivingField?.answer_text === 'true' || isDrivingField?.answer_text === true;
+
+    // 🔥 Hide field kendaraan jika belum pilih "Yes"
+    if (!isDriving && ['vehicle_type', 'vehicle_plate'].includes(field.remarks)) {
+      return null;
+    }
+    const isVehicleField = ['vehicle_type', 'vehicle_plate'].includes(field.remarks);
+    if (!isDriving && isVehicleField) {
+      return null; // tidak render apapun (label + input hilang)
+    }
+
     const renderInput = () => {
       // const [uploadMethod, setUploadMethod] = React.useState('file'); // default file upload
       const key = opts?.uniqueKey ?? String(index);
@@ -2014,7 +2093,7 @@ const OperatorView = () => {
                 return opts.filter((opt) => (opt.name || '').toLowerCase().includes(term));
               }}
               noOptionsText={
-                inputVal.length < 3 ? 'Ketik minimal 3 karakter untuk mencari' : 'Tidak ditemukan'
+                inputVal.length < 3 ? 'Enter at least 3 characters to search.' : 'Not found'
               }
               value={
                 options.find(
@@ -2110,21 +2189,27 @@ const OperatorView = () => {
             );
           }
 
-          if (field.remarks === 'is_driving') {
+          if (field.remarks === 'is_driving' || field.remarks === 'is_employee') {
             const options = [
               { value: 'true', label: 'Yes' },
               { value: 'false', label: 'No' },
             ];
-
-            const currentValue = field.answer_text ?? ''; // kosong jika belum ada jawaban
+            const currentValue = field.answer_text ?? '';
 
             return (
               <FormControl component="fieldset" sx={{ width: '100%' }}>
                 <RadioGroup
                   value={currentValue}
-                  onChange={(e) => onChange(index, 'answer_text', e.target.value)}
                   row
                   sx={{ minWidth: 130 }}
+                  onChange={(e) => {
+                    onChange(index, 'answer_text', e.target.value);
+
+                    // 🔥 trigger re-render otomatis agar vehicle fields muncul/hilang
+                    setFillFormDataVisitor((prev) => {
+                      return [...prev];
+                    });
+                  }}
                 >
                   {options.map((opt) => (
                     <FormControlLabel
@@ -2156,36 +2241,36 @@ const OperatorView = () => {
           );
 
         case 6:
-          if (field.remarks === 'is_employee') {
-            const options = Array.isArray(field.multiple_option_fields)
-              ? field.multiple_option_fields.map((opt) => ({
-                  value: String(opt.value).toLowerCase(),
-                  name: opt.name,
-                }))
-              : [
-                  { value: 'true', name: 'Yes' },
-                  { value: 'false', name: 'No' },
-                ];
+          // if (field.remarks === 'is_employee') {
+          //   const options = Array.isArray(field.multiple_option_fields)
+          //     ? field.multiple_option_fields.map((opt) => ({
+          //         value: String(opt.value).toLowerCase(),
+          //         name: opt.name,
+          //       }))
+          //     : [
+          //         { value: 'true', name: 'Yes' },
+          //         { value: 'false', name: 'No' },
+          //       ];
 
-            const currentValue = String(field.answer_text).toLowerCase();
+          //   const currentValue = String(field.answer_text).toLowerCase();
 
-            return (
-              <Box display="flex" alignItems="center" gap={2}>
-                {options.map((opt) => (
-                  <FormControlLabel
-                    key={opt.value}
-                    control={
-                      <Checkbox
-                        checked={currentValue === opt.value}
-                        onChange={() => onChange(index, 'answer_text', opt.value)}
-                      />
-                    }
-                    label={opt.name}
-                  />
-                ))}
-              </Box>
-            );
-          }
+          //   return (
+          //     <Box display="flex" alignItems="center" gap={2}>
+          //       {options.map((opt) => (
+          //         <FormControlLabel
+          //           key={opt.value}
+          //           control={
+          //             <Checkbox
+          //               checked={currentValue === opt.value}
+          //               onChange={() => onChange(index, 'answer_text', opt.value)}
+          //             />
+          //           }
+          //           label={opt.name}
+          //         />
+          //       ))}
+          //     </Box>
+          //   );
+          // }
 
           // fallback default (checkbox tunggal)
           return (
@@ -2245,7 +2330,15 @@ const OperatorView = () => {
             return (
               <CameraUpload
                 value={field.answer_file}
-                onChange={(url) => onChange(index, 'answer_file', url)}
+                onChange={(url) => {
+                  console.log('📸 [DEBUG] onChange CameraUpload:', {
+                    field: field.remarks,
+                    url,
+                    sectionIdx: fillFormActiveStep,
+                  });
+
+                  onChange(index, 'answer_file', url);
+                }}
               />
             );
           }
@@ -2397,21 +2490,10 @@ const OperatorView = () => {
                     }
                   />
 
-                  {!!(field as any).answer_file && (
-                    <Box
-                      mt={0.5}
-                      display="flex"
-                      alignItems="center"
-                      justifyContent="space-between"
-                      sx={{ overflow: 'hidden' }}
-                    >
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        noWrap
-                        sx={{ flex: 1, minWidth: 0 }}
-                      >
-                        {uploadNames[key] ?? ''}
+                  {(field.answer_file || uploadNames[key]) && (
+                    <Box mt={0.5} display="flex" alignItems="center" justifyContent="space-between">
+                      <Typography variant="caption" color="text.secondary" noWrap>
+                        {uploadNames[key] ?? field.answer_file?.split('/').pop() ?? ''}
                       </Typography>
                       <IconButton
                         size="small"
@@ -2448,163 +2530,28 @@ const OperatorView = () => {
     };
 
     return (
-      <Box sx={{ overflow: 'auto', width: '100%' }}>
-        {showLabel && (
-          <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
-            {field.long_display_text}
-          </Typography>
-        )}
+      <Box
+        sx={{
+          overflow: 'auto',
+          width: '100%',
+        }}
+      >
+        {showLabel &&
+          // <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
+          //   {field.long_display_text}
+          // </Typography>
+          (!isVehicleField || isDriving) && (
+            <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
+              {field.long_display_text}
+            </Typography>
+          )}
         {renderInput()}
       </Box>
     );
   };
 
-  // const handleSubmitPramultiple = async () => {
-  //   try {
-  //     // if (!invitationDetail || !fillFormDataVisitor.length) {
-  //     //   toast('Form belum lengkap', 'warning');
-  //     //   return;
-  //     // }
-
-  //     // if (!questionPageTemplate.length) {
-  //     //   toast('Template question_page belum dimuat', 'error');
-  //     //   return;
-  //     // }
-
-  //     if(loadingAccess) return;
-  //     setLoadingAccess(true);
-
-  //     const tzFromApi =
-  //       invitationDetail.collection?.tz ||
-  //       invitationDetail.collection?.site_place_data?.timezone ||
-  //       'Asia/Jakarta';
-
-  //     const visitorType =
-  //       invitationDetail.collection?.visitor_type ||
-  //       invitationDetail.collection?.visitor_type_data?.id;
-  //     const siteId =
-  //       invitationDetail.collection?.site_place || invitationDetail.collection?.site_place_data?.id;
-  //     const isGroup = invitationDetail.collection?.is_group ?? true;
-
-  //     // 🟢 Ambil visitor yang dipilih
-  //     const selected = relatedVisitors.filter((v) => selectedVisitors.includes(v.id));
-
-  //     // 🔁 Bangun ulang setiap visitor berdasarkan index-nya di fillFormDataVisitor
-  //     const dataList = selected.map((visitor, gIdx) => {
-  //       const visitorGroup = fillFormDataVisitor[gIdx];
-  //       const visitorSections = visitorGroup?.question_page ?? [];
-
-  //       return {
-  //         trx_visitor_id: visitor.id,
-  //         visitor_type: visitorType,
-  //         type_registered: 1,
-  //         is_group: isGroup,
-  //         tz: tzFromApi,
-  //         // registered_site: siteId,
-  //         registered_site: '',
-  //         data_visitor: [
-  //           {
-  //             question_page: questionPageTemplate.map((templateSection: any) => ({
-  //               id: templateSection.id,
-  //               sort: templateSection.sort ?? 0,
-  //               name: templateSection.name,
-  //               status: 0,
-  //               is_document: !!templateSection.is_document,
-  //               can_multiple_used: !!templateSection.can_multiple_used,
-  //               self_only: templateSection.self_only ?? false,
-  //               foreign_id: templateSection.foreign_id ?? '',
-  //               form: (templateSection.form || []).map((templateField: any, fIdx: number) => {
-  //                 const remark = templateField.remarks?.toLowerCase();
-  //                 let answer_text: string | null = null;
-  //                 let answer_datetime: string | null = null;
-  //                 let answer_file: string | null = null;
-
-  //                 for (const groupSection of visitorSections) {
-  //                   const foundField = groupSection.form.find(
-  //                     (f: any) => f.remarks?.toLowerCase() === remark,
-  //                   );
-  //                   if (foundField) {
-  //                     answer_text = foundField.answer_text ?? null;
-  //                     answer_datetime = foundField.answer_datetime ?? null;
-
-  //                     if (foundField.field_type >= 10) {
-  //                       answer_file =
-  //                         foundField.answer_file ??
-  //                         foundField.answer_text ??
-  //                         foundField.answer_datetime ??
-  //                         null;
-  //                     }
-
-  //                     if (
-  //                       ['nda', 'selfie_image', 'identity_image'].includes(
-  //                         foundField.remarks?.toLowerCase(),
-  //                       )
-  //                     ) {
-  //                       answer_file =
-  //                         foundField.answer_file ??
-  //                         foundField.answer_text ??
-  //                         foundField.answer_datetime ??
-  //                         null;
-  //                     }
-
-  //                     break;
-  //                   }
-  //                 }
-
-  //                 return {
-  //                   sort: templateField.sort ?? fIdx,
-  //                   short_name: templateField.short_name,
-  //                   long_display_text: templateField.long_display_text,
-  //                   field_type: templateField.field_type,
-  //                   is_primary: !!templateField.is_primary,
-  //                   is_enable: !!templateField.is_enable,
-  //                   mandatory: !!templateField.mandatory,
-  //                   remarks: templateField.remarks,
-  //                   // custom_field_id: templateField.custom_field_id,
-  //                   // multiple_option_fields: templateField.multiple_option_fields || [],
-  //                   visitor_form_type: 1,
-  //                   answer_text,
-  //                   answer_datetime,
-  //                   answer_file,
-  //                 };
-  //               }),
-  //             })),
-  //           },
-  //         ],
-  //       };
-  //     });
-
-  //     const payload = { list_group: dataList };
-  //     console.log('✅ Final Payload (MULTI-VISITOR FIXED):', JSON.stringify(payload, null, 2));
-
-  //     const result = await createSubmitCompletePraMultiple(token as string, payload);
-  //     toast('Successfully submit praregister', 'success');
-  //     console.log('✅ Submit success:', result);
-  //     setOpenFillForm(false);
-  //   } catch (error) {
-  //     console.error('❌ Submit error:', error);
-  //     toast('Submit gagal', 'error');
-  //   }finally{
-  //     setTimeout(() => {
-  //       setLoadingAccess(false);
-  //     }, 500);
-  //   }
-  // };
-
   const [selectedAccessIds, setSelectedAccessIds] = useState<string[]>([]);
 
-  // useEffect(() => {
-  //   console.table(
-  //     accessData.map((a) => ({
-  //       name: a.access_control_name,
-  //       status: a.visitor_give_access,
-  //       early: a.early_access,
-  //       allowed: getAllowedActions(a.visitor_give_access, a.early_access),
-  //     })),
-  //   );
-  // }, [accessData]);
-
-  // fungsi dasar (seperti sebelumnya)
   const getAllowedActions = (status: number, earlyAccess: boolean) => {
     if (earlyAccess) {
       switch (status) {
@@ -2760,31 +2707,6 @@ const OperatorView = () => {
     );
   }, [selectedAccessIds, selectedVisitors, accessData, permissionAccess]);
 
-  // const getAllowedActionsForMultiple = (selectedIds: string[], selectedVisitorIds: string[]) => {
-  //   if (!selectedIds.length || !selectedVisitorIds.length) return [];
-
-  //   const actionsList = selectedIds.map((id) =>
-  //     getAllowedActionsForAccessId(id, selectedVisitorIds, accessData),
-  //   );
-
-  //   return actionsList.reduce(
-  //     (acc, curr) => acc.filter((x) => curr.includes(x)),
-  //     actionsList[0] || [],
-  //   );
-  // };
-
-  // const allowedActions = useMemo(() => {
-  //   // Kalau belum pilih apa pun
-  //   if (!selectedAccessIds.length || !selectedVisitors.length) return [];
-
-  //   // 🟢 Jika lebih dari satu visitor → tampilkan semua action
-  //   if (selectedVisitors.length > 1) {
-  //     return ['Grant', 'Revoke', 'Block'];
-  //   }
-
-  //   // 🔹 Kalau hanya satu visitor → hitung normal
-  //   return getAllowedActionsForMultiple(selectedAccessIds, selectedVisitors);
-  // }, [selectedAccessIds, selectedVisitors, accessData]);
 
   const handleSubmitPramultiple = async () => {
     try {
@@ -2893,12 +2815,13 @@ const OperatorView = () => {
 
       // 🔵 Submit ke API
       const result = await createSubmitCompletePraMultiple(token as string, payload);
-      toast('Successfully submit praregister', 'success');
-      console.log('✅ Submit success:', result);
+      // toast('Successfully P', 'success');
+      showSwal('success', 'Successfully Pra Register!');
+      // console.log('✅ Submit success:', result);
 
-      setSnackbarMsg('Successfully submit praregister');
-      setSnackbarType('success');
-      setSnackbarOpen(true);
+      // setSnackbarMsg('Successfully submit praregister');
+      // setSnackbarType('success');
+      // setSnackbarOpen(true);
 
       // 🟩 Update lokal biar langsung terlihat (UX cepat)
       setRelatedVisitors((prev) =>
@@ -2940,167 +2863,6 @@ const OperatorView = () => {
     setOpenDialogInvitation(true);
   };
 
-  // const handleAccessAction = async (
-  //   row: any,
-  //   action: 'no_action' | 'grant' | 'revoke' | 'block' | 'unblock',
-  // ): Promise<void> => {
-  //   return new Promise(async (resolve) => {
-  //     const actionMap = { no_action: 0, grant: 1, revoke: 2, block: 3, unblock: 4 };
-  //     const accessControlId = row?.access_control_id || row?.id;
-  //     const actionCode = actionMap[action];
-
-  //     // 🧩 VALIDASI MULTI-VISITOR
-  //     const validateMultiVisitorAccess = (
-  //       accessId: string,
-  //       selectedVisitorIds: string[],
-  //       allAccessData: any[],
-  //       action: 'grant' | 'revoke' | 'block' | 'no_action' | 'unblock',
-  //     ) => {
-  //       const validVisitors: string[] = [];
-  //       const invalidVisitors: string[] = [];
-  //       const actionText = action.toUpperCase();
-
-  //       selectedVisitorIds.forEach((visitorId) => {
-  //         const record = allAccessData.find(
-  //           (a) =>
-  //             (a.trx_visitor_id?.toLowerCase() === visitorId.toLowerCase() ||
-  //               a.trxVisitorId?.toLowerCase() === visitorId.toLowerCase()) &&
-  //             a.access_control_id?.toLowerCase() === accessId.toLowerCase(),
-  //         );
-
-  //         console.log('🔍 Checking visitor', visitorId, {
-  //           foundRecord: !!record,
-  //           record,
-  //           expectedAccessId: accessId,
-  //         });
-
-  //         if (!record) {
-  //           invalidVisitors.push(`${visitorId} (no record found)`);
-  //           return;
-  //         }
-
-  //         const { visitor_give_access, access_control_name, early_access } = record;
-
-  //         // 🚫 Sudah revoke/block, tidak bisa aksi apapun kecuali no_action/unblock
-  //         if ((visitor_give_access === 2 || visitor_give_access === 3) && action !== 'no_action') {
-  //           invalidVisitors.push(`${access_control_name} (already revoked/blocked)`);
-  //           return;
-  //         }
-
-  //         // 🚫 early_access = true → tidak bisa GRANT
-  //         if (early_access && action === 'grant') {
-  //           invalidVisitors.push(`${access_control_name} (early access, cannot GRANT)`);
-  //           return;
-  //         }
-
-  //         // 🚫 Belum grant → tidak bisa revoke/block *kecuali early_access true*
-  //         if (
-  //           (action === 'revoke' || action === 'block') &&
-  //           visitor_give_access === 0 &&
-  //           !early_access
-  //         ) {
-  //           invalidVisitors.push(`${access_control_name} (not granted yet, cannot ${action})`);
-  //           return;
-  //         }
-
-  //         // 🚫 Sudah grant → tidak bisa grant lagi
-  //         if (action === 'grant' && visitor_give_access === 1) {
-  //           invalidVisitors.push(`${access_control_name} (already granted)`);
-  //           return;
-  //         }
-
-  //         // ✅ Kalau semua lolos → valid
-  //         validVisitors.push(visitorId);
-  //       });
-
-  //       return {
-  //         validVisitors,
-  //         invalidVisitors,
-  //         message:
-  //           invalidVisitors.length > 0
-  //             ? `⚠️ Some visitors cannot perform ${actionText}:\n${invalidVisitors.join('\n')}`
-  //             : null,
-  //       };
-  //     };
-
-  //     try {
-  //       setLoadingAccess(true);
-
-  //       // ✅ Jalankan validasi sebelum kirim ke backend
-  //       const { validVisitors, invalidVisitors, message } = validateMultiVisitorAccess(
-  //         accessControlId,
-  //         selectedVisitors,
-  //         accessData,
-  //         action,
-  //       );
-
-  //       // 🚫 Semua invalid → batalkan aksi
-  //       if (!validVisitors.length) {
-  //         setSnackbarMsg(message || 'No valid visitors to process.');
-  //         setSnackbarType('error');
-  //         setSnackbarOpen(true);
-  //         resolve();
-  //         return;
-  //       }
-
-  //       // ⚠️ Campuran valid + invalid → tampilkan warning tapi lanjut
-  //       if (invalidVisitors.length) {
-  //         setSnackbarMsg(
-  //           '⚠️ Some visitors cannot perform this action:\n' + invalidVisitors.join('\n'),
-  //         );
-  //         setSnackbarType('info');
-  //         setSnackbarOpen(true);
-  //       }
-
-  //       // 📨 Kirim hanya visitor yang valid
-  //       const payload = {
-  //         data_access: validVisitors.map((visitorId) => ({
-  //           access_control_id: accessControlId,
-  //           trx_visitor_id: visitorId,
-  //           action: actionCode,
-  //         })),
-  //       };
-
-  //       const res = await createGiveAccessOperator(token as string, payload);
-  //       console.log('✅ Access Action Response:', JSON.stringify(res, null, 2));
-
-  //       const backendMsg =
-  //         res?.collection?.[0] || res?.msg || res?.message || 'Action executed successfully.';
-
-  //       setSnackbarMsg(`✅ ${backendMsg}`);
-  //       setSnackbarType('success');
-  //       setSnackbarOpen(true);
-
-  //       // 🟢 Update accessData di state agar langsung sinkron
-  //       setAccessData((prev) =>
-  //         prev.map((a) =>
-  //           validVisitors.includes(a.trx_visitor_id) && a.access_control_id === accessControlId
-  //             ? { ...a, visitor_give_access: actionCode }
-  //             : a,
-  //         ),
-  //       );
-
-  //       resolve();
-  //     } catch (err: any) {
-  //       console.error('❌ Access Action Error:', err);
-  //       const backendMsg =
-  //         err?.response?.data?.collection?.[0] ||
-  //         err?.response?.data?.msg ||
-  //         err?.response?.data?.message ||
-  //         err?.response?.data?.error ||
-  //         err?.message ||
-  //         'Unknown error occurred.';
-
-  //       setSnackbarMsg(`${backendMsg}`);
-  //       setSnackbarType('error');
-  //       setSnackbarOpen(true);
-  //       resolve(); // biar loop lanjut
-  //     } finally {
-  //       setTimeout(() => setLoadingAccess(false), 600);
-  //     }
-  //   });
-  // };
-
   // ✅ GABUNGKAN MULTI VISITOR ACCESS DENGAN TEMPLATE DATA PERTAMA
   useEffect(() => {
     if (!selectedVisitors.length) {
@@ -3138,7 +2900,7 @@ const OperatorView = () => {
       }, {}),
     );
 
-    console.log('🎯 Merged accessData (multi visitor-aware):', mergedAccess);
+    // console.log('🎯 Merged accessData (multi visitor-aware):', mergedAccess);
     setAccessData(mergedAccess);
   }, [selectedVisitors, allAccessData]);
 
@@ -3255,8 +3017,6 @@ const OperatorView = () => {
       message: lines.join('\n') || null,
     };
   };
-
-  // ✅ HANDLE ACTION DENGAN VALIDASI MULTI VISITOR
   const handleAccessAction = async (
     row: any,
     action: 'no_action' | 'grant' | 'revoke' | 'block' | 'unblock',
@@ -3265,80 +3025,6 @@ const OperatorView = () => {
       const actionMap = { no_action: 0, grant: 1, revoke: 2, block: 3, unblock: 4 };
       const accessControlId = row?.access_control_id || row?.id;
       const actionCode = actionMap[action];
-
-      // 🧩 VALIDASI MULTI-VISITOR
-      // const validateMultiVisitorAccess = (
-      //   accessId: string,
-      //   visitorIds: string[],
-      //   allAccessData: any[],
-      //   action: 'grant' | 'revoke' | 'block' | 'no_action' | 'unblock',
-      // ) => {
-      //   const validVisitors: string[] = [];
-      //   const invalidVisitors: string[] = [];
-      //   const actionText = action.toUpperCase();
-
-      //   visitorIds.forEach((visitorId) => {
-      //     const record = allAccessData.find(
-      //       (a) =>
-      //         a.access_control_id?.toLowerCase() === accessId.toLowerCase() &&
-      //         (a.trx_visitor_id?.toLowerCase() === visitorId.toLowerCase() ||
-      //           a.trxVisitorId?.toLowerCase() === visitorId.toLowerCase()),
-      //     );
-
-      //     console.log('🔍 Checking visitor', visitorId, {
-      //       foundRecord: !!record,
-      //       record,
-      //       expectedAccessId: accessId,
-      //     });
-
-      //     if (!record) {
-      //       invalidVisitors.push(`${visitorId} (no record found)`);
-      //       return;
-      //     }
-
-      //     const { visitor_give_access, access_control_name, early_access } = record;
-
-      //     // 🚫 Sudah revoke/block, tidak bisa aksi apapun kecuali unblock
-      //     if ((visitor_give_access === 2 || visitor_give_access === 3) && action !== 'unblock') {
-      //       invalidVisitors.push(`${access_control_name} (already revoked/blocked)`);
-      //       return;
-      //     }
-
-      //     // 🚫 early_access = true → tidak bisa GRANT
-      //     if (early_access && action === 'grant') {
-      //       invalidVisitors.push(`${access_control_name} (early access, cannot GRANT)`);
-      //       return;
-      //     }
-
-      //     // 🚫 Belum grant → tidak bisa revoke/block *kecuali early_access true*
-      //     if (
-      //       (action === 'revoke' || action === 'block') &&
-      //       visitor_give_access === 0 &&
-      //       !early_access
-      //     ) {
-      //       invalidVisitors.push(`${access_control_name} (not granted yet, cannot ${action})`);
-      //       return;
-      //     }
-
-      //     // 🚫 Sudah grant → tidak bisa grant lagi
-      //     if (action === 'grant' && visitor_give_access === 1) {
-      //       invalidVisitors.push(`${access_control_name} (already granted)`);
-      //       return;
-      //     }
-
-      //     // ✅ Lolos semua kondisi → valid
-      //     validVisitors.push(visitorId);
-      //   });
-
-      //   return {
-      //     validVisitors,
-      //     invalidVisitors,
-      //     message:
-      //       invalidVisitors.length > 0
-      //         ? `${invalidVisitors.join('\n')}`
-      //         : null,
-      //   };
-      // };
 
       try {
         setLoadingAccess(true);
@@ -3472,7 +3158,7 @@ const OperatorView = () => {
 
   return (
     <PageContainer
-      title={!isFullscreen ? 'Operator View' : undefined}
+      title={!isFullscreen ? 'Operator View' : 'Operator View'}
       description={!isFullscreen ? 'Alarm and History Monitor' : undefined}
     >
       <Box
@@ -3482,7 +3168,7 @@ const OperatorView = () => {
           // flexDirection: mdUp ? 'row' : 'column',
           flexDirection: { xs: 'column', md: 'row' },
           backgroundColor: '#fff',
-          height: isFullscreen ? '100vh' : '100%', // ✅ kalau fullscreen pakai 100vh
+          height: isFullscreen ? '100vh' : '100%',
           width: '100%',
           // overflow: 'hidden',
           position: 'relative',
@@ -3588,15 +3274,12 @@ const OperatorView = () => {
           }}
         >
           <Grid container spacing={2} alignItems="center" mb={2}>
-            <Grid size={{ sm: 6, md: 9 }}>
+            <Grid size={{ sm: 12, md: 9 }}>
               <TextField
                 fullWidth
                 size="small"
                 placeholder="Search Visitor"
-                value={''}
                 onClick={() => setOpenSearch(true)}
-                //   onChange={(e) => setSearch(e.target.value)}
-                //   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -3604,7 +3287,7 @@ const OperatorView = () => {
                         onClick={() => setOpen(true)}
                         edge="start"
                         color="inherit"
-                        sx={{}}
+                        sx={{ cursor: 'pointer' }}
                       >
                         <IconSearch size={20} />
                       </IconButton>
@@ -3613,7 +3296,7 @@ const OperatorView = () => {
                 }}
               />
             </Grid>
-            <Grid size={{ md: 3 }}>
+            <Grid size={{ xs: 12, md: 3 }}>
               <Box
                 display="flex"
                 gap={1}
@@ -3634,7 +3317,7 @@ const OperatorView = () => {
                 >
                   Clear
                 </Button>
-                <Button
+                {/* <Button
                   variant="outlined"
                   color="info"
                   startIcon={<IconHistory size={18} />}
@@ -3645,7 +3328,7 @@ const OperatorView = () => {
                   }}
                 >
                   History
-                </Button>
+                </Button> */}
                 <Button
                   variant="contained"
                   color="primary"
@@ -3665,6 +3348,45 @@ const OperatorView = () => {
                   }}
                 >
                   Scan
+                </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<IconUser size={18} />}
+                  onClick={() => setOpenDialogIndex(2)}
+                  sx={{
+                    textTransform: 'none',
+
+                    fontWeight: 600,
+                    px: 2.5,
+                    background: 'linear-gradient(135deg, #5D87FF 0%, #4169E1 100%)',
+                    boxShadow: '0 2px 6px rgba(93, 135, 255, 0.4)',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #4169E1 0%, #3657D6 100%)',
+                    },
+                    zIndex: 999,
+                  }}
+                >
+                  Invitation
+                </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<IconClipboard size={18} />}
+                  onClick={() => setOpenPreRegistration(true)}
+                  sx={{
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    px: 2.5,
+                    background: 'linear-gradient(135deg, #5D87FF 0%, #4169E1 100%)',
+                    boxShadow: '0 2px 6px rgba(93, 135, 255, 0.4)',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #4169E1 0%, #3657D6 100%)',
+                    },
+                    zIndex: 999,
+                  }}
+                >
+                  Pra Register
                 </Button>
                 <IconButton
                   onClick={toggleFullscreen}
@@ -3701,37 +3423,6 @@ const OperatorView = () => {
                 height: '100%',
               }}
             >
-              {/* <Grid size={{ xs: 12, lg: 2 }}>
-                <Card
-                  sx={{
-                    borderRadius: 2,
-                    height: '100%',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                    transition: 'transform 0.2s, box-shadow 0.2s',
-                    '&:hover': {
-                      transform: 'translateY(-4px)',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                    },
-                  }}
-                >
-                  <CardContent
-                    sx={{
-                      p: 3,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      height: '90%',
-                      flexDirection: 'column',
-                    }}
-                  >
-                    <Avatar alt="Natacha" src={''} sx={{ width: 100, height: 100 }} />
-                    <Typography variant="h6" mt={2} sx={{ fontWeight: 600 }}>
-                      Nata
-                    </Typography>
-                    <Box></Box>
-                  </CardContent>
-                </Card>
-              </Grid> */}
               {/* 🧩 Card FR */}
               <Grid size={{ xs: 12, lg: 4.5 }}>
                 <Card
@@ -3820,8 +3511,8 @@ const OperatorView = () => {
                     height: '100%',
                     width: '100%',
                     display: 'flex',
-                    justifyContent: 'center', // ⬅️ vertikal tengah
-                    alignItems: 'center', // ⬅️ horizontal tengah
+                    justifyContent: 'center',
+                    alignItems: 'center',
                     p: 2,
                   }}
                 >
@@ -3839,7 +3530,7 @@ const OperatorView = () => {
                         display: 'flex',
                         justifyContent: 'center',
                         alignItems: 'center',
-                        minHeight: 220, // tinggi tetap untuk menjaga layout stabil
+                        minHeight: 220,
                         mb: 2,
                       }}
                     >
@@ -3859,7 +3550,7 @@ const OperatorView = () => {
                         <Box textAlign="center" color="text.secondary">
                           <IconCards size={48} style={{ opacity: 0.4, marginBottom: 8 }} />
                           <Typography variant="body1" fontWeight={500}>
-                            No QR Available
+                            No QR/Card Available
                           </Typography>
                           <Typography variant="body2" color="text.disabled">
                             Scan a visitor to show QR code
@@ -4051,7 +3742,7 @@ const OperatorView = () => {
                                       {invitationCode[0].card[0].card_number}
                                     </Typography>
 
-                                    {invitationCode[0]?.tracking_ble?.length > 0 &&
+                                    {/* {invitationCode[0]?.tracking_ble?.length > 0 &&
                                       invitationCode[0].tracking_ble[0]?.visitor_give_access ===
                                         0 && (
                                         <Button
@@ -4062,7 +3753,7 @@ const OperatorView = () => {
                                         >
                                           Send Tracking
                                         </Button>
-                                      )}
+                                      )} */}
                                   </Box>
                                 ) : (
                                   <></>
@@ -4251,42 +3942,41 @@ const OperatorView = () => {
                     </Box>
                   )}
                 </CardContent>
-                {invitationCode.length > 0 && invitationCode[0]?.visitor_number && (
+                {/* {invitationCode.length > 0 && invitationCode[0]?.visitor_number && (
                   <CardActions sx={{ justifyContent: 'center', mt: 2, flexWrap: 'wrap', gap: 1 }}>
                     {(() => {
-                      const selectedVisitor = relatedVisitors.find(
-                        (v) => v.visitor_number === selectedVisitorNumber,
-                      );
+                      // Tentukan sumber visitor
+                      const selectedVisitor =
+                        relatedVisitors.find(
+                          (v) => v.visitor_number === invitationCode[0]?.visitor_number,
+                        ) ||
+                        relatedVisitors.find((v) => v.visitor_number === selectedVisitorNumber);
+
                       if (
-                        selectedVisitor?.is_praregister_done == null ||
-                        selectedVisitor?.is_praregister_done === false
+                        selectedVisitor &&
+                        (selectedVisitor.is_praregister_done == null ||
+                          selectedVisitor.is_praregister_done === false)
                       ) {
                         return (
                           <Button
                             variant="contained"
                             color="primary"
-                            onClick={() => handleView(selectedVisitorId!)}
+                            onClick={() => handleView(selectedVisitor.id)}
                           >
                             Fill Form
                           </Button>
                         );
                       }
+
                       return null;
                     })()}
                     {(() => {
-                      // const status = visitorStatus ?? invitationCode[0]?.visitor_status;
-                      // const status = visitorStatus;
-                      // const status = invitationCode[0]?.visitor_status;
-                      // console.log(status);
-                      // const blockby = invitationCode[0]?.block_by ?? null;
-                      // console.log(blockby);
-                      //  const blockby = invitationCode[0]?.block_by ?? null;
-
-                      // const isBlocked = !!blockby;
                       const data = invitationCode[0];
                       const status = data?.visitor_status;
                       const isBlocked = !!data?.is_block;
                       const blockBy = data?.block_by ?? null;
+
+                      
 
                       if (!['Checkin', 'Checkout', 'Block', 'Unblock'].includes(status || '')) {
                         return (
@@ -4366,28 +4056,147 @@ const OperatorView = () => {
                         );
                       }
 
-                      // if (!isBlocked) {
-                      //   return (
-                      //     <Box display="flex" gap={1}>
-                      //       {/* <Button
-                      //         variant="contained"
-                      //         color="error"
-                      //         onClick={() => handleConfirmStatus('Checkout')}
-                      //         startIcon={<IconLogout />}
-                      //       >
-                      //         Check Out
-                      //       </Button> */}
-                      //       <Button
-                      //         variant="contained"
-                      //         sx={{ backgroundColor: '#000' }}
-                      //         onClick={() => handleConfirmStatus('Block')}
-                      //         startIcon={<IconForbid2 />}
-                      //       >
-                      //         Block
-                      //       </Button>
-                      //     </Box>
-                      //   );
-                      // }
+                      if (!isBlocked) {
+                        return (
+                          <Box display="flex" gap={1}>
+                           
+                            <Button
+                              variant="contained"
+                              sx={{ backgroundColor: '#000' }}
+                              onClick={() => handleConfirmStatus('Block')}
+                              startIcon={<IconForbid2 />}
+                            >
+                              Block
+                            </Button>
+                          </Box>
+                        );
+                      }
+
+                      return null;
+                    })()}
+                  </CardActions>
+                )} */}
+                {invitationCode.length > 0 && invitationCode[0]?.visitor_number && (
+                  <CardActions sx={{ justifyContent: 'center', mt: 2, flexWrap: 'wrap', gap: 1 }}>
+                    {(() => {
+                      // Tentukan sumber visitor
+                      const selectedVisitor =
+                        relatedVisitors.find(
+                          (v) => v.visitor_number === invitationCode[0]?.visitor_number,
+                        ) ||
+                        relatedVisitors.find((v) => v.visitor_number === selectedVisitorNumber);
+
+                      // --- Jika form belum diisi (praregister belum done) tampilkan tombol Fill Form
+                      if (
+                        selectedVisitor &&
+                        (selectedVisitor.is_praregister_done == null ||
+                          selectedVisitor.is_praregister_done === false)
+                      ) {
+                        return (
+                          <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={() => handleView(selectedVisitor.id)}
+                          >
+                            Fill Form
+                          </Button>
+                        );
+                      }
+
+                      const data = invitationCode[0];
+                      const status = data?.visitor_status;
+                      const isBlocked = !!data?.is_block;
+                      const blockBy = data?.block_by ?? null;
+
+                      // 🚫 Jangan tampilkan tombol status apa pun kalau pra-register belum selesai
+                      if (
+                        !selectedVisitor ||
+                        selectedVisitor.is_praregister_done == null ||
+                        selectedVisitor.is_praregister_done === false
+                      ) {
+                        return null;
+                      }
+
+                      // --- Checkin / Block default
+                      if (!['Checkin', 'Checkout', 'Block', 'Unblock'].includes(status || '')) {
+                        return (
+                          <>
+                            <Button
+                              variant="contained"
+                              color="success"
+                              onClick={() => handleConfirmStatus('Checkin')}
+                              startIcon={<IconLogin2 />}
+                            >
+                              Check In
+                            </Button>
+                            <Button
+                              variant="contained"
+                              sx={{ backgroundColor: '#000' }}
+                              onClick={() => handleConfirmStatus('Block')}
+                              startIcon={<IconForbid2 />}
+                            >
+                              Block
+                            </Button>
+                          </>
+                        );
+                      }
+
+                      // --- Sudah Checkin
+                      if (status === 'Checkin' && !isBlocked) {
+                        return (
+                          <Box display="flex" gap={1}>
+                            <Button
+                              variant="contained"
+                              color="error"
+                              onClick={() => handleConfirmStatus('Checkout')}
+                              startIcon={<IconLogout />}
+                            >
+                              Check Out
+                            </Button>
+                            <Button
+                              variant="contained"
+                              sx={{ backgroundColor: '#000' }}
+                              onClick={() => handleConfirmStatus('Block')}
+                              startIcon={<IconForbid2 />}
+                            >
+                              Block
+                            </Button>
+                          </Box>
+                        );
+                      }
+
+                      // --- Sudah Checkout tapi belum diblokir
+                      if (status === 'Checkout' && !isBlocked) {
+                        return (
+                          <Box display="flex" gap={1}>
+                            <Button
+                              variant="contained"
+                              sx={{ backgroundColor: '#000' }}
+                              onClick={() => handleConfirmStatus('Block')}
+                              startIcon={<IconForbid2 />}
+                            >
+                              Block
+                            </Button>
+                          </Box>
+                        );
+                      }
+
+                      // --- Jika diblokir
+                      if (isBlocked) {
+                        return (
+                          <Button
+                            variant="contained"
+                            sx={{
+                              backgroundColor: '#f44336',
+                              '&:hover': { backgroundColor: '#d32f2f' },
+                            }}
+                            onClick={() => handleConfirmStatus('Unblock')}
+                            startIcon={<IconBan />}
+                          >
+                            Unblock
+                          </Button>
+                        );
+                      }
 
                       return null;
                     })()}
@@ -4400,6 +4209,7 @@ const OperatorView = () => {
                 sx={{
                   flex: 1,
                   height: '100%',
+                  maxHeight: '600px',
                   display: 'flex',
                   flexDirection: 'column',
                   boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
@@ -4482,64 +4292,45 @@ const OperatorView = () => {
                           <Box display="flex" flexDirection="row" alignItems="center" gap={1}>
                             <Box display="flex" gap={1} flexDirection={'column'}>
                               {isDriving && (
-                                <Box
-                                  sx={{
-                                    backgroundColor: '#4CAF50',
-                                    color: 'white',
-                                    fontWeight: 600,
-                                    borderRadius: '6px',
-                                    px: 1,
-                                    py: 0.25,
-                                    fontSize: '0.75rem',
-                                    textAlign: 'center',
-                                  }}
-                                >
-                                  P
-                                </Box>
+                                <Tooltip title="Parking" arrow>
+                                  <Box
+                                    sx={{
+                                      backgroundColor: '#4CAF50',
+                                      color: 'white',
+                                      fontWeight: 600,
+                                      borderRadius: '6px',
+                                      px: 1,
+                                      py: 0.25,
+                                      fontSize: '0.75rem',
+                                      textAlign: 'center',
+                                      cursor: 'default',
+                                    }}
+                                  >
+                                    P
+                                  </Box>
+                                </Tooltip>
                               )}
 
                               {isScanned && (
-                                <Box
-                                  sx={{
-                                    backgroundColor: '#1976D2',
-                                    color: 'white',
-                                    fontWeight: 600,
-                                    borderRadius: '6px',
-                                    px: 1,
-                                    py: 0.25,
-                                    fontSize: '0.75rem',
-                                    textAlign: 'center',
-                                  }}
-                                >
-                                  S
-                                </Box>
+                                <Tooltip title="Scan" arrow>
+                                  <Box
+                                    sx={{
+                                      backgroundColor: '#1976D2',
+                                      color: 'white',
+                                      fontWeight: 600,
+                                      borderRadius: '6px',
+                                      px: 1,
+                                      py: 0.25,
+                                      fontSize: '0.75rem',
+                                      textAlign: 'center',
+                                      cursor: 'default',
+                                    }}
+                                  >
+                                    S
+                                  </Box>
+                                </Tooltip>
                               )}
                             </Box>
-                            {/* <Checkbox
-                              checked={selectedVisitors.includes(visitor.id)}
-                              onChange={(e) => {
-                                const isChecked = e.target.checked;
-
-                                if (selectMultiple) {
-                                  if (isChecked) {
-                                    setSelectedVisitors((prev) => [...prev, visitor.id]);
-                                    console.log('selected ', selectedVisitors);
-                                  } else {
-                                    setSelectedVisitors((prev) =>
-                                      prev.filter((id) => id !== visitor.id),
-                                    );
-                                  }
-                                } else {
-                                  if (isChecked) {
-                                    setSelectedVisitors([visitor.id]);
-                                    console.log('selected ', selectedVisitors);
-                                    handleSelectRelatedVisitor(visitor);
-                                  } else {
-                                    setSelectedVisitors([]);
-                                  }
-                                }
-                              }}
-                            /> */}
                             <Checkbox
                               checked={selectedVisitors.includes(visitor.id)}
                               onChange={(e) => {
@@ -4634,7 +4425,7 @@ const OperatorView = () => {
                         disabled={!bulkAction || selectedVisitors.length === 0}
                         onClick={handleApplyBulkAction}
                       >
-                        Apply
+                        {loadingAccess ? <CircularProgress size={24} color="inherit" /> : 'Apply'}
                       </Button>
                     </Box>
                     {invitationCode.length > 0 && (
@@ -4649,6 +4440,15 @@ const OperatorView = () => {
                           onClick={() => setOpenExtendVisit(true)}
                           startIcon={<IconClock size={18} />}
                           color="secondary"
+                          disabled={
+                            !(
+                              // invitationCode?.[0]?.visitor_status === 'Checkin' ||
+                              relatedVisitors.some(
+                                (v) =>
+                                  selectedVisitors.includes(v.id) && v.visitor_status === 'Checkin',
+                              )
+                            )
+                          }
                         >
                           Extend
                         </Button>
@@ -4698,38 +4498,6 @@ const OperatorView = () => {
                       }}
                     >
                       <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Faceimage</CustomFormLabel>
-                      {/* {invitationCode[0]?.selfie_image ? (
-                        <img
-                          src={`${BASE_URL}/cdn${invitationCode[0].selfie_image}`}
-                          alt="Face Image"
-                          style={{
-                            width: '100%',
-                            height: isFullscreen ? '100%' : '200px',
-                            borderRadius: '8px',
-                            objectFit: isFullscreen ? 'contain' : 'cover',
-                          }}
-                          // onError={(e) => {
-                          //   // kalau gagal load (404, rusak, dsb)
-                          //   e.currentTarget.style.display = 'none';
-                          // }}
-                        />
-                      ) : (
-                        <Box
-                          display="flex"
-                          alignItems="center"
-                          justifyContent="center"
-                          height={isFullscreen ? '100%' : '200px'}
-                          sx={{
-                            borderRadius: '8px',
-                            backgroundColor: '#f9f9f9',
-                            color: '#888',
-                            fontStyle: 'italic',
-                            fontSize: '0.9rem',
-                          }}
-                        >
-                          No Face Image
-                        </Box>
-                      )} */}
 
                       {activeSelfie ? (
                         <img
@@ -4737,7 +4505,7 @@ const OperatorView = () => {
                           alt="Face Image"
                           style={{
                             width: '100%',
-                            height: isFullscreen ? '100%' : '200px',
+                            height: isFullscreen ? '100%' : '225px',
                             borderRadius: '8px',
                             objectFit: isFullscreen ? 'contain' : 'cover',
                           }}
@@ -4748,7 +4516,7 @@ const OperatorView = () => {
                           display="flex"
                           alignItems="center"
                           justifyContent="center"
-                          height={isFullscreen ? '100%' : '200px'}
+                          height={isFullscreen ? '100%' : '225px'}
                           sx={{
                             borderRadius: '8px',
                             backgroundColor: '#f9f9f9',
@@ -4784,54 +4552,13 @@ const OperatorView = () => {
                       }}
                     >
                       <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Identity Image</CustomFormLabel>
-                      {/* {invitationCode[0]?.identity_image ? (
-                        <img
-                          src={`${BASE_URL}/cdn${invitationCode[0].identity_image}`}
-                          alt="Faceimage"
-                          style={{
-                            width: '100%',
-                            height: isFullscreen ? '100%' : '200px',
-                            borderRadius: '8px',
-                            objectFit: isFullscreen ? 'contain' : 'cover',
-                          }}
-                        />
-                      ) : null} */}
-                      {/* {invitationCode[0]?.identity_image ? (
-                        <img
-                          src={`${BASE_URL}/cdn${invitationCode[0].identity_image}`}
-                          alt="KTP Image"
-                          style={{
-                            width: '100%',
-                            height: isFullscreen ? '100%' : '200px',
-                            borderRadius: '8px',
-                            objectFit: isFullscreen ? 'contain' : 'cover',
-                          }}
-                          // onError={(e) => (e.currentTarget.style.display = 'none')}
-                        />
-                      ) : (
-                        <Box
-                          display="flex"
-                          alignItems="center"
-                          justifyContent="center"
-                          height={isFullscreen ? '100%' : '200px'}
-                          sx={{
-                            borderRadius: '8px',
-                            backgroundColor: '#f9f9f9',
-                            color: '#888',
-                            fontStyle: 'italic',
-                            fontSize: '0.9rem',
-                          }}
-                        >
-                          No KTP Image
-                        </Box>
-                      )} */}
                       {activeKTP ? (
                         <img
                           src={activeKTP}
                           alt="Identity Image"
                           style={{
                             width: '100%',
-                            height: isFullscreen ? '100%' : '200px',
+                            height: isFullscreen ? '100%' : '225px',
                             borderRadius: '8px',
                             objectFit: isFullscreen ? 'contain' : 'cover',
                           }}
@@ -4842,7 +4569,7 @@ const OperatorView = () => {
                           display="flex"
                           alignItems="center"
                           justifyContent="center"
-                          height={isFullscreen ? '100%' : '200px'}
+                          height={isFullscreen ? '100%' : '225px'}
                           sx={{
                             borderRadius: '8px',
                             backgroundColor: '#f9f9f9',
@@ -4862,7 +4589,6 @@ const OperatorView = () => {
           </Grid>
         </Box>
       </Box>
-
       <SearchVisitorDialog
         open={openSearch}
         onClose={() => setOpenSearch(false)}
@@ -4870,262 +4596,21 @@ const OperatorView = () => {
           setVisitorData(data);
           setOpenDetail(true); // langsung buka detail
         }}
+        container={containerRef.current}
       />
-
       {/* Dialog Detail */}
       <DetailVisitorDialog
         open={openDetail}
         onClose={() => setOpenDetail(false)}
         visitorData={visitorData}
       />
-
       {/* Scan QR Visitor */}
-      <Dialog fullWidth maxWidth="sm" open={openDialogIndex === 1} onClose={handleCloseScanQR}>
-        <DialogTitle display="flex">
-          Scan QR Visitor
-          <IconButton
-            aria-label="close"
-            sx={{ position: 'absolute', right: 8, top: 8 }}
-            onClick={handleCloseScanQR}
-          >
-            <IconX />
-          </IconButton>
-        </DialogTitle>
-        <Divider />
-
-        <DialogContent>
-          {/* Toggle mode */}
-          <Box display="flex" gap={1} mb={2}>
-            <Button
-              variant={qrMode === 'manual' ? 'contained' : 'outlined'}
-              onClick={() => setQrMode('manual')}
-              size="small"
-            >
-              Manual
-            </Button>
-            <Button
-              variant={qrMode === 'scan' ? 'contained' : 'outlined'}
-              onClick={() => {
-                setHasDecoded(false);
-                setQrMode('scan');
-              }}
-              size="small"
-            >
-              Scan Kamera
-            </Button>
-          </Box>
-
-          {/* MODE: MANUAL */}
-          {qrMode === 'manual' && (
-            <>
-              <TextField
-                fullWidth
-                label=""
-                variant="outlined"
-                placeholder="Enter your code"
-                size="small"
-                value={qrValue}
-                onChange={(e) => setQrValue(e.target.value)}
-              />
-              <Box mt={2} display="flex" justifyContent="flex-end">
-                <Box mt={2} display="flex" justifyContent="flex-end">
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={async () => {
-                      try {
-                        setIsSubmitting(true);
-                        await handleSubmitQRCode(qrValue);
-                      } finally {
-                        setIsSubmitting(false);
-                      }
-                    }}
-                    disabled={!qrValue || isSubmitting} // 🔒 disable kalau kosong atau sedang loading
-                    startIcon={isSubmitting ? <CircularProgress size={18} color="inherit" /> : null}
-                  >
-                    {isSubmitting ? 'Submit...' : 'Submit'}
-                  </Button>
-                </Box>
-              </Box>
-            </>
-          )}
-
-          {/* MODE: SCAN */}
-          {qrMode === 'scan' && (
-            <>
-              <Box
-                ref={scanContainerRef}
-                sx={{
-                  position: 'relative',
-                  borderRadius: 2,
-                  overflow: 'hidden',
-                  bgcolor: 'black',
-                  aspectRatio: '3 / 4', // proporsional untuk mobile
-                }}
-              >
-                <Scanner
-                  key={scannerKey}
-                  constraints={{ facingMode }}
-                  onScan={async (result: any) => {
-                    if (!result) return;
-                    if (hasDecoded) return;
-
-                    console.log('📸 QR scan raw result:', result);
-                    setHasDecoded(true);
-
-                    let value = '';
-                    if (typeof result === 'string') value = result;
-                    else if (Array.isArray(result)) value = result[0]?.rawValue || '';
-                    else if (typeof result === 'object')
-                      value = result.rawValue || JSON.stringify(result);
-
-                    console.log('✅ Extracted QR value:', value);
-                    setQrValue(value);
-
-                    try {
-                      setIsSubmitting(true);
-                      await handleSubmitQRCode(value); // ✅ panggil langsung
-                      // setOpenDetailQRCode(true); // tampilkan hasil di dialog
-                      setOpenDialogIndex(null);
-                    } catch (err) {
-                      console.error('❌ Error saat submit QR:', err);
-                    } finally {
-                      setIsSubmitting(false);
-                    }
-                  }}
-                  onError={(error: any) => {
-                    console.error('❌ QR Scanner error:', error?.message || error);
-                  }}
-                  styles={{
-                    container: { width: '100%', height: '100%' },
-                    video: {
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      border: 'none !important',
-                    },
-                  }}
-                />
-                <Box sx={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
-                  <Box
-                    sx={{
-                      // ukuran kotak scan (responsif)
-                      '--scanSize': { xs: '70vw', sm: '370px' },
-
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      width: 'var(--scanSize)',
-                      height: 'var(--scanSize)',
-                      transform: 'translate(-50%, -50%)',
-
-                      // ini yang bikin area luar gelap, tengah tetap terang
-                      boxShadow: '0 0 0 9999px rgba(0,0,0,0.55)',
-                      borderRadius: 2, // 0 jika mau siku
-                      outline: '2px solid rgba(255,255,255,0.18)',
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        inset: 0,
-                        '& .corner': {
-                          position: 'absolute',
-                          width: 50,
-                          height: 50,
-                          border: '3px solid #00e5ff',
-                        },
-                        '& .tl': { top: 0, left: 0, borderRight: 'none', borderBottom: 'none' },
-                        '& .tr': { top: 0, right: 0, borderLeft: 'none', borderBottom: 'none' },
-                        '& .bl': { bottom: 0, left: 0, borderRight: 'none', borderTop: 'none' },
-                        '& .br': { bottom: 0, right: 0, borderLeft: 'none', borderTop: 'none' },
-                      }}
-                    >
-                      <Box className="corner tl" />
-                      <Box className="corner tr" />
-                      <Box className="corner bl" />
-                      <Box className="corner br" />
-                    </Box>
-
-                    {/* Laser animasi (bergerak di dalam kotak) */}
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        left: 10,
-                        right: 10,
-                        height: 2,
-                        top: 0,
-                        background: 'linear-gradient(90deg, transparent, #00e5ff, transparent)',
-                        animation: 'scanLine 2s linear infinite',
-                        '@keyframes scanLine': {
-                          '0%': { transform: 'translateY(0)' },
-                          '100%': { transform: 'translateY(calc(var(--scanSize) - 2px))' },
-                        },
-                      }}
-                    />
-                  </Box>
-                </Box>
-                {/* Kontrol: Flip & Torch */}
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    left: 0,
-                    right: 0,
-                    bottom: 8,
-                    display: 'flex',
-                    justifyContent: 'center',
-                    gap: 1,
-                  }}
-                >
-                  <Button
-                    onClick={() =>
-                      setFacingMode((f) => (f === 'environment' ? 'user' : 'environment'))
-                    }
-                    variant="contained"
-                    size="small"
-                    sx={{ bgcolor: 'rgba(0,0,0,0.6)' }}
-                    startIcon={<FlipCameraAndroidIcon fontSize="small" />}
-                  >
-                    Flip
-                  </Button>
-
-                  <Button
-                    onClick={async () => {
-                      try {
-                        const video = scanContainerRef.current?.querySelector(
-                          'video',
-                        ) as HTMLVideoElement | null;
-                        const stream = video?.srcObject as MediaStream | null;
-                        const track = stream?.getVideoTracks()?.[0];
-                        const caps = track?.getCapabilities?.() as any;
-                        if (track && caps?.torch) {
-                          await track.applyConstraints({
-                            advanced: [{ torch: !torchOn }] as any,
-                          });
-                          setTorchOn((t) => !t);
-                        } else {
-                          console.log('Torch not supported on this device.');
-                        }
-                      } catch (e) {
-                        console.log('Torch toggle error:', e);
-                      }
-                    }}
-                    variant="contained"
-                    size="small"
-                    sx={{ bgcolor: 'rgba(0,0,0,0.6)' }}
-                    startIcon={
-                      torchOn ? <FlashOnIcon fontSize="small" /> : <FlashOffIcon fontSize="small" />
-                    }
-                  >
-                    Torch
-                  </Button>
-                </Box>
-              </Box>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
-
+      <ScanQrVisitorDialog
+        open={openDialogIndex === 1}
+        onClose={handleCloseScanQR}
+        handleSubmitQRCode={handleSubmitQRCode}
+        container={containerRef.current ?? undefined}
+      />
       {/* Choose Card */}
       <Dialog
         open={openChooseCardDialog}
@@ -5213,15 +4698,6 @@ const OperatorView = () => {
                       justifyContent="center"
                       alignItems="center"
                     >
-                      {/* <Typography variant="body1" fontWeight={600}>
-                        {card.card_number}
-                      </Typography>
-                      <Typography variant="h1" color="text.secondary">
-                        {card.remarks || '-'}
-                      </Typography>
-                      <Typography variant="body1" color="text.secondary">
-                        {card.card_mac || '-'}
-                      </Typography> */}
                       <Typography variant="h1" color="text.secondary" mt={2}>
                         {card.remarks || '-'}
                       </Typography>
@@ -5307,8 +4783,7 @@ const OperatorView = () => {
           </Box>
         </DialogContent>
       </Dialog>
-
-      {/* Fill Form */}
+      {/* Fill Form Pra regist Multiple*/}
       <Dialog
         open={openFillForm}
         onClose={() => setOpenFillForm(false)}
@@ -5363,6 +4838,14 @@ const OperatorView = () => {
                   const sectionType = getSectionType(section);
                   if (sectionType === 'visitor_information_group') {
                     // ✅ langsung reuse potongan yang kamu pakai untuk render Visitor Info Group
+                    const isDrivingField = fillFormDataVisitor
+                      ?.flatMap((v) => v.question_page)
+                      ?.flatMap((q) => q.form || [])
+                      ?.find((f) => f.remarks === 'is_driving');
+
+                    const isDriving =
+                      isDrivingField?.answer_text === 'true' ||
+                      isDrivingField?.answer_text === true;
                     return (
                       <Grid>
                         <Box>
@@ -5375,48 +4858,97 @@ const OperatorView = () => {
                                       ?.visit_form ||
                                     formsOf(section) ||
                                     []
-                                  ).map((f: any, i: any) => (
-                                    <TableCell key={i}>
-                                      <Typography variant="subtitle2" fontWeight={600}>
-                                        {f.long_display_text}
-                                      </Typography>
-                                    </TableCell>
-                                  ))}
-                                  {/* <TableCell align="right">Actions</TableCell> */}
+                                  )
+                                    .filter(
+                                      (f: any) =>
+                                        // pakai visitor pertama sebagai acuan visual header
+                                        fillFormDataVisitor[0]?.question_page?.[
+                                          fillFormActiveStep
+                                        ]?.form?.find(
+                                          (x: any) =>
+                                            x.remarks === 'is_driving' && x.answer_text === 'true',
+                                        ) || !['vehicle_type', 'vehicle_plate'].includes(f.remarks),
+                                    )
+                                    .map((f: any, i: any) => (
+                                      <TableCell key={i}>
+                                        <Typography variant="subtitle2" fontWeight={600}>
+                                          {f.long_display_text}
+                                        </Typography>
+                                      </TableCell>
+                                    ))}
                                 </TableRow>
                               </TableHead>
+
                               <TableBody>
                                 {fillFormDataVisitor.length > 0 ? (
                                   fillFormDataVisitor.map((group, gIdx) => {
                                     const page =
                                       group.question_page?.[fillFormActiveStep] ?? section;
                                     if (!page) return null;
+
+                                    // 🟢 CARI is_driving milik visitor ini
+                                    const isDrivingField = page.form?.find(
+                                      (f: any) => f.remarks === 'is_driving',
+                                    );
+                                    const isDriving =
+                                      isDrivingField?.answer_text === 'true' ||
+                                      isDrivingField?.answer_text === true;
+
                                     return (
                                       <TableRow key={gIdx}>
-                                        {page.form?.map((field: any, fIdx: number) => (
-                                          <TableCell key={fIdx}>
-                                            {renderFieldInput(
-                                              field,
-                                              fIdx,
-                                              (idx, fieldKey, value) => {
-                                                setFillFormDataVisitor((prev) => {
-                                                  const next = [...prev];
-                                                  const s = fillFormActiveStep;
-                                                  next[gIdx].question_page[s].form[fIdx] = {
-                                                    ...next[gIdx].question_page[s].form[fIdx],
-                                                    [fieldKey]: value,
-                                                  };
-                                                  return next;
-                                                });
-                                              },
-                                              undefined,
-                                              {
-                                                showLabel: false,
-                                                uniqueKey: `${fillFormActiveStep}:${gIdx}:${fIdx}`,
-                                              },
-                                            )}
-                                          </TableCell>
-                                        ))}
+                                        {page.form
+                                          ?.filter(
+                                            (field: any) =>
+                                              isDriving ||
+                                              !['vehicle_type', 'vehicle_plate'].includes(
+                                                field.remarks,
+                                              ),
+                                          )
+                                          .map((field: any) => {
+                                            // ✅ FIX 1: cari index sebenarnya berdasarkan remarks (bukan fIdx)
+                                            const formIdx = page.form.findIndex(
+                                              (x: any) => x.remarks === field.remarks,
+                                            );
+
+                                            return (
+                                              // ✅ FIX 2: gunakan remarks sebagai key, bukan fIdx
+                                              <TableCell key={field.remarks}>
+                                                {renderFieldInput(
+                                                  field,
+                                                  formIdx, // ✅ pakai index real
+                                                  (idx, fieldKey, value) => {
+                                                    setFillFormDataVisitor((prev) => {
+                                                      // ✅ FIX 3: deep clone agar state tetap konsisten
+                                                      const next = structuredClone(prev);
+                                                      const s = fillFormActiveStep;
+
+                                                      // ✅ FIX 4: update berdasarkan remarks, bukan index mentah
+                                                      const targetIdx = next[gIdx].question_page[
+                                                        s
+                                                      ].form.findIndex(
+                                                        (x: any) => x.remarks === field.remarks,
+                                                      );
+                                                      if (targetIdx === -1) return prev;
+
+                                                      next[gIdx].question_page[s].form[targetIdx] =
+                                                        {
+                                                          ...next[gIdx].question_page[s].form[
+                                                            targetIdx
+                                                          ],
+                                                          [fieldKey]: value,
+                                                        };
+                                                      return next;
+                                                    });
+                                                  },
+                                                  undefined,
+                                                  {
+                                                    showLabel: false,
+                                                    uniqueKey: `${fillFormActiveStep}:${gIdx}:${field.remarks}`, // ✅ pakai remarks
+                                                  },
+                                                )}
+                                              </TableCell>
+                                            );
+                                          })}
                                       </TableRow>
                                     );
                                   })
@@ -5476,7 +5008,19 @@ const OperatorView = () => {
             Back
           </Button>
           {fillFormActiveStep < fillFormData.length - 1 ? (
-            <Button variant="contained" onClick={() => setFillFormActiveStep((p) => p + 1)}>
+            // <Button variant="contained" onClick={() => setFillFormActiveStep((p) => p + 1)}>
+            //   Next
+            // </Button>
+            <Button
+              variant="contained"
+              onClick={() => {
+                console.log(
+                  '🧠 [DEBUG BEFORE NEXT] fillFormDataVisitor',
+                  JSON.stringify(fillFormDataVisitor, null, 2),
+                );
+                setFillFormActiveStep((p) => p + 1);
+              }}
+            >
               Next
             </Button>
           ) : (
@@ -5486,8 +5030,7 @@ const OperatorView = () => {
           )}
         </DialogActions>
       </Dialog>
-
-      {/* Praregister */}
+      {/* Submit Praregister */}
       <Dialog
         open={openDialogInvitation}
         onClose={() => setOpenDialogInvitation(false)}
@@ -5507,32 +5050,40 @@ const OperatorView = () => {
         >
           <IconX />
         </IconButton>
-        <DialogContent dividers>
-          {selectedInvitationId ? ( // ✅ pakai ID dari row yang di-klik
-            <FormDialogPraregist
-              id={selectedInvitationId ?? invitationCode?.[0]?.id}
-              onClose={() => setOpenDialogInvitation(false)}
-              onSubmitted={async (formId?: string) => {
-                setOpenDialogInvitation(false);
-                // await fetchRelatedVisitorsByInvitationId(invitationCode[0]?.id);
-                const targetId = formId ?? selectedInvitationId ?? invitationCode?.[0]?.id;
-                if (!targetId) {
-                  console.warn('⚠️ No valid invitation ID found to fetch');
-                  return;
-                }
-
-                await fetchRelatedVisitorsByInvitationId(targetId);
-              }}
-              onSubmitting={setSubmitting}
-            />
-          ) : (
-            <Typography variant="body2" textAlign="center" color="text.secondary">
-              No invitation selected.
-            </Typography>
-          )}
-        </DialogContent>
+        {loading ? (
+          <DialogContent
+            dividers
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              minHeight: 400, // 💪 kasih tinggi tetap biar nggak 'melompat'
+            }}
+          >
+            <CircularProgress />
+          </DialogContent>
+        ) : (
+          <DialogContent dividers>
+            {selectedInvitationId ? (
+              <FormDialogPraregist
+                id={selectedInvitationId ?? invitationCode?.[0]?.id}
+                onClose={() => setOpenDialogInvitation(false)}
+                onSubmitted={async (formId?: string) => {
+                  setOpenDialogInvitation(false);
+                  const targetId = formId ?? selectedInvitationId ?? invitationCode?.[0]?.id;
+                  if (!targetId) return;
+                  await fetchRelatedVisitorsByInvitationId(targetId);
+                }}
+                onSubmitting={setSubmitting}
+              />
+            ) : (
+              <Typography variant="body2" textAlign="center" color="text.secondary">
+                No invitation selected.
+              </Typography>
+            )}
+          </DialogContent>
+        )}
       </Dialog>
-
       {/* Access */}
       <Dialog
         open={openAccessData}
@@ -5540,7 +5091,7 @@ const OperatorView = () => {
         fullWidth
         maxWidth="md"
       >
-        <DialogTitle>Access</DialogTitle>
+        <DialogTitle>Select Access</DialogTitle>
         <IconButton
           aria-label="close"
           onClick={() => setOpenAccessData(false)}
@@ -5555,7 +5106,6 @@ const OperatorView = () => {
           <IconX />
         </IconButton>
         <DialogContent dividers>
-          {/* <AccessDataTable visitorId={selectedVisitorIdForAccessData} /> */}
           <DynamicTable
             data={accessData.map(({ trx_visitor_id, visitors, ...rest }) => rest)}
             isHaveChecked={true}
@@ -5614,8 +5164,6 @@ const OperatorView = () => {
                   return;
                 }
 
-                console.log('🧾 Selected Access IDs:', selectedAccessIds);
-
                 for (const id of selectedAccessIds) {
                   const row = accessData.find(
                     (r) =>
@@ -5643,8 +5191,7 @@ const OperatorView = () => {
           </Box>
         </DialogContent>
       </Dialog>
-
-      {/* Dialog Extend Visi */}
+      {/* Extend Visit */}
       <Dialog
         open={openExtendVisit}
         onClose={() => setOpenExtendVisit(false)}
@@ -5702,6 +5249,134 @@ const OperatorView = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Create Invitation */}
+      <Dialog
+        fullWidth
+        maxWidth={false}
+        PaperProps={{
+          sx: {
+            width: '100vw',
+          },
+        }}
+        open={openInvitationVisitor}
+        onClose={handleCloseDialog}
+        keepMounted
+      >
+        <DialogTitle
+          display="flex"
+          justifyContent={'space-between'}
+          alignItems="center"
+        >
+          Add Invitation Visitor
+          <IconButton
+            aria-label="close"
+            onClick={() => {
+              handleCloseDialog(); // aman langsung tutup
+            }}
+          >
+            <IconX />
+          </IconButton>
+        </DialogTitle>
+        <Divider />
+        <DialogContent>
+          <FormWizardAddVisitor
+            key={wizardKey}
+            formData={formDataAddVisitor}
+            setFormData={setFormDataAddVisitor}
+            // edittingId={edittingId}
+            onSuccess={handleSuccess}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Pra Registration */}
+      <Dialog fullWidth maxWidth="xl" open={openPreRegistration} onClose={handleCloseDialog}>
+        <DialogTitle display="flex" justifyContent={'space-between'} alignItems="center">
+          Add Pra Registration
+          <IconButton
+            aria-label="close"
+            onClick={() => {
+              handleCloseDialog();
+            }}
+          >
+            <IconX />
+          </IconButton>
+        </DialogTitle>
+        <Divider />
+        <DialogContent sx={{ paddingTop: '0px' }}>
+          <br />
+          <FormWizardAddInvitation
+            key={wizardKey}
+            formData={formDataAddVisitor}
+            setFormData={setFormDataAddVisitor}
+            // edittingId={edittingId}
+            onSuccess={handleSuccess}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Select Registered Site */}
+      <Dialog open={openDialogIndex === 2} onClose={handleCloseDialog} fullWidth maxWidth="sm">
+        <DialogTitle
+          display="flex"
+          justifyContent={'space-between'}
+          alignItems="center"
+          // sx={{
+          //   background: 'linear-gradient(135deg, rgba(2,132,199,0.05), rgba(99,102,241,0.08))',
+          // }}
+        >
+          Select Registered Site
+          <IconButton
+            aria-label="close"
+            onClick={() => {
+              handleCloseDialog();
+            }}
+          >
+            <IconX />
+          </IconButton>
+        </DialogTitle>
+        <Divider />
+        <DialogContent>
+          <CustomFormLabel sx={{ marginTop: 0 }}>Registered Site</CustomFormLabel>
+          <Autocomplete
+            fullWidth
+            options={siteData}
+            getOptionLabel={(o) => o.name || ''}
+            value={selectedSite}
+            onChange={(_, nv) => {
+              setSelectedSite(nv);
+              setFormDataAddVisitor((prev) => ({
+                ...prev,
+                registered_site: nv?.id || '', // isi kalau ada pilihan, kosong kalau null
+              }));
+            }}
+            isOptionEqualToValue={(option, value) => option.id === value?.id} // penting
+            renderInput={(params) => <TextField {...params} label="" />}
+          />
+          <Box display="flex" justifyContent="flex-end" mt={2}>
+            <Button
+              variant="contained"
+              onClick={() => {
+                if (!selectedSite) {
+                  toast('Minimal pilih 1 Registered Site.', 'warning');
+                  return;
+                }
+                setFormDataAddVisitor((prev) => ({
+                  ...prev,
+                  registered_site: selectedSite.id,
+                }));
+                setOpenDialogIndex(null); // tutup Registered Site
+
+                setOpenInvitationVisitor(true);
+              }}
+              color="primary"
+            >
+              Next
+            </Button>
+          </Box>
+        </DialogContent>
+      </Dialog>
+
       <Portal>
         <Snackbar
           open={snackbarOpen}
@@ -5740,10 +5415,10 @@ const OperatorView = () => {
       <Portal>
         <Backdrop
           sx={{
-            zIndex: 99999,
+            zIndex: 999999,
             position: 'fixed',
             margin: '0 auto',
-            color: 'primary',
+            // color: 'primary',
           }}
           open={loadingAccess}
         >

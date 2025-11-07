@@ -60,8 +60,8 @@ import {
 } from '@tabler/icons-react';
 import { Scanner } from '@yudiel/react-qr-scanner';
 import moment from 'moment-timezone';
-import LprImage from '../../../assets/images/products/pic_lpr.png';
-import FRImage from '../../../assets/images/products/pic_fr.png';
+import LprImage from 'src/assets/images/products/pic_lpr.png';
+import FRImage from 'src/assets/images/products/pic_fr.png';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import QRCode from 'react-qr-code';
@@ -390,10 +390,7 @@ const DashboardOperator = () => {
         // setRelatedVisitors(mappedVisitors);
         setInvitationCode(data);
         setVisitorStatus(data[0]?.visitor_status ?? null);
-
-        // ==========================
-        // 🔥 Merge Access vs Permission
-        // ==========================
+        
         const accessList = Array.isArray(invitation.access)
           ? invitation.access
           : [invitation.access];
@@ -407,7 +404,6 @@ const DashboardOperator = () => {
             (p: any) => p.access_control_id === a.access_control_id,
           );
 
-          // 🧩 Jika tidak ditemukan, tetap tampil tapi semua izin false
           return {
             // ...a,
             id: a.id,
@@ -421,7 +417,6 @@ const DashboardOperator = () => {
           };
         });
 
-        console.log('🧩 mergedAccess:', mergedAccess);
         setAccessData(mergedAccess);
         setOpenRelated(true);
         return;
@@ -449,9 +444,6 @@ const DashboardOperator = () => {
       setInvitationCode(data);
       setVisitorStatus(data[0]?.visitor_status ?? null);
 
-      // ==========================
-      // 🔥 Merge Access vs Permission
-      // ==========================
       const accessList = Array.isArray(invitation.access) ? invitation.access : [invitation.access];
 
       const filteredAccess = accessList.filter((a: any) =>
@@ -475,7 +467,6 @@ const DashboardOperator = () => {
         };
       });
 
-      console.log('🧩 mergedAccess:', mergedAccess);
       setAccessData(mergedAccess);
 
       setOpenDetailQRCode(true);
@@ -1612,6 +1603,7 @@ const DashboardOperator = () => {
                     isHaveChecked={true}
                     isHaveAction={false}
                     isHaveArrival={true}
+                    isHavePagination={true}
                     // isHaveAction={false}
                   />
                   {/* </Box> */}

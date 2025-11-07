@@ -12,11 +12,12 @@ import { Box } from '@mui/system';
 import React, { useState, useEffect } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import { createDepartment, getAllEmployee } from 'src/customs/api/admin';
+import { createDepartment, getAllEmployee, getVisitorEmployee } from 'src/customs/api/admin';
 import {
   CreateDepartementSubmitSchema,
   CreateDepartmentRequest,
 } from 'src/customs/api/models/Admin/Department';
+import { showSwal } from 'src/customs/components/alerts/alerts';
 import { useSession } from 'src/customs/contexts/SessionContext';
 
 interface FormAddDepartmentProps {
@@ -71,7 +72,7 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
 
     const fetchEmployees = async () => {
       try {
-        const res = await getAllEmployee(token);
+        const res = await getVisitorEmployee(token);
         setAllEmployees(res?.collection ?? []);
       } catch (error) {
         console.error('Failed to fetch employees:', error);
@@ -88,10 +89,15 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
     setErrors({});
 
     try {
-      if (!token) {
-        setAlertType('error');
-        setAlertMessage('Something went wrong. Please try again later.');
+      // if (!token) {
+      //   showSwal('error', 'Something went wrong. Please try again later.');
+      //   return;
+      // }
 
+      const parsed = validateLocal(formData);
+      if (!parsed) {
+        setAlertType('error');
+        setAlertMessage('Please complete the required fields correctly.');
         setTimeout(() => {
           setAlertType('info');
           setAlertMessage('Complete the following data properly and correctly');
@@ -99,21 +105,18 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
         return;
       }
 
-      const parsed = validateLocal(formData);
-      if (!parsed) {
-        setAlertType('error');
-        setAlertMessage('Please complete the required fields correctly.');
-        return;
-      }
-
-      await createDepartment(parsed, token);
+      await createDepartment(parsed, token as string);
       localStorage.removeItem('unsavedDepartmentFormAdd');
-      setAlertType('success');
-      setAlertMessage('Department successfully created!');
 
-      setTimeout(() => {
+      // ✅ Tutup backdrop & dialog dulu sebelum swal
+      setLoading(false);
+      await new Promise<void>((resolve) => {
         onSuccess?.();
-      }, 900);
+        setTimeout(resolve, 600);
+      });
+
+      // ✅ Baru tampil swal sukses
+      showSwal('success', 'Department successfully created!', 3000);
     } catch (err: any) {
       const be = err?.response?.data?.errors;
       if (be && typeof be === 'object') {
@@ -124,28 +127,21 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
         });
       }
 
-      setAlertType('error');
-      setAlertMessage('Something went wrong. Please try again later.');
-      setTimeout(() => {
-        setAlertType('info');
-        setAlertMessage('Complete the following data properly and correctly');
-      }, 3000);
+      showSwal('error', 'Failed to create department.', 3000);
     } finally {
-      setTimeout(() => {
-        setLoading(false);
-      }, 600);
+      setTimeout(() => setLoading(false), 600);
     }
   };
 
   return (
     <>
       <form onSubmit={handleSubmit}>
-        <Grid2 size={12}>
+        {/* <Grid2 size={12}>
           <Alert severity={alertType}>{alertMessage}</Alert>
-        </Grid2>
+        </Grid2> */}
 
         <CustomFormLabel htmlFor="name" sx={{ my: 1 }}>
-          <Typography variant="caption">Department Name</Typography>
+          <Typography variant="body1">Department Name</Typography>
         </CustomFormLabel>
         <CustomTextField
           id="name"
@@ -158,7 +154,7 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
         />
 
         <CustomFormLabel htmlFor="code" sx={{ my: 1 }}>
-          <Typography variant="caption">Department Code</Typography>
+          <Typography variant="body1">Department Code</Typography>
         </CustomFormLabel>
         <CustomTextField
           id="code"
@@ -171,13 +167,13 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
         />
 
         <CustomFormLabel htmlFor="host" sx={{ my: 1 }}>
-          <Typography variant="caption">Head of Department</Typography>
+          <Typography variant="body1">Head of Department</Typography>
         </CustomFormLabel>
         <Autocomplete
           // freeSolo
           id="host"
           autoHighlight
-          disablePortal
+          disablePortal={false}
           options={allEmployes.map((emp: any) => ({ id: emp.id, label: emp.name }))}
           getOptionLabel={(option) => {
             if (typeof option === 'string') return option; // user mengetik manual

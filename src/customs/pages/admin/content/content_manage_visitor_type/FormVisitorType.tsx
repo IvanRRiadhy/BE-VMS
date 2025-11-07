@@ -26,6 +26,9 @@ import {
   DialogActions,
   Backdrop,
   Button as MuiButton,
+  FormControl,
+  Select,
+  InputLabel,
 } from '@mui/material';
 import { Box } from '@mui/system';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
@@ -52,12 +55,14 @@ import {
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
+import { showSwal } from 'src/customs/components/alerts/alerts';
 
 interface FormVisitorTypeProps {
   formData: CreateVisitorTypeRequest;
   setFormData: React.Dispatch<React.SetStateAction<CreateVisitorTypeRequest>>;
   edittingId?: string;
   onSuccess?: () => void;
+  initialDocuments?: { document_id: string; identity_type: number }[]; // 👈 tambahan
 }
 
 const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
@@ -65,6 +70,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
   setFormData,
   edittingId,
   onSuccess,
+  initialDocuments = [],
 }) => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
@@ -109,6 +115,12 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
       [name!]: mapped,
     }));
   };
+
+  useEffect(() => {
+    if (edittingId && initialDocuments.length > 0) {
+      setDocumentIdentities(initialDocuments);
+    }
+  }, [edittingId, initialDocuments]);
 
   const handleOnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -197,6 +209,10 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         grace_time: Number(formData.grace_time),
         period: Number(formData.period),
         section_page_visitor_types: transformedSections,
+        visitor_type_documents: documentIdentities.map((doc) => ({
+          document_id: doc.document_id,
+          identity_type: doc.identity_type ?? null,
+        })),
       };
 
       console.log('Submit data : ', JSON.stringify(data, null, 2));
@@ -206,7 +222,12 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
       if (edittingId) {
         const parsedUpdateData: UpdateVisitorTypeRequest = updateVisitorTypeSchmea.parse({
           ...data,
+          // can_track_ble: formData.can_track_ble ?? false,
           id: edittingId,
+          visitor_type_documents: documentIdentities.map((doc) => ({
+            document_id: doc.document_id,
+            identity_type: doc.identity_type ?? null,
+          })),
         });
 
         console.log('parsedData', JSON.stringify(parsedUpdateData, null, 2));
@@ -214,138 +235,35 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         const payload = await updateVisitorType(token, edittingId, parsedUpdateData);
 
         console.log('payload', payload);
-        setAlertType('success');
-        setAlertMessage('Visitor type updated successfully!');
+        // setAlertType('success');
+        // setAlertMessage('Visitor type updated successfully!');
+        showSwal('success', 'Visitor type updated successfully!');
       } else {
         await createVisitorType(token, parseData);
         // setSectionsData([]);
-        setAlertType('success');
-        setAlertMessage('Visitor type created successfully!');
+        // setAlertType('success');
+        // setAlertMessage('Visitor type created successfully!');
+        showSwal('success', 'Visitor type created successfully!');
       }
 
       // localStorage.removeItem('unsavedVisitorTypeData');
       setTimeout(() => {
         onSuccess?.();
         setLoading(false);
-      }, 1000);
+      }, 600);
     } catch (err: any) {
       if (err?.errors) {
         setErrors(err.errors);
       }
       setAlertType('error');
       setAlertMessage('Something went wrong. Please try again later.');
-      setTimeout(() => {
-        setAlertType('info');
-        setAlertMessage('Complete the following data properly and correctly');
-      }, 3000);
+      // setTimeout(() => {
+      //   setAlertType('info');
+      //   setAlertMessage('Complete the following data properly and correctly');
+      // }, 3000);
       setLoading(false); // ⛔️ penting: jangan taruh di timeout
     }
   };
-
-  // const renderDetailRows = (
-  //   details: FormVisitorTypes[] | any,
-  //   onChange: (index: number, field: keyof FormVisitorTypes, value: any) => void,
-  //   onDelete?: (index: number) => void,
-  //   showMandatory = true,
-  //   isDocument = false,
-  //   canMultiple = false,
-  //   sectionKey?: SectionKey, // 🔑 tambahin param sectionKey
-  // ) => {
-  //   if (!Array.isArray(details)) {
-  //     console.error('Expected array for details, but got:', details);
-  //     return (
-  //       <TableRow>
-  //         <TableCell colSpan={5}>Invalid data format</TableCell>
-  //       </TableRow>
-  //     );
-  //   }
-
-  //   // whitelist untuk pra_form
-  //   const PRA_FORM_ALLOWED = ['name', 'email', 'phone', 'organization'];
-
-  //   return details.map((item, index) => (
-  //     <TableRow key={index}>
-  //       <TableCell>
-  //         <TextField
-  //           select
-  //           size="small"
-  //           value={item.short_name}
-  //           onChange={(e) => {
-  //             const selectedShortName = e.target.value;
-  //             const matchedField = customField.find((f) => f.short_name === selectedShortName);
-
-  //             onChange(index, 'short_name', selectedShortName);
-
-  //             if (matchedField) {
-  //               onChange(index, 'custom_field_id', matchedField.id);
-  //               onChange(index, 'remarks', matchedField.remarks);
-  //               onChange(index, 'field_type', matchedField.field_type);
-  //               onChange(
-  //                 index,
-  //                 'multiple_option_fields',
-  //                 matchedField.multiple_option_fields ?? [],
-  //               );
-  //             }
-  //           }}
-  //           placeholder="Select Field"
-  //           fullWidth
-  //         >
-  //           {customField
-  //             .filter((field) => {
-  //               if (sectionKey === 'pra_form') {
-  //                 return PRA_FORM_ALLOWED.includes(field.remarks); // 🔑 batasi hanya name/email/phone/organization
-  //               }
-  //               if (isDocument) {
-  //                 return field.field_type >= 10 && field.field_type <= 12;
-  //               } else if (canMultiple) {
-  //                 return field.field_type >= 0 && field.field_type <= 12;
-  //               } else {
-  //                 return field.field_type >= 0 && field.field_type <= 9;
-  //               }
-  //             })
-  //             .map((field) => (
-  //               <MenuItem key={field.id} value={field.short_name}>
-  //                 {field.short_name}
-  //               </MenuItem>
-  //             ))}
-  //         </TextField>
-  //       </TableCell>
-
-  //       <TableCell>
-  //         <TextField
-  //           size="small"
-  //           value={item.long_display_text}
-  //           onChange={(e) => onChange(index, 'long_display_text', e.target.value)}
-  //           placeholder="Display Text"
-  //         />
-  //       </TableCell>
-
-  //       <TableCell align="left">
-  //         <Switch
-  //           checked={!!item.is_enable}
-  //           onChange={(_, checked) => onChange(index, 'is_enable', checked)}
-  //         />
-  //       </TableCell>
-
-  //       {showMandatory && (
-  //         <TableCell align="left">
-  //           <Switch
-  //             checked={!!item.mandatory}
-  //             onChange={(_, checked) => onChange(index, 'mandatory', checked)}
-  //           />
-  //         </TableCell>
-  //       )}
-
-  //       {onDelete && (
-  //         <TableCell align="center">
-  //           <IconButton onClick={() => onDelete(index)} size="small">
-  //             <IconTrash fontSize="small" />
-  //           </IconButton>
-  //         </TableCell>
-  //       )}
-  //     </TableRow>
-  //   ));
-  // };
 
   useEffect(() => {
     if (!formData.can_parking) {
@@ -415,6 +333,127 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     });
   }, [formData.can_parking, customField]);
 
+  const handleMove = (from: number, to: number) => {
+    // const updated = [...formData.access];
+    // const [moved] = updated.splice(from, 1);
+    // updated.splice(to, 0, moved);
+    // setFormData((prev) => ({
+    //   ...prev,
+    //   access: updated,
+    // }));
+  };
+
+  // const renderDetailRows = (
+  //   details: FormVisitorTypes[] | any,
+  //   onChange: (index: number, field: keyof FormVisitorTypes, value: any) => void,
+  //   onDelete?: (index: number) => void,
+  //   showMandatory = true,
+  //   isDocument = false,
+  //   canMultiple = false,
+  //   sectionKey?: SectionKey, // <- penting
+  //   sectionName?: string,
+  // ) => {
+  //   if (!Array.isArray(details)) {
+  //     console.error('Expected array for details, but got:', details);
+  //     return (
+  //       <TableRow>
+  //         <TableCell colSpan={5}>Invalid data format</TableCell>
+  //       </TableRow>
+  //     );
+  //   }
+  //   return details.map((item, index) => (
+  //     <TableRow key={index}>
+  //       <TableCell>
+  //         <TextField
+  //           select
+  //           size="small"
+  //           value={item.short_name}
+  //           onChange={(e) => {
+  //             const selectedShortName = e.target.value;
+  //             const matchedField = customField.find((f) => f.short_name === selectedShortName);
+
+  //             onChange(index, 'short_name', selectedShortName);
+
+  //             if (matchedField) {
+  //               onChange(index, 'custom_field_id', matchedField.id);
+  //               onChange(index, 'remarks', matchedField.remarks);
+  //               onChange(index, 'field_type', matchedField.field_type);
+  //               onChange(
+  //                 index,
+  //                 'multiple_option_fields',
+  //                 matchedField.multiple_option_fields ?? [],
+  //               );
+  //             }
+  //           }}
+  //           placeholder="Select Field"
+  //           fullWidth
+  //         >
+  //           {customField
+  //             .filter((field) => {
+  //               if (!sectionKey) return true;
+
+  //               // const whitelist =
+  //               //   WHITELIST[sectionKey]?.[sectionName ?? ''] ??
+  //               //   WHITELIST[sectionKey]?.default ??
+  //               //   [];
+
+  //               // if (whitelist.length) {
+  //               //   // Cek baik remarks maupun short_name
+  //               //   return (
+  //               //     whitelist.includes(field.remarks?.toLowerCase()) ||
+  //               //     whitelist.includes(field.short_name?.toLowerCase())
+  //               //   );
+  //               // }
+
+  //               // fallback rules lama
+  //               if (isDocument) return field.field_type >= 10 && field.field_type <= 12;
+  //               if (canMultiple) return field.field_type >= 0 && field.field_type <= 12;
+  //               return field.field_type >= 0 && field.field_type <= 9;
+  //             })
+  //             .map((field) => (
+  //               <MenuItem key={field.id} value={field.short_name}>
+  //                 {field.short_name}
+  //               </MenuItem>
+  //             ))}
+  //         </TextField>
+  //       </TableCell>
+
+  //       <TableCell>
+  //         <TextField
+  //           size="small"
+  //           value={item.long_display_text}
+  //           onChange={(e) => onChange(index, 'long_display_text', e.target.value)}
+  //           placeholder="Display Text"
+  //         />
+  //       </TableCell>
+
+  //       <TableCell align="left">
+  //         <Switch
+  //           checked={!!item.is_enable}
+  //           onChange={(_, checked) => onChange(index, 'is_enable', checked)}
+  //         />
+  //       </TableCell>
+
+  //       {showMandatory && (
+  //         <TableCell align="left">
+  //           <Switch
+  //             checked={!!item.mandatory}
+  //             onChange={(_, checked) => onChange(index, 'mandatory', checked)}
+  //           />
+  //         </TableCell>
+  //       )}
+
+  //       {onDelete && (
+  //         <TableCell align="center">
+  //           <IconButton onClick={() => onDelete(index)} size="small">
+  //             <IconTrash fontSize="small" />
+  //           </IconButton>
+  //         </TableCell>
+  //       )}
+  //     </TableRow>
+  //   ));
+  // };
+
   const renderDetailRows = (
     details: FormVisitorTypes[] | any,
     onChange: (index: number, field: keyof FormVisitorTypes, value: any) => void,
@@ -422,37 +461,19 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     showMandatory = true,
     isDocument = false,
     canMultiple = false,
-    sectionKey?: SectionKey, // <- penting
+    sectionKey?: SectionKey,
     sectionName?: string,
   ) => {
     if (!Array.isArray(details)) {
       console.error('Expected array for details, but got:', details);
       return (
         <TableRow>
-          <TableCell colSpan={5}>Invalid data format</TableCell>
+          <TableCell colSpan={6}>Invalid data format</TableCell>
         </TableRow>
       );
     }
 
-    // whitelist rules
-    // const WHITELIST: Record<SectionKey, Record<string, string[]>> = {
-    //   pra_form: {
-    //     'Purpose Visit': [
-    //       'host',
-    //       'agenda',
-    //       'site_place',
-    //       'visitor_period_start',
-    //       'visitor_period_end',
-    //     ],
-    //     default: ['name', 'email', 'phone', 'organization'],
-    //   },
-    //   checkout_form: {
-    //     default: ['visitor_code'],
-    //   },
-    //   visit_form: {
-    //     default: [], // bebas (pakai rules field_type)
-    //   },
-    // };
+    const droppableId = String(sectionKey ?? 'default-section');
 
     return details.map((item, index) => (
       <TableRow key={index}>
@@ -484,21 +505,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
             {customField
               .filter((field) => {
                 if (!sectionKey) return true;
-
-                // const whitelist =
-                //   WHITELIST[sectionKey]?.[sectionName ?? ''] ??
-                //   WHITELIST[sectionKey]?.default ??
-                //   [];
-
-                // if (whitelist.length) {
-                //   // Cek baik remarks maupun short_name
-                //   return (
-                //     whitelist.includes(field.remarks?.toLowerCase()) ||
-                //     whitelist.includes(field.short_name?.toLowerCase())
-                //   );
-                // }
-
-                // fallback rules lama
                 if (isDocument) return field.field_type >= 10 && field.field_type <= 12;
                 if (canMultiple) return field.field_type >= 0 && field.field_type <= 12;
                 return field.field_type >= 0 && field.field_type <= 9;
@@ -684,6 +690,43 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     setSectionsData(reorderedSections);
   };
 
+  const [documentIdentities, setDocumentIdentities] = React.useState<
+    { document_id: string; identity_type: number }[]
+  >([]);
+
+  const identityOptions = [
+    { value: -1, label: '' }, // placeholder
+    { value: 0, label: 'NIK' },
+    { value: 1, label: 'KTP' },
+    { value: 2, label: 'PASSPORT' },
+    { value: 3, label: 'Driver License' },
+    { value: 4, label: 'Card Access' },
+    { value: 5, label: 'Face' },
+  ];
+
+  const handleAddDocument = () => {
+    setDocumentIdentities((prev) => [...prev, { document_id: '', identity_type: -1 }]);
+  };
+
+  const handleRemoveDocument = (index: number) => {
+    setDocumentIdentities((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleChangeDocument = (
+    index: number,
+    field: 'document_id' | 'identity_type',
+    value: string | number,
+  ) => {
+    setDocumentIdentities((prev) => {
+      const updated = [...prev];
+      updated[index] = {
+        ...updated[index],
+        [field]: field === 'identity_type' ? Number(value) : String(value),
+      };
+      return updated;
+    });
+  };
+
   const StepContent = (step: number) => {
     if (step === 0) {
       return (
@@ -752,12 +795,88 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                       .join(', ')
                   }
                 >
+                  {' '}
                   {documents.map((item) => (
                     <MenuItem key={item.id} value={item.id}>
-                      {item.name}
+                      {' '}
+                      {item.name}{' '}
                     </MenuItem>
-                  ))}
+                  ))}{' '}
                 </CustomSelect>
+                // <TableContainer component={Paper} sx={{ mt: 1 }}>
+                //   <Table size="small">
+                //     <TableHead>
+                //       <TableRow>
+                //         <TableCell sx={{ fontWeight: 600 }}>Document</TableCell>
+                //         <TableCell sx={{ fontWeight: 600 }}>Identity Type</TableCell>
+                //         <TableCell align="center" sx={{ fontWeight: 600, width: 80 }}>
+                //           Action
+                //         </TableCell>
+                //       </TableRow>
+                //     </TableHead>
+
+                //     <TableBody>
+                //       {documentIdentities.map((row, index) => (
+                //         <TableRow key={index}>
+                //           <TableCell>
+                //             <FormControl size="small" fullWidth>
+                //               <Select
+                //                 value={row.document_id}
+                //                 onChange={(e) =>
+                //                   handleChangeDocument(index, 'document_id', e.target.value)
+                //                 }
+                //               >
+                //                 {documents.map((item) => (
+                //                   <MenuItem key={item.id} value={item.id}>
+                //                     {item.name}
+                //                   </MenuItem>
+                //                 ))}
+                //               </Select>
+                //             </FormControl>
+                //           </TableCell>
+
+                //           <TableCell>
+                //             <FormControl size="small" fullWidth>
+                //               <Select
+                //                 value={row.identity_type}
+                //                 onChange={(e) =>
+                //                   handleChangeDocument(index, 'identity_type', e.target.value)
+                //                 }
+                //               >
+                //                 {identityOptions.map((opt) => (
+                //                   <MenuItem key={opt.value} value={opt.value}>
+                //                     {opt.label}
+                //                   </MenuItem>
+                //                 ))}
+                //               </Select>
+                //             </FormControl>
+                //           </TableCell>
+
+                //           <TableCell align="center">
+                //             <IconButton color="error" onClick={() => handleRemoveDocument(index)}>
+                //               <IconTrash size={18} />
+                //             </IconButton>
+                //           </TableCell>
+                //         </TableRow>
+                //       ))}
+
+                //       {documentIdentities.length === 0 && (
+                //         <TableRow>
+                //           <TableCell colSpan={3} align="center" sx={{ color: 'text.secondary' }}>
+                //             No document added yet.
+                //           </TableCell>
+                //         </TableRow>
+                //       )}
+                //     </TableBody>
+                //   </Table>
+
+                //   {/* Add New button */}
+                //   <Box sx={{ p: 2 }}>
+                //     <Button onClick={handleAddDocument} color="primary" variant="contained">
+                //       Add New
+                //     </Button>
+                //   </Box>
+                // </TableContainer>
               )}
             </Grid>
             <Grid size={12}>
@@ -774,20 +893,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                 inputProps={{ min: 0 }}
               />
             </Grid>
-            {/* <Grid size={12}>
-              <CustomFormLabel htmlFor="visitor-type" sx={{ mt: 1 }}>
-               Prefix
-              </CustomFormLabel>
-              <CustomTextField
-                id="prefix"
-                value={formData.prefix}
-                onChange={handleChange}
-                error={Boolean(errors.prefix)}
-                helperText={errors.prefix || ''}
-                fullWidth
-                inputProps={{ min: 0 }}
-              />
-            </Grid> */}
             <Grid size={12}>
               <CustomFormLabel
                 htmlFor="duration_visit"
@@ -935,12 +1040,13 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                 <FormControlLabel
                   control={
                     <Switch
-                      checked={formData.can_track_ble}
+                      checked={formData.can_track_ble || false}
                       onChange={(e) => {
-                        setFormData((prev) => ({
-                          ...prev,
-                          can_track_ble: e.target.checked,
-                        }));
+                        const checked = e.target.checked;
+                        setFormData((prev) => {
+                          const updated = { ...prev, can_track_ble: checked };
+                          return updated;
+                        });
                       }}
                     />
                   }
@@ -1233,45 +1339,22 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     const currentSection = sectionsData[step - 1]; // dikurangi 1 karena step 0 khusus
     if (!currentSection) return null;
 
-    const handleCustomDocumentChange = (
-      e: React.ChangeEvent<{ value: unknown }>,
-      formType: 'visit_form' | 'pra_form' | 'checkout_form',
-      index: number,
-    ) => {
-      const selectedDocId = e.target.value as string;
+    const handleDragEnds = (result: DropResult) => {
+      if (!result.destination) return;
 
-      setSectionsData((prevSections) => {
-        const newSections = [...prevSections];
-        const currentIndex = step - 1;
+      const section = result.source.droppableId as SectionKey;
+      const currentData = currentSection[section] || [];
+      const reordered = Array.from(currentData);
+      const [moved] = reordered.splice(result.source.index, 1);
+      reordered.splice(result.destination.index, 0, moved);
 
-        if (!newSections[currentIndex]) return prevSections;
-
-        if (!newSections[currentIndex][formType]) {
-          newSections[currentIndex][formType] = [];
-        }
-
-        if (!newSections[currentIndex][formType][index]) {
-          newSections[currentIndex][formType][index] = {
-            sort: index,
-            short_name: '',
-            long_display_text: '',
-            is_enable: false,
-            is_primary: formType === 'visit_form',
-            field_type: 9,
-            remarks: '',
-            mandatory: false,
-            custom_field_id: '',
-            multiple_option_fields: [],
-            document_id: selectedDocId, // ✅ simpan document_id
-            foreign_id: selectedDocId, // ✅ foreign_id ikut document_id
-          };
-        } else {
-          newSections[currentIndex][formType][index].document_id = selectedDocId;
-          newSections[currentIndex][formType][index].foreign_id = selectedDocId;
-        }
-
-        return newSections;
-      });
+      // update order di sectionsData
+      setSectionsData((prev) =>
+        prev.map((sectionData, idx) => {
+          if (idx !== step - 1) return sectionData;
+          return { ...sectionData, [section]: reordered };
+        }),
+      );
     };
 
     return (
@@ -1323,6 +1406,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
             }
           />
         </Box>
+        {/* <DragDropContext onDragEnd={handleDragEnds}> */}
         {!currentSection.is_document && !currentSection.can_multiple_used && (
           <>
             {/* Visit Form */}
@@ -1339,21 +1423,20 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                         <TableCell>Display</TableCell>
                         <TableCell>Enabled</TableCell>
                         <TableCell>Mandatory</TableCell>
-                        <TableCell>Action</TableCell>
+                        <TableCell sx={{ textAlign: 'center' }}>Action</TableCell>
                       </TableRow>
                     </TableHead>
-                    <TableBody>
-                      {renderDetailRows(
-                        currentSection.visit_form || [],
-                        (index, field, value) =>
-                          handleDetailChange('visit_form', index, field, value),
-                        (index) => handleDeleteDetail('visit_form', index),
-                        true,
-                        false,
-                        false,
-                        'visit_form',
-                      )}
-                    </TableBody>
+
+                    {renderDetailRows(
+                      currentSection.visit_form || [],
+                      (index, field, value) =>
+                        handleDetailChange('visit_form', index, field, value),
+                      (index) => handleDeleteDetail('visit_form', index),
+                      true,
+                      false,
+                      false,
+                      'visit_form',
+                    )}
                   </Table>
                 </TableContainer>
                 <MuiButton size="small" onClick={() => handleAddDetail('visit_form')}>
@@ -1361,6 +1444,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                 </MuiButton>
               </Box>
             </Grid>
+
             {/* Pra Form */}
             <Grid size={12}>
               <Box mt={3}>
@@ -1374,33 +1458,29 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                         <TableCell>Field Name</TableCell>
                         <TableCell>Display</TableCell>
                         <TableCell>Enabled</TableCell>
-                        {/* <TableCell>Field Type</TableCell> */}
-                        {/* <TableCell >Is Primary</TableCell> */}
                         <TableCell>Mandatory</TableCell>
-                        <TableCell>Action</TableCell>
+                        <TableCell sx={{ textAlign: 'center' }}>Action</TableCell>
                       </TableRow>
                     </TableHead>
-                    <TableBody>
-                      {renderDetailRows(
-                        currentSection.pra_form || [],
-                        (key, field, value) =>
-                          handleDetailChange('pra_form' as const, key, field, value),
-                        (key) => handleDeleteDetail('pra_form' as const, key),
-                        true,
-                        false,
-                        false,
-                        'pra_form',
-                        currentSection.name,
-                      )}
-                    </TableBody>
+
+                    {renderDetailRows(
+                      currentSection.pra_form || [],
+                      (i, f, v) => handleDetailChange('pra_form', i, f, v),
+                      (i) => handleDeleteDetail('pra_form', i),
+                      true,
+                      false,
+                      false,
+                      'pra_form',
+                    )}
                   </Table>
                 </TableContainer>
-                <MuiButton size="small" onClick={() => handleAddDetail('pra_form' as const)}>
+                <MuiButton size="small" onClick={() => handleAddDetail('pra_form')}>
                   Add New
                 </MuiButton>
               </Box>
             </Grid>
-            {/*Checkout Form */}
+
+            {/* Checkout Form */}
             <Grid size={12}>
               <Box mt={3}>
                 <Typography variant="subtitle1" fontWeight={600}>
@@ -1413,24 +1493,20 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                         <TableCell>Field Name</TableCell>
                         <TableCell>Display</TableCell>
                         <TableCell>Enabled</TableCell>
-                        {/* <TableCell>Field Type</TableCell> */}
-                        {/* <TableCell>Is Primary</TableCell> */}
                         <TableCell>Mandatory</TableCell>
-                        <TableCell>Action</TableCell>
+                        <TableCell sx={{ textAlign: 'center' }}>Action</TableCell>
                       </TableRow>
                     </TableHead>
-                    <TableBody>
-                      {renderDetailRows(
-                        currentSection.checkout_form || [],
-                        (key, field, value) =>
-                          handleDetailChange('checkout_form', key, field, value),
-                        (key) => handleDeleteDetail('checkout_form', key),
-                        true,
-                        false,
-                        false,
-                        'checkout_form',
-                      )}
-                    </TableBody>
+
+                    {renderDetailRows(
+                      currentSection.checkout_form || [],
+                      (i, f, v) => handleDetailChange('checkout_form', i, f, v),
+                      (i) => handleDeleteDetail('checkout_form', i),
+                      true,
+                      false,
+                      false,
+                      'checkout_form',
+                    )}
                   </Table>
                 </TableContainer>
                 <MuiButton size="small" onClick={() => handleAddDetail('checkout_form')}>
@@ -1440,6 +1516,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
             </Grid>
           </>
         )}
+        {/* </DragDropContext> */}
 
         {currentSection.can_multiple_used && (
           <>
@@ -1457,7 +1534,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                         <TableCell>Display</TableCell>
                         <TableCell>Enabled</TableCell>
                         <TableCell>Mandatory</TableCell>
-                        <TableCell>Action</TableCell>
+                        <TableCell sx={{ textAlign: 'center' }}>Action</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -1495,7 +1572,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                         {/* <TableCell>Field Type</TableCell> */}
                         {/* <TableCell >Is Primary</TableCell> */}
                         <TableCell>Mandatory</TableCell>
-                        <TableCell>Action</TableCell>
+                        <TableCell sx={{ textAlign: 'center' }}>Action</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -1575,7 +1652,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                         {/* <TableCell>Field Type</TableCell> */}
                         {/* <TableCell>Is Primary</TableCell> */}
                         <TableCell>Mandatory</TableCell>
-                        <TableCell>Action</TableCell>
+                        <TableCell sx={{ textAlign: 'center' }}>Action</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -1717,7 +1794,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     );
   };
 
-  // const allSteps = ['Visitor Type Info', ...dynamicSteps];
   const totalSteps = 1 + draggableSteps.length;
   const isLastStep = activeStep === totalSteps - 1;
 
@@ -1776,21 +1852,25 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
   //       ...prev,
   //       visitor_type_documents: validIds.map((id) => ({
   //         document_id: id,
+  //         identity_type: 1,
   //       })),
   //     }));
   //   }
   // }, [documents]);
+
   useEffect(() => {
     if (formData.visitor_type_documents && documents.length > 0) {
-      const validIds = formData.visitor_type_documents
-        .map((d) => d.document_id)
-        .filter((id) => documents.some((doc) => doc.id === id));
+      // Ambil hanya document_id yang masih valid
+      const validDocs = formData.visitor_type_documents
+        .filter((d) => documents.some((doc) => doc.id === d.document_id))
+        .map((d) => ({
+          document_id: d.document_id,
+          identity_type: d.identity_type ?? -1, // default -1 jika belum diisi
+        }));
 
       setFormData((prev) => ({
         ...prev,
-        visitor_type_documents: validIds.map((id) => ({
-          document_id: id,
-        })),
+        visitor_type_documents: validDocs,
       }));
     }
   }, [documents]);
@@ -1821,9 +1901,9 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
   return (
     <>
       <form onSubmit={handleOnSubmit}>
-        <Grid size={12}>
+        {/* <Grid size={12}>
           <Alert severity={alertType}>{alertMessage}</Alert>
-        </Grid>
+        </Grid> */}
         <Box width="100%" sx={{ overflow: 'visible' }}>
           <DragDropContext onDragEnd={handleDragEnd}>
             <Droppable
@@ -1998,7 +2078,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
             </Droppable>
           </DragDropContext>
 
-          <Box mt={3}>{StepContent(activeStep)}</Box>
+          <Box mt={1}>{StepContent(activeStep)}</Box>
 
           <Box mt={3} display="flex" justifyContent="space-between">
             {/* Tombol Back */}

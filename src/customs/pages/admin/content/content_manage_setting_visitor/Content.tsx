@@ -154,7 +154,6 @@ const Content = () => {
 
       setSettingData(enriched);
       setIsDataReady(true);
-      setIsDataReady(true);
     };
 
     fetchData();

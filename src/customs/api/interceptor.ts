@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // const axiosInstance = axios.create({
-//   baseURL: `https://programmes-cloudy-litigation-sixth.trycloudflare.com/api`,
+//   baseURL: `https://journal-sticker-muscle-prominent.trycloudflare.com/api`,
 //   headers: {
 //     'Content-Type': 'application/json',
 //   },
@@ -9,29 +9,31 @@ import axios from 'axios';
 // });
 
 // const axiosInstance2 = axios.create({
-//   baseURL: `https://programmes-cloudy-litigation-sixth.trycloudflare.com`,
+//   baseURL: `https://journal-sticker-muscle-prominent.trycloudflare.com`,
 //   headers: {
 //     'Content-Type': 'application/json',
 //   },
 //   // withCredentials: true,
 // });
 
-// export const BASE_URL = `https://programmes-cloudy-litigation-sixth.trycloudflare.com`;
-export const BASE_URL = `http://${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}`;
+// export const BASE_URL = `https://journal-sticker-muscle-prominent.trycloudflare.com`;
+export const BASE_URL = `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}`;
 
 const axiosInstance = axios.create({
-  baseURL: `http://${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api`,
+  baseURL: `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api`,
 
   headers: {
     'Content-Type': 'application/json',
   },
+  // withCredentials: true,
 });
 
 const axiosInstance2 = axios.create({
-  baseURL: `http://${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}`,
+  baseURL: `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}`,
   headers: {
     'Content-Type': 'application/json',
   },
+  // withCredentials: true,
 });
 
 let clearTokenCallback: (() => void) | null = null;

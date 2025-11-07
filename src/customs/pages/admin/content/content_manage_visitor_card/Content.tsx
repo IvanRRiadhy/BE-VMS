@@ -514,62 +514,63 @@ const Content = () => {
             </Grid>
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
-              {isDataReady ? (
-                <DynamicTable
-                  overflowX={'auto'}
-                  data={tableVisitorCard}
-                  selectedRows={selectedRows}
-                  setSelectedRows={setSelectedRows}
-                  isHavePagination={true}
-                  totalCount={totalFilteredRecords}
-                  defaultRowsPerPage={rowsPerPage}
-                  rowsPerPageOptions={[5, 10, 20, 50, 100]}
-                  onPaginationChange={(page, rowsPerPage) => {
-                    setPage(page);
-                    setRowsPerPage(rowsPerPage);
-                  }}
-                  isHaveChecked={true}
-                  isHaveAction={true}
-                  isHaveSearch={true}
-                  isHaveFilter={true}
-                  isHaveExportPdf={false}
-                  isHaveExportXlf={false}
-                  onImportExcel={handleImportExcel}
-                  isHaveImportExcel={true}
-                  isHaveFilterDuration={false}
-                  isHaveAddData={true}
-                  isHaveHeader={false}
-                  isDataVerified={true}
-                  sortColumns={['name']}
-                  onFilterByColumn={(column) => setSortColumn(column.column)}
-                  onCheckedChange={(selected) => setSelectedRows(selected)}
-                  onEdit={(row) => {
-                    handleEdit(row.id);
-                    setEdittingId(row.id);
-                  }}
-                  onBatchEdit={handleBatchEdit}
-                  onDelete={(row) => handleDeleteVisitorCard(row.id)}
-                  onBatchDelete={handleBatchDelete}
-                  onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-                  onAddData={() => {
-                    handleAddVisitorCard();
-                  }}
-                  isHaveFilterMore={true}
-                  filterMoreContent={
-                    <FilterMoreContent
-                      filters={filters}
-                      setFilters={setFilters}
-                      onApplyFilter={handleApplyFilter}
-                    />
-                  }
-                />
-              ) : (
+              {/* {isDataReady ? ( */}
+              <DynamicTable
+                loading={loading}
+                overflowX={'auto'}
+                data={tableVisitorCard}
+                selectedRows={selectedRows}
+                setSelectedRows={setSelectedRows}
+                isHavePagination={true}
+                totalCount={totalFilteredRecords}
+                defaultRowsPerPage={rowsPerPage}
+                rowsPerPageOptions={[5, 10, 20, 50, 100]}
+                onPaginationChange={(page, rowsPerPage) => {
+                  setPage(page);
+                  setRowsPerPage(rowsPerPage);
+                }}
+                isHaveChecked={true}
+                isHaveAction={true}
+                isHaveSearch={true}
+                isHaveFilter={false}
+                isHaveExportPdf={false}
+                isHaveExportXlf={false}
+                onImportExcel={handleImportExcel}
+                isHaveImportExcel={true}
+                isHaveFilterDuration={false}
+                isHaveAddData={true}
+                isHaveHeader={false}
+                isDataVerified={true}
+                sortColumns={['name']}
+                // onFilterByColumn={(column) => setSortColumn(column.column)}
+                onCheckedChange={(selected) => setSelectedRows(selected)}
+                onEdit={(row) => {
+                  handleEdit(row.id);
+                  setEdittingId(row.id);
+                }}
+                onBatchEdit={handleBatchEdit}
+                onDelete={(row) => handleDeleteVisitorCard(row.id)}
+                onBatchDelete={handleBatchDelete}
+                onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                onAddData={() => {
+                  handleAddVisitorCard();
+                }}
+                isHaveFilterMore={true}
+                filterMoreContent={
+                  <FilterMoreContent
+                    filters={filters}
+                    setFilters={setFilters}
+                    onApplyFilter={handleApplyFilter}
+                  />
+                }
+              />
+              {/* ) : (
                 <Card sx={{ width: '100%' }}>
                   <Skeleton />
                   <Skeleton animation="wave" />
                   <Skeleton animation={false} />
                 </Card>
-              )}
+              )} */}
             </Grid>
           </Grid>
         </Box>

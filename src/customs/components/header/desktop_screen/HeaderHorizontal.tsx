@@ -8,7 +8,7 @@ import Profile from 'src/layouts/full/vertical/header/Profile';
 import { AppState } from 'src/store/Store';
 import { styled, useMediaQuery, useTheme } from '@mui/material';
 import Language from 'src/layouts/full/vertical/header/Language';
-import Logo from 'src/assets/images/logos/bi_logo.png';
+import Logo from 'src/assets/images/logos/BI_Logo.png';
 
 const HeaderHorizontal = () => {
   const lgDown = useMediaQuery((theme: Theme) => theme.breakpoints.down('lg'));

@@ -271,8 +271,9 @@ const Content = () => {
             </Grid>
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
-              {isDataReady ? (
+              {/* {isDataReady ? ( */}
                 <DynamicTable
+                loading={loading}
                   isHavePagination={false}
                   totalCount={totalRecords}
                   defaultRowsPerPage={rowsPerPage}
@@ -319,13 +320,13 @@ const Content = () => {
                   //   handleAdd();
                   // }}
                 />
-              ) : (
+              {/* ) : (
                 <Card sx={{ width: '100%' }}>
                   <Skeleton />
                   <Skeleton animation="wave" />
                   <Skeleton animation={false} />
                 </Card>
-              )}
+              )} */}
             </Grid>
             <Grid container size={{ xs: 12, lg: 12 }} sx={{ mt: 4 }} justifyContent={'center'}>
               {availableIntegration.map((integration, index) => (

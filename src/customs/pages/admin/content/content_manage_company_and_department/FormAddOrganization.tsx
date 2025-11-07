@@ -11,13 +11,13 @@ import { Box } from '@mui/system';
 import React, { useEffect, useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import { createOrganization, getAllEmployee } from 'src/customs/api/admin';
+import { createOrganization, getAllEmployee, getVisitorEmployee } from 'src/customs/api/admin';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   CreateOrganizationRequest,
   CreateOrganizationSubmitSchema,
 } from 'src/customs/api/models/Admin/Organization';
-import { showSuccessAlert } from 'src/customs/components/alerts/alerts';
+import { showSuccessAlert, showSwal } from 'src/customs/components/alerts/alerts';
 
 interface FormAddOrganizationProps {
   formData: CreateOrganizationRequest;
@@ -46,7 +46,7 @@ const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({
 
     const fetchEmployees = async () => {
       try {
-        const res = await getAllEmployee(token);
+        const res = await getVisitorEmployee(token);
         setAllEmployees(res?.collection ?? []);
       } catch (error) {
         console.error('Failed to fetch employees:', error);
@@ -85,15 +85,19 @@ const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // ⬅️ langsung tampilkan backdrop
     setLoading(true);
     setErrors({});
 
     try {
-      if (!token) {
+      // if (!token) {
+      //   showSwal('error', 'Something went wrong. Please try again later.');
+      //   return;
+      // }
+
+      const parsed = validateLocal(formData);
+      if (!parsed) {
         setAlertType('error');
-        setAlertMessage('Something went wrong. Please try again later.');
+        setAlertMessage('Please complete the required fields correctly.');
         setTimeout(() => {
           setAlertType('info');
           setAlertMessage('Complete the following data properly and correctly');
@@ -101,25 +105,17 @@ const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({
         return;
       }
 
-      // ⬅️ validasi di sini
-      const parsed = validateLocal(formData);
-      if (!parsed) {
-        setAlertType('error');
-        setAlertMessage('Please complete the required fields correctly.');
-        return; // ⬅️ otomatis backdrop masih aktif
-      }
-
-      // API request
-      await createOrganization(parsed, token);
+      await createOrganization(parsed, token as string);
       localStorage.removeItem('unsavedOrganizationFormAdd');
 
-      setAlertType('success');
-      setAlertMessage('Organization successfully created!');
-      // showSuccessAlert('Organization successfully created!');
-
-      setTimeout(() => {
+      // ✅ Tutup backdrop & dialog dulu sebelum swal
+      setLoading(false);
+      await new Promise<void>((resolve) => {
         onSuccess?.();
-      }, 900);
+        setTimeout(resolve, 600);
+      });
+
+      showSwal('success', 'Organization successfully created!', 3000);
     } catch (err: any) {
       const be = err?.response?.data?.errors;
       if (be && typeof be === 'object') {
@@ -129,29 +125,22 @@ const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({
           host: be.Host?.[0] ?? '',
         });
       }
-      setAlertType('error');
-      setAlertMessage('Something went wrong. Please try again later.');
-      setTimeout(() => {
-        setAlertType('info');
-        setAlertMessage('Complete the following data properly and correctly');
-      }, 3000);
+
+      showSwal('error', 'Failed to create organization.', 3000);
     } finally {
-      // ⬅️ backdrop ditutup terakhir
-      setTimeout(() => {
-        setLoading(false);
-      }, 600);
+      setTimeout(() => setLoading(false), 600);
     }
   };
 
   return (
     <>
       <form onSubmit={handleSubmit}>
-        <Grid2 size={12}>
+        {/* <Grid2 size={12}>
           <Alert severity={alertType}>{alertMessage}</Alert>
-        </Grid2>
+        </Grid2> */}
 
         <CustomFormLabel htmlFor="name" sx={{ my: 1 }}>
-          <Typography variant="caption">Organization Name</Typography>
+          <Typography variant="body1">Organization Name</Typography>
         </CustomFormLabel>
         <CustomTextField
           id="name"
@@ -164,7 +153,7 @@ const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({
         />
 
         <CustomFormLabel htmlFor="code" sx={{ my: 1 }}>
-          <Typography variant="caption">Organization Code</Typography>
+          <Typography variant="body1">Organization Code</Typography>
         </CustomFormLabel>
         <CustomTextField
           id="code"
@@ -177,12 +166,12 @@ const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({
         />
 
         <CustomFormLabel htmlFor="host" sx={{ my: 1 }}>
-          <Typography variant="caption">Head of Organization</Typography>
+          <Typography variant="body1">Head of Organization</Typography>
         </CustomFormLabel>
         <Autocomplete
           id="host"
           autoHighlight
-          disablePortal
+          disablePortal={false}
           options={allEmployes.map((emp: any) => ({ id: emp.id, label: emp.name }))}
           getOptionLabel={(option) => (typeof option === 'string' ? option : option.label)}
           value={

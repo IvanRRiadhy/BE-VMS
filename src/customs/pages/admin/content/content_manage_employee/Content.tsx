@@ -90,47 +90,10 @@ const Content = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [tableRowEmployee, setTableRowEmployee] = useState<EmployeesTableRow[]>([]);
-  // const [organization, setOrganization] = useState<number>(0);
-  // const [department, setDepartment] = useState(0);
-  // const [district, setDistrict] = useState(0);
+  const [sortDir, setSortDir] = useState<string>('desc');
   const [organizationData, setOrganizationData] = useState<OptionItem[]>([]);
   const [departmentData, setDepartmentData] = useState<OptionItem[]>([]);
   const [districtData, setDistrictData] = useState<OptionItem[]>([]);
-  useEffect(() => {
-    if (!token) return;
-
-    (async () => {
-      try {
-        // ambil semua data untuk dropdown, jangan ikut page/rowsPerPage tabel
-        const [orgRes, deptRes, distRes] = await Promise.all([
-          getAllOrganizationPagination(token, 0, 9999, 'name', ''),
-          getAllDepartmentsPagination(token, 0, 9999, 'name', ''),
-          getAllDistrictsPagination(token, 0, 9999, 'name', ''),
-        ]);
-
-        setOrganizationData(
-          (orgRes?.collection ?? []).map((o: any) => ({
-            id: String(o.id),
-            name: o.name ?? '',
-          })),
-        );
-        setDepartmentData(
-          (deptRes?.collection ?? []).map((d: any) => ({
-            id: String(d.id),
-            name: d.name ?? '',
-          })),
-        );
-        setDistrictData(
-          (distRes?.collection ?? []).map((d: any) => ({
-            id: String(d.id),
-            name: d.name ?? '',
-          })),
-        );
-      } catch (e) {
-        console.error('Failed to fetch dropdown options:', e);
-      }
-    })();
-  }, [token]);
 
   const [filters, setFilters] = useState<Filters>({
     joinStart: '',
@@ -162,108 +125,69 @@ const Content = () => {
       try {
         const start = page * rowsPerPage;
 
-        const responseGetAll = await getAllEmployee(token);
-        const responseEmployee = await getAllEmployeePagination(
-          token,
-          start,
-          rowsPerPage,
-          sortColumn,
-          searchKeyword,
-        );
-
-        const organization = await getAllOrganizationPagination(token, start, 99, sortColumn, '');
-        const department = await getAllDepartmentsPagination(token, start, 99, sortColumn, '');
-        const district = await getAllDistrictsPagination(token, start, 99, sortColumn, '');
-        if (responseEmployee && organization && department && district) {
-          const orgMap = (organization.collection ?? []).reduce(
-            (acc: Record<string, string>, org: any) => {
-              acc[org.id] = org.name; // id sudah string
-              return acc;
-            },
-            {},
+        let employeeRes: any;
+        try {
+          employeeRes = await getAllEmployeePaginationFilterMore(
+            token,
+            start,
+            rowsPerPage,
+            sortColumn,
+            sortDir,
+            searchKeyword,
+            filters.gender === 0 ? undefined : filters.gender,
+            filters.joinStart,
+            filters.exitEnd,
+            filters.statusEmployee === 0 ? undefined : filters.statusEmployee,
+            String(filters.organization),
+            String(filters.district),
+            String(filters.department),
           );
-          const deptMap = (department.collection ?? []).reduce(
-            (acc: Record<string, string>, dept: any) => {
-              acc[dept.id] = dept.name;
-              return acc;
-            },
-            {},
-          );
-
-          const distMap = (district.collection ?? []).reduce(
-            (acc: Record<string, string>, dist: any) => {
-              acc[dist.id] = dist.name;
-              return acc;
-            },
-            {},
-          );
-
-          let employeeRes: any;
-          try {
-            employeeRes = await getAllEmployeePaginationFilterMore(
-              token,
-              start,
-              rowsPerPage,
-              sortColumn,
-              searchKeyword,
-              filters.gender === 0 ? undefined : filters.gender,
-              filters.joinStart,
-              filters.exitEnd,
-              filters.statusEmployee === 0 ? undefined : filters.statusEmployee,
-              String(filters.organization),
-              String(filters.district),
-              String(filters.department),
-            );
-          } catch (err: any) {
-            // ←— JIKA HTTP 404, KOSONGKAN STATE & KELUAR
-            if (err?.response?.status === 404 || err?.status === 404) {
-              setTableData([]);
-              setTableRowEmployee([]);
-              setTotalRecords(0);
-              setTotalFilteredRecords(0);
-              setIsDataReady(true);
-              return; // (finally di luar tetap setLoading(false))
-            }
-            throw err; // error lain biar ditangani catch luar
-          }
-
-          // Normalisasi payload yang mengembalikan body 200 tapi isinya "not_found"
-          const safeCollection = Array.isArray(employeeRes?.collection)
-            ? employeeRes.collection
-            : [];
-          const isNotFound =
-            employeeRes?.status_code === 404 ||
-            employeeRes?.status === 'not_found' ||
-            safeCollection.length === 0;
-
-          if (isNotFound) {
+        } catch (err: any) {
+          if (err?.response?.status === 404 || err?.status === 404) {
             setTableData([]);
             setTableRowEmployee([]);
             setTotalRecords(0);
             setTotalFilteredRecords(0);
             setIsDataReady(true);
-            return;
+            return; // (finally di luar tetap setLoading(false))
           }
-
-          // Lanjut mapping seperti biasa
-          setTableData(safeCollection);
-          setTotalRecords(employeeRes?.RecordsTotal ?? safeCollection.length ?? 0);
-          setTotalFilteredRecords(employeeRes?.RecordsFiltered ?? safeCollection.length ?? 0);
-
-          const rows = safeCollection.map((item: any) => ({
-            id: item.id,
-            name: item.name,
-            faceimage: item.faceimage,
-            organization: orgMap[String(item.organization_id)] || 'Unknown Organization',
-            department: deptMap[String(item.department_id)] || 'Unknown Department',
-            district: distMap[String(item.district_id)] || 'Unknown District',
-          }));
-          setTableRowEmployee(rows);
-          setIsDataReady(true);
+          throw err; // error lain biar ditangani catch luar
         }
-      } catch (error) {
-        console.error('Error fetching data:', error);
+
+        const safeCollection = Array.isArray(employeeRes?.collection) ? employeeRes.collection : [];
+        const isNotFound =
+          employeeRes?.status_code === 404 ||
+          employeeRes?.status === 'not_found' ||
+          safeCollection.length === 0;
+
+        if (isNotFound) {
+          setTableData([]);
+          setTableRowEmployee([]);
+          setTotalRecords(0);
+          setTotalFilteredRecords(0);
+          setIsDataReady(true);
+          return;
+        }
+
+        // Lanjut mapping seperti biasa
+        setTableData(safeCollection);
+        setTotalRecords(employeeRes?.RecordsTotal ?? safeCollection.length ?? 0);
+        setTotalFilteredRecords(employeeRes?.RecordsFiltered ?? safeCollection.length ?? 0);
+
+        const rows = safeCollection.map((item: any) => ({
+          id: item.id,
+          name: item.name,
+          faceimage: item.faceimage,
+          organization: item.organization?.name || '-',
+          department: item.department?.name || '-',
+          district: item.district?.name || '-',
+        }));
+        setTableRowEmployee(rows);
+        setIsDataReady(true);
+      } catch (error: any) {
+        console.error('Error fetching data:', error.message);
       } finally {
+        // setTimeout(() => setLoading(false), 300); // beri waktu render skeleton
         setLoading(false);
       }
     };
@@ -508,10 +432,8 @@ const Content = () => {
 
     // <<— penting: set baseline = current form
     setInitialFormData((_) => formDataAddEmployee);
+    setOpenFormAddEmployee(false);
 
-    // opsional: bersihkan atau sinkronkan draft di localStorage
-    // localStorage.setItem('unsavedEmployeeData', JSON.stringify(formDataAddEmployee));
-    // atau kalau tidak mau simpan draft:
     localStorage.removeItem('unsavedEmployeeData');
   };
   // handle dialog close
@@ -540,67 +462,67 @@ const Content = () => {
               <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
             </Grid>
             <Grid size={{ xs: 12, lg: 12 }}>
-              {isDataReady ? (
-                <DynamicTable
-                  loading={loading}
-                  overflowX={'auto'}
-                  data={tableRowEmployee}
-                  selectedRows={selectedRows}
-                  totalCount={totalFilteredRecords}
-                  isHaveChecked={true}
-                  isHaveAction={true}
-                  isHaveSearch={true}
-                  isHaveImage={true}
-                  isHaveFilter={true}
-                  isHaveExportPdf={false}
-                  isHavePagination={true}
-                  defaultRowsPerPage={rowsPerPage}
-                  rowsPerPageOptions={[5, 10, 20, 50, 100]}
-                  onPaginationChange={(page, rowsPerPage) => {
-                    setPage(page);
-                    setRowsPerPage(rowsPerPage);
-                  }}
-                  isHaveExportXlf={false}
-                  isHaveFilterDuration={false}
-                  isHaveAddData={true}
-                  isHaveFilterMore={true}
-                  filterMoreContent={
-                    <FilterMoreContent
-                      filters={filters}
-                      setFilters={setFilters}
-                      onApplyFilter={handleApplyFilter}
-                      organizationData={organizationData}
-                      departmentData={departmentData}
-                      districtData={districtData}
-                    />
-                  }
-                  isHaveHeader={false}
-                  onCheckedChange={(selected) => {
-                    const fullSelectedItems = tableData.filter((item) =>
-                      selected.some((row: EmployeesTableRow) => row.id === item.id),
-                    );
-                    setSelectedRows(fullSelectedItems);
-                  }}
-                  onEdit={(row) => {
-                    handleEdit(row.id);
-                    setEdittingId(row.id);
-                  }}
-                  onBatchEdit={handleBatchEdit}
-                  onDelete={(row) => handleDelete(row.id)}
-                  onBatchDelete={handleBatchDelete}
-                  onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-                  onAddData={() => {
-                    handleAdd();
-                  }}
-                />
-              ) : (
+              {/* {isDataReady ? ( */}
+              <DynamicTable
+                loading={loading}
+                overflowX={'auto'}
+                data={tableRowEmployee}
+                selectedRows={selectedRows}
+                totalCount={totalFilteredRecords}
+                isHaveChecked={true}
+                isHaveAction={true}
+                isHaveSearch={true}
+                isHaveImage={true}
+                isHaveFilter={false}
+                isHaveExportPdf={false}
+                isHavePagination={true}
+                defaultRowsPerPage={rowsPerPage}
+                rowsPerPageOptions={[5, 10, 20, 50, 100]}
+                onPaginationChange={(page, rowsPerPage) => {
+                  setPage(page);
+                  setRowsPerPage(rowsPerPage);
+                }}
+                isHaveExportXlf={false}
+                isHaveFilterDuration={false}
+                isHaveAddData={true}
+                isHaveFilterMore={true}
+                filterMoreContent={
+                  <FilterMoreContent
+                    filters={filters}
+                    setFilters={setFilters}
+                    onApplyFilter={handleApplyFilter}
+                    organizationData={organizationData}
+                    departmentData={departmentData}
+                    districtData={districtData}
+                  />
+                }
+                isHaveHeader={false}
+                onCheckedChange={(selected) => {
+                  const fullSelectedItems = tableData.filter((item) =>
+                    selected.some((row: EmployeesTableRow) => row.id === item.id),
+                  );
+                  setSelectedRows(fullSelectedItems);
+                }}
+                onEdit={(row) => {
+                  handleEdit(row.id);
+                  setEdittingId(row.id);
+                }}
+                onBatchEdit={handleBatchEdit}
+                onDelete={(row) => handleDelete(row.id)}
+                onBatchDelete={handleBatchDelete}
+                onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                onAddData={() => {
+                  handleAdd();
+                }}
+              />
+              {/* ) : (
                 <Card sx={{ width: '100%' }}>
                   <Skeleton />
                   <Skeleton />
                   <Skeleton animation="wave" />
                   <Skeleton animation={false} />
                 </Card>
-              )}
+              )} */}
             </Grid>
           </Grid>
         </Box>

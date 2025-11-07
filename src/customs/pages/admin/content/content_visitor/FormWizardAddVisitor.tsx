@@ -52,7 +52,7 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import 'select2'; // Select2 secara otomatis akan attach ke jQuery global
 import 'select2/dist/css/select2.min.css';
-import { IconTrash } from '@tabler/icons-react';
+import { IconCircleCheck, IconTrash } from '@tabler/icons-react';
 import PageContainer from 'src/components/container/PageContainer';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import Webcam from 'react-webcam';
@@ -75,15 +75,13 @@ import {
   createPraRegister,
   createPraRegisterGroup,
   createVisitor,
-  createVisitors,
   createVisitorsGroup,
+  getAllCustomField,
   getAllCustomFieldPagination,
   getAllEmployee,
   getAllSite,
   getAllVisitor,
-  getAllVisitorCard,
   getAllVisitorType,
-  getAvailableCard,
   getGrantAccess,
   getVisitorEmployee,
   getVisitorTypeById,
@@ -112,6 +110,14 @@ import { IconArrowRight } from '@tabler/icons-react';
 // import CameraUpload from 'src/customs/components/camera/CameraUpload';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useQuery } from '@tanstack/react-query';
+import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
+import { getInvitationById } from 'src/customs/api/visitor';
+import {
+  createGiveAccessOperator,
+  getInvitationScheduleOperatoryId,
+} from 'src/customs/api/operator';
+import CameraUpload from 'src/customs/components/camera/CameraUpload';
+import { fieldPatternMatcher } from '@casl/ability';
 
 interface FormVisitorTypeProps {
   formData: CreateVisitorRequest;
@@ -193,6 +199,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const [rawSections, setRawSections] = useState<any[]>([]);
   const [selectedInvitations, setSelectedInvitations] = useState<any[]>([]);
   const formsOf = (section: any) => (Array.isArray(section?.[FORM_KEY]) ? section[FORM_KEY] : []);
+  const [accessAction, setAccessAction] = useState<'grant' | 'revoke' | 'block'>('grant');
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -252,13 +259,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
     );
   };
-
-  const dummyData = [
-    { id: 1, visitor: 'Budi', card: null },
-    { id: 2, visitor: 'Siti', card: null },
-    { id: 3, visitor: 'Andi', card: null },
-  ];
-
   const [groupVisitors, setGroupVisitors] = useState<GroupVisitor[]>([]);
 
   const handleAddGroup = () => {
@@ -678,64 +678,197 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   //   }
   // };
 
+  // const handleAccessSubmit = async () => {
+  //   if (!selectedInvitations?.length) {
+  //     console.warn('No visitor selected');
+  //     return;
+  //   }
+
+  //   // payload akhir
+  //   const data_access: any[] = [];
+
+  //   // 1️⃣ Group Access → apply ke semua selected visitors
+  //   for (const visitorRow of selectedInvitations) {
+  //     const trxVisitorId = visitorRow.trx_visitor_id;
+  //     const cardNumber = visitorRow.assigned_card_number; // ⬅️ pakai assigned card
+  //     if (!trxVisitorId || !cardNumber) continue;
+
+  //     for (const acId of checkedGroupItems) {
+  //       data_access.push({
+  //         access_control_id: acId,
+  //         action: 1,
+  //         card_number: cardNumber,
+  //         trx_visitor_id: trxVisitorId,
+  //       });
+  //     }
+  //   }
+
+  //   // 2️⃣ Self Only Access → apply hanya ke row visitor yg punya override
+  //   // for (const visitorRow of selectedInvitations) {
+  //   //   if (!hasSelfOnly([visitorRow])) continue; // skip kalau row ini bukan self_only
+
+  //   //   const trxVisitorId = visitorRow.trx_visitor_id;
+  //   //   const cardNumber = visitorRow.assigned_card_number;
+  //   //   if (!trxVisitorId || !cardNumber) continue;
+
+  //   //   for (const acId of checkedSelfItems) {
+  //   //     data_access.push({
+  //   //       access_control_id: acId,
+  //   //       action: 1,
+  //   //       card_number: cardNumber,
+  //   //       trx_visitor_id: trxVisitorId,
+  //   //     });
+  //   //   }
+  //   // }
+
+  //   for (const visitorRow of selectedInvitations) {
+  //     if (!hasSelfOnly([visitorRow])) continue; // skip kalau row ini bukan self_only
+
+  //     const trxVisitorId = visitorRow.trx_visitor_id;
+  //     const cardNumber = visitorRow.assigned_card_number;
+  //     if (!trxVisitorId || !cardNumber) continue;
+
+  //     for (const fullId of checkedSelfItems) {
+  //       // ✅ parse "visitorKey:acId" → ambil hanya acId
+  //       const parts = fullId.split(':');
+  //       const acId = parts.length > 1 ? parts[1] : parts[0];
+
+  //       data_access.push({
+  //         access_control_id: acId,
+  //         action: 1,
+  //         card_number: cardNumber,
+  //         trx_visitor_id: trxVisitorId,
+  //       });
+  //     }
+  //   }
+
+  //   const payload = { data_access };
+  //   console.log('📤 Payload yang dikirim ke APIs:', JSON.stringify(payload, null, 2));
+
+  //   try {
+  //     const res = await createCheckGiveAccess(token as string, payload);
+  //     console.log('📤 Response dari API:', JSON.stringify(res, null, 2));
+  //     toast('Grant access successful', 'success');
+  //     console.log('✅ Grant access success:', res);
+  //   } catch (err) {
+  //     console.error('❌ Failed grant access:', err);
+  //   } finally {
+  //     // reset
+  //     setSelectedInvitations([]);
+  //     setSelectedCards([]);
+  //     setCheckedGroupItems([]);
+  //     setCheckedSelfItems([]);
+  //     // setNextDialogOpen(false);
+  //     // setAccessDialogOpen(false);
+  //     // setTimeout(() => {
+  //     //   onSuccess && onSuccess();
+  //     // }, 500);
+  //   }
+  // };
+
+  const canPerformAction = (action: 'grant' | 'revoke' | 'block', accessItem: any) => {
+    // Jika sudah revoke atau block -> semua disable
+    if (accessItem?.last_action === 2 || accessItem?.last_action === 3) return false;
+
+    // Jika belum grant (early_access false) -> cuma bisa grant
+    if (accessItem?.early_access === false && action == 'grant') return false;
+
+    // Jika sudah grant (early_access true) -> tidak bisa grant lagi
+    if (accessItem?.early_access === true && action === 'grant') return false;
+
+    return true;
+  };
+
+  // const handleAccessSubmit = async () => {
+  //   if (!selectedInvitations?.length) {
+  //     console.warn('No visitor selected');
+  //     return;
+  //   }
+
+  //   // 🧠 Map aksi ke angka (1 Grant, 2 Revoke, 3 Block)
+  //   const actionValue = accessAction === 'grant' ? 1 : accessAction === 'revoke' ? 2 : 3;
+
+  //   const data_access: any[] = [];
+
+  //   // 1️⃣ Group Access
+  //   for (const visitorRow of selectedInvitations) {
+  //     const trxVisitorId = visitorRow.trx_visitor_id;
+  //     const cardNumber = visitorRow.assigned_card_number;
+  //     if (!trxVisitorId || !cardNumber) continue;
+
+  //     for (const acId of checkedGroupItems) {
+  //       data_access.push({
+  //         access_control_id: acId,
+  //         action: actionValue,
+  //         card_number: cardNumber,
+  //         trx_visitor_id: trxVisitorId,
+  //       });
+  //     }
+  //   }
+
+  //   // 2️⃣ Self Only Access
+  //   for (const visitorRow of selectedInvitations) {
+  //     if (!hasSelfOnly([visitorRow])) continue;
+
+  //     const trxVisitorId = visitorRow.trx_visitor_id;
+  //     const cardNumber = visitorRow.assigned_card_number;
+  //     if (!trxVisitorId || !cardNumber) continue;
+
+  //     for (const fullId of checkedSelfItems) {
+  //       const parts = fullId.split(':');
+  //       const acId = parts.length > 1 ? parts[1] : parts[0];
+
+  //       data_access.push({
+  //         access_control_id: acId,
+  //         action: actionValue,
+  //         card_number: cardNumber,
+  //         trx_visitor_id: trxVisitorId,
+  //       });
+  //     }
+  //   }
+
+  //   const payload = { data_access };
+  //   console.log(`📤 ${accessAction.toUpperCase()} Payload:`, JSON.stringify(payload, null, 2));
+
+  //   try {
+  //     const res = await createCheckGiveAccess(token as string, payload);
+  //     console.log('✅ Response:', res);
+  //     toast(
+  //       `${accessAction.charAt(0).toUpperCase() + accessAction.slice(1)} access successful`,
+  //       'success',
+  //     );
+  //   } catch (err) {
+  //     console.error(`❌ Failed to ${accessAction} access:`, err);
+  //   } finally {
+  //     // reset
+  //     setSelectedInvitations([]);
+  //     setSelectedCards([]);
+  //     setCheckedGroupItems([]);
+  //     setCheckedSelfItems([]);
+  //   }
+  // };
+
   const handleAccessSubmit = async () => {
     if (!selectedInvitations?.length) {
       console.warn('No visitor selected');
       return;
     }
 
-    // payload akhir
+    const actionValue = accessAction === 'grant' ? 1 : accessAction === 'revoke' ? 2 : 3;
+
     const data_access: any[] = [];
 
-    // 1️⃣ Group Access → apply ke semua selected visitors
+    console.log(selectedInvitations);
+
     for (const visitorRow of selectedInvitations) {
       const trxVisitorId = visitorRow.trx_visitor_id;
-      const cardNumber = visitorRow.assigned_card_number; // ⬅️ pakai assigned card
+      const cardNumber = visitorRow.assigned_card_number;
       if (!trxVisitorId || !cardNumber) continue;
 
       for (const acId of checkedGroupItems) {
         data_access.push({
           access_control_id: acId,
-          action: 1,
-          card_number: cardNumber,
-          trx_visitor_id: trxVisitorId,
-        });
-      }
-    }
-
-    // 2️⃣ Self Only Access → apply hanya ke row visitor yg punya override
-    // for (const visitorRow of selectedInvitations) {
-    //   if (!hasSelfOnly([visitorRow])) continue; // skip kalau row ini bukan self_only
-
-    //   const trxVisitorId = visitorRow.trx_visitor_id;
-    //   const cardNumber = visitorRow.assigned_card_number;
-    //   if (!trxVisitorId || !cardNumber) continue;
-
-    //   for (const acId of checkedSelfItems) {
-    //     data_access.push({
-    //       access_control_id: acId,
-    //       action: 1,
-    //       card_number: cardNumber,
-    //       trx_visitor_id: trxVisitorId,
-    //     });
-    //   }
-    // }
-
-    for (const visitorRow of selectedInvitations) {
-      if (!hasSelfOnly([visitorRow])) continue; // skip kalau row ini bukan self_only
-
-      const trxVisitorId = visitorRow.trx_visitor_id;
-      const cardNumber = visitorRow.assigned_card_number;
-      if (!trxVisitorId || !cardNumber) continue;
-
-      for (const fullId of checkedSelfItems) {
-        // ✅ parse "visitorKey:acId" → ambil hanya acId
-        const parts = fullId.split(':');
-        const acId = parts.length > 1 ? parts[1] : parts[0];
-
-        data_access.push({
-          access_control_id: acId,
-          action: 1,
+          action: actionValue,
           card_number: cardNumber,
           trx_visitor_id: trxVisitorId,
         });
@@ -743,55 +876,18 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     }
 
     const payload = { data_access };
-    console.log('📤 Payload yang dikirim ke APIs:', JSON.stringify(payload, null, 2));
+    console.log(`📤 ${accessAction.toUpperCase()} Payload:`, JSON.stringify(payload, null, 2));
 
     try {
-      const res = await createCheckGiveAccess(token as string, payload);
-      console.log('📤 Response dari API:', JSON.stringify(res, null, 2));
-      toast('Grant access successful', 'success');
-      console.log('✅ Grant access success:', res);
+      const res = await createGiveAccessOperator(token as string, payload);
+      toast(`${accessAction} access successful`, 'success');
     } catch (err) {
-      console.error('❌ Failed grant access:', err);
+      console.error(`❌ Failed to ${accessAction} access:`, err);
     } finally {
-      // reset
-      setSelectedInvitations([]);
-      setSelectedCards([]);
       setCheckedGroupItems([]);
       setCheckedSelfItems([]);
-      // setNextDialogOpen(false);
-      // setAccessDialogOpen(false);
-      // setTimeout(() => {
-      //   onSuccess && onSuccess();
-      // }, 500);
     }
   };
-
-  // end PV
-
-  // useEffect(() => {
-  //   if (!isGroup || sectionsData.length === 0) return;
-
-  //   const templateQP: SectionPageVisitor[] = sectionsData.map((s, sIdx) => ({
-  //     sort: s.sort ?? sIdx,
-  //     name: s.name,
-  //     status: 0,
-  //     is_document: s.is_document ?? false,
-  //     can_multiple_used: s.can_multiple_used ?? false,
-  //     self_only: s.self_only ?? false,
-  //     foreign_id: s.foreign_id ?? '',
-  //     // Penting: pakai visit_form sebagai "form" untuk payload
-  //     form: formsOf(s).map((f, fIdx) => ({
-  //       ...f,
-  //       sort: f.sort ?? fIdx,
-  //       answer_text: '',
-  //       answer_datetime: '',
-  //       answer_file: '',
-  //     })),
-  //   }));
-
-  //   setDataVisitor([{ question_page: templateQP }]);
-  //   setActiveGroupIdx(0);
-  // }, [isGroup, sectionsData]);
 
   useEffect(() => {
     if (!sectionsData?.length) return;
@@ -1416,8 +1512,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   <>
                     <VisitorSelect
                       token={token as string}
-                      onSelect={(visitor) => {
-                        const v = visitor.visitor; // ⬅️ ambil nested visitor
+                      onSelect={(v) => {
+                        // 🔹 Sekarang langsung gunakan v (tidak ada v.visitor)
                         let genderValue: string | undefined;
 
                         if (v.gender === 'Male') genderValue = '1';
@@ -1428,8 +1524,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           name: v.name,
                           email: v.email,
                           phone: v.phone,
-                          organization: v.organization ?? undefined,
-                          indentity_id: v.identity_id, // typo: "indentity_id" -> harusnya identity_id
+                          // organization: v.visitor_organization_name ?? undefined,
+                          identity_id: v.visitor_identity_id,
                           gender: genderValue,
                         };
 
@@ -1585,7 +1681,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           <Grid>
             {(() => {
               const section = sectionsData[activeStep - 1];
-              console.log('section', section);
+              // console.log('section', section);
               const sectionType = getSectionType(section);
 
               if (sectionType === 'visitor_information_group') {
@@ -1626,7 +1722,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                             handleDeleteGroupRow(gIdx);
                                           }}
                                         >
-                                          <IconTrash />
+                                          <IconTrash color="error" />
                                         </IconButton>
                                       )}
                                     </AccordionSummary>
@@ -1693,7 +1789,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             </MuiButton>
                           </>
                         ) : (
-                          /* ========== 💻 DESKTOP MODE (Table) ========== */
                           <Table
                             size="small"
                             sx={{
@@ -1715,7 +1810,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 )}
                                 <TableCell align="right">
                                   <Typography variant="subtitle2" fontWeight={600}>
-                                    Actions
+                                    Action
                                   </Typography>
                                 </TableCell>
                               </TableRow>
@@ -2009,69 +2104,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             />
           );
 
-        // case 3: {
-        //   let options: { value: string; name: string }[] = [];
-
-        //   if (field.remarks === 'host') {
-        //     options = employee.map((emp: any) => ({
-        //       value: emp.id,
-        //       name: emp.name,
-        //     }));
-        //   } else if (field.remarks === 'employee') {
-        //     options = allVisitorEmployee.map((emp: any) => ({
-        //       value: emp.id,
-        //       name: emp.name,
-        //     }));
-        //   } else if (field.remarks === 'site_place') {
-        //     options = sites
-        //       .filter((site: any) => site.can_visited === true)
-        //       .map((site: any) => ({
-        //         value: site.id,
-        //         name: site.name,
-        //       }));
-        //   } else {
-        //     options = (field.multiple_option_fields || []).map((opt: any) =>
-        //       typeof opt === 'object' ? opt : { value: opt, name: opt },
-        //     );
-        //   }
-
-        //   return (
-        //     <Autocomplete
-        //       size="small"
-        //       options={options}
-        //       getOptionLabel={(option) => option.name}
-        //       inputValue={inputValues[index] || ''}
-        //       onInputChange={(_, newInputValue) =>
-        //         setInputValues((prev) => ({ ...prev, [index]: newInputValue }))
-        //       }
-        //       filterOptions={(opts, state) => {
-        //         if (state.inputValue.length < 3) return [];
-        //         return opts.filter((opt) =>
-        //           opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
-        //         );
-        //       }}
-        //       noOptionsText={
-        //         (inputValues[index] || '').length < 3
-        //           ? 'Ketik minimal 3 karakter untuk mencari'
-        //           : 'Not found'
-        //       }
-        //       value={options.find((opt) => opt.value === field.answer_text) || null}
-        //       onChange={(_, newValue) =>
-        //         onChange(index, 'answer_text', newValue ? newValue.value : '')
-        //       }
-        //       renderInput={(params) => (
-        //         <TextField
-        //           {...params}
-        //           label=""
-        //           placeholder="Ketiks minimal 3 karakter"
-        //           fullWidth
-        //           sx={{ minWidth: 160 }}
-        //         />
-        //       )}
-        //     />
-        //   );
-        // }
-
         case 3: {
           let options: { value: string; name: string }[] = [];
 
@@ -2128,7 +2160,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 return opts.filter((opt) => (opt.name || '').toLowerCase().includes(term));
               }}
               noOptionsText={
-                inputVal.length < 3 ? 'Ketik minimal 3 karakter untuk mencari' : 'Tidak ditemukan'
+                inputVal.length < 3 ? 'Enter at least 3 characters to search.' : 'Not found'
               }
               value={
                 options.find(
@@ -2198,6 +2230,29 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
               </TextField>
             );
           }
+
+          if (field.remarks === 'is_employee' || field.remarks === 'is_driving') {
+            return (
+              <RadioGroup
+                row // hapus kalau mau tampil vertikal
+                value={field.answer_text || ''}
+                onChange={(e) => onChange(index, 'answer_text', e.target.value)}
+                sx={{
+                  justifyContent: 'center',
+                  flexDirection: 'row',
+                }}
+              >
+                {field.multiple_option_fields?.map((opt: any) => (
+                  <FormControlLabel
+                    key={opt.id}
+                    value={opt.value}
+                    control={<Radio size="small" />}
+                    label={opt.name}
+                  />
+                ))}
+              </RadioGroup>
+            );
+          }
           return (
             <TextField
               size="small"
@@ -2209,31 +2264,31 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           );
 
         case 6:
-          if (field.remarks === 'is_employee') {
-            const options = field.multiple_option_fields || [];
-            const value = field.answer_text ?? ''; // '' | 'true' | 'false'
+          // if (field.remarks === 'is_employee') {
+          //   const options = field.multiple_option_fields || [];
+          //   const value = field.answer_text ?? ''; // '' | 'true' | 'false'
 
-            return (
-              <FormGroup row>
-                {options.map((opt: any, idx: number) => (
-                  <FormControlLabel
-                    key={idx}
-                    control={
-                      <Checkbox
-                        checked={value === opt.value}
-                        onChange={(e) => {
-                          // hanya satu yang aktif dalam waktu bersamaan
-                          const newVal = e.target.checked ? opt.value : '';
-                          onChange(index, 'answer_text', newVal);
-                        }}
-                      />
-                    }
-                    label={opt.name}
-                  />
-                ))}
-              </FormGroup>
-            );
-          }
+          //   return (
+          //     <FormGroup row>
+          //       {options.map((opt: any, idx: number) => (
+          //         <FormControlLabel
+          //           key={idx}
+          //           control={
+          //             <Checkbox
+          //               checked={value === opt.value}
+          //               onChange={(e) => {
+          //                 // hanya satu yang aktif dalam waktu bersamaan
+          //                 const newVal = e.target.checked ? opt.value : '';
+          //                 onChange(index, 'answer_text', newVal);
+          //               }}
+          //             />
+          //           }
+          //           label={opt.name}
+          //         />
+          //       ))}
+          //     </FormGroup>
+          //   );
+          // }
 
           // fallback default (checkbox tunggal)
           return (
@@ -2342,7 +2397,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
               {fileUrl && (
                 <Box mt={1} display="flex" alignItems="center" gap={1}>
                   <Typography variant="caption" noWrap>
-                    {/* {fileUrl.split('/').pop()} */}
                     {uploadNames[key] ?? ''}
                   </Typography>
                   <IconButton
@@ -2363,172 +2417,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             </Box>
           );
         }
-
-        // case 12: {
-        //   const key = opts?.uniqueKey ?? String(index);
-        //   return (
-        //     <Box
-        //       display={'flex'}
-        //       alignItems={''}
-        //       justifyContent={'space-between'}
-        //       gap={1}
-        //       width={'380px'}
-        //     >
-        //       <TextField
-        //         select
-        //         size="small"
-        //         value={uploadMethods[key] || 'file'}
-        //         onChange={(e) => handleUploadMethodChange(key, e.target.value)}
-        //         fullWidth
-        //         sx={{ width: '200px' }}
-        //       >
-        //         <MenuItem value="file">Choose File</MenuItem>
-        //         <MenuItem value="camera">Take Photo</MenuItem>
-        //       </TextField>
-
-        //       {(uploadMethods[key] || 'file') === 'camera' ? (
-        //         <CameraUpload
-        //           value={field.answer_file}
-        //           onChange={(url) => onChange(index, 'answer_file', url)}
-        //         />
-        //       ) : (
-        //         // <Box>
-        //         //   <label htmlFor={key}>
-        //         //     <Box
-        //         //       sx={{
-        //         //         border: '2px dashed #90caf9',
-        //         //         display: 'flex',
-        //         //         alignItems: 'center',
-        //         //         // minHeight: 60,
-        //         //         justifyContent: 'center',
-        //         //         gap: 2,
-        //         //         borderRadius: 2,
-        //         //         p: 0.5,
-        //         //         textAlign: 'center',
-        //         //         backgroundColor: '#f5faff',
-        //         //         cursor: 'pointer',
-        //         //         width: '100%',
-        //         //       }}
-        //         //     >
-        //         //       <CloudUploadIcon sx={{ fontSize: 20, color: '#42a5f5' }} />
-        //         //       <Typography variant="subtitle1">Upload File</Typography>
-        //         //     </Box>
-        //         //   </label>
-
-        //         //   <input
-        //         //     id={key}
-        //         //     type="file"
-        //         //     accept="*"
-        //         //     hidden
-        //         //     onChange={(e) =>
-        //         //       handleFileChangeForField(
-        //         //         e as React.ChangeEvent<HTMLInputElement>,
-        //         //         (url) => onChange(index, 'answer_file', url),
-        //         //         key,
-        //         //       )
-        //         //     }
-        //         //   />
-
-        //         //   {/* INFO + REMOVE */}
-        //         //   {!!(field as any).answer_file && (
-        //         //     <Box sx={{ paddingTop: '5px' }} display="flex" alignItems="center" gap={1}>
-        //         //       <Typography variant="caption" color="text.secondary" noWrap>
-        //         //         {uploadNames[key] ?? ''}
-        //         //       </Typography>
-
-        //         //       <IconButton
-        //         //         size="small"
-        //         //         color="error"
-        //         //         disabled={!!removing[key]}
-        //         //         onClick={() =>
-        //         //           handleRemoveFileForField(
-        //         //             (field as any).answer_file,
-        //         //             (url) => onChange(index, 'answer_file', url),
-        //         //             key,
-        //         //           )
-        //         //         }
-        //         //       >
-        //         //         <IconX size={16} />
-        //         //       </IconButton>
-        //         //     </Box>
-        //         //   )}
-        //         // </Box>
-        //         <Box sx={{ width: '200px' }}>
-        //           <label htmlFor={key}>
-        //             <Box
-        //               sx={{
-        //                 border: '2px dashed #90caf9',
-        //                 display: 'flex',
-        //                 alignItems: 'center',
-        //                 justifyContent: 'center',
-        //                 gap: 2,
-        //                 borderRadius: 2,
-        //                 p: 0.5,
-        //                 textAlign: 'center',
-        //                 backgroundColor: '#f5faff',
-        //                 cursor: 'pointer',
-        //                 width: '100%',
-        //               }}
-        //             >
-        //               <CloudUploadIcon sx={{ fontSize: 20, color: '#42a5f5' }} />
-        //               <Typography variant="subtitle1">Upload File</Typography>
-        //             </Box>
-        //           </label>
-
-        //           <input
-        //             id={key}
-        //             type="file"
-        //             accept="*"
-        //             hidden
-        //             onChange={(e) =>
-        //               handleFileChangeForField(
-        //                 e as React.ChangeEvent<HTMLInputElement>,
-        //                 (url) => onChange(index, 'answer_file', url),
-        //                 key,
-        //               )
-        //             }
-        //           />
-
-        //           {/* INFO + REMOVE */}
-        //           {!!(field as any).answer_file && (
-        //             <Box
-        //               mt={0.5}
-        //               display="flex"
-        //               alignItems="center"
-        //               justifyContent="space-between"
-        //               sx={{ overflow: 'hidden' }}
-        //             >
-        //               <Typography
-        //                 variant="caption"
-        //                 color="text.secondary"
-        //                 noWrap
-        //                 sx={{ flex: 1, minWidth: 0 }}
-        //               >
-        //                 {uploadNames[key] ?? ''}
-        //               </Typography>
-
-        //               <IconButton
-        //                 size="small"
-        //                 color="error"
-        //                 disabled={!!removing[key]}
-        //                 onClick={() =>
-        //                   handleRemoveFileForField(
-        //                     (field as any).answer_file,
-        //                     (url) => onChange(index, 'answer_file', url),
-        //                     key,
-        //                   )
-        //                 }
-        //               >
-        //                 <IconX size={16} />
-        //               </IconButton>
-        //             </Box>
-        //           )}
-        //         </Box>
-        //       )}
-        //     </Box>
-        //   );
-        // }
-
         case 12: {
           const key = opts?.uniqueKey ?? String(index);
           return (
@@ -2874,14 +2762,47 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         </TableRow>
       );
     }
+    // 🚦 Deteksi flag dengan dukungan array & string value
+    const getFlag = (key: string) =>
+      details.some((f: any) => {
+        if (f.remarks?.toLowerCase() !== key) return false;
 
-    return details.map((item, index) => {
+        const val = f.answer_text;
+
+        // 🧩 Normalisasi semua bentuk nilai
+        if (Array.isArray(val)) {
+          return val.some((v) => ['true', '1', 'yes'].includes(String(v).toLowerCase()));
+        }
+        return ['true', '1', 'yes', true].includes(String(val).toLowerCase());
+      });
+
+    // 🚘 & 🧑‍💼 status flag
+    const isDriving = getFlag('is_driving');
+    const isEmployee = getFlag('is_employee');
+
+    // 🔗 Peta visibility antar field
+    const visibilityMap: Record<string, boolean> = {
+      vehicle_type: isDriving,
+      vehicle_plate: isDriving,
+      employee: isEmployee,
+    };
+
+    // 🧹 Filter dan reset otomatis field dependent
+    const filteredDetails = details.filter((item, i) => {
+      const remark = (item.remarks || '').toLowerCase();
+      const visible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
+
+      if (!visible && item.answer_text) onChange(i, 'answer_text', '');
+      return visible;
+    });
+
+    // 🚀 Render hasil akhir
+    return filteredDetails.map((item, index) => {
       const key = `${activeStep - 1}:${index}`;
       const previewSrc = getPreviewSrc(key, (item as any).answer_file);
       const shownName = uploadNames[key] || fileNameFromAnswer((item as any).answer_file);
       return (
         <TableRow key={key}>
-          {/* Display Text (label) */}
           <TableCell>
             <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
               {item.long_display_text}
@@ -2891,19 +2812,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 </Typography>
               )}
             </Typography>
-            {/* Render sesuai field_type */}
             {(() => {
               switch (item.field_type) {
-                // case 0: // Text
-                //   return (
-                //     <TextField
-                //       size="small"
-                //       value={item.answer_text}
-                //       onChange={(e) => onChange(index, 'answer_text', e.target.value)}
-                //       placeholder="Enter text"
-                //       fullWidth
-                //     />
-                //   );
                 case 0: // Text
                   return (
                     <TextField
@@ -2988,7 +2898,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       }}
                       noOptionsText={
                         (inputValues[index] || '').length < 3
-                          ? 'Ketik minimal 3 karakter untuk mencari'
+                          ? 'Enter at least 3 characters to search'
                           : 'Not found'
                       }
                       value={options.find((opt) => opt.value === item.answer_text) || null}
@@ -2999,7 +2909,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         <TextField
                           {...params}
                           label=""
-                          placeholder="Ketik minimal 3 karakter"
+                          placeholder="Enter at least 3 characters to search"
                           fullWidth
                         />
                       )}
@@ -3027,34 +2937,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       />
                     </LocalizationProvider>
                   );
-                // case 5: // Radio
-                //   return (
-                //     <FormControl component="fieldset">
-                //       <RadioGroup
-                //         value={item.answer_text}
-                //         onChange={(e) => onChange(index, 'answer_text', e.target.value)}
-                //         sx={{
-                //           flexDirection: 'row', // tampil horizontal
-                //           flexWrap: 'wrap', // bisa pindah baris
-                //           gap: 1, // beri jarak antar item (opsional)
-                //         }}
-                //       >
-                //         {(item.multiple_option_fields || [])
-                //           .sort((a: any, b: any) => {
-                //             // pakai nilai value untuk urutan: 0 -> 1 -> 2
-                //             return Number(a.value) - Number(b.value);
-                //           })
-                //           .map((opt: any, idx: number) => (
-                //             <FormControlLabel
-                //               key={idx}
-                //               value={opt.value}
-                //               control={<Radio />}
-                //               label={opt.name}
-                //             />
-                //           ))}
-                //       </RadioGroup>
-                //     </FormControl>
-                //   );
                 case 5: // Radio
                   return (
                     <FormControl component="fieldset">
@@ -3076,32 +2958,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       </RadioGroup>
                     </FormControl>
                   );
-
-                // case 6: // Checkbox
-                //   return (
-                //     <FormGroup>
-                //       {(item.multiple_option_fields || []).map((opt: any, idx: number) => (
-                //         <FormControlLabel
-                //           key={idx}
-                //           control={
-                //             <Checkbox
-                //               checked={item.answer_text?.includes(
-                //                 typeof opt === 'object' ? opt.value : opt,
-                //               )}
-                //               onChange={(e) => {
-                //                 const val = typeof opt === 'object' ? opt.value : opt;
-                //                 const newValue = e.target.checked
-                //                   ? [...(item.answer_text || []), val]
-                //                   : (item.answer_text || []).filter((v: string) => v !== val);
-                //                 onChange(index, 'answer_text', newValue);
-                //               }}
-                //             />
-                //           }
-                //           label={typeof opt === 'object' ? opt.name : opt}
-                //         />
-                //       ))}
-                //     </FormGroup>
-                //   );
 
                 case 6: // Checkbox
                   return (
@@ -3251,7 +3107,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 src={previewSrc}
                                 alt="preview"
                                 style={{
-                                  width: 200,
+                                  width: 350,
                                   height: 200,
                                   objectFit: 'cover',
                                   borderRadius: 8,
@@ -3429,7 +3285,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   src={previewSrc}
                                   alt="preview"
                                   style={{
-                                    width: 200,
+                                    width: 350,
                                     height: 200,
                                     borderRadius: 12,
                                     objectFit: 'cover',
@@ -3540,7 +3396,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   src={previewSrc}
                                   alt="preview"
                                   style={{
-                                    width: 200,
+                                    width: 350,
                                     height: 200,
                                     borderRadius: 12,
                                     objectFit: 'cover',
@@ -3556,8 +3412,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   onClick={() =>
                                     handleRemoveFileForField(
                                       (item as any).answer_file,
-                                      (url) => onChange(index, 'answer_file', url), // kosongkan state
-                                      key, // reset <input id=key>
+                                      (url) => onChange(index, 'answer_file', url),
+                                      key,
                                     )
                                   }
                                   startIcon={<IconTrash />}
@@ -4139,7 +3995,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           case 6:
           case 7: // Radio, Checkbox, Dropdown
             if (Array.isArray(field.answer_text)) {
-              base.answer_text = field.answer_text.map(String).join(','); // e.g. ["true"] -> "true"
+              base.answer_text = field.answer_text.map(String).join(',');
             } else if (typeof field.answer_text === 'boolean') {
               base.answer_text = field.answer_text ? 'true' : 'false';
             } else {
@@ -4188,7 +4044,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           const cleanDataVisitor = (built.data_visitor ?? []).map((dv: any) => ({
             ...dv,
             question_page: (dv.question_page ?? []).map((qp: any, sIdx: number) => ({
-              // buat id baru jika tidak ada
               id: qp.id || qp.Id || rawSections?.[sIdx]?.Id || crypto.randomUUID(),
               sort: qp.sort ?? sIdx,
               name: qp.name ?? `Section ${sIdx + 1}`,
@@ -4230,9 +4085,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
         setRows(
           visitors.map((v: any, i: number) => ({
-            id: i + 1,
-            visitor: v.visitor?.name,
-            trx_visitor_id: v.visitor_id ?? null,
+            id: v.id,
+            visitor: v.visitor_name,
+            trx_visitor_id: v.id ?? null,
             card: null,
           })),
         );
@@ -4243,9 +4098,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           try {
             const res = await getGrantAccess(token, siteAnswer);
             setAccessData(res.collection ?? []);
-            console.log('✅ Grant access by site_place:', siteAnswer, res.collection);
+            console.log('Grant access by site_place:', siteAnswer, res.collection);
           } catch (err) {
-            console.error('❌ Failed to fetch grant access:', err);
+            console.error('Failed to fetch grant access:', err);
           }
         }
       }
@@ -4290,31 +4145,32 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
         // Mapping hasil visitor
         const visitors = backendResponse.collection?.visitors || [];
-        console.log('visitor', visitors);
         const availableCards = backendResponse.collection?.available_cards || [];
-        console.log('available card : ', availableCards);
         setAvailableCards(availableCards);
 
         setRows(
           visitors.map((v: any, i: number) => ({
-            id: i + 1,
+            id: v.id,
             visitor: v.visitor?.name,
-            trx_visitor_id: v.visitor_id ?? null,
+            trx_visitor_id: v.id ?? null,
             card: null,
           })),
         );
 
+        console.log('rows', rows);
+
         // Cek akses site
-        const siteAnswer = getSiteFromForm(false, sectionsData, dataVisitor);
-        if (siteAnswer) {
-          try {
-            const res = await getGrantAccess(token, siteAnswer);
-            setAccessData(res.collection ?? []);
-            console.log('✅ Grant access by site_place:', siteAnswer, res.collection);
-          } catch (err) {
-            console.error('❌ Failed to fetch grant access:', err);
-          }
+        // const siteAnswer = getSiteFromForm(false, sectionsData, dataVisitor);
+        // if (siteAnswer) {
+        try {
+          // const res = await getGrantAccess(token, siteAnswer);
+          const res = await getInvitationScheduleOperatoryId(visitors[0].id, token);
+          setAccessData(res.collection.access ?? []);
+          // console.log('✅ Grant access by site_place:', siteAnswer, res.collection);
+        } catch (err) {
+          console.error('Failed to fetch grant access:', err);
         }
+        // }
       }
 
       // 🕒 Post submit actions
@@ -4325,9 +4181,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           setNextDialogOpen(true);
         }
       }, 500);
-
-      // localStorage.removeItem('selfOnlyOverrides');
-      // setSelfOnlyOverrides({});
     } catch (err: any) {
       setTimeout(() => {
         setLoading(false);
@@ -4346,221 +4199,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       }
     }
   };
-
-  // const handleOnSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   setErrors({});
-  //   if (!token) return;
-
-  //   try {
-  //     setLoading(true);
-
-  //     // 🧩 Utility untuk mapping field
-  //     const mapField = (field: FormVisitor, sortIdx: number) => {
-  //       const base: any = {
-  //         sort: field.sort ?? sortIdx,
-  //         short_name: field.short_name ?? '',
-  //         long_display_text: field.long_display_text ?? '',
-  //         field_type: field.field_type ?? 0,
-  //         is_primary: field.is_primary ?? false,
-  //         is_enable: field.is_enable ?? false,
-  //         mandatory: field.mandatory ?? false,
-  //         remarks: field.remarks ?? '',
-  //         custom_field_id: field.custom_field_id ?? '',
-  //         multiple_option_fields: field.multiple_option_fields ?? [],
-  //         visitor_form_type: field.visitor_form_type ?? DEFAULT_VFT,
-  //       };
-  //       if (base.field_type === 9 && field.answer_datetime?.trim()) {
-  //         base.answer_datetime = dayjs(field.answer_datetime).utc().toISOString(); // ✅ Zod-compatible
-  //       } else if ([10, 11, 12].includes(base.field_type)) {
-  //         if (field.answer_file?.trim()) base.answer_file = field.answer_file;
-  //       } else if (field.answer_text?.trim()) {
-  //         base.answer_text = field.answer_text;
-  //       }
-
-  //       return base;
-  //     };
-
-  //     // 🧩 Base meta untuk payload
-  //     const tz = moment.tz.guess();
-  //     const baseMeta = {
-  //       visitor_type: formData.visitor_type ?? '',
-  //       type_registered: TYPE_REGISTERED,
-  //       tz,
-  //       is_group: isGroup,
-  //     };
-
-  //     if (TYPE_REGISTERED !== 0) (baseMeta as any).registered_site = formData.registered_site || '';
-
-  //     let payload: any;
-
-  //     // ==========================================================
-  //     // 🧱 CASE 1: MULTI-GROUP VISITOR
-  //     // ==========================================================
-  //     if (isGroup) {
-  //       if (!groupVisitors.length) {
-  //         setErrors({ submit: 'Minimal tambah 1 group dulu.' });
-  //         setLoading(false);
-  //         return;
-  //       }
-
-  //       // 🧩 Bangun struktur list_group
-  //       const list_group = groupVisitors.map((g) => {
-  //         // 🔍 Ambil visitor-visitor yang termasuk grup ini
-  //        const visitorRows = dataVisitor;
-
-  //         // 🚧 Jika visitorRows kosong, isi minimal 1 kosong
-  //         const safeRows = visitorRows.length ? visitorRows : [{ question_page: [] }];
-
-  //         // 🔨 Bangun payload group lengkap
-  //         const groupPayload = {
-  //           visitor_type: formData.visitor_type ?? '',
-  //           is_group: true,
-  //           group_code: g.group_code,
-  //           group_name: g.group_name,
-  //           type_registered: TYPE_REGISTERED,
-  //           tz: moment.tz.guess(),
-  //           registered_site: formData.registered_site ?? '',
-  //           data_visitor: safeRows.map((row) => ({
-  //             question_page: row.question_page.map((section, sIdx) => ({
-  //               id: section.id || sIdx,
-  //               sort: section.sort ?? sIdx,
-  //               name: section.name,
-  //               is_document: section.is_document ?? false,
-  //               can_multiple_used: section.can_multiple_used ?? false,
-  //               foreign_id: section.foreign_id ?? '',
-  //               self_only: section.self_only ?? false,
-  //               form: (section.form ?? []).map((f, fIdx) => ({
-  //                 sort: f.sort ?? fIdx,
-  //                 short_name: f.short_name ?? '',
-  //                 long_display_text: f.long_display_text ?? '',
-  //                 field_type: f.field_type ?? 0,
-  //                 is_primary: f.is_primary ?? false,
-  //                 is_enable: f.is_enable ?? false,
-  //                 mandatory: f.mandatory ?? false,
-  //                 remarks: f.remarks ?? '',
-  //                 custom_field_id: f.custom_field_id ?? '',
-  //                 multiple_option_fields: f.multiple_option_fields ?? [],
-  //                 visitor_form_type: f.visitor_form_type ?? DEFAULT_VFT,
-  //                 answer_text: f.answer_text ?? undefined,
-  //                 answer_datetime:
-  //                   f.field_type === 9 && f.answer_datetime
-  //                     ? dayjs(f.answer_datetime).utc().toISOString()
-  //                     : undefined,
-  //                 answer_file: f.answer_file ?? undefined,
-  //               })),
-  //             })),
-  //           })),
-  //         };
-
-  //         return groupPayload;
-  //       });
-
-  //       // 🚀 Wrap jadi format akhir
-  //       payload = { list_group };
-  //       setSubmitted(true);
-
-  //       console.log('✅ Final payload (group):', JSON.stringify(payload, null, 2));
-  //     }
-
-  //     // ==========================================================
-  //     // 🧱 CASE 2: SINGLE VISITOR
-  //     // ==========================================================
-  //     else {
-  //       if (!sectionsData.length) {
-  //         toast('Minimal isi 1 data visitor.', 'warning');
-  //         return;
-  //       }
-
-  //       const question_page = sectionsData.map((section, sIdx) => ({
-  //         id: section.id || section.Id || sIdx,
-  //         sort: section.sort ?? sIdx,
-  //         name: section.name,
-  //         status: 0,
-  //         is_document: section.is_document ?? false,
-  //         can_multiple_used: section.can_multiple_used ?? false,
-  //         foreign_id: section.foreign_id ?? '',
-  //         self_only: section.self_only ?? false,
-  //         form: formsOf(section).map((f, fIdx) => mapField(f as FormVisitor, fIdx)),
-  //       }));
-
-  //       payload = {
-  //         ...baseMeta,
-  //         data_visitor: [{ question_page }],
-  //       };
-
-  //       setSubmitted(true);
-  //       console.log('✅ payload (single):', JSON.stringify(payload, null, 2));
-  //     }
-
-  //     // ==========================================================
-  //     // 🧩 VALIDASI PAYLOAD (ZOD)
-  //     // ==========================================================
-
-  //     const parsed = isGroup
-  //       ? CreateGroupVisitorRequestSchema.parse(payload)
-  //       : CreateVisitorRequestSchema.parse(payload);
-
-  //     console.log('🚀 parsed final payload:', parsed);
-
-  //     const submitFn = TYPE_REGISTERED === 0 ? createPraRegister : createVisitor;
-  //     const backendResponse = await submitFn(token, parsed as any);
-
-  //     toast('Visitor created successfully.', 'success');
-
-  //     // ==========================================================
-  //     // 🔎 Handle hasil dari backend
-  //     // ==========================================================
-  //     const visitors = backendResponse.collection?.visitors || [];
-  //     const availableCards = backendResponse.collection?.available_cards || [];
-  //     setAvailableCards(availableCards);
-
-  //     setRows((prev) =>
-  //       prev.map((r, i) => ({
-  //         ...r,
-  //         trx_visitor_id: visitors[i]?.visitor_id ?? null,
-  //       })),
-  //     );
-
-  //     // ==========================================================
-  //     // 🌐 Grant Access (Site)
-  //     // ==========================================================
-  //     const siteAnswer = getSiteFromForm(isGroup, sectionsData, dataVisitor);
-  //     if (siteAnswer) {
-  //       try {
-  //         const res = await getGrantAccess(token, siteAnswer);
-  //         setAccessData(res.collection ?? []);
-  //         console.log('✅ Grant access by site_place:', siteAnswer, res.collection);
-  //       } catch (err) {
-  //         console.error('❌ Failed to fetch grant access:', err);
-  //       }
-  //     }
-
-  //     setTimeout(() => {
-  //       setLoading(false);
-  //       onSuccess?.();
-  //       setNextDialogOpen(true);
-  //     }, 1500);
-
-  //     localStorage.removeItem('selfOnlyOverrides');
-  //     setSelfOnlyOverrides({});
-  //   } catch (err: any) {
-  //     setTimeout(() => {
-  //       setLoading(false);
-  //       setNextDialogOpen(true);
-  //     }, 1500);
-
-  //     toast('Failed to create visitor.', 'error');
-  //     console.error(err);
-
-  //     if (err?.errors) setErrors(err.errors);
-  //     else if (err?.name === 'ZodError') {
-  //       const fieldErrors: Record<string, string> = {};
-  //       err.errors.forEach((z: any) => (fieldErrors[z.path.join('.')] = z.message));
-  //       setErrors(fieldErrors);
-  //     }
-  //   }
-  // };
 
   useEffect(() => {
     setDraggableSteps([...dynamicSteps]);
@@ -5117,11 +4755,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
     const fetchSecondaryData = async () => {
       try {
-        const [customFieldRes, employeeRes, allEmployeeRes, visitorRes] = await Promise.all([
-          getAllCustomFieldPagination(token, 0, 99, 'id'),
+        const [customFieldRes, employeeRes, allEmployeeRes] = await Promise.all([
+          // getAllCustomFieldPagination(token, 0, 99, 'id'),
+          getAllCustomField(token),
           getVisitorEmployee(token),
           getVisitorEmployee(token),
-          getAllVisitor(token),
         ]);
 
         if (cancelled) return;
@@ -5129,7 +4767,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         setCustomField(customFieldRes?.collection ?? []);
         setEmployee(employeeRes?.collection ?? []);
         setAllVisitorEmployee(allEmployeeRes?.collection ?? []);
-        setVisitorDatas(visitorRes?.collection ?? []);
+        // setVisitorDatas(visitorRes?.collection ?? []);
       } catch (error) {
         console.error('⚠️ Error fetching secondary data:', error);
       }
@@ -5141,44 +4779,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       cancelled = true;
     };
   }, [token]);
-
-  // useEffect(() => {
-  //   if (!token) return;
-  //   let cancelled = false;
-  //   const min = 500; // ms biar skeleton minimal kelihatan
-
-  //   (async () => {
-  //     const t0 = Date.now();
-  //     setVtLoading(true);
-  //     try {
-  //       const [customFieldRes, visitorTypeRes, EmployeeRes, siteSpaceRes, visitorRes] =
-  //         await Promise.all([
-  //           getAllCustomFieldPagination(token, 0, 99, 'id'),
-  //           getAllVisitorType(token), // << daftar VT
-  //           getVisitorEmployee(token),
-  //           getAllSite(token),
-  //           getAllVisitor(token),
-  //         ]);
-
-  //       if (cancelled) return;
-  //       setCustomField(customFieldRes?.collection ?? []);
-  //       setVisitorType(visitorTypeRes?.collection ?? []);
-  //       setEmployee(EmployeeRes?.collection ?? []);
-  //       setSites(siteSpaceRes?.collection ?? []);
-  //       setVisitorDatas(visitorRes?.collection ?? []);
-  //     } finally {
-  //       const elapsed = Date.now() - t0;
-  //       const wait = Math.max(0, min - elapsed);
-  //       setTimeout(() => {
-  //         if (!cancelled) setVtLoading(false);
-  //       }, wait);
-  //     }
-  //   })();
-
-  //   return () => {
-  //     cancelled = true;
-  //   };
-  // }, [token]);
 
   useEffect(() => {
     if (!formData.visitor_type || !token) return;
@@ -5212,7 +4812,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
         if (isGroup) {
           const groupSections = buildGroupSections(sections);
-          console.log('group', groupSections);
           setSectionsData(groupSections);
           setDraggableSteps(groupSections.map((s) => s.name));
           seedDataVisitorFromSections(groupSections);
@@ -5234,60 +4833,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
     fetchVisitorTypeDetails();
   }, [formData.visitor_type, token]);
-
-  // useEffect(() => {
-  //   if (!formData.visitor_type || !token) return;
-
-  //   const raw = localStorage.getItem('unsavedVisitorData');
-  //   const saved = raw ? JSON.parse(raw) : null;
-  //   const sameType = saved?.visitor_type === formData.visitor_type;
-  //   const sameMode = saved?.is_group === isGroup;
-
-  //   // ✅ Restore jika cocok
-  //   if (sameType && sameMode && saved.sections?.length) {
-  //     setSectionsData(saved.sections);
-  //     setDataVisitor(saved.data_visitor ?? []);
-  //     setGroupedPages(saved.grouped_pages ?? {});
-  //     setDraggableSteps(saved.sections.map((s: any) => s.name));
-  //     setRawSections(saved.sections);
-  //     return;
-  //   }
-
-  //   // 🌐 Kalau tidak cocok → fetch baru
-  //   const fetchVisitorTypeDetails = async () => {
-  //     setVtLoading(true);
-  //     try {
-  //       const res = await getVisitorTypeById(token, formData.visitor_type as string);
-  //       let sections = res?.collection?.section_page_visitor_types ?? [];
-
-  //       if (TYPE_REGISTERED === 0)
-  //         sections = sections.filter((s: any) => (s.pra_form || []).length > 0);
-
-  //       setRawSections(sections);
-
-  //       if (isGroup) {
-  //         const groupSections = buildGroupSections(sections);
-  //         setSectionsData(groupSections);
-  //         setDraggableSteps(groupSections.map((s) => s.name));
-  //         seedDataVisitorFromSections(groupSections);
-  //         setGroupedPages(buildGroupedPages(groupSections));
-  //       } else {
-  //         setSectionsData(sections);
-  //         setDraggableSteps(sections.map((s: any) => s.name));
-  //         setDataVisitor([]);
-  //         setGroupedPages({} as any);
-  //       }
-  //     } catch (err) {
-  //       console.error('Failed to fetch visitor type details', err);
-  //       setSectionsData([]);
-  //       setDraggableSteps([]);
-  //     } finally {
-  //       setVtLoading(false);
-  //     }
-  //   };
-
-  //   fetchVisitorTypeDetails();
-  // }, [formData.visitor_type, token]);
 
   useEffect(() => {
     if (!isGroup) return;
@@ -5383,6 +4928,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
   const handleConfirmChooseCards = () => {
     const ids = normalizeIdsDeep(selectedInvitations);
+    console.log('id', ids);
 
     if (!ids.length || !selectedCards.length) {
       handleCloseChooseCard();
@@ -5984,7 +5530,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           <Grid container spacing={2}>
             {filteredCards.map((card) => {
               const holderRowId = assignedByCard.get(String(card.card_number));
-              const isUsedByOther = !!holderRowId && !selectedIdSet.has(String(holderRowId)); // 🔑 hanya lock jika milik orang lain
+              const isUsedByOther = !!holderRowId && !selectedIdSet.has(String(holderRowId));
               const isAssignedInThisSelection =
                 !!holderRowId && selectedIdSet.has(String(holderRowId));
               const isChosen = selectedCards.includes(card.card_number);
@@ -6166,6 +5712,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       {/* Access Dialog */}
       <Dialog
         open={accessDialogOpen}
+        // open={true}
         onClose={() => setAccessDialogOpen(false)}
         fullWidth
         maxWidth="sm"
@@ -6204,7 +5751,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           onChange={() => handleToggle(a.access_control_id)}
                         />
                       }
-                      label={a.name}
+                      label={
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <Typography>{a.access_control_name}</Typography>
+                          {a.early_access && <IconCircleCheck size={16} color="#10b981" />}
+                        </Box>
+                      }
                     />
                   ))}
                 </Box>
@@ -6425,15 +5977,86 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             <Typography variant="subtitle1" fontWeight={600}>
               Grant {getCheckedCount()} Access
             </Typography>
-            <Button
-              variant="contained"
-              color="success"
-              disabled={checkedItems.length === 0 || loading}
-              onClick={handleAccessSubmit}
-              size="medium"
-            >
-              {loading ? 'Loading...' : 'Submit'}
-            </Button>
+            <Box display="flex" alignItems="center" gap={1}>
+              <CustomSelect
+                size="small"
+                value={
+                  // kalau accessAction nggak valid untuk opsi yang tersedia → fallback ke opsi pertama
+                  (() => {
+                    const allGranted = selectedInvitations.every((v) => v.early_access === true);
+                    const allNotGranted = selectedInvitations.every(
+                      (v) => v.early_access === false,
+                    );
+
+                    // Jika semua belum grant
+                    if (allNotGranted && accessAction !== 'grant') return 'grant';
+                    // Jika semua sudah grant
+                    if (allGranted && accessAction === 'grant') return 'revoke';
+                    // Kalau campuran, biarkan tetap
+                    return accessAction;
+                  })()
+                }
+                onChange={(e: any) =>
+                  setAccessAction(e.target.value as 'grant' | 'revoke' | 'block')
+                }
+              >
+                {(() => {
+                  const allGranted = selectedInvitations.every((v) => v.early_access === true);
+                  const allNotGranted = selectedInvitations.every((v) => v.early_access === false);
+
+                  if (allNotGranted) {
+                    // semua belum grant
+                    return [
+                      <MenuItem key="grant" value="grant">
+                        Grant
+                      </MenuItem>,
+                    ];
+                  } else if (allGranted) {
+                    // semua sudah grant
+                    return [
+                      <MenuItem key="revoke" value="revoke">
+                        Revoke
+                      </MenuItem>,
+                      <MenuItem key="block" value="block">
+                        Block
+                      </MenuItem>,
+                    ];
+                  } else {
+                    // campuran (boleh semua)
+                    return [
+                      <MenuItem key="grant" value="grant">
+                        Grant
+                      </MenuItem>,
+                      <MenuItem key="revoke" value="revoke">
+                        Revoke
+                      </MenuItem>,
+                      <MenuItem key="block" value="block">
+                        Block
+                      </MenuItem>,
+                    ];
+                  }
+                })()}
+              </CustomSelect>
+              <Button
+                variant="contained"
+                color={
+                  accessAction === 'grant'
+                    ? 'primary'
+                    : accessAction === 'revoke'
+                    ? 'warning'
+                    : 'error'
+                }
+                disabled={
+                  loading ||
+                  checkedItems.length === 0 ||
+                  selectedInvitations.some((v) => !canPerformAction(accessAction, v))
+                }
+                onClick={handleAccessSubmit}
+                size="medium"
+              >
+                {loading ? 'Submitting...' : 'Submit'}
+              </Button>
+            </Box>
           </Box>
         </DialogContent>
       </Dialog>
@@ -6472,179 +6095,3 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 };
 
 export default FormWizardAddVisitor;
-
-const CameraUpload: React.FC<{
-  value?: string;
-  onChange: (url: string) => void;
-}> = ({ value, onChange }) => {
-  const [open, setOpen] = React.useState(false);
-  const [previewUrl, setPreviewUrl] = React.useState<string | null>(value || null);
-  const [screenshot, setScreenshot] = React.useState<string | null>(null);
-  const [removing, setRemoving] = React.useState(false);
-  const webcamRef = React.useRef<Webcam>(null);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
-
-  const clearLocal = () => {
-    setScreenshot(null);
-    setPreviewUrl(null);
-    onChange('');
-  };
-
-  const uploadFileToCDN = async (file: File | Blob): Promise<string | null> => {
-    const formData = new FormData();
-    const filename = file instanceof File && file.name ? file.name : 'selfie.png';
-    formData.append('file_name', filename);
-    formData.append('file', file, filename);
-    formData.append('path', 'visitor');
-    try {
-      const { data } = await axiosInstance2.post('/cdn/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      const fileUrl = data?.collection?.file_url;
-      console.log('CDN Response File URL:', fileUrl);
-      return fileUrl ? (fileUrl.startsWith('//') ? `http:${fileUrl}` : fileUrl) : null;
-    } catch (e) {
-      console.error('Upload failed:', e);
-      return null;
-    }
-  };
-
-  const handleCapture = async () => {
-    if (!webcamRef.current) return;
-    const imageSrc = webcamRef.current.getScreenshot();
-    if (!imageSrc) return;
-    const blob = await fetch(imageSrc).then((r) => r.blob());
-    const cdnUrl = await uploadFileToCDN(blob);
-    if (!cdnUrl) return;
-    setScreenshot(imageSrc);
-    setPreviewUrl(imageSrc);
-    onChange(cdnUrl);
-  };
-
-  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const cdnUrl = await uploadFileToCDN(file);
-
-    if (!cdnUrl) return;
-    setPreviewUrl(URL.createObjectURL(file));
-    onChange(cdnUrl);
-  };
-
-  // ⛔ Hapus file di CDN: DELETE ke URL file (http://host/pathcdn/visitor/xxx.png)
-  const handleRemove = async () => {
-    if (!value) {
-      // cuma bersihkan local state kalau belum ada URL CDN
-      clearLocal();
-      return;
-    }
-    try {
-      setRemoving(true);
-      // await axios.delete(value); // <--- sesuai API kamu
-      await axiosInstance2.delete(`/cdn${value}`);
-      console.log('✅ Berhasil hapus file CDN:', value);
-      clearLocal();
-    } catch (e) {
-      console.error('Delete failed:', e);
-    } finally {
-      setRemoving(false);
-    }
-  };
-
-  return (
-    <Box>
-      <Box
-        sx={{
-          borderRadius: 2,
-          p: 2,
-          textAlign: 'center',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 2,
-        }}
-      >
-        <MuiButton size="small" onClick={() => setOpen(true)} startIcon={<PhotoCameraIcon />}>
-          Camera
-        </MuiButton>
-        {previewUrl && ( // <-- tombol Remove hanya muncul jika ada foto
-          <MuiButton
-            size="small"
-            color="error"
-            variant="outlined"
-            onClick={handleRemove}
-            startIcon={<IconTrash />}
-            disabled={removing}
-          >
-            {removing ? 'Removing...' : 'Remove'}
-          </MuiButton>
-        )}
-        <input type="file" hidden ref={fileInputRef} accept="image/*" onChange={handleFile} />
-      </Box>
-
-      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="md" fullWidth>
-        <Box sx={{ p: 3 }}>
-          <Box>
-            <Typography variant="h6" mb={2}>
-              Take Photo From Camera
-            </Typography>
-            {/* close button */}
-            <IconButton
-              onClick={() => setOpen(false)}
-              size="small"
-              sx={{ position: 'absolute', top: 10, right: 10 }}
-            >
-              <IconX />
-            </IconButton>
-          </Box>
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <Webcam
-                audio={false}
-                ref={webcamRef}
-                screenshotFormat="image/jpeg"
-                videoConstraints={{ facingMode: 'environment' }}
-                style={{ width: '100%', borderRadius: 8, border: '2px solid #ccc' }}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              {screenshot ? (
-                <img
-                  src={screenshot}
-                  alt="Captured"
-                  style={{ width: '100%', borderRadius: 8, border: '2px solid #ccc' }}
-                />
-              ) : (
-                <Box
-                  sx={{
-                    width: '100%',
-                    height: '100%',
-                    border: '2px dashed #ccc',
-                    borderRadius: 8,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    minHeight: 240,
-                  }}
-                >
-                  <Typography color="text.secondary">No Photos Have Been Taken Yet</Typography>
-                </Box>
-              )}
-            </Grid>
-          </Grid>
-          <Divider sx={{ my: 2 }} />
-          <Box textAlign="right">
-            <MuiButton color="warning" sx={{ mr: 1 }} onClick={clearLocal}>
-              Clear
-            </MuiButton>
-            <MuiButton variant="contained" onClick={handleCapture}>
-              Take Photo
-            </MuiButton>
-            <MuiButton sx={{ ml: 1 }} onClick={() => setOpen(false)}>
-              Submit
-            </MuiButton>
-          </Box>
-        </Box>
-      </Dialog>
-    </Box>
-  );
-};

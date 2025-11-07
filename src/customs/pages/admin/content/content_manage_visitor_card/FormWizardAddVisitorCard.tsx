@@ -36,6 +36,7 @@ import {
   CreateVisitorCardRequestSchema,
   UpdateVisitorCardRequest,
 } from 'src/customs/api/models/Admin/VisitorCard';
+import { showSwal } from 'src/customs/components/alerts/alerts';
 const steps = ['Card Info', 'Card Details'];
 
 type EnabledFields = {
@@ -244,55 +245,38 @@ const FormWizardAddVisitorCard = ({
         } as UpdateVisitorCardRequest;
 
         await updateVisitorCard(token as string, edittingId, updatedData);
-        setAlertType('success');
-        setAlertMessage('Card updated successfully!');
+        // setAlertType('success');
+        // setAlertMessage('Card updated successfully!');
+        showSwal('success', 'Card created successfully');
       } else {
         const createdData: CreateVisitorCardRequest = {
           ...data,
           type: typeMap[String(data?.type ?? 0)] ?? 0,
         };
         await createVisitorCard(token as string, createdData);
-        setAlertType('success');
-        setAlertMessage('Card created successfully!');
+        // setAlertType('success');
+        // setAlertMessage('Card created successfully!');
+        showSwal('success', 'Card created successfully');
       }
 
-      // if (edittingId !== '' && edittingId !== undefined) {
-      //   const updatedData: UpdateVisitorCardRequest = {
-      //     ...data,
-      //     type: typeMap[data.type ] ?? 0,
-      //   } as UpdateVisitorCardRequest;
-      //   await updateVisitorCard(token as string, edittingId, updatedData);
-      //   setAlertType('success');
-      //   setAlertMessage('Card updated successfully!');
-      // } else {
-      //   await createVisitorCard(token as string, data);
-      //   setAlertType('success');
-      //   setAlertMessage('Card created successfully!');
-      // }
       setTimeout(() => {
         setLoading(false);
         onSuccess?.();
-      }, 800);
+      }, 600);
     } catch (error: any) {
-      // const backendErrors: { [key: string]: string } = {};
-
-      // if (error.response && error.response.data?.collection) {
-      //   error.response.data.collection.forEach((err: { message: string }) => {
-      //     // Coba ekstrak key dari message, atau buat default
-      //     if (err.message.toLowerCase().includes('card number')) {
-      //       backendErrors['card_number'] = err.message;
-      //     } else if (err.message.toLowerCase().includes('site')) {
-      //       backendErrors['registered_site'] = err.message;
-      //     } else {
-      //       backendErrors['employee_id'] = err.message;
-      //     }
-      //   });
-      // }
-
-      // setErrors(backendErrors);
-      setAlertType('error');
-      setAlertMessage('Failed to submit data.');
       setLoading(false);
+
+      // Coba ambil pesan error dari backend
+      const messages: string[] =
+        error?.response?.data?.collection?.map((err: any) => err.message) || [];
+
+      if (messages.length > 0) {
+        // Kalau ada pesan error dari backend → tampilkan pakai Swal
+        showSwal('error', messages.join('\n'));
+      } else {
+        // Kalau tidak ada → fallback pesan umum
+        showSwal('error', 'Failed to submit data.');
+      }
     }
   };
 
@@ -575,9 +559,9 @@ const FormWizardAddVisitorCard = ({
       case 1:
         return (
           <Grid2 container spacing={2}>
-            <Grid2 mt={2} size={{ xs: 12, sm: 12 }}>
+            {/* <Grid2 mt={2} size={{ xs: 12, sm: 12 }}>
               <Alert severity={alertType}>{alertMessage}</Alert>
-            </Grid2>
+            </Grid2> */}
 
             {/* Card Type */}
             <Grid2 size={{ xs: 6, sm: 6 }}>

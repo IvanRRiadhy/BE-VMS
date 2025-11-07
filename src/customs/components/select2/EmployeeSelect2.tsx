@@ -80,7 +80,7 @@ const EmployeeSelect: React.FC<Props> = ({ onSelect, token }) => {
       loadOptions={loadOptions}
       onChange={(selectedOption) => selectedOption && onSelect(selectedOption.data)}
       placeholder="Cari karyawan..."
-      noOptionsMessage={() => 'Karyawan tidak ditemukan'}
+      noOptionsMessage={() => 'Employee not found'}
       formatOptionLabel={formatOptionLabel}
       isClearable
     />

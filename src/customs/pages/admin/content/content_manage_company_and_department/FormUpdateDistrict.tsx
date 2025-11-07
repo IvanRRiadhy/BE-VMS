@@ -13,9 +13,10 @@ import { Box } from '@mui/system';
 import React, { useEffect, useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import { getAllEmployee, updateDistrict } from 'src/customs/api/admin';
+import { getAllEmployee, getVisitorEmployee, updateDistrict } from 'src/customs/api/admin';
 import { Item } from 'src/customs/api/models/Admin/Department';
 import { CreateDistrictSubmitSchema } from 'src/customs/api/models/Admin/District';
+import { showSwal } from 'src/customs/components/alerts/alerts';
 import { useSession } from 'src/customs/contexts/SessionContext';
 
 interface FormUpdateDistrictProps {
@@ -86,7 +87,7 @@ const FormUpdateDistrict: React.FC<FormUpdateDistrictProps> = ({
     if (!token) return;
     (async () => {
       try {
-        const res = await getAllEmployee(token);
+        const res = await getVisitorEmployee(token);
         setAllEmployees(res?.collection ?? []);
       } catch (err) {
         console.error('Failed to fetch employees', err);
@@ -162,11 +163,11 @@ const FormUpdateDistrict: React.FC<FormUpdateDistrictProps> = ({
 
     try {
       if (!token) {
-        setAlertType('error');
-        setAlertMessage('Something went wrong. Please try again later.');
+        showSwal('error', 'Something went wrong. Please try again later.');
         return;
       }
 
+      // 🟡 Batch Edit Mode
       if (isBatchEdit && selectedRows.length > 0) {
         const results = await Promise.allSettled(
           selectedRows
@@ -180,26 +181,32 @@ const FormUpdateDistrict: React.FC<FormUpdateDistrictProps> = ({
         );
 
         const failed = results.filter((r) => r.status === 'rejected');
-        if (failed.length) {
-          setAlertType('error');
-          setAlertMessage('Some districts failed to update.');
+
+        // ✅ Swal langsung tampil
+        if (failed.length > 0) {
+          showSwal('error', 'Some districts failed to update.');
         } else {
-          setAlertType('success');
-          setAlertMessage('All districts updated successfully.');
-          onSuccess?.();
+          showSwal('success', 'All districts updated successfully.', 2000);
         }
+
+        // ✅ Tutup dialog setelah swal muncul
+        setTimeout(() => onSuccess?.(), 800);
         return;
       }
 
+      // 🟢 Single Edit Mode
       if (data) {
         const payload = buildPayload(data);
         const parsed = validateSingle();
         if (!parsed) return;
+
         await updateDistrict(data.id, parsed, token);
 
-        setAlertType('success');
-        setAlertMessage('District updated successfully.');
-        onSuccess?.();
+        // ✅ Swal tampil langsung
+        showSwal('success', 'District updated successfully.', 2000);
+
+        // ✅ Tutup dialog sedikit setelah swal
+        setTimeout(() => onSuccess?.(), 800);
       }
     } catch (err: any) {
       const be = err?.response?.data?.errors;
@@ -210,26 +217,26 @@ const FormUpdateDistrict: React.FC<FormUpdateDistrictProps> = ({
           host: be.Host?.[0] ?? '',
         });
       }
-      setAlertType('error');
-      setAlertMessage('Something went wrong. Please try again later.');
+
+      // 🔥 Swal error langsung tampil
+      showSwal('error', 'Failed to update district.');
     } finally {
-      setTimeout(() => {
-        setLoading(false);
-      }, 600);
+      // 🕒 Pastikan backdrop dimatikan
+      setTimeout(() => setLoading(false), 500);
     }
   };
 
   return (
     <>
       <form onSubmit={handleSubmit}>
-        <Grid2 size={{ xs: 12, sm: 12 }}>
+        {/* <Grid2 size={{ xs: 12, sm: 12 }}>
           <Alert severity={alertType}>{alertMessage}</Alert>
-        </Grid2>
+        </Grid2> */}
 
         {/* NAME */}
         <Box display="flex" alignItems="center" justifyContent="space-between">
           <CustomFormLabel htmlFor="name" sx={{ marginY: 1 }}>
-            <Typography variant="caption">District Name</Typography>
+            <Typography variant="body1">District Name</Typography>
           </CustomFormLabel>
           {isBatchEdit && (
             <FormControlLabel
@@ -265,7 +272,7 @@ const FormUpdateDistrict: React.FC<FormUpdateDistrictProps> = ({
         {/* CODE */}
         <Box display="flex" alignItems="center" justifyContent="space-between">
           <CustomFormLabel htmlFor="code" sx={{ marginY: 1 }}>
-            <Typography variant="caption">District Code</Typography>
+            <Typography variant="body1">District Code</Typography>
           </CustomFormLabel>
           {isBatchEdit && (
             <FormControlLabel
@@ -301,7 +308,7 @@ const FormUpdateDistrict: React.FC<FormUpdateDistrictProps> = ({
         {/* HOST */}
         <Box display="flex" alignItems="center" justifyContent="space-between">
           <CustomFormLabel htmlFor="host" sx={{ marginY: 1 }}>
-            <Typography variant="caption">Head of District</Typography>
+            <Typography variant="body1">Head of District</Typography>
           </CustomFormLabel>
           {isBatchEdit && (
             <FormControlLabel
@@ -325,7 +332,7 @@ const FormUpdateDistrict: React.FC<FormUpdateDistrictProps> = ({
         </Box>
         <Autocomplete
           autoHighlight
-          disablePortal
+          disablePortal={false}
           options={empOptions}
           filterOptions={(x) => x}
           getOptionLabel={(option) => (typeof option === 'string' ? option : option.label)}

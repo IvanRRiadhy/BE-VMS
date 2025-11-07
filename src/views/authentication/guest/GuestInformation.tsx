@@ -37,8 +37,9 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { IconX } from '@tabler/icons-react';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { GroupRoleId } from '../../../constant/GroupRoleId';
-import Logo from 'src/assets/images/logos/bi_logo.png';
+import Logo from 'src/assets/images/logos/BI_Logo.png';
 import { Snackbar } from '@mui/material';
+import { showSwal } from 'src/customs/components/alerts/alerts';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -175,27 +176,6 @@ const GuestInformationStepper = () => {
     );
   };
 
-  // if (loading) {
-  //   return (
-  //     <Box
-  //       component="div"
-  //       sx={{
-  //         position: 'fixed',
-  //         top: '50%',
-  //         left: '50%',
-  //         display: 'flex',
-  //         flexDirection: 'column',
-  //         alignItems: 'center',
-  //         transform: 'translate(-50%, -50%)',
-  //         zIndex: 9999,
-  //       }}
-  //     >
-  //       <CircularProgress />
-  //       {/* <Typography mt={1}>Loading...</Typography> */}
-  //     </Box>
-  //   );
-  // }
-
   if (!invitationData) {
     return (
       <Box
@@ -209,22 +189,11 @@ const GuestInformationStepper = () => {
           gap: 2,
         }}
       >
-        {/* <IconError404 color="error" style={{ fontSize: '5rem' }} />
-        <Typography variant="h5" color="error">
-          Data tidak ditemukan
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Kode yang kamu masukkan mungkin salah atau tidak ada.
-        </Typography>
-        <Alert severity="info" sx={{ mt: 2 }}>
-          Pastikan kode benar atau hubungi admin jika masalah berlanjut.
-        </Alert> */}
         <CircularProgress />
       </Box>
     );
   }
 
-  // const formSections = invitationData.question_page.filter((q: any) => !q.is_document);
   const formSections = invitationData.question_page;
 
   // const formSections = invitationData.question_page;
@@ -829,112 +798,123 @@ const GuestInformationStepper = () => {
     );
   };
 
-  const StepContent = (section: any) => (
-    <Box mt={3}>
-      <Grid container spacing={2}>
-        {section.form?.map((f: any, idx: number) => {
-          let displayValue = formValues[f.remarks] ?? '';
+  const StepContent = (section: any) => {
+    // Ambil status is_driving dari state formValues
+    const isDriving = formValues['is_driving'] === 'true' || formValues['is_driving'] === true;
 
-          // Mapping field type berdasarkan remarks
-          const type = getFieldTypeByRemarks(f.remarks) ?? f.field_type;
+    return (
+      <Box mt={3}>
+        <Grid container spacing={2}>
+          {section.form?.map((f: any, idx: number) => {
+            let displayValue = formValues[f.remarks] ?? '';
 
-          // Override host dan site_place
-          if (f.remarks === 'host') {
-            displayValue = invitationData.host_data?.name || displayValue;
-          } else if (f.remarks === 'site_place') {
-            displayValue = invitationData.site_place_data?.name || displayValue;
-          }
+            // Mapping field type berdasarkan remarks
+            const type = getFieldTypeByRemarks(f.remarks) ?? f.field_type;
 
-          const gridSize = { xs: 12 };
+            // Override host dan site_place
+            if (f.remarks === 'host') {
+              displayValue = invitationData.host_data?.name || displayValue;
+            } else if (f.remarks === 'site_place') {
+              displayValue = invitationData.site_place_data?.name || displayValue;
+            }
 
-          return (
-            <Grid key={idx} size={gridSize}>
-              <CustomFormLabel sx={{ mt: 0 }}>{f.long_display_text || f.remarks}</CustomFormLabel>
+            // 🔥 Skip field kendaraan kalau belum pilih "Yes"
+            if (!isDriving && ['vehicle_type', 'vehicle_plate'].includes(f.remarks)) {
+              return null;
+            }
 
-              {/* 🔹 CASE A: file-based (selfie/nda/identity) */}
-              {(() => {
-                switch (type) {
-                  case 10:
-                    return renderCameraField(f, idx); // selfie_image
-                  case 11:
-                    return renderFileUploadField(f, idx); // nda
-                  case 12:
-                    return renderUploadWithCamera(f, idx); // identity_image
-                  default:
-                    return null;
-                }
-              })()}
+            const gridSize = { xs: 12 };
 
-              {/* 🔹 CASE B: tanggal readonly */}
-              {['visitor_period_start', 'visitor_period_end'].includes(f.remarks) && (
-                <CustomTextField
-                  fullWidth
-                  value={formatDateTime(formValues[f.remarks])}
-                  InputProps={{ readOnly: true }}
-                  disabled
-                />
-              )}
+            return (
+              <Grid key={idx} size={gridSize}>
+                <CustomFormLabel sx={{ mt: 0 }}>{f.long_display_text || f.remarks}</CustomFormLabel>
 
-              {/* 🔹 CASE C: readonly section Purpose Visit */}
-              {section.name === 'Purpose Visit' &&
-                !['visitor_period_start', 'visitor_period_end'].includes(f.remarks) && (
+                {/* FILE-BASED */}
+                {(() => {
+                  switch (type) {
+                    case 10:
+                      return renderCameraField(f, idx);
+                    case 11:
+                      return renderFileUploadField(f, idx);
+                    case 12:
+                      return renderUploadWithCamera(f, idx);
+                    default:
+                      return null;
+                  }
+                })()}
+
+                {/* TANGGAL READONLY */}
+                {['visitor_period_start', 'visitor_period_end'].includes(f.remarks) && (
                   <CustomTextField
                     fullWidth
-                    value={displayValue}
+                    value={formatDateTime(formValues[f.remarks])}
                     InputProps={{ readOnly: true }}
                     disabled
                   />
                 )}
 
-              {/* 🔹 CASE D: vehicle_plate */}
-              {f.remarks === 'vehicle_plate' && (
-                <CustomTextField
-                  fullWidth
-                  value={displayValue}
-                  onChange={(e) => handleChange(f.remarks, e.target.value)}
-                  placeholder={f.long_display_text || f.remarks}
-                  error={!!errors[f.remarks]}
-                  helperText={errors[f.remarks]}
-                />
-              )}
+                {/* PURPOSE VISIT (readonly) */}
+                {section.name === 'Purpose Visit' &&
+                  !['visitor_period_start', 'visitor_period_end'].includes(f.remarks) && (
+                    <CustomTextField
+                      fullWidth
+                      value={displayValue}
+                      InputProps={{ readOnly: true }}
+                      disabled
+                    />
+                  )}
 
-              {/* 🔹 CASE E: gender */}
-              {f.remarks === 'gender' && (
-                <ToggleButtonGroup
-                  id="gender"
-                  exclusive
-                  value={formValues[f.remarks] || ''}
-                  onChange={(_, val) => {
-                    if (val !== null) handleChange(f.remarks, val);
-                  }}
-                  sx={{
-                    '& .MuiToggleButton-root': {
-                      textTransform: 'none',
-                      px: 2,
-                      py: 1,
-                      bgcolor: 'transparent',
-                      color: 'text.primary',
-                      '&:hover': { bgcolor: 'action.hover' },
-                    },
-                    '& .MuiToggleButton-root.Mui-selected': {
-                      bgcolor: 'primary.main',
-                      color: 'white',
-                      '&:hover': { bgcolor: 'primary.dark' },
-                    },
-                  }}
-                >
-                  <ToggleButton value="1">
-                    <IconMan size={16} style={{ marginRight: 6 }} /> Male
-                  </ToggleButton>
-                  <ToggleButton value="2">
-                    <IconWoman size={16} style={{ marginRight: 6 }} /> Female
-                  </ToggleButton>
-                </ToggleButtonGroup>
-              )}
+                {/* VEHICLE PLATE */}
+                {f.remarks === 'vehicle_plate' && (
+                  <CustomTextField
+                    fullWidth
+                    value={displayValue}
+                    onChange={(e) => handleChange(f.remarks, e.target.value)}
+                    placeholder={f.long_display_text || f.remarks}
+                    error={!!errors[f.remarks]}
+                    helperText={errors[f.remarks]}
+                  />
+                )}
 
-              {/* 🔹 CASE F: is_driving */}
-              {f.remarks === 'is_driving' && (
-                <>
+                {/* GENDER */}
+                {f.remarks === 'gender' && (
+                  <ToggleButtonGroup
+                    id="gender"
+                    exclusive
+                    value={formValues[f.remarks] || ''}
+                    onChange={(_, val) => {
+                      if (val !== null) handleChange(f.remarks, val);
+                    }}
+                    sx={{
+                      '& .MuiToggleButton-root': {
+                        textTransform: 'none',
+                        px: 2,
+                        py: 1,
+                        bgcolor: 'transparent',
+                        color: 'text.primary',
+                        '&:hover': { bgcolor: 'action.hover' },
+                      },
+                      '& .MuiToggleButton-root.Mui-selected': {
+                        bgcolor: 'primary.main',
+                        color: 'white',
+                        '&:hover': { bgcolor: 'primary.dark' },
+                      },
+                    }}
+                  >
+                    <ToggleButton value="1">
+                      <IconMan size={16} style={{ marginRight: 6 }} /> Male
+                    </ToggleButton>
+                    <ToggleButton value="0">
+                      <IconWoman size={16} style={{ marginRight: 6 }} /> Female
+                    </ToggleButton>
+                    <ToggleButton value="2">
+                      <IconWoman size={16} style={{ marginRight: 6 }} /> Prefer not to say
+                    </ToggleButton>
+                  </ToggleButtonGroup>
+                )}
+
+                {/* IS_DRIVING */}
+                {f.remarks === 'is_driving' && (
                   <FormControl component="fieldset">
                     <RadioGroup
                       value={formValues[f.remarks] || ''}
@@ -945,82 +925,61 @@ const GuestInformationStepper = () => {
                       <FormControlLabel value="false" control={<Radio />} label="No" />
                     </RadioGroup>
                   </FormControl>
-                  {/* {errors[f.remarks] && (
-                    <Typography variant="caption" color="error">
-                      {errors[f.remarks]}
-                    </Typography>
-                  )} */}
-                </>
-              )}
-
-              {/* 🔹 CASE G: vehicle_type */}
-              {f.remarks === 'vehicle_type' && (
-                <FormControl component="fieldset">
-                  <RadioGroup
-                    value={formValues[f.remarks] || ''}
-                    onChange={(e) => handleChange(f.remarks, e.target.value)}
-                    sx={{ flexDirection: 'row', flexWrap: 'wrap', gap: 1 }}
-                  >
-                    {[
-                      { value: 'car', label: 'Car' },
-                      { value: 'bus', label: 'Bus' },
-                      { value: 'motor', label: 'Motor' },
-                      { value: 'bicycle', label: 'Bicycle' },
-                      { value: 'truck', label: 'Truck' },
-                      { value: 'private_car', label: 'Private Car' },
-                      { value: 'other', label: 'Other' },
-                    ].map((opt) => (
-                      <FormControlLabel
-                        key={opt.value}
-                        value={opt.value}
-                        control={
-                          <Radio
-                          // onClick={() => {
-                          //   // cek apakah radio yang sama diklik ulang
-                          //   if (formValues[f.remarks] === opt.value) {
-                          //     handleChange(f.remarks, '');
-                          //   } else {
-                          //     handleChange(f.remarks, opt.value);
-                          //   }
-                          // }}
-                          />
-                        }
-                        label={opt.label}
-                      />
-                    ))}
-                  </RadioGroup>
-                  {/* {errors[f.remarks] && (
-                    <Typography variant="caption" color="error">
-                      {errors[f.remarks]}
-                    </Typography>
-                  )} */}
-                </FormControl>
-              )}
-
-              {/* 🔹 CASE H: Default input */}
-              {![
-                'visitor_period_start',
-                'visitor_period_end',
-                'vehicle_plate',
-                'gender',
-                'is_driving',
-                'vehicle_type',
-              ].includes(f.remarks) &&
-                !['selfie_image', 'nda', 'identity_image'].includes(f.remarks) &&
-                section.name !== 'Purpose Visit' && (
-                  <CustomTextField
-                    fullWidth
-                    value={displayValue}
-                    onChange={(e) => handleChange(f.remarks, e.target.value)}
-                    placeholder={f.long_display_text || f.remarks}
-                  />
                 )}
-            </Grid>
-          );
-        })}
-      </Grid>
-    </Box>
-  );
+
+                {/* VEHICLE TYPE */}
+                {f.remarks === 'vehicle_type' && (
+                  <FormControl component="fieldset">
+                    <RadioGroup
+                      value={formValues[f.remarks] || ''}
+                      onChange={(e) => handleChange(f.remarks, e.target.value)}
+                      sx={{ flexDirection: 'row', flexWrap: 'wrap', gap: 1 }}
+                    >
+                      {[
+                        { value: 'car', label: 'Car' },
+                        { value: 'bus', label: 'Bus' },
+                        { value: 'motor', label: 'Motor' },
+                        { value: 'bicycle', label: 'Bicycle' },
+                        { value: 'truck', label: 'Truck' },
+                        { value: 'private_car', label: 'Private Car' },
+                        { value: 'other', label: 'Other' },
+                      ].map((opt) => (
+                        <FormControlLabel
+                          key={opt.value}
+                          value={opt.value}
+                          control={<Radio />}
+                          label={opt.label}
+                        />
+                      ))}
+                    </RadioGroup>
+                  </FormControl>
+                )}
+
+                {/* DEFAULT */}
+                {![
+                  'visitor_period_start',
+                  'visitor_period_end',
+                  'vehicle_plate',
+                  'gender',
+                  'is_driving',
+                  'vehicle_type',
+                ].includes(f.remarks) &&
+                  !['selfie_image', 'nda', 'identity_image'].includes(f.remarks) &&
+                  section.name !== 'Purpose Visit' && (
+                    <CustomTextField
+                      fullWidth
+                      value={displayValue}
+                      onChange={(e) => handleChange(f.remarks, e.target.value)}
+                      placeholder={f.long_display_text || f.remarks}
+                    />
+                  )}
+              </Grid>
+            );
+          })}
+        </Grid>
+      </Box>
+    );
+  };
 
   function transformToSubmitPayload(invitationData: any) {
     const { question_page = [], site_place_data, visitor_type, visitor_type_data } = invitationData;
@@ -1087,57 +1046,6 @@ const GuestInformationStepper = () => {
     };
   }
 
-  // const handleSubmit = async () => {
-  //   const currentSection = formSections[activeStep];
-  //   if (!validateStep(currentSection)) return;
-
-  //   try {
-  //     setSubmitting(true);
-
-  //     const payload = transformToSubmitPayload(invitationData);
-  //     console.log('Payload siap dikirim:', JSON.stringify(payload, null, 2));
-
-  //     const visitorId = invitationData?.id;
-  //     if (!visitorId) {
-  //       console.error('❌ Visitor ID tidak ditemukan di invitationData');
-  //       return;
-  //     }
-
-  //     // 1️⃣ Submit pra-form ke backend
-  //     const res = await SubmitPraForm(payload, visitorId);
-  //     console.log('Response submit:', JSON.stringify(res || {}, null, 2));
-
-  //     // 2️⃣ Ambil status terbaru via AuthVisitor (karena token dikirim di sini)
-  //     const authRes = await AuthVisitor({ code });
-  //     console.log('AuthVisitor result:', authRes);
-
-  //     // Pastikan tidak menimpa invitationData dengan res lama
-  //     if (authRes?.collection) {
-  //       setInvitationData(authRes.collection);
-  //     }
-
-  //     // 3️⃣ Cek apakah token tersedia dan status visitor sudah success
-  //     const token = authRes?.collection?.token;
-
-  //     if (token) {
-  //       console.log('✅ Token ditemukan & status success → login guest');
-
-  //       // Simpan token + role guest
-  //       saveToken(token, GroupRoleId.Visitor);
-  //       // sessionStorage.setItem('groupId', GroupRoleId.Visitor); // tambahan manual
-
-  //       // Redirect ke dashboard guest
-  //       navigate('/guest/dashboard');
-  //       return;
-  //     }
-  //   } catch (error) {
-  //     console.error('Error submit:', error);
-  //   } finally {
-  //     setTimeout(() => {
-  //       setSubmitting(false);
-  //     }, 500);
-  //   }
-  // };
 
   const handleSubmit = async () => {
     const currentSection = formSections[activeStep];
@@ -1156,7 +1064,7 @@ const GuestInformationStepper = () => {
 
       // 1️⃣ Kirim pra-form ke backend
       const res = await SubmitPraForm(payload, visitorId);
-      console.log('✅ SubmitPraForm success:', JSON.stringify(res || {}, null, 2));
+      // console.log('✅ SubmitPraForm success:', JSON.stringify(res || {}, null, 2));
 
       // 2️⃣ Setelah submit, tunggu sejenak agar server proses statusnya
       await new Promise((r) => setTimeout(r, 500)); // (opsional tapi smooth)
@@ -1171,13 +1079,13 @@ const GuestInformationStepper = () => {
       }
 
       if (token) {
-        // 4️⃣ Simpan token tanpa trigger reload
         await saveToken(token, GroupRoleId.Visitor);
-        showSnackbar('Successfully Pra Register Visitor', 'success');
+        // showSnackbar('Successfully Pra Register Visitor', 'success');
+        showSwal('success', 'Successfully Pra Register Visitor');
 
         setTimeout(() => {
           setSubmitting(false);
-        }, 200);
+        }, 300);
 
         setTimeout(() => {
           navigate('/guest/dashboard', { replace: true });

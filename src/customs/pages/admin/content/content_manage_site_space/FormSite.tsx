@@ -81,9 +81,8 @@ import {
 import { Item as DocumentItem } from 'src/customs/api/models/Admin/Document';
 import { Item as AccessControlItem } from 'src/customs/api/models/Admin/AccessControl';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
-
-// const BASE_URL = 'http://' + import.meta.env.VITE_API_HOST;
-const BASE_URL = `http://${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}`;
+import { BASE_URL } from 'src/customs/api/interceptor';
+import { showSwal } from 'src/customs/components/alerts/alerts';
 
 type EnabledFields = {
   type: boolean;
@@ -573,14 +572,16 @@ const FormSite = ({
             ...updatedFields,
           };
           await updateSite(row.id, updatedData, token);
-          console.log('Updated Data:', updatedData);
+          // console.log('Updated Data:', updatedData);
         }
 
-        Swal.fire({
-          icon: 'success',
-          title: 'Berhasil!',
-          text: 'Batch update successfully!',
-        });
+        // Swal.fire({
+        //   icon: 'success',
+        //   title: 'Berhasil!',
+        //   text: 'Batch update successfully!',
+        // });
+
+        showSwal('success', 'Batch update successfully!');
 
         resetEnabledFields();
         onSuccess?.();
@@ -634,9 +635,10 @@ const FormSite = ({
         //   }
         // }
 
-        setAlertType('success');
-        setAlertMessage('Site successfully updated!');
-        console.log('✅ Editing ID:', editingId);
+        // setAlertType('success');
+        // setAlertMessage('Site successfully updated!');
+        // console.log('✅ Editing ID:', editingId);
+        showSwal('success', 'Site successfully updated!');
       } else {
         // 🔹 Create new site
         const data: CreateSiteRequest = CreateSiteRequestSchema.parse(formData);
@@ -648,9 +650,10 @@ const FormSite = ({
         await createSiteAccesss(newSiteId as string);
         await createSiteDocumentsForNewSite();
 
-        console.log('✅ Created Data:', res);
-        setAlertType('success');
-        setAlertMessage('Site successfully created!');
+        // console.log('✅ Created Data:', res);
+        // setAlertType('success');
+        // setAlertMessage('Site successfully created!');
+        showSwal('success', 'Site successfully created!');
       }
 
       handleFileUpload();
@@ -658,7 +661,7 @@ const FormSite = ({
 
       setTimeout(() => {
         onSuccess?.();
-      }, 900);
+      }, 600);
     } catch (err: any) {
       if (err?.errors) setErrors(err.errors);
       setAlertType('error');
@@ -670,7 +673,7 @@ const FormSite = ({
     } finally {
       setTimeout(() => {
         setLoading(false);
-      }, 600);
+      }, 650);
     }
   };
 
@@ -750,7 +753,7 @@ const FormSite = ({
         site_id: newSite.id,
       };
 
-      console.log('Creating site document with data:', docWithSiteId);
+      // console.log('Creating site document with data:', docWithSiteId);
 
       try {
         await createSiteDocument(docWithSiteId, token);

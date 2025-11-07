@@ -43,6 +43,8 @@ import {
   CircularProgress,
   Snackbar,
   Alert,
+  FormControl,
+  Radio,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import PageContainer from 'src/components/container/PageContainer';
@@ -182,19 +184,16 @@ const Invitation = () => {
         // if (isDataReady) {
         const res = await getInvitation(token as string, start_date, end_date);
         const rows = res.collection.map((item: any) => {
-          // waktu dasar dari backend
           const baseEnd = moment(item.visitor_period_end);
-
-          // tambahkan extend dari backend (jika ada)
           const extendedEnd = baseEnd.add(item.extend_visitor_period || 0, 'minutes');
 
           return {
             id: item.id,
-            name: item.visitor.name,
-            email: item.visitor.email,
-            organization: item.visitor.organization,
-            gender: item.visitor.gender,
-            phone: item.visitor.phone,
+            name: item.visitor_name,
+            email: item.visitor_email,
+            organization: item.visitor_organization,
+            gender: item.visitor_gender,
+            phone: item.visitor_phone,
             visitor_period_start: item.visitor_period_start,
             visitor_period_end: extendedEnd.format('YYYY-MM-DD HH:mm'), // langsung format lokal
             host: item.host_name ?? '-',
@@ -204,8 +203,6 @@ const Invitation = () => {
         });
 
         setTableData(rows ?? []);
-
-        // }
       } catch (e) {
         console.error(e);
       }
@@ -259,11 +256,10 @@ const Invitation = () => {
     fetchData();
   }, [token]);
 
-  const handleSelectInvitation = async (_: any, value: any) => {
-    if (!value) return;
+  const handleSelectInvitation = async (_: any, selected: any) => {
+    if (!selected || !selected.id) return;
 
-    const selected = invitationDetail.find((item: any) => item.agenda === value); // sesuaikan dengan field sebenarnya
-    if (!selected) return;
+    console.log('Selected invitation:', selected);
 
     try {
       const detail = await getDetailInvitationForm(token as string, selected.id);
@@ -278,8 +274,8 @@ const Invitation = () => {
   const handleNext = () => {
     const current = groupedSections[activeStep];
     if (!current) return;
-    const valid = validateStep(current);
-    if (!valid) return;
+    // const valid = validateStep(current);
+    // if (!valid) return;
     setActiveStep((prev) => prev + 1);
   };
 
@@ -292,20 +288,20 @@ const Invitation = () => {
   };
 
   // 🧾 Simulasi validasi sederhana per step
-  const validateStep = (section: any) => {
-    if (!section) return true;
+  // const validateStep = (section: any) => {
+  //   if (!section) return true;
 
-    // contoh: pastikan semua mandatory field diisi
-    for (const s of section.sections || []) {
-      for (const f of s.form || []) {
-        if (f.mandatory && !f.answer_text && !f.answer_file) {
-          alert(`Field "${f.long_display_text}" masih kosong.`);
-          return false;
-        }
-      }
-    }
-    return true;
-  };
+  //   // contoh: pastikan semua mandatory field diisi
+  //   for (const s of section.sections || []) {
+  //     for (const f of s.form || []) {
+  //       if (f.mandatory && !f.answer_text && !f.answer_file) {
+  //         alert(`Field "${f.long_display_text}" masih kosong.`);
+  //         return false;
+  //       }
+  //     }
+  //   }
+  //   return true;
+  // };
 
   const getSectionType = (section: any) => {
     const f = section.form || [];
@@ -592,20 +588,6 @@ const Invitation = () => {
                   </MenuItem>
                 ))}
               </TextField>
-              // <TextField
-              //   select
-              //   size="small"
-              //   value={String(field.answer_text ?? '')} // ✅ fix di sini
-              //   onChange={(e) => onChange(index, 'answer_text', e.target.value)}
-              //   fullWidth
-              //   sx={{ width: 120 }}
-              // >
-              //   {genderOptions.map((opt) => (
-              //     <MenuItem key={opt.id} value={String(opt.value)}>
-              //       {opt.name}
-              //     </MenuItem>
-              //   ))}
-              // </TextField>
             );
           }
           if (field.remarks === 'vehicle_type') {
@@ -649,6 +631,30 @@ const Invitation = () => {
                   </MenuItem>
                 ))}
               </TextField>
+            );
+          }
+
+          if (field.remarks === 'is_driving') {
+            return (
+              <FormControl component="fieldset">
+                <RadioGroup
+                  row
+                  value={field.answer_text || ''}
+                  onChange={(e) => onChange(index, 'answer_text', e.target.value)}
+                  sx={{ flexDirection: 'row', flexWrap: 'wrap', gap: 1 }}
+                >
+                  <FormControlLabel
+                    value="true"
+                    control={<Radio size="small" color="primary" />}
+                    label="Yes"
+                  />
+                  <FormControlLabel
+                    value="false"
+                    control={<Radio size="small" color="primary" />}
+                    label="No"
+                  />
+                </RadioGroup>
+              </FormControl>
             );
           }
           return (
@@ -1270,11 +1276,6 @@ const Invitation = () => {
 
       return (
         <Box>
-          {/* <Typography variant="h6" gutterBottom>
-          {current.label}
-        </Typography>
-        <Divider sx={{ mb: 2 }} /> */}
-
           {section.form.map((f: any, fIdx: number) => {
             let displayValue = '-';
 
@@ -1285,14 +1286,27 @@ const Invitation = () => {
               // tampilkan nama site, bukan ID
               displayValue =
                 invitationData?.collection?.site_place_data?.name ?? f.answer_text ?? '-';
+            } else if (f.remarks === 'visitor_period_start' || f.remarks === 'visitor_period_end') {
+              // 🕒 khusus untuk field waktu (convert UTC → local)
+              const dt = moment.utc(f.answer_datetime || f.answer_text).local();
+
+              displayValue = dt.isValid()
+                ? dt.format('ddd, DD MMM YYYY | HH:mm')
+                : f.answer_datetime || f.answer_text;
             } else if (f.answer_text) {
               displayValue = f.answer_text;
             } else if (f.answer_datetime) {
-              // 🕒 format datetime ke bentuk “Thu, 09 Oct 2025 | 14:00”
-              const dt = dayjs(f.answer_datetime);
-              displayValue = dt.isValid()
-                ? dt.format('ddd, DD MMM YYYY | HH:mm')
-                : f.answer_datetime;
+              try {
+                const dt = moment.utc(f.answer_datetime).local();
+                console.log('Converted time:', dt.format());
+
+                displayValue = dt.isValid()
+                  ? dt.format('ddd, DD MMM YYYY | HH:mm')
+                  : f.answer_datetime;
+              } catch (err) {
+                console.error('Invalid datetime:', f.answer_datetime);
+                displayValue = f.answer_datetime;
+              }
             } else if (f.answer_file) {
               displayValue = f.answer_file;
             }
@@ -1424,7 +1438,7 @@ const Invitation = () => {
             </Grid>
           </Grid>
         </Box>
-        <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="sm" fullWidth>
+        {/* <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="sm" fullWidth>
           <DialogTitle>Add Invitation</DialogTitle>
           <IconButton
             aria-label="close"
@@ -1465,6 +1479,60 @@ const Invitation = () => {
               </Stack>
               <Button
                 // type="submit"
+                variant="contained"
+                sx={{ mt: 3 }}
+                fullWidth
+                onClick={() => setInvitatioOpenDetail(true)}
+              >
+                <Typography>Next</Typography>
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog> */}
+
+        <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>Add Invitation</DialogTitle>
+          <IconButton
+            aria-label="close"
+            onClick={() => setOpenDialog(false)}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
+              color: (theme) => theme.palette.grey[500],
+            }}
+          >
+            <IconX />
+          </IconButton>
+
+          <DialogContent dividers>
+            <form>
+              <Stack spacing={2} marginTop={1}>
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 12, md: 12 }}>
+                    <CustomFormLabel htmlFor="agenda" sx={{ mt: 0 }}>
+                      Select Agenda
+                    </CustomFormLabel>
+                    <Autocomplete
+                      // ✅ Gunakan object, bukan string
+                      options={invitationDetailVisitor}
+                      getOptionLabel={(option: any) => option.agenda || ''} // tampilkan nama agenda
+                      isOptionEqualToValue={(opt, val) => opt.id === val.id} // supaya bisa set value dengan benar
+                      onChange={handleSelectInvitation}
+                      renderInput={(params) => (
+                        <CustomTextField
+                          {...params}
+                          placeholder="Choose or input invitation"
+                          fullWidth
+                          variant="outlined"
+                        />
+                      )}
+                    />
+                  </Grid>
+                </Grid>
+              </Stack>
+
+              <Button
                 variant="contained"
                 sx={{ mt: 3 }}
                 fullWidth

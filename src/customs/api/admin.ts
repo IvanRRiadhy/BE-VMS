@@ -245,7 +245,6 @@ import {
 } from './models/Admin/GrantAccess';
 import { GetAllSettingResponse } from './models/Admin/Setting';
 
-
 //#region report
 
 export const generateReport = async (token: string, payload: any): Promise<any> => {
@@ -671,6 +670,14 @@ export const getAllVisitor = async (token: string): Promise<GetAllVisitorPaginat
   return response.data;
 };
 
+// Get by invitation
+export const getVisitorInvitation = async (token: string): Promise<any> => {
+  const response = await axiosInstance.get('/visitor/invitation', {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
 // Get By Id
 export const getVisitorById = async (
   token: string,
@@ -688,7 +695,8 @@ export const getAllVisitorPagination = async (
   token: string,
   start: number,
   length: number,
-  sortColumn: string,
+  // sortColumn: string,
+  sortDir = '',
   keyword: string = '',
   start_date: string,
   end_date: string,
@@ -696,7 +704,8 @@ export const getAllVisitorPagination = async (
   const params: Record<string, any> = {
     start,
     length,
-    sort_column: sortColumn,
+    // sort_column: sortColumn,
+    sort_dir: sortDir,
     'search[value]': keyword,
     'start-date': start_date ? format(new Date(start_date), 'yyyy-MM-dd') : '',
     'end-date': end_date ? format(new Date(end_date), 'yyyy-MM-dd') : '',
@@ -1273,10 +1282,7 @@ export const getFormEmployee = async (
   }
 };
 
-export const getEmployeeById = async (
-  id: string,
-  token: string,
-): Promise<GetAllEmployeeByIdResponse> => {
+export const getEmployeeById = async (id: string, token: string): Promise<any> => {
   const response = await axiosInstance.get(`/employee/${id}`, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });
@@ -1287,7 +1293,8 @@ export const getAllEmployeePagination = async (
   token: string,
   start: number,
   length: number,
-  sortColumn: string,
+  sortColumn?: string,
+  sortDir?: string,
   keyword: string = '',
 ): Promise<GetAllEmployeePaginationResponse> => {
   // const params: Record<string, any> = {
@@ -1314,6 +1321,7 @@ export const getAllEmployeePaginationFilterMore = async (
   start: number,
   length: number,
   sortColumn: string,
+  sortDir?: string,
   keyword: string = '',
   gender?: number,
   joinStart?: string,
@@ -1330,6 +1338,7 @@ export const getAllEmployeePaginationFilterMore = async (
     start,
     length,
     sort_column: sortColumn,
+    sort_dir: sortDir,
     'search[value]': keyword, // ← ini diperbaiki!
     'join-start': joinStart,
     'exit-end': exitEnd,
@@ -1439,6 +1448,7 @@ export const getAllSitePagination = async (
   start: number,
   length: number,
   sortColumn: string,
+  sortDir?: string,
   keyword: string = '',
   type?: number,
 ): Promise<GetAllSitesPaginationResponse> => {
@@ -1447,6 +1457,7 @@ export const getAllSitePagination = async (
       start,
       length,
       sort_column: sortColumn,
+      sort_dir: sortDir,
       'search[value]': keyword,
       ...(type !== undefined ? { type } : {}),
     },

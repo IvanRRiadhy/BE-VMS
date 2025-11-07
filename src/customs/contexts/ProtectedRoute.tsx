@@ -73,9 +73,18 @@ export const ProtectedRoute = ({ allowedGroups }: ProtectedRouteProps) => {
 
   if (loading)
     return (
-      <div>
-        <CircularProgress color="primary" />
-        {/* <img src={image} style={{ width: 50, height: 50 }} /> */}
+      <div
+        style={{
+          position: 'fixed',
+          inset: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: 'rgba(255,255,255,0.7)',
+          zIndex: 9999,
+        }}
+      >
+        <CircularProgress color="primary" size={60} />
       </div>
     );
 

@@ -21,7 +21,7 @@ import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import FilterMoreContent from './FilterMoreContent';
 import Swal from 'sweetalert2';
-import { showErrorAlert, showSuccessAlert } from 'src/customs/components/alerts/alerts';
+import { showErrorAlert, showSuccessAlert, showSwal } from 'src/customs/components/alerts/alerts';
 import { Item } from 'src/customs/api/models/Employee/Approval';
 
 interface Filters {
@@ -101,7 +101,7 @@ const Approval = () => {
 
             return {
               id: item.id,
-              visitor_name: trx.visitor?.name || '-',
+              visitor_name: trx.visitor_name || '-',
               site_place_name: trx.site_place_name || '-',
               agenda: trx.agenda || '-',
               visitor_period_start: trx.visitor_period_start || '-',
@@ -217,11 +217,15 @@ const Approval = () => {
 
       // ✅ Tampilkan alert sukses dan tunggu sampai selesai
       setTimeout(() => {
-        showSuccessAlert(
-          'Success',
+        // showSuccessAlert(
+        //   'Success',
+        //   `Data Approval ${action === 'Accept' ? 'approved' : 'denied'} successfully.`,
+        // );
+        showSwal(
+          'success',
           `Data Approval ${action === 'Accept' ? 'approved' : 'denied'} successfully.`,
         );
-      }, 1000);
+      }, 850);
 
       // ✅ Sekarang tutup loading
       setTimeout(() => setLoadingAction(false), 200);
@@ -249,6 +253,7 @@ const Approval = () => {
             <Grid size={{ xs: 12, lg: 12 }}>
               {/* {isDataReady ? ( */}
               <DynamicTable
+                loading={loading}
                 overflowX={'auto'}
                 data={approvalData}
                 isHavePagination={true}
@@ -331,9 +336,6 @@ const Approval = () => {
             </Button>
           </DialogActions>
         </Dialog>
-        {/* <Portal> */}
-
-        {/* </Portal> */}
       </PageContainer>
       <Backdrop
         open={loadingAction}

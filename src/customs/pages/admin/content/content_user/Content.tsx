@@ -86,6 +86,8 @@ const Content = () => {
     queryFn: async () => {
       const response = await getAllUser(token as string);
 
+      console.log('response', response);
+
       const filteredData = response.collection.map((item: any) => ({
         id: item.id,
         fullname: item.fullname,
@@ -101,9 +103,9 @@ const Content = () => {
       const dataForTable = filteredData.map(({ group_id, ...rest }: any) => rest);
 
       return {
-        collection: filteredData, // versi lengkap (punya group_id)
-        tableCollection: dataForTable, // versi untuk table
-        totalRecords: response.RecordsTotal,
+        collection: filteredData,
+        tableCollection: dataForTable,
+        totalRecords: response.recordsTotal,
         totalFiltered: response.RecordsFiltered,
       };
     },
@@ -111,7 +113,7 @@ const Content = () => {
   });
 
   const collection = data?.collection || [];
-  const totalRecords = data?.totalRecords || 0;
+  const totalRecords = data?.collection.length || 0;
 
   const cards = [
     {
@@ -207,42 +209,40 @@ const Content = () => {
             </Grid>
 
             <Grid size={{ xs: 12, lg: 12 }}>
-              {isLoading ? (
+              {/* {isLoading ? (
                 <Card sx={{ width: '100%' }}>
                   <Skeleton />
                   <Skeleton animation="wave" />
                   <Skeleton animation={false} />
                 </Card>
-              ) : (
-                // : isError ? (
-                //   <Card sx={{ p: 3, textAlign: 'center' }}>Error loading data.</Card>
-                // )
+              ) : ( */}
 
-                <DynamicTable
-                  overflowX="auto"
-                  data={collection}
-                  isHavePagination
-                  selectedRows={selectedRows}
-                  defaultRowsPerPage={rowsPerPage}
-                  rowsPerPageOptions={[5, 10, 20, 50, 100]}
-                  onPaginationChange={(newPage, newRowsPerPage) => {
-                    setPage(newPage);
-                    setRowsPerPage(newRowsPerPage);
-                  }}
-                  isHaveChecked
-                  isHaveAction={true}
-                  isHaveAddData={true}
-                  isHaveSearch={true}
-                  isHaveSettingOperator={true}
-                  onSettingOperator={(row) => handleSetting(row.id)}
-                  onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-                  onCheckedChange={(selected) => setSelectedRows(selected)}
-                  onEdit={(row) => handleEdit(row.id)}
-                  onDelete={(row) => handleDelete(row.id)}
-                  onBatchDelete={handleBatchDelete}
-                  onAddData={handleAdd}
-                />
-              )}
+              <DynamicTable
+                loading={isLoading}
+                overflowX="auto"
+                data={collection}
+                isHavePagination
+                selectedRows={selectedRows}
+                defaultRowsPerPage={rowsPerPage}
+                rowsPerPageOptions={[5, 10, 20, 50, 100]}
+                onPaginationChange={(newPage, newRowsPerPage) => {
+                  setPage(newPage);
+                  setRowsPerPage(newRowsPerPage);
+                }}
+                isHaveChecked
+                isHaveAction={true}
+                isHaveAddData={true}
+                isHaveSearch={true}
+                isHaveSettingOperator={true}
+                onSettingOperator={(row) => handleSetting(row.id)}
+                onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                onCheckedChange={(selected) => setSelectedRows(selected)}
+                onEdit={(row) => handleEdit(row.id)}
+                onDelete={(row) => handleDelete(row.id)}
+                onBatchDelete={handleBatchDelete}
+                onAddData={handleAdd}
+              />
+              {/* )} */}
             </Grid>
           </Grid>
         </Box>
@@ -350,8 +350,6 @@ const Content = () => {
           </Grid>
         </DialogContent>
       </Dialog>
-
-      {/* Confirm unsaved dialog */}
       <Dialog open={confirmDialogOpen} onClose={() => setConfirmDialogOpen(false)}>
         <DialogTitle>Unsaved Changes</DialogTitle>
         <DialogContent>You have unsaved changes. Discard them and continue editing?</DialogContent>

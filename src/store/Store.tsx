@@ -38,14 +38,14 @@ import {
 
 const rootReducer = combineReducers({
   customizer: CustomizerReducer,
-  ecommerceReducer: EcommerceReducer,
-  chatReducer: ChatsReducer,
-  emailReducer: EmailReducer,
-  notesReducer: NotesReducer,
-  contactsReducer: ContactsReducer,
-  ticketReducer: TicketReducer,
-  userpostsReducer: UserProfileReducer,
-  blogReducer: BlogReducer,
+  // ecommerceReducer: EcommerceReducer,
+  // chatReducer: ChatsReducer,
+  // emailReducer: EmailReducer,
+  // notesReducer: NotesReducer,
+  // contactsReducer: ContactsReducer,
+  // ticketReducer: TicketReducer,
+  // userpostsReducer: UserProfileReducer,
+  // blogReducer: BlogReducer,
   dateRange: dateRangeReducer,
   userReducer: userReducer,
 });

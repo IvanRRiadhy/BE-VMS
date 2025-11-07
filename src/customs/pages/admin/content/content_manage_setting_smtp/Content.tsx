@@ -112,30 +112,36 @@ const Content = () => {
 
     const fetchData = async () => {
       const start = page * rowsPerPage;
-      const res = await getAllPaginationSettingSmtp(
-        token,
-        start,
-        rowsPerPage,
-        sortColumn,
-        searchKeyword,
-      );
+      setLoading(true);
+      try {
+        const res = await getAllPaginationSettingSmtp(
+          token,
+          start,
+          rowsPerPage,
+          sortColumn,
+          searchKeyword,
+        );
 
-      const mapped = res.collection.map((x: any) => ({
-        id: x.id,
-        name: x.name,
-        title_email: x.title_email,
-        host: x.host,
-        user: x.user,
-        password: x.password,
-        port: x.port,
-        secure: x.secure,
-        from_address: x.from_address,
-        selected_email: x.selected_email,
-      }));
+        const mapped = res.collection.map((x: any) => ({
+          id: x.id,
+          name: x.name,
+          title_email: x.title_email,
+          host: x.host,
+          user: x.user,
+          password: x.password,
+          port: x.port,
+          secure: x.secure,
+          from_address: x.from_address,
+          selected_email: x.selected_email,
+        }));
 
-      setSmtpData(mapped);
-      setTotalRecords(res.RecordsTotal);
-      setIsDataReady(true);
+        setSmtpData(mapped);
+        setTotalRecords(res.RecordsTotal);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchData();
   }, [token, page, rowsPerPage, sortColumn, searchKeyword, refreshTrigger]);
@@ -330,43 +336,36 @@ const Content = () => {
             {tabIndex === 0 && (
               <Box sx={{ overflowX: 'auto', p: 2 }}>
                 {!showForm ? (
-                  isDataReady ? (
-                    <DynamicTable
-                      isHavePagination
-                      isHaveHeaderTitle={true}
-                      titleHeader="SMTP Provider"
-                      data={smtpData}
-                      selectedRows={selectedRows}
-                      defaultRowsPerPage={rowsPerPage}
-                      rowsPerPageOptions={[5, 10, 25, 50, 100]}
-                      onPaginationChange={(page, rowsPerPage) => {
-                        setPage(page);
-                        setRowsPerPage(rowsPerPage);
-                      }}
-                      isHaveChecked={false}
-                      isHaveAction={true}
-                      isHaveSearch={false}
-                      isHaveFilter={false}
-                      isHaveExportPdf={false}
-                      isHaveAddData={true}
-                      isHaveHeader={false}
-                      onCheckedChange={setSelectedRows}
-                      onEdit={(row) => handleEdit(row.id)}
-                      onDelete={(row) => handleDelete(row.id.toString())}
-                      onSearchKeywordChange={setSearchKeyword}
-                      onAddData={handleAdd}
-                      isHaveBooleanSwitch={true}
-                      isDataVerified={true}
-                      onBooleanSwitchChange={handleBooleanSwitchChange}
-                      isHavePassword={true}
-                    />
-                  ) : (
-                    <Card sx={{ width: '100%' }}>
-                      <Skeleton />
-                      <Skeleton animation="wave" />
-                      <Skeleton animation={false} />
-                    </Card>
-                  )
+                  <DynamicTable
+                    loading={loading}
+                    isHavePagination
+                    isHaveHeaderTitle={true}
+                    titleHeader="SMTP Provider"
+                    data={smtpData}
+                    selectedRows={selectedRows}
+                    defaultRowsPerPage={rowsPerPage}
+                    rowsPerPageOptions={[5, 10, 25, 50, 100]}
+                    onPaginationChange={(page, rowsPerPage) => {
+                      setPage(page);
+                      setRowsPerPage(rowsPerPage);
+                    }}
+                    isHaveChecked={false}
+                    isHaveAction={true}
+                    isHaveSearch={false}
+                    isHaveFilter={false}
+                    isHaveExportPdf={false}
+                    isHaveAddData={true}
+                    isHaveHeader={false}
+                    onCheckedChange={setSelectedRows}
+                    onEdit={(row) => handleEdit(row.id)}
+                    onDelete={(row) => handleDelete(row.id.toString())}
+                    onSearchKeywordChange={setSearchKeyword}
+                    onAddData={handleAdd}
+                    isHaveBooleanSwitch={true}
+                    isDataVerified={true}
+                    onBooleanSwitchChange={handleBooleanSwitchChange}
+                    isHavePassword={true}
+                  />
                 ) : (
                   <FormSettingSmtp
                     formData={formData}
@@ -418,7 +417,7 @@ const Content = () => {
           </Box>
         </Paper>
       </Box>
-      <Portal>
+      {/* <Portal>
         <Backdrop
           open={loading}
           sx={{
@@ -428,7 +427,7 @@ const Content = () => {
         >
           <CircularProgress color="primary" />
         </Backdrop>
-      </Portal>
+      </Portal> */}
     </PageContainer>
   );
 };

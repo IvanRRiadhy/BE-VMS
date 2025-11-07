@@ -8,6 +8,7 @@ import { ListItemIcon, List, styled, ListItemText, useTheme, ListItemButton } fr
 import { useSelector } from 'src/store/Store';
 import { AppState } from 'src/store/Store';
 import { useTranslation } from 'react-i18next';
+import { useNavigateWithLoader } from 'src/hooks/useNavigateWithLoader';
 
 type NavGroup = {
   [x: string]: any;
@@ -37,12 +38,14 @@ const NavItem = ({ item, level, pathDirect, onClick }: ItemType) => {
   const customizer = useSelector((state: AppState) => state.customizer);
   const Icon = item.icon;
   const theme = useTheme();
+  // const { navigateWithLoader } = useNavigateWithLoader();
   const itemIcon =
     level > 1 ? <Icon stroke={1.5} size="1rem" /> : <Icon stroke={1.5} size="1.1rem" />;
 
   const ListItemStyled2 = styled(ListItemButton)(() => ({
     padding: '5px 10px',
     gap: '10px',
+    // display: 'flex',
     borderRadius: `${customizer.borderRadius}px`,
     marginBottom: level > 1 ? '3px' : '0px',
     color:
@@ -75,6 +78,27 @@ const NavItem = ({ item, level, pathDirect, onClick }: ItemType) => {
     target: item?.external ? '_blank' : '',
   };
 
+  // const listItemProps: {
+  //   component: any;
+  //   href?: string;
+  //   target?: any;
+  //   to?: any;
+  //   onClick?: React.MouseEventHandler;
+  // } = {
+  //   component: item?.external ? 'a' : 'button',
+  //   href: item?.external ? item?.href : undefined,
+  //   target: item?.external ? '_blank' : undefined,
+  //   // onClick: (e: any) => {
+  //   //   e.preventDefault();
+
+  //   //   if (!item?.external && item?.href) {
+  //   //     navigateWithLoader(item.href);
+  //   //   }
+
+  //   //   onClick?.(e); // tetap panggil callback sidebar jika ada
+  //   // },
+  // };
+
   const { t } = useTranslation();
 
   return (
@@ -83,12 +107,13 @@ const NavItem = ({ item, level, pathDirect, onClick }: ItemType) => {
         {...listItemProps}
         disabled={item.disabled}
         selected={pathDirect === item.href}
-        onClick={onClick}
+        // onClick={onClick}
       >
         <ListItemIcon
           sx={{
             minWidth: 'auto',
             p: '3px 0',
+            display: 'flex',
             color: 'inherit',
           }}
         >

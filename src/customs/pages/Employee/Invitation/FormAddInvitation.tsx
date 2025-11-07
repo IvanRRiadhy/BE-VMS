@@ -1318,8 +1318,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                   <>
                     <VisitorSelect
                       token={token as string}
-                      onSelect={(visitor) => {
-                        const v = visitor.visitor; // ⬅️ ambil nested visitor
+                      onSelect={(v) => {
+                        // 🔹 Sekarang langsung gunakan v (tidak ada v.visitor)
                         let genderValue: string | undefined;
 
                         if (v.gender === 'Male') genderValue = '1';
@@ -1330,8 +1330,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                           name: v.name,
                           email: v.email,
                           phone: v.phone,
-                          organization: v.organization ?? undefined,
-                          indentity_id: v.identity_id, // typo: "indentity_id" -> harusnya identity_id
+                          organization: v.organization,
+                          indentity_id: v.identity_id,
                           gender: genderValue,
                         };
 
@@ -1967,7 +1967,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                 return opts.filter((opt) => (opt.name || '').toLowerCase().includes(term));
               }}
               noOptionsText={
-                inputVal.length < 3 ? 'Ketik minimal 3 karakter untuk mencari' : 'Tidak ditemukan'
+                inputVal.length < 3 ? 'Enter at least 3 characters to search.' : 'Not found'
               }
               value={
                 options.find(
@@ -4018,7 +4018,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
               is_group: true,
               type_registered: TYPE_REGISTERED,
               tz: tz,
-              registered_site: formData.registered_site ?? '',
+              // registered_site: formData.registered_site ?? '',
             },
             selfOnlyOverrides,
           );
@@ -4048,7 +4048,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
             is_group: true,
             visitor_type: formData.visitor_type ?? '',
             tz: tz,
-            registered_site: formData.registered_site ?? '',
+            // registered_site: formData.registered_site ?? '',
             type_registered: TYPE_REGISTERED,
             data_visitor: cleanDataVisitor,
           };
@@ -4064,7 +4064,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         const submitFn = TYPE_REGISTERED === 0 ? createPraRegisterGroup : createVisitors;
         const backendResponse = await submitFn(token, parsed as any);
         toast('Group visitor created successfully.', 'success');
-        const visitors = backendResponse.collection?.visitors || [];
+        // const visitors = backendResponse.collection?.visitors || [];
 
         // const availableCards = backendResponse.collection?.available_cards || [];
         // setAvailableCards(availableCards);
@@ -4156,7 +4156,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         setLoading(false);
         onSuccess?.();
         // setNextDialogOpen(true);
-      }, 1000);
+      }, 600);
 
       localStorage.removeItem('selfOnlyOverrides');
       setSelfOnlyOverrides({});

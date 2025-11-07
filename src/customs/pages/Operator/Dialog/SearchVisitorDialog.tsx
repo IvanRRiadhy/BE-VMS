@@ -1,5 +1,4 @@
-// src/customs/components/operator/SearchVisitorDialog.tsx
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -12,16 +11,17 @@ import {
 } from '@mui/material';
 import { IconSearch, IconX } from '@tabler/icons-react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
-import { getInvitationCode } from 'src/customs/api/operator';
+import { searchVisitor } from 'src/customs/api/operator';
 import { useSession } from 'src/customs/contexts/SessionContext';
 
 interface Props {
   open: boolean;
   onClose: () => void;
   onSearch: (result: any) => void;
+  container: any;
 }
 
-const SearchVisitorDialog: React.FC<Props> = ({ open, onClose, onSearch }) => {
+const SearchVisitorDialog: React.FC<Props> = ({ open, onClose, onSearch, container }) => {
   const { token } = useSession();
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
@@ -29,9 +29,19 @@ const SearchVisitorDialog: React.FC<Props> = ({ open, onClose, onSearch }) => {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
+  useEffect(() => {
+    if (!open) {
+      // Reset semua field dan error ketika dialog ditutup
+      setName('');
+      setCode('');
+      setPlateNumber('');
+      setErrorMsg('');
+    }
+  }, [open]);
+
   const handleSearch = async () => {
-    if (!code.trim()) {
-      setErrorMsg('Please enter a visitor code.');
+    if (!code.trim() && !name.trim() && !plateNumber.trim()) {
+      setErrorMsg('Please enter at least one search field.');
       return;
     }
 
@@ -39,12 +49,18 @@ const SearchVisitorDialog: React.FC<Props> = ({ open, onClose, onSearch }) => {
     setLoading(true);
 
     try {
-      const res = await getInvitationCode(token as string, code.trim());
+      // kirim semua parameter ke API
+      const res = await searchVisitor(token as string, {
+        code: code.trim(),
+        name: name.trim(),
+        vehicle_plate_number: plateNumber.trim(),
+      });
+
       const data = res.collection?.data ?? [];
       console.log('data', data);
 
       if (data.length === 0) {
-        setErrorMsg('Visitor code not found.');
+        setErrorMsg('No visitor found with the given criteria.');
       } else {
         onSearch(data);
         onClose();
@@ -70,7 +86,7 @@ const SearchVisitorDialog: React.FC<Props> = ({ open, onClose, onSearch }) => {
       onClose={onClose}
       fullWidth
       maxWidth="sm"
-      // bisa aktifkan kalau mau di atas, bukan tengah
+      container={container ?? undefined}
       PaperProps={{
         sx: {
           position: 'absolute',
@@ -85,20 +101,12 @@ const SearchVisitorDialog: React.FC<Props> = ({ open, onClose, onSearch }) => {
         Search Visitor
       </DialogTitle>
 
-      <IconButton
-        onClick={onClose}
-        sx={{
-          position: 'absolute',
-          right: '10px',
-          top: '10px',
-        }}
-      >
+      <IconButton onClick={onClose} sx={{ position: 'absolute', right: 10, top: 10 }}>
         <IconX />
       </IconButton>
 
       <DialogContent dividers>
         <Box display="flex" flexDirection="column" gap={1.5}>
-          {/* Input nama */}
           <Box>
             <CustomFormLabel htmlFor="name" sx={{ mt: 0, mb: 0.5 }}>
               Name
@@ -113,7 +121,6 @@ const SearchVisitorDialog: React.FC<Props> = ({ open, onClose, onSearch }) => {
             />
           </Box>
 
-          {/* Input kode undangan */}
           <Box>
             <CustomFormLabel htmlFor="code" sx={{ mt: 0, mb: 0.5 }}>
               Code
@@ -128,7 +135,6 @@ const SearchVisitorDialog: React.FC<Props> = ({ open, onClose, onSearch }) => {
             />
           </Box>
 
-          {/* Input plat kendaraan */}
           <Box>
             <CustomFormLabel htmlFor="plate" sx={{ mt: 0, mb: 0.5 }}>
               Vehicle Plate Number
@@ -145,7 +151,6 @@ const SearchVisitorDialog: React.FC<Props> = ({ open, onClose, onSearch }) => {
 
           {errorMsg && <Box sx={{ color: 'error.main', fontSize: 14 }}>{errorMsg}</Box>}
 
-          {/* Tombol aksi */}
           <Box display="flex" justifyContent="flex-end" gap={1} mt={1}>
             <Button variant="outlined" onClick={handleClear}>
               Clear

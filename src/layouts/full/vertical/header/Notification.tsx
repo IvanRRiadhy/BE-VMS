@@ -11,9 +11,9 @@ import {
   Typography,
   Button,
   Chip,
-  Stack
+  Stack,
 } from '@mui/material';
-import * as dropdownData from './data';
+// import * as dropdownData from './data';
 import Scrollbar from 'src/components/custom-scroll/Scrollbar';
 
 import { IconBellRinging } from '@tabler/icons-react';
@@ -69,7 +69,8 @@ const Notifications = () => {
           <Chip label="5 new" color="primary" size="small" />
         </Stack>
         <Scrollbar sx={{ height: '385px' }}>
-          {dropdownData.notifications.map((notification, index) => (
+          <></>
+          {/* {dropdownData.notifications.map((notification: any, index: any) => (
             <Box key={index}>
               <MenuItem sx={{ py: 2, px: 4 }}>
                 <Stack direction="row" spacing={2}>
@@ -107,7 +108,7 @@ const Notifications = () => {
                 </Stack>
               </MenuItem>
             </Box>
-          ))}
+          ))} */}
         </Scrollbar>
         <Box p={3} pb={1}>
           <Button to="/apps/email" variant="outlined" component={Link} color="primary" fullWidth>

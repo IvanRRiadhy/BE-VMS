@@ -38,6 +38,7 @@ import {
   getDistrictById,
   getAllEmployee,
   getAllOrganizationPagination,
+  getVisitorEmployee,
 } from 'src/customs/api/admin';
 
 import {
@@ -56,6 +57,7 @@ import {
   showConfirmDelete,
   showSuccessAlert,
   showErrorAlert,
+  showSwal,
 } from 'src/customs/components/alerts/alerts';
 
 type EnableField = {
@@ -84,7 +86,6 @@ const entityLabel = (e?: DialogEntity) =>
     : '';
 
 const Content = () => {
-  // ======= Cards summary =======
   const [totals, setTotals] = useState({ organization: 0, department: 0, district: 0 });
   const cards = [
     {
@@ -132,8 +133,7 @@ const Content = () => {
     if (!token) return;
 
     const fetchData = async () => {
-      setLoading(true); // ✅ PENTING! tampilkan skeleton sebelum mulai fetch
-      // setHasFetched(false);
+      setLoading(true);
 
       try {
         const start = page * rowsPerPage;
@@ -169,7 +169,7 @@ const Content = () => {
         }
 
         if (response) {
-          const employees = await getAllEmployee(token);
+          const employees = await getVisitorEmployee(token);
           const employeeMap = Array.isArray(employees?.collection)
             ? employees.collection.reduce((acc: any, emp: any) => {
                 acc[emp.id] = emp.name;
@@ -188,13 +188,10 @@ const Content = () => {
           setTotalRecords(response.RecordsTotal ?? mapped.length ?? 0);
           setIsDataReady(true);
         }
-      } catch (error) {
-        console.error('Fetch error:', error);
+      } catch (error: any) {
+        console.error('Fetch error:', error.message);
       } finally {
-        setTimeout(() => {
-          // setHasFetched(true);
-          setLoading(false); // ✅ Matikan skeleton setelah data siap
-        }, 400);
+        setLoading(false);
       }
     };
 
@@ -303,7 +300,7 @@ const Content = () => {
 
   const openEdit = async (entity: DialogEntity, row: Item) => {
     if (!token) return;
-    setLoading(true);
+    // setLoading(true);
     const myToken = ++editTokenRef.current; // generate token
     try {
       let res: any;
@@ -318,9 +315,11 @@ const Content = () => {
       setDialog({ mode: 'edit', entity });
     } catch (e) {
       console.error('Fetch detail error:', e);
-    } finally {
-      setLoading(false);
     }
+
+    // finally {
+    //   setLoading(false);
+    // }
   };
 
   const closeDialog = () => {
@@ -377,7 +376,7 @@ const Content = () => {
   // ======= Table actions =======
   const handleDelete = async (id: string) => {
     if (!token) return;
-    const confirmed = await showConfirmDelete('Are you sure?', "You won't be able to revert this!");
+    const confirmed = await showConfirmDelete('Are you sure to delete?', "You won't be able to revert this!");
     if (!confirmed) return;
 
     try {
@@ -394,7 +393,8 @@ const Content = () => {
       }
 
       setRefreshTrigger((p) => p + 1);
-      showSuccessAlert('Deleted!', successText);
+      // showSuccessAlert('Deleted!', successText);
+      showSwal('success', successText, 3000);
     } catch (error) {
       console.error(error);
       showErrorAlert('Error!', 'Something went wrong while deleting.');
@@ -462,8 +462,6 @@ const Content = () => {
     }
     setRefreshTrigger((p) => p + 1);
   };
-
-  // ======= Render =======
   return (
     <>
       <PageContainer title="Company & Department" description="this is Dashboard page">
@@ -475,13 +473,13 @@ const Content = () => {
 
             <Grid container mt={1} size={{ xs: 12, lg: 12 }}>
               <Grid size={{ xs: 12, lg: 12 }}>
-                {isDataReady ? (
+                {/* {isDataReady ? ( */}
                 <DynamicTable
-                  // loading={loading}
+                  loading={loading}
                   isHavePagination
                   totalCount={totalRecords}
                   defaultRowsPerPage={rowsPerPage}
-                  rowsPerPageOptions={[5, 10, 25, 50]}
+                  rowsPerPageOptions={[5, 10, 25, 50, 100]}
                   onPaginationChange={(newPage, newRowsPerPage) => {
                     setPage(newPage);
                     setRowsPerPage(newRowsPerPage);
@@ -523,13 +521,13 @@ const Content = () => {
                   onAddData={() => openAdd(mapSelectedToEntity)}
                   onFilterByColumn={(column) => setSortColumn(column.column)}
                 />
-                 ) : (
+                {/* ) : (
                   <Card sx={{ width: '100%' }}>
                     <Skeleton />
                     <Skeleton animation="wave" />
                     <Skeleton animation={false} />
                   </Card>
-                )} 
+                )}  */}
               </Grid>
             </Grid>
           </Grid>
@@ -550,7 +548,7 @@ const Content = () => {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            background: 'linear-gradient(135deg, rgba(2,132,199,0.05), rgba(99,102,241,0.08))',
+            // background: 'linear-gradient(135deg, rgba(2,132,199,0.05), rgba(99,102,241,0.08))',
           }}
         >
           {dialog?.mode === 'add' && `Add ${entityLabel(dialog?.entity)}`}
@@ -571,7 +569,7 @@ const Content = () => {
               formData={formDataAddOrganization}
               setFormData={setFormDataAddOrganization}
               onSuccess={() =>
-                handleSuccess({ entity: 'organization', action: 'create', keepOpen: true })
+                handleSuccess({ entity: 'organization', action: 'create', keepOpen: false })
               }
             />
           )}
@@ -580,7 +578,7 @@ const Content = () => {
               formData={formDataAddDepartment}
               setFormData={setFormDataAddDepartment}
               onSuccess={() =>
-                handleSuccess({ entity: 'department', action: 'create', keepOpen: true })
+                handleSuccess({ entity: 'department', action: 'create', keepOpen: false })
               }
             />
           )}
@@ -589,7 +587,7 @@ const Content = () => {
               formData={formDataAddDistrict}
               setFormData={setFormDataAddDistrict}
               onSuccess={() =>
-                handleSuccess({ entity: 'district', action: 'create', keepOpen: true })
+                handleSuccess({ entity: 'district', action: 'create', keepOpen: false })
               }
             />
           )}
@@ -604,7 +602,7 @@ const Content = () => {
               enabledFields={enabledFields}
               setEnabledFields={setEnabledFields}
               onSuccess={() =>
-                handleSuccess({ entity: 'organization', action: 'update', keepOpen: true })
+                handleSuccess({ entity: 'organization', action: 'update', keepOpen: false })
               }
             />
           )}
@@ -616,7 +614,7 @@ const Content = () => {
               enabledFields={enabledFields}
               setEnabledFields={setEnabledFields}
               onSuccess={() =>
-                handleSuccess({ entity: 'department', action: 'update', keepOpen: true })
+                handleSuccess({ entity: 'department', action: 'update', keepOpen: false })
               }
             />
           )}
@@ -628,7 +626,7 @@ const Content = () => {
               enabledFields={enabledFields}
               setEnabledFields={setEnabledFields}
               onSuccess={() =>
-                handleSuccess({ entity: 'district', action: 'update', keepOpen: true })
+                handleSuccess({ entity: 'district', action: 'update', keepOpen: false })
               }
             />
           )}

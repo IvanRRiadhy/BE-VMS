@@ -15,6 +15,7 @@ import NavItem from '../NavItem/NavItem';
 import { IconChevronDown } from '@tabler/icons-react';
 import { AppState } from 'src/store/Store';
 import { useTranslation } from 'react-i18next';
+import { width } from '@mui/system';
 
 type NavGroupProps = {
   [x: string]: any;
@@ -59,7 +60,8 @@ const NavCollapse = ({
   }, [pathname, menu.children]);
 
   const ListItemStyled = styled(ListItemButton)(() => ({
-    width: 'auto',
+    width: '100%', // bukan 'auto'
+    display: 'flex',
     padding: '5px 10px',
     position: 'relative',
     flexGrow: 'unset',
@@ -85,10 +87,19 @@ const NavCollapse = ({
     top: level > 1 ? `0px` : '35px',
     left: level > 1 ? `${level + 228}px` : '0px',
     padding: '10px',
-    width: '250px',
+    width: '100%',
+    minWidth: '250px',
     color: theme.palette.text.primary,
     boxShadow: theme.shadows[8],
     backgroundColor: theme.palette.background.paper,
+    // borderRadius: '8px',
+    '& .MuiListItemButton-root': {
+      width: '100%', // ⬅️ ikut parent
+      textAlign: 'left',
+      display: 'flex', // ⬅️ wajib agar icon & text sejajar
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+    },
   }));
 
   const listItemProps: {
@@ -97,7 +108,7 @@ const NavCollapse = ({
     component: 'li',
   };
 
-   const { t } = useTranslation();
+  const { t } = useTranslation();
 
   // If Menu has Children
   const submenus = menu.children?.map((item: any) => {
@@ -149,6 +160,15 @@ const NavCollapse = ({
         {...listItemProps}
         selected={pathWithoutLastPart === menu.href}
         className="ListItemStyled"
+        sx={{
+          display: 'flex',
+          position: 'relative', // ⬅️ wajib agar submenu absolute tetap di dalam konteks ini
+          width: '100%', // ⬅️ biar parent full
+          px: 1,
+          '&:hover .SubNav': {
+            display: 'block', // tampilkan submenu saat hover
+          },
+        }}
       >
         <ListItemIcon
           sx={{
@@ -172,14 +192,14 @@ const NavCollapse = ({
         sx={{
           display: 'none',
           position: 'absolute',
-          top: '100%',
+          top: '100%', // muncul tepat di bawah parent
           left: 0,
+          width: '100%', // ⬅️ mengikuti lebar parent
           backgroundColor: 'white',
-          minWidth: 180,
-          // boxShadow: (theme) => theme.shadows[4],
           borderRadius: 1,
           zIndex: 10,
           p: 1,
+          boxShadow: (theme: any) => theme.shadows[4],
         }}
       >
         {submenus}
