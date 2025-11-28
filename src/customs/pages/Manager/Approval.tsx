@@ -12,6 +12,7 @@ import {
   Typography,
 } from '@mui/material';
 import { Box } from '@mui/system';
+import BI_LOGO from 'src/assets/images/logos/BI_Logo.png';
 import { IconScript, IconX } from '@tabler/icons-react';
 import React, { useEffect, useState } from 'react';
 import PageContainer from 'src/components/container/PageContainer';
@@ -21,9 +22,11 @@ import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import FilterMoreContent from './FilterMoreContent';
 import Swal from 'sweetalert2';
-import { showErrorAlert, showSuccessAlert } from 'src/customs/components/alerts/alerts';
+import { showErrorAlert, showSuccessAlert, showSwal } from 'src/customs/components/alerts/alerts';
 import { Item } from 'src/customs/api/models/Employee/Approval';
 import { getApproval } from 'src/customs/api/manager';
+import moment from 'moment';
+import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 
 interface Filters {
   is_action: boolean | null | undefined;
@@ -104,16 +107,20 @@ const Approval = () => {
 
             return {
               id: item.id,
-              visitor_name: trx.visitor?.name || '-',
+              visitor_name: trx.visitor_name || '-',
               site_place_name: trx.site_place_name || '-',
               agenda: trx.agenda || '-',
               visitor_period_start: trx.visitor_period_start || '-',
-              visitor_period_end: trx.visitor_period_end || '-',
+              visitor_period_end: trx.visitor_period_end
+                ? formatDateTime(trx.visitor_period_end, trx.extend_visitor_period)
+                : trx.visitor_period_end || '-',
+
               action_by: item.action_by || '-',
               status: item.action,
             };
           }),
         );
+
         setTotalRecords(res.collection.length);
         // console.log(totalRecords);
         // setTotalFilteredRecords(res.RecordsFiltered);
@@ -200,10 +207,14 @@ const Approval = () => {
     try {
       const confirm = await Swal.fire({
         title: `Do you want to ${action === 'Accept' ? 'Accept' : 'Deny'} this approval?`,
-        icon: 'question',
+        // icon: 'question',
+        imageUrl: BI_LOGO,
+        imageWidth: 100,
+        imageHeight: 100,
         showCancelButton: true,
         confirmButtonText: action === 'Accept' ? 'Yes' : 'Yes',
         cancelButtonText: 'Cancel',
+        reverseButtons: true,
         confirmButtonColor: action === 'Accept' ? '#4caf50' : '#f44336',
         customClass: {
           title: 'swal2-title-custom',
@@ -220,11 +231,15 @@ const Approval = () => {
 
       // ✅ Tampilkan alert sukses dan tunggu sampai selesai
       setTimeout(() => {
-        showSuccessAlert(
-          'Success',
+        // showSuccessAlert(
+        //   'Success',
+        //   `Data Approval ${action === 'Accept' ? 'approved' : 'denied'} successfully.`,
+        // );
+        showSwal(
+          'success',
           `Data Approval ${action === 'Accept' ? 'approved' : 'denied'} successfully.`,
         );
-      }, 1000);
+      }, 400);
 
       // ✅ Sekarang tutup loading
       setTimeout(() => setLoadingAction(false), 200);

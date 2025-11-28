@@ -62,22 +62,22 @@ const Content = () => {
     pdf.save('dashboard.pdf');
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await getTodayPraregister(
-          token!,
-          new Date().toISOString().split('T')[0], // start-date
-          new Date().toISOString().split('T')[0], // end-date
-        );
-        setDataPraregist(response.data || []);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     try {
+  //       const response = await getTodayPraregister(
+  //         token!,
+  //         new Date().toISOString().split('T')[0], // start-date
+  //         new Date().toISOString().split('T')[0], // end-date
+  //       );
+  //       setDataPraregist(response.data || []);
+  //     } catch (error) {
+  //       console.error('Error fetching data:', error);
+  //     }
+  //   };
 
-    fetchData();
-  }, [token]);
+  //   fetchData();
+  // }, [token]);
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const handleClick = (event: React.MouseEvent<HTMLElement>) => setAnchorEl(event.currentTarget);
@@ -200,15 +200,6 @@ const Content = () => {
                   isHaveAddData={false}
                   isHaveHeader={false}
                   isHaveFilterMore={false}
-                  // headerContent={{
-                  //   title: 'Dashboard',
-                  //   subTitle: 'Monitoring all visitor data',
-                  //   items: [{ name: 'department' }, { name: 'employee' }, { name: 'project' }],
-                  // }}
-                  // onHeaderItemClick={(item) => {
-                  //   console.log('Item diklik:', item.name);
-                  // }}
-                  // onCheckedChange={(selected) => console.log('Checked:', selected)}
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 6, lg: 6 }}>
@@ -216,7 +207,6 @@ const Content = () => {
               </Grid>
 
               <Grid size={{ xs: 12, xl: 6 }}>
-                {/* <Heatmap dataCreated={headMapData} title=" Visitors In This Week" /> */}
                 <VisitorHeatMap />
               </Grid>
             </Grid>

@@ -17,9 +17,12 @@ import { IconMail, IconPower } from '@tabler/icons-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCallback } from 'react';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { clear } from 'console';
-import axiosInstance from 'src/customs/api/interceptor';
 import { getProfile } from 'src/customs/api/users';
+import { useDispatch } from 'react-redux';
+import { clearUser } from 'src/store/apps/user/userSlice';
+import { persistor } from 'src/store/Store';
+import { GroupRoleId } from 'src/constant/GroupRoleId';
+
 const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState<null | HTMLElement>(null);
   const navigate = useNavigate();
@@ -33,12 +36,17 @@ const Profile = () => {
     setAnchorEl2(null);
   };
 
-  const { token, clearToken } = useSession();
+  const dispatch = useDispatch();
+
+  const { token, clearToken, groupId } = useSession();
 
   const handleLogout = useCallback(() => {
-    handleClose2(); // Tutup menu dropdown
-    clearToken(); // Hapus session/token
+    handleClose2();
+    clearToken();
 
+    dispatch(clearUser());
+    persistor.purge();
+    localStorage.removeItem('persist:root');
     localStorage.clear();
     sessionStorage.clear();
 
@@ -49,16 +57,22 @@ const Profile = () => {
     navigate('/', { replace: true });
   }, [navigate, clearToken]);
 
-  // useEffect(() => {
-  //   if (!token) return;
+  useEffect(() => {
+    if (!token) return;
 
-  //   const fetchData = async () => {
-  //     const res = await getProfile(token);
-  //     setData(res?.collection || {});
-  //   };
+    const allowed =
+      groupId === GroupRoleId.Visitor.toLowerCase() ||
+      groupId === GroupRoleId.Employee.toLowerCase();
 
-  //   fetchData();
-  // }, [token]);
+    if (!allowed) return;
+
+    const fetchData = async () => {
+      const res = await getProfile(token);
+      setData(res?.collection || {});
+    };
+
+    fetchData();
+  }, [token]);
 
   const profileUrl = getProfilePathByRole(data.group_name);
 
@@ -103,7 +117,7 @@ const Profile = () => {
         }}
       >
         <Stack direction="row" py={0.1} px={1} spacing={1.5} alignItems="center">
-          <Avatar src={''} alt="profile" sx={{ width: 50, height: 50 }} />
+          <Avatar src={``} alt="profile" sx={{ width: 50, height: 50 }} />
 
           <Box sx={{ flexGrow: 1 }}>
             <Typography
@@ -153,10 +167,10 @@ export const getProfilePathByRole = (groupName?: string): string => {
 
   const lower = groupName.toLowerCase();
 
-  if (lower.includes('admin')) return '/admin/profile';
-  if (lower.includes('manager')) return '/manager/profile';
+  // if (lower.includes('admin')) return '/admin/profile';
+  // if (lower.includes('manager')) return '/manager/profile';
   if (lower.includes('employee')) return '/employee/profile';
-  if (lower.includes('operator')) return '/operator/profile';
+  // if (lower.includes('operator')) return '/operator/profile';
   if (lower.includes('visitor') || lower.includes('guest')) return '/guest/profile';
 
   return '/profile';

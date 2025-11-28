@@ -6,6 +6,7 @@ import CustomNavListing, { ItemDataCustomNavListing } from './CustomNavListing';
 import CustomSidebarItems, { ItemDataCustomSidebarItems } from './CustomSidebarItems';
 import Logo from 'src/assets/images/logos/BI_Logo.png';
 import { useState, useEffect } from 'react';
+import CurrentTime from './CurrentTIme';
 
 interface CustomNavigationProps {
   itemDataCustomNavListing: ItemDataCustomNavListing[];
@@ -22,49 +23,32 @@ const CustomNavigation: React.FC<CustomNavigationProps> = ({
 
   const [currentTime, setCurrentTime] = useState<string>('');
 
-  useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      // Format: Sun, 12 Dec 2022 | 12:00 AM
-      const options: Intl.DateTimeFormatOptions = {
-        weekday: 'short',
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: true,
-      };
-      setCurrentTime(now.toLocaleString('en-US', options));
-    };
-
-    updateTime(); // set waktu pertama kali
-    const interval = setInterval(updateTime, 1000); // update tiap detik
-
-    return () => clearInterval(interval);
-  }, []);
-
   if (lgUp) {
     return (
       <Box
         sx={{
-          borderBottom: '1px solid rgba(0,0,0,0.05)',
+          // borderBottom: '1px solid rgba(0,0,0,0.05)',
           background: 'white',
           width: '100%',
           px: 1.5,
-          py: 3,
+          py: 2,
           borderRadius: 0,
         }}
       >
         {/* ------------------------------------------- */}
         {/* NavListing on top for desktop (FULL WIDTH) */}
         {/* ------------------------------------------- */}
-        <Box sx={{ px: 2 }} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
+        <Box
+          sx={{ px: 2, zIndex: 9999 }}
+          display={'flex'}
+          justifyContent={'space-between'}
+          alignItems={'center'}
+        >
           <CustomNavListing itemData={itemDataCustomNavListing} />
-          <Typography variant="body2" fontWeight={500}>
+          {/* <Typography variant="body2" fontWeight={500}>
             {currentTime}
-          </Typography>
+          </Typography> */}
+          <CurrentTime />
         </Box>
       </Box>
     );

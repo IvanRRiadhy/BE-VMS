@@ -88,12 +88,18 @@ const SearchVisitorDialog: React.FC<Props> = ({ open, onClose, onSearch, contain
       maxWidth="sm"
       container={container ?? undefined}
       PaperProps={{
-        sx: {
-          position: 'absolute',
-          top: '15%',
-          left: '50%',
-          transform: 'translate(-50%, 0)',
-        },
+        sx: (theme) => ({
+          // default (untuk semua ukuran selain XL)
+          position: 'relative',
+
+          // hanya XL
+          [theme.breakpoints.up('xl')]: {
+            position: 'absolute',
+            top: '15%',
+            left: '50%',
+            transform: 'translate(-50%, 0)',
+          },
+        }),
       }}
     >
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -101,7 +107,7 @@ const SearchVisitorDialog: React.FC<Props> = ({ open, onClose, onSearch, contain
         Search Visitor
       </DialogTitle>
 
-      <IconButton onClick={onClose} sx={{ position: 'absolute', right: 10, top: 10 }}>
+      <IconButton onClick={onClose} sx={{ position: 'absolute', right: 8, top: 8 }}>
         <IconX />
       </IconButton>
 

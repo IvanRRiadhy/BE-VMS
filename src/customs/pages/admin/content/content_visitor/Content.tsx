@@ -22,11 +22,17 @@ import {
   Tabs,
   Tab,
 } from '@mui/material';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 import type { AlertColor } from '@mui/material/Alert';
 import PageContainer from 'src/components/container/PageContainer';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
-import iconScanQR from '../../../../../assets/images/svgs/scan-qr.svg';
-import iconAdd from '../../../../../assets/images/svgs/add-circle.svg';
+import iconScanQR from 'src/assets/images/svgs/scan-qr.svg';
+import iconAdd from 'src/assets/images/svgs/add-circle.svg';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import CloseIcon from '@mui/icons-material/Close';
@@ -56,6 +62,8 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { getInvitationCode } from 'src/customs/api/operator';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import DetailVisitorDialog from 'src/customs/pages/Operator/Dialog/DetailVisitorDialog';
+import moment from 'moment';
+import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 
 type VisitorTableRow = {
   id: string;
@@ -65,11 +73,8 @@ type VisitorTableRow = {
   email: string;
   organization: string;
   gender: string;
-  // address: string;
   phone: string;
   is_vip: string;
-  // is_email_verified: string;
-  // email_verification_send_at: string;
   visitor_period_start: string;
   visitor_period_end: string;
   host: string;
@@ -236,6 +241,19 @@ const Content = () => {
     Block: 'Block',
   };
 
+  // const formatDateTime = (dateStr?: string, extendMinutes?: number) => {
+  //   if (!dateStr) return '-';
+
+  //   // SELALU ANGGAP INPUT INI UTC WALAUPUN TIDAK ADA 'Z'
+  //   const base = moment.utc(dateStr);
+
+  //   if (extendMinutes && extendMinutes > 0) {
+  //     base.add(extendMinutes, 'minutes');
+  //   }
+
+  //   return base.tz('Asia/Jakarta').format('DD MMM YYYY, HH:mm');
+  // };
+
   useEffect(() => {
     if (!token) return; // tunggu dictionary siap
     const fetchData = async () => {
@@ -253,23 +271,23 @@ const Content = () => {
           startDate,
           endDate,
         );
-
-        let rows = response.collection.map((item: any) => ({
-          id: item.id,
-          visitor_type: item.visitor_type_name || '-',
-          name: item.visitor_name || '-',
-          identity_id: item.visitor_identity_id || '-',
-          email: item.visitor_email || '-',
-          organization: item.visitor_organization_name || '-',
-          gender: item.visitor_gender || '-',
-          // address: item.visitor_address || '-',
-          phone: item.visitor_phone || '-',
-          is_vip: item.visitor_is_vip || '-',
-          visitor_period_start: item.visitor_period_start || '-',
-          visitor_period_end: item.visitor_period_end || '-',
-          host: item.host ?? '-',
-          visitor_status: item.visitor_status || '-',
-        }));
+        let rows = response.collection.map((item: any) => {
+          return {
+            id: item.id,
+            visitor_type: item.visitor_type_name || '-',
+            name: item.visitor_name || '-',
+            identity_id: item.visitor_identity_id || '-',
+            email: item.visitor_email || '-',
+            organization: item.visitor_organization_name || '-',
+            gender: item.visitor_gender || '-',
+            phone: item.visitor_phone || '-',
+            is_vip: item.visitor_is_vip || '-',
+            visitor_period_start: item.visitor_period_start || '-', // BIARKAN apa adanya
+            visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
+            host: item.host ?? '-',
+            visitor_status: item.visitor_status || '-',
+          };
+        });
 
         if (selectedType !== 'All') {
           const apiStatus = statusMap[selectedType];
@@ -693,8 +711,7 @@ const Content = () => {
         maxWidth={false}
         PaperProps={{
           sx: {
-            width: '100vw', // bisa ubah jadi 100vw kalau mau full
-            // maxWidth: '1900px', // misal lebih besar dari xl
+            width: '100vw',
           },
         }}
       >
@@ -733,16 +750,27 @@ const Content = () => {
         </DialogContent>
       </Dialog>
       {/* Add Pre registration */}
-      <Dialog fullWidth maxWidth="xl" open={openPreRegistration} onClose={handleDialogClose}>
+      <Dialog
+        fullWidth
+        // maxWidth="xl"
+        maxWidth={false}
+        PaperProps={{
+          sx: {
+            width: '100vw',
+          },
+        }}
+        open={openPreRegistration}
+        onClose={handleDialogClose}
+      >
         <DialogTitle display="flex" justifyContent={'space-between'} alignItems="center">
           Add Pra Registration
           <IconButton
             aria-label="close"
             onClick={() => {
               if (isFormChanged) {
-                openDiscardForCloseAdd(); // <── ini saja
+                openDiscardForCloseAdd();
               } else {
-                handleCloseDialog(); // aman langsung tutup
+                handleCloseDialog(); 
               }
             }}
           >
@@ -963,7 +991,7 @@ const Content = () => {
               >
                 <Scanner
                   constraints={{ facingMode }}
-                  onScan={async(result: any) => {
+                  onScan={async (result: any) => {
                     // if (!result) return;
                     // if (hasDecoded) return; // cegah spam callback
                     // setHasDecoded(true);

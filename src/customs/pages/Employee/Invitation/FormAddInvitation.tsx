@@ -3237,13 +3237,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
 
                         <Typography variant="body2" color="textSecondary" mt={1}>
                           Supports: PDF, DOCX, JPG, PNG, up to
-                          <span style={{ fontWeight: 'semibold' }}> 5 MB</span>
+                          <span style={{ fontWeight: 'semibold' }}> 100KB</span>
                         </Typography>
-
-                        {/* <Typography variant="body2" color="textSecondary" mt={1}>
-                          Maximal Size 5 MB
-                        </Typography> */}
-
                         {/*preview  */}
                         {(previewSrc || shownName) && (
                           <Box
@@ -3325,7 +3320,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                         </Typography>
 
                         <Typography variant="caption" color="textSecondary">
-                          Supports: PDF, DOCX, JPG, PNG
+                          Supports: PDF, DOCX, JPG, PNG, up to <span style={{ fontWeight: 'semibold' }}> 100KB</span>
                         </Typography>
 
                         <Typography

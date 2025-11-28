@@ -1,97 +1,154 @@
-import { Grid2 as Grid, Button, Box, Backdrop, CircularProgress } from '@mui/material';
+import { Grid2 as Grid, Backdrop, CircularProgress } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { TimeGridSelector } from 'src/customs/components/GridSelector/TimeGridSelector';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { createTimezone, updateTimezone } from 'src/customs/api/admin';
-import { showSuccessAlert, showErrorAlert } from 'src/customs/components/alerts/alerts';
-import { set } from 'lodash';
+import { showErrorAlert, showSwal } from 'src/customs/components/alerts/alerts';
 
-// tipe untuk props form
 interface FormTimezoneProps {
   mode: 'create' | 'edit';
-  initialData?: any; // data dari API untuk edit
+  initialData?: any;
   onSuccess?: () => void;
 }
+
+const dayMapReverse: Record<string, string> = {
+  Sun: 'sunday',
+  Mon: 'monday',
+  Tue: 'tuesday',
+  Wed: 'wednesday',
+  Thu: 'thursday',
+  Fri: 'friday',
+  Sat: 'saturday',
+};
+
+const dayOrder: { abbr: string; key: string }[] = [
+  { abbr: 'Sun', key: 'sunday' },
+  { abbr: 'Mon', key: 'monday' },
+  { abbr: 'Tue', key: 'tuesday' },
+  { abbr: 'Wed', key: 'wednesday' },
+  { abbr: 'Thu', key: 'thursday' },
+  { abbr: 'Fri', key: 'friday' },
+  { abbr: 'Sat', key: 'saturday' },
+];
+
+const STORAGE_KEY = 'timezoneFormDraft';
 
 const FormTimezone = ({ mode, initialData, onSuccess }: FormTimezoneProps) => {
   const { token } = useSession();
   const [loading, setLoading] = useState(false);
 
-  const dayMap: Record<string, string> = {
-    Sun: 'sunday',
-    Mon: 'monday',
-    Tue: 'tuesday',
-    Wed: 'wednesday',
-    Thu: 'thursday',
-    Fri: 'friday',
-    Sat: 'saturday',
-  };
-
-  const STORAGE_KEY = 'timezoneFormDraft';
-
   const [name, setName] = useState(initialData?.name ?? '');
   const [description, setDescription] = useState(initialData?.description ?? '');
-  const [days, setDays] = useState<any[]>(initialData?.days ?? []);
+  const [days, setDays] = useState<any[]>([]);
 
-  // callback dari TimeGridSelector
-  const handleSelectionChange = (newDays: any[]) => {
-    setDays(newDays);
+  const apiToDays = (api: any): any[] => {
+    if (!api) return [];
+    // if api already has days array, assume it's the correct format
+    if (Array.isArray(api.days) && api.days.length) return api.days;
+
+    const res: any[] = [];
+    for (const d of dayOrder) {
+      const startRaw = api?.[d.key];
+      const endRaw = api?.[`${d.key}_end`];
+
+      // normalize "HH:MM:SS" -> "HH:MM"
+      const normalize = (s?: string) => {
+        if (!s) return null;
+        const parts = s.split(':');
+        if (parts.length >= 2) return parts[0].padStart(2, '0') + ':' + parts[1].padStart(2, '0');
+        return s;
+      };
+
+      if (startRaw && endRaw) {
+        res.push({
+          day: d.abbr,
+          hours: [
+            {
+              startTime: normalize(startRaw) as string,
+              endTime: normalize(endRaw) as string,
+            },
+          ],
+        });
+      } else {
+        res.push({
+          day: d.abbr,
+          hours: [],
+        });
+      }
+    }
+    return res;
   };
 
-  // konversi DaySchedule[] ke payload API
-  const buildPayload = () => {
+  const daysToApi = (daysArr: any[]) => {
     const payload: any = { name, description };
 
-    days.forEach((day) => {
-      const key = dayMap[day.day];
-      if (!key) return;
-
-      if (day.hours.length > 0) {
-        // ambil blok terawal & terakhir (inklusif)
-        const start = day.hours[0].startTime;
-        const end = day.hours[day.hours.length - 1].endTime;
-
-        payload[key] = `${start}:00`;
-        payload[key + '_end'] = `${end}:00`;
-      }
+    const mapByAbbr: Record<string, any> = {};
+    (daysArr || []).forEach((d) => {
+      mapByAbbr[d.day] = d;
     });
+
+    for (const d of dayOrder) {
+      const dayObj = mapByAbbr[d.abbr];
+      if (!dayObj || !Array.isArray(dayObj.hours) || dayObj.hours.length === 0) {
+        continue;
+      }
+
+      const start = dayObj.hours[0].startTime;
+      const end = dayObj.hours[dayObj.hours.length - 1].endTime;
+
+      // ensure seconds :00 suffix (to match example payload)
+      const ensureSeconds = (t: string) => {
+        if (!t) return '';
+        if (t.split(':').length === 2) return `${t}:00`;
+        return t;
+      };
+
+      payload[d.key] = ensureSeconds(start);
+      payload[`${d.key}_end`] = ensureSeconds(end);
+    }
 
     return payload;
   };
 
-  const handleSubmit = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!token) return;
+  const handleSelectionChange = (newDays: any[]) => {
+    setDays(newDays);
+  };
 
+  const handleSubmit = async (newDaysFromGrid?: any) => {
+    if (!token) return;
+    setLoading(true);
     try {
-      setLoading(true);
-      const payload = buildPayload();
+      const payload = daysToApi(newDaysFromGrid || days);
       console.log('Payload:', payload);
       if (mode === 'create') {
         await createTimezone(token, payload);
         setName('');
         setDescription('');
-        setDays(initialData); // reset grid
-        // localStorage.removeItem(STORAGE_KEY);
+        setDays([]);
+        localStorage.removeItem(STORAGE_KEY);
 
         setTimeout(() => {
-          showSuccessAlert('Created!', 'Timezone berhasil dibuat.');
+          showSwal('success', 'Time Access successfully created');
           onSuccess?.();
-        }, 600); // jeda 0.6 detik
+        }, 250);
       } else {
-        await updateTimezone(token, initialData.id, payload);
+        // edit
+        const id = initialData?.id;
+        if (!id) throw new Error('Missing timezone id for update');
+        await updateTimezone(token, id, payload);
+
         setTimeout(() => {
-          showSuccessAlert('Updated!', 'Time Access berhasil diupdate.');
+          showSwal('success', 'Time Access successfully updated');
           onSuccess?.();
-        }, 600);
+        }, 250);
       }
     } catch (err: any) {
       console.error(err);
       showErrorAlert('Error', 'Gagal menyimpan timezone');
     } finally {
-      setTimeout(() => setLoading(false), 600);
+      setTimeout(() => setLoading(false), 250);
     }
   };
 
@@ -113,7 +170,6 @@ const FormTimezone = ({ mode, initialData, onSuccess }: FormTimezoneProps) => {
     }
   }, [mode]);
 
-  // ⬇️ Simpan draft ke localStorage setiap kali name/description/days berubah
   useEffect(() => {
     if (mode === 'create') {
       const draft = { name, description, days };
@@ -125,7 +181,7 @@ const FormTimezone = ({ mode, initialData, onSuccess }: FormTimezoneProps) => {
     if (mode === 'edit' && initialData) {
       setName(initialData.name ?? '');
       setDescription(initialData.description ?? '');
-      setDays(initialData.days ?? []);
+      setDays(apiToDays(initialData));
     }
   }, [initialData, mode]);
 
@@ -159,8 +215,10 @@ const FormTimezone = ({ mode, initialData, onSuccess }: FormTimezoneProps) => {
         <Grid size={{ xs: 12, lg: 10 }}>
           <TimeGridSelector
             onSelectionChange={handleSelectionChange}
+            // initialData={days}
+            // initialData={apiToDays(initialData)}
             initialData={days}
-            onSubmit={handleSubmit}
+            onSubmit={(newDays: any) => handleSubmit(newDays)}
           />
         </Grid>
       </Grid>
@@ -169,7 +227,7 @@ const FormTimezone = ({ mode, initialData, onSuccess }: FormTimezoneProps) => {
         open={loading}
         sx={{
           color: '#fff',
-          zIndex: (theme) => theme.zIndex.drawer + 1, // di atas drawer & dialog
+          zIndex: 99999,
         }}
       >
         <CircularProgress color="inherit" />

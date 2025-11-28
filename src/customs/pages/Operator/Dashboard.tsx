@@ -390,7 +390,7 @@ const DashboardOperator = () => {
         // setRelatedVisitors(mappedVisitors);
         setInvitationCode(data);
         setVisitorStatus(data[0]?.visitor_status ?? null);
-        
+
         const accessList = Array.isArray(invitation.access)
           ? invitation.access
           : [invitation.access];
@@ -725,48 +725,6 @@ const DashboardOperator = () => {
     );
   };
 
-  // const handleSubmitGiveAccess = async () => {
-  //   if (!selectedAccessIds.length) {
-  //     setSnackbarMsg('Please select at least one access.');
-  //     setSnackbarType('info');
-  //     setSnackbarOpen(true);
-  //     return;
-  //   }
-
-  //   try {
-  //     // Ambil data dari visitor yang sedang di-checkin
-  //     const trxVisitorId = rows[0]?.trx_visitor_id;
-  //     const cardNumber = rows[0]?.assigned_card_number;
-
-  //     const payload = {
-  //       data_access: selectedAccessIds.map((id) => {
-  //         const accessItem = accessData.find((a) => a.id === id);
-  //         return {
-  //           access_control_id: accessItem?.access_control_id ?? id,
-  //           action: 1,
-  //           card_number: cardNumber,
-  //           trx_visitor_id: trxVisitorId,
-  //         };
-  //       }),
-  //     };
-
-  //     console.log('🚀 Payload Give Access:', payload);
-
-  //     const res = await createGiveAccessOperator(token as string, payload);
-  //     console.log('✅ Give Access Response:', res);
-
-  //     setSnackbarMsg('Access granted successfully.');
-  //     setSnackbarType('success');
-  //     setSnackbarOpen(true);
-  //     setAccessDialogOpen(false);
-  //   } catch (e) {
-  //     console.error('❌ Give Access error:', e);
-  //     setSnackbarMsg('Failed to give access.');
-  //     setSnackbarType('error');
-  //     setSnackbarOpen(true);
-  //   }
-  // };
-
   // const [currentSitePlace, setCurrentSitePlace] = useState<string | null>(null);
   const [loadingAccess, setLoadingAccess] = useState(false);
 
@@ -862,23 +820,6 @@ const DashboardOperator = () => {
       }, 800);
     }
   };
-
-  // useEffect(() => {
-  //   if (accessDialogOpen && currentSitePlace) {
-  //     // Ambil akses site ketika dialog give access dibuka
-  //     const fetchAccess = async () => {
-  //       try {
-  //         const res = await getGrantAccessOperator(token as string, currentSitePlace);
-  //         console.log('Grant Access Data:', res);
-  //         setAccessData(res.collection ?? []); // pastikan formatnya array
-  //       } catch (err) {
-  //         console.error('Error fetching grant access:', err);
-  //         setAccessData([]);
-  //       }
-  //     };
-  //     fetchAccess();
-  //   }
-  // }, [accessDialogOpen, currentSitePlace]);
 
   const confirmMultipleAction = async (action: 'Checkin' | 'Checkout' | 'Block' | 'Unblock') => {
     if (!selectedVisitorData.length) {
@@ -1234,18 +1175,18 @@ const DashboardOperator = () => {
       setSnackbarType('success');
       setSnackbarOpen(true);
     } catch (err: any) {
-     console.error('❌ Access Action Error:', err);
-     const backendMsg =
-       err?.response?.data?.collection?.[0] ||
-       err?.response?.data?.msg ||
-       err?.response?.data?.message ||
-       err?.response?.data?.error ||
-       err?.message ||
-       'Unknown error occurred.';
+      console.error('❌ Access Action Error:', err);
+      const backendMsg =
+        err?.response?.data?.collection?.[0] ||
+        err?.response?.data?.msg ||
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message ||
+        'Unknown error occurred.';
 
-     setSnackbarMsg(`${backendMsg}`);
-     setSnackbarType('error');
-     setSnackbarOpen(true);
+      setSnackbarMsg(`${backendMsg}`);
+      setSnackbarType('error');
+      setSnackbarOpen(true);
     } finally {
       setLoadingAccess(false);
     }
@@ -1364,10 +1305,10 @@ const DashboardOperator = () => {
     <>
       <PageContainer title="Dashboard">
         <Grid container spacing={2} sx={{ mt: 0 }}>
-          <Grid size={{ xs: 12, lg: 9 }}>
+          <Grid size={{ xs: 12, lg: 12 }}>
             <TopCard items={cards} size={{ xs: 12, lg: 3 }} />
           </Grid>
-          <Grid size={{ xs: 12, lg: 3 }}>
+          {/* <Grid size={{ xs: 12, lg: 3 }}>
             <Box display="flex" flexDirection="column" width="100%" gap={2} height="100%">
               <Button
                 onClick={handleOpenScanQR}
@@ -1415,7 +1356,7 @@ const DashboardOperator = () => {
                 </Box>
               </Button>
             </Box>
-          </Grid>
+          </Grid> */}
           <Grid size={{ xs: 12, lg: 12 }}>
             <Grid container spacing={2}>
               {/* Kolom kiri (dua tabel vertikal) */}
@@ -1493,7 +1434,7 @@ const DashboardOperator = () => {
                         sx={{
                           width: '100%',
                           maxWidth: 420,
-                          height: 250,
+                          height: 300,
                           // border: '3px solid #1976d2', // biru elegan seperti frame kamera
                           borderRadius: 2,
                           overflow: 'hidden',
@@ -1562,7 +1503,7 @@ const DashboardOperator = () => {
                         sx={{
                           width: '100%',
                           maxWidth: 420,
-                          height: 250,
+                          height: 300,
                           // border: '3px solid #1976d2', // biru elegan seperti frame kamera
                           borderRadius: 2,
                           overflow: 'hidden',
@@ -1586,27 +1527,16 @@ const DashboardOperator = () => {
                       </Box>
                     </Grid>
                   </Grid>
-                  {/* Contoh konten lain */}
-                  {/* <Box
-                    sx={{
-                      flexGrow: 1, // ambil sisa tinggi yang ada
-                      display: 'flex',
-                      flexDirection: 'column',
-                      height: '100%', // penting agar anaknya bisa ikut penuh
-                      overflow: 'hidden', // opsional, untuk mencegah scroll ganda
-                    }}
-                  > */}
                   <DynamicTable
-                    isHaveHeaderTitle={true}
-                    titleHeader="Data Arrival"
+                    height={420}
+                    isHavePagination
+                    overflowX="auto"
                     data={[]}
-                    isHaveChecked={true}
+                    isHaveChecked={false}
                     isHaveAction={false}
-                    isHaveArrival={true}
-                    isHavePagination={true}
-                    // isHaveAction={false}
+                    isHaveHeaderTitle
+                    titleHeader="Data Arrival"
                   />
-                  {/* </Box> */}
                 </Box>
               </Grid>
             </Grid>
@@ -1900,39 +1830,6 @@ const DashboardOperator = () => {
                     </Button>
                   </Box>
                 </Box>
-
-                {/* Preview hasil + aksi */}
-                {/* <Box mt={2}>
-                  <Typography variant="caption" color="text.secondary">
-                    Hasil: {qrValue || '-'}
-                  </Typography>
-                </Box> */}
-
-                {/* <Box mt={2} display="flex" gap={1} justifyContent="space-between">
-                  <Button
-                    variant="outlined"
-                    onClick={() => {
-                      setHasDecoded(false);
-                      setQrValue('');
-                      setScannerKey((prev) => prev + 1); // 🔥 paksa Scanner re-init
-                    }}
-                  >
-                    Reset
-                  </Button>
-                  <Box>
-                    <Button
-                      variant="contained"
-                      onClick={() => {
-                        setOpenDetailQRCode(true);
-                        setOpenDialogIndex(null);
-                      }}
-                      disabled={!qrValue}
-                      type="submit"
-                    >
-                      Submit
-                    </Button>
-                  </Box>
-                </Box> */}
               </>
             )}
           </DialogContent>
@@ -2906,7 +2803,7 @@ const DashboardOperator = () => {
               zIndex: 99999,
               position: 'fixed',
               margin: '0 auto',
-              color: 'primary'
+              color: 'primary',
             }}
             open={loadingAccess}
           >

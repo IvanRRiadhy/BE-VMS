@@ -31,6 +31,9 @@ import {
   getAllEmployee,
   deleteEmployee,
   getAllOrganizationPagination,
+  getAllOrganizations,
+  getAllDepartments,
+  getAllDistricts,
 } from 'src/customs/api/admin';
 
 import { IconUsers } from '@tabler/icons-react';
@@ -117,6 +120,39 @@ const Content = () => {
     },
   ];
 
+  const fetchDataOrganization = async () => {
+    try {
+      const res = await getAllOrganizations(token as string);
+      setOrganizationData(res?.collection ?? []);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const fetchDataDepartment = async () => {
+    try {
+      const res = await getAllDepartments(token as string);
+      setDepartmentData(res?.collection ?? []);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const fetchDataDistrict = async () => {
+    try {
+      const res = await getAllDistricts(token as string);
+      setDistrictData(res?.collection ?? []);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchDataOrganization();
+    fetchDataDepartment();
+    fetchDataDistrict();
+  }, [token]);
+
   // Fetch table data when pagination or Filter changes.
   useEffect(() => {
     if (!token) return;
@@ -180,7 +216,7 @@ const Content = () => {
           faceimage: item.faceimage,
           organization: item.organization?.name || '-',
           department: item.department?.name || '-',
-          district: item.district?.name || '-',
+          // district: item.district?.name || '-',
         }));
         setTableRowEmployee(rows);
         setIsDataReady(true);
@@ -260,6 +296,7 @@ const Content = () => {
 
   const handleEdit = (id: string) => {
     const existingData = tableData.find((item) => String(item.id) === String(id));
+    console.log('existingData', existingData);
     if (!existingData) return;
 
     const toNum = (
@@ -457,7 +494,7 @@ const Content = () => {
     <>
       <PageContainer title="Employee" description="this is Employee page">
         <Box>
-          <Grid container spacing={3}>
+          <Grid container spacing={2}>
             <Grid size={{ xs: 12, lg: 12 }}>
               <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
             </Grid>

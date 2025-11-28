@@ -1,4 +1,6 @@
 import Swal, { SweetAlertOptions } from 'sweetalert2';
+import BI_LOGO from 'src/assets/images/logos/BI_Logo.png';
+
 /**
  * Show confirmation alert before deleting something
  */
@@ -66,9 +68,9 @@ export const showSuccessAlert = async (
     },
   });
 };
-/**
- * Show error alert
- */
+
+const imageSrc = new URL(BI_LOGO, import.meta.url).href;
+
 export const showErrorAlert = (
   message: string = 'Error!',
   text: string = 'Something went wrong.',
@@ -92,39 +94,48 @@ export const showSwal = (
   const configMap: Record<string, any> = {
     success: {
       title: '<span style="color: #16a34a;">Success!</span>',
-      imageUrl: '/src/assets/images/logos/BI_Logo.png',
+      imageUrl: '/assets/images/BI_Logo.png',
+      // imageUrl: BI_LOGO,
       confirmButtonColor: '#16a34a',
       background: '#fefefe',
       showConfirmButton: false,
     },
     error: {
       title: 'Error!',
-      imageUrl: '/src/assets/images/logos/BI_Logo.png',
+      imageUrl: '/assets/images/BI_Logo.png',
+      // imageUrl: BI_LOGO,
       confirmButtonColor: '#dc2626',
       background: '#fff',
-      showConfirmButton: true,
+      showConfirmButton: false,
+      customClass: {
+        title: 'swal-title-red',
+      },
     },
     warning: {
       title: 'Warning!',
-      imageUrl: '/src/assets/images/logos/BI_Logo.png',
+      imageUrl: '/assets/images/BI_Logo.png',
+      // imageUrl: BI_LOGO,
       confirmButtonColor: '#f59e0b',
       background: '#fff',
       showConfirmButton: true,
     },
     info: {
       title: 'Information',
-      imageUrl: '/src/assets/images/logos/BI_Logo.png',
+      imageUrl: '/assets/images/BI_Logo.png',
+      // imageUrl: BI_LOGO,
       confirmButtonColor: '#3b82f6',
       background: '#fff',
       showConfirmButton: true,
     },
     confirm: {
-      title: 'Are you sure?',
-      imageUrl: '/src/assets/images/logos/BI_Logo.png',
+      // title: 'Are you sure?',
+      imageUrl: '/assets/images/BI_Logo.png',
+      // imageUrl: BI_LOGO,
       showCancelButton: true,
       confirmButtonText: 'Yes',
       cancelButtonText: 'Cancel',
-      confirmButtonColor: '#2563eb',
+      reverseButtons: true,
+      confirmButtonColor: '#16a34a',
       cancelButtonColor: '#9ca3af',
       background: '#fff',
     },
@@ -143,24 +154,49 @@ export const showSwal = (
         .join('<br>')
     : text;
 
-  const config = {
+  const config: SweetAlertOptions = {
     ...baseConfig,
     ...(isMultiline ? { html: formattedText } : { text: formattedText }),
     imageWidth: 100,
     imageHeight: 100,
-    imageAlt: type,
     allowOutsideClick: true,
     allowEscapeKey: true,
     showCloseButton: true,
+    heightAuto: false,
+    target: document.fullscreenElement ?? document.body,
+    backdrop: true,
     customClass: {
+      ...baseConfig.customClass,
       popup: 'rounded-2xl shadow-2xl',
-      title: 'text-lg font-semibold text-gray-800',
+      title: `${baseConfig.customClass?.title || ''} text-lg font-semibold`,
       confirmButton: 'rounded-md px-4 py-2 font-medium',
       cancelButton: 'rounded-md px-4 py-2 font-medium',
+      closeButton: 'swal-close-red',
     },
     ...autoClose,
     ...options,
   };
 
   return Swal.fire(config);
+};
+
+export const showDialogError = (htmlContent: string) => {
+  return Swal.fire({
+    title: '<span style="color:#dc2626;">Error</span>',
+    html: htmlContent,
+    width: '700px', // ukuran lebih besar
+    padding: '20px',
+    background: '#fff',
+    confirmButtonColor: '#dc2626',
+    confirmButtonText: 'Close',
+    showCloseButton: true,
+    imageUrl: '/assets/images/BI_Logo.png',
+    imageWidth: 100,
+    imageHeight: 100,
+    customClass: {
+      popup: 'rounded-2xl shadow-2xl',
+      title: 'text-lg font-semibold text-gray-800',
+      confirmButton: 'rounded-md px-4 py-2 font-medium',
+    },
+  });
 };

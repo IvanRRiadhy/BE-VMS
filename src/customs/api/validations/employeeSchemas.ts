@@ -1,6 +1,6 @@
 // src/customs/validations/employeeSchemas.ts
 import { z } from 'zod';
-import type { CreateEmployeeRequest } from 'src/customs/api/models/Employee';
+import type { CreateEmployeeRequest } from 'src/customs/api/models/Admin/Employee';
 
 // Step 0: Personal Info
 export const Step0Schema = z.object({

@@ -18,16 +18,23 @@ import {
   TextField,
   IconButton,
   Backdrop,
-  Icon,
 } from '@mui/material';
 import { Grid2 as Grid } from '@mui/material';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import Logo from 'src/customs/components/logo/Logo';
-import { IconGenderTransgender, IconMan, IconTrash, IconWoman, IconX } from '@tabler/icons-react';
+import {
+  IconCamera,
+  IconClearAll,
+  IconDeviceFloppy,
+  IconGenderTransgender,
+  IconMan,
+  IconSpacingVertical,
+  IconTrash,
+  IconWoman,
+  IconX,
+} from '@tabler/icons-react';
 import { ToggleButton, ToggleButtonGroup } from '@mui/material';
-import { SubmitPraForm } from 'src/customs/api/users';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -44,7 +51,7 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 import { getVisitorEmployee } from 'src/customs/api/admin';
 import { showErrorAlert, showSuccessAlert, showSwal } from 'src/customs/components/alerts/alerts';
 import { createSubmitCompletePra } from 'src/customs/api/operator';
-import { Circle } from '@mui/icons-material';
+
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -53,6 +60,7 @@ interface FormDialogPraregistProps {
   onClose?: () => void;
   onSubmitted?: (id?: string) => void;
   onSubmitting?: (loading: boolean) => void;
+  containerRef?: any;
 }
 
 const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
@@ -60,6 +68,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
   onClose,
   onSubmitted,
   onSubmitting,
+  containerRef,
 }) => {
   const [activeStep, setActiveStep] = useState(0);
   const { token } = useSession();
@@ -72,7 +81,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
   const [previews, setPreviews] = useState<Record<string, string | null>>({});
   const webcamRef = useRef<Webcam>(null);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const code = searchParams.get('code') || '';
 
@@ -140,7 +149,6 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
 
     return (
       <Box>
-        {/* MAIN UPLOAD BOX */}
         <Box
           sx={{
             border: '2px dashed #90caf9',
@@ -219,7 +227,13 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
           </Box>
         </Box>
 
-        <Dialog open={openCamera} onClose={() => setOpenCamera(false)} maxWidth="md" fullWidth>
+        <Dialog
+          open={openCamera}
+          onClose={() => setOpenCamera(false)}
+          maxWidth="md"
+          fullWidth
+          container={containerRef.current}
+        >
           <Box sx={{ p: 3, position: 'relative' }}>
             <Box>
               <Typography variant="h6" mb={2}>
@@ -285,8 +299,9 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
             {/* ACTION BUTTONS */}
             <Box sx={{ textAlign: 'right' }}>
               <Button
-                color="warning"
-                sx={{ mr: 2 }}
+                color="error"
+                startIcon={<IconTrash />}
+                sx={{ mr: 1 }}
                 onClick={() =>
                   handleRemoveFileForField(
                     f.answer_file,
@@ -299,11 +314,16 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
               </Button>
               <Button
                 variant="contained"
+                startIcon={<IconCamera />}
                 onClick={() => handleCaptureForField((url) => handleChange(f.remarks, url), key)}
               >
                 Take Foto
               </Button>
-              <Button onClick={() => setOpenCamera(false)} sx={{ ml: 2 }}>
+              <Button
+                onClick={() => setOpenCamera(false)}
+                sx={{ ml: 1 }}
+                startIcon={<IconDeviceFloppy />}
+              >
                 Submit
               </Button>
             </Box>
@@ -405,7 +425,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
           </Typography>
 
           <Typography variant="caption" color="textSecondary">
-            Supports: PDF, DOCX, JPG, PNG
+            Supports: PDF, DOCX, JPG, PNG, Upto 100KB
           </Typography>
 
           {/* Hidden input */}
@@ -551,12 +571,12 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
           onClick={() => fileInputRefs.current[key]?.click()}
         >
           <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
-          <Typography variant="subtitle1" sx={{ mt: 1 }}>
+          <Typography variant="h6" sx={{ mt: 1, fontWeight: '500' }}>
             Upload File
           </Typography>
 
-          <Typography variant="caption" color="textSecondary">
-            Supports: PDF, DOCX, JPG, PNG
+          <Typography variant="caption" color="textSecondary" mt={5}>
+            Supports: PDF, DOCX, JPG, PNG, Up to <span style={{ fontWeight: '700' }}>100KB</span>
           </Typography>
 
           {/* 🔹 Tombol kamera tambahan */}
@@ -633,11 +653,22 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
         </Box>
 
         {/* 🔹 Dialog kamera */}
-        <Dialog open={openCamera} onClose={() => setOpenCamera(false)} maxWidth="md" fullWidth>
+        <Dialog
+          open={openCamera}
+          onClose={() => setOpenCamera(false)}
+          maxWidth="md"
+          fullWidth
+          container={containerRef.current}
+        >
           <Box sx={{ p: 3, position: 'relative' }}>
-            <Typography variant="h6" mb={2}>
-              Take Photo From Camera
-            </Typography>
+            <Box display={'flex'} justifyContent={'space-between'} alignItems={'center'} mb={1}>
+              <Typography variant="h6" mb={0}>
+                Take Photo From Camera
+              </Typography>
+              <IconButton onClick={() => setOpenCamera(false)}>
+                <IconX />
+              </IconButton>
+            </Box>
 
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -695,13 +726,16 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                     key,
                   )
                 }
-                color="warning"
-                sx={{ mr: 2 }}
+                startIcon={<IconTrash />}
+                variant="contained"
+                color="error"
+                sx={{ mr: 1 }}
               >
                 Clear Foto
               </Button>
               <Button
                 variant="contained"
+                startIcon={<IconCamera />}
                 onClick={(e) => {
                   // e.stopPropagation();
                   handleCaptureForField((url) => handleChange(f.remarks, url), key);
@@ -709,8 +743,12 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
               >
                 Take Foto
               </Button>
-              <Button onClick={() => setOpenCamera(false)} sx={{ ml: 2 }}>
-                Close
+              <Button
+                onClick={() => setOpenCamera(false)}
+                sx={{ ml: 1 }}
+                startIcon={<IconDeviceFloppy />}
+              >
+                Submit
               </Button>
             </Box>
           </Box>
@@ -799,18 +837,6 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                   />
                 )}
 
-              {/* 🔹 CASE D: vehicle_plate */}
-              {/* {f.remarks === 'vehicle_plate' && (
-                <CustomTextField
-                  fullWidth
-                  value={displayValue}
-                  onChange={(e) => handleChange(f.remarks, e.target.value)}
-                  placeholder={f.long_display_text || f.remarks}
-                  error={!!errors[f.remarks]}
-                  helperText={errors[f.remarks]}
-                />
-              )} */}
-
               {f.remarks === 'vehicle_plate' &&
                 formValues['is_driving'] === 'true' && ( // ✅ kondisi tambahan
                   <CustomTextField
@@ -876,11 +902,11 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                       <FormControlLabel value="false" control={<Radio />} label="No" />
                     </RadioGroup>
                   </FormControl>
-                  {errors[f.remarks] && (
+                  {/* {errors[f.remarks] && (
                     <Typography variant="caption" color="error">
                       {errors[f.remarks]}
                     </Typography>
-                  )}
+                  )} */}
                 </>
               )}
 
@@ -946,40 +972,13 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                       <FormControlLabel value="false" control={<Radio />} label="No" />
                     </RadioGroup>
                   </FormControl>
-                  {errors[f.remarks] && (
+                  {/* {errors[f.remarks] && (
                     <Typography variant="caption" color="error">
                       {errors[f.remarks]}
                     </Typography>
-                  )}
+                  )} */}
                 </>
               )}
-
-              {/* 🔹 CASE G: vehicle_type */}
-              {/* {f.remarks === 'vehicle_type' && (
-                <FormControl component="fieldset">
-                  <RadioGroup
-                    value={formValues[f.remarks] || ''}
-                    sx={{ flexDirection: 'row', flexWrap: 'wrap', gap: 1 }}
-                  >
-                    {[
-                      { value: 'car', label: 'Car' },
-                      { value: 'bus', label: 'Bus' },
-                      { value: 'motor', label: 'Motor' },
-                      { value: 'bicycle', label: 'Bicycle' },
-                      { value: 'truck', label: 'Truck' },
-                      { value: 'private_car', label: 'Private Car' },
-                      { value: 'other', label: 'Other' },
-                    ].map((opt) => (
-                      <FormControlLabel
-                        key={opt.value}
-                        value={opt.value}
-                        control={<Radio onClick={() => handleRadioToggle(f.remarks, opt.value)} />}
-                        label={opt.label}
-                      />
-                    ))}
-                  </RadioGroup>
-                </FormControl>
-              )} */}
 
               {f.remarks === 'vehicle_type' &&
                 formValues['is_driving'] === 'true' && ( // ✅ kondisi tambahan

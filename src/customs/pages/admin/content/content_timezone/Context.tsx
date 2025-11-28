@@ -19,10 +19,14 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 import { Item } from 'src/customs/api/models/Admin/Timezone';
 import { deleteTimezone, getAllTimezone, getTimezoneById } from 'src/customs/api/admin';
 import { IconTrash } from '@tabler/icons-react';
-import { showConfirmDelete, showSuccessAlert } from 'src/customs/components/alerts/alerts';
+import {
+  showConfirmDelete,
+  showSuccessAlert,
+  showSwal,
+} from 'src/customs/components/alerts/alerts';
 import FormTimezone from './FormTimezone';
 import { useDebounce } from 'src/hooks/useDebounce';
-import bg_nodata from '../../../../../assets/images/backgrounds/bg_nodata.svg';
+import bg_nodata from 'src/assets/images/backgrounds/bg_nodata.svg';
 import { IconClock } from '@tabler/icons-react';
 const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
 
@@ -36,6 +40,38 @@ const dayKeyMap: Record<string, string> = {
   Sat: 'saturday',
 };
 
+// function mapApiToDaySchedule(apiData: any) {
+//   if (!apiData) return null;
+
+//   return {
+//     id: apiData.id,
+//     name: apiData.name,
+//     description: apiData.description,
+//     days: daysOfWeek.map((day) => {
+//       const key = dayKeyMap[day]; // "sunday", "monday", dst
+//       const start = apiData[key];
+//       const end = apiData[key + '_end'];
+
+//       // console.log('Mapping', day, '->', key, start, end); // DEBUG
+
+//       return {
+//         id: `day-${day}`,
+//         day,
+//         hours:
+//           start !== null && end !== null
+//             ? [
+//                 {
+//                   id: `block-${day}`,
+//                   startTime: start.substring(0, 5), // "00:00"
+//                   endTime: end.substring(0, 5), // "06:00"
+//                 },
+//               ]
+//             : [],
+//       };
+//     }),
+//   };
+// }
+
 function mapApiToDaySchedule(apiData: any) {
   if (!apiData) return null;
 
@@ -44,25 +80,30 @@ function mapApiToDaySchedule(apiData: any) {
     name: apiData.name,
     description: apiData.description,
     days: daysOfWeek.map((day) => {
-      const key = dayKeyMap[day]; // "sunday", "monday", dst
+      const key = dayKeyMap[day];
       const start = apiData[key];
       const end = apiData[key + '_end'];
 
-      // console.log('Mapping', day, '->', key, start, end); // DEBUG
+      // Jika kosong, undefined, null, atau bukan string → return empty hours
+      if (typeof start !== 'string' || typeof end !== 'string') {
+        return {
+          id: `day-${day}`,
+          day,
+          hours: [],
+        };
+      }
 
+      // Kalau valid → masukkan datanya
       return {
         id: `day-${day}`,
         day,
-        hours:
-          start !== null && end !== null
-            ? [
-                {
-                  id: `block-${day}`,
-                  startTime: start.substring(0, 5), // "00:00"
-                  endTime: end.substring(0, 5), // "06:00"
-                },
-              ]
-            : [],
+        hours: [
+          {
+            id: `block-${day}`,
+            startTime: start.substring(0, 5),
+            endTime: end.substring(0, 5),
+          },
+        ],
       };
     }),
   };
@@ -138,7 +179,8 @@ const Content = () => {
       try {
         await deleteTimezone(token, id);
         setRefreshTrigger((prev) => prev + 1);
-        showSuccessAlert('Deleted!', 'Time Access has been deleted.');
+        // showSuccessAlert('Deleted!', 'Time Access has been deleted.');
+        showSwal('success', 'Time Access has been deleted.');
         setSelectedTimezone(null);
         localStorage.removeItem('selectedTimezone');
       } catch (error) {
@@ -166,7 +208,7 @@ const Content = () => {
         <Box
           sx={{
             display: 'flex',
-            flexDirection: mdUp ? 'row' : 'column', // 👉 row di desktop, column di mobile
+            flexDirection: mdUp ? 'row' : 'column',
             backgroundColor: '#fff',
             height: '100%',
             width: '100%',
@@ -296,6 +338,7 @@ const Content = () => {
               <FormTimezone
                 key={'create'}
                 mode="create"
+                initialData={null}
                 onSuccess={() => setRefreshTrigger((x) => x + 1)}
               />
             )}

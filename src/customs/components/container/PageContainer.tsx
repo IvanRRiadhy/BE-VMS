@@ -51,15 +51,22 @@ const PageContainer: React.FC<CustomPageContainerProps> = ({
           }}
         >
           {/* Header */}
-          {customizer.isHorizontal ? <HeaderHorizontal /> : <HeaderVertical />}
+          {customizer.isHorizontal ? (
+            <HeaderHorizontal
+              itemDataCustomNavListing={itemDataCustomNavListing}
+              itemDataCustomSidebarItems={itemDataCustomSidebarItems}
+            />
+          ) : (
+            <HeaderVertical />
+          )}
 
           {/* Navigation (Horizontal Only) */}
-          {customizer.isHorizontal && (
+          {/* {customizer.isHorizontal && (
             <CustomNavigation
               itemDataCustomNavListing={itemDataCustomNavListing}
               itemDataCustomSidebarItems={itemDataCustomSidebarItems}
             />
-          )}
+          )} */}
 
           {/* Ganti Feed ke Box */}
           <Box
@@ -68,7 +75,7 @@ const PageContainer: React.FC<CustomPageContainerProps> = ({
               background: '#ebedefff',
               p: {
                 xs: '10px',
-                md: '20px',
+                // md: '15px',
               },
               width: '100%',
             }}

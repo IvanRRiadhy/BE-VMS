@@ -1325,11 +1325,8 @@ export const getAllEmployeePaginationFilterMore = async (
   keyword: string = '',
   gender?: number,
   joinStart?: string,
-  // joinEnd?: string,
-  // exitStart?: string,
   exitEnd?: string,
   statusEmployee?: number,
-  // isHead?: boolean,
   organization?: string,
   district?: string,
   department?: string,
@@ -1339,27 +1336,19 @@ export const getAllEmployeePaginationFilterMore = async (
     length,
     sort_column: sortColumn,
     sort_dir: sortDir,
-    'search[value]': keyword, // ← ini diperbaiki!
-    'join-start': joinStart,
-    'exit-end': exitEnd,
-    'status-employee': statusEmployee,
-    organization,
-    district,
-    department,
   };
 
-  if (gender !== undefined) params.gender = gender;
-  // if (joinStart) params['join-start'] = joinStart;
-  // if (joinEnd) params['join-end'] = joinEnd;
-  // if (exitStart) params['exit-start'] = exitStart;
-  // if (exitEnd) params['exit-end'] = exitEnd;
-  if (statusEmployee !== undefined) params['status-employee'] = statusEmployee;
-  // if (isHead !== undefined) params['is-head'] = isHead;
-  if (organization && organization !== '0') params.organization = organization;
-  if (district && district !== '0') params.district = district;
-  if (department && department !== '0') params.department = department;
-  if (joinStart) params.join_start = joinStart;
-  if (exitEnd) params.exit_end = exitEnd;
+  // ✅ hanya tambahkan jika ada isi
+  if (keyword) params['search[value]'] = keyword;
+  if (gender !== undefined && gender !== -1) params.gender = gender;
+  if (joinStart) params['join-start'] = joinStart;
+  if (exitEnd) params['exit-end'] = exitEnd;
+  if (statusEmployee !== undefined && statusEmployee !== -1)
+    params['status-employee'] = statusEmployee;
+  if (organization && organization !== '0' && organization !== '')
+    params.organization = organization;
+  if (district && district !== '0' && district !== '') params.district = district;
+  if (department && department !== '0' && department !== '') params.department = department;
 
   const response = await axiosInstance.get(`/employee/dt`, {
     params,
@@ -1369,10 +1358,7 @@ export const getAllEmployeePaginationFilterMore = async (
   return response.data;
 };
 
-export const createEmployee = async (
-  data: CreateEmployeeRequest,
-  token: string,
-): Promise<CreateEmployeeResponse> => {
+export const createEmployee = async (data: CreateEmployeeRequest, token: string): Promise<any> => {
   try {
     console.log(data);
     const response = await axiosInstance.post(`/employee`, data, {
@@ -1516,7 +1502,7 @@ export const getSiteParking = async (token: string): Promise<any> => {
 };
 
 export const getSiteTracking = async (token: string): Promise<any> => {
-  const response = await axiosInstance.get(`/integration-trackingble/floorplan-masked-area`, {
+  const response = await axiosInstance.get(`/integration-trackingble/card-access`, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });
   return response.data;
@@ -1530,7 +1516,7 @@ export const createSite = async (
     const response = await axiosInstance.post(`/site`, data, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    console.log(response.data);
+    // console.log(response.data);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 400) {
@@ -1553,6 +1539,24 @@ export const createSiteParking = async (
 ): Promise<CreateSiteResponse> => {
   try {
     const response = await axiosInstance.post(`/site-parking`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    console.log(response.data);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const createSiteParkingBulk = async (
+  data: any,
+  token: string,
+): Promise<CreateSiteResponse> => {
+  try {
+    const response = await axiosInstance.post(`/site-parking/bulk`, data, {
       headers: { Authorization: `Bearer ${token}` },
     });
     console.log(response.data);
@@ -1601,9 +1605,27 @@ export const createSiteTracking = async (
   }
 };
 
+export const createSiteTrackingBulk = async (
+  data: any,
+  token: string,
+): Promise<CreateSiteResponse> => {
+  try {
+    const response = await axiosInstance.post(`/site-tracking/bulk`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    console.log(response.data);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
 export const updateSiteTracking = async (
   id: string,
-  data: UpdateSiteTrackingRequest,
+  data: any,
   token: string,
 ): Promise<UpdateSiteTrackingResponse> => {
   try {
@@ -1621,7 +1643,7 @@ export const updateSiteTracking = async (
 
 export const updateSiteAccess = async (
   id: string,
-  data: UpdateSiteAccessRequest,
+  data: any,
   token: string,
 ): Promise<UpdateSiteAccessResponse> => {
   try {
@@ -1639,7 +1661,7 @@ export const updateSiteAccess = async (
 
 export const updateSiteParking = async (
   id: string,
-  data: UpdateSiteParkingRequest,
+  data: any,
   token: string,
 ): Promise<UpdateSiteParkingResponse> => {
   try {
@@ -1657,7 +1679,7 @@ export const updateSiteParking = async (
 
 export const updateSite = async (
   siteId: string,
-  data: UpdateSiteRequest,
+  data: any,
   token: string,
 ): Promise<UpdateSiteResponse> => {
   try {
@@ -2653,6 +2675,62 @@ export const getCardTracking = async (
 ): Promise<GetCardTrackingResponse> => {
   try {
     const response = await axiosInstance.get(`/integration-trackingble/card/${integrationId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const getCardAccessTracking = async (integrationId: string, token: string): Promise<any> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-trackingble/card-access/${integrationId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const getCardAccessTrackingById = async (
+  integrationId: string,
+  id: string,
+  token: string,
+): Promise<any> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-trackingble/card-access/${integrationId}/${id}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const updateCardAccessTracking = async (
+  id: string,
+  data: any,
+  token: string,
+): Promise<any> => {
+  try {
+    const response = await axiosInstance.put(`/integration-trackingble/card-access/${id}`, data, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;

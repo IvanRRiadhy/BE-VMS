@@ -19,7 +19,7 @@ import {
 import { useSearchParams } from 'react-router-dom';
 
 import { useDispatch } from 'react-redux';
-import { setUser } from '../../../store/apps/user/userSlice';
+import { setUser, clearUser } from '../../../store/apps/user/userSlice';
 
 import PageContainer from 'src/components/container/PageContainer';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
@@ -33,7 +33,6 @@ import { IconEye, IconEyeOff, IconUser, IconUserPlus } from '@tabler/icons-react
 import { GroupRoleId } from 'src/constant/GroupRoleId';
 import Logo from 'src/assets/images/logos/BI_Logo.png';
 import { useGlobalLoading } from 'src/customs/contexts/GlobalLoadingContext';
-import { fontWeight } from '@mui/system';
 
 const Login2 = () => {
   const { isAuthenticated } = useAuth();
@@ -52,7 +51,7 @@ const Login2 = () => {
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaError, setCaptchaError] = useState(false);
   // const { showLoader, hideLoader } = useGlobalLoading();
-  const { show } = useGlobalLoading();
+  // const { show } = useGlobalLoading();
 
   const [searchParams] = useSearchParams();
   const [guestCode, setGuestCode] = useState(searchParams.get('code') || '');
@@ -64,14 +63,6 @@ const Login2 = () => {
 
   // Tabs state
   const [tab, setTab] = useState(0);
-
-  // useEffect(() => {
-  //   if (error === true) {
-  //     setTimeout(() => {
-  //       setError(false);
-  //     }, 2000);
-  //   }
-  // }, [error]);
 
   // Handle captcha change (token received)
   const onCaptchaChange = (token: string | null) => {
@@ -106,17 +97,14 @@ const Login2 = () => {
 
       dispatch(
         setUser({
-          // token,
-          // group_id,
           employee_id,
-          // username: userName,
         }),
       );
 
       if (group_id.toUpperCase() === GroupRoleId.Admin) navigate('/admin/dashboard');
       else if (group_id.toUpperCase() === GroupRoleId.Manager) navigate('/manager/dashboard');
       else if (group_id.toUpperCase() === GroupRoleId.Employee) navigate('/employee/dashboard');
-      else if (group_id.toUpperCase() === GroupRoleId.OperatorVMS) navigate('/operator/dashboard');
+      else if (group_id.toUpperCase() === GroupRoleId.OperatorVMS) navigate('/operator/view');
       else if (group_id.toUpperCase() === GroupRoleId.Visitor) navigate('/visitor/dashboard');
     } catch (err) {
       setTimeout(() => {
@@ -167,9 +155,6 @@ const Login2 = () => {
         }
         navigate('/guest/dashboard');
       }
-      // setTimeout(() => {
-
-      // }, 500);
     } catch (err) {
       console.error('Guest login gagal:', err);
       setGuestError(true);
@@ -178,7 +163,6 @@ const Login2 = () => {
   };
 
   useEffect(() => {
-    // 🔎 Cek apakah ada pesan logout
     const msg = sessionStorage.getItem('logoutMsg');
     if (msg) {
       setSnackbarMsg(msg);
@@ -453,6 +437,7 @@ const Login2 = () => {
             <Alert
               onClose={() => setSnackbarOpen(false)}
               severity={snackbarType}
+              variant="filled"
               sx={{ width: '100%' }}
             >
               {snackbarMsg}

@@ -7,10 +7,11 @@ type Props = {
   setFormData: React.Dispatch<React.SetStateAction<CreateVisitorRequest>>;
   edittingId?: string;
   onSuccess?: () => void;
+  containerRef?: any | null;
 };
 
 const FormWizardAddInvitation: React.FC<Props> = (props) => {
-  return <FormWizardAddVisitor {...props} formKey="pra_form" />;
+  return <FormWizardAddVisitor {...props} formKey="pra_form"   />;
 };
 
 export default FormWizardAddInvitation;

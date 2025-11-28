@@ -45,6 +45,8 @@ import {
   UpdateSiteRequestSchema,
   CreateSiteAccessSchema,
   CreateSiteAccessRequest,
+  UpdateSiteTrackingSchema,
+  UpdateSiteParkingSchema,
 } from 'src/customs/api/models/Admin/Sites';
 import { IconTrash } from '@tabler/icons-react';
 import { QRCodeCanvas } from 'qrcode.react';
@@ -71,6 +73,9 @@ import {
   createSiteAccess,
   updateSiteAccess,
   getSitesAccess,
+  createSiteTrackingBulk,
+  createSiteParkingBulk,
+  getAllDocument,
 } from 'src/customs/api/admin';
 import {
   CreateSiteDocumentRequest,
@@ -83,6 +88,8 @@ import { Item as AccessControlItem } from 'src/customs/api/models/Admin/AccessCo
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { BASE_URL } from 'src/customs/api/interceptor';
 import { showSwal } from 'src/customs/components/alerts/alerts';
+import RenderDragSite from './components/RenderDragSite';
+import RenderDetailRows from '../content_manage_visitor_type/RenderDetailRows';
 
 type EnabledFields = {
   type: boolean;
@@ -145,7 +152,6 @@ const FormSite = ({
     { value: 'Asia/Jakarta', label: '(UTC+07:00) WIB (Waktu Indonesia Barat)' },
     { value: 'Asia/Makassar', label: '(UTC+08:00) WITA (Waktu Indonesia Tengah)' },
     { value: 'Asia/Jayapura', label: '(UTC+09:00) WIT (Waktu Indonesia Timur)' },
-    // ...add more as needed
   ];
   const [documentlist, setDocumentList] = useState<DocumentItem[]>([]);
   const [filteredSiteDocumentList, setFilteredSiteDocumentList] = useState<SiteDocumentItem[]>([]);
@@ -179,29 +185,24 @@ const FormSite = ({
 
     (async () => {
       try {
-        const [siteRes, parkingRes, trackingRes] = await Promise.all([
+        const results = await Promise.allSettled([
           getSiteById(editingId, token),
           getSitesParking(token),
           getSitesTracking(token),
-          // getSitesAccess(token),
         ]);
 
-        const site = siteRes.collection;
-        // const accessList = accessRes.collection ?? [];
-        const parkingList = parkingRes.collection ?? [];
-        const trackingList = trackingRes.collection ?? [];
+        const [siteRes, parkingRes, trackingRes] = results;
 
-        console.log('🧩 Full parking list:', parkingList);
-        console.log('🧩 Full tracking list:', trackingList);
-        console.log('🎯 Editing site ID:', editingId);
+        const site = siteRes.status === 'fulfilled' ? siteRes.value.collection?.access : [];
 
-        // simpan semua untuk dropdown
+        const parkingList =
+          parkingRes.status === 'fulfilled' ? parkingRes.value.collection ?? [] : [];
 
+        const trackingList =
+          trackingRes.status === 'fulfilled' ? trackingRes.value.collection ?? [] : [];
         setSiteParking(parkingList);
         setSiteTracking(trackingList);
-        // setAccess(accessList);
 
-        // ✅ Filter fleksibel (support nested site.id)
         const normalizedId = editingId.toLowerCase();
 
         const filteredParking = parkingList.filter(
@@ -212,50 +213,33 @@ const FormSite = ({
           (t: any) => (t.site_id || t.siteId)?.toLowerCase() === normalizedId,
         );
 
-        // const filteredAccess = accessList.filter(
-        //   (a: any) => (a.site_id || a.siteId)?.toLowerCase() === normalizedId,
-        // );
-        console.log('🎯 Normalized ID:', normalizedId);
-        console.log('✅ Filtered Parking:', filteredParking);
-        console.log('✅ Filtered Tracking:', filteredTracking);
-        // mapping untuk formData
-        const mappedParking = filteredParking.map((p: any, idx: number) => ({
+        const mappedParking = filteredParking.map((p: any, idx: any) => ({
           id: p.id,
           sort: idx,
           site_id: p.site_id,
           prk_area_parking_id: p.prk_area_parking_id ?? p.id,
-          name: p.name ?? p.prk_area_parking?.name ?? '',
+          name: p.name ?? p.area_name ?? '',
           early_access: p.early_access ?? false,
         }));
 
-        const mappedTracking = filteredTracking.map((t: any, idx: number) => ({
+        const mappedTracking = filteredTracking.map((t: any, idx: any) => ({
           id: t.id,
           sort: idx,
           site_id: t.site_id,
-          trk_ble_floorplan_masked_area_id: t.trk_ble_floorplan_masked_area_id ?? t.id,
-          name: t.name ?? t.trk_ble_floorplan_masked_area?.name ?? '',
+          trk_ble_card_access_id: t.trk_ble_card_access_id ?? t.id,
+          name: t.name ?? t.name ?? '',
           early_access: t.early_access ?? false,
         }));
 
-        // const mappedAccess = filteredAccess.map((a: any, idx: number) => ({
-        //   id: a.id,
-        //   sort: idx,
-        //   site_id: a.site_id,
-        //   access_control_id: a.access_control_id ?? a.id,
-        //   name: a.name ?? a.access_control?.name ?? '',
-        //   early_access: a.early_access ?? false,
-        // }));
-
-        // simpan ke formData agar muncul di tabel
         setFormData((prev) => ({
           ...prev,
           ...site,
-          access: site?.access ?? [],
+          access: site ?? [],
           parking: mappedParking,
           tracking: mappedTracking,
         }));
       } catch (err) {
-        console.error('❌ Failed to load site details:', err);
+        console.error('❌ Unexpected error:', err);
       }
     })();
   }, [editingId, token]);
@@ -267,7 +251,7 @@ const FormSite = ({
       try {
         const [docRes, accessControlRes, siteParkingRes, siteTrackingRes, siteDocRes] =
           await Promise.allSettled([
-            getAllDocumentPagination(token, 0, 9999, 'id'),
+            getAllDocument(token),
             getAllAccessControl(token),
             getSiteParking(token),
             getSiteTracking(token),
@@ -326,14 +310,14 @@ const FormSite = ({
       const docWithSiteId: CreateSiteTrackingRequest = {
         ...doc,
         site_id: newSiteId,
-        trk_ble_floorplan_masked_area_id: doc.trk_ble_floorplan_masked_area_id,
+        trk_ble_card_access_id: doc.trk_ble_card_access_id,
         early_access: !!doc.early_access,
       };
 
       console.log('🚀 Creating Site Tracking:', docWithSiteId);
 
-      if (!docWithSiteId.trk_ble_floorplan_masked_area_id) {
-        console.error('❌ Missing trk_ble_floorplan_masked_area_id for', doc);
+      if (!docWithSiteId.trk_ble_card_access_id) {
+        console.error('❌ Missing trk_ble_card_access_id for', doc);
         continue; // skip yang kosong
       }
 
@@ -520,171 +504,142 @@ const FormSite = ({
   //     }, 600);
   //   }
   // };
+  const normalizeAccessPayload = (items: any[], siteId: string) => {
+    return {
+      data: items.map((a, idx) => ({
+        site_id: siteId,
+        sort: idx + 1,
+        // access_control_id: a.access_control_id,
+        early_access: a.early_access ?? false,
+      })),
+    };
+  };
+  const normalizeTrackingPayload = (items: any[], siteId: string) => {
+    return {
+      data: items.map((t, idx) => ({
+        site_id: siteId,
+        sort: idx + 1,
+        // access_control_id: t.access_control_id,
+        trk_ble_card_access_id: t.trk_ble_card_access_id,
+        early_access: t.early_access ?? false,
+      })),
+    };
+  };
+
+  const normalizeParkingPayload = (items: any[], siteId: string) => {
+    return {
+      data: items.map((p, idx) => ({
+        site_id: siteId,
+        sort: idx + 1,
+        // access_control_id: p.access_control_id,
+        prk_area_parking_id: p.prk_area_parking_id,
+        early_access: p.early_access ?? false,
+      })),
+    };
+  };
+
   const handleOnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Submitting form with data:', formData);
-    setLoading(true);
     setErrors({});
 
     try {
+      setLoading(true);
       if (!token) {
-        setAlertType('error');
-        setAlertMessage('Something went wrong. Please try again later.');
-        setTimeout(() => {
-          setAlertType('info');
-          setAlertMessage('Complete the following data properly and correctly');
-        }, 3000);
+        showSwal('error', 'Session expired!');
         return;
       }
 
-      // 🧩 1️⃣ Batch edit (sudah oke)
+      // 🧩 1️⃣ Batch Edit
       if (isBatchEdit && selectedRows.length > 0) {
         const updatedFields: Partial<CreateSiteRequest> = {};
 
-        if (enabledFields?.type) updatedFields.type = formData.type;
-        if (enabledFields?.can_contactless_login)
-          updatedFields.can_contactless_login = formData.can_contactless_login;
-        if (enabledFields?.can_visited) updatedFields.can_visited = formData.can_visited;
-        if (enabledFields?.can_signout) updatedFields.can_signout = formData.can_signout;
-        if (enabledFields?.auto_signout) updatedFields.auto_signout = formData.auto_signout;
-        if (enabledFields?.signout_time) updatedFields.signout_time = formData.signout_time;
-        if (enabledFields?.timezone) updatedFields.timezone = formData.timezone;
-        if (enabledFields?.need_document) updatedFields.need_document = formData.need_document;
-        if (enabledFields?.need_approval) updatedFields.need_approval = formData.need_approval;
-        if (enabledFields?.is_registered_point)
-          updatedFields.is_registered_point = formData.is_registered_point;
-        if (enabledFields?.type_approval) updatedFields.type_approval = formData.type_approval;
+        Object.entries(enabledFields || {}).forEach(([key, isEnabled]) => {
+          if (isEnabled) (updatedFields as any)[key] = (formData as any)[key];
+        });
 
         if (Object.keys(updatedFields).length === 0) {
-          setAlertType('error');
-          setAlertMessage('Please enable at least one field to update.');
-          setTimeout(() => {
-            setAlertType('info');
-            setAlertMessage('Complete the following data properly and correctly');
-          }, 3000);
+          showSwal('error', 'Please enable at least one field to update.');
           setLoading(false);
           return;
         }
 
         for (const row of selectedRows) {
-          const updatedData: any = {
-            ...row,
-            ...updatedFields,
-          };
-          await updateSite(row.id, updatedData, token);
-          // console.log('Updated Data:', updatedData);
+          await updateSite(row.id, { ...row, ...updatedFields }, token);
         }
 
-        // Swal.fire({
-        //   icon: 'success',
-        //   title: 'Berhasil!',
-        //   text: 'Batch update successfully!',
-        // });
-
-        showSwal('success', 'Batch update successfully!');
-
+        showSwal('success', 'Batch update successful!');
         resetEnabledFields();
         onSuccess?.();
         return;
       }
 
-      // 🧩 2️⃣ Create vs Update Mode
       if (editingId) {
-        // 🔹 Gunakan schema update yang aman
-        const updateData: UpdateSiteRequest = UpdateSiteRequestSchema.parse(formData);
+        console.log('Editing site with ID:', editingId);
+        console.log('Form Data:', formData);
+        const updateData = UpdateSiteRequestSchema.parse(formData);
+        console.log('updateData main', updateData);
+        // const updateDataTracking = UpdateSiteTrackingSchema.parse(formData.tracking || []);
+        // console.log('updateData tracking', updateDataTracking);
+        // const updateDataParking = UpdateSiteParkingSchema.parse(formData.parking || []);
+        // console.log('updateData parking', updateDataParking);
 
-        // Hapus nilai kosong supaya gak overwrite data lama
+        // Bersihkan field kosong
         Object.keys(updateData).forEach((key) => {
           const val = (updateData as any)[key];
           if (val === '' || val === null || val === undefined) delete (updateData as any)[key];
         });
 
+        // Remove arrays agar tidak ikut overwrite
+        // delete (updateData as any).parking;
+        // delete (updateData as any).tracking;
         // delete (updateData as any).access;
-        delete (updateData as any).parking;
-        delete (updateData as any).tracking;
 
-        console.log('Updating Site:', updateData);
-        await updateSite(editingId, updateData, token);
+        const res = await updateSite(editingId, updateData, token);
+        console.log('res', JSON.stringify(res, null, 2));
 
-        // 🔹 Update tracking dan parking satu per satu (bukan by siteId)
-        const trackingData = formData.tracking ?? [];
-        const parkingData = formData.parking ?? [];
-        const accessData = formData.access ?? [];
+        // // Bulk update access
+        // const accessPayload = normalizeAccessPayload(formData.access ?? [], editingId);
+        // await createSiteAccessBulk(accessPayload, token);
 
-        for (const track of trackingData) {
-          if (track.id) {
-            await updateSiteTracking(track.id, track, token);
-          } else {
-            await createSiteTracking({ ...track, site_id: editingId }, token);
-          }
-        }
+        // await updateSiteAccess(editingId, formData.access ?? [], token);
 
-        for (const park of parkingData) {
-          if (park.id) {
-            await updateSiteParking(park.id, park, token);
-          } else {
-            await createSiteParking({ ...park, site_id: editingId }, token);
-          }
-        }
+        const trackingPayload = normalizeTrackingPayload(formData.tracking ?? [], editingId);
+        console.log('trackingPayload', trackingPayload);
 
-        // for (const acc of accessData) {
-        //   if (acc.id) {
-        //     await updateSiteAccess(acc.id, acc, token);
-        //   } else {
-        //     await createSiteAccess({ ...acc, site_id: editingId }, token);
-        //   }
-        // }
+        await updateSiteTracking(editingId, trackingPayload, token);
+        const parkingPayload = normalizeTrackingPayload(formData.parking ?? [], editingId);
+        console.log('parkingPayload', parkingPayload);
 
-        // setAlertType('success');
-        // setAlertMessage('Site successfully updated!');
-        // console.log('✅ Editing ID:', editingId);
+        await updateSiteParking(editingId, parkingPayload, token);
+
+        await handleFileUpload(editingId);
+
         showSwal('success', 'Site successfully updated!');
       } else {
-        // 🔹 Create new site
-        const data: CreateSiteRequest = CreateSiteRequestSchema.parse(formData);
-        const res = await createSite(data, token);
-        const newSiteId = res.collection?.id;
+        const createData = CreateSiteRequestSchema.parse(formData);
+        const res = await createSite(createData, token);
+        const newSiteId = res.collection?.id as string;
 
-        await createSiteTrackings(newSiteId as string);
-        await createSiteParkings(newSiteId as string);
-        await createSiteAccesss(newSiteId as string);
+        const trackingPayload = normalizeTrackingPayload(formData.tracking ?? [], newSiteId);
+        console.log('trackingPayload', trackingPayload);
+        await createSiteTrackingBulk(trackingPayload, token);
+
+        const parkingPayload = normalizeParkingPayload(formData.parking ?? [], newSiteId);
+        await createSiteParkingBulk(parkingPayload, token);
+
         await createSiteDocumentsForNewSite();
+        await handleFileUpload(newSiteId);
 
-        // console.log('✅ Created Data:', res);
-        // setAlertType('success');
-        // setAlertMessage('Site successfully created!');
         showSwal('success', 'Site successfully created!');
       }
 
-      handleFileUpload();
-      localStorage.removeItem('unsavedSiteForm');
-
-      setTimeout(() => {
-        onSuccess?.();
-      }, 600);
+      onSuccess?.();
     } catch (err: any) {
       if (err?.errors) setErrors(err.errors);
-      setAlertType('error');
-      setAlertMessage('Something went wrong. Please try again later.');
-      setTimeout(() => {
-        setAlertType('info');
-        setAlertMessage('Complete the following data properly and correctly');
-      }, 3000);
+      showSwal('error', 'Failed. Please try again later.');
     } finally {
-      setTimeout(() => {
-        setLoading(false);
-      }, 650);
+      setTimeout(() => setLoading(false), 650);
     }
-  };
-
-  const [keyDialogOpen, setKeyDialogOpen] = useState(false);
-
-  const handleKeyClick = () => {
-    setKeyDialogOpen(true);
-  };
-  const handleKeyDialogClose = () => setKeyDialogOpen(false);
-  const handleRegenerateKey = () => {
-    setFormData((prev) => ({ ...prev, code: generateKeyCode() }));
   };
 
   const [siteImageFile, setSiteImageFile] = useState<File | null>(null);
@@ -705,29 +660,16 @@ const FormSite = ({
     setPreviewUrl(null);
   };
 
-  const handleFileUpload = async () => {
-    if (fileInputRef.current && token) {
-      const allSite = await getAllSitePagination(token, 0, 20, 'id');
-      const otherAllSite = await getAllSite(token);
-      console.log('All sites (pagination):', allSite);
-      console.log('All sites:', allSite);
-      const matchedSite = allSite.collection.find(
-        (site: any) => site.name === formData.name && site.description === formData.description,
-        // add more fields if needed
-      );
-      const otherMatchedSite = otherAllSite.collection.find(
-        (site: any) => site.name === formData.name && site.description === formData.description,
-        // add more fields if needed
-      );
-      if (matchedSite && siteImageFile) {
-        console.log('Matched site id:', matchedSite.id);
-        await uploadImageSite(matchedSite.id, siteImageFile!, token);
-      } else if (otherMatchedSite && siteImageFile) {
-        console.log('Matched site id (other):', otherMatchedSite.id);
-        await uploadImageSite(otherMatchedSite.id, siteImageFile!, token);
-      } else {
-        console.log('No matching site found');
-      }
+  const handleFileUpload = async (siteId: string) => {
+    if (!token || !siteImageFile) return;
+
+    console.log('Uploading image for site:', siteId);
+
+    try {
+      await uploadImageSite(siteId, siteImageFile, token);
+      console.log('Image upload success');
+    } catch (err) {
+      console.error('Image upload failed', err);
     }
   };
 
@@ -849,15 +791,6 @@ const FormSite = ({
     });
   };
 
-  // const handleDetailDelete = (fieldKey: 'access', index: number) => {
-  //   setFormData((prev) => {
-  //     const arr = Array.isArray((prev as any)[fieldKey]) ? [...(prev as any)[fieldKey]] : [];
-  //     if (index < 0 || index >= arr.length) return prev;
-  //     arr.splice(index, 1);
-  //     return { ...prev, [fieldKey]: arr } as any;
-  //   });
-  // };
-
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
 
@@ -957,11 +890,11 @@ const FormSite = ({
                   select
                   fullWidth
                   size="small"
-                  value={item.trk_ble_floorplan_masked_area_id || ''}
+                  value={item.trk_ble_card_access_id || ''}
                   onChange={(e) => {
                     const selectedId = e.target.value;
                     const matched = trackingList.find((t) => t.id === selectedId);
-                    onChange(sectionKey, index, 'trk_ble_floorplan_masked_area_id', selectedId);
+                    onChange(sectionKey, index, 'trk_ble_card_access_id', selectedId);
                     if (matched) onChange(sectionKey, index, 'name', matched.name);
                   }}
                 >
@@ -1027,7 +960,7 @@ const FormSite = ({
       case 'tracking':
         newItem = {
           sort: formData.tracking?.length ?? 0,
-          trk_ble_floorplan_masked_area_id: '',
+          trk_ble_card_access_id: '',
           site_id: '',
           name: '',
           early_access: false,
@@ -1055,9 +988,6 @@ const FormSite = ({
     <>
       <form onSubmit={handleOnSubmit}>
         <Grid container spacing={2} sx={{ mb: 2 }}>
-          <Grid size={12}>
-            <Alert severity={alertType}>{alertMessage}</Alert>
-          </Grid>
           {/* Location Details */}
           <Grid size={{ xs: 12, md: 5 }}>
             <Paper sx={{ p: 3 }}>
@@ -1115,7 +1045,7 @@ const FormSite = ({
                             onChange={(e) =>
                               setFormData((prev) => ({
                                 ...prev,
-                                type: parseInt(e.target.value), // parseInt lebih aman untuk kosong
+                                type: parseInt(e.target.value),
                               }))
                             }
                           />
@@ -1382,7 +1312,7 @@ const FormSite = ({
                         setFormData((prev) => ({
                           ...prev,
                           auto_signout: checked,
-                          can_signout: checked ? true : prev.can_signout, // force true if checked, leave unchanged if unchecked
+                          can_signout: checked ? true : prev.can_signout, 
                         }));
                         if (isBatchEdit) {
                           setEnabledFields((prev) => ({ ...prev, auto_signout: true }));
@@ -1467,7 +1397,7 @@ const FormSite = ({
                   }
                   label={
                     <Box display="flex" alignItems="center">
-                      Registered Point
+                      Registered Site
                       <Tooltip title="Visitors must register a point before visiting the site.">
                         <IconButton size="small" sx={{ ml: 1 }}>
                           <InfoOutlinedIcon fontSize="small" />
@@ -1550,7 +1480,7 @@ const FormSite = ({
                           <TableCell>Action</TableCell>
                         </TableRow>
                       </TableHead>
-                      <Droppable
+                      {/* <Droppable
                         droppableId="access-droppable"
                         isDropDisabled={false}
                         isCombineEnabled={false}
@@ -1568,7 +1498,20 @@ const FormSite = ({
                             {provided.placeholder}
                           </TableBody>
                         )}
-                      </Droppable>
+                      </Droppable> */}
+                      <RenderDragSite
+                        sectionKey="access"
+                        items={formData.access}
+                        onChange={handleDetailChange}
+                        onDelete={handleDetailDelete}
+                        accessControlList={accessControl}
+                        onReorder={(newItems) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            access: newItems,
+                          }))
+                        }
+                      />
                     </Table>
                   </TableContainer>
                 </DragDropContext>
@@ -1610,23 +1553,8 @@ const FormSite = ({
                     Upload Site Image
                   </Typography>
                   <Typography variant="caption" color="textSecondary">
-                    Supports: JPG, JPEG, PNG
+                    Supports: JPG, JPEG, PNG, Up to 100KB
                   </Typography>
-                  {/* Show file name or short base64 */}
-                  {/* {(siteImageFile || formData.image) && (
-                    <Typography
-                      variant="caption"
-                      sx={{ mt: 1, color: '#1976d2', wordBreak: 'break-all' }}
-                    >
-                      {siteImageFile
-                        ? siteImageFile.name
-                        : formData.image
-                        ? `${formData.image.substring(0, 30)}...${formData.image.substring(
-                            formData.image.length - 10,
-                          )}`
-                        : ''}
-                    </Typography>
-                  )} */}
                   {previewUrl && (
                     <Box
                       mt={2}
@@ -1705,7 +1633,7 @@ const FormSite = ({
                         </TableRow>
                       </TableHead>
 
-                      <Droppable
+                      {/* <Droppable
                         droppableId="parking-droppable"
                         isDropDisabled={false}
                         isCombineEnabled={false}
@@ -1724,18 +1652,23 @@ const FormSite = ({
                             {provided.placeholder}
                           </TableBody>
                         )}
-                      </Droppable>
+                      </Droppable> */}
+                      <RenderDragSite
+                        sectionKey="parking"
+                        items={formData.parking}
+                        onChange={handleDetailChange}
+                        onDelete={handleDetailDelete}
+                        parkingList={siteParking}
+                        onReorder={(newItems) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            parking: newItems,
+                          }))
+                        }
+                      />
                     </Table>
                   </TableContainer>
                 </DragDropContext>
-                {/* <MuiButton
-                  size="small"
-                  onClick={() => handleAddDetail('parking')}
-                  variant="contained"
-                  color="primary"
-                >
-                  Add New
-                </MuiButton> */}
                 {(!formData.parking || formData.parking.length === 0) && (
                   <MuiButton
                     size="small"
@@ -1768,28 +1701,19 @@ const FormSite = ({
                           <TableCell>Action</TableCell>
                         </TableRow>
                       </TableHead>
-
-                      <Droppable
-                        droppableId="tracking-droppable"
-                        isDropDisabled={false}
-                        isCombineEnabled={false}
-                        ignoreContainerClipping={true}
-                      >
-                        {(provided) => (
-                          <TableBody ref={provided.innerRef} {...provided.droppableProps}>
-                            {renderDetailRows(
-                              formData.tracking || [],
-                              'tracking',
-                              handleDetailChange,
-                              handleDetailDelete,
-                              undefined,
-                              undefined,
-                              siteTracking,
-                            )}
-                            {provided.placeholder}
-                          </TableBody>
-                        )}
-                      </Droppable>
+                      <RenderDragSite
+                        sectionKey="tracking"
+                        items={formData.tracking}
+                        onChange={handleDetailChange}
+                        onDelete={handleDetailDelete}
+                        trackingList={siteTracking}
+                        onReorder={(newItems) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            tracking: newItems,
+                          }))
+                        }
+                      />
                     </Table>
                   </TableContainer>
                 </DragDropContext>
@@ -1841,8 +1765,6 @@ const FormSite = ({
                                 return (
                                   <TableRow key={doc.id + idx}>
                                     <TableCell>{docInfo ? docInfo.name : doc.id}</TableCell>
-                                    {/* <TableCell>{doc.retentionTime}</TableCell> */}
-                                    {/* if 0 rentionTime so give text forever */}
                                     {doc.retentionTime === 0 ? (
                                       <TableCell sx={{ color: '#888' }}>Forever</TableCell>
                                     ) : (
@@ -2027,7 +1949,7 @@ const FormSite = ({
         open={loading}
         sx={{
           color: '#fff',
-          zIndex: (theme) => theme.zIndex.drawer + 1, // di atas drawer & dialog
+          zIndex: 99999,
         }}
       >
         <CircularProgress color="inherit" />

@@ -75,7 +75,7 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
       setAlertMessage('Site successfully created!');
       setTimeout(() => {
         onSuccess?.();
-      }, 900);
+      }, 600);
     } catch (err: any) {
       if (err?.errors) {
         setErrors(err.errors);

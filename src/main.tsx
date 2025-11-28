@@ -25,31 +25,19 @@ const queryClient = new QueryClient({
   },
 });
 
-// import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-
-// Buat router data-based
-// const router = createBrowserRouter([
-//   {
-//     path: '*',
-//     element: <App />,
-//   },
-// ]);
-
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <Provider store={store}>
     <PersistGate loading={<Spinner />} persistor={persistor}>
       <SessionProvider>
-        <GlobalLoadingProvider>
-          {/* <BrowserRouter> */}
-          <AuthProvider>
-            <QueryClientProvider client={queryClient}>
-              <Suspense fallback={<Spinner />}>
-                <App />
-              </Suspense>
-            </QueryClientProvider>
-          </AuthProvider>
-          {/* </BrowserRouter> */}
-        </GlobalLoadingProvider>
+        {/* <GlobalLoadingProvider> */}
+        <AuthProvider>
+          <QueryClientProvider client={queryClient}>
+            <Suspense fallback={<Spinner />}>
+              <App />
+            </Suspense>
+          </QueryClientProvider>
+        </AuthProvider>
+        {/* </GlobalLoadingProvider> */}
       </SessionProvider>
     </PersistGate>
   </Provider>,

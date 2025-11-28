@@ -7,6 +7,7 @@ import {
   IconSquareCheck,
   IconChecklist,
   IconSquareOff,
+  IconTrash,
 } from '@tabler/icons-react';
 
 // Define types
@@ -28,7 +29,7 @@ const daysOfWeek: DaySchedule['day'][] = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fr
 interface TimeGridSelectorProps {
   onSelectionChange: (days: DaySchedule[]) => void;
   initialData?: DaySchedule[];
-  onSubmit?: () => void;
+  onSubmit?: any;
 }
 
 export const TimeGridSelector = ({
@@ -40,8 +41,8 @@ export const TimeGridSelector = ({
   const [selectedCells, setSelectedCells] = useState<Record<string, boolean>>({});
   const [isSelecting, setIsSelecting] = useState(false);
   const [selectionMode, setSelectionMode] = useState<'add' | 'remove'>('add');
+  const [dragStart, setDragStart] = useState<{ day: number; time: number } | null>(null);
 
-  // Generate time slots from 00:00 to 23:00 (hourly)
   const timeSlots = Array.from({ length: 24 }, (_, i) => {
     const hour = i.toString().padStart(2, '0');
     return `${hour}:00`;
@@ -57,13 +58,9 @@ export const TimeGridSelector = ({
     };
   });
 
-  // Calculate total number of cells (7 days * 24 hours)
   const totalCells = daysOfWeek.length * timeSlots.length;
-
-  // Check if all cells are selected
   const isAllSelected = Object.keys(selectedCells).length === totalCells;
 
-  // Initialize days structure
   const initializeDays = useCallback((): DaySchedule[] => {
     return daysOfWeek.map((day) => ({
       id: `day-${day}`,
@@ -76,13 +73,15 @@ export const TimeGridSelector = ({
     return initialData.length > 0 ? initialData : initializeDays();
   });
 
-  // ⬇️ Tambahkan ini
   useEffect(() => {
     onSelectionChange(days);
   }, [days, onSelectionChange]);
 
   useEffect(() => {
+    console.log('### TimeGridSelector initialData berubah:', initialData);
+
     if (initialData && initialData.length > 0) {
+      console.log('   -> Memuat initialData ke days state');
       setDays(initialData);
 
       // isi selectedCells biar grid terwarnai
@@ -106,6 +105,11 @@ export const TimeGridSelector = ({
       onSelectionChange(initialData);
     }
   }, [initialData]);
+
+  // useEffect(() => {
+  //   const newDays = convertSelectionToTimeBlocks();
+  //   onSelectionChange(newDays);
+  // }, [selectedCells]);
 
   // Handle global mouse up to clear selection state
   const handleGlobalMouseUp = useCallback(() => {
@@ -163,22 +167,109 @@ export const TimeGridSelector = ({
   );
 
   // Handle mouse down on cell
-  const handleMouseDown = useCallback(
-    (dayIndex: number, timeIndex: number) => {
-      setIsSelecting(true);
-      handleCellClick(dayIndex, timeIndex);
-    },
-    [handleCellClick],
-  );
+  // const handleMouseDown = useCallback(
+  //   (dayIndex: number, timeIndex: number) => {
+  //     setIsSelecting(true);
+  //     handleCellClick(dayIndex, timeIndex);
+  //   },
+  //   [handleCellClick],
+  // );
+
+  // const handleMouseDown = useCallback((dayIndex: number, timeIndex: number) => {
+  //   setIsSelecting(true);
+  //   setDragStart({ day: dayIndex, time: timeIndex });
+  // }, []);
+
+  const handleMouseDown = (dayIndex: number, timeIndex : number) => {
+    setIsSelecting(true);
+    setDragStart({ day: dayIndex, time: timeIndex });
+
+    const cellId = `${dayIndex}-${timeIndex}`;
+    setSelectedCells((prev) => {
+      const updated = { ...prev };
+      if (selectionMode === 'add') updated[cellId] = true;
+      else delete updated[cellId];
+      return updated;
+    });
+  };
 
   // Handle mouse enter on cell during selection
+  // const handleMouseEnter = useCallback(
+  //   (dayIndex: number, timeIndex: number) => {
+  //     if (!isSelecting) return;
+  //     // cuma update selectedCells, tanpa convert
+  //     handleCellClick(dayIndex, timeIndex);
+  //   },
+  //   [isSelecting, handleCellClick],
+  // );
+
+  // const handleMouseEnter = useCallback(
+  //   (dayIndex: number, timeIndex: number) => {
+  //     if (!isSelecting || !dragStart) return;
+
+  //     const start = dragStart.time;
+  //     const end = timeIndex;
+
+  //     const min = Math.min(start, end);
+  //     const max = Math.max(start, end);
+
+  //     const updates: Record<string, boolean> = {};
+
+  //     for (let i = min; i <= max; i++) {
+  //       const cellId = `${dragStart.day}-${i}`;
+  //       updates[cellId] = true;
+  //     }
+
+  //     setSelectedCells((prev) => ({ ...prev, ...updates }));
+  //   },
+  //   [isSelecting, dragStart],
+  // );
+
   const handleMouseEnter = useCallback(
     (dayIndex: number, timeIndex: number) => {
-      if (!isSelecting) return;
-      handleCellClick(dayIndex, timeIndex);
+      if (!isSelecting || !dragStart) return;
+
+      const start = dragStart.time;
+      const end = timeIndex;
+
+      const min = Math.min(start, end);
+      const max = Math.max(start, end);
+
+      setSelectedCells((prev) => {
+        const updated = { ...prev };
+
+        for (let i = min; i <= max; i++) {
+          const cellId = `${dragStart.day}-${i}`;
+
+          if (selectionMode === 'add') {
+            updated[cellId] = true;
+          } else {
+            delete updated[cellId];
+          }
+        }
+
+        return updated;
+      });
     },
-    [isSelecting, handleCellClick],
+    [isSelecting, dragStart, selectionMode],
   );
+
+  useEffect(() => {
+    const handleUp = () => {
+      if (isSelecting) {
+        setIsSelecting(false);
+        setDragStart(null);
+
+        const newDays = convertSelectionToTimeBlocks();
+        setDays(newDays);
+        onSelectionChange(newDays);
+        onSubmit?.(newDays);
+      }
+    };
+
+    window.addEventListener('mouseup', handleUp);
+    return () => window.removeEventListener('mouseup', handleUp);
+  }, [isSelecting]);
 
   // Toggle between selecting all and removing all
   const handleToggleAll = useCallback(() => {
@@ -337,19 +428,21 @@ export const TimeGridSelector = ({
           >
             {isAllSelected ? 'Remove All' : 'Select All'}
           </Button>
-          <Button variant="outlined" color="error" onClick={handleClearAll} size="small">
+          <Button
+            startIcon={<IconTrash size={16} />}
+            variant="contained"
+            color="error"
+            onClick={handleClearAll}
+            size="small"
+          >
             Clear
           </Button>
           <Button
             variant="contained"
             onClick={() => {
               const newDays = convertSelectionToTimeBlocks();
-              onSelectionChange(newDays); // submit dulu
-              onSubmit?.(); // optional
-              // ⬅️ reset setelah submit
-              setSelectedCells({});
-              const emptyDays = initializeDays();
-              setDays(emptyDays);
+              onSelectionChange(newDays);
+              onSubmit?.(newDays);
             }}
             size="small"
           >
@@ -358,10 +451,6 @@ export const TimeGridSelector = ({
         </Box>
       </Box>
 
-      {/* Quick Actions Row */}
-      <Box display="flex" justifyContent="center" mb={2} gap={1}></Box>
-
-      {/* Compact Grid */}
       <Box
         sx={{
           display: 'flex',
@@ -376,7 +465,6 @@ export const TimeGridSelector = ({
         onDragStart={handleDragStart}
         onContextMenu={handleContextMenu}
       >
-        {/* Header row */}
         <Box
           sx={{
             display: 'flex',
@@ -389,7 +477,6 @@ export const TimeGridSelector = ({
             borderBottom: `1px solid ${theme.palette.divider}`,
           }}
         >
-          {/* Time label spacer */}
           <Box
             sx={{
               width: 60,
@@ -434,12 +521,9 @@ export const TimeGridSelector = ({
             </Box>
           ))}
         </Box>
-
-        {/* Time rows */}
         {timeGroups.map((group, groupIndex) => (
           <Box key={groupIndex} sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
             <Box sx={{ display: 'flex', gap: 0.5, position: 'relative' }}>
-              {/* Time labels column */}
               <Box
                 sx={{
                   width: 60,
@@ -473,8 +557,6 @@ export const TimeGridSelector = ({
                   </Box>
                 ))}
               </Box>
-
-              {/* Day columns */}
               {daysOfWeek.map((_, dayIndex) => (
                 <Box
                   key={dayIndex}
@@ -528,50 +610,6 @@ export const TimeGridSelector = ({
           </Box>
         ))}
       </Box>
-
-      {/* Selected time blocks summary */}
-      {/* <Box
-        mt={2}
-        p={1}
-        sx={{
-          backgroundColor: theme.palette.grey[50],
-          borderRadius: 1,
-          border: `1px solid ${theme.palette.divider}`,
-        }}
-      >
-        <Typography variant="subtitle2" gutterBottom display="flex" alignItems="center" gap={1}>
-          <IconClock size={16} />
-          Selected Time Blocks
-        </Typography>
-
-        <Box sx={{ maxHeight: 120, overflowY: 'auto' }}>
-          {days.map(
-            (day) =>
-              day.hours.length > 0 && (
-                <Box key={day.id} mb={0.5}>
-                  <Typography variant="caption" fontWeight="bold">
-                    {day.day}:
-                  </Typography>
-                  <Box display="flex" flexWrap="wrap" gap={0.5} ml={1}>
-                    {day.hours.map((hour) => (
-                      <Chip
-                        key={hour.id}
-                        label={`${hour.startTime} - ${hour.endTime}`}
-                        size="small"
-                        variant="outlined"
-                      />
-                    ))}
-                  </Box>
-                </Box>
-              ),
-          )}
-          {days.every((day) => day.hours.length === 0) && (
-            <Typography variant="caption" color="textSecondary">
-              No time blocks selected. Click on the grid to select hours.
-            </Typography>
-          )}
-        </Box>
-      </Box> */}
 
       <Box mt={1}>
         <Typography variant="caption" color="textSecondary">

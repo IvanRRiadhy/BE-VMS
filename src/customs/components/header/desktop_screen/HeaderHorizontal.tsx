@@ -9,8 +9,10 @@ import { AppState } from 'src/store/Store';
 import { styled, useMediaQuery, useTheme } from '@mui/material';
 import Language from 'src/layouts/full/vertical/header/Language';
 import Logo from 'src/assets/images/logos/BI_Logo.png';
-
-const HeaderHorizontal = () => {
+import CustomNavigation from 'src/customs/components/header/navigation/CustomNavigation';
+import itemDataCustomNavListing from 'src/customs/components/header/navigation/CustomNavListing';
+import itemDataCustomSidebarItems from 'src/customs/components/header/navigation/CustomSidebarItems';
+const HeaderHorizontal = ({ itemDataCustomNavListing, itemDataCustomSidebarItems }: any) => {
   const lgDown = useMediaQuery((theme: Theme) => theme.breakpoints.down('lg'));
 
   const customizer = useSelector((state: AppState) => state.customizer);
@@ -23,6 +25,7 @@ const HeaderHorizontal = () => {
     boxShadow: 'none',
     padding: '5px',
     width: '100%',
+    zIndex: 1200,
     borderBottom: '1px solid rgba(0,0,0,0.05)',
     [theme.breakpoints.up('lg')]: {
       minHeight: customizer.TopbarHeight,
@@ -51,7 +54,7 @@ const HeaderHorizontal = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {!isMobile && (
               <Box sx={{ width: lgDown ? '0px' : 'none', overflow: 'hidden' }}>
-                <img src={Logo} width={50} height={50} />
+                <img src={Logo} width={45} height={45} />
               </Box>
             )}
           </Box>
@@ -65,6 +68,13 @@ const HeaderHorizontal = () => {
             </IconButton>
           )}
         </Box>
+
+        {customizer.isHorizontal && (
+          <CustomNavigation
+            itemDataCustomNavListing={itemDataCustomNavListing}
+            itemDataCustomSidebarItems={itemDataCustomSidebarItems}
+          />
+        )}
 
         {/* Kanan: Mode, Notifikasi, Profile */}
         <Stack spacing={1} direction="row" alignItems="center">

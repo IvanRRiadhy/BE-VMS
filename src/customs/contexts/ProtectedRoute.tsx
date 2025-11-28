@@ -90,6 +90,7 @@ export const ProtectedRoute = ({ allowedGroups }: ProtectedRouteProps) => {
 
   // 🔒 Belum login
   if (!isAuthenticated) return <Navigate to="/" replace />;
+  
 
   // ✅ Cek grup jika diset
   if (allowedGroups && allowedGroups.length > 0) {
@@ -98,7 +99,7 @@ export const ProtectedRoute = ({ allowedGroups }: ProtectedRouteProps) => {
     const isAllowed = normalizedGroup && allowedNormalized.includes(normalizedGroup);
 
     if (!isAllowed) {
-      console.warn('🚫 Unauthorized group', { normalizedGroup, allowedNormalized });
+      // console.warn('🚫 Unauthorized group', { normalizedGroup, allowedNormalized });
       return <Navigate to="/unauthorized" replace />;
     }
   }

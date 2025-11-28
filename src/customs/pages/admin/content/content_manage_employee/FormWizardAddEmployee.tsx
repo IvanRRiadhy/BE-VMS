@@ -43,6 +43,9 @@ import {
   getAllEmployeePagination,
   getAllEmployee,
   uploadImageEmployee,
+  getAllOrganizations,
+  getAllDepartments,
+  getAllDistricts,
 } from 'src/customs/api/admin';
 
 import {
@@ -56,6 +59,7 @@ import { showSuccessAlert, showSwal } from 'src/customs/components/alerts/alerts
 const steps = ['Personal Info', 'Work Details', 'Access & Address', 'Other Details', 'Photo'];
 
 import { getStepSchema, stepFieldMap } from 'src/customs/api/validations/employeeSchemas';
+import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 
 type EnabledFields = {
   organization_id: boolean;
@@ -170,9 +174,9 @@ const FormWizardAddEmployee = ({
       if (!token) return;
 
       const [orgRes, deptRes, distRes] = await Promise.all([
-        getAllOrganizationPagination(token, 0, 99, 'id'),
-        getAllDepartmentsPagination(token, 0, 99, 'id'),
-        getAllDistrictsPagination(token, 0, 99, 'id'),
+        getAllOrganizations(token),
+        getAllDepartments(token),
+        getAllDistricts(token),
       ]);
 
       setOrganization(orgRes.collection ?? []);
@@ -207,7 +211,7 @@ const FormWizardAddEmployee = ({
     };
 
     fetchData();
-  }, [token, edittingId, isBatchEdit]); 
+  }, [token, edittingId, isBatchEdit]);
 
   // Ambil subset field dari formData
   const pick = (obj: Record<string, any>, keys: readonly string[]) => {
@@ -389,10 +393,8 @@ const FormWizardAddEmployee = ({
     setErrors({});
 
     try {
-      // Save form data to localStorage for unsaved changes
       if (!token) {
-        setAlertType('error');
-        setAlertMessage('Something went wrong. Please try again later.');
+        showSwal('error', 'Something went wrong. Please try again later.');
         setTimeout(() => {
           setAlertType('info');
           setAlertMessage('Complete the following data properly and correctly');
@@ -400,73 +402,57 @@ const FormWizardAddEmployee = ({
         return;
       }
 
+      /** 🧩 Batch Edit Mode */
       if (isBatchEdit && selectedRows.length > 0) {
-        // ambil hanya keys yang aktif
         const enabledKeys = Object.keys(enabledFields ?? {}).filter(
           (k) => (enabledFields as any)[k] === true,
         ) as (keyof CreateEmployeeRequest)[];
 
         if (enabledKeys.length === 0) {
-          setAlertType('error');
-          setAlertMessage('Please enable at least one field to update.');
-          setTimeout(() => {
-            setAlertType('info');
-            setAlertMessage('Complete the following data properly and correctly');
-          }, 3000);
+          showSwal('error', 'Please enable at least one field to update.');
           setLoading(false);
           return;
         }
 
-        // ambil payload hanya field ON
         const payload = pick(formData, enabledKeys);
-
-        // bikin schema subset sesuai field ON
-        const shape: Record<string, true> = {};
-        enabledKeys.forEach((k) => (shape[k as string] = true));
-
         const baseSchema = unwrapZodObject(CreateEmployeeSubmitSchema);
-        const partialSchema = baseSchema?.pick(shape);
+        const partialSchema = baseSchema?.pick(
+          Object.fromEntries(enabledKeys.map((k) => [k, true])),
+        );
 
-        // validasi
-        if (partialSchema) {
-          const res = partialSchema.safeParse(payload);
-          if (!res.success) {
-            const em = toErrorMap(res.error.issues);
-            setErrors((prev) => ({ ...prev, ...em }));
-            setAlertType('error');
-            setAlertMessage('Please complete the required fields.');
-            const firstKey = Object.keys(em)[0];
-            if (firstKey) scrollToField(firstKey);
-            setLoading(false);
-            return;
-          }
+        const res = partialSchema?.safeParse(payload);
+        if (res && !res.success) {
+          const em = toErrorMap(res.error.issues);
+          setErrors(em);
+          showSwal('error', 'Please complete the required fields.');
+          const firstKey = Object.keys(em)[0];
+          if (firstKey) scrollToField(firstKey);
+          setLoading(false);
+          return;
         }
-
-        // kalau lolos validasi → build updatedFields
-        const updatedFields = enabledKeys.reduce((acc, k) => {
-          (acc as any)[k] = formData[k];
-          return acc;
-        }, {} as Partial<CreateEmployeeRequest>);
 
         for (const row of selectedRows) {
-          const updatedData: UpdateEmployeeRequest = {
-            ...row,
-            ...updatedFields,
-          };
-          await updateEmployee(row.id, updatedData, token);
+          await updateEmployee(
+            row.id,
+            {
+              ...row,
+              ...payload,
+              vehicle_plate_number: payload.vehicle_plate_number,
+              vehicle_type: payload.vehicle_type,
+            },
+            token,
+          );
         }
 
-        showSwal('success', 'Batch update successfully!', 2000);
-        // showSuccessAlert('Batch update successfully!');
+        showSwal('success', 'Batch update successfully!');
         resetEnabledFields();
         onSuccess?.();
         return;
       }
-      console.log('Form data:', formData);
-      // NORMAL MODE (add/edit biasa)
+
+      /** 🧩 Normal Create / Update Mode */
       const mergedFormData = normalizeForSubmit({
         ...formData,
-        faceimage: formData.faceimage,
         gender:
           typeof formData.gender === 'string'
             ? formData.gender === 'Female'
@@ -479,9 +465,7 @@ const FormWizardAddEmployee = ({
       if (!result.success) {
         const em = toErrorMap(result.error.issues);
         setErrors(em);
-        setAlertType('error');
-        setAlertMessage('Please complete the following data properly and correctly.');
-        // opsional: scroll ke field pertama yang error
+        showSwal('error', 'Please complete the required fields.');
         const firstKey = Object.keys(em)[0];
         if (firstKey) {
           const el = document.getElementById(firstKey);
@@ -490,42 +474,44 @@ const FormWizardAddEmployee = ({
         return;
       }
 
-      const data = result.data; // sudah valid
+      const data = result.data;
+      const rawFaceImage = formData.faceimage;
+      const rawFileImage = siteImageFile;
 
-      console.log('test', data);
+      const hasNewImage = Boolean(rawFileImage) || isDataUrl(rawFaceImage);
+
       if (edittingId) {
-        const hasNewImage = Boolean(siteImageFile) || isDataUrl(formData.faceimage);
-
-        // Buang faceimage dari payload update
-        const { faceimage: _drop, ...withoutImage } = result.data;
-
+        /** ✏️ UPDATE */
+        const { faceimage: _drop, ...withoutImage } = data;
         const editData: UpdateEmployeeRequest = {
           ...withoutImage,
           qr_code: formData.card_number,
           is_email_verify: false,
         };
 
-        // 1) Update data NON-gambar dulu
-        await updateEmployee(edittingId, editData, token);
+        console.log('Updating employee with data:', editData);
 
-        // 2) Kalau ada gambar BARU, upload terpisah
+        const res = await updateEmployee(edittingId, editData, token);
+        console.log('Update result:', res);
         if (hasNewImage) {
-          if (siteImageFile) {
-            await uploadImageEmployee(edittingId, siteImageFile, token);
-          } else {
-            // dari kamera (dataURL)
-            const blob = await (await fetch(formData.faceimage)).blob();
-            const file = new File([blob], 'camera.jpg', { type: blob.type || 'image/jpeg' });
-            await uploadImageEmployee(edittingId, file, token);
-          }
+          await handleFileUploads(edittingId, rawFileImage, rawFaceImage);
         }
-        showSwal('success', 'Employee successfully updated!', 3000);
+
+        showSwal('success', 'Employee successfully updated!');
       } else {
-        await createEmployee(data, token);
-        handleFileUploads();
-        showSwal('success', 'Employee successfully created!', 3000);
+        const created = await createEmployee(data, token);
+        const employeeId = created?.collection.employee_id;
+
+        if (hasNewImage) {
+          await handleFileUploads(employeeId as string, rawFileImage, rawFaceImage);
+        }
+        setTimeout(() => {
+          showSwal('success', 'Employee successfully created!');
+        }, 750);
+
         setFormData(CreateEmployeeRequestSchema.parse({}));
       }
+
       setTimeout(() => {
         onSuccess?.();
       }, 600);
@@ -533,84 +519,31 @@ const FormWizardAddEmployee = ({
       if (err?.errors) {
         setErrors(err.errors);
       }
-      showSwal('error', err?.message ?? 'Failed to submit. Please try again.', 2000);
+      showSwal('error', err?.message ?? 'Failed to submit. Please try again.');
     } finally {
       setTimeout(() => {
         setLoading(false);
       }, 650);
     }
   };
-
-  // Handle Upload Image
-  // const handleFileUploads = async () => {
-  //   if (fileInputRef.current && token) {
-  //     // const allSite = await getAllEmployeePagination(token, 0, 9999, 'id');
-  //     const allSite = await getAllEmployeePagination(token, 0, 9999, 'id');
-  //     const otherAllSite = await getAllEmployee(token);
-
-  //     const matchedSite = allSite.collection.find(
-  //       (employee: any) =>
-  //         employee.name === formData.name && employee.card_number === formData.card_number,
-  //     );
-
-  //     const otherMatchedSite = otherAllSite.collection.find(
-  //       (employee: any) =>
-  //         employee.name === formData.name && employee.card_number === formData.card_number,
-  //     );
-
-  //     // Upload manual (file input)
-  //     if ((matchedSite || otherMatchedSite) && siteImageFile) {
-  //       const id = matchedSite?.id || otherMatchedSite?.id!;
-  //       console.log('Upload via file input, employee id:', id);
-  //       await uploadImageEmployee(id, siteImageFile, token);
-  //     } else if ((matchedSite || otherMatchedSite) && formData.faceimage) {
-  //       const id = matchedSite?.id || otherMatchedSite?.id!;
-  //       console.log('Upload via webcam, employee id:', id);
-
-  //       const blob = await fetch(formData.faceimage).then((res) => res.blob());
-  //       const file = new File([blob], 'webcam.jpg', { type: 'image/jpeg' });
-
-  //       await uploadImageEmployee(id, file, token);
-  //     }
-
-  //     // Tidak ditemukan
-  //     else {
-  //       console.log('No matching site found or no image data');
-  //     }
-  //   }
-  // };
-
-  const handleFileUploads = async () => {
-    if (fileInputRef.current && token && edittingId) {
-      try {
-        const siteById = await getEmployeeById(edittingId, token);
-
-        if (!siteById) {
-          console.log('Employee not found');
-          return;
-        }
-
-        // Upload via file input (manual)
-        if (siteImageFile) {
-          console.log('Upload via file input, employee id:', siteById.id);
-          await uploadImageEmployee(siteById.id, siteImageFile, token);
-        }
-        // Upload via webcam (base64)
-        else if (formData.faceimage) {
-          console.log('Upload via webcam, employee id:', siteById.id);
-
-          const blob = await fetch(formData.faceimage).then((res) => res.blob());
-          const file = new File([blob], 'webcam.jpg', { type: 'image/jpeg' });
-
-          await uploadImageEmployee(siteById.id, file, token);
-        } else {
-          console.log('No image data found to upload');
-        }
-      } catch (error) {
-        console.error('Error during file upload:', error);
+  const handleFileUploads = async (employeeId: any, fileFromInput: any, faceImage: any) => {
+    try {
+      //  console.log('UPLOAD START', { fileFromInput, faceImage });
+      if (fileFromInput) {
+        await uploadImageEmployee(employeeId, fileFromInput, token as string);
+        return;
       }
-    } else {
-      console.log('No token, no file input, or no edittingId provided');
+
+      if (faceImage) {
+        const blob = await fetch(faceImage).then((res) => res.blob());
+        const file = new File([blob], 'webcam.jpg', { type: 'image/jpeg' });
+        await uploadImageEmployee(employeeId, file, token as string);
+        return;
+      }
+
+      console.log('No image to upload');
+    } catch (error) {
+      console.error('Error uploading image:', error);
     }
   };
 
@@ -620,12 +553,6 @@ const FormWizardAddEmployee = ({
     if (selectedFile) {
       setSiteImageFile(selectedFile);
       setPreviewUrl(URL.createObjectURL(selectedFile));
-
-      // ⬅️ update ke formData juga
-      // setFormData((prev) => ({
-      //   ...prev,
-      //   faceimage: selectedFile.name, // atau biar jelas: '' dulu, nanti diupload terpisah
-      // }));
     }
   };
 
@@ -649,7 +576,7 @@ const FormWizardAddEmployee = ({
 
     // ⬇️ KUNCI: jangan dobel /cdn
     const url = rel.startsWith('/cdn/') ? `${BASE_URL}${rel}` : `${BASE_URL}/cdn${rel}`;
-    console.log('Preview URL:', url);
+    // console.log('Preview URL:', url);
 
     setPreviewUrl(url);
   }, [formData.faceimage, siteImageFile]);
@@ -658,11 +585,7 @@ const FormWizardAddEmployee = ({
     switch (step) {
       case 0:
         return (
-          <Grid2 container spacing={2}>
-            {/* <Grid2 size={{ xs: 12, sm: 12 }}>
-              <Alert severity="info">Complete the following data properly and correctly.</Alert>
-            </Grid2> */}
-            {/* Name */}
+          <Grid2 container spacing={1}>
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1 }} htmlFor="name" required>
                 <Typography variant="caption">Employee Name</Typography>
@@ -695,6 +618,28 @@ const FormWizardAddEmployee = ({
                 error={Boolean(errors.person_id)}
                 helperText={errors.person_id}
               />
+            </Grid2>
+
+            <Grid2 size={{ xs: 12, sm: 12 }}>
+              <CustomFormLabel sx={{ my: 1 }} htmlFor="employeeType">
+                <Typography variant="caption">Identity Type</Typography>
+              </CustomFormLabel>
+              <CustomSelect
+                id="employeeType"
+                value={formData.identity_type}
+                onChange={(e: any) => setFormData({ ...formData, identity_type: e.target.value })}
+                fullWidth
+                disabled={isBatchEdit}
+              >
+                <MenuItem value={'NIK'}>NIK</MenuItem>
+                <MenuItem value={'KTP'}>KTP</MenuItem>
+                <MenuItem value={'Passport'}>Passport</MenuItem>
+                <MenuItem value={'DriverLicense'}>Driver License</MenuItem>
+                <MenuItem value={'CardAccess'}>Card Access</MenuItem>
+                <MenuItem value={'Face'}>Face</MenuItem>
+                <MenuItem value={'NDA'}>NDA</MenuItem>
+                <MenuItem value={'Other'}>Other</MenuItem>
+              </CustomSelect>
             </Grid2>
             {/* Identity ID */}
             <Grid2 size={{ xs: 12, sm: 12 }}>
@@ -808,10 +753,7 @@ const FormWizardAddEmployee = ({
 
       case 1:
         return (
-          <Grid2 container spacing={2}>
-            {/* <Grid2 size={{ xs: 12, sm: 12 }}>
-              <Alert severity="info">Complete the following data properly and correctly.</Alert>
-            </Grid2> */}
+          <Grid2 container spacing={1}>
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1 }} htmlFor="phone">
                 <Typography variant="caption">Employee Phone</Typography>
@@ -825,6 +767,42 @@ const FormWizardAddEmployee = ({
                 disabled={isBatchEdit}
               />
             </Grid2>
+            <Grid2 size={{ xs: 12, sm: 12 }}>
+              <CustomFormLabel sx={{ my: 1 }} htmlFor="vehicle_type">
+                <Typography variant="caption">Vehicle Type</Typography>
+              </CustomFormLabel>
+              <CustomSelect
+                id="vehicle_type"
+                value={formData.vehicle_type}
+                onChange={(e: any) => setFormData({ ...formData, vehicle_type: e.target.value })}
+                fullWidth
+                disabled={isBatchEdit}
+              >
+                <MenuItem value="Car">Car</MenuItem>
+                <MenuItem value="Bus">Bus</MenuItem>
+                <MenuItem value="Motor">Motor</MenuItem>
+                <MenuItem value="Truck">Truck</MenuItem>
+                <MenuItem value="Bicycle">Bicycle</MenuItem>
+                <MenuItem value="Private Car">Private Car</MenuItem>
+              </CustomSelect>
+            </Grid2>
+            <Grid2 size={{ xs: 12, sm: 12 }}>
+              <CustomFormLabel sx={{ my: 1 }} htmlFor="vehiclePlateNumber">
+                <Typography variant="caption">Vehicle Plate Number</Typography>
+              </CustomFormLabel>
+              <CustomTextField
+                id="vehiclePlateNumber"
+                value={formData.vehicle_plate_number}
+                onChange={(e: any) =>
+                  setFormData({ ...formData, vehicle_plate_number: e.target.value })
+                }
+                fullWidth
+                variant="outlined"
+                disabled={isBatchEdit}
+                placeholder="Enter vehicle plate number"
+              />
+            </Grid2>
+
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <Box
                 display="flex"
@@ -1032,10 +1010,7 @@ const FormWizardAddEmployee = ({
 
       case 2:
         return (
-          <Grid2 container spacing={2}>
-            {/* <Grid2 size={{ xs: 12, sm: 12 }}>
-              <Alert severity="info">Complete the following data properly and correctly.</Alert>
-            </Grid2> */}
+          <Grid2 container spacing={1}>
             {/* Is Head */}
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <FormControlLabel
@@ -1063,9 +1038,8 @@ const FormWizardAddEmployee = ({
               <Autocomplete
                 fullWidth
                 autoHighlight
-                disablePortal
+                // disablePortal
                 options={employeeAllRes}
-                // cegah pilih orang yg sama dgn Head-2
                 filterOptions={(opts) => opts.filter((o) => o.id !== formData.head_employee_2)}
                 getOptionLabel={(opt) => opt?.name ?? ''}
                 value={employeeAllRes.find((e) => e.id === formData.head_employee_1) || null}
@@ -1107,7 +1081,7 @@ const FormWizardAddEmployee = ({
               <Autocomplete
                 fullWidth
                 autoHighlight
-                disablePortal
+                // disablePortal
                 options={employeeAllRes}
                 // cegah pilih orang yg sama dgn Head-1
                 filterOptions={(opts) => opts.filter((o) => o.id !== formData.head_employee_1)}
@@ -1172,100 +1146,12 @@ const FormWizardAddEmployee = ({
                 disabled={isBatchEdit}
               />
             </Grid2>
-            {/* <Grid2 size={{ xs: 6, sm: 6 }}>
-              <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="qr">
-                <Typography variant="caption">QR Access :</Typography>
-              </CustomFormLabel>
-              <CustomTextField id="qr" fullWidth variant="outlined" />
-            </Grid2> */}
-            {/* Access Area */}
-            {/* <Grid2 size={{ xs: 12, sm: 12 }}>
-              <Box display="flex" alignItems="center" justifyContent="space-between">
-                <CustomFormLabel sx={{ marginY: 1, marginX: 1 }} htmlFor="access_are" required>
-                  <Typography variant="caption">Access Area Special</Typography>
-                </CustomFormLabel>
-
-                {isBatchEdit && (
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        size="small"
-                        checked={enabledFields?.access_area || false}
-                        onChange={(e) =>
-                          setEnabledFields((prev) => ({
-                            ...prev,
-                            access_area: e.target.checked,
-                          }))
-                        }
-                      />
-                    }
-                    label=""
-                    labelPlacement="start"
-                  />
-                )}
-              </Box>
-
-              <CustomTextField
-                id="access_are"
-                value={formData.access_area}
-                onChange={handleChange}
-                fullWidth
-                required
-                disabled={isBatchEdit && !enabledFields?.access_area}
-                variant="outlined"
-              />
-            </Grid2>
-
-            <Grid2 size={{ xs: 12, sm: 12 }}>
-              <Box display="flex" alignItems="center" justifyContent="space-between">
-                <CustomFormLabel
-                  sx={{ marginY: 1, marginX: 1 }}
-                  htmlFor="access_area_special"
-                  required
-                >
-                  <Typography variant="caption">Access Area Special</Typography>
-                </CustomFormLabel>
-
-                {isBatchEdit && (
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        size="small"
-                        checked={enabledFields?.access_area_special || false}
-                        onChange={(e) =>
-                          setEnabledFields((prev) => ({
-                            ...prev,
-                            access_area_special: e.target.checked,
-                          }))
-                        }
-                      />
-                    }
-                    label=""
-                    labelPlacement="start"
-                  />
-                )}
-              </Box>
-
-              <CustomTextField
-                id="access_area_special"
-                value={formData.access_area_special}
-                onChange={handleChange}
-                fullWidth
-                required
-                disabled={isBatchEdit && !enabledFields?.access_area_special}
-                variant="outlined"
-              />
-            </Grid2> */}
           </Grid2>
         );
 
       case 3:
         return (
-          <Grid2 container spacing={2}>
-            {/* <Grid2 size={{ xs: 12, sm: 12 }}>
-              <Alert severity="info">Complete the following data properly and correctly.</Alert>
-            </Grid2> */}
-
+          <Grid2 container spacing={1}>
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1 }} htmlFor="dob" required>
                 <Typography variant="caption">Date of Birth</Typography>
@@ -1334,10 +1220,7 @@ const FormWizardAddEmployee = ({
 
       case 4:
         return (
-          <Grid2 container spacing={2}>
-            {/* <Grid2 size={{ xs: 12, sm: 12 }}>
-              <Alert severity={alertType}>{alertMessage}</Alert>
-            </Grid2> */}
+          <Grid2 container spacing={1}>
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <Paper sx={{ p: 3 }}>
                 <Box>
@@ -1362,7 +1245,7 @@ const FormWizardAddEmployee = ({
                     </Typography>
 
                     <Typography variant="caption" color="textSecondary">
-                      Supports: JPG, JPEG, PNG
+                      Supports: JPG, JPEG, PNG, Max Size: 2MB
                     </Typography>
                     <Typography
                       variant="subtitle1"
@@ -1459,24 +1342,57 @@ const FormWizardAddEmployee = ({
                       </Box>
                     </Dialog>
 
+                    <input
+                      type="file"
+                      accept="image/*"
+                      hidden
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      disabled={isBatchEdit}
+                    />
+
                     {previewUrl && (
                       <Box
                         mt={2}
                         sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
                       >
-                        <img
+                        {/* <img
                           src={previewUrl}
                           alt="preview"
                           style={{
-                            width: 200,
-                            height: 200,
+                            width: 300,
+                            height: 170,
                             borderRadius: 12,
                             objectFit: 'cover',
+                            objectPosition: 'center',
                             cursor: 'pointer',
                             boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
                           }}
                           onClick={(e) => e.stopPropagation()}
-                        />
+                        /> */}
+
+                        <div
+                          style={{
+                            width: 300,
+                            aspectRatio: '16/9',
+                            borderRadius: 12,
+                            overflow: 'hidden',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
+                          }}
+                        >
+                          <img
+                            src={previewUrl}
+                            alt="preview"
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                              objectPosition: 'center',
+                              cursor: 'pointer',
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </div>
 
                         <Button
                           sx={{ mt: 1 }}
@@ -1493,15 +1409,6 @@ const FormWizardAddEmployee = ({
                         </Button>
                       </Box>
                     )}
-
-                    <input
-                      type="file"
-                      accept="image/*"
-                      hidden
-                      ref={fileInputRef}
-                      onChange={handleFileChange}
-                      disabled={isBatchEdit}
-                    />
                   </Box>
                 </Box>
               </Paper>

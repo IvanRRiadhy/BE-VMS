@@ -186,6 +186,24 @@ const Content = () => {
     handleOpenDialog();
   }, []);
 
+  const identityLabelMap: Record<number, string> = {
+    1: 'NIK',
+    2: 'KTP',
+    3: 'PASSPORT',
+    4: 'DriverLicense',
+    5: 'CardAccess',
+    6: 'Face',
+  };
+
+  const identityValueMap: Record<string, number> = {
+    NIK: 0,
+    KTP: 1,
+    PASSPORT: 2,
+    DriverLicense: 3,
+    CardAccess: 4,
+    Face: 5,
+  };
+
   const normalizeDetail = (d: any) => ({
     ...d,
     // FE kamu butuh array of { document_id }, sementara API mengembalikan objek lengkap
@@ -210,10 +228,8 @@ const Content = () => {
       const raw = resp?.collection;
       if (!raw) throw new Error('No data found.');
 
-      // ⚙️ Normalisasi data form utama
       const hydrated = normalizeDetail(raw);
 
-      // Simpan form utama
       setEdittingId(id);
       setFormDataAddVisitorType(hydrated);
 
@@ -221,14 +237,15 @@ const Content = () => {
       if (Array.isArray(raw.visitor_type_documents)) {
         const mappedDocs = raw.visitor_type_documents.map((doc: any) => ({
           document_id: doc.document_id,
-          identity_type: doc.identity_type ?? -1, // bisa null juga
+          identity_type:
+            typeof doc.identity_type === 'string'
+              ? identityValueMap[doc.identity_type]
+              : doc.identity_type ?? -1,
         }));
-
-        // console.log('✅ Mapped visitor_type_documents:', mappedDocs);
 
         setDocumentIdentities(mappedDocs);
       } else {
-        console.warn('⚠️ visitor_type_documents tidak ditemukan di response');
+        // console.warn('⚠️visitor_type_documents tidak ditemukan di response');
         setDocumentIdentities([]);
       }
 
@@ -424,7 +441,6 @@ const Content = () => {
             </Grid>
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
-              {/* {isDataReady ? ( */}
               <DynamicTable
                 loading={loading}
                 overflowX={'auto'}
@@ -436,7 +452,7 @@ const Content = () => {
                 isHaveSearch={true}
                 isHavePagination={true}
                 defaultRowsPerPage={rowsPerPage}
-                rowsPerPageOptions={[5, 10, 20, 50, 100]}
+                rowsPerPageOptions={[5, 10, 20, 50, 100, 200, 500]}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);
@@ -466,13 +482,6 @@ const Content = () => {
                   handleBooleanSwitch(row, col as keyof VisitorTypeTableRow, checked)
                 }
               />
-              {/* ) : (
-                <Card sx={{ width: '100%' }}>
-                  <Skeleton />
-                  <Skeleton animation="wave" />
-                  <Skeleton animation={false} />
-                </Card>
-              )} */}
             </Grid>
           </Grid>
         </Box>
@@ -485,7 +494,7 @@ const Content = () => {
       >
         <DialogTitle
           sx={{
-            padding: 2,
+            // padding: { xs: 2, md: 1 },
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -509,7 +518,7 @@ const Content = () => {
           </IconButton>
         </DialogTitle>
         <Divider />
-        <DialogContent sx={{ pt: 0.5 }}>
+        <DialogContent sx={{ padding: { xs: 2, md: 3 } }}>
           <FormVisitorType
             formData={formDataAddVisitorType}
             setFormData={setFormDataAddVisitorType}

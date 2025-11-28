@@ -34,7 +34,7 @@ import {
   IconCar,
   IconLicense,
   IconCalendarUp,
-  IconMapPin,
+  IconMapPin,   
   IconUserCheck,
   IconLogin2,
   IconLogout2,
@@ -45,6 +45,7 @@ import {
 import moment from 'moment-timezone';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
+import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 interface VisitorDetailDialogProps {
   open: boolean;
   loading: boolean;
@@ -211,7 +212,10 @@ const VisitorDetailDialog: React.FC<VisitorDetailDialogProps> = ({
                     {
                       icon: <IconCalendarUp />,
                       label: 'Period End',
-                      value: formatLocalDateTime(detail.visitor_period_end),
+                      value: formatDateTime(
+                        detail.visitor_period_end,
+                        detail.extend_visitor_period,
+                      ),
                     },
                     {
                       icon: <IconMapPin />,

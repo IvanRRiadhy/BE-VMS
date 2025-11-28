@@ -26,6 +26,10 @@ import {
   IconAlarm,
   IconDashboard,
   IconReport,
+  IconSteeringWheel,
+  IconCalendarClock,
+  IconPackageExport,
+  IconMapPin,
 } from '@tabler/icons-react';
 import { uniqueId } from 'lodash';
 import { ItemDataCustomNavListing } from './CustomNavListing';
@@ -61,6 +65,32 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
       },
       {
         id: uniqueId(),
+        title: 'Delivery',
+        icon: IconPackageExport,
+        href: '/admin/manage/delivery',
+        children: [
+          {
+            id: uniqueId(),
+            title: 'Staff',
+            icon: IconSteeringWheel,
+            href: '/admin/manage/delivery/staff',
+          },
+          {
+            id: uniqueId(),
+            title: 'Scheduler',
+            icon: IconCalendarClock,
+            href: '/admin/manage/delivery/scheduler',
+          },
+          {
+            id: uniqueId(),
+            title: 'Visit',
+            icon: IconMapPin,
+            href: '/admin/manage/delivery/visit',
+          },
+        ],
+      },
+      {
+        id: uniqueId(),
         title: 'navigation.site_space',
         icon: IconSitemap,
         href: '/admin/manage/site-space',
@@ -71,18 +101,6 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
         icon: IconCards,
         href: '/admin/manage/card',
       },
-      // {
-      //   id: uniqueId(),
-      //   title: 'Group Card Access',
-      //   icon: IconIdBadge2,
-      //   href: '/admin/manage/group-card-access',
-      // },
-      // {
-      //   id: uniqueId(),
-      //   title: 'Scheduler',
-      //   icon: IconCalendarCheck,
-      //   href: '/admin/manage/scheduler',
-      // },
       {
         id: uniqueId(),
         title: 'navigation.timezone',
@@ -95,18 +113,6 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
         icon: IconUsersGroup,
         href: '/admin/manage/visitor-type',
       },
-      // {
-      //   id: uniqueId(),
-      //   title: 'Devices Kiosk',
-      //   icon: IconDevices,
-      //   href: '/admin/manage/device-kiosk',
-      // },
-      // {
-      //   id: uniqueId(),
-      //   title: 'Operator',
-      //   icon: IconUser,
-      //   href: '/admin/manage/operator',
-      // },
       {
         id: uniqueId(),
         title: 'navigation.document',
@@ -145,13 +151,38 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
       },
     ],
   },
+
+  // {
+  //   id: uniqueId(),
+  //   title: 'navigation.visitor',
+  //   icon: IconPackageExport,
+  //   href: '/admin/visitor',
+  //   children: [
+  //     {
+  //       id: uniqueId(),
+  //       title: 'List Visitor',
+  //       icon: IconUserCircle,
+  //       chipColor: 'secondary',
+  //       href: '/admin/visitor/list-visitor',
+  //     },
+  //     {
+  //       id: uniqueId(),
+  //       title: 'Transaction Visitor',
+  //       icon: IconUserCircle,
+  //       chipColor: 'secondary',
+  //       href: '/admin/visitor/transaction-visitor',
+  //     },
+  //   ],
+  // },
+
   {
     id: uniqueId(),
-    title: 'navigation.visitor',
+    title: 'Visitor',
     icon: IconUserCircle,
     chipColor: 'secondary',
     href: '/admin/visitor',
   },
+
   {
     id: uniqueId(),
     title: 'navigation.settings',
@@ -245,6 +276,32 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
       },
       {
         id: uniqueId(),
+        title: 'Delivery',
+        icon: IconUsers,
+        href: '/admin/manage/delivery',
+        children: [
+          {
+            id: uniqueId(),
+            title: 'Staff',
+            icon: IconUsers,
+            href: '/admin/manage/delivery/staff',
+          },
+          {
+            id: uniqueId(),
+            title: 'Scheduler',
+            icon: IconUsers,
+            href: '/admin/manage/delivery/scheduler',
+          },
+          {
+            id: uniqueId(),
+            title: 'Visit',
+            icon: IconUsers,
+            href: '/admin/manage/delivery/visit',
+          },
+        ],
+      },
+      {
+        id: uniqueId(),
         title: 'navigation.site_space',
         icon: IconSitemap,
         href: '/admin/manage/site-space',
@@ -255,6 +312,7 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
         icon: IconCards,
         href: '/admin/manage/card',
       },
+
       // {
       //   id: uniqueId(),
       //   title: 'Group Card Access',

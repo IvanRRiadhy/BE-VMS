@@ -34,5 +34,6 @@
     "settings": "Settings",
     "helps": "Helps",
     "faq": "FAQ"
-  }
+  },
+  "no_visit_today": "No Visit data for today"
 }

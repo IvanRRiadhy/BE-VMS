@@ -23,6 +23,7 @@ import FilterMoreContent from './FilterMoreContent';
 import Swal from 'sweetalert2';
 import { showErrorAlert, showSuccessAlert, showSwal } from 'src/customs/components/alerts/alerts';
 import { Item } from 'src/customs/api/models/Employee/Approval';
+import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 
 interface Filters {
   is_action: boolean | null | undefined;
@@ -102,10 +103,14 @@ const Approval = () => {
             return {
               id: item.id,
               visitor_name: trx.visitor_name || '-',
-              site_place_name: trx.site_place_name || '-',
+              // site_place_name: trx.site_place_name || '-',
+              visitor_type: trx.visitor_type_name || '-',
               agenda: trx.agenda || '-',
               visitor_period_start: trx.visitor_period_start || '-',
-              visitor_period_end: trx.visitor_period_end || '-',
+              // visitor_period_end: trx.visitor_period_end || '-',
+              visitor_period_end: trx.visitor_period_end
+                ? formatDateTime(trx.visitor_period_end, trx.extend_visitor_period)
+                : trx.visitor_period_end || '-',
               action_by: item.action_by || '-',
               status: item.action,
             };

@@ -47,12 +47,14 @@ import {
   Portal,
   useTheme,
   useMediaQuery,
+  Select,
+  Popper,
 } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import 'select2'; // Select2 secara otomatis akan attach ke jQuery global
 import 'select2/dist/css/select2.min.css';
-import { IconTrash } from '@tabler/icons-react';
+import { IconCamera, IconDeviceFloppy, IconTrash } from '@tabler/icons-react';
 import PageContainer from 'src/components/container/PageContainer';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import Webcam from 'react-webcam';
@@ -72,10 +74,6 @@ import {
 
 import {
   createCheckGiveAccess,
-  createPraRegister,
-  createPraRegisterGroup,
-  createVisitor,
-  createVisitorsGroup,
   getAllCustomField,
   getAllCustomFieldPagination,
   getAllEmployee,
@@ -104,7 +102,7 @@ import utc from 'dayjs/plugin/utc';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import 'dayjs/locale/id';
-import { DateTimePicker, renderTimeViewClock } from '@mui/x-date-pickers';
+import { DateTimePicker, renderTimeViewClock, TimePicker } from '@mui/x-date-pickers';
 import { IconX } from '@tabler/icons-react';
 import { IconArrowRight } from '@tabler/icons-react';
 // import CameraUpload from 'src/customs/components/camera/CameraUpload';
@@ -118,7 +116,6 @@ import {
 } from 'src/customs/api/operator';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import CameraUpload from 'src/customs/components/camera/CameraUpload';
-// import CameraUpload from 'src/customs/components/camera/CameraUpload';
 
 interface FormVisitorTypeProps {
   formData: CreateVisitorRequest;
@@ -126,6 +123,7 @@ interface FormVisitorTypeProps {
   edittingId?: string;
   onSuccess?: () => void;
   formKey?: 'visit_form' | 'pra_form';
+  containerRef?: any;
 }
 
 dayjs.extend(utc);
@@ -133,7 +131,7 @@ dayjs.extend(weekday);
 dayjs.extend(localizedFormat);
 dayjs.extend(customParseFormat);
 dayjs.extend(advancedFormat);
-dayjs.locale('id');
+// dayjs.locale('id');
 
 type GroupedPages = {
   single_page: any[];
@@ -157,6 +155,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   edittingId,
   onSuccess,
   formKey = 'visit_form',
+  containerRef,
 }) => {
   const THEME = useTheme();
   const isMobile = useMediaQuery(THEME.breakpoints.down('sm'));
@@ -200,7 +199,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     severity: AlertColor;
   }>({ open: false, message: '', severity: 'info' });
 
-  // 3) helper supaya snackbar pasti muncul walau pesannya sama
   const toast = (message: string, severity: AlertColor = 'info') => {
     setSnackbar((s) => ({ ...s, open: false }));
     setTimeout(() => setSnackbar({ open: true, message, severity }), 0);
@@ -527,11 +525,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   // utils
   const flatDeep = (x: any): any[] => (Array.isArray(x) ? x.flat(Infinity) : [x]);
 
-  const normalizeIdsDeep = (payload: any): number[] => {
+  const normalizeIdsDeep = (payload: any): string[] => {
     const flat = flatDeep(payload);
-    const ids = flat
-      .map((v) => (typeof v === 'object' && v !== null ? Number(v.id) : Number(v)))
-      .filter((n) => Number.isFinite(n) && n > 0);
+    const ids = flat.map((v) => (typeof v === 'object' && v !== null ? v.id : v)).filter((n) => n); // filter null / undefined
     // dedupe
     return Array.from(new Set(ids));
   };
@@ -597,14 +593,14 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       console.warn('No visitor selected');
       return;
     }
+    setLoading(true);
 
-    // payload akhir
     const data_access: any[] = [];
 
     // 1️⃣ Group Access → apply ke semua selected visitors
     for (const visitorRow of selectedInvitations) {
       const trxVisitorId = visitorRow.trx_visitor_id;
-      const cardNumber = visitorRow.assigned_card_number; // ⬅️ pakai assigned card
+      const cardNumber = visitorRow.assigned_card_number;
       if (!trxVisitorId || !cardNumber) continue;
 
       for (const acId of checkedGroupItems) {
@@ -617,26 +613,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       }
     }
 
-    // 2️⃣ Self Only Access → apply hanya ke row visitor yg punya override
-    // for (const visitorRow of selectedInvitations) {
-    //   if (!hasSelfOnly([visitorRow])) continue; // skip kalau row ini bukan self_only
-
-    //   const trxVisitorId = visitorRow.trx_visitor_id;
-    //   const cardNumber = visitorRow.assigned_card_number;
-    //   if (!trxVisitorId || !cardNumber) continue;
-
-    //   for (const acId of checkedSelfItems) {
-    //     data_access.push({
-    //       access_control_id: acId,
-    //       action: 1,
-    //       card_number: cardNumber,
-    //       trx_visitor_id: trxVisitorId,
-    //     });
-    //   }
-    // }
-
     for (const visitorRow of selectedInvitations) {
-      if (!hasSelfOnly([visitorRow])) continue; // skip kalau row ini bukan self_only
+      if (!hasSelfOnly([visitorRow])) continue;
 
       const trxVisitorId = visitorRow.trx_visitor_id;
       const cardNumber = visitorRow.assigned_card_number;
@@ -1866,6 +1844,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     }
   };
 
+  const CustomPopper = (props: any) => {
+    return <Popper {...props} placement="bottom-start" style={{ zIndex: 99999 }} />;
+  };
+
   const fieldKey = (f: any) => f?.custom_field_id || sanitize(f?.remarks) || '';
   const [uploadNames, setUploadNames] = useState<Record<string, string>>({});
 
@@ -1961,14 +1943,15 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           return (
             <Autocomplete
               size="small"
-              freeSolo // ✅ Biar tetap bisa diketik dari awal
+              freeSolo
+              disablePortal={true}
+              // PopperComponent={CustomPopper}
               options={options}
               getOptionLabel={(option) => (typeof option === 'string' ? option : option.name)}
               inputValue={inputVal}
               onInputChange={(_, newInputValue) =>
                 setInputValues((prev) => ({ ...prev, [uniqueKey]: newInputValue }))
               }
-              // ✅ Filter: hanya aktif kalau >= 3 huruf
               filterOptions={(opts, state) => {
                 const term = (state.inputValue || '').toLowerCase();
                 if (term.length < 3) return [];
@@ -1986,12 +1969,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 onChange(index, 'answer_text', newValue instanceof Object ? newValue.value : '')
               }
               renderInput={(params) => (
-                <TextField
-                  {...params}
-                  placeholder="Ketik minimal 3 karakter"
-                  fullWidth
-                  sx={{ minWidth: 160 }}
-                />
+                <TextField {...params} placeholder="" fullWidth sx={{ minWidth: 160 }} />
               )}
             />
           );
@@ -2011,45 +1989,53 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         case 5: // Radio
           if (field.remarks === 'gender') {
             return (
-              <TextField
-                select
+              <Select
+                // select
                 size="small"
                 value={field.answer_text || ''}
                 onChange={(e) => onChange(index, 'answer_text', e.target.value)}
                 fullWidth
                 sx={{ width: 100 }}
+                MenuProps={{
+                  disablePortal: true,
+                  container: containerRef?.current || null,
+                }}
               >
                 {field.multiple_option_fields?.map((opt: any) => (
                   <MenuItem key={opt.id} value={opt.value}>
                     {opt.name}
                   </MenuItem>
                 ))}
-              </TextField>
+              </Select>
             );
           }
 
           if (field.remarks === 'vehicle_type') {
             return (
-              <TextField
-                select
+              <Select
+                // select
                 size="small"
                 value={field.answer_text || ''}
                 onChange={(e) => onChange(index, 'answer_text', e.target.value)}
                 fullWidth
+                MenuProps={{
+                  disablePortal: true,
+                  container: containerRef?.current || null,
+                }}
               >
                 {field.multiple_option_fields?.map((opt: any) => (
                   <MenuItem key={opt.id} value={opt.value}>
                     {opt.name}
                   </MenuItem>
                 ))}
-              </TextField>
+              </Select>
             );
           }
 
           if (field.remarks === 'is_employee' || field.remarks === 'is_driving') {
             return (
               <RadioGroup
-                row // hapus kalau mau tampil vertikal
+                row
                 value={field.answer_text || ''}
                 onChange={(e) => onChange(index, 'answer_text', e.target.value)}
                 sx={{
@@ -2078,33 +2064,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           );
 
         case 6:
-          // if (field.remarks === 'is_employee') {
-          //   const options = field.multiple_option_fields || [];
-          //   const value = field.answer_text ?? ''; // '' | 'true' | 'false'
-
-          //   return (
-          //     <FormGroup row>
-          //       {options.map((opt: any, idx: number) => (
-          //         <FormControlLabel
-          //           key={idx}
-          //           control={
-          //             <Checkbox
-          //               checked={value === opt.value}
-          //               onChange={(e) => {
-          //                 // hanya satu yang aktif dalam waktu bersamaan
-          //                 const newVal = e.target.checked ? opt.value : '';
-          //                 onChange(index, 'answer_text', newVal);
-          //               }}
-          //             />
-          //           }
-          //           label={opt.name}
-          //         />
-          //       ))}
-          //     </FormGroup>
-          //   );
-          // }
-
-          // fallback default (checkbox tunggal)
           return (
             <FormControlLabel
               control={
@@ -2121,13 +2080,24 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
         case 8: // Time
           return (
-            <TextField
-              type="time"
-              size="small"
-              value={field.answer_datetime}
-              onChange={(e) => onChange(index, 'answer_datetime', e.target.value)}
-              fullWidth
-            />
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <TimePicker
+                value={field.answer_datetime ? dayjs(field.answer_datetime, 'HH:mm') : null}
+                onChange={(newValue) => {
+                  const utcTime = newValue?.utc().format('HH:mm');
+                  onChange(index, 'answer_datetime', utcTime);
+                }}
+                slotProps={{
+                  textField: {
+                    size: 'small',
+                    fullWidth: true,
+                  },
+                  popper: {
+                    container: containerRef.current,
+                  },
+                }}
+              />
+            </LocalizationProvider>
           );
 
         case 9:
@@ -2152,6 +2122,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   textField: {
                     fullWidth: true,
                   },
+                  popper: {
+                    container: containerRef.current,
+                  },
                 }}
               />
             </LocalizationProvider>
@@ -2162,6 +2135,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             <CameraUpload
               value={field.answer_file}
               onChange={(url) => onChange(index, 'answer_file', url)}
+              containerRef={containerRef.current || undefined}
             />
           );
 
@@ -2432,30 +2406,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       e.target.value = '';
     };
 
-  const onChangesByFieldTypes = (key: keyof FormVisitor, value: any, targetFieldType: number) => {
-    setSectionsData((prev) =>
-      prev.map((sec) =>
-        updateSectionForm(sec, (arr) =>
-          arr.map((form) =>
-            form.field_type === targetFieldType ? { ...form, [key]: value } : form,
-          ),
-        ),
-      ),
-    );
-
-    // (opsional) sinkronisasi tambahan kamu tetap bisa lanjut di bawah ini
-    setGroupedPages((prev) => {
-      const pvSection = sectionsData.find(isPurposeVisit);
-      if (!pvSection) return prev;
-      return {
-        ...prev,
-        single_page: prev.single_page.map((f) =>
-          f.field_type === targetFieldType ? { ...f, [key]: value } : f,
-        ),
-      };
-    });
-  };
-
   const makeCdnUrl = (rel?: string | null) => {
     if (!rel) return null;
     if (/^(data:|blob:|https?:\/\/)/i.test(rel)) return rel;
@@ -2565,6 +2515,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     };
     fetchData();
   }, [token]);
+
   const renderDetailRows = (
     details: FormVisitor[] | any,
     onChange: (index: number, field: keyof FormVisitor, value: any) => void,
@@ -2584,9 +2535,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
         const val = f.answer_text;
 
-        // 🧩 Normalisasi semua bentuk nilai
         if (Array.isArray(val)) {
-          return val.some((v) => ['true', '1', 'yes'].includes(String(v).toLowerCase()));
+          return val.some((v) => ['true', '1', 'yes', true].includes(String(v).toLowerCase()));
         }
         return ['true', '1', 'yes', true].includes(String(val).toLowerCase());
       });
@@ -2597,15 +2547,17 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
     // 🔗 Peta visibility antar field
     const visibilityMap: Record<string, boolean> = {
+      employee: isEmployee,
       vehicle_type: isDriving,
       vehicle_plate: isDriving,
-      employee: isEmployee,
     };
 
     // 🧹 Filter dan reset otomatis field dependent
     const filteredDetails = details.filter((item, i) => {
-      const remark = (item.remarks || '').toLowerCase();
-      const visible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
+      const remarks = (item.remarks || '').toLowerCase();
+      // console.log(`Checking visibility for field "${remarks}"`);
+      const visible = visibilityMap.hasOwnProperty(remarks) ? visibilityMap[remarks] : true;
+      console.log(`Field "${remarks}" visibility:`, visible);
 
       if (!visible && item.answer_text) onChange(i, 'answer_text', '');
       return visible;
@@ -2703,6 +2655,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     <Autocomplete
                       size="small"
                       options={options}
+                      disablePortal={true}
                       getOptionLabel={(option) => option.name}
                       inputValue={inputValues[index] || ''}
                       onInputChange={(_, newInputValue) =>
@@ -2755,40 +2708,21 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       />
                     </LocalizationProvider>
                   );
-                // case 5: // Radio
-                //   return (
-                //     <FormControl component="fieldset">
-                //       <RadioGroup
-                //         value={item.answer_text}
-                //         onChange={(e) => onChange(index, 'answer_text', e.target.value)}
-                //         sx={{
-                //           flexDirection: 'row', // tampil horizontal
-                //           flexWrap: 'wrap', // bisa pindah baris
-                //           gap: 1, // beri jarak antar item (opsional)
-                //         }}
-                //       >
-                //         {(item.multiple_option_fields || [])
-                //           .sort((a: any, b: any) => {
-                //             // pakai nilai value untuk urutan: 0 -> 1 -> 2
-                //             return Number(a.value) - Number(b.value);
-                //           })
-                //           .map((opt: any, idx: number) => (
-                //             <FormControlLabel
-                //               key={idx}
-                //               value={opt.value}
-                //               control={<Radio />}
-                //               label={opt.name}
-                //             />
-                //           ))}
-                //       </RadioGroup>
-                //     </FormControl>
-                //   );
                 case 5: // Radio
                   return (
                     <FormControl component="fieldset">
                       <RadioGroup
                         value={String(item.answer_text)} // ✅ pastikan string
-                        onChange={(e) => onChange(index, 'answer_text', e.target.value)}
+                        // onChange={(e) => onChange(index, 'answer_text', e.target.value)}
+                        onChange={(e) => {
+                          console.log(
+                            'Radio Click:',
+                            item.remarks,
+                            '→ new answer_text =',
+                            e.target.value,
+                          );
+                          onChange(index, 'answer_text', e.target.value);
+                        }}
                         sx={{ flexDirection: 'row', flexWrap: 'wrap', gap: 1 }}
                       >
                         {(item.multiple_option_fields || [])
@@ -2796,7 +2730,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           .map((opt: any, idx: number) => (
                             <FormControlLabel
                               key={idx}
-                              value={String(opt.value)} // ✅ samain jadi string
+                              value={String(opt.value)}
                               control={<Radio />}
                               label={opt.name}
                             />
@@ -2839,15 +2773,38 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     </FormGroup>
                   );
 
+                // case 8: // TimePicker
+                //   return (
+                //     <TextField
+                //       type="time"
+                //       size="small"
+                //       value={item.answer_datetime}
+                //       onChange={(e) => onChange(index, 'answer_datetime', e.target.value)}
+                //       fullWidth
+                //     />
+                //   );
                 case 8: // TimePicker
                   return (
-                    <TextField
-                      type="time"
-                      size="small"
-                      value={item.answer_datetime}
-                      onChange={(e) => onChange(index, 'answer_datetime', e.target.value)}
-                      fullWidth
-                    />
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                      <TimePicker
+                        value={item.answer_datetime ? dayjs(item.answer_datetime, 'HH:mm') : null}
+                        onChange={(newValue) => {
+                          // const formatted = newValue ? newValue.format('HH:mm') : '';
+                          // onChange(index, 'answer_datetime', formatted);
+                          const utcTime = newValue?.utc().format('HH:mm');
+                          onChange(index, 'answer_datetime', utcTime);
+                        }}
+                        slotProps={{
+                          textField: {
+                            size: 'small',
+                            fullWidth: true,
+                          },
+                          popper: {
+                            container: containerRef.current,
+                          },
+                        }}
+                      />
+                    </LocalizationProvider>
                   );
                 case 9:
                   return (
@@ -2857,7 +2814,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         ampm={false}
                         onChange={(newValue) => {
                           if (newValue) {
-                            const utc = newValue.utc().format(); // hasil: 2025-08-05T10:00:00Z
+                            const utc = newValue.utc().format();
                             onChange(index, 'answer_datetime', utc);
                           }
                         }}
@@ -2870,6 +2827,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         slotProps={{
                           textField: {
                             fullWidth: true,
+                          },
+                          popper: {
+                            container: containerRef.current,
                           },
                         }}
                       />
@@ -2902,7 +2862,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             cursor: 'pointer',
                             p: 2,
                           }}
-                          onClick={() => setOpenCamera(true)} // Bisa langsung dibuka saat klik semua bagian
+                          onClick={() => setOpenCamera(true)}
                         >
                           {/* <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} /> */}
                           <PhotoCameraIcon sx={{ fontSize: 48, color: '#42a5f5', mr: 0.5 }} />
@@ -2937,60 +2897,57 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             )
                           }
                         />
+                        {/* PREVIEW / INFO */}
+                        {(previewSrc || shownName) && (
+                          <Box
+                            mt={1}
+                            display="flex"
+                            alignItems="center"
+                            gap={1}
+                            justifyContent={'center'}
+                          >
+                            {previewSrc ? (
+                              <Box display={'flex'} flexDirection={'column'} alignItems={'center'}>
+                                <img
+                                  src={previewSrc}
+                                  alt="preview"
+                                  style={{
+                                    width: 350,
+                                    height: 200,
+                                    objectFit: 'cover',
+                                    borderRadius: 8,
+                                  }}
+                                />
+                                <MuiButton
+                                  color="error"
+                                  size="small"
+                                  variant="outlined"
+                                  sx={{ mt: 2, minWidth: 120 }}
+                                  onClick={() =>
+                                    handleRemoveFileForField(
+                                      (item as any).answer_file,
+                                      (url) => onChange(index, 'answer_file', url),
+                                      key,
+                                    )
+                                  }
+                                  startIcon={<IconTrash />}
+                                >
+                                  Remove
+                                </MuiButton>
+                              </Box>
+                            ) : (
+                              <></>
+                            )}
+                          </Box>
+                        )}
                       </Box>
-
-                      {/* PREVIEW / INFO */}
-                      {(previewSrc || shownName) && (
-                        <Box
-                          mt={1}
-                          display="flex"
-                          alignItems="center"
-                          gap={1}
-                          justifyContent={'center'}
-                        >
-                          {previewSrc ? (
-                            <Box display={'flex'} flexDirection={'column'} alignItems={'center'}>
-                              <img
-                                src={previewSrc}
-                                alt="preview"
-                                style={{
-                                  width: 350,
-                                  height: 200,
-                                  objectFit: 'cover',
-                                  borderRadius: 8,
-                                }}
-                              />
-                              {/* <Typography variant="caption" noWrap>
-                                {shownName}
-                              </Typography> */}
-                              <MuiButton
-                                color="error"
-                                size="small"
-                                variant="outlined"
-                                sx={{ mt: 2, minWidth: 120 }}
-                                onClick={() =>
-                                  handleRemoveFileForField(
-                                    (item as any).answer_file,
-                                    (url) => onChange(index, 'answer_file', url), // kosongkan state
-                                    key, // reset <input id=key>
-                                  )
-                                }
-                                startIcon={<IconTrash />}
-                              >
-                                Remove
-                              </MuiButton>
-                            </Box>
-                          ) : (
-                            <></>
-                          )}
-                        </Box>
-                      )}
 
                       <Dialog
                         open={openCamera}
                         onClose={() => setOpenCamera(false)}
                         maxWidth="md"
                         fullWidth
+                        container={containerRef.current}
                       >
                         <Box sx={{ p: 3 }}>
                           <Box>
@@ -3063,13 +3020,15 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   key,
                                 )
                               }
-                              color="warning"
-                              sx={{ mr: 2 }}
+                              startIcon={<IconTrash />}
+                              color="error"
+                              sx={{ mr: 1 }}
                             >
                               Clear Foto
                             </MuiButton>
                             <MuiButton
                               variant="contained"
+                              startIcon={<IconCamera />}
                               onClick={() =>
                                 handleCaptureForField(
                                   (url) => onChange(index, 'answer_file', url),
@@ -3079,7 +3038,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             >
                               Take Foto
                             </MuiButton>
-                            <MuiButton onClick={() => setOpenCamera(false)} sx={{ ml: 2 }}>
+                            <MuiButton
+                              startIcon={<IconDeviceFloppy />}
+                              onClick={() => setOpenCamera(false)}
+                              sx={{ ml: 1 }}
+                            >
                               Submit
                             </MuiButton>
                           </Box>
@@ -3113,13 +3076,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                         <Typography variant="body2" color="textSecondary" mt={1}>
                           Supports: PDF, DOCX, JPG, PNG, up to
-                          <span style={{ fontWeight: 'semibold' }}> 5 MB</span>
+                          <span style={{ fontWeight: 'semibold' }}> 100KB</span>
                         </Typography>
-
-                        {/* <Typography variant="body2" color="textSecondary" mt={1}>
-                          Maximal Size 5 MB
-                        </Typography> */}
-
                         {/*preview  */}
                         {(previewSrc || shownName) && (
                           <Box
@@ -3152,8 +3110,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   onClick={() =>
                                     handleRemoveFileForField(
                                       (item as any).answer_file,
-                                      (url) => onChange(index, 'answer_file', url), // kosongkan state
-                                      key, // reset <input id=key>
+                                      (url) => onChange(index, 'answer_file', url),
+                                      key,
                                     )
                                   }
                                   startIcon={<IconTrash />}
@@ -3200,12 +3158,13 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         onClick={() => fileInputRef.current?.click()}
                       >
                         <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
-                        <Typography variant="subtitle1" sx={{ mt: 1 }}>
+                        <Typography variant="h6" sx={{ mt: 1 }}>
                           Upload File
                         </Typography>
 
                         <Typography variant="caption" color="textSecondary">
-                          Supports: PDF, DOCX, JPG, PNG
+                          Supports: PDF, DOCX, JPG, PNG, Up to
+                          <span style={{ fontWeight: '700' }}> 100KB</span>
                         </Typography>
 
                         <Typography
@@ -3235,7 +3194,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             )
                           }
                         />
-                        {/*preview  */}
                         {(previewSrc || shownName) && (
                           <Box
                             mt={2}
@@ -3267,8 +3225,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   onClick={() =>
                                     handleRemoveFileForField(
                                       (item as any).answer_file,
-                                      (url) => onChange(index, 'answer_file', url), // kosongkan state
-                                      key, // reset <input id=key>
+                                      (url) => onChange(index, 'answer_file', url),
+                                      key,
                                     )
                                   }
                                   startIcon={<IconTrash />}
@@ -3290,11 +3248,22 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         onClose={() => setOpenCamera(false)}
                         maxWidth="md"
                         fullWidth
+                        container={containerRef.current}
                       >
                         <Box sx={{ p: 3 }}>
-                          <Typography variant="h6" mb={2}>
-                            Take Photo From Camera
-                          </Typography>
+                          <Box
+                            display={'flex'}
+                            justifyContent={'space-between'}
+                            alignItems={'center'}
+                            mb={1}
+                          >
+                            <Typography variant="h6" mb={0}>
+                              Take Photo From Camera
+                            </Typography>
+                            <IconButton onClick={() => setOpenCamera(false)}>
+                              <IconX />
+                            </IconButton>
+                          </Box>
 
                           <Grid container spacing={2}>
                             <Grid size={{ xs: 12, sm: 6 }}>
@@ -3354,8 +3323,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   key,
                                 )
                               }
-                              color="warning"
-                              sx={{ mr: 2 }}
+                              color="error"
+                              sx={{ mr: 1 }}
+                              startIcon={<IconTrash />}
                             >
                               Clear Foto
                             </MuiButton>
@@ -3365,11 +3335,16 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 e.stopPropagation();
                                 handleCaptureForField((url) => onChange(index, 'answer_file', url));
                               }}
+                              startIcon={<IconCamera />}
                             >
                               Take Foto
                             </MuiButton>
-                            <MuiButton onClick={() => setOpenCamera(false)} sx={{ ml: 2 }}>
-                              Close
+                            <MuiButton
+                              startIcon={<IconDeviceFloppy />}
+                              onClick={() => setOpenCamera(false)}
+                              sx={{ ml: 1 }}
+                            >
+                              Submit
                             </MuiButton>
                           </Box>
                         </Box>
@@ -3399,21 +3374,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const sanitize = (v?: string | null) => (v ?? '').trim().toLowerCase();
 
   const DEFAULT_VFT = FORM_KEY === 'pra_form' ? 0 : 1;
-
-  // const mapFieldOut = (tpl: any, sortIdx: number, src?: any) => ({
-  //   remarks: tpl.remarks ?? '',
-  //   visitor_form_type: tpl.visitor_form_type ?? DEFAULT_VFT,
-  //   field_type: tpl.field_type ?? 0,
-  //   sort: tpl.sort ?? sortIdx,
-  //   short_name: tpl.short_name ?? '',
-  //   long_display_text: tpl.long_display_text ?? '',
-  //   custom_field_id: tpl.custom_field_id ?? null,
-  //   // properti ekstra yang diminta contoh lama:
-  //   form_visitor_type_id: '',
-
-  //   ...pickAns(src ?? {}),
-
-  // });
 
   const mapFieldOut = (tpl: any, sortIdx: number, src?: any) => {
     const out: any = {
@@ -3729,18 +3689,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             card: null,
           })),
         );
-
-        // Cek akses site
-        // const siteAnswer = getSiteFromForm(false, sectionsData, dataVisitor);
-        // if (siteAnswer) {
-        //   try {
-        //     const res = await getGrantAccess(token, siteAnswer);
-        //     setAccessData(res.collection ?? []);
-        //     console.log('✅ Grant access by site_place:', siteAnswer, res.collection);
-        //   } catch (err) {
-        //     console.error('❌ Failed to fetch grant access:', err);
-        //   }
-        // }
       }
 
       // 🟦 SINGLE MODE
@@ -4627,7 +4575,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
     setRows((prevRows) =>
       prevRows.map((row) => {
-        const p = pairs.find((x) => x.id === row.id);
+        const p = pairs.find((x) => x.id === String(row.id));
         if (!p) return row;
 
         return {
@@ -4764,7 +4712,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
   const getCheckedCount = () => {
     if (!isGroup) {
-      return checkedItems.length; // Single Access
+      return checkedItems.length;
     }
 
     if (isGroup && !hasSelfOnly(dataVisitor)) {
@@ -4772,7 +4720,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     }
 
     if (isGroup && hasSelfOnly(dataVisitor)) {
-      return checkedSelfItems.length + checkedItems.length; // Group + Self Only
+      return checkedSelfItems.length + checkedItems.length;
     }
 
     return 0;
@@ -4786,12 +4734,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           preselected.push(cardNumber);
         }
       }
-      setSelectedCards(preselected); // isi lagi biar counter & toggle sinkron
+      setSelectedCards(preselected);
     }
   }, [openChooseCardDialog, assignedByCard, selectedIdSet]);
 
   return (
-    <PageContainer title="Visitor" description="this is Add Visitor page">
+    <PageContainer title="Operator View" description="this is operator view">
       <form onSubmit={handleOnSubmit}>
         <Box width="100%">
           <DragDropContext onDragEnd={() => {}}>
@@ -4817,11 +4765,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     alternativeLabel
                     sx={{
                       width: '100%',
-                      // overflowX: 'auto',
-                      // px: 2,
                       flexWrap: 'nowrap',
                       justifyContent: 'flex-start',
-                      // columnGap: 6,
                       '& .MuiStep-root': {
                         flex: '1 1 0',
                         // px: 1.5,
@@ -4832,7 +4777,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         maxWidth: 200,
                         overflow: 'hidden',
                         textWrap: 'wrap',
-                        // textOverflow: 'ellipsis',
                         textAlign: 'center',
                       },
                       '& .MuiStepIcon-root': {
@@ -4840,9 +4784,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         height: 30,
                       },
                     }}
-                    // connector={null}
                   >
-                    {/* Static Step Pertama */}
                     <Step
                       key="User Type"
                       completed={false}
@@ -4884,7 +4826,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                               cursor: 'pointer',
                             }}
                             onClick={() => setActiveStep(index + 1)}
-                            // key={section.id ?? index}
                           >
                             <Box
                               sx={{
@@ -4903,10 +4844,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 justifyContent: 'center',
                                 mb: 0.5,
                                 fontWeight: 'bold',
-                                // border:
-                                //   activeStep === index + 1
-                                //     ? '2px solid #1976d2'
-                                //     : '1px solid #33393dff',
                                 transition: 'all 0.2s ease',
                                 marginRight: -2,
                               }}
@@ -4944,13 +4881,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             sx={{
               position: 'sticky',
               bottom: -20,
-              backgroundColor: 'white', // kasih background supaya gak tembus konten
+              backgroundColor: 'white',
               padding: 2,
               zIndex: 10,
-              // borderTop: '1px solid #ddd',
+              borderTop: '1px solid #ddd',
             }}
           >
-            {/* Tombol Back */}
             <MuiButton
               disabled={activeStep === 0}
               onClick={() => setActiveStep((prev) => prev - 1)}
@@ -4958,58 +4894,17 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
               Back
             </MuiButton>
 
-            {/* Tombol Next / Submit */}
-            {/* {isLastStep ? (
-              <Button color="primary" type="submit" variant="contained" disabled={loading}>
-                {loading ? 'Submitting...' : 'Submit'}
-              </Button>
-            ) : (
-              <Button
-                variant="contained"
-                onClick={(e) => {
-                  e.preventDefault();
-
-                
-                  if (activeStep === 1 && isGroup) {
-                    handleSaveGroupVisitor();
-                  }
-
-               
-                  if (activeStep === 0 && isGroup) {
-                    const unfilled = groupVisitors.filter(
-                      (g) => !g.data_visitor || g.data_visitor.length === 0,
-                    );
-                    if (unfilled.length > 0) {
-                      toast(
-                        `Masih ada ${unfilled.length} group yang belum diisi form-nya.`,
-                        'warning',
-                      );
-                      return;
-                    }
-                  }
-
-                  // ⬆️ Pindah ke step berikutnya
-                  setActiveStep((prev) => prev + 1);
-                }}
-              >
-                Next
-              </Button>
-            )} */}
-
-            {/* 🔹 Tombol Next / Save */}
             {isGroup ? (
-              // === Mode GROUP ===
               isLastStep ? (
-                // ✅ Step terakhir: Simpan group
                 <Button
                   variant="contained"
                   color="primary"
                   disabled={loading}
                   onClick={(e) => {
                     e.preventDefault();
-                    handleSaveGroupVisitor(); // 💾 simpan data visitor ke group aktif
+                    handleSaveGroupVisitor();
                     toast('Group form saved successfully.', 'success');
-                    setActiveStep(0); // ⬅️ balik ke list group
+                    setActiveStep(0);
                   }}
                 >
                   {loading ? 'Saving...' : 'Save Group'}
@@ -5031,9 +4926,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   Next
                 </Button>
               )
-            ) : // === Mode SINGLE ===
-            isLastStep ? (
-              // ✅ Step terakhir untuk single → Submit
+            ) : isLastStep ? (
               <Button
                 variant="contained"
                 color="primary"
@@ -5045,7 +4938,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 {loading ? 'Submitting...' : 'Submit'}
               </Button>
             ) : (
-              // ✅ Step biasa untuk single → Next
               <Button
                 variant="contained"
                 onClick={(e) => {
@@ -5069,11 +4961,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         sx={{
           '& .MuiDialog-paper': {
             borderRadius: 3, // sudut lebih rounded
-            boxShadow: '0 8px 24px rgba(0,0,0,0.08)', // bayangan halus
+            boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
           },
         }}
       >
-        {/* Header */}
         <Box
           display="flex"
           justifyContent="space-between"
@@ -5113,8 +5004,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             </MuiButton>
           </Box>
         </Box>
-
-        {/* Content */}
         <DialogContent
           dividers
           sx={{
@@ -5181,7 +5070,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <IconSearch size={20} /> {/* ikon tabler */}
+                    <IconSearch size={20} />
                   </InputAdornment>
                 ),
               }}
@@ -5216,7 +5105,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 !!holderRowId && selectedIdSet.has(String(holderRowId));
               const isChosen = selectedCards.includes(card.card_number);
 
-              // KUNCI HANYA JIKA milik visitor lain
               const isLocked = isUsedByOther;
 
               return (
@@ -5245,7 +5133,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       alignItems: 'center',
                       textAlign: 'center',
 
-                      // base look
                       border: '1px solid',
                       borderColor: isChosen ? 'primary.main' : 'divider',
                       boxShadow: isChosen ? theme.shadows[10] : theme.shadows[4],
@@ -5253,7 +5140,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                       // visual disabled utk Used saja
                       cursor: isLocked ? 'not-allowed' : 'pointer',
-                      pointerEvents: isLocked ? 'none' : 'auto', // ✅ kartu “used by THIS selection” tetap bisa diklik
+                      pointerEvents: isLocked ? 'none' : 'auto',
                       opacity: isUsedByOther ? 0.4 : 1,
                       filter: isUsedByOther ? 'grayscale(0.8) brightness(0.7)' : 'none',
                       '::after': isUsedByOther
@@ -5268,7 +5155,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           }
                         : {},
 
-                      // hover/active/focus hanya jika tidak locked
                       transformOrigin: 'center',
                       transition: theme.transitions.create(
                         ['transform', 'box-shadow', 'border-color', 'background-color', 'filter'],
@@ -5307,7 +5193,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       }),
                     })}
                   >
-                    {/* konten */}
                     <Box flexGrow={1} display="flex" flexDirection="column" justifyContent="center">
                       <Typography variant="body1" mt={1}>
                         {card.card_number}
@@ -5328,7 +5213,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       onMouseDown={(e) => e.stopPropagation()}
                       control={
                         <Checkbox
-                          disabled={isUsedByOther} // ✅ hanya disable jika milik orang lain
+                          disabled={isUsedByOther}
                           checked={isChosen}
                           onClick={(e) => e.stopPropagation()}
                           onMouseDown={(e) => e.stopPropagation()}
@@ -5339,7 +5224,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       sx={{ m: 0 }}
                     />
 
-                    {/* chip status */}
                     {isUsedByOther && (
                       <Chip
                         size="small"
@@ -5411,11 +5295,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         >
           <CloseIcon />
         </IconButton>
-        {/* close icon */}
 
         <DialogContent dividers>
           <Stack spacing={3} flexDirection="column">
-            {/* 1. Single */}
             {!isGroup && (
               <Box>
                 <Typography variant="subtitle1" fontWeight={600} mb={1}>
@@ -5460,190 +5342,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 </Box>
               </Box>
             )}
-
-            {/* 3. Group + Self Only */}
-            {/* {showGroupAndSelf && (
-              <Stack spacing={3}>
-                <Box>
-                  <Typography variant="subtitle1" fontWeight={600} mb={1} textAlign={'center'}>
-                    Group Access
-                  </Typography>
-                  <Box display="flex" flexDirection="column">
-                    {groupAccessData.map((a) => (
-                      <FormControlLabel
-                        key={`group-${a.access_control_id}`}
-                        control={
-                          <Checkbox
-                            checked={checkedGroupItems.includes(a.access_control_id)}
-                            onChange={() => handleToggleGroup(a.access_control_id)}
-                          />
-                        }
-                        label={a.name}
-                      />
-                    ))}
-                  </Box>
-                </Box>
-
-                <Divider />
-
-                <Box>
-                  <Typography variant="subtitle1" fontWeight={600} mb={1} textAlign={'center'}>
-                    Self Only Access
-                  </Typography>
-                  <Stack
-                    spacing={1}
-                    direction="row"
-                    alignItems={'center'}
-                    justifyContent={'center'}
-                  >
-                    {selfOnlyVisitors.map((v) => (
-                      <Button
-                        key={v?.idx}
-                        variant="outlined"
-                        size="small"
-                        onClick={() => {
-                          setSelectedVisitor(v?.dv);
-                          setOpenVisitorDialog(true);
-                        }}
-                        sx={{
-                          maxWidth: 150, 
-                          textOverflow: 'ellipsis',
-                          overflow: 'hidden',
-                          whiteSpace: 'nowrap',
-                        }}
-                        title={v?.name} 
-                      >
-                        {v?.name}
-                      </Button>
-                    ))}
-                  </Stack>
-
-                  <Box mt={2} display="flex" flexDirection="column" gap={1}>
-                    {selfOnlyVisitors.map((v) => {
-                      if (v?.key !== undefined) {
-                        const key = v.key;
-                     
-                        return (
-                          <Box key={v?.key} display="flex" flexDirection="column">
-                            {(grantAccessMap[v?.key] ?? []).map((a) => (
-                              <FormControlLabel
-                                key={`self-${v?.key}-${a.access_control_id}`}
-                                control={
-                                  <Checkbox
-                                    checked={checkedSelfItems.includes(
-                                      `${v?.key}:${a.access_control_id}`,
-                                    )}
-                                    onChange={() =>
-                                      handleToggleSelf(`${v?.key}:${a.access_control_id}`)
-                                    }
-                                  />
-                                }
-                                label={a.name}
-                              />
-                            ))}
-                          </Box>
-                        );
-                      }
-           
-                    })}
-                  </Box>
-
-                  <Dialog
-                    open={openVisitorDialog}
-                    onClose={() => setOpenVisitorDialog(false)}
-                    fullWidth
-                    maxWidth="xs"
-                  >
-                    <DialogTitle
-                      sx={{
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        fontSize: '1rem',
-                        position: 'relative',
-                      }}
-                    >
-                      Visitor (Self Only)
-              
-                      <IconButton
-                        onClick={() => setOpenVisitorDialog(false)}
-                        sx={{
-                          position: 'absolute',
-                          right: 8,
-                          top: 8,
-                          color: (theme) => theme.palette.grey[500],
-                        }}
-                      >
-                        <IconX size={20} />
-                      </IconButton>
-                    </DialogTitle>
-
-                    <DialogContent dividers>
-                      {selectedVisitor ? (
-                        <Stack
-                          direction="row"
-                          spacing={2}
-                          justifyContent="center"
-                          flexWrap="wrap"
-                          sx={{ width: '100%' }}
-                        >
-                          {selectedVisitor.question_page?.map((page: any, pi: number) =>
-                            page.form
-                              ?.filter((f: any) => f.remarks === 'name')
-                              .map((f: any, fi: number) => (
-                                <Stack
-                                  key={`${pi}-${fi}`}
-                                  spacing={1}
-                                  alignItems="center"
-                                  sx={{
-                                    minWidth: 120,
-                                    maxWidth: 150,
-                                    p: 1,
-                                  }}
-                                >
-                                  <Box
-                                    sx={{
-                                      width: 64,
-                                      height: 64,
-                                      borderRadius: '50%',
-                                      bgcolor: 'primary.main',
-                                      color: 'white',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      fontSize: 24,
-                                      fontWeight: 600,
-                                    }}
-                                  >
-                                    {f.answer_text?.charAt(0)?.toUpperCase() || '?'}
-                                  </Box>
-
-                                  <Typography
-                                    variant="body1"
-                                    fontWeight={500}
-                                    sx={{
-                                      textTransform: 'capitalize',
-                                      textAlign: 'center',
-                                      overflow: 'hidden',
-                                      textOverflow: 'ellipsis',
-                                      whiteSpace: 'nowrap',
-                                      width: '100%',
-                                    }}
-                                    title={f.answer_text}
-                                  >
-                                    {f.answer_text || '-'}
-                                  </Typography>
-                                </Stack>
-                              )),
-                          )}
-                        </Stack>
-                      ) : (
-                        <Typography textAlign="center">No visitor selected</Typography>
-                      )}
-                    </DialogContent>
-                  </Dialog>
-                </Box>
-              </Stack>
-            )} */}
           </Stack>
 
           <Divider sx={{ my: 2 }} />
@@ -5654,7 +5352,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             </Typography>
             <Button
               variant="contained"
-              color="success"
+              color="primary"
               disabled={checkedItems.length === 0 || loading}
               onClick={handleAccessSubmit}
               size="medium"

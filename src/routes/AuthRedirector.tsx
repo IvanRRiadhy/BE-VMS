@@ -68,28 +68,46 @@ export default function AuthRedirector() {
       if (upperGroup === GroupRoleId.Admin) redirectPath = '/admin/dashboard';
       else if (upperGroup === GroupRoleId.Manager) redirectPath = '/manager/dashboard';
       else if (upperGroup === GroupRoleId.Employee) redirectPath = '/employee/dashboard';
-      else if (upperGroup === GroupRoleId.OperatorVMS) redirectPath = '/operator/dashboard';
-
+      else if (upperGroup === GroupRoleId.OperatorVMS) redirectPath = '/operator/view';
       // hanya redirect dari root
-      if (location.pathname === '/' || location.pathname === '/*') {
+      if (
+        location.pathname === '/auth/login' ||
+        location.pathname === '/auth/register' ||
+        location.pathname === '/auth/forgot-password'
+      ) {
+        navigate(redirectPath, { replace: true });
+      } else if (location.pathname === '/') {
         navigate(redirectPath, { replace: true });
       }
     } else if (!authLoading && !isAuthenticated) {
-      // belum login → ke halaman login
-      if (location.pathname === '/' || location.pathname === '/*') {
+      if (location.pathname === '/auth/login' || location.pathname === '/') {
         navigate('/auth/login', { replace: true });
       }
     }
   }, [authLoading, isAuthenticated, groupId, location.pathname, navigate]);
 
-  // tampilkan loading spinner jika masih loading
+  // if (authLoading) {
+  //   return (
+  //     <Backdrop open sx={{ color: '#1976d2', zIndex: 9999, bgcolor: 'rgba(255,255,255,0.8)' }}>
+  //       <CircularProgress color="primary" thickness={4} />
+  //     </Backdrop>
+  //   );
+  // }
+
   if (authLoading) {
     return (
-      <Backdrop open sx={{ color: '#1976d2', zIndex: 9999, bgcolor: 'rgba(255,255,255,0.8)' }}>
-        <CircularProgress color="primary" thickness={4} />
-      </Backdrop>
+      <div
+        style={{
+          display: 'flex',
+          height: '100vh',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <CircularProgress />
+      </div>
     );
   }
 
-  return <Outlet />; // <== biar route anak tetap bisa muncul
+  return <Outlet />;
 }

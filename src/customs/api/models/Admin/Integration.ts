@@ -1043,15 +1043,16 @@ export type UpdateFloorPlanTrackingRequest = z.infer<typeof UpdateFloorPlanTrack
 // Floor Plan Masked Area
 export type FloorPlanMaskedAreaTracking = {
   id: string;
-  floorplan_maskedarea_id: string;
-  floorplanId: string;
-  floorId: string;
+  trk_floorplan_masked_area_id: string;
+  floorplan_id: string;
+  floor_id: string;
   name: string;
-  areaShape: string;
-  colorArea: string;
-  restrictedStatus: string;
-  engineAreaId: string;
-  status: number;
+  area_shape: string;
+  color_area: string;
+  restricted_status: string;
+  integration_id: string;
+  site_id: string;
+  active: boolean;
 };
 
 export type GetFloorPlanMaskedAreaTrackingResponse = {

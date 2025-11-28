@@ -43,9 +43,10 @@ interface Props {
   open: boolean;
   onClose: () => void;
   visitorData: any[];
+  container?: HTMLElement | null;
 }
 
-const DetailVisitorDialog: React.FC<Props> = ({ open, onClose, visitorData }) => {
+const DetailVisitorDialog: React.FC<Props> = ({ open, onClose, visitorData, container }) => {
   const [tabValue, setTabValue] = useState(0);
   const formatDateTime = (dateStr?: string) => {
     if (!dateStr) return '-';
@@ -57,7 +58,7 @@ const DetailVisitorDialog: React.FC<Props> = ({ open, onClose, visitorData }) =>
     );
   };
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg" container={container}>
       <DialogTitle>Detail Visitor Information</DialogTitle>
       <IconButton sx={{ position: 'absolute', right: '10px', top: '10px' }} onClick={onClose}>
         <IconX />

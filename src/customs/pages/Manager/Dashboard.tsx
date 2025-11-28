@@ -65,6 +65,7 @@ import PieCharts from './PieCharts';
 import { getApproval } from 'src/customs/api/employee';
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router';
+import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 // import OperatorPieChart from './Charts/OperatorPieChart';
 
 const DashboardEmployee = () => {
@@ -134,42 +135,11 @@ const DashboardEmployee = () => {
           null as any,
           null as any,
         );
-        console.log(response.collection);
-
-        // // 🚀 Ambil semua invitation
-        // const res = await getInvitation(token as string, startDate, endDate);
-
-        // const invitationData = res?.collection ?? [];
-        // console.log('Invitation data:', invitationData);
-
-        // // 🧩 Simpan semua data ke state utama
-        // setInvitationList(invitationData);
-
-        // // 🔍 Filter invitation yang belum preregister (is_pregister_done = null)
-        // const notDoneInvitations = invitationData.filter(
-        //   (inv: any) => inv.is_praregister_done === null,
-        // );
-
-        // // ✅ Ambil invitation terakhir (index terbesar)
-        // if (notDoneInvitations.length > 0) {
-        //   const latestIndex = notDoneInvitations.length - 1;
-        //   setAlertInvitationData(notDoneInvitations[latestIndex]);
-        //   setOpenAlertInvitation(true);
-        // }
+        // console.log(response.collection);
 
         // 🧩 Mapping data approval untuk tabel
         const mappedData = response.collection.map((item: any) => {
           const trx = item.trx_visitor || {};
-
-          // const visitor_period_start =
-          //   trx.visitor.visitor_period_start && trx.visitor.visitor_period_start !== 'Invalid date'
-          //     ? trx.visitor.visitor_period_start
-          //     : '-';
-
-          // const visitor_period_ends =
-          //   trx.visitor.visitor_period_end && trx.visitor.visitor_period_end !== 'Invalid date'
-          //     ? trx.visitor.visitor_period_end
-          //     : '-';
 
           return {
             id: item.id,
@@ -177,7 +147,9 @@ const DashboardEmployee = () => {
             site_place_name: trx.site_place_name || '-',
             agenda: trx.agenda || '-',
             visitor_period_start: trx.visitor_period_start || '-',
-            visitor_period_end: trx.visitor_period_end || '-',
+            visitor_period_end: trx.visitor_period_end
+              ? formatDateTime(trx.visitor_period_end, trx.extend_visitor_period)
+              : trx.visitor_period_end || '-',
             action_by: item.action_by || '-',
             status: item.action || '-',
           };

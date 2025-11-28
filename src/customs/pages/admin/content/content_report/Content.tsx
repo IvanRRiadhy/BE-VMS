@@ -18,39 +18,24 @@ import {
 } from '@mui/material';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import { Box } from '@mui/system';
-import { DateTimePicker } from '@mui/x-date-pickers';
-import { DateRangePicker } from 'react-date-range';
 import dayjs from 'dayjs';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
-import {
-  IconActivity,
-  IconCalendarMonth,
-  IconClockHour4,
-  IconDeviceFloppy,
-  IconFileExport,
-  IconFileSpreadsheet,
-  IconFileTypePdf,
-  IconMapPin,
-  IconPrinter,
-  IconReport,
-  IconTrash,
-  IconUserCheck,
-  IconUsers,
-  IconUserX,
-  IconX,
-} from '@tabler/icons-react';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+
+import { IconDeviceFloppy, IconReport, IconTrash, IconX } from '@tabler/icons-react';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { Snackbar, Alert } from '@mui/material';
 import { Tabs, Tab } from '@mui/material';
-import axiosInstance from 'src/customs/api/interceptor';
 import {
   generateReport,
   getAllSite,
   getAllVisitor,
   getVisitorEmployee,
 } from 'src/customs/api/admin';
-import { IconCalendar } from '@tabler/icons-react';
+import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 
 const Content = () => {
   const { token } = useSession();
@@ -73,7 +58,7 @@ const Content = () => {
   const [employeeOptions, setEmployeeOptions] = useState<Array<{ id: string; name: string }>>([]);
   const [visitorOptions, setVisitorOptions] = useState<Array<{ id: string; name: string }>>([]);
   const [activeTab, setActiveTab] = useState(0);
-  const [summary, setSummary] = useState<any | null>(null);
+  const [summary, setSummary] = useState<any[]>([]);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10); // 👈 default 10
@@ -132,8 +117,19 @@ const Content = () => {
       }
 
       const res = await generateReport(token, formData);
-      const summaryData = res.collection?.summary?.[0] ?? null; // ✅ ambil summary
-      setSummary(summaryData); // ✅ simpan di state
+      const rowsSummary = res.collection?.summary?.map((item: any) => ({
+        id: item.id,
+        date: item.date,
+        month: item.month,
+        invited: item.invited,
+        checkin: item.checkin,
+        checkout: item.checkout,
+        block: item.block,
+        active: item.activeOnSite,
+        average_duration: item.average_duration ?? 0,
+      }));
+      const summaryData = res.collection?.summary ?? []; // ✅ ambil summary
+      setSummary(rowsSummary); // ✅ simpan di state
 
       const rows =
         res.collection?.data?.map((item: any) => ({
@@ -148,7 +144,7 @@ const Content = () => {
           phone: item.visitor.phone,
           is_vip: item.visitor.is_vip,
           visitor_period_start: item.visitor_period_start,
-          visitor_period_end: item.visitor_period_end,
+          visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
           host: item.host_name ?? '-',
         })) ?? [];
 
@@ -163,6 +159,69 @@ const Content = () => {
 
   const [savedReports, setSavedReports] = useState<any[]>([]);
   const [selectedReport, setSelectedReport] = useState<any | null>(null);
+
+  const exportToExcel = () => {
+    const worksheet = XLSX.utils.json_to_sheet(reportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Report');
+    XLSX.writeFile(workbook, `report-${Date.now()}.xlsx`);
+  };
+
+  const exportToCSV = () => {
+    const worksheet = XLSX.utils.json_to_sheet(reportData);
+    const csv = XLSX.utils.sheet_to_csv(worksheet);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `report-${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportToPDF = () => {
+    if (!reportData || reportData.length === 0) return;
+
+    const doc = new jsPDF('l', 'mm', 'a4');
+
+    doc.text('Visitor Report', 14, 15);
+
+    const tableColumn = Object.keys(reportData[0] || {});
+    const tableRows = reportData.map((row) => Object.values(row));
+
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows as any[],
+      startY: 20,
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [22, 160, 133] },
+    });
+
+    doc.save(`report-${Date.now()}.pdf`);
+  };
+
+  const printReport = () => {
+    const printWindow = window.open('', '_blank');
+    const tableHtml = document.getElementById('print-report-area')?.innerHTML;
+
+    printWindow!.document.write(`
+    <html>
+      <head>
+        <title>Visitor Report</title>
+      </head>
+      <body>
+        ${tableHtml}
+      </body>
+    </html>
+  `);
+
+    printWindow!.document.close();
+    printWindow!.focus();
+    printWindow!.print();
+    printWindow!.close();
+  };
 
   const handleConfirmSaveReport = async () => {
     // if (!reportData || reportData.length === 0) {
@@ -253,7 +312,7 @@ const Content = () => {
 
     // kosongkan data hasil juga jika mau sekalian
     setReportData([]);
-    setSummary(null);
+    setSummary([]);
     setSelectedReport(null);
 
     showSnackbar('Form has been reset.', 'info');
@@ -326,6 +385,7 @@ const Content = () => {
               onChange={(e: any): any => handleChange('visitor_statuses', e.target.value)}
               placeholder="Select Visitor Status"
             >
+              <MenuItem value="">Select Visitor Status</MenuItem>
               <MenuItem value="Checkin">Checkin</MenuItem>
               <MenuItem value="Checkout">Checkout</MenuItem>
               <MenuItem value="Block">Block</MenuItem>
@@ -498,7 +558,9 @@ const Content = () => {
           },
         }}
       >
-        <DialogTitle sx={{ position: 'relative', padding: 3 }}>Report Dialog</DialogTitle>
+        <DialogTitle sx={{ position: 'relative', padding: 3 }}>
+          Report Transaction Visitor
+        </DialogTitle>
         <IconButton
           aria-label="close"
           onClick={() => setOpenDialog(false)}
@@ -522,92 +584,22 @@ const Content = () => {
           {/* 🔹 TAB 1 - SUMMARY */}
           {activeTab === 0 && (
             <Box>
-              <Typography variant="h6" gutterBottom fontWeight={700} mb={2}>
+              {/* <Typography variant="h6" gutterBottom fontWeight={700} mb={2}>
                 Summary Report
-              </Typography>
+              </Typography> */}
 
               {summary ? (
-                // <Grid container spacing={2}>
-                //   {[
-                //     {
-                //       icon: <IconCalendar size={22} />,
-                //       label: 'Year',
-                //       value: summary.year,
-                //       color: 'linear-gradient(135deg, #3b82f6, #2563eb)',
-                //     },
-                //     {
-                //       icon: <IconCalendarMonth size={22} />,
-                //       label: 'Month',
-                //       value: summary.month,
-                //       color: 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
-                //     },
-                //     {
-                //       icon: <IconUsers size={22} />,
-                //       label: 'Invited',
-                //       value: summary.invited,
-                //       color: 'linear-gradient(135deg, #10b981, #059669)',
-                //     },
-                //     {
-                //       icon: <IconUserCheck size={22} />,
-                //       label: 'Check-in',
-                //       value: summary.checkin,
-                //       color: 'linear-gradient(135deg, #f59e0b, #d97706)',
-                //     },
-                //     {
-                //       icon: <IconUserX size={22} />,
-                //       label: 'Check-out',
-                //       value: summary.checkout,
-                //       color: 'linear-gradient(135deg, #ef4444, #b91c1c)',
-                //     },
-                //     {
-                //       icon: <IconMapPin size={22} />,
-                //       label: 'Block',
-                //       value: summary.block,
-                //       color: 'linear-gradient(135deg, #000, #4338ca)',
-                //     },
-                //     {
-                //       icon: <IconActivity size={22} />,
-                //       label: 'Active On Site',
-                //       value: summary.activeOnSite,
-                //       color: 'linear-gradient(135deg, #14b8a6, #0d9488)',
-                //     },
-                //     {
-                //       icon: <IconClockHour4 size={22} />,
-                //       label: 'Avg Duration (min)',
-                //       value: summary.avgDurationMinutes,
-                //       color: 'linear-gradient(135deg, #f43f5e, #be123c)',
-                //     },
-                //   ].map((item, idx) => (
-                //     <Grid key={idx} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-                //       <Card
-                //         sx={{
-                //           p: 2.5,
-                //           borderRadius: 3,
-                //           color: '#fff',
-                //           background: item.color,
-                //           boxShadow: '0 4px 10px rgba(0,0,0,0.15)',
-                //           transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                //           '&:hover': {
-                //             transform: 'translateY(-4px)',
-                //             boxShadow: '0 6px 16px rgba(0,0,0,0.25)',
-                //           },
-                //         }}
-                //       >
-                //         <Box display="flex" alignItems="center" gap={1}>
-                //           {item.icon}
-                //           <Typography variant="subtitle2" sx={{ opacity: 0.9 }}>
-                //             {item.label}
-                //           </Typography>
-                //         </Box>
-                //         <Typography variant="h5" fontWeight={700} mt={0.5} ml={3.5}>
-                //           {item.value}
-                //         </Typography>
-                //       </Card>
-                //     </Grid>
-                //   ))}
-                // </Grid>
-
-                <DynamicTable data={[summary]} />
+                <DynamicTable
+                  data={summary}
+                  isHaveHeaderTitle={true}
+                  titleHeader="Summary"
+                  isHaveExportCsv={true}
+                  onExportCsv={exportToCSV}
+                  isHaveExportExcel={true}
+                  onExportExcel={exportToExcel}
+                  isHaveExportPdf={true}
+                  onExportPdf={exportToPDF}
+                />
               ) : (
                 <Typography variant="body2" color="text.secondary">
                   No summary data available.
@@ -619,10 +611,14 @@ const Content = () => {
           {/* 🔹 TAB 2 - TABLE */}
           {activeTab === 1 && (
             <Box>
-              <Box display={'flex'} justifyContent="space-between" alignItems="center" mb={1}>
-                <Typography variant="h6">Detail Report</Typography>
+              {/* <Box display={'flex'} justifyContent="space-between" alignItems="center" mb={1}>
                 <Box display="flex" gap={1}>
-                  <Button variant="contained" color="primary" startIcon={<IconPrinter size={18} />}>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    startIcon={<IconPrinter size={18} />}
+                    onClick={printReport}
+                  >
                     Print
                   </Button>
                   <Button
@@ -633,6 +629,7 @@ const Content = () => {
                       backgroundColor: '#d32f2f',
                       '&:hover': { backgroundColor: '#b71c1c' },
                     }}
+                    onClick={exportToPDF}
                   >
                     PDF
                   </Button>
@@ -645,6 +642,7 @@ const Content = () => {
                     //   backgroundColor: '#2e7d32',
                     //   '&:hover': { backgroundColor: '#1b5e20' },
                     // }}
+                    onClick={exportToCSV}
                   >
                     Export CSV
                   </Button>
@@ -653,25 +651,29 @@ const Content = () => {
                     variant="outlined"
                     color="success"
                     startIcon={<IconFileExport size={18} />}
+                    onClick={exportToExcel}
                   >
                     Export Excel
                   </Button>
                 </Box>
-              </Box>
-
-              <DynamicTable
-                data={reportData}
-                isHaveSearch={true}
-                isHavePagination={false}
-                // defaultRowsPerPage={rowsPerPage}
-                isHavePeriod
-                onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-                // rowsPerPageOptions={[5, 10, 20, 50, 100]}
-                // onPaginationChange={(page, rowsPerPage) => {
-                //   setPage(page);
-                //   setRowsPerPage(rowsPerPage);
-                // }}
-              />
+              </Box> */}
+              <div id="print-report-area">
+                <DynamicTable
+                  data={reportData}
+                  isHaveSearch={true}
+                  isHavePagination={false}
+                  isHavePeriod
+                  onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                  isHaveExportCsv={true}
+                  isHaveExportExcel={true}
+                  // isHavePrint={true}
+                  isHaveExportPdf={true}
+                  onExportCsv={exportToCSV}
+                  onExportExcel={exportToExcel}
+                  onExportPdf={exportToPDF}
+                  onPrint={printReport}
+                />
+              </div>
             </Box>
           )}
         </DialogContent>

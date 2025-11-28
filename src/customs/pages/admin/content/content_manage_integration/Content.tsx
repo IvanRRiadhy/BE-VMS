@@ -208,13 +208,14 @@ const Content = () => {
   const handleEdit = (id: string) => {
     const editing = localStorage.getItem('unsavedIntegrationData');
     const integration = integrationData.find((item) => item.id === id);
+    // console.log('Editing integration:', integration);
     const available = availableIntegration.find(
       (item) => item.brand_name === integration?.brand_name && item.name === integration?.name,
     );
     console.log('Available integration:', available);
     const integrationWithListId = {
       ...integration,
-      integration_list_id: available?.id || '',
+      integration_list_id: integration?.integration_list_id || '',
     };
     console.log('Integration data:', integrationWithListId);
     setFormDataAddIntegration(CreateIntegrationRequestSchema.parse(integrationWithListId));

@@ -86,7 +86,7 @@ const Content = () => {
     queryFn: async () => {
       const response = await getAllUser(token as string);
 
-      console.log('response', response);
+      // console.log('response', response);
 
       const filteredData = response.collection.map((item: any) => ({
         id: item.id,

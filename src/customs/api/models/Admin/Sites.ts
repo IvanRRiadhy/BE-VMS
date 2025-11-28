@@ -33,7 +33,7 @@ export type Tracking = {
   site_id: string;
   name: string;
   early_access: boolean;
-  trk_ble_floorplan_masked_area_id: string;
+  trk_ble_card_access_id: string;
 };
 
 export type Item = {
@@ -120,7 +120,7 @@ export const CreateSiteRequestSchema = z.object({
   map_link: z.string().default(''),
   can_contactless_login: z.boolean().default(false),
   need_document: z.boolean().default(false),
-  is_registered_point: z.boolean().default(false).optional().nullable(),
+  is_registered_point: z.boolean().default(false),
   access: z
     .array(
       z.object({
@@ -155,7 +155,7 @@ export const CreateSiteParkingSchema = z.object({
 export const CreateSiteTrackingSchema = z.object({
   sort: z.number().optional().default(0),
   site_id: z.string(),
-  trk_ble_floorplan_masked_area_id: z.string(),
+  trk_ble_card_access_id: z.string(),
   early_access: z.boolean().optional().default(false),
 });
 
@@ -168,10 +168,10 @@ export const UpdateSiteParkingSchema = z.object({
 });
 
 export const UpdateSiteTrackingSchema = z.object({
-  id: z.string(),
+  id: z.string().optional(),
   sort: z.number().optional().default(0),
-  site_id: z.string(),
-  trk_ble_floorplan_masked_area_id: z.string(),
+  site_id: z.string().optional(),
+  trk_ble_card_access_id: z.string().optional(),
   early_access: z.boolean().optional().default(false),
 });
 

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -9,29 +9,36 @@ import {
   CircularProgress,
   IconButton,
   TextField,
+  Tooltip,
 } from '@mui/material';
 import FlipCameraAndroidIcon from '@mui/icons-material/FlipCameraAndroid';
 import FlashOnIcon from '@mui/icons-material/FlashOn';
 import FlashOffIcon from '@mui/icons-material/FlashOff';
-import { IconX } from '@tabler/icons-react';
-// import Scanner from './Scanner'; // pastikan path sesuai
+import { IconCamera, IconUser, IconX } from '@tabler/icons-react';
 import { Scanner } from '@yudiel/react-qr-scanner';
 type Props = {
   open: boolean;
   onClose: () => void;
   handleSubmitQRCode: (value: string) => Promise<void>;
   container?: HTMLElement;
+  onOpenInvitation?: () => void;
 };
 
-const ScanQrVisitorDialog: React.FC<Props> = ({ open, onClose, handleSubmitQRCode, container }) => {
-  const [qrMode, setQrMode] = React.useState<'manual' | 'scan'>('manual');
-  const [qrValue, setQrValue] = React.useState('');
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [scannerKey, setScannerKey] = React.useState(0);
-  const [hasDecoded, setHasDecoded] = React.useState(false);
-  const [facingMode, setFacingMode] = React.useState<'user' | 'environment'>('environment');
-  const [torchOn, setTorchOn] = React.useState(false);
-  const scanContainerRef = React.useRef<HTMLDivElement>(null);
+const ScanQrVisitorDialog: React.FC<Props> = ({
+  open,
+  onClose,
+  handleSubmitQRCode,
+  container,
+  onOpenInvitation,
+}) => {
+  const [qrMode, setQrMode] = useState<'manual' | 'scan'>('manual');
+  const [qrValue, setQrValue] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [scannerKey, setScannerKey] = useState(0);
+  const [hasDecoded, setHasDecoded] = useState(false);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
+  const [torchOn, setTorchOn] = useState(false);
+  const scanContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) {
@@ -60,25 +67,59 @@ const ScanQrVisitorDialog: React.FC<Props> = ({ open, onClose, handleSubmitQRCod
       <Divider />
 
       <DialogContent>
-        {/* Toggle mode */}
         <Box display="flex" gap={1} mb={2}>
-          <Button
-            variant={qrMode === 'manual' ? 'contained' : 'outlined'}
-            onClick={() => setQrMode('manual')}
-            size="small"
-          >
-            Manual
-          </Button>
-          <Button
-            variant={qrMode === 'scan' ? 'contained' : 'outlined'}
-            onClick={() => {
-              setHasDecoded(false);
-              setQrMode('scan');
+          <Tooltip
+            title="Enter the code manually"
+            placement="top"
+            arrow
+            slotProps={{
+              tooltip: {
+                sx: {
+                  fontSize: '1rem',
+                  padding: '8px 14px',
+                },
+              },
+              popper: {
+                container: container,
+              },
             }}
-            size="small"
           >
-            Scan Kamera
-          </Button>
+            <Button
+              variant={qrMode === 'manual' ? 'contained' : 'outlined'}
+              onClick={() => setQrMode('manual')}
+              size="small"
+            >
+              Manual
+            </Button>
+          </Tooltip>
+          <Tooltip
+            title="Scan the code using your camera"
+            placement="top"
+            arrow
+            slotProps={{
+              tooltip: {
+                sx: {
+                  fontSize: '1rem',
+                  padding: '8px 14px',
+                },
+              },
+              popper: {
+                container: container,
+              },
+            }}
+          >
+            <Button
+              variant={qrMode === 'scan' ? 'contained' : 'outlined'}
+              onClick={() => {
+                setHasDecoded(false);
+                setQrMode('scan');
+              }}
+              startIcon={<IconCamera />}
+              size="small"
+            >
+              Scan Kamera
+            </Button>
+          </Tooltip>
         </Box>
 
         {/* MODE: MANUAL */}
@@ -93,7 +134,43 @@ const ScanQrVisitorDialog: React.FC<Props> = ({ open, onClose, handleSubmitQRCod
               value={qrValue}
               onChange={(e) => setQrValue(e.target.value)}
             />
-            <Box mt={2} display="flex" justifyContent="flex-end">
+            <Divider sx={{ my: 2 }} />
+            <Box mt={2} display="flex" justifyContent="space-between" alignItems={'center'}>
+              <Tooltip
+                title="Create a new invitation"
+                placement="top"
+                arrow
+                slotProps={{
+                  tooltip: {
+                    sx: {
+                      fontSize: '1rem',
+                      padding: '8px 14px',
+                    },
+                  },
+                  popper: {
+                    container: container,
+                  },
+                }}
+              >
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<IconUser size={18} />}
+                  onClick={onOpenInvitation}
+                  sx={{
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    px: 2.5,
+                    background: 'linear-gradient(135deg, #5D87FF 0%, #4169E1 100%)',
+                    boxShadow: '0 2px 6px rgba(93, 135, 255, 0.4)',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #4169E1 0%, #3657D6 100%)',
+                    },
+                  }}
+                >
+                  New Invitation
+                </Button>
+              </Tooltip>
               <Button
                 variant="contained"
                 color="primary"
@@ -103,7 +180,7 @@ const ScanQrVisitorDialog: React.FC<Props> = ({ open, onClose, handleSubmitQRCod
                     await handleSubmitQRCode(qrValue);
                     onClose();
                   } finally {
-                    setIsSubmitting(false);
+                    setTimeout(() => setIsSubmitting(false), 400);
                   }
                 }}
                 disabled={!qrValue || isSubmitting}
@@ -115,7 +192,6 @@ const ScanQrVisitorDialog: React.FC<Props> = ({ open, onClose, handleSubmitQRCod
           </>
         )}
 
-        {/* MODE: SCAN */}
         {qrMode === 'scan' && (
           <Box
             ref={scanContainerRef}

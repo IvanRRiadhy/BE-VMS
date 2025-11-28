@@ -118,12 +118,15 @@ const NavCollapse = ({
         onClick={handleClick}
         selected={pathWithoutLastPart === menu.href}
         key={menu?.id}
+        // sx={{ backgroundColor: 'red' }}
+        sx={{ ':hover': { backgroundColor: 'primary.main'} }}
       >
         <ListItemIcon
           sx={{
             minWidth: '36px',
             p: '3px 0',
             color: 'inherit',
+            zIndex: 99999,
           }}
         >
           {menuIcon}

@@ -11,6 +11,9 @@ import {
   Skeleton,
   Card,
   IconButton,
+  Portal,
+  Backdrop,
+  CircularProgress,
 } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
 import { useRef } from 'react';
@@ -54,6 +57,7 @@ type EnableField = {
 
 const Content = () => {
   const [tableData, setTableData] = useState<Item[]>([]);
+  const [allData, setAllData] = useState<Item[]>([]);
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
 
   const [isDataReady, setIsDataReady] = useState(false);
@@ -171,7 +175,8 @@ const Content = () => {
           appliedType !== -1 ? appliedType : undefined,
         );
         const resGetAll = await getAllSite(token);
-        console.log('Response from API:', resGetAll);
+        // console.log('Response from API:', resGetAll);
+        setAllData(resGetAll.collection);
         setTableData(response.collection);
         setTotalRecords(response.RecordsTotal);
         setTotalFilteredRecords(response.RecordsFiltered);
@@ -186,8 +191,8 @@ const Content = () => {
         }));
 
         // if (rows) {
-          setTableRowSite(rows);
-          // setIsDataReady(true);
+        setTableRowSite(rows);
+        // setIsDataReady(true);
         // }
       } catch (error) {
         console.error('Fetch error:', error);
@@ -260,7 +265,8 @@ const Content = () => {
       }
     }
 
-    const found = tableData.find((item) => item.id === id);
+    const found = allData.find((item) => item.id === id);
+
     if (!found) return;
 
     try {
@@ -270,7 +276,7 @@ const Content = () => {
         access: [],
         parking: [],
         tracking: [],
-        is_registered_point: false,
+        // is_registered_point: false,
       };
       setEdittingId(id);
       setFormDataAddSite(parsedData);
@@ -334,17 +340,13 @@ const Content = () => {
   const handleDelete = async (id: string) => {
     if (!token) return;
 
-    const confirm = await showConfirmDelete(
-      'Are you sure you want to delete this site space?',
-      "",
-    );
+    const confirm = await showConfirmDelete('Are you sure you want to delete this site space?', '');
 
     if (confirm) {
       setLoading(true);
       try {
         await deleteSiteSpace(id, token);
         setRefreshTrigger((prev) => prev + 1);
-        // showSuccessAlert('Deleted!', 'Site space has been deleted.');
         showSwal('success', 'Site space has been deleted.');
       } catch (error) {
         // console.error(error);
@@ -363,7 +365,7 @@ const Content = () => {
 
     const confirmed = await showConfirmDelete(
       `Are you sure to delete ${rows.length} site space?`,
-      "",
+      '',
     );
 
     if (confirmed) {
@@ -452,9 +454,7 @@ const Content = () => {
             <Grid size={{ xs: 12, lg: 12 }}>
               <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
             </Grid>
-            {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
-              {/* {isDataReady ? ( */}
               <DynamicTable
                 loading={loading}
                 isHavePagination={true}
@@ -508,13 +508,6 @@ const Content = () => {
                 sortColumns={['name']}
                 onFilterByColumn={(column) => setSortColumn(column.column)}
               />
-              {/* ) : (
-                <Card sx={{ width: '100%' }}>
-                  <Skeleton />
-                  <Skeleton animation="wave" />
-                  <Skeleton animation={false} />
-                </Card>
-              )} */}
             </Grid>
           </Grid>
         </Box>
@@ -531,7 +524,7 @@ const Content = () => {
               if (isFormChanged) {
                 setConfirmDialogOpen(true);
               } else {
-                handleCloseModalCreateSiteSpace(); // langsung tutup kalau tidak ada perubahan
+                handleCloseModalCreateSiteSpace();
               }
             }}
           >
@@ -546,7 +539,7 @@ const Content = () => {
             setFormData={setFormDataAddSite}
             onSuccess={() => {
               localStorage.removeItem('unsavedSiteForm');
-              setSelectedRows([]); // <<< Tambahkan ini
+              setSelectedRows([]);
               setRefreshTrigger((prev) => prev + 1);
               handleCloseModalCreateSiteSpace();
             }}
@@ -572,6 +565,12 @@ const Content = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Portal>
+        <Backdrop open={loading} style={{ zIndex: 99999, color: '#fff' }}>
+          <CircularProgress color="primary" />
+        </Backdrop>
+      </Portal>
     </>
   );
 };

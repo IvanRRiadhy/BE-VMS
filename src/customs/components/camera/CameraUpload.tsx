@@ -3,16 +3,17 @@ import { Box, Typography, Divider, IconButton, Button } from '@mui/material';
 import { Grid2 as Grid } from '@mui/material';
 import Webcam from 'react-webcam';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
-import { IconTrash, IconX } from '@tabler/icons-react';
+import { IconCamera, IconDeviceFloppy, IconTrash, IconX } from '@tabler/icons-react';
 import Dialog from '@mui/material/Dialog';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 
 interface CameraUploadProps {
   value?: string;
   onChange: (url: string) => void;
+  containerRef?: any | null;
 }
 
-const CameraUpload: React.FC<CameraUploadProps> = ({ value, onChange }) => {
+const CameraUpload: React.FC<CameraUploadProps> = ({ value, onChange, containerRef }) => {
   const [open, setOpen] = React.useState(false);
   const [previewUrl, setPreviewUrl] = React.useState<string | null>(value || null);
   const [screenshot, setScreenshot] = React.useState<string | null>(null);
@@ -111,7 +112,17 @@ const CameraUpload: React.FC<CameraUploadProps> = ({ value, onChange }) => {
         <input type="file" hidden ref={fileInputRef} accept="image/*" onChange={handleFile} />
       </Box>
 
-      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        maxWidth="md"
+        fullWidth
+        // container={containerRef.current}
+        slotProps={{
+          // backdrop: { container: containerRef },
+          root: { container: containerRef },
+        }}
+      >
         <Box sx={{ p: 3 }}>
           <Typography variant="h6" mb={2}>
             Take Photo From Camera
@@ -162,13 +173,13 @@ const CameraUpload: React.FC<CameraUploadProps> = ({ value, onChange }) => {
 
           <Divider sx={{ my: 2 }} />
           <Box textAlign="right">
-            <Button color="warning" sx={{ mr: 1 }} onClick={clearLocal}>
+            <Button color="error" sx={{ mr: 1 }} onClick={clearLocal} startIcon={<IconTrash />}>
               Clear
             </Button>
-            <Button variant="contained" onClick={handleCapture}>
+            <Button variant="contained" onClick={handleCapture} startIcon={<IconCamera />}>
               Take Photo
             </Button>
-            <Button sx={{ ml: 1 }} onClick={() => setOpen(false)}>
+            <Button sx={{ ml: 1 }} onClick={() => setOpen(false)} startIcon={<IconDeviceFloppy />}>
               Submit
             </Button>
           </Box>

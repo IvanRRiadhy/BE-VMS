@@ -54,6 +54,7 @@ import {
   IconCircleX,
   IconCircleCheck,
   IconUserOff,
+  IconX,
 } from '@tabler/icons-react';
 import axiosInstance from 'src/customs/api/interceptor';
 import { useDebounce } from 'src/hooks/useDebounce';
@@ -503,6 +504,8 @@ const Content = () => {
     setRefreshTrigger((prev) => prev + 1);
   };
 
+  
+
   return (
     <>
       <PageContainer title="Card" description="this is Dashboard page">
@@ -583,6 +586,19 @@ const Content = () => {
         fullWidth
       >
         <DialogTitle>{importErrorTitle}</DialogTitle>
+        <IconButton
+          aria-label="close"
+          onClick={() => setImportErrorOpen(false)}
+          sx={{
+            position: 'absolute',
+            right: 8,
+            top: 8,
+            color: (theme) => theme.palette.grey[500],
+          }}
+        >
+          <IconX />
+        </IconButton>
+          
         <DialogContent dividers>
           <TableContainer>
             <Table size="small">
@@ -633,9 +649,9 @@ const Content = () => {
             </Table>
           </TableContainer>
         </DialogContent>
-        <DialogActions>
+        {/* <DialogActions>
           <Button onClick={() => setImportErrorOpen(false)}>Close</Button>
-        </DialogActions>
+        </DialogActions> */}
       </Dialog>
 
       <Dialog open={openFormCreateVisitorCard} onClose={handleRequestClose} fullWidth maxWidth="md">
@@ -643,13 +659,6 @@ const Content = () => {
           {isBatchEdit ? 'Batch Edit' : edittingId ? 'Edit' : 'Add'} Card
           <IconButton
             aria-label="close"
-            // onClick={() => {
-            //   if (isFormChanged) {
-            //     setConfirmDialogOpen(true); // ada perubahan, tampilkan dialog konfirmasi
-            //   } else {
-            //     handleCloseModalCreateVisitorCard(); // tidak ada perubahan, langsung tutup
-            //   }
-            // }}
             onClick={() => handleRequestClose(undefined, 'closeButton')}
           >
             <CloseIcon />

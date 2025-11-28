@@ -307,7 +307,6 @@ export const createPraRegisterGroupOperator = async (
   return response.data;
 };
 
-
 export const getGrantAccess = async (
   token: string,
   site: string,
@@ -322,5 +321,12 @@ export const getGrantAccess = async (
   if (response.data.status === 'error') {
     throw new Error(response.data.message);
   }
+  return response.data;
+};
+
+export const getTodayVisitingPurpose = async (token: string): Promise<any> => {
+  const response = await axiosInstance.get('/dashboard/top-today-visiting-purpose', {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
   return response.data;
 };

@@ -1,3 +1,4 @@
+import { verify } from 'crypto';
 import { z } from 'zod';
 
 //TYPE
@@ -7,6 +8,8 @@ export type Item = {
   card_number: string;
   ble_card_number: string;
   type: number;
+  vehicle_plate_number?: string;
+  vehicle_type?: string;
   name: string;
   phone: string;
   email: string;
@@ -15,6 +18,7 @@ export type Item = {
   upload_fr: number;
   qr_code: string;
   faceimage: string;
+  identity_type: string;
   // access_area: string;
   // access_area_special: string;
   birth_date: string; // ISO date format, e.g. "2025-06-16"
@@ -66,6 +70,8 @@ export const CreateEmployeeRequestSchema = z.object({
   card_number: z.string().default(''),
   ble_card_number: z.string().default(''),
   type: z.number().default(0),
+  vehicle_plate_number: z.string().default(''),
+  vehicle_type: z.string().default(''),
   name: z.string().default(''),
   phone: z.string().default(''),
   email: z.string().default(''),
@@ -74,6 +80,7 @@ export const CreateEmployeeRequestSchema = z.object({
   upload_fr: z.number().default(0),
   qr_code: z.string().default(''),
   faceimage: z.string().default(''),
+  identity_type: z.string().default(''),
   // access_area: z.string().default(''),
   // access_area_special: z.string().default(''),
   birth_date: z.string().default(''),
@@ -127,6 +134,10 @@ export interface UpdateEmployeeRequest {
   gender: number;
   address: string;
   upload_fr: number;
+  vehicle_plate_number: string;
+  vehicle_type: string;
+  // faceimage: string;
+  identity_type: string;
   qr_code: string;
   // access_area: string;
   // access_area_special: string;

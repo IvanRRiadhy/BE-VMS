@@ -45,11 +45,14 @@ import {
   FormControl,
   RadioGroup,
   Radio,
-  Chip,
   Tooltip,
+  Select,
 } from '@mui/material';
 import { Box, useMediaQuery, useTheme, width } from '@mui/system';
+// import { t } from 'i18next';
 import moment from 'moment-timezone';
+import backgroundnodata from 'src/assets/images/backgrounds/bg_nodata.svg';
+import infoPic from 'src/assets/images/backgrounds/info_pic.png';
 import {
   IconArrowsMaximize,
   IconBan,
@@ -66,18 +69,23 @@ import {
   IconCreditCard,
   IconForbid2,
   IconGenderMale,
-  IconHistory,
   IconHome,
+  IconInfoCircle,
   IconKey,
   IconLicense,
   IconLogin2,
   IconLogout,
   IconMapPin,
+  IconMapPinCheck,
   IconNumbers,
+  IconParking,
   IconPhone,
   IconQrcode,
+  IconQuestionMark,
+  IconReport,
   IconSearch,
   IconTicket,
+  IconTimeDuration0,
   IconUser,
   IconUserCheck,
   IconUsersGroup,
@@ -88,11 +96,7 @@ import PageContainer from 'src/components/container/PageContainer';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import QRCode from 'react-qr-code';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { Scanner } from '@yudiel/react-qr-scanner';
-import FlipCameraAndroidIcon from '@mui/icons-material/FlipCameraAndroid';
-import FlashOnIcon from '@mui/icons-material/FlashOn';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import FlashOffIcon from '@mui/icons-material/FlashOff';
 import {
   createGiveAccessOperator,
   createGrandAccessOperator,
@@ -105,6 +109,7 @@ import {
   getInvitationCode,
   getInvitationOperatorRelated,
   getPermissionOperator,
+  getTodayVisitingPurpose,
 } from 'src/customs/api/operator';
 import { BASE_URL, axiosInstance2 } from 'src/customs/api/interceptor';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
@@ -115,6 +120,7 @@ import DetailVisitorDialog from './Dialog/DetailVisitorDialog';
 import Swal from 'sweetalert2';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import { getDetailInvitationForm } from 'src/customs/api/visitor';
+import { FullScreen, useFullScreenHandle } from 'react-full-screen';
 import {
   CreateVisitorRequest,
   CreateVisitorRequestSchema,
@@ -131,7 +137,13 @@ import advancedFormat from 'dayjs/plugin/advancedFormat';
 import utc from 'dayjs/plugin/utc';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import HistoryDialog from './Dialog/HistoryDialog';
-import { getAllSite, getRegisteredSite, getVisitorEmployee, updateExtend } from 'src/customs/api/admin';
+import {
+  getAllSite,
+  getRegisteredSite,
+  getVisitorEmployee,
+  getAllVisitorType,
+  updateExtend,
+} from 'src/customs/api/admin';
 import Webcam from 'react-webcam';
 import FormDialogInvitation from '../Employee/FormDialogInvitation';
 import FormDialogPraregist from './Dialog/FormDialogPraregist';
@@ -140,18 +152,25 @@ import { showSwal } from 'src/customs/components/alerts/alerts';
 import FormWizardAddVisitor from './Invitation/FormWizardAddVisitor';
 import FormWizardAddInvitation from './Invitation/FormWizardAddInvitation';
 import ScanQrVisitorDialog from './Dialog/ScanQrVisitorDialog';
-import { json } from 'stream/consumers';
+import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import SelectRegisteredSiteDialog from './Dialog/SelectRegisteredSiteDialog';
+import VisitingPurposeDialog from './Dialog/VisitingPurposeDialog';
+import SwiperComponent from './Components/SwiperComponent';
+import InfoDialog from './Dialog/InfoDialog';
+import ExtendVisitDialog from './Dialog/ExtendVisitDialog';
+import { useTranslation } from 'react-i18next';
 dayjs.extend(utc);
 dayjs.extend(weekday);
 dayjs.extend(localizedFormat);
 dayjs.extend(customParseFormat);
 dayjs.extend(advancedFormat);
-dayjs.locale('id');
+// dayjs.locale('id');
 const OperatorView = () => {
   const theme = useTheme();
   const mdUp = useMediaQuery(theme.breakpoints.up('md'));
   const secdrawerWidth = 320;
   const { token } = useSession();
+  const { t } = useTranslation();
 
   // 🔔 Dummy data Alarm dan History
   const alarms = Array.from({ length: 5 }, (_, i) => ({
@@ -161,6 +180,8 @@ const OperatorView = () => {
     time: `2025-10-21 ${10 + i}:00`,
     type: i % 2 === 0 ? 'Critical' : 'Warning',
   }));
+
+  const dataImage = [infoPic];
 
   const histories = Array.from({ length: 5 }, (_, i) => ({
     id: i + 1,
@@ -181,7 +202,6 @@ const OperatorView = () => {
   const [torchOn, setTorchOn] = useState(false);
   const [wizardKey, setWizardKey] = useState(0);
   const scanContainerRef = useRef<HTMLDivElement | null>(null);
-
   const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [scannerKey, setScannerKey] = useState(0);
@@ -223,7 +243,6 @@ const OperatorView = () => {
   const [selectedMinutes, setSelectedMinutes] = useState<number | null>(null);
   const [openExtendVisit, setOpenExtendVisit] = useState(false);
   const durationOptions = [15, 30, 45, 60, 90, 120, 150, 180];
-  const [extendedEndTime, setExtendedEndTime] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [openFillForm, setOpenFillForm] = useState(false);
   const [fillFormData, setFillFormData] = useState<any[]>([]);
@@ -234,19 +253,48 @@ const OperatorView = () => {
   const [selectedSite, setSelectedSite] = useState<any | null>(null);
   const [flowTarget, setFlowTarget] = useState<'invitation' | 'preReg' | null>(null);
   const [siteData, setSiteData] = useState<any[]>([]);
-  const [accessDialogOpen, setAccessDialogOpen] = useState(false);
+  const [openDialogInfo, setOpenDialogInfo] = useState(false);
   const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorRequest>(() => {
     const saved = localStorage.getItem('unsavedVisitorData');
     return saved ? JSON.parse(saved) : CreateVisitorRequestSchema.parse({});
   });
 
   const [dialogContainer, setDialogContainer] = useState<HTMLElement | null>(null);
+  const [hidePageContainer, setHidePageContainer] = useState(false);
+  useEffect(() => {
+    const handleBrowserFullscreen = () => {
+      const isBrowserFullscreen = !!document.fullscreenElement;
+      setIsFullscreen(isBrowserFullscreen);
+
+      // jika user fullscreen manual (F11)
+      if (isBrowserFullscreen) {
+        setHidePageContainer(true);
+      } else {
+        setHidePageContainer(false);
+      }
+    };
+
+    document.addEventListener('fullscreenchange', handleBrowserFullscreen);
+    return () => document.removeEventListener('fullscreenchange', handleBrowserFullscreen);
+  }, []);
+
+  function getColorByName(name: string) {
+    let hash = 0;
+
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+
+    const hue = Math.abs(hash % 360);
+
+    return `hsl(${hue}, 70%, 55%)`; // solid warna, tidak gradient
+  }
 
   useEffect(() => {
     if (containerRef.current) {
       setDialogContainer(containerRef.current);
     }
-  }, [containerRef.current]);
+  }, [containerRef]);
 
   const handleExtend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -262,9 +310,9 @@ const OperatorView = () => {
     try {
       setLoadingAccess(true);
       const payload = {
-        id: selectedVisitors[0], // ambil visitor ID pertama (atau kirim satu per satu)
+        id: selectedVisitors[0],
         period: selectedMinutes,
-        apply_to_all: applyToAll, // state checkbox “Apply to another visitor”
+        apply_to_all: applyToAll,
       };
 
       console.log('📤 Sending extend payload:', payload);
@@ -294,14 +342,23 @@ const OperatorView = () => {
         ),
       );
 
-      setSnackbarMsg(`Visit extended by ${selectedMinutes} minutes`);
-      setSnackbarType('success');
-      setSnackbarOpen(true);
+      showSwal('success', `Visit extended by ${selectedMinutes} minutes`);
       setOpenExtendVisit(false);
       setSelectedMinutes(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error extending visit:', error);
-      setSnackbarMsg('Failed to extend visit.');
+
+      // default message jika tidak ada response
+      let msg = 'Failed to extend visit.';
+      let status = null;
+
+      // jika ada response dari backend
+      if (error.response && error.response.data) {
+        msg = error.response.data.msg || error.response.data.message || msg;
+        status = error.response.data.status;
+      }
+
+      setSnackbarMsg(msg);
       setSnackbarType('error');
       setSnackbarOpen(true);
     } finally {
@@ -309,7 +366,7 @@ const OperatorView = () => {
     }
   };
 
-  const handleSuccess = () => {
+  const handleSuccess = async () => {
     setSelectedSite(null);
     setFormDataAddVisitor((prev: any) => ({
       ...prev,
@@ -317,6 +374,7 @@ const OperatorView = () => {
     }));
     // setRefreshTrigger((prev) => prev + 1);
     handleCloseDialog();
+    await fetchTodayVisitingPurpose();
   };
 
   useEffect(() => {
@@ -359,13 +417,13 @@ const OperatorView = () => {
     }[]
   >([]);
 
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-  }, []);
+  // useEffect(() => {
+  //   const handleFullscreenChange = () => {
+  //     setIsFullscreen(!!document.fullscreenElement);
+  //   };
+  //   document.addEventListener('fullscreenchange', handleFullscreenChange);
+  //   return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  // }, []);
 
   const uploadFileToCDN = async (file: File | Blob): Promise<string | null> => {
     const formData = new FormData();
@@ -408,9 +466,6 @@ const OperatorView = () => {
       setUploadNames((prev) => ({ ...prev, [trackKey]: file.name }));
       setPreviews((prev) => ({ ...prev, [trackKey]: URL.createObjectURL(file) }));
     }
-
-    // console.log('🟢 Before uploadNames:', uploadNames);
-    // console.log('🟢 Set uploadNames for key', trackKey, '->', file.name);
 
     const path = await uploadFileToCDN(file);
     if (path) setAnswerFile(path);
@@ -468,9 +523,7 @@ const OperatorView = () => {
   };
 
   const resetSelections = () => {
-    // setSelectedInvitations([]);
     setSelectedCards([]);
-    // setTableKey((k) => k + 1); // ← paksa remount DynamicTable
   };
 
   const [selectedInvitations, setSelectedInvitations] = useState<any[]>([]);
@@ -589,6 +642,20 @@ const OperatorView = () => {
     });
   };
 
+  const [currentAction, setCurrentAction] = useState<'Checkin' | 'Checkout' | null>(null);
+  const [showExtendButton, setShowExtendButton] = useState(false);
+  const [actionButton, setActionButton] = useState<any | null>(null);
+
+  const handleOpenAction = (value: string) => {
+    setActionButton(value);
+    setOpenDialogIndex(1);
+  };
+
+  const handleActionClick = (action: 'Checkin' | 'Checkout') => {
+    setCurrentAction(action);
+    setOpenDialogIndex(1);
+  };
+
   const handleSubmitQRCode = async (value: string) => {
     try {
       const res = await getInvitationCode(token as string, value);
@@ -609,6 +676,34 @@ const OperatorView = () => {
       setScannedVisitorNumber(data[0]?.visitor_number ?? null);
 
       await fetchRelatedVisitorsByInvitationId(invitationId);
+
+      if (currentAction) {
+        setSelectedVisitors([invitationId]);
+        await handleConfirmStatus(currentAction);
+        setCurrentAction(null);
+        handleCloseScanQR();
+        return;
+      }
+
+      if (actionButton == 'extend') {
+        setSelectedVisitors([invitationId]);
+        setOpenExtendVisit(true);
+        setActionButton(null);
+        handleCloseScanQR();
+        return;
+      } else if (actionButton == 'card') {
+        setSelectedVisitors([invitationId]);
+        handleChooseCard();
+        setActionButton(null);
+        handleCloseScanQR();
+        return;
+      } else if (actionButton == 'access') {
+        setSelectedVisitors([invitationId]);
+        setOpenAccessData(true);
+        setActionButton(null);
+        handleCloseScanQR();
+        return;
+      }
 
       setInvitationCode((prev) =>
         prev.map((inv) => {
@@ -656,16 +751,13 @@ const OperatorView = () => {
       }
       handleCloseScanQR();
 
-      showSwal('success', 'Code scanned successfully.', 3000);
-
-      // setSnackbarMsg('Code scanned successfully.');
-      // setSnackbarType('success');
-      // setSnackbarOpen(true);
+      showSwal('success', 'Code scanned successfully.');
+      setShowExtendButton(true);
     } catch (e) {
-      // console.error('Error fetching invitation code:', e);
-      setSnackbarMsg('Your code does not exist.');
-      setSnackbarType('error');
-      setSnackbarOpen(true);
+      // setSnackbarMsg('Your code does not exist.');
+      // setSnackbarType('error');
+      // setSnackbarOpen(true);
+      showSwal('error', 'Your code does not exist.');
     }
   };
 
@@ -752,21 +844,15 @@ const OperatorView = () => {
     // console.log('🧩 allAccessData from related visitors:', allAccess);
     setAllAccessData(allAccess);
     // Set visitor pertama sebagai default
-    if (relatedData.length > 0) {
+    // if (relatedData.length > 0) {
+    //   const firstVisitorId = relatedData[0].id?.toLowerCase();
+    //   setSelectedVisitors([firstVisitorId]);
+    // }
+    if (relatedData.length > 0 && selectedVisitors.length === 0) {
       const firstVisitorId = relatedData[0].id?.toLowerCase();
       setSelectedVisitors([firstVisitorId]);
     }
   };
-
-  // const formatDateTime = (dateStr?: string) => {
-  //   if (!dateStr) return '-';
-  //   return (
-  //     moment
-  //       .utc(dateStr) // data asal UTC
-  //       .tz('Asia/Jakarta') // ubah ke zona waktu Jakarta
-  //       .format('DD MMM YYYY, HH:mm') + ' WIB'
-  //   );
-  // };
 
   const formatDateTime = (dateStr?: string, extendMinutes?: number) => {
     if (!dateStr) return '-';
@@ -890,37 +976,6 @@ const OperatorView = () => {
 
         response = await createMultipleGrantAccess(token as string, { data: dataPayload });
       } else {
-        // // 🧍 Single visitor
-        // for (const visitorId of selectedVisitors) {
-        //   const visitor = relatedVisitors.find(
-        //     (v) => v.id?.toLowerCase() === visitorId.toLowerCase(),
-        //   );
-        //   if (!visitor) continue;
-
-        //   if (visitor.card && visitor.card.length > 0) {
-        //     alreadyHasCard.push(visitor.name || visitorId);
-        //     continue;
-        //   }
-
-        //   for (const cardNumber of selectedCards) {
-        //     // await createGrandAccessOperator(token as string, {
-        //     //   card_number: String(cardNumber),
-        //     //   trx_visitor_id: visitorId,
-        //     // });
-        //     const payload = {
-        //       card_number: String(cardNumber),
-        //       trx_visitor_id: visitorId,
-        //     };
-
-        //     // console.log('Grant Access', JSON.stringify(payload, null, 2));
-
-        //     response = await createGrandAccessOperator(token as string, payload);
-        //     console.log('response : ',JSON.stringify(response, null , 2));
-        //   }
-
-        //   successAssigned.push(visitor.name || visitorId);
-        // }
-
         // 🧍 Single visitor (selected OR scanned)
         const visitorId = invitationCode[0]?.id;
 
@@ -954,7 +1009,7 @@ const OperatorView = () => {
             };
 
             response = await createGrandAccessOperator(token as string, payload);
-            // console.log('response:', JSON.stringify(response, null, 2));
+            console.log('response:', JSON.stringify(payload, null, 2));
           }
 
           successAssigned.push(visitor.name || visitorId);
@@ -969,30 +1024,15 @@ const OperatorView = () => {
 
       await fetchAvailableCards();
 
-      // if (response?.collection && response.collection.length > 0) {
-      //   const messages = response.collection.map((item: any) => item.message).join(', ');
-      //   setSnackbarMsg(`⚠️ ${messages}`);
-      //   setSnackbarType('error');
-      //   setSnackbarOpen(true);
-      //   setLoadingAccess(false);
-      //   return;
-      // }
-
-      // setInvitationCode((prev) => {
-      //   if (!prev || prev.length === 0) return prev;
-
-      //   const updated = { ...prev[0] };
-
-      //   // Jika belum ada card array, buat baru
-      //   updated.card = [
-      //     ...(updated.card || []),
-      //     ...selectedCards.map((num) => ({
-      //       card_number: String(num),
-      //     })),
-      //   ];
-
-      //   return [updated];
-      // });
+      if (response?.collection && response.collection.length > 0) {
+        const messages = response.collection.map((item: any) => item.message).join(', ');
+        // setSnackbarMsg(`⚠️ ${messages}`);
+        // setSnackbarType('error');
+        showSwal('error', `${messages}`);
+        // setSnackbarOpen(true);
+        setLoadingAccess(false);
+        return;
+      }
 
       // handleCloseChooseCard();
       const uniqueAssigned = Array.from(new Set(successAssigned));
@@ -1000,23 +1040,6 @@ const OperatorView = () => {
 
       // 🧾 Build final message
       let message = '';
-
-      // if (uniqueAssigned.length > 0) {
-      //   message += `Successfully assigned ${uniqueAssigned.length} card(s):\n`;
-      //   message += selectedVisitors
-      //     .map((visitorId, idx) => {
-      //       const visitor = relatedVisitors.find(
-      //         (v) => v.id?.toLowerCase() === visitorId.toLowerCase(),
-      //       );
-      //       const cardNumber = selectedCards[idx] || '-';
-      //       if (visitor && !alreadyHasCard.includes(visitor.name || visitorId)) {
-      //         return `• ${visitor.name || visitorId} - (Card: ${cardNumber})`;
-      //       }
-      //       return null;
-      //     })
-      //     .filter(Boolean)
-      //     .join('\n');
-      // }
 
       if (uniqueAssigned.length > 0) {
         message += `Successfully assigned ${uniqueAssigned.length} card(s):\n`;
@@ -1087,6 +1110,7 @@ const OperatorView = () => {
       setTimeout(() => setLoadingAccess(false), 600);
     }
   };
+
   const handleClearAll = () => {
     setQrValue('');
     setSearch('');
@@ -1103,7 +1127,7 @@ const OperatorView = () => {
   };
 
   const handleConfirmStatus = async (action: 'Checkin' | 'Checkout' | 'Block' | 'Unblock') => {
-    const id = invitationCode?.[0]?.id ?? selectedVisitorId;
+    const id = selectedVisitorId ?? invitationCode?.[0]?.id;
     const actionLabelMap: Record<string, string> = {
       Checkin: 'check in',
       Checkout: 'check out',
@@ -1116,10 +1140,11 @@ const OperatorView = () => {
     try {
       if (action === 'Block' || action === 'Unblock') {
         const { value: inputReason } = await Swal.fire({
-          imageUrl: '/src/assets/images/logos/BI_Logo.png',
+          imageUrl: '/assets/images/BI_Logo.png',
           imageWidth: 80,
           imageHeight: 80,
           imageAlt: 'BI Logo',
+          target: containerRef.current,
           title: action === 'Block' ? 'Block Visitor' : 'Unblock Visitor',
           text:
             action === 'Block'
@@ -1128,6 +1153,7 @@ const OperatorView = () => {
           input: 'text',
           inputPlaceholder: 'Enter reason...',
           inputAttributes: { maxlength: '200' },
+          showCloseButton: true,
           showCancelButton: true,
           confirmButtonText: action,
           confirmButtonColor: action === 'Block' || action === 'Unblock' ? '#000' : '#000',
@@ -1136,6 +1162,7 @@ const OperatorView = () => {
           customClass: {
             title: 'swal2-title-custom',
             popup: 'swal-popup-custom',
+            closeButton: 'swal-close-red',
           },
           inputValidator: (value) => {
             if (!value || value.trim().length < 3) {
@@ -1151,18 +1178,21 @@ const OperatorView = () => {
         // 🔹 Normal confirm dialog
         const confirm = await Swal.fire({
           title: `Do you want to ${actionLabelMap[action]}?`,
-          imageUrl: '/src/assets/images/logos/BI_Logo.png',
+          imageUrl: '/assets/images/BI_Logo.png',
           imageWidth: 80,
           imageHeight: 80,
           imageAlt: 'BI Logo',
           showCancelButton: true,
           confirmButtonText: 'Yes',
           cancelButtonText: 'Cancel',
+          showCloseButton: true,
+          target: containerRef.current,
           confirmButtonColor: '#4caf50',
           reverseButtons: true,
           customClass: {
             title: 'swal2-title-custom',
             popup: 'swal-popup-custom',
+            closeButton: 'swal-close-red',
           },
         });
 
@@ -1170,14 +1200,12 @@ const OperatorView = () => {
       }
 
       setLoadingAccess(true);
-
-      // 🔥 API call
       const res = await createInvitationActionOperator(token as string, id!, {
         action,
         reason,
       });
 
-      // console.log('✅ Action Response:', res);
+      console.log('✅ Action Response:', res);
 
       setRelatedVisitors((prev) =>
         prev.map((v) =>
@@ -1207,23 +1235,37 @@ const OperatorView = () => {
         return [JSON.parse(JSON.stringify(updated))];
       });
 
+      setSelectedVisitors((prev) => {
+        if (!selectedVisitorId) return prev; // prevent undefined
+        if (!prev.includes(selectedVisitorId)) {
+          return [...prev, selectedVisitorId];
+        }
+        return prev;
+      });
+
       setVisitorStatus(action);
 
       // 🔹 Refetch background sync (after small delay)
       const invitationId = invitationCode?.[0]?.id;
       if (invitationId) {
-        await new Promise((r) => setTimeout(r, 600)); // tunggu 1 detik
+        const previousSelected = [...selectedVisitors];
+        const previousSelectedId = selectedVisitorId;
+
+        await new Promise((r) => setTimeout(r, 600));
         await fetchRelatedVisitorsByInvitationId(invitationId);
+
+        setSelectedVisitors(previousSelected);
+        setSelectedVisitorId(previousSelectedId);
       }
-      // setSnackbarMsg(`${action} successfully.`);
-      // setSnackbarType('success');
-      // setSnackbarOpen(true);
       showSwal('success', `${action} successfully.`);
-    } catch (e) {
-      // console.error('❌ Error createInvitationActionOperator:', e);
-      setSnackbarMsg(`Failed to ${action}.`);
-      setSnackbarType('error');
-      setSnackbarOpen(true);
+    } catch (e: any) {
+      const message =
+        e?.response?.data?.msg ??
+        e?.response?.data?.message ??
+        e?.message ??
+        'Failed to update visitor status.';
+
+      showSwal('error', message);
     } finally {
       // setTimeout(() => {
       setLoadingAccess(false);
@@ -1365,6 +1407,7 @@ const OperatorView = () => {
         inputPlaceholder: 'Enter reason...',
         inputAttributes: { maxlength: '200' },
         showCancelButton: true,
+        target: containerRef.current,
         reverseButtons: true,
         confirmButtonText: bulkAction === 'block' ? 'Block' : 'Unblock',
         confirmButtonColor: bulkAction === 'block' ? '#000' : '#000',
@@ -1555,27 +1598,8 @@ const OperatorView = () => {
       actions.add('unblock');
       actions.delete('block');
     }
-  }
-
-  // ===================================================
-  // 🧩 2️⃣ MULTIPLE SELECTION
-  // ===================================================
-  else if (selectedData.length > 1) {
+  } else if (selectedData.length > 1) {
     // // 🔸 Jika ada Preregis yang belum pra-register
-    // if (hasPreregis && preregFalse) {
-    //   actions.add('fill_form');
-    // }
-
-    // // 🔸 Jika ada yang sudah pra-register (boleh checkin/block)
-    // if (hasPreregis && preregTrue) {
-    //   actions.add('checkin');
-    //   actions.add('block');
-    // }
-
-    // // 🔸 Gabungkan semua kemungkinan aksi lain (Checkin, Block, dsb.)
-    // for (const status of statuses) {
-    //   (statusActions[status] || []).forEach((a) => actions.add(a));
-    // }
     const baseStatusActions: Record<string, string[]> = {
       Checkin: ['checkout', 'block'],
       Checkout: ['block'],
@@ -1633,37 +1657,6 @@ const OperatorView = () => {
     );
     return REQUIRED_VI.every((x) => r.has(x));
   };
-  const pickVisitorInfoSingle = (sections: any[] = []) =>
-    sections.find((s) => !s?.is_document && !s?.can_multiple_used && hasVIFields(s));
-
-  const pickPurposeVisit = (sections: any[] = []) =>
-    sections.find(
-      (s) =>
-        !s?.is_document &&
-        formsOf(s).some((f: any) =>
-          ['host', 'agenda', 'site_place', 'visitor_period_start', 'visitor_period_end'].includes(
-            sanitizeRemarks(f?.remarks),
-          ),
-        ),
-    );
-
-  const cloneForms = (forms?: any[]) =>
-    Array.isArray(forms)
-      ? forms.map((f, idx) => ({
-          ...f,
-          sort: f.sort ?? idx,
-          foreign_id: asStr(f.foreign_id),
-          answer_text: '',
-          answer_datetime: '',
-          answer_file: '',
-          multiple_option_fields: Array.isArray(f.multiple_option_fields)
-            ? f.multiple_option_fields.map((opt: any) =>
-                typeof opt === 'object' ? { ...opt } : opt,
-              )
-            : [],
-        }))
-      : [];
-
   const handleUploadMethodChange = (ukey: string, v: string) => {
     setUploadMethods((prev) => ({ ...prev, [ukey]: v as 'file' | 'camera' }));
   };
@@ -1753,23 +1746,12 @@ const OperatorView = () => {
     ];
   };
 
-  const DOC_REMARKS = new Set(['selfie_image', 'identity_image', 'nda']);
-
   const asStr = (v: any) => (v == null ? '' : String(v));
-
   const sameField = (a: any, b: any) =>
     (a?.custom_field_id && b?.custom_field_id && a.custom_field_id === b.custom_field_id) ||
     (a?.remarks &&
       b?.remarks &&
       String(a.remarks).toLowerCase() === String(b.remarks).toLowerCase());
-
-  const pickAns = (f: any) => {
-    const o: any = {};
-    if (f?.answer_text) o.answer_text = f.answer_text;
-    if (f?.answer_datetime) o.answer_datetime = f.answer_datetime;
-    if (f?.answer_file) o.answer_file = f.answer_file;
-    return o;
-  };
 
   const isPurposeVisit = (section: any) => {
     if (section?.is_document) return false;
@@ -2145,6 +2127,16 @@ const OperatorView = () => {
                 sx={{ width: 160 }}
                 value={value}
                 onChange={(e) => onChange(index, 'answer_text', e.target.value)}
+                SelectProps={{
+                  MenuProps: {
+                    disablePortal: true,
+                    PaperProps: {
+                      sx: {
+                        zIndex: 20000,
+                      },
+                    },
+                  },
+                }}
               >
                 {options.map((opt) => (
                   <MenuItem key={opt.value} value={opt.value}>
@@ -2205,7 +2197,6 @@ const OperatorView = () => {
                   onChange={(e) => {
                     onChange(index, 'answer_text', e.target.value);
 
-                    // 🔥 trigger re-render otomatis agar vehicle fields muncul/hilang
                     setFillFormDataVisitor((prev) => {
                       return [...prev];
                     });
@@ -2241,38 +2232,6 @@ const OperatorView = () => {
           );
 
         case 6:
-          // if (field.remarks === 'is_employee') {
-          //   const options = Array.isArray(field.multiple_option_fields)
-          //     ? field.multiple_option_fields.map((opt) => ({
-          //         value: String(opt.value).toLowerCase(),
-          //         name: opt.name,
-          //       }))
-          //     : [
-          //         { value: 'true', name: 'Yes' },
-          //         { value: 'false', name: 'No' },
-          //       ];
-
-          //   const currentValue = String(field.answer_text).toLowerCase();
-
-          //   return (
-          //     <Box display="flex" alignItems="center" gap={2}>
-          //       {options.map((opt) => (
-          //         <FormControlLabel
-          //           key={opt.value}
-          //           control={
-          //             <Checkbox
-          //               checked={currentValue === opt.value}
-          //               onChange={() => onChange(index, 'answer_text', opt.value)}
-          //             />
-          //           }
-          //           label={opt.name}
-          //         />
-          //       ))}
-          //     </Box>
-          //   );
-          // }
-
-          // fallback default (checkbox tunggal)
           return (
             <FormControlLabel
               control={
@@ -2396,7 +2355,6 @@ const OperatorView = () => {
               {fileUrl && (
                 <Box mt={1} display="flex" alignItems="center" gap={1}>
                   <Typography variant="caption" noWrap>
-                    {/* {fileUrl.split('/').pop()} */}
                     {uploadNames[key] ?? ''}
                   </Typography>
                   <IconButton
@@ -2405,8 +2363,8 @@ const OperatorView = () => {
                     onClick={() =>
                       handleRemoveFileForField(
                         (field as any).answer_file,
-                        (url) => onChange(index, 'answer_file', url), // kosongkan state
-                        key, // reset <input id=key>
+                        (url) => onChange(index, 'answer_file', url),
+                        key,
                       )
                     }
                   >
@@ -2423,11 +2381,11 @@ const OperatorView = () => {
           return (
             <Box
               display="flex"
-              flexDirection={{ xs: 'column', sm: 'column', md: 'row' }} // ⬅️ stack on mobile
+              flexDirection={{ xs: 'column', sm: 'column', md: 'row' }}
               alignItems={{ xs: 'stretch', md: 'center' }}
               justifyContent="space-between"
               gap={1.5}
-              width="100%" // ⬅️ let it adapt instead of fixed width
+              width="100%"
               sx={{ maxWidth: 400 }}
             >
               <TextField
@@ -2437,7 +2395,7 @@ const OperatorView = () => {
                 onChange={(e) => handleUploadMethodChange(key, e.target.value)}
                 fullWidth
                 sx={{
-                  width: { xs: '100%', md: '200px' }, // full on mobile
+                  width: { xs: '100%', md: '200px' },
                 }}
               >
                 <MenuItem value="file">Choose File</MenuItem>
@@ -2536,15 +2494,11 @@ const OperatorView = () => {
           width: '100%',
         }}
       >
-        {showLabel &&
-          // <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
-          //   {field.long_display_text}
-          // </Typography>
-          (!isVehicleField || isDriving) && (
-            <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
-              {field.long_display_text}
-            </Typography>
-          )}
+        {showLabel && (!isVehicleField || isDriving) && (
+          <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
+            {field.long_display_text}
+          </Typography>
+        )}
         {renderInput()}
       </Box>
     );
@@ -2556,12 +2510,12 @@ const OperatorView = () => {
     if (earlyAccess) {
       switch (status) {
         case 0:
-          return ['Revoke', 'Block']; // early access belum grant
+          return ['Revoke', 'Block'];
         case 1:
-          return []; // granted — tetap bisa revoke/block
+          return [];
         case 2:
         case 3:
-          return []; // revoked/blocked — tidak bisa apa-apa
+          return [];
         default:
           return [];
       }
@@ -2586,7 +2540,7 @@ const OperatorView = () => {
       (p) => p.access_control_id?.toLowerCase() === accessId.toLowerCase(),
     );
 
-    if (!perm) return []; // operator tidak punya izin sama sekali di access ini
+    if (!perm) return [];
 
     const actions: string[] = [];
     if (perm.can_grant) actions.push('Grant');
@@ -2595,35 +2549,6 @@ const OperatorView = () => {
 
     return actions;
   };
-
-  // 🔹 Ambil allowed actions untuk satu access ID hanya untuk visitor yang dipilih
-  // const getAllowedActionsForAccessId = (
-  //   accessId: string,
-  //   selectedVisitorIds: string[],
-  //   allAccessData: any[],
-
-  // ) => {
-  //   const records = allAccessData.filter(
-  //     (a) =>
-  //       a.access_control_id?.toLowerCase() === accessId.toLowerCase() &&
-  //       selectedVisitorIds.some(
-  //         (v) =>
-  //           v.toLowerCase() === a.trx_visitor_id?.toLowerCase() ||
-  //           v.toLowerCase() === a.trxVisitorId?.toLowerCase(),
-  //       ),
-  //   );
-
-  //   if (!records.length) return [];
-
-  //   const perVisitorActions = records.map((r) =>
-  //     getAllowedActions(r.visitor_give_access ?? 0, !!r.early_access),
-  //   );
-
-  //   return perVisitorActions.reduce(
-  //     (acc, cur) => acc.filter((x) => cur.includes(x)),
-  //     perVisitorActions[0] || [],
-  //   );
-  // };
 
   const getAllowedActionsForAccessId = (
     accessId: string,
@@ -2698,7 +2623,6 @@ const OperatorView = () => {
       return commonPermissionActions;
     }
 
-    // 🔹 Kalau hanya satu visitor → hitung normal
     return getAllowedActionsForMultiple(
       selectedAccessIds,
       selectedVisitors,
@@ -2706,7 +2630,6 @@ const OperatorView = () => {
       permissionAccess,
     );
   }, [selectedAccessIds, selectedVisitors, accessData, permissionAccess]);
-
 
   const handleSubmitPramultiple = async () => {
     try {
@@ -2725,10 +2648,8 @@ const OperatorView = () => {
         invitationDetail.collection?.site_place || invitationDetail.collection?.site_place_data?.id;
       const isGroup = invitationDetail.collection?.is_group ?? true;
 
-      // 🟢 Ambil visitor yang dipilih
       const selected = relatedVisitors.filter((v) => selectedVisitors.includes(v.id));
 
-      // 🔁 Bangun ulang setiap visitor berdasarkan index-nya di fillFormDataVisitor
       const dataList = selected.map((visitor, gIdx) => {
         const visitorGroup = fillFormDataVisitor[gIdx];
         const visitorSections = visitorGroup?.question_page ?? [];
@@ -2812,18 +2733,8 @@ const OperatorView = () => {
 
       const payload = { list_group: dataList };
       console.log('✅ Final Payload (MULTI-VISITOR FIXED):', JSON.stringify(payload, null, 2));
-
-      // 🔵 Submit ke API
       const result = await createSubmitCompletePraMultiple(token as string, payload);
-      // toast('Successfully P', 'success');
       showSwal('success', 'Successfully Pra Register!');
-      // console.log('✅ Submit success:', result);
-
-      // setSnackbarMsg('Successfully submit praregister');
-      // setSnackbarType('success');
-      // setSnackbarOpen(true);
-
-      // 🟩 Update lokal biar langsung terlihat (UX cepat)
       setRelatedVisitors((prev) =>
         prev.map((v) =>
           selectedVisitors.includes(v.id)
@@ -2863,7 +2774,6 @@ const OperatorView = () => {
     setOpenDialogInvitation(true);
   };
 
-  // ✅ GABUNGKAN MULTI VISITOR ACCESS DENGAN TEMPLATE DATA PERTAMA
   useEffect(() => {
     if (!selectedVisitors.length) {
       setAccessData([]);
@@ -3062,7 +2972,6 @@ const OperatorView = () => {
         //   setSnackbarOpen(true);
         // }
 
-        // ❌ Semua invalid → stop
         if (!validVisitors.length) {
           setSnackbarMsg(message || 'No valid visitors to process.');
           setSnackbarType('error');
@@ -3071,7 +2980,6 @@ const OperatorView = () => {
           return;
         }
 
-        // ⚠️ Campuran valid + invalid → tampilkan peringatan tapi lanjut
         if (invalidVisitors.length) {
           setSnackbarMsg(
             '⚠️ Some visitors cannot perform this action:\n' + invalidVisitors.join('\n'),
@@ -3156,26 +3064,57 @@ const OperatorView = () => {
       ? `${BASE_URL}/cdn${activeVisitor.identity_image}`
       : null;
 
+  const [todayVisitingPurpose, setTodayVisitingPurpose] = useState<any[]>([]);
+  // // const [todayVisitingPurpose, setTodayVisitingPurpose] = useState<any[]>([
+  // //   { id: 'E54ADE95-1C51-4C51-9C26-9ED0A1C1A001', name: 'Visitor', count: 4 },
+  // //   { id: '9AD65124-7251-4E11-8C48-79A2F1370002', name: 'Meeting', count: 12 },
+  // //   { id: '1470E3A4-6EC1-4F5F-AE2C-43AD51360003', name: 'Delivery', count: 6 },
+  // //   { id: 'FA8918BC-6E44-4DF8-BEE8-096F6D850004', name: 'Courier', count: 2 },
+  // //   { id: 'C3A4601B-4F6B-48CA-9727-7C0B90490005', name: 'Maintenance', count: 8 },
+  // //   { id: 'A72151C5-5214-4F3C-9D21-366DF0F70006', name: 'Guest', count: 3 },
+  // // ]);
+  // const moreItems = todayVisitingPurpose.slice(5);
+
+  const [openMore, setOpenMore] = useState(false);
+  const handleOpenMore = () => setOpenMore(true);
+
+  const fetchTodayVisitingPurpose = async () => {
+    try {
+      const res = await getTodayVisitingPurpose(token as string);
+      setTodayVisitingPurpose(res?.collection || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    if (token) {
+      fetchTodayVisitingPurpose();
+    }
+  }, [token]);
+
+  const handle = useFullScreenHandle();
+
   return (
-    <PageContainer
-      title={!isFullscreen ? 'Operator View' : 'Operator View'}
-      description={!isFullscreen ? 'Alarm and History Monitor' : undefined}
-    >
-      <Box
-        ref={containerRef}
-        sx={{
-          display: 'flex',
-          // flexDirection: mdUp ? 'row' : 'column',
-          flexDirection: { xs: 'column', md: 'row' },
-          backgroundColor: '#fff',
-          height: isFullscreen ? '100vh' : '100%',
-          width: '100%',
-          // overflow: 'hidden',
-          position: 'relative',
-        }}
-      >
-        {/* LEFT SIDEBAR */}
-        {/* <Box
+    <PageContainer title={'Operator View'} description={'Alarm and History Monitor'}>
+      <FullScreen handle={handle}>
+        <Box
+          ref={containerRef}
+          sx={{
+            display: 'flex',
+            // flexDirection: mdUp ? 'row' : 'column',
+            flexDirection: { xs: 'column', md: 'row' },
+            backgroundColor: '#fff',
+            height: isFullscreen ? '100vh' : { lg: '90vh', xs: '100%' },
+            width: '100%',
+            padding: '0 !important',
+            // overflow: 'hidden',
+            position: 'relative',
+            overflow: 'visible',
+          }}
+        >
+          {/* LEFT SIDEBAR */}
+          {/* <Box
           sx={{
             width: { xs: '100%', md: secdrawerWidth },
             minWidth: { md: secdrawerWidth },
@@ -3262,487 +3201,1210 @@ const OperatorView = () => {
           </Box>
         </Box> */}
 
-        {/* RIGHT CONTENT */}
-        <Box
-          flexGrow={1}
-          p={3}
-          sx={{
-            // overflow: 'hidden',
-            // height: '100vh',
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          <Grid container spacing={2} alignItems="center" mb={2}>
-            <Grid size={{ sm: 12, md: 9 }}>
-              <TextField
-                fullWidth
-                size="small"
-                placeholder="Search Visitor"
-                onClick={() => setOpenSearch(true)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <IconButton
-                        onClick={() => setOpen(true)}
-                        edge="start"
-                        color="inherit"
-                        sx={{ cursor: 'pointer' }}
-                      >
-                        <IconSearch size={20} />
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 3 }}>
-              <Box
-                display="flex"
-                gap={1}
-                alignItems="center"
-                flexWrap={'wrap'}
-                justifyContent={'flex-start'}
-              >
-                <Button
-                  variant="outlined"
-                  color="error"
-                  startIcon={<IconX size={18} />}
-                  onClick={handleClearAll}
-                  sx={{
-                    textTransform: 'none',
-                    fontWeight: 600,
-                    px: 2.2,
+          {/* RIGHT CONTENT */}
+          <Box
+            flexGrow={1}
+            // p={3}
+            sx={{
+              overflow: isFullscreen ? 'auto' : 'hidden',
+              display: 'flex',
+              padding: '10px',
+              flexDirection: 'column',
+              // justifyContent: 'space-between',
+              height: isFullscreen ? '100vh' : 'auto',
+            }}
+          >
+            <Grid container spacing={1} mb={2}>
+              <Grid size={{ xs: 12, sm: 12, xl: 10.5 }}>
+                <CustomTextField
+                  fullWidth
+                  size="small"
+                  placeholder="Search Visitor"
+                  onClick={() => setOpenSearch(true)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <IconButton
+                          onClick={() => setOpen(true)}
+                          edge="start"
+                          color="inherit"
+                          sx={{ cursor: 'pointer' }}
+                        >
+                          <IconSearch size={20} />
+                        </IconButton>
+                      </InputAdornment>
+                    ),
                   }}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 12, xl: 1.5 }}>
+                <Box
+                  display="flex"
+                  gap={0.5}
+                  alignItems="center"
+                  // flexWrap={'wrap'}
+                  justifyContent={'flex-start'}
                 >
-                  Clear
-                </Button>
-                {/* <Button
-                  variant="outlined"
-                  color="info"
-                  startIcon={<IconHistory size={18} />}
-                  sx={{
-                    textTransform: 'none',
-                    fontWeight: 600,
-                    px: 2.2,
-                  }}
-                >
-                  History
-                </Button> */}
-                <Button
-                  variant="contained"
-                  color="primary"
-                  startIcon={<IconQrcode size={18} />}
-                  onClick={handleOpenScanQR}
-                  sx={{
-                    textTransform: 'none',
-
-                    fontWeight: 600,
-                    px: 2.5,
-                    background: 'linear-gradient(135deg, #5D87FF 0%, #4169E1 100%)',
-                    boxShadow: '0 2px 6px rgba(93, 135, 255, 0.4)',
-                    '&:hover': {
-                      background: 'linear-gradient(135deg, #4169E1 0%, #3657D6 100%)',
-                    },
-                    zIndex: 999,
-                  }}
-                >
-                  Scan
-                </Button>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  startIcon={<IconUser size={18} />}
-                  onClick={() => setOpenDialogIndex(2)}
-                  sx={{
-                    textTransform: 'none',
-
-                    fontWeight: 600,
-                    px: 2.5,
-                    background: 'linear-gradient(135deg, #5D87FF 0%, #4169E1 100%)',
-                    boxShadow: '0 2px 6px rgba(93, 135, 255, 0.4)',
-                    '&:hover': {
-                      background: 'linear-gradient(135deg, #4169E1 0%, #3657D6 100%)',
-                    },
-                    zIndex: 999,
-                  }}
-                >
-                  Invitation
-                </Button>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  startIcon={<IconClipboard size={18} />}
-                  onClick={() => setOpenPreRegistration(true)}
-                  sx={{
-                    textTransform: 'none',
-                    fontWeight: 600,
-                    px: 2.5,
-                    background: 'linear-gradient(135deg, #5D87FF 0%, #4169E1 100%)',
-                    boxShadow: '0 2px 6px rgba(93, 135, 255, 0.4)',
-                    '&:hover': {
-                      background: 'linear-gradient(135deg, #4169E1 0%, #3657D6 100%)',
-                    },
-                    zIndex: 999,
-                  }}
-                >
-                  Pra Register
-                </Button>
-                <IconButton
-                  onClick={toggleFullscreen}
-                  sx={{
-                    backgroundColor: '#5D87FF',
-                    color: 'white',
-                    borderRadius: '50%',
-                    width: 36,
-                    height: 36,
-                    '&:hover': { backgroundColor: '#4B6EE2' },
-                  }}
-                >
-                  <IconArrowsMaximize
-                    size={20}
-                    style={{
-                      transform: isFullscreen ? 'rotate(45deg)' : 'none', // efek visual toggle
-                      transition: 'transform 0.3s ease',
+                  <Tooltip
+                    title="Clear data information"
+                    placement="top"
+                    arrow
+                    slotProps={{
+                      tooltip: {
+                        sx: {
+                          fontSize: '1rem',
+                          padding: '8px 14px',
+                        },
+                      },
+                      popper: {
+                        container: containerRef.current,
+                      },
                     }}
-                  />
-                </IconButton>
-              </Box>
-            </Grid>
-          </Grid>
+                  >
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      startIcon={<IconX size={18} />}
+                      onClick={handleClearAll}
+                      sx={{
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        px: 2.2,
+                      }}
+                    >
+                      Clear
+                    </Button>
+                  </Tooltip>
+                  <Tooltip
+                    title="Information Guide Operator"
+                    placement="top"
+                    arrow
+                    slotProps={{
+                      tooltip: {
+                        sx: {
+                          fontSize: '1rem',
+                          padding: '8px 14px',
+                        },
+                      },
+                      popper: {
+                        container: containerRef.current,
+                      },
+                    }}
+                  >
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      startIcon={<IconInfoCircle size={25} />}
+                      onClick={() => setOpenDialogInfo(true)}
+                      sx={{
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        px: 2.2,
+                      }}
+                    >
+                      Info
+                    </Button>
+                  </Tooltip>
 
-          <Grid container spacing={2} alignItems="stretch">
+                  <Tooltip
+                    title="Tap to toggle Fullscreen"
+                    placement="top"
+                    arrow
+                    slotProps={{
+                      tooltip: {
+                        sx: {
+                          fontSize: '1rem',
+                          padding: '8px 14px',
+                        },
+                      },
+                      popper: {
+                        container: containerRef.current,
+                      },
+                    }}
+                  >
+                    <IconButton
+                      // onClick={toggleFullscreen}
+                      onClick={() => {
+                        if (isFullscreen) {
+                          handle.exit();
+                        } else {
+                          handle.enter();
+                        }
+                      }}
+                      sx={{
+                        backgroundColor: '#5D87FF',
+                        color: 'white',
+                        borderRadius: 1,
+                        width: 36,
+                        height: 36,
+                        '&:hover': { backgroundColor: '#4B6EE2' },
+                      }}
+                    >
+                      <IconArrowsMaximize
+                        size={20}
+                        style={{
+                          transform: isFullscreen ? 'rotate(45deg)' : 'none',
+                          transition: 'transform 0.3s ease',
+                        }}
+                      />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              </Grid>
+            </Grid>
+
             <Grid
               container
               spacing={2}
-              size={{ xs: 12 }}
-              sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'stretch',
-                height: '100%',
-              }}
+              alignItems="stretch"
+              // sx={{
+              //   flex: isFullscreen ? 1 : 'unset',
+              //   minHeight: 0,
+              // }}
             >
-              {/* 🧩 Card FR */}
-              <Grid size={{ xs: 12, lg: 4.5 }}>
-                <Card
-                  sx={{
-                    borderRadius: 2,
-                    height: '100%',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                    transition: 'transform 0.2s, box-shadow 0.2s',
-                    '&:hover': {
-                      transform: 'translateY(-4px)',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                    },
-                  }}
-                >
-                  <CardContent
+              <Grid
+                container
+                spacing={2}
+                size={{ xs: 12 }}
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'stretch',
+                  height: '100%',
+                  flexWrap: 'wrap',
+                }}
+              >
+                {/* 🧩 Card FR */}
+                <Grid size={{ xs: 12, lg: 4.5 }}>
+                  <Card
                     sx={{
-                      p: 3,
+                      borderRadius: 2,
                       display: 'flex',
-                      alignItems: 'center',
                       justifyContent: 'center',
-                      height: '90%',
-                    }}
-                  >
-                    <img src={FRImage} alt="FR" style={{ width: 400, height: 350 }} />
-                  </CardContent>
-                  <CardActions
-                    sx={{
-                      justifyContent: 'center',
-                      borderTop: '1px solid #eee',
-                      py: 1,
-                      backgroundColor: '#f9f9f9',
-                    }}
-                  >
-                    <Typography variant="subtitle1" fontWeight="bold" textAlign="center">
-                      {invitationCode[0]?.visitor?.name ||
-                        'No visitor data found. Please scan QR first.'}
-                    </Typography>
-                  </CardActions>
-                </Card>
-              </Grid>
-
-              {/* 🧩 Card LPR */}
-              <Grid size={{ xs: 12, lg: 4.5 }}>
-                <Card
-                  sx={{
-                    borderRadius: 2,
-                    height: '100%', // ✅ samakan tinggi
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                    transition: 'transform 0.2s, box-shadow 0.2s',
-                    '&:hover': {
-                      transform: 'translateY(-4px)',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                    },
-                  }}
-                >
-                  <CardContent
-                    sx={{
-                      p: 3,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      height: '90%',
-                    }}
-                  >
-                    <img src={LprImage} alt="LPR" style={{ width: 400, height: 350 }} />
-                  </CardContent>
-                  <CardActions
-                    sx={{
-                      justifyContent: 'center',
-                      borderTop: '1px solid #eee',
-                      py: 1,
-                      backgroundColor: '#f9f9f9',
-                    }}
-                  >
-                    <Typography variant="subtitle1" fontWeight="bold" textAlign="center">
-                      {invitationCode[0]?.vehicle_plate_number ||
-                        'No visitor data found. Please scan QR first.'}
-                    </Typography>
-                  </CardActions>
-                </Card>
-              </Grid>
-              <Grid size={{ xs: 12, lg: 3 }}>
-                <Card
-                  sx={{
-                    borderRadius: 2,
-                    height: '100%',
-                    width: '100%',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    p: 2,
-                  }}
-                >
-                  <CardContent
-                    sx={{
-                      flexGrow: 1,
-                      display: 'flex',
                       flexDirection: 'column',
-                      justifyContent: 'center',
-                      pb: '0 !important',
+                      height: '100%',
+                      maxHeight: isFullscreen ? '50vh' : { xs: '100%', sm: '100%', xl: '450px' },
                     }}
                   >
-                    <Box
+                    <CardContent
                       sx={{
+                        p: 1,
                         display: 'flex',
-                        justifyContent: 'center',
                         alignItems: 'center',
-                        minHeight: 220,
-                        mb: 2,
+                        justifyContent: 'center',
+                        gap: 1,
+                        flexDirection: { xs: 'row', xl: 'row' },
+                        maxHeight: isFullscreen ? '100%' : { xs: '100%', xl: '350px' },
+                        overflow: 'hidden',
                       }}
                     >
-                      {invitationCode[0]?.visitor_number ? (
-                        <QRCode
-                          size={200}
-                          value={invitationCode[0].visitor_number}
-                          viewBox="0 0 256 256"
-                          style={{
-                            boxShadow: '0 0 10px rgba(0, 0, 0, 0.2)',
-                            padding: '10px',
-                            borderRadius: '8px',
-                            background: 'white',
-                          }}
-                        />
-                      ) : (
-                        <Box textAlign="center" color="text.secondary">
-                          <IconCards size={48} style={{ opacity: 0.4, marginBottom: 8 }} />
-                          <Typography variant="body1" fontWeight={500}>
-                            No QR/Card Available
-                          </Typography>
-                          <Typography variant="body2" color="text.disabled">
-                            Scan a visitor to show QR code
-                          </Typography>
-                        </Box>
-                      )}
-                    </Box>
-                    <Box mt={2}>
-                      <Typography variant="h6" fontWeight="bold" mb={1}>
-                        Number
-                      </Typography>
-                      <Typography variant="body1" color="text.secondary" mb={1}>
-                        {invitationCode[0]?.number || '-'}
-                      </Typography>
-                    </Box>
-                    <Box>
-                      <Typography variant="h6" fontWeight="bold" mb={1}>
-                        Invitation Code
-                      </Typography>
-                      <Typography variant="body1" color="text.secondary" mb={1}>
-                        {invitationCode[0]?.invitation_code || '-'}
-                      </Typography>
-                    </Box>
-                    <Divider sx={{ my: 2 }} />
-                    <Box
-                      display="flex"
-                      justifyContent="space-between"
-                      alignItems="center"
-                      mt="auto"
-                    >
-                      <Typography variant="h6" fontWeight="bold">
-                        Status
-                      </Typography>
                       <Box
-                        component="span"
                         sx={{
-                          backgroundColor: '#4CAF50',
-                          color: 'white',
-                          px: 2,
-                          py: 0.5,
-                          borderRadius: '12px',
-                          fontSize: '0.875rem',
-                          fontWeight: 500,
+                          flex: 1,
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          maxHeight: '100%',
+                          borderRadius: 2,
+                          overflow: 'hidden',
                         }}
                       >
-                        Match
+                        <img
+                          src={FRImage}
+                          alt="FR"
+                          style={{
+                            width: '100%',
+                            maxWidth: '400px',
+                            height: 'auto',
+                            maxHeight: '100%',
+                            objectFit: 'contain',
+                          }}
+                        />
                       </Box>
-                    </Box>
-                  </CardContent>
-                </Card>
+
+                      <Box
+                        sx={{
+                          flex: 1,
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          maxHeight: '100%',
+                          borderRadius: 2,
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <img
+                          src={LprImage}
+                          alt="FR"
+                          style={{
+                            width: '100%',
+                            maxWidth: '400px',
+                            height: 'auto',
+                            maxHeight: '100%',
+                            objectFit: 'contain',
+                            borderRadius: 15,
+                          }}
+                        />
+                      </Box>
+                    </CardContent>
+                    <CardActions
+                      sx={{
+                        justifyContent: 'center',
+                        borderTop: '1px solid #eee',
+                        py: 1,
+                        mt: 1,
+                        backgroundColor: '#f9f9f9',
+                      }}
+                    >
+                      <Typography variant="subtitle1" fontWeight="bold" textAlign="center">
+                        {invitationCode[0]?.visitor?.name ||
+                          'No visitor data found. Please scan QR first.'}
+                      </Typography>
+                    </CardActions>
+                  </Card>
+                </Grid>
+
+                {/* Visiting Purpose*/}
+                <Grid
+                  size={{ xs: 12, lg: 4.5 }}
+                  sx={{
+                    display: 'flex',
+                    justifyContent: isFullscreen ? 'center' : 'flex-start',
+                    alignItems: isFullscreen ? 'center' : 'stretch',
+                    overflow: isFullscreen ? 'auto' : 'hidden',
+                  }}
+                >
+                  <Card
+                    sx={{
+                      borderRadius: 2,
+                      height: '100%',
+                      maxHeight: isFullscreen
+                        ? { xs: '100%', sm: '100%', lg: '80%', xl: '100%' }
+                        : { xs: '100%', sm: '100%', xl: '450px' },
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                      transition: 'transform 0.2s, box-shadow 0.2s',
+                      overflow: isFullscreen ? 'auto' : 'hidden',
+                      '&:hover': {
+                        transform: 'translateY(-4px)',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                      },
+                    }}
+                  >
+                    <CardContent
+                      sx={{
+                        p: 0,
+                        paddingBottom: '0 !important',
+                      }}
+                    >
+                      <Grid container spacing={1}>
+                        <Grid
+                          size={{ xs: 12, xl: 7 }}
+                          sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}
+                        >
+                          <Tooltip
+                            title="Scan QR to search data visitor"
+                            placement="top"
+                            arrow
+                            slotProps={{
+                              tooltip: {
+                                sx: {
+                                  fontSize: '1rem',
+                                  padding: '8px 14px',
+                                },
+                              },
+                            }}
+                          >
+                            <Button
+                              variant="contained"
+                              startIcon={<IconQrcode size={25} />}
+                              onClick={handleOpenScanQR}
+                              size="large"
+                              sx={{
+                                textTransform: 'none',
+                                fontWeight: 600,
+                                px: 2.5,
+                                background: 'linear-gradient(135deg, #5D87FF 0%, #4169E1 100%)',
+                                boxShadow: '0 2px 6px rgba(93, 135, 255, 0.4)',
+                                '&:hover': {
+                                  background: 'linear-gradient(135deg, #4169E1 0%, #3657D6 100%)',
+                                },
+                                zIndex: 999,
+                                width: '100%',
+                                height: '55px',
+                                p: 0,
+                              }}
+                            >
+                              <Typography variant="h5" color="white">
+                                Scan
+                              </Typography>
+                            </Button>
+                          </Tooltip>
+                          {todayVisitingPurpose.length === 0 ? (
+                            <Card
+                              sx={{
+                                p: 3,
+                                borderRadius: 2,
+                                background: 'linear-gradient(135deg, #ECEFF1 0%, #CFD8DC 100%)',
+                                textAlign: 'center',
+                                height: '100%',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }}
+                            >
+                              {/* <IconInbox size={46} color="#90A4AE" /> */}
+                              <img src={backgroundnodata} alt="No Data" height="100" width="100%" />
+                              <Typography
+                                variant="h5"
+                                fontWeight={600}
+                                color="text.secondary"
+                                mt={3}
+                              >
+                                {t('no_visit_today')}
+                              </Typography>
+                            </Card>
+                          ) : (
+                            <>
+                              <Grid size={{ xs: 12 }}></Grid>
+                              {todayVisitingPurpose.slice(0, 5).map((item) => (
+                                <>
+                                  <Card
+                                    key={item.id}
+                                    sx={{
+                                      p: 1,
+                                      borderRadius: 1,
+                                      // background: 'linear-gradient(135deg, #5D87FF 0%, #4169E1 100%)',
+                                      background: getColorByName(item.name),
+                                      boxShadow: '0 6px 14px rgba(93, 135, 255, 0.3)',
+                                      transition: 'all 0.3s ease',
+                                      '&:hover': {
+                                        transform: 'translateY(-4px)',
+                                        boxShadow: '0 10px 18px rgba(93, 135, 255, 0.45)',
+                                      },
+                                      mb: 0,
+                                    }}
+                                  >
+                                    <CardContent
+                                      sx={{
+                                        px: 2,
+                                        paddingTop: '0 !important',
+                                        paddingBottom: '0 !important',
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                      }}
+                                    >
+                                      <Typography
+                                        variant="h5"
+                                        fontWeight="bold"
+                                        color="white"
+                                        sx={{ textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}
+                                      >
+                                        {item.name}
+                                      </Typography>
+                                      <Typography variant="h5" fontWeight="bold" color="white">
+                                        {item.count}
+                                      </Typography>
+                                    </CardContent>
+                                  </Card>
+                                </>
+                              ))}
+                              {todayVisitingPurpose.length > 5 && (
+                                <Button
+                                  variant="outlined"
+                                  size="small"
+                                  onClick={handleOpenMore}
+                                  sx={{ textTransform: 'none', fontWeight: 600 }}
+                                >
+                                  Show All
+                                </Button>
+                              )}
+                              <VisitingPurposeDialog
+                                open={openMore}
+                                onClose={() => setOpenMore(false)}
+                                data={todayVisitingPurpose}
+                              />
+                            </>
+                          )}
+                        </Grid>
+                        <Grid size={{ xs: 12, xl: 5 }}>
+                          <Grid container spacing={isFullscreen ? 3 : 1.5}>
+                            <Grid size={{ xs: 6, lg: 6 }}>
+                              <Tooltip
+                                title="Pra Register Visitor"
+                                placement="top"
+                                arrow
+                                slotProps={{
+                                  tooltip: {
+                                    sx: {
+                                      fontSize: '1rem',
+                                      padding: '8px 14px',
+                                      zIndex: 9999999,
+                                    },
+                                  },
+                                  popper: {
+                                    container: containerRef.current,
+                                  },
+                                }}
+                              >
+                                <Button
+                                  variant="contained"
+                                  color="primary"
+                                  startIcon={<IconClipboard size={25} />}
+                                  onClick={() => setOpenPreRegistration(true)}
+                                  sx={{
+                                    textTransform: 'none',
+                                    fontWeight: 600,
+                                    px: 2.5,
+
+                                    boxShadow: '0 2px 6px rgba(0, 200, 83, 0.4)',
+                                    zIndex: 999,
+                                    width: '100%',
+                                    height: '55px',
+                                    p: 0,
+                                    backgroundColor: '#',
+                                  }}
+                                >
+                                  <Typography variant="h5" color="white">
+                                    Pra Register
+                                  </Typography>
+                                </Button>
+                              </Tooltip>
+                            </Grid>
+                            <Grid size={{ xs: 6, lg: 6 }}>
+                              <Tooltip
+                                title="Invitation Visitor"
+                                placement="top"
+                                arrow
+                                slotProps={{
+                                  tooltip: {
+                                    sx: {
+                                      fontSize: '1rem',
+                                      padding: '8px 14px',
+                                    },
+                                  },
+                                  popper: {
+                                    container: containerRef.current,
+                                  },
+                                }}
+                              >
+                                <Button
+                                  variant="contained"
+                                  color="primary"
+                                  startIcon={<IconUser size={25} />}
+                                  onClick={() => setOpenDialogIndex(2)}
+                                  sx={{
+                                    textTransform: 'none',
+                                    fontWeight: 600,
+                                    px: 2.5,
+
+                                    boxShadow: '0 2px 6px rgba(0, 200, 83, 0.4)',
+                                    zIndex: 999,
+                                    width: '100%',
+                                    height: '55px',
+                                    p: 0,
+                                    backgroundColor: '',
+                                  }}
+                                >
+                                  <Typography variant="h5" color="white">
+                                    Invitation
+                                  </Typography>
+                                </Button>
+                              </Tooltip>
+                            </Grid>
+                            {/* Checkin */}
+                            <Grid size={{ xs: 6, lg: 6 }}>
+                              <Tooltip
+                                title="Checkin Visitor"
+                                placement="top"
+                                arrow
+                                slotProps={{
+                                  tooltip: {
+                                    sx: {
+                                      fontSize: '1rem',
+                                      padding: '8px 14px',
+                                    },
+                                  },
+                                  popper: {
+                                    container: containerRef.current,
+                                  },
+                                }}
+                              >
+                                <Button
+                                  variant="contained"
+                                  startIcon={<IconCheck size={25} />}
+                                  onClick={() => handleActionClick('Checkin')}
+                                  // color="success"
+                                  size="large"
+                                  sx={{
+                                    textTransform: 'none',
+                                    fontWeight: 600,
+                                    px: 2.5,
+
+                                    boxShadow: '0 2px 6px rgba(0, 200, 83, 0.4)',
+                                    zIndex: 999,
+                                    width: '100%',
+                                    height: '55px',
+                                    p: 0,
+                                    backgroundColor: '#22C55E',
+                                  }}
+                                >
+                                  <Typography variant="h5" color="white">
+                                    Checkin
+                                  </Typography>
+                                </Button>
+                              </Tooltip>
+                            </Grid>
+
+                            {/* Checkout */}
+                            <Grid size={{ xs: 6, lg: 6 }}>
+                              <Tooltip
+                                title="Checkout Visitor"
+                                placement="top"
+                                arrow
+                                slotProps={{
+                                  tooltip: {
+                                    sx: {
+                                      fontSize: '1rem',
+                                      padding: '8px 14px',
+                                    },
+                                  },
+                                  popper: {
+                                    container: containerRef.current,
+                                  },
+                                }}
+                              >
+                                <Button
+                                  variant="contained"
+                                  startIcon={<IconX size={25} />}
+                                  onClick={() => handleActionClick('Checkout')}
+                                  size="large"
+                                  sx={{
+                                    textTransform: 'none',
+                                    fontWeight: 600,
+                                    px: 2.5,
+                                    background: 'linear-gradient(135deg, #FF5252 0%, #D50000 100%)',
+                                    boxShadow: '0 2px 6px rgba(255, 82, 82, 0.4)',
+                                    '&:hover': {
+                                      background:
+                                        'linear-gradient(135deg, #D50000 0%, #B71C1C 100%)',
+                                    },
+                                    zIndex: 999,
+                                    width: '100%',
+                                    height: '55px',
+                                    p: 0,
+                                  }}
+                                >
+                                  <Typography variant="h5" color="white">
+                                    Checkout
+                                  </Typography>
+                                </Button>
+                              </Tooltip>
+                            </Grid>
+
+                            {/* Card */}
+                            <Grid size={{ xs: 6, lg: 6 }}>
+                              <Tooltip
+                                title="Choose Card"
+                                placement="top"
+                                arrow
+                                slotProps={{
+                                  tooltip: {
+                                    sx: {
+                                      fontSize: '1rem',
+                                      padding: '8px 14px',
+                                    },
+                                  },
+                                  popper: {
+                                    container: containerRef.current,
+                                  },
+                                }}
+                              >
+                                <Button
+                                  variant="contained"
+                                  startIcon={<IconCards size={28} />}
+                                  onClick={() => handleOpenAction('card')}
+                                  size="large"
+                                  sx={{
+                                    textTransform: 'none',
+                                    fontWeight: 600,
+                                    px: 2.5,
+                                    background: 'linear-gradient(135deg, #AB47BC 0%, #6A1B9A 100%)',
+                                    boxShadow: '0 2px 6px rgba(171, 71, 188, 0.4)',
+                                    '&:hover': {
+                                      background:
+                                        'linear-gradient(135deg, #8E24AA 0%, #4A148C 100%)',
+                                    },
+                                    zIndex: 999,
+                                    width: '100%',
+                                    height: '55px',
+                                    p: 0,
+                                  }}
+                                >
+                                  <Typography variant="h5" color="white">
+                                    Card
+                                  </Typography>
+                                </Button>
+                              </Tooltip>
+                            </Grid>
+
+                            {/* Access */}
+                            <Grid size={{ xs: 6, lg: 6 }}>
+                              <Tooltip
+                                title="Access Control"
+                                placement="top"
+                                arrow
+                                slotProps={{
+                                  tooltip: {
+                                    sx: {
+                                      fontSize: '1rem',
+                                      padding: '8px 14px',
+                                    },
+                                  },
+                                  popper: {
+                                    container: containerRef.current,
+                                  },
+                                }}
+                              >
+                                <Button
+                                  variant="contained"
+                                  startIcon={<IconKey size={25} />}
+                                  onClick={() => handleOpenAction('access')}
+                                  size="large"
+                                  sx={{
+                                    textTransform: 'none',
+                                    fontWeight: 600,
+                                    px: 2.5,
+                                    background: 'linear-gradient(135deg, #FF9800 0%, #F57C00 100%)',
+                                    boxShadow: '0 2px 6px rgba(255, 152, 0, 0.4)',
+                                    '&:hover': {
+                                      background:
+                                        'linear-gradient(135deg, #FB8C00 0%, #E65100 100%)',
+                                    },
+                                    zIndex: 999,
+                                    width: '100%',
+                                    height: '55px',
+                                    p: 0,
+                                  }}
+                                >
+                                  <Typography variant="h5" color="white">
+                                    Access
+                                  </Typography>
+                                </Button>
+                              </Tooltip>
+                            </Grid>
+
+                            {/* Parking */}
+                            <Grid size={{ xs: 6, lg: 6 }}>
+                              <Tooltip
+                                title="Parking Information"
+                                placement="top"
+                                arrow
+                                slotProps={{
+                                  tooltip: {
+                                    sx: {
+                                      fontSize: '1rem',
+                                      padding: '8px 14px',
+                                    },
+                                  },
+                                  popper: {
+                                    container: containerRef.current,
+                                  },
+                                }}
+                              >
+                                <Button
+                                  variant="contained"
+                                  startIcon={<IconParking size={25} />}
+                                  onClick={handleOpenScanQR}
+                                  size="large"
+                                  sx={{
+                                    textTransform: 'none',
+                                    fontWeight: 600,
+                                    px: 2.5,
+                                    background: '#00ACC1',
+                                    boxShadow: '0 2px 6px rgba(0, 172, 193, 0.4)',
+
+                                    zIndex: 999,
+                                    width: '100%',
+                                    height: '55px',
+                                    p: 0,
+                                  }}
+                                >
+                                  <Typography variant="h5" color="white">
+                                    Parking
+                                  </Typography>
+                                </Button>
+                              </Tooltip>
+                            </Grid>
+
+                            {/* Report */}
+                            <Grid size={{ xs: 6, lg: 6 }}>
+                              <Tooltip
+                                title="Report Information"
+                                placement="top"
+                                arrow
+                                slotProps={{
+                                  tooltip: {
+                                    sx: {
+                                      fontSize: '1rem',
+                                      padding: '8px 14px',
+                                    },
+                                  },
+                                  popper: {
+                                    container: containerRef.current,
+                                  },
+                                }}
+                              >
+                                <Button
+                                  variant="contained"
+                                  startIcon={<IconReport size={25} />}
+                                  onClick={handleOpenScanQR}
+                                  size="large"
+                                  sx={{
+                                    textTransform: 'none',
+                                    fontWeight: 600,
+                                    px: 2.5,
+                                    background: 'linear-gradient(135deg, #607D8B 0%, #455A64 100%)',
+                                    boxShadow: '0 2px 6px rgba(96, 125, 139, 0.4)',
+                                    '&:hover': {
+                                      background:
+                                        'linear-gradient(135deg, #546E7A 0%, #37474F 100%)',
+                                    },
+                                    zIndex: 999,
+                                    width: '100%',
+                                    height: '55px',
+                                    p: 0,
+                                  }}
+                                >
+                                  <Typography variant="h5" color="white">
+                                    Report
+                                  </Typography>
+                                </Button>
+                              </Tooltip>
+                            </Grid>
+                            <Grid size={{ xs: 6, lg: 6 }}>
+                              <Tooltip
+                                title="Extend time"
+                                placement="top"
+                                arrow
+                                slotProps={{
+                                  tooltip: {
+                                    sx: {
+                                      fontSize: '1rem', // <<< ukuran teks tooltip
+                                      padding: '8px 14px',
+                                    },
+                                  },
+                                  popper: {
+                                    container: containerRef.current,
+                                  },
+                                }}
+                              >
+                                <Button
+                                  variant="contained"
+                                  startIcon={<IconClock size={25} />}
+                                  onClick={() => handleOpenAction('extend')}
+                                  // color="info"
+                                  size="large"
+                                  sx={{
+                                    textTransform: 'none',
+                                    fontWeight: 600,
+                                    px: 2.5,
+                                    boxShadow: '0 2px 6px rgba(96, 125, 139, 0.4)',
+                                    background: 'linear-gradient(135deg, #FFE082 0%, #FFCA28 100%)',
+                                    zIndex: 999,
+                                    width: '100%',
+                                    height: '55px',
+                                    p: 0,
+                                  }}
+                                >
+                                  <Typography variant="h5" color="white">
+                                    Extend
+                                  </Typography>
+                                </Button>
+                              </Tooltip>
+                            </Grid>
+                            <Grid size={{ xs: 6, lg: 6 }}>
+                              <Tooltip
+                                title="Action for arrival visitor"
+                                placement="top"
+                                arrow
+                                slotProps={{
+                                  tooltip: {
+                                    sx: {
+                                      fontSize: '1rem', // <<< ukuran teks tooltip
+                                      padding: '8px 14px',
+                                    },
+                                  },
+                                  popper: {
+                                    container: containerRef.current,
+                                  },
+                                }}
+                              >
+                                <Button
+                                  variant="contained"
+                                  startIcon={<IconMapPinCheck size={25} />}
+                                  onClick={handleOpenScanQR}
+                                  size="large"
+                                  sx={{
+                                    textTransform: 'none',
+                                    fontWeight: 600,
+                                    px: 2.5,
+                                    boxShadow: '0 2px 6px rgba(96, 125, 139, 0.4)',
+                                    zIndex: 999,
+                                    width: '100%',
+                                    height: '55px',
+                                    p: 0,
+                                    backgroundColor: '#10B981',
+                                  }}
+                                >
+                                  <Typography variant="h5" color="white">
+                                    Arrival
+                                  </Typography>
+                                </Button>
+                              </Tooltip>
+                            </Grid>
+                            <Grid size={{ xs: 6, lg: 6 }}>
+                              <Tooltip
+                                title="Blacklist Visitor"
+                                placement="top"
+                                arrow
+                                slotProps={{
+                                  tooltip: {
+                                    sx: {
+                                      fontSize: '1rem', // <<< ukuran teks tooltip
+                                      padding: '8px 14px',
+                                    },
+                                  },
+                                  popper: {
+                                    container: containerRef.current,
+                                  },
+                                }}
+                              >
+                                <Button
+                                  variant="contained"
+                                  startIcon={<IconUser size={25} />}
+                                  onClick={handleOpenScanQR}
+                                  size="large"
+                                  sx={{
+                                    textTransform: 'none',
+                                    fontWeight: 600,
+                                    px: 2.5,
+                                    boxShadow: '0 2px 6px rgba(96, 125, 139, 0.4)',
+                                    zIndex: 999,
+                                    width: '100%',
+                                    height: '55px',
+                                    p: 0,
+                                    backgroundColor: '#000',
+                                  }}
+                                >
+                                  <Typography variant="h5" color="white">
+                                    Blacklist
+                                  </Typography>
+                                </Button>
+                              </Tooltip>
+                            </Grid>
+                            <Grid size={{ xs: 6, lg: 6 }}>
+                              <Tooltip
+                                title="Whitelist Visitor"
+                                placement="top"
+                                arrow
+                                slotProps={{
+                                  tooltip: {
+                                    sx: {
+                                      fontSize: '1rem', // <<< ukuran teks tooltip
+                                      padding: '8px 14px',
+                                    },
+                                  },
+                                  popper: {
+                                    container: containerRef.current,
+                                  },
+                                }}
+                              >
+                                <Button
+                                  variant="contained"
+                                  startIcon={<IconUser size={25} />}
+                                  onClick={handleOpenScanQR}
+                                  size="large"
+                                  sx={{
+                                    textTransform: 'none',
+                                    fontWeight: 600,
+                                    px: 2.5,
+                                    boxShadow: '0 2px 6px rgba(96, 125, 139, 0.4)',
+                                    zIndex: 999,
+                                    width: '100%',
+                                    height: '55px',
+                                    p: 0,
+                                    backgroundColor: 'gray',
+                                  }}
+                                >
+                                  <Typography variant="h5" color="white">
+                                    Whitelist
+                                  </Typography>
+                                </Button>
+                              </Tooltip>
+                            </Grid>
+                          </Grid>
+                        </Grid>
+                      </Grid>
+                    </CardContent>
+                  </Card>
+                </Grid>
+
+                {/* Side Right QR Code */}
+                <Grid size={{ xs: 12, lg: 3 }}>
+                  <Card
+                    sx={{
+                      borderRadius: 2,
+                      height: '100%',
+                      width: '100%',
+                      maxHeight: isFullscreen ? '100%' : { xs: '100%', sm: '100%', xl: '450px' },
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      p: 2,
+                    }}
+                  >
+                    <CardContent
+                      sx={{
+                        flexGrow: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'center',
+                        pb: '0 !important',
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          minHeight: 150,
+                          mb: 0,
+                        }}
+                      >
+                        {invitationCode[0]?.visitor_number ? (
+                          <QRCode
+                            size={200}
+                            value={invitationCode[0].visitor_number}
+                            viewBox="0 0 256 256"
+                            style={{
+                              boxShadow: '0 0 10px rgba(0, 0, 0, 0.2)',
+                              padding: '10px',
+                              borderRadius: '8px',
+                              background: 'white',
+                            }}
+                          />
+                        ) : (
+                          <Box textAlign="center" color="text.secondary">
+                            <IconCards size={48} style={{ opacity: 0.4, marginBottom: 8 }} />
+                            <Typography variant="body1" fontWeight={500}>
+                              No QR/Card Available
+                            </Typography>
+                            <Typography variant="body2" color="text.disabled">
+                              Scan a visitor to show QR code
+                            </Typography>
+                          </Box>
+                        )}
+                      </Box>
+                      <Box mt={2}>
+                        <Typography variant="h6" fontWeight="bold" mb={1}>
+                          Number
+                        </Typography>
+                        <Typography variant="body1" color="text.secondary" mb={1}>
+                          {invitationCode[0]?.number || '-'}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="h6" fontWeight="bold" mb={1}>
+                          Invitation Code
+                        </Typography>
+                        <Typography variant="body1" color="text.secondary" mb={1}>
+                          {invitationCode[0]?.invitation_code || '-'}
+                        </Typography>
+                      </Box>
+                      <Divider sx={{ my: 1 }} />
+                      <Box
+                        display="flex"
+                        justifyContent="space-between"
+                        alignItems="center"
+                        mt="auto"
+                      >
+                        <Typography variant="h6" fontWeight="bold">
+                          Status
+                        </Typography>
+                        <Box
+                          component="span"
+                          sx={{
+                            backgroundColor: '#4CAF50',
+                            color: 'white',
+                            px: 2,
+                            py: 0.5,
+                            borderRadius: '12px',
+                            fontSize: '0.875rem',
+                            fontWeight: 500,
+                          }}
+                        >
+                          Match
+                        </Box>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
               </Grid>
             </Grid>
-            {/* 🧩 Card QR Code (kanan) */}
-          </Grid>
 
-          <Grid container spacing={2} mt={3} sx={{ flexGrow: 1, height: '100%' }}>
             <Grid
-              size={{ xs: 12, lg: 4.5 }}
-              sx={{ boxShadow: '0 2px 8px rgba(0,0,0,0.1)', padding: 1, borderRadius: 2 }}
+              container
+              spacing={2}
+              mt={3}
+              sx={{
+                flex: isFullscreen ? 1 : 'unset',
+                minHeight: 0,
+              }}
             >
-              <Card sx={{ boxShadow: 'none', p: 1, height: '100%' }}>
-                <CardContent sx={{ boxShadow: 'none', p: 0 }}>
-                  {/* Tabs */}
-                  <Tabs
-                    value={tabValue}
-                    onChange={(e, newVal) => setTabValue(newVal)}
-                    variant="fullWidth"
-                  >
-                    <Tab label="Info" />
-                    <Tab label="Visit Information" />
-                    <Tab label="Purpose Visit" />
-                  </Tabs>
+              <Grid
+                size={{ xs: 12, lg: 4.5 }}
+                sx={{ boxShadow: '0 2px 8px rgba(0,0,0,0.1)', padding: 1, borderRadius: 2 }}
+              >
+                <Card
+                  sx={{
+                    boxShadow: 'none',
+                    p: 1,
+                    height: '450px',
+                    maxHeight: isFullscreen ? '100%' : '450px',
+                  }}
+                >
+                  <CardContent sx={{ boxShadow: 'none', p: 0 }}>
+                    {/* Tabs */}
+                    <Tabs
+                      value={tabValue}
+                      onChange={(e, newVal) => setTabValue(newVal)}
+                      variant="fullWidth"
+                    >
+                      <Tab label="Info" />
+                      <Tab label="Visit Information" />
+                      <Tab label="Purpose Visit" />
+                    </Tabs>
 
-                  {/* Tab Panels */}
-                  {tabValue === 0 && (
-                    <Box sx={{ mt: 2 }}>
-                      {/* Grid Info Visitor */}
-                      <Grid container rowSpacing={4} columnSpacing={2} mt={1}>
-                        {/* Email */}
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Box display="flex" gap={2} alignItems="flex-start">
-                            <IconBrandGmail />
-                            <Box>
-                              <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Email</CustomFormLabel>
-                              <Typography
-                                sx={{
-                                  wordBreak: 'break-word',
-                                  overflowWrap: 'anywhere',
-                                  whiteSpace: 'normal',
-                                }}
-                              >
-                                {invitationCode[0]?.visitor?.email || '-'}
-                              </Typography>
-                            </Box>
-                          </Box>
-                        </Grid>
-
-                        {/* Phone */}
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Box display="flex" gap={2} alignItems="flex-start">
-                            <IconPhone />
-                            <Box>
-                              <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Phone</CustomFormLabel>
-                              <Typography
-                                sx={{
-                                  wordBreak: 'break-word',
-                                  overflowWrap: 'anywhere',
-                                  whiteSpace: 'normal',
-                                }}
-                              >
-                                {invitationCode[0]?.visitor?.phone || '-'}
-                              </Typography>
-                            </Box>
-                          </Box>
-                        </Grid>
-
-                        {/* Address */}
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Box display="flex" gap={2} alignItems="flex-start">
-                            <IconHome />
-                            <Box>
-                              <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Address</CustomFormLabel>
-                              <Typography
-                                sx={{
-                                  wordBreak: 'break-word',
-                                  overflowWrap: 'anywhere',
-                                  whiteSpace: 'normal',
-                                }}
-                              >
-                                {invitationCode[0]?.visitor?.address || '-'}
-                              </Typography>
-                            </Box>
-                          </Box>
-                        </Grid>
-
-                        {/* Gender */}
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Box display="flex" gap={2} alignItems="flex-start">
-                            <IconGenderMale />
-                            <Box>
-                              <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Gender</CustomFormLabel>
-                              <Typography>{invitationCode[0]?.visitor?.gender || '-'}</Typography>
-                            </Box>
-                          </Box>
-                        </Grid>
-
-                        {/* Organization */}
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Box display="flex" gap={2} alignItems="flex-start">
-                            <IconBuildingSkyscraper />
-                            <Box>
-                              <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>
-                                Organization
-                              </CustomFormLabel>
-                              <Typography
-                                sx={{
-                                  wordBreak: 'break-word',
-                                  overflowWrap: 'anywhere',
-                                  whiteSpace: 'normal',
-                                }}
-                              >
-                                {invitationCode[0]?.visitor?.organization || '-'}
-                              </Typography>
-                            </Box>
-                          </Box>
-                        </Grid>
-
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Box
-                            display={'flex'}
-                            justifyContent={'space-between'}
-                            flexWrap={'wrap'}
-                            // alignItems={'center'}
-                          >
-                            <Box display="flex" gap={2} alignItems="flex-start" flexWrap={'wrap'}>
-                              <IconCards />
+                    {/* Tab Panels */}
+                    {tabValue === 0 && (
+                      <Box sx={{ mt: 2 }}>
+                        {/* Grid Info Visitor */}
+                        <Grid container rowSpacing={4} columnSpacing={2} mt={1}>
+                          {/* Email */}
+                          <Grid size={{ xs: 12, md: 6 }}>
+                            <Box display="flex" gap={2} alignItems="flex-start">
+                              <IconBrandGmail />
                               <Box>
-                                <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Card</CustomFormLabel>
+                                <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Email</CustomFormLabel>
+                                <Typography
+                                  sx={{
+                                    wordBreak: 'break-word',
+                                    overflowWrap: 'anywhere',
+                                    whiteSpace: 'normal',
+                                  }}
+                                >
+                                  {invitationCode[0]?.visitor?.email || '-'}
+                                </Typography>
                               </Box>
                             </Box>
-                            <Box>
-                              {!invitationCode || invitationCode.length === 0 ? (
-                                <></>
-                              ) : invitationCode[0]?.card && invitationCode[0].card.length > 0 ? (
-                                // ✅ Sudah punya kartu → tampilkan nomor
-                                invitationCode[0].card[0]?.card_number?.trim() ? (
-                                  <Box>
-                                    <Typography sx={{ fontWeight: 600 }}>
-                                      {invitationCode[0].card[0].card_number}
-                                    </Typography>
+                          </Grid>
 
-                                    {/* {invitationCode[0]?.tracking_ble?.length > 0 &&
+                          {/* Phone */}
+                          <Grid size={{ xs: 12, md: 6 }}>
+                            <Box display="flex" gap={2} alignItems="flex-start">
+                              <IconPhone />
+                              <Box>
+                                <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Phone</CustomFormLabel>
+                                <Typography
+                                  sx={{
+                                    wordBreak: 'break-word',
+                                    overflowWrap: 'anywhere',
+                                    whiteSpace: 'normal',
+                                  }}
+                                >
+                                  {invitationCode[0]?.visitor?.phone || '-'}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          </Grid>
+
+                          {/* Address */}
+                          <Grid size={{ xs: 12, md: 6 }}>
+                            <Box display="flex" gap={2} alignItems="flex-start">
+                              <IconHome />
+                              <Box>
+                                <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Address</CustomFormLabel>
+                                <Typography
+                                  sx={{
+                                    wordBreak: 'break-word',
+                                    overflowWrap: 'anywhere',
+                                    whiteSpace: 'normal',
+                                  }}
+                                >
+                                  {invitationCode[0]?.visitor?.address || '-'}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          </Grid>
+
+                          {/* Gender */}
+                          <Grid size={{ xs: 12, md: 6 }}>
+                            <Box display="flex" gap={2} alignItems="flex-start">
+                              <IconGenderMale />
+                              <Box>
+                                <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Gender</CustomFormLabel>
+                                <Typography>{invitationCode[0]?.visitor?.gender || '-'}</Typography>
+                              </Box>
+                            </Box>
+                          </Grid>
+
+                          {/* Organization */}
+                          <Grid size={{ xs: 12, md: 6 }}>
+                            <Box display="flex" gap={2} alignItems="flex-start">
+                              <IconBuildingSkyscraper />
+                              <Box>
+                                <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>
+                                  Organization
+                                </CustomFormLabel>
+                                <Typography
+                                  sx={{
+                                    wordBreak: 'break-word',
+                                    overflowWrap: 'anywhere',
+                                    whiteSpace: 'normal',
+                                  }}
+                                >
+                                  {invitationCode[0]?.visitor?.organization || '-'}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          </Grid>
+
+                          <Grid size={{ xs: 12, md: 6 }}>
+                            <Box
+                              display={'flex'}
+                              justifyContent={'space-between'}
+                              flexWrap={'wrap'}
+                              // alignItems={'center'}
+                            >
+                              <Box display="flex" gap={2} alignItems="flex-start" flexWrap={'wrap'}>
+                                <IconCards />
+                                <Box>
+                                  <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Card</CustomFormLabel>
+                                </Box>
+                              </Box>
+                              <Box>
+                                {!invitationCode || invitationCode.length === 0 ? (
+                                  <></>
+                                ) : invitationCode[0]?.card && invitationCode[0].card.length > 0 ? (
+                                  invitationCode[0].card[0]?.card_number?.trim() ? (
+                                    <Box>
+                                      <Typography sx={{ fontWeight: 600 }}>
+                                        {invitationCode[0].card[0].card_number}
+                                      </Typography>
+
+                                      {/* {invitationCode[0]?.tracking_ble?.length > 0 &&
                                       invitationCode[0].tracking_ble[0]?.visitor_give_access ===
                                         0 && (
                                         <Button
@@ -3754,1677 +4416,1755 @@ const OperatorView = () => {
                                           Send Tracking
                                         </Button>
                                       )} */}
-                                  </Box>
+                                    </Box>
+                                  ) : (
+                                    <></>
+                                  )
+                                ) : invitationCode[0]?.visitor_status === 'Checkin' ? (
+                                  // ✅ Tampilkan tombol "Choose Card" hanya kalau sudah Checkin
+                                  <Button
+                                    variant="contained"
+                                    color="primary"
+                                    size="large"
+                                    onClick={handleChooseCard}
+                                    sx={{ mt: 0.5 }}
+                                  >
+                                    Choose Card
+                                  </Button>
                                 ) : (
                                   <></>
-                                )
-                              ) : invitationCode[0]?.visitor_status === 'Checkin' ? (
-                                // ✅ Tampilkan tombol "Choose Card" hanya kalau sudah Checkin
-                                <Button
-                                  variant="contained"
-                                  color="primary"
-                                  onClick={handleChooseCard}
-                                  sx={{ mt: 0.5 }}
-                                >
-                                  Choose Card
-                                </Button>
-                              ) : (
-                                // 🚫 Status lain (Preregis, Queue, dsb) → tidak tampilkan apa-apa
-                                <></>
-                              )}
-                            </Box>
-                          </Box>
-                        </Grid>
-                      </Grid>
-                    </Box>
-                  )}
-
-                  {tabValue === 1 && (
-                    <Box sx={{ mt: 2 }}>
-                      <Grid container rowSpacing={4} columnSpacing={2}>
-                        {/* Group Code */}
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Box display="flex" gap={2} alignItems="flex-start">
-                            <IconUsersGroup />
-                            <Box>
-                              <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Group Code</CustomFormLabel>
-                              <Typography>{invitationCode[0]?.group_code || '-'}</Typography>
-                            </Box>
-                          </Box>
-                        </Grid>
-
-                        {/* Group Name */}
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Box display="flex" gap={2} alignItems="flex-start">
-                            <IconUser />
-                            <Box>
-                              <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Group Name</CustomFormLabel>
-                              <Typography>{invitationCode[0]?.group_name || '-'}</Typography>
-                            </Box>
-                          </Box>
-                        </Grid>
-
-                        {/* Visitor Number */}
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Box display="flex" gap={2} alignItems="flex-start">
-                            <IconNumbers />
-                            <Box>
-                              <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>
-                                Visitor Number
-                              </CustomFormLabel>
-                              <Typography>{invitationCode[0]?.visitor_number || '-'}</Typography>
-                            </Box>
-                          </Box>
-                        </Grid>
-
-                        {/* Invitation Code */}
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Box display="flex" gap={2} alignItems="flex-start">
-                            <IconTicket />
-                            <Box>
-                              <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>
-                                Invitation Code
-                              </CustomFormLabel>
-                              <Typography>{invitationCode[0]?.invitation_code || '-'}</Typography>
-                            </Box>
-                          </Box>
-                        </Grid>
-
-                        {/* Visitor Status */}
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Box display="flex" gap={2} alignItems="flex-start">
-                            <IconCheckupList />
-                            <Box>
-                              <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>
-                                Visitor Status
-                              </CustomFormLabel>
-                              <Typography>{invitationCode[0]?.visitor_status || '-'}</Typography>
-                            </Box>
-                          </Box>
-                        </Grid>
-
-                        {/* Vehicle Type */}
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Box display="flex" gap={2} alignItems="flex-start">
-                            <IconCar />
-                            <Box>
-                              <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>
-                                Vehicle Type
-                              </CustomFormLabel>
-                              <Typography>{invitationCode[0]?.vehicle_type || '-'}</Typography>
-                            </Box>
-                          </Box>
-                        </Grid>
-
-                        {/* Vehicle Plate No. */}
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Box display="flex" gap={2} alignItems="flex-start">
-                            <IconLicense />
-                            <Box>
-                              <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>
-                                Vehicle Plate No.
-                              </CustomFormLabel>
-                              <Typography>
-                                {invitationCode[0]?.vehicle_plate_number || '-'}
-                              </Typography>
-                            </Box>
-                          </Box>
-                        </Grid>
-                      </Grid>
-                    </Box>
-                  )}
-
-                  {tabValue === 2 && (
-                    <Box sx={{ mt: 2 }}>
-                      <Grid container rowSpacing={4} columnSpacing={2}>
-                        {/* Agenda */}
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Box display="flex" gap={2} alignItems="flex-start">
-                            <IconCalendarEvent />
-                            <Box>
-                              <CustomFormLabel sx={{ mt: 0, mb: 0 }}>Agenda</CustomFormLabel>
-                              <Typography>{invitationCode[0]?.agenda || '-'}</Typography>
-                            </Box>
-                          </Box>
-                        </Grid>
-
-                        {/* PIC Host */}
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Box display="flex" gap={2} alignItems="flex-start">
-                            <IconUserCheck />
-                            <Box>
-                              <CustomFormLabel sx={{ mt: 0, mb: 0 }}>PIC Host</CustomFormLabel>
-                              <Typography>{invitationCode[0]?.host_name || '-'}</Typography>
-                            </Box>
-                          </Box>
-                        </Grid>
-
-                        {/* Period Start */}
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Box display="flex" gap={2} alignItems="flex-start">
-                            <IconCalendarTime />
-                            <Box>
-                              <CustomFormLabel sx={{ mt: 0, mb: 0 }}>Period Start</CustomFormLabel>
-                              {formatDateTime(invitationCode[0]?.visitor_period_start) ?? '-'}
-                            </Box>
-                          </Box>
-                        </Grid>
-
-                        {/* Period End */}
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Box display="flex" gap={2} alignItems="flex-start">
-                            <IconCalendarEvent />
-                            <Box>
-                              <CustomFormLabel sx={{ mt: 0, mb: 0 }}>Period End</CustomFormLabel>
-                              <Typography>
-                                {formatDateTime(
-                                  invitationCode[0]?.visitor_period_end,
-                                  invitationCode[0]?.extend_visitor_period,
-                                )}
-                              </Typography>
-                            </Box>
-                          </Box>
-                        </Grid>
-
-                        {/* Registered Site */}
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Box display="flex" gap={2} alignItems="flex-start">
-                            <IconMapPin />
-                            <Box>
-                              <CustomFormLabel sx={{ mt: 0, mb: 0 }}>
-                                Registered Site
-                              </CustomFormLabel>
-                              <Typography>{invitationCode[0]?.site_place_name || '-'}</Typography>
-                            </Box>
-                          </Box>
-                        </Grid>
-                      </Grid>
-                    </Box>
-                  )}
-                </CardContent>
-                {/* {invitationCode.length > 0 && invitationCode[0]?.visitor_number && (
-                  <CardActions sx={{ justifyContent: 'center', mt: 2, flexWrap: 'wrap', gap: 1 }}>
-                    {(() => {
-                      // Tentukan sumber visitor
-                      const selectedVisitor =
-                        relatedVisitors.find(
-                          (v) => v.visitor_number === invitationCode[0]?.visitor_number,
-                        ) ||
-                        relatedVisitors.find((v) => v.visitor_number === selectedVisitorNumber);
-
-                      if (
-                        selectedVisitor &&
-                        (selectedVisitor.is_praregister_done == null ||
-                          selectedVisitor.is_praregister_done === false)
-                      ) {
-                        return (
-                          <Button
-                            variant="contained"
-                            color="primary"
-                            onClick={() => handleView(selectedVisitor.id)}
-                          >
-                            Fill Form
-                          </Button>
-                        );
-                      }
-
-                      return null;
-                    })()}
-                    {(() => {
-                      const data = invitationCode[0];
-                      const status = data?.visitor_status;
-                      const isBlocked = !!data?.is_block;
-                      const blockBy = data?.block_by ?? null;
-
-                      
-
-                      if (!['Checkin', 'Checkout', 'Block', 'Unblock'].includes(status || '')) {
-                        return (
-                          <>
-                            <Button
-                              variant="contained"
-                              color="success"
-                              onClick={() => handleConfirmStatus('Checkin')}
-                              startIcon={<IconLogin2 />}
-                            >
-                              Check In
-                            </Button>
-                            <Button
-                              variant="contained"
-                              sx={{ backgroundColor: '#000' }}
-                              onClick={() => handleConfirmStatus('Block')}
-                              startIcon={<IconForbid2 />}
-                            >
-                              Block
-                            </Button>
-                          </>
-                        );
-                      }
-
-                      if (status === 'Checkin' && !isBlocked) {
-                        return (
-                          <Box display="flex" gap={1}>
-                            <Button
-                              variant="contained"
-                              color="error"
-                              onClick={() => handleConfirmStatus('Checkout')}
-                              startIcon={<IconLogout />}
-                            >
-                              Check Out
-                            </Button>
-                            <Button
-                              variant="contained"
-                              sx={{ backgroundColor: '#000' }}
-                              onClick={() => handleConfirmStatus('Block')}
-                              startIcon={<IconForbid2 />}
-                            >
-                              Block
-                            </Button>
-                          </Box>
-                        );
-                      }
-
-                      if (status === 'Checkout' && !isBlocked) {
-                        return (
-                          <Box display="flex" gap={1}>
-                            <Button
-                              variant="contained"
-                              sx={{ backgroundColor: '#000' }}
-                              onClick={() => handleConfirmStatus('Block')}
-                              startIcon={<IconForbid2 />}
-                            >
-                              Block
-                            </Button>
-                          </Box>
-                        );
-                      }
-
-                      if (isBlocked) {
-                        return (
-                          <Button
-                            variant="contained"
-                            sx={{
-                              backgroundColor: '#f44336',
-                              '&:hover': { backgroundColor: '#d32f2f' },
-                            }}
-                            onClick={() => handleConfirmStatus('Unblock')}
-                            startIcon={<IconBan />}
-                          >
-                            Unblock
-                          </Button>
-                          // <></>
-                        );
-                      }
-
-                      if (!isBlocked) {
-                        return (
-                          <Box display="flex" gap={1}>
-                           
-                            <Button
-                              variant="contained"
-                              sx={{ backgroundColor: '#000' }}
-                              onClick={() => handleConfirmStatus('Block')}
-                              startIcon={<IconForbid2 />}
-                            >
-                              Block
-                            </Button>
-                          </Box>
-                        );
-                      }
-
-                      return null;
-                    })()}
-                  </CardActions>
-                )} */}
-                {invitationCode.length > 0 && invitationCode[0]?.visitor_number && (
-                  <CardActions sx={{ justifyContent: 'center', mt: 2, flexWrap: 'wrap', gap: 1 }}>
-                    {(() => {
-                      // Tentukan sumber visitor
-                      const selectedVisitor =
-                        relatedVisitors.find(
-                          (v) => v.visitor_number === invitationCode[0]?.visitor_number,
-                        ) ||
-                        relatedVisitors.find((v) => v.visitor_number === selectedVisitorNumber);
-
-                      // --- Jika form belum diisi (praregister belum done) tampilkan tombol Fill Form
-                      if (
-                        selectedVisitor &&
-                        (selectedVisitor.is_praregister_done == null ||
-                          selectedVisitor.is_praregister_done === false)
-                      ) {
-                        return (
-                          <Button
-                            variant="contained"
-                            color="primary"
-                            onClick={() => handleView(selectedVisitor.id)}
-                          >
-                            Fill Form
-                          </Button>
-                        );
-                      }
-
-                      const data = invitationCode[0];
-                      const status = data?.visitor_status;
-                      const isBlocked = !!data?.is_block;
-                      const blockBy = data?.block_by ?? null;
-
-                      // 🚫 Jangan tampilkan tombol status apa pun kalau pra-register belum selesai
-                      if (
-                        !selectedVisitor ||
-                        selectedVisitor.is_praregister_done == null ||
-                        selectedVisitor.is_praregister_done === false
-                      ) {
-                        return null;
-                      }
-
-                      // --- Checkin / Block default
-                      if (!['Checkin', 'Checkout', 'Block', 'Unblock'].includes(status || '')) {
-                        return (
-                          <>
-                            <Button
-                              variant="contained"
-                              color="success"
-                              onClick={() => handleConfirmStatus('Checkin')}
-                              startIcon={<IconLogin2 />}
-                            >
-                              Check In
-                            </Button>
-                            <Button
-                              variant="contained"
-                              sx={{ backgroundColor: '#000' }}
-                              onClick={() => handleConfirmStatus('Block')}
-                              startIcon={<IconForbid2 />}
-                            >
-                              Block
-                            </Button>
-                          </>
-                        );
-                      }
-
-                      // --- Sudah Checkin
-                      if (status === 'Checkin' && !isBlocked) {
-                        return (
-                          <Box display="flex" gap={1}>
-                            <Button
-                              variant="contained"
-                              color="error"
-                              onClick={() => handleConfirmStatus('Checkout')}
-                              startIcon={<IconLogout />}
-                            >
-                              Check Out
-                            </Button>
-                            <Button
-                              variant="contained"
-                              sx={{ backgroundColor: '#000' }}
-                              onClick={() => handleConfirmStatus('Block')}
-                              startIcon={<IconForbid2 />}
-                            >
-                              Block
-                            </Button>
-                          </Box>
-                        );
-                      }
-
-                      // --- Sudah Checkout tapi belum diblokir
-                      if (status === 'Checkout' && !isBlocked) {
-                        return (
-                          <Box display="flex" gap={1}>
-                            <Button
-                              variant="contained"
-                              sx={{ backgroundColor: '#000' }}
-                              onClick={() => handleConfirmStatus('Block')}
-                              startIcon={<IconForbid2 />}
-                            >
-                              Block
-                            </Button>
-                          </Box>
-                        );
-                      }
-
-                      // --- Jika diblokir
-                      if (isBlocked) {
-                        return (
-                          <Button
-                            variant="contained"
-                            sx={{
-                              backgroundColor: '#f44336',
-                              '&:hover': { backgroundColor: '#d32f2f' },
-                            }}
-                            onClick={() => handleConfirmStatus('Unblock')}
-                            startIcon={<IconBan />}
-                          >
-                            Unblock
-                          </Button>
-                        );
-                      }
-
-                      return null;
-                    })()}
-                  </CardActions>
-                )}
-              </Card>
-            </Grid>
-            <Grid size={{ xs: 12, lg: 4.5 }} sx={{ display: 'flex', flexDirection: 'column' }}>
-              <Card
-                sx={{
-                  flex: 1,
-                  height: '100%',
-                  maxHeight: '600px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                  overflow: 'auto',
-                }}
-              >
-                <Box display="flex" justifyContent="space-between">
-                  <CardHeader title="Related Visitors" sx={{ p: 0 }} />
-                  <FormControlLabel
-                    value="end"
-                    control={
-                      <Checkbox
-                        checked={selectMultiple}
-                        onChange={(e) => {
-                          setSelectMultiple(e.target.checked);
-                          setSelectedVisitors([]); // reset selected
-                        }}
-                      />
-                    }
-                    label="Select Multiple"
-                    labelPlacement="end"
-                  />
-                </Box>
-                <Divider sx={{ mt: 1 }} />
-                <CardContent
-                  sx={{
-                    flex: 1,
-                    overflowY: 'auto',
-                    p: 0,
-                    pb: '0 !important',
-                    display: 'flex',
-                    flexDirection: 'column',
-                  }}
-                >
-                  {relatedVisitors.map((visitor, index) => {
-                    const isDriving = visitor.is_driving === true;
-                    const isScanned =
-                      visitor.visitor_number &&
-                      scannedVisitorNumber &&
-                      visitor.visitor_number === scannedVisitorNumber;
-                    const isSelected = visitor.visitor_number === selectedVisitorNumber;
-
-                    return (
-                      <React.Fragment key={visitor.id || index}>
-                        <ListItem
-                          sx={{
-                            px: 1,
-                            py: 1.5,
-                            borderBottom: index !== relatedVisitors.length - 1 ? 'none' : 'none',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            cursor: 'pointer',
-                            transition: 'background 0.2s ease',
-
-                            '&:hover': {
-                              backgroundColor: 'rgba(93,135,255,0.08)',
-                            },
-                          }}
-                          onClick={() => handleSelectRelatedVisitor(visitor)}
-                        >
-                          {/* Avatar + Info */}
-                          <Box display="flex" alignItems="center" gap={2}>
-                            <Avatar
-                              src={`${BASE_URL}/cdn${visitor.selfie_image}`}
-                              alt={visitor.name}
-                              sx={{ width: 45, height: 45 }}
-                            />
-                            <Box>
-                              <Typography variant="h6" fontWeight="bold">
-                                {visitor.name || '-'}
-                              </Typography>
-                              <Typography variant="body1" color="text.secondary">
-                                {visitor.organization || '-'}
-                              </Typography>
-                            </Box>
-                          </Box>
-
-                          {/* Checkbox + status */}
-                          <Box display="flex" flexDirection="row" alignItems="center" gap={1}>
-                            <Box display="flex" gap={1} flexDirection={'column'}>
-                              {isDriving && (
-                                <Tooltip title="Parking" arrow>
-                                  <Box
-                                    sx={{
-                                      backgroundColor: '#4CAF50',
-                                      color: 'white',
-                                      fontWeight: 600,
-                                      borderRadius: '6px',
-                                      px: 1,
-                                      py: 0.25,
-                                      fontSize: '0.75rem',
-                                      textAlign: 'center',
-                                      cursor: 'default',
-                                    }}
-                                  >
-                                    P
-                                  </Box>
-                                </Tooltip>
-                              )}
-
-                              {isScanned && (
-                                <Tooltip title="Scan" arrow>
-                                  <Box
-                                    sx={{
-                                      backgroundColor: '#1976D2',
-                                      color: 'white',
-                                      fontWeight: 600,
-                                      borderRadius: '6px',
-                                      px: 1,
-                                      py: 0.25,
-                                      fontSize: '0.75rem',
-                                      textAlign: 'center',
-                                      cursor: 'default',
-                                    }}
-                                  >
-                                    S
-                                  </Box>
-                                </Tooltip>
-                              )}
-                            </Box>
-                            <Checkbox
-                              checked={selectedVisitors.includes(visitor.id)}
-                              onChange={(e) => {
-                                const isChecked = e.target.checked;
-
-                                setSelectedVisitors((prev) => {
-                                  if (selectMultiple) {
-                                    if (isChecked) {
-                                      const updated = Array.from(new Set([...prev, visitor.id]));
-                                      console.log('✅ Added visitor ID:', visitor.id);
-                                      console.log('🧾 Updated visitors (after add):', updated);
-                                      return updated;
-                                    } else {
-                                      const updated = prev.filter((id) => id !== visitor.id);
-                                      console.log('❌ Removed visitor ID:', visitor.id);
-                                      console.log('🧾 Updated visitors (after remove):', updated);
-                                      return updated;
-                                    }
-                                  } else {
-                                    if (isChecked) {
-                                      console.log('🎯 Single visitor selected:', visitor.id);
-                                      handleSelectRelatedVisitor(visitor);
-                                      return [visitor.id];
-                                    } else {
-                                      console.log('🚫 Unselected single visitor:', visitor.id);
-                                      return [];
-                                    }
-                                  }
-                                });
-                              }}
-                            />
-                          </Box>
-                        </ListItem>
-
-                        {/* Info bawah */}
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'flex-start',
-                            mt: 1,
-                            px: 1,
-                            gap: 0.5,
-                            // borderBottom: '1px solid #eee',
-                          }}
-                        >
-                          <Typography variant="body1" fontWeight="medium" sx={{ lineHeight: 1.3 }}>
-                            {visitor.agenda || '-'}
-                          </Typography>
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                            sx={{ lineHeight: 1.2 }}
-                          >
-                            {`${formatDateTime(visitor.visitor_period_start)} - ${formatDateTime(
-                              visitor.visitor_period_end,
-                              visitor.extend_visitor_period,
-                            )}`}
-                          </Typography>
-                        </Box>
-                        <Divider sx={{ my: 1 }} />
-                      </React.Fragment>
-                    );
-                  })}
-                </CardContent>
-                <CardActions>
-                  <Divider />
-                  <Box
-                    display={'flex'}
-                    gap={2}
-                    width={'100%'}
-                    sx={{ mt: 2, justifyContent: 'space-between' }}
-                    flexWrap={'wrap'}
-                  >
-                    <Box display="flex" gap={1}>
-                      <CustomSelect
-                        sx={{ width: '150px' }}
-                        value={bulkAction}
-                        onChange={(e: any) => setBulkAction(e.target.value)}
-                      >
-                        {availableActions.map((action) => (
-                          <MenuItem key={action.value} value={action.value}>
-                            {action.label}
-                          </MenuItem>
-                        ))}
-                      </CustomSelect>
-
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        sx={{ width: '100px' }}
-                        disabled={!bulkAction || selectedVisitors.length === 0}
-                        onClick={handleApplyBulkAction}
-                      >
-                        {loadingAccess ? <CircularProgress size={24} color="inherit" /> : 'Apply'}
-                      </Button>
-                    </Box>
-                    {invitationCode.length > 0 && (
-                      <Box
-                        display={'flex'}
-                        gap={0.5}
-                        alignItems={'center'}
-                        justifyContent={'flex-end'}
-                      >
-                        <Button
-                          variant="contained"
-                          onClick={() => setOpenExtendVisit(true)}
-                          startIcon={<IconClock size={18} />}
-                          color="secondary"
-                          disabled={
-                            !(
-                              // invitationCode?.[0]?.visitor_status === 'Checkin' ||
-                              relatedVisitors.some(
-                                (v) =>
-                                  selectedVisitors.includes(v.id) && v.visitor_status === 'Checkin',
-                              )
-                            )
-                          }
-                        >
-                          Extend
-                        </Button>
-                        <Button
-                          variant="outlined"
-                          color="primary"
-                          onClick={handleChooseCard}
-                          startIcon={<IconCreditCard size={18} />}
-                        >
-                          Card
-                        </Button>
-
-                        <Button
-                          variant="contained"
-                          color="primary"
-                          onClick={() => setOpenAccessData(true)}
-                          startIcon={<IconKey size={18} />}
-                        >
-                          Access
-                        </Button>
-                      </Box>
-                    )}
-                  </Box>
-                </CardActions>
-              </Card>
-            </Grid>
-
-            <Grid size={{ xs: 12, lg: 3 }} sx={{ height: '100%' }}>
-              <Grid container direction="column" spacing={2} sx={{ height: '100%', flexGrow: 1 }}>
-                <Grid sx={{ flex: 1, display: 'flex' }}>
-                  <Card
-                    sx={{
-                      flex: 1,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      height: '100%',
-                      maxHeight: '100%',
-                    }}
-                  >
-                    <CardContent
-                      sx={{
-                        flex: 1,
-                        p: 0,
-                        overflowY: 'auto',
-                        overflowX: 'hidden',
-                        pb: '0 ! important',
-                      }}
-                    >
-                      <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Faceimage</CustomFormLabel>
-
-                      {activeSelfie ? (
-                        <img
-                          src={activeSelfie}
-                          alt="Face Image"
-                          style={{
-                            width: '100%',
-                            height: isFullscreen ? '100%' : '225px',
-                            borderRadius: '8px',
-                            objectFit: isFullscreen ? 'contain' : 'cover',
-                          }}
-                          onError={(e) => (e.currentTarget.style.display = 'none')}
-                        />
-                      ) : (
-                        <Box
-                          display="flex"
-                          alignItems="center"
-                          justifyContent="center"
-                          height={isFullscreen ? '100%' : '225px'}
-                          sx={{
-                            borderRadius: '8px',
-                            backgroundColor: '#f9f9f9',
-                            color: '#888',
-                            fontStyle: 'italic',
-                            fontSize: '0.9rem',
-                          }}
-                        >
-                          No Face Image
-                        </Box>
-                      )}
-                    </CardContent>
-                  </Card>
-                </Grid>
-
-                <Grid sx={{ flex: 1, display: 'flex' }}>
-                  <Card
-                    sx={{
-                      flex: 1,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      height: '100%',
-                      maxHeight: '100%',
-                    }}
-                  >
-                    <CardContent
-                      sx={{
-                        flex: 1,
-                        p: 0,
-                        overflowY: 'auto',
-                        overflowX: 'hidden',
-                        pb: '0 ! important',
-                      }}
-                    >
-                      <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Identity Image</CustomFormLabel>
-                      {activeKTP ? (
-                        <img
-                          src={activeKTP}
-                          alt="Identity Image"
-                          style={{
-                            width: '100%',
-                            height: isFullscreen ? '100%' : '225px',
-                            borderRadius: '8px',
-                            objectFit: isFullscreen ? 'contain' : 'cover',
-                          }}
-                          onError={(e) => (e.currentTarget.style.display = 'none')}
-                        />
-                      ) : (
-                        <Box
-                          display="flex"
-                          alignItems="center"
-                          justifyContent="center"
-                          height={isFullscreen ? '100%' : '225px'}
-                          sx={{
-                            borderRadius: '8px',
-                            backgroundColor: '#f9f9f9',
-                            color: '#888',
-                            fontStyle: 'italic',
-                            fontSize: '0.9rem',
-                          }}
-                        >
-                          No Face Image
-                        </Box>
-                      )}
-                    </CardContent>
-                  </Card>
-                </Grid>
-              </Grid>
-            </Grid>
-          </Grid>
-        </Box>
-      </Box>
-      <SearchVisitorDialog
-        open={openSearch}
-        onClose={() => setOpenSearch(false)}
-        onSearch={(data) => {
-          setVisitorData(data);
-          setOpenDetail(true); // langsung buka detail
-        }}
-        container={containerRef.current}
-      />
-      {/* Dialog Detail */}
-      <DetailVisitorDialog
-        open={openDetail}
-        onClose={() => setOpenDetail(false)}
-        visitorData={visitorData}
-      />
-      {/* Scan QR Visitor */}
-      <ScanQrVisitorDialog
-        open={openDialogIndex === 1}
-        onClose={handleCloseScanQR}
-        handleSubmitQRCode={handleSubmitQRCode}
-        container={containerRef.current ?? undefined}
-      />
-      {/* Choose Card */}
-      <Dialog
-        open={openChooseCardDialog}
-        onClose={() => setOpenChooseCardDialog(false)}
-        fullWidth
-        maxWidth="lg"
-      >
-        <DialogTitle>Choose Card</DialogTitle>
-        <IconButton
-          aria-label="close"
-          onClick={() => setOpenChooseCardDialog(false)}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            color: (theme) => theme.palette.grey[500],
-          }}
-        >
-          <IconX />
-        </IconButton>
-        <DialogContent dividers>
-          {/* Search */}
-          <Box mb={2}>
-            <TextField
-              fullWidth
-              size="small"
-              placeholder="Search card"
-              variant="outlined"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <IconSearch size={20} />
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Box>
-
-          {/* Grid list of cards */}
-          <Grid container spacing={2}>
-            {filteredCards.map((card) => {
-              const isChosen = selectedCards.includes(card.card_number);
-              const isLimitReached =
-                selectedCards.length >= (selectedVisitors.length || 1) && !isChosen;
-              return (
-                <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={card.id}>
-                  <Paper
-                    onClick={() => {
-                      handleToggleCard(card.card_number);
-                    }}
-                    sx={(theme) => ({
-                      p: 2,
-                      borderRadius: 2,
-                      position: 'relative',
-                      height: 280,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      textAlign: 'center',
-                      cursor: 'pointer',
-                      border: '1px solid',
-                      borderColor: isChosen ? theme.palette.primary.main : 'divider',
-                      boxShadow: isChosen ? theme.shadows[8] : theme.shadows[2],
-                      backgroundColor: isChosen ? theme.palette.primary.light : 'background.paper',
-                      transition: theme.transitions.create(
-                        ['transform', 'box-shadow', 'border-color', 'background-color'],
-                        {
-                          duration: theme.transitions.duration.shorter,
-                        },
-                      ),
-                      '&:hover': {
-                        transform: isLimitReached ? 'none' : 'translateY(-3px)',
-                        boxShadow: isLimitReached ? theme.shadows[1] : theme.shadows[6],
-                      },
-                    })}
-                  >
-                    {/* Konten kartu */}
-                    <Box
-                      flexGrow={1}
-                      display="flex"
-                      flexDirection="column"
-                      justifyContent="center"
-                      alignItems="center"
-                    >
-                      <Typography variant="h1" color="text.secondary" mt={2}>
-                        {card.remarks || '-'}
-                      </Typography>
-                      {/* Baris untuk CARD */}
-                      <Box
-                        display="flex"
-                        justifyContent="space-between"
-                        width="100%"
-                        maxWidth={300}
-                        mt={1}
-                      >
-                        <Typography variant="body1" fontWeight={600}>
-                          Card
-                        </Typography>
-                        <Typography variant="body1" color="text.secondary">
-                          {card.card_number || '-'}
-                        </Typography>
-                      </Box>
-
-                      {/* Baris untuk BLE */}
-                      <Box
-                        display="flex"
-                        justifyContent="space-between"
-                        width="100%"
-                        maxWidth={300}
-                        flexWrap={'wrap'}
-                        gap={1}
-                      >
-                        <Typography variant="body1" fontWeight={600}>
-                          BLE
-                        </Typography>
-                        <Typography variant="body1" fontWeight={500}>
-                          {card.card_mac || '-'}
-                        </Typography>
-                      </Box>
-                    </Box>
-
-                    <Typography variant="body1">{card.name}</Typography>
-
-                    {/* Checkbox */}
-                    <FormControlLabel
-                      onClick={(e) => e.stopPropagation()}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      control={
-                        <Checkbox
-                          checked={isChosen}
-                          disabled={!isChosen}
-                          onChange={() => handleToggleCard(card.card_number)}
-                        />
-                      }
-                      label=""
-                      sx={{ m: 0 }}
-                    />
-                  </Paper>
-                </Grid>
-              );
-            })}
-          </Grid>
-
-          {/* Footer */}
-          <Box mt={3} display="flex" justifyContent="space-between" alignItems="center">
-            <Box display="flex" flexDirection="column" gap={0.5}>
-              {/* <Typography variant="body2">
-                        Selected Card: {selectedCards.length > 0 ? selectedCards[0] : '-'}
-                      </Typography> */}
-              <Typography variant="body2">
-                Cards chosen: {selectedCards.length} / {availableCount}
-              </Typography>
-            </Box>
-
-            <Box display="flex" gap={1}>
-              <Button onClick={handleCloseChooseCard} color="secondary">
-                Cancel
-              </Button>
-              <Button
-                variant="contained"
-                disabled={selectedCards.length === 0}
-                onClick={handleConfirmChooseCards}
-              >
-                Choose
-              </Button>
-            </Box>
-          </Box>
-        </DialogContent>
-      </Dialog>
-      {/* Fill Form Pra regist Multiple*/}
-      <Dialog
-        open={openFillForm}
-        onClose={() => setOpenFillForm(false)}
-        fullWidth
-        maxWidth={false} // penting agar tidak dibatasi ukuran default MUI
-        PaperProps={{
-          sx: {
-            width: '100vw', // bisa ubah jadi 100vw kalau mau full
-            // maxWidth: '1900px', // misal lebih besar dari xl
-          },
-        }}
-      >
-        <DialogTitle sx={{ pb: 1, fontWeight: 600 }}>Fill Pre-Registration Form</DialogTitle>
-        <IconButton
-          aria-label="close"
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            color: (theme) => theme.palette.grey[500],
-          }}
-          onClick={() => setOpenFillForm(false)}
-        >
-          <IconX />
-        </IconButton>
-        <DialogContent dividers>
-          {fillFormData.length > 0 && (
-            <>
-              <Stepper activeStep={fillFormActiveStep} alternativeLabel sx={{ mb: 3 }}>
-                {fillFormData.map((s, i) => (
-                  <Step key={i}>
-                    <StepLabel
-                      onClick={() => setFillFormActiveStep(i)}
-                      sx={{
-                        '& .MuiStepLabel-label': {
-                          fontSize: '0.9rem !important', // ubah ukuran di sini, misal 16px = 1rem
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                        },
-                      }}
-                    >
-                      {s.name}
-                    </StepLabel>
-                  </Step>
-                ))}
-              </Stepper>
-              <Box>
-                {(() => {
-                  const section = fillFormData[fillFormActiveStep];
-                  if (!section) return null;
-
-                  const sectionType = getSectionType(section);
-                  if (sectionType === 'visitor_information_group') {
-                    // ✅ langsung reuse potongan yang kamu pakai untuk render Visitor Info Group
-                    const isDrivingField = fillFormDataVisitor
-                      ?.flatMap((v) => v.question_page)
-                      ?.flatMap((q) => q.form || [])
-                      ?.find((f) => f.remarks === 'is_driving');
-
-                    const isDriving =
-                      isDrivingField?.answer_text === 'true' ||
-                      isDrivingField?.answer_text === true;
-                    return (
-                      <Grid>
-                        <Box>
-                          <TableContainer component={Paper} sx={{ mb: 1 }}>
-                            <Table size="small">
-                              <TableHead>
-                                <TableRow>
-                                  {(
-                                    fillFormDataVisitor[0]?.question_page?.[fillFormActiveStep]
-                                      ?.visit_form ||
-                                    formsOf(section) ||
-                                    []
-                                  )
-                                    .filter(
-                                      (f: any) =>
-                                        // pakai visitor pertama sebagai acuan visual header
-                                        fillFormDataVisitor[0]?.question_page?.[
-                                          fillFormActiveStep
-                                        ]?.form?.find(
-                                          (x: any) =>
-                                            x.remarks === 'is_driving' && x.answer_text === 'true',
-                                        ) || !['vehicle_type', 'vehicle_plate'].includes(f.remarks),
-                                    )
-                                    .map((f: any, i: any) => (
-                                      <TableCell key={i}>
-                                        <Typography variant="subtitle2" fontWeight={600}>
-                                          {f.long_display_text}
-                                        </Typography>
-                                      </TableCell>
-                                    ))}
-                                </TableRow>
-                              </TableHead>
-
-                              <TableBody>
-                                {fillFormDataVisitor.length > 0 ? (
-                                  fillFormDataVisitor.map((group, gIdx) => {
-                                    const page =
-                                      group.question_page?.[fillFormActiveStep] ?? section;
-                                    if (!page) return null;
-
-                                    // 🟢 CARI is_driving milik visitor ini
-                                    const isDrivingField = page.form?.find(
-                                      (f: any) => f.remarks === 'is_driving',
-                                    );
-                                    const isDriving =
-                                      isDrivingField?.answer_text === 'true' ||
-                                      isDrivingField?.answer_text === true;
-
-                                    return (
-                                      <TableRow key={gIdx}>
-                                        {page.form
-                                          ?.filter(
-                                            (field: any) =>
-                                              isDriving ||
-                                              !['vehicle_type', 'vehicle_plate'].includes(
-                                                field.remarks,
-                                              ),
-                                          )
-                                          .map((field: any) => {
-                                            // ✅ FIX 1: cari index sebenarnya berdasarkan remarks (bukan fIdx)
-                                            const formIdx = page.form.findIndex(
-                                              (x: any) => x.remarks === field.remarks,
-                                            );
-
-                                            return (
-                                              // ✅ FIX 2: gunakan remarks sebagai key, bukan fIdx
-                                              <TableCell key={field.remarks}>
-                                                {renderFieldInput(
-                                                  field,
-                                                  formIdx, // ✅ pakai index real
-                                                  (idx, fieldKey, value) => {
-                                                    setFillFormDataVisitor((prev) => {
-                                                      // ✅ FIX 3: deep clone agar state tetap konsisten
-                                                      const next = structuredClone(prev);
-                                                      const s = fillFormActiveStep;
-
-                                                      // ✅ FIX 4: update berdasarkan remarks, bukan index mentah
-                                                      const targetIdx = next[gIdx].question_page[
-                                                        s
-                                                      ].form.findIndex(
-                                                        (x: any) => x.remarks === field.remarks,
-                                                      );
-                                                      if (targetIdx === -1) return prev;
-
-                                                      next[gIdx].question_page[s].form[targetIdx] =
-                                                        {
-                                                          ...next[gIdx].question_page[s].form[
-                                                            targetIdx
-                                                          ],
-                                                          [fieldKey]: value,
-                                                        };
-                                                      return next;
-                                                    });
-                                                  },
-                                                  undefined,
-                                                  {
-                                                    showLabel: false,
-                                                    uniqueKey: `${fillFormActiveStep}:${gIdx}:${field.remarks}`, // ✅ pakai remarks
-                                                  },
-                                                )}
-                                              </TableCell>
-                                            );
-                                          })}
-                                      </TableRow>
-                                    );
-                                  })
-                                ) : (
-                                  <TableRow>
-                                    <TableCell colSpan={12} align="center">
-                                      No visitor data. Click “Add New” to start.
-                                    </TableCell>
-                                  </TableRow>
-                                )}
-                              </TableBody>
-                            </Table>
-                          </TableContainer>
-                        </Box>
-                      </Grid>
-                    );
-                  } else if (sectionType === 'purpose_visit') {
-                    const mergedVisitForm = formsOf(section);
-                    return (
-                      <Grid container spacing={2} sx={{ px: 1 }}>
-                        {mergedVisitForm.map((f: any, idx: number) => (
-                          <Grid size={{ xs: 12 }} key={idx}>
-                            <Box display="flex" flexDirection="column" gap={0.5}>
-                              <Typography variant="subtitle2" fontWeight={600}>
-                                {f.long_display_text}
-                              </Typography>
-
-                              {/* Semua input jadi disabled */}
-                              <Box sx={{ pointerEvents: 'none', opacity: 0.6 }}>
-                                {renderFieldInput(
-                                  f,
-                                  idx,
-                                  () => {}, // disable onChange
-                                  undefined,
-                                  { showLabel: false, uniqueKey: `${fillFormActiveStep}:${idx}` },
                                 )}
                               </Box>
                             </Box>
                           </Grid>
-                        ))}
-                      </Grid>
-                    );
-                  }
+                        </Grid>
+                      </Box>
+                    )}
 
-                  return null;
-                })()}
-              </Box>
-            </>
-          )}
-        </DialogContent>
+                    {tabValue === 1 && (
+                      <Box sx={{ mt: 2 }}>
+                        <Grid container rowSpacing={4} columnSpacing={2}>
+                          {/* Group Code */}
+                          <Grid size={{ xs: 12, md: 6 }}>
+                            <Box display="flex" gap={2} alignItems="flex-start">
+                              <IconUsersGroup />
+                              <Box>
+                                <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>
+                                  Group Code
+                                </CustomFormLabel>
+                                <Typography>{invitationCode[0]?.group_code || '-'}</Typography>
+                              </Box>
+                            </Box>
+                          </Grid>
 
-        <DialogActions style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <Button
-            onClick={() => setFillFormActiveStep((p) => Math.max(p - 1, 0))}
-            disabled={fillFormActiveStep === 0}
-          >
-            Back
-          </Button>
-          {fillFormActiveStep < fillFormData.length - 1 ? (
-            // <Button variant="contained" onClick={() => setFillFormActiveStep((p) => p + 1)}>
-            //   Next
-            // </Button>
-            <Button
-              variant="contained"
-              onClick={() => {
-                console.log(
-                  '🧠 [DEBUG BEFORE NEXT] fillFormDataVisitor',
-                  JSON.stringify(fillFormDataVisitor, null, 2),
-                );
-                setFillFormActiveStep((p) => p + 1);
-              }}
-            >
-              Next
-            </Button>
-          ) : (
-            <Button variant="contained" color="primary" onClick={handleSubmitPramultiple}>
-              Submit
-            </Button>
-          )}
-        </DialogActions>
-      </Dialog>
-      {/* Submit Praregister */}
-      <Dialog
-        open={openDialogInvitation}
-        onClose={() => setOpenDialogInvitation(false)}
-        fullWidth
-        maxWidth="xl"
-      >
-        <DialogTitle>Praregister</DialogTitle>
-        <IconButton
-          aria-label="close"
-          onClick={() => setOpenDialogInvitation(false)}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            color: (theme) => theme.palette.grey[500],
-          }}
-        >
-          <IconX />
-        </IconButton>
-        {loading ? (
-          <DialogContent
-            dividers
-            sx={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              minHeight: 400, // 💪 kasih tinggi tetap biar nggak 'melompat'
-            }}
-          >
-            <CircularProgress />
-          </DialogContent>
-        ) : (
-          <DialogContent dividers>
-            {selectedInvitationId ? (
-              <FormDialogPraregist
-                id={selectedInvitationId ?? invitationCode?.[0]?.id}
-                onClose={() => setOpenDialogInvitation(false)}
-                onSubmitted={async (formId?: string) => {
-                  setOpenDialogInvitation(false);
-                  const targetId = formId ?? selectedInvitationId ?? invitationCode?.[0]?.id;
-                  if (!targetId) return;
-                  await fetchRelatedVisitorsByInvitationId(targetId);
-                }}
-                onSubmitting={setSubmitting}
-              />
-            ) : (
-              <Typography variant="body2" textAlign="center" color="text.secondary">
-                No invitation selected.
-              </Typography>
-            )}
-          </DialogContent>
-        )}
-      </Dialog>
-      {/* Access */}
-      <Dialog
-        open={openAccessData}
-        onClose={() => setOpenAccessData(false)}
-        fullWidth
-        maxWidth="md"
-      >
-        <DialogTitle>Select Access</DialogTitle>
-        <IconButton
-          aria-label="close"
-          onClick={() => setOpenAccessData(false)}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
+                          {/* Group Name */}
+                          <Grid size={{ xs: 12, md: 6 }}>
+                            <Box display="flex" gap={2} alignItems="flex-start">
+                              <IconUser />
+                              <Box>
+                                <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>
+                                  Group Name
+                                </CustomFormLabel>
+                                <Typography>{invitationCode[0]?.group_name || '-'}</Typography>
+                              </Box>
+                            </Box>
+                          </Grid>
 
-            color: (theme) => theme.palette.grey[500],
-          }}
-        >
-          <IconX />
-        </IconButton>
-        <DialogContent dividers>
-          <DynamicTable
-            data={accessData.map(({ trx_visitor_id, visitors, ...rest }) => rest)}
-            isHaveChecked={true}
-            isHaveHeaderTitle={true}
-            titleHeader="Access"
-            overflowX="auto"
-            isHaveAccess={true}
-            onAccessAction={handleAccessAction}
-            onCheckedChange={(checkedRows) => {
-              const ids = checkedRows.map((r) => r.access_control_id);
-              setSelectedAccessIds(ids);
-            }}
-          />
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <CustomSelect
-              sx={{ width: '30%', p: 0, mt: 2, backgroundColor: 'white' }}
-              value={selectedActionAccess}
-              onChange={(e: any) => setSelectedActionAccess(e.target.value)}
-              displayEmpty
-              disabled={!selectedAccessIds.length}
-            >
-              <MenuItem value="">Select Action</MenuItem>
-              <MenuItem value="grant" disabled={!allowedActions.includes('Grant')}>
-                Grant
-              </MenuItem>
-              <MenuItem value="revoke" disabled={!allowedActions.includes('Revoke')}>
-                Revoke
-              </MenuItem>
-              <MenuItem value="block" disabled={!allowedActions.includes('Block')}>
-                Block
-              </MenuItem>
-            </CustomSelect>
+                          {/* Visitor Number */}
+                          <Grid size={{ xs: 12, md: 6 }}>
+                            <Box display="flex" gap={2} alignItems="flex-start">
+                              <IconNumbers />
+                              <Box>
+                                <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>
+                                  Visitor Number
+                                </CustomFormLabel>
+                                <Typography>{invitationCode[0]?.visitor_number || '-'}</Typography>
+                              </Box>
+                            </Box>
+                          </Grid>
 
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={async () => {
-                if (!selectedAccessIds.length || !selectedActionAccess) {
-                  setSnackbarMsg('Please select rows and an action first.');
-                  setSnackbarType('info');
-                  setSnackbarOpen(true);
-                  return;
-                }
+                          {/* Invitation Code */}
+                          <Grid size={{ xs: 12, md: 6 }}>
+                            <Box display="flex" gap={2} alignItems="flex-start">
+                              <IconTicket />
+                              <Box>
+                                <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>
+                                  Invitation Code
+                                </CustomFormLabel>
+                                <Typography>{invitationCode[0]?.invitation_code || '-'}</Typography>
+                              </Box>
+                            </Box>
+                          </Grid>
 
-                // 🚨 validasi tambahan: pastikan aksi masih diizinkan
-                if (
-                  !allowedActions.includes(
-                    selectedActionAccess.charAt(0).toUpperCase() + selectedActionAccess.slice(1),
-                  )
-                ) {
-                  setSnackbarMsg(
-                    `Action "${selectedActionAccess}" is not allowed for selected access.`,
-                  );
-                  setSnackbarType('info');
-                  setSnackbarOpen(true);
-                  return;
-                }
+                          {/* Visitor Status */}
+                          <Grid size={{ xs: 12, md: 6 }}>
+                            <Box display="flex" gap={2} alignItems="flex-start">
+                              <IconCheckupList />
+                              <Box>
+                                <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>
+                                  Visitor Status
+                                </CustomFormLabel>
+                                <Typography>{invitationCode[0]?.visitor_status || '-'}</Typography>
+                              </Box>
+                            </Box>
+                          </Grid>
 
-                for (const id of selectedAccessIds) {
-                  const row = accessData.find(
-                    (r) =>
-                      r.access_control_id?.toLowerCase() === id.toLowerCase() &&
-                      selectedVisitors.some(
-                        (v) =>
-                          v.toLowerCase() === r.trx_visitor_id?.toLowerCase() ||
-                          v.toLowerCase() === r.trxVisitorId?.toLowerCase(),
-                      ),
-                  );
+                          {/* Vehicle Type */}
+                          <Grid size={{ xs: 12, md: 6 }}>
+                            <Box display="flex" gap={2} alignItems="flex-start">
+                              <IconCar />
+                              <Box>
+                                <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>
+                                  Vehicle Type
+                                </CustomFormLabel>
+                                <Typography>{invitationCode[0]?.vehicle_type || '-'}</Typography>
+                              </Box>
+                            </Box>
+                          </Grid>
 
-                  if (!row) {
-                    continue;
-                  }
+                          {/* Vehicle Plate No. */}
+                          <Grid size={{ xs: 12, md: 6 }}>
+                            <Box display="flex" gap={2} alignItems="flex-start">
+                              <IconLicense />
+                              <Box>
+                                <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>
+                                  Vehicle Plate No.
+                                </CustomFormLabel>
+                                <Typography>
+                                  {invitationCode[0]?.vehicle_plate_number || '-'}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          </Grid>
+                        </Grid>
+                      </Box>
+                    )}
 
-                  await handleAccessAction(row, selectedActionAccess.toLowerCase() as any);
-                }
-                setSelectedActionAccess('');
-              }}
-              sx={{ mb: 0, mt: 2 }}
-              disabled={!selectedActionAccess || allowedActions.length === 0}
-            >
-              Apply
-            </Button>
-          </Box>
-        </DialogContent>
-      </Dialog>
-      {/* Extend Visit */}
-      <Dialog
-        open={openExtendVisit}
-        onClose={() => setOpenExtendVisit(false)}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle>Extend Visit</DialogTitle>
-        <IconButton
-          aria-label="close"
-          onClick={() => setOpenExtendVisit(false)}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            color: (theme) => theme.palette.grey[500],
-          }}
-        >
-          <IconX />
-        </IconButton>
-        <DialogContent dividers>
-          <form onSubmit={handleExtend}>
-            <Box display="flex" flexWrap="wrap" gap={1.5} justifyContent="center" sx={{ mb: 2 }}>
-              {durationOptions.map((minutes) => (
-                <Chip
-                  key={minutes}
-                  label={`${minutes} min`}
-                  clickable
-                  color={selectedMinutes === minutes ? 'primary' : 'default'}
-                  onClick={() => setSelectedMinutes(minutes)}
+                    {tabValue === 2 && (
+                      <Box sx={{ mt: 2 }}>
+                        <Grid container rowSpacing={4} columnSpacing={2}>
+                          {/* Agenda */}
+                          <Grid size={{ xs: 12, md: 6 }}>
+                            <Box display="flex" gap={2} alignItems="flex-start">
+                              <IconCalendarEvent />
+                              <Box>
+                                <CustomFormLabel sx={{ mt: 0, mb: 0 }}>Agenda</CustomFormLabel>
+                                <Typography>{invitationCode[0]?.agenda || '-'}</Typography>
+                              </Box>
+                            </Box>
+                          </Grid>
+
+                          {/* PIC Host */}
+                          <Grid size={{ xs: 12, md: 6 }}>
+                            <Box display="flex" gap={2} alignItems="flex-start">
+                              <IconUserCheck />
+                              <Box>
+                                <CustomFormLabel sx={{ mt: 0, mb: 0 }}>PIC Host</CustomFormLabel>
+                                <Typography>{invitationCode[0]?.host_name || '-'}</Typography>
+                              </Box>
+                            </Box>
+                          </Grid>
+
+                          {/* Period Start */}
+                          <Grid size={{ xs: 12, md: 6 }}>
+                            <Box display="flex" gap={2} alignItems="flex-start">
+                              <IconCalendarTime />
+                              <Box>
+                                <CustomFormLabel sx={{ mt: 0, mb: 0 }}>
+                                  Period Start
+                                </CustomFormLabel>
+                                {formatDateTime(invitationCode[0]?.visitor_period_start) ?? '-'}
+                              </Box>
+                            </Box>
+                          </Grid>
+
+                          {/* Period End */}
+                          <Grid size={{ xs: 12, md: 6 }}>
+                            <Box display="flex" gap={2} alignItems="flex-start">
+                              <IconCalendarEvent />
+                              <Box>
+                                <CustomFormLabel sx={{ mt: 0, mb: 0 }}>Period End</CustomFormLabel>
+                                <Typography>
+                                  {formatDateTime(
+                                    invitationCode[0]?.visitor_period_end,
+                                    invitationCode[0]?.extend_visitor_period,
+                                  )}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          </Grid>
+
+                          {/* Registered Site */}
+                          <Grid size={{ xs: 12, md: 6 }}>
+                            <Box display="flex" gap={2} alignItems="flex-start">
+                              <IconMapPin />
+                              <Box>
+                                <CustomFormLabel sx={{ mt: 0, mb: 0 }}>
+                                  Registered Site
+                                </CustomFormLabel>
+                                <Typography>{invitationCode[0]?.site_place_name || '-'}</Typography>
+                              </Box>
+                            </Box>
+                          </Grid>
+                        </Grid>
+                      </Box>
+                    )}
+                  </CardContent>
+                  {invitationCode.length > 0 && invitationCode[0]?.visitor_number && (
+                    <CardActions sx={{ justifyContent: 'center', mt: 2, flexWrap: 'wrap', gap: 1 }}>
+                      {(() => {
+                        // Tentukan sumber visitor
+                        const selectedVisitor =
+                          relatedVisitors.find(
+                            (v) => v.visitor_number === invitationCode[0]?.visitor_number,
+                          ) ||
+                          relatedVisitors.find((v) => v.visitor_number === selectedVisitorNumber);
+
+                        if (
+                          selectedVisitor &&
+                          (selectedVisitor.is_praregister_done == null ||
+                            selectedVisitor.is_praregister_done === false)
+                        ) {
+                          return (
+                            <Button
+                              variant="contained"
+                              color="primary"
+                              size="large"
+                              onClick={() => handleView(selectedVisitor.id)}
+                            >
+                              Fill Form
+                            </Button>
+                          );
+                        }
+
+                        const data = invitationCode[0];
+                        const status = data?.visitor_status;
+                        const isBlocked = !!data?.is_block;
+                        const blockBy = data?.block_by ?? null;
+
+                        if (
+                          !selectedVisitor ||
+                          selectedVisitor.is_praregister_done == null ||
+                          selectedVisitor.is_praregister_done === false
+                        ) {
+                          return null;
+                        }
+                        if (!['Checkin', 'Checkout', 'Block', 'Unblock'].includes(status || '')) {
+                          return (
+                            <Box display="flex" gap={1}>
+                              <Tooltip
+                                title="Check In"
+                                placement="top"
+                                arrow
+                                slotProps={{
+                                  tooltip: {
+                                    sx: {
+                                      fontSize: '1rem',
+                                      padding: '8px 14px',
+                                    },
+                                  },
+                                  popper: {
+                                    container: containerRef.current,
+                                  },
+                                }}
+                              >
+                                <Button
+                                  variant="contained"
+                                  color="success"
+                                  size="large"
+                                  onClick={() => handleConfirmStatus('Checkin')}
+                                  startIcon={<IconLogin2 />}
+                                >
+                                  Check In
+                                </Button>
+                              </Tooltip>
+                              <Tooltip
+                                title="Block"
+                                placement="top"
+                                arrow
+                                slotProps={{
+                                  tooltip: {
+                                    sx: {
+                                      fontSize: '1rem',
+                                      padding: '8px 14px',
+                                    },
+                                  },
+                                  popper: {
+                                    container: containerRef.current,
+                                  },
+                                }}
+                              >
+                                <Button
+                                  variant="contained"
+                                  size="large"
+                                  sx={{ backgroundColor: '#000' }}
+                                  onClick={() => handleConfirmStatus('Block')}
+                                  startIcon={<IconForbid2 />}
+                                >
+                                  Block
+                                </Button>
+                              </Tooltip>
+                            </Box>
+                          );
+                        }
+
+                        if (status === 'Checkin' && !isBlocked) {
+                          return (
+                            <Box display="flex" gap={1}>
+                              <Tooltip
+                                title="Check Out"
+                                placement="top"
+                                arrow
+                                slotProps={{
+                                  tooltip: {
+                                    sx: {
+                                      fontSize: '1rem',
+                                      padding: '8px 14px',
+                                    },
+                                  },
+                                  popper: {
+                                    container: containerRef.current,
+                                  },
+                                }}
+                              >
+                                <Button
+                                  variant="contained"
+                                  color="error"
+                                  size="large"
+                                  onClick={() => handleConfirmStatus('Checkout')}
+                                  startIcon={<IconLogout />}
+                                >
+                                  Check Out
+                                </Button>
+                              </Tooltip>
+                              <Tooltip
+                                title="Block"
+                                placement="top"
+                                arrow
+                                slotProps={{
+                                  tooltip: {
+                                    sx: {
+                                      fontSize: '1rem',
+                                      padding: '8px 14px',
+                                    },
+                                  },
+                                  popper: {
+                                    container: containerRef.current,
+                                  },
+                                }}
+                              >
+                                <Button
+                                  variant="contained"
+                                  size="large"
+                                  sx={{ backgroundColor: '#000' }}
+                                  onClick={() => handleConfirmStatus('Block')}
+                                  startIcon={<IconForbid2 />}
+                                >
+                                  Block
+                                </Button>
+                              </Tooltip>
+                            </Box>
+                          );
+                        }
+                        if (status === 'Checkout' && !isBlocked) {
+                          return (
+                            <Box display="flex" gap={1}>
+                              <Tooltip
+                                title="Block Visitor"
+                                placement="top"
+                                arrow
+                                slotProps={{
+                                  tooltip: {
+                                    sx: {
+                                      fontSize: '1rem',
+                                      padding: '8px 14px',
+                                    },
+                                  },
+                                  popper: {
+                                    container: containerRef.current,
+                                  },
+                                }}
+                              >
+                                <Button
+                                  variant="contained"
+                                  size="large"
+                                  sx={{ backgroundColor: '#000' }}
+                                  onClick={() => handleConfirmStatus('Block')}
+                                  startIcon={<IconForbid2 />}
+                                >
+                                  Block
+                                </Button>
+                              </Tooltip>
+                            </Box>
+                          );
+                        }
+
+                        if (isBlocked) {
+                          return (
+                            <Tooltip
+                              title="Unblock"
+                              placement="top"
+                              arrow
+                              slotProps={{
+                                tooltip: {
+                                  sx: {
+                                    fontSize: '1rem',
+                                    padding: '8px 14px',
+                                  },
+                                },
+                                popper: {
+                                  container: containerRef.current,
+                                },
+                              }}
+                            >
+                              <Button
+                                variant="contained"
+                                size="large"
+                                sx={{
+                                  backgroundColor: '#f44336',
+                                  '&:hover': { backgroundColor: '#d32f2f' },
+                                }}
+                                onClick={() => handleConfirmStatus('Unblock')}
+                                startIcon={<IconBan />}
+                              >
+                                Unblock
+                              </Button>
+                            </Tooltip>
+                          );
+                        }
+
+                        return null;
+                      })()}
+                    </CardActions>
+                  )}
+                </Card>
+              </Grid>
+              <Grid size={{ xs: 12, lg: 4.5 }} sx={{ display: 'flex', flexDirection: 'column' }}>
+                <Card
                   sx={{
-                    fontWeight: selectedMinutes === minutes ? 600 : 400,
-                    px: 1.5,
+                    flex: 1,
+                    height: '100%',
+                    maxHeight: isFullscreen ? '100%' : '530px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                    overflow: 'auto',
+                  }}
+                >
+                  <Box display="flex" justifyContent="space-between">
+                    <CardHeader title="Related Visitors" sx={{ p: 0 }} />
+                    <Tooltip
+                      title="Click and Select more than 1 visitor"
+                      slotProps={{
+                        tooltip: {
+                          sx: {
+                            fontSize: '1rem',
+                            padding: '8px 14px',
+                          },
+                        },
+                        popper: {
+                          container: containerRef.current,
+                        },
+                      }}
+                    >
+                      <FormControlLabel
+                        value="end"
+                        control={
+                          <Checkbox
+                            checked={selectMultiple}
+                            onChange={(e) => {
+                              setSelectMultiple(e.target.checked);
+                              setSelectedVisitors([]); // reset selected
+                            }}
+                          />
+                        }
+                        label="Select Multiple"
+                        labelPlacement="end"
+                      />
+                    </Tooltip>
+                  </Box>
+                  <Divider sx={{ mt: 1 }} />
+                  <CardContent
+                    sx={{
+                      flex: 1,
+                      overflowY: 'auto',
+                      p: 0,
+                      pb: '0 !important',
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
+                  >
+                    {relatedVisitors.map((visitor, index) => {
+                      const isDriving = visitor.is_driving === true;
+                      const isScanned =
+                        visitor.visitor_number &&
+                        scannedVisitorNumber &&
+                        visitor.visitor_number === scannedVisitorNumber;
+                      const isSelected = visitor.visitor_number === selectedVisitorNumber;
+
+                      return (
+                        <React.Fragment key={visitor.id || index}>
+                          <ListItem
+                            sx={{
+                              px: 1,
+                              py: 1.5,
+                              borderBottom: index !== relatedVisitors.length - 1 ? 'none' : 'none',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              cursor: 'pointer',
+                              transition: 'background 0.2s ease',
+
+                              '&:hover': {
+                                backgroundColor: 'rgba(93,135,255,0.08)',
+                              },
+                            }}
+                            onClick={() => handleSelectRelatedVisitor(visitor)}
+                          >
+                            {/* Avatar + Info */}
+                            <Box display="flex" alignItems="center" gap={2}>
+                              <Avatar
+                                src={`${BASE_URL}/cdn${visitor.selfie_image}`}
+                                alt={visitor.name}
+                                sx={{ width: 45, height: 45 }}
+                              />
+                              <Box>
+                                <Typography variant="h6" fontWeight="bold">
+                                  {visitor.name || '-'}
+                                </Typography>
+                                <Typography variant="body1" color="text.secondary">
+                                  {visitor.organization || '-'}
+                                </Typography>
+                              </Box>
+                            </Box>
+                            <Box display="flex" flexDirection="row" alignItems="center" gap={1}>
+                              <Box display="flex" gap={1} flexDirection={'column'}>
+                                {isDriving && (
+                                  <Tooltip
+                                    title="Parking"
+                                    arrow
+                                    slotProps={{
+                                      tooltip: {
+                                        sx: {
+                                          fontSize: '1rem',
+                                          padding: '8px 14px',
+                                        },
+                                      },
+                                      popper: {
+                                        container: containerRef.current,
+                                      },
+                                    }}
+                                  >
+                                    <Box
+                                      sx={{
+                                        backgroundColor: '#4CAF50',
+                                        color: 'white',
+                                        fontWeight: 600,
+                                        borderRadius: '6px',
+                                        px: 1,
+                                        py: 0.25,
+                                        fontSize: '0.75rem',
+                                        textAlign: 'center',
+                                        cursor: 'default',
+                                      }}
+                                    >
+                                      P
+                                    </Box>
+                                  </Tooltip>
+                                )}
+
+                                {isScanned && (
+                                  <Tooltip
+                                    title="Scanned"
+                                    arrow
+                                    slotProps={{
+                                      tooltip: {
+                                        sx: {
+                                          fontSize: '1rem',
+                                          padding: '8px 14px',
+                                        },
+                                      },
+                                      popper: {
+                                        container: containerRef.current,
+                                      },
+                                    }}
+                                  >
+                                    <Box
+                                      sx={{
+                                        backgroundColor: '#1976D2',
+                                        color: 'white',
+                                        fontWeight: 600,
+                                        borderRadius: '6px',
+                                        px: 1,
+                                        py: 0.25,
+                                        fontSize: '0.75rem',
+                                        textAlign: 'center',
+                                        cursor: 'default',
+                                      }}
+                                    >
+                                      S
+                                    </Box>
+                                  </Tooltip>
+                                )}
+                              </Box>
+                              <Checkbox
+                                checked={selectedVisitors.includes(visitor.id)}
+                                onChange={(e) => {
+                                  const isChecked = e.target.checked;
+
+                                  setSelectedVisitors((prev) => {
+                                    if (selectMultiple) {
+                                      if (isChecked) {
+                                        const updated = Array.from(new Set([...prev, visitor.id]));
+                                        return updated;
+                                      } else {
+                                        const updated = prev.filter((id) => id !== visitor.id);
+                                        return updated;
+                                      }
+                                    } else {
+                                      if (isChecked) {
+                                        handleSelectRelatedVisitor(visitor);
+                                        return [visitor.id];
+                                      } else {
+                                        return [];
+                                      }
+                                    }
+                                  });
+                                }}
+                              />
+                            </Box>
+                          </ListItem>
+
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'flex-start',
+                              mt: 1,
+                              px: 1,
+                              gap: 0.5,
+                              // borderBottom: '1px solid #eee',
+                            }}
+                          >
+                            <Typography
+                              variant="body1"
+                              fontWeight="medium"
+                              sx={{ lineHeight: 1.3 }}
+                            >
+                              {visitor.agenda || '-'}
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              sx={{ lineHeight: 1.2 }}
+                            >
+                              {`${formatDateTime(visitor.visitor_period_start)} - ${formatDateTime(
+                                visitor.visitor_period_end,
+                                visitor.extend_visitor_period,
+                              )}`}
+                            </Typography>
+                          </Box>
+                          <Divider sx={{ my: 1 }} />
+                        </React.Fragment>
+                      );
+                    })}
+                  </CardContent>
+                  <CardActions sx={{ overflow: 'visible' }}>
+                    <Divider />
+                    <Box
+                      display={'flex'}
+                      gap={2}
+                      width={'100%'}
+                      sx={{ mt: 2, justifyContent: 'space-between' }}
+                      flexWrap={'wrap'}
+                    >
+                      <Box display="flex" gap={1} ref={containerRef}>
+                        <Select
+                          sx={{ width: '150px' }}
+                          value={bulkAction}
+                          onChange={(e: any) => setBulkAction(e.target.value)}
+                          MenuProps={{
+                            disablePortal: true,
+                            container: containerRef.current,
+                          }}
+                        >
+                          {availableActions.map((action) => (
+                            <MenuItem key={action.value} value={action.value}>
+                              {action.label}
+                            </MenuItem>
+                          ))}
+                        </Select>
+
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          sx={{ width: '100px' }}
+                          disabled={!bulkAction || selectedVisitors.length === 0}
+                          onClick={handleApplyBulkAction}
+                        >
+                          {loadingAccess ? <CircularProgress size={24} color="inherit" /> : 'Apply'}
+                        </Button>
+                      </Box>
+                      {invitationCode.length > 0 && (
+                        <Box
+                          display={'flex'}
+                          gap={0.5}
+                          alignItems={'center'}
+                          justifyContent={'flex-end'}
+                        >
+                          <Tooltip
+                            title="Extend Time"
+                            placement="top"
+                            arrow
+                            slotProps={{
+                              tooltip: {
+                                sx: {
+                                  fontSize: '1rem',
+                                  padding: '8px 14px',
+                                },
+                              },
+                              popper: {
+                                container: containerRef.current,
+                              },
+                            }}
+                          >
+                            <Button
+                              variant="contained"
+                              onClick={() => setOpenExtendVisit(true)}
+                              startIcon={<IconClock size={18} />}
+                              sx={{
+                                color: '#fff',
+                                // warna ketika AKTIF
+                                background: !relatedVisitors.some(
+                                  (v) =>
+                                    selectedVisitors.includes(v.id) &&
+                                    v.visitor_status === 'Checkin',
+                                )
+                                  ? undefined
+                                  : 'linear-gradient(135deg, #FFE082 0%, #FFCA28 100%)',
+
+                                // style khusus ketika DISABLED
+                                '&.Mui-disabled': {
+                                  background: '#BDBDBD !important', // abu2
+                                  color: '#FFFFFF !important',
+                                  opacity: 0.8,
+                                },
+                              }}
+                              disabled={
+                                !(
+                                  // invitationCode?.[0]?.visitor_status === 'Checkin' ||
+                                  relatedVisitors.some(
+                                    (v) =>
+                                      selectedVisitors.includes(v.id) &&
+                                      v.visitor_status === 'Checkin',
+                                  )
+                                )
+                              }
+                            >
+                              Extend
+                            </Button>
+                          </Tooltip>
+                          <Tooltip
+                            title="Card"
+                            placement="top"
+                            arrow
+                            slotProps={{
+                              tooltip: {
+                                sx: {
+                                  fontSize: '1rem',
+                                  padding: '8px 14px',
+                                },
+                              },
+                              popper: {
+                                container: containerRef.current,
+                              },
+                            }}
+                          >
+                            <Button
+                              sx={{
+                                background: 'linear-gradient(135deg, #AB47BC 0%, #6A1B9A 100%)',
+                                color: '#fff',
+                              }}
+                              onClick={handleChooseCard}
+                              startIcon={<IconCreditCard size={18} />}
+                            >
+                              Card
+                            </Button>
+                          </Tooltip>
+
+                          <Tooltip
+                            title="Access Control"
+                            placement="top"
+                            arrow
+                            slotProps={{
+                              tooltip: { sx: { fontSize: '1rem', padding: '8px 14px' } },
+                              popper: {
+                                container: containerRef.current,
+                              },
+                            }}
+                          >
+                            <Button
+                              sx={{
+                                background: 'linear-gradient(135deg, #FF9800 0%, #F57C00 100%)',
+                                color: '#fff',
+                              }}
+                              onClick={() => setOpenAccessData(true)}
+                              startIcon={<IconKey size={18} />}
+                            >
+                              Access
+                            </Button>
+                          </Tooltip>
+                        </Box>
+                      )}
+                    </Box>
+                  </CardActions>
+                </Card>
+              </Grid>
+
+              <Grid size={{ xs: 12, lg: 3 }} sx={{ height: '100%' }}>
+                <Grid container direction="column" spacing={2} sx={{ height: '100%', flexGrow: 1 }}>
+                  <Grid sx={{ flex: 1, display: 'flex' }}>
+                    <Card
+                      sx={{
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        height: { xs: '100%', md: '100%' },
+                        maxHeight: '100%',
+                      }}
+                    >
+                      <CardContent
+                        sx={{
+                          flex: 1,
+                          p: 0,
+                          overflow: 'hidden',
+                          pb: '0 ! important',
+                        }}
+                      >
+                        <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Faceimage</CustomFormLabel>
+
+                        {activeSelfie ? (
+                          <img
+                            src={activeSelfie}
+                            alt="Face Image"
+                            style={{
+                              width: '100%',
+                              height: isFullscreen ? '100%' : '175px',
+                              borderRadius: '8px',
+                              overflow: 'hidden',
+                              objectFit: isFullscreen ? 'cover' : 'cover',
+                              objectPosition: 'center center',
+                              display: 'block',
+                            }}
+                            onError={(e) => (e.currentTarget.style.display = 'none')}
+                          />
+                        ) : (
+                          <Box
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="center"
+                            height={isFullscreen ? '100%' : '175px'}
+                            sx={{
+                              borderRadius: '8px',
+                              backgroundColor: '#f9f9f9',
+                              color: '#888',
+                              fontStyle: 'italic',
+
+                              fontSize: '0.9rem',
+                            }}
+                          >
+                            No Face Image
+                          </Box>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </Grid>
+
+                  <Grid sx={{ flex: 1, display: 'flex' }}>
+                    <Card
+                      sx={{
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        height: '100%',
+                        maxHeight: '100%',
+                      }}
+                    >
+                      <CardContent
+                        sx={{
+                          flex: 1,
+                          p: 0,
+                          // overflowY: 'auto',
+                          overflow: 'hidden',
+                          pb: '0 ! important',
+                        }}
+                      >
+                        <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Identity Image</CustomFormLabel>
+                        {activeKTP ? (
+                          <img
+                            src={activeKTP}
+                            alt="Identity Image"
+                            style={{
+                              width: '100%',
+                              height: isFullscreen ? '100%' : '175px',
+                              borderRadius: '8px',
+                              objectFit: isFullscreen ? 'cover' : 'cover',
+                            }}
+                            onError={(e) => (e.currentTarget.style.display = 'none')}
+                          />
+                        ) : (
+                          <Box
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="center"
+                            height={isFullscreen ? '100%' : '175px'}
+                            sx={{
+                              borderRadius: '8px',
+                              backgroundColor: '#f9f9f9',
+                              color: '#888',
+                              fontStyle: 'italic',
+                              fontSize: '0.9rem',
+                            }}
+                          >
+                            No Face Image
+                          </Box>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                </Grid>
+              </Grid>
+            </Grid>
+          </Box>
+
+          <SearchVisitorDialog
+            open={openSearch}
+            onClose={() => setOpenSearch(false)}
+            onSearch={(data) => {
+              setVisitorData(data);
+              setOpenDetail(true); // langsung buka detail
+            }}
+            container={containerRef.current}
+          />
+          {/* Dialog Detail */}
+          <DetailVisitorDialog
+            open={openDetail}
+            onClose={() => setOpenDetail(false)}
+            visitorData={visitorData}
+            container={containerRef.current ?? undefined}
+          />
+          {/* Scan QR Visitor */}
+          <ScanQrVisitorDialog
+            open={openDialogIndex === 1}
+            onClose={handleCloseScanQR}
+            handleSubmitQRCode={handleSubmitQRCode}
+            container={containerRef.current ?? undefined}
+            onOpenInvitation={() => setOpenDialogIndex(2)}
+          />
+          {/* Choose Card */}
+          <Dialog
+            open={openChooseCardDialog}
+            onClose={() => setOpenChooseCardDialog(false)}
+            fullWidth
+            maxWidth="lg"
+            container={containerRef.current}
+          >
+            <DialogTitle>Choose Card</DialogTitle>
+            <IconButton
+              aria-label="close"
+              onClick={() => setOpenChooseCardDialog(false)}
+              sx={{
+                position: 'absolute',
+                right: 8,
+                top: 8,
+                color: (theme) => theme.palette.grey[500],
+              }}
+            >
+              <IconX />
+            </IconButton>
+            <DialogContent dividers>
+              <Box mb={2}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  placeholder="Search card"
+                  variant="outlined"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <IconSearch size={20} />
+                      </InputAdornment>
+                    ),
                   }}
                 />
-              ))}
-            </Box>
-            <FormControlLabel
-              control={<Checkbox checked={applyToAll} onChange={handleApplyToAllChange} />}
-              label={
-                <Typography variant="body2" color="text.secondary">
-                  Apply to another visitor
-                </Typography>
-              }
-            />
-            <Button
-              type="submit"
-              variant="contained"
-              sx={{ mt: 2 }}
-              fullWidth
-              disabled={!selectedMinutes}
-            >
-              Extend
-            </Button>
-          </form>
-        </DialogContent>
-      </Dialog>
+              </Box>
 
-      {/* Create Invitation */}
-      <Dialog
-        fullWidth
-        maxWidth={false}
-        PaperProps={{
-          sx: {
-            width: '100vw',
-          },
-        }}
-        open={openInvitationVisitor}
-        onClose={handleCloseDialog}
-        keepMounted
-      >
-        <DialogTitle
-          display="flex"
-          justifyContent={'space-between'}
-          alignItems="center"
-        >
-          Add Invitation Visitor
-          <IconButton
-            aria-label="close"
-            onClick={() => {
-              handleCloseDialog(); // aman langsung tutup
-            }}
-          >
-            <IconX />
-          </IconButton>
-        </DialogTitle>
-        <Divider />
-        <DialogContent>
-          <FormWizardAddVisitor
-            key={wizardKey}
-            formData={formDataAddVisitor}
-            setFormData={setFormDataAddVisitor}
-            // edittingId={edittingId}
-            onSuccess={handleSuccess}
-          />
-        </DialogContent>
-      </Dialog>
+              <Grid container spacing={2}>
+                {filteredCards.map((card) => {
+                  const isChosen = selectedCards.includes(card.card_number);
+                  const isLimitReached =
+                    selectedCards.length >= (selectedVisitors.length || 1) && !isChosen;
+                  return (
+                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={card.id}>
+                      <Paper
+                        onClick={() => {
+                          handleToggleCard(card.card_number);
+                        }}
+                        sx={(theme) => ({
+                          p: 2,
+                          borderRadius: 2,
+                          position: 'relative',
+                          height: 280,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          textAlign: 'center',
+                          cursor: 'pointer',
+                          border: '1px solid',
+                          borderColor: isChosen ? theme.palette.primary.main : 'divider',
+                          boxShadow: isChosen ? theme.shadows[8] : theme.shadows[2],
+                          backgroundColor: isChosen
+                            ? theme.palette.primary.light
+                            : 'background.paper',
+                          transition: theme.transitions.create(
+                            ['transform', 'box-shadow', 'border-color', 'background-color'],
+                            {
+                              duration: theme.transitions.duration.shorter,
+                            },
+                          ),
+                          '&:hover': {
+                            transform: isLimitReached ? 'none' : 'translateY(-3px)',
+                            boxShadow: isLimitReached ? theme.shadows[1] : theme.shadows[6],
+                          },
+                        })}
+                      >
+                        <Box
+                          flexGrow={1}
+                          display="flex"
+                          flexDirection="column"
+                          justifyContent="center"
+                          alignItems="center"
+                        >
+                          <Typography variant="h1" color="text.secondary" mt={2}>
+                            {card.remarks || '-'}
+                          </Typography>
 
-      {/* Create Pra Registration */}
-      <Dialog fullWidth maxWidth="xl" open={openPreRegistration} onClose={handleCloseDialog}>
-        <DialogTitle display="flex" justifyContent={'space-between'} alignItems="center">
-          Add Pra Registration
-          <IconButton
-            aria-label="close"
-            onClick={() => {
-              handleCloseDialog();
-            }}
-          >
-            <IconX />
-          </IconButton>
-        </DialogTitle>
-        <Divider />
-        <DialogContent sx={{ paddingTop: '0px' }}>
-          <br />
-          <FormWizardAddInvitation
-            key={wizardKey}
-            formData={formDataAddVisitor}
-            setFormData={setFormDataAddVisitor}
-            // edittingId={edittingId}
-            onSuccess={handleSuccess}
-          />
-        </DialogContent>
-      </Dialog>
+                          <Box
+                            display="flex"
+                            justifyContent="space-between"
+                            width="100%"
+                            maxWidth={300}
+                            mt={1}
+                          >
+                            <Typography variant="body1" fontWeight={600}>
+                              Card
+                            </Typography>
+                            <Typography variant="body1" color="text.secondary">
+                              {card.card_number || '-'}
+                            </Typography>
+                          </Box>
 
-      {/* Select Registered Site */}
-      <Dialog open={openDialogIndex === 2} onClose={handleCloseDialog} fullWidth maxWidth="sm">
-        <DialogTitle
-          display="flex"
-          justifyContent={'space-between'}
-          alignItems="center"
-          // sx={{
-          //   background: 'linear-gradient(135deg, rgba(2,132,199,0.05), rgba(99,102,241,0.08))',
-          // }}
-        >
-          Select Registered Site
-          <IconButton
-            aria-label="close"
-            onClick={() => {
-              handleCloseDialog();
-            }}
-          >
-            <IconX />
-          </IconButton>
-        </DialogTitle>
-        <Divider />
-        <DialogContent>
-          <CustomFormLabel sx={{ marginTop: 0 }}>Registered Site</CustomFormLabel>
-          <Autocomplete
+                          <Box
+                            display="flex"
+                            justifyContent="space-between"
+                            width="100%"
+                            maxWidth={300}
+                            flexWrap={'wrap'}
+                            gap={1}
+                          >
+                            <Typography variant="body1" fontWeight={600}>
+                              BLE
+                            </Typography>
+                            <Typography variant="body1" fontWeight={500}>
+                              {card.card_mac || '-'}
+                            </Typography>
+                          </Box>
+                        </Box>
+
+                        <Typography variant="body1">{card.name}</Typography>
+
+                        <FormControlLabel
+                          onClick={(e) => e.stopPropagation()}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          control={
+                            <Checkbox
+                              checked={isChosen}
+                              disabled={!isChosen}
+                              onChange={() => handleToggleCard(card.card_number)}
+                            />
+                          }
+                          label=""
+                          sx={{ m: 0 }}
+                        />
+                      </Paper>
+                    </Grid>
+                  );
+                })}
+              </Grid>
+
+              <Box mt={3} display="flex" justifyContent="space-between" alignItems="center">
+                <Box display="flex" flexDirection="column" gap={0.5}>
+                  <Typography variant="body2">
+                    Cards chosen: {selectedCards.length} / {availableCount}
+                  </Typography>
+                </Box>
+
+                <Box display="flex" gap={1}>
+                  <Button onClick={handleCloseChooseCard} color="secondary">
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="contained"
+                    disabled={selectedCards.length === 0}
+                    onClick={handleConfirmChooseCards}
+                  >
+                    Choose
+                  </Button>
+                </Box>
+              </Box>
+            </DialogContent>
+          </Dialog>
+          {/* Fill Form Pra regist Multiple*/}
+          <Dialog
+            open={openFillForm}
+            onClose={() => setOpenFillForm(false)}
             fullWidth
-            options={siteData}
-            getOptionLabel={(o) => o.name || ''}
-            value={selectedSite}
-            onChange={(_, nv) => {
-              setSelectedSite(nv);
-              setFormDataAddVisitor((prev) => ({
-                ...prev,
-                registered_site: nv?.id || '', // isi kalau ada pilihan, kosong kalau null
-              }));
+            maxWidth={false}
+            PaperProps={{
+              sx: {
+                width: '100vw',
+              },
             }}
-            isOptionEqualToValue={(option, value) => option.id === value?.id} // penting
-            renderInput={(params) => <TextField {...params} label="" />}
-          />
-          <Box display="flex" justifyContent="flex-end" mt={2}>
-            <Button
-              variant="contained"
-              onClick={() => {
-                if (!selectedSite) {
-                  toast('Minimal pilih 1 Registered Site.', 'warning');
-                  return;
-                }
-                setFormDataAddVisitor((prev) => ({
-                  ...prev,
-                  registered_site: selectedSite.id,
-                }));
-                setOpenDialogIndex(null); // tutup Registered Site
-
-                setOpenInvitationVisitor(true);
-              }}
-              color="primary"
-            >
-              Next
-            </Button>
-          </Box>
-        </DialogContent>
-      </Dialog>
-
-      <Portal>
-        <Snackbar
-          open={snackbarOpen}
-          autoHideDuration={8000}
-          onClose={() => setSnackbarOpen(false)}
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-          sx={{
-            zIndex: 99999,
-            position: 'fixed',
-            top: 20,
-            left: 0,
-            right: 0,
-            margin: '0 auto',
-            maxWidth: 500,
-            '& .MuiPaper-root': {
-              minWidth: 420,
-              maxWidth: 600,
-              fontSize: '1rem',
-              whiteSpace: 'pre-line', // 🟢 ini penting banget
-              lineHeight: 1.5,
-              p: 2.5,
-              borderRadius: 2,
-            },
-          }}
-        >
-          <Alert
-            onClose={() => setSnackbarOpen(false)}
-            severity={snackbarType}
-            variant="filled"
-            sx={{ width: '100%', fontSize: '16px', whiteSpace: 'pre-line' }}
+            container={containerRef.current}
           >
-            {snackbarMsg}
-          </Alert>
-        </Snackbar>
-      </Portal>
-      <Portal>
-        <Backdrop
-          sx={{
-            zIndex: 999999,
-            position: 'fixed',
-            margin: '0 auto',
-            // color: 'primary',
-          }}
-          open={loadingAccess}
-        >
-          <CircularProgress color="inherit" />
-        </Backdrop>
-      </Portal>
+            <DialogTitle sx={{ pb: 1, fontWeight: 600 }}>Fill Pre-Registration Form</DialogTitle>
+            <IconButton
+              aria-label="close"
+              sx={{
+                position: 'absolute',
+                right: 8,
+                top: 8,
+                color: (theme) => theme.palette.grey[500],
+              }}
+              onClick={() => setOpenFillForm(false)}
+            >
+              <IconX />
+            </IconButton>
+            <DialogContent dividers>
+              {fillFormData.length > 0 && (
+                <>
+                  <Stepper activeStep={fillFormActiveStep} alternativeLabel sx={{ mb: 3 }}>
+                    {fillFormData.map((s, i) => (
+                      <Step key={i}>
+                        <StepLabel
+                          onClick={() => setFillFormActiveStep(i)}
+                          sx={{
+                            '& .MuiStepLabel-label': {
+                              fontSize: '0.9rem !important',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                            },
+                          }}
+                        >
+                          {s.name}
+                        </StepLabel>
+                      </Step>
+                    ))}
+                  </Stepper>
+                  <Box>
+                    {(() => {
+                      const section = fillFormData[fillFormActiveStep];
+                      if (!section) return null;
+
+                      const sectionType = getSectionType(section);
+                      if (sectionType === 'visitor_information_group') {
+                        const isDrivingField = fillFormDataVisitor
+                          ?.flatMap((v) => v.question_page)
+                          ?.flatMap((q) => q.form || [])
+                          ?.find((f) => f.remarks === 'is_driving');
+
+                        const isDriving =
+                          isDrivingField?.answer_text === 'true' ||
+                          isDrivingField?.answer_text === true;
+                        return (
+                          <Grid>
+                            <Box>
+                              <TableContainer component={Paper} sx={{ mb: 1 }}>
+                                <Table size="small">
+                                  <TableHead>
+                                    <TableRow>
+                                      {(
+                                        fillFormDataVisitor[0]?.question_page?.[fillFormActiveStep]
+                                          ?.visit_form ||
+                                        formsOf(section) ||
+                                        []
+                                      )
+                                        .filter(
+                                          (f: any) =>
+                                            // pakai visitor pertama sebagai acuan visual header
+                                            fillFormDataVisitor[0]?.question_page?.[
+                                              fillFormActiveStep
+                                            ]?.form?.find(
+                                              (x: any) =>
+                                                x.remarks === 'is_driving' &&
+                                                x.answer_text === 'true',
+                                            ) ||
+                                            !['vehicle_type', 'vehicle_plate'].includes(f.remarks),
+                                        )
+                                        .map((f: any, i: any) => (
+                                          <TableCell key={i}>
+                                            <Typography variant="subtitle2" fontWeight={600}>
+                                              {f.long_display_text}
+                                            </Typography>
+                                          </TableCell>
+                                        ))}
+                                    </TableRow>
+                                  </TableHead>
+
+                                  <TableBody>
+                                    {fillFormDataVisitor.length > 0 ? (
+                                      fillFormDataVisitor.map((group, gIdx) => {
+                                        const page =
+                                          group.question_page?.[fillFormActiveStep] ?? section;
+                                        if (!page) return null;
+
+                                        // 🟢 CARI is_driving milik visitor ini
+                                        const isDrivingField = page.form?.find(
+                                          (f: any) => f.remarks === 'is_driving',
+                                        );
+                                        const isDriving =
+                                          isDrivingField?.answer_text === 'true' ||
+                                          isDrivingField?.answer_text === true;
+
+                                        return (
+                                          <TableRow key={gIdx}>
+                                            {page.form
+                                              ?.filter(
+                                                (field: any) =>
+                                                  isDriving ||
+                                                  !['vehicle_type', 'vehicle_plate'].includes(
+                                                    field.remarks,
+                                                  ),
+                                              )
+                                              .map((field: any) => {
+                                                // ✅ FIX 1: cari index sebenarnya berdasarkan remarks (bukan fIdx)
+                                                const formIdx = page.form.findIndex(
+                                                  (x: any) => x.remarks === field.remarks,
+                                                );
+
+                                                return (
+                                                  // ✅ FIX 2: gunakan remarks sebagai key, bukan fIdx
+                                                  <TableCell key={field.remarks}>
+                                                    {renderFieldInput(
+                                                      field,
+                                                      formIdx, // ✅ pakai index real
+                                                      (idx, fieldKey, value) => {
+                                                        setFillFormDataVisitor((prev) => {
+                                                          // ✅ FIX 3: deep clone agar state tetap konsisten
+                                                          const next = structuredClone(prev);
+                                                          const s = fillFormActiveStep;
+
+                                                          // ✅ FIX 4: update berdasarkan remarks, bukan index mentah
+                                                          const targetIdx = next[
+                                                            gIdx
+                                                          ].question_page[s].form.findIndex(
+                                                            (x: any) => x.remarks === field.remarks,
+                                                          );
+                                                          if (targetIdx === -1) return prev;
+
+                                                          next[gIdx].question_page[s].form[
+                                                            targetIdx
+                                                          ] = {
+                                                            ...next[gIdx].question_page[s].form[
+                                                              targetIdx
+                                                            ],
+                                                            [fieldKey]: value,
+                                                          };
+                                                          return next;
+                                                        });
+                                                      },
+                                                      undefined,
+                                                      {
+                                                        showLabel: false,
+                                                        uniqueKey: `${fillFormActiveStep}:${gIdx}:${field.remarks}`, // ✅ pakai remarks
+                                                      },
+                                                    )}
+                                                  </TableCell>
+                                                );
+                                              })}
+                                          </TableRow>
+                                        );
+                                      })
+                                    ) : (
+                                      <TableRow>
+                                        <TableCell colSpan={12} align="center">
+                                          No visitor data. Click “Add New” to start.
+                                        </TableCell>
+                                      </TableRow>
+                                    )}
+                                  </TableBody>
+                                </Table>
+                              </TableContainer>
+                            </Box>
+                          </Grid>
+                        );
+                      } else if (sectionType === 'purpose_visit') {
+                        const mergedVisitForm = formsOf(section);
+                        return (
+                          <Grid container spacing={2} sx={{ px: 1 }}>
+                            {mergedVisitForm.map((f: any, idx: number) => (
+                              <Grid size={{ xs: 12 }} key={idx}>
+                                <Box display="flex" flexDirection="column" gap={0.5}>
+                                  <Typography variant="subtitle2" fontWeight={600}>
+                                    {f.long_display_text}
+                                  </Typography>
+
+                                  {/* Semua input jadi disabled */}
+                                  <Box sx={{ pointerEvents: 'none', opacity: 0.6 }}>
+                                    {renderFieldInput(
+                                      f,
+                                      idx,
+                                      () => {}, // disable onChange
+                                      undefined,
+                                      {
+                                        showLabel: false,
+                                        uniqueKey: `${fillFormActiveStep}:${idx}`,
+                                      },
+                                    )}
+                                  </Box>
+                                </Box>
+                              </Grid>
+                            ))}
+                          </Grid>
+                        );
+                      }
+
+                      return null;
+                    })()}
+                  </Box>
+                </>
+              )}
+            </DialogContent>
+
+            <DialogActions style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Button
+                onClick={() => setFillFormActiveStep((p) => Math.max(p - 1, 0))}
+                disabled={fillFormActiveStep === 0}
+              >
+                Back
+              </Button>
+              {fillFormActiveStep < fillFormData.length - 1 ? (
+                <Button
+                  variant="contained"
+                  onClick={() => {
+                    setFillFormActiveStep((p) => p + 1);
+                  }}
+                >
+                  Next
+                </Button>
+              ) : (
+                <Button variant="contained" color="primary" onClick={handleSubmitPramultiple}>
+                  Submit
+                </Button>
+              )}
+            </DialogActions>
+          </Dialog>
+          {/* Submit Praregister */}
+          <Dialog
+            open={openDialogInvitation}
+            onClose={() => setOpenDialogInvitation(false)}
+            fullWidth
+            maxWidth="xl"
+            container={containerRef.current}
+          >
+            <DialogTitle>Praregister</DialogTitle>
+            <IconButton
+              aria-label="close"
+              onClick={() => setOpenDialogInvitation(false)}
+              sx={{
+                position: 'absolute',
+                right: 8,
+                top: 8,
+                color: (theme) => theme.palette.grey[500],
+              }}
+            >
+              <IconX />
+            </IconButton>
+            {loading ? (
+              <DialogContent
+                dividers
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  minHeight: 400,
+                }}
+              >
+                <CircularProgress />
+              </DialogContent>
+            ) : (
+              <DialogContent dividers>
+                {selectedInvitationId ? (
+                  <FormDialogPraregist
+                    id={selectedInvitationId ?? invitationCode?.[0]?.id}
+                    onClose={() => setOpenDialogInvitation(false)}
+                    onSubmitted={async (formId?: string) => {
+                      setOpenDialogInvitation(false);
+                      const targetId = formId ?? selectedInvitationId ?? invitationCode?.[0]?.id;
+                      if (!targetId) return;
+                      await fetchRelatedVisitorsByInvitationId(targetId);
+                    }}
+                    onSubmitting={setSubmitting}
+                    containerRef={containerRef.current}
+                  />
+                ) : (
+                  <Typography variant="body2" textAlign="center" color="text.secondary">
+                    No invitation selected.
+                  </Typography>
+                )}
+              </DialogContent>
+            )}
+          </Dialog>
+          {/* Access */}
+          <Dialog
+            open={openAccessData}
+            onClose={() => setOpenAccessData(false)}
+            fullWidth
+            maxWidth="md"
+            container={containerRef.current}
+          >
+            <DialogTitle>Select Access</DialogTitle>
+            <IconButton
+              aria-label="close"
+              onClick={() => setOpenAccessData(false)}
+              sx={{
+                position: 'absolute',
+                right: 8,
+                top: 8,
+
+                color: (theme) => theme.palette.grey[500],
+              }}
+            >
+              <IconX />
+            </IconButton>
+            <DialogContent dividers>
+              <DynamicTable
+                data={accessData.map(({ trx_visitor_id, visitors, ...rest }) => rest)}
+                isHaveChecked={true}
+                isHaveHeaderTitle={true}
+                titleHeader="Access"
+                overflowX="auto"
+                isHaveAccess={true}
+                onAccessAction={handleAccessAction}
+                onCheckedChange={(checkedRows) => {
+                  const ids = checkedRows.map((r) => r.access_control_id);
+                  setSelectedAccessIds(ids);
+                }}
+              />
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <CustomSelect
+                  sx={{ width: '30%', p: 0, mt: 2, backgroundColor: 'white' }}
+                  value={selectedActionAccess}
+                  onChange={(e: any) => setSelectedActionAccess(e.target.value)}
+                  displayEmpty
+                  disabled={!selectedAccessIds.length}
+                >
+                  <MenuItem value="">Select Action</MenuItem>
+                  <MenuItem value="grant" disabled={!allowedActions.includes('Grant')}>
+                    Grant
+                  </MenuItem>
+                  <MenuItem value="revoke" disabled={!allowedActions.includes('Revoke')}>
+                    Revoke
+                  </MenuItem>
+                  <MenuItem value="block" disabled={!allowedActions.includes('Block')}>
+                    Block
+                  </MenuItem>
+                </CustomSelect>
+
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={async () => {
+                    if (!selectedAccessIds.length || !selectedActionAccess) {
+                      setSnackbarMsg('Please select rows and an action first.');
+                      setSnackbarType('info');
+                      setSnackbarOpen(true);
+                      return;
+                    }
+
+                    if (
+                      !allowedActions.includes(
+                        selectedActionAccess.charAt(0).toUpperCase() +
+                          selectedActionAccess.slice(1),
+                      )
+                    ) {
+                      setSnackbarMsg(
+                        `Action "${selectedActionAccess}" is not allowed for selected access.`,
+                      );
+                      setSnackbarType('info');
+                      setSnackbarOpen(true);
+                      return;
+                    }
+
+                    for (const id of selectedAccessIds) {
+                      const row = accessData.find(
+                        (r) =>
+                          r.access_control_id?.toLowerCase() === id.toLowerCase() &&
+                          selectedVisitors.some(
+                            (v) =>
+                              v.toLowerCase() === r.trx_visitor_id?.toLowerCase() ||
+                              v.toLowerCase() === r.trxVisitorId?.toLowerCase(),
+                          ),
+                      );
+
+                      if (!row) {
+                        continue;
+                      }
+
+                      await handleAccessAction(row, selectedActionAccess.toLowerCase() as any);
+                    }
+                    setSelectedActionAccess('');
+                  }}
+                  sx={{ mb: 0, mt: 2 }}
+                  disabled={!selectedActionAccess || allowedActions.length === 0}
+                >
+                  Apply
+                </Button>
+              </Box>
+            </DialogContent>
+          </Dialog>
+          {/* Extend Visit */}
+          <ExtendVisitDialog
+            open={openExtendVisit}
+            onClose={() => setOpenExtendVisit(false)}
+            container={containerRef.current}
+            durationOptions={durationOptions}
+            selectedMinutes={selectedMinutes}
+            setSelectedMinutes={setSelectedMinutes}
+            applyToAll={applyToAll}
+            onApplyToAllChange={handleApplyToAllChange}
+            onSubmit={handleExtend}
+          />
+
+          {/* Create Invitation */}
+          <Dialog
+            fullWidth
+            // maxWidth="xl"
+            maxWidth={false}
+            PaperProps={{
+              sx: {
+                width: '100vw',
+              },
+            }}
+            open={openInvitationVisitor}
+            onClose={handleCloseDialog}
+            keepMounted
+            container={containerRef.current ?? undefined}
+          >
+            <DialogTitle display="flex" justifyContent={'space-between'} alignItems="center">
+              Add Invitation Visitor
+              <IconButton
+                aria-label="close"
+                onClick={() => {
+                  handleCloseDialog();
+                }}
+              >
+                <IconX />
+              </IconButton>
+            </DialogTitle>
+            <Divider />
+            <DialogContent>
+              <FormWizardAddVisitor
+                key={wizardKey}
+                formData={formDataAddVisitor}
+                setFormData={setFormDataAddVisitor}
+                // edittingId={edittingId}
+                onSuccess={handleSuccess}
+                containerRef={containerRef}
+              />
+            </DialogContent>
+          </Dialog>
+
+          {/* Create Pra Registration */}
+          <Dialog
+            fullWidth
+            // maxWidth="xl"
+            maxWidth={false}
+            PaperProps={{
+              sx: {
+                width: '100vw',
+              },
+            }}
+            open={openPreRegistration}
+            onClose={handleCloseDialog}
+            container={containerRef.current ?? undefined}
+          >
+            <DialogTitle display="flex" justifyContent={'space-between'} alignItems="center">
+              Add Pra Registration
+              <IconButton
+                aria-label="close"
+                onClick={() => {
+                  handleCloseDialog();
+                }}
+              >
+                <IconX />
+              </IconButton>
+            </DialogTitle>
+            <Divider />
+            <DialogContent sx={{ paddingTop: '0px' }}>
+              <br />
+              <FormWizardAddInvitation
+                key={wizardKey}
+                formData={formDataAddVisitor}
+                setFormData={setFormDataAddVisitor}
+                onSuccess={handleSuccess}
+                containerRef={containerRef ?? null}
+              />
+            </DialogContent>
+          </Dialog>
+
+          {/* Registered Site */}
+          <Dialog
+            open={openDialogIndex === 2}
+            onClose={handleCloseDialog}
+            fullWidth
+            maxWidth="sm"
+            container={containerRef.current ?? undefined}
+          >
+            <DialogTitle
+              display="flex"
+              justifyContent={'space-between'}
+              alignItems="center"
+              // sx={{
+              //   background: 'linear-gradient(135deg, rgba(2,132,199,0.05), rgba(99,102,241,0.08))',
+              // }}
+            >
+              Select Registered Site
+              <IconButton
+                aria-label="close"
+                onClick={() => {
+                  handleCloseDialog();
+                }}
+              >
+                <IconX />
+              </IconButton>
+            </DialogTitle>
+            <Divider />
+            <DialogContent>
+              <CustomFormLabel sx={{ marginTop: 0 }}>Registered Site</CustomFormLabel>
+              <Autocomplete
+                fullWidth
+                options={siteData}
+                getOptionLabel={(o) => o.name || ''}
+                value={selectedSite}
+                onChange={(_, nv) => {
+                  setSelectedSite(nv);
+                  setFormDataAddVisitor((prev) => ({
+                    ...prev,
+                    registered_site: nv?.id || '',
+                  }));
+                }}
+                slotProps={{
+                  popper: {
+                    container: containerRef.current,
+                  },
+                }}
+                isOptionEqualToValue={(option, value) => option.id === value?.id}
+                renderInput={(params) => <TextField {...params} label="" />}
+              />
+              <Box display="flex" justifyContent="flex-end" mt={2}>
+                <Button
+                  variant="contained"
+                  onClick={() => {
+                    if (!selectedSite) {
+                      toast('Minimal pilih 1 Registered Site.', 'warning');
+                      return;
+                    }
+                    setFormDataAddVisitor((prev) => ({
+                      ...prev,
+                      registered_site: selectedSite.id,
+                    }));
+                    setOpenDialogIndex(null);
+
+                    setOpenInvitationVisitor(true);
+                  }}
+                  color="primary"
+                >
+                  Next
+                </Button>
+              </Box>
+            </DialogContent>
+          </Dialog>
+          {/* <SelectRegisteredSiteDialog
+            open={openDialogIndex === 2}
+            onClose={handleCloseDialog}
+            siteData={siteData}
+            selectedSite={selectedSite}
+            setSelectedSite={setSelectedSite}
+            setFormDataAddVisitor={setFormDataAddVisitor as any}
+            setOpenInvitationVisitor={setOpenInvitationVisitor}
+            container={containerRef ?? null}
+          /> */}
+
+          <InfoDialog
+            open={openDialogInfo}
+            onClose={() => setOpenDialogInfo(false)}
+            data={dataImage}
+            container={containerRef ?? null}
+          />
+
+          <Portal>
+            <Snackbar
+              open={snackbarOpen}
+              autoHideDuration={8000}
+              onClose={() => setSnackbarOpen(false)}
+              anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+              sx={{
+                zIndex: 99999,
+                position: 'fixed',
+                top: 20,
+                left: 0,
+                right: 0,
+                margin: '0 auto',
+                maxWidth: 500,
+                '& .MuiPaper-root': {
+                  minWidth: 420,
+                  maxWidth: 600,
+                  fontSize: '1rem',
+                  whiteSpace: 'pre-line',
+                  lineHeight: 1.5,
+                  p: 2.5,
+                  borderRadius: 2,
+                },
+              }}
+            >
+              <Alert
+                onClose={() => setSnackbarOpen(false)}
+                severity={snackbarType}
+                variant="filled"
+                sx={{ width: '100%', fontSize: '16px', whiteSpace: 'pre-line' }}
+              >
+                {snackbarMsg}
+              </Alert>
+            </Snackbar>
+          </Portal>
+          <Portal>
+            <Backdrop
+              sx={{
+                zIndex: 999999,
+                position: 'fixed',
+                margin: '0 auto',
+              }}
+              open={loadingAccess}
+            >
+              <CircularProgress color="inherit" />
+            </Backdrop>
+          </Portal>
+        </Box>
+      </FullScreen>
     </PageContainer>
   );
 };
