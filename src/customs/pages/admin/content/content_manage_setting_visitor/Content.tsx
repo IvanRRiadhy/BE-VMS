@@ -16,7 +16,12 @@ import {
   TextField,
   Autocomplete,
 } from '@mui/material';
-import PageContainer from 'src/components/container/PageContainer';
+import PageContainer from 'src/customs/components/container/PageContainer';
+import {
+  AdminCustomSidebarItemsData,
+  AdminNavListingData,
+} from 'src/customs/components/header/navigation/AdminMenu';
+import Container from 'src/components/container/PageContainer';
 import { IconBrandGmail, IconSettingsFilled } from '@tabler/icons-react';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
@@ -168,76 +173,80 @@ const Content = () => {
   };
 
   return (
-    <PageContainer title="Settings" description="Setting Smtp page">
-      <Box>
-        <Grid size={{ xs: 12 }}>
-          <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
-        </Grid>
+    <PageContainer
+      itemDataCustomNavListing={AdminNavListingData}
+      itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
+    >
+      <Container title="Settings" description="Setting Smtp page">
+        <Box>
+          <Grid size={{ xs: 12 }}>
+            <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
+          </Grid>
 
-        <Paper sx={{ display: 'flex', minHeight: 400, mt: 2, p: 2, overflowX: 'auto' }}>
-          <Tabs
-            orientation="vertical"
-            value={tabIndex}
-            onChange={(_, newValue) => setTabIndex(newValue)}
-            sx={{ borderRight: 1, borderColor: 'divider', minWidth: 180 }}
-          >
-            <Tab label="Visitor User" />
-          </Tabs>
+          <Paper sx={{ display: 'flex', minHeight: 400, mt: 2, p: 2, overflowX: 'auto' }}>
+            <Tabs
+              orientation="vertical"
+              value={tabIndex}
+              onChange={(_, newValue) => setTabIndex(newValue)}
+              sx={{ borderRight: 1, borderColor: 'divider', minWidth: 180 }}
+            >
+              <Tab label="Visitor User" />
+            </Tabs>
 
-          <Box sx={{ flex: 1 }}>
-            {tabIndex === 0 && (
-              <Box sx={{ overflowX: 'auto', p: 2, height: '100%' }}>
-                {!showForm ? (
-                  isDataReady ? (
-                    <DynamicTable
-                      isHavePagination={false}
-                      isHaveHeaderTitle={true}
-                      titleHeader="Setting"
-                      data={settingData.map(({ organization_id, ...rest }) => rest)}
-                      // selectedRows={selectedRows}
-                      // defaultRowsPerPage={rowsPerPage}
-                      // rowsPerPageOptions={[5, 10, 25, 50, 100]}
-                      // onPaginationChange={(page, rowsPerPage) => {
-                      //   setPage(page);
-                      //   setRowsPerPage(rowsPerPage);
-                      // }}
-                      isHaveChecked={true}
-                      isHaveAction={false}
-                      isHaveSearch={false}
-                      isHaveFilter={false}
-                      isHaveExportPdf={false}
-                      isHaveAddData={false}
-                      isSelectedType={true}
-                      isHaveActionOnlyEdit={true}
-                      isHaveHeader={false}
-                      // onCheckedChange={setSelectedRows}
-                      onEdit={(row) => handleEdit(row.id)}
-                      // onDelete={(row) => handleDelete(row.id.toString())}
-                      onSearchKeywordChange={setSearchKeyword}
-                      // onAddData={handleAdd}
-                      // isHaveBooleanSwitch={true}
-                      // isDataVerified={true}
-                      // isHavePassword={true}
-                    />
+            <Box sx={{ flex: 1 }}>
+              {tabIndex === 0 && (
+                <Box sx={{ overflowX: 'auto', p: 2, height: '100%' }}>
+                  {!showForm ? (
+                    isDataReady ? (
+                      <DynamicTable
+                        isHavePagination={false}
+                        isHaveHeaderTitle={true}
+                        titleHeader="Setting"
+                        data={settingData.map(({ organization_id, ...rest }) => rest)}
+                        // selectedRows={selectedRows}
+                        // defaultRowsPerPage={rowsPerPage}
+                        // rowsPerPageOptions={[5, 10, 25, 50, 100]}
+                        // onPaginationChange={(page, rowsPerPage) => {
+                        //   setPage(page);
+                        //   setRowsPerPage(rowsPerPage);
+                        // }}
+                        isHaveChecked={true}
+                        isHaveAction={false}
+                        isHaveSearch={false}
+                        isHaveFilter={false}
+                        isHaveExportPdf={false}
+                        isHaveAddData={false}
+                        isSelectedType={true}
+                        isHaveActionOnlyEdit={true}
+                        isHaveHeader={false}
+                        // onCheckedChange={setSelectedRows}
+                        onEdit={(row) => handleEdit(row.id)}
+                        // onDelete={(row) => handleDelete(row.id.toString())}
+                        onSearchKeywordChange={setSearchKeyword}
+                        // onAddData={handleAdd}
+                        // isHaveBooleanSwitch={true}
+                        // isDataVerified={true}
+                        // isHavePassword={true}
+                      />
+                    ) : (
+                      <Card sx={{ width: '100%' }}>
+                        <Skeleton />
+                        <Skeleton animation="wave" />
+                        <Skeleton animation={false} />
+                      </Card>
+                    )
                   ) : (
-                    <Card sx={{ width: '100%' }}>
-                      <Skeleton />
-                      <Skeleton animation="wave" />
-                      <Skeleton animation={false} />
-                    </Card>
-                  )
-                ) : (
-                  <FormSetting
-                    formData={formData}
-                    setFormData={setFormData}
-                    editingId={edittingId}
-                    onSubmit={handleSubmit}
-                    onCancel={handleCancelForm}
-                  />
-                )}
-              </Box>
-            )}
-            {/* {tabIndex === 0 && (
+                    <FormSetting
+                      formData={formData}
+                      setFormData={setFormData}
+                      editingId={edittingId}
+                      onSubmit={handleSubmit}
+                      onCancel={handleCancelForm}
+                    />
+                  )}
+                </Box>
+              )}
+              {/* {tabIndex === 0 && (
               <form action={handleSubmit as any}>
                 <Box
                   sx={{
@@ -287,20 +296,21 @@ const Content = () => {
                 </Box>
               </form>
             )} */}
-          </Box>
-        </Paper>
-      </Box>
-      <Portal>
-        <Backdrop
-          open={loading}
-          sx={{
-            color: '#fff',
-            zIndex: (theme) => theme.zIndex.drawer + 1, // di atas drawer & dialog
-          }}
-        >
-          <CircularProgress color="primary" />
-        </Backdrop>
-      </Portal>
+            </Box>
+          </Paper>
+        </Box>
+        <Portal>
+          <Backdrop
+            open={loading}
+            sx={{
+              color: '#fff',
+              zIndex: (theme) => theme.zIndex.drawer + 1, // di atas drawer & dialog
+            }}
+          >
+            <CircularProgress color="primary" />
+          </Backdrop>
+        </Portal>
+      </Container>
     </PageContainer>
   );
 };

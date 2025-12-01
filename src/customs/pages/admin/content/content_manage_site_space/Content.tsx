@@ -15,7 +15,13 @@ import {
   Backdrop,
   CircularProgress,
 } from '@mui/material';
-import PageContainer from 'src/components/container/PageContainer';
+import Container from 'src/components/container/PageContainer';
+import PageContainer from 'src/customs/components/container/PageContainer';
+import {
+  AdminCustomSidebarItemsData,
+  AdminNavListingData,
+} from 'src/customs/components/header/navigation/AdminMenu';
+
 import { useRef } from 'react';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
@@ -446,8 +452,11 @@ const Content = () => {
   };
 
   return (
-    <>
-      <PageContainer title="Site Space" description="Site page">
+    <PageContainer
+      itemDataCustomNavListing={AdminNavListingData}
+      itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
+    >
+      <Container title="Site Space" description="Site page">
         <Box>
           <Grid container spacing={3}>
             {/* column */}
@@ -511,7 +520,7 @@ const Content = () => {
             </Grid>
           </Grid>
         </Box>
-      </PageContainer>
+      </Container>
       {/* Dialog create employee */}
       <Dialog open={openFormCreateSiteSpace} onClose={handleDialogClose} fullWidth maxWidth="xl">
         <DialogTitle
@@ -571,7 +580,7 @@ const Content = () => {
           <CircularProgress color="primary" />
         </Backdrop>
       </Portal>
-    </>
+    </PageContainer>
   );
 };
 

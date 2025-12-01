@@ -41,54 +41,87 @@ const Evacuate = Loadable(lazy(() => import('src/customs/pages/Guest/Evacuate/Ev
 const Visitor = Loadable(lazy(() => import('src/customs/pages/Guest/Visitor/Visitor')));
 
 /* ****ADMIN PAGES**** */
-const Dashboard = Loadable(lazy(() => import('src/customs/pages/admin/Dashboard')));
-const ManageVisitor = Loadable(lazy(() => import('src/customs/pages/admin/ManageVisitor')));
-const ManageCompanyAndDepartment = Loadable(
-  lazy(() => import('src/customs/pages/admin/ManageCompanyAndDepartment')),
+const Dashboard = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/content_dashboard/Content')),
 );
-const ManageEmployee = Loadable(lazy(() => import('src/customs/pages/admin/ManageEmployee')));
-const ManageSiteSpace = Loadable(lazy(() => import('src/customs/pages/admin/ManageSiteSpace')));
-const ManageVisitorCard = Loadable(lazy(() => import('src/customs/pages/admin/ManageVisitorCard')));
-const ManageDeviceKiosk = Loadable(lazy(() => import('src/customs/pages/admin/ManageDeviceKiosk')));
-const ManageOperator = Loadable(lazy(() => import('src/customs/pages/admin/ManageOperator')));
-const ManageDocument = Loadable(lazy(() => import('src/customs/pages/admin/ManageDocument')));
-const ManageBrand = Loadable(lazy(() => import('src/customs/pages/admin/ManageBrand')));
-const SettingUser = Loadable(lazy(() => import('src/customs/pages/admin/SettingUser')));
+const ManageVisitor = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/content_visitor/Content')),
+);
+const ManageCompanyAndDepartment = Loadable(
+  lazy(
+    () => import('src/customs/pages/admin/content/content_manage_company_and_department/Content'),
+  ),
+);
+const ManageEmployee = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/content_manage_employee/Content')),
+);
+const ManageSiteSpace = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/content_manage_site_space/Content')),
+);
+const ManageVisitorCard = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/content_manage_visitor_card/Content')),
+);
+// const ManageDeviceKiosk = Loadable(lazy(() => import('src/customs/pages/admin/ManageDeviceKiosk')));
+
+const ManageDocument = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/content_manage_document/Content')),
+);
+const ManageBrand = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/content_manage_brand/Content')),
+);
+const SettingUser = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/content_setting_user/Content')),
+);
 const FormAddUser = Loadable(
   lazy(() => import('src/customs/pages/admin/content/content_setting_user/FormAddUser')),
 );
-const ManageVisitorType = Loadable(lazy(() => import('src/customs/pages/admin/ManageVisitorType')));
-const ManageIntegration = Loadable(lazy(() => import('src/customs/pages/admin/ManageIntegration')));
+const ManageVisitorType = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/content_manage_visitor_type/Content')),
+);
+const ManageIntegration = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/content_manage_integration/Content')),
+);
 const ManageIntegrationDetail = Loadable(
   lazy(() => import('src/customs/pages/admin/ManageIntegrationDetail')),
 );
 const ManageAccessControl = Loadable(
-  lazy(() => import('src/customs/pages/admin/ManageAccessControl')),
+  lazy(() => import('src/customs/pages/admin/content/content_manage_access_control/Content')),
 );
-const ManageCustomField = Loadable(lazy(() => import('src/customs/pages/admin/ManageCustomField')));
-const ManageSettingSmtp = Loadable(lazy(() => import('src/customs/pages/admin/ManageSettingSmtp')));
-const ManageGroupCardAccess = Loadable(
-  lazy(() => import('src/customs/pages/admin/ManageGroupCardAccess')),
+const ManageCustomField = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/content_manage_custom_field/Content')),
 );
-const ManageTimezone = Loadable(lazy(() => import('src/customs/pages/admin/ManageTimezone')));
+const ManageSettingSmtp = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/content_manage_setting_smtp/Content')),
+);
+// const ManageGroupCardAccess = Loadable(
+//   lazy(() => import('src/customs/pages/admin/ManageGroupCardAccess')),
+// );
+const ManageTimezone = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/content_timezone/Context')),
+);
 const ManageSettingVisitor = Loadable(
-  lazy(() => import('src/customs/pages/admin/ManageSettingVisitor')),
+  lazy(() => import('src/customs/pages/admin/content/content_manage_setting_visitor/Content')),
 );
-const ManageScheduler = Loadable(lazy(() => import('src/customs/pages/admin/ManageScheduler')));
-const ManageDelivery = Loadable(lazy(() => import('src/customs/pages/admin/ManageDelivery')));
+const ManageDelivery = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/content_manage_delivery/Driver/Content')),
+);
 const ManageDeliveryScheduler = Loadable(
-  lazy(() => import('src/customs/pages/admin/ManageDeliverySchduler')),
+  lazy(() => import('src/customs/pages/admin/content/content_manage_delivery/Schduler/Content')),
 );
 const ManageDeliveryVisit = Loadable(
-  lazy(() => import('src/customs/pages/admin/ManageDeliveryVisit')),
+  lazy(() => import('src/customs/pages/admin/content/content_manage_delivery/Visit/Content')),
 );
 const ManageDetailScheduler = Loadable(
   lazy(
     () => import('src/customs/pages/admin/content/content_manage_delivery/Schduler/DetailSchduler'),
   ),
 );
-const ManageUser = Loadable(lazy(() => import('src/customs/pages/admin/ManageUser')));
-const ManageReport = Loadable(lazy(() => import('src/customs/pages/admin/ManageReport')));
+const ManageUser = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/content_user/Content')),
+);
+const ManageReport = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/content_report/Content')),
+);
 
 /* ****EMPLOYEE PAGES**** */
 const DashboardEmployee = Loadable(lazy(() => import('src/customs/pages/Employee/Dashboard')));
@@ -200,12 +233,10 @@ const Router = [
           { path: '/admin/manage/delivery/visit', element: <ManageDeliveryVisit /> },
           { path: '/admin/manage/site-space', element: <ManageSiteSpace /> },
           { path: '/admin/manage/card', element: <ManageVisitorCard /> },
-          { path: '/admin/manage/group-card', element: <ManageGroupCardAccess /> },
-          { path: '/admin/manage/scheduler', element: <ManageScheduler /> },
+
           { path: '/admin/manage/timezone', element: <ManageTimezone /> },
           { path: '/admin/manage/visitor-type', element: <ManageVisitorType /> },
-          { path: '/admin/manage/device-kiosk', element: <ManageDeviceKiosk /> },
-          { path: '/admin/manage/operator', element: <ManageOperator /> },
+          // { path: '/admin/manage/device-kiosk', element: <ManageDeviceKiosk /> },
           { path: '/admin/manage/document', element: <ManageDocument /> },
           { path: '/admin/manage/brand', element: <ManageBrand /> },
           { path: '/admin/manage/integration', element: <ManageIntegration /> },

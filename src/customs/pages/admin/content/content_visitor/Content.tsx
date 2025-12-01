@@ -29,7 +29,12 @@ import timezone from 'dayjs/plugin/timezone';
 dayjs.extend(utc);
 dayjs.extend(timezone);
 import type { AlertColor } from '@mui/material/Alert';
-import PageContainer from 'src/components/container/PageContainer';
+import Container from 'src/components/container/PageContainer';
+import PageContainer from 'src/customs/components/container/PageContainer';
+import {
+  AdminCustomSidebarItemsData,
+  AdminNavListingData,
+} from 'src/customs/components/header/navigation/AdminMenu';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import iconScanQR from 'src/assets/images/svgs/scan-qr.svg';
 import iconAdd from 'src/assets/images/svgs/add-circle.svg';
@@ -577,8 +582,11 @@ const Content = () => {
   };
 
   return (
-    <>
-      <PageContainer title="Visitor" description="this is Dashboard page">
+    <PageContainer
+      itemDataCustomNavListing={AdminNavListingData}
+      itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
+    >
+      <Container title="Visitor" description="this is Dashboard page">
         <Box>
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, lg: 12 }}>
@@ -693,7 +701,7 @@ const Content = () => {
             </Grid>
           </Grid>
         </Box>
-      </PageContainer>
+      </Container>
       {/* Add New Invitation Visitor */}
       <Dialog
         fullWidth
@@ -1176,7 +1184,7 @@ const Content = () => {
         error={visitorError}
         detail={visitorDetail}
         onClose={() => setOpenVisitorDialog(false)}
-        onConfirm={(action: any) => openConfirm(action)} // callback dari parent
+        onConfirm={(action: any) => openConfirm(action)}
       />
 
       <DetailVisitorDialog
@@ -1252,7 +1260,7 @@ const Content = () => {
           </Alert>
         </Snackbar>
       </Portal>
-    </>
+    </PageContainer>
   );
 };
 

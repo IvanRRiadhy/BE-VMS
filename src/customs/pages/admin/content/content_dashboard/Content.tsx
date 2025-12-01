@@ -1,6 +1,11 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Box, Button, Drawer, Grid2 as Grid, Typography } from '@mui/material';
-import PageContainer from 'src/components/container/PageContainer';
+import Container from 'src/components/container/PageContainer';
+import PageContainer from 'src/customs/components/container/PageContainer';
+import {
+  AdminCustomSidebarItemsData,
+  AdminNavListingData,
+} from 'src/customs/components/header/navigation/AdminMenu';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import Welcome from 'src/layouts/full/shared/welcome/Welcome';
@@ -93,127 +98,132 @@ const Content = () => {
   // ]);
 
   return (
-    <PageContainer title="Dashboard" description="this is Dashboard page">
-      <Box>
-        <Grid container spacing={3} alignItems="center" justifyContent="space-between" mb={1}>
-          <Grid
-            size={{ xs: 12, lg: 12 }}
-            display="flex"
-            justifyContent="flex-end"
-            alignItems="center"
-            gap={2}
-            sx={{ mt: 2 }}
-          >
-            <Button
-              size="small"
-              sx={{
-                backgroundColor: 'white',
-                color: 'black',
-                border: '1px solid #d1d1d1',
-                ':hover': { backgroundColor: '#d1d1d1', color: 'black' },
-              }}
-              startIcon={<IconCalendar size={18} />}
-              onClick={handleClick}
+    <PageContainer
+      itemDataCustomNavListing={AdminNavListingData}
+      itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
+    >
+      <Container title="Dashboard" description="this is Dashboard page">
+        <Box>
+          <Grid container spacing={3} alignItems="center" justifyContent="space-between" mb={1}>
+            <Grid
+              size={{ xs: 12, lg: 12 }}
+              display="flex"
+              justifyContent="flex-end"
+              alignItems="center"
+              gap={2}
+              sx={{ mt: 2 }}
             >
-              {`${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`}
-            </Button>
+              <Button
+                size="small"
+                sx={{
+                  backgroundColor: 'white',
+                  color: 'black',
+                  border: '1px solid #d1d1d1',
+                  ':hover': { backgroundColor: '#d1d1d1', color: 'black' },
+                }}
+                startIcon={<IconCalendar size={18} />}
+                onClick={handleClick}
+              >
+                {`${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`}
+              </Button>
 
-            <Button
-              size="small"
-              variant="contained"
-              color="error"
-              startIcon={<IconDownload />}
-              onClick={handleExportPdf}
-            >
-              Export
-            </Button>
+              <Button
+                size="small"
+                variant="contained"
+                color="error"
+                startIcon={<IconDownload />}
+                onClick={handleExportPdf}
+              >
+                Export
+              </Button>
 
-            <Drawer open={open} anchor="right" onClose={handleClose}>
-              <Box sx={{ p: 2 }}>
-                <Typography variant="h6" mb={1}>
-                  Select Date Range
-                </Typography>
-                <Calendar
-                  value={{ startDate, endDate }} // ✅ biar Calendar tahu tanggal aktif saat ini
-                  onChange={(selection: any) => {
-                    dispatch(
-                      setDateRange({
-                        startDate: selection.startDate,
-                        endDate: selection.endDate,
-                      }),
-                    );
-                    handleClose();
-                  }}
-                />
-              </Box>
-            </Drawer>
-          </Grid>
-        </Grid>
-
-        <div ref={exportRef}>
-          <Grid container spacing={3}>
-            {/* column */}
-            <Grid size={{ xs: 12, lg: 12 }}>
-              <TopCards />
-            </Grid>
-            {/* column */}
-            <Grid container mt={1} size={{ xs: 12, lg: 12 }}>
-              <Grid size={{ xs: 12, md: 6, xl: 3 }}>
-                <VisitingTypeChart />
-              </Grid>
-              <Grid size={{ xs: 12, md: 6, xl: 4 }}>
-                <TopVisitingPurposeChart title="Top Visiting Purpose" />
-              </Grid>
-
-              <Grid size={{ xs: 12, md: 6, xl: 5 }}>
-                <TopVisitor />
-              </Grid>
-
-              <Grid size={{ xs: 12, md: 6, lg: 6 }}>
-                <AvarageDurationChart />
-              </Grid>
-
-              <Grid size={{ xs: 12, md: 6, lg: 6 }}>
-                <Typography variant="h6" sx={{ mb: 2 }}>
-                  {t('visitor_praregist')}
-                </Typography>
-                <DynamicTable
-                  height={420}
-                  isHavePagination
-                  overflowX={'auto'}
-                  data={dataPraregist}
-                  isHaveChecked={false}
-                  isHaveAction={false}
-                  isHaveSearch={false}
-                  isHaveFilter={false}
-                  isHaveExportPdf={false}
-                  isHaveExportXlf={false}
-                  isHaveHeaderTitle={true}
-                  titleHeader=""
-                  // defaultRowsPerPage={rowsPerPage}
-                  rowsPerPageOptions={[5, 10, 20, 50, 100]}
-                  // onPaginationChange={(page, rowsPerPage) => {
-                  //   setPage(page);
-                  //   setRowsPerPage(rowsPerPage);
-                  // }}
-                  isHaveFilterDuration={false}
-                  isHaveAddData={false}
-                  isHaveHeader={false}
-                  isHaveFilterMore={false}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 6, lg: 6 }}>
-                <VisitorFluctuationChart />
-              </Grid>
-
-              <Grid size={{ xs: 12, xl: 6 }}>
-                <VisitorHeatMap />
-              </Grid>
+              <Drawer open={open} anchor="right" onClose={handleClose}>
+                <Box sx={{ p: 2 }}>
+                  <Typography variant="h6" mb={1}>
+                    Select Date Range
+                  </Typography>
+                  <Calendar
+                    value={{ startDate, endDate }} // ✅ biar Calendar tahu tanggal aktif saat ini
+                    onChange={(selection: any) => {
+                      dispatch(
+                        setDateRange({
+                          startDate: selection.startDate,
+                          endDate: selection.endDate,
+                        }),
+                      );
+                      handleClose();
+                    }}
+                  />
+                </Box>
+              </Drawer>
             </Grid>
           </Grid>
-        </div>
-        <Welcome />
-      </Box>
+
+          <div ref={exportRef}>
+            <Grid container spacing={3}>
+              {/* column */}
+              <Grid size={{ xs: 12, lg: 12 }}>
+                <TopCards />
+              </Grid>
+              {/* column */}
+              <Grid container mt={1} size={{ xs: 12, lg: 12 }}>
+                <Grid size={{ xs: 12, md: 6, xl: 3 }}>
+                  <VisitingTypeChart />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6, xl: 4 }}>
+                  <TopVisitingPurposeChart title="Top Visiting Purpose" />
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 6, xl: 5 }}>
+                  <TopVisitor />
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 6, lg: 6 }}>
+                  <AvarageDurationChart />
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 6, lg: 6 }}>
+                  <Typography variant="h6" sx={{ mb: 2 }}>
+                    {t('visitor_praregist')}
+                  </Typography>
+                  <DynamicTable
+                    height={420}
+                    isHavePagination
+                    overflowX={'auto'}
+                    data={dataPraregist}
+                    isHaveChecked={false}
+                    isHaveAction={false}
+                    isHaveSearch={false}
+                    isHaveFilter={false}
+                    isHaveExportPdf={false}
+                    isHaveExportXlf={false}
+                    isHaveHeaderTitle={true}
+                    titleHeader=""
+                    // defaultRowsPerPage={rowsPerPage}
+                    rowsPerPageOptions={[5, 10, 20, 50, 100]}
+                    // onPaginationChange={(page, rowsPerPage) => {
+                    //   setPage(page);
+                    //   setRowsPerPage(rowsPerPage);
+                    // }}
+                    isHaveFilterDuration={false}
+                    isHaveAddData={false}
+                    isHaveHeader={false}
+                    isHaveFilterMore={false}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6, lg: 6 }}>
+                  <VisitorFluctuationChart />
+                </Grid>
+
+                <Grid size={{ xs: 12, xl: 6 }}>
+                  <VisitorHeatMap />
+                </Grid>
+              </Grid>
+            </Grid>
+          </div>
+          <Welcome />
+        </Box>
+      </Container>
     </PageContainer>
   );
 };

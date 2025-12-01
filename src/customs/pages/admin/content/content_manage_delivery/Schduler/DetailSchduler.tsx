@@ -53,6 +53,7 @@ import DnDOutsideCourier from './SchedulerCalendar';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { momentLocalizer } from 'react-big-calendar';
+import { dayjsLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import { getCalendarSchedule, getSchedulerDeliveryById } from 'src/customs/api/Delivery/Scheduler';
 import { getTimezoneById } from 'src/customs/api/admin';
@@ -94,7 +95,8 @@ const ManageDetailScheduler: FC = () => {
 
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
-  const localizer = momentLocalizer(moment);
+  // const localizer = momentLocalizer(moment);
+  const localizer = dayjsLocalizer(dayjs);
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [openForm, setOpenForm] = useState(false);
   const [isDraggingOutside, setIsDraggingOutside] = useState(false);
@@ -194,60 +196,150 @@ const ManageDetailScheduler: FC = () => {
       return {
         id: item.id,
         title: item.visitor_name,
-        // start: moment(item.visitor_period_start + 'Z')
-        //   .local()
-        //   .toDate(),
-        // end: moment(item.visitor_period_end + 'Z')
-        //   .local()
-        //   .toDate(),
-        start: moment.utc(item.visitor_period_start).local().toDate(),
-        end: moment.utc(item.visitor_period_end).local().toDate(),
+        start: dayjs(item.visitor_period_start + 'Z')
+          .local()
+          .toDate(),
+        end: dayjs(item.visitor_period_end + 'Z')
+          .local()
+          .toDate(),
+        // start: moment.utc(item.visitor_period_start).local().toDate(),
+        // end: moment.utc(item.visitor_period_end).local().toDate(),
+        // start: dayjs.utc(item.visitor_period_start).local().toDate(),
+        // end: dayjs.utc(item.visitor_period_end).local().toDate(),
         colour: colourMap[employeeId] || '#000',
       };
     });
+    console.log('mappedEvents', mappedEvents);
 
     setEvents(mappedEvents);
   };
 
   const [currentView, setCurrentView] = useState(Views.MONTH);
+  const viewRef = useRef(Views.MONTH);
+
+  // function normalizeRange(range: any, view: string) {
+  //   if (view === Views.MONTH) {
+  //     let dates: Date[];
+
+  //     // Jika RBC kirim array → langsung pakai
+  //     if (Array.isArray(range)) {
+  //       dates = range;
+  //     } else {
+  //       // RBC MONTH selalu 6 minggu (42 hari)
+  //       dates = Array.from({ length: 42 }, (_, i) => dayjs(range.start).add(i, 'day').toDate());
+  //     }
+
+  //     // Ambil tanggal tengah → ini pasti tanggal di bulan yg tampil
+  //     const middleDate = dayjs(dates[Math.floor(dates.length / 2)]);
+
+  //     return {
+  //       start: middleDate.startOf('month').toDate(),
+  //       end: middleDate.endOf('month').toDate(),
+  //     };
+  //   }
+
+  //   // WEEK
+  //   if (view === Views.WEEK) {
+  //     if (Array.isArray(range)) {
+  //       return {
+  //         start: range[0],
+  //         end: range[range.length - 1],
+  //       };
+  //     }
+  //     return { start: range.start, end: range.end };
+  //   }
+
+  //   // DAY
+  //   if (view === Views.DAY) {
+  //     if (range.start) {
+  //       return { start: range.start, end: range.end };
+  //     }
+  //     return { start: range, end: range };
+  //   }
+
+  //   return { start: null, end: null };
+  // }
+
+  // function normalizeRange(range: any, view: string) {
+  //   // --- Jika array (MONTH/WEEK) ---
+  //   if (Array.isArray(range)) {
+  //     const dates = range.filter((d) => d instanceof Date && !isNaN(d.getTime()));
+
+  //     if (dates.length === 0) {
+  //       return { start: null, end: null };
+  //     }
+
+  //     // MONTH → ambil tengah
+  //     if (view === Views.MONTH) {
+  //       const middle = dates[Math.floor(dates.length / 2)];
+  //       const m = dayjs(middle);
+  //       return {
+  //         start: m.startOf('month').toDate(),
+  //         end: m.endOf('month').toDate(),
+  //       };
+  //     }
+
+  //     // WEEK → ambil awal + akhir
+  //     return {
+  //       start: dates[0],
+  //       end: dates[dates.length - 1],
+  //     };
+  //   }
+
+  //   // --- Jika object { start, end } (DAY / WEEK / MONTH kadang) ---
+  //   if (range && typeof range === 'object' && 'start' in range && 'end' in range) {
+  //     return {
+  //       start: new Date(range.start),
+  //       end: new Date(range.end),
+  //     };
+  //   }
+
+  //   // --- Jika single Date (DAY) ---
+  //   if (range instanceof Date) {
+  //     return { start: range, end: range };
+  //   }
+
+  //   // Fallback
+  //   return { start: null, end: null };
+  // }
 
   function normalizeRange(range: any, view: string) {
+    console.log('🟦 normalizeRange CALLED — view:', view);
+    console.log('📦 raw range:', range);
+    // WEEK — Range selalu array 7 hari
+    if (view === Views.WEEK) {
+      if (Array.isArray(range) && range.length === 7) {
+        return {
+          start: dayjs(range[0]).startOf('day').toDate(),
+          end: dayjs(range[6]).endOf('day').toDate(),
+        };
+      }
+    }
+
+    // MONTH — 42 hari
     if (view === Views.MONTH) {
       let dates: Date[];
 
-      // Jika RBC kirim array → langsung pakai
+      // Jika array → RBC 42 hari
       if (Array.isArray(range)) {
         dates = range;
       } else {
-        // RBC MONTH selalu 6 minggu (42 hari)
         dates = Array.from({ length: 42 }, (_, i) => dayjs(range.start).add(i, 'day').toDate());
       }
 
-      // Ambil tanggal tengah → ini pasti tanggal di bulan yg tampil
-      const middleDate = dayjs(dates[Math.floor(dates.length / 2)]);
+      // Temukan tanggal yang benar-benar berada pada bulan ini
+      const middle = dates[Math.floor(dates.length / 2)];
+      const midMonth = dayjs(middle).month();
 
       return {
-        start: middleDate.startOf('month').toDate(),
-        end: middleDate.endOf('month').toDate(),
+        start: dayjs(middle).startOf('month').toDate(),
+        end: dayjs(middle).endOf('month').toDate(),
       };
-    }
-
-    // WEEK
-    if (view === Views.WEEK) {
-      if (Array.isArray(range)) {
-        return {
-          start: range[0],
-          end: range[range.length - 1],
-        };
-      }
-      return { start: range.start, end: range.end };
     }
 
     // DAY
     if (view === Views.DAY) {
-      if (range.start) {
-        return { start: range.start, end: range.end };
-      }
+      if (range?.start) return range;
       return { start: range, end: range };
     }
 
@@ -263,7 +355,7 @@ const ManageDetailScheduler: FC = () => {
 
     setLastRange({ start, end });
 
-    const startDate = dayjs(start).format('YYYY-MM-DD');
+    const startDate = dayjs(start).subtract(1, 'day').format('YYYY-MM-DD');
     const endDate = dayjs(end).format('YYYY-MM-DD');
     loadSchedule(startDate, endDate);
   };
@@ -275,20 +367,13 @@ const ManageDetailScheduler: FC = () => {
 
   useEffect(() => {
     if (couriers.length > 0) {
-      const start = dayjs().startOf('month').format('YYYY-MM-DD');
+      const start = dayjs().startOf('month').subtract(1, 'day').format('YYYY-MM-DD');
       const end = dayjs().endOf('month').format('YYYY-MM-DD');
       loadSchedule(start, end);
     }
   }, [couriers]);
 
   const handleDragStart = (courier: any) => {
-    // const res = (draggedCourier.current = {
-    //   id: courier.id,
-    //   name: courier.employee.name,
-    //   colour: courier.colour,
-    //   employee_id: courier.employee_id,
-    //   group_delivery_staff_id: courier.group_delivery_staff_id,
-    // } as any);
     const res = setDraggedCourier({
       id: courier?.id as string,
       name: courier.employee.name,
@@ -296,7 +381,6 @@ const ManageDetailScheduler: FC = () => {
       employee_id: courier.employee_id,
       group_delivery_staff_id: courier.group_delivery_staff_id,
     });
-    // console.log('res', res);
     setIsDraggingOutside(true);
   };
 
@@ -667,8 +751,13 @@ const ManageDetailScheduler: FC = () => {
               events={events}
               setEvents={setEvents}
               timeAccess={timeAccess}
+              currentView={currentView}
+              setCurrentView={setCurrentView}
               onRangeChange={handleRangeChange}
-              onViewChange={setCurrentView}
+              onViewChange={(view) => {
+                viewRef.current = view;
+                setCurrentView(view);
+              }}
               loadSchedule={loadSchedule}
               lastRange={lastRange}
             />

@@ -13,11 +13,16 @@ import {
   IconButton,
   useTheme,
 } from '@mui/material';
-import PageContainer from 'src/components/container/PageContainer';
+import PageContainer from 'src/customs/components/container/PageContainer';
+import Container from 'src/components/container/PageContainer';
 
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import CloseIcon from '@mui/icons-material/Close';
+import {
+  AdminCustomSidebarItemsData,
+  AdminNavListingData,
+} from 'src/customs/components/header/navigation/AdminMenu';
 import { useAuth } from 'src/customs/contexts/AuthProvider';
 import {
   getAllAccessControl,
@@ -322,8 +327,11 @@ const Content = () => {
   };
 
   return (
-    <>
-      <PageContainer title="Access Control" description="Site page">
+    <PageContainer
+      itemDataCustomNavListing={AdminNavListingData}
+      itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
+    >
+      <Container title="Access Control" description="Site page">
         <Box>
           <Grid container spacing={3}>
             {/* column */}
@@ -333,49 +341,49 @@ const Content = () => {
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
               {/* {isDataReady ? ( */}
-                <DynamicTable
+              <DynamicTable
                 loading={loading}
-                  isHavePagination={true}
-                  selectedRows={selectedRows}
-                  totalCount={totalFilteredRecords}
-                  defaultRowsPerPage={rowsPerPage}
-                  rowsPerPageOptions={[5, 10, 20]}
-                  onPaginationChange={(page, rowsPerPage) => {
-                    setPage(page);
-                    setRowsPerPage(rowsPerPage);
-                  }}
-                  overflowX={'auto'}
-                  data={tableData}
-                  isHaveChecked={true}
-                  isHaveAction={true}
-                  isHaveSearch={true}
-                  isHaveFilter={false}
-                  isHaveExportPdf={false}
-                  isHaveExportXlf={false}
-                  isHaveFilterDuration={false}
-                  isHaveAddData={true}
-                  isHaveHeader={false}
-                  onCheckedChange={(selected) => {
-                    const selectedItem = selected.map((item) => ({
-                      ...item,
-                      brand_id: item.brand_name, // assuming brand_name is the equivalent of brand_id
-                      integration_id: item.integration_name, // assuming integration_name is the equivalent of integration_id
-                    }));
-                    setSelectedRows(selectedItem);
-                  }}
-                  onEdit={(row) => {
-                    handleEdit(row.id);
-                    setEdittingId(row.id);
-                  }}
-                  isDataVerified={true}
-                  onDelete={(row) => handleDelete(row.id)}
-                  onBatchDelete={handleBatchDelete}
-                  onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-                  onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
-                  onAddData={() => {
-                    handleAdd();
-                  }}
-                />
+                isHavePagination={true}
+                selectedRows={selectedRows}
+                totalCount={totalFilteredRecords}
+                defaultRowsPerPage={rowsPerPage}
+                rowsPerPageOptions={[5, 10, 20]}
+                onPaginationChange={(page, rowsPerPage) => {
+                  setPage(page);
+                  setRowsPerPage(rowsPerPage);
+                }}
+                overflowX={'auto'}
+                data={tableData}
+                isHaveChecked={true}
+                isHaveAction={true}
+                isHaveSearch={true}
+                isHaveFilter={false}
+                isHaveExportPdf={false}
+                isHaveExportXlf={false}
+                isHaveFilterDuration={false}
+                isHaveAddData={true}
+                isHaveHeader={false}
+                onCheckedChange={(selected) => {
+                  const selectedItem = selected.map((item) => ({
+                    ...item,
+                    brand_id: item.brand_name, // assuming brand_name is the equivalent of brand_id
+                    integration_id: item.integration_name, // assuming integration_name is the equivalent of integration_id
+                  }));
+                  setSelectedRows(selectedItem);
+                }}
+                onEdit={(row) => {
+                  handleEdit(row.id);
+                  setEdittingId(row.id);
+                }}
+                isDataVerified={true}
+                onDelete={(row) => handleDelete(row.id)}
+                onBatchDelete={handleBatchDelete}
+                onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
+                onAddData={() => {
+                  handleAdd();
+                }}
+              />
               {/* ) : (
                 <Card sx={{ width: '100%' }}>
                   <Skeleton />
@@ -386,7 +394,7 @@ const Content = () => {
             </Grid>
           </Grid>
         </Box>
-      </PageContainer>
+      </Container>
       <Dialog open={openCreateAccessControl} onClose={handleDialogClose} fullWidth maxWidth="md">
         <DialogTitle sx={{ position: 'relative', padding: 3 }}>
           {edittingId ? 'Edit' : 'Add'} Access Control
@@ -451,7 +459,7 @@ const Content = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

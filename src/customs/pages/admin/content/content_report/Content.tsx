@@ -1,5 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import PageContainer from 'src/components/container/PageContainer';
+import Container from 'src/components/container/PageContainer';
+import PageContainer from 'src/customs/components/container/PageContainer';
+import {
+  AdminCustomSidebarItemsData,
+  AdminNavListingData,
+} from 'src/customs/components/header/navigation/AdminMenu';
 import {
   Autocomplete,
   Backdrop,
@@ -331,287 +336,292 @@ const Content = () => {
   };
 
   return (
-    <PageContainer title="Report" description="This is Content Report page">
-      <Box sx={{ backgroundColor: 'white', p: 3 }}>
-        <Typography variant="h5" gutterBottom mb={2}>
-          Transaction Visitor Report
-        </Typography>
-        <Grid container spacing={3}>
-          <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-            <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Period</CustomFormLabel>
-            <CustomSelect
-              fullWidth
-              value={formData.time_report}
-              onChange={(e: any) => handleChange('time_report', e.target.value)}
-            >
-              <MenuItem value="all">Select Period</MenuItem>
-              <MenuItem value="Daily">Daily</MenuItem>
-              <MenuItem value="Weekly">Weekly</MenuItem>
-              <MenuItem value="Monthly">Monthly</MenuItem>
-              <MenuItem value="Yearly">Yearly</MenuItem>
-              <MenuItem value="CustomDate">Custom Date</MenuItem>
-            </CustomSelect>
-          </Grid>
-          <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-            <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Start Date</CustomFormLabel>
-            <TextField
-              type="date"
-              fullWidth
-              value={formData.start_date}
-              onChange={(e) => handleChange('start_date', e.target.value)}
-              InputLabelProps={{ shrink: true }}
-              sx={{ '& input': { color: 'black' } }}
-              disabled={formData.time_report !== 'CustomDate'} // ✅ Disable kalau bukan CustomDate
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-            <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>End Date</CustomFormLabel>
-            <TextField
-              type="date"
-              fullWidth
-              value={formData.end_date}
-              onChange={(e) => handleChange('end_date', e.target.value)}
-              InputLabelProps={{ shrink: true }}
-              sx={{ '& input': { color: 'black' } }}
-              disabled={formData.time_report !== 'CustomDate'} // ✅ Disable juga di sini
-            />
-          </Grid>
-          <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-            <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Visitor Status</CustomFormLabel>
-            <CustomSelect
-              fullWidth
-              value={formData.visitor_statuses}
-              onChange={(e: any): any => handleChange('visitor_statuses', e.target.value)}
-              placeholder="Select Visitor Status"
-            >
-              <MenuItem value="">Select Visitor Status</MenuItem>
-              <MenuItem value="Checkin">Checkin</MenuItem>
-              <MenuItem value="Checkout">Checkout</MenuItem>
-              <MenuItem value="Block">Block</MenuItem>
-            </CustomSelect>
-          </Grid>
-          <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-            <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Sites</CustomFormLabel>
-            <Autocomplete
-              multiple
-              options={siteOptions}
-              value={siteOptions.filter((x) => formData.sites.includes(x.id))}
-              getOptionLabel={(option) => option.name}
-              onChange={(e, val) =>
-                handleChange(
-                  'sites',
-                  val.map((v) => v.id),
-                )
-              }
-              renderInput={(params) => <TextField {...params} placeholder="Select Sites" />}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-            <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Host</CustomFormLabel>
-            <Autocomplete
-              multiple
-              options={employeeOptions}
-              value={employeeOptions.filter((x) => formData.hosts.includes(x.id))}
-              getOptionLabel={(option) => option.name}
-              onChange={(e, val) =>
-                handleChange(
-                  'hosts',
-                  val.map((v) => v.id),
-                )
-              }
-              renderInput={(params) => <TextField {...params} placeholder="Select Host" />}
-            />
-          </Grid>
-        </Grid>
-        <Grid size={{ xs: 12, md: 6 }} mt={2}>
-          <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handlePostReport}
-              startIcon={<IconReport />}
-              disabled={loading}
-            >
-              Generate Report
-            </Button>
-            <Button
-              variant="contained"
-              color="success"
-              onClick={handleOpenSaveDialog}
-              startIcon={<IconDeviceFloppy />}
-              disabled={loading}
-            >
-              Save Generate Report
-            </Button>
-
-            <Button
-              variant="outlined"
-              color="error"
-              onClick={handleResetForm}
-              startIcon={<IconTrash />}
-            >
-              Reset
-            </Button>
-          </Box>
-        </Grid>
-      </Box>
-      <Box sx={{ backgroundColor: 'white', p: 3, mt: 2 }}>
-        <Typography variant="h5" gutterBottom mb={2}>
-          Report Result
-        </Typography>
-        <Grid container spacing={2} gap={2}>
-          {/* Kiri - daftar report */}
-          <Grid size={{ xs: 12, md: 4 }}>
-            {savedReports.length === 0 ? (
-              <Typography variant="body2" color="text.secondary">
-                No saved reports yet.
-              </Typography>
-            ) : (
-              savedReports.map((rep) => (
-                <Card
-                  key={rep.id}
-                  sx={{
-                    p: 2,
-                    minHeight: 100,
-                    mb: 2,
-                    cursor: 'pointer',
-                    border: selectedReport?.id === rep.id ? '2px solid #1976d2' : '1px solid #ddd',
-                    backgroundColor:
-                      selectedReport?.id === rep.id ? 'rgba(25, 118, 210, 0.08)' : 'inherit',
-                  }}
-                  onClick={() => setSelectedReport(rep)}
-                >
-                  <Typography variant="h6">Report {rep.title}</Typography>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      {rep.time_report}
-                    </Typography>
-                    <Typography variant="body1">{rep.site}</Typography>
-                  </Box>
-                </Card>
-              ))
-            )}
-          </Grid>
-
-          {/* 🔹 Garis pemisah vertikal */}
-          <Grid
-            sx={{
-              display: { xs: 'none', md: 'block' },
-              borderRight: '1px solid #e0e0e0',
-              height: 'auto',
-              mx: 1,
-            }}
-          />
-
-          {/* Kanan - preview */}
-          <Grid size={{ xs: 12, md: 7.6 }}>
-            {selectedReport ? (
-              <Card sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="h6">{selectedReport.title}</Typography>
-                  <Typography variant="h6" sx={{ ml: 2, color: 'text.secondary' }}>
-                    {selectedReport.site}
-                  </Typography>
-                </Box>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  sx={{ mt: 2 }}
-                  onClick={() => {
-                    setReportData(selectedReport.data);
-                    setOpenDialog(true);
-                  }}
-                >
-                  Generate Report
-                </Button>
-              </Card>
-            ) : (
-              <Card
-                sx={{
-                  p: 3,
-                  minHeight: 150,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: 'none !important',
-                }}
+    <PageContainer
+      itemDataCustomNavListing={AdminNavListingData}
+      itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
+    >
+      <Container title="Report" description="This is Content Report page">
+        <Box sx={{ backgroundColor: 'white', p: 3 }}>
+          <Typography variant="h5" gutterBottom mb={2}>
+            Transaction Visitor Report
+          </Typography>
+          <Grid container spacing={3}>
+            <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+              <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Period</CustomFormLabel>
+              <CustomSelect
+                fullWidth
+                value={formData.time_report}
+                onChange={(e: any) => handleChange('time_report', e.target.value)}
               >
-                <Typography variant="body2" color="text.secondary">
-                  Select a report from the left to preview details
-                </Typography>
-              </Card>
-            )}
-          </Grid>
-        </Grid>
-      </Box>
+                <MenuItem value="all">Select Period</MenuItem>
+                <MenuItem value="Daily">Daily</MenuItem>
+                <MenuItem value="Weekly">Weekly</MenuItem>
+                <MenuItem value="Monthly">Monthly</MenuItem>
+                <MenuItem value="Yearly">Yearly</MenuItem>
+                <MenuItem value="CustomDate">Custom Date</MenuItem>
+              </CustomSelect>
+            </Grid>
+            <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+              <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Start Date</CustomFormLabel>
+              <TextField
+                type="date"
+                fullWidth
+                value={formData.start_date}
+                onChange={(e) => handleChange('start_date', e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                sx={{ '& input': { color: 'black' } }}
+                disabled={formData.time_report !== 'CustomDate'} // ✅ Disable kalau bukan CustomDate
+              />
+            </Grid>
 
-      <Dialog
-        open={openDialog}
-        onClose={() => setOpenDialog(false)}
-        fullWidth
-        maxWidth="xl"
-        PaperProps={{
-          sx: {
-            width: '90vw', // ✅ Lebih lebar dari "xl"
-            maxWidth: 'none', // 🔸 Hilangkan batas maxWidth bawaan MUI
-          },
-        }}
-      >
-        <DialogTitle sx={{ position: 'relative', padding: 3 }}>
-          Report Transaction Visitor
-        </DialogTitle>
-        <IconButton
-          aria-label="close"
-          onClick={() => setOpenDialog(false)}
-          sx={{
-            position: 'absolute',
-            top: 15,
-            right: 15,
-            color: (theme) => theme.palette.grey[500],
+            <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+              <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>End Date</CustomFormLabel>
+              <TextField
+                type="date"
+                fullWidth
+                value={formData.end_date}
+                onChange={(e) => handleChange('end_date', e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                sx={{ '& input': { color: 'black' } }}
+                disabled={formData.time_report !== 'CustomDate'} // ✅ Disable juga di sini
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+              <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Visitor Status</CustomFormLabel>
+              <CustomSelect
+                fullWidth
+                value={formData.visitor_statuses}
+                onChange={(e: any): any => handleChange('visitor_statuses', e.target.value)}
+                placeholder="Select Visitor Status"
+              >
+                <MenuItem value="">Select Visitor Status</MenuItem>
+                <MenuItem value="Checkin">Checkin</MenuItem>
+                <MenuItem value="Checkout">Checkout</MenuItem>
+                <MenuItem value="Block">Block</MenuItem>
+              </CustomSelect>
+            </Grid>
+            <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+              <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Sites</CustomFormLabel>
+              <Autocomplete
+                multiple
+                options={siteOptions}
+                value={siteOptions.filter((x) => formData.sites.includes(x.id))}
+                getOptionLabel={(option) => option.name}
+                onChange={(e, val) =>
+                  handleChange(
+                    'sites',
+                    val.map((v) => v.id),
+                  )
+                }
+                renderInput={(params) => <TextField {...params} placeholder="Select Sites" />}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+              <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Host</CustomFormLabel>
+              <Autocomplete
+                multiple
+                options={employeeOptions}
+                value={employeeOptions.filter((x) => formData.hosts.includes(x.id))}
+                getOptionLabel={(option) => option.name}
+                onChange={(e, val) =>
+                  handleChange(
+                    'hosts',
+                    val.map((v) => v.id),
+                  )
+                }
+                renderInput={(params) => <TextField {...params} placeholder="Select Host" />}
+              />
+            </Grid>
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }} mt={2}>
+            <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handlePostReport}
+                startIcon={<IconReport />}
+                disabled={loading}
+              >
+                Generate Report
+              </Button>
+              <Button
+                variant="contained"
+                color="success"
+                onClick={handleOpenSaveDialog}
+                startIcon={<IconDeviceFloppy />}
+                disabled={loading}
+              >
+                Save Generate Report
+              </Button>
+
+              <Button
+                variant="outlined"
+                color="error"
+                onClick={handleResetForm}
+                startIcon={<IconTrash />}
+              >
+                Reset
+              </Button>
+            </Box>
+          </Grid>
+        </Box>
+        <Box sx={{ backgroundColor: 'white', p: 3, mt: 2 }}>
+          <Typography variant="h5" gutterBottom mb={2}>
+            Report Result
+          </Typography>
+          <Grid container spacing={2} gap={2}>
+            {/* Kiri - daftar report */}
+            <Grid size={{ xs: 12, md: 4 }}>
+              {savedReports.length === 0 ? (
+                <Typography variant="body2" color="text.secondary">
+                  No saved reports yet.
+                </Typography>
+              ) : (
+                savedReports.map((rep) => (
+                  <Card
+                    key={rep.id}
+                    sx={{
+                      p: 2,
+                      minHeight: 100,
+                      mb: 2,
+                      cursor: 'pointer',
+                      border:
+                        selectedReport?.id === rep.id ? '2px solid #1976d2' : '1px solid #ddd',
+                      backgroundColor:
+                        selectedReport?.id === rep.id ? 'rgba(25, 118, 210, 0.08)' : 'inherit',
+                    }}
+                    onClick={() => setSelectedReport(rep)}
+                  >
+                    <Typography variant="h6">Report {rep.title}</Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        {rep.time_report}
+                      </Typography>
+                      <Typography variant="body1">{rep.site}</Typography>
+                    </Box>
+                  </Card>
+                ))
+              )}
+            </Grid>
+
+            {/* 🔹 Garis pemisah vertikal */}
+            <Grid
+              sx={{
+                display: { xs: 'none', md: 'block' },
+                borderRight: '1px solid #e0e0e0',
+                height: 'auto',
+                mx: 1,
+              }}
+            />
+
+            {/* Kanan - preview */}
+            <Grid size={{ xs: 12, md: 7.6 }}>
+              {selectedReport ? (
+                <Card sx={{ p: 3 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <Typography variant="h6">{selectedReport.title}</Typography>
+                    <Typography variant="h6" sx={{ ml: 2, color: 'text.secondary' }}>
+                      {selectedReport.site}
+                    </Typography>
+                  </Box>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    sx={{ mt: 2 }}
+                    onClick={() => {
+                      setReportData(selectedReport.data);
+                      setOpenDialog(true);
+                    }}
+                  >
+                    Generate Report
+                  </Button>
+                </Card>
+              ) : (
+                <Card
+                  sx={{
+                    p: 3,
+                    minHeight: 150,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: 'none !important',
+                  }}
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    Select a report from the left to preview details
+                  </Typography>
+                </Card>
+              )}
+            </Grid>
+          </Grid>
+        </Box>
+
+        <Dialog
+          open={openDialog}
+          onClose={() => setOpenDialog(false)}
+          fullWidth
+          maxWidth="xl"
+          PaperProps={{
+            sx: {
+              width: '90vw', // ✅ Lebih lebar dari "xl"
+              maxWidth: 'none', // 🔸 Hilangkan batas maxWidth bawaan MUI
+            },
           }}
         >
-          <IconX />
-        </IconButton>
-        <DialogContent dividers>
-          <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
-            <Tabs value={activeTab} onChange={(e, val) => setActiveTab(val)}>
-              <Tab label="Summary" />
-              <Tab label="Report Table" />
-            </Tabs>
-          </Box>
+          <DialogTitle sx={{ position: 'relative', padding: 3 }}>
+            Report Transaction Visitor
+          </DialogTitle>
+          <IconButton
+            aria-label="close"
+            onClick={() => setOpenDialog(false)}
+            sx={{
+              position: 'absolute',
+              top: 15,
+              right: 15,
+              color: (theme) => theme.palette.grey[500],
+            }}
+          >
+            <IconX />
+          </IconButton>
+          <DialogContent dividers>
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+              <Tabs value={activeTab} onChange={(e, val) => setActiveTab(val)}>
+                <Tab label="Summary" />
+                <Tab label="Report Table" />
+              </Tabs>
+            </Box>
 
-          {/* 🔹 TAB 1 - SUMMARY */}
-          {activeTab === 0 && (
-            <Box>
-              {/* <Typography variant="h6" gutterBottom fontWeight={700} mb={2}>
+            {/* 🔹 TAB 1 - SUMMARY */}
+            {activeTab === 0 && (
+              <Box>
+                {/* <Typography variant="h6" gutterBottom fontWeight={700} mb={2}>
                 Summary Report
               </Typography> */}
 
-              {summary ? (
-                <DynamicTable
-                  data={summary}
-                  isHaveHeaderTitle={true}
-                  titleHeader="Summary"
-                  isHaveExportCsv={true}
-                  onExportCsv={exportToCSV}
-                  isHaveExportExcel={true}
-                  onExportExcel={exportToExcel}
-                  isHaveExportPdf={true}
-                  onExportPdf={exportToPDF}
-                />
-              ) : (
-                <Typography variant="body2" color="text.secondary">
-                  No summary data available.
-                </Typography>
-              )}
-            </Box>
-          )}
+                {summary ? (
+                  <DynamicTable
+                    data={summary}
+                    isHaveHeaderTitle={true}
+                    titleHeader="Summary"
+                    isHaveExportCsv={true}
+                    onExportCsv={exportToCSV}
+                    isHaveExportExcel={true}
+                    onExportExcel={exportToExcel}
+                    isHaveExportPdf={true}
+                    onExportPdf={exportToPDF}
+                  />
+                ) : (
+                  <Typography variant="body2" color="text.secondary">
+                    No summary data available.
+                  </Typography>
+                )}
+              </Box>
+            )}
 
-          {/* 🔹 TAB 2 - TABLE */}
-          {activeTab === 1 && (
-            <Box>
-              {/* <Box display={'flex'} justifyContent="space-between" alignItems="center" mb={1}>
+            {/* 🔹 TAB 2 - TABLE */}
+            {activeTab === 1 && (
+              <Box>
+                {/* <Box display={'flex'} justifyContent="space-between" alignItems="center" mb={1}>
                 <Box display="flex" gap={1}>
                   <Button
                     variant="contained"
@@ -657,93 +667,94 @@ const Content = () => {
                   </Button>
                 </Box>
               </Box> */}
-              <div id="print-report-area">
-                <DynamicTable
-                  data={reportData}
-                  isHaveSearch={true}
-                  isHavePagination={false}
-                  isHavePeriod
-                  onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-                  isHaveExportCsv={true}
-                  isHaveExportExcel={true}
-                  // isHavePrint={true}
-                  isHaveExportPdf={true}
-                  onExportCsv={exportToCSV}
-                  onExportExcel={exportToExcel}
-                  onExportPdf={exportToPDF}
-                  onPrint={printReport}
-                />
-              </div>
-            </Box>
-          )}
-        </DialogContent>
-      </Dialog>
-      <Dialog
-        open={openSaveDialog}
-        onClose={() => setOpenSaveDialog(false)}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle>Save Template Report</DialogTitle>
-        <IconButton
-          aria-label="close"
-          onClick={() => setOpenSaveDialog(false)}
-          sx={{
-            position: 'absolute',
-            top: 8,
-            right: 8,
-            color: (theme) => theme.palette.grey[500],
-          }}
+                <div id="print-report-area">
+                  <DynamicTable
+                    data={reportData}
+                    isHaveSearch={true}
+                    isHavePagination={false}
+                    isHavePeriod
+                    onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                    isHaveExportCsv={true}
+                    isHaveExportExcel={true}
+                    // isHavePrint={true}
+                    isHaveExportPdf={true}
+                    onExportCsv={exportToCSV}
+                    onExportExcel={exportToExcel}
+                    onExportPdf={exportToPDF}
+                    onPrint={printReport}
+                  />
+                </div>
+              </Box>
+            )}
+          </DialogContent>
+        </Dialog>
+        <Dialog
+          open={openSaveDialog}
+          onClose={() => setOpenSaveDialog(false)}
+          fullWidth
+          maxWidth="sm"
         >
-          <IconX />
-        </IconButton>
-        <DialogContent dividers>
-          <CustomFormLabel sx={{ mt: 0.5 }}>Name</CustomFormLabel>
-          <TextField
-            fullWidth
-            label=""
-            value={templateName}
-            onChange={(e) => setTemplateName(e.target.value)}
-            sx={{ mt: 1 }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenSaveDialog(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleConfirmSaveReport}
-            disabled={isSaving}
-            startIcon={
-              isSaving ? (
-                <CircularProgress size={16} color="inherit" />
-              ) : (
-                <IconDeviceFloppy size={16} />
-              )
-            }
+          <DialogTitle>Save Template Report</DialogTitle>
+          <IconButton
+            aria-label="close"
+            onClick={() => setOpenSaveDialog(false)}
+            sx={{
+              position: 'absolute',
+              top: 8,
+              right: 8,
+              color: (theme) => theme.palette.grey[500],
+            }}
           >
-            {isSaving ? 'Saving...' : 'Save'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      >
-        <Alert
+            <IconX />
+          </IconButton>
+          <DialogContent dividers>
+            <CustomFormLabel sx={{ mt: 0.5 }}>Name</CustomFormLabel>
+            <TextField
+              fullWidth
+              label=""
+              value={templateName}
+              onChange={(e) => setTemplateName(e.target.value)}
+              sx={{ mt: 1 }}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenSaveDialog(false)}>Cancel</Button>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleConfirmSaveReport}
+              disabled={isSaving}
+              startIcon={
+                isSaving ? (
+                  <CircularProgress size={16} color="inherit" />
+                ) : (
+                  <IconDeviceFloppy size={16} />
+                )
+              }
+            >
+              {isSaving ? 'Saving...' : 'Save'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={3000}
           onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity as any}
-          variant="filled"
-          sx={{ width: '100%' }}
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-      <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={loading}>
-        <CircularProgress color="inherit" />
-      </Backdrop>
+          <Alert
+            onClose={() => setSnackbar({ ...snackbar, open: false })}
+            severity={snackbar.severity as any}
+            variant="filled"
+            sx={{ width: '100%' }}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+        <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={loading}>
+          <CircularProgress color="inherit" />
+        </Backdrop>
+      </Container>
     </PageContainer>
   );
 };

@@ -14,7 +14,12 @@ import {
   Tooltip,
   useTheme,
 } from '@mui/material';
-import PageContainer from 'src/components/container/PageContainer';
+import {
+  AdminCustomSidebarItemsData,
+  AdminNavListingData,
+} from 'src/customs/components/header/navigation/AdminMenu';
+import PageContainer from 'src/customs/components/container/PageContainer';
+import Container from 'src/components/container/PageContainer';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { Item } from 'src/customs/api/models/Admin/Timezone';
 import { deleteTimezone, getAllTimezone, getTimezoneById } from 'src/customs/api/admin';
@@ -203,8 +208,11 @@ const Content = () => {
   };
 
   return (
-    <>
-      <PageContainer title="Timezone" description="Manage Timezone">
+    <PageContainer
+      itemDataCustomNavListing={AdminNavListingData}
+      itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
+    >
+      <Container title="Timezone" description="Manage Timezone">
         <Box
           sx={{
             display: 'flex',
@@ -344,7 +352,7 @@ const Content = () => {
             )}
           </Box>
         </Box>
-      </PageContainer>
+      </Container>
 
       {/* Dialog Add Timezone */}
       {/* <Dialog open={openForm} onClose={() => setOpenForm(false)} fullWidth maxWidth="xl">
@@ -386,7 +394,7 @@ const Content = () => {
           </Button>
         </DialogActions>
       </Dialog> */}
-    </>
+    </PageContainer>
   );
 };
 

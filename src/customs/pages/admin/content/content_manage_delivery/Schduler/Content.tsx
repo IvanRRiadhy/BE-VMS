@@ -22,9 +22,13 @@ import { IconClock, IconX } from '@tabler/icons-react';
 import Paper from '@mui/material/Paper';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
-import PageContainer from 'src/components/container/PageContainer';
-import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
-import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import Container from 'src/components/container/PageContainer';
+import PageContainer from 'src/customs/components/container/PageContainer';
+import {
+  AdminCustomSidebarItemsData,
+  AdminNavListingData,
+} from 'src/customs/components/header/navigation/AdminMenu';
+
 import {
   getAllSite,
   getAllTimezone,
@@ -295,188 +299,193 @@ const Content = () => {
   };
 
   return (
-    <PageContainer title="Scheduler" description="this is scheduler page">
-      <Box>
-        <Grid container spacing={3}>
-          <Grid size={{ xs: 12, lg: 12 }}>
-            <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
+    <PageContainer
+      itemDataCustomNavListing={AdminNavListingData}
+      itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
+    >
+      <Container title="Scheduler" description="this is scheduler page">
+        <Box>
+          <Grid container spacing={3}>
+            <Grid size={{ xs: 12, lg: 12 }}>
+              <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
+            </Grid>
+            <DynamicTable
+              loading={loading}
+              overflowX={'auto'}
+              data={schedulerData || []}
+              // selectedRows={selectedRows}
+              totalCount={totalFilteredRecords}
+              isHaveChecked={true}
+              isHaveAction={true}
+              isActionEmployee={false}
+              isHaveSearch={true}
+              isHaveFilter={false}
+              isHaveExportPdf={false}
+              isHavePagination={true}
+              defaultRowsPerPage={rowsPerPage}
+              rowsPerPageOptions={[5, 10, 20, 50, 100]}
+              onPaginationChange={(page, rowsPerPage) => {
+                setPage(page);
+                setRowsPerPage(rowsPerPage);
+              }}
+              isHaveAddData={true}
+              isActionVisitor={false}
+              isHaveView={false}
+              isHaveViewAndAction={true}
+              onView={(row) => {
+                handleView(row.id);
+              }}
+              isHaveFilterMore={true}
+              filterMoreContent={
+                <FilterMoreContent
+                  filters={filters}
+                  setFilters={setFilters}
+                  onApplyFilter={handleApplyFilter}
+                  visitorTypeData={visitorTypeQuery || []}
+                  siteData={siteDataQuery || []}
+                  hostData={hostDataQuery || []}
+                  timeAccessData={timezoneData || []}
+                />
+              }
+              onEdit={(row) => {
+                handleEdit(row.id);
+                setEdittingId(row.id);
+              }}
+              onDelete={(row) => handleDeleteSchduler(row.id)}
+              onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+              onAddData={() => {
+                handleAdd();
+              }}
+            />
           </Grid>
-          <DynamicTable
-            loading={loading}
-            overflowX={'auto'}
-            data={schedulerData || []}
-            // selectedRows={selectedRows}
-            totalCount={totalFilteredRecords}
-            isHaveChecked={true}
-            isHaveAction={true}
-            isActionEmployee={false}
-            isHaveSearch={true}
-            isHaveFilter={false}
-            isHaveExportPdf={false}
-            isHavePagination={true}
-            defaultRowsPerPage={rowsPerPage}
-            rowsPerPageOptions={[5, 10, 20, 50, 100]}
-            onPaginationChange={(page, rowsPerPage) => {
-              setPage(page);
-              setRowsPerPage(rowsPerPage);
-            }}
-            isHaveAddData={true}
-            isActionVisitor={false}
-            isHaveView={false}
-            isHaveViewAndAction={true}
-            onView={(row) => {
-              handleView(row.id);
-            }}
-            isHaveFilterMore={true}
-            filterMoreContent={
-              <FilterMoreContent
-                filters={filters}
-                setFilters={setFilters}
-                onApplyFilter={handleApplyFilter}
-                visitorTypeData={visitorTypeQuery || []}
-                siteData={siteDataQuery || []}
-                hostData={hostDataQuery || []}
-                timeAccessData={timezoneData || []}
-              />
-            }
-            onEdit={(row) => {
-              handleEdit(row.id);
-              setEdittingId(row.id);
-            }}
-            onDelete={(row) => handleDeleteSchduler(row.id)}
-            onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-            onAddData={() => {
-              handleAdd();
-            }}
-          />
-        </Grid>
-      </Box>
-      <Dialog
-        open={openDialogScheduler}
-        onClose={() => setOpenDialogScheduler(false)}
-        fullWidth
-        maxWidth="md"
-      >
-        <DialogTitle>
-          {formMode === 'add' ? 'Add Delivery Scheduler' : 'Edit Delivery Scheduler'}
-        </DialogTitle>
-        <IconButton
-          aria-label="close"
-          onClick={() => setOpenDialogScheduler(false)}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            color: (theme) => theme.palette.grey[500],
-          }}
+        </Box>
+        <Dialog
+          open={openDialogScheduler}
+          onClose={() => setOpenDialogScheduler(false)}
+          fullWidth
+          maxWidth="md"
         >
-          <IconX />
-        </IconButton>
-        <DialogContent dividers>
-          <SchedulerForm
-            timezoneData={timezoneData ?? []}
-            visitorTypeQuery={visitorTypeQuery ?? []}
-            siteDataQuery={siteDataQuery ?? []}
-            hostDataQuery={hostDataQuery ?? []}
-            defaultValue={selectedScheduler} 
-            mode={formMode}
-            onSubmit={handleSubmitScheduler}
-            loading={loading}
-          />
-        </DialogContent>
-      </Dialog>
+          <DialogTitle>
+            {formMode === 'add' ? 'Add Delivery Scheduler' : 'Edit Delivery Scheduler'}
+          </DialogTitle>
+          <IconButton
+            aria-label="close"
+            onClick={() => setOpenDialogScheduler(false)}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
+              color: (theme) => theme.palette.grey[500],
+            }}
+          >
+            <IconX />
+          </IconButton>
+          <DialogContent dividers>
+            <SchedulerForm
+              timezoneData={timezoneData ?? []}
+              visitorTypeQuery={visitorTypeQuery ?? []}
+              siteDataQuery={siteDataQuery ?? []}
+              hostDataQuery={hostDataQuery ?? []}
+              defaultValue={selectedScheduler}
+              mode={formMode}
+              onSubmit={handleSubmitScheduler}
+              loading={loading}
+            />
+          </DialogContent>
+        </Dialog>
 
-      <Dialog
-        open={errorDialogOpen}
-        onClose={() => setErrorDialogOpen(false)}
-        maxWidth="xl"
-        fullWidth
-      >
-        <DialogTitle>This Required Fields on visitor type</DialogTitle>
-        <IconButton
-          aria-label="close"
-          onClick={() => setErrorDialogOpen(false)}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            color: (theme) => theme.palette.grey[500],
-          }}
+        <Dialog
+          open={errorDialogOpen}
+          onClose={() => setErrorDialogOpen(false)}
+          maxWidth="xl"
+          fullWidth
         >
-          <IconX />
-        </IconButton>
+          <DialogTitle>This Required Fields on visitor type</DialogTitle>
+          <IconButton
+            aria-label="close"
+            onClick={() => setErrorDialogOpen(false)}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
+              color: (theme) => theme.palette.grey[500],
+            }}
+          >
+            <IconX />
+          </IconButton>
 
-        <DialogContent dividers>
-          <TableContainer component={Paper} elevation={3} sx={{ borderRadius: 2 }}>
-            <Table size="small" sx={{ minWidth: 650 }}>
-              {/* TABLE HEAD */}
-              <TableHead>
-                <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                  <TableCell
-                    colSpan={errorDialogRows.length}
-                    sx={{
-                      fontWeight: 'bold',
-                      fontSize: '1rem',
-                      textAlign: 'start',
-                    }}
-                  >
-                    Missing Field
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-
-              <TableBody>
-                {errorDialogRows.length > 0 ? (
-                  <TableRow
-                    sx={{
-                      '&:nth-of-type(odd)': { backgroundColor: '#fafafa' },
-                      '& td': { paddingY: 1.5 },
-                    }}
-                  >
-                    {errorDialogRows.map((item, index) => (
-                      <TableCell
-                        key={index}
-                        align="center"
-                        sx={{
-                          borderLeft: '1px solid #eee',
-                          borderRight:
-                            index === errorDialogRows.length - 1 ? 'none' : '1px solid #eee',
-                          paddingX: 2,
-                          fontSize: '0.95rem',
-                        }}
-                      >
-                        {item.short_name}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ) : (
-                  <TableRow>
+          <DialogContent dividers>
+            <TableContainer component={Paper} elevation={3} sx={{ borderRadius: 2 }}>
+              <Table size="small" sx={{ minWidth: 650 }}>
+                {/* TABLE HEAD */}
+                <TableHead>
+                  <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
                     <TableCell
-                      colSpan={errorDialogRows.length + 1}
-                      align="center"
-                      sx={{ padding: 3, fontStyle: 'italic', color: 'text.secondary' }}
+                      colSpan={errorDialogRows.length}
+                      sx={{
+                        fontWeight: 'bold',
+                        fontSize: '1rem',
+                        textAlign: 'start',
+                      }}
                     >
-                      No missing field details.
+                      Missing Field
                     </TableCell>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </DialogContent>
-      </Dialog>
+                </TableHead>
 
-      <Portal>
-        <Backdrop
-          open={loadingData}
-          sx={{
-            color: '#fff',
-            zIndex: 999999,
-          }}
-        >
-          <CircularProgress color="inherit" />
-        </Backdrop>
-      </Portal>
+                <TableBody>
+                  {errorDialogRows.length > 0 ? (
+                    <TableRow
+                      sx={{
+                        '&:nth-of-type(odd)': { backgroundColor: '#fafafa' },
+                        '& td': { paddingY: 1.5 },
+                      }}
+                    >
+                      {errorDialogRows.map((item, index) => (
+                        <TableCell
+                          key={index}
+                          align="center"
+                          sx={{
+                            borderLeft: '1px solid #eee',
+                            borderRight:
+                              index === errorDialogRows.length - 1 ? 'none' : '1px solid #eee',
+                            paddingX: 2,
+                            fontSize: '0.95rem',
+                          }}
+                        >
+                          {item.short_name}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ) : (
+                    <TableRow>
+                      <TableCell
+                        colSpan={errorDialogRows.length + 1}
+                        align="center"
+                        sx={{ padding: 3, fontStyle: 'italic', color: 'text.secondary' }}
+                      >
+                        No missing field details.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </DialogContent>
+        </Dialog>
+
+        <Portal>
+          <Backdrop
+            open={loadingData}
+            sx={{
+              color: '#fff',
+              zIndex: 999999,
+            }}
+          >
+            <CircularProgress color="inherit" />
+          </Backdrop>
+        </Portal>
+      </Container>
     </PageContainer>
   );
 };

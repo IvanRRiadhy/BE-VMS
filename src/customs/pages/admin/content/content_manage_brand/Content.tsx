@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Box, Card, Skeleton, Grid2 as Grid } from '@mui/material';
-import PageContainer from 'src/components/container/PageContainer';
+import Container from 'src/components/container/PageContainer';
+import PageContainer from 'src/customs/components/container/PageContainer';
+import {
+  AdminCustomSidebarItemsData,
+  AdminNavListingData,
+} from 'src/customs/components/header/navigation/AdminMenu';
 
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
@@ -94,44 +99,39 @@ const Content = () => {
   };
 
   return (
-    <>
-      <PageContainer title="Brand" description="Brand page">
+    <PageContainer
+      itemDataCustomNavListing={AdminNavListingData}
+      itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
+    >
+      <Container title="Brand" description="Brand page">
         <Box>
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, lg: 12 }}>
               <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
             </Grid>
             <Grid size={{ xs: 12, lg: 12 }}>
-              {/* {isDataReady ? ( */}
-                <DynamicTable
+              <DynamicTable
                 loading={loading}
-                  overflowX={'auto'}
-                  data={tableData}
-                  selectedRows={selectedRows}
-                  isHaveChecked={true}
-                  isHaveSearch={true}
-                  isHaveFilter={false}
-                  isHaveExportPdf={false}
-                  isHaveExportXlf={false}
-                  isHaveFilterDuration={false}
-                  isHaveFilterMore={false}
-                  isHaveHeader={false}
-                  onCheckedChange={(selected) => setSelectedRows(selected)}
-                  onBatchDelete={handleBatchDelete}
-                  onSearchKeywordChange={(searchKeyword) => setSearchKeyword(searchKeyword)}
-                />
-              {/* ) : (
-                <Card sx={{ width: '100%' }}>
-                  <Skeleton />
-                  <Skeleton animation="wave" />
-                  <Skeleton animation={false} />
-                </Card>
-              )} */}
+                overflowX={'auto'}
+                data={tableData}
+                selectedRows={selectedRows}
+                isHaveChecked={true}
+                isHaveSearch={true}
+                isHaveFilter={false}
+                isHaveExportPdf={false}
+                isHaveExportXlf={false}
+                isHaveFilterDuration={false}
+                isHaveFilterMore={false}
+                isHaveHeader={false}
+                onCheckedChange={(selected) => setSelectedRows(selected)}
+                onBatchDelete={handleBatchDelete}
+                onSearchKeywordChange={(searchKeyword) => setSearchKeyword(searchKeyword)}
+              />
             </Grid>
           </Grid>
         </Box>
-      </PageContainer>
-    </>
+      </Container>
+    </PageContainer>
   );
 };
 

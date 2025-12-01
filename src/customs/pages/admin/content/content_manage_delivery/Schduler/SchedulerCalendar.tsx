@@ -42,7 +42,6 @@ import {
 import { IconCamera, IconDeviceFloppy, IconTrash, IconX } from '@tabler/icons-react';
 import { Box } from '@mui/system';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { getDeliveryStaffRegisterById } from 'src/customs/api/Delivery/StaffRegister';
 import dayjs, { Dayjs, tz } from 'dayjs';
 import { useParams } from 'react-router';
 import {
@@ -84,6 +83,7 @@ export interface CalendarEvent {
 
 interface DnDOutsideCourierProps {
   // draggedCourierRef: any;
+
   draggedCourier: any;
   setDraggedCourier: React.Dispatch<React.SetStateAction<any>>;
   isDraggingOutside: boolean;
@@ -93,6 +93,8 @@ interface DnDOutsideCourierProps {
   events: any[];
   setEvents: React.Dispatch<React.SetStateAction<any[]>>;
   timeAccess: any;
+  currentView: any;
+  setCurrentView: React.Dispatch<React.SetStateAction<any>>;
   onViewChange?: (view: any) => void | undefined;
   onRangeChange?: (range: any, view: any) => void | undefined;
   loadSchedule: (startDate: string, endDate: string) => void;
@@ -110,6 +112,8 @@ export default function DnDOutsideCourier({
   timeAccess,
   events,
   setEvents,
+  currentView,
+  setCurrentView,
   onViewChange,
   onRangeChange,
   loadSchedule,
@@ -426,45 +430,29 @@ export default function DnDOutsideCourier({
       isTemp: true,
     };
   }, [isDraggingOutside, draggedCourier]);
+  const dragStartRef = useRef<Date | null>(null);
 
-  // const SLOT_INTERVAL_MINUTES = 30;
+  const getWeekColumnIndex = (mouse: { x: number; y: number }) => {
+    const el = document.elementFromPoint(mouse.x, mouse.y) as HTMLElement | null;
+    if (!el) return -1;
 
-  // const handleSelectSlot = useCallback(({ start, end }: any) => {
-  //   let realStart = start;
-  //   const view = viewRef.current;
+    const cols = Array.from(document.querySelectorAll('.rbc-time-column'));
 
-  //   const isWeekView = view === Views.MONTH || view === Views.WEEK;
+    return cols.findIndex((col) => col.contains(el));
+  };
 
-  //   // --- FIX RBC BUG PADA WEEK VIEW ---
-  //   if (isWeekView) {
-  //     const startHour = dayjs(start).hour();
-  //     const endHour = dayjs(end).hour();
-  //     const endMinute = dayjs(end).minute();
+  const getDateFromWeekColumn = (colIndex: number, weekStart: Date) => {
+    if (colIndex < 0) return null;
+    return dayjs(weekStart).add(colIndex, 'day').toDate();
+  };
 
-  //     // Jika START = 00:00 padahal user drag bukan di jam 00
-  //     if (startHour === 0 && (endHour !== 0 || endMinute !== 0)) {
-  //       realStart = dayjs(end).subtract(SLOT_INTERVAL_MINUTES, 'minute').toDate();
-  //     }
-  //   }
-
-  //   // Stop jika slot di-disable
-  //   if (isSlotDisabled(realStart) || isSlotDisabled(end)) return;
-
-  //   // Update visitor period
-  //   updateVisitorPeriod(realStart, end);
-
-  //   setSelectedEvent({
-  //     id: crypto.randomUUID(),
-  //     start: realStart,
-  //     end,
-  //     title: '',
-  //     driver_id: null,
-  //     color: '',
-  //     fromSlot: true,
-  //   });
-
-  //   setOpenDeliverySchedule(true);
-  // }, []);
+  const handleSelecting = ({ start, end }: any) => {
+    // Ambil hanya sekali saat drag mulai
+    if (!dragStartRef.current) {
+      dragStartRef.current = start;
+    }
+    return true; // harus return true
+  };
 
   const handleSelectSlot = useCallback(
     ({ start, end }: any) => {
@@ -494,34 +482,44 @@ export default function DnDOutsideCourier({
     [drivers],
   );
 
+  const [lastMouse, setLastMouse] = useState<{ x: number; y: number } | null>(null);
+
+  useEffect(() => {
+    let frame = 0;
+
+    const handler = (e: MouseEvent) => {
+      cancelAnimationFrame(frame);
+
+      frame = requestAnimationFrame(() => {
+        setLastMouse({ x: e.clientX, y: e.clientY });
+      });
+    };
+
+    window.addEventListener('mousemove', handler);
+    return () => window.removeEventListener('mousemove', handler);
+  }, []);
+
   // const handleSelectSlot = useCallback(
-  //   ({ start, end }: any) => {
-  //     const currentView = viewRef.current;
+  //   ({ start, end }: { start: Date; end: Date }) => {
+  //     const view = currentView;
+  //     console.log('view', view);
 
   //     let realStart = start;
   //     let realEnd = end;
 
-  //     // ================================
-  //     // 📌 FIX 1 — MONTH view → ALWAYS 1 DAY
-  //     // ================================
-  //     if (currentView === 'month') {
-  //       realStart = dayjs(start).startOf('day').toDate();
-  //       realEnd = dayjs(start).endOf('day').toDate();
-  //       console.log('📅 MONTH CLICK → 1 Hari:', realStart, realEnd);
-  //     }
+  //     if (view === Views.WEEK && lastMouse) {
+  //       const correctDate = getDateFromMouse(lastMouse);
 
-  //     // ================================
-  //     // 📌 FIX 2 — RBC DAY/WEEK DRAG BUG
-  //     // ================================
-  //     if (currentView !== 'month') {
-  //       if (dayjs(start).hour() === 0 && dayjs(end).hour() !== 0) {
-  //         realStart = dayjs(end).subtract(30, 'minute').toDate();
-  //         console.log('🔥 FIXED WEEK/DAY START:', realStart);
+  //       if (correctDate) {
+  //         realStart = getTimeFromMouse(lastMouse, correctDate);
+  //         realEnd = end;
+  //         console.log('realStart', realStart);
+  //         console.log('realEnd', realEnd);
   //       }
   //     }
-
-  //     // Disable slot logic
-  //     if (isSlotDisabled(realStart) || isSlotDisabled(realEnd)) return;
+  //     if (view !== Views.MONTH) {
+  //       if (isSlotDisabled(realStart) || isSlotDisabled(realEnd)) return;
+  //     }
 
   //     updateVisitorPeriod(realStart, realEnd);
 
@@ -531,14 +529,48 @@ export default function DnDOutsideCourier({
   //       end: realEnd,
   //       title: '',
   //       driver_id: null,
-  //       colour: '',
+  //       color: '',
   //       fromSlot: true,
   //     });
 
   //     setOpenDeliverySchedule(true);
   //   },
-  //   [drivers],
+  //   [lastMouse],
   // );
+
+  // const handleSelectSlot = useCallback(({ start, end }: any) => {
+  //   const view = 'week';
+
+  //   // default
+  //   let realStart = start;
+  //   let realEnd = end;
+
+  //   if (view === Views.WEEK) {
+  //     // Jika RBC mengirim 00:00 → ganti dengan dragStartRef
+  //     if (dayjs(start).hour() === 0 && dragStartRef.current) {
+  //       realStart = dragStartRef.current;
+  //     }
+  //   }
+
+  //   // bersihkan ref
+  //   dragStartRef.current = null;
+
+  //   if (isSlotDisabled(realStart) || isSlotDisabled(realEnd)) return;
+
+  //   updateVisitorPeriod(realStart, realEnd);
+
+  //   setSelectedEvent({
+  //     id: crypto.randomUUID(),
+  //     start: realStart,
+  //     end: realEnd,
+  //     title: '',
+  //     driver_id: null,
+  //     color: '',
+  //     fromSlot: true,
+  //   });
+
+  //   setOpenDeliverySchedule(true);
+  // }, []);
 
   const [openInvitationDetail, setOpenInvitationDetail] = useState(false);
 
@@ -2110,7 +2142,7 @@ export default function DnDOutsideCourier({
     }, 10);
   };
 
-  const viewRef = useRef(Views.MONTH);
+  // const viewRef = useRef(Views.MONTH);
 
   const [detailDataInvitation, setDetailDataInvitation] = useState<any>({});
   const handleUploadMethodChange = (ukey: string, v: string) => {
@@ -2651,7 +2683,6 @@ export default function DnDOutsideCourier({
     );
   };
 
-  const CustomWeekEvent = ({ event }: any) => {};
   return (
     <div>
       <DnDCalendar
@@ -2662,14 +2693,13 @@ export default function DnDOutsideCourier({
         views={[Views.MONTH, Views.WEEK, Views.DAY, Views.AGENDA]}
         defaultDate={defaultDate}
         onView={(view: any) => {
-          viewRef.current = view;
-          onViewChange && onViewChange(view || 'month');
+          setCurrentView(view);
+          onViewChange?.(view);
         }}
-        onRangeChange={(range) => {
-          const realView = viewRef.current;
-          if (onRangeChange && typeof onRangeChange === 'function') {
-            onRangeChange(range, realView);
-          }
+        onRangeChange={(range, view) => {
+          console.log('RANGE:', range);
+          console.log('VIEW:', view);
+          onRangeChange?.(range, view);
         }}
         resizable={true}
         selectable={true}
@@ -2684,6 +2714,7 @@ export default function DnDOutsideCourier({
         onDragOver={(e) => {
           e.preventDefault();
         }}
+        // onSelecting={handleSelecting}
         onSelectEvent={(event) => handleOpenExistingEvent(event as any)}
         formats={{
           timeGutterFormat: (date) => moment(date).format('HH:mm'),

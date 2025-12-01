@@ -15,7 +15,7 @@ import {
   Tabs,
 } from '@mui/material';
 import Grid from '@mui/material/Grid2';
-import PageContainer from 'src/components/container/PageContainer';
+import Container from 'src/components/container/PageContainer';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import CloseIcon from '@mui/icons-material/Close';
@@ -24,13 +24,17 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 import { useQuery } from '@tanstack/react-query';
 import { deleteUser, getAllUser, getUserById } from 'src/customs/api/admin';
 import {
+  AdminCustomSidebarItemsData,
+  AdminNavListingData,
+} from 'src/customs/components/header/navigation/AdminMenu';
+import {
   showConfirmDelete,
   showErrorAlert,
   showSuccessAlert,
 } from 'src/customs/components/alerts/alerts';
 import { CreateUserSchema, Item, UpdateUserSchema } from 'src/customs/api/models/Admin/User';
 import FormUser from './FormUser';
-import { filter } from 'lodash';
+import PageContainer from 'src/customs/components/container/PageContainer';
 
 const Content = () => {
   const { token } = useSession();
@@ -200,8 +204,11 @@ const Content = () => {
   };
 
   return (
-    <>
-      <PageContainer title="User" description="User page">
+    <PageContainer
+      itemDataCustomNavListing={AdminNavListingData}
+      itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
+    >
+      <Container title="User" description="User page">
         <Box>
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, lg: 12 }}>
@@ -246,7 +253,7 @@ const Content = () => {
             </Grid>
           </Grid>
         </Box>
-      </PageContainer>
+      </Container>
 
       {/* Add / Edit Dialog */}
       <Dialog open={openFormAddDocument} onClose={handleCloseDialog} fullWidth maxWidth="md">
@@ -368,7 +375,7 @@ const Content = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

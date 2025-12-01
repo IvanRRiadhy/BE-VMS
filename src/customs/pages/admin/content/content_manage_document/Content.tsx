@@ -12,7 +12,12 @@ import {
   Skeleton,
   IconButton,
 } from '@mui/material';
-import PageContainer from 'src/components/container/PageContainer';
+import Container from 'src/components/container/PageContainer';
+import PageContainer from 'src/customs/components/container/PageContainer';
+import {
+  AdminCustomSidebarItemsData,
+  AdminNavListingData,
+} from 'src/customs/components/header/navigation/AdminMenu';
 
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
@@ -230,15 +235,17 @@ const Content = () => {
   };
 
   return (
-    <>
-      <PageContainer title="Document" description="Document page">
+    <PageContainer
+      itemDataCustomNavListing={AdminNavListingData}
+      itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
+    >
+      <Container title="Document" description="Document page">
         <Box>
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, lg: 12 }}>
               <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
             </Grid>
             <Grid size={{ xs: 12, lg: 12 }}>
-              {/* {isDataReady ? ( */}
               <DynamicTable
                 loading={loading}
                 overflowX={'auto'}
@@ -279,17 +286,10 @@ const Content = () => {
                 htmlClampLines={4}
                 htmlMaxWidth={500}
               />
-              {/* ) : (
-                <Card sx={{ width: '100%' }}>
-                  <Skeleton />
-                  <Skeleton animation="wave" />
-                  <Skeleton animation={false} />
-                </Card>
-              )} */}
             </Grid>
           </Grid>
         </Box>
-      </PageContainer>
+      </Container>
       <Dialog open={openFormAddDocument} onClose={handleCloseDialog} fullWidth maxWidth="md">
         <DialogTitle sx={{ position: 'relative', padding: 3 }}>
           Add Document
@@ -361,7 +361,7 @@ const Content = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

@@ -12,7 +12,12 @@ import {
   Skeleton,
   Card,
 } from '@mui/material';
-import PageContainer from 'src/components/container/PageContainer';
+import PageContainer from 'src/customs/components/container/PageContainer';
+import {
+  AdminCustomSidebarItemsData,
+  AdminNavListingData,
+} from 'src/customs/components/header/navigation/AdminMenu';
+import Container from 'src/components/container/PageContainer';
 import CloseIcon from '@mui/icons-material/Close';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
@@ -491,8 +496,11 @@ const Content = () => {
   };
 
   return (
-    <>
-      <PageContainer title="Employee" description="this is Employee page">
+    <PageContainer
+      itemDataCustomNavListing={AdminNavListingData}
+      itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
+    >
+      <Container title="Employee" description="this is Employee page">
         <Box>
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, lg: 12 }}>
@@ -563,7 +571,7 @@ const Content = () => {
             </Grid>
           </Grid>
         </Box>
-      </PageContainer>
+      </Container>
       <Dialog open={openFormAddEmployee} onClose={handleDialogClose} fullWidth maxWidth="md">
         <DialogTitle
           sx={{
@@ -618,7 +626,7 @@ const Content = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

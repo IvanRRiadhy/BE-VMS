@@ -12,7 +12,12 @@ import {
   IconButton,
   Skeleton,
 } from '@mui/material';
-import PageContainer from 'src/components/container/PageContainer';
+import Container from 'src/components/container/PageContainer';
+import {
+  AdminCustomSidebarItemsData,
+  AdminNavListingData,
+} from 'src/customs/components/header/navigation/AdminMenu';
+import PageContainer from 'src/customs/components/container/PageContainer';
 
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
@@ -463,8 +468,11 @@ const Content = () => {
     setRefreshTrigger((p) => p + 1);
   };
   return (
-    <>
-      <PageContainer title="Company & Department" description="this is Dashboard page">
+   <PageContainer
+      itemDataCustomNavListing={AdminNavListingData}
+      itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
+    >
+      <Container title="Company & Department" description="this is Dashboard page">
         <Box>
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, lg: 12 }}>
@@ -532,7 +540,7 @@ const Content = () => {
             </Grid>
           </Grid>
         </Box>
-      </PageContainer>
+      </Container>
 
       {/* ======= Unified Dialog for ADD & EDIT ======= */}
       <Dialog
@@ -646,7 +654,7 @@ const Content = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 
