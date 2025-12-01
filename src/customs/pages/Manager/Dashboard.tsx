@@ -22,6 +22,7 @@ import {
   IconBuildingSkyscraper,
   IconCalendarTime,
   IconCalendarUp,
+  IconCamera,
   IconCar,
   IconCheck,
   IconCheckupList,
@@ -381,8 +382,9 @@ const DashboardEmployee = () => {
                 setQrMode('scan');
               }}
               size="small"
+              startIcon={<IconCamera />}
             >
-              Scan Kamera
+              Scan Camera
             </Button>
           </Box>
 

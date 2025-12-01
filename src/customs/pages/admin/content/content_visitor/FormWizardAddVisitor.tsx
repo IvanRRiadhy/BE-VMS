@@ -4075,9 +4075,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     setPvDlg({ open: false, rowIdx: null, forms: [] });
   };
 
-  useEffect(() => {
-    localStorage.setItem('selfOnlyOverrides', JSON.stringify(selfOnlyOverrides));
-  }, [selfOnlyOverrides]);
+  // useEffect(() => {
+  //   localStorage.setItem('selfOnlyOverrides', JSON.stringify(selfOnlyOverrides));
+  // }, [selfOnlyOverrides]);
 
   // matikan override PV di baris (optional: hapus file CDN)
   // matikan override PV di baris (optional: hapus file CDN)

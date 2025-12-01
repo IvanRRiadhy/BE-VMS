@@ -181,7 +181,7 @@ const OperatorView = () => {
     type: i % 2 === 0 ? 'Critical' : 'Warning',
   }));
 
-  const dataImage = [infoPic];
+  const dataImage = [infoPic, infoPic, infoPic];
 
   const histories = Array.from({ length: 5 }, (_, i) => ({
     id: i + 1,
@@ -3105,7 +3105,7 @@ const OperatorView = () => {
             // flexDirection: mdUp ? 'row' : 'column',
             flexDirection: { xs: 'column', md: 'row' },
             backgroundColor: '#fff',
-            height: isFullscreen ? '100vh' : { lg: '90vh', xs: '100%' },
+            height: isFullscreen ? '100vh' : { lg: '100%', xs: '100%' },
             width: '100%',
             padding: '0 !important',
             // overflow: 'hidden',
@@ -3214,7 +3214,7 @@ const OperatorView = () => {
               height: isFullscreen ? '100vh' : 'auto',
             }}
           >
-            <Grid container spacing={1} mb={2}>
+            <Grid container spacing={1} mb={0}>
               <Grid size={{ xs: 12, sm: 12, xl: 10.5 }}>
                 <CustomTextField
                   fullWidth
@@ -4257,7 +4257,7 @@ const OperatorView = () => {
             <Grid
               container
               spacing={2}
-              mt={3}
+              mt={1}
               sx={{
                 flex: isFullscreen ? 1 : 'unset',
                 minHeight: 0,
@@ -5263,7 +5263,8 @@ const OperatorView = () => {
                             display="flex"
                             alignItems="center"
                             justifyContent="center"
-                            height={isFullscreen ? '100%' : '175px'}
+                            // height={isFullscreen ? '100%' : '175px'}
+                            height={isFullscreen ? '100%' : { xs: '200px', md: '100%' }}
                             sx={{
                               borderRadius: '8px',
                               backgroundColor: '#f9f9f9',
@@ -5317,7 +5318,7 @@ const OperatorView = () => {
                             display="flex"
                             alignItems="center"
                             justifyContent="center"
-                            height={isFullscreen ? '100%' : '175px'}
+                            height={isFullscreen ? '100%' : { xs: '200px', md: '100%' }}
                             sx={{
                               borderRadius: '8px',
                               backgroundColor: '#f9f9f9',

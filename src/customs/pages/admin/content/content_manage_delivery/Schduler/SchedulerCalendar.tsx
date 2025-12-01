@@ -72,7 +72,6 @@ import { getAllSite, getVisitorEmployee } from 'src/customs/api/admin';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import CameraUpload from 'src/customs/components/camera/CameraUpload';
 import InvitationScheduleDetailDialog from './Dialog/InvitationScheduleDetailDialog';
-import { set } from 'lodash';
 
 export interface CalendarEvent {
   id: number;
@@ -428,6 +427,45 @@ export default function DnDOutsideCourier({
     };
   }, [isDraggingOutside, draggedCourier]);
 
+  // const SLOT_INTERVAL_MINUTES = 30;
+
+  // const handleSelectSlot = useCallback(({ start, end }: any) => {
+  //   let realStart = start;
+  //   const view = viewRef.current;
+
+  //   const isWeekView = view === Views.MONTH || view === Views.WEEK;
+
+  //   // --- FIX RBC BUG PADA WEEK VIEW ---
+  //   if (isWeekView) {
+  //     const startHour = dayjs(start).hour();
+  //     const endHour = dayjs(end).hour();
+  //     const endMinute = dayjs(end).minute();
+
+  //     // Jika START = 00:00 padahal user drag bukan di jam 00
+  //     if (startHour === 0 && (endHour !== 0 || endMinute !== 0)) {
+  //       realStart = dayjs(end).subtract(SLOT_INTERVAL_MINUTES, 'minute').toDate();
+  //     }
+  //   }
+
+  //   // Stop jika slot di-disable
+  //   if (isSlotDisabled(realStart) || isSlotDisabled(end)) return;
+
+  //   // Update visitor period
+  //   updateVisitorPeriod(realStart, end);
+
+  //   setSelectedEvent({
+  //     id: crypto.randomUUID(),
+  //     start: realStart,
+  //     end,
+  //     title: '',
+  //     driver_id: null,
+  //     color: '',
+  //     fromSlot: true,
+  //   });
+
+  //   setOpenDeliverySchedule(true);
+  // }, []);
+
   const handleSelectSlot = useCallback(
     ({ start, end }: any) => {
       let realStart = start;
@@ -435,7 +473,6 @@ export default function DnDOutsideCourier({
       if (dayjs(start).hour() === 0 && dayjs(end).hour() !== 0) {
         const slotMinutes = 30;
         realStart = dayjs(end).subtract(slotMinutes, 'minute').toDate();
-        console.log('🔥 FIXED START:', realStart);
       }
 
       if (isSlotDisabled(start) || isSlotDisabled(end)) return;
@@ -2614,9 +2651,7 @@ export default function DnDOutsideCourier({
     );
   };
 
-  const CustomWeekEvent = ({ event }: any) => {
-
-  };
+  const CustomWeekEvent = ({ event }: any) => {};
   return (
     <div>
       <DnDCalendar
@@ -2675,7 +2710,7 @@ export default function DnDOutsideCourier({
         }}
         popup
         // showMultiDayTimes
-        style={{ height: '80vh' }}
+        style={{ height: '85vh' }}
         eventPropGetter={(event: any) => ({
           style: {
             backgroundColor: event.colour || '#000',
@@ -2720,7 +2755,7 @@ export default function DnDOutsideCourier({
         <DialogContent dividers>
           {selectedEvent && (
             <Box mt={0}>
-              {selectedEvent?.fromSlot && (
+              {/* {selectedEvent?.fromSlot && (
                 <Box mb={0} mx={2}>
                   <Typography fontWeight={600} mb={1}>
                     Delivery Staff
@@ -2745,7 +2780,7 @@ export default function DnDOutsideCourier({
                     )}
                   />
                 </Box>
-              )}
+              )} */}
 
               {selectedEvent?.isGroup ? (
                 <Table size="small">

@@ -36,6 +36,7 @@ import {
   IconBuildingSkyscraper,
   IconCalendarTime,
   IconCalendarUp,
+  IconCamera,
   IconCar,
   IconCards,
   IconCheckupList,
@@ -1572,9 +1573,10 @@ const DashboardOperator = () => {
                   setHasDecoded(false);
                   setQrMode('scan');
                 }}
+                startIcon={<IconCamera />}
                 size="small"
               >
-                Scan Kamera
+                Scan Camera
               </Button>
             </Box>
 

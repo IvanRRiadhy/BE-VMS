@@ -15,16 +15,16 @@ const CurrentTime: React.FC = () => {
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit',
-        hour12: true,
+        hour12: false,
       };
-      setTime(now.toLocaleString('en-US', options));
+      setTime(now.toLocaleString('id-ID', options));
     }, 1000);
 
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <Typography variant="body2" fontWeight={500}>
+    <Typography variant="body1" fontWeight={500}>
       {time}
     </Typography>
   );

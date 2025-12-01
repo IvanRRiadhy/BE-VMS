@@ -57,6 +57,7 @@ import moment from 'moment';
 import { getCalendarSchedule, getSchedulerDeliveryById } from 'src/customs/api/Delivery/Scheduler';
 import { getTimezoneById } from 'src/customs/api/admin';
 import { BASE_URL } from 'src/customs/api/interceptor';
+import PageContainers from 'src/components/container/PageContainer';
 
 export interface Employee {
   id: string;
@@ -193,14 +194,14 @@ const ManageDetailScheduler: FC = () => {
       return {
         id: item.id,
         title: item.visitor_name,
-        start: moment(item.visitor_period_start + 'Z')
-          .local()
-          .toDate(),
-        end: moment(item.visitor_period_end + 'Z')
-          .local()
-          .toDate(),
-        // start: moment.utc(item.visitor_period_start).local().toDate(),
-        // end: moment.utc(item.visitor_period_end).local().toDate(),
+        // start: moment(item.visitor_period_start + 'Z')
+        //   .local()
+        //   .toDate(),
+        // end: moment(item.visitor_period_end + 'Z')
+        //   .local()
+        //   .toDate(),
+        start: moment.utc(item.visitor_period_start).local().toDate(),
+        end: moment.utc(item.visitor_period_end).local().toDate(),
         colour: colourMap[employeeId] || '#000',
       };
     });
@@ -211,38 +212,40 @@ const ManageDetailScheduler: FC = () => {
   const [currentView, setCurrentView] = useState(Views.MONTH);
 
   function normalizeRange(range: any, view: string) {
-    // MONTH → pasti array → gunakan index tengah
     if (view === Views.MONTH) {
-      const middle = range[Math.floor(range.length / 2)];
-      const mid = dayjs(middle);
+      let dates: Date[];
+
+      // Jika RBC kirim array → langsung pakai
+      if (Array.isArray(range)) {
+        dates = range;
+      } else {
+        // RBC MONTH selalu 6 minggu (42 hari)
+        dates = Array.from({ length: 42 }, (_, i) => dayjs(range.start).add(i, 'day').toDate());
+      }
+
+      // Ambil tanggal tengah → ini pasti tanggal di bulan yg tampil
+      const middleDate = dayjs(dates[Math.floor(dates.length / 2)]);
+
       return {
-        start: mid.startOf('month').toDate(),
-        end: mid.endOf('month').toDate(),
+        start: middleDate.startOf('month').toDate(),
+        end: middleDate.endOf('month').toDate(),
       };
     }
 
-    // WEEK → bisa object atau array
+    // WEEK
     if (view === Views.WEEK) {
       if (Array.isArray(range)) {
-        // RBC kirim array 7 hari → ambil first and last
         return {
           start: range[0],
           end: range[range.length - 1],
         };
       }
-
-      // RBC kirim object .start .end
-      if (range?.start && range?.end) {
-        return {
-          start: range.start,
-          end: range.end,
-        };
-      }
+      return { start: range.start, end: range.end };
     }
 
-    // DAY → satu tanggal
+    // DAY
     if (view === Views.DAY) {
-      if (range?.start) {
+      if (range.start) {
         return { start: range.start, end: range.end };
       }
       return { start: range, end: range };
@@ -293,7 +296,7 @@ const ManageDetailScheduler: FC = () => {
       employee_id: courier.employee_id,
       group_delivery_staff_id: courier.group_delivery_staff_id,
     });
-    console.log('res', res);
+    // console.log('res', res);
     setIsDraggingOutside(true);
   };
 
@@ -469,280 +472,281 @@ const ManageDetailScheduler: FC = () => {
       itemDataCustomNavListing={AdminNavListingData}
       itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
     >
-      <Box
-        sx={{ display: 'flex', flexDirection: mdUp ? 'row' : 'column', backgroundColor: '#fff' }}
-      >
-        {/* Sidebar */}
-        <Box sx={{ width: mdUp ? secdrawerWidth : '100%', p: 2, borderRight: '1px solid #eee' }}>
-          <Tooltip title="Go back to previous page" arrow>
-            <Button
+      <PageContainers title="Schedule">
+        <Box
+          sx={{ display: 'flex', flexDirection: mdUp ? 'row' : 'column', backgroundColor: '#fff' }}
+        >
+          {/* Sidebar */}
+          <Box sx={{ width: mdUp ? secdrawerWidth : '100%', p: 2, borderRight: '1px solid #eee' }}>
+            <Tooltip title="Go back to previous page" arrow>
+              <Button
+                size="small"
+                variant="contained"
+                startIcon={<IconArrowLeft size={18} />}
+                onClick={() => navigate('/admin/manage/delivery/scheduler')}
+                sx={{ mb: 2 }}
+              >
+                Back
+              </Button>
+            </Tooltip>
+
+            <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+              <Typography variant="h6" fontSize="1rem">
+                Delivery Staff
+              </Typography>
+
+              <Button
+                size="small"
+                variant="contained"
+                startIcon={<IconPlus size={18} />}
+                onClick={() => setOpenForm(true)}
+              >
+                Add
+              </Button>
+            </Box>
+
+            <TextField
+              fullWidth
               size="small"
-              variant="contained"
-              startIcon={<IconArrowLeft size={18} />}
-              onClick={() => navigate('/admin/manage/delivery/scheduler')}
+              placeholder="Search Delivery Staff"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
               sx={{ mb: 2 }}
-            >
-              Back
-            </Button>
-          </Tooltip>
+            />
 
-          <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
-            <Typography variant="h6" fontSize="1rem">
-              Delivery Staff
-            </Typography>
+            {groupedCouriers.map((group) => {
+              const isSingle = group.items.length === 1;
 
-            <Button
-              size="small"
-              variant="contained"
-              startIcon={<IconPlus size={18} />}
-              onClick={() => setOpenForm(true)}
-            >
-              Add
-            </Button>
-          </Box>
-
-          <TextField
-            fullWidth
-            size="small"
-            placeholder="Search Delivery Staff"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            sx={{ mb: 2 }}
-          />
-
-          {groupedCouriers.map((group) => {
-            const isSingle = group.items.length === 1;
-
-            return (
-              <Box key={group.id} sx={{ mb: 1 }}>
-                <Box
-                  draggable
-                  onDragStart={() => handleDragStart(group.items[0])}
-                  sx={{
-                    p: 1,
-                    borderRadius: 1,
-                    mb: isSingle ? 1 : 0,
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    cursor: 'pointer',
-                    backgroundColor: group.colour || '#000',
-                    color: '#fff',
-                  }}
-                  onClick={() => !isSingle && toggleGroup(group.id)}
-                >
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <Avatar
-                      sx={{ width: 30, height: 30 }}
-                      src={`${BASE_URL}/cdn/${group.items[0].employee.faceimage}`}
-                    />
-                    <Typography>
-                      {isSingle ? group.items[0].employee.name : `${group.groupName}`}
-                    </Typography>
-                  </Box>
-
-                  <Box sx={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-                    {!isSingle && (
-                      <IconChevronDown
-                        style={{
-                          transform: openGroup[group.id] ? 'rotate(180deg)' : 'rotate(0deg)',
-                          transition: '0.2s',
-                        }}
+              return (
+                <Box key={group.id} sx={{ mb: 1 }}>
+                  <Box
+                    draggable
+                    onDragStart={() => handleDragStart(group.items[0])}
+                    sx={{
+                      p: 1,
+                      borderRadius: 1,
+                      mb: isSingle ? 1 : 0,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      cursor: 'pointer',
+                      backgroundColor: group.colour || '#000',
+                      color: '#fff',
+                    }}
+                    onClick={() => !isSingle && toggleGroup(group.id)}
+                  >
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <Avatar
+                        sx={{ width: 30, height: 30 }}
+                        src={`${BASE_URL}/cdn/${group.items[0].employee.faceimage}`}
                       />
-                    )}
+                      <Typography>
+                        {isSingle ? group.items[0].employee.name : `${group.groupName}`}
+                      </Typography>
+                    </Box>
 
-                    <IconButton
-                      size="small"
-                      onClick={() => setOpenForm(true)}
-                      sx={{
-                        backgroundColor: '#5c87ff',
-                        borderRadius: '50%',
-                        '&:hover': { backgroundColor: '#f0f0f0' },
-                      }}
-                    >
-                      <IconPlus style={{ color: 'white', width: 16, height: 16 }} />
-                    </IconButton>
+                    <Box sx={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                      {!isSingle && (
+                        <IconChevronDown
+                          style={{
+                            transform: openGroup[group.id] ? 'rotate(180deg)' : 'rotate(0deg)',
+                            transition: '0.2s',
+                          }}
+                        />
+                      )}
 
-                    <IconButton
-                      size="small"
-                      onClick={() => handleEdit(group.items[0].id)}
-                      sx={{
-                        backgroundColor: '#FA896B',
-                        borderRadius: '50%',
-                        '&:hover': { backgroundColor: '#f0f0f0' },
-                      }}
-                    >
-                      <IconPencil style={{ color: 'white', width: 16, height: 16 }} />
-                    </IconButton>
-
-                    <IconButton
-                      size="small"
-                      onClick={() => handleDelete(group.items[0].id)}
-                      sx={{
-                        backgroundColor: 'red',
-                        borderRadius: '50%',
-                        '&:hover': { backgroundColor: '#f0f0f0' },
-                      }}
-                    >
-                      <IconTrash style={{ color: 'white', width: 16, height: 16 }} />
-                    </IconButton>
-                  </Box>
-                </Box>
-
-                {!isSingle && (
-                  <Collapse in={openGroup[group.id]}>
-                    {group.items.slice(1).map((c) => (
-                      <Box
-                        key={c.id}
-                        draggable
-                        onDragStart={() => handleDragStart(c)}
+                      <IconButton
+                        size="small"
+                        onClick={() => setOpenForm(true)}
                         sx={{
-                          p: 1,
-                          mt: 0.5,
-                          backgroundColor: c.colour,
-                          borderRadius: 1,
-                          marginLeft: '10px',
-                          border: '1px solid #eee',
-                          display: 'flex',
-                          cursor: 'pointer',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          color: '#fff',
+                          backgroundColor: '#5c87ff',
+                          borderRadius: '50%',
+                          '&:hover': { backgroundColor: '#f0f0f0' },
                         }}
                       >
-                        <Box display="flex" alignItems="center" gap={1}>
-                          <Avatar
-                            sx={{ width: 30, height: 30 }}
-                            src={`${BASE_URL}/cdn/${c.employee.faceimage}`}
-                          />
-                          <Typography>{c.employee.name}</Typography>
-                        </Box>
+                        <IconPlus style={{ color: 'white', width: 16, height: 16 }} />
+                      </IconButton>
 
-                        <Box sx={{ display: 'flex', gap: '5px' }}>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleEdit(c.id)}
-                            sx={{
-                              backgroundColor: '#FA896B',
-                              borderRadius: '50%',
-                              '&:hover': { backgroundColor: '#f0f0f0' },
-                            }}
-                          >
-                            <IconPencil style={{ color: 'white', width: 16, height: 16 }} />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleDelete(c.id)}
-                            sx={{
-                              backgroundColor: 'red',
-                              borderRadius: '50%',
-                              '&:hover': { backgroundColor: '#f0f0f0' },
-                            }}
-                          >
-                            <IconTrash style={{ color: 'white', width: 16, height: 16 }} />
-                          </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleEdit(group.items[0].id)}
+                        sx={{
+                          backgroundColor: '#FA896B',
+                          borderRadius: '50%',
+                          '&:hover': { backgroundColor: '#f0f0f0' },
+                        }}
+                      >
+                        <IconPencil style={{ color: 'white', width: 16, height: 16 }} />
+                      </IconButton>
+
+                      <IconButton
+                        size="small"
+                        onClick={() => handleDelete(group.items[0].id)}
+                        sx={{
+                          backgroundColor: 'red',
+                          borderRadius: '50%',
+                          '&:hover': { backgroundColor: '#f0f0f0' },
+                        }}
+                      >
+                        <IconTrash style={{ color: 'white', width: 16, height: 16 }} />
+                      </IconButton>
+                    </Box>
+                  </Box>
+
+                  {!isSingle && (
+                    <Collapse in={openGroup[group.id]}>
+                      {group.items.slice(1).map((c) => (
+                        <Box
+                          key={c.id}
+                          draggable
+                          onDragStart={() => handleDragStart(c)}
+                          sx={{
+                            p: 1,
+                            mt: 0.5,
+                            backgroundColor: c.colour,
+                            borderRadius: 1,
+                            marginLeft: '10px',
+                            border: '1px solid #eee',
+                            display: 'flex',
+                            cursor: 'pointer',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            color: '#fff',
+                          }}
+                        >
+                          <Box display="flex" alignItems="center" gap={1}>
+                            <Avatar
+                              sx={{ width: 30, height: 30 }}
+                              src={`${BASE_URL}/cdn/${c.employee.faceimage}`}
+                            />
+                            <Typography>{c.employee.name}</Typography>
+                          </Box>
+
+                          <Box sx={{ display: 'flex', gap: '5px' }}>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleEdit(c.id)}
+                              sx={{
+                                backgroundColor: '#FA896B',
+                                borderRadius: '50%',
+                                '&:hover': { backgroundColor: '#f0f0f0' },
+                              }}
+                            >
+                              <IconPencil style={{ color: 'white', width: 16, height: 16 }} />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleDelete(c.id)}
+                              sx={{
+                                backgroundColor: 'red',
+                                borderRadius: '50%',
+                                '&:hover': { backgroundColor: '#f0f0f0' },
+                              }}
+                            >
+                              <IconTrash style={{ color: 'white', width: 16, height: 16 }} />
+                            </IconButton>
+                          </Box>
                         </Box>
-                      </Box>
-                    ))}
-                  </Collapse>
-                )}
-              </Box>
-            );
-          })}
+                      ))}
+                    </Collapse>
+                  )}
+                </Box>
+              );
+            })}
+          </Box>
+
+          {/* Calendar */}
+          <Box flexGrow={1} p={2} height="100%">
+            <DnDOutsideCourier
+              draggedCourier={draggedCourier}
+              setDraggedCourier={setDraggedCourier}
+              isDraggingOutside={isDraggingOutside}
+              setIsDraggingOutside={setIsDraggingOutside}
+              localizer={localizer}
+              couriers={couriers}
+              events={events}
+              setEvents={setEvents}
+              timeAccess={timeAccess}
+              onRangeChange={handleRangeChange}
+              onViewChange={setCurrentView}
+              loadSchedule={loadSchedule}
+              lastRange={lastRange}
+            />
+          </Box>
         </Box>
 
-        {/* Calendar */}
-        <Box flexGrow={1} p={2} height="100%">
-          <DnDOutsideCourier
-            draggedCourier={draggedCourier}
-            setDraggedCourier={setDraggedCourier}
-            isDraggingOutside={isDraggingOutside}
-            setIsDraggingOutside={setIsDraggingOutside}
-            localizer={localizer}
-            couriers={couriers}
-            events={events}
-            setEvents={setEvents}
-            timeAccess={timeAccess}
-            onRangeChange={handleRangeChange}
-            onViewChange={setCurrentView}
-            loadSchedule={loadSchedule}
-            lastRange={lastRange}
-          />
-        </Box>
-      </Box>
+        <Dialog open={openForm} onClose={handleCloseForm} fullWidth maxWidth="sm">
+          <DialogTitle>
+            {isEditMode ? 'Edit Delivery Staff' : 'Add  Delivery Staff'}
+            <IconButton sx={{ position: 'absolute', right: 8, top: 8 }} onClick={handleCloseForm}>
+              <IconX />
+            </IconButton>
+          </DialogTitle>
 
-      {/* Dialog Add Staff */}
-      <Dialog open={openForm} onClose={handleCloseForm} fullWidth maxWidth="sm">
-        <DialogTitle>
-          {isEditMode ? 'Edit Delivery Staff' : 'Add  Delivery Staff'}
-          <IconButton sx={{ position: 'absolute', right: 8, top: 8 }} onClick={handleCloseForm}>
-            <IconX />
-          </IconButton>
-        </DialogTitle>
+          <DialogContent dividers>
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12 }}>
+                <CustomFormLabel htmlFor="name" sx={{ mt: 0 }}>
+                  Employee
+                </CustomFormLabel>
+                <Autocomplete
+                  options={deliveryStaff}
+                  getOptionLabel={(option) => option.name}
+                  value={selectedDeliveryData}
+                  onChange={(event, newValue) => setSelectedDeliveryData(newValue)}
+                  renderInput={(params) => <CustomTextField {...params} />}
+                  disabled={isEditMode}
+                />
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <CustomFormLabel sx={{ mt: 0 }}>Head Employee (Optional)</CustomFormLabel>
+                <Autocomplete
+                  // options={deliveryStaff.filter((x) => x.id !== selectedDeliveryData?.id)}
+                  options={allStaff}
+                  getOptionLabel={(option) => option.name}
+                  value={selectedHead}
+                  onChange={(event, newValue) => setSelectedHead(newValue)}
+                  renderInput={(params) => <CustomTextField {...params} />}
+                  disabled={isEditMode}
+                />
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <CustomFormLabel sx={{ mt: 0 }}>Colour</CustomFormLabel>
 
-        <DialogContent dividers>
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12 }}>
-              <CustomFormLabel htmlFor="name" sx={{ mt: 0 }}>
-                Employee
-              </CustomFormLabel>
-              <Autocomplete
-                options={deliveryStaff}
-                getOptionLabel={(option) => option.name}
-                value={selectedDeliveryData}
-                onChange={(event, newValue) => setSelectedDeliveryData(newValue)}
-                renderInput={(params) => <CustomTextField {...params} />}
-                disabled={isEditMode}
-              />
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
+                  {colorOptions.map((color) => (
+                    <Box
+                      key={color}
+                      onClick={() => setSelectedColor(color)}
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: '50%',
+                        cursor: 'pointer',
+                        border: selectedColor === color ? '3px solid #000' : '2px solid #ccc',
+                        backgroundColor: color,
+                        transition: '0.2s',
+                      }}
+                    />
+                  ))}
+                </Box>
+              </Grid>
             </Grid>
-            <Grid size={{ xs: 12 }}>
-              <CustomFormLabel sx={{ mt: 0 }}>Head Employee (Optional)</CustomFormLabel>
-              <Autocomplete
-                // options={deliveryStaff.filter((x) => x.id !== selectedDeliveryData?.id)}
-                options={allStaff}
-                getOptionLabel={(option) => option.name}
-                value={selectedHead}
-                onChange={(event, newValue) => setSelectedHead(newValue)}
-                renderInput={(params) => <CustomTextField {...params} />}
-                disabled={isEditMode}
-              />
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <CustomFormLabel sx={{ mt: 0 }}>Colour</CustomFormLabel>
+          </DialogContent>
 
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
-                {colorOptions.map((color) => (
-                  <Box
-                    key={color}
-                    onClick={() => setSelectedColor(color)}
-                    sx={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: '50%',
-                      cursor: 'pointer',
-                      border: selectedColor === color ? '3px solid #000' : '2px solid #ccc',
-                      backgroundColor: color,
-                      transition: '0.2s',
-                    }}
-                  />
-                ))}
-              </Box>
-            </Grid>
-          </Grid>
-        </DialogContent>
-
-        <DialogActions>
-          <Button onClick={() => setOpenForm(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleSubmit}>
-            Submit
-          </Button>
-        </DialogActions>
-      </Dialog>
-      <Portal>
-        <Backdrop open={loading} sx={{ zIndex: 999999, color: '#fff' }}>
-          <CircularProgress color="inherit" />
-        </Backdrop>
-      </Portal>
+          <DialogActions>
+            <Button onClick={() => setOpenForm(false)}>Cancel</Button>
+            <Button variant="contained" onClick={handleSubmit}>
+              Submit
+            </Button>
+          </DialogActions>
+        </Dialog>
+        <Portal>
+          <Backdrop open={loading} sx={{ zIndex: 999999, color: '#fff' }}>
+            <CircularProgress color="inherit" />
+          </Backdrop>
+        </Portal>
+      </PageContainers>
     </PageContainer>
   );
 };

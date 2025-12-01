@@ -55,7 +55,7 @@ import FlipCameraAndroidIcon from '@mui/icons-material/FlipCameraAndroid';
 import FlashOnIcon from '@mui/icons-material/FlashOn';
 import FlashOffIcon from '@mui/icons-material/FlashOff';
 import FilterMoreContent from './FilterMoreContent';
-import { IconClipboard, IconQrcode, IconUser, IconUsers } from '@tabler/icons-react';
+import { IconCamera, IconClipboard, IconQrcode, IconUser, IconUsers } from '@tabler/icons-react';
 import EmployeeDetailDialog from './Dialog/EmployeeDetailDialog';
 import VisitorDetailDialog from './Dialog/VisitorDetailDialog';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
@@ -566,17 +566,10 @@ const Content = () => {
       setOpenDetail(true);
 
       if (data.length === 0) {
-        // setSnackbarMsg('Your code does not exist.');
-        // setSnackbarType('error');
-        // setSnackbarOpen(true);
         showSwal('error', 'Your code does not exist.');
         return;
       }
     } catch (error) {
-      console.error('❌ Gagal mengambil data visitor:', error);
-      // setSnackbarMsg('Failed to fetch visitor data. Please try again.');
-      // setSnackbarType('error');
-      // setSnackbarOpen(true);
       showSwal('error', 'Failed to fetch visitor data. Please try again.');
     } finally {
       setLoading(false);
@@ -770,7 +763,7 @@ const Content = () => {
               if (isFormChanged) {
                 openDiscardForCloseAdd();
               } else {
-                handleCloseDialog(); 
+                handleCloseDialog();
               }
             }}
           >
@@ -943,8 +936,9 @@ const Content = () => {
                 setQrMode('scan');
               }}
               size="small"
+              startIcon={<IconCamera />}
             >
-              Scan Kamera
+              Scan Camera
             </Button>
           </Box>
 

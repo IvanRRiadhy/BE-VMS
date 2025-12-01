@@ -45,9 +45,6 @@ const CustomNavigation: React.FC<CustomNavigationProps> = ({
           alignItems={'center'}
         >
           <CustomNavListing itemData={itemDataCustomNavListing} />
-          {/* <Typography variant="body2" fontWeight={500}>
-            {currentTime}
-          </Typography> */}
           <CurrentTime />
         </Box>
       </Box>

@@ -56,7 +56,7 @@ export default function SwiperComponent({ images }: any) {
           autoplay={{ delay: 2500 }}
           spaceBetween={10}
           slidesPerView={1}
-          style={{ width: '100%', maxWidth: 800 }} // LIMIT WIDTH
+          style={{ width: '100%', maxWidth: 800 }}
         >
           {images.map((src: any, idx: any) => (
             <SwiperSlide key={idx} style={{ display: 'flex', justifyContent: 'center' }}>

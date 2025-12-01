@@ -117,7 +117,7 @@ const ScanQrVisitorDialog: React.FC<Props> = ({
               startIcon={<IconCamera />}
               size="small"
             >
-              Scan Kamera
+              Scan Camera
             </Button>
           </Tooltip>
         </Box>

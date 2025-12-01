@@ -44,7 +44,7 @@ const HeaderHorizontal = ({ itemDataCustomNavListing, itemDataCustomSidebarItems
 
   const theme = useTheme();
 
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // true jika <=600px
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm')); 
 
   return (
     <AppBarStyled position="static" color="default" elevation={8}>
