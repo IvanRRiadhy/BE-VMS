@@ -89,11 +89,6 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
     setErrors({});
 
     try {
-      // if (!token) {
-      //   showSwal('error', 'Something went wrong. Please try again later.');
-      //   return;
-      // }
-
       const parsed = validateLocal(formData);
       if (!parsed) {
         setAlertType('error');
@@ -108,15 +103,13 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
       await createDepartment(parsed, token as string);
       localStorage.removeItem('unsavedDepartmentFormAdd');
 
-      // ✅ Tutup backdrop & dialog dulu sebelum swal
       setLoading(false);
       await new Promise<void>((resolve) => {
         onSuccess?.();
         setTimeout(resolve, 600);
       });
 
-      // ✅ Baru tampil swal sukses
-      showSwal('success', 'Department successfully created!', 3000);
+      showSwal('success', 'Department successfully created!');
     } catch (err: any) {
       const be = err?.response?.data?.errors;
       if (be && typeof be === 'object') {
@@ -136,12 +129,8 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
   return (
     <>
       <form onSubmit={handleSubmit}>
-        {/* <Grid2 size={12}>
-          <Alert severity={alertType}>{alertMessage}</Alert>
-        </Grid2> */}
-
-        <CustomFormLabel htmlFor="name" sx={{ my: 1 }}>
-          <Typography variant="body1">Department Name</Typography>
+        <CustomFormLabel htmlFor="name" sx={{ my: 1, fontWeight: 500 }} required>
+          Department Name
         </CustomFormLabel>
         <CustomTextField
           id="name"
@@ -153,8 +142,8 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
           variant="outlined"
         />
 
-        <CustomFormLabel htmlFor="code" sx={{ my: 1 }}>
-          <Typography variant="body1">Department Code</Typography>
+        <CustomFormLabel htmlFor="code" sx={{ my: 1, fontWeight: 500 }} required>
+          Department Code
         </CustomFormLabel>
         <CustomTextField
           id="code"
@@ -166,8 +155,8 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
           variant="outlined"
         />
 
-        <CustomFormLabel htmlFor="host" sx={{ my: 1 }}>
-          <Typography variant="body1">Head of Department</Typography>
+        <CustomFormLabel htmlFor="host" sx={{ my: 1, fontWeight: 500 }} required>
+          Head of Department
         </CustomFormLabel>
         <Autocomplete
           // freeSolo
@@ -176,7 +165,7 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
           disablePortal={false}
           options={allEmployes.map((emp: any) => ({ id: emp.id, label: emp.name }))}
           getOptionLabel={(option) => {
-            if (typeof option === 'string') return option; // user mengetik manual
+            if (typeof option === 'string') return option;
             return option.label;
           }}
           value={
@@ -188,14 +177,10 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
           onChange={(_, newValue) => {
             const newHost = typeof newValue === 'string' ? newValue : newValue?.id ?? '';
             setFormData((prev) => ({ ...prev, host: newHost }));
-
-            // clear error langsung
             setErrors((prev) => ({ ...prev, host: '' }));
           }}
           onInputChange={(_, inputValue) => {
             setFormData((prev) => ({ ...prev, host: inputValue }));
-
-            // clear error langsung
             setErrors((prev) => ({ ...prev, host: '' }));
           }}
           renderInput={(params) => (
@@ -226,7 +211,7 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
         open={loading}
         sx={{
           color: '#fff',
-          zIndex: (theme) => theme.zIndex.drawer + 1, // di atas drawer & dialog
+          zIndex: (theme) => theme.zIndex.drawer + 1,
         }}
       >
         <CircularProgress color="inherit" />

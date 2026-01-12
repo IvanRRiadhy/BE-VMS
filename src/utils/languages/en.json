@@ -15,14 +15,18 @@
   "visitor": "Visitor",
   "repeat_visitor": "Repeat Visitor",
   "new_visitor": "New Visitor",
+
   "navigation": {
+    "delivery": "Delivery",
+    "staff": "Staff",
+    "scheduler": "Scheduler",
     "dashboard": "Dasboard",
     "manage_system": "Manage System",
     "company_department": "Company & Department",
     "employees": "Employees",
     "site_space": "Site Space",
     "card": "Card",
-    "timezone": "Timezone",
+    "timeaccess": "Time Access",
     "visitor_type": "Visitor Type",
     "document": "Document",
     "brand": "Brand",
@@ -32,8 +36,9 @@
     "custom_field": "Custom Field",
     "visitor": "Visitor",
     "settings": "Settings",
-    "helps": "Helps",
-    "faq": "FAQ"
+    "helps": "Helps"
   },
-  "no_visit_today": "No Visit data for today."
+  "no_visit_today": "No Visit data for today.",
+  "report": "Report",
+  "search": "Search"
 }

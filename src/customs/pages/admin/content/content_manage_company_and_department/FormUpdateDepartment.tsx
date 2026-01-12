@@ -180,7 +180,6 @@ const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({
 
         const failed = results.filter((r) => r.status === 'rejected');
 
-        // ✅ Tampilkan swal langsung
         if (failed.length) {
           showSwal('error', 'Some departments failed to update.');
         } else {
@@ -202,8 +201,7 @@ const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({
 
         await updateDepartment(data.id, parsed, token);
 
-        // ✅ Swal langsung tampil
-        showSwal('success', 'Department updated successfully.', 3000);
+        showSwal('success', 'Department updated successfully.');
 
         setTimeout(() => {
           onSuccess?.();
@@ -219,10 +217,8 @@ const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({
         });
       }
 
-      // 🔥 Error swal langsung muncul
       showSwal('error', 'Failed to update department.');
     } finally {
-      // ⏳ Pastikan backdrop dimatikan
       setTimeout(() => {
         setLoading(false);
       }, 500);
@@ -231,12 +227,9 @@ const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({
   return (
     <>
       <form onSubmit={handleSubmit}>
-        {/* <Grid2 size={{ xs: 12, sm: 12 }}>
-          <Alert severity={alertType}>{alertMessage}</Alert>
-        </Grid2> */}
         <Box display="flex" alignItems="center" justifyContent="space-between">
-          <CustomFormLabel htmlFor="name" sx={{ marginY: 1 }}>
-            <Typography variant="body1">Department Name</Typography>
+          <CustomFormLabel htmlFor="name" sx={{ marginY: 1, fontWeight: 500 }}>
+            Department Name
           </CustomFormLabel>
           {isBatchEdit && (
             <FormControlLabel
@@ -270,8 +263,8 @@ const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({
         />
 
         <Box display="flex" alignItems="center" justifyContent="space-between">
-          <CustomFormLabel htmlFor="code" sx={{ marginY: 1 }}>
-            <Typography variant="body1">Department Code</Typography>
+          <CustomFormLabel htmlFor="code" sx={{ marginY: 1, fontWeight: 500 }}>
+            Department Code
           </CustomFormLabel>
           {isBatchEdit && (
             <FormControlLabel
@@ -305,8 +298,8 @@ const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({
         />
 
         <Box display="flex" alignItems="center" justifyContent="space-between">
-          <CustomFormLabel htmlFor="host" sx={{ marginY: 1 }}>
-            <Typography variant="body1">Head of Department</Typography>
+          <CustomFormLabel htmlFor="host" sx={{ marginY: 1, fontWeight: 500 }}>
+            Head of Department
           </CustomFormLabel>
           {isBatchEdit && (
             <FormControlLabel

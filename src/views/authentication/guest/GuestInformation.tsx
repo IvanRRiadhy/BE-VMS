@@ -23,10 +23,11 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import PageContainer from 'src/components/container/PageContainer';
-import { IconError404, IconMan, IconTrash, IconWoman } from '@tabler/icons-react';
+import { IconDeviceFloppy, IconError404, IconMan, IconTrash, IconWoman } from '@tabler/icons-react';
 import { ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { AuthVisitor, SubmitPraForm } from 'src/customs/api/users';
 import dayjs from 'dayjs';
+import 'dayjs/locale/id';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import MuiButton from 'src/views/forms/form-elements/MuiButton';
@@ -37,88 +38,79 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { IconX } from '@tabler/icons-react';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { GroupRoleId } from '../../../constant/GroupRoleId';
-import Logo from 'src/assets/images/logos/BI_Logo.png';
+// import Logo from 'src/assets/images/logos/BI_Logo.png';
+import Logo from 'src/assets/images/logos/bio-experience-1x1-logo.png';
 import { Snackbar } from '@mui/material';
 import { showSwal } from 'src/customs/components/alerts/alerts';
+import { IconCamera } from '@tabler/icons-react';
+
+import { useTheme, useMediaQuery, MobileStepper } from '@mui/material';
+import KeyboardArrowLeft from '@mui/icons-material/KeyboardArrowLeft';
+import KeyboardArrowRight from '@mui/icons-material/KeyboardArrowRight';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
+// dayjs.locale('id');
 
 const GuestInformationStepper = () => {
   const [activeStep, setActiveStep] = useState(0);
-  // const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [formValues, setFormValues] = useState<Record<string, any>>({});
   const [invitationData, setInvitationData] = useState<any | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [openCamera, setOpenCamera] = React.useState(false);
+  const [openCamera, setOpenCamera] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [uploadNames, setUploadNames] = React.useState<Record<string, string>>({});
+  const [uploadNames, setUploadNames] = useState<Record<string, string>>({});
   const [previews, setPreviews] = useState<Record<string, string | null>>({});
-  const [removing, setRemoving] = React.useState<Record<string, boolean>>({});
+  const [removing, setRemoving] = useState<Record<string, boolean>>({});
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
     severity: 'success',
   });
-  const showSnackbar = (message: string, severity: 'success' | 'error' | 'info' | 'warning') => {
-    setSnackbar({ open: true, message, severity });
-  };
+
   const webcamRef = useRef<Webcam>(null);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const [submitting, setSubmitting] = useState(false);
   const formatDateTime = (value: string | null) => {
     if (!value) return '-';
-    return dayjs(value).tz('Asia/Jakarta').format('DD MMMM YYYY HH:mm');
+    return dayjs(value).tz(dayjs.tz.guess()).format('dddd, DD MMMM YYYY, HH:mm');
   };
+
   const { saveToken } = useSession();
 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const code = searchParams.get('code') || ''; // ambil dari URL
+  const code = searchParams.get('code') || '';
+  const isEmpty = (val: any) => val === undefined || val === null || val === '';
 
   const validateStep = (section: any) => {
     const newErrors: Record<string, string> = {};
-
-    section.form?.forEach((f: any) => {
+    section?.form?.forEach((f: any) => {
       if (
-        (f.remarks === 'vehicle_type' || f.remarks === 'vehicle_plate') &&
-        !formValues[f.remarks]
+        f.mandatory &&
+        isEmpty(formValues[f.remarks])
+        // &&
+        // !(
+        //   ['vehicle_plate', 'vehicle_type'].includes(f.remarks) &&
+        //   formValues['is_driving'] !== 'true'
+        // )
       ) {
         newErrors[f.remarks] = `${f.long_display_text} is required`;
       }
     });
-
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0; // true kalau valid
+    return Object.keys(newErrors).length === 0;
   };
-
-  const handlePDFUploadFor =
-    (remarks: string) => async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-
-      const path = await uploadFileToCDN(file);
-      if (path) {
-        setFormValues((prev) => ({ ...prev, [remarks]: path }));
-        setPreviews((prev) => ({ ...prev, [remarks]: URL.createObjectURL(file) }));
-        setUploadNames((prev) => ({ ...prev, [remarks]: file.name }));
-      }
-
-      e.target.value = ''; // reset
-    };
 
   useEffect(() => {
     const fetchData = async () => {
       if (!code) return;
 
-      // try {
-      // setLoading(true);
-      // panggil API visitor
       const res = await AuthVisitor({ code });
       setInvitationData(res.collection);
       console.log(res);
 
-      // inisialisasi nilai form dari payload
       const initial: Record<string, any> = {};
       res.collection.question_page.forEach((section: any) => {
         section.form.forEach((f: any) => {
@@ -132,11 +124,6 @@ const GuestInformationStepper = () => {
         });
       });
       setFormValues(initial);
-      // } catch (err) {
-      //   console.error('Gagal load invitation', err);
-      // } finally {
-      //   setLoading(false);
-      // }
     };
 
     fetchData();
@@ -144,16 +131,20 @@ const GuestInformationStepper = () => {
 
   const handleChange = (remarks: string, value: any) => {
     setFormValues((prev) => ({ ...prev, [remarks]: value }));
+    setErrors((prev) => {
+      if (!prev[remarks]) return prev;
+      const { [remarks]: _, ...rest } = prev;
+      return rest;
+    });
   };
 
   const handleNext = () => {
     const currentSection = formSections[activeStep];
-    if (!validateStep(currentSection)) return; // stop kalau ada error
+    if (!validateStep(currentSection)) return;
     setActiveStep((prev) => prev + 1);
   };
 
   const handleBack = () => setActiveStep((prev) => prev - 1);
-  const handleReset = () => setActiveStep(0);
 
   const CustomStepIcon = (props: any) => {
     const { icon, active } = props;
@@ -189,26 +180,24 @@ const GuestInformationStepper = () => {
           gap: 2,
         }}
       >
-        <CircularProgress />
+        <CircularProgress color="primary" />
       </Box>
     );
   }
 
   const formSections = invitationData.question_page;
 
-  // const formSections = invitationData.question_page;
   const steps = formSections.map((q: any) => q.name);
 
   const handleRemoveFileForField = async (
     currentUrl: string,
     setAnswerFile: (url: string) => void,
-    inputId: string, // <- pakai key yg sama dengan id input
+    inputId: string,
   ) => {
     try {
       setRemoving((s) => ({ ...s, [inputId]: true }));
       if (currentUrl) {
         await axiosInstance2.delete(`/cdn${currentUrl}`);
-        console.log('✅ Berhasil hapus file CDN:', currentUrl);
       }
 
       setAnswerFile('');
@@ -236,18 +225,15 @@ const GuestInformationStepper = () => {
 
     try {
       const response = await axiosInstance2.post('/cdn/upload', formData, {
-        // const response = await axios.post('http://localhost:8000/cdn/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
 
       const fileUrl = response.data?.collection?.file_url;
-      console.log('CDN Response File URL:', fileUrl);
 
       if (!fileUrl) return null;
 
-      // Tambahkan protokol jika belum ada
       return fileUrl.startsWith('//') ? `http:${fileUrl}` : fileUrl;
     } catch (error) {
       console.error('Upload failed:', error);
@@ -263,7 +249,6 @@ const GuestInformationStepper = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // tampilkan preview lokal dulu (supaya user melihat langsung)
     if (trackKey) {
       setUploadNames((prev) => ({ ...prev, [trackKey]: file.name }));
       setPreviews((prev) => ({ ...prev, [trackKey]: URL.createObjectURL(file) }));
@@ -271,7 +256,7 @@ const GuestInformationStepper = () => {
 
     const path = await uploadFileToCDN(file);
     if (path) setAnswerFile(path);
-    // reset input agar bisa pilih file yg sama lagi
+
     e.target.value = '';
   };
 
@@ -311,7 +296,6 @@ const GuestInformationStepper = () => {
 
     return (
       <Box>
-        {/* MAIN UPLOAD BOX */}
         <Box
           sx={{
             border: '2px dashed #90caf9',
@@ -390,9 +374,12 @@ const GuestInformationStepper = () => {
           </Box>
         </Box>
 
-        {/* PREVIEW FOTO */}
+        {errors[key] && (
+          <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
+            {errors[key]}
+          </Typography>
+        )}
 
-        {/* DIALOG KAMERA */}
         <Dialog open={openCamera} onClose={() => setOpenCamera(false)} maxWidth="md" fullWidth>
           <Box sx={{ p: 3, position: 'relative' }}>
             <Box>
@@ -408,7 +395,6 @@ const GuestInformationStepper = () => {
             </Box>
 
             <Grid container spacing={2}>
-              {/* CAMERA LIVE VIEW */}
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Webcam
                   audio={false}
@@ -423,7 +409,6 @@ const GuestInformationStepper = () => {
                 />
               </Grid>
 
-              {/* PREVIEW FOTO */}
               <Grid size={{ xs: 12, sm: 6 }}>
                 {previewSrc ? (
                   <img
@@ -456,10 +441,10 @@ const GuestInformationStepper = () => {
 
             <Divider sx={{ my: 2 }} />
 
-            {/* ACTION BUTTONS */}
             <Box sx={{ textAlign: 'right' }}>
               <Button
-                color="warning"
+                color="error"
+                startIcon={<IconTrash />}
                 sx={{ mr: 2 }}
                 onClick={() =>
                   handleRemoveFileForField(
@@ -473,11 +458,16 @@ const GuestInformationStepper = () => {
               </Button>
               <Button
                 variant="contained"
+                startIcon={<IconCamera />}
                 onClick={() => handleCaptureForField((url) => handleChange(f.remarks, url), key)}
               >
                 Take Foto
               </Button>
-              <Button onClick={() => setOpenCamera(false)} sx={{ ml: 2 }}>
+              <Button
+                onClick={() => setOpenCamera(false)}
+                sx={{ ml: 2 }}
+                startIcon={<IconDeviceFloppy />}
+              >
                 Submit
               </Button>
             </Box>
@@ -494,7 +484,6 @@ const GuestInformationStepper = () => {
 
     return (
       <Box>
-        {/* Upload Box */}
         <Box
           sx={{
             border: '2px dashed #90caf9',
@@ -543,7 +532,6 @@ const GuestInformationStepper = () => {
               }}
             >
               {previewSrc ? (
-                // 📄 PDF / DOC Preview
                 previewSrc.endsWith('.pdf') || previewSrc.endsWith('.docx') ? (
                   <Box
                     sx={{
@@ -564,7 +552,6 @@ const GuestInformationStepper = () => {
                     </Typography>
                   </Box>
                 ) : (
-                  // 🖼️ Image Preview
                   <img
                     src={previewSrc}
                     alt="preview"
@@ -578,13 +565,11 @@ const GuestInformationStepper = () => {
                   />
                 )
               ) : (
-                // No previewSrc, show filename only
                 <Typography variant="caption" noWrap>
                   {shownName}
                 </Typography>
               )}
 
-              {/* Remove button */}
               <Button
                 color="error"
                 size="small"
@@ -630,15 +615,14 @@ const GuestInformationStepper = () => {
           onClick={() => fileInputRefs.current[key]?.click()}
         >
           <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
-          <Typography variant="subtitle1" sx={{ mt: 1 }}>
+          <Typography variant="h6" sx={{ mt: 1 }}>
             Upload File
           </Typography>
 
           <Typography variant="caption" color="textSecondary">
-            Supports: PDF, DOCX, JPG, PNG
+            Supports: PDF, JPG, PNG, JPEG, Up to <span style={{ fontWeight: '700' }}> 100KB</span>
           </Typography>
 
-          {/* 🔹 Tombol kamera tambahan */}
           <Typography
             variant="subtitle1"
             component="span"
@@ -652,7 +636,6 @@ const GuestInformationStepper = () => {
             Use Camera
           </Typography>
 
-          {/* 🔹 Hidden input file */}
           <input
             id={`file-${key}`}
             type="file"
@@ -668,7 +651,6 @@ const GuestInformationStepper = () => {
             }
           />
 
-          {/* 🔹 Preview upload / foto */}
           {(previewSrc || shownName) && (
             <Box mt={2} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               {previewSrc ? (
@@ -711,12 +693,25 @@ const GuestInformationStepper = () => {
           )}
         </Box>
 
-        {/* 🔹 Dialog kamera */}
+        {errors[key] && (
+          <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
+            {errors[key]}
+          </Typography>
+        )}
+
         <Dialog open={openCamera} onClose={() => setOpenCamera(false)} maxWidth="md" fullWidth>
           <Box sx={{ p: 3, position: 'relative' }}>
-            <Typography variant="h6" mb={2}>
-              Take Photo From Camera
-            </Typography>
+            <Box>
+              <Typography variant="h6" mb={2}>
+                Take Photo From Camera
+              </Typography>
+              <IconButton
+                onClick={() => setOpenCamera(false)}
+                sx={{ position: 'absolute', top: 10, right: 10 }}
+              >
+                <IconX size={22} />
+              </IconButton>
+            </Box>
 
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -774,13 +769,15 @@ const GuestInformationStepper = () => {
                     key,
                   )
                 }
-                color="warning"
+                color="error"
+                startIcon={<IconTrash />}
                 sx={{ mr: 2 }}
               >
                 Clear Foto
               </Button>
               <Button
                 variant="contained"
+                startIcon={<IconCamera />}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleCaptureForField((url) => handleChange(f.remarks, url), key);
@@ -788,8 +785,12 @@ const GuestInformationStepper = () => {
               >
                 Take Foto
               </Button>
-              <Button onClick={() => setOpenCamera(false)} sx={{ ml: 2 }}>
-                Close
+              <Button
+                onClick={() => setOpenCamera(false)}
+                sx={{ ml: 2 }}
+                startIcon={<IconDeviceFloppy />}
+              >
+                Submit
               </Button>
             </Box>
           </Box>
@@ -799,26 +800,21 @@ const GuestInformationStepper = () => {
   };
 
   const StepContent = (section: any) => {
-    // Ambil status is_driving dari state formValues
     const isDriving = formValues['is_driving'] === 'true' || formValues['is_driving'] === true;
 
     return (
-      <Box mt={3}>
+      <Box mt={1}>
         <Grid container spacing={2}>
           {section.form?.map((f: any, idx: number) => {
             let displayValue = formValues[f.remarks] ?? '';
 
-            // Mapping field type berdasarkan remarks
             const type = getFieldTypeByRemarks(f.remarks) ?? f.field_type;
 
-            // Override host dan site_place
             if (f.remarks === 'host') {
               displayValue = invitationData.host_data?.name || displayValue;
             } else if (f.remarks === 'site_place') {
               displayValue = invitationData.site_place_data?.name || displayValue;
             }
-
-            // 🔥 Skip field kendaraan kalau belum pilih "Yes"
             if (!isDriving && ['vehicle_type', 'vehicle_plate'].includes(f.remarks)) {
               return null;
             }
@@ -827,9 +823,9 @@ const GuestInformationStepper = () => {
 
             return (
               <Grid key={idx} size={gridSize}>
-                <CustomFormLabel sx={{ mt: 0 }}>{f.long_display_text || f.remarks}</CustomFormLabel>
-
-                {/* FILE-BASED */}
+                <CustomFormLabel sx={{ mt: 0 }} required={f.mandatory === true}>
+                  {f.long_display_text || f.remarks}
+                </CustomFormLabel>
                 {(() => {
                   switch (type) {
                     case 10:
@@ -842,8 +838,6 @@ const GuestInformationStepper = () => {
                       return null;
                   }
                 })()}
-
-                {/* TANGGAL READONLY */}
                 {['visitor_period_start', 'visitor_period_end'].includes(f.remarks) && (
                   <CustomTextField
                     fullWidth
@@ -852,8 +846,6 @@ const GuestInformationStepper = () => {
                     disabled
                   />
                 )}
-
-                {/* PURPOSE VISIT (readonly) */}
                 {section.name === 'Purpose Visit' &&
                   !['visitor_period_start', 'visitor_period_end'].includes(f.remarks) && (
                     <CustomTextField
@@ -864,7 +856,6 @@ const GuestInformationStepper = () => {
                     />
                   )}
 
-                {/* VEHICLE PLATE */}
                 {f.remarks === 'vehicle_plate' && (
                   <CustomTextField
                     fullWidth
@@ -876,44 +867,49 @@ const GuestInformationStepper = () => {
                   />
                 )}
 
-                {/* GENDER */}
                 {f.remarks === 'gender' && (
-                  <ToggleButtonGroup
-                    id="gender"
-                    exclusive
-                    value={formValues[f.remarks] || ''}
-                    onChange={(_, val) => {
-                      if (val !== null) handleChange(f.remarks, val);
-                    }}
-                    sx={{
-                      '& .MuiToggleButton-root': {
-                        textTransform: 'none',
-                        px: 2,
-                        py: 1,
-                        bgcolor: 'transparent',
-                        color: 'text.primary',
-                        '&:hover': { bgcolor: 'action.hover' },
-                      },
-                      '& .MuiToggleButton-root.Mui-selected': {
-                        bgcolor: 'primary.main',
-                        color: 'white',
-                        '&:hover': { bgcolor: 'primary.dark' },
-                      },
-                    }}
-                  >
-                    <ToggleButton value="1">
-                      <IconMan size={16} style={{ marginRight: 6 }} /> Male
-                    </ToggleButton>
-                    <ToggleButton value="0">
-                      <IconWoman size={16} style={{ marginRight: 6 }} /> Female
-                    </ToggleButton>
-                    <ToggleButton value="2">
-                      <IconWoman size={16} style={{ marginRight: 6 }} /> Prefer not to say
-                    </ToggleButton>
-                  </ToggleButtonGroup>
+                  <>
+                    <ToggleButtonGroup
+                      id="gender"
+                      exclusive
+                      value={formValues[f.remarks] || ''}
+                      onChange={(_, val) => {
+                        if (val !== null) handleChange(f.remarks, val);
+                      }}
+                      sx={{
+                        '& .MuiToggleButton-root': {
+                          textTransform: 'none',
+                          px: 2,
+                          py: 1,
+                          bgcolor: 'transparent',
+                          color: 'text.primary',
+                          '&:hover': { bgcolor: 'action.hover' },
+                        },
+                        '& .MuiToggleButton-root.Mui-selected': {
+                          bgcolor: 'primary.main',
+                          color: 'white',
+                          '&:hover': { bgcolor: 'primary.dark' },
+                        },
+                      }}
+                    >
+                      <ToggleButton value="1">
+                        <IconMan size={16} style={{ marginRight: 6 }} /> Male
+                      </ToggleButton>
+                      <ToggleButton value="0">
+                        <IconWoman size={16} style={{ marginRight: 6 }} /> Female
+                      </ToggleButton>
+                      <ToggleButton value="2">
+                        <IconWoman size={16} style={{ marginRight: 6 }} /> Prefer not to say
+                      </ToggleButton>
+                    </ToggleButtonGroup>
+                    {errors[f.remarks] && (
+                      <Typography variant="caption" color="error" sx={{ display: 'block', mt: 1 }}>
+                        {errors[f.remarks]}
+                      </Typography>
+                    )}
+                  </>
                 )}
 
-                {/* IS_DRIVING */}
                 {f.remarks === 'is_driving' && (
                   <FormControl component="fieldset">
                     <RadioGroup
@@ -924,10 +920,14 @@ const GuestInformationStepper = () => {
                       <FormControlLabel value="true" control={<Radio />} label="Yes" />
                       <FormControlLabel value="false" control={<Radio />} label="No" />
                     </RadioGroup>
+                    {errors[f.remarks] && (
+                      <Typography variant="caption" color="error">
+                        {errors[f.remarks]}
+                      </Typography>
+                    )}
                   </FormControl>
                 )}
 
-                {/* VEHICLE TYPE */}
                 {f.remarks === 'vehicle_type' && (
                   <FormControl component="fieldset">
                     <RadioGroup
@@ -952,10 +952,14 @@ const GuestInformationStepper = () => {
                         />
                       ))}
                     </RadioGroup>
+                    {errors[f.remarks] && (
+                      <Typography variant="caption" color="error">
+                        {errors[f.remarks]}
+                      </Typography>
+                    )}
                   </FormControl>
                 )}
 
-                {/* DEFAULT */}
                 {![
                   'visitor_period_start',
                   'visitor_period_end',
@@ -971,6 +975,8 @@ const GuestInformationStepper = () => {
                       value={displayValue}
                       onChange={(e) => handleChange(f.remarks, e.target.value)}
                       placeholder={f.long_display_text || f.remarks}
+                      error={!!errors[f.remarks]}
+                      helperText={errors[f.remarks]}
                     />
                   )}
               </Grid>
@@ -985,7 +991,7 @@ const GuestInformationStepper = () => {
     const { question_page = [], site_place_data, visitor_type, visitor_type_data } = invitationData;
 
     return {
-      visitor_type: visitor_type, // ← bisa pakai langsung dari API kalau mau
+      visitor_type: visitor_type,
       type_registered: 0,
       is_group: false,
       tz: site_place_data?.timezone ?? 'Asia/Jakarta',
@@ -993,7 +999,6 @@ const GuestInformationStepper = () => {
       data_visitor: [
         {
           question_page: question_page.map((section: any) => {
-            // cari definisi section
             const sectionDef = visitor_type_data?.section_page_visitor_types?.find(
               (s: any) => s.Id.toLowerCase() === section.id.toLowerCase(),
             );
@@ -1030,9 +1035,8 @@ const GuestInformationStepper = () => {
 
                 if (!value) return base;
 
-                // per-tipe mapping
                 if (f.field_type === 9) {
-                  return { ...base, answer_datetime: value, answer_text: value }; // boleh double kalau backend butuh
+                  return { ...base, answer_datetime: value, answer_text: value };
                 }
                 if (f.field_type === 10 || f.field_type === 11 || f.field_type === 12) {
                   return { ...base, answer_file: value };
@@ -1046,8 +1050,8 @@ const GuestInformationStepper = () => {
     };
   }
 
-
-  const handleSubmit = async () => {
+  const handleSubmit = async (e: any) => {
+    e.preventDefault();
     const currentSection = formSections[activeStep];
     if (!validateStep(currentSection)) return;
 
@@ -1058,57 +1062,52 @@ const GuestInformationStepper = () => {
       console.log('payload', JSON.stringify(payload, null, 2));
       const visitorId = invitationData?.id;
       if (!visitorId) {
-        console.error('❌ Visitor ID tidak ditemukan di invitationData');
         return;
       }
 
-      // 1️⃣ Kirim pra-form ke backend
       const res = await SubmitPraForm(payload, visitorId);
-      // console.log('✅ SubmitPraForm success:', JSON.stringify(res || {}, null, 2));
+      console.log('✅ SubmitPraForm success:', JSON.stringify(res || {}, null, 2));
 
-      // 2️⃣ Setelah submit, tunggu sejenak agar server proses statusnya
-      await new Promise((r) => setTimeout(r, 500)); // (opsional tapi smooth)
+      // await new Promise((r) => setTimeout(r, 500));
 
-      // 3️⃣ Ambil status terbaru & token
       const authRes = await AuthVisitor({ code });
+      console.log('✅ AuthVisitor success:', JSON.stringify(authRes || {}, null, 2));
       const token = authRes?.collection?.token;
-      const status = authRes?.status || '';
+      console.log('token', token);
 
-      if (status == 'process') {
-        navigate(`/portal/waiting`);
+      const status = authRes.status;
+
+      if (status === 'process') {
+        setSubmitting(false);
+        navigate('/portal/waiting', { replace: true });
+        return;
       }
 
       if (token) {
         await saveToken(token, GroupRoleId.Visitor);
-        // showSnackbar('Successfully Pra Register Visitor', 'success');
         showSwal('success', 'Successfully Pra Register Visitor');
 
-        setTimeout(() => {
-          setSubmitting(false);
-        }, 300);
-
-        setTimeout(() => {
-          navigate('/guest/dashboard', { replace: true });
-        }, 700); // ⬅️ 0.7 detik cukup untuk efek “smooth”
-
+        navigate('/guest/dashboard', { replace: true });
+        localStorage.removeItem('visitor_ref_code');
         return;
       }
-      console.warn('Token tidak ditemukan setelah AuthVisitor.');
     } catch (error) {
-      console.error('Error submit:', error);
+      setSubmitting(false);
+      showSwal('error', 'Failed to submit guest information form.');
+    } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <PageContainer title="Information" description="Guest Info Stepper">
+    <PageContainer title="Guest Information" description="Guest Information">
       <Grid
         container
         justifyContent="center"
         alignItems="center"
         sx={{ height: '100vh', backgroundColor: '#f4f6f8' }}
       >
-        <Grid size={{ xs: 11, sm: 8, lg: 10 }}>
+        <Grid size={{ xs: 12, sm: 11, xl: 8 }} sx={{ p: { xs: 2 } }}>
           <Card elevation={10} sx={{ p: 3, borderRadius: 3, bgcolor: 'white', boxShadow: 3 }}>
             <Box
               textAlign="center"
@@ -1117,55 +1116,117 @@ const GuestInformationStepper = () => {
               flexDirection="column"
               alignItems="center"
             >
-              {/* <Logo /> */}
-              <img src={Logo} width={100} height={100} />
+              <img src={Logo} width={100} height={100} alt="Logo" />
               {code && (
-                <Typography variant="subtitle1" fontWeight={600} mt={2}>
+                <Typography variant="h6" fontWeight={600} mt={2}>
                   Invitation Code: {code}
                 </Typography>
               )}
             </Box>
 
-            <Stepper activeStep={activeStep} alternativeLabel>
-              {steps.map((label: any, idx: number) => (
-                <Step key={idx}>
-                  <StepLabel
-                    StepIconComponent={CustomStepIcon}
-                    onClick={() => setActiveStep(idx)}
-                    sx={{
-                      cursor: 'pointer',
-                      '& .MuiStepLabel-label': {
-                        typography: 'body1',
-                        fontWeight: activeStep === idx ? 600 : 400,
-                      },
-                    }}
-                  >
-                    {label}
-                  </StepLabel>
-                </Step>
-              ))}
-            </Stepper>
-
-            {activeStep === steps.length ? (
-              <Box mt={3} textAlign="center">
-                <Typography variant="h6" color="success.main">
-                  Semua langkah selesai 🎉
-                </Typography>
-                <Button onClick={handleReset} sx={{ mt: 2 }} variant="contained" color="error">
-                  Reset
-                </Button>
-              </Box>
-            ) : (
+            {!isMobile && (
               <>
-                <Box mt={4}>{StepContent(formSections[activeStep])}</Box>
+                <Stepper activeStep={activeStep} alternativeLabel>
+                  {steps.map((label: any, idx: number) => (
+                    <Step key={idx}>
+                      <StepLabel
+                        StepIconComponent={CustomStepIcon}
+                        onClick={() => setActiveStep(idx)}
+                        sx={{
+                          cursor: 'pointer',
+                          '& .MuiStepLabel-label': {
+                            typography: 'body1',
+                            fontWeight: activeStep === idx ? 600 : 400,
+                          },
+                        }}
+                      >
+                        {label}
+                      </StepLabel>
+                    </Step>
+                  ))}
+                </Stepper>
+              </>
+            )}
 
+            {isMobile && (
+              <Box
+                sx={{
+                  mt: 1,
+                  mb: 1,
+                  px: 2,
+                  py: 1,
+                  width: 'fit-content',
+                  mx: 'auto',
+                  // bgcolor: 'primary.main',
+                  borderRadius: 2,
+                  color: 'primary',
+                  textAlign: 'center',
+                }}
+              >
+                <Typography variant="h5" fontWeight={600}>
+                  {steps[activeStep]}
+                </Typography>
+              </Box>
+            )}
+
+            <Box mt={2}>{StepContent(formSections[activeStep])}</Box>
+
+            {isMobile && (
+              <Box sx={{ mt: 2 }}>
+                <MobileStepper
+                  variant="dots"
+                  steps={steps.length}
+                  position="static"
+                  activeStep={activeStep}
+                  nextButton={
+                    activeStep === steps.length - 1 ? (
+                      <Button
+                        size="medium"
+                        variant="contained"
+                        color="primary"
+                        onClick={handleSubmit}
+                      >
+                        Submit
+                      </Button>
+                    ) : (
+                      <Button
+                        size="medium"
+                        variant="contained"
+                        color="primary"
+                        onClick={handleNext}
+                      >
+                        Next
+                        <KeyboardArrowRight />
+                      </Button>
+                    )
+                  }
+                  backButton={
+                    <Button size="medium" onClick={handleBack} disabled={activeStep === 0}>
+                      <KeyboardArrowLeft />
+                      Back
+                    </Button>
+                  }
+                />
+              </Box>
+            )}
+
+            <>
+              {!isMobile && (
                 <Box display="flex" flexDirection="row" mt={4}>
-                  <Button disabled={activeStep === 0} onClick={handleBack}>
+                  <Button
+                    disabled={activeStep === 0}
+                    onClick={handleBack}
+                    startIcon={<KeyboardArrowLeft />}
+                  >
                     Back
                   </Button>
                   <Box flex="1 1 auto" />
                   {activeStep !== steps.length - 1 ? (
-                    <Button onClick={handleNext} variant="contained">
+                    <Button
+                      onClick={handleNext}
+                      variant="contained"
+                      endIcon={<KeyboardArrowRight />}
+                    >
                       Next
                     </Button>
                   ) : (
@@ -1174,19 +1235,19 @@ const GuestInformationStepper = () => {
                     </Button>
                   )}
                 </Box>
-              </>
-            )}
+              )}
+            </>
           </Card>
         </Grid>
       </Grid>
       <Backdrop
         open={submitting}
         sx={{
-          zIndex: (theme) => theme.zIndex.modal + 1,
+          zIndex: 99999,
         }}
       >
         <Box display="flex" flexDirection="column" alignItems="center">
-          <CircularProgress color="inherit" />
+          <CircularProgress color="primary" />
         </Box>
       </Backdrop>
       <Snackbar

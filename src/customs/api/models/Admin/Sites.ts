@@ -44,6 +44,7 @@ export type Item = {
   image: string | null;
   can_visited: boolean;
   need_approval: boolean;
+  // need_invitation: boolean;
   type_approval: number;
   can_signout: boolean;
   auto_signout: boolean;
@@ -53,6 +54,8 @@ export type Item = {
   map_link: string;
   can_contactless_login: boolean;
   need_document: boolean;
+  parent: string | null;
+  is_child: boolean;
   access: Access[];
   parking: Parking[];
   tracking: Tracking[];
@@ -106,12 +109,13 @@ export type GetSiteByIdResponse = {
 
 //CREATE
 export const CreateSiteRequestSchema = z.object({
-  type: z.number().default(0),
+  type: z.number().default(0).optional(),
   name: z.string().default(''),
   description: z.string().nullable().optional().default(''),
   image: z.string().nullable().optional().default(''),
   can_visited: z.boolean().default(false),
   need_approval: z.boolean().default(false),
+  // need_invitation: z.boolean().default(false),
   type_approval: z.number().default(0),
   can_signout: z.boolean().default(false),
   auto_signout: z.boolean().default(false),
@@ -121,6 +125,8 @@ export const CreateSiteRequestSchema = z.object({
   can_contactless_login: z.boolean().default(false),
   need_document: z.boolean().default(false),
   is_registered_point: z.boolean().default(false),
+  parent: z.string().nullable().optional(),
+  is_child: z.boolean().default(false),
   access: z
     .array(
       z.object({
@@ -243,6 +249,7 @@ export const UpdateSiteRequestSchema = z.object({
   description: z.string().nullable().optional().default(''),
   image: z.string().nullable().optional().default(''),
   can_visited: z.boolean().default(false),
+  // need_invitation: z.boolean().default(false),
   need_approval: z.boolean().default(false),
   type_approval: z.number().default(0),
   can_signout: z.boolean().default(false),
@@ -253,6 +260,8 @@ export const UpdateSiteRequestSchema = z.object({
   can_contactless_login: z.boolean().default(false),
   need_document: z.boolean().default(false),
   is_registered_point: z.boolean().default(false).optional().nullable(),
+  parent: z.string().nullable().optional().default(''),
+  is_child: z.boolean().default(false).optional().nullable(),
   access: z
     .array(
       z.object({

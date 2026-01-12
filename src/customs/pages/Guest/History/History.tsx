@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import dayjs from 'dayjs';
 import {
   Box,
   Grid2 as Grid,
@@ -18,6 +17,11 @@ import {
   Divider,
   IconButton,
 } from '@mui/material';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+dayjs.extend(utc);
+dayjs.extend(timezone);
 import PageContainer from 'src/components/container/PageContainer';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
@@ -29,6 +33,7 @@ import FilterMoreContent from './FilterMoreContent';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { getHistory, getListSite } from 'src/customs/api/visitor';
 import { getAllSite } from 'src/customs/api/admin';
+import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 // import FilterMoreContent from './Invitation/FilterMoreContent';
 const History = () => {
   const { token } = useSession();
@@ -40,6 +45,7 @@ const History = () => {
   const [edittingId, setEdittingId] = useState<string | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [historyData, setHistoryData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
   const cards = [
     {
       title: 'Total History',
@@ -49,22 +55,6 @@ const History = () => {
       color: 'none',
     },
   ];
-  const [tableData, setTableData] = useState<[]>([]);
-  const [agenda, setAgenda] = useState('');
-
-  const tableDataHistory = [
-    {
-      id: 1,
-      name: 'Kunjungan',
-      phone: '081234567890',
-      registered_site: 'Gedung A',
-      day: 'Mon, 14 Jul 2025 09:00 AM',
-    },
-  ];
-
-  const handleAdd = () => {
-    setOpenDialog(true);
-  };
 
   const [filters, setFilters] = useState<any>({
     site_id: '',
@@ -82,31 +72,36 @@ const History = () => {
 
     const fetchData = async () => {
       try {
-        // hitung tanggal
+        setLoading(true);
         const start_date = dayjs().subtract(7, 'day').format('YYYY-MM-DD');
-        const end_date = dayjs().add(0, 'day').format('YYYY-MM-DD'); 
+        const end_date = dayjs().add(0, 'day').format('YYYY-MM-DD');
 
-        // if (isDataReady) {
         const res = await getHistory(token as string, start_date, end_date, filters.site_id ?? '');
-        setHistoryData(res?.collection ?? []);
-        // }
+        const rows = res.collection.map((item: any) => {
+          return {
+            id: item.id,
+            name: item.visitor?.name || '-',
+            agenda: item.agenda || '-',
+            site: item.site_place_name || '-',
+            visitor_status: item.visitor_status || '-',
+            // invitation_code: item.invitation_code || '-',
+            vehicle_type: item.vehicle_type || '-',
+            vehicle_plate_number: item.vehicle_plate_number || '-',
+            host: item.host_name || item.host || '-',
+            visitor_period_start: item.visitor_period_start || '-',
+            visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
+          };
+        });
+        setHistoryData(rows ?? []);
       } catch (e) {
         console.error(e);
+      } finally {
+        setTimeout(() => setLoading(false), 500);
       }
     };
 
     fetchData();
-  }, [token, refreshTrigger]);
-
-  // useEffect(() => {
-  //   if (!token) return;
-  //   const fetchSites = async () => {
-  //     const res = await getListSite(token as string); // misalnya endpoint: /site/list
-  //     setSiteOptions(res?.collection ?? []);
-  //   };
-
-  //   fetchSites();
-  // }, [token]);
+  }, [token]);
 
   return (
     <>
@@ -117,57 +112,27 @@ const History = () => {
               <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
             </Grid>
             <Grid size={{ xs: 12, lg: 12 }}>
-              {/* {isDataReady ? ( */}
               <DynamicTable
+                loading={loading}
                 overflowX={'auto'}
                 data={historyData}
-                isHavePagination={true}
+                isHavePagination={false}
                 selectedRows={selectedRows}
-                // defaultRowsPerPage={rowsPerPage}
-                rowsPerPageOptions={[5, 10, 20]}
-                // onPaginationChange={(page, rowsPerPage) => {
-                //   setPage(page);
-                //   setRowsPerPage(rowsPerPage);
-                // }}
-                isHaveChecked={true}
+                isHaveChecked={false}
                 isHaveAction={false}
-                isHaveSearch={true}
+                isHaveSearch={false}
+                isHaveHeaderTitle={true}
+                titleHeader='History'
                 isHaveFilter={false}
                 isHaveExportPdf={false}
+                isHavePeriod={true}
                 isHaveExportXlf={false}
                 isHaveFilterDuration={false}
                 isHaveAddData={false}
-                isHaveFilterMore={true}
+                isHaveFilterMore={false}
                 isHaveHeader={false}
-                isHavePdf={true}
-                filterMoreContent={
-                  <FilterMoreContent
-                    filters={filters}
-                    setFilters={setFilters}
-                    onApplyFilter={handleApplyFilter}
-                    siteOptions={siteOptions}
-                  />
-                }
-                // onCheckedChange={(selected) => setSelectedRows(selected)}
-                // onEdit={(row) => {
-                //   handleEdit(row.id);
-                //   setEdittingId(row.id);
-                // }}
-                // onDelete={(row) => handleDelete(row.id)}
-                // onBatchDelete={handleBatchDelete}
-                // onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-                // onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
-                // onAddData={() => {
-                //   handleAdd();
-                // }}
+                isHavePdf={false}
               />
-              {/* ) : (
-                <Card sx={{ width: '100%' }}>
-                  <Skeleton />
-                  <Skeleton animation="wave" />
-                  <Skeleton animation={false} />
-                </Card>
-              )} */}
             </Grid>
           </Grid>
         </Box>

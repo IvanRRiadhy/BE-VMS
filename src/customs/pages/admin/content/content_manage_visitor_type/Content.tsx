@@ -47,8 +47,6 @@ import { useRef } from 'react';
 import TopCard from 'src/customs/components/cards/TopCard';
 import {
   showConfirmDelete,
-  showErrorAlert,
-  showSuccessAlert,
   showSwal,
 } from 'src/customs/components/alerts/alerts';
 
@@ -69,7 +67,7 @@ const Content = () => {
   const [loadingData, setLoadingData] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [totalRecords, setTotalRecords] = useState(0);
-  const [tableRowVisitorType, setTableRowVisitorType] = React.useState<VisitorTypeTableRow[]>([]);
+  const [tableRowVisitorType, setTableRowVisitorType] = useState<VisitorTypeTableRow[]>([]);
   const [selectedRows, setSelectedRows] = useState<VisitorTypeTableRow[]>([]);
   const [formDataAddVisitorType, setFormDataAddVisitorType] = useState<CreateVisitorTypeRequest>(
     () => {
@@ -80,13 +78,14 @@ const Content = () => {
   const [edittingId, setEdittingId] = useState('');
   const defaultFormData = CreateVisitorTypeRequestSchema.parse({});
   const isFormChanged = JSON.stringify(formDataAddVisitorType) !== JSON.stringify(defaultFormData);
-  const [openFormCreateVisitorType, setOpenFormCreateVisitorType] = React.useState(false);
-  const [confirmDialogOpen, setConfirmDialogOpen] = React.useState(false);
+  const [openFormCreateVisitorType, setOpenFormCreateVisitorType] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
-  const [openFormCreateSiteSpace, setOpenFormCreateSiteSpace] = React.useState(false);
+  const [openFormCreateSiteSpace, setOpenFormCreateSiteSpace] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [isDataReady, setIsDataReady] = useState(false);
   const dialogRef = useRef<HTMLDivElement | null>(null);
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [documentIdentities, setDocumentIdentities] = useState<
     { document_id: string; identity_type: number }[]
   >([]);
@@ -110,9 +109,9 @@ const Content = () => {
         !dialogRef.current.contains(event.target as Node)
       ) {
         if (isFormChanged) {
-          setConfirmDialogOpen(true); // buka dialog konfirmasi
+          setConfirmDialogOpen(true);
         } else {
-          handleCloseDialog(); // tutup langsung kalau tidak ada perubahan
+          handleCloseDialog();
         }
       }
     }
@@ -140,9 +139,9 @@ const Content = () => {
           start,
           rowsPerPage,
           sortColumn,
+          sortDir,
           searchKeyword,
         );
-        // const document = await getAllDocumentPagination(token, start, 99, sortColumn);
         setVisitorData(response.collection);
         setTotalRecords(response.RecordsTotal);
         setTotalFilteredRecords(response.RecordsFiltered);
@@ -153,10 +152,9 @@ const Content = () => {
           description: item.description,
           period: item.period,
         }));
-        // setTableData(mappedDocument);
         if (rows) {
           setTableRowVisitorType(rows);
-          setIsDataReady(true);
+          // setIsDataReady(true);
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -172,7 +170,6 @@ const Content = () => {
     setOpenFormCreateVisitorType(true);
   };
   const handleCloseDialog = () => {
-    // localStorage.removeItem('unsavedVisitorTypeData'); // Pastikan dihapus hanya saat keluar
     setOpenFormCreateVisitorType(false);
   };
 
@@ -191,15 +188,6 @@ const Content = () => {
     handleOpenDialog();
   }, []);
 
-  const identityLabelMap: Record<number, string> = {
-    1: 'NIK',
-    2: 'KTP',
-    3: 'PASSPORT',
-    4: 'DriverLicense',
-    5: 'CardAccess',
-    6: 'Face',
-  };
-
   const identityValueMap: Record<string, number> = {
     NIK: 0,
     KTP: 1,
@@ -211,11 +199,9 @@ const Content = () => {
 
   const normalizeDetail = (d: any) => ({
     ...d,
-    // FE kamu butuh array of { document_id }, sementara API mengembalikan objek lengkap
     visitor_type_documents: (d.visitor_type_documents ?? []).map((x: any) => ({
       document_id: x.document_id,
     })),
-    // pastikan semua form array, bukan null
     section_page_visitor_types: (d.section_page_visitor_types ?? []).map((s: any, i: number) => ({
       ...s,
       sort: s.sort ?? i,
@@ -231,15 +217,14 @@ const Content = () => {
 
       const resp = await getVisitorTypeById(token as string, id);
       const raw = resp?.collection;
-      if (!raw) throw new Error('No data found.');
+
 
       const hydrated = normalizeDetail(raw);
 
       setEdittingId(id);
       setFormDataAddVisitorType(hydrated);
 
-      // 🧩 Ambil langsung visitor_type_documents dari raw (bukan dari hydrated)
-      if (Array.isArray(raw.visitor_type_documents)) {
+      if (Array.isArray(raw?.visitor_type_documents)) {
         const mappedDocs = raw.visitor_type_documents.map((doc: any) => ({
           document_id: doc.document_id,
           identity_type:
@@ -250,7 +235,6 @@ const Content = () => {
 
         setDocumentIdentities(mappedDocs);
       } else {
-        // console.warn('⚠️visitor_type_documents tidak ditemukan di response');
         setDocumentIdentities([]);
       }
 
@@ -259,7 +243,7 @@ const Content = () => {
         JSON.stringify({
           id,
           ...hydrated,
-          visitor_type_documents: raw.visitor_type_documents ?? [],
+          visitor_type_documents: raw?.visitor_type_documents ?? [],
         }),
       );
 
@@ -273,7 +257,7 @@ const Content = () => {
 
   const handleConfirmEdit = () => {
     setConfirmDialogOpen(false);
-    localStorage.removeItem('unsavedCustomDataData'); // Bersihkan data tersimpan
+    localStorage.removeItem('unsavedVisitorTypeData');
 
     if (pendingEditId) {
       const nextItem = visitorData.find((item) => item.id === pendingEditId);
@@ -386,21 +370,17 @@ const Content = () => {
     if (!token) return;
 
     // setLoading(true);
-    const confirmed = await showConfirmDelete(
-      'Are you sure to delete this visitor type?',
-      // "You won't be able to revert this!",
-    );
+    const confirmed = await showConfirmDelete('Are you sure to delete this visitor type?');
     if (!confirmed) return;
     try {
       setLoadingData(true);
       await deleteVisitorType(token, id);
 
       setRefreshTrigger((prev) => prev + 1);
-      // showSuccessAlert('Deleted!', 'Visitor type has been deleted.');
-      showSwal('success', 'Visitor type has been deleted.');
+      showSwal('success', 'Successfully deleted visitor type!');
     } catch (error) {
       console.error(error);
-      showErrorAlert('Failed!', 'Failed to delete visitor type.');
+      showSwal('error', 'Failed to delete visitor type.');
     } finally {
       setTimeout(() => {
         setLoadingData(false);
@@ -413,22 +393,22 @@ const Content = () => {
 
     const result = await Swal.fire({
       title: `Are you sure to delete ${rows.length} items?`,
-      text: "You won't be able to revert this!",
+      // text: "You won't be able to revert this!",
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonText: 'Yes, delete all!',
+      confirmButtonText: 'Yes',
+      cancelButtonText: 'No',
     });
 
     if (result.isConfirmed) {
       setLoading(true);
       try {
-        // Bisa pakai Promise.all untuk hapus semua
         await Promise.all(rows.map((row) => deleteVisitorType(token, row.id)));
         setRefreshTrigger((prev) => prev + 1);
-        Swal.fire('Deleted!', 'Selected data has been deleted.', 'success');
-        setSelectedRows([]); // reset selected rows
+        showSwal('success', 'Successfully deleted selected items!');
+        setSelectedRows([]); 
       } catch (error) {
-        Swal.fire('Error!', 'Failed to delete some items.', 'error');
+        showSwal('error', 'Failed to delete some items.');
       } finally {
         setLoading(false);
       }
@@ -443,11 +423,9 @@ const Content = () => {
       <Container title="Visitor Type" description="Visitor Type Page">
         <Box>
           <Grid container spacing={3}>
-            {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
               <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
             </Grid>
-            {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
               <DynamicTable
                 loading={loading}
@@ -460,7 +438,7 @@ const Content = () => {
                 isHaveSearch={true}
                 isHavePagination={true}
                 defaultRowsPerPage={rowsPerPage}
-                rowsPerPageOptions={[5, 10, 20, 50, 100, 200, 500]}
+                rowsPerPageOptions={[10, 25, 50, 100]}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);
@@ -494,12 +472,7 @@ const Content = () => {
           </Grid>
         </Box>
       </Container>
-      <Dialog
-        open={openFormCreateVisitorType}
-        onClose={handleDialogClose} // sebelumnya: handleCloseDialog
-        maxWidth="xl"
-        fullWidth
-      >
+      <Dialog open={openFormCreateVisitorType} onClose={handleDialogClose} maxWidth="xl" fullWidth>
         <DialogTitle
           sx={{
             // padding: { xs: 2, md: 1 },
@@ -513,9 +486,9 @@ const Content = () => {
             aria-label="close"
             onClick={() => {
               if (isFormChanged) {
-                setConfirmDialogOpen(true); // ada perubahan, tampilkan dialog konfirmasi
+                setConfirmDialogOpen(true);
               } else {
-                handleCloseDialog(); // tidak ada perubahan, langsung tutup
+                handleCloseDialog();
               }
             }}
             sx={{
@@ -559,10 +532,10 @@ const Content = () => {
           open={loadingData}
           sx={{
             color: '#fff',
-            zIndex: (t) => (t.zIndex.snackbar ?? 1400) - 1, // di atas modal (1300), di bawah snackbar (1400)
+            zIndex: 999999,
           }}
         >
-          <CircularProgress />
+          <CircularProgress color="primary" />
         </Backdrop>
       </Portal>
     </PageContainer>

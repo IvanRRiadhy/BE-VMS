@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // const axiosInstance = axios.create({
-//   baseURL: `https://finding-town-rear-gel.trycloudflare.com/api`,
+//   baseURL: `https://classification-addressed-sections-sisters.trycloudflare.com/api`,
 //   headers: {
 //     'Content-Type': 'application/json',
 //   },
@@ -9,14 +9,14 @@ import axios from 'axios';
 // });
 
 // const axiosInstance2 = axios.create({
-//   baseURL: `https://finding-town-rear-gel.trycloudflare.com`,
+//   baseURL: `https://classification-addressed-sections-sisters.trycloudflare.com`,
 //   headers: {
 //     'Content-Type': 'application/json',
 //   },
 //   // withCredentials: true,
 // });
 
-// export const BASE_URL = `https://finding-town-rear-gel.trycloudflare.com`;
+// export const BASE_URL = `https://classification-addressed-sections-sisters.trycloudflare.com`;
 export const BASE_URL = `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}`;
 
 const axiosInstance = axios.create({

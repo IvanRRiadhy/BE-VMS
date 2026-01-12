@@ -137,8 +137,8 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({ formData, setFormData
         </Grid2> */}
 
         {/* District Name */}
-        <CustomFormLabel sx={{ my: 1 }} htmlFor="name">
-          <Typography variant="body1">District Name</Typography>
+        <CustomFormLabel sx={{ my: 1, fontWeight: 500 }} htmlFor="name" required>
+          District Name
         </CustomFormLabel>
         <CustomTextField
           id="name"
@@ -151,8 +151,8 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({ formData, setFormData
         />
 
         {/* District Code */}
-        <CustomFormLabel sx={{ my: 1 }} htmlFor="code">
-          <Typography variant="body1">District Code</Typography>
+        <CustomFormLabel sx={{ my: 1, fontWeight: 500 }} htmlFor="code" required>
+          District Code
         </CustomFormLabel>
         <CustomTextField
           id="code"
@@ -164,8 +164,8 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({ formData, setFormData
           fullWidth
         />
 
-        <CustomFormLabel htmlFor="host" sx={{ my: 1 }}>
-          <Typography variant="body1">Head of District</Typography>
+        <CustomFormLabel htmlFor="host" sx={{ my: 1, fontWeight: 500 }} required>
+          Head of District
         </CustomFormLabel>
         <Autocomplete
           id="host"

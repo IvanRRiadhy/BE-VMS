@@ -377,7 +377,7 @@ const FormWizardAddVisitorCard = ({
                 variant="outlined"
                 fullWidth
                 disabled={isBatchEdit}
-                error={Boolean(errors?.remarks)} // kasih border merah kalau error
+                error={Boolean(errors?.remarks)} 
                 helperText={errors?.remarks}
               />
             </Grid2>
@@ -565,7 +565,7 @@ const FormWizardAddVisitorCard = ({
 
             {/* Card Type */}
             <Grid2 size={{ xs: 6, sm: 6 }}>
-              <CustomFormLabel htmlFor="card-type" sx={{ mt: 0 }}>
+              <CustomFormLabel htmlFor="card-type" sx={{ mt: 2 }}>
                 <Typography variant="caption">Card Type</Typography>
               </CustomFormLabel>
               <CustomTextField
@@ -621,7 +621,7 @@ const FormWizardAddVisitorCard = ({
                 variant="outlined"
                 fullWidth
                 disabled={isBatchEdit}
-                error={Boolean(errors?.card_number)} // kasih border merah kalau error
+                error={Boolean(errors?.card_number)} 
                 helperText={errors?.card_number}
               />
             </Grid2>

@@ -248,13 +248,9 @@ import { GetAllSettingResponse } from './models/Admin/Setting';
 //#region report
 
 export const generateReport = async (token: string, payload: any): Promise<any> => {
-  const response = await axiosInstance.post(
-    '/report/visitor-transaction',
-    payload, // ✅ kirim body request di sini
-    {
-      headers: { Authorization: `Bearer ${token}` },
-    },
-  );
+  const response = await axiosInstance.post('/report/visitor-transaction/generate', payload, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
   return response.data;
 };
 //#region User
@@ -663,10 +659,60 @@ export const deleteVisitorCard = async (
 
 //#region Visitor
 // Get  All
-export const getAllVisitor = async (token: string): Promise<GetAllVisitorPaginationResponse> => {
+export const getAllVisitor = async (token: string): Promise<any> => {
   const response = await axiosInstance.get('/visitor', {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });
+  return response.data;
+};
+
+export const getListVisitor = async (token: string): Promise<any> => {
+  const response = await axiosInstance.get('/visitor/invitation', {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+const filters = {};
+
+const toKebabKeys = (obj: Record<string, any>) =>
+  Object.fromEntries(
+    Object.entries(obj)
+      .filter(([_, v]) => v !== '' && v !== null && v !== undefined)
+      .map(([k, v]) => [k.replace(/_/g, '-'), v]),
+  );
+
+export const getListVisitorPagination = async (
+  token: string,
+  start: number,
+  length: number,
+  sortDir = '',
+  keyword: string = '',
+  filters: Record<string, any> = {},
+): Promise<any> => {
+  // Convert filter keys to kebab-case & remove empty values
+  const cleanedFilters = Object.fromEntries(
+    Object.entries(filters)
+      .filter(([_, v]) => v !== '' && v !== null && v !== undefined)
+      .map(([k, v]) => [k.replace(/_/g, '-'), v]),
+  );
+
+  const params: Record<string, any> = {
+    start,
+    length,
+    sort_dir: sortDir,
+    'search[value]': keyword,
+    ...cleanedFilters,
+  };
+
+  const response = await axiosInstance.get('/visitor/invitation/dt', {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+    },
+    params,
+  });
+
   return response.data;
 };
 
@@ -700,6 +746,7 @@ export const getAllVisitorPagination = async (
   keyword: string = '',
   start_date: string,
   end_date: string,
+  status?: string,
 ): Promise<GetAllVisitorPaginationResponse> => {
   const params: Record<string, any> = {
     start,
@@ -709,6 +756,7 @@ export const getAllVisitorPagination = async (
     'search[value]': keyword,
     'start-date': start_date ? format(new Date(start_date), 'yyyy-MM-dd') : '',
     'end-date': end_date ? format(new Date(end_date), 'yyyy-MM-dd') : '',
+    status,
   };
   const response = await axiosInstance.get('/visitor/dt', {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
@@ -796,6 +844,14 @@ export const deleteVisitor = async (
 
 //#region Visitor Type
 
+// Get Camera Anaytics
+export const getCameraAnalytics = async (token: string): Promise<any> => {
+  const response = await axiosInstance.get('/integration/camera-analytics', {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
 // Get All
 export const getAllVisitorType = async (token: string): Promise<GetAllVisitorTypeResponse> => {
   const response = await axiosInstance.get('/visitor-type', {
@@ -821,6 +877,7 @@ export const getAllVisitorTypePagination = async (
   start: number,
   length: number,
   sortColumn: string,
+  sort_dir: string,
   keyword: string = '',
   // gender?: number,
   // joinStart?: string,
@@ -843,6 +900,7 @@ export const getAllVisitorTypePagination = async (
       start,
       length,
       sort_column: sortColumn,
+      'sort_dir': sort_dir,
       'search[value]': keyword,
     },
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
@@ -866,7 +924,7 @@ export const createVisitorType = async (
 export const updateVisitorType = async (
   token: string,
   visitorId: string,
-  data: UpdateVisitorTypeRequest,
+  data: any,
 ): Promise<UpdateVisitorTypeResponse> => {
   console.log(data);
   const response = await axiosInstance.put(`/visitor-type/${visitorId}`, data, {
@@ -1178,12 +1236,19 @@ export const getAllDocumentPagination = async (
   token: string,
   start: number,
   length: number,
-  sortColumn: string,
+  sortColumn?: string,
+  sortDir?: string,
   keyword?: string,
 ): Promise<GetAllDocumentPaginationResponse> => {
   try {
     const response = await axiosInstance.get(`/document/dt`, {
-      params: { start, length, sort_column: sortColumn, 'search[value]': keyword },
+      params: {
+        start,
+        length,
+        sort_column: sortColumn,
+        'search[value]': keyword,
+        sort_dir: sortDir,
+      },
       headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
     });
     return response.data;
@@ -1437,7 +1502,9 @@ export const getAllSitePagination = async (
   sortDir?: string,
   keyword: string = '',
   type?: number,
-): Promise<GetAllSitesPaginationResponse> => {
+  parent?: string,
+  is_child?: boolean,
+): Promise<any> => {
   const response = await axiosInstance.get(`/site/dt`, {
     params: {
       start,
@@ -1446,6 +1513,8 @@ export const getAllSitePagination = async (
       sort_dir: sortDir,
       'search[value]': keyword,
       ...(type !== undefined ? { type } : {}),
+      ...(parent ? { parent } : {}),
+      ...(is_child !== undefined ? { 'is-child': is_child } : {}),
     },
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });
@@ -1814,12 +1883,12 @@ export const deleteBrand = async (brandId: string, token: string): Promise<Updat
 //#endregion
 
 //#region AccessControl API
-export const getAllAccessControl = async (token: string): Promise<GetAllAccessControlResponse> => {
+export const getAllAccessControl = async (token: string): Promise<any> => {
   try {
     const response = await axiosInstance.get(`/access-control`, {
       headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
     });
-    return response.data as GetAllAccessControlResponse;
+    return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 400) {
       throw error.response.data as ValidationErrorResponse;
@@ -1939,11 +2008,18 @@ export const getAllCustomFieldPagination = async (
   start: number,
   length: number,
   sortColumn: string,
+  sortDir: string,
   keyword?: string,
 ): Promise<GetAllCustomFieldPaginationResponse> => {
   try {
     const response = await axiosInstance.get(`/custom-field/dt`, {
-      params: { start, length, sort_column: sortColumn, 'search[value]': keyword },
+      params: {
+        start,
+        length,
+        sort_column: sortColumn,
+        'search[value]': keyword,
+        sort_dir: sortDir,
+      },
       headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
     });
     return response.data;
@@ -3649,6 +3725,98 @@ export const updateTRXVisitor = async (
   try {
     const response = await axiosInstance.put(`/integration-trackingble/trx-visitor/${id}`, data, {
       headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const getIntegrationIpsotekCategory = async (token: string): Promise<any> => {
+  try {
+    const response = await axiosInstance.get(`/integration-ipsotek/category`, {
+      headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+// get by id
+
+export const getIntegrationIpsotekCategoryById = async (integrationId: string): Promise<any> => {
+  try {
+    const response = await axiosInstance.get(`/integration-ipsotek/category/${integrationId}`, {
+      headers: { Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const getIntegrationIpsotekById = async (
+  integrationId: string,
+  id: string,
+): Promise<any> => {
+  try {
+    const response = await axiosInstance.get(
+      `/integration-ipsotek/category/${integrationId}/${id}`,
+      {
+        headers: { Accept: 'application/json' },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const createIpsotekCategory = async (data: any, id: string, token: string): Promise<any> => {
+  try {
+    const response = await axiosInstance.post(`/integration-ipsotek/category/${id}`, data, {
+      headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const updateIpsotekCategory = async (id: string, data: any, token: string): Promise<any> => {
+  try {
+    const response = await axiosInstance.put(`/integration-ipsotek/category/${id}`, data, {
+      headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
+export const deleteIpsotekCategory = async (id: string, token: string): Promise<any> => {
+  try {
+    const response = await axiosInstance.delete(`/integration-ipsotek/category/${id}`, {
+      headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
     });
     return response.data;
   } catch (error) {

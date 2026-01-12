@@ -50,10 +50,8 @@ const Profile = () => {
     localStorage.clear();
     sessionStorage.clear();
 
-    // 💾 Simpan pesan ke sessionStorage
     sessionStorage.setItem('logoutMsg', 'You have been logged out successfully.');
 
-    // 🚪 Redirect ke halaman login
     navigate('/', { replace: true });
   }, [navigate, clearToken]);
 

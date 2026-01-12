@@ -60,7 +60,14 @@ import FlipCameraAndroidIcon from '@mui/icons-material/FlipCameraAndroid';
 import FlashOnIcon from '@mui/icons-material/FlashOn';
 import FlashOffIcon from '@mui/icons-material/FlashOff';
 import FilterMoreContent from './FilterMoreContent';
-import { IconCamera, IconClipboard, IconQrcode, IconUser, IconUsers } from '@tabler/icons-react';
+import {
+  IconArrowRight,
+  IconCamera,
+  IconClipboard,
+  IconQrcode,
+  IconUser,
+  IconUsers,
+} from '@tabler/icons-react';
 import EmployeeDetailDialog from './Dialog/EmployeeDetailDialog';
 import VisitorDetailDialog from './Dialog/VisitorDetailDialog';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
@@ -79,7 +86,7 @@ type VisitorTableRow = {
   organization: string;
   gender: string;
   phone: string;
-  is_vip: string;
+  // is_vip: string;
   visitor_period_start: string;
   visitor_period_end: string;
   host: string;
@@ -117,7 +124,7 @@ const Content = () => {
     {
       title: 'Total Visitor',
       icon: IconUsers,
-      subTitle: `${totalRecords}`,
+      subTitle: `${totalFilteredRecords}`,
       subTitleSetting: 10,
       color: 'none',
     },
@@ -162,7 +169,6 @@ const Content = () => {
     if (isFormChanged) {
       localStorage.setItem('unsavedVisitorData', JSON.stringify(formDataAddVisitor));
     } else {
-      // kalau balik ke default, hapus jejak draft
       localStorage.removeItem('unsavedVisitorData');
     }
   }, [formDataAddVisitor, isFormChanged]);
@@ -192,11 +198,23 @@ const Content = () => {
   // Qr Scanner
   const [qrValue, setQrValue] = useState('');
   const [qrMode, setQrMode] = useState<'manual' | 'scan'>('manual');
-  const [hasDecoded, setHasDecoded] = useState(false); // cegah multi-callback beruntun
+  const [hasDecoded, setHasDecoded] = useState(false);
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
   const [torchOn, setTorchOn] = useState(false);
   const scanContainerRef = useRef<HTMLDivElement | null>(null);
   const [wizardKey, setWizardKey] = useState(0);
+
+  // function mapIntegrationToTableRow(item: any) {
+  //   return {
+  //     id: item.id,
+  //     name: item.name,
+  //     brand_name: item.brand_name,
+  //     brand_type: formatEnumLabel(BrandType[item.brand_type]),
+  //     integration_type: formatEnumLabel(IntegrationType[item.integration_type]),
+  //     api_type_auth: formatEnumLabel(ApiTypeAuth[item.api_type_auth]),
+  //     api_url: item.api_url || '',
+  //   };
+  // }
 
   const resetRegisteredFlow = () => {
     setSelectedSite(null);
@@ -239,34 +257,22 @@ const Content = () => {
 
   const statusMap: Record<string, string> = {
     All: 'All',
-    Preregis: 'Preregis', // 👈 mapping fix
+    Preregis: 'Preregis',
     Checkin: 'Checkin',
     Checkout: 'Checkout',
     Denied: 'Denied',
     Block: 'Block',
   };
 
-  // const formatDateTime = (dateStr?: string, extendMinutes?: number) => {
-  //   if (!dateStr) return '-';
-
-  //   // SELALU ANGGAP INPUT INI UTC WALAUPUN TIDAK ADA 'Z'
-  //   const base = moment.utc(dateStr);
-
-  //   if (extendMinutes && extendMinutes > 0) {
-  //     base.add(extendMinutes, 'minutes');
-  //   }
-
-  //   return base.tz('Asia/Jakarta').format('DD MMM YYYY, HH:mm');
-  // };
-
   useEffect(() => {
-    if (!token) return; // tunggu dictionary siap
+    if (!token) return;
     const fetchData = async () => {
       setLoading(true);
-      setIsDataReady(false);
+      // setIsDataReady(false);
 
       try {
         const start = page * rowsPerPage;
+        const status = selectedType === 'All' ? undefined : statusMap[selectedType];
         const response = await getAllVisitorPagination(
           token,
           start,
@@ -275,6 +281,7 @@ const Content = () => {
           searchKeyword,
           startDate,
           endDate,
+          status,
         );
         let rows = response.collection.map((item: any) => {
           return {
@@ -286,26 +293,30 @@ const Content = () => {
             organization: item.visitor_organization_name || '-',
             gender: item.visitor_gender || '-',
             phone: item.visitor_phone || '-',
-            is_vip: item.visitor_is_vip || '-',
-            visitor_period_start: item.visitor_period_start || '-', // BIARKAN apa adanya
+            // is_vip: item.is_vip || '-',
+            visitor_period_start: item.visitor_period_start || '-',
             visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
             host: item.host ?? '-',
             visitor_status: item.visitor_status || '-',
           };
         });
 
-        if (selectedType !== 'All') {
-          const apiStatus = statusMap[selectedType];
-          rows = rows.filter((r) => r.visitor_status === apiStatus);
-        }
+        // if (selectedType !== 'All') {
+        //   const apiStatus = statusMap[selectedType];
+        //   rows = rows.filter((r) => r.visitor_status === apiStatus);
+        // }
 
         setTableRowVisitors(response.collection);
         setTotalRecords(response.RecordsTotal);
         setTotalFilteredRecords(response.RecordsFiltered);
         setTableCustomVisitor(rows);
-        setIsDataReady(true);
+        // setIsDataReady(true);
       } catch (err) {
         console.error('Failed to fetch visitor data:', err);
+        setTableCustomVisitor([]);
+        setTotalRecords(0);
+        setTotalFilteredRecords(0);
+        setTableRowVisitors([]);
       } finally {
         setLoading(false);
       }
@@ -323,77 +334,6 @@ const Content = () => {
     endDate,
     selectedType,
   ]);
-
-  // const start = page * rowsPerPage;
-
-  // const {
-  //   data: visitorResult,
-  //   isLoading,
-  //   isFetching,
-  //   isPlaceholderData,
-  //   refetch,
-  // } = useQuery({
-  //   queryKey: [
-  //     'visitors',
-  //     page,
-  //     rowsPerPage,
-  //     sortDir,
-  //     searchKeyword,
-  //     startDate,
-  //     endDate,
-  //     selectedType,
-  //   ],
-  //   queryFn: async () => {
-  //     const response = await getAllVisitorPagination(
-  //       token!,
-  //       start,
-  //       rowsPerPage,
-  //       sortDir,
-  //       searchKeyword,
-  //       startDate,
-  //       endDate,
-  //     );
-
-  //     // 🔹 Map hasil API jadi format tabel
-  //     let rows = response.collection.map((item: any) => ({
-  //       id: item.id,
-  //       visitor_type: item.visitor_type_name ?? '-',
-  //       name: item.visitor_name ?? '-',
-  //       identity_id: item.visitor_identity_id ?? '-',
-  //       email: item.visitor_email ?? '-',
-  //       organization: item.visitor_organization_name ?? '-',
-  //       gender: item.visitor_gender ?? '-',
-  //       phone: item.visitor_phone ?? '-',
-  //       is_vip: item.visitor_is_vip ?? '-',
-  //       visitor_period_start: item.visitor_period_start ?? '-',
-  //       visitor_period_end: item.visitor_period_end ?? '-',
-  //       host: item.host ?? '-',
-  //       visitor_status: item.visitor_status ?? '-',
-  //     }));
-
-  //     // 🔹 Tambahkan filter berdasarkan selectedType
-  //     if (selectedType !== 'All') {
-  //       const apiStatus = statusMap[selectedType];
-  //       rows = rows.filter((r) => r.visitor_status === apiStatus);
-  //     }
-
-  //     // 🔹 Return data & info pagination
-  //     return {
-  //       rows,
-  //       totalRecords: response.RecordsTotal ?? response.collection.length,
-  //       totalFilteredRecords: response.RecordsFiltered ?? rows.length,
-  //     };
-  //   },
-  //   enabled: !!token,
-  //   staleTime: 60 * 1000,
-  //   gcTime: 5 * 60 * 1000,
-  //   refetchOnWindowFocus: false,
-  //   placeholderData: (prev) => prev, // ✅ langsung tampil data lama
-  // });
-
-  // const tableCustomVisitor = visitorResult?.rows ?? [];
-  // const totalRecords = visitorResult?.totalRecords ?? 0;
-  // const totalFilteredRecords = visitorResult?.totalFilteredRecords ?? 0;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -421,7 +361,6 @@ const Content = () => {
         freshForm = CreateVisitorRequestSchema.parse({});
       }
     } else {
-      // <── penting: pakai parse baru, bukan defaultFormData state lama
       freshForm = CreateVisitorRequestSchema.parse({});
     }
 
@@ -436,7 +375,7 @@ const Content = () => {
     setSelectedSite(null);
     setFormDataAddVisitor((prev: any) => ({
       ...prev,
-      registered_site: '', // reset registered site
+      registered_site: '',
     }));
     setRefreshTrigger((prev) => prev + 1);
     handleCloseDialog();
@@ -480,7 +419,6 @@ const Content = () => {
 
     try {
       const res = await getVisitorById(token, id);
-      // backend kamu ada yang taruh di res.collection, ada juga langsung body
       setVisitorDetail(res?.collection ?? res ?? null);
     } catch (err: any) {
       setVisitorError(err?.message || 'Failed to fetch visitor detail.');
@@ -521,9 +459,9 @@ const Content = () => {
       // dummy delay biar kelihatan loading
       await new Promise((r) => setTimeout(r, 400));
 
-      setConfirm(null); // tutup dialog konfirmasi
-      setOpenVisitorDialog(false); // tutup dialog detail visitor
-      setRefreshTrigger((p) => p + 1); // refresh tabel
+      setConfirm(null);
+      setOpenVisitorDialog(false);
+      setRefreshTrigger((p) => p + 1);
     } catch (e) {
       // gagal -> matikan loading, tetap di dialog konfirmasi
       setConfirm((c) => (c ? { ...c, loading: false } : c));
@@ -586,7 +524,7 @@ const Content = () => {
       itemDataCustomNavListing={AdminNavListingData}
       itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
     >
-      <Container title="Visitor" description="this is Dashboard page">
+      <Container title="Transaction Visitor" description="this is Dashboard page">
         <Box>
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, lg: 12 }}>
@@ -595,7 +533,6 @@ const Content = () => {
                 items={cards}
                 onImageClick={(_, index) => {
                   if (index === 2) {
-                    // Invitation → pilih Registered Site dulu
                     setFlowTarget('invitation');
                     setOpenDialogIndex(2);
                   } else if (index === 3) {
@@ -618,8 +555,9 @@ const Content = () => {
                 stickyHeader={true}
                 data={tableCustomVisitor}
                 totalCount={totalFilteredRecords}
+                // isNoActionTableHead={false}
                 selectedRows={selectedRows}
-                rowsPerPageOptions={[5, 10, 20, 50, 100]}
+                rowsPerPageOptions={[10, 50, 100]}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);
@@ -682,21 +620,21 @@ const Content = () => {
                     setStartDate(ranges.startDate.toISOString());
                     setEndDate(ranges.endDate.toISOString());
                     setPage(0); // reset ke halaman pertama
-                    setRefreshTrigger((prev) => prev + 1); // trigger fetch
+                    setRefreshTrigger((prev) => prev + 1);
                   }
                 }}
                 onAddData={() => {
                   handleAdd();
                 }}
-                isHaveFilterMore={true}
+                isHaveFilterMore={false}
                 // isHaveFilter={true}
-                filterMoreContent={
-                  <FilterMoreContent
-                    filters={filters}
-                    setFilters={setFilters}
-                    onApplyFilter={handleApplyFilter}
-                  />
-                }
+                // filterMoreContent={
+                //   <FilterMoreContent
+                //     filters={filters}
+                //     setFilters={setFilters}
+                //     onApplyFilter={handleApplyFilter}
+                //   />
+                // }
               />
             </Grid>
           </Grid>
@@ -814,9 +752,9 @@ const Content = () => {
             aria-label="close"
             onClick={() => {
               if (isFormChanged) {
-                openDiscardForCloseAdd(); // <── ini saja
+                openDiscardForCloseAdd();
               } else {
-                handleCloseDialog(); // aman langsung tutup
+                handleCloseDialog();
               }
             }}
           >
@@ -830,15 +768,15 @@ const Content = () => {
             fullWidth
             options={siteData}
             getOptionLabel={(o) => o.name || ''}
-            value={selectedSite} // harus null setelah reset
+            value={selectedSite}
             onChange={(_, nv) => {
               setSelectedSite(nv);
               setFormDataAddVisitor((prev) => ({
                 ...prev,
-                registered_site: nv?.id || '', // isi kalau ada pilihan, kosong kalau null
+                registered_site: nv?.id || '',
               }));
             }}
-            isOptionEqualToValue={(option, value) => option.id === value?.id} // penting
+            isOptionEqualToValue={(option, value) => option.id === value?.id}
             renderInput={(params) => <TextField {...params} label="" />}
           />
           <Box display="flex" justifyContent="flex-end" mt={2}>
@@ -861,6 +799,7 @@ const Content = () => {
                 }
               }}
               color="primary"
+              endIcon={<IconArrowRight width={18} />}
             >
               Next
             </Button>
@@ -1252,9 +1191,9 @@ const Content = () => {
         >
           <Alert
             onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-            severity={snackbar.severity} // ← beda warna/ikon sesuai severity
+            severity={snackbar.severity}
             sx={{ width: '100%' }}
-            variant="filled" // optional: biar lebih kontras
+            variant="filled"
           >
             {snackbar.message}
           </Alert>

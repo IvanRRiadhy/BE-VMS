@@ -41,19 +41,8 @@ import PageContainer from 'src/components/container/PageContainer';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import FlipCameraAndroidIcon from '@mui/icons-material/FlipCameraAndroid';
-import FlashOnIcon from '@mui/icons-material/FlashOn';
-import FlashOffIcon from '@mui/icons-material/FlashOff';
-import CloseIcon from '@mui/icons-material/Close';
-import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
-import { IconPhone } from '@tabler/icons-react';
-import { IconCalendarEvent } from '@tabler/icons-react';
-import { IconUserCheck } from '@tabler/icons-react';
-import VisitorStatusPieChart from '../Guest/Components/charts/VisitorStatusPieChart';
-import VisitorHeatMap from 'src/customs/components/charts/VisitorHeatMap';
 import Heatmap from './Heatmap';
-import PieCharts from './PieCharts';
-import { getApproval } from 'src/customs/api/employee';
+import { createApproval, getApproval } from 'src/customs/api/employee';
 import dayjs from 'dayjs';
 import {
   getActiveInvitation,
@@ -62,14 +51,13 @@ import {
   openParkingBlocker,
 } from 'src/customs/api/visitor';
 import FormDialogInvitation from './FormDialogInvitation';
-import { useNavigate } from 'react-router';
 import { getAccessPass } from 'src/customs/api/admin';
 import { Download } from '@mui/icons-material';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
-// import OperatorPieChart from './Charts/OperatorPieChart';
-
+import Swal from 'sweetalert2';
+import { showSwal } from 'src/customs/components/alerts/alerts';
 const DashboardEmployee = () => {
   const cards = [
     { title: 'Check In', icon: IconLogin, subTitle: `0`, subTitleSetting: 10, color: 'none' },
@@ -79,44 +67,6 @@ const DashboardEmployee = () => {
   ];
 
   const { token } = useSession();
-
-  const tableRowColumn = [
-    {
-      id: 1,
-      Name: 'Andi Prasetyo',
-      'Visit Time': '2025-06-13T09:00:00',
-      Purpose: 'Meeting',
-      'Purpose Person': 'Bapak Joko',
-    },
-    {
-      id: 2,
-      Name: 'Siti Aminah',
-      'Visit Time': '2025-06-13T10:30:00',
-      Purpose: 'Interview',
-      'Purpose Person': 'Ibu Rina',
-    },
-    {
-      id: 3,
-      Name: 'Budi Santoso',
-      'Visit Time': '2025-06-13T11:15:00',
-      Purpose: 'Pengantaran Dokumen',
-      'Purpose Person': 'Pak Dedi',
-    },
-    {
-      id: 4,
-      Name: 'Rina Marlina',
-      'Visit Time': '2025-06-13T13:45:00',
-      Purpose: 'Audit',
-      'Purpose Person': 'Bu Intan',
-    },
-    {
-      id: 5,
-      Name: 'Fajar Nugroho',
-      'Visit Time': '2025-06-13T15:00:00',
-      Purpose: 'Maintenance',
-      'Purpose Person': 'Pak Wahyu',
-    },
-  ];
 
   // ✅ state untuk buka tutup dialog QR
   const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
@@ -144,6 +94,11 @@ const DashboardEmployee = () => {
   const [activeAccessPass, setActiveAccessPass] = useState<any>();
   const printRef = useRef<HTMLDivElement>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  /*************  ✨ Windsurf Command ⭐  *************/
+  /**
+   * Opens the dialog for accessing the access pass.
+   */
+  /*******  b976c85f-50a7-4180-9ef5-11a30904f248  *******/
   const handleOpenAccess = () => {
     setOpenAccess(true);
   };
@@ -152,9 +107,6 @@ const DashboardEmployee = () => {
     setOpenAccess(false);
   };
 
-  const navigate = useNavigate();
-
-  const handleOpenScanQR = () => setOpenDialogIndex(1);
   const handleCloseScanQR = () => {
     try {
       const video = scanContainerRef.current?.querySelector('video') as HTMLVideoElement | null;
@@ -178,21 +130,16 @@ const DashboardEmployee = () => {
     const fetchDataActiveInvtiation = async () => {
       try {
         const response = await getActiveInvitation(token as string);
-        console.log(response);
+        // console.log(response);
 
         let rows = response.collection.map((item: any) => ({
           id: item.id,
           // visitor_type:  item.visitor_type_name,
           name: item.visitor.name,
-          // identity_id: item.visitor.identity_id,
           email: item.visitor.email,
           organization: item.visitor.organization,
-          // gender: item.visitor.gender,
-          // address: item.visitor.address,
-          // phone: item.visitor.phone,
-          // is_vip: item.visitor.is_vip,
           visitor_period_start: item.visitor_period_start,
-          visitor_period_end: item.visitor_period_end,
+          visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
           host: item.host_name ?? '-',
           // visitor_status: item.visitor_status,
         }));
@@ -205,68 +152,6 @@ const DashboardEmployee = () => {
     fetchDataActiveInvtiation();
   }, [token]);
 
-  // useEffect(() => {
-  //   if (!token) return;
-
-  //   const fetchData = async () => {
-  //     try {
-  //       setLoading(true);
-
-  //       // 📅 Ambil range tanggal dinamis (30 hari ke belakang & ke depan)
-  //       const startDate = dayjs().subtract(30, 'day').format('YYYY-MM-DD');
-  //       const endDate = dayjs().add(30, 'day').format('YYYY-MM-DD');
-
-  //       // 🚀 Ambil data approval tanpa pagination
-  //       const response = await getApproval(
-  //         token as string,
-  //         startDate,
-  //         endDate,
-  //         false,
-  //         null as any,
-  //         null as any,
-  //       );
-
-  //       const res = await getInvitation(token as string, startDate, endDate, false);
-
-  //       setInvitationList(res?.collection ?? []);
-
-  //       // 🧩 Mapping data ke bentuk siap tampil
-  //       const mappedData = response.collection.map((item: any) => {
-  //         const trx = item.trx_visitor || {};
-
-  //         const visitor_period_start =
-  //           trx.visitor.visitor_period_start && trx.visitor.visitor_period_start !== 'Invalid date'
-  //             ? trx.visitor.visitor_period_start
-  //             : '-';
-
-  //         const visitor_period_ends =
-  //           trx.visitor.visitor_period_end && trx.visitor.visitor_period_end !== 'Invalid date'
-  //             ? trx.visitor.visitor_period_end
-  //             : '-';
-
-  //         return {
-  //           id: item.id,
-  //           visitor_name: item.visitor?.name || '-',
-  //           site_place_name: trx.site_place_name || '-',
-  //           agenda: trx.agenda || '-',
-  //           visitor_period_start,
-  //           visitor_period_ends,
-  //           action_by: item.action_by || '-',
-  //           status: item.action || '-',
-  //         };
-  //       });
-
-  //       setApprovalData(mappedData);
-  //     } catch (error) {
-  //       console.error('Error fetching data:', error);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   fetchData();
-  // }, [token]);
-
   useEffect(() => {
     if (!token) return;
 
@@ -274,9 +159,8 @@ const DashboardEmployee = () => {
       try {
         setLoading(true);
 
-        // 📅 Ambil range tanggal dinamis (30 hari ke belakang & ke depan)
         const startDate = dayjs().subtract(30, 'day').format('YYYY-MM-DD');
-        const endDate = dayjs().add(30, 'day').format('YYYY-MM-DD');
+        const endDate = dayjs().add(31, 'day').format('YYYY-MM-DD');
 
         // 🚀 Ambil data approval tanpa pagination
         const response = await getApproval(
@@ -287,12 +171,13 @@ const DashboardEmployee = () => {
           null as any,
           null as any,
         );
-        // console.log(response.collection);
 
-        // // 🚀 Ambil semua invitation
-        // 🧩 Mapping data approval untuk tabel
         const mappedData = response.collection.map((item: any) => {
           const trx = item.trx_visitor || {};
+          let status = '';
+          if (item.action === 'Accept') status = 'Accept';
+          else if (item.action === 'Deny') status = 'Deny';
+          else status = '-';
           return {
             id: item.id,
             visitor_name: item.visitor?.name || '-',
@@ -305,7 +190,7 @@ const DashboardEmployee = () => {
               ? formatDateTime(trx.visitor_period_end, trx.extend_visitor_period)
               : trx.visitor_period_end || '-',
             action_by: item.action_by || '-',
-            status: item.action || '-',
+            status: item.action,
           };
         });
 
@@ -319,30 +204,6 @@ const DashboardEmployee = () => {
 
     fetchData();
   }, [token]);
-
-  // useEffect(() => {
-  //   if (!token) return;
-
-  //   const fetchInvitation = async () => {
-  //     try {
-  //       const startDate = dayjs().subtract(0, 'day').format('YYYY-MM-DD');
-  //       const endDate = dayjs().format('YYYY-MM-DD');
-
-  //       console.log('🚀 Fetching invitations...');
-  //       const res = await getInvitation(token as string, startDate, endDate);
-  //       const invitationData = res?.collection ?? [];
-
-  //       console.log('✅ Invitation response:', invitationData);
-
-  //       setInvitationList(invitationData);
-
-  //     } catch (error) {
-  //       console.error('❌ Error fetching invitation:', error);
-  //     }
-  //   };
-
-  //   fetchInvitation();
-  // }, [token]);
 
   useEffect(() => {
     if (!token) return;
@@ -426,7 +287,7 @@ const DashboardEmployee = () => {
 
       // Buat logo khusus untuk PDF
       const logoEl = document.createElement('img');
-      logoEl.src = '/src/assets/images/logos/BI_Logo.png';
+      logoEl.src = '/src/assets/images/logos/bio-experience-1x1-logo.png';
       logoEl.style.width = '100px';
       logoEl.style.height = '100px';
       logoEl.style.display = 'block';
@@ -453,7 +314,6 @@ const DashboardEmployee = () => {
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       pdf.save(`Access Pass ${activeAccessPass?.group_name || 'Visitor'}.pdf`);
 
-      // Hapus clone
       clone.remove();
     } finally {
       setIsGenerating(false);
@@ -491,8 +351,52 @@ const DashboardEmployee = () => {
     }
   };
 
+  const handleActionApproval = async (id: string, action: 'Accept' | 'Deny') => {
+    if (!id || !token) return;
+
+    try {
+      const confirm = await Swal.fire({
+        title: `Do you want to ${action === 'Accept' ? 'Accept' : 'Deny'} this approval?`,
+        icon: 'question',
+        // imageUrl: BI_LOGO,
+        imageWidth: 100,
+        imageHeight: 100,
+        showCancelButton: true,
+        confirmButtonText: action === 'Accept' ? 'Yes' : 'No',
+        cancelButtonText: 'Cancel',
+        reverseButtons: true,
+        confirmButtonColor: action === 'Accept' ? '#4caf50' : '#f44336',
+        customClass: {
+          title: 'swal2-title-custom',
+          htmlContainer: 'swal2-text-custom',
+        },
+      });
+
+      if (!confirm.isConfirmed) return;
+
+      setTimeout(() => setLoading(true), 800);
+
+      await createApproval(token, { action }, id);
+      setTimeout(() => {
+        showSwal(
+          'success',
+          `Data Approval ${action === 'Accept' ? 'approved' : 'denied'} successfully.`,
+        );
+      }, 850);
+
+      setTimeout(() => setLoading(false), 200);
+
+   
+      // setRefreshTrigger((prev) => prev + 1);
+    } catch (error) {
+      console.error('Approval action error:', error);
+      setTimeout(() => setLoading(false), 800);
+      showSwal('error', 'Something went wrong while processing approval.');
+    }
+  };
+
   return (
-    <PageContainer title="Dashboard Employee">
+    <PageContainer title="Dashboard Employee" description="This is Employee Dashboard">
       <Grid container spacing={2} sx={{ mt: 0 }}>
         <Grid size={{ xs: 12, lg: 9 }}>
           <TopCard items={cards} size={{ xs: 12, lg: 6 }} />
@@ -591,16 +495,16 @@ const DashboardEmployee = () => {
             overflowX="auto"
             data={approvalData}
             isHaveChecked={false}
-            isHaveAction={false}
+            isHaveAction={true}
+            isActionVisitor={false}
             isHaveHeaderTitle
             titleHeader="Approval"
             isHaveApproval={true}
+            onAccept={(row: { id: string }) => handleActionApproval(row.id, 'Accept')}
+            onDenied={(row: { id: string }) => handleActionApproval(row.id, 'Deny')}
             isHavePeriod={true}
           />
         </Grid>
-        {/* <Grid size={{ xs: 12, lg: 3 }}>
-          <PieCharts />
-        </Grid> */}
         <Grid size={{ xs: 12, lg: 6 }} sx={{ height: '100%' }}>
           <DynamicTable
             data={invitationDetailVisitor}
@@ -639,46 +543,7 @@ const DashboardEmployee = () => {
         >
           <IconX />
         </IconButton>
-        {/* 
-        <DialogContent>
-          <Box
-            display="flex"
-            justifyContent="center"
-            alignItems="center"
-            flexDirection="column"
-            textAlign="center"
-            py={3}
-          >
-            <IconBellRingingFilled size={60} color="orange" />
-            <Typography variant="h4" mt={2} fontWeight={600}>
-              1 New Invitation
-            </Typography>
 
-            <Typography variant="h6" mt={1}>
-              {alertInvitationData?.visitor?.name ?? 'Unknown Visitor'}{' '}
-              <span>has invited you </span> <span>for {alertInvitationData?.agenda ?? '-'}</span>
-            </Typography>
-
-            <Typography variant="body1" mt={0.5}></Typography>
-
-            <Typography variant="body2" color="text.secondary" mt={1}>
-              Hosted by <b>{alertInvitationData?.host_name ?? '-'}</b>
-            </Typography>
-
-            <Typography variant="body2" color="text.secondary" mt={1}>
-              {moment
-                .utc(alertInvitationData?.visitor_period_start)
-                .tz('Asia/Jakarta')
-                .format('DD MMM YYYY, HH:mm')}{' '}
-              -{' '}
-              {moment
-                .utc(alertInvitationData?.visitor_period_end)
-                .tz('Asia/Jakarta')
-                .format('HH:mm')}{' '}
-              WIB
-            </Typography>
-          </Box>
-        </DialogContent> */}
         <DialogContent>
           <Box
             display="flex"
@@ -695,10 +560,6 @@ const DashboardEmployee = () => {
                 : '1 invitation must be completed'}
             </Typography>
 
-            {/* <Typography variant="h6" mt={1} color="text.primary">
-              Ada {pendingInvitationCount} undangan yang belum diisi pra-register.
-            </Typography> */}
-
             <Typography variant="body1" color="text.secondary" mt={1}>
               You must complete the invitation before it expires
             </Typography>
@@ -712,7 +573,7 @@ const DashboardEmployee = () => {
         fullWidth
         maxWidth="xl"
       >
-        <DialogTitle>Praregister </DialogTitle>
+        <DialogTitle>Praregister</DialogTitle>
         <IconButton
           aria-label="close"
           onClick={() => setOpenDialogInvitation(false)}
@@ -726,13 +587,13 @@ const DashboardEmployee = () => {
           <IconX />
         </IconButton>
         <DialogContent dividers>
-          {selectedInvitationId ? ( // ✅ pakai ID dari row yang di-klik
+          {selectedInvitationId ? (
             <FormDialogInvitation
               id={selectedInvitationId}
               onClose={() => setOpenDialogInvitation(false)}
               onSubmitted={() => {
                 setOpenDialogInvitation(false);
-                setInvitationDetailVisitor([]); // optional: reload / clear
+                setInvitationDetailVisitor([]);
               }}
               onSubmitting={setSubmitting}
             />
@@ -743,165 +604,6 @@ const DashboardEmployee = () => {
           )}
         </DialogContent>
       </Dialog>
-
-      {/* {activeAccessPass && (
-        <Dialog open={openAccess} onClose={handleCloseAccess} fullWidth maxWidth="sm">
-          <DialogTitle textAlign={'center'} sx={{ p: 2 }}>
-            Your Access Pass
-          </DialogTitle>
-          <IconButton
-            aria-label="close"
-            onClick={handleCloseAccess}
-            sx={{
-              position: 'absolute',
-              right: 8,
-              top: 8,
-              color: (theme) => theme.palette.grey[500],
-            }}
-          >
-            <IconX />
-          </IconButton>
-          <DialogContent sx={{ paddingTop: 2 }} dividers>
-            <Box
-              display="flex"
-              flexDirection="row"
-              alignItems="center"
-              justifyContent="space-between"
-            >
-              <Box display="flex" gap={2}>
-                <Avatar />
-                <Box>
-                  <Typography variant="body1" fontWeight="bold">
-                    {activeAccessPass.group_name || '- '}
-                  </Typography>
-                  <Typography variant="body2" color="grey">
-                    {formatVisitorPeriodLocal(
-                      activeAccessPass.visitor_period_start as string,
-                      activeAccessPass.visitor_period_end as string,
-                    )}
-                  </Typography>
-                </Box>
-              </Box>
-
-              <IconButton
-                color="primary"
-                sx={{
-                  backgroundColor: 'primary.main',
-                  color: 'white',
-                  '&:hover': {
-                    backgroundColor: 'primary.dark',
-                  },
-                }}
-              >
-                <Download />
-              </IconButton>
-            </Box>
-            <Box mt={3}>
-              <Grid container spacing={2} justifyContent="center">
-                <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
-                  <Typography variant="body1" color="textSecondary" fontWeight={500}>
-                    Invitation Code
-                  </Typography>
-                  <Typography variant="body1" fontWeight="bold">
-                    {activeAccessPass.invitation_code}
-                  </Typography>
-                </Grid>
-
-                <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
-                  <Typography variant="body1" color="textSecondary" fontWeight={500}>
-                    Card
-                  </Typography>
-                  <Typography variant="body1" fontWeight="bold">
-                    {activeAccessPass.card_number || '-'}
-                  </Typography>
-                </Grid>
-
-                <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
-                  <Typography variant="body1" color="textSecondary" fontWeight={500}>
-                    Host
-                  </Typography>
-                  <Typography variant="body1" fontWeight="bold">
-                    {activeAccessPass.host_name || '-'}
-                  </Typography>
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
-                  <Typography variant="body1" color="textSecondary" fontWeight={500}>
-                    Group Code
-                  </Typography>
-                  <Typography variant="body1" fontWeight="bold">
-                    {activeAccessPass.group_code || '-'}
-                  </Typography>
-                </Grid>
-              </Grid>
-            </Box>
-
-            <Box mt={2}>
-              <Typography variant="h4" sx={{ fontWeight: 'bold' }} textAlign={'center'}>
-                {activeAccessPass.site_place_name}
-              </Typography>
-              <Box
-                display="flex"
-                justifyContent="center"
-                mt={1}
-                mb={1}
-                flexDirection={'column'}
-                alignItems={'center'}
-              >
-                <Box
-                  sx={{
-                    display: 'inline-block',
-                    p: 3,
-                    borderRadius: 2,
-                    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.2)',
-                    backgroundColor: 'white', // biar kontras
-                  }}
-                  my={2}
-                >
-                  <QRCode
-                    value={activeAccessPass.visitor_number}
-                    size={180}
-                    style={{
-                      height: 'auto',
-                      width: '180px',
-                      borderRadius: 8,
-                    }}
-                  />
-                </Box>
-                <Box display="flex" gap={3} mb={2}>
-                  <Typography color="error">Tracked</Typography>
-                  <Typography color="error">Low Battery</Typography>
-                </Box>
-                <Typography variant="body2" mb={1}>
-                  Show this while visiting
-                </Typography>
-                <Typography variant="h6">ID : {activeAccessPass.visitor_code}</Typography>
-                <Divider sx={{ width: '100%', my: 2, borderColor: 'grey' }} />
-                <Box display={'flex'} mt={0} gap={1} flexDirection={'column'}>
-                  <Grid size={{ xs: 12, sm: 6 }} textAlign="center" display={'flex'} gap={1}>
-                    <Typography variant="body1" color="textSecondary" fontWeight={500}>
-                      Parking Slot
-                    </Typography>
-                    <Typography variant="body1" fontWeight="bold">
-                      {activeAccessPass?.parking_slot || '-'}
-                    </Typography>
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }} textAlign="center" display={'flex'} gap={1}>
-                    <Typography variant="body1" color="textSecondary" fontWeight={500}>
-                      Vehicle Plate
-                    </Typography>
-                    <Typography variant="body1" fontWeight="bold">
-                      {activeAccessPass.vehicle_plate_number || '-'}
-                    </Typography>
-                  </Grid>
-                </Box>
-                <Button size="small" variant="contained" sx={{ mt: 2 }}>
-                  Parking Blocker
-                </Button>
-              </Box>
-            </Box>
-          </DialogContent>
-        </Dialog>
-      )} */}
 
       {activeAccessPass && (
         <Dialog open={openAccess} onClose={handleCloseAccess} fullWidth maxWidth="sm">
@@ -993,7 +695,7 @@ const DashboardEmployee = () => {
                       right: 20,
                       '&:hover': { backgroundColor: 'primary.dark' },
                       '@media print': {
-                        display: 'none !important', // pastikan override semua
+                        display: 'none !important',
                       },
                     }}
                     onClick={handleDownloadPDF}
@@ -1050,7 +752,7 @@ const DashboardEmployee = () => {
                     p: 3,
                     borderRadius: 2,
                     boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.2)',
-                    backgroundColor: 'white', // biar kontras
+                    backgroundColor: 'white',
                   }}
                   my={2}
                 >
@@ -1173,14 +875,14 @@ const DashboardEmployee = () => {
       <Portal>
         <Backdrop
           sx={{
-            zIndex: 1,
+            zIndex: 99999,
             position: 'fixed',
             margin: '0 auto',
             color: 'primary',
           }}
           open={isGenerating}
         >
-          <CircularProgress color="inherit" />
+          <CircularProgress color="primary" />
         </Backdrop>
       </Portal>
     </PageContainer>

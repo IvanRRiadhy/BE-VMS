@@ -6,7 +6,6 @@ import {
   Step,
   StepLabel,
   Typography,
-  Card,
   FormControl,
   RadioGroup,
   FormControlLabel,
@@ -18,18 +17,20 @@ import {
   TextField,
   IconButton,
   Backdrop,
+  useTheme,
+  useMediaQuery,
+  MobileStepper,
 } from '@mui/material';
 import { Grid2 as Grid } from '@mui/material';
-import { useNavigate, useSearchParams } from 'react-router-dom';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import {
+  IconArrowLeft,
+  IconArrowRight,
   IconCamera,
-  IconClearAll,
   IconDeviceFloppy,
   IconGenderTransgender,
   IconMan,
-  IconSpacingVertical,
   IconTrash,
   IconWoman,
   IconX,
@@ -42,15 +43,12 @@ import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import Webcam from 'react-webcam';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import {
-  createVisitorInvitation,
-  getDetailInvitationForm,
-  submitPraFormEmployee,
-} from 'src/customs/api/visitor';
+import {  getDetailInvitationForm } from 'src/customs/api/visitor';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { getVisitorEmployee } from 'src/customs/api/admin';
-import { showErrorAlert, showSuccessAlert, showSwal } from 'src/customs/components/alerts/alerts';
+import { showSwal } from 'src/customs/components/alerts/alerts';
 import { createSubmitCompletePra } from 'src/customs/api/operator';
+import { KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -72,6 +70,8 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
 }) => {
   const [activeStep, setActiveStep] = useState(0);
   const { token } = useSession();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [formValues, setFormValues] = useState<Record<string, any>>({});
   const [invitationData, setInvitationData] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
@@ -81,14 +81,13 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
   const [previews, setPreviews] = useState<Record<string, string | null>>({});
   const webcamRef = useRef<Webcam>(null);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
-  // const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const code = searchParams.get('code') || '';
+  const [inputValues, setInputValues] = useState<{ [key: number]: string }>({});
+  const [allVisitorEmployee, setAllVisitorEmployee] = useState<any[]>([]);
+  const [submitting, setSubmitting] = useState(false);
 
   const formatDateTime = (value: string | null) =>
-    !value ? '-' : dayjs(value).tz('Asia/Jakarta').format('DD MMMM YYYY HH:mm');
+    !value ? '-' : dayjs(value).tz(dayjs.tz.guess()).format('dddd, DD MMMM YYYY, HH:mm');
 
-  // ✅ Ambil detail invitation
   useEffect(() => {
     const fetchData = async () => {
       if (!id || !token) return;
@@ -98,7 +97,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
         const data = res.collection;
         setInvitationData(data);
 
-        // siapkan nilai awal form
+      
         const initial: Record<string, any> = {};
         data?.question_page?.forEach((section: any) => {
           section.form?.forEach((f: any) => {
@@ -109,7 +108,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
         });
         setFormValues(initial);
       } catch (err) {
-        console.error('❌ Gagal load invitation detail:', err);
+      
       } finally {
         setLoading(false);
       }
@@ -117,30 +116,45 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
     fetchData();
   }, [id, token]);
 
-  // ✅ Validasi field di step aktif
-  // const validateStep = (section: any) => {
-  //   const newErrors: Record<string, string> = {};
-  //   section?.form?.forEach((f: any) => {
-  //     if (f.mandatory && !formValues[f.remarks]) {
-  //       newErrors[f.remarks] = `${f.long_display_text} is required`;
-  //     }
-  //   });
-  //   setErrors(newErrors);
-  //   return Object.keys(newErrors).length === 0;
-  // };
+  const validateStep = (section: any) => {
+    const newErrors: Record<string, string> = {};
+    section?.form?.forEach((f: any) => {
+      if (
+        f.mandatory &&
+        isEmpty(formValues[f.remarks])
+        // &&
+        // !(
+        //   ['vehicle_plate', 'vehicle_type'].includes(f.remarks) &&
+        //   formValues['is_driving'] !== 'true'
+        // )
+      ) {
+        newErrors[f.remarks] = `${f.long_display_text} is required`;
+      }
+    });
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
-  const handleChange = (remarks: string, value: any) =>
+  const handleChange = (remarks: string, value: any) => {
     setFormValues((prev) => ({ ...prev, [remarks]: value }));
+    setErrors((prev) => {
+      if (!prev[remarks]) return prev;
+      const { [remarks]: _, ...rest } = prev;
+      return rest;
+    });
+  };
 
   const formSections = invitationData?.question_page ?? [];
   const steps = formSections.map((q: any) => q.name ?? 'Untitled');
 
   const handleNext = () => {
     const currentSection = formSections[activeStep];
-    // if (!validateStep(currentSection)) return;
+    if (!validateStep(currentSection)) return;
     setActiveStep((s) => s + 1);
   };
   const handleBack = () => setActiveStep((s) => s - 1);
+
+  const isEmpty = (val: any) => val === undefined || val === null || val === '';
 
   const renderCameraField = (f: any, idx: number) => {
     const key = f.remarks;
@@ -227,12 +241,19 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
           </Box>
         </Box>
 
+        {errors[key] && (
+          <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
+            {errors[key]}
+          </Typography>
+        )}
+
         <Dialog
           open={openCamera}
           onClose={() => setOpenCamera(false)}
           maxWidth="md"
           fullWidth
           container={containerRef.current}
+          disablePortal
         >
           <Box sx={{ p: 3, position: 'relative' }}>
             <Box>
@@ -248,7 +269,6 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
             </Box>
 
             <Grid container spacing={2}>
-              {/* CAMERA LIVE VIEW */}
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Webcam
                   audio={false}
@@ -332,72 +352,6 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
       </Box>
     );
   };
-  const uploadFileToCDN = async (file: File | Blob): Promise<string | null> => {
-    const formData = new FormData();
-    const filename = file instanceof File && file.name ? file.name : 'selfie.png';
-    formData.append('file_name', filename);
-    formData.append('file', file, filename);
-    formData.append('path', 'visitor');
-    try {
-      const { data } = await axiosInstance2.post('/cdn/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      const fileUrl = data?.collection?.file_url;
-      console.log('CDN Response File URL:', fileUrl);
-      return fileUrl ? (fileUrl.startsWith('//') ? `http:${fileUrl}` : fileUrl) : null;
-    } catch (e) {
-      console.error('Upload failed:', e);
-      return null;
-    }
-  };
-
-  const [removing, setRemoving] = React.useState<Record<string, boolean>>({});
-
-  const handleRemoveFileForField = async (
-    currentUrl: string,
-    setAnswerFile: (url: string) => void,
-    inputId: string, // <- pakai key yg sama dengan id input
-  ) => {
-    try {
-      setRemoving((s) => ({ ...s, [inputId]: true }));
-      if (currentUrl) {
-        await axiosInstance2.delete(`/cdn${currentUrl}`);
-      }
-
-      setAnswerFile('');
-      setPreviews((p) => ({ ...p, [inputId]: null }));
-      setUploadNames((n) => {
-        const { [inputId]: _, ...rest } = n;
-        return rest;
-      });
-      const el = document.getElementById(inputId) as HTMLInputElement | null;
-      if (el) el.value = '';
-    } catch (e) {
-      console.error('Delete failed:', e);
-    } finally {
-      setRemoving((s) => ({ ...s, [inputId]: false }));
-    }
-  };
-
-  const handleFileChangeForField = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-    setAnswerFile: (url: string) => void,
-    trackKey?: string,
-  ) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // tampilkan preview lokal dulu (supaya user melihat langsung)
-    if (trackKey) {
-      setUploadNames((prev) => ({ ...prev, [trackKey]: file.name }));
-      setPreviews((prev) => ({ ...prev, [trackKey]: URL.createObjectURL(file) }));
-    }
-
-    const path = await uploadFileToCDN(file);
-    if (path) setAnswerFile(path);
-    // reset input agar bisa pilih file yg sama lagi
-    e.target.value = '';
-  };
 
   const renderFileUploadField = (f: any, idx: number) => {
     const key = f.remarks;
@@ -425,10 +379,8 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
           </Typography>
 
           <Typography variant="caption" color="textSecondary">
-            Supports: PDF, DOCX, JPG, PNG, Upto 100KB
+            Supports: PDF, DOCX, JPG, PNG, Up to 100KB
           </Typography>
-
-          {/* Hidden input */}
           <input
             id={`file-${key}`}
             type="file"
@@ -443,8 +395,6 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
               )
             }
           />
-
-          {/* Preview Section */}
           {(previewSrc || shownName) && (
             <Box
               mt={2}
@@ -455,7 +405,6 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
               }}
             >
               {previewSrc ? (
-                // 📄 PDF / DOC Preview
                 previewSrc.endsWith('.pdf') || previewSrc.endsWith('.docx') ? (
                   <Box
                     sx={{
@@ -476,7 +425,6 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                     </Typography>
                   </Box>
                 ) : (
-                  // 🖼️ Image Preview
                   <img
                     src={previewSrc}
                     alt="preview"
@@ -490,7 +438,6 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                   />
                 )
               ) : (
-                // No previewSrc, show filename only
                 <Typography variant="caption" noWrap>
                   {shownName}
                 </Typography>
@@ -520,35 +467,6 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
     );
   };
 
-  const handleCaptureForField = async (setAnswerFile: (url: string) => void, trackKey?: string) => {
-    if (!webcamRef.current) return;
-    const imageSrc = webcamRef.current.getScreenshot();
-    if (!imageSrc) return;
-
-    const blob = await fetch(imageSrc).then((res) => res.blob());
-    const path = await uploadFileToCDN(blob);
-    if (!path) return;
-
-    if (trackKey) {
-      setPreviews((prev) => ({ ...prev, [trackKey]: imageSrc }));
-      setUploadNames((prev) => ({ ...prev, [trackKey]: 'camera.jpg' }));
-    }
-    setAnswerFile(path);
-  };
-
-  const getFieldTypeByRemarks = (remarks: string): number | null => {
-    switch (remarks) {
-      case 'selfie_image':
-        return 10; // Kamera
-      case 'nda':
-        return 11; // File upload dokumen
-      case 'identity_image':
-        return 12; // Upload file + opsi kamera
-      default:
-        return null;
-    }
-  };
-
   const renderUploadWithCamera = (f: any, idx: number) => {
     const key = f.remarks;
     const previewSrc = previews[key];
@@ -576,10 +494,9 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
           </Typography>
 
           <Typography variant="caption" color="textSecondary" mt={5}>
-            Supports: PDF, DOCX, JPG, PNG, Up to <span style={{ fontWeight: '700' }}>100KB</span>
+            Supports: JPG, JPEG, PNG, Up to <span style={{ fontWeight: '700' }}>100KB</span>
           </Typography>
 
-          {/* 🔹 Tombol kamera tambahan */}
           <Typography
             variant="subtitle1"
             component="span"
@@ -593,7 +510,6 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
             Use Camera
           </Typography>
 
-          {/* 🔹 Hidden input file */}
           <input
             id={`file-${key}`}
             type="file"
@@ -609,7 +525,6 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
             }
           />
 
-          {/* 🔹 Preview upload / foto */}
           {(previewSrc || shownName) && (
             <Box mt={2} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               {previewSrc ? (
@@ -652,13 +567,18 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
           )}
         </Box>
 
-        {/* 🔹 Dialog kamera */}
+        {errors[key] && (
+          <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
+            {errors[key]}
+          </Typography>
+        )}
         <Dialog
           open={openCamera}
           onClose={() => setOpenCamera(false)}
           maxWidth="md"
           fullWidth
           container={containerRef.current}
+          disablePortal
         >
           <Box sx={{ p: 3, position: 'relative' }}>
             <Box display={'flex'} justifyContent={'space-between'} alignItems={'center'} mb={1}>
@@ -737,7 +657,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                 variant="contained"
                 startIcon={<IconCamera />}
                 onClick={(e) => {
-                  // e.stopPropagation();
+                  e.stopPropagation();
                   handleCaptureForField((url) => handleChange(f.remarks, url), key);
                 }}
               >
@@ -757,9 +677,99 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
     );
   };
 
-  const [inputValues, setInputValues] = useState<{ [key: number]: string }>({});
-  const [allVisitorEmployee, setAllVisitorEmployee] = useState<any[]>([]);
-  const [submitting, setSubmitting] = useState(false);
+  const uploadFileToCDN = async (file: File | Blob): Promise<string | null> => {
+    const formData = new FormData();
+    const filename = file instanceof File && file.name ? file.name : 'selfie.png';
+    formData.append('file_name', filename);
+    formData.append('file', file, filename);
+    formData.append('path', 'visitor');
+    try {
+      const { data } = await axiosInstance2.post('/cdn/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      const fileUrl = data?.collection?.file_url;
+      console.log('CDN Response File URL:', fileUrl);
+      return fileUrl ? (fileUrl.startsWith('//') ? `http:${fileUrl}` : fileUrl) : null;
+    } catch (e) {
+      console.error('Upload failed:', e);
+      return null;
+    }
+  };
+
+  const [removing, setRemoving] = useState<Record<string, boolean>>({});
+
+  const handleRemoveFileForField = async (
+    currentUrl: string,
+    setAnswerFile: (url: string) => void,
+    inputId: string, // <- pakai key yg sama dengan id input
+  ) => {
+    try {
+      setRemoving((s) => ({ ...s, [inputId]: true }));
+      if (currentUrl) {
+        await axiosInstance2.delete(`/cdn${currentUrl}`);
+      }
+
+      setAnswerFile('');
+      setPreviews((p) => ({ ...p, [inputId]: null }));
+      setUploadNames((n) => {
+        const { [inputId]: _, ...rest } = n;
+        return rest;
+      });
+      const el = document.getElementById(inputId) as HTMLInputElement | null;
+      if (el) el.value = '';
+    } catch (e) {
+      console.error('Delete failed:', e);
+    } finally {
+      setRemoving((s) => ({ ...s, [inputId]: false }));
+    }
+  };
+
+  const handleFileChangeForField = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setAnswerFile: (url: string) => void,
+    trackKey?: string,
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (trackKey) {
+      setUploadNames((prev) => ({ ...prev, [trackKey]: file.name }));
+      setPreviews((prev) => ({ ...prev, [trackKey]: URL.createObjectURL(file) }));
+    }
+
+    const path = await uploadFileToCDN(file);
+    if (path) setAnswerFile(path);
+    e.target.value = '';
+  };
+
+  const handleCaptureForField = async (setAnswerFile: (url: string) => void, trackKey?: string) => {
+    if (!webcamRef.current) return;
+    const imageSrc = webcamRef.current.getScreenshot();
+    if (!imageSrc) return;
+
+    const blob = await fetch(imageSrc).then((res) => res.blob());
+    const path = await uploadFileToCDN(blob);
+    if (!path) return;
+
+    if (trackKey) {
+      setPreviews((prev) => ({ ...prev, [trackKey]: imageSrc }));
+      setUploadNames((prev) => ({ ...prev, [trackKey]: 'camera.jpg' }));
+    }
+    setAnswerFile(path);
+  };
+
+  const getFieldTypeByRemarks = (remarks: string): number | null => {
+    switch (remarks) {
+      case 'selfie_image':
+        return 10; // Kamera
+      case 'nda':
+        return 11; // File upload dokumen
+      case 'identity_image':
+        return 12; // Upload file + opsi kamera
+      default:
+        return null;
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -772,21 +782,18 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
   const handleRadioToggle = (remarks: string, value: any) => {
     setFormValues((prev) => ({
       ...prev,
-      [remarks]: prev[remarks] === value ? '' : value, // klik 2x = kosong
+      [remarks]: prev[remarks] === value ? '' : value,
     }));
   };
 
-  // ✅ render field per section
   const StepContent = (section: any) => (
     <Box mt={3}>
       <Grid container spacing={2}>
         {section.form?.map((f: any, idx: number) => {
           let displayValue = formValues[f.remarks] ?? '';
 
-          // Mapping field type berdasarkan remarks
           const type = getFieldTypeByRemarks(f.remarks) ?? f.field_type;
 
-          // Override host dan site_place
           if (f.remarks === 'host') {
             displayValue = invitationData.host_data?.name || displayValue;
           } else if (f.remarks === 'site_place') {
@@ -799,10 +806,11 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
             <Grid key={idx} size={gridSize}>
               {!['vehicle_type', 'vehicle_plate'].includes(f.remarks) ||
               formValues['is_driving'] === 'true' ? (
-                <CustomFormLabel sx={{ mt: 0 }}>{f.long_display_text || f.remarks}</CustomFormLabel>
+                <CustomFormLabel sx={{ mt: 0 }} required={f.mandatory === true}>
+                  {f.long_display_text || f.remarks}
+                </CustomFormLabel>
               ) : null}
 
-              {/* 🔹 CASE A: file-based (selfie/nda/identity) */}
               {(() => {
                 switch (type) {
                   case 10:
@@ -816,7 +824,6 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                 }
               })()}
 
-              {/* 🔹 CASE B: tanggal readonly */}
               {['visitor_period_start', 'visitor_period_end'].includes(f.remarks) && (
                 <CustomTextField
                   fullWidth
@@ -826,7 +833,6 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                 />
               )}
 
-              {/* 🔹 CASE C: readonly section Purpose Visit */}
               {section.name === 'Purpose Visit' &&
                 !['visitor_period_start', 'visitor_period_end'].includes(f.remarks) && (
                   <CustomTextField
@@ -837,63 +843,67 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                   />
                 )}
 
-              {f.remarks === 'vehicle_plate' &&
-                formValues['is_driving'] === 'true' && ( // ✅ kondisi tambahan
-                  <CustomTextField
-                    fullWidth
-                    value={displayValue}
-                    onChange={(e) => handleChange(f.remarks, e.target.value)}
-                    placeholder={f.long_display_text || f.remarks}
-                    error={!!errors[f.remarks]}
-                    helperText={errors[f.remarks]}
-                  />
-                )}
-
-              {/* 🔹 CASE E: gender */}
-              {f.remarks === 'gender' && (
-                <ToggleButtonGroup
-                  id="gender"
-                  exclusive
-                  value={formValues[f.remarks] || ''}
-                  onChange={(_, val) => {
-                    if (val !== null) handleChange(f.remarks, val);
-                  }}
-                  sx={{
-                    '& .MuiToggleButton-root': {
-                      textTransform: 'none',
-                      px: 2,
-                      py: 1,
-                      bgcolor: 'transparent',
-                      color: 'text.primary',
-                      '&:hover': { bgcolor: 'action.hover' },
-                    },
-                    '& .MuiToggleButton-root.Mui-selected': {
-                      bgcolor: 'primary.main',
-                      color: 'white',
-                      '&:hover': { bgcolor: 'primary.dark' },
-                    },
-                  }}
-                >
-                  <ToggleButton value="1">
-                    <IconMan size={16} style={{ marginRight: 6 }} /> Male
-                  </ToggleButton>
-                  <ToggleButton value="0">
-                    <IconWoman size={16} style={{ marginRight: 6 }} /> Female
-                  </ToggleButton>
-                  <ToggleButton value="2">
-                    <IconGenderTransgender size={16} style={{ marginRight: 6 }} /> Prefer not to say
-                  </ToggleButton>
-                </ToggleButtonGroup>
+              {f.remarks === 'vehicle_plate' && formValues['is_driving'] === 'true' && (
+                <CustomTextField
+                  fullWidth
+                  value={displayValue}
+                  onChange={(e) => handleChange(f.remarks, e.target.value)}
+                  placeholder={f.long_display_text || f.remarks}
+                  error={!!errors[f.remarks]}
+                  helperText={errors[f.remarks]}
+                />
               )}
 
-              {/* 🔹 CASE F: is_driving */}
+              {f.remarks === 'gender' && (
+                <>
+                  <ToggleButtonGroup
+                    id="gender"
+                    exclusive
+                    value={formValues[f.remarks] || ''}
+                    onChange={(_, val) => {
+                      if (val !== null) handleChange(f.remarks, val);
+                    }}
+                    sx={{
+                      '& .MuiToggleButton-root': {
+                        textTransform: 'none',
+                        px: 2,
+                        py: 1,
+                        bgcolor: 'transparent',
+                        color: 'text.primary',
+                        '&:hover': { bgcolor: 'action.hover' },
+                      },
+                      '& .MuiToggleButton-root.Mui-selected': {
+                        bgcolor: 'primary.main',
+                        color: 'white',
+                        '&:hover': { bgcolor: 'primary.dark' },
+                      },
+                    }}
+                  >
+                    <ToggleButton value="1">
+                      <IconMan size={16} style={{ marginRight: 6 }} /> Male
+                    </ToggleButton>
+                    <ToggleButton value="0">
+                      <IconWoman size={16} style={{ marginRight: 6 }} /> Female
+                    </ToggleButton>
+                    <ToggleButton value="2">
+                      <IconGenderTransgender size={16} style={{ marginRight: 6 }} /> Prefer not to
+                      say
+                    </ToggleButton>
+                  </ToggleButtonGroup>
+                  {errors[f.remarks] && (
+                    <Typography variant="caption" color="error" sx={{ display: 'block', mt: 1 }}>
+                      {errors[f.remarks]}
+                    </Typography>
+                  )}
+                </>
+              )}
+
               {f.remarks === 'is_driving' && (
                 <>
                   <FormControl component="fieldset">
                     <RadioGroup
                       value={formValues[f.remarks] || ''}
                       onChange={(e) => {
-                        // console.log('🚗 is_driving changed to:', e.target.value);
                         handleChange(f.remarks, e.target.value);
                       }}
                       sx={{ flexDirection: 'row', flexWrap: 'wrap', gap: 1 }}
@@ -901,12 +911,12 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                       <FormControlLabel value="true" control={<Radio />} label="Yes" />
                       <FormControlLabel value="false" control={<Radio />} label="No" />
                     </RadioGroup>
+                    {errors[f.remarks] && (
+                      <Typography variant="caption" color="error">
+                        {errors[f.remarks]}
+                      </Typography>
+                    )}
                   </FormControl>
-                  {/* {errors[f.remarks] && (
-                    <Typography variant="caption" color="error">
-                      {errors[f.remarks]}
-                    </Typography>
-                  )} */}
                 </>
               )}
 
@@ -952,11 +962,11 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                     )}
                   />
 
-                  {/* {errors[f.remarks] && (
+                  {errors[f.remarks] && (
                     <Typography variant="caption" color="error">
                       {errors[f.remarks]}
                     </Typography>
-                  )} */}
+                  )}
                 </>
               )}
 
@@ -971,43 +981,45 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                       <FormControlLabel value="true" control={<Radio />} label="Yes" />
                       <FormControlLabel value="false" control={<Radio />} label="No" />
                     </RadioGroup>
+                    {errors[f.remarks] && (
+                      <Typography variant="caption" color="error">
+                        {errors[f.remarks]}
+                      </Typography>
+                    )}
                   </FormControl>
-                  {/* {errors[f.remarks] && (
-                    <Typography variant="caption" color="error">
-                      {errors[f.remarks]}
-                    </Typography>
-                  )} */}
                 </>
               )}
 
-              {f.remarks === 'vehicle_type' &&
-                formValues['is_driving'] === 'true' && ( // ✅ kondisi tambahan
-                  <FormControl component="fieldset">
-                    <RadioGroup
-                      value={formValues[f.remarks] || ''}
-                      sx={{ flexDirection: 'row', flexWrap: 'wrap', gap: 1 }}
-                    >
-                      {[
-                        { value: 'car', label: 'Car' },
-                        { value: 'bus', label: 'Bus' },
-                        { value: 'motor', label: 'Motor' },
-                        { value: 'bicycle', label: 'Bicycle' },
-                        { value: 'truck', label: 'Truck' },
-                        { value: 'private_car', label: 'Private Car' },
-                        { value: 'other', label: 'Other' },
-                      ].map((opt) => (
-                        <FormControlLabel
-                          key={opt.value}
-                          value={opt.value}
-                          control={
-                            <Radio onClick={() => handleRadioToggle(f.remarks, opt.value)} />
-                          }
-                          label={opt.label}
-                        />
-                      ))}
-                    </RadioGroup>
-                  </FormControl>
-                )}
+              {f.remarks === 'vehicle_type' && formValues['is_driving'] === 'true' && (
+                <FormControl component="fieldset">
+                  <RadioGroup
+                    value={formValues[f.remarks] || ''}
+                    sx={{ flexDirection: 'row', flexWrap: 'wrap', gap: 1 }}
+                  >
+                    {[
+                      { value: 'car', label: 'Car' },
+                      { value: 'bus', label: 'Bus' },
+                      { value: 'motor', label: 'Motor' },
+                      { value: 'bicycle', label: 'Bicycle' },
+                      { value: 'truck', label: 'Truck' },
+                      { value: 'private_car', label: 'Private Car' },
+                      { value: 'other', label: 'Other' },
+                    ].map((opt) => (
+                      <FormControlLabel
+                        key={opt.value}
+                        value={opt.value}
+                        control={<Radio onClick={() => handleRadioToggle(f.remarks, opt.value)} />}
+                        label={opt.label}
+                      />
+                    ))}
+                  </RadioGroup>
+                  {errors[f.remarks] && (
+                    <Typography variant="caption" color="error">
+                      {errors[f.remarks]}
+                    </Typography>
+                  )}
+                </FormControl>
+              )}
 
               {![
                 'visitor_period_start',
@@ -1026,6 +1038,8 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                     value={displayValue}
                     onChange={(e) => handleChange(f.remarks, e.target.value)}
                     placeholder={f.long_display_text || f.remarks}
+                    error={!!errors[f.remarks]}
+                    helperText={errors[f.remarks]}
                   />
                 )}
             </Grid>
@@ -1072,18 +1086,13 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
               answer_file: null,
             };
 
-            // mapping per tipe
             if ([10, 11, 12].includes(f.field_type)) {
-              // file (selfie_image, nda, identity)
               base.answer_file = value;
             } else if (f.field_type === 9) {
-              // datetime
               base.answer_datetime = value;
             } else {
-              // text
               base.answer_text = value;
             }
-
             return base;
           }),
         })),
@@ -1093,6 +1102,10 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
+    const currentSection = formSections[activeStep];
+    if (!validateStep(currentSection)) {
+      return;
+    }
     if (!invitationData) return;
 
     try {
@@ -1107,51 +1120,27 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
         (res.status === 'success' || res.status_code === 200 || res.title === 'success' || res.msg);
 
       if (ok) {
-        // ✅ beri jeda dulu agar spinner terlihat, baru tampilkan snackbar
-        // await new Promise((r) => setTimeout(r, 600));
-
-        // showSuccessAlert('Successfully Pra Register!', 'Success');
         showSwal('success', 'Successfully Pra Register!');
-
-        // await new Promise((r) => setTimeout(r, 1000));
-
-        // onSubmitted?.();
         onSubmitted?.(invitationData.id);
       } else {
         await new Promise((r) => setTimeout(r, 600));
-        showErrorAlert('Error!', res.msg ?? 'Something went wrong');
+        showSwal('error', res.msg ?? 'Something went wrong');
       }
     } catch (err) {
-      console.error('❌ Submit error:', err);
+      // console.error('❌ Submit error:', err);
       const errMsg =
         (err as any)?.response?.collection?.message ??
         (err as any)?.message ??
         'Failed Praregister';
 
       await new Promise((r) => setTimeout(r, 600));
-      showErrorAlert('Error!', errMsg);
+      showSwal('error', errMsg ?? 'Something went wrong');
     } finally {
-      // 🔹 beri sedikit jeda agar snackbar sempat muncul dulu sebelum backdrop hilang
       setTimeout(() => {
         setSubmitting(false);
       }, 600);
     }
   };
-
-  // if (loading)
-  //   return (
-  //     <Box
-  //       sx={{
-  //         position: 'fixed',
-  //         top: '50%',
-  //         left: '50%',
-  //         transform: 'translate(-50%, -50%)',
-  //         textAlign: 'center',
-  //       }}
-  //     >
-  //       <CircularProgress />
-  //     </Box>
-  //   );
 
   return (
     <>
@@ -1161,72 +1150,133 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
         alignItems="stretch"
         sx={{
           width: '100%',
-          // minHeight: '100vh',
-          // backgroundColor: '#f4f6f8',
         }}
       >
         <Grid size={{ xs: 12 }}>
-          <Stepper activeStep={activeStep} alternativeLabel>
-            {steps.map((label: string, i: number) => (
-              <Step key={i}>
-                <StepLabel
-                  StepIconComponent={CustomStepIcon}
-                  onClick={() => setActiveStep(i)}
-                  sx={{
-                    '& .MuiStepLabel-label': {
-                      fontSize: '0.9rem', // 👉 ubah ukuran font
-                      fontWeight: 500, // opsional: tebalin dikit
-                    },
-                  }}
-                >
-                  {label}
-                </StepLabel>
-              </Step>
-            ))}
-          </Stepper>
+          {!isMobile && (
+            <Stepper activeStep={activeStep} alternativeLabel>
+              {steps.map((label: string, i: number) => (
+                <Step key={i}>
+                  <StepLabel
+                    StepIconComponent={CustomStepIcon}
+                    onClick={() => setActiveStep(i)}
+                    sx={{
+                      '& .MuiStepLabel-label': {
+                        fontSize: '0.9rem',
+                        fontWeight: 500,
+                      },
+                    }}
+                  >
+                    {label}
+                  </StepLabel>
+                </Step>
+              ))}
+            </Stepper>
+          )}
 
-          <Box mt={4}>
+          {isMobile && (
+            <Box
+              sx={{
+                mt: 1,
+                mb: 1,
+                px: 2,
+                py: 1,
+                width: 'fit-content',
+                mx: 'auto',
+                // bgcolor: 'primary.main',
+                borderRadius: 2,
+                color: 'primary',
+                textAlign: 'center',
+              }}
+            >
+              <Typography variant="h5" fontWeight={600}>
+                {steps[activeStep]}
+              </Typography>
+            </Box>
+          )}
+
+          <Box mt={2}>
             {formSections.length > 0 ? (
               StepContent(formSections[activeStep])
             ) : (
-              // <Typography textAlign="center" color="text.secondary">
-              //   Form sections not found.
-              // </Typography>
-
               <Box textAlign="center" mt={4}>
-                <CircularProgress />
+                <CircularProgress color="primary" />
               </Box>
             )}
           </Box>
 
-          <Box display="flex" flexDirection="row" mt={4}>
-            <Button disabled={activeStep === 0} onClick={handleBack}>
-              Back
-            </Button>
-            <Box flex="1 1 auto" />
-            {activeStep !== steps.length - 1 ? (
-              <Button variant="contained" onClick={handleNext}>
-                Next
+          {isMobile && (
+            <Box sx={{ mt: 2 }}>
+              <MobileStepper
+                variant="dots"
+                steps={steps.length}
+                position="static"
+                activeStep={activeStep}
+                nextButton={
+                  activeStep === steps.length - 1 ? (
+                    <Button
+                      size="medium"
+                      variant="contained"
+                      color="primary"
+                      onClick={handleSubmit}
+                    >
+                      Submit
+                    </Button>
+                  ) : (
+                    <Button size="medium" variant="contained" color="primary" onClick={handleNext}>
+                      Next
+                      <KeyboardArrowRight />
+                    </Button>
+                  )
+                }
+                backButton={
+                  <Button size="medium" onClick={handleBack} disabled={activeStep === 0}>
+                    <KeyboardArrowLeft />
+                    Back
+                  </Button>
+                }
+              />
+            </Box>
+          )}
+
+          {!isMobile && (
+            <Box display="flex" flexDirection="row" mt={2}>
+              <Button
+                disabled={activeStep === 0}
+                onClick={handleBack}
+                startIcon={<IconArrowLeft size={18} />}
+              >
+                Back
               </Button>
-            ) : (
-              <Button variant="contained" color="primary" onClick={handleSubmit}>
-                Submit
-              </Button>
-            )}
-          </Box>
+              <Box flex="1 1 auto" />
+              {activeStep !== steps.length - 1 ? (
+                <Button
+                  variant="contained"
+                  onClick={handleNext}
+                  endIcon={<IconArrowRight size={18} />}
+                >
+                  Next
+                </Button>
+              ) : (
+                <Button variant="contained" color="primary" onClick={handleSubmit}>
+                  Submit
+                </Button>
+              )}
+            </Box>
+          )}
         </Grid>
       </Grid>
 
       <Backdrop
         sx={{
           color: '#fff',
-          zIndex: (theme) => theme.zIndex.drawer + 9999,
+          zIndex: 99999,
           position: 'fixed',
         }}
         open={submitting}
       >
         <Box textAlign="center">
-          <CircularProgress color="inherit" />
+          <CircularProgress color="primary" />
         </Box>
       </Backdrop>
     </>

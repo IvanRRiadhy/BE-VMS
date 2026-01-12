@@ -10,6 +10,7 @@ import {
   Backdrop,
   Button,
   Card,
+  Checkbox,
   CircularProgress,
   Dialog,
   DialogActions,
@@ -71,7 +72,7 @@ const Content = () => {
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
-    severity: 'success', // 'success' | 'error' | 'warning' | 'info'
+    severity: 'success',
   });
   const [loading, setLoading] = useState(false);
 
@@ -87,8 +88,6 @@ const Content = () => {
   };
 
   useEffect(() => {
-    // Fetch initial data if needed
-
     const fetchData = async () => {
       if (!token) return;
       const resSite = await getAllSite(token);
@@ -133,8 +132,8 @@ const Content = () => {
         active: item.activeOnSite,
         average_duration: item.average_duration ?? 0,
       }));
-      const summaryData = res.collection?.summary ?? []; // ✅ ambil summary
-      setSummary(rowsSummary); // ✅ simpan di state
+      const summaryData = res.collection?.summary ?? [];
+      setSummary(rowsSummary);
 
       const rows =
         res.collection?.data?.map((item: any) => ({
@@ -208,24 +207,22 @@ const Content = () => {
   };
 
   const printReport = () => {
-    const printWindow = window.open('', '_blank');
-    const tableHtml = document.getElementById('print-report-area')?.innerHTML;
-
-    printWindow!.document.write(`
-    <html>
-      <head>
-        <title>Visitor Report</title>
-      </head>
-      <body>
-        ${tableHtml}
-      </body>
-    </html>
-  `);
-
-    printWindow!.document.close();
-    printWindow!.focus();
-    printWindow!.print();
-    printWindow!.close();
+    //   const printWindow = window.open('', '_blank');
+    //   const tableHtml = document.getElementById('print-report-area')?.innerHTML;
+    //   printWindow!.document.write(`
+    //   <html>
+    //     <head>
+    //       <title>Visitor Report</title>
+    //     </head>
+    //     <body>
+    //       ${tableHtml}
+    //     </body>
+    //   </html>
+    // `);
+    //   printWindow!.document.close();
+    //   printWindow!.focus();
+    //   printWindow!.print();
+    //   printWindow!.close();
   };
 
   const handleConfirmSaveReport = async () => {
@@ -297,7 +294,7 @@ const Content = () => {
     } catch (err) {
       showSnackbar('Failed to save report.', 'error');
     } finally {
-      setLoading(false); // ⏹️ selesai loading
+      setLoading(false);
     }
   };
 
@@ -328,10 +325,6 @@ const Content = () => {
   const [isSaving, setIsSaving] = useState(false);
 
   const handleOpenSaveDialog = () => {
-    // if (!reportData || reportData.length === 0) {
-    //   showSnackbar('No report data to save. Please generate the report first.', 'info');
-    //   return;
-    // }
     setOpenSaveDialog(true);
   };
 
@@ -370,7 +363,7 @@ const Content = () => {
                 onChange={(e) => handleChange('start_date', e.target.value)}
                 InputLabelProps={{ shrink: true }}
                 sx={{ '& input': { color: 'black' } }}
-                disabled={formData.time_report !== 'CustomDate'} // ✅ Disable kalau bukan CustomDate
+                disabled={formData.time_report !== 'CustomDate'}
               />
             </Grid>
 
@@ -383,7 +376,7 @@ const Content = () => {
                 onChange={(e) => handleChange('end_date', e.target.value)}
                 InputLabelProps={{ shrink: true }}
                 sx={{ '& input': { color: 'black' } }}
-                disabled={formData.time_report !== 'CustomDate'} // ✅ Disable juga di sini
+                disabled={formData.time_report !== 'CustomDate'}
               />
             </Grid>
             <Grid size={{ xs: 12, md: 6, lg: 4 }}>
@@ -432,6 +425,9 @@ const Content = () => {
                 renderInput={(params) => <TextField {...params} placeholder="Select Host" />}
               />
             </Grid>
+            {/* <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+              <Checkbox /> Visitor
+            </Grid> */}
           </Grid>
           <Grid size={{ xs: 12, md: 6 }} mt={2}>
             <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>

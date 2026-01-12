@@ -1,4 +1,4 @@
-import { Box, Paper, Typography, useTheme, Button, IconButton, Chip } from '@mui/material';
+import { Box, Paper, Typography, useTheme, Button, IconButton, Chip, Tooltip } from '@mui/material';
 import { useState, useEffect, useCallback } from 'react';
 import {
   IconX,
@@ -78,10 +78,10 @@ export const TimeGridSelector = ({
   }, [days, onSelectionChange]);
 
   useEffect(() => {
-    console.log('### TimeGridSelector initialData berubah:', initialData);
+    // console.log('### TimeGridSelector initialData berubah:', initialData);
 
     if (initialData && initialData.length > 0) {
-      console.log('   -> Memuat initialData ke days state');
+      // console.log('   -> Memuat initialData ke days state');
       setDays(initialData);
 
       // isi selectedCells biar grid terwarnai
@@ -180,7 +180,7 @@ export const TimeGridSelector = ({
   //   setDragStart({ day: dayIndex, time: timeIndex });
   // }, []);
 
-  const handleMouseDown = (dayIndex: number, timeIndex : number) => {
+  const handleMouseDown = (dayIndex: number, timeIndex: number) => {
     setIsSelecting(true);
     setDragStart({ day: dayIndex, time: timeIndex });
 
@@ -398,56 +398,71 @@ export const TimeGridSelector = ({
   return (
     <Paper
       elevation={1}
-      sx={{ overflow: 'hidden', pt: '7px', px: '0.5rem' }}
+      sx={{ overflow: 'auto', pt: '7px', px: '0.5rem' }}
       onDragStart={handleDragStart}
       onContextMenu={handleContextMenu}
     >
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        mb={2}
+        gap={1}
+        flexWrap={'wrap'}
+      >
         <Typography variant="subtitle1" fontWeight="bold">
           Time Access Schedule
         </Typography>
-        <Box display="flex" gap={1}>
-          <Chip
-            icon={
-              selectionMode === 'add' ? <IconSquareCheck size={16} /> : <IconSquare size={16} />
-            }
-            label={selectionMode === 'add' ? 'Adding' : 'Removing'}
-            onClick={() => setSelectionMode((prev) => (prev === 'add' ? 'remove' : 'add'))}
-            color={selectionMode === 'add' ? 'primary' : 'error'}
-            variant={selectionMode === 'add' ? 'filled' : 'outlined'}
-            size="small"
-            sx={{ margin: '2.8px 0' }}
-          />
-          <Button
-            variant="outlined"
-            color={isAllSelected ? 'error' : 'primary'}
-            size="small"
-            startIcon={isAllSelected ? <IconSquareOff size={16} /> : <IconChecklist size={16} />}
-            onClick={handleToggleAll}
-            sx={{ fontSize: '0.75rem' }}
-          >
-            {isAllSelected ? 'Remove All' : 'Select All'}
-          </Button>
-          <Button
-            startIcon={<IconTrash size={16} />}
-            variant="contained"
-            color="error"
-            onClick={handleClearAll}
-            size="small"
-          >
-            Clear
-          </Button>
-          <Button
-            variant="contained"
-            onClick={() => {
-              const newDays = convertSelectionToTimeBlocks();
-              onSelectionChange(newDays);
-              onSubmit?.(newDays);
-            }}
-            size="small"
-          >
-            Apply
-          </Button>
+        <Box display="flex" gap={1} flexWrap={'wrap'}>
+          <Tooltip title="Add/Remove Hours Selection" arrow>
+            <Chip
+              icon={
+                selectionMode === 'add' ? <IconSquareCheck size={16} /> : <IconSquare size={16} />
+              }
+              label={selectionMode === 'add' ? 'Adding' : 'Removing'}
+              onClick={() => setSelectionMode((prev) => (prev === 'add' ? 'remove' : 'add'))}
+              color={selectionMode === 'add' ? 'primary' : 'error'}
+              variant={selectionMode === 'add' ? 'filled' : 'outlined'}
+              size="small"
+              sx={{ margin: '2.8px 0' }}
+            />
+          </Tooltip>
+          <Tooltip title="Select All Hours" arrow>
+            <Button
+              variant="outlined"
+              color={isAllSelected ? 'error' : 'primary'}
+              size="small"
+              startIcon={isAllSelected ? <IconSquareOff size={16} /> : <IconChecklist size={16} />}
+              onClick={handleToggleAll}
+              sx={{ fontSize: '0.75rem' }}
+            >
+              {isAllSelected ? 'Remove All' : 'Select All'}
+            </Button>
+          </Tooltip>
+          <Tooltip title="Clear All Hours" arrow>
+            <Button
+              startIcon={<IconTrash size={16} />}
+              variant="contained"
+              color="error"
+              onClick={handleClearAll}
+              size="small"
+            >
+              Clear
+            </Button>
+          </Tooltip>
+          <Tooltip title="Apply Selection" arrow>
+            <Button
+              variant="contained"
+              onClick={() => {
+                const newDays = convertSelectionToTimeBlocks();
+                onSelectionChange(newDays);
+                onSubmit?.(newDays);
+              }}
+              size="small"
+            >
+              Apply
+            </Button>
+          </Tooltip>
         </Box>
       </Box>
 
@@ -456,7 +471,7 @@ export const TimeGridSelector = ({
           display: 'flex',
           flexDirection: 'column',
           gap: 0.5,
-          maxHeight: '600px',
+          maxHeight: '660px',
           overflowY: 'auto',
           pr: 1,
           position: 'relative',

@@ -13,7 +13,7 @@ import axiosInstance from './interceptor';
 import { GetProfileResponse } from './models/profile';
 
 const url: string = `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api`;
-// const url: string = `https://finding-town-rear-gel.trycloudflare.com/api`;
+// const url: string = `https://classification-addressed-sections-sisters.trycloudflare.com/api`;
 export const login = async (body: LoginRequest): Promise<LoginResponse> => {
   try {
     const response = await axios.post<LoginResponse>(`${url}/_Auth/RequestToken`, body, {
@@ -47,19 +47,12 @@ export const AuthVisitor = async (body: AuthVisitorRequest): Promise<AuthVisitor
   }
 };
 
-export const SubmitPraForm = async (
-  body: any, // bisa diganti dengan type PraformRequest
-  id: string,
-): Promise<AuthVisitorResponse> => {
+export const SubmitPraForm = async (body: any, id: string): Promise<AuthVisitorResponse> => {
   try {
-    const response = await axios.post(
-      `${url}/_Auth/submit/pra-form`,
-      body, // body JSON lengkap
-      {
-        headers: { 'Content-Type': 'application/json' },
-        params: { id }, // id visitor sebagai query param
-      },
-    );
+    const response = await axios.post(`${url}/_Auth/submit/pra-form`, body, {
+      headers: { 'Content-Type': 'application/json' },
+      params: { id },
+    });
     return response.data;
   } catch (error) {
     throw error;

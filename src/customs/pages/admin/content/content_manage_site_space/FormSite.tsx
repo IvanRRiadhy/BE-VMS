@@ -90,6 +90,7 @@ import { BASE_URL } from 'src/customs/api/interceptor';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import RenderDragSite from './components/RenderDragSite';
 import RenderDetailRows from '../content_manage_visitor_type/RenderDetailRows';
+import { useLocation, useParams } from 'react-router';
 
 type EnabledFields = {
   type: boolean;
@@ -132,6 +133,11 @@ const FormSite = ({
   enabledFields,
   setEnabledFields,
 }: FormSiteProps) => {
+  const { token } = useSession();
+  const location = useLocation();
+  const segments = location.pathname.split('/');
+  const parentRouteId = segments[segments.length - 1] || null;
+
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
   const [alertType, setAlertType] = useState<'info' | 'success' | 'error'>('info');
@@ -146,7 +152,6 @@ const FormSite = ({
   const [alertMessage, setAlertMessage] = useState<string>(
     'Complete the following data properly and correctly',
   );
-  const { token } = useSession();
 
   const timezoneOptions = [
     { value: 'Asia/Jakarta', label: '(UTC+07:00) WIB (Waktu Indonesia Barat)' },
@@ -157,7 +162,6 @@ const FormSite = ({
   const [filteredSiteDocumentList, setFilteredSiteDocumentList] = useState<SiteDocumentItem[]>([]);
   const [siteDocuments, setSiteDocuments] = useState<CreateSiteDocumentRequest[]>([]);
   const [siteParking, setSiteParking] = useState<Parking[]>([]);
-  const [access, setAccess] = useState<Access[]>([]);
   const [siteTracking, setSiteTracking] = useState<Tracking[]>([]);
   const [newDocumentA, setNewDocumentA] = useState<SiteDocumentItem>({
     id: '',
@@ -166,7 +170,6 @@ const FormSite = ({
     documents: {} as DocumentItem,
     retentionTime: 0,
   });
-  const [site, setSite] = useState<Item[]>([]);
   const [accessControl, setAccessControl] = useState<AccessControlItem[]>([]);
 
   const [retentionInput, setRetentionInput] = useState('0');
@@ -298,213 +301,7 @@ const FormSite = ({
     }));
   };
 
-  const createSiteTrackings = async (newSiteId: string) => {
-    const trackingData = formData.tracking || []; // ✅ ambil langsung dari formData
-
-    if (!trackingData.length) {
-      console.warn('⚠️ No tracking data to create.');
-      return;
-    }
-
-    for (const doc of trackingData) {
-      const docWithSiteId: CreateSiteTrackingRequest = {
-        ...doc,
-        site_id: newSiteId,
-        trk_ble_card_access_id: doc.trk_ble_card_access_id,
-        early_access: !!doc.early_access,
-      };
-
-      console.log('🚀 Creating Site Tracking:', docWithSiteId);
-
-      if (!docWithSiteId.trk_ble_card_access_id) {
-        console.error('❌ Missing trk_ble_card_access_id for', doc);
-        continue; // skip yang kosong
-      }
-
-      await createSiteTracking(docWithSiteId, token as string);
-    }
-  };
-
-  const createSiteAccesss = async (newSiteId: string) => {
-    const trackingData = formData.access || []; // ✅ ambil langsung dari formData
-
-    if (!trackingData.length) {
-      console.warn('⚠️ No tracking data to create.');
-      return;
-    }
-
-    for (const doc of trackingData) {
-      const docWithSiteId: CreateSiteAccessRequest = {
-        ...doc,
-        site_id: newSiteId,
-        access_control_id: doc.access_control_id,
-        early_access: !!doc.early_access,
-      };
-
-      console.log('🚀 Creating Site Tracking:', docWithSiteId);
-
-      if (!docWithSiteId.access_control_id) {
-        console.error('❌ Missing access_control_id for', doc);
-        continue; // skip yang kosong
-      }
-
-      await createSiteAccess(docWithSiteId, token as string);
-    }
-  };
-
-  const createSiteParkings = async (newSiteId: string) => {
-    const parkingData = formData.parking || [];
-
-    if (!parkingData.length) {
-      console.warn('⚠️ No parking data to create.');
-      return;
-    }
-
-    for (const doc of parkingData) {
-      const docWithSiteId: CreateSiteParkingRequest = {
-        ...doc,
-        site_id: newSiteId,
-        prk_area_parking_id: doc.prk_area_parking_id,
-        early_access: !!doc.early_access,
-      };
-
-      console.log('🚀 Creating Site Parking:', docWithSiteId);
-
-      if (!docWithSiteId.prk_area_parking_id) {
-        console.error('❌ Missing prk_area_parking_id for', doc);
-        continue; // skip yang kosong
-      }
-
-      await createSiteParking(docWithSiteId, token as string);
-    }
-  };
-
-  // const handleOnSubmit = async (e: React.FormEvent) => {
-  //   // console.log('Submitting form with data:', formData);
-  //   e.preventDefault();
-  //   console.log('Submitting form with data:', formData);
-  //   setLoading(true);
-  //   setErrors({});
-  //   try {
-  //     if (!token) {
-  //       setAlertType('error');
-  //       setAlertMessage('Something went wrong. Please try again later.');
-
-  //       setTimeout(() => {
-  //         setAlertType('info');
-  //         setAlertMessage('Complete the following data properly and correctly');
-  //       }, 3000);
-  //       return;
-  //     }
-
-  //     if (isBatchEdit && selectedRows.length > 0) {
-  //       const updatedFields: Partial<CreateSiteRequest> = {};
-
-  //       // Misal ada field access_area_special dan gender juga
-  //       if (enabledFields?.type) {
-  //         //  setSiteTypes
-  //         updatedFields.type = formData.type;
-  //       }
-  //       if (enabledFields?.can_contactless_login)
-  //         updatedFields.can_contactless_login = formData.can_contactless_login;
-  //       if (enabledFields?.can_visited) {
-  //         updatedFields.can_visited = formData.can_visited;
-  //       }
-  //       if (enabledFields?.can_signout) updatedFields.can_signout = formData.can_signout;
-  //       if (enabledFields?.auto_signout) updatedFields.auto_signout = formData.auto_signout;
-  //       if (enabledFields?.signout_time) updatedFields.signout_time = formData.signout_time;
-  //       if (enabledFields?.timezone) updatedFields.timezone = formData.timezone;
-  //       if (enabledFields?.need_document) updatedFields.need_document = formData.need_document;
-  //       if (enabledFields?.need_approval) updatedFields.need_approval = formData.need_approval;
-  //       if (enabledFields?.is_registered_point)
-  //         updatedFields.is_registered_point = formData.is_registered_point;
-
-  //       // Khusus 'type_approval', cek dulu apakah enabled dan 'need_approval' true
-  //       // if (enabledFields?.type_approval && formData.need_approval === true) {
-  //       //   updatedFields.type_approval = formData.type_approval;
-  //       // }
-
-  //       if (enabledFields?.type_approval) {
-  //         updatedFields.type_approval = formData.type_approval;
-  //       }
-
-  //       if (Object.keys(updatedFields).length === 0) {
-  //         setAlertType('error');
-  //         setAlertMessage('Please enable at least one field to update.');
-  //         setTimeout(() => {
-  //           setAlertType('info');
-  //           setAlertMessage('Complete the following data properly and correctly');
-  //         }, 3000);
-  //         setLoading(false);
-  //         return;
-  //       }
-
-  //       for (const row of selectedRows) {
-  //         const updatedData: UpdateSiteRequest = {
-  //           // hanya kirim field yang perlu
-  //           ...row,
-  //           ...updatedFields,
-  //         };
-  //         await updateSite(row.id, updatedData, token);
-  //         console.log('Updated Data:', updatedData);
-  //       }
-  //       setAlertType('success');
-  //       setAlertMessage('Batch update successfully!');
-  //       Swal.fire({
-  //         icon: 'success',
-  //         title: 'Berhasil!',
-  //         text: 'Batch update successfully!',
-  //       });
-
-  //       resetEnabledFields();
-  //       onSuccess?.();
-  //       return;
-  //     }
-
-  //     const data: CreateSiteRequest = CreateSiteRequestSchema.parse(formData);
-  //     console.log('Setting Data: ', data);
-  //     if (editingId) {
-  //       const res = await updateSite(editingId, data, token);
-  //       console.log('Updated Data:', res);
-  //       setAlertType('success');
-  //       setAlertMessage('Site successfully updated!');
-  //       console.log('Editing ID:', editingId);
-  //     } else {
-  //       const res = await createSite(data, token);
-  //       const newSiteId = res.collection?.id;
-
-  //       await createSiteTrackings(newSiteId as string);
-  //       await createSiteParkings(newSiteId as string);
-  //       console.log('Created Data:', res);
-  //       setAlertType('success');
-  //       setAlertMessage('Site successfully created!');
-  //     }
-
-  //     await createSiteDocumentsForNewSite();
-
-  //     handleFileUpload();
-  //     localStorage.removeItem('unsavedSiteForm');
-
-  //     setTimeout(() => {
-  //       // onSuccess?.();
-  //     }, 900);
-  //   } catch (err: any) {
-  //     if (err?.errors) {
-  //       setErrors(err.errors);
-  //     }
-  //     setAlertType('error');
-  //     setAlertMessage('Something went wrong. Please try again later.');
-  //     setTimeout(() => {
-  //       setAlertType('info');
-  //       setAlertMessage('Complete the following data properly and correctly');
-  //     }, 3000);
-  //   } finally {
-  //     setTimeout(() => {
-  //       setLoading(false);
-  //     }, 600);
-  //   }
-  // };
-  const normalizeAccessPayload = (items: any[], siteId: string) => {
+  const normalizeAccessPayloads = (items: any[], siteId: string) => {
     return {
       data: items.map((a, idx) => ({
         site_id: siteId,
@@ -514,7 +311,7 @@ const FormSite = ({
       })),
     };
   };
-  const normalizeTrackingPayload = (items: any[], siteId: string) => {
+  const normalizeTrackingPayloads = (items: any[], siteId: string) => {
     return {
       data: items.map((t, idx) => ({
         site_id: siteId,
@@ -526,7 +323,25 @@ const FormSite = ({
     };
   };
 
+  const normalizeTrackingPayload = (items: any[], siteId: string) => {
+    return items.map((t, idx) => ({
+      site_id: siteId,
+      sort: idx + 1,
+      trk_ble_card_access_id: t.trk_ble_card_access_id,
+      early_access: t.early_access ?? false,
+    }));
+  };
+
   const normalizeParkingPayload = (items: any[], siteId: string) => {
+    return items.map((p, idx) => ({
+      site_id: siteId,
+      sort: idx + 1,
+      prk_area_parking_id: p.prk_area_parking_id,
+      early_access: p.early_access ?? false,
+    }));
+  };
+
+  const normalizeParkingPayloads = (items: any[], siteId: string) => {
     return {
       data: items.map((p, idx) => ({
         site_id: siteId,
@@ -574,8 +389,8 @@ const FormSite = ({
       }
 
       if (editingId) {
-        console.log('Editing site with ID:', editingId);
-        console.log('Form Data:', formData);
+        // console.log('Editing site with ID:', editingId);
+        // console.log('Form Data:', formData);
         const updateData = UpdateSiteRequestSchema.parse(formData);
         console.log('updateData main', updateData);
         // const updateDataTracking = UpdateSiteTrackingSchema.parse(formData.tracking || []);
@@ -589,43 +404,86 @@ const FormSite = ({
           if (val === '' || val === null || val === undefined) delete (updateData as any)[key];
         });
 
-        // Remove arrays agar tidak ikut overwrite
-        // delete (updateData as any).parking;
-        // delete (updateData as any).tracking;
-        // delete (updateData as any).access;
-
         const res = await updateSite(editingId, updateData, token);
         console.log('res', JSON.stringify(res, null, 2));
 
-        // // Bulk update access
-        // const accessPayload = normalizeAccessPayload(formData.access ?? [], editingId);
-        // await createSiteAccessBulk(accessPayload, token);
+        // const trackingPayload = normalizeTrackingPayload(formData.tracking ?? [], editingId);
+        // console.log('trackingPayload', trackingPayload);
 
-        // await updateSiteAccess(editingId, formData.access ?? [], token);
+        // await updateSiteTracking(editingId, trackingPayload, token);
+        // const parkingPayload = normalizeTrackingPayload(formData.parking ?? [], editingId);
+        // console.log('parkingPayload', parkingPayload);
 
-        const trackingPayload = normalizeTrackingPayload(formData.tracking ?? [], editingId);
-        console.log('trackingPayload', trackingPayload);
+        // await updateSiteParking(editingId, parkingPayload, token);
 
-        await updateSiteTracking(editingId, trackingPayload, token);
-        const parkingPayload = normalizeTrackingPayload(formData.parking ?? [], editingId);
-        console.log('parkingPayload', parkingPayload);
+        for (const t of formData.tracking ?? []) {
+          const payload = {
+            site_id: editingId, // tetap pakai site ID
+            sort: t.sort,
+            trk_ble_card_access_id: t.trk_ble_card_access_id ?? t.id,
+            early_access: t.early_access ?? false,
+          };
 
-        await updateSiteParking(editingId, parkingPayload, token);
+          if (t.id) {
+            await updateSiteTracking(t.id, payload, token); // pakai id record
+          } else {
+            await createSiteTracking(payload, token); // baru
+          }
+        }
+
+        // 🔹 Update Parking per item
+        for (const p of formData.parking ?? []) {
+          const payload = {
+            site_id: editingId,
+            sort: p.sort,
+            prk_area_parking_id: p.prk_area_parking_id ?? p.id,
+            early_access: p.early_access ?? false,
+          };
+
+          if (p.id) {
+            await updateSiteParking(p.id, payload, token); // pakai id record
+          } else {
+            await createSiteParking(payload, token); // baru
+          }
+        }
 
         await handleFileUpload(editingId);
 
         showSwal('success', 'Site successfully updated!');
       } else {
-        const createData = CreateSiteRequestSchema.parse(formData);
+        const rawId = parentRouteId;
+
+        const isValidParent =
+          typeof parentRouteId === 'string' &&
+          parentRouteId.trim() !== '' &&
+          parentRouteId !== 'site-space' &&
+          parentRouteId !== 'create';
+
+        const parentId = isValidParent ? parentRouteId : null;
+        let finalFormData = {
+          ...formData,
+          parent: parentId ?? null,
+          is_child: Boolean(parentId),
+          // is_child: !!parentId,
+          type: formData.type ?? 0,
+        };
+        console.log('finalFormData', finalFormData);
+        const createData = CreateSiteRequestSchema.parse(finalFormData);
+        console.log('createData', createData);
         const res = await createSite(createData, token);
         const newSiteId = res.collection?.id as string;
 
-        const trackingPayload = normalizeTrackingPayload(formData.tracking ?? [], newSiteId);
-        console.log('trackingPayload', trackingPayload);
-        await createSiteTrackingBulk(trackingPayload, token);
+        const trackingPayload = normalizeTrackingPayloads(formData.tracking ?? [], newSiteId);
 
-        const parkingPayload = normalizeParkingPayload(formData.parking ?? [], newSiteId);
-        await createSiteParkingBulk(parkingPayload, token);
+        if (trackingPayload.data.length > 0) {
+          await createSiteTrackingBulk(trackingPayload, token);
+        }
+
+        const parkingPayload = normalizeParkingPayloads(formData.parking ?? [], newSiteId);
+
+        if (parkingPayload.data.length > 0) {
+          await createSiteParkingBulk(parkingPayload, token);
+        }
 
         await createSiteDocumentsForNewSite();
         await handleFileUpload(newSiteId);
@@ -687,15 +545,11 @@ const FormSite = ({
       console.error('New site not found after creation');
       return;
     }
-
-    // Tambahkan site_id ke tiap dokumen dan kirim
     for (const doc of siteDocuments) {
       const docWithSiteId: CreateSiteDocumentRequest = {
         ...doc,
         site_id: newSite.id,
       };
-
-      // console.log('Creating site document with data:', docWithSiteId);
 
       try {
         await createSiteDocument(docWithSiteId, token);
@@ -706,13 +560,7 @@ const FormSite = ({
   };
 
   function formatEnumLabel(label: string) {
-    // Insert a space before all caps and capitalize the first letter
-    return (
-      label
-        .replace(/([A-Z])/g, ' $1')
-        // .replace(/^./, (str) => str.toUpperCase())
-        .trim()
-    );
+    return label.replace(/([A-Z])/g, ' $1').trim();
   }
 
   const resetEnabledFields = () => {
@@ -747,7 +595,6 @@ const FormSite = ({
 
   useEffect(() => {
     if (!siteImageFile && formData.image) {
-      // Jika dari backend berupa URL atau base64, set preview
       if (
         formData.image.startsWith('data:image') ||
         formData.image.startsWith('http') ||
@@ -755,18 +602,12 @@ const FormSite = ({
       ) {
         setPreviewUrl(formData.image);
       } else {
-        // Jika bukan URL atau base64 (misal path lokal dari backend), kamu bisa prepend base URL
         setPreviewUrl(`${BASE_URL}/cdn${formData.image}`);
       }
     }
   }, [formData.image, siteImageFile]);
 
-  const handleDetailChange = (
-    section: string, // use string instead of keyof formData
-    index: number,
-    field: string, // use string instead of keyof Access
-    value: any,
-  ) => {
+  const handleDetailChange = (section: string, index: number, field: string, value: any) => {
     setFormData((prev) => {
       const arr = Array.isArray(prev[section as keyof typeof formData])
         ? [...(prev[section as keyof typeof formData] as any[])]
@@ -777,10 +618,7 @@ const FormSite = ({
     });
   };
 
-  const handleDetailDelete = (
-    section: string, // gunakan string supaya cocok dengan renderDetailRows
-    index: number,
-  ) => {
+  const handleDetailDelete = (section: string, index: number) => {
     setFormData((prev) => {
       const arr = Array.isArray(prev[section as keyof typeof formData])
         ? [...(prev[section as keyof typeof formData] as any[])]
@@ -810,137 +648,6 @@ const FormSite = ({
       ...prev,
       access: updated,
     }));
-  };
-
-  const renderDetailRows = (
-    items: any[] | [],
-    sectionKey: 'parking' | 'tracking' | 'access',
-    onChange: (section: string, index: number, field: string, value: any) => void, // change the type of section to string
-    onDelete?: (section: string, index: number) => void,
-    accessControlList?: AccessControlItem[] | [],
-    parkingList?: Parking[] | [],
-    trackingList?: Tracking[] | [],
-  ) => {
-    return items.map((item, index) => (
-      <Draggable
-        key={`${sectionKey}-${index}`}
-        draggableId={`${sectionKey}-${index}`}
-        index={index}
-      >
-        {(provided, snapshot) => (
-          <TableRow
-            ref={provided.innerRef}
-            {...provided.draggableProps}
-            style={{
-              ...provided.draggableProps.style,
-              backgroundColor: snapshot.isDragging ? '#f0f0f0' : undefined,
-              cursor: 'move',
-            }}
-          >
-            <TableCell {...provided.dragHandleProps}>⇅</TableCell>
-
-            {/* kolom Name */}
-            <TableCell>
-              {sectionKey === 'access' && accessControlList ? (
-                <TextField
-                  select
-                  fullWidth
-                  size="small"
-                  value={item.access_control_id || ''}
-                  onChange={(e) => {
-                    const selectedId = e.target.value;
-                    const matched = accessControlList.find((a) => a.id === selectedId);
-                    onChange(sectionKey, index, 'access_control_id', selectedId);
-                    if (matched) onChange(sectionKey, index, 'name', matched.name);
-                  }}
-                >
-                  <MenuItem value="" disabled>
-                    Select Access Control
-                  </MenuItem>
-                  {accessControlList.map((ac) => (
-                    <MenuItem key={ac.id} value={ac.id}>
-                      {ac.name}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              ) : sectionKey === 'parking' && parkingList ? (
-                <TextField
-                  select
-                  fullWidth
-                  size="small"
-                  value={item.prk_area_parking_id || ''}
-                  onChange={(e) => {
-                    const selectedId = e.target.value;
-                    const matched = parkingList.find((p) => p.id === selectedId);
-                    onChange(sectionKey, index, 'prk_area_parking_id', selectedId);
-                    if (matched) onChange(sectionKey, index, 'name', matched.name);
-                  }}
-                >
-                  <MenuItem value="" disabled>
-                    Select Parking
-                  </MenuItem>
-                  {parkingList.map((p) => (
-                    <MenuItem key={p.id} value={p.id}>
-                      {p.name}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              ) : sectionKey === 'tracking' && trackingList ? (
-                <TextField
-                  select
-                  fullWidth
-                  size="small"
-                  value={item.trk_ble_card_access_id || ''}
-                  onChange={(e) => {
-                    const selectedId = e.target.value;
-                    const matched = trackingList.find((t) => t.id === selectedId);
-                    onChange(sectionKey, index, 'trk_ble_card_access_id', selectedId);
-                    if (matched) onChange(sectionKey, index, 'name', matched.name);
-                  }}
-                >
-                  <MenuItem value="" disabled>
-                    Select Tracking
-                  </MenuItem>
-                  {trackingList.map((t) => (
-                    <MenuItem key={t.id} value={t.id}>
-                      {t.name}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              ) : (
-                <TextField
-                  fullWidth
-                  size="small"
-                  value={item.name || ''}
-                  onChange={(e) => onChange(sectionKey, index, 'name', e.target.value)}
-                />
-              )}
-            </TableCell>
-
-            {/* kolom Early Access */}
-            <TableCell>
-              <Switch
-                checked={!!item.early_access}
-                onChange={(_, checked) => onChange(sectionKey, index, 'early_access', checked)}
-              />
-            </TableCell>
-
-            {/* tombol delete */}
-            {onDelete && (
-              <TableCell>
-                <IconButton
-                  onClick={() => onDelete(sectionKey, index)}
-                  size="small"
-                  sx={{ color: 'error.main' }}
-                >
-                  <IconTrash size={22} />
-                </IconButton>
-              </TableCell>
-            )}
-          </TableRow>
-        )}
-      </Draggable>
-    ));
   };
 
   const handleAddDetail = (section: 'parking' | 'tracking' | 'access') => {
@@ -984,22 +691,22 @@ const FormSite = ({
     }));
   };
 
+  const typeLabel = siteTypes.find((i) => i.value === formData.type)?.label ?? '';
+
   return (
     <>
       <form onSubmit={handleOnSubmit}>
-        <Grid container spacing={2} sx={{ mb: 2 }}>
+        <Grid container spacing={2} sx={{ mb: 2 }} alignItems="stretch">
           {/* Location Details */}
-          <Grid size={{ xs: 12, md: 5 }}>
-            <Paper sx={{ p: 3 }}>
+          <Grid size={{ xs: 12, md: 5 }} display={'flex'}>
+            <Paper sx={{ p: 3, height: '100%', width: '100%' }}>
               <Typography variant="h6" sx={{ mb: 2, borderLeft: '4px solid #673ab7', pl: 1 }}>
                 Location Details
               </Typography>
 
               <Grid container spacing={2}>
                 <Grid size={6}>
-                  <CustomFormLabel htmlFor="name" required>
-                    Location Name{' '}
-                  </CustomFormLabel>
+                  <CustomFormLabel htmlFor="name">Location Name</CustomFormLabel>
                   <CustomTextField
                     id="name"
                     value={formData.name}
@@ -1011,9 +718,7 @@ const FormSite = ({
                     disabled={isBatchEdit}
                     sx={{ mb: 2 }}
                   />
-                  <CustomFormLabel htmlFor="description" required>
-                    Description
-                  </CustomFormLabel>
+                  <CustomFormLabel htmlFor="description">Description</CustomFormLabel>
                   <CustomTextField
                     id="description"
                     value={formData.description}
@@ -1027,63 +732,20 @@ const FormSite = ({
                   />
                 </Grid>
                 <Grid size={6}>
-                  <Box
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="space-between"
-                    sx={{ marginX: 1 }}
-                  >
-                    <CustomFormLabel htmlFor="type" required>
-                      Type
-                    </CustomFormLabel>
-                    {isBatchEdit && (
-                      <FormControlLabel
-                        control={
-                          <Switch
-                            size="small"
-                            checked={enabledFields?.type || false}
-                            onChange={(e) =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                type: parseInt(e.target.value),
-                              }))
-                            }
-                          />
-                        }
-                        label=""
-                        labelPlacement="start"
-                        sx={{ mt: 2 }}
-                      />
-                    )}
+                  <Box display="flex" alignItems="center" justifyContent="space-between">
+                    <CustomFormLabel htmlFor="type">Type</CustomFormLabel>
                   </Box>
                   <CustomTextField
                     id="type"
                     name="type"
-                    select
-                    value={formData.type}
-                    onChange={handleChange}
+                    // select
+                    value={typeLabel}
                     fullWidth
                     sx={{ mb: 2 }}
-                    required
-                    disabled={isBatchEdit && !enabledFields?.type}
-                  >
-                    <MenuItem value="" disabled>
-                      Select Type
-                    </MenuItem>
-                    {siteTypes.map((item) => (
-                      <MenuItem key={item.value} value={item.value}>
-                        {item.label}
-                      </MenuItem>
-                    ))}
-                  </CustomTextField>
-
-                  {/* {formData.need_approval && ( */}
-                  <Box
-                  // display="flex"
-                  // alignItems="center"
-                  // justifyContent="space-between"
-                  // sx={{ marginX: 1 }}
-                  >
+                    // required
+                    disabled
+                  />
+                  <Box>
                     <CustomFormLabel htmlFor="type_approval" required={formData.need_approval}>
                       Type Approval
                     </CustomFormLabel>
@@ -1096,7 +758,7 @@ const FormSite = ({
                         setFormData((prev) => ({
                           ...prev,
                           type_approval: value,
-                          need_approval: value !== 0 ? true : false, // auto-set if not 0
+                          need_approval: value !== 0 ? true : false,
                         }));
                       }}
                       fullWidth
@@ -1118,14 +780,13 @@ const FormSite = ({
                         ))}
                     </CustomSelect>
                   </Box>
-                  {/* )} */}
                 </Grid>
               </Grid>
             </Paper>
           </Grid>
           {/* Language and Timezone */}
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Paper sx={{ p: 3, mb: 2 }}>
+          <Grid size={{ xs: 12, md: 3.5 }} display={'flex'}>
+            <Paper sx={{ p: 3, height: '100%', width: '100%' }}>
               <Typography variant="h6" sx={{ mb: 2, borderLeft: '4px solid #673ab7', pl: 1 }}>
                 Language and Timezone
               </Typography>
@@ -1221,267 +882,345 @@ const FormSite = ({
           </Grid>
 
           {/* Right-most settings switches */}
-          <Grid size={{ xs: 12, md: 3 }}>
-            <Paper sx={{ p: 3 }}>
+          <Grid size={{ xs: 12, md: 3.5 }} display={'flex'}>
+            <Paper sx={{ p: 3, pb: 0, height: '100%', width: '100%' }}>
               <Typography variant="h6" sx={{ mb: 2, borderLeft: '4px solid #673ab7', pl: 1 }}>
                 Settings
               </Typography>
-              {/* Switches */}
-              <Box>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={formData.can_visited}
-                      onChange={(_, checked) => {
-                        setFormData((prev) => ({ ...prev, can_visited: checked }));
+              <Grid container spacing={2} sx={{ pt: 1 }}>
+                <Grid size={{ xs: 12, xl: 6 }}>
+                  <Box>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={formData.can_visited}
+                          onChange={(_, checked) => {
+                            setFormData((prev) => ({ ...prev, can_visited: checked }));
 
-                        if (isBatchEdit) {
-                          setEnabledFields((prev) => ({ ...prev, can_visited: true }));
-                        }
-                      }}
+                            if (isBatchEdit) {
+                              setEnabledFields((prev) => ({ ...prev, can_visited: true }));
+                            }
+                          }}
+                        />
+                      }
+                      label={
+                        <Box display="flex" alignItems="center">
+                          Can Visit
+                          <Tooltip
+                            title="Visitors can visit the site."
+                            sx={{
+                              ml: { xs: 0, lg: 3.5 },
+                            }}
+                            arrow
+                          >
+                            <IconButton size="small">
+                              <InfoOutlinedIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      }
+                      sx={{ marginRight: 0 }}
                     />
-                  }
-                  label={
-                    <Box display="flex" alignItems="center">
-                      Can Visit
-                      <Tooltip title="Visitors can visit the site.">
-                        <IconButton size="small" sx={{ ml: 1 }}>
-                          <InfoOutlinedIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  }
-                />
-              </Box>
-              <Box>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={formData.need_approval}
-                      onChange={(_, checked) => {
-                        setFormData((prev) => ({ ...prev, need_approval: checked }));
-                        if (isBatchEdit) {
-                          setEnabledFields((prev) => ({ ...prev, need_approval: true }));
-                        }
-                      }}
+                  </Box>
+                </Grid>
+                <Grid size={{ xs: 12, xl: 6 }}>
+                  <Box>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={formData.need_approval}
+                          onChange={(_, checked) => {
+                            setFormData((prev) => ({ ...prev, need_approval: checked }));
+                            if (isBatchEdit) {
+                              setEnabledFields((prev) => ({ ...prev, need_approval: true }));
+                            }
+                          }}
+                        />
+                      }
+                      label={
+                        <Box display="flex" alignItems="center">
+                          Need Approval
+                          <Tooltip title="Visitors must be approved before visiting the site." arrow>
+                            <IconButton size="small">
+                              <InfoOutlinedIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      }
                     />
-                  }
-                  label={
-                    <Box display="flex" alignItems="center">
-                      Need Approval
-                      <Tooltip title="Visitors must be approved before visiting the site.">
-                        <IconButton size="small" sx={{ ml: 1 }}>
-                          <InfoOutlinedIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  }
-                />
-              </Box>
-              <Box>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={formData.can_signout}
-                      onChange={(_, checked) => {
-                        setFormData((prev) => ({ ...prev, can_signout: checked }));
-                        if (isBatchEdit) {
-                          setEnabledFields((prev) => ({ ...prev, can_signout: true }));
-                        }
-                      }}
+                  </Box>
+                </Grid>
+                <Grid size={{ xs: 12, xl: 6 }}>
+                  <Box>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          // checked={formData.need_invitation}
+                          onChange={(_, checked) => {
+                            setFormData((prev) => ({ ...prev, need_invitation: checked }));
+                            if (isBatchEdit) {
+                              setEnabledFields((prev) => ({ ...prev, need_invitation: true }));
+                            }
+                          }}
+                        />
+                      }
+                      label={
+                        <Box display="flex" alignItems="center">
+                          Need Invitation
+                          <Tooltip title="Visitors must be invited before visiting the site." arrow>
+                            <IconButton size="small">
+                              <InfoOutlinedIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      }
                     />
-                  }
-                  label={
-                    <Box display="flex" alignItems="center">
-                      Can Check-out
-                      <Tooltip title="Visitors must check out before leaving the site.">
-                        <IconButton size="small" sx={{ ml: 1 }}>
-                          <InfoOutlinedIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  }
-                />
-              </Box>
-              <Box>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={formData.auto_signout}
-                      onChange={(_, checked) => {
-                        setFormData((prev) => ({
-                          ...prev,
-                          auto_signout: checked,
-                          can_signout: checked ? true : prev.can_signout, 
-                        }));
-                        if (isBatchEdit) {
-                          setEnabledFields((prev) => ({ ...prev, auto_signout: true }));
-                        }
-                      }}
+                  </Box>
+                </Grid>
+                <Grid size={{ xs: 12, xl: 6 }}>
+                  <Box>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          // checked={formData.need_invitation}
+                          onChange={(_, checked) => {
+                            setFormData((prev) => ({ ...prev, need_invitation: checked }));
+                            if (isBatchEdit) {
+                              setEnabledFields((prev) => ({ ...prev, need_invitation: true }));
+                            }
+                          }}
+                        />
+                      }
+                      label={
+                        <Box display="flex" alignItems="center">
+                          Need Swap Card
+                          <Tooltip title="
+                            Visitors must swap card.
+                          " arrow>
+                            <IconButton size="small">
+                              <InfoOutlinedIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      }
                     />
-                  }
-                  label={
-                    <Box display="flex" alignItems="center">
-                      Auto Check-out
-                      <Tooltip title="Automatically checks out visitors at a specified time.">
-                        <IconButton size="small" sx={{ ml: 1 }}>
-                          <InfoOutlinedIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  }
-                />
-              </Box>
-              <Box>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={formData.can_contactless_login}
-                      onChange={(_, checked) => {
-                        setFormData((prev) => ({ ...prev, can_contactless_login: checked }));
-                        if (isBatchEdit) {
-                          setEnabledFields((prev) => ({ ...prev, can_contactless_login: true }));
-                        }
-                      }}
+                  </Box>
+                </Grid>
+                <Grid size={{ xs: 12, xl: 6 }}>
+                  <Box>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={formData.can_signout}
+                          onChange={(_, checked) => {
+                            setFormData((prev) => ({ ...prev, can_signout: checked }));
+                            if (isBatchEdit) {
+                              setEnabledFields((prev) => ({ ...prev, can_signout: true }));
+                            }
+                          }}
+                        />
+                      }
+                      label={
+                        <Box display="flex" alignItems="center">
+                          Can Check-out
+                          <Tooltip title="Visitors must check out before leaving the site." arrow>
+                            <IconButton size="small">
+                              <InfoOutlinedIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      }
                     />
-                  }
-                  label={
-                    <Box display="flex" alignItems="center">
-                      Contactless Login
-                      <Tooltip title="Visitors can do contactless login.">
-                        <IconButton size="small" sx={{ ml: 1 }}>
-                          <InfoOutlinedIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  }
-                />
-              </Box>
-              <Box>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={formData.need_document}
-                      onChange={(_, checked) => {
-                        setFormData((prev) => ({ ...prev, need_document: checked }));
-                        if (isBatchEdit) {
-                          setEnabledFields((prev) => ({ ...prev, need_document: true }));
-                        }
-                      }}
+                  </Box>
+                </Grid>
+                <Grid size={{ xs: 12, xl: 6 }}>
+                  <Box>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={formData.auto_signout}
+                          onChange={(_, checked) => {
+                            setFormData((prev) => ({
+                              ...prev,
+                              auto_signout: checked,
+                              can_signout: checked ? true : prev.can_signout,
+                            }));
+                            if (isBatchEdit) {
+                              setEnabledFields((prev) => ({ ...prev, auto_signout: true }));
+                            }
+                          }}
+                        />
+                      }
+                      label={
+                        <Box display="flex" alignItems="center">
+                          Auto Check-out
+                          <Tooltip title="Automatically checks out visitors at a specified time." arrow>
+                            <IconButton size="small">
+                              <InfoOutlinedIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      }
                     />
-                  }
-                  label={
-                    <Box display="flex" alignItems="center">
-                      Need Document
-                      <Tooltip title="Visitors must upload a document before visiting the site.">
-                        <IconButton size="small" sx={{ ml: 1 }}>
-                          <InfoOutlinedIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  }
-                />
-              </Box>
-              <Box>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={formData.is_registered_point}
-                      onChange={(_, checked) => {
-                        setFormData((prev) => ({ ...prev, is_registered_point: checked }));
-                        if (isBatchEdit) {
-                          setEnabledFields((prev) => ({ ...prev, is_registered_point: true }));
-                        }
-                      }}
+                  </Box>
+                </Grid>
+                <Grid size={{ xs: 12, xl: 6 }}>
+                  <Box>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={formData.can_contactless_login}
+                          onChange={(_, checked) => {
+                            setFormData((prev) => ({ ...prev, can_contactless_login: checked }));
+                            if (isBatchEdit) {
+                              setEnabledFields((prev) => ({
+                                ...prev,
+                                can_contactless_login: true,
+                              }));
+                            }
+                          }}
+                        />
+                      }
+                      label={
+                        <Box display="flex" alignItems="center">
+                          Contactless Login
+                          <Tooltip title="Visitors can do contactless login." arrow>
+                            <IconButton size="small">
+                              <InfoOutlinedIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      }
                     />
-                  }
-                  label={
-                    <Box display="flex" alignItems="center">
-                      Registered Site
-                      <Tooltip title="Visitors must register a point before visiting the site.">
-                        <IconButton size="small" sx={{ ml: 1 }}>
-                          <InfoOutlinedIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  }
-                />
-              </Box>
+                  </Box>
+                </Grid>
+                <Grid size={{ xs: 12, xl: 6 }}>
+                  <Box>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={formData.need_document}
+                          onChange={(_, checked) => {
+                            setFormData((prev) => ({ ...prev, need_document: checked }));
+                            if (isBatchEdit) {
+                              setEnabledFields((prev) => ({ ...prev, need_document: true }));
+                            }
+                          }}
+                        />
+                      }
+                      label={
+                        <Box display="flex" alignItems="center">
+                          Need Document
+                          <Tooltip title="Visitors must upload a document before visiting the site." arrow>
+                            <IconButton size="small">
+                              <InfoOutlinedIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      }
+                    />
+                  </Box>
+                </Grid>
+                <Grid size={{ xs: 12, xl: 6 }}>
+                  <Box>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={formData.is_registered_point}
+                          onChange={(_, checked) => {
+                            setFormData((prev) => ({ ...prev, is_registered_point: checked }));
+                            if (isBatchEdit) {
+                              setEnabledFields((prev) => ({ ...prev, is_registered_point: true }));
+                            }
+                          }}
+                        />
+                      }
+                      label={
+                        <Box display="flex" alignItems="center">
+                          Registered Site
+                          <Tooltip title="Visitors must register a point before visiting the site." arrow>
+                            <IconButton size="small">
+                              <InfoOutlinedIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      }
+                    />
+                  </Box>
+                </Grid>
+              </Grid>
             </Paper>
           </Grid>
 
-          {/* Access */}
-          {/* <Grid size={{ xs: 12, md: 6 }}>
-            <Paper sx={{ p: 3 }}>
-              <Box>
-                <Typography variant="h6" sx={{ borderLeft: '4px solid #673ab7', pl: 1 }}>
-                  Access
-                </Typography>
-                <DragDropContext onDragEnd={handleDragEnd}>
-                  <TableContainer component={Paper} sx={{ mb: 1 }}>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>*</TableCell>
-                          <TableCell>Name</TableCell>
-                          <TableCell>Early Access</TableCell>
-                          <TableCell>Action</TableCell>
-                        </TableRow>
-                      </TableHead>
-
-                      <Droppable
-                        droppableId="access-droppable"
-                        isDropDisabled={false}
-                        isCombineEnabled={false}
-                        ignoreContainerClipping={true}
-                      >
-                        {(provided) => (
-                          <TableBody ref={provided.innerRef} {...provided.droppableProps}>
-                            {renderDetailRows(
-                              formData.access || [],
-                              accessControl,
-                              (index, field, value) =>
-                                handleDetailChange('access', index, field, value),
-                              (index) => handleDetailDelete('access', index),
-                            )}
-                            {provided.placeholder}
-                          </TableBody>
-                        )}
-                      </Droppable>
-                    </Table>
-                  </TableContainer>
-                </DragDropContext>
-                <MuiButton
-                  size="small"
-                  onClick={() => handleAddDetail()}
-                  variant="contained"
-                  color="primary"
-                >
-                  Add New
-                </MuiButton>
-              </Box>
-            </Paper>
-          </Grid> */}
-
+          {/* Site Access */}
           <Grid size={{ xs: 12, md: 6 }}>
-            <Paper sx={{ p: 3 }}>
-              <Box>
-                <Typography variant="h6" sx={{ borderLeft: '4px solid #673ab7', pl: 1 }}>
-                  Access
-                </Typography>
-                <DragDropContext onDragEnd={handleDragEnd}>
-                  <TableContainer component={Paper} sx={{ mb: 1 }}>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>*</TableCell>
-                          <TableCell>Name</TableCell>
-                          <TableCell>Early Access</TableCell>
-                          <TableCell>Action</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      {/* <Droppable
-                        droppableId="access-droppable"
+            <Grid size={{ xs: 12 }}>
+              <Paper sx={{ p: 3 }}>
+                <Box>
+                  <Typography variant="h6" sx={{ borderLeft: '4px solid #673ab7', pl: 1 }}>
+                    Access
+                  </Typography>
+                  <DragDropContext onDragEnd={handleDragEnd}>
+                    <TableContainer component={Paper} sx={{ mb: 1 }}>
+                      <Table>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>*</TableCell>
+                            <TableCell>Name</TableCell>
+                            <TableCell>Early Access</TableCell>
+                            <TableCell>Action</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <RenderDragSite
+                          sectionKey="access"
+                          items={formData.access}
+                          onChange={handleDetailChange}
+                          onDelete={handleDetailDelete}
+                          accessControlList={accessControl}
+                          onReorder={(newItems) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              access: newItems,
+                            }))
+                          }
+                        />
+                      </Table>
+                    </TableContainer>
+                  </DragDropContext>
+                  {formData.can_visited && (
+                    <MuiButton
+                      size="small"
+                      onClick={() => handleAddDetail('access')}
+                      variant="contained"
+                      color="primary"
+                    >
+                      Add New
+                    </MuiButton>
+                  )}
+                </Box>
+              </Paper>
+            </Grid>
+            {/* Site Parking */}
+            <Grid size={{ xs: 12 }}>
+              <Paper sx={{ p: 3 }}>
+                <Box>
+                  <Typography variant="h6" sx={{ borderLeft: '4px solid #673ab7', pl: 1 }}>
+                    Site Parking
+                  </Typography>
+                  <DragDropContext onDragEnd={handleDragEnd}>
+                    <TableContainer component={Paper} sx={{ mb: 1 }}>
+                      <Table>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>*</TableCell>
+                            <TableCell>Name</TableCell>
+                            <TableCell>Early Access</TableCell>
+                            <TableCell>Action</TableCell>
+                          </TableRow>
+                        </TableHead>
+
+                        {/* <Droppable
+                        droppableId="parking-droppable"
                         isDropDisabled={false}
                         isCombineEnabled={false}
                         ignoreContainerClipping={true}
@@ -1489,42 +1228,95 @@ const FormSite = ({
                         {(provided) => (
                           <TableBody ref={provided.innerRef} {...provided.droppableProps}>
                             {renderDetailRows(
-                              formData.access || [],
-                              'access',
+                              formData.parking || [],
+                              'parking',
                               handleDetailChange,
                               handleDetailDelete,
-                              accessControl || [], // tetap bisa dikirim walau tidak dipakai
+                              undefined,
+                              siteParking,
                             )}
                             {provided.placeholder}
                           </TableBody>
                         )}
                       </Droppable> */}
-                      <RenderDragSite
-                        sectionKey="access"
-                        items={formData.access}
-                        onChange={handleDetailChange}
-                        onDelete={handleDetailDelete}
-                        accessControlList={accessControl}
-                        onReorder={(newItems) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            access: newItems,
-                          }))
-                        }
-                      />
-                    </Table>
-                  </TableContainer>
-                </DragDropContext>
-                <MuiButton
-                  size="small"
-                  onClick={() => handleAddDetail('access')}
-                  variant="contained"
-                  color="primary"
-                >
-                  Add New
-                </MuiButton>
-              </Box>
-            </Paper>
+                        <RenderDragSite
+                          sectionKey="parking"
+                          items={formData.parking}
+                          onChange={handleDetailChange}
+                          onDelete={handleDetailDelete}
+                          parkingList={siteParking}
+                          onReorder={(newItems) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              parking: newItems,
+                            }))
+                          }
+                        />
+                      </Table>
+                    </TableContainer>
+                  </DragDropContext>
+                  {(!formData.parking ||
+                    (formData.parking.length === 0 && formData.can_visited)) && (
+                    <MuiButton
+                      size="small"
+                      onClick={() => handleAddDetail('parking')}
+                      variant="contained"
+                      color="primary"
+                    >
+                      Add New
+                    </MuiButton>
+                  )}
+                </Box>
+              </Paper>
+            </Grid>
+            {/* Site Tracking */}
+            <Grid size={{ xs: 12 }}>
+              <Paper sx={{ p: 3 }}>
+                <Box>
+                  <Typography variant="h6" sx={{ borderLeft: '4px solid #673ab7', pl: 1 }}>
+                    Site Tracking
+                  </Typography>
+                  <DragDropContext onDragEnd={handleDragEnd}>
+                    <TableContainer component={Paper} sx={{ mb: 1 }}>
+                      <Table>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>*</TableCell>
+                            <TableCell>Name</TableCell>
+                            <TableCell>Early Access</TableCell>
+                            <TableCell>Action</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <RenderDragSite
+                          sectionKey="tracking"
+                          items={formData.tracking}
+                          onChange={handleDetailChange}
+                          onDelete={handleDetailDelete}
+                          trackingList={siteTracking}
+                          onReorder={(newItems) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              tracking: newItems,
+                            }))
+                          }
+                        />
+                      </Table>
+                    </TableContainer>
+                  </DragDropContext>
+                  {(!formData.tracking ||
+                    (formData.tracking.length === 0 && formData.can_visited)) && (
+                    <MuiButton
+                      size="small"
+                      onClick={() => handleAddDetail('tracking')}
+                      variant="contained"
+                      color="primary"
+                    >
+                      Add New
+                    </MuiButton>
+                  )}
+                </Box>
+              </Paper>
+            </Grid>
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
@@ -1614,122 +1406,6 @@ const FormSite = ({
             </Paper>
           </Grid>
 
-          {/* Site Parking */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Paper sx={{ p: 3 }}>
-              <Box>
-                <Typography variant="h6" sx={{ borderLeft: '4px solid #673ab7', pl: 1 }}>
-                  Site Parking
-                </Typography>
-                <DragDropContext onDragEnd={handleDragEnd}>
-                  <TableContainer component={Paper} sx={{ mb: 1 }}>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>*</TableCell>
-                          <TableCell>Name</TableCell>
-                          <TableCell>Early Access</TableCell>
-                          <TableCell>Action</TableCell>
-                        </TableRow>
-                      </TableHead>
-
-                      {/* <Droppable
-                        droppableId="parking-droppable"
-                        isDropDisabled={false}
-                        isCombineEnabled={false}
-                        ignoreContainerClipping={true}
-                      >
-                        {(provided) => (
-                          <TableBody ref={provided.innerRef} {...provided.droppableProps}>
-                            {renderDetailRows(
-                              formData.parking || [],
-                              'parking',
-                              handleDetailChange,
-                              handleDetailDelete,
-                              undefined,
-                              siteParking,
-                            )}
-                            {provided.placeholder}
-                          </TableBody>
-                        )}
-                      </Droppable> */}
-                      <RenderDragSite
-                        sectionKey="parking"
-                        items={formData.parking}
-                        onChange={handleDetailChange}
-                        onDelete={handleDetailDelete}
-                        parkingList={siteParking}
-                        onReorder={(newItems) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            parking: newItems,
-                          }))
-                        }
-                      />
-                    </Table>
-                  </TableContainer>
-                </DragDropContext>
-                {(!formData.parking || formData.parking.length === 0) && (
-                  <MuiButton
-                    size="small"
-                    onClick={() => handleAddDetail('parking')}
-                    variant="contained"
-                    color="primary"
-                  >
-                    Add New
-                  </MuiButton>
-                )}
-              </Box>
-            </Paper>
-          </Grid>
-
-          {/* Site Tracking */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Paper sx={{ p: 3 }}>
-              <Box>
-                <Typography variant="h6" sx={{ borderLeft: '4px solid #673ab7', pl: 1 }}>
-                  Site Tracking
-                </Typography>
-                <DragDropContext onDragEnd={handleDragEnd}>
-                  <TableContainer component={Paper} sx={{ mb: 1 }}>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>*</TableCell>
-                          <TableCell>Name</TableCell>
-                          <TableCell>Early Access</TableCell>
-                          <TableCell>Action</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <RenderDragSite
-                        sectionKey="tracking"
-                        items={formData.tracking}
-                        onChange={handleDetailChange}
-                        onDelete={handleDetailDelete}
-                        trackingList={siteTracking}
-                        onReorder={(newItems) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            tracking: newItems,
-                          }))
-                        }
-                      />
-                    </Table>
-                  </TableContainer>
-                </DragDropContext>
-                {(!formData.tracking || formData.tracking.length === 0) && (
-                  <MuiButton
-                    size="small"
-                    onClick={() => handleAddDetail('tracking')}
-                    variant="contained"
-                    color="primary"
-                  >
-                    Add New
-                  </MuiButton>
-                )}
-              </Box>
-            </Paper>
-          </Grid>
           {formData.need_document && (
             <Grid size={{ xs: 12, md: 6 }}>
               <Paper sx={{ p: 3 }}>
@@ -1844,7 +1520,7 @@ const FormSite = ({
                       <CustomFormLabel htmlFor="retention_time">
                         Retention Time (days)
                         <Tooltip title="If the value is 0, the document data will be stored permanently.">
-                          <IconButton size="small" sx={{ ml: 1 }}>
+                          <IconButton size="small">
                             <InfoOutlinedIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
@@ -1866,10 +1542,10 @@ const FormSite = ({
                             }));
                           }
                         }}
-                        type="text" // text agar bisa kontrol input
+                        type="text"
                         inputProps={{
-                          inputMode: 'numeric', // buka keyboard angka
-                          pattern: '[0-9]*', // cegah input selain angka
+                          inputMode: 'numeric',
+                          pattern: '[0-9]*',
                         }}
                         fullWidth
                         sx={{ mb: 2 }}
@@ -1940,7 +1616,7 @@ const FormSite = ({
             disabled={loading}
             size="medium"
           >
-            {loading ? 'Submitting...' : 'Submit'}
+            {loading ? <CircularProgress size={20} /> : 'Submit'}
           </Button>
         </Box>
       </form>
@@ -1952,7 +1628,7 @@ const FormSite = ({
           zIndex: 99999,
         }}
       >
-        <CircularProgress color="inherit" />
+        <CircularProgress color="primary" />
       </Backdrop>
     </>
   );

@@ -58,7 +58,6 @@ const DetailProfile = () => {
         setLoading(true);
         const res = await getProfile(token);
 
-        // ✅ API mengembalikan bentuk { status, collection }
         const d = res?.collection;
         if (!d) return;
 

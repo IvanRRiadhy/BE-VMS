@@ -48,31 +48,27 @@ import {
   Tooltip,
   Select,
 } from '@mui/material';
-import { Box, useMediaQuery, useTheme, width } from '@mui/system';
-// import { t } from 'i18next';
+import { Box, display, fontSize, useMediaQuery, useTheme, width } from '@mui/system';
 import moment from 'moment-timezone';
 import backgroundnodata from 'src/assets/images/backgrounds/bg_nodata.svg';
 import infoPic from 'src/assets/images/backgrounds/info_pic.png';
 import {
+  IconArrowLeft,
+  IconArrowRight,
   IconArrowsMaximize,
   IconBan,
-  IconBrandGmail,
-  IconBuildingSkyscraper,
-  IconCalendarEvent,
-  IconCalendarTime,
-  IconCar,
   IconCards,
   IconCheck,
   IconCheckupList,
   IconClipboard,
   IconClock,
   IconCreditCard,
+  IconDoor,
+  IconExternalLink,
   IconForbid2,
-  IconGenderMale,
-  IconHome,
   IconInfoCircle,
   IconKey,
-  IconLicense,
+  IconLogin,
   IconLogin2,
   IconLogout,
   IconMapPin,
@@ -81,14 +77,11 @@ import {
   IconParking,
   IconPhone,
   IconQrcode,
-  IconQuestionMark,
   IconReport,
+  IconScan,
   IconSearch,
-  IconTicket,
-  IconTimeDuration0,
+  IconSwipe,
   IconUser,
-  IconUserCheck,
-  IconUsersGroup,
   IconX,
 } from '@tabler/icons-react';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
@@ -125,9 +118,7 @@ import {
   CreateVisitorRequest,
   CreateVisitorRequestSchema,
   FormVisitor,
-  SectionPageVisitor,
 } from 'src/customs/api/models/Admin/Visitor';
-// import CameraUpload from 'src/customs/components/camera/CameraUpload';
 import { DateTimePicker, LocalizationProvider, renderTimeViewClock } from '@mui/x-date-pickers';
 import dayjs, { Dayjs, tz } from 'dayjs';
 import weekday from 'dayjs/plugin/weekday';
@@ -136,7 +127,7 @@ import customParseFormat from 'dayjs/plugin/customParseFormat';
 import advancedFormat from 'dayjs/plugin/advancedFormat';
 import utc from 'dayjs/plugin/utc';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import HistoryDialog from './Dialog/HistoryDialog';
+
 import {
   getAllSite,
   getRegisteredSite,
@@ -155,10 +146,17 @@ import ScanQrVisitorDialog from './Dialog/ScanQrVisitorDialog';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import SelectRegisteredSiteDialog from './Dialog/SelectRegisteredSiteDialog';
 import VisitingPurposeDialog from './Dialog/VisitingPurposeDialog';
-import SwiperComponent from './Components/SwiperComponent';
 import InfoDialog from './Dialog/InfoDialog';
 import ExtendVisitDialog from './Dialog/ExtendVisitDialog';
 import { useTranslation } from 'react-i18next';
+import VisitorDetailTabs from './Components/VisitorDetailTabs';
+import BlacklistVisitorDialog from './Dialog/BlacklistVisitorDialog';
+import ListVisitorDialog from './Dialog/ListVisitorDialog';
+import TriggeredAccessDialog from './Dialog/TriggeredAccessDialog';
+import DetailVisitingPurpose from './Dialog/DetailVisitingPurpose';
+import SwipeCardDialog from './Dialog/SwipeCardDialog';
+import SwipeAccessDialog from './Dialog/SwipeAccessDialog';
+import { useDebounce } from 'src/hooks/useDebounce';
 dayjs.extend(utc);
 dayjs.extend(weekday);
 dayjs.extend(localizedFormat);
@@ -167,29 +165,10 @@ dayjs.extend(advancedFormat);
 // dayjs.locale('id');
 const OperatorView = () => {
   const theme = useTheme();
-  const mdUp = useMediaQuery(theme.breakpoints.up('md'));
-  const secdrawerWidth = 320;
   const { token } = useSession();
   const { t } = useTranslation();
 
-  // 🔔 Dummy data Alarm dan History
-  const alarms = Array.from({ length: 5 }, (_, i) => ({
-    id: i + 1,
-    title: `Alarm #${i + 1}`,
-    message: `Beacon ${100 + i} memasuki area terlarang.`,
-    time: `2025-10-21 ${10 + i}:00`,
-    type: i % 2 === 0 ? 'Critical' : 'Warning',
-  }));
-
-  const dataImage = [infoPic, infoPic, infoPic];
-
-  const histories = Array.from({ length: 5 }, (_, i) => ({
-    id: i + 1,
-    title: `Event #${i + 1}`,
-    message: `Beacon ${200 + i} keluar dari area ${i % 3 === 0 ? 'A1' : 'B2'}.`,
-    time: `2025-10-21 ${8 + i}:15`,
-  }));
-
+  const dataImage = [infoPic];
   const [invitationCode, setInvitationCode] = useState<any[]>([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -235,6 +214,7 @@ const OperatorView = () => {
   const [uploadMethods, setUploadMethods] = useState<Record<string, 'file' | 'camera'>>({});
   const [allVisitorEmployee, setAllVisitorEmployee] = useState<any[]>([]);
   const [openSearch, setOpenSearch] = useState(false);
+  const [openDetailVisitingPurpose, setOpenDetailVistingPurpose] = useState(false);
   const [openDetail, setOpenDetail] = useState(false);
   const [visitorData, setVisitorData] = useState<any[]>([]);
   const [openAccessData, setOpenAccessData] = useState(false);
@@ -249,24 +229,73 @@ const OperatorView = () => {
   const [fillFormActiveStep, setFillFormActiveStep] = useState(0);
   const [fillFormGroupedPages, setFillFormGroupedPages] = useState<any>({});
   const [fillFormDataVisitor, setFillFormDataVisitor] = useState<any[]>([]);
-  const [dataVisitor, setDataVisitor] = useState<{ question_page: SectionPageVisitor[] }[]>([]);
   const [selectedSite, setSelectedSite] = useState<any | null>(null);
-  const [flowTarget, setFlowTarget] = useState<'invitation' | 'preReg' | null>(null);
   const [siteData, setSiteData] = useState<any[]>([]);
   const [openDialogInfo, setOpenDialogInfo] = useState(false);
+  const [openSwipeDialog, setOpenSwipeDialog] = useState(false);
+  const [selectedInvitations, setSelectedInvitations] = useState<any[]>([]);
+  const [openSwipeAccess, setOpenSwipeAccess] = useState(false);
+  const handle = useFullScreenHandle();
+
+  const [openListVisitor, setOpenListVisitor] = useState(false);
+  const [openBlacklistVisitor, setOpenBlacklistVisitor] = useState(false);
+  const [openTriggeredAccess, setOpenTriggeredAccess] = useState(false);
+
+  const handleOpenBlacklistVisitor = () => setOpenBlacklistVisitor(true);
+  const handleCloseBlacklistVisitor = () => setOpenBlacklistVisitor(false);
+
+  const handleOpenListVisitor = () => setOpenListVisitor(true);
+  const handleCloseListVisitor = () => setOpenListVisitor(false);
+
+  const handleCloseTriggeredAcceess = () => setOpenTriggeredAccess(false);
+
   const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorRequest>(() => {
     const saved = localStorage.getItem('unsavedVisitorData');
     return saved ? JSON.parse(saved) : CreateVisitorRequestSchema.parse({});
   });
 
+  const [swipePayload, setSwipePayload] = useState<{
+    value: string;
+    type: string;
+  } | null>(null);
+
+  const handleSwipeCardSubmit = (value: string, type: string) => {
+    setSwipePayload({ value, type });
+    setOpenSwipeDialog(false);
+    setOpenSwipeAccess(true);
+  };
+
+  const [selectedPurpose, setSelectedPurpose] = useState<any>(null);
+
+  const handleOpenSwipeDialog = () => {
+    setOpenSwipeDialog(true);
+  };
+
+  const handleOpenSwipeAccess = () => {
+    setOpenSwipeAccess(true);
+  };
+
+  const handleCloseSwipeAccess = () => {
+    setOpenSwipeAccess(false);
+  };
+
+  const handleCloseSwipeDialog = () => {
+    setOpenSwipeDialog(false);
+  };
+
+  const handleOpenDetailVistingPurpose = (item: any) => {
+    setSelectedPurpose(item);
+    setOpenDetailVistingPurpose(true);
+  };
+
   const [dialogContainer, setDialogContainer] = useState<HTMLElement | null>(null);
   const [hidePageContainer, setHidePageContainer] = useState(false);
+
   useEffect(() => {
     const handleBrowserFullscreen = () => {
       const isBrowserFullscreen = !!document.fullscreenElement;
       setIsFullscreen(isBrowserFullscreen);
 
-      // jika user fullscreen manual (F11)
       if (isBrowserFullscreen) {
         setHidePageContainer(true);
       } else {
@@ -287,7 +316,7 @@ const OperatorView = () => {
 
     const hue = Math.abs(hash % 360);
 
-    return `hsl(${hue}, 70%, 55%)`; // solid warna, tidak gradient
+    return `hsl(${hue}, 70%, 55%)`;
   }
 
   useEffect(() => {
@@ -319,7 +348,6 @@ const OperatorView = () => {
 
       await extendPeriodOperator(token as string, payload);
 
-      // ✅ update UI lokal
       setRelatedVisitors((prev) =>
         prev.map((v) =>
           selectedVisitors.includes(v.id)
@@ -348,11 +376,9 @@ const OperatorView = () => {
     } catch (error: any) {
       console.error('❌ Error extending visit:', error);
 
-      // default message jika tidak ada response
       let msg = 'Failed to extend visit.';
       let status = null;
 
-      // jika ada response dari backend
       if (error.response && error.response.data) {
         msg = error.response.data.msg || error.response.data.message || msg;
         status = error.response.data.status;
@@ -370,7 +396,7 @@ const OperatorView = () => {
     setSelectedSite(null);
     setFormDataAddVisitor((prev: any) => ({
       ...prev,
-      registered_site: '', // reset registered site
+      registered_site: '',
     }));
     // setRefreshTrigger((prev) => prev + 1);
     handleCloseDialog();
@@ -384,14 +410,6 @@ const OperatorView = () => {
     };
     fetchData();
   }, [token]);
-
-  const [tableKey, setTableKey] = useState(0);
-  const [nextDialogOpen, setNextDialogOpen] = useState(false);
-  const handleCloseGrantDialog = () => {
-    setNextDialogOpen(false);
-    setSelectedInvitations([]);
-    setSelectedCards([]);
-  };
 
   const [relatedVisitors, setRelatedVisitors] = useState<
     {
@@ -417,14 +435,7 @@ const OperatorView = () => {
     }[]
   >([]);
 
-  // useEffect(() => {
-  //   const handleFullscreenChange = () => {
-  //     setIsFullscreen(!!document.fullscreenElement);
-  //   };
-  //   document.addEventListener('fullscreenchange', handleFullscreenChange);
-  //   return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-  // }, []);
-
+  const [resetStep, setResetStep] = useState(0);
   const uploadFileToCDN = async (file: File | Blob): Promise<string | null> => {
     const formData = new FormData();
 
@@ -441,11 +452,9 @@ const OperatorView = () => {
       });
 
       const fileUrl = response.data?.collection?.file_url;
-      console.log('CDN Response File URL:', fileUrl);
 
       if (!fileUrl) return null;
 
-      // Tambahkan protokol jika belum ada
       return fileUrl.startsWith('//') ? `http:${fileUrl}` : fileUrl;
     } catch (error) {
       console.error('Upload failed:', error);
@@ -461,7 +470,6 @@ const OperatorView = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // tampilkan preview lokal dulu (supaya user melihat langsung)
     if (trackKey) {
       setUploadNames((prev) => ({ ...prev, [trackKey]: file.name }));
       setPreviews((prev) => ({ ...prev, [trackKey]: URL.createObjectURL(file) }));
@@ -469,35 +477,15 @@ const OperatorView = () => {
 
     const path = await uploadFileToCDN(file);
     if (path) setAnswerFile(path);
-    // reset input agar bisa pilih file yg sama lagi
+
     e.target.value = '';
-  };
-
-  const toggleFullscreen = () => {
-    const elem = containerRef.current;
-
-    if (!elem) return;
-
-    if (!isFullscreen) {
-      // masuk fullscreen
-      if (elem.requestFullscreen) elem.requestFullscreen();
-      else if ((elem as any).webkitRequestFullscreen) (elem as any).webkitRequestFullscreen();
-      else if ((elem as any).msRequestFullscreen) (elem as any).msRequestFullscreen();
-      setIsFullscreen(true);
-    } else {
-      // keluar fullscreen
-      if (document.exitFullscreen) document.exitFullscreen();
-      else if ((document as any).webkitExitFullscreen) (document as any).webkitExitFullscreen();
-      else if ((document as any).msExitFullscreen) (document as any).msExitFullscreen();
-      setIsFullscreen(false);
-    }
   };
 
   const handleCloseDialog = () => {
     localStorage.removeItem('unsavedVisitorData');
     setSelectedSite(null);
-    // setOpenDialog(false);
     setFormDataAddVisitor(CreateVisitorRequestSchema.parse({}));
+    setResetStep((prev) => prev + 1);
     setOpenInvitationVisitor(false);
     setOpenPreRegistration(false);
     setOpenDialogIndex(null);
@@ -526,16 +514,6 @@ const OperatorView = () => {
     setSelectedCards([]);
   };
 
-  const [selectedInvitations, setSelectedInvitations] = useState<any[]>([]);
-
-  const handleSelectInvitation = (payload: Row[]) => {
-    console.group('onCheckedChange');
-    console.log('raw payload (rows):', payload);
-    console.groupEnd();
-
-    setSelectedInvitations(payload); // langsung array of row
-  };
-
   const handleCloseChooseCard = () => {
     setOpenChooseCardDialog(false);
     resetSelections();
@@ -550,24 +528,18 @@ const OperatorView = () => {
     }
 
     try {
-      setLoadingAccess(true); // ⏳ Mulai loading
-
-      // const invitationId = invitationCode?.[0]?.id;
-      // if (invitationId) {
-      //   await fetchRelatedVisitorsByInvitationId(invitationId);
-      // }
-
-      // Pastikan daftar kartu dikosongkan (opsional)
+      setLoadingAccess(true);
       setSelectedCards([]);
 
-      setOpenChooseCardDialog(true); // 🔓 Buka modal setelah data selesai diambil
+      setOpenChooseCardDialog(true);
     } catch (error) {
-      console.error('❌ Gagal mengambil data visitor:', error);
-      setSnackbarMsg('Failed to fetch visitor data. Please try again.');
-      setSnackbarType('error');
-      setSnackbarOpen(true);
+      // console.error('❌ Gagal mengambil data visitor:', error);
+      // setSnackbarMsg('Failed to fetch visitor data. Please try again.');
+      // setSnackbarType('error');
+      // setSnackbarOpen(true);
+      showSwal('error', 'Failed to fetch visitor data. Please try again.');
     } finally {
-      setTimeout(() => setLoadingAccess(false), 200); // ✅ Hentikan loading setelah sedikit jeda
+      setTimeout(() => setLoadingAccess(false), 200);
     }
   };
 
@@ -594,14 +566,13 @@ const OperatorView = () => {
     };
 
     if (openChooseCardDialog) {
-      fetchData(); // ✅ refresh setiap kali dialog dibuka
+      fetchData();
     }
   }, [token, openChooseCardDialog]);
 
   useEffect(() => {
     const fetchData = async () => {
       const response = await getRegisteredSite(token as string);
-      // const response = await getAllSite(token as string);
       setSiteData(response.collection);
     };
     fetchData();
@@ -624,35 +595,71 @@ const OperatorView = () => {
       const normalized = String(cardNumber);
       const maxCards = selectedVisitors.length || 1;
 
-      // Jika sudah dipilih → hapus dari array
       if (prev.includes(normalized)) {
         return prev.filter((c) => c !== normalized);
       }
 
-      // Jika sudah mencapai batas maksimal
       if (prev.length >= maxCards) {
-        setSnackbarMsg(`You can only select up to ${maxCards} card${maxCards > 1 ? 's' : ''}.`);
+        setSnackbarMsg(`You can only select up to ${maxCards} cards.`);
         setSnackbarType('info');
         setSnackbarOpen(true);
-        return prev; // tidak menambahkan kartu baru
+        return prev;
       }
 
-      // Jika masih bisa → tambahkan
       return [...prev, normalized];
     });
   };
 
   const [currentAction, setCurrentAction] = useState<'Checkin' | 'Checkout' | null>(null);
+  const [currentActionBlacklist, setCurrentActionBlacklist] = useState<'Blacklist' | null>(null);
   const [showExtendButton, setShowExtendButton] = useState(false);
   const [actionButton, setActionButton] = useState<any | null>(null);
 
   const handleOpenAction = (value: string) => {
     setActionButton(value);
+
+    if (value === 'card' && invitationCode.length > 0 && relatedVisitors.length > 0) {
+      handleChooseCard();
+      return;
+    }
+    if (value === 'access' && invitationCode.length > 0 && relatedVisitors.length > 0) {
+      setOpenAccessData(true);
+      return;
+    }
+
+    if (value === 'extend' && invitationCode.length > 0 && relatedVisitors.length > 0) {
+      setOpenExtendVisit(true);
+      return;
+    }
+    if (value === 'open' && invitationCode.length > 0 && relatedVisitors.length > 0) {
+      setOpenTriggeredAccess(true);
+      return;
+    }
     setOpenDialogIndex(1);
   };
 
-  const handleActionClick = (action: 'Checkin' | 'Checkout') => {
+  const handleActionClick = async (action: 'Checkin' | 'Checkout') => {
     setCurrentAction(action);
+
+    if (invitationCode.length > 0 || relatedVisitors.length > 0) {
+      setSelectedVisitors([selectedVisitorId ?? invitationCode?.[0]?.id]);
+      await handleConfirmStatus(action);
+      setCurrentAction(null);
+      return;
+    }
+
+    setOpenDialogIndex(1);
+  };
+
+  const handleActionBlacklist = async (action: 'Blacklist') => {
+    setCurrentActionBlacklist(action);
+
+    if (invitationCode.length > 0 || relatedVisitors.length > 0) {
+      setSelectedVisitors([selectedVisitorId ?? invitationCode?.[0]?.id]);
+      await handleBlacklistStatus(action);
+      setCurrentAction(null);
+      return;
+    }
     setOpenDialogIndex(1);
   };
 
@@ -677,34 +684,6 @@ const OperatorView = () => {
 
       await fetchRelatedVisitorsByInvitationId(invitationId);
 
-      if (currentAction) {
-        setSelectedVisitors([invitationId]);
-        await handleConfirmStatus(currentAction);
-        setCurrentAction(null);
-        handleCloseScanQR();
-        return;
-      }
-
-      if (actionButton == 'extend') {
-        setSelectedVisitors([invitationId]);
-        setOpenExtendVisit(true);
-        setActionButton(null);
-        handleCloseScanQR();
-        return;
-      } else if (actionButton == 'card') {
-        setSelectedVisitors([invitationId]);
-        handleChooseCard();
-        setActionButton(null);
-        handleCloseScanQR();
-        return;
-      } else if (actionButton == 'access') {
-        setSelectedVisitors([invitationId]);
-        setOpenAccessData(true);
-        setActionButton(null);
-        handleCloseScanQR();
-        return;
-      }
-
       setInvitationCode((prev) =>
         prev.map((inv) => {
           if (inv.id?.toLowerCase() !== invitationId.toLowerCase()) return inv;
@@ -716,11 +695,12 @@ const OperatorView = () => {
       );
 
       const accessList = Array.isArray(invitation.access) ? invitation.access : [invitation.access];
-      // console.log('🧩 accessList:', accessList);
+      console.log('accessList', accessList);
 
       const filteredAccess = accessList.filter((a: any) =>
         permissionAccess.some((p: any) => p.access_control_id === a.access_control_id),
       );
+      console.log('filteredAccess', filteredAccess);
 
       const mergedAccess = filteredAccess.map((a: any) => {
         const perm = permissionAccess.find((p: any) => p.access_control_id === a.access_control_id);
@@ -737,9 +717,10 @@ const OperatorView = () => {
           disabled: !perm,
         };
       });
+      console.log('mergedAccess', mergedAccess);
 
-      // console.log('🧩 mergedAccess:', mergedAccess);
-      setAccessData([...mergedAccess]);
+      // setAccessData([...mergedAccess]);
+      setAccessData(mergedAccess);
       if (invitation?.id) {
         setSelectedVisitors((prev) => {
           if (!prev.includes(invitation.id)) {
@@ -749,25 +730,63 @@ const OperatorView = () => {
           return prev;
         });
       }
+
+      if (currentAction) {
+        setSelectedVisitors([invitationId]);
+        await handleConfirmStatus(currentAction);
+        setCurrentAction(null);
+        handleCloseScanQR();
+        return;
+      }
+
+      if (actionButton == 'extend') {
+        setSelectedVisitors([invitationId]);
+        setOpenExtendVisit(true);
+        setActionButton(null);
+        handleCloseScanQR();
+        return;
+      } else if (actionButton == 'card') {
+        setSelectedVisitors([invitationId]);
+        // handleChooseCard();
+        setOpenChooseCardDialog(true);
+        setActionButton(null);
+        handleCloseScanQR();
+        return;
+      } else if (actionButton == 'access') {
+        setSelectedVisitors([invitationId]);
+        setOpenAccessData(true);
+        setActionButton(null);
+        handleCloseScanQR();
+        return;
+      } else if (actionButton == 'open') {
+        setSelectedVisitors([invitationId]);
+        setOpenTriggeredAccess(true);
+        setActionButton(null);
+        handleCloseScanQR();
+        return;
+      }
       handleCloseScanQR();
 
       showSwal('success', 'Code scanned successfully.');
       setShowExtendButton(true);
     } catch (e) {
-      // setSnackbarMsg('Your code does not exist.');
-      // setSnackbarType('error');
-      // setSnackbarOpen(true);
       showSwal('error', 'Your code does not exist.');
     }
   };
 
+  // useEffect(() => {
+  //   if (!relatedVisitors.length) return;
+
+  //   setSelectedVisitors((prevSelected) =>
+  //     prevSelected.filter((id) => relatedVisitors.some((v) => v.id === id)),
+  //   );
+  // }, [relatedVisitors]);
   useEffect(() => {
     if (!relatedVisitors.length) return;
 
-    // Pastikan hanya ID yang masih ada di data baru yang tetap dipilih
-    setSelectedVisitors((prevSelected) =>
-      prevSelected.filter((id) => relatedVisitors.some((v) => v.id === id)),
-    );
+    const validIds = new Set(relatedVisitors.map((v) => v.id));
+
+    setSelectedVisitors((prev) => prev.filter((id) => validIds.has(id)));
   }, [relatedVisitors]);
 
   const [allAccessData, setAllAccessData] = useState<any[]>([]);
@@ -813,41 +832,30 @@ const OperatorView = () => {
 
         return {
           ...inv,
-          // 🔹 tambahkan update image agar UI langsung berubah
           selfie_image: updatedVisitor.selfie_image,
           identity_image: updatedVisitor.identity_image,
-          // 🔹 update field status lainnya juga
-          // is_praregister_done: updatedVisitor.is_praregister_done,
-          // visitor_status: updatedVisitor.visitor_status,
-          // block_by: updatedVisitor.block_by,
-          // is_block: updatedVisitor.is_block,
           card: updatedVisitor.card?.length > 0 ? updatedVisitor.card : inv.card ?? [],
         };
       }),
     );
 
     setRelatedVisitors(mappedVisitors);
-    console.log('related visitor', mappedVisitors);
 
-    // 🔹 Gabungkan semua access dari semua visitor
     const allAccess = relatedData.flatMap((v: any) =>
       (v.access ?? []).map((a: any) => ({
         id: a.id ?? '-',
-        trx_visitor_id: (a.trx_visitor_id || v.id)?.toLowerCase(), // ✅ pastikan lowercase
+        trx_visitor_id: (a.trx_visitor_id || v.id)?.toLowerCase(),
         access_control_id: a.access_control_id?.toLowerCase(),
         access_control_name: a.access_control_name ?? '-',
         visitor_give_access: a.visitor_give_access ?? 0,
         early_access: !!a.early_access,
       })),
     );
+    console.log('allAccess', allAccess);
 
-    // console.log('🧩 allAccessData from related visitors:', allAccess);
     setAllAccessData(allAccess);
-    // Set visitor pertama sebagai default
-    // if (relatedData.length > 0) {
-    //   const firstVisitorId = relatedData[0].id?.toLowerCase();
-    //   setSelectedVisitors([firstVisitorId]);
-    // }
+    // setAccessData(allAccess);
+
     if (relatedData.length > 0 && selectedVisitors.length === 0) {
       const firstVisitorId = relatedData[0].id?.toLowerCase();
       setSelectedVisitors([firstVisitorId]);
@@ -864,9 +872,7 @@ const OperatorView = () => {
       baseTime.add(extendMinutes, 'minutes');
     }
 
-    return baseTime
-      .tz(moment.tz.guess()) // ✅ ubah ke zona waktu lokal user
-      .format('DD MMM YYYY, HH:mm');
+    return baseTime.tz(moment.tz.guess()).format('DD MMM YYYY, HH:mm');
   };
 
   type Row = {
@@ -879,13 +885,19 @@ const OperatorView = () => {
   };
 
   const [searchKeyword, setSearchKeyword] = useState('');
+  const debouncedKeyword = useDebounce(searchKeyword, 300);
+
+  const filteredVisitors = useMemo(() => {
+    if (!debouncedKeyword.trim()) return relatedVisitors;
+
+    const keyword = debouncedKeyword.toLowerCase();
+
+    return relatedVisitors.filter((v) =>
+      [v.name].filter(Boolean).some((field) => field.includes(keyword)),
+    );
+  }, [relatedVisitors, debouncedKeyword]);
 
   const [rows, setRows] = useState<Row[]>([]);
-
-  const filteredRows = useMemo(() => {
-    if (!searchKeyword) return rows;
-    return rows.filter((r) => r.visitor?.toLowerCase().includes(searchKeyword.toLowerCase()));
-  }, [rows, searchKeyword]);
 
   const assignedByCard = useMemo(() => {
     const m = new Map<string, string | number>();
@@ -915,7 +927,6 @@ const OperatorView = () => {
   const availableVisibleCards = useMemo(() => {
     return filteredCards.filter((c) => {
       const holder = assignedByCard.get(String(c.card_number));
-      // singkirkan hanya jika dipegang orang lain
       return !(holder && !selectedIdSet.has(String(holder)));
     });
   }, [filteredCards, assignedByCard, selectedIdSet]);
@@ -976,7 +987,6 @@ const OperatorView = () => {
 
         response = await createMultipleGrantAccess(token as string, { data: dataPayload });
       } else {
-        // 🧍 Single visitor (selected OR scanned)
         const visitorId = invitationCode[0]?.id;
 
         if (!visitorId) {
@@ -1009,7 +1019,7 @@ const OperatorView = () => {
             };
 
             response = await createGrandAccessOperator(token as string, payload);
-            console.log('response:', JSON.stringify(payload, null, 2));
+            // console.log('response:', JSON.stringify(payload, null, 2));
           }
 
           successAssigned.push(visitor.name || visitorId);
@@ -1024,15 +1034,15 @@ const OperatorView = () => {
 
       await fetchAvailableCards();
 
-      if (response?.collection && response.collection.length > 0) {
-        const messages = response.collection.map((item: any) => item.message).join(', ');
-        // setSnackbarMsg(`⚠️ ${messages}`);
-        // setSnackbarType('error');
-        showSwal('error', `${messages}`);
-        // setSnackbarOpen(true);
-        setLoadingAccess(false);
-        return;
-      }
+      // if (response?.collection && response.collection.length > 0) {
+      //   const messages = response.collection.map((item: any) => item.message).join(', ');
+      //   // setSnackbarMsg(`⚠️ ${messages}`);
+      //   // setSnackbarType('error');
+      //   showSwal('error', `${messages}`);
+      //   // setSnackbarOpen(true);
+      //   setLoadingAccess(false);
+      //   return;
+      // }
 
       // handleCloseChooseCard();
       const uniqueAssigned = Array.from(new Set(successAssigned));
@@ -1044,7 +1054,6 @@ const OperatorView = () => {
       if (uniqueAssigned.length > 0) {
         message += `Successfully assigned ${uniqueAssigned.length} card(s):\n`;
 
-        // 🧩 Fallback kalau selectedVisitors kosong → pakai invitationCode
         const visitorListForMessage =
           selectedVisitors.length > 0 ? selectedVisitors : invitationCode?.map((i) => i.id) || [];
 
@@ -1071,16 +1080,11 @@ const OperatorView = () => {
           uniqueSkipped.map((v) => `• ${v}`).join('\n');
       }
 
-      // If no success or skipped, show generic
       if (!message) {
         message = 'No cards were assigned.';
       }
 
-      // Show Snackbar
       showSwal('success', message);
-      // setSnackbarMsg(message);
-      // setSnackbarType(uniqueAssigned.length > 0 ? 'success' : 'info');
-      // setSnackbarOpen(true);
 
       setInvitationCode((prev) => {
         if (!prev || prev.length === 0) return prev;
@@ -1102,10 +1106,11 @@ const OperatorView = () => {
 
       handleCloseChooseCard();
     } catch (err) {
-      console.error('Assign card error:', err);
-      setSnackbarMsg('Failed to assign card(s).');
-      setSnackbarType('error');
-      setSnackbarOpen(true);
+      // console.error('Assign card error:', err);
+      // setSnackbarMsg('Failed to assign card(s).');
+      // setSnackbarType('error');
+      // setSnackbarOpen(true);
+      showSwal('error', 'Failed to assign card(s).');
     } finally {
       setTimeout(() => setLoadingAccess(false), 600);
     }
@@ -1126,6 +1131,45 @@ const OperatorView = () => {
     setTorchOn(false);
   };
 
+  const handleBlacklistStatus = async (action: 'Blacklist') => {
+    const id = selectedVisitorId ?? invitationCode?.[0]?.id;
+
+    if (!id) {
+      showSwal('error', 'Visitor ID not found.');
+      return;
+    }
+
+    try {
+      const res = await Swal.fire({
+        // imageUrl: '/assets/images/BI_Logo.png',
+        icon: 'warning',
+        imageWidth: 80,
+        imageHeight: 80,
+        imageAlt: 'Logo',
+        target: containerRef.current,
+        title: 'Blacklist Visitor',
+        text: 'Are you sure you want to blacklist this visitor?',
+        showCloseButton: true,
+        showCancelButton: true,
+        confirmButtonText: 'Yes',
+        cancelButtonText: 'No',
+        confirmButtonColor: '#000',
+        customClass: {
+          title: 'swal2-title-custom',
+          popup: 'swal-popup-custom',
+          closeButton: 'swal-close-red',
+        },
+      });
+
+      if (!res.isConfirmed) return;
+
+      // await blacklistVisitor(token as string, id, action);
+      showSwal('success', 'Visitor has been successfully blacklisted.');
+    } catch (err) {
+      showSwal('error', 'Failed to blacklist visitor.');
+    }
+  };
+
   const handleConfirmStatus = async (action: 'Checkin' | 'Checkout' | 'Block' | 'Unblock') => {
     const id = selectedVisitorId ?? invitationCode?.[0]?.id;
     const actionLabelMap: Record<string, string> = {
@@ -1140,10 +1184,11 @@ const OperatorView = () => {
     try {
       if (action === 'Block' || action === 'Unblock') {
         const { value: inputReason } = await Swal.fire({
-          imageUrl: '/assets/images/BI_Logo.png',
+          // imageUrl: '/assets/images/BI_Logo.png',
+          icon: 'warning',
           imageWidth: 80,
           imageHeight: 80,
-          imageAlt: 'BI Logo',
+          imageAlt: 'Logo',
           target: containerRef.current,
           title: action === 'Block' ? 'Block Visitor' : 'Unblock Visitor',
           text:
@@ -1175,13 +1220,13 @@ const OperatorView = () => {
         if (!inputReason) return;
         reason = inputReason.trim();
       } else {
-        // 🔹 Normal confirm dialog
         const confirm = await Swal.fire({
           title: `Do you want to ${actionLabelMap[action]}?`,
-          imageUrl: '/assets/images/BI_Logo.png',
+          // imageUrl: '/assets/images/BI_Logo.png',
+          icon: 'success',
           imageWidth: 80,
           imageHeight: 80,
-          imageAlt: 'BI Logo',
+          imageAlt: 'Logo',
           showCancelButton: true,
           confirmButtonText: 'Yes',
           cancelButtonText: 'Cancel',
@@ -1205,7 +1250,7 @@ const OperatorView = () => {
         reason,
       });
 
-      console.log('✅ Action Response:', res);
+      // console.log('✅ Action Response:', res);
 
       setRelatedVisitors((prev) =>
         prev.map((v) =>
@@ -1236,7 +1281,7 @@ const OperatorView = () => {
       });
 
       setSelectedVisitors((prev) => {
-        if (!selectedVisitorId) return prev; // prevent undefined
+        if (!selectedVisitorId) return prev;
         if (!prev.includes(selectedVisitorId)) {
           return [...prev, selectedVisitorId];
         }
@@ -1245,7 +1290,6 @@ const OperatorView = () => {
 
       setVisitorStatus(action);
 
-      // 🔹 Refetch background sync (after small delay)
       const invitationId = invitationCode?.[0]?.id;
       if (invitationId) {
         const previousSelected = [...selectedVisitors];
@@ -1278,13 +1322,12 @@ const OperatorView = () => {
   const handleRemoveFileForField = async (
     currentUrl: string,
     setAnswerFile: (url: string) => void,
-    inputId: string, // <- pakai key yg sama dengan id input
+    inputId: string,
   ) => {
     try {
       setRemoving((s) => ({ ...s, [inputId]: true }));
       if (currentUrl) {
         await axiosInstance2.delete(`/cdn${currentUrl}`);
-        // console.log('✅ Berhasil hapus file CDN:', currentUrl);
       }
 
       setAnswerFile('');
@@ -1307,7 +1350,6 @@ const OperatorView = () => {
     severity: AlertColor; // 'success' | 'info' | 'warning' | 'error'
   }>({ open: false, message: '', severity: 'info' });
 
-  // 3) helper supaya snackbar pasti muncul walau pesannya sama
   const toast = (message: string, severity: AlertColor = 'info') => {
     setSnackbar((s) => ({ ...s, open: false }));
     setTimeout(() => setSnackbar({ open: true, message, severity }), 0);
@@ -1316,18 +1358,15 @@ const OperatorView = () => {
   const [selectedVisitorId, setSelectedVisitorId] = useState<string | null>(null);
 
   const handleSelectRelatedVisitor = (visitor: any) => {
-    // 🟢 Update visitor aktif yang ditampilkan
     setSelectedVisitorNumber(visitor.visitor_number);
     setSelectedVisitorId(visitor.id);
-    console.log('selected id ', selectedVisitorId);
 
-    // 🔄 Update invitationCode agar tab info & visit ikut berubah
     setInvitationCode([
       {
         ...invitationCode[0],
         visitor: {
-          ...invitationCode[0]?.visitor, // simpan semua field lama
-          ...visitor, // timpa field yang ada di related visitor
+          ...invitationCode[0]?.visitor,
+          ...visitor,
         },
         visitor_number: visitor.visitor_number,
         visitor_period_start: visitor.visitor_period_start,
@@ -1354,7 +1393,6 @@ const OperatorView = () => {
       return;
     }
 
-    // 🟩 Fill Form → buka dialog Stepper
     if (bulkAction === 'fill_form') {
       const validToFill = selectedData.filter(
         (v) => !v.is_praregister_done && v.visitor_status === 'Preregis',
@@ -1378,7 +1416,6 @@ const OperatorView = () => {
     const validActions = ['checkin', 'checkout', 'block', 'unblock'];
     if (!validActions.includes(bulkAction)) return;
 
-    // 🧠 Filter visitor yang betul-betul dikirim ke API
     const validForApi = selectedData.filter((v) => {
       const status = v.visitor_status?.toLowerCase();
       switch (bulkAction) {
@@ -1394,7 +1431,6 @@ const OperatorView = () => {
       }
     });
 
-    // 🔸 Ambil reason jika Block/Unblock
     let reason = '';
     if (bulkAction === 'block' || bulkAction === 'unblock') {
       const { value: inputReason } = await Swal.fire({
@@ -1439,7 +1475,6 @@ const OperatorView = () => {
         await createMultipleInvitationActionOperator(token as string, payload);
       }
 
-      // 🔄 Update state lokal (optimistic)
       setRelatedVisitors((prev) =>
         prev.map((v) => {
           const valid = validForApi.some((vv) => vv.id === v.id);
@@ -1463,14 +1498,12 @@ const OperatorView = () => {
         const updated = validForApi.find((v) => v.id === currentVisitorId);
         if (!updated) return prev;
 
-        // 🔹 Tentukan status baru
         let newStatus = updated.visitor_status;
         if (bulkAction === 'checkin') newStatus = 'Checkin';
         else if (bulkAction === 'checkout') newStatus = 'Checkout';
         else if (bulkAction === 'block') newStatus = 'Block';
         else if (bulkAction === 'unblock') newStatus = 'Unblock';
 
-        // 🔹 Tentukan nilai is_block baru
         let newIsBlock = prev[0]?.is_block ?? null;
         if (bulkAction === 'block') newIsBlock = 1;
         else if (bulkAction === 'unblock') newIsBlock = null;
@@ -1489,7 +1522,6 @@ const OperatorView = () => {
         ];
       });
 
-      // 🧾 Buat pesan hasil akhir per visitor
       const resultMessages = selectedData.map((v) => {
         const status = v.visitor_status;
         const done = v.is_praregister_done;
@@ -1515,20 +1547,14 @@ const OperatorView = () => {
             return `${v.name} successfully unblock.`;
 
           default:
-            return `${v.name} dilewati.`;
+            return `${v.name} skip.`;
         }
       });
 
-      // 🔔 Tampilkan semua pesan sekaligus di snackbar
       showSwal('success', resultMessages.join('\n'));
-      // setSnackbarMsg(resultMessages.join('\n'));
-      // setSnackbarType('info');
-      // setSnackbarOpen(true);
-
       setSelectedVisitors([]);
       setBulkAction('');
 
-      // Refetch background
       const invitationId = invitationCode?.[0]?.id;
       if (invitationId) {
         setTimeout(async () => {
@@ -1537,13 +1563,13 @@ const OperatorView = () => {
       }
     } catch (error: any) {
       console.error('Multiple Action Failed:', error);
-      toast('Failed to perform multiple action', 'error');
+      // toast('Failed to perform multiple action', 'error');
+      showSwal('error', 'Failed to perform multiple action.');
     } finally {
       setTimeout(() => setLoadingAccess(false), 600);
     }
   };
 
-  // 🧩 Ambil data visitor terpilih
   const selectedData =
     selectMultiple && selectedVisitors.length > 0
       ? relatedVisitors.filter((v) => selectedVisitors.includes(v.id))
@@ -1553,7 +1579,6 @@ const OperatorView = () => {
           ),
         ].filter(Boolean);
 
-  // 🧠 Mapping aksi berdasarkan visitor_status
   const statusActions: Record<string, string[]> = {
     Checkin: ['checkout', 'block'],
     Checkout: ['block'],
@@ -1561,31 +1586,21 @@ const OperatorView = () => {
     Unblock: ['block'],
   };
 
-  // 🧮 Set hasil aksi
   let actions = new Set<string>();
 
-  // ===================================================
-  // 🧩 1️⃣ SINGLE SELECTION
-  // ===================================================
   if (selectedData.length === 1) {
     const v = selectedData[0];
-    // console.log('tes', v);
 
-    // Jika visitor belum pra-register → tampilkan Fill Form
     if (v?.visitor_status === 'Preregis' && !v?.is_praregister_done) {
       actions.add('fill_form');
     }
 
-    // Tambahkan aksi berdasarkan status
     (statusActions[v?.visitor_status as string] || []).forEach((a: any) => actions.add(a));
 
-    // Untuk Preregis yang sudah pra-register → tambahkan checkin dan block
     if (v?.visitor_status === 'Preregis' && v?.is_praregister_done) {
       actions.add('checkin');
       actions.add('block');
     }
-
-    // const isBlocked = !!(v?.is_block || v?.block_by);
     const isBlocked = !!v?.is_block;
 
     if (v?.visitor_status === 'Checkin' && isBlocked) {
@@ -1619,10 +1634,8 @@ const OperatorView = () => {
       return baseStatusActions[status as string] || [];
     });
 
-    // 🔹 Ambil semua action (union)
     const union = Array.from(new Set(actionArrays.flat()));
 
-    // 🔹 Tambahkan hasil union ke set actions
     union.forEach((a) => actions.add(a));
   }
   if (actions.size === 0) {
@@ -1648,15 +1661,6 @@ const OperatorView = () => {
     return v === 'indentity_id' ? 'identity_id' : v;
   };
 
-  const REQUIRED_VI = ['name', 'email', 'organization'] as const;
-  const hasVIFields = (s?: any) => {
-    const r = new Set(
-      formsOf(s)
-        .map((f: any) => sanitizeRemarks(f?.remarks))
-        .filter(Boolean),
-    );
-    return REQUIRED_VI.every((x) => r.has(x));
-  };
   const handleUploadMethodChange = (ukey: string, v: string) => {
     setUploadMethods((prev) => ({ ...prev, [ukey]: v as 'file' | 'camera' }));
   };
@@ -1664,15 +1668,12 @@ const OperatorView = () => {
   const buildGroupSections = (sections?: any[]) => {
     const list = Array.isArray(sections) ? sections : [];
 
-    // Cek apakah data datang dari API (punya `form`)
     const hasForm = list.some((s) => Array.isArray(s.form));
 
     if (hasForm) {
-      // Pisahkan dokumen dan non-dokumen
       const nonDocSections = list.filter((s) => !s.is_document);
       const docSections = list.filter((s) => s.is_document);
 
-      // Ambil sumber Visitor Info, Parking, dan Purpose Visit
       const visitorInfoSrc = nonDocSections.find((s) =>
         s.name.toLowerCase().includes('visitor information'),
       );
@@ -1683,10 +1684,8 @@ const OperatorView = () => {
         s.name.toLowerCase().includes('purpose visit'),
       );
 
-      // Gabungkan form dokumen
       const docForms = docSections.flatMap((d) => d.form || []);
 
-      // Utility untuk buat section
       const makeSection = (src: any, name: string, allowMultiple = false, includeDocs = false) => {
         const baseForms = Array.isArray(src?.form)
           ? src.form.map((f: any, i: number) => ({
@@ -1704,7 +1703,6 @@ const OperatorView = () => {
         };
       };
 
-      // 🔹 Gabungkan Visitor Info + Parking + Dokumen jadi 1 group
       const visitorCombinedForms = [
         ...(visitorInfoSrc?.form || []),
         ...(parkingSrc?.form || []),
@@ -1719,13 +1717,11 @@ const OperatorView = () => {
         visit_form: visitorCombinedForms,
       };
 
-      // 🔹 Purpose Visit tetap terpisah
       const purposeVisitSection = makeSection(purposeVisitSrc, 'Purpose Visit', false, false);
 
       return [visitorGroupSection, purposeVisitSection];
     }
 
-    // fallback jika bukan data dari API (misal dari template visitor_type)
     return [
       {
         Id: 'visitor_info_group',
@@ -1786,7 +1782,6 @@ const OperatorView = () => {
     sections.forEach((section) => {
       const forms = formsOf(section);
 
-      // Purpose Visit → single_page
       if (isPurposeVisit(section)) {
         if (!section?.self_only) {
           // hanya Purpose Visit global (shared)
@@ -1795,11 +1790,9 @@ const OperatorView = () => {
             single_page.push(existing ? { ...f, ...existing } : cloneFormWithEmptyAnswers(f, idx));
           });
         }
-        // kalau self_only = true → biarkan kosong di groupedPages
         return;
       }
 
-      // Non-document → batch_page (template kolom)
       if (!section?.is_document) {
         forms.forEach((f: any, idx: number) => {
           const secId = (section as any)?.id ?? (section as any)?.Id ?? null;
@@ -1821,27 +1814,22 @@ const OperatorView = () => {
     return {
       single_page,
       batch_page,
-      // batch_rows: [{}], // ← siapkan 1 baris default
     };
   };
 
   const [invitationDetail, setInvitationDetail] = useState<any>([]);
-
   const [questionPageTemplate, setQuestionPageTemplate] = useState<any[]>([]);
-
   const [applyToAll, setApplyToAll] = useState(false);
 
   const handleApplyToAllChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const checked = event.target.checked;
     setApplyToAll(checked);
-    console.log('✅ Apply to another visitor:', checked);
   };
 
   const handleOpenFillFormDialog = async (visitors: any[] | string) => {
     try {
       let visitorList: any[] = [];
 
-      // 🔧 Normalize input jadi object[]
       if (typeof visitors === 'string') {
         const v = relatedVisitors.find((x) => x.id === visitors);
         if (v) visitorList = [v];
@@ -1860,30 +1848,25 @@ const OperatorView = () => {
         return;
       }
 
-      // 🔹 Ambil detail form untuk semua visitor
       const results = await Promise.all(
         visitorList.map((v) => getDetailInvitationForm(token as string, v.id)),
       );
 
-      // 🔹 Ambil template dari visitor pertama (untuk definisi global)
       const firstResult = results[0];
       const questionPagesTemplate = firstResult?.collection?.question_page ?? [];
 
       setInvitationDetail(firstResult);
       setQuestionPageTemplate(questionPagesTemplate);
 
-      // 🔹 Build Group Sections berdasarkan template pertama
       const baseSections = buildGroupSections(questionPagesTemplate);
       setFillFormData(baseSections);
       setFillFormActiveStep(0);
       setFillFormGroupedPages(buildGroupedPages(baseSections));
 
-      // 🔹 Buat data form per visitor berdasarkan hasilnya sendiri
       const visitorGroupList = results.map((res, idx) => {
         const v = visitorList[idx];
         const qPages = res?.collection?.question_page ?? [];
 
-        // Gunakan buildGroupSections untuk masing-masing visitor
         const builtSections = buildGroupSections(qPages);
         const wrappedSections = builtSections.map((section) => ({
           ...section,
@@ -1901,7 +1884,8 @@ const OperatorView = () => {
       setOpenFillForm(true);
     } catch (error) {
       console.error('Failed to open fill form:', error);
-      toast('Failed to load form', 'error');
+      // toast('Failed to load form', 'error');
+      showSwal('error', 'Failed to load form');
     }
   };
 
@@ -1970,12 +1954,10 @@ const OperatorView = () => {
     }
     const isVehicleField = ['vehicle_type', 'vehicle_plate'].includes(field.remarks);
     if (!isDriving && isVehicleField) {
-      return null; // tidak render apapun (label + input hilang)
+      return null;
     }
 
     const renderInput = () => {
-      // const [uploadMethod, setUploadMethod] = React.useState('file'); // default file upload
-      const key = opts?.uniqueKey ?? String(index);
       switch (field.field_type) {
         case 0: // Text
           return (
@@ -2025,7 +2007,6 @@ const OperatorView = () => {
 
           switch (field.remarks) {
             case 'host':
-              // gunakan value dari API langsung
               options = [{ value: hostId, name: hostName }];
               break;
 
@@ -2037,7 +2018,6 @@ const OperatorView = () => {
               break;
 
             case 'site_place':
-              // gunakan value dari API langsung
               options = [{ value: sitePlaceId, name: sitePlaceName }];
               break;
 
@@ -2047,21 +2027,12 @@ const OperatorView = () => {
               );
               break;
           }
-
-          // 🔹 Gunakan uniqueKey biar gak tabrakan antar visitor group
           const uniqueKey = opts?.uniqueKey ?? `${activeStep}:${index}`;
           const inputVal = inputValues[uniqueKey as any] || '';
-
-          // 🔒 Disabled khusus untuk purpose visit
-          const isDisabled =
-            field.remarks === 'host' ||
-            field.remarks === 'site_place' ||
-            field.remarks === 'employee';
 
           return (
             <Autocomplete
               size="small"
-              // disabled={isDisabled} // ✅ Disabled biar readonly
               freeSolo
               options={options}
               getOptionLabel={(option) => (typeof option === 'string' ? option : option.name)}
@@ -2157,7 +2128,6 @@ const OperatorView = () => {
               { value: 'other', label: 'Other' },
             ];
 
-            // gunakan string kosong jika belum ada nilai
             const currentValue = field.answer_text ?? '';
 
             return (
@@ -2165,7 +2135,7 @@ const OperatorView = () => {
                 select
                 size="small"
                 fullWidth
-                value={currentValue} // ✅ wajib ada agar bisa memilih
+                value={currentValue}
                 onChange={(e) => onChange(index, 'answer_text', e.target.value)}
                 sx={{ minWidth: 160 }}
               >
@@ -2243,9 +2213,6 @@ const OperatorView = () => {
               label=""
             />
           );
-
-        // fallback default checkbox single
-
         case 8: // Time
           return (
             <TextField
@@ -2265,11 +2232,11 @@ const OperatorView = () => {
                 ampm={false}
                 onChange={(newValue) => {
                   if (newValue) {
-                    const utc = newValue.utc().format(); // hasil: 2025-08-05T10:00:00Z
+                    const utc = newValue.utc().format();
                     onChange(index, 'answer_datetime', utc);
                   }
                 }}
-                format="ddd, DD - MMM - YYYY, HH:mm"
+                format="dddd, DD MMMM YYYY, HH:mm"
                 viewRenderers={{
                   hours: renderTimeViewClock,
                   minutes: renderTimeViewClock,
@@ -2290,12 +2257,6 @@ const OperatorView = () => {
               <CameraUpload
                 value={field.answer_file}
                 onChange={(url) => {
-                  console.log('📸 [DEBUG] onChange CameraUpload:', {
-                    field: field.remarks,
-                    url,
-                    sectionIdx: fillFormActiveStep,
-                  });
-
                   onChange(index, 'answer_file', url);
                 }}
               />
@@ -2309,8 +2270,6 @@ const OperatorView = () => {
           );
 
         case 11: {
-          // File upload (PDF / NDA)
-          // const inputId = `pdf-${opts?.uniqueKey ?? index}`;
           const key = opts?.uniqueKey ?? String(index);
           const fileUrl = (field as any).answer_file as string | undefined;
           return (
@@ -2556,6 +2515,8 @@ const OperatorView = () => {
     allAccessData: any[],
     permissionAccess: any[],
   ) => {
+    if (!accessId) return [];
+
     const records = allAccessData.filter(
       (a) =>
         a.access_control_id?.toLowerCase() === accessId.toLowerCase() &&
@@ -2572,16 +2533,13 @@ const OperatorView = () => {
       getAllowedActions(r.visitor_give_access ?? 0, !!r.early_access),
     );
 
-    // hasil intersection semua visitor
     const commonActions = perVisitorActions.reduce(
       (acc, cur) => acc.filter((x) => cur.includes(x)),
       perVisitorActions[0] || [],
     );
 
-    // 🔹 Batasi lagi berdasarkan permission operator
     const permissionActions = getAllowedActionsByPermission(accessId, permissionAccess);
 
-    // ✅ ambil irisan antar dua array
     return commonActions.filter((action) => permissionActions.includes(action));
   };
 
@@ -2606,16 +2564,13 @@ const OperatorView = () => {
   const allowedActions = useMemo(() => {
     if (!selectedAccessIds.length || !selectedVisitors.length) return [];
 
-    // 🟢 Jika lebih dari satu visitor → batasi juga oleh permission
     if (selectedVisitors.length > 1) {
       const allActions = ['Grant', 'Revoke', 'Block'];
 
-      // Batasi berdasar permission operator
       const permissionActions = selectedAccessIds.flatMap((id) =>
         getAllowedActionsByPermission(id, permissionAccess),
       );
 
-      // ambil irisan semua permission
       const commonPermissionActions = allActions.filter((a) =>
         permissionActions.every((perm) => perm.includes(a)),
       );
@@ -2732,7 +2687,7 @@ const OperatorView = () => {
       });
 
       const payload = { list_group: dataList };
-      console.log('✅ Final Payload (MULTI-VISITOR FIXED):', JSON.stringify(payload, null, 2));
+      // console.log('✅ Final Payload (MULTI-VISITOR FIXED):', JSON.stringify(payload, null, 2));
       const result = await createSubmitCompletePraMultiple(token as string, payload);
       showSwal('success', 'Successfully Pra Register!');
       setRelatedVisitors((prev) =>
@@ -2747,7 +2702,6 @@ const OperatorView = () => {
         ),
       );
 
-      // 🟦 Ambil ulang data dari server agar 100% sinkron
       const invitationId = invitationCode?.[0]?.id;
       if (invitationId) {
         console.log('🔄 Refetching visitors for invitation:', invitationId);
@@ -2759,7 +2713,8 @@ const OperatorView = () => {
       // setSelectMultiple(false);
     } catch (error) {
       console.error('❌ Submit error:', error);
-      toast('Submit gagal', 'error');
+      // toast('Submit gagal', 'error');
+      showSwal('error', 'Failed Submit Pra Register!');
     } finally {
       setTimeout(() => {
         setLoadingAccess(false);
@@ -2780,12 +2735,10 @@ const OperatorView = () => {
       return;
     }
 
-    // Ambil semua access milik visitor terpilih (case-insensitive)
     const filtered = allAccessData.filter((a) =>
       selectedVisitors.some((id) => id.toLowerCase() === a.trx_visitor_id?.toLowerCase()),
     );
 
-    // 🔹 Gabungkan access berdasarkan access_control_id, tapi simpan semua visitor-nya
     const mergedAccess = Object.values(
       filtered.reduce((acc: any, curr: any) => {
         const key = curr.access_control_id;
@@ -2797,22 +2750,19 @@ const OperatorView = () => {
         } else {
           acc[key].visitors.push(curr.trx_visitor_id);
 
-          // Ambil visitor_give_access dengan prioritas tertinggi (block > revoke > grant > none)
           acc[key].visitor_give_access = Math.max(
             acc[key].visitor_give_access ?? 0,
             curr.visitor_give_access ?? 0,
           );
 
-          // Jika salah satu early_access = true, tandai true
           acc[key].early_access = acc[key].early_access || curr.early_access;
         }
         return acc;
       }, {}),
     );
 
-    // console.log('🎯 Merged accessData (multi visitor-aware):', mergedAccess);
     setAccessData(mergedAccess);
-  }, [selectedVisitors, allAccessData]);
+  }, [selectedVisitors]);
 
   const validateMultiVisitorAccess = (
     accessId: string,
@@ -2876,7 +2826,6 @@ const OperatorView = () => {
         return;
       }
 
-      // 🚫 belum grant → tidak bisa revoke/block (kecuali early_access)
       if (
         (action === 'revoke' || action === 'block') &&
         visitor_give_access === 0 &&
@@ -2891,7 +2840,6 @@ const OperatorView = () => {
         return;
       }
 
-      // 🚫 sudah grant → tidak bisa grant lagi
       if (action === 'grant' && visitor_give_access === 1) {
         invalidVisitors.push({
           visitorId,
@@ -2902,7 +2850,6 @@ const OperatorView = () => {
         return;
       }
 
-      // ✅ Valid
       validVisitors.push({
         visitorId,
         name: visitorName,
@@ -2910,7 +2857,6 @@ const OperatorView = () => {
       });
     });
 
-    // 💬 Format pesan simple tapi informatif
     const lines: string[] = [];
 
     validVisitors.forEach((v) => {
@@ -2939,8 +2885,6 @@ const OperatorView = () => {
       try {
         setLoadingAccess(true);
 
-        // ✅ Visitor yang relevan diambil dari row.visitors (bukan hanya selectedVisitors)
-        // const targetVisitors = row.visitors ?? selectedVisitors;
         const targetVisitors = allAccessData
           .filter(
             (a) =>
@@ -2951,7 +2895,6 @@ const OperatorView = () => {
 
         console.log(targetVisitors);
 
-        // Jalankan validasi
         const { validVisitors, invalidVisitors, message } = validateMultiVisitorAccess(
           accessControlId,
           targetVisitors,
@@ -2959,18 +2902,6 @@ const OperatorView = () => {
           relatedVisitors,
           action,
         );
-
-        // if (message) {
-        //   setSnackbarMsg(message);
-        //   setSnackbarType(
-        //     validVisitors.length && invalidVisitors.length
-        //       ? 'info'
-        //       : validVisitors.length
-        //       ? 'success'
-        //       : 'error',
-        //   );
-        //   setSnackbarOpen(true);
-        // }
 
         if (!validVisitors.length) {
           setSnackbarMsg(message || 'No valid visitors to process.');
@@ -2988,7 +2919,6 @@ const OperatorView = () => {
           setSnackbarOpen(true);
         }
 
-        // 📨 Payload hanya untuk valid visitors
         const payload = {
           data_access: validVisitors.map((visitorId) => ({
             access_control_id: accessControlId,
@@ -3005,11 +2935,12 @@ const OperatorView = () => {
         const backendMsg =
           res?.collection?.[0] || res?.msg || res?.message || 'Action executed successfully.';
 
-        setSnackbarMsg(`✅ ${backendMsg}`);
-        setSnackbarType('success');
-        setSnackbarOpen(true);
+        showSwal('success', backendMsg);
 
-        // 🟢 Update accessData agar sinkron di UI
+        // setSnackbarMsg(`✅ ${backendMsg}`);
+        // setSnackbarType('success');
+        // setSnackbarOpen(true);
+
         setAccessData((prev) =>
           prev.map((a) =>
             validVisitors.includes(a.trx_visitor_id) && a.access_control_id === accessControlId
@@ -3037,9 +2968,10 @@ const OperatorView = () => {
           err?.message ||
           'Unknown error occurred.';
 
-        setSnackbarMsg(`${backendMsg}`);
-        setSnackbarType('error');
-        setSnackbarOpen(true);
+        // setSnackbarMsg(`${backendMsg}`);
+        // setSnackbarType('error');
+        // setSnackbarOpen(true);
+        showSwal('error', backendMsg);
         resolve();
       } finally {
         setTimeout(() => setLoadingAccess(false), 600);
@@ -3065,16 +2997,6 @@ const OperatorView = () => {
       : null;
 
   const [todayVisitingPurpose, setTodayVisitingPurpose] = useState<any[]>([]);
-  // // const [todayVisitingPurpose, setTodayVisitingPurpose] = useState<any[]>([
-  // //   { id: 'E54ADE95-1C51-4C51-9C26-9ED0A1C1A001', name: 'Visitor', count: 4 },
-  // //   { id: '9AD65124-7251-4E11-8C48-79A2F1370002', name: 'Meeting', count: 12 },
-  // //   { id: '1470E3A4-6EC1-4F5F-AE2C-43AD51360003', name: 'Delivery', count: 6 },
-  // //   { id: 'FA8918BC-6E44-4DF8-BEE8-096F6D850004', name: 'Courier', count: 2 },
-  // //   { id: 'C3A4601B-4F6B-48CA-9727-7C0B90490005', name: 'Maintenance', count: 8 },
-  // //   { id: 'A72151C5-5214-4F3C-9D21-366DF0F70006', name: 'Guest', count: 3 },
-  // // ]);
-  // const moreItems = todayVisitingPurpose.slice(5);
-
   const [openMore, setOpenMore] = useState(false);
   const handleOpenMore = () => setOpenMore(true);
 
@@ -3093,10 +3015,8 @@ const OperatorView = () => {
     }
   }, [token]);
 
-  const handle = useFullScreenHandle();
-
   return (
-    <PageContainer title={'Operator View'} description={'Alarm and History Monitor'}>
+    <PageContainer title={'Operator View'} description={'Operator View'}>
       <FullScreen handle={handle}>
         <Box
           ref={containerRef}
@@ -3108,114 +3028,25 @@ const OperatorView = () => {
             height: isFullscreen ? '100vh' : { lg: '100%', xs: '100%' },
             width: '100%',
             padding: '0 !important',
-            // overflow: 'hidden',
+
             position: 'relative',
             overflow: 'visible',
           }}
         >
-          {/* LEFT SIDEBAR */}
-          {/* <Box
-          sx={{
-            width: { xs: '100%', md: secdrawerWidth },
-            minWidth: { md: secdrawerWidth },
-            maxWidth: { md: secdrawerWidth },
-            flexShrink: 0,
-            p: 2,
-            borderRight: { md: '1px solid #eee' },
-            borderTop: { xs: '1px solid #eee', md: 'none' },
-            order: { xs: 2, md: 0 },
-            backgroundColor: '#fff',
-
-            overflowY: { md: 'auto', xs: 'visible' },
-            maxHeight: { md: '100%', xs: 'unset' },
-          }}
-        >
-          <Typography variant="h6" mb={1}>
-            🔔 Alarm
-          </Typography>
-          <Divider sx={{ mb: 1 }} />
-          <Box display="flex" flexDirection="column" gap={1}>
-            {alarms.map((alarm) => (
-              <Card
-                key={alarm.id}
-                sx={{
-                  borderLeft: `4px solid ${alarm.type === 'Critical' ? '#FF3B3B' : '#FFC107'}`,
-                  boxShadow: 'none',
-                  borderRadius: 2,
-                  paddingBottom: 0,
-                }}
-              >
-                <CardContent sx={{ p: 0, pb: '0 !important' }}>
-                  <Typography variant="subtitle2" fontWeight="bold">
-                    {alarm.title}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {alarm.message}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    color="text.disabled"
-                    display="block"
-                    sx={{ mt: 0.5 }}
-                  >
-                    {alarm.time}
-                  </Typography>
-                </CardContent>
-              </Card>
-            ))}
-          </Box>
-
-          <Typography variant="h6" mt={3} mb={1}>
-            🕒 History
-          </Typography>
-          <Divider sx={{ mb: 1 }} />
-          <Box display="flex" flexDirection="column" gap={1}>
-            {histories.map((history) => (
-              <Card
-                key={history.id}
-                sx={{
-                  borderLeft: '4px solid #5D87FF',
-                  boxShadow: 'none',
-                  borderRadius: 2,
-                  paddingBottom: 0,
-                }}
-              >
-                <CardContent sx={{ p: 0, pb: '0 !important' }}>
-                  <Typography variant="subtitle2" fontWeight="bold">
-                    {history.title}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {history.message}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    color="text.disabled"
-                    display="block"
-                    sx={{ mt: 0.5 }}
-                  >
-                    {history.time}
-                  </Typography>
-                </CardContent>
-              </Card>
-            ))}
-          </Box>
-        </Box> */}
-
           {/* RIGHT CONTENT */}
           <Box
             flexGrow={1}
-            // p={3}
             sx={{
               overflow: isFullscreen ? 'auto' : 'hidden',
               display: 'flex',
               padding: '10px',
               flexDirection: 'column',
-              // justifyContent: 'space-between',
+
               height: isFullscreen ? '100vh' : 'auto',
             }}
           >
             <Grid container spacing={1} mb={0}>
-              <Grid size={{ xs: 12, sm: 12, xl: 10.5 }}>
+              <Grid size={{ xs: 12, sm: 12, xl: 10 }}>
                 <CustomTextField
                   fullWidth
                   size="small"
@@ -3237,14 +3068,8 @@ const OperatorView = () => {
                   }}
                 />
               </Grid>
-              <Grid size={{ xs: 12, sm: 12, xl: 1.5 }}>
-                <Box
-                  display="flex"
-                  gap={0.5}
-                  alignItems="center"
-                  // flexWrap={'wrap'}
-                  justifyContent={'flex-start'}
-                >
+              <Grid size={{ xs: 12, sm: 12, xl: 2 }}>
+                <Box display="flex" gap={0.5} alignItems="center" justifyContent={'flex-start'}>
                   <Tooltip
                     title="Clear data information"
                     placement="top"
@@ -3269,10 +3094,84 @@ const OperatorView = () => {
                       sx={{
                         textTransform: 'none',
                         fontWeight: 600,
-                        px: 2.2,
+                        px: 2,
                       }}
                     >
                       Clear
+                    </Button>
+                  </Tooltip>
+                  <Tooltip
+                    title="List Visitor"
+                    placement="top"
+                    arrow
+                    slotProps={{
+                      tooltip: {
+                        sx: {
+                          fontSize: '1rem',
+                          padding: '8px 14px',
+                        },
+                      },
+                      popper: {
+                        container: containerRef.current,
+                      },
+                    }}
+                  >
+                    <Button
+                      onClick={handleOpenListVisitor}
+                      sx={{
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        px: 0,
+                        display: 'flex',
+                        justifyContent: 'center !important',
+                        alignItems: 'center !important',
+                        paddingRight: 0,
+                        paddingLeft: 0,
+                        backgroundColor: 'gray',
+                        '&:hover': {
+                          backgroundColor: 'gray',
+                          opacity: 0.9,
+                        },
+                      }}
+                    >
+                      <IconUser style={{ color: '#fff' }} size={25} />
+                    </Button>
+                  </Tooltip>
+                  <Tooltip
+                    title="Blacklist Visitor"
+                    placement="top"
+                    arrow
+                    slotProps={{
+                      tooltip: {
+                        sx: {
+                          fontSize: '1rem',
+                          padding: '8px 14px',
+                        },
+                      },
+                      popper: {
+                        container: containerRef.current,
+                      },
+                    }}
+                  >
+                    <Button
+                      onClick={handleOpenBlacklistVisitor}
+                      sx={{
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        backgroundColor: '#000',
+                        px: 0,
+                        display: 'flex',
+                        justifyContent: 'center !important',
+                        alignItems: 'center !important',
+                        paddingRight: 0,
+                        paddingLeft: 0,
+                        '&:hover': {
+                          backgroundColor: '#000',
+                          opacity: 0.9,
+                        },
+                      }}
+                    >
+                      <IconUser style={{ color: '#fff' }} size={25} />
                     </Button>
                   </Tooltip>
                   <Tooltip
@@ -3294,15 +3193,14 @@ const OperatorView = () => {
                     <Button
                       variant="contained"
                       color="primary"
-                      startIcon={<IconInfoCircle size={25} />}
                       onClick={() => setOpenDialogInfo(true)}
                       sx={{
-                        textTransform: 'none',
-                        fontWeight: 600,
-                        px: 2.2,
+                        minWidth: 0,
+                        padding: 0.7,
+                        borderRadius: 1,
                       }}
                     >
-                      Info
+                      <IconInfoCircle size={25} />
                     </Button>
                   </Tooltip>
 
@@ -3323,7 +3221,6 @@ const OperatorView = () => {
                     }}
                   >
                     <IconButton
-                      // onClick={toggleFullscreen}
                       onClick={() => {
                         if (isFullscreen) {
                           handle.exit();
@@ -3353,15 +3250,7 @@ const OperatorView = () => {
               </Grid>
             </Grid>
 
-            <Grid
-              container
-              spacing={2}
-              alignItems="stretch"
-              // sx={{
-              //   flex: isFullscreen ? 1 : 'unset',
-              //   minHeight: 0,
-              // }}
-            >
+            <Grid container spacing={2} alignItems="stretch">
               <Grid
                 container
                 spacing={2}
@@ -3383,7 +3272,7 @@ const OperatorView = () => {
                       justifyContent: 'center',
                       flexDirection: 'column',
                       height: '100%',
-                      maxHeight: isFullscreen ? '50vh' : { xs: '100%', sm: '100%', xl: '450px' },
+                      maxHeight: isFullscreen ? '50vh' : { xs: '100%', sm: '100%', xl: '400px' },
                     }}
                   >
                     <CardContent
@@ -3394,7 +3283,7 @@ const OperatorView = () => {
                         justifyContent: 'center',
                         gap: 1,
                         flexDirection: { xs: 'row', xl: 'row' },
-                        maxHeight: isFullscreen ? '100%' : { xs: '100%', xl: '350px' },
+                        maxHeight: isFullscreen ? '100%' : { xs: '100%', xl: '300px' },
                         overflow: 'hidden',
                       }}
                     >
@@ -3471,7 +3360,7 @@ const OperatorView = () => {
                     display: 'flex',
                     justifyContent: isFullscreen ? 'center' : 'flex-start',
                     alignItems: isFullscreen ? 'center' : 'stretch',
-                    overflow: isFullscreen ? 'auto' : 'hidden',
+                    // overflow: isFullscreen ? 'auto' : 'hidden',
                   }}
                 >
                   <Card
@@ -3480,14 +3369,9 @@ const OperatorView = () => {
                       height: '100%',
                       maxHeight: isFullscreen
                         ? { xs: '100%', sm: '100%', lg: '80%', xl: '100%' }
-                        : { xs: '100%', sm: '100%', xl: '450px' },
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                      transition: 'transform 0.2s, box-shadow 0.2s',
+                        : { xs: '100%', sm: '100%', xl: '400px' },
+
                       overflow: isFullscreen ? 'auto' : 'hidden',
-                      '&:hover': {
-                        transform: 'translateY(-4px)',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                      },
                     }}
                   >
                     <CardContent
@@ -3553,7 +3437,6 @@ const OperatorView = () => {
                                 justifyContent: 'center',
                               }}
                             >
-                              {/* <IconInbox size={46} color="#90A4AE" /> */}
                               <img src={backgroundnodata} alt="No Data" height="100" width="100%" />
                               <Typography
                                 variant="h5"
@@ -3566,15 +3449,28 @@ const OperatorView = () => {
                             </Card>
                           ) : (
                             <>
-                              <Grid size={{ xs: 12 }}></Grid>
                               {todayVisitingPurpose.slice(0, 5).map((item) => (
-                                <>
+                                <Tooltip
+                                  arrow
+                                  title={'Detail data ' + item.name}
+                                  placement="top"
+                                  key={item.id}
+                                  slotProps={{
+                                    tooltip: {
+                                      sx: {
+                                        fontSize: '1rem',
+                                        padding: '8px 14px',
+                                        zIndex: 9999999,
+                                      },
+                                    },
+                                  }}
+                                >
                                   <Card
+                                    onClick={() => handleOpenDetailVistingPurpose(item)}
                                     key={item.id}
                                     sx={{
                                       p: 1,
                                       borderRadius: 1,
-                                      // background: 'linear-gradient(135deg, #5D87FF 0%, #4169E1 100%)',
                                       background: getColorByName(item.name),
                                       boxShadow: '0 6px 14px rgba(93, 135, 255, 0.3)',
                                       transition: 'all 0.3s ease',
@@ -3582,6 +3478,7 @@ const OperatorView = () => {
                                         transform: 'translateY(-4px)',
                                         boxShadow: '0 10px 18px rgba(93, 135, 255, 0.45)',
                                       },
+                                      cursor: 'pointer',
                                       mb: 0,
                                     }}
                                   >
@@ -3608,7 +3505,7 @@ const OperatorView = () => {
                                       </Typography>
                                     </CardContent>
                                   </Card>
-                                </>
+                                </Tooltip>
                               ))}
                               {todayVisitingPurpose.length > 5 && (
                                 <Button
@@ -3640,7 +3537,7 @@ const OperatorView = () => {
                                     sx: {
                                       fontSize: '1rem',
                                       padding: '8px 14px',
-                                      zIndex: 9999999,
+                                      zIndex: 99999,
                                     },
                                   },
                                   popper: {
@@ -3661,12 +3558,12 @@ const OperatorView = () => {
                                     boxShadow: '0 2px 6px rgba(0, 200, 83, 0.4)',
                                     zIndex: 999,
                                     width: '100%',
-                                    height: '55px',
+                                    height: '50px',
                                     p: 0,
                                     backgroundColor: '#',
                                   }}
                                 >
-                                  <Typography variant="h5" color="white">
+                                  <Typography variant="h6" color="white">
                                     Pra Register
                                   </Typography>
                                 </Button>
@@ -3702,12 +3599,11 @@ const OperatorView = () => {
                                     boxShadow: '0 2px 6px rgba(0, 200, 83, 0.4)',
                                     zIndex: 999,
                                     width: '100%',
-                                    height: '55px',
+                                    height: '50px',
                                     p: 0,
-                                    backgroundColor: '',
                                   }}
                                 >
-                                  <Typography variant="h5" color="white">
+                                  <Typography variant="h6" color="white">
                                     Invitation
                                   </Typography>
                                 </Button>
@@ -3733,7 +3629,7 @@ const OperatorView = () => {
                               >
                                 <Button
                                   variant="contained"
-                                  startIcon={<IconCheck size={25} />}
+                                  startIcon={<IconLogin size={25} />}
                                   onClick={() => handleActionClick('Checkin')}
                                   // color="success"
                                   size="large"
@@ -3745,12 +3641,12 @@ const OperatorView = () => {
                                     boxShadow: '0 2px 6px rgba(0, 200, 83, 0.4)',
                                     zIndex: 999,
                                     width: '100%',
-                                    height: '55px',
+                                    height: '50px',
                                     p: 0,
                                     backgroundColor: '#22C55E',
                                   }}
                                 >
-                                  <Typography variant="h5" color="white">
+                                  <Typography variant="h6" color="white">
                                     Checkin
                                   </Typography>
                                 </Button>
@@ -3777,7 +3673,7 @@ const OperatorView = () => {
                               >
                                 <Button
                                   variant="contained"
-                                  startIcon={<IconX size={25} />}
+                                  startIcon={<IconLogout size={25} />}
                                   onClick={() => handleActionClick('Checkout')}
                                   size="large"
                                   sx={{
@@ -3792,11 +3688,11 @@ const OperatorView = () => {
                                     },
                                     zIndex: 999,
                                     width: '100%',
-                                    height: '55px',
+                                    height: '50px',
                                     p: 0,
                                   }}
                                 >
-                                  <Typography variant="h5" color="white">
+                                  <Typography variant="h6" color="white">
                                     Checkout
                                   </Typography>
                                 </Button>
@@ -3838,12 +3734,12 @@ const OperatorView = () => {
                                     },
                                     zIndex: 999,
                                     width: '100%',
-                                    height: '55px',
+                                    height: '50px',
                                     p: 0,
                                   }}
                                 >
-                                  <Typography variant="h5" color="white">
-                                    Card
+                                  <Typography variant="h6" color="white">
+                                    Swipe
                                   </Typography>
                                 </Button>
                               </Tooltip>
@@ -3884,11 +3780,11 @@ const OperatorView = () => {
                                     },
                                     zIndex: 999,
                                     width: '100%',
-                                    height: '55px',
+                                    height: '50px',
                                     p: 0,
                                   }}
                                 >
-                                  <Typography variant="h5" color="white">
+                                  <Typography variant="h6" color="white">
                                     Access
                                   </Typography>
                                 </Button>
@@ -3924,14 +3820,13 @@ const OperatorView = () => {
                                     px: 2.5,
                                     background: '#00ACC1',
                                     boxShadow: '0 2px 6px rgba(0, 172, 193, 0.4)',
-
                                     zIndex: 999,
                                     width: '100%',
-                                    height: '55px',
+                                    height: '50px',
                                     p: 0,
                                   }}
                                 >
-                                  <Typography variant="h5" color="white">
+                                  <Typography variant="h6" color="white">
                                     Parking
                                   </Typography>
                                 </Button>
@@ -3941,7 +3836,7 @@ const OperatorView = () => {
                             {/* Report */}
                             <Grid size={{ xs: 6, lg: 6 }}>
                               <Tooltip
-                                title="Report Information"
+                                title="Open Manual Triggered Access"
                                 placement="top"
                                 arrow
                                 slotProps={{
@@ -3958,27 +3853,27 @@ const OperatorView = () => {
                               >
                                 <Button
                                   variant="contained"
-                                  startIcon={<IconReport size={25} />}
-                                  onClick={handleOpenScanQR}
+                                  startIcon={<IconDoor size={25} />}
+                                  // onClick={handleOpenTriggeredAccess}
+                                  onClick={() => handleOpenAction('open')}
                                   size="large"
                                   sx={{
                                     textTransform: 'none',
                                     fontWeight: 600,
                                     px: 2.5,
-                                    background: 'linear-gradient(135deg, #607D8B 0%, #455A64 100%)',
+                                    background: 'brown',
                                     boxShadow: '0 2px 6px rgba(96, 125, 139, 0.4)',
                                     '&:hover': {
-                                      background:
-                                        'linear-gradient(135deg, #546E7A 0%, #37474F 100%)',
+                                      background: 'brown',
                                     },
                                     zIndex: 999,
                                     width: '100%',
-                                    height: '55px',
+                                    height: '50px',
                                     p: 0,
                                   }}
                                 >
-                                  <Typography variant="h5" color="white">
-                                    Report
+                                  <Typography variant="h6" color="white">
+                                    Open
                                   </Typography>
                                 </Button>
                               </Tooltip>
@@ -3991,7 +3886,7 @@ const OperatorView = () => {
                                 slotProps={{
                                   tooltip: {
                                     sx: {
-                                      fontSize: '1rem', // <<< ukuran teks tooltip
+                                      fontSize: '1rem',
                                       padding: '8px 14px',
                                     },
                                   },
@@ -4004,7 +3899,6 @@ const OperatorView = () => {
                                   variant="contained"
                                   startIcon={<IconClock size={25} />}
                                   onClick={() => handleOpenAction('extend')}
-                                  // color="info"
                                   size="large"
                                   sx={{
                                     textTransform: 'none',
@@ -4014,11 +3908,11 @@ const OperatorView = () => {
                                     background: 'linear-gradient(135deg, #FFE082 0%, #FFCA28 100%)',
                                     zIndex: 999,
                                     width: '100%',
-                                    height: '55px',
+                                    height: '50px',
                                     p: 0,
                                   }}
                                 >
-                                  <Typography variant="h5" color="white">
+                                  <Typography variant="h6" color="white">
                                     Extend
                                   </Typography>
                                 </Button>
@@ -4026,13 +3920,13 @@ const OperatorView = () => {
                             </Grid>
                             <Grid size={{ xs: 6, lg: 6 }}>
                               <Tooltip
-                                title="Action for arrival visitor"
+                                title="Confirm for arrival visitor"
                                 placement="top"
                                 arrow
                                 slotProps={{
                                   tooltip: {
                                     sx: {
-                                      fontSize: '1rem', // <<< ukuran teks tooltip
+                                      fontSize: '1rem',
                                       padding: '8px 14px',
                                     },
                                   },
@@ -4053,12 +3947,12 @@ const OperatorView = () => {
                                     boxShadow: '0 2px 6px rgba(96, 125, 139, 0.4)',
                                     zIndex: 999,
                                     width: '100%',
-                                    height: '55px',
+                                    height: '50px',
                                     p: 0,
                                     backgroundColor: '#10B981',
                                   }}
                                 >
-                                  <Typography variant="h5" color="white">
+                                  <Typography variant="h6" color="white">
                                     Arrival
                                   </Typography>
                                 </Button>
@@ -4066,13 +3960,13 @@ const OperatorView = () => {
                             </Grid>
                             <Grid size={{ xs: 6, lg: 6 }}>
                               <Tooltip
-                                title="Blacklist Visitor"
+                                title="Add to Blacklist Visitor"
                                 placement="top"
                                 arrow
                                 slotProps={{
                                   tooltip: {
                                     sx: {
-                                      fontSize: '1rem', // <<< ukuran teks tooltip
+                                      fontSize: '1rem',
                                       padding: '8px 14px',
                                     },
                                   },
@@ -4084,7 +3978,8 @@ const OperatorView = () => {
                                 <Button
                                   variant="contained"
                                   startIcon={<IconUser size={25} />}
-                                  onClick={handleOpenScanQR}
+                                  // onClick={handleOpenScanQR}
+                                  onClick={() => handleActionBlacklist('Blacklist')}
                                   size="large"
                                   sx={{
                                     textTransform: 'none',
@@ -4093,12 +3988,12 @@ const OperatorView = () => {
                                     boxShadow: '0 2px 6px rgba(96, 125, 139, 0.4)',
                                     zIndex: 999,
                                     width: '100%',
-                                    height: '55px',
+                                    height: '50px',
                                     p: 0,
                                     backgroundColor: '#000',
                                   }}
                                 >
-                                  <Typography variant="h5" color="white">
+                                  <Typography variant="h6" color="white">
                                     Blacklist
                                   </Typography>
                                 </Button>
@@ -4112,7 +4007,7 @@ const OperatorView = () => {
                                 slotProps={{
                                   tooltip: {
                                     sx: {
-                                      fontSize: '1rem', // <<< ukuran teks tooltip
+                                      fontSize: '1rem',
                                       padding: '8px 14px',
                                     },
                                   },
@@ -4133,12 +4028,12 @@ const OperatorView = () => {
                                     boxShadow: '0 2px 6px rgba(96, 125, 139, 0.4)',
                                     zIndex: 999,
                                     width: '100%',
-                                    height: '55px',
+                                    height: '50px',
                                     p: 0,
                                     backgroundColor: 'gray',
                                   }}
                                 >
-                                  <Typography variant="h5" color="white">
+                                  <Typography variant="h6" color="white">
                                     Whitelist
                                   </Typography>
                                 </Button>
@@ -4158,7 +4053,7 @@ const OperatorView = () => {
                       borderRadius: 2,
                       height: '100%',
                       width: '100%',
-                      maxHeight: isFullscreen ? '100%' : { xs: '100%', sm: '100%', xl: '450px' },
+                      maxHeight: isFullscreen ? '100%' : { xs: '100%', sm: '100%', xl: '400px' },
                       display: 'flex',
                       justifyContent: 'center',
                       alignItems: 'center',
@@ -4179,13 +4074,13 @@ const OperatorView = () => {
                           display: 'flex',
                           justifyContent: 'center',
                           alignItems: 'center',
-                          minHeight: 150,
+                          minHeight: 120,
                           mb: 0,
                         }}
                       >
                         {invitationCode[0]?.visitor_number ? (
                           <QRCode
-                            size={200}
+                            size={170}
                             value={invitationCode[0].visitor_number}
                             viewBox="0 0 256 256"
                             style={{
@@ -4198,10 +4093,10 @@ const OperatorView = () => {
                         ) : (
                           <Box textAlign="center" color="text.secondary">
                             <IconCards size={48} style={{ opacity: 0.4, marginBottom: 8 }} />
-                            <Typography variant="body1" fontWeight={500}>
+                            <Typography variant="h6" fontWeight={500}>
                               No QR/Card Available
                             </Typography>
-                            <Typography variant="body2" color="text.disabled">
+                            <Typography variant="body1" color="text.disabled">
                               Scan a visitor to show QR code
                             </Typography>
                           </Box>
@@ -4212,7 +4107,7 @@ const OperatorView = () => {
                           Number
                         </Typography>
                         <Typography variant="body1" color="text.secondary" mb={1}>
-                          {invitationCode[0]?.number || '-'}
+                          {invitationCode[0]?.visitor_number || '-'}
                         </Typography>
                       </Box>
                       <Box>
@@ -4223,14 +4118,15 @@ const OperatorView = () => {
                           {invitationCode[0]?.invitation_code || '-'}
                         </Typography>
                       </Box>
-                      <Divider sx={{ my: 1 }} />
+                      <Divider sx={{ mt: 0.5 }} />
                       <Box
                         display="flex"
                         justifyContent="space-between"
                         alignItems="center"
                         mt="auto"
+                        pt={0}
                       >
-                        <Typography variant="h6" fontWeight="bold">
+                        <Typography variant="h6" fontWeight="bold" mb={0}>
                           Status
                         </Typography>
                         <Box
@@ -4240,6 +4136,7 @@ const OperatorView = () => {
                             color: 'white',
                             px: 2,
                             py: 0.5,
+                            mt: 0.5,
                             borderRadius: '12px',
                             fontSize: '0.875rem',
                             fontWeight: 500,
@@ -4271,344 +4168,18 @@ const OperatorView = () => {
                   sx={{
                     boxShadow: 'none',
                     p: 1,
-                    height: '450px',
+                    height: {
+                      lg: '450px',
+                      xs: '100%',
+                    },
                     maxHeight: isFullscreen ? '100%' : '450px',
                   }}
                 >
                   <CardContent sx={{ boxShadow: 'none', p: 0 }}>
-                    {/* Tabs */}
-                    <Tabs
-                      value={tabValue}
-                      onChange={(e, newVal) => setTabValue(newVal)}
-                      variant="fullWidth"
-                    >
-                      <Tab label="Info" />
-                      <Tab label="Visit Information" />
-                      <Tab label="Purpose Visit" />
-                    </Tabs>
-
-                    {/* Tab Panels */}
-                    {tabValue === 0 && (
-                      <Box sx={{ mt: 2 }}>
-                        {/* Grid Info Visitor */}
-                        <Grid container rowSpacing={4} columnSpacing={2} mt={1}>
-                          {/* Email */}
-                          <Grid size={{ xs: 12, md: 6 }}>
-                            <Box display="flex" gap={2} alignItems="flex-start">
-                              <IconBrandGmail />
-                              <Box>
-                                <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Email</CustomFormLabel>
-                                <Typography
-                                  sx={{
-                                    wordBreak: 'break-word',
-                                    overflowWrap: 'anywhere',
-                                    whiteSpace: 'normal',
-                                  }}
-                                >
-                                  {invitationCode[0]?.visitor?.email || '-'}
-                                </Typography>
-                              </Box>
-                            </Box>
-                          </Grid>
-
-                          {/* Phone */}
-                          <Grid size={{ xs: 12, md: 6 }}>
-                            <Box display="flex" gap={2} alignItems="flex-start">
-                              <IconPhone />
-                              <Box>
-                                <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Phone</CustomFormLabel>
-                                <Typography
-                                  sx={{
-                                    wordBreak: 'break-word',
-                                    overflowWrap: 'anywhere',
-                                    whiteSpace: 'normal',
-                                  }}
-                                >
-                                  {invitationCode[0]?.visitor?.phone || '-'}
-                                </Typography>
-                              </Box>
-                            </Box>
-                          </Grid>
-
-                          {/* Address */}
-                          <Grid size={{ xs: 12, md: 6 }}>
-                            <Box display="flex" gap={2} alignItems="flex-start">
-                              <IconHome />
-                              <Box>
-                                <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Address</CustomFormLabel>
-                                <Typography
-                                  sx={{
-                                    wordBreak: 'break-word',
-                                    overflowWrap: 'anywhere',
-                                    whiteSpace: 'normal',
-                                  }}
-                                >
-                                  {invitationCode[0]?.visitor?.address || '-'}
-                                </Typography>
-                              </Box>
-                            </Box>
-                          </Grid>
-
-                          {/* Gender */}
-                          <Grid size={{ xs: 12, md: 6 }}>
-                            <Box display="flex" gap={2} alignItems="flex-start">
-                              <IconGenderMale />
-                              <Box>
-                                <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Gender</CustomFormLabel>
-                                <Typography>{invitationCode[0]?.visitor?.gender || '-'}</Typography>
-                              </Box>
-                            </Box>
-                          </Grid>
-
-                          {/* Organization */}
-                          <Grid size={{ xs: 12, md: 6 }}>
-                            <Box display="flex" gap={2} alignItems="flex-start">
-                              <IconBuildingSkyscraper />
-                              <Box>
-                                <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>
-                                  Organization
-                                </CustomFormLabel>
-                                <Typography
-                                  sx={{
-                                    wordBreak: 'break-word',
-                                    overflowWrap: 'anywhere',
-                                    whiteSpace: 'normal',
-                                  }}
-                                >
-                                  {invitationCode[0]?.visitor?.organization || '-'}
-                                </Typography>
-                              </Box>
-                            </Box>
-                          </Grid>
-
-                          <Grid size={{ xs: 12, md: 6 }}>
-                            <Box
-                              display={'flex'}
-                              justifyContent={'space-between'}
-                              flexWrap={'wrap'}
-                              // alignItems={'center'}
-                            >
-                              <Box display="flex" gap={2} alignItems="flex-start" flexWrap={'wrap'}>
-                                <IconCards />
-                                <Box>
-                                  <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Card</CustomFormLabel>
-                                </Box>
-                              </Box>
-                              <Box>
-                                {!invitationCode || invitationCode.length === 0 ? (
-                                  <></>
-                                ) : invitationCode[0]?.card && invitationCode[0].card.length > 0 ? (
-                                  invitationCode[0].card[0]?.card_number?.trim() ? (
-                                    <Box>
-                                      <Typography sx={{ fontWeight: 600 }}>
-                                        {invitationCode[0].card[0].card_number}
-                                      </Typography>
-
-                                      {/* {invitationCode[0]?.tracking_ble?.length > 0 &&
-                                      invitationCode[0].tracking_ble[0]?.visitor_give_access ===
-                                        0 && (
-                                        <Button
-                                          sx={{ mt: 1 }}
-                                          variant="contained"
-                                          color="primary"
-                                          startIcon={<IconSend width={18} />}
-                                        >
-                                          Send Tracking
-                                        </Button>
-                                      )} */}
-                                    </Box>
-                                  ) : (
-                                    <></>
-                                  )
-                                ) : invitationCode[0]?.visitor_status === 'Checkin' ? (
-                                  // ✅ Tampilkan tombol "Choose Card" hanya kalau sudah Checkin
-                                  <Button
-                                    variant="contained"
-                                    color="primary"
-                                    size="large"
-                                    onClick={handleChooseCard}
-                                    sx={{ mt: 0.5 }}
-                                  >
-                                    Choose Card
-                                  </Button>
-                                ) : (
-                                  <></>
-                                )}
-                              </Box>
-                            </Box>
-                          </Grid>
-                        </Grid>
-                      </Box>
-                    )}
-
-                    {tabValue === 1 && (
-                      <Box sx={{ mt: 2 }}>
-                        <Grid container rowSpacing={4} columnSpacing={2}>
-                          {/* Group Code */}
-                          <Grid size={{ xs: 12, md: 6 }}>
-                            <Box display="flex" gap={2} alignItems="flex-start">
-                              <IconUsersGroup />
-                              <Box>
-                                <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>
-                                  Group Code
-                                </CustomFormLabel>
-                                <Typography>{invitationCode[0]?.group_code || '-'}</Typography>
-                              </Box>
-                            </Box>
-                          </Grid>
-
-                          {/* Group Name */}
-                          <Grid size={{ xs: 12, md: 6 }}>
-                            <Box display="flex" gap={2} alignItems="flex-start">
-                              <IconUser />
-                              <Box>
-                                <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>
-                                  Group Name
-                                </CustomFormLabel>
-                                <Typography>{invitationCode[0]?.group_name || '-'}</Typography>
-                              </Box>
-                            </Box>
-                          </Grid>
-
-                          {/* Visitor Number */}
-                          <Grid size={{ xs: 12, md: 6 }}>
-                            <Box display="flex" gap={2} alignItems="flex-start">
-                              <IconNumbers />
-                              <Box>
-                                <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>
-                                  Visitor Number
-                                </CustomFormLabel>
-                                <Typography>{invitationCode[0]?.visitor_number || '-'}</Typography>
-                              </Box>
-                            </Box>
-                          </Grid>
-
-                          {/* Invitation Code */}
-                          <Grid size={{ xs: 12, md: 6 }}>
-                            <Box display="flex" gap={2} alignItems="flex-start">
-                              <IconTicket />
-                              <Box>
-                                <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>
-                                  Invitation Code
-                                </CustomFormLabel>
-                                <Typography>{invitationCode[0]?.invitation_code || '-'}</Typography>
-                              </Box>
-                            </Box>
-                          </Grid>
-
-                          {/* Visitor Status */}
-                          <Grid size={{ xs: 12, md: 6 }}>
-                            <Box display="flex" gap={2} alignItems="flex-start">
-                              <IconCheckupList />
-                              <Box>
-                                <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>
-                                  Visitor Status
-                                </CustomFormLabel>
-                                <Typography>{invitationCode[0]?.visitor_status || '-'}</Typography>
-                              </Box>
-                            </Box>
-                          </Grid>
-
-                          {/* Vehicle Type */}
-                          <Grid size={{ xs: 12, md: 6 }}>
-                            <Box display="flex" gap={2} alignItems="flex-start">
-                              <IconCar />
-                              <Box>
-                                <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>
-                                  Vehicle Type
-                                </CustomFormLabel>
-                                <Typography>{invitationCode[0]?.vehicle_type || '-'}</Typography>
-                              </Box>
-                            </Box>
-                          </Grid>
-
-                          {/* Vehicle Plate No. */}
-                          <Grid size={{ xs: 12, md: 6 }}>
-                            <Box display="flex" gap={2} alignItems="flex-start">
-                              <IconLicense />
-                              <Box>
-                                <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>
-                                  Vehicle Plate No.
-                                </CustomFormLabel>
-                                <Typography>
-                                  {invitationCode[0]?.vehicle_plate_number || '-'}
-                                </Typography>
-                              </Box>
-                            </Box>
-                          </Grid>
-                        </Grid>
-                      </Box>
-                    )}
-
-                    {tabValue === 2 && (
-                      <Box sx={{ mt: 2 }}>
-                        <Grid container rowSpacing={4} columnSpacing={2}>
-                          {/* Agenda */}
-                          <Grid size={{ xs: 12, md: 6 }}>
-                            <Box display="flex" gap={2} alignItems="flex-start">
-                              <IconCalendarEvent />
-                              <Box>
-                                <CustomFormLabel sx={{ mt: 0, mb: 0 }}>Agenda</CustomFormLabel>
-                                <Typography>{invitationCode[0]?.agenda || '-'}</Typography>
-                              </Box>
-                            </Box>
-                          </Grid>
-
-                          {/* PIC Host */}
-                          <Grid size={{ xs: 12, md: 6 }}>
-                            <Box display="flex" gap={2} alignItems="flex-start">
-                              <IconUserCheck />
-                              <Box>
-                                <CustomFormLabel sx={{ mt: 0, mb: 0 }}>PIC Host</CustomFormLabel>
-                                <Typography>{invitationCode[0]?.host_name || '-'}</Typography>
-                              </Box>
-                            </Box>
-                          </Grid>
-
-                          {/* Period Start */}
-                          <Grid size={{ xs: 12, md: 6 }}>
-                            <Box display="flex" gap={2} alignItems="flex-start">
-                              <IconCalendarTime />
-                              <Box>
-                                <CustomFormLabel sx={{ mt: 0, mb: 0 }}>
-                                  Period Start
-                                </CustomFormLabel>
-                                {formatDateTime(invitationCode[0]?.visitor_period_start) ?? '-'}
-                              </Box>
-                            </Box>
-                          </Grid>
-
-                          {/* Period End */}
-                          <Grid size={{ xs: 12, md: 6 }}>
-                            <Box display="flex" gap={2} alignItems="flex-start">
-                              <IconCalendarEvent />
-                              <Box>
-                                <CustomFormLabel sx={{ mt: 0, mb: 0 }}>Period End</CustomFormLabel>
-                                <Typography>
-                                  {formatDateTime(
-                                    invitationCode[0]?.visitor_period_end,
-                                    invitationCode[0]?.extend_visitor_period,
-                                  )}
-                                </Typography>
-                              </Box>
-                            </Box>
-                          </Grid>
-
-                          {/* Registered Site */}
-                          <Grid size={{ xs: 12, md: 6 }}>
-                            <Box display="flex" gap={2} alignItems="flex-start">
-                              <IconMapPin />
-                              <Box>
-                                <CustomFormLabel sx={{ mt: 0, mb: 0 }}>
-                                  Registered Site
-                                </CustomFormLabel>
-                                <Typography>{invitationCode[0]?.site_place_name || '-'}</Typography>
-                              </Box>
-                            </Box>
-                          </Grid>
-                        </Grid>
-                      </Box>
-                    )}
+                    <VisitorDetailTabs
+                      invitationCode={invitationCode}
+                      handleChooseCard={handleChooseCard}
+                    />
                   </CardContent>
                   {invitationCode.length > 0 && invitationCode[0]?.visitor_number && (
                     <CardActions sx={{ justifyContent: 'center', mt: 2, flexWrap: 'wrap', gap: 1 }}>
@@ -4640,7 +4211,6 @@ const OperatorView = () => {
                         const data = invitationCode[0];
                         const status = data?.visitor_status;
                         const isBlocked = !!data?.is_block;
-                        const blockBy = data?.block_by ?? null;
 
                         if (
                           !selectedVisitor ||
@@ -4853,35 +4423,55 @@ const OperatorView = () => {
                 >
                   <Box display="flex" justifyContent="space-between">
                     <CardHeader title="Related Visitors" sx={{ p: 0 }} />
-                    <Tooltip
-                      title="Click and Select more than 1 visitor"
-                      slotProps={{
-                        tooltip: {
-                          sx: {
-                            fontSize: '1rem',
-                            padding: '8px 14px',
+                    <Box display={'flex'} gap={1}>
+                      <FormControl sx={{ width: '100%' }}>
+                        <CustomTextField
+                          fullWidth
+                          size="medium"
+                          value={searchKeyword}
+                          onChange={(e) => setSearchKeyword(e.target.value)}
+                          placeholder="Search Visitor"
+                          sx={{ mb: 0, width: '100%', p: 0 }}
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <IconSearch fontSize="small" />
+                              </InputAdornment>
+                            ),
+                          }}
+                        />
+                      </FormControl>
+                      <Tooltip
+                        title="Click and Select more than 1 visitor"
+                        slotProps={{
+                          tooltip: {
+                            sx: {
+                              fontSize: '1rem',
+                              padding: '8px 14px',
+                            },
                           },
-                        },
-                        popper: {
-                          container: containerRef.current,
-                        },
-                      }}
-                    >
-                      <FormControlLabel
-                        value="end"
-                        control={
-                          <Checkbox
-                            checked={selectMultiple}
-                            onChange={(e) => {
-                              setSelectMultiple(e.target.checked);
-                              setSelectedVisitors([]); // reset selected
-                            }}
-                          />
-                        }
-                        label="Select Multiple"
-                        labelPlacement="end"
-                      />
-                    </Tooltip>
+                          popper: {
+                            container: containerRef.current,
+                          },
+                        }}
+                      >
+                        <FormControlLabel
+                          value="end"
+                          control={
+                            <Checkbox
+                              checked={selectMultiple}
+                              onChange={(e) => {
+                                setSelectMultiple(e.target.checked);
+                                setSelectedVisitors([]);
+                              }}
+                            />
+                          }
+                          label="Select Multiple"
+                          labelPlacement="end"
+                          sx={{ marginRight: 0, width: '250px' }}
+                        />
+                      </Tooltip>
+                    </Box>
                   </Box>
                   <Divider sx={{ mt: 1 }} />
                   <CardContent
@@ -4894,7 +4484,7 @@ const OperatorView = () => {
                       flexDirection: 'column',
                     }}
                   >
-                    {relatedVisitors.map((visitor, index) => {
+                    {filteredVisitors.map((visitor, index) => {
                       const isDriving = visitor.is_driving === true;
                       const isScanned =
                         visitor.visitor_number &&
@@ -5043,7 +4633,6 @@ const OperatorView = () => {
                               mt: 1,
                               px: 1,
                               gap: 0.5,
-                              // borderBottom: '1px solid #eee',
                             }}
                           >
                             <Typography
@@ -5134,7 +4723,7 @@ const OperatorView = () => {
                               startIcon={<IconClock size={18} />}
                               sx={{
                                 color: '#fff',
-                                // warna ketika AKTIF
+
                                 background: !relatedVisitors.some(
                                   (v) =>
                                     selectedVisitors.includes(v.id) &&
@@ -5143,9 +4732,8 @@ const OperatorView = () => {
                                   ? undefined
                                   : 'linear-gradient(135deg, #FFE082 0%, #FFCA28 100%)',
 
-                                // style khusus ketika DISABLED
                                 '&.Mui-disabled': {
-                                  background: '#BDBDBD !important', // abu2
+                                  background: '#BDBDBD !important',
                                   color: '#FFFFFF !important',
                                   opacity: 0.8,
                                 },
@@ -5188,7 +4776,7 @@ const OperatorView = () => {
                               onClick={handleChooseCard}
                               startIcon={<IconCreditCard size={18} />}
                             >
-                              Card
+                              Swipe
                             </Button>
                           </Tooltip>
 
@@ -5222,34 +4810,53 @@ const OperatorView = () => {
               </Grid>
 
               <Grid size={{ xs: 12, lg: 3 }} sx={{ height: '100%' }}>
-                <Grid container direction="column" spacing={2} sx={{ height: '100%', flexGrow: 1 }}>
+                <Grid
+                  container
+                  direction="column"
+                  spacing={1}
+                  sx={{ height: '100%', flexGrow: 1, flexWrap: 'nowrap' }}
+                >
                   <Grid sx={{ flex: 1, display: 'flex' }}>
                     <Card
                       sx={{
                         flex: 1,
                         display: 'flex',
-                        flexDirection: 'column',
-                        height: { xs: '100%', md: '100%' },
-                        maxHeight: '100%',
+                        flexDirection: 'column !important',
+                        // height: { xs: '100%', md: '100%' },
+                        // maxHeight: '100%',
                       }}
                     >
+                      <CardHeader
+                        title="Faceimage"
+                        sx={{ p: 0 }}
+                        slotProps={{
+                          title: {
+                            sx: {
+                              fontSize: '15px !important',
+                              marginBottom: '2px',
+                            },
+                          },
+                        }}
+                      />
                       <CardContent
                         sx={{
                           flex: 1,
                           p: 0,
                           overflow: 'hidden',
                           pb: '0 ! important',
+                          // height: '100%',
                         }}
                       >
-                        <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Faceimage</CustomFormLabel>
-
                         {activeSelfie ? (
-                          <img
+                          <Box
+                            component="img"
                             src={activeSelfie}
                             alt="Face Image"
-                            style={{
+                            sx={{
                               width: '100%',
-                              height: isFullscreen ? '100%' : '175px',
+                              height: isFullscreen
+                                ? { xs: '250px', md: '100%', xl: '270px' }
+                                : '200px',
                               borderRadius: '8px',
                               overflow: 'hidden',
                               objectFit: isFullscreen ? 'cover' : 'cover',
@@ -5263,14 +4870,13 @@ const OperatorView = () => {
                             display="flex"
                             alignItems="center"
                             justifyContent="center"
-                            // height={isFullscreen ? '100%' : '175px'}
+                            // height={isFullscreen ? '100%' : '170px'}
                             height={isFullscreen ? '100%' : { xs: '200px', md: '100%' }}
                             sx={{
                               borderRadius: '8px',
                               backgroundColor: '#f9f9f9',
                               color: '#888',
                               fontStyle: 'italic',
-
                               fontSize: '0.9rem',
                             }}
                           >
@@ -5287,10 +4893,22 @@ const OperatorView = () => {
                         flex: 1,
                         display: 'flex',
                         flexDirection: 'column',
-                        height: '100%',
+                        height: { xs: '100%', md: '100%' },
                         maxHeight: '100%',
                       }}
                     >
+                      <CardHeader
+                        title="Identity Image"
+                        sx={{ p: 0 }}
+                        slotProps={{
+                          title: {
+                            sx: {
+                              fontSize: '15px !important',
+                              marginBottom: '2px',
+                            },
+                          },
+                        }}
+                      />
                       <CardContent
                         sx={{
                           flex: 1,
@@ -5300,16 +4918,21 @@ const OperatorView = () => {
                           pb: '0 ! important',
                         }}
                       >
-                        <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Identity Image</CustomFormLabel>
                         {activeKTP ? (
-                          <img
+                          <Box
+                            component="img"
                             src={activeKTP}
-                            alt="Identity Image"
-                            style={{
+                            alt="Face Image"
+                            sx={{
                               width: '100%',
-                              height: isFullscreen ? '100%' : '175px',
+                              height: isFullscreen
+                                ? { xs: '250px', md: '100%', xl: '270px' }
+                                : '200px',
                               borderRadius: '8px',
+                              // overflow: 'hidden',
                               objectFit: isFullscreen ? 'cover' : 'cover',
+                              objectPosition: 'center center',
+                              display: 'block',
                             }}
                             onError={(e) => (e.currentTarget.style.display = 'none')}
                           />
@@ -5327,7 +4950,7 @@ const OperatorView = () => {
                               fontSize: '0.9rem',
                             }}
                           >
-                            No Face Image
+                            No Identity Image
                           </Box>
                         )}
                       </CardContent>
@@ -5337,13 +4960,17 @@ const OperatorView = () => {
               </Grid>
             </Grid>
           </Box>
-
+          <DetailVisitingPurpose
+            open={openDetailVisitingPurpose}
+            onClose={() => setOpenDetailVistingPurpose(false)}
+            data={selectedPurpose}
+          />
           <SearchVisitorDialog
             open={openSearch}
             onClose={() => setOpenSearch(false)}
             onSearch={(data) => {
               setVisitorData(data);
-              setOpenDetail(true); // langsung buka detail
+              setOpenDetail(true);
             }}
             container={containerRef.current}
           />
@@ -5362,6 +4989,12 @@ const OperatorView = () => {
             container={containerRef.current ?? undefined}
             onOpenInvitation={() => setOpenDialogIndex(2)}
           />
+          <BlacklistVisitorDialog
+            open={openBlacklistVisitor}
+            onClose={handleCloseBlacklistVisitor}
+          />
+          <ListVisitorDialog open={openListVisitor} onClose={handleCloseListVisitor} />
+          <TriggeredAccessDialog open={openTriggeredAccess} onClose={handleCloseTriggeredAcceess} />
           {/* Choose Card */}
           <Dialog
             open={openChooseCardDialog}
@@ -5508,26 +5141,51 @@ const OperatorView = () => {
 
               <Box mt={3} display="flex" justifyContent="space-between" alignItems="center">
                 <Box display="flex" flexDirection="column" gap={0.5}>
-                  <Typography variant="body2">
+                  <Typography variant="body1">
                     Cards chosen: {selectedCards.length} / {availableCount}
                   </Typography>
                 </Box>
-
-                <Box display="flex" gap={1}>
-                  <Button onClick={handleCloseChooseCard} color="secondary">
-                    Cancel
-                  </Button>
-                  <Button
-                    variant="contained"
-                    disabled={selectedCards.length === 0}
-                    onClick={handleConfirmChooseCards}
-                  >
-                    Choose
-                  </Button>
-                </Box>
               </Box>
             </DialogContent>
+            <DialogActions>
+              <Button
+                fullWidth
+                variant="contained"
+                // disabled={selectedCards.length === 0}
+                onClick={handleOpenSwipeDialog}
+                color="warning"
+                sx={{ fontSize: '16px' }}
+                startIcon={<IconSwipe />}
+              >
+                Swipe
+              </Button>
+              <Button
+                fullWidth
+                variant="contained"
+                // disabled={selectedCards.length === 0}
+                onClick={handleConfirmChooseCards}
+                color="primary"
+                sx={{ fontSize: '16px' }}
+                startIcon={<IconCards />}
+              >
+                Give
+              </Button>
+            </DialogActions>
           </Dialog>
+          {/* Dialog Swipe */}
+          <SwipeCardDialog
+            open={openSwipeDialog}
+            onClose={handleCloseSwipeDialog}
+            onSubmit={handleSwipeCardSubmit}
+          />
+          {/* Dialog Swipe Access */}
+          <SwipeAccessDialog
+            open={openSwipeAccess}
+            onClose={handleCloseSwipeAccess}
+            data={accessData}
+            payload={swipePayload}
+          />
+
           {/* Fill Form Pra regist Multiple*/}
           <Dialog
             open={openFillForm}
@@ -5605,7 +5263,6 @@ const OperatorView = () => {
                                       )
                                         .filter(
                                           (f: any) =>
-                                            // pakai visitor pertama sebagai acuan visual header
                                             fillFormDataVisitor[0]?.question_page?.[
                                               fillFormActiveStep
                                             ]?.form?.find(
@@ -5631,8 +5288,6 @@ const OperatorView = () => {
                                         const page =
                                           group.question_page?.[fillFormActiveStep] ?? section;
                                         if (!page) return null;
-
-                                        // 🟢 CARI is_driving milik visitor ini
                                         const isDrivingField = page.form?.find(
                                           (f: any) => f.remarks === 'is_driving',
                                         );
@@ -5651,24 +5306,20 @@ const OperatorView = () => {
                                                   ),
                                               )
                                               .map((field: any) => {
-                                                // ✅ FIX 1: cari index sebenarnya berdasarkan remarks (bukan fIdx)
                                                 const formIdx = page.form.findIndex(
                                                   (x: any) => x.remarks === field.remarks,
                                                 );
 
                                                 return (
-                                                  // ✅ FIX 2: gunakan remarks sebagai key, bukan fIdx
                                                   <TableCell key={field.remarks}>
                                                     {renderFieldInput(
                                                       field,
-                                                      formIdx, // ✅ pakai index real
+                                                      formIdx,
                                                       (idx, fieldKey, value) => {
                                                         setFillFormDataVisitor((prev) => {
-                                                          // ✅ FIX 3: deep clone agar state tetap konsisten
                                                           const next = structuredClone(prev);
                                                           const s = fillFormActiveStep;
 
-                                                          // ✅ FIX 4: update berdasarkan remarks, bukan index mentah
                                                           const targetIdx = next[
                                                             gIdx
                                                           ].question_page[s].form.findIndex(
@@ -5690,7 +5341,7 @@ const OperatorView = () => {
                                                       undefined,
                                                       {
                                                         showLabel: false,
-                                                        uniqueKey: `${fillFormActiveStep}:${gIdx}:${field.remarks}`, // ✅ pakai remarks
+                                                        uniqueKey: `${fillFormActiveStep}:${gIdx}:${field.remarks}`,
                                                       },
                                                     )}
                                                   </TableCell>
@@ -5722,19 +5373,11 @@ const OperatorView = () => {
                                   <Typography variant="subtitle2" fontWeight={600}>
                                     {f.long_display_text}
                                   </Typography>
-
-                                  {/* Semua input jadi disabled */}
                                   <Box sx={{ pointerEvents: 'none', opacity: 0.6 }}>
-                                    {renderFieldInput(
-                                      f,
-                                      idx,
-                                      () => {}, // disable onChange
-                                      undefined,
-                                      {
-                                        showLabel: false,
-                                        uniqueKey: `${fillFormActiveStep}:${idx}`,
-                                      },
-                                    )}
+                                    {renderFieldInput(f, idx, () => {}, undefined, {
+                                      showLabel: false,
+                                      uniqueKey: `${fillFormActiveStep}:${idx}`,
+                                    })}
                                   </Box>
                                 </Box>
                               </Grid>
@@ -5754,6 +5397,7 @@ const OperatorView = () => {
               <Button
                 onClick={() => setFillFormActiveStep((p) => Math.max(p - 1, 0))}
                 disabled={fillFormActiveStep === 0}
+                startIcon={<IconArrowLeft />}
               >
                 Back
               </Button>
@@ -5763,11 +5407,17 @@ const OperatorView = () => {
                   onClick={() => {
                     setFillFormActiveStep((p) => p + 1);
                   }}
+                  endIcon={<IconArrowRight />}
                 >
                   Next
                 </Button>
               ) : (
-                <Button variant="contained" color="primary" onClick={handleSubmitPramultiple}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleSubmitPramultiple}
+                  disabled={loadingAccess}
+                >
                   Submit
                 </Button>
               )}
@@ -5837,7 +5487,7 @@ const OperatorView = () => {
             maxWidth="md"
             container={containerRef.current}
           >
-            <DialogTitle>Select Access</DialogTitle>
+            <DialogTitle>Give Access</DialogTitle>
             <IconButton
               aria-label="close"
               onClick={() => setOpenAccessData(false)}
@@ -5856,12 +5506,14 @@ const OperatorView = () => {
                 data={accessData.map(({ trx_visitor_id, visitors, ...rest }) => rest)}
                 isHaveChecked={true}
                 isHaveHeaderTitle={true}
-                titleHeader="Access"
+                // titleHeader="Access"
                 overflowX="auto"
                 isHaveAccess={true}
+                isNoActionTableHead={true}
                 onAccessAction={handleAccessAction}
                 onCheckedChange={(checkedRows) => {
                   const ids = checkedRows.map((r) => r.access_control_id);
+                  console.log('id', ids);
                   setSelectedAccessIds(ids);
                 }}
               />
@@ -5949,7 +5601,6 @@ const OperatorView = () => {
             onApplyToAllChange={handleApplyToAllChange}
             onSubmit={handleExtend}
           />
-
           {/* Create Invitation */}
           <Dialog
             fullWidth
@@ -5982,13 +5633,13 @@ const OperatorView = () => {
                 key={wizardKey}
                 formData={formDataAddVisitor}
                 setFormData={setFormDataAddVisitor}
-                // edittingId={edittingId}
                 onSuccess={handleSuccess}
                 containerRef={containerRef}
+                fullscreenHandle={handle}
+                resetStep={resetStep}
               />
             </DialogContent>
           </Dialog>
-
           {/* Create Pra Registration */}
           <Dialog
             fullWidth
@@ -6026,7 +5677,6 @@ const OperatorView = () => {
               />
             </DialogContent>
           </Dialog>
-
           {/* Registered Site */}
           <Dialog
             open={openDialogIndex === 2}
@@ -6035,14 +5685,7 @@ const OperatorView = () => {
             maxWidth="sm"
             container={containerRef.current ?? undefined}
           >
-            <DialogTitle
-              display="flex"
-              justifyContent={'space-between'}
-              alignItems="center"
-              // sx={{
-              //   background: 'linear-gradient(135deg, rgba(2,132,199,0.05), rgba(99,102,241,0.08))',
-              // }}
-            >
+            <DialogTitle display="flex" justifyContent={'space-between'} alignItems="center">
               Select Registered Site
               <IconButton
                 aria-label="close"
@@ -6093,34 +5736,24 @@ const OperatorView = () => {
                     setOpenInvitationVisitor(true);
                   }}
                   color="primary"
+                  endIcon={<IconArrowRight width={18} />}
                 >
                   Next
                 </Button>
               </Box>
             </DialogContent>
           </Dialog>
-          {/* <SelectRegisteredSiteDialog
-            open={openDialogIndex === 2}
-            onClose={handleCloseDialog}
-            siteData={siteData}
-            selectedSite={selectedSite}
-            setSelectedSite={setSelectedSite}
-            setFormDataAddVisitor={setFormDataAddVisitor as any}
-            setOpenInvitationVisitor={setOpenInvitationVisitor}
-            container={containerRef ?? null}
-          /> */}
-
+          {/* Info Dialog */}
           <InfoDialog
             open={openDialogInfo}
             onClose={() => setOpenDialogInfo(false)}
             data={dataImage}
             container={containerRef ?? null}
           />
-
           <Portal>
             <Snackbar
               open={snackbarOpen}
-              autoHideDuration={8000}
+              autoHideDuration={3000}
               onClose={() => setSnackbarOpen(false)}
               anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
               sx={{
@@ -6161,7 +5794,7 @@ const OperatorView = () => {
               }}
               open={loadingAccess}
             >
-              <CircularProgress color="inherit" />
+              <CircularProgress color="primary" />
             </Backdrop>
           </Portal>
         </Box>

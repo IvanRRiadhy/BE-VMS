@@ -163,66 +163,13 @@ export default function DnDOutsideCourier({
     fetchDrivers();
   }, [token]);
 
-  // const onDropFromOutside = useCallback(
-  //   ({ start }: any) => {
-  //     if (!draggedCourierRef.current) return;
-
-  //     // setSelectedEvent(tempEvent);
-  //     setSelectedEvent({
-  //       id: draggedCourierRef.current.employee_id,
-  //       title: draggedCourierRef.current.name,
-  //       // start: dayjs(start).utc().toDate(),
-  //       start: start,
-  //       end: dayjs(start).add(1, 'hour').utc().toDate(),
-  //       // start,
-  //       // end: moment(start).add(1, 'hour').toDate(),
-  //       allDay: false,
-  //       color: draggedCourierRef.current.color,
-  //       resource: { internal: true },
-  //     });
-  //     setIsDraggingOutside(false);
-  //     draggedCourierRef.current = null;
-  //     setOpenDeliverySchedule(true);
-  //   },
-  //   [draggedCourierRef],
-  // );
-
-  // const onDropFromOutside = useCallback(
-  //   ({ start }: any) => {
-  //     if (!draggedCourierRef.current) return;
-
-  //     const courier = draggedCourierRef.current;
-  //     const groupId = courier.group_delivery_staff_id;
-
-  //     // Ambil semua member group
-  //     const groupMembers = couriers.filter((c) => c.group_delivery_staff_id === groupId);
-  //     console.log(groupMembers);
-
-  //     setSelectedEvent({
-  //       id: courier.employee_id,
-  //       title: courier.name,
-  //       isGroup: groupMembers.length > 1,
-  //       members: groupMembers,
-  //       start,
-  //       end: dayjs(start).add(1, 'hour').utc().toDate(),
-  //       color: courier.color,
-  //       resource: { internal: true },
-  //     });
-
-  //     console.log(courier);
-
-  //     setIsDraggingOutside(false);
-  //     draggedCourierRef.current = null;
-  //     setOpenDeliverySchedule(true);
-  //   },
-  //   [couriers, draggedCourierRef],
-  // );
   const [dragKey, setDragKey] = useState(0);
 
   const onDropFromOutside = useCallback(
-    ({ start }: any) => {
+    ({ start, end }: any) => {
       if (!draggedCourier) return;
 
+      updateVisitorPeriod(start, end);
       const courier = draggedCourier;
 
       const employeeId = String(courier.employee_id ?? '').trim();
@@ -259,7 +206,7 @@ export default function DnDOutsideCourier({
         isGroup: groupMembers.length > 1,
         members: groupMembers,
         start,
-        end: dayjs(start).add(1, 'hour').utc().toDate(),
+        end,
         colour: courier.colour,
         resource: { internal: true },
       });
@@ -381,7 +328,7 @@ export default function DnDOutsideCourier({
         visitor_period_start: dayjs(rescheduleData.newStart).utc().format(),
       };
 
-      console.log('RESCHEDULE PAYLOAD =>', payload);
+      // console.log('RESCHEDULE PAYLOAD =>', payload);
 
       await updateReschduleInvitation(token as string, payload);
 
@@ -422,7 +369,8 @@ export default function DnDOutsideCourier({
     const now = new Date();
 
     return {
-      id: draggedCourier.id + '_temp',
+      // id: draggedCourier.id + '_temp',
+      id: draggedCourier.id,
       title: draggedCourier.name,
       start: now,
       end: dayjs(now).add(1, 'hour').toDate(),
@@ -430,47 +378,223 @@ export default function DnDOutsideCourier({
       isTemp: true,
     };
   }, [isDraggingOutside, draggedCourier]);
+
   const dragStartRef = useRef<Date | null>(null);
 
-  const getWeekColumnIndex = (mouse: { x: number; y: number }) => {
+  const [dragSlot, setDragSlot] = useState<any>(null);
+  const dragSlotRef = useRef<any>(null);
+  const lastMouseRef = useRef<{ x: number; y: number } | null>(null);
+  const lastRangeRef = useRef<any>(lastRange); // lastRange adalah prop dari parent
+  useEffect(() => {
+    lastRangeRef.current = lastRange;
+  }, [lastRange]);
+
+  const handleSelecting = useCallback((range: any) => {
+    console.log('Selecting highlight:', {
+      start: dayjs(range.start).format('YYYY-MM-DD HH:mm'),
+      end: dayjs(range.end).format('YYYY-MM-DD HH:mm'),
+    });
+
+    setDragSlot(range); // state (async)
+    dragSlotRef.current = range; // ref (sync)
+    return true;
+  }, []);
+
+  useEffect(() => {
+    let frame = 0;
+    const handler = (e: MouseEvent) => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const pos = { x: e.clientX, y: e.clientY };
+        setLastMouse(pos); // untuk UI/debug
+        lastMouseRef.current = pos; // ref for hit-test
+      });
+    };
+
+    window.addEventListener('mousemove', handler);
+    return () => window.removeEventListener('mousemove', handler);
+  }, []);
+
+  const getWeekColumnIndex = (mouse: { x: number; y: number } | null) => {
+    if (!mouse) return -1;
     const el = document.elementFromPoint(mouse.x, mouse.y) as HTMLElement | null;
     if (!el) return -1;
-
     const cols = Array.from(document.querySelectorAll('.rbc-time-column'));
-
     return cols.findIndex((col) => col.contains(el));
   };
 
-  const getDateFromWeekColumn = (colIndex: number, weekStart: Date) => {
-    if (colIndex < 0) return null;
+  const getDateFromWeekColumn = (colIndex: number, weekStart: Date | null) => {
+    if (colIndex < 0 || !weekStart) return null;
     return dayjs(weekStart).add(colIndex, 'day').toDate();
   };
 
-  const handleSelecting = ({ start, end }: any) => {
-    // Ambil hanya sekali saat drag mulai
-    if (!dragStartRef.current) {
-      dragStartRef.current = start;
+  // const handleSelectSlot = useCallback(
+  //   ({ start, end }: any) => {
+  //     console.log('==== HANDLE SELECT SLOT ====');
+  //     console.log('Raw start:', start);
+  //     console.log('Raw end:', end);
+  //     console.log('Start (local):', dayjs(start).format('YYYY-MM-DD HH:mm'));
+  //     console.log('End   (local):', dayjs(end).format('YYYY-MM-DD HH:mm'));
+
+  //     let realStart = start;
+
+  //     // LOGIC slot menit terakhir (untuk geser?)
+  //     if (dayjs(start).hour() === 0 && dayjs(end).hour() !== 0) {
+  //       const slotMinutes = 30;
+  //       realStart = dayjs(end).subtract(slotMinutes, 'minute').toDate();
+
+  //       console.log(
+  //         'Adjusted realStart → karena start jam 00:',
+  //         dayjs(realStart).format('YYYY-MM-DD HH:mm'),
+  //       );
+  //     }
+
+  //     console.log('Final realStart:', dayjs(realStart).format('YYYY-MM-DD HH:mm'));
+  //     console.log('Final end:', dayjs(end).format('YYYY-MM-DD HH:mm'));
+
+  //     if (isSlotDisabled(start) || isSlotDisabled(end)) {
+  //       console.log('⛔ SLOT DISABLED — no action');
+  //       return;
+  //     }
+
+  //     // setelah ini masuk updateVisitorPeriod
+  //     console.log('Calling updateVisitorPeriod:', {
+  //       start: dayjs(start).format(),
+  //       end: dayjs(end).format(),
+  //     });
+
+  //     updateVisitorPeriod(start, end);
+
+  //     setSelectedEvent({
+  //       id: crypto.randomUUID(),
+  //       start: realStart,
+  //       end: end,
+  //       title: '',
+  //       driver_id: null,
+  //       color: '',
+  //       fromSlot: true,
+  //     });
+
+  //     setOpenDeliverySchedule(true);
+  //   },
+  //   [drivers],
+  // );
+
+  const isSlotDisabled = (date: Date) => {
+    if (!timeAccess) {
+      return false;
     }
-    return true; // harus return true
+
+    const day = dayjs(date).day();
+
+    const map: Record<number, { start: string; end: string }> = {
+      0: { start: timeAccess.sunday, end: timeAccess.sunday_end },
+      1: { start: timeAccess.monday, end: timeAccess.monday_end },
+      2: { start: timeAccess.tuesday, end: timeAccess.tuesday_end },
+      3: { start: timeAccess.wednesday, end: timeAccess.wednesday_end },
+      4: { start: timeAccess.thursday, end: timeAccess.thursday_end },
+      5: { start: timeAccess.friday, end: timeAccess.friday_end },
+      6: { start: timeAccess.saturday, end: timeAccess.saturday_end },
+    };
+
+    const access = map[day];
+
+    if (!access || !access.start || !access.end) {
+      return false;
+    }
+
+    // parse jam
+    const [startH, startM] = access.start.split(':').map(Number);
+    const [endH, endM] = access.end.split(':').map(Number);
+
+    if ([startH, startM, endH, endM].some(isNaN)) {
+      return false;
+    }
+
+    const startMinutes = startH * 60 + startM;
+    const endMinutes = endH * 60 + endM;
+
+    const currentMinutes = dayjs(date).hour() * 60 + dayjs(date).minute();
+
+    const disabled = !(currentMinutes >= startMinutes && currentMinutes <= endMinutes);
+
+    return disabled;
   };
 
   const handleSelectSlot = useCallback(
-    ({ start, end }: any) => {
-      let realStart = start;
+    (slotInfo?: any) => {
+      console.log('==== HANDLE SELECT SLOT (ROBUST) ====');
+      console.log('slotInfo param:', slotInfo);
 
-      if (dayjs(start).hour() === 0 && dayjs(end).hour() !== 0) {
-        const slotMinutes = 30;
-        realStart = dayjs(end).subtract(slotMinutes, 'minute').toDate();
+      // prefer slotInfo.start if looks valid
+      let start = slotInfo?.start ?? dragSlotRef.current?.start;
+      let end = slotInfo?.end ?? dragSlotRef.current?.end;
+
+      console.log('initial start/end cand:', {
+        start: start ? dayjs(start).format('YYYY-MM-DD HH:mm') : null,
+        end: end ? dayjs(end).format('YYYY-MM-DD HH:mm') : null,
+      });
+
+      const looksSuspicious =
+        start &&
+        end && // fallback to today check
+        ((dayjs(start).isSame(dayjs(), 'day') && dayjs(end).isSame(dayjs(), 'day')) ||
+          (dayjs(start).hour() === 0 && dayjs(end).hour() === 0));
+
+      if (looksSuspicious) {
+        // try to use latest selecting range (ref) first
+        if (dragSlotRef.current) {
+          start = dragSlotRef.current.start;
+          end = dragSlotRef.current.end;
+          console.log('Using dragSlotRef (from onSelecting):', {
+            start: dayjs(start).format('YYYY-MM-DD HH:mm'),
+            end: dayjs(end).format('YYYY-MM-DD HH:mm'),
+          });
+        } else {
+          // fallback: use hit-test with lastMouseRef and lastRangeRef
+          const mouse = lastMouseRef.current;
+          const colIndex = getWeekColumnIndex(mouse ?? null);
+          const weekStart = lastRangeRef.current?.start ?? null;
+          const colDate = getDateFromWeekColumn(colIndex, weekStart);
+
+          if (colDate) {
+            // derive time part from slotInfo (hours/minutes)
+            const hour = slotInfo?.start ? dayjs(slotInfo.start).hour() : 0;
+            const minute = slotInfo?.start ? dayjs(slotInfo.start).minute() : 0;
+            start = dayjs(colDate).hour(hour).minute(minute).toDate();
+
+            const endHour = slotInfo?.end ? dayjs(slotInfo.end).hour() : hour + 1;
+            const endMinute = slotInfo?.end ? dayjs(slotInfo.end).minute() : minute;
+            end = dayjs(colDate).hour(endHour).minute(endMinute).toDate();
+
+            console.log('Using hit-test computation:', {
+              colIndex,
+              colDate: dayjs(colDate).format('YYYY-MM-DD'),
+              start: dayjs(start).format('YYYY-MM-DD HH:mm'),
+              end: dayjs(end).format('YYYY-MM-DD HH:mm'),
+            });
+          }
+        }
       }
 
-      if (isSlotDisabled(start) || isSlotDisabled(end)) return;
+      if (!start || !end) {
+        console.log('❌ unable to resolve start/end — abort');
+        return;
+      }
 
+      // final check slot disabled
+      if (isSlotDisabled(start) || isSlotDisabled(end)) {
+        console.log('⛔ SLOT DISABLED — no action');
+        return;
+      }
+
+      // update visitor period & selected event
       updateVisitorPeriod(start, end);
 
       setSelectedEvent({
         id: crypto.randomUUID(),
-        start: realStart,
-        end: end,
+        start,
+        end,
         title: '',
         driver_id: null,
         color: '',
@@ -479,8 +603,73 @@ export default function DnDOutsideCourier({
 
       setOpenDeliverySchedule(true);
     },
-    [drivers],
+    [dragSlotRef, lastMouseRef, lastRangeRef],
   );
+
+  // const handleSelectSlot = useCallback(() => {
+  //   console.log('==== HANDLE SELECT SLOT (FIXED) ====');
+
+  //   // Gunakan tanggal dari highlight, bukan dari RBC internal
+  //   const start = dragSlot?.start;
+  //   const end = dragSlot?.end;
+
+  //   if (!start || !end) {
+  //     console.log('❌ dragSlot kosong — abort');
+  //     return;
+  //   }
+
+  //   console.log('Using highlight slot:', {
+  //     start: dayjs(start).format('YYYY-MM-DD HH:mm'),
+  //     end: dayjs(end).format('YYYY-MM-DD HH:mm'),
+  //   });
+
+  //   if (isSlotDisabled(start) || isSlotDisabled(end)) {
+  //     console.log('⛔ SLOT DISABLED — no action');
+  //     return;
+  //   }
+
+  //   updateVisitorPeriod(start, end);
+
+  //   setSelectedEvent({
+  //     id: crypto.randomUUID(),
+  //     start,
+  //     end,
+  //     title: '',
+  //     driver_id: null,
+  //     color: '',
+  //     fromSlot: true,
+  //   });
+
+  //   setOpenDeliverySchedule(true);
+  // }, [dragSlot, isSlotDisabled]);
+
+  // const handleSelectSlot = useCallback(
+  //   ({ start, end }: any) => {
+  //     let realStart = start;
+
+  //     if (dayjs(start).hour() === 0 && dayjs(end).hour() !== 0) {
+  //       const slotMinutes = 30;
+  //       realStart = dayjs(end).subtract(slotMinutes, 'minute').toDate();
+  //     }
+
+  //     if (isSlotDisabled(start) || isSlotDisabled(end)) return;
+
+  //     updateVisitorPeriod(start, end);
+
+  //     setSelectedEvent({
+  //       id: crypto.randomUUID(),
+  //       start: realStart,
+  //       end: end,
+  //       title: '',
+  //       driver_id: null,
+  //       color: '',
+  //       fromSlot: true,
+  //     });
+
+  //     setOpenDeliverySchedule(true);
+  //   },
+  //   [drivers],
+  // );
 
   const [lastMouse, setLastMouse] = useState<{ x: number; y: number } | null>(null);
 
@@ -603,6 +792,7 @@ export default function DnDOutsideCourier({
 
   const [deliveryData, setDeliveryData] = useState<any>(null);
   useEffect(() => {
+    // console.log(localizer);
     const fetchData = async () => {
       try {
         const res = await getSchedulerDeliveryById(token as string, id as string);
@@ -1315,7 +1505,7 @@ export default function DnDOutsideCourier({
                         ampm={false}
                         onChange={(newValue) => {
                           if (newValue) {
-                            const utc = newValue.utc().format(); // hasil: 2025-08-05T10:00:00Z
+                            const utc = newValue.utc().format();
                             onChange('answer_datetime', utc, index);
                           }
                         }}
@@ -2029,15 +2219,48 @@ export default function DnDOutsideCourier({
 
         setEvents((prev) => [...prev, ...groupEvents]);
       } else {
+        // const finalEvent = {
+        //   ...selectedEvent,
+        //   title: payload?.data_visitor?.[0]?.visitor_name ?? selectedEvent.title,
+        //   isGroup: false,
+        //   start: startLocal ?? selectedEvent.start,
+        //   end: endLocal ?? selectedEvent.end,
+        //   colour: getColour(selectedEvent),
+
+        // };
+        // const res = await createPrainvitationDelivery(token as string, payload);
+        // setEvents((prev) => [...prev, finalEvent]);
+        // console.log('event', finalEvent);
+        const visitor = payload?.data_visitor?.[0];
+        if (!visitor) return;
+
+        // Ambil ID employee dari form
+        const employeeField = visitor.question_page
+          .flatMap((p: any) => p.form)
+          .find((f: any) => f.remarks === 'employee');
+
+        const employeeId = employeeField?.answer_text;
+
+        // Cari nama driver
+        const driver = drivers.find((d) => d.id === employeeId);
+        const employeeName = driver?.name ?? 'Visitor';
+
+        // Cari warna courier jika ada
+        const courier = couriers.find((c) => String(c.employee_id) === String(employeeId));
+        const colour = courier?.colour ?? getColour(selectedEvent);
+
         const finalEvent = {
           ...selectedEvent,
+          title: employeeName,
           isGroup: false,
           start: startLocal ?? selectedEvent.start,
           end: endLocal ?? selectedEvent.end,
-          colour: getColour(selectedEvent),
+          colour,
         };
+
         await createPrainvitationDelivery(token as string, payload);
         setEvents((prev) => [...prev, finalEvent]);
+        console.log('event', finalEvent);
       }
 
       reloadCalendar();
@@ -2051,47 +2274,6 @@ export default function DnDOutsideCourier({
     } finally {
       setTimeout(() => setLoading(false), 600);
     }
-  };
-
-  const isSlotDisabled = (date: Date) => {
-    if (!timeAccess) {
-      return false;
-    }
-
-    const day = dayjs(date).day();
-
-    const map: Record<number, { start: string; end: string }> = {
-      0: { start: timeAccess.sunday, end: timeAccess.sunday_end },
-      1: { start: timeAccess.monday, end: timeAccess.monday_end },
-      2: { start: timeAccess.tuesday, end: timeAccess.tuesday_end },
-      3: { start: timeAccess.wednesday, end: timeAccess.wednesday_end },
-      4: { start: timeAccess.thursday, end: timeAccess.thursday_end },
-      5: { start: timeAccess.friday, end: timeAccess.friday_end },
-      6: { start: timeAccess.saturday, end: timeAccess.saturday_end },
-    };
-
-    const access = map[day];
-
-    if (!access || !access.start || !access.end) {
-      return false;
-    }
-
-    // parse jam
-    const [startH, startM] = access.start.split(':').map(Number);
-    const [endH, endM] = access.end.split(':').map(Number);
-
-    if ([startH, startM, endH, endM].some(isNaN)) {
-      return false;
-    }
-
-    const startMinutes = startH * 60 + startM;
-    const endMinutes = endH * 60 + endM;
-
-    const currentMinutes = dayjs(date).hour() * 60 + dayjs(date).minute();
-
-    const disabled = !(currentMinutes >= startMinutes && currentMinutes <= endMinutes);
-
-    return disabled;
   };
 
   const updateVisitorPeriod = (start: Date, end: Date) => {
@@ -2691,18 +2873,21 @@ export default function DnDOutsideCourier({
         events={eventsToRender}
         defaultView={Views.MONTH}
         views={[Views.MONTH, Views.WEEK, Views.DAY, Views.AGENDA]}
-        defaultDate={defaultDate}
+        // date={lastRange?.start || new Date()} // <<< FIX 1
+        // defaultDate={lastRange?.start || new Date()}
+        defaultDate={defaultDate || new Date()}
         onView={(view: any) => {
           setCurrentView(view);
           onViewChange?.(view);
         }}
         onRangeChange={(range, view) => {
-          console.log('RANGE:', range);
-          console.log('VIEW:', view);
+          // console.log('🟦 onRangeChange CALLED — view:', view);
+          // console.log('📦 raw range:', range);
           onRangeChange?.(range, view);
         }}
         resizable={true}
         selectable={true}
+        longPressThreshold={1}
         draggableAccessor={() => true}
         resourceAccessor={(event) => event.resource}
         resizableAccessor={() => true}
@@ -2714,8 +2899,12 @@ export default function DnDOutsideCourier({
         onDragOver={(e) => {
           e.preventDefault();
         }}
-        // onSelecting={handleSelecting}
-        onSelectEvent={(event) => handleOpenExistingEvent(event as any)}
+        onSelecting={(range) => {
+          console.log('📌 RBC raw selecting:', range);
+          return handleSelecting(range);
+        }}
+        // onSelectEvent={(event) => handleOpenExistingEvent(event as any)}
+        onSelectEvent={(event) => handleOpenExistingEvent({ ...event })}
         formats={{
           timeGutterFormat: (date) => moment(date).format('HH:mm'),
           eventTimeRangeFormat: ({ start, end }) =>

@@ -100,11 +100,19 @@ export type GetIntegrationByIdResponse = {
   collection: Item | null;
 };
 
+const numberWithDefault = (def = 0) =>
+  z.preprocess((val) => {
+    if (val === '' || val === null || val === undefined) return def;
+    const num = Number(val);
+    return Number.isNaN(num) ? def : num;
+  }, z.number());
+
 //CREATE
 export const CreateIntegrationRequestSchema = z.object({
   name: z.string().default(''),
   brand_name: z.string().default(''),
-  brand_type: z.number().default(0),
+  // brand_type: z.number().default(0),
+  brand_type: numberWithDefault(0),
   integration_type: z.number().default(0),
   api_type_auth: z.number().default(0),
   api_url: z.string().default(''),

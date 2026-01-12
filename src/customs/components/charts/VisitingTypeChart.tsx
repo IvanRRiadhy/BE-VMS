@@ -82,7 +82,7 @@ const VisitingTypeChart = () => {
                   label: d.label,
                   color: d.color,
                 })),
-                innerRadius: 0, // pie penuh
+                innerRadius: 0, 
                 outerRadius: 120,
               },
             ]}

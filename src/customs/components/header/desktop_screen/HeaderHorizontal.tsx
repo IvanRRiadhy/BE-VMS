@@ -8,10 +8,10 @@ import Profile from 'src/layouts/full/vertical/header/Profile';
 import { AppState } from 'src/store/Store';
 import { styled, useMediaQuery, useTheme } from '@mui/material';
 import Language from 'src/layouts/full/vertical/header/Language';
-import Logo from 'src/assets/images/logos/BI_Logo.png';
+// import Logo from 'src/assets/images/logos/BI_Logo.png';
+import Logo from 'src/assets/images/logos/bio-experience-1x1-logo.png';
 import CustomNavigation from 'src/customs/components/header/navigation/CustomNavigation';
-import itemDataCustomNavListing from 'src/customs/components/header/navigation/CustomNavListing';
-import itemDataCustomSidebarItems from 'src/customs/components/header/navigation/CustomSidebarItems';
+
 const HeaderHorizontal = ({ itemDataCustomNavListing, itemDataCustomSidebarItems }: any) => {
   const lgDown = useMediaQuery((theme: Theme) => theme.breakpoints.down('lg'));
 

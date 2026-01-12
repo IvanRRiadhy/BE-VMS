@@ -47,12 +47,13 @@ import {
   Portal,
   useTheme,
   useMediaQuery,
+  MobileStepper,
 } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import 'select2'; // Select2 secara otomatis akan attach ke jQuery global
 import 'select2/dist/css/select2.min.css';
-import { IconTrash } from '@tabler/icons-react';
+import { IconArrowLeft, IconTrash } from '@tabler/icons-react';
 import PageContainer from 'src/components/container/PageContainer';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import Webcam from 'react-webcam';
@@ -76,6 +77,7 @@ import {
   createPraRegisterGroup,
   createVisitor,
   createVisitors,
+  getAllCustomField,
   getAllCustomFieldPagination,
   getAllEmployee,
   getAllSite,
@@ -112,7 +114,8 @@ import { IconArrowRight } from '@tabler/icons-react';
 // import CameraUpload from 'src/customs/components/camera/CameraUpload';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useQuery } from '@tanstack/react-query';
-
+import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
+import CameraUpload from 'src/customs/components/camera/CameraUpload';
 interface FormVisitorTypeProps {
   formData: CreateVisitorRequest;
   setFormData: React.Dispatch<React.SetStateAction<CreateVisitorRequest>>;
@@ -126,7 +129,7 @@ dayjs.extend(weekday);
 dayjs.extend(localizedFormat);
 dayjs.extend(customParseFormat);
 dayjs.extend(advancedFormat);
-dayjs.locale('id');
+// dayjs.locale('id');
 
 type GroupedPages = {
   single_page: any[];
@@ -141,7 +144,7 @@ interface GroupVisitor {
   is_group?: boolean;
   tz?: string;
   registered_site?: string;
-  data_visitor: any[]; // nanti hasil form visitor per group
+  data_visitor: any[];
 }
 
 const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
@@ -177,10 +180,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
   const [draggableSteps, setDraggableSteps] = useState<string[]>([]);
   const [sectionsData, setSectionsData] = useState<SectionPageVisitorType[]>([]);
   const [dataVisitor, setDataVisitor] = useState<{ question_page: SectionPageVisitor[] }[]>([]);
-  // const [dataVisitor, setDataVisitor] = useState<DataVisitor[]>([]);
-  // const [dataVisitor, setDataVisitor] = useState<
-  //   { id?: string; question_page: SectionPageVisitor[] }[]
-  // >([]);
   const totalSteps = 1 + draggableSteps.length;
   const isLastStep = activeStep === totalSteps - 1;
   const [isSingle, setIsSingle] = useState(false);
@@ -210,29 +209,13 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
 
   const [searchTerm, setSearchTerm] = useState('');
 
-  // const [cards, setCard] = useState<any[]>([]);
-
   const [groupedPages, setGroupedPages] = useState<GroupedPages>({
     single_page: [],
     batch_page: {},
   });
   const TYPE_REGISTERED: 0 | 1 = FORM_KEY === 'pra_form' ? 0 : 1;
 
-  const [previews, setPreviews] = useState<Record<string, string | null>>({}); // blob/CDN preview
-
-  const handleSaveGroupForm = () => {
-    setGroupVisitors((prev) =>
-      prev.map((g, idx) =>
-        idx === activeGroupIdx
-          ? { ...g, data_visitor: structuredClone(dataVisitor) } // simpan hasil form
-          : g,
-      ),
-    );
-
-    // reset
-    setDataVisitor([]);
-    setActiveStep(0);
-  };
+  const [previews, setPreviews] = useState<Record<string, string | null>>({});
 
   const updateSectionForm = (sec: any, updater: (arr: any[]) => any[]) => ({
     ...sec,
@@ -246,7 +229,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
   });
 
   const [accessData, setAccessData] = useState<any[]>([]);
-  const [selfOnlyAccessData, setSelfOnlyAccessData] = useState<Record<string, any[]>>({});
   const [checkedItems, setCheckedItems] = useState<number[]>([]);
   const [availableCards, setAvailableCards] = useState<any[]>([]);
 
@@ -291,6 +273,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
   };
 
   const [grantAccessMap, setGrantAccessMap] = useState<Record<string, any[]>>({});
+
   const allSite = dataVisitor
     .map(
       (v) =>
@@ -299,8 +282,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
           ?.find((f: any) => f.remarks === 'site_place')?.answer_text,
     )
     .filter(Boolean);
-
-  // const isSingle = !isGroup;
 
   const [groupAccessData, setGroupAccessData] = useState<any[]>([]);
 
@@ -315,13 +296,12 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
           ?.flatMap((p: any) => p.form || [])
           ?.find((f: any) => f.remarks === 'name');
 
-        // ambil site_place (optional, kalau mau ditampilkan)
         const siteField = dv?.question_page
           ?.flatMap((p: any) => p.form || [])
           ?.find((f: any) => f.remarks === 'site_place');
 
         return {
-          key: `row${idx + 1}`, // ✅ konsisten dengan overrides
+          key: `row${idx + 1}`,
           idx,
           dv,
           name: nameField?.answer_text || `Visitor ${idx + 1}`,
@@ -371,7 +351,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
               map[v.key] = resSelf.collection ?? [];
             }
           } else {
-            console.log(`⚠️ self_only ${v?.name} tidak punya site_place`);
             if (v?.key !== undefined) {
               map[v.key] = [];
             }
@@ -398,24 +377,18 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         for (const page of visitor.question_page ?? []) {
           const found = page.form?.find((f: any) => f.remarks === 'site_place');
           if (found?.answer_text) {
-            console.log('[getSiteFromForm] ✅ Group mode → site_place:', found.answer_text);
             return found.answer_text;
           }
         }
       }
-      console.log('[getSiteFromForm] ⚠️ Group mode → site_place belum diisi');
       return null;
     } else {
       const purposeVisitPage = sectionsData.find((p: any) => p.name === 'Purpose Visit');
       const siteFieldUI =
         purposeVisitPage?.visit_form?.find((f: any) => f.remarks === 'site_place') ??
-        purposeVisitPage?.form?.find((f: any) => f.remarks === 'site_place'); // 👈 fallback ke form juga
+        purposeVisitPage?.form?.find((f: any) => f.remarks === 'site_place');
 
       if (siteFieldUI?.answer_text) {
-        console.log(
-          '[getSiteFromForm] ✅ Single mode (sectionsData) → site_place:',
-          siteFieldUI.answer_text,
-        );
         return siteFieldUI.answer_text;
       }
 
@@ -423,47 +396,13 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       for (const page of dataVisitor[0]?.question_page ?? []) {
         const found = page.form?.find((f: any) => f.remarks === 'site_place');
         if (found?.answer_text) {
-          console.log(
-            '[getSiteFromForm] ✅ Single mode (dataVisitor) → site_place:',
-            found.answer_text,
-          );
           return found.answer_text;
         }
       }
-
-      console.log('[getSiteFromForm] ⚠️ Single mode → site_place belum diisi');
       return null;
     }
   }
 
-  // useEffect(() => {
-  //   const fetchCards = async () => {
-  //     try {
-  //       const res = await getAvailableCard(token as string, formData.registered_site as string);
-  //       console.log('Available Cards:', res);
-  //       setAvailableCards(res.collection ?? []);
-  //     } catch (error) {
-  //       console.error('Failed to fetch cards:', error);
-  //     }
-  //   };
-
-  //   fetchCards();
-  // }, [token, formData.registered_site]);
-
-  // useEffect(() => {
-  //   const fetchDataCard = async () => {
-  //     try {
-  //       const res = await getAllVisitorCard(token as string);
-  //       setCard(res.collection ?? []);
-  //     } catch (error) {
-  //       console.error('Failed to fetch cards:', error);
-  //     }
-  //   };
-
-  //   fetchDataCard();
-  // }, [token]);
-
-  // filter cards berdasarkan search
   const filteredCards = availableCards.filter((card) =>
     [card.remarks, card.card_number, card.card_mac]
       .join(' ')
@@ -479,7 +418,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     const ids = flat
       .map((v) => (typeof v === 'object' && v !== null ? Number(v.id) : Number(v)))
       .filter((n) => Number.isFinite(n) && n > 0);
-    // dedupe
     return Array.from(new Set(ids));
   };
 
@@ -488,13 +426,13 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     console.log('raw payload (rows):', payload);
     console.groupEnd();
 
-    setSelectedInvitations(payload); // langsung array of row
+    setSelectedInvitations(payload);
   };
 
   // kalau klik choose card (dari DynamicTable)
   const handleOpenChooseCard = () => {
     if (!selectedInvitations?.length) {
-      toast('Please select at least one invitation first.'); // <— tampilkan snackbar
+      toast('Please select at least one invitation first.');
       return;
     }
     setSelectedCards([]);
@@ -507,9 +445,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     setSelectedCards([]);
   };
 
-  // amankan juga kalau ditutup via ESC/backdrop
-
-  // amankan pagination/reopen Grant dialog
   useEffect(() => {
     if (!nextDialogOpen) {
       setSelectedInvitations([]);
@@ -539,72 +474,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     return { data_access };
   }
 
-  // const handleAccessSubmit = async () => {
-  //   if (!selectedInvitations?.length) {
-  //     console.warn('No visitor selected');
-  //     return;
-  //   }
-  //   console.log('👉 selectedInvitations', selectedInvitations);
-
-  //   const payload = buildDataAccess(rows, selectedInvitations, checkedItems.map(String));
-
-  //   // if (!payload.data_access.length) {
-  //   //   console.warn('No access data to submit');
-  //   //   return;
-  //   // }
-
-  //   console.log('📦 Final payload:', payload);
-
-  //   try {
-  //     const res = await createCheckGiveAccess(token as string, payload as any);
-  //     toast('Grant access successful', 'success');
-  //     console.log('✅ Grant access success:', res);
-  //   } catch (err) {
-  //     console.error('❌ Failed grant access:', err);
-  //   } finally {
-  //     setSelectedInvitations([]);
-  //     setSelectedCards([]);
-  //     setCheckedItems([]);
-  //     setNextDialogOpen(false);
-  //     setAccessDialogOpen(false);
-  //     setTimeout(() => {
-  //       onSuccess && onSuccess();
-  //     }, 500);
-  //   }
-  // };
-
-  // const handleAccessSubmit = async () => {
-  //   if (!selectedInvitations?.length) {
-  //     console.warn('No visitor selected');
-  //     return;
-  //   }
-
-  //   // ✅ Gabungkan kedua state
-  //   const allChecked = [...checkedGroupItems, ...checkedSelfItems];
-
-  //   console.log('👉 selectedInvitations', selectedInvitations);
-  //   const payload = buildDataAccess(rows, selectedInvitations, allChecked.map(String));
-  //   console.log('📦 Final payload:', payload);
-
-  //   try {
-  //     const res = await createCheckGiveAccess(token as string, payload as any);
-  //     toast('Grant access successful', 'success');
-  //     console.log('✅ Grant access success:', res);
-  //   } catch (err) {
-  //     console.error('❌ Failed grant access:', err);
-  //   } finally {
-  //     setSelectedInvitations([]);
-  //     setSelectedCards([]);
-  //     setCheckedGroupItems([]);
-  //     setCheckedSelfItems([]);
-  //     setNextDialogOpen(false);
-  //     setAccessDialogOpen(false);
-  //     setTimeout(() => {
-  //       onSuccess && onSuccess();
-  //     }, 500);
-  //   }
-  // };
-
   const handleAccessSubmit = async () => {
     if (!selectedInvitations?.length) {
       console.warn('No visitor selected');
@@ -617,7 +486,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     // 1️⃣ Group Access → apply ke semua selected visitors
     for (const visitorRow of selectedInvitations) {
       const trxVisitorId = visitorRow.trx_visitor_id;
-      const cardNumber = visitorRow.assigned_card_number; // ⬅️ pakai assigned card
+      const cardNumber = visitorRow.assigned_card_number;
       if (!trxVisitorId || !cardNumber) continue;
 
       for (const acId of checkedGroupItems) {
@@ -630,26 +499,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       }
     }
 
-    // 2️⃣ Self Only Access → apply hanya ke row visitor yg punya override
-    // for (const visitorRow of selectedInvitations) {
-    //   if (!hasSelfOnly([visitorRow])) continue; // skip kalau row ini bukan self_only
-
-    //   const trxVisitorId = visitorRow.trx_visitor_id;
-    //   const cardNumber = visitorRow.assigned_card_number;
-    //   if (!trxVisitorId || !cardNumber) continue;
-
-    //   for (const acId of checkedSelfItems) {
-    //     data_access.push({
-    //       access_control_id: acId,
-    //       action: 1,
-    //       card_number: cardNumber,
-    //       trx_visitor_id: trxVisitorId,
-    //     });
-    //   }
-    // }
-
     for (const visitorRow of selectedInvitations) {
-      if (!hasSelfOnly([visitorRow])) continue; // skip kalau row ini bukan self_only
+      if (!hasSelfOnly([visitorRow])) continue;
 
       const trxVisitorId = visitorRow.trx_visitor_id;
       const cardNumber = visitorRow.assigned_card_number;
@@ -693,33 +544,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     }
   };
 
-  // end PV
-
-  // useEffect(() => {
-  //   if (!isGroup || sectionsData.length === 0) return;
-
-  //   const templateQP: SectionPageVisitor[] = sectionsData.map((s, sIdx) => ({
-  //     sort: s.sort ?? sIdx,
-  //     name: s.name,
-  //     status: 0,
-  //     is_document: s.is_document ?? false,
-  //     can_multiple_used: s.can_multiple_used ?? false,
-  //     self_only: s.self_only ?? false,
-  //     foreign_id: s.foreign_id ?? '',
-  //     // Penting: pakai visit_form sebagai "form" untuk payload
-  //     form: formsOf(s).map((f, fIdx) => ({
-  //       ...f,
-  //       sort: f.sort ?? fIdx,
-  //       answer_text: '',
-  //       answer_datetime: '',
-  //       answer_file: '',
-  //     })),
-  //   }));
-
-  //   setDataVisitor([{ question_page: templateQP }]);
-  //   setActiveGroupIdx(0);
-  // }, [isGroup, sectionsData]);
-
   useEffect(() => {
     if (!sectionsData?.length) return;
 
@@ -733,10 +557,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
             answer_datetime: '',
             answer_file: '',
           }));
-          // kalau belum ada, seed dengan 1 lembar
-          // if (!next[secIdx] || next[secIdx].length === 0) {
-          //   next[secIdx] = [template];
-          // }
         }
       });
       return next;
@@ -756,104 +576,12 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       const matchedSection = sectionsData.find((s) => s.name === sectionName);
       return {
         ...matchedSection!,
-        sort: index, // update nilai sort berdasarkan urutan baru
+        sort: index,
       };
     });
 
     setSectionsData(reorderedSections);
   };
-
-  //   useEffect(() => {
-  //     const fetchVisitorTypeDetails = async () => {
-  //       if (!formData.visitor_type || !token) return;
-
-  //       setVtLoading(true); // mulai skeleton
-  //       const minLoadingTime = 500; // ms, minimal loading terlihat
-  //       const startTime = Date.now();
-
-  //       try {
-  //         const res = await getVisitorTypeById(token, formData.visitor_type);
-  //         const selectedType = res?.collection;
-
-  //         if (selectedType && selectedType.section_page_visitor_types) {
-  //           const sections = selectedType.section_page_visitor_types;
-  //           setDraggableSteps(sections.map((s: any) => s.name));
-  //           setSectionsData(sections);
-  //         } else {
-  //           setDraggableSteps([]);
-  //           setSectionsData([]);
-  //         }
-  //       } catch (error) {
-  //         console.error('Failed to fetch visitor type details', error);
-  //         setDraggableSteps([]);
-  //         setSectionsData([]);
-  //       } finally {
-  //         const elapsed = Date.now() - startTime;
-  //         const remaining = Math.max(minLoadingTime - elapsed, 0);
-  //         setTimeout(() => setVtLoading(false), remaining);
-  //       }
-  //     };
-
-  //     fetchVisitorTypeDetails();
-  //   }, [formData.visitor_type, token]);
-
-  // const handleSaveGroupVisitor = () => {
-  //   if (activeGroupIdx === null) return;
-
-  //   setGroupVisitors((prev) => {
-  //     const next = [...prev];
-  //     next[activeGroupIdx] = {
-  //       ...next[activeGroupIdx],
-  //       data_visitor: structuredClone(dataVisitor), // simpan form hasil pengisian
-  //     };
-  //     return next;
-  //   });
-
-  //   // reset temporary data
-  //   setActiveGroupIdx(0);
-  //   setDataVisitor([]);
-  //   setActiveStep(0);
-  // };
-
-  // const handleSaveGroupVisitor = () => {
-  //   if (activeGroupIdx === null) return;
-
-  //   setGroupVisitors((prev) => {
-  //     const next = [...prev];
-
-  //     // 🔧 Bersihkan id di level form, tapi pertahankan id di level question_page
-  //     const cleanDataVisitor = structuredClone(dataVisitor).map((dv) => ({
-  //       ...dv,
-  //       question_page: dv.question_page.map((qp) => ({
-  //         // id pada section tetap ada dan ditampilkan
-  //         id: qp.id || crypto.randomUUID(), // jaga section ID tetap ada
-  //         sort: qp.sort ?? 0,
-  //         name: qp.name ?? '',
-  //         // status: qp.s ?? 0,
-  //         is_document: qp.is_document ?? false,
-  //         can_multiple_used: qp.can_multiple_used ?? false,
-  //         foreign_id: qp.foreign_id ?? '',
-  //         self_only: qp.self_only ?? false,
-
-  //         // 🔹 tapi semua form di dalamnya id-nya dihapus
-  //         form: (qp.form || []).map(({ id, ...rest }) => rest),
-  //       })),
-  //     }));
-
-  //     next[activeGroupIdx] = {
-  //       ...next[activeGroupIdx],
-  //       data_visitor: cleanDataVisitor,
-  //     };
-
-  //     console.log(
-  //       `💾 Saved group ${next[activeGroupIdx].group_name || '(no name)'}`,
-  //       cleanDataVisitor,
-  //     );
-
-  //     return next;
-  //   });
-  // };
-
   const handleSaveGroupVisitor = () => {
     if (activeGroupIdx === null) return;
     console.log('💾 Saving existing group:', activeGroupIdx);
@@ -946,7 +674,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         <Box>
           <Grid container spacing={2}>
             <Grid sx={{ mt: 0 }} size={{ xs: 12, sm: 12 }}>
-              {/* <Alert severity="info">Complete the following data properly and correctly</Alert> */}
               <Divider />
             </Grid>
 
@@ -963,8 +690,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                   value={formData.visitor_type}
                   onChange={(e) => {
                     const newType = e.target.value;
-
-                    // 💡 Reset data tanpa ubah mode (isGroup tetap!)
                     setFormData((prev: any) => ({
                       ...prev,
                       visitor_type: newType,
@@ -1024,7 +749,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                           </Grid>
                         ))}
                   </Grid>
-                  {/* </Fade> */}
                 </RadioGroup>
               </FormControl>
             </Grid>
@@ -1035,7 +759,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
               >
                 Select Status Visitor
               </CustomFormLabel>
-              {/* {formData.visitor_type && ( */}
               <Box display="flex" alignItems="center" gap={2}>
                 <FormControlLabel
                   control={
@@ -1047,7 +770,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                         setIsGroup(false);
                         setFormData((prev: any) => ({
                           ...prev,
-                          is_group: false, // ubah nilainya jadi false
+                          is_group: false,
                         }));
                       }}
                     />
@@ -1065,7 +788,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                         setIsGroup(true);
                         setFormData((prev: any) => ({
                           ...prev,
-                          is_group: true, // ubah nilainya jadi true
+                          is_group: true,
                         }));
                       }}
                     />
@@ -1128,32 +851,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                 InputProps={{ readOnly: true }}
                               />
                             </TableCell>
-                            {/* <TableCell>
-                              <Button
-                                variant="outlined"
-                                color="primary"
-                                size="small"
-                                endIcon={<IconArrowRight size={20} />}
-                                onClick={() => {
-                                  // Simpan index group aktif
-                                  setActiveGroupIdx(index);
-
-                                  // Jika group sudah punya data_visitor sebelumnya → load ke form
-                                  if (g.data_visitor && g.data_visitor.length > 0) {
-                                    setDataVisitor(structuredClone(g.data_visitor));
-                                  } else {
-                                    // kalau belum pernah isi, buat dari sectionsData
-                                    const fresh = seedDataVisitorFromSections(sectionsData);
-                                    setDataVisitor(fresh);
-                                  }
-
-                                  // Pindah ke form step
-                                  setActiveStep(1);
-                                }}
-                              >
-                                Visitor Form
-                              </Button>
-                            </TableCell> */}
                             <TableCell>
                               <Button
                                 variant="outlined"
@@ -1161,10 +858,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                 size="small"
                                 endIcon={<IconArrowRight size={20} />}
                                 onClick={() => {
-                                  // Simpan index group aktif
                                   setActiveGroupIdx(index);
-
-                                  // Helper deep clone universal
                                   const deepClone = (obj: any) => {
                                     try {
                                       return structuredClone(obj);
@@ -1172,8 +866,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                       return JSON.parse(JSON.stringify(obj));
                                     }
                                   };
-
-                                  // Jika group sudah punya data_visitor sebelumnya → load ke form
                                   if (g.data_visitor && g.data_visitor.length > 0) {
                                     const cloned = deepClone(g.data_visitor);
                                     setDataVisitor(cloned);
@@ -1194,8 +886,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                       fresh,
                                     );
                                   }
-
-                                  // Pindah ke form step
                                   setActiveStep(1);
                                 }}
                               >
@@ -1234,45 +924,13 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                   </TableContainer>
                 </Box>
               )}
-              {/* )} */}
             </Grid>
           </Grid>
         </Box>
       );
     }
-    const currentSection = sectionsData[step - 1]; // dikurangi 1 karena step 0 khusus
+    const currentSection = sectionsData[step - 1];
     if (!currentSection) return null;
-
-    const handleDeleteDetail = (sectionKey: SectionKey, indexToRemove: number) => {
-      setSectionsData((prev) =>
-        prev.map((section, index) => {
-          if (index === activeStep - 1) {
-            const originalFields = section[sectionKey];
-            if (!Array.isArray(originalFields)) return section;
-
-            const updatedFields = originalFields.filter((_, idx) => idx !== indexToRemove);
-
-            return {
-              ...section,
-              [sectionKey]: updatedFields,
-            };
-          }
-          return section;
-        }),
-      );
-    };
-
-    // split access berdasarkan apakah datang dari section self_only
-    const groupSections = sectionsData.filter((s) => !s.self_only);
-    const selfOnlySections = sectionsData.filter((s) => s.self_only);
-
-    // lalu masing-masing bisa dipetakan ke accessData
-    const groupAccess = accessData.filter((a) =>
-      groupSections.some((s) => s.foreign_id === a.section_id),
-    );
-    const selfAccess = accessData.filter((a) =>
-      selfOnlySections.some((s) => s.foreign_id === a.section_id),
-    );
 
     const handleDetailChange = (
       sectionKey: SectionKey,
@@ -1319,7 +977,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                     <VisitorSelect
                       token={token as string}
                       onSelect={(v) => {
-                        // 🔹 Sekarang langsung gunakan v (tidak ada v.visitor)
                         let genderValue: string | undefined;
 
                         if (v.gender === 'Male') genderValue = '1';
@@ -1495,7 +1152,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                   <Grid>
                     <Box>
                       <TableContainer component={Paper} sx={{ mb: 1 }}>
-                        {/* ========== 📱 MOBILE MODE (Accordion) ========== */}
                         {isMobile ? (
                           <>
                             {dataVisitor.length > 0 ? (
@@ -1595,7 +1251,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                             </MuiButton>
                           </>
                         ) : (
-                          /* ========== 💻 DESKTOP MODE (Table) ========== */
                           <Table
                             size="small"
                             sx={{
@@ -1741,8 +1396,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                       {renderDetailRows(mergedVisitForm, (idx, fieldKey, value) => {
                         setGroupedPages((prev) => {
                           const next = { ...prev, single_page: [...prev.single_page] };
-
-                          // 🔄 gunakan mergedVisitForm bukan formsOf(section)
                           const base = formsOf(section)[idx];
                           const found = next.single_page.findIndex((sf) => sameField(sf, base));
 
@@ -1796,8 +1449,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
             is_enable: false,
             is_primary: true,
             field_type: 0,
-            remarks: '', // akan diisi setelah short_name dipilih
-            custom_field_id: '', // akan diisi setelah short_name dipilih
+            remarks: '',
+            custom_field_id: '',
             multiple_option_fields: [],
             mandatory: false,
             answer_datetime: '',
@@ -1953,7 +1606,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
           return (
             <Autocomplete
               size="small"
-              freeSolo // ✅ Biar tetap bisa diketik dari awal
+              freeSolo
               options={options}
               getOptionLabel={(option) => (typeof option === 'string' ? option : option.name)}
               inputValue={inputVal}
@@ -2073,7 +1726,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
             );
           }
 
-          // fallback default (checkbox tunggal)
           return (
             <FormControlLabel
               control={
@@ -2133,8 +1785,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
           );
 
         case 11: {
-          // File upload (PDF / NDA)
-          // const inputId = `pdf-${opts?.uniqueKey ?? index}`;
           const key = opts?.uniqueKey ?? String(index);
           const fileUrl = (field as any).answer_file as string | undefined;
           return (
@@ -2200,177 +1850,12 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
           );
         }
 
-        // case 12: {
-        //   const key = opts?.uniqueKey ?? String(index);
-        //   return (
-        //     <Box
-        //       display={'flex'}
-        //       alignItems={''}
-        //       justifyContent={'space-between'}
-        //       gap={1}
-        //       width={'380px'}
-        //     >
-        //       <TextField
-        //         select
-        //         size="small"
-        //         value={uploadMethods[key] || 'file'}
-        //         onChange={(e) => handleUploadMethodChange(key, e.target.value)}
-        //         fullWidth
-        //         sx={{ width: '200px' }}
-        //       >
-        //         <MenuItem value="file">Choose File</MenuItem>
-        //         <MenuItem value="camera">Take Photo</MenuItem>
-        //       </TextField>
-
-        //       {(uploadMethods[key] || 'file') === 'camera' ? (
-        //         <CameraUpload
-        //           value={field.answer_file}
-        //           onChange={(url) => onChange(index, 'answer_file', url)}
-        //         />
-        //       ) : (
-        //         // <Box>
-        //         //   <label htmlFor={key}>
-        //         //     <Box
-        //         //       sx={{
-        //         //         border: '2px dashed #90caf9',
-        //         //         display: 'flex',
-        //         //         alignItems: 'center',
-        //         //         // minHeight: 60,
-        //         //         justifyContent: 'center',
-        //         //         gap: 2,
-        //         //         borderRadius: 2,
-        //         //         p: 0.5,
-        //         //         textAlign: 'center',
-        //         //         backgroundColor: '#f5faff',
-        //         //         cursor: 'pointer',
-        //         //         width: '100%',
-        //         //       }}
-        //         //     >
-        //         //       <CloudUploadIcon sx={{ fontSize: 20, color: '#42a5f5' }} />
-        //         //       <Typography variant="subtitle1">Upload File</Typography>
-        //         //     </Box>
-        //         //   </label>
-
-        //         //   <input
-        //         //     id={key}
-        //         //     type="file"
-        //         //     accept="*"
-        //         //     hidden
-        //         //     onChange={(e) =>
-        //         //       handleFileChangeForField(
-        //         //         e as React.ChangeEvent<HTMLInputElement>,
-        //         //         (url) => onChange(index, 'answer_file', url),
-        //         //         key,
-        //         //       )
-        //         //     }
-        //         //   />
-
-        //         //   {/* INFO + REMOVE */}
-        //         //   {!!(field as any).answer_file && (
-        //         //     <Box sx={{ paddingTop: '5px' }} display="flex" alignItems="center" gap={1}>
-        //         //       <Typography variant="caption" color="text.secondary" noWrap>
-        //         //         {uploadNames[key] ?? ''}
-        //         //       </Typography>
-
-        //         //       <IconButton
-        //         //         size="small"
-        //         //         color="error"
-        //         //         disabled={!!removing[key]}
-        //         //         onClick={() =>
-        //         //           handleRemoveFileForField(
-        //         //             (field as any).answer_file,
-        //         //             (url) => onChange(index, 'answer_file', url),
-        //         //             key,
-        //         //           )
-        //         //         }
-        //         //       >
-        //         //         <IconX size={16} />
-        //         //       </IconButton>
-        //         //     </Box>
-        //         //   )}
-        //         // </Box>
-        //         <Box sx={{ width: '200px' }}>
-        //           <label htmlFor={key}>
-        //             <Box
-        //               sx={{
-        //                 border: '2px dashed #90caf9',
-        //                 display: 'flex',
-        //                 alignItems: 'center',
-        //                 justifyContent: 'center',
-        //                 gap: 2,
-        //                 borderRadius: 2,
-        //                 p: 0.5,
-        //                 textAlign: 'center',
-        //                 backgroundColor: '#f5faff',
-        //                 cursor: 'pointer',
-        //                 width: '100%',
-        //               }}
-        //             >
-        //               <CloudUploadIcon sx={{ fontSize: 20, color: '#42a5f5' }} />
-        //               <Typography variant="subtitle1">Upload File</Typography>
-        //             </Box>
-        //           </label>
-
-        //           <input
-        //             id={key}
-        //             type="file"
-        //             accept="*"
-        //             hidden
-        //             onChange={(e) =>
-        //               handleFileChangeForField(
-        //                 e as React.ChangeEvent<HTMLInputElement>,
-        //                 (url) => onChange(index, 'answer_file', url),
-        //                 key,
-        //               )
-        //             }
-        //           />
-
-        //           {/* INFO + REMOVE */}
-        //           {!!(field as any).answer_file && (
-        //             <Box
-        //               mt={0.5}
-        //               display="flex"
-        //               alignItems="center"
-        //               justifyContent="space-between"
-        //               sx={{ overflow: 'hidden' }}
-        //             >
-        //               <Typography
-        //                 variant="caption"
-        //                 color="text.secondary"
-        //                 noWrap
-        //                 sx={{ flex: 1, minWidth: 0 }}
-        //               >
-        //                 {uploadNames[key] ?? ''}
-        //               </Typography>
-
-        //               <IconButton
-        //                 size="small"
-        //                 color="error"
-        //                 disabled={!!removing[key]}
-        //                 onClick={() =>
-        //                   handleRemoveFileForField(
-        //                     (field as any).answer_file,
-        //                     (url) => onChange(index, 'answer_file', url),
-        //                     key,
-        //                   )
-        //                 }
-        //               >
-        //                 <IconX size={16} />
-        //               </IconButton>
-        //             </Box>
-        //           )}
-        //         </Box>
-        //       )}
-        //     </Box>
-        //   );
-        // }
-
         case 12: {
           const key = opts?.uniqueKey ?? String(index);
           return (
             <Box
               display="flex"
-              flexDirection={{ xs: 'column', sm: 'column', md: 'row' }} // ⬅️ stack on mobile
+              flexDirection={{ xs: 'column', sm: 'column', md: 'row' }}
               alignItems={{ xs: 'stretch', md: 'center' }}
               justifyContent="space-between"
               gap={1.5}
@@ -2509,13 +1994,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
   const [inputValues, setInputValues] = useState<{ [key: number]: string }>({});
   const webcamRef = useRef<Webcam>(null);
 
-  const clearFileForField = (setAnswerFile: (url: string) => void) => {
-    setScreenshot(null);
-    setPreviewUrl(null);
-    setOpenCamera(false);
-    setAnswerFile(''); // kosongkan answer_file di field aktif
-  };
-
   const uploadFileToCDN = async (file: File | Blob): Promise<string | null> => {
     const formData = new FormData();
 
@@ -2526,7 +2004,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
 
     try {
       const response = await axiosInstance2.post('/cdn/upload', formData, {
-        // const response = await axios.post('http://localhost:8000/cdn/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -2575,8 +2052,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         ),
       ),
     );
-
-    // (opsional) sinkronisasi tambahan kamu tetap bisa lanjut di bawah ini
     setGroupedPages((prev) => {
       const pvSection = sectionsData.find(isPurposeVisit);
       if (!pvSection) return prev;
@@ -2596,9 +2071,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     return r.startsWith('/cdn/') ? `${BASE_URL}${r}` : `${BASE_URL}/cdn${r}`;
   };
 
-  // tentukan preview yg ditampilkan:
-  // 1) kalau ada previews[key] (ObjectURL hasil pilih file / kamera) -> pakai itu
-  // 2) else, kalau answer_file punya ekstensi image -> pakai cdn url
   const getPreviewSrc = (key: string, answerFile?: string) => {
     if (previews[key]) return previews[key];
     if (!answerFile) return null;
@@ -2612,7 +2084,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     return isImg ? makeCdnUrl(answerFile) : null;
   };
 
-  // —— optional: helper untuk tampilkan nama file dari answer_file (fallback)
   const fileNameFromAnswer = (answerFile?: string) => {
     if (!answerFile) return '';
     try {
@@ -2670,7 +2141,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     }
   };
 
-  // === (opsional) kamera: simpan preview & nama file default ===
   const handleCaptureForField = async (setAnswerFile: (url: string) => void, trackKey?: string) => {
     if (!webcamRef.current) return;
     const imageSrc = webcamRef.current.getScreenshot();
@@ -2688,6 +2158,39 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
   };
 
   const [startTime, setStartTime] = useState<Dayjs | null>(dayjs());
+  const [siteTree, setSiteTree] = useState<any[]>([]);
+
+  const buildSiteTree = (
+    sites: any[],
+    parentId: string | null,
+  ): {
+    id: string;
+    name: string;
+    children?: {
+      id: string;
+      name: string;
+      children?: { id: string; name: string; children?: any[] }[];
+    }[];
+  }[] => {
+    // function body
+    return sites
+      .filter((s) => {
+        const siteParent = s.parent ? s.parent.toLowerCase() : null;
+        const target = parentId ? parentId.toLowerCase() : null;
+        return siteParent === target;
+      })
+      .map((s) => ({
+        id: s.id,
+        name: s.name,
+        children: buildSiteTree(sites, s.id),
+      }));
+  };
+
+  const renderTree = (node: any) => (
+    <TreeItem key={node.id} itemId={String(node.id)} label={node.name}>
+      {node.children?.map((child: any) => renderTree(child))}
+    </TreeItem>
+  );
   const renderDetailRows = (
     details: FormVisitor[] | any,
     onChange: (index: number, field: keyof FormVisitor, value: any) => void,
@@ -2720,17 +2223,41 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
             {/* Render sesuai field_type */}
             {(() => {
               switch (item.field_type) {
-                // case 0: // Text
-                //   return (
-                //     <TextField
-                //       size="small"
-                //       value={item.answer_text}
-                //       onChange={(e) => onChange(index, 'answer_text', e.target.value)}
-                //       placeholder="Enter text"
-                //       fullWidth
-                //     />
-                //   );
                 case 0: // Text
+                  if (item.remarks === 'agenda') {
+                    return (
+                      <Autocomplete
+                        size="small"
+                        freeSolo
+                        options={[
+                          'Meeting',
+                          'Presentation',
+                          'Visit',
+                          'Training',
+                          'Report',
+                          // 'Others',
+                        ]}
+                        value={item.answer_text || ''}
+                        onChange={(e, newValue) => {
+                          if (newValue === 'Others') {
+                            onChange(index, 'answer_text', '');
+                          } else {
+                            onChange(index, 'answer_text', newValue || '');
+                          }
+                        }}
+                        onInputChange={(e, newInputValue) => {
+                          onChange(index, 'answer_text', newInputValue);
+                        }}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            placeholder="Choose or write manually agenda"
+                            fullWidth
+                          />
+                        )}
+                      />
+                    );
+                  }
                   return (
                     <TextField
                       size="small"
@@ -2773,7 +2300,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                     />
                   );
                 case 3: {
-                  let options: { value: string; name: string }[] = [];
+                  let options: { value: string; name: string; disabled?: boolean | undefined }[] =
+                    [];
 
                   if (item.remarks === 'host') {
                     options = employee.map((emp: any) => ({
@@ -2786,12 +2314,11 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                       name: emp.name,
                     }));
                   } else if (item.remarks === 'site_place') {
-                    options = sites
-                      .filter((site: any) => site.can_visited === true)
-                      .map((site: any) => ({
-                        value: site.id,
-                        name: site.name,
-                      }));
+                    options = sites.map((site: any) => ({
+                      value: site.id,
+                      name: site.name,
+                      disabled: site.can_visited === false,
+                    }));
                   } else {
                     options = (item.multiple_option_fields || []).map((opt: any) =>
                       typeof opt === 'object' ? opt : { value: opt, name: opt },
@@ -2799,38 +2326,53 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                   }
 
                   return (
-                    <Autocomplete
-                      size="small"
-                      options={options}
-                      getOptionLabel={(option) => option.name}
-                      inputValue={inputValues[index] || ''}
-                      onInputChange={(_, newInputValue) =>
-                        setInputValues((prev) => ({ ...prev, [index]: newInputValue }))
-                      }
-                      filterOptions={(opts, state) => {
-                        if (state.inputValue.length < 3) return [];
-                        return opts.filter((opt) =>
-                          opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
-                        );
-                      }}
-                      noOptionsText={
-                        (inputValues[index] || '').length < 3
-                          ? 'Ketik minimal 3 karakter untuk mencari'
-                          : 'Not found'
-                      }
-                      value={options.find((opt) => opt.value === item.answer_text) || null}
-                      onChange={(_, newValue) =>
-                        onChange(index, 'answer_text', newValue ? newValue.value : '')
-                      }
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          label=""
-                          placeholder="Ketik minimal 3 karakter"
-                          fullWidth
-                        />
+                    <>
+                      <Autocomplete
+                        size="small"
+                        options={options}
+                        getOptionLabel={(option) => option.name}
+                        getOptionDisabled={(option) => option.disabled || false}
+                        inputValue={inputValues[index] || ''}
+                        onInputChange={(_, newInputValue) =>
+                          setInputValues((prev) => ({ ...prev, [index]: newInputValue }))
+                        }
+                        filterOptions={(opts, state) => {
+                          if (state.inputValue.length < 3) return [];
+                          return opts.filter((opt) =>
+                            opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
+                          );
+                        }}
+                        noOptionsText={
+                          (inputValues[index] || '').length < 3
+                            ? 'Enter at least 3 characters to search'
+                            : 'Not found'
+                        }
+                        value={options.find((opt) => opt.value === item.answer_text) || null}
+                        onChange={(_, newValue) => {
+                          const selectedValue = newValue ? newValue.value : '';
+                          onChange(index, 'answer_text', selectedValue);
+                          if (item.remarks === 'site_place') {
+                            if (!newValue) {
+                              setSiteTree([]);
+                              return;
+                            }
+                            const tree = buildSiteTree(sites, selectedValue);
+                            setSiteTree(tree);
+                          }
+                        }}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label=""
+                            placeholder="Enter at least 3 characters to search"
+                            fullWidth
+                          />
+                        )}
+                      />
+                      {item.remarks === 'site_place' && siteTree.length > 0 && (
+                        <SimpleTreeView>{siteTree.map((node) => renderTree(node))}</SimpleTreeView>
                       )}
-                    />
+                    </>
                   );
                 }
                 case 4: // Datepicker
@@ -2840,7 +2382,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                         value={startTime}
                         ampm={false}
                         onChange={setStartTime}
-                        format="ddd, DD - MMM - YYYY, HH:mm"
+                        format="dddd, DD  MMMMM  YYYY, HH:mm"
                         viewRenderers={{
                           hours: renderTimeViewClock,
                           minutes: renderTimeViewClock,
@@ -2854,48 +2396,27 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                       />
                     </LocalizationProvider>
                   );
-                // case 5: // Radio
-                //   return (
-                //     <FormControl component="fieldset">
-                //       <RadioGroup
-                //         value={item.answer_text}
-                //         onChange={(e) => onChange(index, 'answer_text', e.target.value)}
-                //         sx={{
-                //           flexDirection: 'row', // tampil horizontal
-                //           flexWrap: 'wrap', // bisa pindah baris
-                //           gap: 1, // beri jarak antar item (opsional)
-                //         }}
-                //       >
-                //         {(item.multiple_option_fields || [])
-                //           .sort((a: any, b: any) => {
-                //             // pakai nilai value untuk urutan: 0 -> 1 -> 2
-                //             return Number(a.value) - Number(b.value);
-                //           })
-                //           .map((opt: any, idx: number) => (
-                //             <FormControlLabel
-                //               key={idx}
-                //               value={opt.value}
-                //               control={<Radio />}
-                //               label={opt.name}
-                //             />
-                //           ))}
-                //       </RadioGroup>
-                //     </FormControl>
-                //   );
                 case 5: // Radio
                   return (
                     <FormControl component="fieldset">
                       <RadioGroup
-                        value={String(item.answer_text)} // ✅ pastikan string
+                        value={String(item.answer_text)}
                         onChange={(e) => onChange(index, 'answer_text', e.target.value)}
                         sx={{ flexDirection: 'row', flexWrap: 'wrap', gap: 1 }}
                       >
                         {(item.multiple_option_fields || [])
-                          .sort((a: any, b: any) => Number(a.value) - Number(b.value))
+                          // .sort((a: any, b: any) => Number(a.value) - Number(b.value))
+                          .sort((a: any, b: any) => {
+                            if (item.remarks === 'is_driving') {
+                              const order: Record<string, number> = { true: 0, false: 1 };
+                              return order[a.value] - order[b.value];
+                            }
+                            return 0;
+                          })
                           .map((opt: any, idx: number) => (
                             <FormControlLabel
                               key={idx}
-                              value={String(opt.value)} // ✅ samain jadi string
+                              value={String(opt.value)}
                               control={<Radio />}
                               label={opt.name}
                             />
@@ -2903,33 +2424,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                       </RadioGroup>
                     </FormControl>
                   );
-
-                // case 6: // Checkbox
-                //   return (
-                //     <FormGroup>
-                //       {(item.multiple_option_fields || []).map((opt: any, idx: number) => (
-                //         <FormControlLabel
-                //           key={idx}
-                //           control={
-                //             <Checkbox
-                //               checked={item.answer_text?.includes(
-                //                 typeof opt === 'object' ? opt.value : opt,
-                //               )}
-                //               onChange={(e) => {
-                //                 const val = typeof opt === 'object' ? opt.value : opt;
-                //                 const newValue = e.target.checked
-                //                   ? [...(item.answer_text || []), val]
-                //                   : (item.answer_text || []).filter((v: string) => v !== val);
-                //                 onChange(index, 'answer_text', newValue);
-                //               }}
-                //             />
-                //           }
-                //           label={typeof opt === 'object' ? opt.name : opt}
-                //         />
-                //       ))}
-                //     </FormGroup>
-                //   );
-
                 case 6: // Checkbox
                   return (
                     <FormGroup>
@@ -3000,7 +2494,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                     </LocalizationProvider>
                   );
 
-                case 10: // TakePicture (Assuming image capture from device camera)
+                case 10: // TakePicture
                   return (
                     <Box>
                       <Box
@@ -3320,7 +2814,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                         </Typography>
 
                         <Typography variant="caption" color="textSecondary">
-                          Supports: PDF, DOCX, JPG, PNG, up to <span style={{ fontWeight: 'semibold' }}> 100KB</span>
+                          Supports: PDF, DOCX, JPG, PNG, up to{' '}
+                          <span style={{ fontWeight: 'semibold' }}> 100KB</span>
                         </Typography>
 
                         <Typography
@@ -3511,21 +3006,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
 
   const DEFAULT_VFT = FORM_KEY === 'pra_form' ? 0 : 1;
 
-  // const mapFieldOut = (tpl: any, sortIdx: number, src?: any) => ({
-  //   remarks: tpl.remarks ?? '',
-  //   visitor_form_type: tpl.visitor_form_type ?? DEFAULT_VFT,
-  //   field_type: tpl.field_type ?? 0,
-  //   sort: tpl.sort ?? sortIdx,
-  //   short_name: tpl.short_name ?? '',
-  //   long_display_text: tpl.long_display_text ?? '',
-  //   custom_field_id: tpl.custom_field_id ?? null,
-  //   // properti ekstra yang diminta contoh lama:
-  //   form_visitor_type_id: '',
-
-  //   ...pickAns(src ?? {}),
-
-  // });
-
   const mapFieldOut = (tpl: any, sortIdx: number, src?: any) => {
     const out: any = {
       remarks: tpl.remarks ?? '',
@@ -3569,15 +3049,11 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     return { byRemarks, byCF };
   };
 
-  // kumpulkan semua form (apapun section-nya) dari satu row dataVisitor
   const flattenRowForms = (row: any) =>
     (row?.question_page ?? []).flatMap((p: any) => (Array.isArray(p.form) ? p.form : []));
 
-  // kalau rows kosong, fallback nilai row dari groupedPages.batch_page (satu baris)
   const fakeRowFromBatchPage = (batch_page: Record<string, any>) => ({
-    question_page: [
-      { form: Object.values(batch_page || {}) }, // cukup biar flattenRowForms dapat sumber nilai
-    ],
+    question_page: [{ form: Object.values(batch_page || {}) }],
   });
 
   function buildFinalPayload(
@@ -3589,9 +3065,9 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       is_group: boolean;
       type_registered: number;
       tz: string;
-      registered_site?: string; // <-- jadikan optional
-      group_code?: string; // <-- jadikan optional
-      group_name?: string; // <-- jadikan optional
+      registered_site?: string;
+      group_code?: string;
+      group_name?: string;
     },
     selfOnlyOverrides: Record<string, any[]> = {}, // 👈 inject dari state
   ) {
@@ -3648,7 +3124,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
           name: section.name ?? `Page ${sIdx + 1}`,
           is_document: !!section.is_document,
           can_multiple_used: !!section.can_multiple_used,
-          // penting: tulis kembali flag per-row, bukan dari template
+
           self_only: !!rowSelfOnly,
           foreign_id: asStr(section.foreign_id),
           form,
@@ -3678,235 +3154,38 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     return basePayload;
   }
 
-  // v1
-  // const handleOnSubmits = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   setErrors({});
-  //   if (!token) return;
-
-  //   try {
-  //     setLoading(true);
-  //     // --- builder field tetap sama ---
-  //     const mapField = (field: FormVisitor, sortIdx: number) => {
-  //       const base: any = {
-  //         sort: field.sort ?? sortIdx,
-  //         short_name: field.short_name ?? '',
-  //         long_display_text: field.long_display_text ?? '',
-  //         field_type: field.field_type ?? 0,
-  //         is_primary: field.is_primary ?? false,
-  //         is_enable: field.is_enable ?? false,
-  //         mandatory: field.mandatory ?? false,
-  //         remarks: field.remarks ?? '',
-  //         custom_field_id: field.custom_field_id ?? '',
-  //         multiple_option_fields: field.multiple_option_fields ?? [],
-  //         visitor_form_type: field.visitor_form_type ?? DEFAULT_VFT,
-  //       };
-  //       if (base.field_type === 9) {
-  //         // 🟢 Format ke UTC ISO string
-  //         if (typeof field.answer_datetime === 'string' && field.answer_datetime.trim()) {
-  //           base.answer_datetime = dayjs(field.answer_datetime).utc().toISOString();
-  //         }
-  //       } else if ([10, 11, 12].includes(base.field_type)) {
-  //         if (typeof field.answer_file === 'string' && field.answer_file.trim()) {
-  //           base.answer_file = field.answer_file;
-  //         }
-  //       } else {
-  //         if (typeof field.answer_text === 'string' && field.answer_text.trim()) {
-  //           base.answer_text = field.answer_text;
-  //         }
-  //       }
-  //       return base;
-  //     };
-
-  //     // --- build payload (single / group) ---
-  //     let payload: CreateVisitorRequest | CreateGroupVisitorRequest | null = null;
-
-  //     const tz = moment.tz.guess();
-
-  //     const baseMeta = {
-  //       visitor_type: formData.visitor_type ?? '',
-  //       type_registered: TYPE_REGISTERED,
-  //       tz,
-  //       is_group: isGroup,
-  //     };
-
-  //     // kalau preregister (TYPE_REGISTERED=0) jangan sertakan registered_site
-  //     if (TYPE_REGISTERED !== 0) {
-  //       (baseMeta as any).registered_site = formData.registered_site || '';
-  //     }
-
-  //     if (isGroup) {
-  //       if (groupVisitors.length === 0) {
-  //         setErrors({ submit: 'Minimal tambah 1 group dulu.' });
-  //         return;
-  //       }
-
-  //       const tz = moment.tz.guess();
-
-  //       // Bangun list_group
-  //       const list_group = groupVisitors.map((g) => {
-  //         const built = buildFinalPayload(
-  //           rawSections,
-  //           groupedPages,
-  //           g.data_visitor.length ? g.data_visitor : dataVisitor,
-  //           {
-  //             visitor_type: formData.visitor_type ?? '',
-  //             is_group: true,
-  //             type_registered: TYPE_REGISTERED,
-  //             tz,
-  //             registered_site: formData.registered_site ?? '',
-  //           },
-  //           selfOnlyOverrides,
-  //         );
-
-  //         return {
-  //           ...built,
-  //           group_code: g.group_code ?? '',
-  //           group_name: g.group_name ?? '',
-  //         };
-  //       });
-
-  //       // ✅ Payload clean hanya berisi list_group
-  //       let payload: CreateGroupVisitorRequest = { list_group };
-
-  //       const parsed = CreateGroupVisitorRequestSchema.parse(payload);
-  //       console.log('🚀 Final Payload:', JSON.stringify(parsed, null, 2));
-  //     } else {
-  //       if (!sectionsData.length) {
-  //         toast('Minimal isi 1 data visitor.', 'warning');
-  //         return;
-  //       }
-  //       const question_page = sectionsData.map((section, sIdx) => {
-  //         const base = {
-  //           id: section.id || section.Id || sIdx,
-  //           sort: section.sort ?? sIdx,
-  //           name: section.name,
-  //           status: 0,
-  //           is_document: section.is_document ?? false,
-  //           can_multiple_used: section.can_multiple_used ?? false,
-  //           foreign_id: section.foreign_id ?? '',
-  //           self_only: section.self_only ?? false,
-  //           form: formsOf(section).map((f, fIdx) => mapField(f as FormVisitor, fIdx)),
-  //         };
-
-  //         // ✅ handle id kecil & Id besar
-  //         return section.id || section.Id ? { ...base, id: section.id ?? section.Id } : base;
-  //       });
-
-  //       console.log('🔥 question_page:', question_page);
-
-  //       payload = {
-  //         ...baseMeta,
-  //         data_visitor: [{ question_page }],
-  //       };
-  //       setSubmitted(true);
-  //       console.log('✅ payload (single):', JSON.stringify(payload, null, 2));
-  //     }
-
-  //     // --- validasi + pilih endpoint berdasar TYPE_REGISTERED ---
-  //     const newRows = (payload?.data_visitor || []).map((v, i) => {
-  //       // Pastikan question_page selalu array
-  //       const pages = Array.isArray(v.question_page) ? v.question_page : [v.question_page];
-
-  //       // Pastikan form juga aman
-  //       const allForms = pages.flatMap((p: any) => (Array.isArray(p.form) ? p.form : []));
-
-  //       // Cari field "name"
-  //       const visitorForm = allForms.find((f: any) => f.remarks === 'name');
-
-  //       return {
-  //         id: i + 1,
-  //         visitor: visitorForm?.answer_text ?? '',
-  //         card: null,
-  //       };
-  //     });
-
-  //     console.log('✅ newRows:', newRows);
-
-  //     setRows(newRows);
-  //     const parsed = CreateVisitorRequestSchema.parse(payload as any);
-  //     console.log('🚀 parsed final payload:', parsed);
-  //     const submitFn = TYPE_REGISTERED === 0 ? createPraRegister : createVisitor;
-  //     const backendResponse = await submitFn(token, parsed); // ⬅️ kirim ke endpoint yang benar
-  //     // setLoading(false);
-
-  //     toast('Visitor created successfully.', 'success');
-  //     // isi rows awal: { id, visitor, card }
-  //     // setRows((prevRows) =>
-  //     //   prevRows.map((row, idx) => ({
-  //     //     ...row,
-  //     //     trx_visitor_id: backendResponse.collection?.[idx]?.trx_visitor_id ?? null,
-  //     //   })),
-  //     // );
-
-  //     const visitors = backendResponse.collection?.visitors || [];
-  //     const availableCards = backendResponse.collection?.available_cards || [];
-
-  //     setAvailableCards(availableCards);
-
-  //     console.group('Visitors (trx_visitor_id)');
-  //     visitors.forEach((v, i) => {
-  //       console.log(
-  //         `Row ${i + 1} → trx_visitor_id: ${v.id}, visitor_id: ${v.visitor_id}, name: ${
-  //           v.visitor?.name
-  //         }`,
-  //       );
-  //     });
-  //     console.groupEnd();
-
-  //     setRows((prevRows) =>
-  //       prevRows.map((row, idx) => ({
-  //         ...row,
-  //         trx_visitor_id: visitors[idx]?.visitor_id ?? null,
-  //       })),
-  //     );
-
-  //     const siteAnswer = getSiteFromForm(isGroup, sectionsData, dataVisitor);
-  //     if (siteAnswer) {
-  //       try {
-  //         const res = await getGrantAccess(token, siteAnswer);
-  //         setAccessData(res.collection ?? []);
-  //         console.log('✅ Grant access by site_place:', siteAnswer, res.collection);
-  //       } catch (err) {
-  //         console.error('❌ Failed to fetch grant access:', err);
-  //       }
-  //     }
-
-  //     setTimeout(() => {
-  //       setLoading(false); // backdrop hilang
-  //       onSuccess?.();
-  //       setNextDialogOpen(true); // dialog muncul
-  //     }, 1500);
-
-  //     localStorage.removeItem('selfOnlyOverrides');
-  //     setSelfOnlyOverrides({});
-  //   } catch (err: any) {
-  //     setTimeout(() => {
-  //       setLoading(false); // backdrop hilang
-  //       setNextDialogOpen(true);
-  //     }, 1500);
-  //     toast('Failed to create visitor.', 'error');
-  //     console.error(err);
-  //     if (err?.errors) {
-  //       setErrors(err.errors);
-  //     } else if (err?.name === 'ZodError') {
-  //       const fieldErrors: Record<string, string> = {};
-  //       err.errors.forEach((z: any) => (fieldErrors[z.path.join('.')] = z.message));
-  //       setErrors(fieldErrors);
-  //     }
-  //   }
-  // };
-
   const removeIdsDeep = (obj: any): any => {
     if (Array.isArray(obj)) return obj.map(removeIdsDeep);
     if (obj && typeof obj === 'object') {
-      const { id, Id, ...rest } = obj; // hapus id & Id
+      const { id, Id, ...rest } = obj;
       const cleaned = Object.fromEntries(
         Object.entries(rest).map(([k, v]) => [k, removeIdsDeep(v)]),
       );
       return cleaned;
     }
     return obj;
+  };
+
+  const resetMediaState = () => {
+    setPreviews({});
+    setUploadNames({});
+    setScreenshot(null);
+    setOpenCamera(false);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const clearAnswerFiles = () => {
+    setSectionsData((prev) =>
+      prev.map((section) => ({
+        ...section,
+        form: section?.form?.map((f: any) =>
+          [10, 11, 12].includes(f.field_type) ? { ...f, answer_file: '' } : f,
+        ),
+      })),
+    );
   };
 
   const handleOnSubmit = async (e: React.FormEvent) => {
@@ -3938,21 +3217,11 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
           visitor_form_type: field.visitor_form_type ?? DEFAULT_VFT,
         };
 
-        // if (base.field_type === 9 && typeof field.answer_datetime === 'string') {
-        //   base.answer_datetime = dayjs(field.answer_datetime).utc().toISOString();
-        // } else if ([10, 11, 12].includes(base.field_type)) {
-        //   base.answer_file = field.answer_file?.trim() || '';
-        // } else {
-        //   base.answer_text = field.answer_text?.trim() || '';
-        // }
-
-        // return base;
-        // 🧩 Safe converter
         const safeTrim = (val: any): string => {
           if (val === undefined || val === null) return '';
           if (typeof val === 'string') return val.trim();
-          if (Array.isArray(val)) return val.map(String).join(','); // join array → "true,false"
-          return String(val).trim(); // number / boolean → "true"/"false"
+          if (Array.isArray(val)) return val.map(String).join(',');
+          return String(val).trim();
         };
 
         // 🧠 Field type-specific handler
@@ -3973,7 +3242,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
           case 6:
           case 7: // Radio, Checkbox, Dropdown
             if (Array.isArray(field.answer_text)) {
-              base.answer_text = field.answer_text.map(String).join(','); // e.g. ["true"] -> "true"
+              base.answer_text = field.answer_text.map(String).join(',');
             } else if (typeof field.answer_text === 'boolean') {
               base.answer_text = field.answer_text ? 'true' : 'false';
             } else {
@@ -3998,10 +3267,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         ...(TYPE_REGISTERED !== 0 && { registered_site: formData.registered_site ?? '' }),
       };
 
-      // --- Payload Builder ---
       let payload: CreateVisitorRequest | CreateGroupVisitorRequest;
 
-      // 🟩 GROUP MODE
       if (isGroup) {
         const list_group = groupVisitors.map((g) => {
           const built = buildFinalPayload(
@@ -4013,7 +3280,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
               is_group: true,
               type_registered: TYPE_REGISTERED,
               tz: tz,
-              // registered_site: formData.registered_site ?? '',
             },
             selfOnlyOverrides,
           );
@@ -4022,7 +3288,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
           const cleanDataVisitor = (built.data_visitor ?? []).map((dv: any) => ({
             ...dv,
             question_page: (dv.question_page ?? []).map((qp: any, sIdx: number) => ({
-              // buat id baru jika tidak ada
               id: qp.id || qp.Id || rawSections?.[sIdx]?.Id || crypto.randomUUID(),
               sort: qp.sort ?? sIdx,
               name: qp.name ?? `Section ${sIdx + 1}`,
@@ -4031,12 +3296,10 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
               can_multiple_used: qp.can_multiple_used ?? false,
               foreign_id: qp.foreign_id ?? '',
               self_only: qp.self_only ?? false,
-              // hapus id pada setiap form
               form: (qp.form ?? []).map(({ id, Id, ...rest }: any) => rest),
             })),
           }));
 
-          // 🔥 Hapus id di level group (tidak di-include)
           return {
             group_name: g.group_name ?? '',
             group_code: g.group_code ?? '',
@@ -4051,7 +3314,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
 
         payload = { list_group };
 
-        // ✅ Validasi Group Schema
         const parsed = CreateGroupVisitorRequestSchema.parse(payload);
         console.log('🚀 Final Payload (Group):', JSON.stringify(parsed, null, 2));
 
@@ -4059,31 +3321,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         const submitFn = TYPE_REGISTERED === 0 ? createPraRegisterGroup : createVisitors;
         const backendResponse = await submitFn(token, parsed as any);
         toast('Group visitor created successfully.', 'success');
-        // const visitors = backendResponse.collection?.visitors || [];
-
-        // const availableCards = backendResponse.collection?.available_cards || [];
-        // setAvailableCards(availableCards);
-
-        // setRows(
-        //   visitors.map((v: any, i: number) => ({
-        //     id: i + 1,
-        //     visitor: v.visitor?.name,
-        //     trx_visitor_id: v.visitor_id ?? null,
-        //     card: null,
-        //   })),
-        // );
-
-        // // Cek akses site
-        // const siteAnswer = getSiteFromForm(false, sectionsData, dataVisitor);
-        // if (siteAnswer) {
-        //   try {
-        //     const res = await getGrantAccess(token, siteAnswer);
-        //     setAccessData(res.collection ?? []);
-        //     console.log('✅ Grant access by site_place:', siteAnswer, res.collection);
-        //   } catch (err) {
-        //     console.error('❌ Failed to fetch grant access:', err);
-        //   }
-        // }
+        resetMediaState();
+        clearAnswerFiles();
       }
 
       // 🟦 SINGLE MODE
@@ -4119,6 +3358,9 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         console.log('✅ Visitor created:', backendResponse);
         toast('Visitor created successfully.', 'success');
 
+        resetMediaState();
+        clearAnswerFiles();
+
         // Mapping hasil visitor
         const visitors = backendResponse.collection?.visitors || [];
         const availableCards = backendResponse.collection?.available_cards || [];
@@ -4139,22 +3381,21 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
           try {
             const res = await getGrantAccess(token, siteAnswer);
             setAccessData(res.collection ?? []);
-            console.log('✅ Grant access by site_place:', siteAnswer, res.collection);
+            // console.log('✅ Grant access by site_place:', siteAnswer, res.collection);
           } catch (err) {
             console.error('❌ Failed to fetch grant access:', err);
           }
         }
       }
 
-      // 🕒 Post submit actions
       setTimeout(() => {
         setLoading(false);
         onSuccess?.();
         // setNextDialogOpen(true);
       }, 600);
 
-      localStorage.removeItem('selfOnlyOverrides');
-      setSelfOnlyOverrides({});
+      // localStorage.removeItem('selfOnlyOverrides');
+      // setSelfOnlyOverrides({});
     } catch (err: any) {
       setTimeout(() => {
         setLoading(false);
@@ -4174,226 +3415,10 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     }
   };
 
-  // const handleOnSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   setErrors({});
-  //   if (!token) return;
-
-  //   try {
-  //     setLoading(true);
-
-  //     // 🧩 Utility untuk mapping field
-  //     const mapField = (field: FormVisitor, sortIdx: number) => {
-  //       const base: any = {
-  //         sort: field.sort ?? sortIdx,
-  //         short_name: field.short_name ?? '',
-  //         long_display_text: field.long_display_text ?? '',
-  //         field_type: field.field_type ?? 0,
-  //         is_primary: field.is_primary ?? false,
-  //         is_enable: field.is_enable ?? false,
-  //         mandatory: field.mandatory ?? false,
-  //         remarks: field.remarks ?? '',
-  //         custom_field_id: field.custom_field_id ?? '',
-  //         multiple_option_fields: field.multiple_option_fields ?? [],
-  //         visitor_form_type: field.visitor_form_type ?? DEFAULT_VFT,
-  //       };
-  //       if (base.field_type === 9 && field.answer_datetime?.trim()) {
-  //         base.answer_datetime = dayjs(field.answer_datetime).utc().toISOString(); // ✅ Zod-compatible
-  //       } else if ([10, 11, 12].includes(base.field_type)) {
-  //         if (field.answer_file?.trim()) base.answer_file = field.answer_file;
-  //       } else if (field.answer_text?.trim()) {
-  //         base.answer_text = field.answer_text;
-  //       }
-
-  //       return base;
-  //     };
-
-  //     // 🧩 Base meta untuk payload
-  //     const tz = moment.tz.guess();
-  //     const baseMeta = {
-  //       visitor_type: formData.visitor_type ?? '',
-  //       type_registered: TYPE_REGISTERED,
-  //       tz,
-  //       is_group: isGroup,
-  //     };
-
-  //     if (TYPE_REGISTERED !== 0) (baseMeta as any).registered_site = formData.registered_site || '';
-
-  //     let payload: any;
-
-  //     // ==========================================================
-  //     // 🧱 CASE 1: MULTI-GROUP VISITOR
-  //     // ==========================================================
-  //     if (isGroup) {
-  //       if (!groupVisitors.length) {
-  //         setErrors({ submit: 'Minimal tambah 1 group dulu.' });
-  //         setLoading(false);
-  //         return;
-  //       }
-
-  //       // 🧩 Bangun struktur list_group
-  //       const list_group = groupVisitors.map((g) => {
-  //         // 🔍 Ambil visitor-visitor yang termasuk grup ini
-  //        const visitorRows = dataVisitor;
-
-  //         // 🚧 Jika visitorRows kosong, isi minimal 1 kosong
-  //         const safeRows = visitorRows.length ? visitorRows : [{ question_page: [] }];
-
-  //         // 🔨 Bangun payload group lengkap
-  //         const groupPayload = {
-  //           visitor_type: formData.visitor_type ?? '',
-  //           is_group: true,
-  //           group_code: g.group_code,
-  //           group_name: g.group_name,
-  //           type_registered: TYPE_REGISTERED,
-  //           tz: moment.tz.guess(),
-  //           registered_site: formData.registered_site ?? '',
-  //           data_visitor: safeRows.map((row) => ({
-  //             question_page: row.question_page.map((section, sIdx) => ({
-  //               id: section.id || sIdx,
-  //               sort: section.sort ?? sIdx,
-  //               name: section.name,
-  //               is_document: section.is_document ?? false,
-  //               can_multiple_used: section.can_multiple_used ?? false,
-  //               foreign_id: section.foreign_id ?? '',
-  //               self_only: section.self_only ?? false,
-  //               form: (section.form ?? []).map((f, fIdx) => ({
-  //                 sort: f.sort ?? fIdx,
-  //                 short_name: f.short_name ?? '',
-  //                 long_display_text: f.long_display_text ?? '',
-  //                 field_type: f.field_type ?? 0,
-  //                 is_primary: f.is_primary ?? false,
-  //                 is_enable: f.is_enable ?? false,
-  //                 mandatory: f.mandatory ?? false,
-  //                 remarks: f.remarks ?? '',
-  //                 custom_field_id: f.custom_field_id ?? '',
-  //                 multiple_option_fields: f.multiple_option_fields ?? [],
-  //                 visitor_form_type: f.visitor_form_type ?? DEFAULT_VFT,
-  //                 answer_text: f.answer_text ?? undefined,
-  //                 answer_datetime:
-  //                   f.field_type === 9 && f.answer_datetime
-  //                     ? dayjs(f.answer_datetime).utc().toISOString()
-  //                     : undefined,
-  //                 answer_file: f.answer_file ?? undefined,
-  //               })),
-  //             })),
-  //           })),
-  //         };
-
-  //         return groupPayload;
-  //       });
-
-  //       // 🚀 Wrap jadi format akhir
-  //       payload = { list_group };
-  //       setSubmitted(true);
-
-  //       console.log('✅ Final payload (group):', JSON.stringify(payload, null, 2));
-  //     }
-
-  //     // ==========================================================
-  //     // 🧱 CASE 2: SINGLE VISITOR
-  //     // ==========================================================
-  //     else {
-  //       if (!sectionsData.length) {
-  //         toast('Minimal isi 1 data visitor.', 'warning');
-  //         return;
-  //       }
-
-  //       const question_page = sectionsData.map((section, sIdx) => ({
-  //         id: section.id || section.Id || sIdx,
-  //         sort: section.sort ?? sIdx,
-  //         name: section.name,
-  //         status: 0,
-  //         is_document: section.is_document ?? false,
-  //         can_multiple_used: section.can_multiple_used ?? false,
-  //         foreign_id: section.foreign_id ?? '',
-  //         self_only: section.self_only ?? false,
-  //         form: formsOf(section).map((f, fIdx) => mapField(f as FormVisitor, fIdx)),
-  //       }));
-
-  //       payload = {
-  //         ...baseMeta,
-  //         data_visitor: [{ question_page }],
-  //       };
-
-  //       setSubmitted(true);
-  //       console.log('✅ payload (single):', JSON.stringify(payload, null, 2));
-  //     }
-
-  //     // ==========================================================
-  //     // 🧩 VALIDASI PAYLOAD (ZOD)
-  //     // ==========================================================
-
-  //     const parsed = isGroup
-  //       ? CreateGroupVisitorRequestSchema.parse(payload)
-  //       : CreateVisitorRequestSchema.parse(payload);
-
-  //     console.log('🚀 parsed final payload:', parsed);
-
-  //     const submitFn = TYPE_REGISTERED === 0 ? createPraRegister : createVisitor;
-  //     const backendResponse = await submitFn(token, parsed as any);
-
-  //     toast('Visitor created successfully.', 'success');
-
-  //     // ==========================================================
-  //     // 🔎 Handle hasil dari backend
-  //     // ==========================================================
-  //     const visitors = backendResponse.collection?.visitors || [];
-  //     const availableCards = backendResponse.collection?.available_cards || [];
-  //     setAvailableCards(availableCards);
-
-  //     setRows((prev) =>
-  //       prev.map((r, i) => ({
-  //         ...r,
-  //         trx_visitor_id: visitors[i]?.visitor_id ?? null,
-  //       })),
-  //     );
-
-  //     // ==========================================================
-  //     // 🌐 Grant Access (Site)
-  //     // ==========================================================
-  //     const siteAnswer = getSiteFromForm(isGroup, sectionsData, dataVisitor);
-  //     if (siteAnswer) {
-  //       try {
-  //         const res = await getGrantAccess(token, siteAnswer);
-  //         setAccessData(res.collection ?? []);
-  //         console.log('✅ Grant access by site_place:', siteAnswer, res.collection);
-  //       } catch (err) {
-  //         console.error('❌ Failed to fetch grant access:', err);
-  //       }
-  //     }
-
-  //     setTimeout(() => {
-  //       setLoading(false);
-  //       onSuccess?.();
-  //       setNextDialogOpen(true);
-  //     }, 1500);
-
-  //     localStorage.removeItem('selfOnlyOverrides');
-  //     setSelfOnlyOverrides({});
-  //   } catch (err: any) {
-  //     setTimeout(() => {
-  //       setLoading(false);
-  //       setNextDialogOpen(true);
-  //     }, 1500);
-
-  //     toast('Failed to create visitor.', 'error');
-  //     console.error(err);
-
-  //     if (err?.errors) setErrors(err.errors);
-  //     else if (err?.name === 'ZodError') {
-  //       const fieldErrors: Record<string, string> = {};
-  //       err.errors.forEach((z: any) => (fieldErrors[z.path.join('.')] = z.message));
-  //       setErrors(fieldErrors);
-  //     }
-  //   }
-  // };
-
   useEffect(() => {
     setDraggableSteps([...dynamicSteps]);
   }, [dynamicSteps]);
 
-  //   // kalau tidak ada draft → fetch dari API
   useEffect(() => {
     if (!formData.visitor_type) return;
 
@@ -4404,14 +3429,14 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
           type_registered: 1,
           grouped_pages: groupedPages,
           data_visitor: dataVisitor,
-          sections: sectionsData, // ⬅️ simpan full structure
+          sections: sectionsData,
         }
       : {
           visitor_type: formData.visitor_type,
           is_group: false,
           type_registered: 1,
           data_visitor: [{ question_page: sectionsData }],
-          sections: sectionsData, // ⬅️ simpan juga untuk single
+          sections: sectionsData,
         };
 
     localStorage.setItem('unsavedVisitorData', JSON.stringify(draft));
@@ -4419,7 +3444,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
 
   const handleAddDetails = () => {
     if (!isGroup) {
-      // fallback ke add field biasa kalau single
       handleAddDetail(FORM_KEY);
       return;
     }
@@ -4442,7 +3466,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       });
 
       const next = [...prev, clone];
-      setActiveGroupIdx(next.length - 1); // opsional: fokus ke group baru
+      setActiveGroupIdx(next.length - 1);
       return next;
     });
   };
@@ -4497,9 +3521,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     return REQUIRED_VI.every((x) => r.has(x));
   };
 
-  const getBatchKey = (sectionId?: string, formId?: string) =>
-    `${sectionId ?? 'section'}-${formId ?? 'field'}`;
-
   const isPurposeVisit = (section: any) => {
     if (section?.is_document) return false;
     const forms = formsOf(section);
@@ -4513,101 +3534,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     return forms.some((f: any) => PV.has((f?.remarks ?? '').trim().toLowerCase()));
   };
 
-  // index section Purpose Visit
-  // const pvIndex = sectionsData.findIndex((s) => isPurposeVisit(s));
   const pvIndex = React.useMemo(() => sectionsData.findIndex(isPurposeVisit), [sectionsData]);
   const hasAns = (f: any) => !!(f?.answer_text || f?.answer_datetime || f?.answer_file);
-  // ada override PV di baris?
-  const hasRowPv = (rowIdx: number) => !!dataVisitor[rowIdx]?.question_page?.[pvIndex]?.self_only;
-
-  // buka dialog PV utk row tertentu
-  const openPvDialog = (rowIdx: number) => {
-    if (pvIndex < 0) return;
-
-    const tpl = sectionsData[pvIndex];
-    const base = formsOf(tpl).map((f: any, i: number) => ({
-      ...f,
-      sort: f.sort ?? i,
-    }));
-
-    // prefill dari shared
-    const prefilled = base.map((f: any) => {
-      const shared = (groupedPages.single_page || []).find((sf: any) => sameField(sf, f));
-      return { ...f, ...pickAns(shared || {}) };
-    });
-
-    // 1) tandai self_only + seed page PV di baris itu SEKARANG,
-    //    supaya switch langsung On dan payload punya self_only: true
-    setDataVisitor((prev) => {
-      const next = [...prev];
-      const row = next[rowIdx];
-      const existing = row?.question_page?.[pvIndex];
-
-      row.question_page[pvIndex] = {
-        id: existing?.id,
-        sort: tpl?.sort ?? pvIndex,
-        name: tpl?.name ?? 'Purpose Visit',
-        is_document: !!tpl?.is_document,
-        can_multiple_used: !!tpl?.can_multiple_used,
-        self_only: true,
-        foreign_id: tpl?.foreign_id ?? '',
-        form: existing?.form?.length ? existing.form : prefilled,
-      };
-      return next;
-    });
-
-    // 2) buka dialog untuk edit PV per-baris
-    setPvDlg({ open: true, rowIdx, forms: prefilled });
-  };
-
-  const savePvDialog = () => {
-    if (pvDlg.rowIdx == null) return;
-
-    setSelfOnlyOverrides((prev) => {
-      const next = { ...prev };
-      next[`row${pvDlg.rowIdx}`] = pvDlg.forms; // simpan full forms untuk row ini
-      return next;
-    });
-
-    setDataVisitor((prev) => {
-      const next = [...prev];
-      const s = activeStep - 1;
-      if (pvDlg.rowIdx !== null && pvDlg.rowIdx !== undefined) {
-        if (next[pvDlg.rowIdx]?.question_page?.[s]) {
-          next[pvDlg.rowIdx].question_page[s].self_only = true;
-        }
-      }
-      return next;
-    });
-
-    setPvDlg({ open: false, rowIdx: null, forms: [] });
-  };
-
-  useEffect(() => {
-    localStorage.setItem('selfOnlyOverrides', JSON.stringify(selfOnlyOverrides));
-  }, [selfOnlyOverrides]);
-
-  // matikan override PV di baris (optional: hapus file CDN)
-  // matikan override PV di baris (optional: hapus file CDN)
-  const clearRowPv = (rowIdx: number) => {
-    setDataVisitor((prev) => {
-      const next = [...prev];
-      const pvIdx = next[rowIdx].question_page.findIndex((q) => {
-        if (q !== undefined && q.form !== undefined) {
-          return q.form.some((f) => f.remarks === 'host');
-        }
-        return false;
-      });
-      if (pvIdx >= 0) {
-        next[rowIdx].question_page[pvIdx] = {
-          ...next[rowIdx].question_page[pvIdx],
-          form: [],
-          self_only: false,
-        };
-      }
-      return next;
-    });
-  };
 
   const buildGroupedPages = (sections: any[] = []): GroupedPages => {
     const single_page: any[] = [];
@@ -4625,7 +3553,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
             single_page.push(existing ? { ...f, ...existing } : cloneFormWithEmptyAnswers(f, idx));
           });
         }
-        // kalau self_only = true → biarkan kosong di groupedPages
+
         return;
       }
 
@@ -4651,7 +3579,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     return {
       single_page,
       batch_page,
-      // batch_rows: [{}], // ← siapkan 1 baris default
     };
   };
   const pickVisitorInfoSingle = (sections: any[] = []) =>
@@ -4668,7 +3595,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         ),
     );
 
-  // Ambil form dokumen dari sections mentah
   const collectDocForms = (sections: any[]) => {
     const docs = sections.filter((s) => s?.is_document && formsOf(s).length);
     const all = docs.flatMap((s) => formsOf(s) || []);
@@ -4682,11 +3608,9 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
   const buildGroupSections = (sections?: any[]) => {
     const list = Array.isArray(sections) ? sections : [];
 
-    // sumber Visitor Info (single) untuk dijadikan Group
     const viSrc = pickVisitorInfoSingle(list);
     const pvSrc = pickPurposeVisit(list);
 
-    // Kumpulkan form dokumen dan clone
     const docForms = cloneForms(collectDocForms(list));
     const otherSingles = list
       .filter(
@@ -4720,7 +3644,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
           })(),
         }
       : {
-          // fallback kalau tidak ada VI di visitor_type
           Id: 'visitor_info_group',
           sort: 0,
           name: 'Visitor Information (Group)',
@@ -4740,7 +3663,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
               field_type: 0,
               remarks: 'organization',
             },
-            // minimal kolom dokumen
+
             {
               short_name: 'Selfie Image',
               long_display_text: 'Selfie Image',
@@ -4762,7 +3685,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
           ]),
         };
 
-    // Purpose Visit tetap section tersendiri (umumnya can_multiple_used true)
     const pv = pvSrc
       ? {
           ...pvSrc,
@@ -4810,9 +3732,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
             },
           ]),
         };
-
-    // Penting: JANGAN ikutkan lagi section dokumen terpisah agar tidak dobel
-    // Kalau kamu masih butuh halaman dokumen terpisah, hapus blok ini dan return [vi, pv, ...docs]
     return [vi, pv];
   };
 
@@ -4837,66 +3756,11 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         })),
       },
     ];
-
-    // setDataVisitor((prev) =>
-    //   prev.map((x) => ({
-    //     ...x,
-    //     question_page: x.question_page.map((p: any) => ({ ...p, form: [] })),
-    //   })),
-    // );
     setDataVisitor(result);
     return result;
   };
 
   const [allVisitorEmployee, setAllVisitorEmployee] = useState<any[]>([]);
-
-  // useEffect(() => {
-  //   if (!token) return;
-  //   let cancelled = false;
-  //   const min = 500; // ms biar skeleton minimal kelihatan
-
-  //   (async () => {
-  //     const t0 = Date.now();
-  //     setVtLoading(true);
-  //     try {
-  //       const [
-  //         customFieldRes,
-  //         visitorTypeRes,
-  //         EmployeeRes,
-  //         AllEmployeeRes,
-  //         siteSpaceRes,
-  //         visitorRes,
-  //       ] = await Promise.all([
-  //         getAllCustomFieldPagination(token, 0, 99, 'id'),
-  //         getAllVisitorType(token),
-  //         // getAllEmployee(token),
-  //         // getVisitorEmployee(token),
-  //         getFormEmployee(token),
-  //         getVisitorEmployee(token),
-  //         getAllSite(token),
-  //         getAllVisitor(token),
-  //       ]);
-
-  //       if (cancelled) return;
-  //       setCustomField(customFieldRes?.collection ?? []);
-  //       setVisitorType(visitorTypeRes?.collection ?? []); // << penting
-  //       setEmployee(EmployeeRes?.collection ?? []);
-  //       setAllVisitorEmployee(AllEmployeeRes?.collection ?? []);
-  //       setSites(siteSpaceRes?.collection ?? []);
-  //       setVisitorDatas(visitorRes?.collection ?? []);
-  //     } finally {
-  //       const elapsed = Date.now() - t0;
-  //       const wait = Math.max(0, min - elapsed);
-  //       setTimeout(() => {
-  //         if (!cancelled) setVtLoading(false);
-  //       }, wait);
-  //     }
-  //   })();
-
-  //   return () => {
-  //     cancelled = true;
-  //   };
-  // }, [token]);
 
   const {
     data: visitorType = [],
@@ -4909,13 +3773,12 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       const res = await getAllVisitorType(token);
       return res?.collection ?? [];
     },
-    staleTime: 10 * 60 * 1000, // cache 10 menit
-    gcTime: 30 * 60 * 1000, // simpan 30 menit di memori
-    refetchOnWindowFocus: false, // tidak refetch tiap ganti tab
-    enabled: !!token, // hanya jalan kalau token sudah siap
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    enabled: !!token,
   });
 
-  // ✅ useEffect lain tetap dipakai untuk data lainnya
   useEffect(() => {
     if (!token) return;
     let cancelled = false;
@@ -4930,8 +3793,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         if (cancelled) return;
 
         setSites(siteSpaceRes?.collection ?? []);
-
-        // lanjut background
         fetchSecondaryData();
       } catch (error) {
         console.error('❌ Error fetching main data:', error);
@@ -4947,7 +3808,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     const fetchSecondaryData = async () => {
       try {
         const [customFieldRes, employeeRes, allEmployeeRes, visitorRes] = await Promise.all([
-          getAllCustomFieldPagination(token, 0, 99, 'id'),
+          // getAllCustomFieldPagination(token, 0, 99, 'id'),
+          getAllCustomField(token),
           getFormEmployee(token),
           getVisitorEmployee(token),
           getAllVisitor(token),
@@ -4971,15 +3833,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     };
   }, [token]);
 
-  // ✅ UI
-  // if (vtFetching) {
-  //   return <Skeleton variant="rectangular" height={40} />;
-  // }
-
-  // if (vtError) {
-  //   return <Typography color="error">Failed to load visitor types</Typography>;
-  // }
-
   useEffect(() => {
     if (!formData.visitor_type || !token) return;
 
@@ -5002,8 +3855,10 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     const fetchVisitorTypeDetails = async () => {
       setVtLoading(true);
       try {
-        const res = await getVisitorTypeById(token, formData.visitor_type as string);
-        let sections = res?.collection?.section_page_visitor_types ?? [];
+        // const res = await getVisitorTypeById(token, formData.visitor_type as string);
+        const res = visitorType.find((vt: any) => vt.id === formData.visitor_type);
+        let sections = res?.section_page_visitor_types ?? [];
+        // let sections = res?.collection?.section_page_visitor_types ?? [];
 
         if (TYPE_REGISTERED === 0 || FORM_KEY == 'pra_form')
           sections = sections.filter((s: any) => (s.pra_form || []).length > 0);
@@ -5042,7 +3897,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       const next = [...prev];
       const qps = next[0].question_page;
 
-      // merge groupedPages.single_page ke Purpose Visit section
       const purpose = qps.find((s) => s.name.toLowerCase().includes('purpose visit'));
       if (purpose) {
         purpose.form = purpose?.form?.map((f: any) => {
@@ -5099,7 +3953,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
   const resetSelections = () => {
     setSelectedInvitations([]);
     setSelectedCards([]);
-    setTableKey((k) => k + 1); // ← paksa remount DynamicTable
+    setTableKey((k) => k + 1);
   };
 
   const handleCloseChooseCard = () => {
@@ -5194,7 +4048,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     const holderRowId = assignedByCard.get(String(cardNumber));
     const isUsedByOther = !!holderRowId && !selectedIdSet.has(String(holderRowId));
 
-    if (isUsedByOther) return; // hanya return kalau milik visitor lain
+    if (isUsedByOther) return;
 
     setSelectedCards((prev) => {
       if (prev.includes(cardNumber)) {
@@ -5203,7 +4057,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       }
       if (prev.length >= selectedInvitations.length) {
         toast('You have reached the maximum number of invitations.', 'warning');
-        return prev; // tidak nambah
+        return prev;
       }
       return [...prev, cardNumber];
     });
@@ -5240,14 +4094,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     }
   };
 
-  // function hasSelfOnly(sectionsData: any[]): boolean {
-  //   return sectionsData.some(
-  //     (s) =>
-  //       s.form?.some?.((f: any) => f.self_only === true) ||
-  //       s.visit_form?.some?.((f: any) => f.self_only === true),
-  //   );
-  // }
-
   const hasSelfOnly = (dataVisitor: any[]) =>
     dataVisitor?.some((dv) => dv.question_page?.some((page: any) => page.self_only === true));
 
@@ -5271,23 +4117,17 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     );
   };
 
-  const handleToggleSelf = (id: string) => {
-    setCheckedSelfItems((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-    );
-  };
-
   const getCheckedCount = () => {
     if (!isGroup) {
-      return checkedItems.length; // Single Access
+      return checkedItems.length;
     }
 
     if (isGroup && !hasSelfOnly(dataVisitor)) {
-      return checkedGroupItems.length; // Group only
+      return checkedGroupItems.length;
     }
 
     if (isGroup && hasSelfOnly(dataVisitor)) {
-      return checkedSelfItems.length + checkedItems.length; // Group + Self Only
+      return checkedSelfItems.length + checkedItems.length;
     }
 
     return 0;
@@ -5301,154 +4141,173 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
           preselected.push(cardNumber);
         }
       }
-      setSelectedCards(preselected); // isi lagi biar counter & toggle sinkron
+      setSelectedCards(preselected);
     }
   }, [openChooseCardDialog, assignedByCard, selectedIdSet]);
+
+  const stepLabels = useMemo(() => ['User Type', ...draggableSteps], [draggableSteps]);
 
   return (
     <PageContainer title="Invitation" description="this is Add Visitor page">
       <form onSubmit={handleOnSubmit}>
         <Box width="100%">
-          <DragDropContext onDragEnd={() => {}}>
-            <Droppable
-              droppableId="stepper"
-              direction="horizontal"
-              isDropDisabled={true}
-              isCombineEnabled={false}
-              ignoreContainerClipping={false}
-            >
-              {(provided) => (
-                <div
-                  ref={provided.innerRef}
-                  {...provided.droppableProps}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    padding: '0 0',
-                  }}
-                >
-                  <Stepper
-                    activeStep={activeStep}
-                    alternativeLabel
-                    sx={{
-                      width: '100%',
-                      // overflowX: 'auto',
-                      // px: 2,
-                      flexWrap: 'nowrap',
-                      justifyContent: 'flex-start',
-                      // columnGap: 6,
-                      '& .MuiStep-root': {
-                        flex: '1 1 0',
-                        // px: 1.5,
-                      },
-                      '& .MuiStepLabel-label': {
-                        fontSize: '0.875rem',
-                        whiteSpace: 'nowrap',
-                        maxWidth: 200,
-                        overflow: 'hidden',
-                        textWrap: 'wrap',
-                        // textOverflow: 'ellipsis',
-                        textAlign: 'center',
-                      },
-                      '& .MuiStepIcon-root': {
-                        width: 30,
-                        height: 30,
-                      },
+          {!isMobile ? (
+            <DragDropContext onDragEnd={() => {}}>
+              <Droppable
+                droppableId="stepper"
+                direction="horizontal"
+                isDropDisabled={true}
+                isCombineEnabled={false}
+                ignoreContainerClipping={false}
+              >
+                {(provided) => (
+                  <div
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      padding: '0 0',
                     }}
-                    // connector={null}
                   >
-                    {/* Static Step Pertama */}
-                    <Step
-                      key="User Type"
-                      completed={false}
+                    <Stepper
+                      activeStep={activeStep}
+                      alternativeLabel
                       sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        m: 0,
+                        width: '100%',
+                        // overflowX: 'auto',
+                        // px: 2,
+                        flexWrap: 'nowrap',
+                        justifyContent: 'flex-start',
+                        // columnGap: 6,
+                        '& .MuiStep-root': {
+                          flex: '1 1 0',
+                          // px: 1.5,
+                        },
+                        '& .MuiStepLabel-label': {
+                          fontSize: '0.875rem',
+                          whiteSpace: 'nowrap',
+                          maxWidth: 200,
+                          overflow: 'hidden',
+                          textWrap: 'wrap',
+                          // textOverflow: 'ellipsis',
+                          textAlign: 'center',
+                        },
+                        '& .MuiStepIcon-root': {
+                          width: 30,
+                          height: 30,
+                        },
                       }}
+                      // connector={null}
                     >
-                      <StepLabel
-                        onClick={() => setActiveStep(0)}
-                        StepIconProps={{ sx: { width: 30, height: 30 } }}
+                      <Step
+                        key="User Type"
+                        completed={false}
                         sx={{
-                          '& .MuiStepLabel-label': {
-                            fontWeight: activeStep === 0 ? 600 : 400,
-                            color: activeStep === 0 ? 'primary.main' : 'text.secondary',
-                          },
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          m: 0,
                         }}
                       >
-                        User Type
-                      </StepLabel>
-                    </Step>
+                        <StepLabel
+                          onClick={() => setActiveStep(0)}
+                          StepIconProps={{ sx: { width: 30, height: 30 } }}
+                          sx={{
+                            '& .MuiStepLabel-label': {
+                              fontWeight: activeStep === 0 ? 600 : 400,
+                              color: activeStep === 0 ? 'primary.main' : 'text.secondary',
+                            },
+                          }}
+                        >
+                          User Type
+                        </StepLabel>
+                      </Step>
 
-                    {/* Dynamic Draggable Steps */}
-                    {draggableSteps.map((label, index) => (
-                      <Draggable key={label} draggableId={label} index={index} isDragDisabled>
-                        {(provided, snapshot) => (
-                          <Step
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            sx={{
-                              display: 'flex',
-                              flexDirection: 'column',
-                              alignItems: 'center',
-                              mx: 1,
-                              cursor: 'pointer',
-                            }}
-                            onClick={() => setActiveStep(index + 1)}
-                            // key={section.id ?? index}
-                          >
-                            <Box
+                      {/* Dynamic Draggable Steps */}
+                      {draggableSteps.map((label, index) => (
+                        <Draggable key={label} draggableId={label} index={index} isDragDisabled>
+                          {(provided, snapshot) => (
+                            <Step
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
                               sx={{
-                                backgroundColor: snapshot.isDragging
-                                  ? '#1976d2'
-                                  : activeStep === index + 1
-                                  ? 'primary.main'
-                                  : '#9e9e9e',
-                                color:
-                                  snapshot.isDragging || activeStep === index + 1 ? '#fff' : '#fff',
-                                width: 30,
-                                height: 30,
-                                borderRadius: '50%',
                                 display: 'flex',
+                                flexDirection: 'column',
                                 alignItems: 'center',
-                                justifyContent: 'center',
-                                mb: 0.5,
-                                fontWeight: 'bold',
-                                // border:
-                                //   activeStep === index + 1
-                                //     ? '2px solid #1976d2'
-                                //     : '1px solid #33393dff',
-                                transition: 'all 0.2s ease',
-                                marginRight: -2,
+                                mx: 1,
+                                cursor: 'pointer',
                               }}
+                              onClick={() => setActiveStep(index + 1)}
                             >
-                              {index + 2}
-                            </Box>
-                            <StepLabel
-                              sx={{
-                                '& .MuiStepLabel-label': {
-                                  fontWeight: activeStep === index + 1 ? 600 : 400,
+                              <Box
+                                sx={{
+                                  backgroundColor: snapshot.isDragging
+                                    ? '#1976d2'
+                                    : activeStep === index + 1
+                                    ? 'primary.main'
+                                    : '#9e9e9e',
                                   color:
-                                    activeStep === index + 1 ? 'primary.main' : 'text.secondary',
-                                },
-                              }}
-                            >
-                              {label}
-                            </StepLabel>
-                          </Step>
-                        )}
-                      </Draggable>
-                    ))}
-                  </Stepper>
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </DragDropContext>
+                                    snapshot.isDragging || activeStep === index + 1
+                                      ? '#fff'
+                                      : '#fff',
+                                  width: 30,
+                                  height: 30,
+                                  borderRadius: '50%',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  mb: 0.5,
+                                  fontWeight: 'bold',
+                                  transition: 'all 0.2s ease',
+                                  marginRight: -2,
+                                }}
+                              >
+                                {index + 2}
+                              </Box>
+                              <StepLabel
+                                sx={{
+                                  '& .MuiStepLabel-label': {
+                                    fontWeight: activeStep === index + 1 ? 600 : 400,
+                                    color:
+                                      activeStep === index + 1 ? 'primary.main' : 'text.secondary',
+                                  },
+                                }}
+                              >
+                                {label}
+                              </StepLabel>
+                            </Step>
+                          )}
+                        </Draggable>
+                      ))}
+                    </Stepper>
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
+          ) : (
+            <>
+              <Typography fontWeight={600} color="black" textAlign="center" variant="h5">
+                {stepLabels[activeStep]}
+              </Typography>
+              <MobileStepper
+                variant="dots"
+                steps={draggableSteps.length + 1}
+                position="static"
+                activeStep={activeStep}
+                sx={{
+                  background: 'transparent',
+                  justifyContent: 'center',
+                  mb: 0,
+                }}
+                nextButton={null}
+                backButton={null}
+              />
+            </>
+          )}
 
           <Box mt={3}>{handleSteps(activeStep)}</Box>
 
@@ -5459,110 +4318,63 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
             sx={{
               position: 'sticky',
               bottom: -20,
-              backgroundColor: 'white', // kasih background supaya gak tembus konten
+              backgroundColor: 'white',
               padding: 2,
               zIndex: 10,
-              // borderTop: '1px solid #ddd',
             }}
           >
             {/* Tombol Back */}
             <MuiButton
               disabled={activeStep === 0}
               onClick={() => setActiveStep((prev) => prev - 1)}
+              startIcon={<IconArrowLeft width={18} />}
             >
               Back
             </MuiButton>
-
-            {/* Tombol Next / Submit */}
-            {/* {isLastStep ? (
-              <Button color="primary" type="submit" variant="contained" disabled={loading}>
-                {loading ? 'Submitting...' : 'Submit'}
-              </Button>
-            ) : (
-              <Button
-                variant="contained"
-                onClick={(e) => {
-                  e.preventDefault();
-
-                
-                  if (activeStep === 1 && isGroup) {
-                    handleSaveGroupVisitor();
-                  }
-
-               
-                  if (activeStep === 0 && isGroup) {
-                    const unfilled = groupVisitors.filter(
-                      (g) => !g.data_visitor || g.data_visitor.length === 0,
-                    );
-                    if (unfilled.length > 0) {
-                      toast(
-                        `Masih ada ${unfilled.length} group yang belum diisi form-nya.`,
-                        'warning',
-                      );
-                      return;
-                    }
-                  }
-
-                  // ⬆️ Pindah ke step berikutnya
-                  setActiveStep((prev) => prev + 1);
-                }}
-              >
-                Next
-              </Button>
-            )} */}
-
-            {/* 🔹 Tombol Next / Save */}
             {isGroup ? (
-              // === Mode GROUP ===
               isLastStep ? (
-                // ✅ Step terakhir: Simpan group
                 <Button
                   variant="contained"
                   color="primary"
                   disabled={loading}
                   onClick={(e) => {
                     e.preventDefault();
-                    handleSaveGroupVisitor(); // 💾 simpan data visitor ke group aktif
+                    handleSaveGroupVisitor();
                     toast('Group form saved successfully.', 'success');
-                    setActiveStep(0); // ⬅️ balik ke list group
+                    setActiveStep(0);
                   }}
                 >
                   {loading ? 'Saving...' : 'Save Group'}
                 </Button>
               ) : activeStep === 0 ? (
-                // ✅ Step awal group → lanjutkan ke submit semua
                 <Button variant="contained" color="primary" onClick={handleOnSubmit}>
                   Submit All
                 </Button>
               ) : (
-                // ✅ Step biasa di group → lanjut ke step berikut
                 <Button
                   variant="contained"
                   onClick={(e) => {
                     e.preventDefault();
                     setActiveStep((prev) => prev + 1);
                   }}
+                  endIcon={<IconArrowRight width={18} />}
                 >
                   Next
                 </Button>
               )
-            ) : // === Mode SINGLE ===
-            isLastStep ? (
-              // ✅ Step terakhir untuk single → Submit
+            ) : isLastStep ? (
               <Button
                 variant="contained"
                 color="primary"
                 disabled={loading}
-                onClick={
-                  handleOnSubmit // 🔥 langsung submit
-                }
+                onClick={handleOnSubmit}
               >
                 {loading ? 'Submitting...' : 'Submit'}
               </Button>
             ) : (
-              // ✅ Step biasa untuk single → Next
               <Button
                 variant="contained"
+                endIcon={<IconArrowRight width={18} />}
                 onClick={(e) => {
                   e.preventDefault();
                   setActiveStep((prev) => prev + 1);
@@ -5584,11 +4396,10 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         sx={{
           '& .MuiDialog-paper': {
             borderRadius: 3, // sudut lebih rounded
-            boxShadow: '0 8px 24px rgba(0,0,0,0.08)', // bayangan halus
+            boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
           },
         }}
       >
-        {/* Header */}
         <Box
           display="flex"
           justifyContent="space-between"
@@ -5668,7 +4479,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       {/* Choose Card  */}
       <Dialog open={openChooseCardDialog} onClose={handleCloseChooseCard} fullWidth maxWidth="lg">
         <DialogTitle>Choose Card</DialogTitle>
-        {/* closeicon */}
         <IconButton
           aria-label="close"
           onClick={handleCloseChooseCard}
@@ -5696,7 +4506,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <IconSearch size={20} /> {/* ikon tabler */}
+                    <IconSearch size={20} />
                   </InputAdornment>
                 ),
               }}
@@ -5726,12 +4536,10 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
           <Grid container spacing={2}>
             {filteredCards.map((card) => {
               const holderRowId = assignedByCard.get(String(card.card_number));
-              const isUsedByOther = !!holderRowId && !selectedIdSet.has(String(holderRowId)); // 🔑 hanya lock jika milik orang lain
+              const isUsedByOther = !!holderRowId && !selectedIdSet.has(String(holderRowId));
               const isAssignedInThisSelection =
                 !!holderRowId && selectedIdSet.has(String(holderRowId));
               const isChosen = selectedCards.includes(card.card_number);
-
-              // KUNCI HANYA JIKA milik visitor lain
               const isLocked = isUsedByOther;
 
               return (
@@ -5741,7 +4549,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                     tabIndex={isLocked ? -1 : 0}
                     aria-disabled={isLocked}
                     aria-pressed={isChosen ? 'true' : 'false'}
-                    onClick={() => !isLocked && handleToggleCard(card.card_number)} // selected => boleh toggle
+                    onClick={() => !isLocked && handleToggleCard(card.card_number)}
                     onKeyDown={(e) => {
                       if (isLocked) return;
                       if (e.key === 'Enter' || e.key === ' ') {
@@ -5759,8 +4567,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                       justifyContent: 'space-between',
                       alignItems: 'center',
                       textAlign: 'center',
-
-                      // base look
                       border: '1px solid',
                       borderColor: isChosen ? 'primary.main' : 'divider',
                       boxShadow: isChosen ? theme.shadows[10] : theme.shadows[4],
@@ -5768,7 +4574,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
 
                       // visual disabled utk Used saja
                       cursor: isLocked ? 'not-allowed' : 'pointer',
-                      pointerEvents: isLocked ? 'none' : 'auto', // ✅ kartu “used by THIS selection” tetap bisa diklik
+                      pointerEvents: isLocked ? 'none' : 'auto',
                       opacity: isUsedByOther ? 0.4 : 1,
                       filter: isUsedByOther ? 'grayscale(0.8) brightness(0.7)' : 'none',
                       '::after': isUsedByOther
@@ -5837,13 +4643,12 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                       {card.name}
                     </Typography>
 
-                    {/* checkbox: disable hanya saat Used */}
                     <FormControlLabel
                       onClick={(e) => e.stopPropagation()}
                       onMouseDown={(e) => e.stopPropagation()}
                       control={
                         <Checkbox
-                          disabled={isUsedByOther} // ✅ hanya disable jika milik orang lain
+                          disabled={isUsedByOther}
                           checked={isChosen}
                           onClick={(e) => e.stopPropagation()}
                           onMouseDown={(e) => e.stopPropagation()}
@@ -5990,7 +4795,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
               onClick={handleAccessSubmit}
               size="medium"
             >
-              {loading ? 'Loading...' : 'Submit'}
+              {loading ? <CircularProgress size={20} /> : 'Submit'}
             </Button>
           </Box>
         </DialogContent>
@@ -6001,10 +4806,10 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
           open={loading}
           sx={{
             color: '#fff',
-            zIndex: (theme) => theme.zIndex.modal + 1,
+            zIndex: 999999,
           }}
         >
-          <CircularProgress color="inherit" />
+          <CircularProgress color="primary" />
         </Backdrop>
       </Portal>
       <Portal>
@@ -6017,7 +4822,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         >
           <Alert
             onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-            severity={snackbar.severity} // ← beda warna/ikon sesuai severity
+            severity={snackbar.severity}
             sx={{ width: '100%' }}
             variant="filled"
           >
@@ -6026,182 +4831,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         </Snackbar>
       </Portal>
     </PageContainer>
-  );
-};
-
-const CameraUpload: React.FC<{
-  value?: string;
-  onChange: (url: string) => void;
-}> = ({ value, onChange }) => {
-  const [open, setOpen] = React.useState(false);
-  const [previewUrl, setPreviewUrl] = React.useState<string | null>(value || null);
-  const [screenshot, setScreenshot] = React.useState<string | null>(null);
-  const [removing, setRemoving] = React.useState(false);
-  const webcamRef = React.useRef<Webcam>(null);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
-
-  const clearLocal = () => {
-    setScreenshot(null);
-    setPreviewUrl(null);
-    onChange('');
-  };
-
-  const uploadFileToCDN = async (file: File | Blob): Promise<string | null> => {
-    const formData = new FormData();
-    const filename = file instanceof File && file.name ? file.name : 'selfie.png';
-    formData.append('file_name', filename);
-    formData.append('file', file, filename);
-    formData.append('path', 'visitor');
-    try {
-      const { data } = await axiosInstance2.post('/cdn/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      const fileUrl = data?.collection?.file_url;
-      console.log('CDN Response File URL:', fileUrl);
-      return fileUrl ? (fileUrl.startsWith('//') ? `http:${fileUrl}` : fileUrl) : null;
-    } catch (e) {
-      console.error('Upload failed:', e);
-      return null;
-    }
-  };
-
-  const handleCapture = async () => {
-    if (!webcamRef.current) return;
-    const imageSrc = webcamRef.current.getScreenshot();
-    if (!imageSrc) return;
-    const blob = await fetch(imageSrc).then((r) => r.blob());
-    const cdnUrl = await uploadFileToCDN(blob);
-    if (!cdnUrl) return;
-    setScreenshot(imageSrc);
-    setPreviewUrl(imageSrc);
-    onChange(cdnUrl);
-  };
-
-  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const cdnUrl = await uploadFileToCDN(file);
-
-    if (!cdnUrl) return;
-    setPreviewUrl(URL.createObjectURL(file));
-    onChange(cdnUrl);
-  };
-
-  // ⛔ Hapus file di CDN: DELETE ke URL file (http://host/pathcdn/visitor/xxx.png)
-  const handleRemove = async () => {
-    if (!value) {
-      // cuma bersihkan local state kalau belum ada URL CDN
-      clearLocal();
-      return;
-    }
-    try {
-      setRemoving(true);
-      // await axios.delete(value); // <--- sesuai API kamu
-      await axiosInstance2.delete(`/cdn${value}`);
-      console.log('✅ Berhasil hapus file CDN:', value);
-      clearLocal();
-    } catch (e) {
-      console.error('Delete failed:', e);
-    } finally {
-      setRemoving(false);
-    }
-  };
-
-  return (
-    <Box>
-      <Box
-        sx={{
-          borderRadius: 2,
-          p: 2,
-          textAlign: 'center',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 2,
-        }}
-      >
-        <MuiButton size="small" onClick={() => setOpen(true)} startIcon={<PhotoCameraIcon />}>
-          Camera
-        </MuiButton>
-        {previewUrl && ( // <-- tombol Remove hanya muncul jika ada foto
-          <MuiButton
-            size="small"
-            color="error"
-            variant="outlined"
-            onClick={handleRemove}
-            startIcon={<IconTrash />}
-            disabled={removing}
-          >
-            {removing ? 'Removing...' : 'Remove'}
-          </MuiButton>
-        )}
-        <input type="file" hidden ref={fileInputRef} accept="image/*" onChange={handleFile} />
-      </Box>
-
-      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="md" fullWidth>
-        <Box sx={{ p: 3 }}>
-          <Box>
-            <Typography variant="h6" mb={2}>
-              Take Photo From Camera
-            </Typography>
-            {/* close button */}
-            <IconButton
-              onClick={() => setOpen(false)}
-              size="small"
-              sx={{ position: 'absolute', top: 10, right: 10 }}
-            >
-              <IconX />
-            </IconButton>
-          </Box>
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <Webcam
-                audio={false}
-                ref={webcamRef}
-                screenshotFormat="image/jpeg"
-                videoConstraints={{ facingMode: 'environment' }}
-                style={{ width: '100%', borderRadius: 8, border: '2px solid #ccc' }}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              {screenshot ? (
-                <img
-                  src={screenshot}
-                  alt="Captured"
-                  style={{ width: '100%', borderRadius: 8, border: '2px solid #ccc' }}
-                />
-              ) : (
-                <Box
-                  sx={{
-                    width: '100%',
-                    height: '100%',
-                    border: '2px dashed #ccc',
-                    borderRadius: 8,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    minHeight: 240,
-                  }}
-                >
-                  <Typography color="text.secondary">No Photos Have Been Taken Yet</Typography>
-                </Box>
-              )}
-            </Grid>
-          </Grid>
-          <Divider sx={{ my: 2 }} />
-          <Box textAlign="right">
-            <MuiButton color="warning" sx={{ mr: 1 }} onClick={clearLocal}>
-              Clear
-            </MuiButton>
-            <MuiButton variant="contained" onClick={handleCapture}>
-              Take Photo
-            </MuiButton>
-            <MuiButton sx={{ ml: 1 }} onClick={() => setOpen(false)}>
-              Submit
-            </MuiButton>
-          </Box>
-        </Box>
-      </Dialog>
-    </Box>
   );
 };
 

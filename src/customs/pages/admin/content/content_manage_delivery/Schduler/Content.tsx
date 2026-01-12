@@ -274,7 +274,7 @@ const Content = () => {
       try {
         await deleteSchedulerDelivery(token as string, id);
         setRefreshTrigger((prev) => prev + 1);
-        showSwal('success', 'Scheduler has been deleted.');
+        showSwal('success', 'Successfully deleted scheduler!');
       } catch (error) {
         console.log(error);
         showSwal('error', 'Failed to delete scheduler.');
@@ -323,7 +323,7 @@ const Content = () => {
               isHaveExportPdf={false}
               isHavePagination={true}
               defaultRowsPerPage={rowsPerPage}
-              rowsPerPageOptions={[5, 10, 20, 50, 100]}
+              rowsPerPageOptions={[10, 20, 50, 100]}
               onPaginationChange={(page, rowsPerPage) => {
                 setPage(page);
                 setRowsPerPage(rowsPerPage);

@@ -12,6 +12,8 @@ import {
   Skeleton,
   Grid2 as Grid,
   IconButton,
+  Portal,
+  Backdrop,
 } from '@mui/material';
 import Container from 'src/components/container/PageContainer';
 import PageContainer from 'src/customs/components/container/PageContainer';
@@ -44,6 +46,7 @@ import {
   showConfirmDelete,
   showErrorAlert,
   showSuccessAlert,
+  showSwal,
 } from 'src/customs/components/alerts/alerts';
 
 type CustomFieldTableRow = {
@@ -63,7 +66,7 @@ const Content = () => {
   const [totalRecords, setTotalRecords] = useState(0);
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(30);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -72,6 +75,7 @@ const Content = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [initialFormSnapshot, setInitialFormSnapshot] = useState<string | null>(null);
   const [shouldTrackChanges, setShouldTrackChanges] = useState(false);
+  const [sortDir, setSortDir] = useState('desc');
   useEffect(() => {
     if (!token) return;
     const fetchData = async () => {
@@ -84,15 +88,16 @@ const Content = () => {
           start,
           rowsPerPage,
           sortColumn,
+          sortDir,
           searchKeyword,
         );
         const total = responseGet.collection?.length ?? 0;
-        console.log('Total records:', total);
+        // console.log('Total records:', total);
         setTableData(responseGet.collection);
         setTotalRecords(total);
 
         console.log('Table data:', tableData);
-        const rows = responseGet.collection.map((item: Item) => ({
+        const rows = response.collection.map((item: Item) => ({
           id: item.id,
           name: item.short_name,
           display_text: item.long_display_text,
@@ -191,7 +196,6 @@ const Content = () => {
     setEdittingId('');
     handleOpenDialog();
 
-    // Delay sedikit agar `useEffect` tidak langsung anggap ada perubahan
     setTimeout(() => setShouldTrackChanges(true), 100);
   };
 
@@ -220,8 +224,8 @@ const Content = () => {
     }
   };
   const handleConfirmEdit = () => {
-    setConfirmDialogOpen(false); // Tutup dialog konfirmasi
-    localStorage.removeItem('unsavedCustomDataData'); // Hapus data yang belum disimpan
+    setConfirmDialogOpen(false);
+    localStorage.removeItem('unsavedCustomDataData');
 
     if (pendingEditId) {
       const data = tableData.find((item) => item.id === pendingEditId);
@@ -233,8 +237,8 @@ const Content = () => {
     }
 
     setPendingEditId(null);
-    setIsFormInitialized(true); // ⬅️ Mulai tracking form baru
-    handleCloseDialog(); // ⬅️ Buka dialog edit yang baru
+    setIsFormInitialized(true);
+    handleCloseDialog();
   };
 
   const handleCancelEdit = () => {
@@ -264,8 +268,9 @@ const Content = () => {
       setLoading(true);
       try {
         await deleteCustomField(id, token);
+        showSwal('success', 'Custom Field has been deleted.');
         setRefreshTrigger((prev) => prev + 1);
-        showSuccessAlert('Deleted!', 'Custom Field has been deleted.');
+        // showSuccessAlert('Deleted!', 'Custom Field has been deleted.');
       } catch (error) {
         console.error(error);
         showErrorAlert('Failed!', 'Failed to delete custom field.');
@@ -288,8 +293,9 @@ const Content = () => {
       setLoading(true);
       try {
         await Promise.all(rows.map((row) => deleteCustomField(row.id, token)));
+        showSwal('success', `${rows.length} items have been deleted.`);
         setRefreshTrigger((prev) => prev + 1);
-        showSuccessAlert('Deleted!', `${rows.length} items have been deleted.`);
+        // showSuccessAlert('Deleted!', `${rows.length} items have been deleted.`);
       } catch (error) {
         console.error(error);
         showErrorAlert('Error!', 'Failed to delete some items.');
@@ -313,50 +319,43 @@ const Content = () => {
             </Grid>
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
-              {isDataReady ? (
-                <DynamicTable
-                  overflowX={'auto'}
-                  isHavePagination={false}
-                  data={tableRowSite}
-                  selectedRows={selectedRows}
-                  totalCount={totalFilteredRecords}
-                  // defaultRowsPerPage={rowsPerPage}
-                  // rowsPerPageOptions={[5, 10, 20, 50, 100]}
-                  // onPaginationChange={(page, rowsPerPage) => {
-                  //   setPage(page);
-                  //   setRowsPerPage(rowsPerPage);
-                  // }}
-                  isHaveChecked={true}
-                  isHaveAction={false}
-                  isHaveSearch={true}
-                  isHaveFilter={false}
-                  isHaveExportPdf={false}
-                  isHaveExportXlf={false}
-                  isHaveFilterDuration={false}
-                  isHaveAddData={true}
-                  isHaveHeader={false}
-                  onCheckedChange={(selected) => {
-                    setSelectedRows(selected);
-                  }}
-                  onEdit={(row) => {
-                    handleEdit(row.id);
-                    setEdittingId(row.id);
-                  }}
-                  onDelete={(row) => handleDelete(row.id)}
-                  onBatchDelete={handleBatchDelete}
-                  onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-                  onAddData={() => {
-                    handleAdd();
-                  }}
-                  isHaveObjectData={true}
-                />
-              ) : (
-                <Card sx={{ width: '100%' }}>
-                  <Skeleton />
-                  <Skeleton animation="wave" />
-                  <Skeleton animation={false} />
-                </Card>
-              )}
+              <DynamicTable
+                loading={loading}
+                overflowX={'auto'}
+                isHavePagination={false}
+                data={tableRowSite}
+                selectedRows={selectedRows}
+                totalCount={totalFilteredRecords}
+                // defaultRowsPerPage={rowsPerPage}
+                // rowsPerPageOptions={[5, 10, 20, 50, 100]}
+                // onPaginationChange={(page, rowsPerPage) => {
+                //   setPage(page);
+                //   setRowsPerPage(rowsPerPage);
+                // }}
+                isHaveChecked={true}
+                isHaveAction={false}
+                isHaveSearch={true}
+                isHaveFilter={false}
+                isHaveExportPdf={false}
+                isHaveExportXlf={false}
+                isHaveFilterDuration={false}
+                isHaveAddData={true}
+                isHaveHeader={false}
+                onCheckedChange={(selected) => {
+                  setSelectedRows(selected);
+                }}
+                onEdit={(row) => {
+                  handleEdit(row.id);
+                  setEdittingId(row.id);
+                }}
+                onDelete={(row) => handleDelete(row.id)}
+                onBatchDelete={handleBatchDelete}
+                onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                onAddData={() => {
+                  handleAdd();
+                }}
+                isHaveObjectData={true}
+              />
             </Grid>
           </Grid>
         </Box>
@@ -367,7 +366,7 @@ const Content = () => {
         fullWidth
         maxWidth={formDataAddCustomField.field_type >= 3 ? 'lg' : 'md'}
       >
-        <DialogTitle sx={{ position: 'relative', padding: 5 }}>
+        <DialogTitle sx={{ position: 'relative', padding: 3 }}>
           {edittingId ? 'Edit' : 'Add'} Custom Field
           <IconButton
             aria-label="close"
@@ -380,8 +379,8 @@ const Content = () => {
             }}
             sx={{
               position: 'absolute',
-              right: 8,
-              top: 8,
+              right: 10,
+              top: 10,
               color: (theme) => theme.palette.grey[500],
             }}
           >
@@ -399,17 +398,14 @@ const Content = () => {
               handleCloseDialog();
               setRefreshTrigger(refreshTrigger + 1);
               if (edittingId) {
-                Swal.fire({
-                  icon: 'success',
-                  title: 'Success',
-                  text: 'Custom Field successfully updated!',
-                });
+                // Swal.fire({
+                //   icon: 'success',
+                //   title: 'Success',
+                //   text: 'Custom Field successfully updated!',
+                // });
+                showSwal('success', 'Custom Field successfully updated!');
               } else {
-                Swal.fire({
-                  icon: 'success',
-                  title: 'Success',
-                  text: 'Custom Field successfully created!',
-                });
+                 showSwal('success', 'Custom Field successfully created!');
               }
             }}
             editingId={edittingId}
@@ -430,7 +426,7 @@ const Content = () => {
           </Button>
         </DialogActions>
       </Dialog>
-      {loading && (
+      {/* {loading && (
         <Box
           sx={{
             position: 'fixed',
@@ -447,7 +443,18 @@ const Content = () => {
         >
           <CircularProgress color="primary" />
         </Box>
-      )}
+      )} */}
+      {/* <Portal>
+        <Backdrop
+          open={loading}
+          sx={{
+            color: '#fff',
+            zIndex: 99999, // di atas drawer & dialog
+          }}
+        >
+          <CircularProgress color="primary" />
+        </Backdrop>
+      </Portal> */}
     </PageContainer>
   );
 };

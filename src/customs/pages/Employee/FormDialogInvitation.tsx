@@ -24,7 +24,14 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import Logo from 'src/customs/components/logo/Logo';
-import { IconMan, IconTrash, IconWoman, IconX } from '@tabler/icons-react';
+import {
+  IconArrowLeft,
+  IconGenderTransgender,
+  IconMan,
+  IconTrash,
+  IconWoman,
+  IconX,
+} from '@tabler/icons-react';
 import { ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { SubmitPraForm } from 'src/customs/api/users';
 import dayjs from 'dayjs';
@@ -41,9 +48,11 @@ import {
 } from 'src/customs/api/visitor';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { getVisitorEmployee } from 'src/customs/api/admin';
-import { showErrorAlert, showSuccessAlert } from 'src/customs/components/alerts/alerts';
+import { showErrorAlert, showSuccessAlert, showSwal } from 'src/customs/components/alerts/alerts';
+import { IconArrowRight } from '@tabler/icons-react';
 dayjs.extend(utc);
 dayjs.extend(timezone);
+dayjs.locale('id');
 
 interface FormDialogInvitationProps {
   id: string;
@@ -74,9 +83,8 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
   const code = searchParams.get('code') || '';
 
   const formatDateTime = (value: string | null) =>
-    !value ? '-' : dayjs(value).tz('Asia/Jakarta').format('DD MMMM YYYY HH:mm');
+    !value ? '-' : dayjs(value).tz(dayjs.tz.guess()).format('dddd, DD MMMM YYYY, HH:mm');
 
-  // ✅ Ambil detail invitation
   useEffect(() => {
     const fetchData = async () => {
       if (!id || !token) return;
@@ -129,54 +137,6 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
     setActiveStep((s) => s + 1);
   };
   const handleBack = () => setActiveStep((s) => s - 1);
-
-  // ✅ render field kamera/upload
-  //   const renderCameraField = (f: any, idx: number) => (
-  //     <Box>
-  //       <Box
-  //         sx={{
-  //           border: '2px dashed #90caf9',
-  //           borderRadius: 2,
-  //           padding: 4,
-  //           textAlign: 'center',
-  //           backgroundColor: '#f5faff',
-  //           cursor: 'pointer',
-  //         }}
-  //         onClick={() => setOpenCamera(true)}
-  //       >
-  //         <PhotoCameraIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
-  //         <Typography variant="subtitle1" color="primary" sx={{ fontWeight: 600 }}>
-  //           Use Camera
-  //         </Typography>
-  //       </Box>
-
-  //       <Dialog open={openCamera} onClose={() => setOpenCamera(false)} maxWidth="md" fullWidth>
-  //         <Box sx={{ p: 3 }}>
-  //           <Typography variant="h6" mb={2}>
-  //             Take Selfie Photo
-  //           </Typography>
-  //           <Webcam
-  //             audio={false}
-  //             ref={webcamRef}
-  //             screenshotFormat="image/jpeg"
-  //             videoConstraints={{ facingMode: 'user' }}
-  //             style={{ width: '100%', borderRadius: 8, border: '2px solid #ccc' }}
-  //           />
-  //           <Divider sx={{ my: 2 }} />
-  //           <Box sx={{ textAlign: 'right' }}>
-  //             <Button
-  //               variant="contained"
-  //               onClick={() =>
-  //                 handleCaptureForField((url) => handleChange(f.remarks, url), f.remarks)
-  //               }
-  //             >
-  //               Capture
-  //             </Button>
-  //           </Box>
-  //         </Box>
-  //       </Dialog>
-  //     </Box>
-  //   );
 
   const renderCameraField = (f: any, idx: number) => {
     const key = f.remarks;
@@ -282,7 +242,6 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
             </Box>
 
             <Grid container spacing={2}>
-              {/* CAMERA LIVE VIEW */}
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Webcam
                   audio={false}
@@ -297,7 +256,6 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
                 />
               </Grid>
 
-              {/* PREVIEW FOTO */}
               <Grid size={{ xs: 12, sm: 6 }}>
                 {previewSrc ? (
                   <img
@@ -330,7 +288,6 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
 
             <Divider sx={{ my: 2 }} />
 
-            {/* ACTION BUTTONS */}
             <Box sx={{ textAlign: 'right' }}>
               <Button
                 color="warning"
@@ -424,48 +381,10 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
 
     const path = await uploadFileToCDN(file);
     if (path) setAnswerFile(path);
-    // reset input agar bisa pilih file yg sama lagi
+
     e.target.value = '';
   };
 
-  //   const getFieldTypeByRemarks = (remarks: string): number | null => {
-  //     switch (remarks) {
-  //       case 'selfie_image':
-  //         return 10; // Kamera
-  //       case 'nda':
-  //         return 11; // File upload dokumen
-  //       case 'identity_image':
-  //         return 12; // Upload file + opsi kamera
-  //       default:
-  //         return null;
-  //     }
-  //   };
-
-  // const renderFileUploadField = (f: any, idx: number) => (
-  //   <Box
-  //     sx={{
-  //       border: '2px dashed #90caf9',
-  //       borderRadius: 2,
-  //       padding: 4,
-  //       textAlign: 'center',
-  //       backgroundColor: '#f5faff',
-  //       cursor: 'pointer',
-  //     }}
-  //     onClick={() => fileInputRefs.current[f.remarks]?.click()}
-  //   >
-  //     <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
-  //     <Typography variant="subtitle1">Upload NDA File</Typography>
-  //     <input
-  //       type="file"
-  //       hidden
-  //       accept="application/pdf,image/*"
-  //       ref={(el: any) => (fileInputRefs.current[f.remarks] = el)}
-  //       onChange={(e) =>
-  //         handleFileChangeForField(e, (url) => handleChange(f.remarks, url), f.remarks)
-  //       }
-  //     />
-  //   </Box>
-  // );
   const renderFileUploadField = (f: any, idx: number) => {
     const key = f.remarks;
     const previewSrc = previews[key];
@@ -557,7 +476,6 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
                   />
                 )
               ) : (
-                // No previewSrc, show filename only
                 <Typography variant="caption" noWrap>
                   {shownName}
                 </Typography>
@@ -638,15 +556,14 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
           onClick={() => fileInputRefs.current[key]?.click()}
         >
           <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
-          <Typography variant="subtitle1" sx={{ mt: 1 }}>
+          <Typography variant="h6" sx={{ mt: 1 }}>
             Upload File
           </Typography>
 
           <Typography variant="caption" color="textSecondary">
-            Supports: PDF, DOCX, JPG, PNG
+            Supports: PDF, DOCX, JPG, PNG, JPEG, Up to <b>100KB</b>
           </Typography>
 
-          {/* 🔹 Tombol kamera tambahan */}
           <Typography
             variant="subtitle1"
             component="span"
@@ -660,7 +577,6 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
             Use Camera
           </Typography>
 
-          {/* 🔹 Hidden input file */}
           <input
             id={`file-${key}`}
             type="file"
@@ -676,7 +592,6 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
             }
           />
 
-          {/* 🔹 Preview upload / foto */}
           {(previewSrc || shownName) && (
             <Box mt={2} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               {previewSrc ? (
@@ -825,7 +740,8 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
       <Grid container spacing={2}>
         {section.form?.map((f: any, idx: number) => {
           let displayValue = formValues[f.remarks] ?? '';
-
+          const isDriving =
+            formValues['is_driving'] === 'true' || formValues['is_driving'] === true;
           // Mapping field type berdasarkan remarks
           const type = getFieldTypeByRemarks(f.remarks) ?? f.field_type;
 
@@ -835,12 +751,17 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
           } else if (f.remarks === 'site_place') {
             displayValue = invitationData.site_place_data?.name || displayValue;
           }
+          if (!isDriving && ['vehicle_type', 'vehicle_plate'].includes(f.remarks)) {
+            return null;
+          }
 
           const gridSize = { xs: 12 };
 
           return (
             <Grid key={idx} size={gridSize}>
-              <CustomFormLabel sx={{ mt: 0 }}>{f.long_display_text || f.remarks}</CustomFormLabel>
+              <CustomFormLabel sx={{ mt: 0 }} required={f.mandatory === true}>
+                {f.long_display_text || f.remarks}
+              </CustomFormLabel>
 
               {/* 🔹 CASE A: file-based (selfie/nda/identity) */}
               {(() => {
@@ -915,10 +836,13 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
                   }}
                 >
                   <ToggleButton value="1">
-                    <IconMan size={16} style={{ marginRight: 6 }} /> Laki-Laki
+                    <IconMan size={16} style={{ marginRight: 6 }} /> Male
+                  </ToggleButton>
+                  <ToggleButton value="0">
+                    <IconWoman size={16} style={{ marginRight: 6 }} /> Female
                   </ToggleButton>
                   <ToggleButton value="2">
-                    <IconWoman size={16} style={{ marginRight: 6 }} /> Perempuan
+                    <IconGenderTransgender size={16} style={{ marginRight: 6 }} /> Prefer Not to Say
                   </ToggleButton>
                 </ToggleButtonGroup>
               )}
@@ -980,7 +904,7 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
                       <TextField
                         {...params}
                         label=""
-                        placeholder="Ketik minimal 3 karakter"
+                        placeholder="Enter at least 3 characters to search"
                         fullWidth
                       />
                     )}
@@ -1129,44 +1053,44 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
     ],
   });
 
-
   const handleSubmit = async (e: any) => {
     e.preventDefault();
     if (!invitationData) return;
 
     try {
-      setSubmitting(true); // 🔹 tampilkan backdrop internal
+      setSubmitting(true);
 
       const payload = transformToSubmitPayload(invitationData);
       const res = await submitPraFormEmployee(token as string, id, payload);
 
-      console.log('submitPraFormEmployee response:', res);
+      // console.log('submitPraFormEmployee response:', res);
 
       const ok =
         res &&
         (res.status === 'success' || res.status_code === 200 || res.title === 'success' || res.msg);
 
       if (ok) {
-        // ✅ beri jeda dulu agar spinner terlihat, baru tampilkan snackbar
         await new Promise((r) => setTimeout(r, 600));
 
-        showSuccessAlert('Successfully Pra Register!', res.msg ?? 'Success');
+        // showSuccessAlert('Successfully Pra Register!', res.msg ?? 'Success');
+        showSwal('success', res.msg ?? 'Successfully Pra Register!');
 
         await new Promise((r) => setTimeout(r, 1000));
 
         onSubmitted?.();
       } else {
         await new Promise((r) => setTimeout(r, 600));
-        showErrorAlert('Error!', res.msg ?? 'Something went wrong');
+        // showErrorAlert('Error!', res.msg ?? 'Something went wrong');
+        showSwal('error', res.msg ?? 'Failed created invitation.');
       }
     } catch (err) {
       console.error('❌ Submit error:', err);
       const errMsg = (err as any)?.response?.data?.msg ?? (err as any)?.message ?? 'Unknown error';
 
       await new Promise((r) => setTimeout(r, 600));
-      showErrorAlert('Error!', errMsg);
+      // showErrorAlert('Error!', errMsg);
+      showSwal('error', errMsg ?? 'Failed created invitation.');
     } finally {
-      // 🔹 beri sedikit jeda agar snackbar sempat muncul dulu sebelum backdrop hilang
       setTimeout(() => {
         setSubmitting(false);
       }, 800);
@@ -1209,8 +1133,8 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
                   onClick={() => setActiveStep(i)}
                   sx={{
                     '& .MuiStepLabel-label': {
-                      fontSize: '0.9rem', // 👉 ubah ukuran font
-                      fontWeight: 500, // opsional: tebalin dikit
+                      fontSize: '0.9rem',
+                      fontWeight: 500,
                     },
                   }}
                 >
@@ -1231,12 +1155,12 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
           </Box>
 
           <Box display="flex" flexDirection="row" mt={4}>
-            <Button disabled={activeStep === 0} onClick={handleBack}>
+            <Button disabled={activeStep === 0} onClick={handleBack} startIcon={<IconArrowLeft />}>
               Back
             </Button>
             <Box flex="1 1 auto" />
             {activeStep !== steps.length - 1 ? (
-              <Button variant="contained" onClick={handleNext}>
+              <Button variant="contained" onClick={handleNext} endIcon={<IconArrowRight />}>
                 Next
               </Button>
             ) : (
@@ -1256,8 +1180,7 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
         open={submitting}
       >
         <Box textAlign="center">
-          <CircularProgress color="inherit" />
-          {/* <Typography mt={2}>Submitting your data...</Typography> */}
+          <CircularProgress color="primary" />
         </Box>
       </Backdrop>
     </>
@@ -1284,7 +1207,7 @@ const CustomStepIcon = (props: any) => {
       }}
       className={className}
     >
-      {props.icon} {/* tetap tampilkan nomor step */}
+      {props.icon}
     </Box>
   );
 };

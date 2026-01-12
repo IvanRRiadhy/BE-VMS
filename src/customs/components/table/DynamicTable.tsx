@@ -26,17 +26,21 @@ import {
   TablePagination,
   IconButton,
   Switch,
+  Breadcrumbs,
 } from '@mui/material';
 import BlankCard from 'src/components/shared/BlankCard';
 import { RichHtmlCell } from './RichHtmlCell';
-import { Stack, useMediaQuery, useTheme } from '@mui/system';
+import { fontSize, Stack, useMediaQuery, useTheme } from '@mui/system';
 import {
+  IconAlertSquare,
   IconEye,
   IconEyeOff,
   IconFileExport,
   IconFileSpreadsheet,
   IconFileText,
   IconFileTypePdf,
+  IconForbid2,
+  IconHome,
   IconLogin2,
   IconLogout2,
   IconPencil,
@@ -45,8 +49,18 @@ import {
   IconRefresh,
   IconSettings,
   IconTrash,
+  IconUserCheck,
+  IconUserX,
+  IconXboxX,
 } from '@tabler/icons-react';
-import { AddCircle, CalendarMonth, ChecklistOutlined, Search } from '@mui/icons-material';
+import {
+  AddCircle,
+  CalendarMonth,
+  ChecklistOutlined,
+  ExpandLess,
+  ExpandMore,
+  Search,
+} from '@mui/icons-material';
 import EditIconOutline from '@mui/icons-material/Edit';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import RemoveRedEyeIcon from '@mui/icons-material/RemoveRedEye';
@@ -64,6 +78,8 @@ import backgroundnodata from 'src/assets/images/backgrounds/bg_nodata.svg';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import moment from 'moment';
 import { GroupRoleId } from 'src/constant/GroupRoleId';
+import { useTranslation } from 'react-i18next';
+import { Link, useNavigate } from 'react-router';
 
 type HeaderItem = { name: string };
 
@@ -101,13 +117,17 @@ type DynamicTableProps<
   isHaveSearch?: boolean;
   isHaveSettingOperator?: boolean;
   hasFetched?: boolean;
+  isSiteSpaceName?: boolean;
   isHaveFilter?: boolean;
   isHaveExportPdf?: boolean;
+  isAccessControlType?: boolean;
   isHaveView?: boolean;
   isHaveExportXlf?: boolean;
   isHaveImportExcel?: boolean;
+  isTreeSiteType?: boolean;
   isHaveFilterDuration?: boolean;
   isActionVisitor?: boolean;
+  setCurrentId?: any;
   onAccept?: (row: T) => void;
   onDenied?: (row: T) => void;
   isHaveAddData?: boolean;
@@ -131,6 +151,8 @@ type DynamicTableProps<
   isHaveViewAndAction?: boolean;
   isHavePeriod?: boolean;
   defaultSelectedHeaderItem?: string;
+  isActionListVisitor?: boolean;
+  breadcrumbItems?: any[];
   isHavePagination?: boolean;
   rowsPerPageOptions?: number[];
   defaultRowsPerPage?: number;
@@ -196,10 +218,13 @@ export function DynamicTable<
   isActionEmployee = false,
   height,
   isHaveGender = false,
+  isAccessControlType,
   isHaveVip = false,
   isHaveAddData = false,
   isHaveHeader = false,
   isHaveBooleanSwitch = false,
+  breadcrumbItems,
+  isActionListVisitor = false,
   isHaveVerified = false,
   isHaveView = false,
   isHaveAccess = false,
@@ -214,6 +239,7 @@ export function DynamicTable<
   headerContent,
   hasFetched = false,
   onAccept,
+  isSiteSpaceName,
   isNoActionTableHead = false,
   onDenied,
   isHaveApproval = false,
@@ -236,7 +262,7 @@ export function DynamicTable<
   loading = false,
   isVip,
   isHaveFilterMore = false,
-
+  isTreeSiteType,
   filterMoreContent,
   sortColumns,
   onPrint,
@@ -254,6 +280,7 @@ export function DynamicTable<
   onSettingOperator,
   onView,
   onBatchEdit,
+  setCurrentId,
   onDelete,
   onBatchDelete,
   onSearchKeywordChange,
@@ -270,6 +297,9 @@ export function DynamicTable<
     defaultSelectedHeaderItem ?? null,
   );
   const [showDrawer, setShowDrawer] = useState(false);
+
+  const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const BASE_URL = axiosInstance2.defaults.baseURL + '/cdn';
 
@@ -294,6 +324,7 @@ export function DynamicTable<
     'visitor_give_access',
     'access_control_id',
     'registered_site',
+    'is_email_verified',
   ];
 
   const fallbackColumns = React.useMemo(() => {
@@ -425,6 +456,11 @@ export function DynamicTable<
     1: 'Document',
     2: 'Face',
   };
+  const [openRow, setOpenRow] = useState<number | null>(null);
+
+  const toggleRow = (id: number) => {
+    setOpenRow((prev) => (prev === id ? null : id));
+  };
 
   // 1) Tetapkan lebar kolom yang konsisten
   const CHECKBOX_COL_WIDTH = 40;
@@ -465,7 +501,6 @@ export function DynamicTable<
     brand: 'Brand',
     floor: 'Floor',
     floor_plan_masked_area: 'Floor Plan Masked Area',
-    // floor_plan_device: 'Floor Plan Device',
     visitor_type: 'Visitor Type',
     building: 'Building',
     ble_reader: 'Ble Reader',
@@ -480,6 +515,17 @@ export function DynamicTable<
   const togglePassword = (id: string | number) => {
     setVisiblePasswords((prev) => ({ ...prev, [id]: !prev[id] }));
   };
+
+  const statusBgMap: Record<string, string> = {
+    Checkin: '#13DEB9', // hijau
+    Checkout: '#F44336', // merah
+    Block: '#000000', // hitam
+    Deny: '#8B0000', // merah tua
+    Approve: '#13DEB9', // hijau
+    Pracheckin: '#13DEB9', // hijau
+  };
+
+  const defaultBg = '#9E9E9E'; // abu-abu
 
   const tooltipLabels: Record<string, { true: string; false: string }> = {
     is_primary: {
@@ -520,40 +566,13 @@ export function DynamicTable<
     },
   };
 
-  // const isOperator = (groupId?: string) =>
-  //   !!groupId &&
-  //   [GroupRoleId.OperatorAdmin, GroupRoleId.OperatorVMS].some(
-  //     (id) => id === groupId.toUpperCase(),
-  //   );
-
   const formatDate = (date?: string) => {
     if (!date) return '-'; // fallback kalau kosong
-    return moment.utc(date).local().format('DD-MM-YYYY HH:mm');
-  };
-
-  const formatDateTime = (dateStr?: string, extendMinutes?: number) => {
-    if (!dateStr) return '-';
-
-    const baseTime = moment.utc(dateStr);
-
-    // Tambahkan menit hanya kalau ada extend
-    if (extendMinutes && extendMinutes > 0) {
-      baseTime.add(extendMinutes, 'minutes');
-    }
-
-    return baseTime
-      .tz(moment.tz.guess()) // ✅ ubah ke zona waktu lokal user
-      .format('DD MMM YYYY, HH:mm');
+    return moment.utc(date).local().format('DD-MM-YYYY, HH:mm');
   };
 
   const getAccessActions = (row: any) => {
-    const {
-      visitor_give_access,
-      can_grant,
-      can_revoke,
-      can_block,
-      early_access, // ✅ tambahkan ini (pastikan datanya ada di row)
-    } = row;
+    const { visitor_give_access, can_grant, can_revoke, can_block, early_access } = row;
 
     const allDisabled = !can_grant && !can_revoke && !can_block;
 
@@ -609,17 +628,15 @@ export function DynamicTable<
             </Box>
           );
 
-        case 2: // Revoke → tidak tampil tombol
-        case 3: // Block → tidak tampil tombol
+        case 2:
+        case 3:
           return <></>;
 
         default:
-          // selain Grant (misal belum di-grant) → tidak bisa apa-apa
           return <></>;
       }
     }
 
-    // 🟢 2️⃣ Normal behavior jika bukan early_access
     switch (visitor_give_access) {
       case 1: // Grant
         return (
@@ -696,8 +713,6 @@ export function DynamicTable<
                     <Typography sx={{ fontSize: '1rem' }} variant="subtitle2" fontWeight={600}>
                       {headerContent.title}
                     </Typography>
-
-                    {/* HAPUS Box overflowX, biarkan scroller Tabs yang kerja */}
                     <Tabs
                       value={headerContent.items.findIndex(
                         (item) => item.name === selectedHeaderItem,
@@ -725,8 +740,8 @@ export function DynamicTable<
                           gap: 0.5,
                         },
                         '& .MuiTab-root': {
-                          minWidth: 'auto', // penting biar tab tidak “kaku” 72px+
-                          whiteSpace: 'nowrap', // biar label tidak turun baris
+                          minWidth: 'auto',
+                          whiteSpace: 'nowrap',
                           minHeight: 20,
                           textTransform: 'none',
                           fontSize: '0.6rem',
@@ -771,7 +786,40 @@ export function DynamicTable<
       <BlankCard sx={{ height: { height } }}>
         <CardContent sx={{ height: { height } }}>
           <Grid2 container sx={{ marginBottom: 0.1 }}>
-            {/* ROW 1 */}
+            {isSiteSpaceName && (
+              <Grid2
+                size={{ xs: 12 }}
+                display="flex"
+                justifyContent="space-between"
+                alignItems="center"
+                flexWrap={'wrap'}
+                sx={{
+                  mb: 2,
+                  gap: { xs: 1.5, md: 0 },
+                }}
+              >
+                <Breadcrumbs aria-label="breadcrumb">
+                  {breadcrumbItems?.map((item, index) => {
+                    const isLast = index === breadcrumbItems.length - 1;
+                    return isLast ? (
+                      <Typography key={item.id} sx={{ color: 'text.primary', fontSize: '16px' }}>
+                        {item.name}
+                      </Typography>
+                    ) : (
+                      <Link
+                        key={item.id}
+                        to={`/admin/manage/site-space/${item.id}`}
+                        onClick={() => setCurrentId(item.id)}
+                      >
+                        <Typography sx={{ color: 'primary.main', fontSize: '16px' }}>
+                          {item.name}
+                        </Typography>
+                      </Link>
+                    );
+                  })}
+                </Breadcrumbs>
+              </Grid2>
+            )}
             <Grid2
               size={{ xs: 12 }}
               display="flex"
@@ -779,70 +827,68 @@ export function DynamicTable<
               alignItems="center"
               flexWrap={'wrap'}
               sx={{
-                mb: 3,
-                gap: { xs: 1.5, md: 0 }, // gap 2 hanya saat xs (mobile), 0 saat sm ke atas
+                mb: 2,
+                gap: { xs: 1.5, md: 0 },
               }}
             >
               {/* SEARCH MENU */}
               <Stack direction="row" spacing={2}>
                 {isHaveSearch && (
-                  <Grid2
-                    container
-                    spacing={0.5}
-                    // size={{ xs: 12 }}
-                    display="flex"
-                    justifyContent="space-between"
-                    alignItems="center"
-                    flexWrap={'wrap'}
-                  >
-                    <Grid2 size={{ xs: 10, lg: 10 }}>
-                      <TextField
-                        fullWidth
-                        variant="outlined"
-                        size="small"
-                        value={searchKeyword}
-                        onChange={(e) => setSearchKeyword(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        sx={{
-                          height: 36,
-                          width: {
-                            xs: '100%', // mobile tetap penuh
-                            sm: '320px', // layar medium ke atas dibatasi 320px
-                          },
-                          // width: '300px',
-                        }}
-                        InputProps={{
-                          sx: {
+                  <>
+                    <Grid2
+                      container
+                      spacing={0.5}
+                      display="flex"
+                      justifyContent="space-between"
+                      alignItems="center"
+                      flexWrap={'wrap'}
+                    >
+                      <Grid2 size={{ xs: 10, lg: 10 }}>
+                        <TextField
+                          fullWidth
+                          variant="outlined"
+                          size="small"
+                          value={searchKeyword}
+                          onChange={(e) => setSearchKeyword(e.target.value)}
+                          onKeyDown={handleKeyDown}
+                          sx={{
                             height: 36,
-                          },
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <Search fontSize="small" />
-                            </InputAdornment>
-                          ),
-                        }}
-                      />
+                            width: {
+                              xs: '100%',
+                              sm: '320px',
+                            },
+                          }}
+                          InputProps={{
+                            sx: {
+                              height: 36,
+                            },
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <Search fontSize="small" />
+                              </InputAdornment>
+                            ),
+                          }}
+                        />
+                      </Grid2>
+                      <Grid2 size={{ xs: 2, lg: 2 }}>
+                        <Button
+                          variant="contained"
+                          fullWidth
+                          onClick={handleSearch}
+                          sx={{
+                            height: 36,
+                            width: '100%',
+                            fontSize: '0.7rem',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          <Typography fontSize={'0.7rem'} variant="caption" my={0.2}>
+                            {t('search')}
+                          </Typography>
+                        </Button>
+                      </Grid2>
                     </Grid2>
-                    <Grid2 size={{ xs: 2, lg: 2 }}>
-                      <Button
-                        variant="contained"
-                        fullWidth
-                        onClick={
-                          handleSearch // panggil fungsi kamu
-                        }
-                        sx={{
-                          height: 36,
-                          width: '100%',
-                          fontSize: '0.7rem',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        <Typography fontSize={'0.7rem'} variant="caption" my={0.2}>
-                          Search
-                        </Typography>
-                      </Button>
-                    </Grid2>
-                  </Grid2>
+                  </>
                 )}
                 {isHaveHeaderTitle && (
                   <Typography
@@ -1075,10 +1121,7 @@ export function DynamicTable<
                   </Typography>
                 </Box>
 
-                {/* View */}
-
-                {/* Tombol Edit (batch edit hanya jika perlu) */}
-                {!isHaveCard || isNoActionTableHead == false ? (
+                {!isNoActionTableHead ? (
                   <Box display="flex" alignItems="center" gap={3} pr={2.5}>
                     <EditIconOutline
                       sx={{ fontSize: '1.2rem', cursor: 'pointer' }}
@@ -1094,8 +1137,6 @@ export function DynamicTable<
                         if (!Array.isArray(selectedRows) || selectedRows.length === 0) return;
 
                         const confirmed = await onBatchDelete?.(selectedRows);
-
-                        // Jika berhasil (misalnya return true), reset selection
                         if (confirmed) {
                           setCheckedIds([]);
                           if (setSelectedRows) {
@@ -1105,16 +1146,7 @@ export function DynamicTable<
                       }}
                     />
                   </Box>
-                ) : // <Button
-                //   size="small"
-                //   color="primary"
-                //   variant="contained"
-                //   onClick={() => onChooseCard?.()} // ← buka dialog bulk
-                //   // disabled={selectedInvitations.length === 0}
-                // >
-                //   Choose Card
-                // </Button>
-                null}
+                ) : null}
               </Grid2>
             )}
           </Grid2>
@@ -1141,9 +1173,9 @@ export function DynamicTable<
                         columns.length +
                         (isHaveChecked ? 1 : 0) + // checkbox
                         1 + // NO
-                        (isHaveAction ? 1 : 0) // action
+                        (isHaveAction ? 1 : 0)
                       }
-                      sx={{ padding: 0 }} // hilangkan padding agar Box bekerja optimal
+                      sx={{ padding: 0 }}
                     >
                       <Box
                         height={150}
@@ -1179,149 +1211,6 @@ export function DynamicTable<
                 // whiteSpace: 'normal', // biar teks bisa wrap
                 // }}
               >
-                {/* <TableHead>
-                <TableRow>
-                  {isHaveChecked && (
-                    <TableCell
-                      sx={{
-                        position: 'sticky',
-                        left: 0,
-                        zIndex: 2,
-                        background: 'white',
-                        width: 40,
-                      }}
-                    >
-                      <Checkbox
-                        checked={
-                          paginatedData.length > 0 &&
-                          paginatedData.every((r) => checkedIds.includes(r.id))
-                        }
-                        indeterminate={
-                          paginatedData.some((r) => checkedIds.includes(r.id)) &&
-                          !paginatedData.every((r) => checkedIds.includes(r.id))
-                        }
-                        onChange={handleCheckAll}
-                      />
-                    </TableCell>
-                  )}
-                  {isHaveAction && isActionVisitor && (
-                    <TableCell
-                      sx={{
-                        position: 'sticky',
-                        left: isHaveChecked ? CHECKBOX_COL_WIDTH : 0,
-                        zIndex: 4,
-                        background: 'white',
-                        minWidth: ACTION_COL_WIDTH,
-                        maxWidth: ACTION_COL_WIDTH,
-                      }}
-                    >
-                      Action
-                    </TableCell>
-                  )}
-
-                  <TableCell
-                    sx={{
-                      position: 'sticky',
-                      left:
-                        (isHaveChecked ? CHECKBOX_COL_WIDTH : 0) +
-                        (isActionVisitor ? ACTION_COL_WIDTH : 0),
-                      zIndex: 4,
-                      background: 'white',
-                      minWidth: INDEX_COL_WIDTH,
-                      maxWidth: INDEX_COL_WIDTH,
-                      // marginRight: '10px',
-                    }}
-                  >
-                    #
-                  </TableCell>
-                  {columns.map((col, idx) => {
-                    const makeSticky = isStickyVisitorCol(idx);
-
-                    // custom label
-                    let label: string = col;
-                    if (label.startsWith('is_')) {
-                      label = label.replace(/^is_/, ''); // hapus "is_"
-                    }
-
-                    const pretty = label
-                      .replace(/_/g, ' ')
-                      .replace(/\b\w/g, (c) => c.toUpperCase());
-
-                    return (
-                      <TableCell
-                        key={col}
-                        sx={{
-                          ...(makeSticky && {
-                            position: {
-                              xs: 'static', // default kecil
-                              lg: makeSticky ? 'sticky' : 'static', // sticky hanya di lg
-                            },
-                            left: {
-                              xs: 'auto',
-                              lg: makeSticky ? getStickyLeft(idx) : 'auto',
-                            },
-                            zIndex: {
-                              xs: 'auto',
-                              lg: makeSticky ? 4 : 'auto',
-                            },
-                            background: 'white',
-                            minWidth: DATA_COL_WIDTH,
-                            maxWidth: DATA_COL_WIDTH,
-                          }),
-                        }}
-                      >
-                        {pretty}
-                      </TableCell>
-                    );
-                  })}
-                  {isHaveAction && !isActionVisitor && (
-                    <TableCell
-                      sx={{
-                        position: 'sticky',
-                        right: 0,
-                        bgcolor: 'background.paper',
-                        zIndex: 4, // header > body
-                        p: 0,
-                        verticalAlign: 'middle',
-                        textAlign: 'center',
-                      }}
-                    >
-                      Action
-                    </TableCell>
-                  )}
-
-                  {isHaveActionOnlyEdit && (
-                    <TableCell
-                      sx={{ position: 'sticky', right: 0, background: 'white', zIndex: 2 }}
-                    >
-                      Action
-                    </TableCell>
-                  )}
-                  {isHaveArrival && (
-                    <TableCell
-                      sx={{ position: 'sticky', right: 0, background: 'white', zIndex: 2 }}
-                    >
-                      <Button variant="contained">Arrival</Button>
-                    </TableCell>
-                  )}
-          
-
-                  {isHaveCard && (
-                    <TableCell sx={{ position: 'sticky', right: 0, zIndex: 2 }}>
-                      <Button
-                        size="small"
-                        color="primary"
-                        variant="contained"
-                        onClick={() => onChooseCard?.()} // ← buka dialog bulk
-                        // disabled={selectedInvitations.length === 0}
-                      >
-                        Choose Card
-                      </Button>
-                    </TableCell>
-                  )}
-                </TableRow>
-              </TableHead> */}
-
                 <TableHead>
                   <TableRow>
                     {/* ✅ Checkbox */}
@@ -1359,6 +1248,45 @@ export function DynamicTable<
                               onChange={handleCheckAll}
                             />
                           )
+                        )}
+                      </TableCell>
+                    )}
+
+                    {isTreeSiteType && (
+                      <TableCell
+                        sx={{
+                          position: 'sticky',
+                          left: 0,
+                          zIndex: 2,
+                          background: 'white',
+                          width: 40,
+                          padding: 0,
+                          textAlign: 'center',
+                        }}
+                      >
+                        {loading ? (
+                          <Skeleton
+                            variant="rectangular"
+                            width={20}
+                            height={20}
+                            animation="wave"
+                            sx={{ marginLeft: '16px' }}
+                          />
+                        ) : (
+                          // paginatedData.length > 0 && (
+                          //   <Checkbox
+                          //     checked={
+                          //       paginatedData.length > 0 &&
+                          //       paginatedData.every((r) => checkedIds.includes(r.id))
+                          //     }
+                          //     indeterminate={
+                          //       paginatedData.some((r) => checkedIds.includes(r.id)) &&
+                          //       !paginatedData.every((r) => checkedIds.includes(r.id))
+                          //     }
+                          //     onChange={handleCheckAll}
+                          //   />
+                          // )
+                          <></>
                         )}
                       </TableCell>
                     )}
@@ -1529,7 +1457,6 @@ export function DynamicTable<
                   {loading ? (
                     [...Array(rowsPerPage)].map((_, idx) => (
                       <TableRow key={`skeleton-${idx}`}>
-                        {/* ✅ Checkbox column */}
                         {isHaveChecked && (
                           <TableCell
                             padding="checkbox"
@@ -1607,12 +1534,6 @@ export function DynamicTable<
                                     height={32}
                                     animation="wave"
                                   />
-                                  {/* <Skeleton
-                                    variant="text"
-                                    width="50%"
-                                    height={18}
-                                    animation="wave"
-                                  /> */}
                                 </>
                               ) : col.includes('status') ? (
                                 <Skeleton
@@ -1659,47 +1580,6 @@ export function DynamicTable<
                   ) : paginatedData.length === 0 && !loading ? (
                     <></>
                   ) : (
-                    // <TableRow>
-                    // <TableCell
-                    //   colSpan={
-                    //     isSmallScreen
-                    //       ? 3 // 📱 layar kecil: tampil ringkas saja
-                    //       : columns.length + (isHaveChecked ? 1 : 0) + 1 + (isHaveAction ? 1 : 0) // 💻 layar besar: full span
-                    //   }
-                    //   sx={{
-                    //     p: 0,
-                    //     border: 'none',
-                    //     height: 250, // tinggi area kosong
-                    //     verticalAlign: 'middle', // penting
-                    //   }}
-                    // >
-                    //   <Box
-                    //     sx={{
-                    //       height: '100%',
-                    //       width: '100%',
-                    //       display: 'flex',
-                    //       flexDirection: 'column',
-                    //       alignItems: 'center',
-                    //       justifyContent: 'center', // center vertikal
-                    //       textAlign: 'center',
-                    //       color: 'text.secondary',
-                    //       pointerEvents: 'none', // biar gak ganggu scroll
-                    //     }}
-                    //   >
-                    //     <img
-                    //       src={backgroundnodata}
-                    //       alt="No Data"
-                    //       height="100"
-                    //       style={{
-                    //         objectFit: 'contain',
-                    //         marginBottom: 8,
-                    //         opacity: 0.85,
-                    //       }}
-                    //     />
-                    //     <Typography variant="body1">No Data Available</Typography>
-                    //   </Box>
-                    // </TableCell>
-                    // </TableRow>
                     paginatedData.map((row: any, index) => (
                       <TableRow key={row.id}>
                         {isHaveChecked && (
@@ -1714,6 +1594,14 @@ export function DynamicTable<
                           </TableCell>
                         )}
 
+                        {isTreeSiteType && (
+                          <TableCell width={50}>
+                            <IconButton size="small" onClick={() => toggleRow(row.id)}>
+                              {openRow === row.id ? <ExpandLess /> : <ExpandMore />}
+                            </IconButton>
+                          </TableCell>
+                        )}
+
                         {isHaveAction && isActionVisitor && (
                           <TableCell
                             sx={{
@@ -1721,7 +1609,7 @@ export function DynamicTable<
                               left: isHaveChecked ? CHECKBOX_COL_WIDTH : 0,
                               zIndex: 3,
                               background: 'white',
-                              minWidth: ACTION_COL_WIDTH, // ditambah biar muat icon VIP
+                              minWidth: ACTION_COL_WIDTH,
                               maxWidth: ACTION_COL_WIDTH,
                             }}
                           >
@@ -1851,8 +1739,34 @@ export function DynamicTable<
                                   lines={htmlClampLines}
                                   maxWidth={htmlMaxWidth}
                                 />
+                              ) : col === 'type' && isAccessControlType ? (
+                                <>{row.type === 0 ? 'Access' : 'Group'}</>
                               ) : col === 'card_status' ? (
                                 CARD_STATUS[Number(row[col])] ?? String(row[col] ?? '-')
+                              ) : col === 'is_employee' ? (
+                                row[col] ? (
+                                  <IconUserCheck size={20} color="green" />
+                                ) : (
+                                  <IconUserX size={20} color="red" />
+                                )
+                              ) : col === 'visitor_status' ? (
+                                <Box
+                                  sx={{
+                                    backgroundColor: statusBgMap[row.visitor_status] || defaultBg,
+                                    borderRadius: '999px',
+                                    color: '#fff',
+                                    px: 1.5,
+                                    py: 0.5,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 600,
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                >
+                                  {row.visitor_status || '-'}
+                                </Box>
                               ) : col === 'document_type' ? (
                                 DOCUMENT_TYPE[Number(row[col])] ?? String(row[col] ?? '-')
                               ) : col === 'status' && isHaveApproval ? (
@@ -2047,11 +1961,11 @@ export function DynamicTable<
                                   <span>{(row[col] as React.ReactNode) ?? '-'}</span>
 
                                   {isHaveVerified &&
-                                    (row[col] == 'is_email_verified' ? (
+                                    (row.is_email_verified ? (
                                       <Tooltip title="Email Verified">
                                         <Box
                                           sx={{
-                                            backgroundColor: 'green',
+                                            backgroundColor: '#13DEB9',
                                             borderRadius: '50%',
                                             display: 'inline-flex',
                                             alignItems: 'center',
@@ -2233,65 +2147,6 @@ export function DynamicTable<
                           </TableCell>
                         )}
 
-                        {/* {isHaveApproval && (row as any)?.status == null ? (
-                          <TableCell
-                            sx={{
-                              position: 'sticky',
-                              right: 0,
-                              bgcolor: 'background.paper',
-                              zIndex: 2,
-                              p: 0,
-                              verticalAlign: 'middle',
-                            }}
-                          >
-                            <Box
-                              sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: 1,
-                                px: 1.5,
-                                py: 1.25,
-                                height: '100%',
-                              }}
-                            >
-                   
-                              <Tooltip title="Accept">
-                                <Button
-                                  variant="contained"
-                                  color="primary"
-                                  size="small"
-                                  sx={{ minWidth: 64, textTransform: 'none' }}
-                                  onClick={() => onAccept?.(row)}
-                                >
-                                  Accept
-                                </Button>
-                              </Tooltip>
-
-                              <Tooltip title="Deny">
-                                <Button
-                                  variant="contained"
-                                  color="error"
-                                  size="small"
-                                  sx={{ minWidth: 64, textTransform: 'none' }}
-                                  onClick={() => onDenied?.(row)}
-                                >
-                                  Denied
-                                </Button>
-                              </Tooltip>
-                            </Box>
-                          </TableCell>
-                        ) : (
-                          <TableCell></TableCell>
-                          // null
-                        )} */}
-
-                        {/* {isHaveAccess && (
-                          <TableCell>
-                            
-                          </TableCell>
-                        )} */}
-
                         {isHaveAction && !isActionVisitor && (
                           <TableCell
                             sx={{
@@ -2316,17 +2171,7 @@ export function DynamicTable<
                             >
                               {isHaveApproval ? (
                                 (row as any)?.status == null ? (
-                                  <TableCell
-                                    sx={{
-                                      position: 'sticky',
-                                      right: 0,
-                                      bgcolor: 'background.paper',
-                                      zIndex: 2,
-                                      p: 0,
-                                      verticalAlign: 'middle',
-                                      borderBottom: 'none',
-                                    }}
-                                  >
+                                  <>
                                     <Box
                                       sx={{
                                         display: 'flex',
@@ -2368,9 +2213,9 @@ export function DynamicTable<
                                         </Button>
                                       </Tooltip>
                                     </Box>
-                                  </TableCell>
+                                  </>
                                 ) : (
-                                  <TableCell
+                                  <Box
                                     sx={{
                                       position: 'sticky',
                                       right: 0,
@@ -2381,7 +2226,7 @@ export function DynamicTable<
                                     }}
                                   >
                                     -
-                                  </TableCell>
+                                  </Box>
                                 )
                               ) : isHaveAccess ? (
                                 <TableCell
@@ -2500,6 +2345,105 @@ export function DynamicTable<
                                     >
                                       <IconRefresh width={18} height={18} />
                                     </IconButton>
+                                  </Tooltip>
+                                </>
+                              ) : isActionListVisitor ? (
+                                <>
+                                  <Tooltip
+                                    title="Block Visitor"
+                                    arrow
+                                    placement="top"
+                                    slotProps={{
+                                      tooltip: {
+                                        sx: {
+                                          fontSize: '0.8rem',
+                                          padding: '8px 14px',
+                                        },
+                                      },
+                                    }}
+                                  >
+                                    <Button
+                                      // variant="contained"
+                                      // color="error"
+                                      size="small"
+                                      startIcon={<IconForbid2 />}
+                                      // onClick={() => onBlock?.(row)} // optional trigger
+                                      sx={{
+                                        textTransform: 'none',
+                                        borderRadius: 1,
+                                        fontWeight: 500,
+                                        backgroundColor: '#000',
+                                        color: 'white',
+                                        '&:hover': { backgroundColor: '#000 ', opacity: 0.8 },
+                                      }}
+                                    >
+                                      Block
+                                    </Button>
+                                  </Tooltip>
+                                  <Tooltip
+                                    title="Blacklist Visitor"
+                                    arrow
+                                    placement="top"
+                                    slotProps={{
+                                      tooltip: {
+                                        sx: {
+                                          fontSize: '0.8rem',
+                                          padding: '8px 14px',
+                                        },
+                                      },
+                                    }}
+                                  >
+                                    <Button
+                                      // variant="contained"
+                                      // color="error"
+                                      size="small"
+                                      startIcon={<IconXboxX />}
+                                      // onClick={() => onBlock?.(row)} // optional trigger
+                                      sx={{
+                                        textTransform: 'none',
+                                        borderRadius: 1,
+                                        fontWeight: 500,
+                                        backgroundColor: '#6B0000',
+                                        color: 'white',
+                                        '&:hover': { backgroundColor: '#000 ', opacity: 0.8 },
+                                      }}
+                                    >
+                                      Blacklist
+                                    </Button>
+                                  </Tooltip>
+                                  <Tooltip
+                                    title="Sign alert to visitor"
+                                    arrow
+                                    placement="top"
+                                    slotProps={{
+                                      tooltip: {
+                                        sx: {
+                                          fontSize: '0.8rem',
+                                          padding: '8px 14px',
+                                        },
+                                      },
+                                    }}
+                                  >
+                                    <Button
+                                      // variant="contained"
+                                      // color="error"
+                                      size="small"
+                                      startIcon={<IconAlertSquare />}
+                                      // onClick={() => onBlock?.(row)} // optional trigger
+                                      sx={{
+                                        textTransform: 'none',
+                                        borderRadius: 1,
+                                        fontWeight: 500,
+                                        backgroundColor: '#FFC107',
+                                        // width: '100%',
+                                        px: 1,
+                                        textWrap: 'nowrap',
+                                        color: 'white',
+                                        '&:hover': { backgroundColor: '#FFC107 ', opacity: 0.8 },
+                                      }}
+                                    >
+                                      Sign Alert
+                                    </Button>
                                   </Tooltip>
                                 </>
                               ) : (

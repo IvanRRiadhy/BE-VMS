@@ -1,8 +1,6 @@
 import {
   Avatar,
   Button,
-  Card,
-  CardContent,
   Dialog,
   DialogActions,
   DialogContent,
@@ -17,7 +15,6 @@ import {
   TextField,
   Typography,
   Portal,
-  Chip,
   FormControlLabel,
   Checkbox,
   Paper,
@@ -27,15 +24,13 @@ import {
   Backdrop,
 } from '@mui/material';
 import { Box } from '@mui/system';
+
 import {
   IconArrowAutofitRight,
-  IconArrowsMaximize,
   IconBan,
   IconBrandGmail,
-  IconBrowser,
   IconBuildingSkyscraper,
   IconCalendarTime,
-  IconCalendarUp,
   IconCamera,
   IconCar,
   IconCards,
@@ -44,29 +39,24 @@ import {
   IconForbid2,
   IconGenderMale,
   IconHome,
-  IconIdBadge2,
   IconLicense,
   IconLogin,
   IconLogin2,
   IconLogout,
   IconMapPin,
   IconNumbers,
-  IconQrcode,
   IconSearch,
   IconTicket,
   IconUser,
   IconUsersGroup,
-  IconWindowMaximize,
   IconX,
 } from '@tabler/icons-react';
 import { Scanner } from '@yudiel/react-qr-scanner';
 import moment from 'moment-timezone';
 import LprImage from 'src/assets/images/products/pic_lpr.png';
 import FRImage from 'src/assets/images/products/pic_fr.png';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import QRCode from 'react-qr-code';
-import PageContainer from 'src/components/container/PageContainer';
+import Container from 'src/components/container/PageContainer';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
@@ -86,7 +76,6 @@ import {
   createMultipleGrantAccess,
   createMultipleInvitationActionOperator,
   getAvailableCardOperator,
-  getGrantAccessOperator,
   getInvitationCode,
   getInvitationOperatorRelated,
 } from 'src/customs/api/operator';
@@ -129,24 +118,11 @@ const DashboardOperator = () => {
   const scanContainerRef = useRef<HTMLDivElement | null>(null);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [invitationCode, setInvitationCode] = useState<Item[]>([]);
-  const [relatedData, setRelatedData] = useState<any[]>([]);
-
-  // const [code, setCode] = useState('');
   const [selectedInvitations, setSelectedInvitations] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
 
   const [selectedCards, setSelectedCards] = useState<string[]>([]);
   const [openChooseCardDialog, setOpenChooseCardDialog] = useState(false);
-
-  const handleOpenChooseCard = () => {
-    if (!selectedInvitations?.length) {
-      setSnackbarMsg('Please select at least one invitation first.');
-      setSnackbarType('info');
-      return;
-    }
-    setSelectedCards([]);
-    setOpenChooseCardDialog(true);
-  };
 
   const handleOpenScanQR = () => setOpenDialogIndex(1);
   const handleCloseScanQR = () => {
@@ -238,10 +214,7 @@ const DashboardOperator = () => {
 
   const [searchKeyword, setSearchKeyword] = useState('');
 
-  const filteredRows = useMemo(() => {
-    if (!searchKeyword) return rows;
-    return rows.filter((r) => r.visitor?.toLowerCase().includes(searchKeyword.toLowerCase()));
-  }, [rows]);
+
 
   const assignedByCard = useMemo(() => {
     const m = new Map<string, string | number>();
@@ -289,74 +262,6 @@ const DashboardOperator = () => {
     fetchData();
   }, [token]);
 
-  // const handleSubmitQRCode = async () => {
-  //   try {
-  //     const res = await getInvitationCode(token as string, qrValue);
-  //     const data = res.collection?.data ?? [];
-  //     console.log(data);
-
-  //     if (data.length === 0) {
-  //       setSnackbarMsg('Your code does not exist.');
-  //       setSnackbarType('error');
-  //       setSnackbarOpen(true);
-  //       return;
-  //     }
-
-  //     const invitation = data[0];
-  //     const invitationId = invitation.id;
-
-  //     // ✅ Ambil data related visitor
-  //     const relatedRes = await getInvitationOperatorRelated(invitationId, token as string);
-  //     const relatedData = relatedRes.collection ?? [];
-
-  //     const mappedVisitors = relatedData.map((v: any) => ({
-  //       id: v.id ?? '-',
-  //       name: v.visitor?.name ?? '-',
-  //       avatar: '',
-  //       vehicle_plate_number: v.vehicle_plate_number ?? '-',
-  //       visitor_status: v.visitor_status ?? '-',
-  //     }));
-  //     console.log('mapped visitor', mappedVisitors);
-
-  //     setRelatedVisitors(mappedVisitors);
-  //     console.log('related visitor', relatedVisitors);
-  //     setInvitationCode(data);
-  //     setVisitorStatus(data[0]?.visitor_status ?? null);
-  //     const acc = data[0]?.access;
-  //     if (acc) {A
-  //       const arr = Array.isArray(acc) ? acc : [acc];
-  //       const mappedAccess = arr.map((a: any) => ({
-  //         id: a.id,
-  //         // access_control_id: a.access_control_id,
-  //         name: a.access_control_name ?? '-',
-  //         early_access: a.early_access,
-  //         visitor_give_access: a.visitor_give_access, // 🔥 simpan field ini!
-  //         status:
-  //           a.visitor_give_access === 1
-  //             ? 'Grant'
-  //             : a.visitor_give_access === 2
-  //             ? 'Revoke'
-  //             : a.visitor_give_access === 3
-  //             ? 'Block'
-  //             : 'No Action',
-  //       }));
-  //       setAccessData(mappedAccess);
-  //     } else {
-  //       setAccessData([]);
-  //     }
-  //     setOpenDetailQRCode(true);
-  //     handleCloseScanQR();
-
-  //     setSnackbarMsg('Kode Akses ditemukan.');
-  //     setSnackbarType('success');
-  //     setSnackbarOpen(true);
-  //   } catch (e) {
-  //     console.error('Error fetching invitation code:', e);
-  //     setSnackbarMsg('Your code does not exist.');
-  //     setSnackbarType('error');
-  //     setSnackbarOpen(true);
-  //   }
-  // };
 
   const handleSubmitQRCode = async (value: string) => {
     try {
@@ -586,52 +491,6 @@ const DashboardOperator = () => {
     return m;
   }, [availableCards]);
 
-  // const handleConfirmChooseCards = async () => {
-  //   const trxVisitorId = invitationCode[0]?.id;
-
-  //   if (!trxVisitorId) {
-  //     setSnackbarMsg('Missing visitor ID.');
-  //     setSnackbarType('error');
-  //     setSnackbarOpen(true);
-  //     return;
-  //   }
-
-  //   if (!selectedCards.length) {
-  //     setSnackbarMsg('Please choose at least one card.');
-  //     setSnackbarType('info');
-  //     setSnackbarOpen(true);
-  //     return;
-  //   }
-
-  //   try {
-  //     // 🔥 panggil API createGrandAccessOperator untuk tiap kartu terpilih
-  //     for (const cardNumber of selectedCards) {
-  //       const payload = {
-  //         card_number: String(cardNumber),
-  //         trx_visitor_id: trxVisitorId,
-  //       };
-
-  //       // 👉 log payload sebelum kirim
-  //       console.log('🚀 Grant Access Payload:', payload);
-
-  //       const res = await createGrandAccessOperator(token as string, payload);
-
-  //       // 👉 log hasil response dari API
-  //       console.log('✅ Grant Access Response:', res);
-  //     }
-
-  //     setSnackbarMsg(`Successfully assigned ${selectedCards.length} card(s).`);
-  //     setSnackbarType('success');
-  //     setSnackbarOpen(true);
-
-  //     handleCloseChooseCard();
-  //   } catch (err) {
-  //     console.error('❌ createGrandAccessOperator error:', err);
-  //     setSnackbarMsg('Failed to assign card.');
-  //     setSnackbarType('error');
-  //     setSnackbarOpen(true);
-  //   }
-  // };
 
   const handleConfirmChooseCards = async () => {
     try {
@@ -1303,8 +1162,8 @@ const DashboardOperator = () => {
   }, [selectedAccessIds, accessData]);
 
   return (
-    <>
-      <PageContainer title="Dashboard">
+  
+      <Container title="Dashboard">
         <Grid container spacing={2} sx={{ mt: 0 }}>
           <Grid size={{ xs: 12, lg: 12 }}>
             <TopCard items={cards} size={{ xs: 12, lg: 3 }} />
@@ -2812,8 +2671,7 @@ const DashboardOperator = () => {
             <CircularProgress color="inherit" />
           </Backdrop>
         </Portal>
-      </PageContainer>
-    </>
+      </Container>
   );
 };
 

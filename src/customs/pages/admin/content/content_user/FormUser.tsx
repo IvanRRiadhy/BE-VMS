@@ -29,6 +29,7 @@ import {
   FormHelperText,
 } from '@mui/material';
 import { GroupRoleId } from 'src/constant/GroupRoleId';
+import { showSwal } from 'src/customs/components/alerts/alerts';
 
 interface FormUserProps {
   formData: CreateUserRequest;
@@ -44,9 +45,9 @@ const FormUser: React.FC<FormUserProps> = ({ formData, setFormData, edittingId, 
   const [snackbarMsg, setSnackbarMsg] = useState('');
   const [snackbarType, setSnackbarType] = useState<'success' | 'error' | 'info'>('info');
   const [alertType, setAlertType] = useState<'info' | 'success' | 'error'>('info');
-  const groupRoles = Object.entries(GroupRoleId).map(([name, id]) => ({
-    id,
-    name,
+  const groupOptions = Object.entries(GroupRoleId).map(([key, value]) => ({
+    id: value,
+    label: key.replace(/([A-Z])/g, ' $1'),
   }));
   const [alertMessage, setAlertMessage] = useState<string>(
     'Complete the following data properly and correctly',
@@ -66,8 +67,6 @@ const FormUser: React.FC<FormUserProps> = ({ formData, setFormData, edittingId, 
 
     try {
       if (!token) {
-        setAlertType('error');
-        setAlertMessage('Missing token. Please login again.');
         return;
       }
 
@@ -77,19 +76,13 @@ const FormUser: React.FC<FormUserProps> = ({ formData, setFormData, edittingId, 
         await createUser(token, formData);
       }
 
-      setAlertType('success');
-      setAlertMessage(edittingId ? 'User successfully updated!' : 'User successfully created!');
+      showSwal('success', edittingId ? 'User successfully updated!' : 'User successfully created!');
       setTimeout(() => {
         onSuccess?.();
       }, 600);
     } catch (err: any) {
-      setAlertType('error');
-      setAlertMessage('Something went wrong. Please try again later.');
       if (err?.errors) setErrors(err.errors);
-      setTimeout(() => {
-        setAlertType('info');
-        setAlertMessage('Complete the following data properly and correctly');
-      }, 3000);
+      showSwal('error', 'Something went wrong. Please try again later.');
     } finally {
       setTimeout(() => setLoading(false), 600);
     }
@@ -125,31 +118,10 @@ const FormUser: React.FC<FormUserProps> = ({ formData, setFormData, edittingId, 
     }
   }, [organizationRes, employeeRes]);
 
-  const handleGroupChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.toString(); // pastikan string
-
-    console.log('👉 Dipilih value:', value);
-
-    // jika pilih Employee → tampilkan alert dan hentikan update
-    if (value === GroupRoleId.Employee) {
-      setSnackbarMsg('Employee must be created in the Employee page.');
-      setSnackbarType('info');
-      setSnackbarOpen(true);
-      return; // hentikan, jadi value tidak berubah
-    }
-
-    // lanjut kalau bukan Employee
-    handleChange({ target: { id: 'group_id', value } } as any);
-  };
-
   return (
     <>
       <form onSubmit={handleSubmit}>
         <Grid2 container spacing={2} sx={{ mb: 2 }}>
-          <Grid2 size={12} mt={2}>
-            <Alert severity={alertType}>{alertMessage}</Alert>
-          </Grid2>
-
           <Grid2 size={{ xs: 12, lg: 6 }}>
             <CustomFormLabel htmlFor="fullname" sx={{ mt: 0.5 }}>
               Full Name
@@ -161,7 +133,8 @@ const FormUser: React.FC<FormUserProps> = ({ formData, setFormData, edittingId, 
               error={Boolean(errors.fullname)}
               helperText={errors.fullname ?? ''}
               fullWidth
-              required
+              placeholder="Enter Your Fullname"
+              // required
               disabled={loading}
             />
           </Grid2>
@@ -176,8 +149,9 @@ const FormUser: React.FC<FormUserProps> = ({ formData, setFormData, edittingId, 
               onChange={handleChange}
               error={Boolean(errors.username)}
               helperText={errors.username ?? ''}
+              placeholder="Enter your username"
               fullWidth
-              required
+              // required
               disabled={loading}
             />
           </Grid2>
@@ -205,7 +179,7 @@ const FormUser: React.FC<FormUserProps> = ({ formData, setFormData, edittingId, 
                   helperText={errors.organization_id ?? ''}
                   placeholder="Select organization"
                   fullWidth
-                  required
+                  // required
                   disabled={loading}
                 />
               )}
@@ -263,38 +237,66 @@ const FormUser: React.FC<FormUserProps> = ({ formData, setFormData, edittingId, 
             </CustomFormLabel>
             <CustomTextField
               id="group_id"
-              name="group_id"
               select
               value={formData.group_id || ''}
-              onChange={handleGroupChange}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  group_id: e.target.value, // UUID string
+                }))
+              }
               error={Boolean(errors.group_id)}
               helperText={errors.group_id ?? ''}
               fullWidth
-              disabled={loading}
             >
-              {groupRoles.map((group) => (
-                <MenuItem key={group.id} value={group.id}>
-                  {group.name}
+              <MenuItem value="" disabled>
+                Select Group
+              </MenuItem>
+
+              {groupOptions.map((group) => (
+                <MenuItem key={group.id} value={group.id.toUpperCase()}>
+                  {group.label}
                 </MenuItem>
               ))}
             </CustomTextField>
           </Grid2>
 
-          <Grid2 size={{ xs: 12, lg: 6 }}>
-            <CustomFormLabel htmlFor="email" sx={{ mt: 0.5 }}>
-              Email
-            </CustomFormLabel>
-            <CustomTextField
-              id="email"
-              type="email"
-              value={formData.email || ''}
-              onChange={handleChange}
-              error={Boolean(errors.email)}
-              helperText={errors.email ?? ''}
-              fullWidth
-              disabled={loading}
-            />
-          </Grid2>
+          {!edittingId && (
+            <Grid2 size={{ xs: 12, lg: 6 }}>
+              <CustomFormLabel htmlFor="email" sx={{ mt: 0.5 }}>
+                Email
+              </CustomFormLabel>
+              <CustomTextField
+                id="email"
+                value={formData.email || ''}
+                onChange={handleChange}
+                error={Boolean(errors.email)}
+                helperText={errors.email ?? ''}
+                fullWidth
+                placeholder="Enter your email"
+                // required
+                disabled={loading}
+              />
+            </Grid2>
+          )}
+
+          {edittingId && (
+            <Grid2 size={{ xs: 12 }}>
+              <CustomFormLabel htmlFor="email" sx={{ mt: 0.5 }}>
+                Email
+              </CustomFormLabel>
+              <CustomTextField
+                id="email"
+                value={formData.email || ''}
+                onChange={handleChange}
+                error={Boolean(errors.email)}
+                helperText={errors.email ?? ''}
+                fullWidth
+                // required
+                disabled={loading}
+              />
+            </Grid2>
+          )}
 
           {!edittingId && (
             <Grid2 size={{ xs: 12, lg: 6 }}>
@@ -309,7 +311,8 @@ const FormUser: React.FC<FormUserProps> = ({ formData, setFormData, edittingId, 
                 error={Boolean(errors.password)}
                 helperText={errors.password ?? ''}
                 fullWidth
-                required
+                placeholder="Enter your password"
+                // required
                 disabled={loading}
               />
             </Grid2>
@@ -348,20 +351,15 @@ const FormUser: React.FC<FormUserProps> = ({ formData, setFormData, edittingId, 
               fullWidth
               multiline
               rows={3}
+              placeholder="Enter your description"
               disabled={loading}
             />
           </Grid2>
 
           <Grid2 size={12}>
             <Box display="flex" justifyContent="flex-end" mt={1}>
-              <Button
-                color="primary"
-                variant="contained"
-                type="submit"
-                disabled={loading}
-                startIcon={loading ? <CircularProgress size={18} /> : undefined}
-              >
-                Submit
+              <Button color="primary" variant="contained" type="submit" disabled={loading}>
+                {loading ? <CircularProgress size={20} /> : 'Submit'}
               </Button>
             </Box>
           </Grid2>

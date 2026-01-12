@@ -61,6 +61,7 @@ export type Item = {
   duration_visit: number;
   max_time_visit: number;
   can_parking: boolean;
+  can_track_cctv: boolean;
   can_access: boolean;
   add_to_menu: boolean;
   need_document: boolean;
@@ -144,6 +145,7 @@ export const CreateVisitorTypeRequestSchema = z.object({
   can_parking: z.boolean().default(false),
   can_access: z.boolean().default(false),
   add_to_menu: z.boolean().default(false),
+  can_track_cctv: z.boolean().default(false),
   need_document: z.boolean().default(false),
   grace_time: z.number().default(0),
   direct_visit: z.boolean().default(false),
@@ -188,6 +190,7 @@ export const updateVisitorTypeSchmea = z.object({
   max_time_visit: z.number().default(0),
   can_parking: z.boolean().default(false),
   can_track_ble: z.boolean().nullable().optional(),
+  can_track_cctv: z.boolean().nullable().optional(),
   can_access: z.boolean().default(false),
   add_to_menu: z.boolean().default(false),
   need_document: z.boolean().default(false),

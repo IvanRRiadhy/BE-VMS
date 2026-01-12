@@ -209,7 +209,7 @@ const ManageDetailScheduler: FC = () => {
         colour: colourMap[employeeId] || '#000',
       };
     });
-    console.log('mappedEvents', mappedEvents);
+    // console.log('mappedEvents', mappedEvents);
 
     setEvents(mappedEvents);
   };
@@ -348,16 +348,49 @@ const ManageDetailScheduler: FC = () => {
 
   const [lastRange, setLastRange] = useState({ start: null, end: null });
 
+  // const handleRangeChange = (range: any, view: any) => {
+  //   const activeView = view || currentView;
+
+  //   const { start, end } = normalizeRange(range, activeView);
+
+  //   setLastRange({ start, end });
+
+  //   // const startDate = dayjs(start).subtract(1, 'day').format('YYYY-MM-DD');
+  //   const startDate = dayjs(start).format('YYYY-MM-DD');
+  //   const endDate = dayjs(end).format('YYYY-MM-DD');
+  //   loadSchedule(startDate, endDate);
+  // };
+
   const handleRangeChange = (range: any, view: any) => {
     const activeView = view || currentView;
 
+    // =======================
+    // 🎯 FIX PENTING UNTUK WEEK
+    // =======================
+    if (activeView === Views.WEEK) {
+      console.log('📅 RAW WEEK RANGE:', range);
+
+      // RBC selalu kirim array 7 hari
+      if (Array.isArray(range) && range.length === 7) {
+        const start = dayjs(range[0]).startOf('day').toDate();
+        const end = dayjs(range[6]).endOf('day').toDate();
+
+        setLastRange({ start, end } as any);
+
+        loadSchedule(dayjs(start).format('YYYY-MM-DD'), dayjs(end).format('YYYY-MM-DD'));
+
+        return;
+      }
+    }
+
+    // =======================
+    // MONTH & DAY tetap normal
+    // =======================
     const { start, end } = normalizeRange(range, activeView);
 
     setLastRange({ start, end });
 
-    const startDate = dayjs(start).subtract(1, 'day').format('YYYY-MM-DD');
-    const endDate = dayjs(end).format('YYYY-MM-DD');
-    loadSchedule(startDate, endDate);
+    loadSchedule(dayjs(start).format('YYYY-MM-DD'), dayjs(end).format('YYYY-MM-DD'));
   };
 
   useEffect(() => {
@@ -556,7 +589,7 @@ const ManageDetailScheduler: FC = () => {
       itemDataCustomNavListing={AdminNavListingData}
       itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
     >
-      <PageContainers title="Schedule">
+      <PageContainers title="Calendar">
         <Box
           sx={{ display: 'flex', flexDirection: mdUp ? 'row' : 'column', backgroundColor: '#fff' }}
         >
@@ -689,7 +722,7 @@ const ManageDetailScheduler: FC = () => {
                             mt: 0.5,
                             backgroundColor: c.colour,
                             borderRadius: 1,
-                            marginLeft: '10px',
+                            marginLeft: '20px',
                             border: '1px solid #eee',
                             display: 'flex',
                             cursor: 'pointer',
@@ -776,7 +809,7 @@ const ManageDetailScheduler: FC = () => {
             <Grid container spacing={2}>
               <Grid size={{ xs: 12 }}>
                 <CustomFormLabel htmlFor="name" sx={{ mt: 0 }}>
-                  Employee
+                  Delivery Staff
                 </CustomFormLabel>
                 <Autocomplete
                   options={deliveryStaff}
@@ -788,7 +821,7 @@ const ManageDetailScheduler: FC = () => {
                 />
               </Grid>
               <Grid size={{ xs: 12 }}>
-                <CustomFormLabel sx={{ mt: 0 }}>Head Employee (Optional)</CustomFormLabel>
+                <CustomFormLabel sx={{ mt: 0 }}>Head Delivery Staff</CustomFormLabel>
                 <Autocomplete
                   // options={deliveryStaff.filter((x) => x.id !== selectedDeliveryData?.id)}
                   options={allStaff}

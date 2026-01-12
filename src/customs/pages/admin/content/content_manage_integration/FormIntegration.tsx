@@ -27,6 +27,7 @@ import {
   IntegrationType,
 } from 'src/customs/api/models/Admin/Integration';
 import { createIntegration, updateIntegration } from 'src/customs/api/admin';
+import { showSwal } from 'src/customs/components/alerts/alerts';
 
 interface FormIntegrationProps {
   formData: CreateIntegrationRequest;
@@ -47,6 +48,7 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
     const { id, value } = e.target;
     setFormData((prev) => ({ ...prev, [id]: value }));
   };
+
   const handleOnSubmit = async (e: React.FormEvent) => {
     console.log('Submitting form with data:', formData);
     e.preventDefault();
@@ -64,6 +66,7 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
         return;
       }
       const data: CreateIntegrationRequest = CreateIntegrationRequestSchema.parse(formData);
+      console.log('data', data);
       if (editingId && editingId !== '') {
         await updateIntegration(editingId, data, token);
       } else {
@@ -71,8 +74,12 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
       }
 
       localStorage.removeItem('unsavedIntegrationData');
-      setAlertType('success');
-      setAlertMessage('Site successfully created!');
+      // setAlertType('success');
+      // setAlertMessage('Site successfully created!');
+      showSwal(
+        'success',
+        editingId ? 'Integration successfully updated!' : 'Integration successfully created!',
+      );
       setTimeout(() => {
         onSuccess?.();
       }, 600);
@@ -80,12 +87,7 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
       if (err?.errors) {
         setErrors(err.errors);
       }
-      setAlertType('error');
-      setAlertMessage('Something went wrong. Please try again later.');
-      setTimeout(() => {
-        setAlertType('info');
-        setAlertMessage('Complete the following data properly and correctly');
-      }, 3000);
+      showSwal('error', err.message || 'Something went wrong. Please try again later.');
     } finally {
       setTimeout(() => {
         setLoading(false);
@@ -93,7 +95,6 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
     }
   };
   function formatEnumLabel(label: string) {
-    // Insert a space before all caps and capitalize the first letter
     return label
       .replace(/([A-Z])/g, ' $1')
       .replace(/^./, (str) => str.toUpperCase())
@@ -104,9 +105,9 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
     <>
       <form onSubmit={handleOnSubmit}>
         <Grid container spacing={2} sx={{ mb: 2 }}>
-          <Grid size={12}>
+          {/* <Grid size={12}>
             <Alert severity={alertType}>{alertMessage}</Alert>
-          </Grid>
+          </Grid> */}
           <Grid size={6}>
             <Typography variant="h6" sx={{ mb: 2, borderLeft: '4px solid #673ab7', pl: 1 }}>
               Integration Details
@@ -129,7 +130,7 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
               fullWidth
               disabled
             />
-            <CustomFormLabel htmlFor="integration_type">Integration Type :</CustomFormLabel>
+            <CustomFormLabel htmlFor="integration_type">Integration Type</CustomFormLabel>
             <CustomTextField
               id="integration_type"
               value={formatEnumLabel(IntegrationType[formData.integration_type])}
@@ -142,7 +143,7 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
             <Typography variant="h6" sx={{ mb: 2, borderLeft: '4px solid #673ab7', pl: 1 }}>
               API Type : {formatEnumLabel(ApiTypeAuth[formData.api_type_auth])}
             </Typography>
-            <CustomFormLabel htmlFor="api_url">API URL :</CustomFormLabel>
+            <CustomFormLabel htmlFor="api_url">API URL</CustomFormLabel>
             <CustomTextField
               id="api_url"
               value={formData.api_url}
@@ -151,7 +152,6 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
               helperText={errors.api_url || ''}
               fullWidth
             />
-            {/* Show Auth Username/Password only for Basic (0) */}
             {formData.api_type_auth === 0 && (
               <>
                 <CustomFormLabel htmlFor="api_auth_username">API Auth Username</CustomFormLabel>
@@ -185,7 +185,7 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
                   helperText={errors.api_key_field || ''}
                   onChange={handleChange}
                   fullWidth
-                  disabled
+                  // disabled
                 />
                 <CustomFormLabel htmlFor="api_key_value">API Key Value</CustomFormLabel>
                 <CustomTextField
@@ -208,7 +208,7 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
             disabled={loading}
             size="medium"
           >
-            {loading ? 'Submitting...' : 'Submit'}
+            {loading ? <CircularProgress size={20} /> : 'Submit'}
           </Button>
         </Box>
       </form>
@@ -216,8 +216,8 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
         <Backdrop
           open={loading}
           sx={{
-            color: '#fff',
-            zIndex: (t) => (t.zIndex.snackbar ?? 1400) - 1, // di atas modal (1300), di bawah snackbar (1400)
+            color: 'primary.main',
+            zIndex: (t) => (t.zIndex.snackbar ?? 1400) - 1,
           }}
         >
           <CircularProgress />

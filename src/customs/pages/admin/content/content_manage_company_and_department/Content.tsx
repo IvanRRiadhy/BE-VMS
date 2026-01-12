@@ -381,28 +381,38 @@ const Content = () => {
   // ======= Table actions =======
   const handleDelete = async (id: string) => {
     if (!token) return;
-    const confirmed = await showConfirmDelete('Are you sure to delete?', "You won't be able to revert this!");
+
+    const confirmed = await showConfirmDelete(
+      `Are you sure you want to delete this ${selectedType}?`,
+    );
     if (!confirmed) return;
 
     try {
       let successText = '';
-      if (selectedType === 'department') {
-        await deleteDepartment(id, token);
-        successText = 'Department has been successfully deleted.';
-      } else if (selectedType === 'district') {
-        await deleteDistrict(id, token);
-        successText = 'District has been removed successfully.';
-      } else {
-        await deleteOrganization(id, token);
-        successText = 'Organization data has been deleted.';
+
+      switch (selectedType) {
+        case 'department':
+          await deleteDepartment(id, token);
+          successText = 'Department has been successfully deleted.';
+          break;
+
+        case 'district':
+          await deleteDistrict(id, token);
+          successText = 'District has been successfully deleted.';
+          break;
+
+        case 'organization':
+        default:
+          await deleteOrganization(id, token);
+          successText = 'Organization has been successfully deleted.';
+          break;
       }
 
       setRefreshTrigger((p) => p + 1);
-      // showSuccessAlert('Deleted!', successText);
-      showSwal('success', successText, 3000);
+      showSwal('success', successText);
     } catch (error) {
       console.error(error);
-      showErrorAlert('Error!', 'Something went wrong while deleting.');
+      showErrorAlert('Error!', `Failed to delete ${selectedType}.`);
     }
   };
 
@@ -424,7 +434,8 @@ const Content = () => {
         }),
       );
       setRefreshTrigger((p) => p + 1);
-      showSuccessAlert('Deleted!', `${rows.length} items have been deleted.`);
+      // showSuccessAlert('Deleted!', `${rows.length} items have been deleted.`);
+      showSwal('success', `${rows.length} items have been deleted.`);
       setSelectedRows([]);
     } catch (error) {
       console.error(error);
@@ -468,7 +479,7 @@ const Content = () => {
     setRefreshTrigger((p) => p + 1);
   };
   return (
-   <PageContainer
+    <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
       itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
     >
@@ -481,13 +492,12 @@ const Content = () => {
 
             <Grid container mt={1} size={{ xs: 12, lg: 12 }}>
               <Grid size={{ xs: 12, lg: 12 }}>
-                {/* {isDataReady ? ( */}
                 <DynamicTable
                   loading={loading}
                   isHavePagination
                   totalCount={totalRecords}
                   defaultRowsPerPage={rowsPerPage}
-                  rowsPerPageOptions={[5, 10, 25, 50, 100]}
+                  rowsPerPageOptions={[10, 25, 50, 100]}
                   onPaginationChange={(newPage, newRowsPerPage) => {
                     setPage(newPage);
                     setRowsPerPage(newRowsPerPage);
@@ -529,13 +539,6 @@ const Content = () => {
                   onAddData={() => openAdd(mapSelectedToEntity)}
                   onFilterByColumn={(column) => setSortColumn(column.column)}
                 />
-                {/* ) : (
-                  <Card sx={{ width: '100%' }}>
-                    <Skeleton />
-                    <Skeleton animation="wave" />
-                    <Skeleton animation={false} />
-                  </Card>
-                )}  */}
               </Grid>
             </Grid>
           </Grid>
@@ -548,15 +551,14 @@ const Content = () => {
         onClose={(_, __) => attemptCloseDialog()}
         fullWidth
         maxWidth="md"
-        transitionDuration={0} // ⬅️ hilangkan fade supaya tidak ada “Update” yang muncul sepersekian detik
-        TransitionProps={{ onExited: () => setEditingRow(null) }} // ⬅️ bersihkan data edit setelah benar-benar tertutup
+        transitionDuration={0}
+        TransitionProps={{ onExited: () => setEditingRow(null) }}
       >
         <DialogTitle
           sx={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            // background: 'linear-gradient(135deg, rgba(2,132,199,0.05), rgba(99,102,241,0.08))',
           }}
         >
           {dialog?.mode === 'add' && `Add ${entityLabel(dialog?.entity)}`}

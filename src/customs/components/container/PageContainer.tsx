@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import CustomNavigation from 'src/customs/components/header/navigation/CustomNavigation';
 import { styled, Box, useTheme } from '@mui/material';
 import { useSelector } from 'src/store/Store';
@@ -8,6 +8,7 @@ import { ItemDataCustomNavListing } from '../header/navigation/CustomNavListing'
 import { ItemDataCustomSidebarItems } from '../header/navigation/CustomSidebarItems';
 import HeaderHorizontal from 'src/customs/components/header/desktop_screen/HeaderHorizontal';
 import HeaderVertical from 'src/customs/components/header/mobile_screen/HeaderVertical';
+import Customizer from 'src/layouts/full/shared/customizer/Customizer';
 
 export interface CustomPageContainerProps {
   itemDataCustomNavListing?: ItemDataCustomNavListing[];
@@ -36,7 +37,32 @@ const PageContainer: React.FC<CustomPageContainerProps> = ({
   children,
 }) => {
   const customizer = useSelector((state: AppState) => state.customizer);
+  const [hideChrome, setHideChrome] = React.useState(false);
   const theme = useTheme();
+  useEffect(() => {
+    const checkFullscreen = () => {
+      const isF11 = window.innerHeight === screen.height;
+      // const isF11 = document.fullscreenElement != null;
+      setHideChrome(isF11);
+    };
+
+    // listen F11 fullscreen changes
+    window.addEventListener('resize', checkFullscreen);
+
+    // listen react-full-screen child events
+    const handler = (e: any) => {
+      setHideChrome(e.detail.isFullscreen);
+    };
+    window.addEventListener('operator-fullscreen-changed', handler);
+
+    checkFullscreen(); // initial
+
+    return () => {
+      window.removeEventListener('resize', checkFullscreen);
+      window.removeEventListener('operator-fullscreen-changed', handler);
+    };
+  }, []);
+
   return (
     <>
       <MainWrapper
@@ -51,14 +77,15 @@ const PageContainer: React.FC<CustomPageContainerProps> = ({
           }}
         >
           {/* Header */}
-          {customizer.isHorizontal ? (
-            <HeaderHorizontal
-              itemDataCustomNavListing={itemDataCustomNavListing}
-              itemDataCustomSidebarItems={itemDataCustomSidebarItems}
-            />
-          ) : (
-            <HeaderVertical />
-          )}
+          {!hideChrome &&
+            (customizer.isHorizontal ? (
+              <HeaderHorizontal
+                itemDataCustomNavListing={itemDataCustomNavListing}
+                itemDataCustomSidebarItems={itemDataCustomSidebarItems}
+              />
+            ) : (
+              <HeaderVertical />
+            ))}
 
           {/* Navigation (Horizontal Only) */}
           {/* {customizer.isHorizontal && (
@@ -84,6 +111,7 @@ const PageContainer: React.FC<CustomPageContainerProps> = ({
               {React.isValidElement(children) ? <ScrollToTop>{children}</ScrollToTop> : children}{' '}
             </Box>
           </Box>
+          {/* <Customizer /> */}
         </PageWrapper>
       </MainWrapper>
     </>

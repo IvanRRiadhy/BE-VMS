@@ -31,36 +31,27 @@ export const GuestNavListingData: ItemDataCustomNavListing[] = [
     chipColor: 'secondary',
     href: '/guest/invitation',
   },
-
-  {
-    id: uniqueId(),
-    title: 'Report',
-    icon: IconReport,
-    chipColor: 'secondary',
-    href: '/guest/report',
-  },
-
-  // {
-  //   id: uniqueId(),
-  //   title: 'Visitor',
-  //   icon: IconUsers,
-  //   chipColor: 'secondary',
-  //   href: '/guest/visitor',
-  // },
-  {
-    id: uniqueId(),
-    title: 'Parking',
-    icon: IconCar,
-    chipColor: 'secondary',
-    href: '/guest/parking',
-  },
-
   {
     id: uniqueId(),
     title: 'History',
     icon: IconHistory,
     chipColor: 'secondary',
     href: '/guest/history',
+  },
+  {
+    id: uniqueId(),
+    title: 'Parking',
+    icon: IconCar,
+    chipColor: 'secondary',
+    href: '/parking',
+    target: '_blank',
+  },
+  {
+    id: uniqueId(),
+    title: 'Report',
+    icon: IconReport,
+    chipColor: 'secondary',
+    href: '/guest/report',
   },
 ];
 
@@ -85,31 +76,24 @@ export const GuestCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
   },
   {
     id: uniqueId(),
-    title: 'Report',
-    icon: IconReport,
+    title: 'History',
+    icon: IconHistory,
     chipColor: 'secondary',
-    href: '/guest/report',
+    href: '/guest/history',
   },
-
-  // {
-  //   id: uniqueId(),
-  //   title: 'Visitor',
-  //   icon: IconUsers,
-  //   chipColor: 'secondary',
-  //   href: '/guest/visitor',
-  // },
   {
     id: uniqueId(),
     title: 'Parking',
     icon: IconCar,
     chipColor: 'secondary',
-    href: '/guest/parking',
+    href: '/parking',
+    target: '_blank',
   },
   {
     id: uniqueId(),
-    title: 'History',
-    icon: IconHistory,
+    title: 'Report',
+    icon: IconReport,
     chipColor: 'secondary',
-    href: '/guest/history',
+    href: '/guest/report',
   },
 ];

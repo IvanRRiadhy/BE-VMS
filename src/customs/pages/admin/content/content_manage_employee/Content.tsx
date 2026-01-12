@@ -29,9 +29,6 @@ import {
   Item,
 } from 'src/customs/api/models/Admin/Employee';
 import {
-  getAllDepartmentsPagination,
-  getAllDistrictsPagination,
-  getAllEmployeePagination,
   getAllEmployeePaginationFilterMore,
   getAllEmployee,
   deleteEmployee,
@@ -48,6 +45,7 @@ import {
   showConfirmDelete,
   showSuccessAlert,
   showErrorAlert,
+  showSwal,
 } from 'src/customs/components/alerts/alerts';
 import FilterMoreContent from './FilterMoreContent';
 
@@ -68,7 +66,7 @@ type EnableField = {
 };
 
 interface OptionItem {
-  id: string; // atau 'number' jika ID dari API berupa angka
+  id: string;
   name: string;
 }
 
@@ -407,17 +405,19 @@ const Content = () => {
   const handleDelete = async (id: string) => {
     if (!token) return;
 
-    const confirmed = await showConfirmDelete('Are you sure?', "You won't be able to revert this!");
+    const confirmed = await showConfirmDelete('Are you sure delete this employee?');
 
     if (confirmed) {
       setLoading(true);
       try {
         await deleteEmployee(id, token);
         setRefreshTrigger((prev) => prev + 1);
-        showSuccessAlert('Deleted!', 'Employee has been deleted.');
+        // showSuccessAlert('Deleted!', 'Employee has been deleted.');
+        showSwal('success', 'Succesfully deleted employee.');
       } catch (error) {
         console.error(error);
-        showErrorAlert('Gagal!', 'Failed to delete employee.');
+        // showErrorAlert('Gagal!', 'Failed to delete employee.');
+        showSwal('error', 'Failed to delete employee.');
         setTimeout(() => setLoading(false), 500);
       } finally {
         setTimeout(() => setLoading(false), 500);
@@ -507,7 +507,6 @@ const Content = () => {
               <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
             </Grid>
             <Grid size={{ xs: 12, lg: 12 }}>
-              {/* {isDataReady ? ( */}
               <DynamicTable
                 loading={loading}
                 overflowX={'auto'}
@@ -522,7 +521,7 @@ const Content = () => {
                 isHaveExportPdf={false}
                 isHavePagination={true}
                 defaultRowsPerPage={rowsPerPage}
-                rowsPerPageOptions={[5, 10, 20, 50, 100]}
+                rowsPerPageOptions={[10, 20, 50, 100]}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);
@@ -560,14 +559,6 @@ const Content = () => {
                   handleAdd();
                 }}
               />
-              {/* ) : (
-                <Card sx={{ width: '100%' }}>
-                  <Skeleton />
-                  <Skeleton />
-                  <Skeleton animation="wave" />
-                  <Skeleton animation={false} />
-                </Card>
-              )} */}
             </Grid>
           </Grid>
         </Box>
@@ -588,7 +579,7 @@ const Content = () => {
               if (isFormChanged) {
                 setConfirmDialogOpen(true);
               } else {
-                handleCloseDialog(); // langsung tutup kalau tidak ada perubahan
+                handleCloseDialog();
               }
             }}
             sx={{

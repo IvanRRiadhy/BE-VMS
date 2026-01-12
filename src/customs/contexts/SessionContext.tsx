@@ -41,6 +41,7 @@
 // };
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { revokeToken } from '../api/users';
 
 export type AuthType = 'admin' | 'guest' | null;
 
@@ -86,6 +87,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     setToken(null);
     setAuthType(null);
     setGroupId(null);
+    revokeToken(token!);
   };
 
   return (

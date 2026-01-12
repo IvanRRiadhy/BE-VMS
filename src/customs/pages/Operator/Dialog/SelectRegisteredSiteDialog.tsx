@@ -10,7 +10,7 @@ import {
   TextField,
   Autocomplete,
 } from '@mui/material';
-import { IconX } from '@tabler/icons-react';
+import { IconArrowRight, IconX } from '@tabler/icons-react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 
@@ -92,7 +92,12 @@ const SelectRegisteredSiteDialog: React.FC<SelectRegisteredSiteDialogProps> = ({
           }}
         />
         <Box display="flex" justifyContent="flex-end" mt={2}>
-          <Button variant="contained" color="primary" onClick={handleNext}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleNext}
+            endIcon={<IconArrowRight size={18} />}
+          >
             Next
           </Button>
         </Box>

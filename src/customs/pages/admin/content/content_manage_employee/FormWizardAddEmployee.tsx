@@ -377,7 +377,6 @@ const FormWizardAddEmployee = ({
     return out;
   };
 
-  // opsional: normalisasi tipe agar sesuai schema (ID sebagai string)
   const normalizeForSubmit = (v: CreateEmployeeRequest) => ({
     ...v,
     organization_id: String(v.organization_id ?? ''),

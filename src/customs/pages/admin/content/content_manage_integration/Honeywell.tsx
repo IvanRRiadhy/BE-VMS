@@ -58,6 +58,7 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import { showSwal } from 'src/customs/components/alerts/alerts';
 
 const Honeywell = ({ id }: { id: string }) => {
   // const { id } = useParams();
@@ -275,7 +276,6 @@ const Honeywell = ({ id }: { id: string }) => {
   };
 
   useEffect(() => {
-    // pertama kali juga fetch default 'companies'
     fetchListByType(selectedType);
     setIsDataReady(true);
   }, [selectedType, token, id]);
@@ -307,10 +307,6 @@ const Honeywell = ({ id }: { id: string }) => {
     setEditingRow(null);
     setOpenFormType(null);
   };
-
-  // const filteredData = dummyData.filter(
-  //   (item) => item[selectedType as keyof typeof item] !== undefined,
-  // );
 
   const headerMap: Record<string, string> = {
     companies: 'Companies',
@@ -368,7 +364,6 @@ const Honeywell = ({ id }: { id: string }) => {
   };
 
   useEffect(() => {
-    // kalau dialog ditutup, kosongkan semua form
     if (!editDialogType) {
       setCompanyForm(null);
       setBadgeTypeForm(null);
@@ -377,7 +372,6 @@ const Honeywell = ({ id }: { id: string }) => {
       return;
     }
 
-    // belum ada data detail → jangan set dulu
     if (!detailData) return;
 
     if (editDialogType === 'Companies') {
@@ -415,7 +409,6 @@ const Honeywell = ({ id }: { id: string }) => {
         name: detailData.name ?? '',
         access_control_id: detailData.access_control_id ?? '',
 
-        // readonly (opsional ditampilkan)
         description: detailData.description ?? '',
         clearcode_id: detailData.clearcode_id ?? '',
         honeywell_id: detailData.honeywell_id ?? '',
@@ -425,14 +418,12 @@ const Honeywell = ({ id }: { id: string }) => {
       setBadgeStatusForm({
         // editable
         name: detailData.name ?? '',
-        // readonly (opsional ditampilkan)
         description: detailData.description ?? '',
         badge_status_id: detailData.badge_status_id ?? '',
         honeywell_id: detailData.honeywell_id ?? '',
         id: detailData.id ?? '',
       });
     } else {
-      // jenis dialog lain → kosongkan semua
       setCompanyForm(null);
       setBadgeTypeForm(null);
       setClearCodeForm(null);
@@ -462,7 +453,7 @@ const Honeywell = ({ id }: { id: string }) => {
           setVisitorTypeOptions([]);
         } else if (editDialogType === 'Badge Type') {
           // Load visitor types
-          const res = await getAllVisitorType(token); // kalau butuh id, pakai id juga
+          const res = await getAllVisitorType(token);
           if (cancelled) return;
 
           const items =
@@ -475,7 +466,7 @@ const Honeywell = ({ id }: { id: string }) => {
           setOrgOptions([]);
         } else if (editDialogType === 'Clearcodes') {
           // Load visitor types
-          const res = await getAllAccessControl(token); // kalau butuh id, pakai id juga
+          const res = await getAllAccessControl(token);
           if (cancelled) return;
 
           const items =
@@ -516,8 +507,6 @@ const Honeywell = ({ id }: { id: string }) => {
       Object.entries(obj).filter(([, v]) => v !== '' && v !== null && v !== undefined),
     );
 
-  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
   const handleSaveCompany = async () => {
     if (!companyForm) return;
 
@@ -546,7 +535,8 @@ const Honeywell = ({ id }: { id: string }) => {
           prev.map((it) => (String(it.id) === companyId ? { ...it, ...payload } : it)),
         );
 
-        setSyncMsg({ open: true, text: 'Company updated successfully', severity: 'success' });
+        // setSyncMsg({ open: true, text: 'Company updated successfully', severity: 'success' });
+        showSwal('success', 'Company updated successfully');
         setTimeout(() => {
           handleCloseDialog();
         }, 600);
@@ -567,11 +557,12 @@ const Honeywell = ({ id }: { id: string }) => {
       });
 
       if (!Object.keys(payload).length) {
-        setSyncMsg({
-          open: true,
-          text: 'Nyalakan minimal satu toggle (Name/Organization) untuk disimpan.',
-          severity: 'error',
-        });
+        // setSyncMsg({
+        //   open: true,
+        //   text: 'Nyalakan minimal satu toggle (Name/Organization) untuk disimpan.',
+        //   severity: 'error',
+        // });
+        showSwal('error', 'Turn on at least one toggle (Name/Organization) to save.');
         return;
       }
 
@@ -582,22 +573,23 @@ const Honeywell = ({ id }: { id: string }) => {
         prev.map((it) => (ids.includes(String(it.id)) ? { ...it, ...payload } : it)),
       );
 
-      setSyncMsg({
-        open: true,
-        text: `Updated ${ids.length} companies.`,
-        severity: 'success',
-      });
-      // opsional: setIsBatchEdit(false); setSelectedRows([]);
+      // setSyncMsg({
+      //   open: true,
+      //   text: `Updated ${ids.length} companies.`,
+      //   severity: 'success',
+      // });
+      showSwal('success', `Updated ${ids.length} companies.`);
       setTimeout(() => {
         handleCloseDialog();
       }, 600);
       return;
     } catch (err: any) {
-      setSyncMsg({
-        open: true,
-        text: err?.response?.data?.msg || 'Failed to update company',
-        severity: 'error',
-      });
+      // setSyncMsg({
+      //   open: true,
+      //   text: err?.response?.data?.msg || 'Failed to update company',
+      //   severity: 'error',
+      // });
+      showSwal('error', err?.response?.data?.msg || 'Failed to update company');
     } finally {
       setTimeout(() => {
         setSaving(false);
@@ -614,7 +606,7 @@ const Honeywell = ({ id }: { id: string }) => {
       if (!isBatchEdit) {
         const btId = String(badgeTypeForm.id ?? '');
         if (!btId) {
-          console.error('❌ badgeTypeForm.id is missing');
+          // console.error('❌ badgeTypeForm.id is missing');
           return;
         }
 
@@ -629,9 +621,9 @@ const Honeywell = ({ id }: { id: string }) => {
         setListData((prev) =>
           prev.map((it) => (String(it.id) === btId ? { ...it, ...payload } : it)),
         );
-        setSyncMsg({ open: true, text: 'Badge type updated successfully', severity: 'success' });
+        // setSyncMsg({ open: true, text: 'Badge type updated successfully', severity: 'success' });
+        showSwal('success', 'Badge type updated successfully');
 
-        // ✅ Tambahkan jeda sebelum tutup dialog agar smooth
         setTimeout(() => {
           handleCloseDialog();
         }, 600);
@@ -665,15 +657,15 @@ const Honeywell = ({ id }: { id: string }) => {
         prev.map((it) => (ids.includes(String(it.id)) ? { ...it, ...payload } : it)),
       );
 
-      setSyncMsg({ open: true, text: `Updated ${ids.length} badge types.`, severity: 'success' });
-
-      // ✅ Sama juga: jeda biar smooth
+      showSwal('success', `Updated ${ids.length} badge types.`);
+      // setSyncMsg({ open: true, text: `Updated ${ids.length} badge types.`, severity: 'success' });
       setTimeout(() => {
         handleCloseDialog();
       }, 600);
     } catch (err) {
-      console.error('Save badge type error:', err);
-      setSyncMsg({ open: true, text: 'Failed to update badge type', severity: 'error' });
+      // console.error('Save badge type error:', err);
+      // setSyncMsg({ open: true, text: 'Failed to update badge type', severity: 'error' });
+      showSwal('error', 'Failed to update badge type');
     } finally {
       setTimeout(() => {
         setSaving(false);
@@ -705,7 +697,8 @@ const Honeywell = ({ id }: { id: string }) => {
         setListData((prev) =>
           prev.map((it) => (String(it.id) === ccId ? { ...it, ...payload } : it)),
         );
-        setSyncMsg({ open: true, text: 'Clear code updated successfully', severity: 'success' });
+        // setSyncMsg({ open: true, text: 'Clear code updated successfully', severity: 'success' });
+        showSwal('success', 'Clear code updated successfully');
         setTimeout(() => {
           handleCloseDialog();
         }, 600);
@@ -726,11 +719,12 @@ const Honeywell = ({ id }: { id: string }) => {
       });
 
       if (!Object.keys(payload).length) {
-        setSyncMsg({
-          open: true,
-          text: 'Nyalakan minimal satu toggle (Name/Access Control) untuk disimpan.',
-          severity: 'error',
-        });
+        // setSyncMsg({
+        //   open: true,
+        //   text: 'Nyalakan minimal satu toggle (Name/Access Control) untuk disimpan.',
+        //   severity: 'error',
+        // });
+        showSwal('error', 'Turn on at least one toggle (Name/Access Control) to save.');
         return;
       }
 
@@ -739,14 +733,16 @@ const Honeywell = ({ id }: { id: string }) => {
       setListData((prev) =>
         prev.map((it) => (ids.includes(String(it.id)) ? { ...it, ...payload } : it)),
       );
-      setSyncMsg({ open: true, text: `Updated ${ids.length} clear codes.`, severity: 'success' });
+      // setSyncMsg({ open: true, text: `Updated ${ids.length} clear codes.`, severity: 'success' });
+      showSwal('success', `Updated ${ids.length} clear codes.`);
       setTimeout(() => {
         handleCloseDialog();
       }, 600);
       return;
     } catch (err) {
       console.error('Save clear code error:', err);
-      setSyncMsg({ open: true, text: 'Failed to update clear code', severity: 'error' });
+      // setSyncMsg({ open: true, text: 'Failed to update clear code', severity: 'error' });
+      showSwal('error', 'Failed to update clear code');
     } finally {
       setTimeout(() => setSaving(false), 800);
     }
@@ -772,7 +768,8 @@ const Honeywell = ({ id }: { id: string }) => {
       else if (selectedType === 'clear_codes')
         await updateClearcodes(String(rowId), payload as any, token as string);
       else if (selectedType === 'badge_status') {
-        setSyncMsg({ open: true, text: 'Update Badge Status belum didukung.', severity: 'error' });
+        // setSyncMsg({ open: true, text: 'Update Badge Status belum didukung.', severity: 'error' });
+        showSwal('error', 'Failed to update badge status');
         setListData(prev);
         return;
       }
@@ -781,11 +778,12 @@ const Honeywell = ({ id }: { id: string }) => {
     } catch (e: any) {
       console.error(e);
       setListData(prev);
-      setSyncMsg({
-        open: true,
-        text: e?.response?.data?.msg || 'Gagal mengubah status.',
-        severity: 'error',
-      });
+      // setSyncMsg({
+      //   open: true,
+      //   text: e?.response?.data?.msg || 'Gagal mengubah status.',
+      //   severity: 'error',
+      // });
+      showSwal('error', e?.response?.data?.msg || 'Failed to update status.');
     }
   };
 
@@ -793,7 +791,8 @@ const Honeywell = ({ id }: { id: string }) => {
   const [isBatchEdit, setIsBatchEdit] = useState(false);
   const handleEditBatch = () => {
     if (!selectedRows.length) {
-      setSyncMsg({ open: true, text: 'Pilih minimal satu baris.', severity: 'error' });
+      // setSyncMsg({ open: true, text: 'Pilih minimal satu baris.', severity: 'error' });
+      showSwal('error', 'Select at least one row.');
       return;
     }
 
@@ -825,12 +824,6 @@ const Honeywell = ({ id }: { id: string }) => {
       setCompanyForm(null);
       setBadgeTypeForm(null);
     } else {
-      // tipe lain belum didukung
-      setSyncMsg({
-        open: true,
-        text: 'Batch edit belum didukung untuk tipe ini.',
-        severity: 'error',
-      });
       setIsBatchEdit(false);
       setEditDialogType(null);
     }
@@ -850,12 +843,9 @@ const Honeywell = ({ id }: { id: string }) => {
       <PageContainer title="Integration Detail" description="this is Dashboard page">
         <Box>
           <Grid container spacing={3} flexWrap={'wrap'}>
-            {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
               <TopCard items={cards} size={{ xs: 12, lg: 2.4 }} />
             </Grid>
-
-            {/* column */}
             <Grid container mt={1} size={{ xs: 12, lg: 12 }}>
               <Grid size={{ xs: 12, lg: 12 }}>
                 {isDataReady ? (

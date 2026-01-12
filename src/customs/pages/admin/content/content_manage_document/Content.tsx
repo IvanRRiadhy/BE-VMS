@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Box,
   Button,
@@ -31,11 +31,7 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 import { deleteDocument, getAllDocumentPagination } from 'src/customs/api/admin';
 import FormAddDocument from './FormAddDocument';
 import { IconScript } from '@tabler/icons-react';
-import {
-  showConfirmDelete,
-  showErrorAlert,
-  showSuccessAlert,
-} from 'src/customs/components/alerts/alerts';
+import { showConfirmDelete, showErrorAlert, showSwal } from 'src/customs/components/alerts/alerts';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 
 const Content = () => {
@@ -51,6 +47,7 @@ const Content = () => {
   const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [sortDir, setSortDir] = useState('desc');
   const [formDataAddDocument, setFormDataAddDocument] = useState<CreateDocumentRequest>(() => {
     const saved = localStorage.getItem('unsavedDocumentData');
     return saved ? JSON.parse(saved) : CreateDocumentRequestSchema.parse({});
@@ -77,12 +74,12 @@ const Content = () => {
           start,
           rowsPerPage,
           sortColumn,
+          sortDir,
           searchKeyword,
         );
-        console.log('Response from API:', response);
+        // console.log('Response from API:', response);
         setTableData(response.collection);
         setTotalRecords(response.RecordsTotal);
-        setIsDataReady(true);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -90,7 +87,7 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword]);
+  }, [token, page, rowsPerPage, sortColumn, sortDir, refreshTrigger, searchKeyword]);
 
   const [openFormAddDocument, setOpenFormAddDocument] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
@@ -118,18 +115,18 @@ const Content = () => {
     }
   };
 
-  const hasUnsaved = () => {
+  const hasUnsaved = useCallback(() => {
     const raw = localStorage.getItem('unsavedDocumentData');
     if (!raw) return false;
     try {
       const parsed = JSON.parse(raw);
-      return !isEmptyDoc(parsed); // hanya true kalau beda dengan default
+      return !isEmptyDoc(parsed);
     } catch {
       return false;
     }
-  };
+  }, []);
 
-  const handleAdd = () => {
+  const handleAdd = useCallback(() => {
     if (hasUnsaved()) {
       setPendingEditId(null);
       setConfirmDialogOpen(true);
@@ -137,7 +134,7 @@ const Content = () => {
       setFormDataAddDocument(CreateDocumentRequestSchema.parse({}));
       setOpenFormAddDocument(true);
     }
-  };
+  }, [hasUnsaved]);
 
   const handleEdit = (id: string) => {
     if (hasUnsaved()) {
@@ -181,17 +178,20 @@ const Content = () => {
     localStorage.setItem('unsavedDocumentData', JSON.stringify({ ...formDataAddDocument }));
   }, [formDataAddDocument, openFormAddDocument]);
 
-  // Handle Delete
   const handleDelete = async (id: string) => {
     if (!token) return;
-    setLoading(true);
+
+    const confirm = await showConfirmDelete('Are you sure you want to delete this document?');
+
+    if (!confirm) return;
     try {
+      setLoading(true);
       await deleteDocument(id, token);
+      showSwal('success', 'Successfully deleted document!');
       setRefreshTrigger((prev) => prev + 1);
-      showSuccessAlert('Deleted!', 'Item has been deleted.');
     } catch (error) {
       console.error(error);
-      showErrorAlert('Error!', 'Failed to delete item.');
+      showSwal('error', 'Failed to delete document.');
     } finally {
       setLoading(false);
     }
@@ -211,11 +211,11 @@ const Content = () => {
       try {
         await Promise.all(rows.map((row) => deleteDocument(row.id, token)));
         setRefreshTrigger((prev) => prev + 1);
-        showSuccessAlert('Deleted!', `${rows.length} items have been deleted.`);
+        showSwal('success', `${rows.length} items have been deleted.`);
         setSelectedRows([]); // reset selected rows
       } catch (error) {
         console.error(error);
-        showErrorAlert('Error!', 'Failed to delete some items.');
+        showSwal('error', 'Failed to delete some items.');
       } finally {
         setLoading(false);
       }
@@ -253,7 +253,7 @@ const Content = () => {
                 isHavePagination={true}
                 selectedRows={selectedRows}
                 defaultRowsPerPage={rowsPerPage}
-                rowsPerPageOptions={[5, 10, 20]}
+                rowsPerPageOptions={[10, 20, 50, 100, 500]}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);
@@ -279,9 +279,7 @@ const Content = () => {
                 onBatchDelete={handleBatchDelete}
                 onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
                 onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
-                onAddData={() => {
-                  handleAdd();
-                }}
+                onAddData={() => handleAdd()}
                 htmlFields={['document_text']}
                 htmlClampLines={4}
                 htmlMaxWidth={500}
@@ -292,14 +290,14 @@ const Content = () => {
       </Container>
       <Dialog open={openFormAddDocument} onClose={handleCloseDialog} fullWidth maxWidth="md">
         <DialogTitle sx={{ position: 'relative', padding: 3 }}>
-          Add Document
+         {edittingId ? 'Edit Document' : 'Add New Document'}
           <IconButton
             aria-label="close"
             onClick={handleCloseDialog}
             sx={{
               position: 'absolute',
-              right: 8,
-              top: 8,
+              right: 10,
+              top: 10,
               color: (theme) => theme.palette.grey[500],
             }}
           >
@@ -314,8 +312,10 @@ const Content = () => {
             setFormData={setFormDataAddDocument}
             edittingId={edittingId}
             onSuccess={() => {
-              setRefreshTrigger(refreshTrigger + 1);
+              localStorage.removeItem('unsavedDocumentData');
               handleCloseDialog();
+              setRefreshTrigger(refreshTrigger + 1);
+              console.log('tes');
             }}
           />
         </DialogContent>

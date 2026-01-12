@@ -322,10 +322,6 @@ const BioPeopleParking = ({ id }: { id: string }) => {
     setEditDialogType(TYPE_MAP[selectedType] ?? null);
   }, [selectedType, editingRow]);
 
-  useEffect(() => {
-    if (!token) return;
-  }, [token, editDialogType]);
-
   const [isBatchEdit, setIsBatchEdit] = useState(false);
   const handleEditBatch = () => {
     if (!selectedRows.length) {

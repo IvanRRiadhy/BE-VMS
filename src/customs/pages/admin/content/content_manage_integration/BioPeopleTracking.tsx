@@ -22,88 +22,27 @@ import {
   IconButton,
   Autocomplete,
   Skeleton,
+  MenuItem,
 } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import TopCard from 'src/customs/components/cards/TopCard';
+import { IconRectangle, IconRefresh } from '@tabler/icons-react';
+import { Item } from 'src/customs/api/models/Admin/Integration';
 import {
-  IconAccessible,
-  IconBrandMedium,
-  IconBuilding,
-  IconBuildingSkyscraper,
-  IconCards,
-  IconDeviceCctv,
-  IconDeviceIpad,
-  IconMapPins,
-  IconMapSearch,
-  IconRectangle,
-  IconRefresh,
-  IconStairsUp,
-  IconUserOff,
-  IconUsers,
-} from '@tabler/icons-react';
-import {
-  Item,
-  UpdateDepartmentTrackingRequest,
-  UpdateOrganizationTrackingRequest,
-} from 'src/customs/api/models/Admin/Integration';
-import {
-  getAccessCCTV,
-  getAccessCCTVById,
-  getAccessControl,
-  getAccessControlById,
-  getAlarmTracking,
-  getAlarmWarningTracking,
-  getAllAccessControl,
-  getAllBrand,
-  getAllDepartments,
-  getAllDistricts,
-  getAllEmployee,
-  getAllOrganizations,
   getAllSite,
-  getBleReaderTracking,
-  getBleReaderTrackingById,
-  getBrandTracking,
-  getBrandTrackingById,
-  getBuildingTracking,
-  getBuildingTrackingById,
+  getAllVisitorType,
   getCardAccessTracking,
   getCardAccessTrackingById,
-  getCardTracking,
-  getCardTrackingById,
-  getDepartmentTracking,
-  getDepartmentTrackingById,
-  getDistrictTracking,
-  getDistrictTrackingById,
-  getFloor,
-  getFloorById,
-  getFloorPlan,
-  getFloorPlanById,
-  getFloorPlanMaskedArea,
   getFloorPlanMaskedAreaById,
-  getMemberTracking,
-  getMemberTrackingById,
-  getOrganizationTracking,
-  getOrganizationTrackingById,
-  getTrackingTransaction,
-  getTrackingTransactionById,
-  getTRXVisitor,
-  getVisitorBlacklist,
-  getVisitorTracking,
   syncTrackingBleIntegration,
   updateCardAccessTracking,
-  updateCardTracking,
-  updateDepartmentTracking,
-  updateDistrictTracking,
-  updateFloorPlanMaskedArea,
-  updateOrganizationTracking,
 } from 'src/customs/api/admin';
 import CloseIcon from '@mui/icons-material/Close';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import { floor, rest } from 'lodash';
 import { showSwal } from 'src/customs/components/alerts/alerts';
-import { count } from 'console';
+import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 
 const BioPeopleTracking = ({ id }: { id: string }) => {
   const { token } = useSession();
@@ -208,10 +147,11 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
   const [listData, setListData] = useState<any[]>([]);
   const [detailData, setDetailData] = useState<any | null>(null);
   const [orgOptions, setOrgOptions] = useState<Array<{ id: string; label: string }>>([]);
+  const [visitoTypeOptions, setVisitorTypeOptions] = useState<Array<{ id: string; label: string }>>(
+    [],
+  );
   const [syncing, setSyncing] = useState(false);
   const [saving, setSaving] = useState(false);
-  // const [floorPlanMaskedArea setFloorPlanForm] = useState<any>(null);
-  const [floorPlanMaskedArea, setFloorPlanMaskedArea] = useState<any>(null);
   const [cardAccessForm, setCardAccessForm] = useState<any>(null);
 
   const [syncMsg, setSyncMsg] = useState<{
@@ -250,17 +190,10 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
   const [selectedType, setSelectedType] = useState('card_access');
   const [editingRow, setEditingRow] = useState<Item | null>(null);
   const headerMap: Record<string, string> = {
-    // floor_plan_masked_area: 'Floor Plan Masked Area',
     card_access: 'Card Access',
   };
 
-  const TYPE_MAP: Record<
-    string,
-    // 'Floor Plan Masked Area'
-    //  |
-    'Card Access'
-  > = {
-    // floor_plan_masked_area: 'Floor Plan Masked Area',
+  const TYPE_MAP: Record<string, 'Card Access'> = {
     card_access: 'Card Access',
   };
 
@@ -335,11 +268,6 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
     setIsDataReady(true);
   }, [selectedType, token, id]);
 
-  useEffect(() => {
-    if (!editingRow) return;
-    setEditDialogType(TYPE_MAP[selectedType] ?? null);
-  }, [selectedType, editingRow]);
-
   const [isBatchEdit, setIsBatchEdit] = useState(false);
   const handleEditBatch = () => {
     if (!selectedRows.length) {
@@ -352,15 +280,8 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
   };
 
   const [enabled, setEnabled] = useState({
-    organization_id: true,
-    department_id: true,
-    district_id: true,
-    card_id: true,
     site_id: true,
-    employee_id: true,
-    brand_id: true,
-    camera_id: true,
-    access_control_id: true,
+    visitor_type_id: true,
   });
 
   const handleEditRow = async (row: any) => {
@@ -368,15 +289,8 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
 
     setIsBatchEdit(false);
     setEnabled({
-      organization_id: true,
-      department_id: true,
-      district_id: true,
-      card_id: true,
       site_id: true,
-      employee_id: true,
-      brand_id: true,
-      camera_id: true,
-      access_control_id: true,
+      visitor_type_id: true,
     });
 
     setEditingRow(row);
@@ -407,20 +321,15 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
   }, [selectedType, editingRow]);
 
   const handleCloseDialog = () => {
-    setIsBatchEdit(false);
-    setEnabled({
-      organization_id: true,
-      department_id: true,
-      district_id: true,
-      employee_id: true,
-      card_id: true,
-      brand_id: true,
-      site_id: true,
-      camera_id: true,
-      access_control_id: true,
-    });
     setEditDialogType(null);
     setEditingRow(null);
+    setDetailData(null);
+
+    setIsBatchEdit(false);
+    setEnabled({
+      site_id: true,
+      visitor_type_id: true,
+    });
   };
 
   useEffect(() => {
@@ -440,6 +349,8 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
         remarks: detailData.remarks ?? '',
         integration_id: detailData.integration_id ?? '',
         site_id: (detailData.site_id ?? '').toUpperCase() ?? '',
+        visitor_type_id: (detailData.visitor_type_id ?? '').toUpperCase() ?? '',
+        access_tracking_type: detailData.access_tracking_type ?? '',
         active: detailData.active ?? '',
       });
     } else {
@@ -457,6 +368,7 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
         if (editDialogType === 'Card Access') {
           // Dialog lain (atau ditutup)
           const res = await getAllSite(token);
+          const resVisitorType = await getAllVisitorType(token);
           if (cancelled) return;
 
           const items =
@@ -465,17 +377,18 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
               label: o.name ?? '',
             })) || [];
 
+          const itemsVisitorType = (resVisitorType.collection ?? []).map((o: any) => ({
+            id: String(o.id).toUpperCase(),
+            label: o.name ?? '',
+          }));
+
           setOrgOptions(items);
+          setVisitorTypeOptions(itemsVisitorType);
         } else {
           setOrgOptions([]);
         }
       } catch (e) {
         console.error('Load options error:', e);
-        // if (editDialogType === 'Organization') {
-        //   setOrgOptions([]);
-        // } else {
-        //   setOrgOptions([]);
-        // }
         setOrgOptions([]);
       }
     };
@@ -490,58 +403,7 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
       Object.entries(obj).filter(([, v]) => v !== '' && v !== null && v !== undefined),
     );
 
-  const handleSaveFloorPlanMaskedArea = async () => {
-    if (!token || !id) return;
-
-    try {
-      setSaving(true);
-
-      if (!isBatchEdit) {
-        const areaId = String(floorPlanMaskedArea?.id ?? detailData?.id ?? '');
-
-        if (!areaId) {
-          setSyncMsg({
-            open: true,
-            text: 'ID Floor Plan Masked Area tidak ditemukan.',
-            severity: 'error',
-          });
-          return;
-        }
-
-        const payload = omitEmpty({
-          site_id: floorPlanMaskedArea.site_id || undefined,
-          active: floorPlanMaskedArea.active,
-        });
-
-        await updateFloorPlanMaskedArea(areaId, payload, token);
-
-        setListData((prev) => {
-          const updated = prev.map((item) =>
-            String(item.trk_floorplan_masked_area_id) === areaId ? { ...item, ...payload } : item,
-          );
-          return [...updated]; // 🔥 PAKSA reference baru
-        });
-
-        await new Promise((res) => setTimeout(res, 300));
-
-        handleCloseDialog();
-        await fetchListByType(selectedType);
-        await new Promise((res) => setTimeout(res, 300));
-
-        showSwal('success', 'Floor Plan Masked Area updated successfully');
-
-        return;
-      }
-    } catch (err: any) {
-      setSyncMsg({
-        open: true,
-        text: err?.response?.data?.msg || 'Failed to update Floor Plan Masked Area',
-        severity: 'error',
-      });
-    } finally {
-      setTimeout(() => setSaving(false), 400);
-    }
-  };
+  const accessType = cardAccessForm?.access_tracking_type;
 
   const handleSaveCardAccess = async () => {
     if (!token || !id) return;
@@ -562,7 +424,13 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
         }
 
         const payload = omitEmpty({
-          site_id: cardAccessForm.site_id || undefined,
+          access_tracking_type: accessType || undefined,
+
+          site_id: accessType === 'Site' ? cardAccessForm.site_id || null : null,
+
+          visitor_type_id:
+            accessType === 'VisitorType' ? cardAccessForm.visitor_type_id || null : null,
+
           active: cardAccessForm.active,
         });
 
@@ -591,6 +459,9 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
       setTimeout(() => setSaving(false), 400);
     }
   };
+
+  const isSiteAccess = cardAccessForm?.access_tracking_type === 'Site';
+  const isVisitorTypeAccess = cardAccessForm?.access_tracking_type === 'VisitorType';
 
   return (
     <>
@@ -674,6 +545,28 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
           ) : (
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
               <Box>
+                <CustomFormLabel htmlFor="access_tracking_type" sx={{ mt: 0 }}>
+                  Access Type
+                </CustomFormLabel>
+                <CustomSelect
+                  id="access_tracking_type"
+                  fullWidth
+                  value={cardAccessForm?.access_tracking_type ?? ''}
+                  onChange={(e: any) =>
+                    setCardAccessForm((p: any) => ({
+                      ...p,
+                      access_tracking_type: e.target.value,
+                      site_id: e.target.value === 'Site' ? p.site_id : '',
+                      visitor_type_id: e.target.value === 'VisitorType' ? p.visitor_type_id : '',
+                    }))
+                  }
+                  disabled={isBatchEdit}
+                >
+                  <MenuItem value="Site">Site</MenuItem>
+                  <MenuItem value="VisitorType">Visitor Type</MenuItem>
+                </CustomSelect>
+              </Box>
+              <Box>
                 <Box
                   sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
                 >
@@ -699,7 +592,7 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
                 <Autocomplete
                   fullWidth
                   autoHighlight
-                  disablePortal
+                  // disablePortal={true}
                   options={orgOptions}
                   value={
                     orgOptions.find((o) => o.id === String(cardAccessForm.site_id ?? '')) || null
@@ -712,16 +605,57 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
                   }
                   isOptionEqualToValue={(opt, val) => opt.id === val.id}
                   getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt.label)}
-                  renderInput={(params) => (
-                    <CustomTextField
-                      {...params}
+                  renderInput={(params) => <CustomTextField {...params} size="small" />}
+                  disabled={saving || !isSiteAccess || (isBatchEdit && !enabled.site_id)}
+                />
+              </Box>
+              <Box>
+                <Box
+                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                >
+                  <CustomFormLabel htmlFor="visitor_type_id" sx={{ mt: 0 }}>
+                    Visitor Type
+                  </CustomFormLabel>
+
+                  {isBatchEdit && (
+                    <FormControlLabel
+                      sx={{ m: 0 }}
+                      control={
+                        <Switch
+                          size="small"
+                          checked={enabled.visitor_type_id}
+                          onChange={(e) =>
+                            setEnabled((p) => ({ ...p, visitor_type_id: e.target.checked }))
+                          }
+                        />
+                      }
                       label=""
-                      size="small"
-                      disabled={isBatchEdit ? !enabled.site_id || saving : saving}
                     />
                   )}
-                  // single: aktif, batch: tergantung toggle
-                  disabled={isBatchEdit ? !enabled.site_id || saving : saving}
+                </Box>
+
+                <Autocomplete
+                  fullWidth
+                  autoHighlight
+                  disablePortal
+                  options={visitoTypeOptions}
+                  value={
+                    visitoTypeOptions.find(
+                      (o) => o.id === String(cardAccessForm.visitor_type_id ?? ''),
+                    ) || null
+                  }
+                  onChange={(_, newVal) =>
+                    setCardAccessForm((p: any) => ({
+                      ...p,
+                      visitor_type_id: newVal ? newVal.id : '',
+                    }))
+                  }
+                  isOptionEqualToValue={(opt, val) => opt.id === val.id}
+                  getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt.label)}
+                  disabled={
+                    saving || !isVisitorTypeAccess || (isBatchEdit && !enabled.visitor_type_id)
+                  }
+                  renderInput={(params) => <CustomTextField {...params} size="small" />}
                 />
               </Box>
               <Box>
@@ -772,611 +706,6 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
           </Button>
         </DialogActions>
       </Dialog>
-      {/* Floor Plan Masked Area */}
-      {/* <Dialog
-        open={editDialogType === 'Floor Plan Masked Area'}
-        fullWidth
-        maxWidth="md"
-        onClose={handleCloseDialog}
-      >
-        <DialogTitle
-          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-        >
-          Edit Floor Plan Masked Area
-          <IconButton
-            aria-label="close"
-            onClick={handleCloseDialog}
-            disabled={saving}
-            sx={{ color: (t) => t.palette.grey[500] }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <Divider />
-        <DialogContent sx={{ pt: 2 }}>
-          {!floorPlanMaskedArea ? (
-            <Box sx={{ py: 2 }}>Loading…</Box>
-          ) : (
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-              <Box>
-                <Box
-                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-                >
-                  <CustomFormLabel htmlFor="site_id" sx={{ mt: 0 }}>
-                    Site
-                  </CustomFormLabel>
-
-                  {isBatchEdit && (
-                    <FormControlLabel
-                      sx={{ m: 0 }}
-                      control={
-                        <Switch
-                          size="small"
-                          checked={enabled.site_id}
-                          onChange={(e) => setEnabled((p) => ({ ...p, site_id: e.target.checked }))}
-                        />
-                      }
-                      label=""
-                    />
-                  )}
-                </Box>
-
-                <Autocomplete
-                  fullWidth
-                  autoHighlight
-                  disablePortal
-                  options={orgOptions}
-                  value={
-                    orgOptions.find((o) => o.id === String(floorPlanMaskedArea.site_id ?? '')) ||
-                    null
-                  }
-                  onChange={(_, newVal) =>
-                    setFloorPlanMaskedArea((p: any) => ({
-                      ...p,
-                      site_id: newVal ? newVal.id : '',
-                    }))
-                  }
-                  isOptionEqualToValue={(opt, val) => opt.id === val.id}
-                  getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt.label)}
-                  renderInput={(params) => (
-                    <CustomTextField
-                      {...params}
-                      label=""
-                      size="small"
-                      disabled={isBatchEdit ? !enabled.site_id || saving : saving}
-                    />
-                  )}
-                  // single: aktif, batch: tergantung toggle
-                  disabled={isBatchEdit ? !enabled.site_id || saving : saving}
-                />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Active</CustomFormLabel>
-                <Switch
-                  checked={Boolean(floorPlanMaskedArea?.active)}
-                  onChange={(e) =>
-                    setFloorPlanMaskedArea((prev: any) => ({
-                      ...prev,
-                      active: e.target.checked,
-                    }))
-                  }
-                  color="primary"
-                />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Name</CustomFormLabel>
-                <CustomTextField value={floorPlanMaskedArea.name ?? ''} fullWidth disabled />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Floor ID</CustomFormLabel>
-                <CustomTextField value={floorPlanMaskedArea.floor_id ?? ''} fullWidth disabled />
-              </Box>
-
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Floor Plan ID</CustomFormLabel>
-                <CustomTextField
-                  value={floorPlanMaskedArea.floorplan_id ?? ''}
-                  fullWidth
-                  disabled
-                />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Trx Floorplan Masked Area ID</CustomFormLabel>
-                <CustomTextField
-                  value={floorPlanMaskedArea.trk_floorplan_masked_area_id ?? ''}
-                  fullWidth
-                  disabled
-                />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Area Shape</CustomFormLabel>
-                <CustomTextField value={floorPlanMaskedArea.area_shape ?? ''} fullWidth disabled />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Color Area</CustomFormLabel>
-                <CustomTextField value={floorPlanMaskedArea.color_area ?? ''} fullWidth disabled />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Restricted Status</CustomFormLabel>
-                <CustomTextField
-                  value={floorPlanMaskedArea.restricted_status ?? ''}
-                  fullWidth
-                  disabled
-                />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Integration ID</CustomFormLabel>
-                <CustomTextField
-                  value={floorPlanMaskedArea.integration_id ?? ''}
-                  fullWidth
-                  disabled
-                />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Created At</CustomFormLabel>
-                <CustomTextField value={floorPlanMaskedArea.created_at ?? ''} fullWidth disabled />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Updated At</CustomFormLabel>
-                <CustomTextField value={floorPlanMaskedArea.updated_at ?? ''} fullWidth disabled />
-              </Box>
-            </Box>
-          )}
-        </DialogContent>
-        <Divider />
-        <DialogActions>
-          <Button onClick={handleCloseDialog} disabled={saving}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            disabled={!floorPlanMaskedArea || saving}
-            onClick={handleSaveFloorPlanMaskedArea}
-          >
-            {saving ? 'Saving…' : 'Submit'}
-          </Button>
-        </DialogActions>
-      </Dialog> */}
-
-      {/* Brand */}
-      {/* <Dialog open={editDialogType === 'Brand'} fullWidth maxWidth="md" onClose={handleCloseDialog}>
-        <DialogTitle
-          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-        >
-          Edit Brand
-          <IconButton
-            aria-label="close"
-            onClick={handleCloseDialog}
-            disabled={saving}
-            sx={{ color: (t) => t.palette.grey[500] }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <Divider />
-        <DialogContent sx={{ pt: 2 }}>
-          {!brandForm ? (
-            <Box sx={{ py: 2 }}>Loading…</Box>
-          ) : (
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-              <Box>
-                <Box
-                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-                >
-                  <CustomFormLabel htmlFor="site_id" sx={{ mt: 0 }}>
-                    Brand
-                  </CustomFormLabel>
-
-               
-                  {isBatchEdit && (
-                    <FormControlLabel
-                      sx={{ m: 0 }}
-                      control={
-                        <Switch
-                          size="small"
-                          checked={enabled.brand_id}
-                          onChange={(e) =>
-                            setEnabled((p) => ({ ...p, brand_id: e.target.checked }))
-                          }
-                        />
-                      }
-                      label=""
-                    />
-                  )}
-                </Box>
-
-                <Autocomplete
-                  fullWidth
-                  autoHighlight
-                  disablePortal
-                  options={orgOptions}
-                  value={orgOptions.find((o) => o.id === String(brandForm?.brand_id ?? '')) || null}
-                  onChange={(_, newVal) =>
-                    setBrandForm((p: any) => ({
-                      ...p,
-                      brand_id: newVal ? newVal.id : '',
-                    }))
-                  }
-                  isOptionEqualToValue={(opt, val) => opt.id === val.id}
-                  getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt.label)}
-                  renderInput={(params) => (
-                    <CustomTextField
-                      {...params}
-                      label=""
-                      size="small"
-                      disabled={isBatchEdit ? !enabled.brand_id || saving : saving}
-                    />
-                  )}
-                  // single: aktif, batch: tergantung toggle
-                  disabled={isBatchEdit ? !enabled.brand_id || saving : saving}
-                />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Name</CustomFormLabel>
-                <CustomTextField value={brandForm?.name ?? ''} fullWidth disabled />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Tag</CustomFormLabel>
-                <CustomTextField value={brandForm?.tag ?? ''} fullWidth disabled />
-              </Box>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} disabled={saving}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            disabled={!brandForm || saving}
-            onClick={handleSaveCard}
-          >
-            {saving ? 'Saving…' : 'Submit'}
-          </Button>
-        </DialogActions>
-      </Dialog> */}
-      {/* Building */}
-      {/* <Dialog
-        open={editDialogType === 'Building'}
-        fullWidth
-        maxWidth="md"
-        onClose={handleCloseDialog}
-      >
-        <DialogTitle
-          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-        >
-          Edit Building
-          <IconButton
-            aria-label="close"
-            onClick={handleCloseDialog}
-            disabled={saving}
-            sx={{ color: (t) => t.palette.grey[500] }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <Divider />
-        <DialogContent sx={{ pt: 2 }}>
-          {!buildingForm ? (
-            <Box sx={{ py: 2 }}>Loading…</Box>
-          ) : (
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-              <Box>
-                <Box
-                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-                >
-                  <CustomFormLabel htmlFor="site_id" sx={{ mt: 0 }}>
-                    Building
-                  </CustomFormLabel>
-
-                  {isBatchEdit && (
-                    <FormControlLabel
-                      sx={{ m: 0 }}
-                      control={
-                        <Switch
-                          size="small"
-                          checked={enabled.site_id}
-                          onChange={(e) => setEnabled((p) => ({ ...p, site_id: e.target.checked }))}
-                        />
-                      }
-                      label=""
-                    />
-                  )}
-                </Box>
-
-                <Autocomplete
-                  fullWidth
-                  autoHighlight
-                  disablePortal
-                  options={orgOptions}
-                  value={
-                    orgOptions.find((o) => o.id === String(buildingForm?.site_id ?? '')) || null
-                  }
-                  onChange={(_, newVal) =>
-                    setBuildingForm((p: any) => ({
-                      ...p,
-                      site_id: newVal ? newVal.id : '',
-                    }))
-                  }
-                  isOptionEqualToValue={(opt, val) => opt.id === val.id}
-                  getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt.label)}
-                  renderInput={(params) => (
-                    <CustomTextField
-                      {...params}
-                      label=""
-                      size="small"
-                      disabled={isBatchEdit ? !enabled.site_id || saving : saving}
-                    />
-                  )}
-                  // single: aktif, batch: tergantung toggle
-                  disabled={isBatchEdit ? !enabled.site_id || saving : saving}
-                />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Name</CustomFormLabel>
-                <CustomTextField value={buildingForm?.name ?? ''} fullWidth disabled />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Image</CustomFormLabel>
-                <CustomTextField value={buildingForm?.image ?? ''} fullWidth disabled />
-              </Box>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} disabled={saving}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            disabled={!buildingForm || saving}
-            onClick={handleSaveCard}
-          >
-            {saving ? 'Saving…' : 'Submit'}
-          </Button>
-        </DialogActions>
-      </Dialog> */}
-
-      {/* CCTV */}
-      {/* <Dialog
-        open={editDialogType === 'Access CCTV'}
-        fullWidth
-        maxWidth="md"
-        onClose={handleCloseDialog}
-      >
-        <DialogTitle
-          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-        >
-          Edit Access CCTV
-          <IconButton
-            aria-label="close"
-            onClick={handleCloseDialog}
-            disabled={saving}
-            sx={{ color: (t) => t.palette.grey[500] }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <Divider />
-        <DialogContent sx={{ pt: 2 }}>
-          {!accessCCTVForm ? (
-            <Box sx={{ py: 2 }}>Loading…</Box>
-          ) : (
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-              <Box>
-                <Box
-                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-                >
-                  <CustomFormLabel htmlFor="camera_id" sx={{ mt: 0 }}>
-                    Access CCTV
-                  </CustomFormLabel>
-
-             
-                  {isBatchEdit && (
-                    <FormControlLabel
-                      sx={{ m: 0 }}
-                      control={
-                        <Switch
-                          size="small"
-                          checked={enabled.camera_id}
-                          onChange={(e) =>
-                            setEnabled((p) => ({ ...p, camera_id: e.target.checked }))
-                          }
-                        />
-                      }
-                      label=""
-                    />
-                  )}
-                </Box>
-
-                <Autocomplete
-                  fullWidth
-                  autoHighlight
-                  disablePortal
-                  options={orgOptions}
-                  value={
-                    orgOptions.find((o) => o.id === String(accessCCTVForm?.camera_id ?? '')) || null
-                  }
-                  onChange={(_, newVal) =>
-                    setAccessCCTVForm((p: any) => ({
-                      ...p,
-                      camera_id: newVal ? newVal.id : '',
-                    }))
-                  }
-                  isOptionEqualToValue={(opt, val) => opt.id === val.id}
-                  getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt.label)}
-                  renderInput={(params) => (
-                    <CustomTextField
-                      {...params}
-                      label=""
-                      size="small"
-                      disabled={isBatchEdit ? !enabled.camera_id || saving : saving}
-                    />
-                  )}
-                  // single: aktif, batch: tergantung toggle
-                  disabled={isBatchEdit ? !enabled.camera_id || saving : saving}
-                />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Name</CustomFormLabel>
-                <CustomTextField value={accessCCTVForm?.name ?? ''} fullWidth disabled />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>RTSP</CustomFormLabel>
-                <CustomTextField value={accessCCTVForm?.rtsp ?? ''} fullWidth disabled />
-              </Box>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} disabled={saving}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            disabled={!accessCCTVForm || saving}
-            onClick={handleSaveCard}
-          >
-            {saving ? 'Saving…' : 'Submit'}
-          </Button>
-        </DialogActions>
-      </Dialog> */}
-
-      {/* Access Control */}
-      {/* <Dialog
-        open={editDialogType === 'Access Control'}
-        fullWidth
-        maxWidth="md"
-        onClose={handleCloseDialog}
-      >
-        <DialogTitle
-          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-        >
-          Edit Access Control
-          <IconButton
-            aria-label="close"
-            onClick={handleCloseDialog}
-            disabled={saving}
-            sx={{ color: (t) => t.palette.grey[500] }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <Divider />
-        <DialogContent sx={{ pt: 2 }}>
-          {!accessControlForm ? (
-            <Box sx={{ py: 2 }}>Loading…</Box>
-          ) : (
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-              <Box>
-                <Box
-                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-                >
-                  <CustomFormLabel htmlFor="access_control_id" sx={{ mt: 0 }}>
-                    Access Control
-                  </CustomFormLabel>
-
-             
-                  {isBatchEdit && (
-                    <FormControlLabel
-                      sx={{ m: 0 }}
-                      control={
-                        <Switch
-                          size="small"
-                          checked={enabled.access_control_id}
-                          onChange={(e) =>
-                            setEnabled((p) => ({ ...p, access_control_id: e.target.checked }))
-                          }
-                        />
-                      }
-                      label=""
-                    />
-                  )}
-                </Box>
-
-                <Autocomplete
-                  fullWidth
-                  autoHighlight
-                  disablePortal
-                  options={orgOptions}
-                  value={
-                    orgOptions.find(
-                      (o) => o.id === String(accessControlForm?.access_control_id ?? ''),
-                    ) || null
-                  }
-                  onChange={(_, newVal) =>
-                    setAccessControlForm((p: any) => ({
-                      ...p,
-                      access_control_id: newVal ? newVal.id : '',
-                    }))
-                  }
-                  isOptionEqualToValue={(opt, val) => opt.id === val.id}
-                  getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt.label)}
-                  renderInput={(params) => (
-                    <CustomTextField
-                      {...params}
-                      label=""
-                      size="small"
-                      disabled={isBatchEdit ? !enabled.access_control_id || saving : saving}
-                    />
-                  )}
-                  // single: aktif, batch: tergantung toggle
-                  disabled={isBatchEdit ? !enabled.access_control_id || saving : saving}
-                />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Name</CustomFormLabel>
-                <CustomTextField value={accessControlForm?.name ?? ''} fullWidth disabled />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Type</CustomFormLabel>
-                <CustomTextField value={accessControlForm?.type ?? ''} fullWidth disabled />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Description</CustomFormLabel>
-                <CustomTextField value={accessControlForm?.description ?? ''} fullWidth disabled />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Channel</CustomFormLabel>
-                <CustomTextField value={accessControlForm?.channel ?? ''} fullWidth disabled />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Door ID</CustomFormLabel>
-                <CustomTextField value={accessControlForm?.doorId ?? ''} fullWidth disabled />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Raw</CustomFormLabel>
-                <CustomTextField value={accessControlForm?.raw ?? ''} fullWidth disabled />
-              </Box>
-              <Box>
-                <CustomFormLabel sx={{ mt: 0 }}>Integration ID</CustomFormLabel>
-                <CustomTextField
-                  value={accessControlForm?.integrationId ?? ''}
-                  fullWidth
-                  disabled
-                />
-              </Box>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} disabled={saving}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            disabled={!accessControlForm || saving}
-            onClick={handleSaveCard}
-          >
-            {saving ? 'Saving…' : 'Submit'}
-          </Button>
-        </DialogActions>
-      </Dialog> */}
 
       <Portal>
         <Snackbar
@@ -1403,7 +732,7 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
           open={saving}
           sx={{
             color: '#fff',
-            zIndex: (t) => Math.min(99998, (t.zIndex.snackbar ?? 1400) - 1), // ⬅️ tepat di bawah snackbar
+            zIndex: (t) => Math.min(99998, (t.zIndex.snackbar ?? 1400) - 1),
           }}
         >
           <CircularProgress />

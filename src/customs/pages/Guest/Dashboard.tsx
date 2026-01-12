@@ -5,21 +5,12 @@ import { Box } from '@mui/system';
 import {
   Card,
   Typography,
-  CardHeader,
-  CardContent,
-  CardMedia,
-  Avatar,
-  Collapse,
   IconButton,
-  CardActions,
-  DialogActions,
   DialogContent,
   DialogTitle,
   Grid2 as Grid,
   Button,
   Dialog,
-  Autocomplete,
-  Popover,
   Drawer,
   Portal,
   Backdrop,
@@ -29,67 +20,40 @@ import {
 } from '@mui/material';
 
 import Divider from '@mui/material/Divider';
-import {
-  Home,
-  Event,
-  CheckCircle,
-  Report,
-  LocalParking,
-  People,
-  Alarm,
-  ExitToApp,
-  Download,
-  DateRange,
-  Circle,
-} from '@mui/icons-material';
-import AlarmIcon from '@mui/icons-material/Alarm';
+import { Download } from '@mui/icons-material';
 import {
   IconBan,
-  IconBellRingingFilled,
   IconCalendar,
   IconCards,
-  IconCheck,
   IconCircleOff,
-  IconClipboard,
   IconDownload,
   IconLogin,
   IconLogout,
-  IconQrcode,
-  IconUserPlus,
-  IconUsersGroup,
   IconX,
 } from '@tabler/icons-react';
-import { Item as AccessPassType } from 'src/customs/api/models/Admin/AccessPass';
 import QRCode from 'react-qr-code';
-import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import VisitorStatusPieChart from 'src/customs/pages/Guest/Components/charts/VisitorStatusPieChart';
 import TopCard from './TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { t } from 'i18next';
 import { getActiveInvitation, openParkingBlocker } from 'src/customs/api/visitor';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import moment from 'moment-timezone';
 import dayjs, { Dayjs } from 'dayjs';
 import { subDays } from 'date-fns';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
 
-import { addDays } from 'date-fns';
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.locale('id');
+
 import Calendar from 'src/customs/components/calendar/Calendar';
 import { getAccessPass } from 'src/customs/api/admin';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 
 const Dashboard = () => {
-  // const [open, setOpen] = useState(false);
-  const [openInvitation, setOpenInvitation] = useState(false);
-
-  // const handleClickOpen = () => {
-  //   setOpen(true);
-  // };
-
   const [selectedVisitor, setSelectedVisitor] = useState<any>(null);
   const { token } = useSession();
   const [loading, setLoading] = useState(false);
@@ -147,21 +111,16 @@ const Dashboard = () => {
           id: item.id,
           // visitor_type:  item.visitor_type_name,
           name: item.visitor.name,
-          // identity_id: item.visitor.identity_id,
           email: item.visitor.email,
           organization: item.visitor.organization,
-          // gender: item.visitor.gender,
-          // address: item.visitor.address,
-          // phone: item.visitor.phone,
-          // is_vip: item.visitor.is_vip,
           visitor_period_start: item.visitor_period_start,
-          visitor_period_end: item.visitor_period_end,
-          host: item.host_name ?? '-',
-          // visitor_status: item.visitor_status,
+          visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
+          host: item.host ?? '-',
+          visitor_status: item.visitor_status,
         }));
         setActiveVisitData(response ?? []);
         const resAccess = await getAccessPass(token as string);
-        console.log(resAccess);
+        // console.log(resAccess);
         setActiveAccessPass(resAccess);
       } catch (e) {
         console.error(e);
@@ -171,13 +130,10 @@ const Dashboard = () => {
     fetchData();
   }, [token]);
 
-  const [startDate, setStartDate] = useState<Dayjs | null>(dayjs().subtract(7, 'day'));
-  const [endDate, setEndDate] = useState<Dayjs | null>(dayjs());
-
   const [dateRange, setDateRange] = useState([
     {
-      startDate: subDays(new Date(), 7), // ✅ 7 hari ke belakang dari hari ini
-      endDate: new Date(), // ✅ hari ini
+      startDate: subDays(new Date(), 7),
+      endDate: new Date(),
       key: 'selection',
     },
   ]);
@@ -188,48 +144,17 @@ const Dashboard = () => {
   const open = Boolean(anchorEl);
 
   function formatVisitorPeriodLocal(startUtc: string, endUtc: string) {
-    const startLocal = moment.utc(startUtc).tz(moment.tz.guess()).format('YYYY-MM-DD HH:mm');
-    const endLocal = moment.utc(endUtc).tz(moment.tz.guess()).format('YYYY-MM-DD HH:mm');
+    const startLocal = moment
+      .utc(startUtc)
+      .tz(moment.tz.guess())
+      .format('dddd, DD MMMM YYYY HH:mm');
+    const endLocal = moment.utc(endUtc).tz(moment.tz.guess()).format('dddd,DD MMMM YYYY HH:mm');
     return `${startLocal} - ${endLocal}`;
   }
 
   const printRef = useRef<HTMLDivElement>(null);
 
   const [isGenerating, setIsGenerating] = useState(false);
-
-  // const handleDownloadPDF = async () => {
-  //   if (!printRef.current) return;
-  //   setIsGenerating(true);
-
-  //   // Ambil semua elemen yang punya class "no-print"
-  //   const elementsToHide = document.querySelectorAll('.no-print');
-
-  //   // ✅ Cast ke HTMLElement agar .style bisa diakses tanpa error
-  //   elementsToHide.forEach((el) => {
-  //     (el as HTMLElement).style.display = 'none';
-  //   });
-
-  //   try {
-  //     const canvas = await html2canvas(printRef.current, {
-  //       scale: 3, // biar kualitas tinggi (tidak buram)
-  //       useCORS: true,
-  //     });
-
-  //     const imgData = canvas.toDataURL('image/png');
-  //     const pdf = new jsPDF('p', 'mm', 'a4');
-  //     const pdfWidth = pdf.internal.pageSize.getWidth();
-  //     const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-
-  //     pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-  //     pdf.save(`Access_Pass_${activeAccessPass?.group_name || 'Visitor'}.pdf`);
-  //   } finally {
-  //     // Kembalikan tampilan tombol setelah generate PDF selesai
-  //     elementsToHide.forEach((el) => {
-  //       (el as HTMLElement).style.display = '';
-  //     });
-  //     setIsGenerating(false);
-  //   }
-  // };
 
   const handleDownloadPDF = async () => {
     if (!printRef.current) return;
@@ -360,7 +285,7 @@ const Dashboard = () => {
         >
           <Card
             sx={{
-              flex: 1, // ✅ biar isi Card stretch penuh
+              flex: 1,
               display: 'flex',
               justifyContent: '',
               alignItems: 'center',
@@ -422,7 +347,7 @@ const Dashboard = () => {
           </Card>
         </Grid>
 
-        <Grid size={{ xs: 12, lg: 8 }}>
+        <Grid size={{ xs: 12, lg: 9 }}>
           <DynamicTable
             height={420}
             isHavePagination
@@ -449,7 +374,7 @@ const Dashboard = () => {
             isHaveFilterMore={false}
           />
         </Grid>
-        <Grid size={{ xs: 12, lg: 4 }}>
+        <Grid size={{ xs: 12, lg: 3 }}>
           <VisitorStatusPieChart />
         </Grid>
       </Grid>
@@ -464,7 +389,7 @@ const Dashboard = () => {
             onClick={handleCloseAccess}
             sx={{
               position: 'absolute',
-              right: 8,
+              right: 10,
               top: 8,
               color: (theme) => theme.palette.grey[500],
             }}
@@ -489,7 +414,7 @@ const Dashboard = () => {
                 width: '100%',
                 height: '100%',
                 objectFit: 'cover',
-                zIndex: -1, // biar di belakang
+                zIndex: -1,
               }}
             />
             <Box
@@ -497,14 +422,14 @@ const Dashboard = () => {
               justifyContent="center"
               className="only-print"
               sx={{
-                display: 'none', // sembunyikan di layar
+                display: 'none',
                 '@media print': {
-                  display: 'flex', // tampilkan ketika print
+                  display: 'flex',
                 },
               }}
             >
               <img
-                src="/src/assets/images/logos/BI_Logo.png"
+                src="/src/assets/images/logos/bio-experience-1x1-logo.png"
                 alt="logo"
                 width={100}
                 height={100}
@@ -527,10 +452,10 @@ const Dashboard = () => {
 
                 <Grid size={{ xs: 12, sm: 6 }} textAlign="center" position={'relative'}>
                   <Typography variant="body1" color="textSecondary" fontWeight={500}>
-                    Card
+                    Group Name
                   </Typography>
                   <Typography variant="body1" fontWeight="bold">
-                    {activeAccessPass.card_number || '-'}
+                    {activeAccessPass.group_name || '-'}
                   </Typography>
                 </Grid>
                 {!isGenerating && (
@@ -541,7 +466,8 @@ const Dashboard = () => {
                       backgroundColor: 'primary.main',
                       color: 'white',
                       position: 'absolute',
-                      right: 20,
+                      right: 5,
+                      top: -10,
                       '&:hover': { backgroundColor: 'primary.dark' },
                       '@media print': {
                         display: 'none !important', // pastikan override semua
@@ -558,7 +484,7 @@ const Dashboard = () => {
                     Host
                   </Typography>
                   <Typography variant="body1" fontWeight="bold">
-                    {activeAccessPass.host_name || '-'}
+                    {activeAccessPass.host || '-'}
                   </Typography>
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
@@ -678,7 +604,7 @@ const Dashboard = () => {
                     variant="contained"
                     className="no-print"
                     onClick={handleOpenParkingBlocker}
-                    disabled={isParkingLoading}
+                    disabled={isParkingLoading || !activeAccessPass.is_driving}
                     sx={{
                       mt: 2,
                       width: '100%',
@@ -732,7 +658,7 @@ const Dashboard = () => {
           }}
           open={isGenerating}
         >
-          <CircularProgress color="inherit" />
+          <CircularProgress color="primary" />
         </Backdrop>
       </Portal>
     </PageContainer>

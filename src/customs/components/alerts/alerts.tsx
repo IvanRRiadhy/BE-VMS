@@ -12,12 +12,14 @@ export const showConfirmDelete = async (
     title,
     text,
     // icon: 'warning',
-    imageUrl: '/src/assets/images/logos/BI_Logo.png',
+    // imageUrl: '/src/assets/images/logos/BI_Logo.png',
+    icon: 'warning',
     imageWidth: 100,
     imageHeight: 100,
     iconColor: '#f59e0b',
     background: '#1f2937',
     color: '#f9fafb',
+
     showCancelButton: true,
     confirmButtonColor: '#10b981',
     cancelButtonColor: '#ef4444',
@@ -50,11 +52,10 @@ export const showSuccessAlert = async (
     title,
     text,
     icon: 'success',
-    iconColor: '#10b981', // hijau
-    background: '#ffffff', // putih
-    color: '#111827', // teks gelap
+    iconColor: '#10b981',
+    background: '#ffffff',
+    color: '#111827',
     confirmButtonColor: '#10b981',
-    // confirmButtonText: 'Got it!',
     showCloseButton: true,
     showClass: {
       popup: 'animate__animated animate__fadeInDown',
@@ -94,7 +95,8 @@ export const showSwal = (
   const configMap: Record<string, any> = {
     success: {
       title: '<span style="color: #16a34a;">Success!</span>',
-      imageUrl: '/assets/images/BI_Logo.png',
+      // imageUrl: '/assets/images/BI_Logo.png',
+      icon: 'success',
       // imageUrl: BI_LOGO,
       confirmButtonColor: '#16a34a',
       background: '#fefefe',
@@ -102,7 +104,8 @@ export const showSwal = (
     },
     error: {
       title: 'Error!',
-      imageUrl: '/assets/images/BI_Logo.png',
+      // imageUrl: '/assets/images/BI_Logo.png',
+      icon: 'error',
       // imageUrl: BI_LOGO,
       confirmButtonColor: '#dc2626',
       background: '#fff',
@@ -113,7 +116,8 @@ export const showSwal = (
     },
     warning: {
       title: 'Warning!',
-      imageUrl: '/assets/images/BI_Logo.png',
+      // imageUrl: '/assets/images/BI_Logo.png',
+      icon: 'warning',
       // imageUrl: BI_LOGO,
       confirmButtonColor: '#f59e0b',
       background: '#fff',
@@ -121,7 +125,8 @@ export const showSwal = (
     },
     info: {
       title: 'Information',
-      imageUrl: '/assets/images/BI_Logo.png',
+      // imageUrl: '/assets/images/BI_Logo.png',
+      icon: 'info',
       // imageUrl: BI_LOGO,
       confirmButtonColor: '#3b82f6',
       background: '#fff',
@@ -129,12 +134,13 @@ export const showSwal = (
     },
     confirm: {
       // title: 'Are you sure?',
-      imageUrl: '/assets/images/BI_Logo.png',
+      // imageUrl: '/assets/images/BI_Logo.png',
+      icon: 'question',
       // imageUrl: BI_LOGO,
       showCancelButton: true,
       confirmButtonText: 'Yes',
       cancelButtonText: 'Cancel',
-      reverseButtons: true,
+      reverseButtons: false,
       confirmButtonColor: '#16a34a',
       cancelButtonColor: '#9ca3af',
       background: '#fff',

@@ -5,6 +5,7 @@ import Honeywell from './Honeywell';
 import BioPeopleTracking from './BioPeopleTracking';
 import BioPeopleParking from './BioPeopleParking';
 import axiosInstance from 'src/customs/api/interceptor';
+import Ipsotek from './Ipsotek';
 
 const IntegrationDetail = () => {
   const { id } = useParams();
@@ -54,10 +55,14 @@ const IntegrationDetail = () => {
   if (!integration) return <p>Data not found.</p>;
 
   const brand = String(integration.brand_name || '').toLowerCase();
+  const brandType = String(integration.brand_type || '');
   const fullName = String(integration.name || '').toLowerCase();
   const name = fullName.split(' - ')[0].trim(); // ambil sebelum " - "
 
   switch (true) {
+    case brand === 'honeywell' && brandType === 'CameraAnalytics':
+      return <Ipsotek id={integration.id} />;
+      
     case brand === 'honeywell' || name === 'honeywell':
       return <Honeywell id={integration.id} />;
 

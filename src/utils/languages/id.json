@@ -15,14 +15,18 @@
   "block": "Blokir",
   "repeat_visitor": "Pengunjung Ulang",
   "new_visitor": "Pengunjung Baru",
+
   "navigation": {
+    "delivery": "Pengiriman",
+    "staff": "Staff",
+    "scheduler": "Jadwal",
     "dashboard": "Dasboard",
     "manage_system": "Kelola Sistem",
     "company_department": "Perusahaan & Departemen",
     "employees": "Karyawan",
     "site_space": "Ruang Lokasi",
     "card": "Kartu",
-    "timezone": "Zona Waktu",
+    "timeaccess": "Waktu Akses",
     "visitor_type": "Jenis Pengunjung",
     "document": "Dokumen",
     "brand": "Merek",
@@ -32,8 +36,9 @@
     "custom_field": "Kolom Kustom",
     "visitor": "Pengunjung",
     "settings": "Pengaturan",
-    "helps": "Bantuan",
-    "faq": "FAQ"
+    "helps": "Bantuan"
   },
-  "no_visit_today": "Tidak ada kunjungan hari ini."
+  "no_visit_today": "Tidak ada kunjungan hari ini.",
+  "report": "Laporan",
+  "search": "Cari"
 }

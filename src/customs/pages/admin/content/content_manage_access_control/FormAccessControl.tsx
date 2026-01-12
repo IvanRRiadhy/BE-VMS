@@ -8,6 +8,9 @@ import {
   Button as MuiButton,
   Backdrop,
   MenuItem,
+  FormControl,
+  Select,
+  FormHelperText,
 } from '@mui/material';
 import { Box } from '@mui/system';
 import React, { useEffect, useState, useRef } from 'react';
@@ -15,6 +18,7 @@ import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
+import { SelectChangeEvent } from '@mui/material';
 import {
   CreateAccessControlRequest,
   CreateAccessControlRequestSchema,
@@ -34,7 +38,8 @@ import {
 import { AccessControlType } from 'src/customs/api/models/Admin/AccessControl';
 import { Item as BrandItem } from 'src/customs/api/models/Admin/Brand';
 import { Item as Integrationitem } from 'src/customs/api/models/Admin/Integration';
-import { showSuccessAlert } from 'src/customs/components/alerts/alerts';
+import { showSuccessAlert, showSwal } from 'src/customs/components/alerts/alerts';
+import { ZodError } from 'zod';
 type AccessControlFormData = {
   brand_id: string;
   integration_id: string;
@@ -70,22 +75,28 @@ const FormAccessControl = ({
   );
   const { token } = useSession();
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | { id?: string; name?: string; value: unknown }>,
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent,
   ) => {
-    const id = (e.target as any).id || (e.target as any).name;
-    const value = e.target.value;
+    const target = e.target as HTMLInputElement;
+    const id = target.name || target.id;
+    const value = target.value;
 
-    if (id) {
-      setFormData((prev) => ({
-        ...prev,
-        [id]: value,
-      }));
-    }
+    if (!id) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      [id]: value,
+    }));
+    setErrors((prev) => {
+      if (!prev[id]) return prev;
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
   };
   const [brandList, setBrandList] = useState<BrandItem[]>([]);
   const [integrationList, setIntegrationList] = useState<Integrationitem[]>([]);
 
-  // 1️⃣ Ambil list brand & integration sekali saat token ada
   useEffect(() => {
     if (!token) return;
 
@@ -101,7 +112,17 @@ const FormAccessControl = ({
     fetchList();
   }, [token]);
 
-  // 2️⃣ Ambil detail access kalau sedang mode edit
+  function mapZodErrors(err: ZodError) {
+    const fieldErrors: Record<string, string> = {};
+    err.errors.forEach((e) => {
+      const field = e.path[0];
+      if (field) {
+        fieldErrors[field.toString()] = e.message;
+      }
+    });
+    return fieldErrors;
+  }
+
   useEffect(() => {
     if (!token || !editingId) return;
 
@@ -109,7 +130,6 @@ const FormAccessControl = ({
       const accessRes = await getAccessControlsById(editingId, token);
       const target = accessRes?.collection as Item | undefined;
       if (target) {
-        console.log('Target for editing:', target);
         setFormData({
           brand_id: target.brand_id ?? '',
           integration_id: target.integration_id ?? '',
@@ -155,37 +175,29 @@ const FormAccessControl = ({
         door_id: formData.door_id,
         raw: formData.raw,
       });
-      console.log('Data being sent to API:', dataUpdate);
+      // console.log('Data being sent to API:', dataUpdate);
 
-      console.log('Setting Data: ', data);
+      // console.log('Setting Data: ', data);
       if (editingId) {
         await updateAccessControl(editingId, dataUpdate, token);
         console.log('Form Data : ', formData);
-        showSuccessAlert('Updated!', 'Access control successfully updated!');
       } else {
-        console.log('Create Mode');
+        // console.log('Create Mode');
         await createAccessControl(data, token);
-        // setAlertMessage(
-        //   editingId ? 'Custom field successfully updated!' : 'Custom field successfully created!',
-        // );
-        showSuccessAlert('Created!', 'Access control successfully created!');
       }
       localStorage.removeItem('unsavedAccessControl');
-      setAlertType('success');
+      // setAlertType('success');
 
       setTimeout(() => {
         onSuccess?.();
       }, 900);
     } catch (err: any) {
-      if (err?.errors) {
-        setErrors(err.errors);
+      if (err instanceof ZodError) {
+        setErrors(mapZodErrors(err));
+        return;
       }
-      setAlertType('error');
-      setAlertMessage('Something went wrong. Please try again later.');
-      setTimeout(() => {
-        setAlertType('info');
-        setAlertMessage('Complete the following data properly and correctly');
-      }, 3000);
+
+      showSwal('error', 'Something went wrong. Please try again later.');
     } finally {
       setTimeout(() => {
         setLoading(false);
@@ -193,7 +205,6 @@ const FormAccessControl = ({
     }
   };
   function formatEnumLabel(label: string) {
-    // Insert a space before all caps and capitalize the first letter
     return label
       .replace(/([A-Z])/g, ' $1')
       .replace(/^./, (str) => str.toUpperCase())
@@ -204,14 +215,13 @@ const FormAccessControl = ({
     <>
       <form onSubmit={handleOnSubmit}>
         <Grid container spacing={2} sx={{ mb: 2 }}>
-          <Grid size={12} sx={{ mt: -3 }}>
-            <Alert severity={alertType}>{alertMessage}</Alert>
-          </Grid>
           <Grid size={{ xs: 12, md: 6 }}>
             <Typography variant="h6" sx={{ my: 2, borderLeft: '4px solid #673ab7', pl: 1 }}>
               Access Control Details
             </Typography>
-            <CustomFormLabel htmlFor="access_control_name">Name</CustomFormLabel>
+            <CustomFormLabel htmlFor="access_control_name" required sx={{ mt: 2 }}>
+              Name
+            </CustomFormLabel>
             <CustomTextField
               id="name"
               value={formData.name}
@@ -219,21 +229,21 @@ const FormAccessControl = ({
               error={!!errors.name}
               helperText={errors.name || ''}
               fullWidth
-              required
             />
-            <CustomFormLabel htmlFor="description">Description</CustomFormLabel>
+            <CustomFormLabel htmlFor="description" sx={{ mt: 2 }}>
+              Description
+            </CustomFormLabel>
             <CustomTextField
               id="description"
               value={formData.description}
               onChange={handleChange}
-              error={!!errors.description}
-              helperText={errors.description || ''}
               fullWidth
-              required
             />
             <Grid container spacing={2}>
               <Grid size={6}>
-                <CustomFormLabel htmlFor="channel">Channel</CustomFormLabel>
+                <CustomFormLabel htmlFor="channel" sx={{ mt: 2 }}>
+                  Channel
+                </CustomFormLabel>
                 <CustomTextField
                   id="channel"
                   value={formData.channel}
@@ -241,11 +251,12 @@ const FormAccessControl = ({
                   error={!!errors.channel}
                   helperText={errors.channel || ''}
                   fullWidth
-                  required
                 />
               </Grid>
               <Grid size={6}>
-                <CustomFormLabel htmlFor="door-id">Door Id</CustomFormLabel>
+                <CustomFormLabel htmlFor="door-id" sx={{ mt: 2 }}>
+                  Door Id
+                </CustomFormLabel>
                 <CustomTextField
                   id="door_id"
                   value={formData.door_id}
@@ -253,7 +264,6 @@ const FormAccessControl = ({
                   error={!!errors.door_id}
                   helperText={errors.door_id || ''}
                   fullWidth
-                  required
                 />
               </Grid>
             </Grid>
@@ -262,7 +272,9 @@ const FormAccessControl = ({
             <Typography variant="h6" sx={{ my: 2, borderLeft: '4px solid #673ab7', pl: 1 }}>
               Access Control Settings
             </Typography>
-            <CustomFormLabel htmlFor="brand-name">Brand Name</CustomFormLabel>
+            <CustomFormLabel htmlFor="brand-name" sx={{ mt: 2 }}>
+              Brand Name
+            </CustomFormLabel>
 
             <CustomSelect
               id="brand_id"
@@ -283,24 +295,34 @@ const FormAccessControl = ({
               ))}
             </CustomSelect>
 
-            <CustomFormLabel htmlFor="integration-name">Integration Name</CustomFormLabel>
-            <CustomSelect
-              id="integration_id"
-              name="integration_id"
-              value={formData.integration_id || ''}
-              onChange={handleChange}
-              fullWidth
-            >
-              <MenuItem value="" disabled>
-                Select Integration
-              </MenuItem>
-              {integrationList.map((integration) => (
-                <MenuItem key={integration.id} value={integration.id}>
-                  {integration.name}
+            <CustomFormLabel htmlFor="integration-name" required sx={{ mt: 2 }}>
+              Integration Name
+            </CustomFormLabel>
+            <FormControl fullWidth error={!!errors.integration_id}>
+              <Select
+                id="integration_id"
+                name="integration_id"
+                value={formData.integration_id || ''}
+                onChange={handleChange}
+                displayEmpty
+              >
+                <MenuItem value="" disabled>
+                  Select Integration
                 </MenuItem>
-              ))}
-            </CustomSelect>
-            <CustomFormLabel htmlFor="type">Type</CustomFormLabel>
+                {integrationList.map((integration) => (
+                  <MenuItem key={integration.id} value={integration.id}>
+                    {integration.name}
+                  </MenuItem>
+                ))}
+              </Select>
+
+              {errors.integration_id && (
+                <FormHelperText sx={{ marginLeft: 0 }}>{errors.integration_id}</FormHelperText>
+              )}
+            </FormControl>
+            <CustomFormLabel htmlFor="type" sx={{ mt: 2 }}>
+              Type
+            </CustomFormLabel>
             <CustomSelect
               id="type"
               name="type"
@@ -332,7 +354,7 @@ const FormAccessControl = ({
             disabled={loading}
             size="medium"
           >
-            Submit
+            {loading ? <CircularProgress size={20} /> : 'Submit'}
           </Button>
         </Box>
       </form>
@@ -340,10 +362,10 @@ const FormAccessControl = ({
         open={loading}
         sx={{
           color: '#fff',
-          zIndex: (theme) => theme.zIndex.drawer + 1, // di atas drawer & dialog
+          zIndex: 99999,
         }}
       >
-        <CircularProgress color="inherit" />
+        <CircularProgress color="primary" />
       </Backdrop>
     </>
   );

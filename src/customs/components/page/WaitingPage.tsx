@@ -1,9 +1,53 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Box, CircularProgress, Typography } from '@mui/material';
 import LoadingImage from '../../../assets/images/backgrounds/loading-img.svg';
-import PageContainer from '../container/PageContainer';
+import { useNavigate } from 'react-router';
+import { AuthVisitor } from 'src/customs/api/users';
+import { useSession } from 'src/customs/contexts/SessionContext';
+import { GroupRoleId } from 'src/constant/GroupRoleId';
+import { showSwal } from '../alerts/alerts';
 
 const WaitingPage = () => {
+  const navigate = useNavigate();
+  const { saveToken } = useSession();
+
+  useEffect(() => {
+    const code = localStorage.getItem('visitor_ref_code');
+    if (!code) return;
+
+    let cancelled = false;
+
+    const poll = async () => {
+      if (cancelled) return;
+
+      try {
+        const res = await AuthVisitor({ code });
+        const token = res?.collection?.token;
+        const status = res?.status;
+        if (token) {
+          await saveToken(token, GroupRoleId.Visitor);
+          localStorage.removeItem('visitor_ref_code');
+          navigate('/guest/dashboard', { replace: true });
+          showSwal('success', 'Welcome to the Visitor Management System');
+          return;
+        }
+        if (status === 'fiil_form') {
+          navigate(`/portal/information?code=${code}`, { replace: true });
+          return;
+        }
+        setTimeout(poll, 5000);
+      } catch (e) {
+        console.error(e);
+        setTimeout(poll, 8000);
+      }
+    };
+
+    poll();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [navigate]);
   return (
     <Box
       sx={{
@@ -15,7 +59,6 @@ const WaitingPage = () => {
         bgcolor: 'background.default',
       }}
     >
-      {/* Gambar loading */}
       <Box
         component="img"
         src={LoadingImage}
@@ -36,12 +79,10 @@ const WaitingPage = () => {
   `}
       </style>
 
-      {/* Spinner MUI */}
       <CircularProgress size={30} thickness={5} sx={{ mb: 2 }} />
 
-      {/* Teks */}
       <Typography variant="h5" sx={{ color: 'text.primary' }}>
-        Please waiting for a moment...
+        Your visit application is currently in process. You will receive an email notification.
       </Typography>
 
       {/* Animasi spin */}

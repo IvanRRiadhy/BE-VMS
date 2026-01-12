@@ -109,18 +109,20 @@ const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCu
       if (editingId && editingId !== '') {
         await updateCustomField(token as string, parsedData, editingId);
       } else {
-        await createCustomField(parsedData, token as string) ;
+        await createCustomField(parsedData, token as string);
       }
       localStorage.removeItem('unsavedCustomFieldForm');
       // setAlertType('success');
       // setAlertMessage(
       //   editingId ? 'Custom field successfully updated!' : 'Custom field successfully created!',
       // );
-      showSwal
-      ('success', editingId ? 'Custom field successfully updated!' : 'Custom field successfully created!');
+      showSwal(
+        'success',
+        editingId ? 'Custom field successfully updated!' : 'Custom field successfully created!',
+      );
       setTimeout(() => {
         onSuccess?.();
-      },600);
+      }, 600);
     } catch (err: any) {
       if (err?.errors) {
         setErrors(err.errors);
@@ -132,7 +134,6 @@ const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCu
       //   setAlertMessage('Complete the following data properly and correctly');
       // }, 3000);
       // take error form backend message or static
-
     } finally {
       setTimeout(() => {
         setLoading(false);
@@ -155,8 +156,8 @@ const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCu
               lg: formData.field_type <= 2 ? 6 : 4,
             }}
           >
-            <Paper sx={{ p: 2 }}>
-              <Typography variant="h6" sx={{ my: 2, borderLeft: '4px solid #673ab7', pl: 1 }}>
+            <Paper sx={{ p: 0 }}>
+              <Typography variant="h6" sx={{ my: 0, borderLeft: '4px solid #673ab7', pl: 1 }}>
                 Custom Field Details
               </Typography>
               <CustomFormLabel htmlFor="custom_field_name">Custom Field Name</CustomFormLabel>
@@ -190,7 +191,7 @@ const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCu
             }}
           >
             <Paper sx={{ p: 2 }}>
-              <Typography variant="h6" sx={{ my: 2, borderLeft: '4px solid #673ab7', pl: 1 }}>
+              <Typography variant="h6" sx={{ my: 0, borderLeft: '4px solid #673ab7', pl: 1 }}>
                 Custom Field's Input
               </Typography>
               <Grid container spacing={2}>

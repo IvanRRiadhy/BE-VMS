@@ -1,6 +1,6 @@
 import { Grid2 as Grid, Typography } from '@mui/material';
 import { Box } from '@mui/system';
-import { IconScript } from '@tabler/icons-react';
+import { IconReport, IconScript } from '@tabler/icons-react';
 import React from 'react';
 import PageContainer from 'src/components/container/PageContainer';
 import TopCard from 'src/customs/components/cards/TopCard';
@@ -12,7 +12,7 @@ const Report = () => {
       title: 'Total Report',
       subTitle: `0`,
       subTitleSetting: 10,
-      icon: IconScript,
+      icon: IconReport,
       color: 'none',
     },
   ];
@@ -25,14 +25,13 @@ const Report = () => {
             <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
           </Grid>
           <Grid size={{ xs: 12, lg: 12 }}>
-            {/* {isDataReady ? ( */}
             <DynamicTable
               overflowX={'auto'}
               data={[]}
               isHavePagination={true}
               // selectedRows={selectedRows}
               // defaultRowsPerPage={rowsPerPage}
-              rowsPerPageOptions={[5, 10, 20]}
+              rowsPerPageOptions={[10, 20, 100]}
               // onPaginationChange={(page, rowsPerPage) => {
               //   setPage(page);
               //   setRowsPerPage(rowsPerPage);
@@ -44,34 +43,11 @@ const Report = () => {
               isHaveExportPdf={false}
               isHaveExportXlf={false}
               isHaveFilterDuration={false}
-              isHaveAddData={true}
+              isHaveAddData={false}
               isHaveFilterMore={false}
               isHaveHeader={false}
-              isHavePdf={true}
-              // onFileClick={(row) => handleFileClick(row)}
-              // onCheckedChange={(selected) => setSelectedRows(selected)}
-              // onEdit={(row) => {
-              //   handleEdit(row.id);
-              //   setEdittingId(row.id);
-              // }}
-              // onDelete={(row) => handleDelete(row.id)}
-              // onBatchDelete={handleBatchDelete}
-              // onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-              // onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
-              // onAddData={() => {
-              //   handleAdd();
-              // }}
-              htmlFields={['document_text']}
-              htmlClampLines={4}
-              htmlMaxWidth={500}
+              isHavePdf={false}
             />
-            {/* ) : (
-              <Card sx={{ width: '100%' }}>
-                <Skeleton />
-                <Skeleton animation="wave" />
-                <Skeleton animation={false} />
-              </Card>
-            )} */}
           </Grid>
         </Grid>
       </Box>

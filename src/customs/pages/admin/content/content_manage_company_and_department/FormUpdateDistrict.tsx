@@ -229,14 +229,9 @@ const FormUpdateDistrict: React.FC<FormUpdateDistrictProps> = ({
   return (
     <>
       <form onSubmit={handleSubmit}>
-        {/* <Grid2 size={{ xs: 12, sm: 12 }}>
-          <Alert severity={alertType}>{alertMessage}</Alert>
-        </Grid2> */}
-
-        {/* NAME */}
         <Box display="flex" alignItems="center" justifyContent="space-between">
-          <CustomFormLabel htmlFor="name" sx={{ marginY: 1 }}>
-            <Typography variant="body1">District Name</Typography>
+          <CustomFormLabel htmlFor="name" sx={{ marginY: 1, fontWeight: 500 }}>
+           District Name
           </CustomFormLabel>
           {isBatchEdit && (
             <FormControlLabel
@@ -271,8 +266,8 @@ const FormUpdateDistrict: React.FC<FormUpdateDistrictProps> = ({
 
         {/* CODE */}
         <Box display="flex" alignItems="center" justifyContent="space-between">
-          <CustomFormLabel htmlFor="code" sx={{ marginY: 1 }}>
-            <Typography variant="body1">District Code</Typography>
+          <CustomFormLabel htmlFor="code" sx={{ marginY: 1, fontWeight: 500 }}>
+            District Code
           </CustomFormLabel>
           {isBatchEdit && (
             <FormControlLabel
@@ -307,8 +302,8 @@ const FormUpdateDistrict: React.FC<FormUpdateDistrictProps> = ({
 
         {/* HOST */}
         <Box display="flex" alignItems="center" justifyContent="space-between">
-          <CustomFormLabel htmlFor="host" sx={{ marginY: 1 }}>
-            <Typography variant="body1">Head of District</Typography>
+          <CustomFormLabel htmlFor="host" sx={{ marginY: 1, fontWeight: 500 }}>
+            Head of District
           </CustomFormLabel>
           {isBatchEdit && (
             <FormControlLabel

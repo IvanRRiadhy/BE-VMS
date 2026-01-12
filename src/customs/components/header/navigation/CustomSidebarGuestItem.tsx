@@ -14,6 +14,7 @@ export interface ItemDataCustomSidebarItems {
   title?: string;
   icon?: React.ElementType;
   href?: string;
+  target?: string;
   chip?: string;
   chipColor?: string;
   children?: ItemDataCustomSidebarItems[];

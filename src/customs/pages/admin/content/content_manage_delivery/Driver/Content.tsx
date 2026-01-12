@@ -393,18 +393,17 @@ const Content = () => {
   const handleDelete = async (id: string) => {
     if (!token) return;
 
-    const confirmed = await showConfirmDelete('Are you sure to delete this driver?');
+    const confirmed = await showConfirmDelete('Are you sure to delete this delivery staff?');
 
     if (confirmed) {
       setLoading(true);
       try {
         await deleteDriver(id, token);
         setRefreshTrigger((prev) => prev + 1);
-        // showSuccessAlert('Deleted!', 'Driver has been deleted.');
-        showSwal('success', 'Driver has been deleted.');
+        showSwal('success', 'Successfully deleted delivery staff!');
       } catch (error) {
         console.error(error);
-        showSwal('error', 'Failed to delete driver.');
+        showSwal('error', 'Failed to delete staff.');
         setTimeout(() => setLoading(false), 500);
       } finally {
         setTimeout(() => setLoading(false), 500);
@@ -425,7 +424,7 @@ const Content = () => {
       try {
         await Promise.all(rows.map((row) => deleteDriver(row.id, token)));
         setRefreshTrigger((prev) => prev + 1);
-        // showSuccessAlert('Deleted!', `${rows.length} items have been deleted.`);
+
         showSwal('success', `${rows.length} items have been deleted.`);
         setSelectedRows([]); // reset selected rows
       } catch (error) {
@@ -560,14 +559,14 @@ const Content = () => {
             padding: 2,
           }}
         >
-          {isBatchEdit ? 'Batch Edit' : edittingId ? 'Edit' : 'Add'} Staff
+          {isBatchEdit ? 'Batch Edit' : edittingId ? 'Edit' : 'Add'} Delivery Staff
           <IconButton
             aria-label="close"
             onClick={() => {
               if (isFormChanged) {
                 setConfirmDialogOpen(true);
               } else {
-                handleCloseDialog(); // langsung tutup kalau tidak ada perubahan
+                handleCloseDialog();
               }
             }}
             sx={{

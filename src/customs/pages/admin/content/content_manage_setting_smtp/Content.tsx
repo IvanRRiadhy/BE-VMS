@@ -39,6 +39,7 @@ import {
   showConfirmDelete,
   showErrorAlert,
   showSuccessAlert,
+  showSwal,
 } from 'src/customs/components/alerts/alerts';
 import FormSettingSmtp from './FormSettingSmtp';
 import FormSendTestEmail from './FormSendTestEmail';
@@ -151,22 +152,20 @@ const Content = () => {
     fetchData();
   }, [token, page, rowsPerPage, sortColumn, searchKeyword, refreshTrigger]);
 
-  // Handlers
   const handleDelete = async (id: string) => {
     if (!token) return;
 
-    const confirmed = await showConfirmDelete('Are you sure?', "You won't be able to revert this!");
+    const confirmed = await showConfirmDelete('Are you sure to delete this smtp provider?');
     if (!confirmed) return;
     try {
       if (confirmed) {
         setLoading(true);
         await deleteSmtp(id, token);
         setRefreshTrigger((prev) => prev + 1);
-        showSuccessAlert('Deleted!', 'Item has been deleted.');
+        showSwal('success', 'Successfully deleted smtp provider!');
       }
     } catch (error) {
       console.error(error);
-      showErrorAlert('Error!', 'Failed to delete item.');
     } finally {
       setLoading(false);
     }
@@ -337,7 +336,7 @@ const Content = () => {
             >
               <Tab label="SMTP Provider" />
               <Tab label="Send A Test" />
-              <Tab label="Sender Report" />
+              {/* <Tab label="Sender Report" /> */}
             </Tabs>
 
             <Box sx={{ flex: 1 }}>
@@ -353,7 +352,7 @@ const Content = () => {
                       data={smtpData}
                       selectedRows={selectedRows}
                       defaultRowsPerPage={rowsPerPage}
-                      rowsPerPageOptions={[5, 10, 25, 50, 100]}
+                      rowsPerPageOptions={[10, 25, 50, 100]}
                       onPaginationChange={(page, rowsPerPage) => {
                         setPage(page);
                         setRowsPerPage(rowsPerPage);
@@ -399,7 +398,7 @@ const Content = () => {
               )}
 
               {/* Tab Sender Report */}
-              {tabIndex === 2 && (
+              {/* {tabIndex === 2 && (
                 <Box sx={{ overflowX: 'auto', p: 2 }}>
                   <DynamicTable
                     data={smtpData}
@@ -422,7 +421,7 @@ const Content = () => {
                     isHavePassword={true}
                   />
                 </Box>
-              )}
+              )} */}
             </Box>
           </Paper>
         </Box>

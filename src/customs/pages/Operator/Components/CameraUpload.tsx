@@ -1,11 +1,10 @@
-import React, {useState, useRef} from 'react'
-import Webcam from "react-webcam";
-import { IconCamera, IconX } from '@tabler/icons-react';
-import { Button, Box, Dialog, Typography, IconButton, Grid2 as Grid, Divider} from '@mui/material';
+import React, { useState, useRef } from 'react';
+import Webcam from 'react-webcam';
+import { IconCamera, IconDeviceFloppy, IconX } from '@tabler/icons-react';
+import { Button, Box, Dialog, Typography, IconButton, Grid2 as Grid, Divider } from '@mui/material';
 import { IconTrash } from '@tabler/icons-react';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
-
 
 const CameraUpload: React.FC<{
   value?: string;
@@ -166,13 +165,13 @@ const CameraUpload: React.FC<{
           </Grid>
           <Divider sx={{ my: 2 }} />
           <Box textAlign="right">
-            <Button color="warning" sx={{ mr: 1 }} onClick={clearLocal}>
+            <Button color="error" sx={{ mr: 1 }} onClick={clearLocal} startIcon={<IconTrash />}>
               Clear
             </Button>
-            <Button variant="contained" onClick={handleCapture}>
+            <Button variant="contained" onClick={handleCapture} startIcon={<PhotoCameraIcon />}>
               Take Photo
             </Button>
-            <Button sx={{ ml: 1 }} onClick={() => setOpen(false)}>
+            <Button sx={{ ml: 1 }} onClick={() => setOpen(false)} startIcon={<IconDeviceFloppy />}>
               Submit
             </Button>
           </Box>
@@ -182,5 +181,4 @@ const CameraUpload: React.FC<{
   );
 };
 
-
-export default CameraUpload
+export default CameraUpload;

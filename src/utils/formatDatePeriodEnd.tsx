@@ -13,5 +13,5 @@ export const formatDateTime = (dateStr?: string, extendMinutes = 0) => {
   return base
     .local()
     .utcOffset(7 * 60)
-    .format('D-M-Y HH:mm');
+    .format('DD-MM-Y, HH:mm');
 };

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Box,
   Dialog,
@@ -14,6 +14,8 @@ import {
   Portal,
   Backdrop,
   CircularProgress,
+  Autocomplete,
+  TextField,
 } from '@mui/material';
 import Container from 'src/components/container/PageContainer';
 import PageContainer from 'src/customs/components/container/PageContainer';
@@ -30,7 +32,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { CreateSiteRequestSchema, Item } from 'src/customs/api/models/Admin/Sites';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { deleteSiteSpace, getAllSite, getAllSitePagination } from 'src/customs/api/admin';
-import { IconSitemap } from '@tabler/icons-react';
+import { IconSitemap, IconX } from '@tabler/icons-react';
 import {
   showConfirmDelete,
   showSuccessAlert,
@@ -38,9 +40,11 @@ import {
   showSwal,
 } from 'src/customs/components/alerts/alerts';
 import FilterMoreContent from './FilterMoreContent';
+import { useNavigate, useParams } from 'react-router';
 
 type SiteTableRow = {
   id: string;
+  // parent: string | null;
   name: string;
   type: number;
   description: string | null;
@@ -63,15 +67,13 @@ type EnableField = {
 
 const Content = () => {
   const [tableData, setTableData] = useState<Item[]>([]);
-  const [allData, setAllData] = useState<Item[]>([]);
+  const [allData, setAllData] = useState<any[]>([]);
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
-
-  const [isDataReady, setIsDataReady] = useState(false);
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(15);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -87,6 +89,64 @@ const Content = () => {
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
   const [shouldSaveToStorage, setShouldSaveToStorage] = useState(true);
   const [isBatchEdit, setIsBatchEdit] = useState(false);
+  const [openDetailType, setOpenDetailType] = useState(false);
+  const [selectedType, setSelectedType] = useState<number | null>(null);
+  const navigate = useNavigate();
+
+  const [breadcrumbItems, setBreadcrumbItems] = useState<{ id: string; name: string }[]>([]);
+  const [appliedType, setAppliedType] = useState<number>(-1);
+  const { '*': wildcard } = useParams();
+
+  const handleCloseDetailType = () => {
+    setSelectedType(null);
+    setOpenDetailType(false);
+  };
+
+  const [currentId, setCurrentId] = useState<string | null>(null);
+
+  const typeOptions = [
+    { label: 'Site', value: 0 },
+    { label: 'Building', value: 1 },
+    { label: 'Floor', value: 2 },
+    { label: 'Room', value: 3 },
+  ];
+
+  const [allowedTypes, setAllowedTypes] = useState(typeOptions);
+  const [id, setId] = useState<string | undefined>(undefined);
+
+  const typeHierarchy: Record<number, number[]> = {
+    0: [1, 2, 3], // Site → Building, Floor, Room
+    1: [2, 3], // Building → Floor, Room
+    2: [3], // Floor → Room
+    3: [], // Room → nothing
+  };
+  useEffect(() => {
+    if (!allData) return;
+
+    const lastParentId = wildcard ? wildcard.split('/').slice(-1)[0] : id;
+
+    if (!lastParentId) {
+      setAllowedTypes(typeOptions);
+      return;
+    }
+
+    const parentItem = allData.find((item) => item.id === lastParentId);
+
+    if (!parentItem) {
+      setAllowedTypes(typeOptions);
+      return;
+    }
+
+    const parentType = parentItem.type;
+
+    const allowedChildTypes = typeHierarchy[parentType] || [];
+
+    const filtered = typeOptions.filter(
+      (opt) => allowedChildTypes.includes(opt.value) && opt.value !== parentType,
+    );
+
+    setAllowedTypes(filtered);
+  }, [id, wildcard, allData]);
 
   const [initialFormSnapshot, setInitialFormSnapshot] = useState<Item | null>(null);
   const [formDataAddSite, setFormDataAddSite] = useState<Item>(() => {
@@ -103,10 +163,8 @@ const Content = () => {
       color: 'none',
     },
   ];
-  const defaultFormData = CreateSiteRequestSchema.parse({});
 
-  // Cek apakah form berubah
-  const isFormChanged = React.useMemo(() => {
+  const isFormChanged = useMemo(() => {
     if (!openFormCreateSiteSpace || !initialFormSnapshot) return false;
     return JSON.stringify(formDataAddSite) !== JSON.stringify(initialFormSnapshot);
   }, [openFormCreateSiteSpace, formDataAddSite, initialFormSnapshot]);
@@ -136,9 +194,9 @@ const Content = () => {
         !dialogRef.current.contains(event.target as Node)
       ) {
         if (isFormChanged) {
-          setConfirmDialogOpen(true); // buka dialog konfirmasi
+          setConfirmDialogOpen(true);
         } else {
-          handleCloseModalCreateSiteSpace(); // tutup langsung kalau tidak ada perubahan
+          handleCloseModalCreateSiteSpace();
         }
       }
     }
@@ -163,32 +221,49 @@ const Content = () => {
     type: -1,
   });
 
-  const [appliedType, setAppliedType] = useState<number>(-1);
+  const getHierarchyParams = (wildcard?: string) => {
+    if (!wildcard) {
+      return {
+        parent: undefined,
+        is_child: false,
+      };
+    }
 
+    const lastParentId = wildcard.split('/').slice(-1)[0];
+
+    return {
+      parent: lastParentId,
+      is_child: true,
+    };
+  };
   useEffect(() => {
     if (!token) return;
+
     const fetchData = async () => {
       setLoading(true);
       try {
         const start = page * rowsPerPage;
+
+        const { parent, is_child } = getHierarchyParams(wildcard);
+
         const response = await getAllSitePagination(
           token,
           start,
           rowsPerPage,
-          sortDir,
           sortColumn,
+          sortDir,
           searchKeyword,
           appliedType !== -1 ? appliedType : undefined,
+          parent,
+          is_child,
         );
-        const resGetAll = await getAllSite(token);
-        // console.log('Response from API:', resGetAll);
-        setAllData(resGetAll.collection);
+        const res = await getAllSite(token);
+        setAllData(res.collection);
         setTableData(response.collection);
         setTotalRecords(response.RecordsTotal);
         setTotalFilteredRecords(response.RecordsFiltered);
-        // console.log('Table data:', response.RecordsFiltered);
 
-        const rows = response.collection.map((item) => ({
+        const tableRows = response.collection.map((item: any) => ({
           id: item.id,
           name: item.name,
           type: item.type,
@@ -196,20 +271,54 @@ const Content = () => {
           image: item.image || '',
         }));
 
-        // if (rows) {
-        setTableRowSite(rows);
-        // setIsDataReady(true);
-        // }
+        setTableRowSite(tableRows);
       } catch (error) {
-        console.error('Fetch error:', error);
+        // console.error('Fetch error:', error);
+        setTableRowSite([]);
+        setTableData([]);
+        setTotalRecords(0);
+        setTotalFilteredRecords(0);
       } finally {
         setLoading(false);
       }
     };
-    fetchData();
-  }, [token, page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword, appliedType]);
 
-  // Create Site space state management
+    fetchData();
+  }, [
+    token,
+    page,
+    rowsPerPage,
+    sortColumn,
+    sortDir,
+    refreshTrigger,
+    searchKeyword,
+    appliedType,
+    wildcard,
+  ]);
+
+  useEffect(() => {
+    if (!allData?.length) {
+      setBreadcrumbItems([{ id: '', name: 'Home' }]);
+      return;
+    }
+
+    if (!wildcard) {
+      setBreadcrumbItems([{ id: '', name: 'Home' }]);
+      return;
+    }
+
+    const ids = wildcard.split('/');
+
+    const chain = ids
+      .map((id) => allData.find((item) => item.id === id))
+      .filter(Boolean)
+      .map((item) => ({
+        id: item.id,
+        name: item.name,
+      }));
+
+    setBreadcrumbItems([{ id: '', name: 'Home' }, ...chain]);
+  }, [wildcard, allData]);
 
   const handleOpenDialog = () => {
     setOpenFormCreateSiteSpace(true);
@@ -224,11 +333,14 @@ const Content = () => {
   };
 
   // Handle Add
-  const handleAdd = () => {
+  const handleAdd = (type?: number) => {
+    handleCloseDetailType();
     const editing = localStorage.getItem('unsavedSiteForm');
     if (editing) {
       const parsed = JSON.parse(editing);
       if (!parsed.id) {
+        // set type jika ada
+        if (type !== undefined) parsed.type = type;
         setFormDataAddSite(parsed);
         setInitialFormSnapshot(parsed);
         setEdittingId('');
@@ -247,6 +359,9 @@ const Content = () => {
       parking: [],
       tracking: [],
       is_registered_point: false,
+      parent: '',
+      is_child: false,
+      type: type ?? 0,
     };
     setFormDataAddSite(empty);
     setInitialFormSnapshot(empty);
@@ -254,8 +369,6 @@ const Content = () => {
     setOpenFormCreateSiteSpace(true);
   };
 
-  // Handle Edit
-  // buka EDIT
   const handleEdit = (id: string) => {
     const editing = localStorage.getItem('unsavedSiteForm');
     if (editing) {
@@ -282,6 +395,9 @@ const Content = () => {
         access: [],
         parking: [],
         tracking: [],
+        parent: '',
+        is_child: false,
+        type: 0,
         // is_registered_point: false,
       };
       setEdittingId(id);
@@ -309,6 +425,9 @@ const Content = () => {
           parking: [],
           tracking: [],
           is_registered_point: false,
+          parent: '',
+          is_child: false,
+          type: 0,
         };
         setEdittingId(pendingEditId);
         setFormDataAddSite(parsedData);
@@ -326,6 +445,9 @@ const Content = () => {
         parking: [],
         tracking: [],
         is_registered_point: false,
+        parent: '',
+        is_child: false,
+        type: 0,
       };
       setEdittingId('');
       setFormDataAddSite(empty);
@@ -342,21 +464,20 @@ const Content = () => {
     setPendingEditId(null);
   };
 
-  // Delete Site Space
   const handleDelete = async (id: string) => {
     if (!token) return;
 
-    const confirm = await showConfirmDelete('Are you sure you want to delete this site space?', '');
+    const confirm = await showConfirmDelete('Are you sure you want to delete this site space?');
+
+    if (!confirm) return;
 
     if (confirm) {
       setLoading(true);
       try {
         await deleteSiteSpace(id, token);
         setRefreshTrigger((prev) => prev + 1);
-        showSwal('success', 'Site space has been deleted.');
+        showSwal('success', 'Successfully deleted site space!');
       } catch (error) {
-        // console.error(error);
-        showErrorAlert('Failed!', 'Failed to delete site space.');
         showSwal('error', 'Failed to delete site space.');
         setTimeout(() => setLoading(false), 500);
       } finally {
@@ -365,27 +486,19 @@ const Content = () => {
     }
   };
 
-  // Delete Batch Site Space
   const handleBatchDelete = async (rows: SiteTableRow[]) => {
     if (!token || rows.length === 0) return;
 
-    const confirmed = await showConfirmDelete(
-      `Are you sure to delete ${rows.length} site space?`,
-      '',
-    );
-
+    const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} items?`);
     if (confirmed) {
       setLoading(true);
       try {
         await Promise.all(rows.map((row) => deleteSiteSpace(row.id, token)));
         setRefreshTrigger((prev) => prev + 1);
-        setSelectedRows([]); // <<< Reset setelah delete
-        // showSuccessAlert('Deleted!', `${rows.length} items have been deleted.`);
+        setSelectedRows([]);
         showSwal('success', `${rows.length} site space have been deleted.`);
-        setSelectedRows([]); // reset selected rows
+        setSelectedRows([]);
       } catch (error) {
-        console.error(error);
-        // showErrorAlert('Error!', 'Failed to delete some items.');
         showSwal('error', 'Failed to delete some items.');
       } finally {
         setLoading(false);
@@ -451,15 +564,18 @@ const Content = () => {
     setRefreshTrigger((prev) => prev + 1);
   };
 
+  const handleOpenType = () => {
+    setOpenDetailType(true);
+  };
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
       itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
     >
-      <Container title="Site Space" description="Site page">
+      <Container title="Site Space" description="Site space">
         <Box>
           <Grid container spacing={3}>
-            {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
               <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
             </Grid>
@@ -470,13 +586,23 @@ const Content = () => {
                 totalCount={totalFilteredRecords}
                 defaultRowsPerPage={rowsPerPage}
                 isHaveImage={true}
-                rowsPerPageOptions={[5, 10, 20, 50, 100]}
+                rowsPerPageOptions={[10, 25, 50, 100, 250]}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);
                 }}
+                isSiteSpaceName={true}
+                titleHeader="Site"
+                isHaveIntegration={true}
+                onNameClick={(row) => {
+                  const currentPath = wildcard ? wildcard.split('/') : [];
+                  const newPath = [...currentPath, row.id].join('/');
+                  navigate(`/admin/manage/site-space/${newPath}`);
+                }}
+                setCurrentId={(id: any) => setCurrentId(id)}
                 overflowX={'auto'}
                 data={tableRowSite}
+                breadcrumbItems={breadcrumbItems}
                 selectedRows={selectedRows}
                 isHaveChecked={true}
                 isHaveAction={true}
@@ -487,7 +613,7 @@ const Content = () => {
                 isHaveFilterDuration={false}
                 isHaveAddData={true}
                 isHaveHeader={false}
-                isSiteSpaceType
+                isSiteSpaceType={true}
                 onCheckedChange={(selected) => {
                   const fullSelectedItems = tableData.filter((item) =>
                     selected.some((row: SiteTableRow) => row.id === item.id),
@@ -512,7 +638,8 @@ const Content = () => {
                 onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
                 onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
                 onAddData={() => {
-                  handleAdd();
+                  // handleAdd();
+                  handleOpenType();
                 }}
                 sortColumns={['name']}
                 onFilterByColumn={(column) => setSortColumn(column.column)}
@@ -521,7 +648,7 @@ const Content = () => {
           </Grid>
         </Box>
       </Container>
-      {/* Dialog create employee */}
+
       <Dialog open={openFormCreateSiteSpace} onClose={handleDialogClose} fullWidth maxWidth="xl">
         <DialogTitle
           sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
@@ -560,7 +687,47 @@ const Content = () => {
           />
         </DialogContent>
       </Dialog>
-      {/* Dialog Confirm edit */}
+
+      <Dialog open={openDetailType} onClose={handleCloseDetailType} fullWidth maxWidth="sm">
+        <DialogTitle>
+          Select Type Site
+          <IconButton
+            onClick={handleCloseDetailType}
+            sx={{ position: 'absolute', right: 10, top: 10 }}
+          >
+            <IconX />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent dividers>
+          <Autocomplete
+            fullWidth
+            options={allowedTypes}
+            value={allowedTypes.find((o) => o.value === selectedType) || null}
+            onChange={(e, newValue) => {
+              setSelectedType(newValue?.value ?? null);
+            }}
+            renderInput={(params) => <TextField {...params} placeholder="Select site type..." />}
+          />
+        </DialogContent>
+
+        <DialogActions>
+          <Button onClick={handleCloseDetailType}>Cancel</Button>
+          <Button
+            onClick={() => {
+              if (selectedType === null) {
+                showSwal('error', 'Please select a type first');
+                return;
+              }
+              handleAdd(selectedType);
+            }}
+            variant="contained"
+            disabled={allowedTypes.length === 0}
+          >
+            Next
+          </Button>
+        </DialogActions>
+      </Dialog>
       <Dialog open={confirmDialogOpen} onClose={handleCancelEdit}>
         <DialogTitle ref={dialogRef}>Unsaved Changes</DialogTitle>
         <DialogContent>
@@ -574,12 +741,6 @@ const Content = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
-      <Portal>
-        <Backdrop open={loading} style={{ zIndex: 99999, color: '#fff' }}>
-          <CircularProgress color="primary" />
-        </Backdrop>
-      </Portal>
     </PageContainer>
   );
 };

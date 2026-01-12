@@ -89,7 +89,6 @@ function mapApiToDaySchedule(apiData: any) {
       const start = apiData[key];
       const end = apiData[key + '_end'];
 
-      // Jika kosong, undefined, null, atau bukan string → return empty hours
       if (typeof start !== 'string' || typeof end !== 'string') {
         return {
           id: `day-${day}`,
@@ -98,7 +97,6 @@ function mapApiToDaySchedule(apiData: any) {
         };
       }
 
-      // Kalau valid → masukkan datanya
       return {
         id: `day-${day}`,
         day,
@@ -178,7 +176,7 @@ const Content = () => {
   const handleDelete = async (id: string) => {
     if (!token) return;
 
-    const confirmed = await showConfirmDelete('Are you sure you want to delete this timezone?');
+    const confirmed = await showConfirmDelete('Are you sure you want to delete this time access?');
     if (confirmed) {
       setLoading(true);
       try {
@@ -212,7 +210,7 @@ const Content = () => {
       itemDataCustomNavListing={AdminNavListingData}
       itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
     >
-      <Container title="Timezone" description="Manage Timezone">
+      <Container title="Time Access" description="Manage Timezone">
         <Box
           sx={{
             display: 'flex',
@@ -223,13 +221,12 @@ const Content = () => {
             overflow: 'hidden',
           }}
         >
-          {/* LEFT SIDEBAR (kecil) */}
           <Box
             sx={{
-              width: mdUp ? secdrawerWidth : '100%', // fixed kecil
+              width: mdUp ? secdrawerWidth : '100%',
               borderRight: '1px solid #eee',
               p: 2,
-              pt: 4,
+              pt: 2,
               overflow: 'auto',
             }}
           >
@@ -237,17 +234,19 @@ const Content = () => {
               <Typography variant="h6" fontSize="1rem">
                 Time Access
               </Typography>
-              <Button
-                size="small"
-                variant="contained"
-                onClick={() => {
-                  setSelectedTimezone(null);
-                  localStorage.removeItem('timezoneFormDraft'); // ❌ hapus draft ketika klik add
-                  setRefreshTrigger((x) => x + 1);
-                }}
-              >
-                + Add
-              </Button>
+              <Tooltip title="Add Time Access" arrow>
+                <Button
+                  size="small"
+                  variant="contained"
+                  onClick={() => {
+                    setSelectedTimezone(null);
+                    localStorage.removeItem('timezoneFormDraft');
+                    setRefreshTrigger((x) => x + 1);
+                  }}
+                >
+                  + Add
+                </Button>
+              </Tooltip>
             </Box>
 
             {/* Search */}
@@ -334,7 +333,7 @@ const Content = () => {
           </Box>
 
           {/* RIGHT CONTENT (besar) */}
-          <Box flexGrow={1} p={3} sx={{ overflow: 'auto' }}>
+          <Box flexGrow={1} p={3} sx={{ overflow: 'hidden', height: { xs: 'auto', xl: '88vh' } }}>
             {selectedTimezone ? (
               <FormTimezone
                 key={selectedTimezone.id}
@@ -353,47 +352,6 @@ const Content = () => {
           </Box>
         </Box>
       </Container>
-
-      {/* Dialog Add Timezone */}
-      {/* <Dialog open={openForm} onClose={() => setOpenForm(false)} fullWidth maxWidth="xl">
-        <DialogTitle>
-          Add Timezone
-          <IconButton
-            aria-label="close"
-            onClick={() => setOpenForm(false)}
-            sx={{ position: 'absolute', right: 8, top: 8 }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent dividers>
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 3 }}>
-              <Grid size={{ xs: 12 }}>
-                <CustomFormLabel sx={{ marginY: 1 }} htmlFor="name">
-                  Name
-                </CustomFormLabel>
-                <CustomTextField type="text" id="name" fullWidth />
-              </Grid>
-              <Grid size={{ xs: 12 }}>
-                <CustomFormLabel sx={{ marginY: 1 }} htmlFor="description">
-                  Description
-                </CustomFormLabel>
-                <CustomTextField type="text" id="description" fullWidth />
-              </Grid>
-            </Grid>
-            <Grid size={{ xs: 9 }}>
-              <TimeGridSelector onSelectionChange={() => {}} />
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenForm(false)}>Cancel</Button>
-          <Button onClick={() => setOpenForm(false)} color="primary" variant="contained">
-            Submit
-          </Button>
-        </DialogActions>
-      </Dialog> */}
     </PageContainer>
   );
 };

@@ -52,6 +52,7 @@ import {
   showConfirmDelete,
   showErrorAlert,
   showSuccessAlert,
+  showSwal,
 } from 'src/customs/components/alerts/alerts';
 
 import {
@@ -337,22 +338,17 @@ const Content = () => {
     handleOpenDialog();
   };
 
-  // Handle Delete Visitor Card
   const handleDeleteVisitorCard = async (id: string) => {
-    const confirmed = await showConfirmDelete(
-      'Are you sure to delete?',
-      "You won't be able to revert this!",
-    );
+    const confirmed = await showConfirmDelete('Are you sure to delete this card?');
 
     if (confirmed) {
       setLoading(true);
       try {
         await deleteVisitorCard(token as string, id);
         setRefreshTrigger(refreshTrigger + 1);
-        showSuccessAlert('Deleted!', 'Visitor Card has been deleted.');
+        showSwal('success', 'Successfully deleted card!');
       } catch (error) {
-        console.error('Error deleting visitor card:', error);
-        showErrorAlert('Failed!', 'Failed to delete visitor card.');
+        showSwal('error', 'Failed to delete card.');
         setTimeout(() => setLoading(false), 500);
       } finally {
         setTimeout(() => setLoading(false), 500);
@@ -534,7 +530,7 @@ const Content = () => {
                 isHavePagination={true}
                 totalCount={totalFilteredRecords}
                 defaultRowsPerPage={rowsPerPage}
-                rowsPerPageOptions={[5, 10, 20, 50, 100]}
+                rowsPerPageOptions={[10, 25, 50, 100]}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);
@@ -656,9 +652,6 @@ const Content = () => {
             </Table>
           </TableContainer>
         </DialogContent>
-        {/* <DialogActions>
-          <Button onClick={() => setImportErrorOpen(false)}>Close</Button>
-        </DialogActions> */}
       </Dialog>
 
       <Dialog open={openFormCreateVisitorCard} onClose={handleRequestClose} fullWidth maxWidth="md">
@@ -672,7 +665,7 @@ const Content = () => {
           </IconButton>
         </DialogTitle>
         <Divider />
-        <DialogContent>
+        <DialogContent sx={{ mt: 0, pt: 0 }}>
           <br />
           <FormWizardAddVisitorCard
             formData={formAddVisitorCard}
@@ -765,8 +758,6 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
       </Typography>
 
       <Grid container spacing={3}>
-        {/* Join Dates */}
-
         <Grid size={{ xs: 12 }}>
           <CustomFormLabel sx={{ marginTop: '0px' }}>
             <Typography variant="caption">Type</Typography>

@@ -57,7 +57,8 @@ export const getAllApprovalDT = async (
   token: string,
   start?: number,
   length?: number,
-  sortColumn?: string,
+  // sortColumn?: string,
+  sortDir?: string,
   keyword: string = '',
   start_date?: string,
   end_date?: string,
@@ -71,7 +72,9 @@ export const getAllApprovalDT = async (
     // ✅ hanya tambahkan jika benar-benar diisi
     if (typeof start === 'number' && start > 0) params.start = start;
     if (typeof length === 'number' && length > 0) params.length = length;
-    if (sortColumn) params.sortColumn = sortColumn;
+    // sort_dir
+    params.sort_dir = sortDir;
+    // if (sortColumn) params.sortColumn = sortColumn;
     if (keyword?.trim()) params.keyword = keyword.trim();
     if (start_date) params['start-date'] = start_date;
     if (end_date) params['end-date'] = end_date;
@@ -79,9 +82,6 @@ export const getAllApprovalDT = async (
     if (typeof site_approval === 'number' && site_approval > 0)
       params['site-approval'] = site_approval;
     if (approval_type) params['approval-type'] = approval_type;
-
-    // ✅ Debug
-    console.log('📤 Params sent:', params);
 
     const hasAnyParam = Object.keys(params).length > 0;
 

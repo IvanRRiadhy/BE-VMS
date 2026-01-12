@@ -63,11 +63,12 @@ import VisitorStatusPieChart from '../Guest/Components/charts/VisitorStatusPieCh
 import VisitorHeatMap from 'src/customs/components/charts/VisitorHeatMap';
 import Heatmap from './Heatmap';
 import PieCharts from './PieCharts';
-import { getApproval } from 'src/customs/api/employee';
+import { getAllApprovalDT, getApproval } from 'src/customs/api/employee';
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
-// import OperatorPieChart from './Charts/OperatorPieChart';
+import PieChartsEmployee from './PieChartsEmployee';
+import { getActiveInvitation } from 'src/customs/api/visitor';
 
 const DashboardEmployee = () => {
   const cards = [
@@ -79,19 +80,18 @@ const DashboardEmployee = () => {
 
   const { token } = useSession();
 
-  // ✅ state untuk buka tutup dialog QR
   const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
   const [openDetailQRCode, setOpenDetailQRCode] = useState(false);
   const [tabValue, setTabValue] = useState(0);
   const [loading, setLoading] = useState(false);
-  // QR Scanner state
   const [qrValue, setQrValue] = useState('');
   const [qrMode, setQrMode] = useState<'manual' | 'scan'>('manual');
   const [hasDecoded, setHasDecoded] = useState(false);
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
   const [torchOn, setTorchOn] = useState(false);
+  const [approvalData, setApprovalData] = useState<any[]>([]);
   const scanContainerRef = useRef<HTMLDivElement | null>(null);
-
+  const [activeInvitation, setActiveInvitation] = useState<any[]>([]);
   const navigate = useNavigate();
 
   const handleOpenScanQR = () => setOpenDialogIndex(1);
@@ -114,8 +114,6 @@ const DashboardEmployee = () => {
     setOpenDialogIndex(null);
   };
 
-  const [approvalData, setApprovalData] = useState<any[]>([]);
-
   useEffect(() => {
     if (!token) return;
 
@@ -123,7 +121,6 @@ const DashboardEmployee = () => {
       try {
         setLoading(true);
 
-        // 📅 Ambil range tanggal dinamis (30 hari ke belakang & ke depan)
         const startDate = dayjs().subtract(30, 'day').format('YYYY-MM-DD');
         const endDate = dayjs().add(30, 'day').format('YYYY-MM-DD');
 
@@ -137,6 +134,18 @@ const DashboardEmployee = () => {
           null as any,
         );
         // console.log(response.collection);
+        // const response = await getAllApprovalDT(
+        //   token as string,
+        //   // start,
+        //   // rowsPerPage,
+        //   // sortColumn,
+        //   // searchKeyword, // 🚀 hapus spasi di awal/akhir
+        //   // filters.start_date || undefined,
+        //   // filters.end_date || undefined,
+        //   // filters.is_action ?? undefined,
+        //   // filters.site_approval ?? undefined,
+        //   // filters.approval_type || undefined,
+        // );
 
         // 🧩 Mapping data approval untuk tabel
         const mappedData = response.collection.map((item: any) => {
@@ -148,9 +157,7 @@ const DashboardEmployee = () => {
             site_place_name: trx.site_place_name || '-',
             agenda: trx.agenda || '-',
             visitor_period_start: trx.visitor_period_start || '-',
-            visitor_period_end: trx.visitor_period_end
-              ? formatDateTime(trx.visitor_period_end, trx.extend_visitor_period)
-              : trx.visitor_period_end || '-',
+            visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
             action_by: item.action_by || '-',
             status: item.action || '-',
           };
@@ -167,6 +174,32 @@ const DashboardEmployee = () => {
     fetchData();
   }, [token]);
 
+  // useEffect(() => {
+  //   const fetchDataActiveInvtiation = async () => {
+  //     try {
+  //       const response = await getActiveInvitation(token as string);
+  //       // console.log(response);
+
+  //       let rows = response.collection.map((item: any) => ({
+  //         id: item.id,
+  //         // visitor_type:  item.visitor_type_name,
+  //         name: item.visitor.name,
+  //         email: item.visitor.email,
+  //         organization: item.visitor.organization,
+  //         visitor_period_start: item.visitor_period_start,
+  //         visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
+  //         host: item.host_name ?? '-',
+  //         // visitor_status: item.visitor_status,
+  //       }));
+  //       setActiveInvitation(rows || []);
+  //     } catch (error) {
+  //       console.error('Error fetching data:', error);
+  //     }
+  //   };
+
+  //   fetchDataActiveInvtiation();
+  // }, [token]);
+
   const moveApproval = () => {
     navigate('/manager/approval');
   };
@@ -176,18 +209,13 @@ const DashboardEmployee = () => {
   };
 
   return (
-    <PageContainer title="Dashboard Operator">
+    <PageContainer title="Dashboard Manager" description="This is Manager Dashboard">
       <Grid container spacing={2} sx={{ mt: 0 }}>
         <Grid size={{ xs: 12, lg: 9 }}>
           <TopCard items={cards} size={{ xs: 12, lg: 3 }} />
         </Grid>
         <Grid size={{ xs: 12, lg: 3 }}>
           <Box display={'flex'} flexDirection={'column'} width={'100%'} gap={1}>
-            {/* <Button variant="contained" color="primary" onClick={moveInvitation}>
-              
-              
-              Send Invitation
-            </Button> */}
             <Button
               variant="contained"
               color="primary"
@@ -217,108 +245,13 @@ const DashboardEmployee = () => {
           </Box>
         </Grid>
 
-        {/* ✅ QR Code Card: klik untuk buka scanner */}
-        {/* <Grid size={{ xs: 12, sm: 4 }}>
-          <Typography variant="h6" sx={{ mb: 0 }}>
-            Scan QR
-          </Typography>
-          <Card
-            sx={{ borderRadius: 2, boxShadow: 3, mt: 1, cursor: 'pointer' }}
-            onClick={handleOpenScanQR}
-          >
-            <CardContent sx={{ display: 'flex', justifyContent: 'center', padding: 2 }}>
-              <Box display="flex" flexDirection="column" alignItems="center">
-                <Box
-                  sx={{
-                    borderRadius: 2,
-                    padding: 3,
-                    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.2)',
-                    backgroundColor: 'white',
-                  }}
-                >
-                  <QRCode
-                    value={'Scan QR'}
-                    size={180}
-                    style={{ height: 'auto', width: '180px', borderRadius: 8 }}
-                  />
-                </Box>
-                <Typography mt={1} fontWeight={500}>
-                  Klik untuk membuka Scanner
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid> */}
-        {/* <Grid size={{ xs: 12, sm: 4 }}>
-          <Typography variant="h6" sx={{ mb: 0 }}>
-            Graph
-          </Typography>
-          <Card
-            sx={{ borderRadius: 2, boxShadow: 3, mt: 1, cursor: 'pointer' }}
-            onClick={handleOpenScanQR}
-          >
-            <CardContent sx={{ display: 'flex', justifyContent: 'center', padding: 2 }}>
-              <Box display="flex" flexDirection="column" alignItems="center">
-                <Box
-                  sx={{
-                    borderRadius: 2,
-                    padding: 3,
-                    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.2)',
-                    backgroundColor: 'white',
-                  }}
-                >
-                  <QRCode
-                    value={'Scan QR'}
-                    size={180}
-                    style={{ height: 'auto', width: '180px', borderRadius: 8 }}
-                  />
-                </Box>
-                <Typography mt={1} fontWeight={500}>
-                  Klik untuk membuka Scanner
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 4 }}>
-          <Typography variant="h6" sx={{ mb: 0 }}>
-            Circle Chat
-          </Typography>
-          <Card
-            sx={{ borderRadius: 2, boxShadow: 3, mt: 1, cursor: 'pointer' }}
-            onClick={handleOpenScanQR}
-          >
-            <CardContent sx={{ display: 'flex', justifyContent: 'center', padding: 2 }}>
-              <Box display="flex" flexDirection="column" alignItems="center">
-                <Box
-                  sx={{
-                    borderRadius: 2,
-                    padding: 3,
-                    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.2)',
-                    backgroundColor: 'white',
-                  }}
-                >
-                  <QRCode
-                    value={'Scan QR'}
-                    size={180}
-                    style={{ height: 'auto', width: '180px', borderRadius: 8 }}
-                  />
-                </Box>
-                <Typography mt={1} fontWeight={500}>
-                  Klik untuk membuka Scanner
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid> */}
-
         {/* Tabel */}
         <Grid size={{ xs: 12, lg: 6 }}>
           <DynamicTable
-            height={420}
-            isHavePagination
+            height={430}
+            isHavePagination={false}
             overflowX="auto"
-            data={[]}
+            data={activeInvitation}
             isHaveChecked={false}
             isHaveAction={false}
             isHaveHeaderTitle
@@ -328,12 +261,12 @@ const DashboardEmployee = () => {
 
         <Grid size={{ xs: 12, lg: 6 }}>
           <DynamicTable
-            height={420}
-            isHavePagination
+            height={430}
+            isHavePagination={false}
             overflowX="auto"
             data={approvalData}
             isHaveChecked={false}
-            isHaveAction={false}
+            isHaveAction={true}
             isHaveHeaderTitle
             titleHeader="Approval"
             isHaveApproval={true}
@@ -344,7 +277,7 @@ const DashboardEmployee = () => {
           <PieCharts />
         </Grid>
         <Grid size={{ xs: 12, lg: 3 }} sx={{ height: '100%' }}>
-          <PieCharts />
+          <PieChartsEmployee />
         </Grid>
         <Grid size={{ xs: 12, lg: 6 }} sx={{ height: '100%' }}>
           <Heatmap />

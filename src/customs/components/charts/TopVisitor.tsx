@@ -17,12 +17,6 @@ const TopVisitor = () => {
     const fetchData = async () => {
       if (!token) return;
       try {
-        // const today = new Date();
-        // const end_date = today.toISOString().split('T')[0];
-        // const start = new Date(today);
-        // start.setDate(today.getDate() - 7);
-        // const start_date = start.toISOString().split('T')[0];
-
         const res = await getTopVisitors(
           token,
           startDate.toLocaleDateString('en-CA'),
@@ -45,11 +39,12 @@ const TopVisitor = () => {
       type: 'bar',
       toolbar: { show: false },
       animations: { enabled: true },
+      fontFamily: 'Plus Jakarta Sans, sans-serif',
     },
     plotOptions: {
       bar: {
-        borderRadius: 8, // 🎯 rounded top
-        borderRadiusApplication: 'end', // hanya bagian atas yang rounded
+        borderRadius: 8,
+        borderRadiusApplication: 'end',
         columnWidth: '50%',
         distributed: false,
         // endingShape: 'rounded',
@@ -57,17 +52,10 @@ const TopVisitor = () => {
     },
     dataLabels: {
       enabled: false,
+      style: {
+        fontFamily: 'Plus Jakarta Sans, sans-serif',
+      },
     },
-    // xaxis: {
-    //   categories: labels,
-    //   axisBorder: { show: true },
-    //   axisTicks: { show: false },
-    //   labels: {
-    //     show: true,
-    //     rotate: 0,
-    //     style: { colors: '#6b7280', fontSize: '14px' },
-    //   },
-    // },
     xaxis: {
       categories: labels,
       axisBorder: { show: true },
@@ -80,7 +68,6 @@ const TopVisitor = () => {
           fontSize: '12px',
         },
         formatter: (value: string) => {
-          // 🧠 Potong label jadi 2 baris jika terlalu panjang
           if (value.length > 5) {
             const words = value.split(' ');
             if (words.length > 1) {
@@ -105,7 +92,7 @@ const TopVisitor = () => {
       borderColor: '#e5e7eb',
       strokeDashArray: 4,
     },
-    colors: ['#3b82f6'], // 💙 biru seperti permintaanmu
+    colors: ['#3b82f6'],
     tooltip: {
       theme: 'light',
     },

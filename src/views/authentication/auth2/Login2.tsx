@@ -31,8 +31,8 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 import { useAuth } from 'src/customs/contexts/AuthProvider';
 import { IconEye, IconEyeOff, IconUser, IconUserPlus } from '@tabler/icons-react';
 import { GroupRoleId } from 'src/constant/GroupRoleId';
-import Logo from 'src/assets/images/logos/BI_Logo.png';
-import { useGlobalLoading } from 'src/customs/contexts/GlobalLoadingContext';
+// import Logo from 'src/assets/images/logos/BI_Logo.png';
+import Logo from 'src/assets/images/logos/bio-experience-1x1-logo.png';
 
 const Login2 = () => {
   const { isAuthenticated } = useAuth();
@@ -50,8 +50,6 @@ const Login2 = () => {
   const recaptchaRef = useRef<ReCAPTCHA | null>(null);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaError, setCaptchaError] = useState(false);
-  // const { showLoader, hideLoader } = useGlobalLoading();
-  // const { show } = useGlobalLoading();
 
   const [searchParams] = useSearchParams();
   const [guestCode, setGuestCode] = useState(searchParams.get('code') || '');
@@ -63,12 +61,6 @@ const Login2 = () => {
 
   // Tabs state
   const [tab, setTab] = useState(0);
-
-  // Handle captcha change (token received)
-  const onCaptchaChange = (token: string | null) => {
-    setCaptchaToken(token);
-    if (token) setCaptchaError(false);
-  };
 
   // On Submit (login normal)
   async function loginSubmit(e: FormEvent<HTMLFormElement>) {
@@ -90,10 +82,8 @@ const Login2 = () => {
       // recaptchaRef.current?.reset();
 
       // const { token, group_id } = response.collection;
-      const { token, group_id, employee_id, username: userName } = response.collection;
+      const { token, group_id, employee_id, type } = response.collection;
       saveToken(token, group_id);
-
-      // show();
 
       dispatch(
         setUser({
@@ -104,8 +94,11 @@ const Login2 = () => {
       if (group_id.toUpperCase() === GroupRoleId.Admin) navigate('/admin/dashboard');
       else if (group_id.toUpperCase() === GroupRoleId.Manager) navigate('/manager/dashboard');
       else if (group_id.toUpperCase() === GroupRoleId.Employee) navigate('/employee/dashboard');
+      else if (group_id.toUpperCase() === GroupRoleId.Employee && type == 0)
+        navigate('/delivery-staff/dashboard');
       else if (group_id.toUpperCase() === GroupRoleId.OperatorVMS) navigate('/operator/view');
-      else if (group_id.toUpperCase() === GroupRoleId.Visitor) navigate('/visitor/dashboard');
+      // else if (group_id.toUpperCase() === GroupRoleId.OperatorAdmin) navigate('/operator-admin/dashboard');
+      else if (group_id.toUpperCase() === GroupRoleId.Visitor) navigate('/guest/dashboard');
     } catch (err) {
       setTimeout(() => {
         if (err instanceof AxiosError && err.response) {
@@ -132,31 +125,36 @@ const Login2 = () => {
 
     try {
       const res = await AuthVisitor({ code: guestCode });
-      console.log('Response guest login:', res);
-      // setGuestError(false);
 
-      // if (!res?.collection) {
-      //   setLoading(false);
-      //   setGuestError(true);
-      //   return;
-      // }
-
-      const status = res.status || '';
+      const status = res.status;
       console.log('Status:', status);
+
+      localStorage.setItem('visitor_ref_code', guestCode);
       // setLoading(false);
       if (status === 'process') {
         // navigate(`/portal/waiting?code=${guestCode}`);
-        navigate(`/portal/waiting`);
-      } else if (status.toLowerCase() === 'fiil_form') {
-        navigate(`/portal/information?code=${guestCode}`);
-      } else {
-        if (res.collection.token) {
-          saveToken(res.collection.token, 'guest');
-        }
-        navigate('/guest/dashboard');
+        navigate('/portal/waiting', { replace: true });
+        return;
       }
+
+      if (status === 'fiil_form') {
+        navigate(`/portal/information?code=${guestCode}`, { replace: true });
+        return;
+      } else if (res.collection.token) {
+        saveToken(res.collection.token, GroupRoleId.Visitor.toLowerCase());
+        navigate('/guest/dashboard');
+        localStorage.removeItem('visitor_ref_code');
+        return;
+      }
+
+      // else {
+      //   if (res.collection.token) {
+      //     saveToken(res.collection.token, GroupRoleId.Visitor.toLowerCase());
+      //   }
+      //   navigate('/guest/dashboard');
+      // }
     } catch (err) {
-      console.error('Guest login gagal:', err);
+      // console.error('Guest login gagal:', err);
       setGuestError(true);
       setLoading(false);
     }
@@ -211,7 +209,8 @@ const Login2 = () => {
                 >
                   <Box display="flex" alignItems="center" justifyContent="center" mb={1}>
                     {/* <Logo /> */}
-                    <img src={Logo} width={100} height={100} />
+                    {/* <img src={Logo} width={100} height={100} /> */}
+                    <img src={Logo} width={80} height={80} />
                   </Box>
 
                   {/* Tabs Switch */}
@@ -415,7 +414,7 @@ const Login2 = () => {
                     </Typography>
                   </Box>
 
-                  <CardActions sx={{ justifyContent: 'center' }}>
+                  {/* <CardActions sx={{ justifyContent: 'center' }}>
                     <Typography
                       variant="subtitle2"
                       sx={{ color: 'grey.600', opacity: 0.7 }}
@@ -423,7 +422,7 @@ const Login2 = () => {
                     >
                       Version 1.02 - <span style={{}}>Build</span> 071125
                     </Typography>
-                  </CardActions>
+                  </CardActions> */}
                 </Card>
               </Grid>
             </Grid>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Button,
@@ -31,6 +31,7 @@ import {
   showConfirmDelete,
   showErrorAlert,
   showSuccessAlert,
+  showSwal,
 } from 'src/customs/components/alerts/alerts';
 import { CreateUserSchema, Item, UpdateUserSchema } from 'src/customs/api/models/Admin/User';
 import FormUser from './FormUser';
@@ -56,35 +57,6 @@ const Content = () => {
     setTabValue(newValue);
   };
 
-  // const { data, isLoading, isError, refetch } = useQuery({
-  //   queryKey: ['users', token, page, rowsPerPage, searchKeyword],
-  //   queryFn: async () => {
-  //     const response = await getAllUser(token as string);
-
-  //     // 🔹 Ambil hanya kolom yang dibutuhkan
-  //     const filteredData = response.collection.map((item: any) => ({
-  //       id: item.id,
-  //       fullname: item.fullname,
-  //       username: item.username,
-  //       group_id: item.group_id,
-  //       email: item.email,
-  //       group_name: item.group_name,
-  //       description: item.description || '',
-  //       status: item.status,
-  //     }));
-
-  //     return {
-  //       collection: filteredData,
-  //       totalRecords: response.RecordsTotal,
-  //       totalFiltered: response.RecordsFiltered,
-  //     };
-  //   },
-  //   enabled: !!token,
-  // });
-
-  // const collection = data?.collection || [];
-  // const totalRecords = collection.length;
-
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['users', token, page, rowsPerPage, searchKeyword],
     queryFn: async () => {
@@ -96,14 +68,12 @@ const Content = () => {
         id: item.id,
         fullname: item.fullname,
         username: item.username,
-        group_id: item.group_id, // tetap ambil untuk logika internal
+        // group_id: item.group_id,
         email: item.email,
         group_name: item.group_name,
         description: item.description || '',
-        status: item.status,
+        // status: item.status,
       }));
-
-      // 🧠 Sembunyikan group_id hanya di UI (buat versi tanpa kolom itu)
       const dataForTable = filteredData.map(({ group_id, ...rest }: any) => rest);
 
       return {
@@ -138,9 +108,11 @@ const Content = () => {
   const handleEdit = async (id: string) => {
     try {
       const response = await getUserById(id, token as string);
-      // Pastikan response sudah sesuai struktur UpdateUserSchema
-      // const parsedData = CreateUserSchema.parse(response);
-      setFormAddUser(response.collection);
+      console.log('response', response.collection);
+      setFormAddUser({
+        ...response.collection,
+        group_id: response?.collection?.group_id?.toUpperCase(),
+      });
       setEdittingId(id);
       setOpenFormAddDocument(true);
     } catch (error) {
@@ -151,36 +123,27 @@ const Content = () => {
 
   const handleSetting = async (id: string) => {
     try {
-      // const response = await getUserById(id, token as string);
-      // // Pastikan response sudah sesuai struktur UpdateUserSchema
-      // // const parsedData = CreateUserSchema.parse(response);
-      // setFormAddUser(response.collection);
-      // setEdittingId(id);
-      // setOpenFormAddDocument(true);
       setOpenDialogSetting(true);
     } catch (error) {
       console.error('Failed to fetch user details:', error);
-      showErrorAlert('Error!', 'Failed to load user data for editing.');
+      // showErrorAlert('Error!', 'Failed to load user data for editing.');
+      showSwal('error', 'Failed to load user data for editing.');
     }
   };
 
   const handleCloseDialog = () => setOpenFormAddDocument(false);
 
-  // Delete single user
   const handleDelete = async (id: string) => {
-    const confirmed = await showConfirmDelete(
-      `Are you sure to delete this user?`,
-      "You won't be able to revert this!",
-    );
+    const confirmed = await showConfirmDelete(`Are you sure to delete this user?`);
     if (!confirmed) return;
 
     try {
-      showSuccessAlert('Deleted!', 'User has been deleted.');
       await deleteUser(token as string, id);
+      showSwal('success', 'Successfully deleted user!');
       refetch();
     } catch (error) {
       console.error(error);
-      showErrorAlert('Error!', 'Failed to delete user.');
+      showSwal('error', 'Failed to delete user.');
     }
   };
 

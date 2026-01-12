@@ -19,10 +19,10 @@ import { createApproval, getAllApprovalDT, getApprovalById } from 'src/customs/a
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
+import BI_LOGO from 'src/assets/images/logos/BI_Logo.png';
 import FilterMoreContent from './FilterMoreContent';
 import Swal from 'sweetalert2';
-import { showErrorAlert, showSuccessAlert, showSwal } from 'src/customs/components/alerts/alerts';
-import { Item } from 'src/customs/api/models/Employee/Approval';
+import { showSwal } from 'src/customs/components/alerts/alerts';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 
 interface Filters {
@@ -39,14 +39,14 @@ const Approval = () => {
   const [loading, setLoading] = useState(false);
   const { token } = useSession();
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [searchKeyword, setSearchKeyword] = useState('');
-  const [isDataReady, setIsDataReady] = useState(false);
   const [totalRecords, setTotalRecords] = useState(0);
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [loadingAction, setLoadingAction] = useState(false);
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const cards = [
     {
       title: 'Total Approval',
@@ -82,12 +82,13 @@ const Approval = () => {
           token,
           start,
           rowsPerPage,
-          sortColumn,
-          searchKeyword, // 🚀 hapus spasi di awal/akhir
+          // sortColumn,
+          sortDir,
+          searchKeyword,
           filters.start_date || undefined,
           filters.end_date || undefined,
-          filters.is_action ?? undefined,
-          filters.site_approval ?? undefined,
+          filters.is_action || undefined,
+          filters.site_approval || undefined,
           filters.approval_type || undefined,
         );
 
@@ -107,7 +108,6 @@ const Approval = () => {
               visitor_type: trx.visitor_type_name || '-',
               agenda: trx.agenda || '-',
               visitor_period_start: trx.visitor_period_start || '-',
-              // visitor_period_end: trx.visitor_period_end || '-',
               visitor_period_end: trx.visitor_period_end
                 ? formatDateTime(trx.visitor_period_end, trx.extend_visitor_period)
                 : trx.visitor_period_end || '-',
@@ -119,7 +119,7 @@ const Approval = () => {
         setTotalRecords(res.collection.length);
         // console.log(totalRecords);
         setTotalFilteredRecords(res.RecordsFiltered);
-        setIsDataReady(true);
+        // setIsDataReady(true);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -133,7 +133,7 @@ const Approval = () => {
     refreshTrigger,
     page,
     rowsPerPage,
-    sortColumn,
+    // sortColumn,
     searchKeyword,
     filters.start_date,
     filters.end_date,
@@ -158,44 +158,6 @@ const Approval = () => {
     }
   };
 
-  // const handleActionApproval = async (id: string, action: 'Accept' | 'Deny') => {
-  //   if (!id || !token) return;
-
-  //   try {
-  //     const confirm = await Swal.fire({
-  //       title: `${action === 'Accept' ? 'Approve' : 'Deny'} this request?`,
-  //       icon: 'question',
-  //       showCancelButton: true,
-  //       confirmButtonText: action === 'Accept' ? 'Yes, Approve' : 'Yes, Deny',
-  //       cancelButtonText: 'Cancel',
-  //       confirmButtonColor: action === 'Accept' ? '#4caf50' : '#f44336',
-  //     });
-
-  //     if (!confirm.isConfirmed) return;
-
-  //     // ✅ Baru mulai loading setelah user konfirmasi
-  //     setTimeout(() => setLoading(true), 200);
-
-  //     await createApproval(token, { action }, id);
-
-  //     // ⏱ delay biar Swal close dulu
-  //     await new Promise((resolve) => setTimeout(resolve, 300));
-
-  //     await showSuccessAlert(
-  //       'Success',
-  //       `Data Approval ${action === 'Accept' ? 'approved' : 'denied'} successfully.`,
-  //     );
-
-  //     setRefreshTrigger((prev) => prev + 1);
-  //   } catch (error) {
-  //     console.error('Approval action error:', error);
-  //     await Swal.fire('Error', 'Something went wrong while processing approval.', 'error');
-  //   } finally {
-  //     // kasih sedikit delay agar transisi smooth
-  //     setTimeout(() => setLoading(false), 400);
-  //   }
-  // };
-
   const handleActionApproval = async (id: string, action: 'Accept' | 'Deny') => {
     if (!id || !token) return;
 
@@ -203,8 +165,12 @@ const Approval = () => {
       const confirm = await Swal.fire({
         title: `Do you want to ${action === 'Accept' ? 'Accept' : 'Deny'} this approval?`,
         icon: 'question',
+        // imageUrl: BI_LOGO,
+        imageWidth: 100,
+        imageHeight: 100,
+        reverseButtons: true,
         showCancelButton: true,
-        confirmButtonText: action === 'Accept' ? 'Yes' : 'Yes',
+        confirmButtonText: action === 'Accept' ? 'Yes' : 'No',
         cancelButtonText: 'Cancel',
         confirmButtonColor: action === 'Accept' ? '#4caf50' : '#f44336',
         customClass: {
@@ -215,35 +181,24 @@ const Approval = () => {
 
       if (!confirm.isConfirmed) return;
 
-      // ✅ Start loading setelah konfirmasi
-      setTimeout(() => setLoadingAction(true), 800);
+      setTimeout(() => setLoadingAction(true), 500);
 
       await createApproval(token, { action }, id);
-
-      // ✅ Tampilkan alert sukses dan tunggu sampai selesai
       setTimeout(() => {
-        // showSuccessAlert(
-        //   'Success',
-        //   `Data Approval ${action === 'Accept' ? 'approved' : 'denied'} successfully.`,
-        // );
         showSwal(
           'success',
           `Data Approval ${action === 'Accept' ? 'approved' : 'denied'} successfully.`,
         );
       }, 850);
 
-      // ✅ Sekarang tutup loading
-      setTimeout(() => setLoadingAction(false), 200);
-
       // 🔄 Refresh data
       setRefreshTrigger((prev) => prev + 1);
     } catch (error) {
       console.error('Approval action error:', error);
       setTimeout(() => setLoadingAction(false), 800);
-      setTimeout(
-        () => showErrorAlert('Error', 'Something went wrong while processing approval.'),
-        1000,
-      );
+      showSwal('error', 'Something went wrong while processing approval.');
+    } finally {
+      setTimeout(() => setLoadingAction(false), 600);
     }
   };
 
@@ -256,7 +211,6 @@ const Approval = () => {
               <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
             </Grid>
             <Grid size={{ xs: 12, lg: 12 }}>
-              {/* {isDataReady ? ( */}
               <DynamicTable
                 loading={loading}
                 overflowX={'auto'}
@@ -264,7 +218,7 @@ const Approval = () => {
                 isHavePagination={true}
                 // selectedRows={selectedRows}
                 defaultRowsPerPage={rowsPerPage}
-                rowsPerPageOptions={[5, 10, 20]}
+                rowsPerPageOptions={[10, 20, 100]}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);
@@ -297,59 +251,18 @@ const Approval = () => {
                   />
                 }
               />
-              {/* ) : (
-              <Card sx={{ width: '100%' }}>
-                <Skeleton />
-                <Skeleton animation="wave" />
-                <Skeleton animation={false} />
-              </Card>
-            )} */}
             </Grid>
           </Grid>
         </Box>
-
-        <Dialog open={false} onClose={() => {}} fullWidth maxWidth="sm">
-          <DialogTitle>Approval Detail</DialogTitle>
-          <IconButton
-            aria-label="close"
-            onClick={() => {}}
-            sx={{
-              position: 'absolute',
-              right: 8,
-              top: 8,
-              color: (theme) => theme.palette.grey[500],
-            }}
-          >
-            <IconX />
-          </IconButton>
-          <DialogContent dividers>
-            <Typography gutterBottom> Name</Typography>
-            <Typography gutterBottom> Email</Typography>
-            <Typography gutterBottom> Phone</Typography>
-            <Typography gutterBottom> Company</Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => {}} color="error" variant="contained">
-              Deny
-            </Button>
-            <Button
-              // onClick={() => handleActionApproval(approvalDataDetail?.id || '')}
-              color="primary"
-              variant="contained"
-            >
-              Accept
-            </Button>
-          </DialogActions>
-        </Dialog>
       </PageContainer>
       <Backdrop
         open={loadingAction}
         sx={{
           color: '#fff',
-          zIndex: (theme) => theme.zIndex.drawer + 1, // di atas drawer & dialog
+          zIndex: 99999,
         }}
       >
-        <CircularProgress color="inherit" />
+        <CircularProgress color="primary" />
       </Backdrop>
     </>
   );

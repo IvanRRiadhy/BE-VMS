@@ -139,8 +139,8 @@ const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({
           <Alert severity={alertType}>{alertMessage}</Alert>
         </Grid2> */}
 
-        <CustomFormLabel htmlFor="name" sx={{ my: 1 }}>
-          <Typography variant="body1">Organization Name</Typography>
+        <CustomFormLabel htmlFor="name" sx={{ my: 1, fontWeight: 500 }} required>
+          Organization Name
         </CustomFormLabel>
         <CustomTextField
           id="name"
@@ -152,8 +152,8 @@ const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({
           variant="outlined"
         />
 
-        <CustomFormLabel htmlFor="code" sx={{ my: 1 }}>
-          <Typography variant="body1">Organization Code</Typography>
+        <CustomFormLabel htmlFor="code" sx={{ my: 1, fontWeight: 500 }} required>
+          Organization Code
         </CustomFormLabel>
         <CustomTextField
           id="code"
@@ -165,8 +165,8 @@ const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({
           variant="outlined"
         />
 
-        <CustomFormLabel htmlFor="host" sx={{ my: 1 }}>
-          <Typography variant="body1">Head of Organization</Typography>
+        <CustomFormLabel htmlFor="host" sx={{ my: 1, fontWeight: 500 }} required>
+          Head of Organization
         </CustomFormLabel>
         <Autocomplete
           id="host"

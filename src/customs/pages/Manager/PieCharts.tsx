@@ -47,7 +47,7 @@ export default function PieCharts() {
                   height: 18,
                   borderRadius: '50%',
                   bgcolor: item.color,
-                  border: '2px solid #fff', // biar lebih clean
+                  border: '2px solid #fff',
                   boxShadow: 1,
                 }}
               />

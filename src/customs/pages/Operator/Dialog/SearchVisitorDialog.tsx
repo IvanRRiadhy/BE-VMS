@@ -9,7 +9,7 @@ import {
   TextField,
   CircularProgress,
 } from '@mui/material';
-import { IconSearch, IconX } from '@tabler/icons-react';
+import { IconSearch, IconTrash, IconX } from '@tabler/icons-react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import { searchVisitor } from 'src/customs/api/operator';
 import { useSession } from 'src/customs/contexts/SessionContext';
@@ -157,8 +157,8 @@ const SearchVisitorDialog: React.FC<Props> = ({ open, onClose, onSearch, contain
 
           {errorMsg && <Box sx={{ color: 'error.main', fontSize: 14 }}>{errorMsg}</Box>}
 
-          <Box display="flex" justifyContent="flex-end" gap={1} mt={1}>
-            <Button variant="outlined" onClick={handleClear}>
+          <Box display="flex" justifyContent="flex-end" gap={0.5} mt={1}>
+            <Button variant="contained" color="error" onClick={handleClear} startIcon={<IconX />}>
               Clear
             </Button>
 
@@ -166,7 +166,7 @@ const SearchVisitorDialog: React.FC<Props> = ({ open, onClose, onSearch, contain
               variant="contained"
               onClick={handleSearch}
               disabled={loading}
-              startIcon={loading ? <CircularProgress size={18} color="inherit" /> : null}
+              startIcon={loading ? <CircularProgress size={18} color="inherit" /> : <IconSearch />}
             >
               {loading ? 'Searching...' : 'Search'}
             </Button>

@@ -8,6 +8,7 @@ import {
   FormControlLabel,
   RadioGroup,
   Autocomplete,
+  Divider,
 } from '@mui/material';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
@@ -74,11 +75,12 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
         Employee Filter
       </Typography>
 
+      <Divider sx={{ mb: 0 }} />
       <Grid2 container spacing={3}>
         {/* Join Dates */}
         <Grid2 size={{ xs: 12, sm: 6 }}>
-          <CustomFormLabel htmlFor="joinStart">
-            <Typography variant="caption">Join Start</Typography>
+          <CustomFormLabel htmlFor="joinStart" sx={{ mt: 2 }}>
+            <Typography variant="body1">Join Start</Typography>
           </CustomFormLabel>
           <CustomTextField
             id="joinStart"
@@ -87,13 +89,13 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
             variant="outlined"
             value={filters.joinStart}
             onChange={handleChange}
-            InputProps={{ sx: { fontSize: '0.7rem' } }}
+            InputProps={{ sx: { fontSize: '0.8rem' } }}
           />
         </Grid2>
 
         <Grid2 size={{ xs: 12, sm: 6 }}>
-          <CustomFormLabel htmlFor="exitEnd">
-            <Typography variant="caption">Exit End</Typography>
+          <CustomFormLabel htmlFor="exitEnd" sx={{ mt: 2 }}>
+            <Typography variant="body1">Exit End</Typography>
           </CustomFormLabel>
           <CustomTextField
             id="exitEnd"
@@ -102,14 +104,14 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
             variant="outlined"
             value={filters.exitEnd}
             onChange={handleChange}
-            InputProps={{ sx: { fontSize: '0.7rem' } }}
+            InputProps={{ sx: { fontSize: '0.8rem' } }}
           />
         </Grid2>
 
         {/* Organization */}
         <Grid2 size={{ xs: 12, sm: 4 }}>
           <CustomFormLabel htmlFor="organization" sx={{ mt: 0 }}>
-            <Typography variant="caption">Organization</Typography>
+            <Typography variant="body1">Organization</Typography>
           </CustomFormLabel>
           <Autocomplete
             id="organization"
@@ -126,7 +128,7 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
                 {...params}
                 placeholder="Select organization"
                 variant="outlined"
-                InputProps={{ ...params.InputProps, sx: { fontSize: '0.7rem' } }}
+                InputProps={{ ...params.InputProps, sx: { fontSize: '0.8rem' } }}
               />
             )}
           />
@@ -135,7 +137,7 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
         {/* Department */}
         <Grid2 size={{ xs: 12, sm: 4 }}>
           <CustomFormLabel htmlFor="department" sx={{ mt: 0 }}>
-            <Typography variant="caption">Department</Typography>
+            <Typography variant="body1">Department</Typography>
           </CustomFormLabel>
           <Autocomplete
             id="department"
@@ -152,7 +154,7 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
                 {...params}
                 placeholder="Select department"
                 variant="outlined"
-                InputProps={{ ...params.InputProps, sx: { fontSize: '0.7rem' } }}
+                InputProps={{ ...params.InputProps, sx: { fontSize: '0.8rem' } }}
               />
             )}
           />
@@ -161,7 +163,7 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
         {/* District */}
         <Grid2 size={{ xs: 12, sm: 4 }}>
           <CustomFormLabel htmlFor="district" sx={{ mt: 0 }}>
-            <Typography variant="caption">District</Typography>
+            <Typography variant="body1">District</Typography>
           </CustomFormLabel>
           <Autocomplete
             id="district"
@@ -176,7 +178,7 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
                 {...params}
                 placeholder="Select district"
                 variant="outlined"
-                InputProps={{ ...params.InputProps, sx: { fontSize: '0.7rem' } }}
+                InputProps={{ ...params.InputProps, sx: { fontSize: '0.8rem' } }}
               />
             )}
           />
@@ -184,8 +186,8 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
 
         {/* Gender */}
         <Grid2 size={{ xs: 12, sm: 6 }}>
-          <CustomFormLabel>
-            <Typography variant="caption">Gender</Typography>
+          <CustomFormLabel sx={{ mt: 0 }}>
+            <Typography variant="body1">Gender</Typography>
           </CustomFormLabel>
           <FormControl>
             <RadioGroup row name="gender" value={String(filters.gender)} onChange={handleChange}>
@@ -207,8 +209,8 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
 
         {/* Status Employee */}
         <Grid2 size={{ xs: 12, sm: 6 }}>
-          <CustomFormLabel>
-            <Typography variant="caption">Status Employee</Typography>
+          <CustomFormLabel sx={{ mt: 0 }}>
+            <Typography variant="body1">Status Employee</Typography>
           </CustomFormLabel>
           <FormControl>
             <RadioGroup

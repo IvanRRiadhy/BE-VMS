@@ -24,10 +24,11 @@ export interface LoginResponseCollection {
   token: string;
   employee_id: string;
   distributor_id: string;
-  menu: any[]; // Ubah `any` ke tipe yang lebih spesifik jika tahu struktur menu
+  menu: any[]; 
   groupAccess: GroupAccess[];
   id: string;
   status: number;
+  type?: number;
 }
 
 export interface LoginResponse {

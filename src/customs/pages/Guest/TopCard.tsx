@@ -21,6 +21,7 @@ interface TopCardsProps {
   size?: { xs: number; lg: number };
 }
 
+
 const defaultColor = '#FFFFFF';
 
 const TopCard: React.FC<TopCardsProps> = ({ items, onImageClick, cardMarginBottom, size }) => {

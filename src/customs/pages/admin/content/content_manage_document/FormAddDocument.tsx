@@ -12,6 +12,7 @@ import {
   Radio,
   Portal,
   Backdrop,
+  TextField,
 } from '@mui/material';
 import { Box } from '@mui/system';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
@@ -28,6 +29,7 @@ import { CKEditor } from '@ckeditor/ckeditor5-react';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 import axiosInstance from 'src/customs/api/interceptor';
 import { showSwal } from 'src/customs/components/alerts/alerts';
+import MemoEditor from 'src/customs/components/CKEditor/MemoEditor';
 
 interface FormAddDocumentProps {
   formData: CreateDocumentRequest;
@@ -56,10 +58,19 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
   const [file, setFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const { id, value } = e.target;
+  //   setFormData((prev) => ({ ...prev, [id]: value }));
+  // };
+
+  const handleChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
-    setFormData((prev) => ({ ...prev, [id]: value }));
-  };
+
+    setFormData((prev) => ({
+      ...prev,
+      [id]: value,
+    }));
+  }, []);
 
   const resetFileState = () => {
     setFile(null);
@@ -71,7 +82,6 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const f = event.target.files?.[0];
     if (!f) {
-      // user cancel or reset
       resetFileState();
       return;
     }
@@ -98,7 +108,6 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
         return;
       }
     } else {
-      // type 0 atau 2 → harus image
       if (!isImage) {
         alert('Only image files are allowed for this document type.');
         resetFileState();
@@ -131,50 +140,62 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
         return;
       }
 
-      const data = {
+      const payload = {
         name: formData.name,
         document_text: formData.document_text,
         document_type: formData.document_type,
         can_signed: formData.can_signed ?? false,
         can_upload: formData.can_upload ?? false,
         can_declined: formData.can_declined ?? false,
+        remarks: '',
       };
+      console.log('payload : ', JSON.stringify(payload, null, 2));
 
-      let docId = edittingId;
-      if (docId) {
-        await updateDocument(docId, data, token);
+      let docId: string;
+
+      if (edittingId) {
+        // Edit
+        docId = edittingId;
+        await updateDocument(docId, payload, token);
       } else {
-        await createDocument(data, token);
+        // Create
+        const res = await createDocument(payload, token);
+        console.log('res create : ', res);
+
+        if (!res?.collection?.id) {
+          throw new Error('Document ID not returned from API');
+        }
+
+        docId = res?.collection?.id;
+        console.log('Document ID:', docId);
       }
 
+      // --- UPLOAD FILE JIKA DOCUMENT TYPE 1 ---
       if (formData.document_type === 1 && file) {
         await uploadDocumentFile({
           baseUrl: API_BASE,
           docId,
           file,
           token,
-          onProgress: (p) => {
-            // opsional: tampilkan progress ke UI kalau kamu mau
-            console.log('Upload:', p, '%');
-          },
+          // onProgress: (p) => console.log('Upload:', p, '%'),
         });
       }
-
-      localStorage.removeItem('unsavedDocumentFormAdd');
-      // setAlertType('success');
-      // setAlertMessage('Document successfully created!');
-      showSwal('success', 'Document successfully created!');
+      showSwal(
+        'success',
+        edittingId ? 'Document updated successfully!' : 'Document created successfully!',
+      );
       setTimeout(() => {
         onSuccess?.();
       }, 600);
     } catch (err: any) {
       if (err?.errors) setErrors(err.errors);
-      setAlertType('error');
-      setAlertMessage('Something went wrong. Please try again later.');
-      setTimeout(() => {
-        setAlertType('info');
-        setAlertMessage('Complete the following data properly and correctly');
-      }, 3000);
+      showSwal('error', err?.message || 'Failed to create document.');
+      // setAlertType('error');
+      // setAlertMessage('Something went wrong. Please try again later.');
+      // setTimeout(() => {
+      //   setAlertType('info');
+      //   setAlertMessage('Complete the following data properly and correctly');
+      // }, 3000);
     } finally {
       setTimeout(() => {
         setLoading(false);
@@ -187,49 +208,46 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
       ? '.pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document'
       : 'image/png,image/jpeg,image/jpg,image/bmp,image/webp';
 
+  const handleChangeDocumentType = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const nextType = Number(e.target.value);
+
+    setFormData((prev) => ({
+      ...prev,
+      document_type: nextType,
+      document_text: '',
+      file: '',
+    }));
+
+    resetFileState();
+  };
+
   return (
     <>
       <form onSubmit={handleSubmit}>
         <Grid2 container spacing={2} sx={{ mb: 2 }}>
-          {/* <Grid2 size={12}>
-            <Alert severity={alertType}>{alertMessage}</Alert>
-          </Grid2> */}
-
           <Grid2 size={{ xs: 12, lg: 12 }}>
-            <CustomFormLabel htmlFor="name" sx={{ mt: 0 }}>
+            <CustomFormLabel htmlFor="name" sx={{ mt: 0 }} required>
               Document Name
             </CustomFormLabel>
-            <CustomTextField
+            <TextField
               id="name"
               value={formData.name}
               onChange={handleChange}
               error={Boolean(errors.name)}
               helperText={errors.name ?? ''}
               fullWidth
-              required
               disabled={loading}
             />
           </Grid2>
 
           <Grid2 size={{ xs: 6, lg: 6 }}>
             <FormControl component="fieldset" disabled={loading}>
-              <CustomFormLabel sx={{ mt: 0 }}>Document Type</CustomFormLabel>
+              <CustomFormLabel sx={{ mt: 0 }} required>Document Type</CustomFormLabel>
               <RadioGroup
                 id="document_type"
                 row
                 value={formData.document_type}
-                onChange={(e) => {
-                  const nextType = Number(e.target.value);
-                  // Reset konten saat ganti tipe
-                  setFormData((prev) => ({
-                    ...prev,
-                    document_type: nextType,
-                    document_text: '',
-                    file: '',
-                  }));
-                  // Reset file & preview
-                  resetFileState();
-                }}
+                onChange={handleChangeDocumentType}
               >
                 <FormControlLabel value={0} control={<Radio />} label="ID Card" />
                 <FormControlLabel value={1} control={<Radio />} label="Document" />
@@ -249,7 +267,7 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
                     ? 'true'
                     : formData.can_declined === false
                     ? 'false'
-                    : '' // ⬅️ kosong → tidak ada radio terpilih
+                    : ''
                 }
                 onChange={(e) =>
                   setFormData((prev) => ({
@@ -272,7 +290,7 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
               name="can_signed"
               row
               value={
-                formData.can_signed === true ? 'true' : formData.can_signed === false ? 'false' : '' // ⬅️ kosong → tidak ada radio terpilih
+                formData.can_signed === true ? 'true' : formData.can_signed === false ? 'false' : ''
               }
               onChange={(e) =>
                 setFormData((prev) => ({
@@ -294,7 +312,7 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
               name="can_upload"
               row
               value={
-                formData.can_upload === true ? 'true' : formData.can_upload === false ? 'false' : '' // ⬅️ kosong → tidak ada radio terpilih
+                formData.can_upload === true ? 'true' : formData.can_upload === false ? 'false' : ''
               }
               onChange={(e) =>
                 setFormData((prev) => ({
@@ -317,7 +335,7 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
                   <Box>
                     {formData.can_signed && (
                       <Box mb={2}>
-                        <CKEditor
+                        {/* <CKEditor
                           editor={ClassicEditor}
                           data={formData.document_text || ''}
                           disabled={loading}
@@ -331,6 +349,16 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
                             const data = editor.getData();
                             setFormData((prev) => ({ ...prev, document_text: data }));
                           }}
+                        /> */}
+                        <MemoEditor
+                          value={formData.document_text}
+                          disabled={loading}
+                          onChange={(data: string) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              document_text: data,
+                            }))
+                          }
                         />
                       </Box>
                     )}
@@ -353,7 +381,7 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
                           Upload File
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          Supports: PDF
+                          Supports: PDF, Up to 100 KB
                         </Typography>
 
                         {(preview || file) && (
@@ -424,12 +452,6 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
                       }}
                     />
                   )}
-
-                  {/* {!preview && file && (
-                    <Typography variant="body2" sx={{ mt: 2 }}>
-                      📄 {file.name}
-                    </Typography>
-                  )} */}
                 </Grid2>
               </Grid2>
             )}
@@ -454,7 +476,7 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
           open={loading}
           sx={{
             color: '#fff',
-            zIndex: (t) => (t.zIndex.snackbar ?? 1400) - 1, // di atas modal, di bawah snackbar
+            zIndex: (t) => (t.zIndex.snackbar ?? 1400) - 1,
           }}
         >
           <CircularProgress />
@@ -464,7 +486,7 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
   );
 };
 
-export default FormAddDocument;
+export default React.memo(FormAddDocument);
 
 async function uploadDocumentFile({
   baseUrl,
@@ -473,27 +495,26 @@ async function uploadDocumentFile({
   token,
   onProgress,
 }: {
-  baseUrl: string; // "http://192.168.1.116:8000"
-  docId: string; // UUID dokumen
-  file: File; // file yang dipilih user
-  token: string; // bearer
-  onProgress?: (pct: number) => void; // optional utk UI progress
+  baseUrl: string;
+  docId: string;
+  file: File;
+  token: string;
+  onProgress?: (pct: number) => void;
 }) {
   const url = `${baseUrl}/api/document/upload/${docId}`;
 
   const form = new FormData();
-  form.append('file', file); // field name "file" - sesuaikan jika backend pakai nama lain
+  form.append('file', file);
 
   const res = await axios.post(url, form, {
     headers: {
       Authorization: `Bearer ${token}`,
-      // ❌ Jangan set Content-Type manual; biarkan axios set boundary otomatis
     },
-    onUploadProgress: (evt) => {
-      if (!onProgress || !evt.total) return;
-      const pct = Math.round((evt.loaded * 100) / evt.total);
-      onProgress(pct);
-    },
+    // onUploadProgress: (evt) => {
+    //   if (!onProgress || !evt.total) return;
+    //   const pct = Math.round((evt.loaded * 100) / evt.total);
+    //   onProgress(pct);
+    // },
   });
 
   return res.data;
