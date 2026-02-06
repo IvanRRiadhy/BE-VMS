@@ -119,7 +119,7 @@ import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 
 const COLORS = [
-  '#3b82f6',
+  '#055499',
   '#f97316',
   '#22c55e',
   '#eab308',
@@ -143,6 +143,9 @@ const TopVisitingPurposeChart = ({ title }: { title: string }) => {
     colors: [],
   });
 
+  const start = startDate?.toISOString().split('T')[0];
+  const end = endDate?.toISOString().split('T')[0];
+
   useEffect(() => {
     if (!token) return;
 
@@ -156,8 +159,10 @@ const TopVisitingPurposeChart = ({ title }: { title: string }) => {
 
         const res = await getTopVisitingPurpose(
           token,
-          startDate.toLocaleDateString('en-CA'),
-          endDate.toLocaleDateString('en-CA'),
+          // startDate.toLocaleDateString('en-CA'),
+          // endDate.toLocaleDateString('en-CA'),
+          start,
+          end,
         );
 
         const labels = res.collection.map((item: any) => item.name);
@@ -171,7 +176,7 @@ const TopVisitingPurposeChart = ({ title }: { title: string }) => {
     };
 
     fetchData();
-  }, [token, startDate, endDate]);
+  }, [token, start, end]);
 
   const options: ApexCharts.ApexOptions = {
     chart: {
@@ -182,7 +187,7 @@ const TopVisitingPurposeChart = ({ title }: { title: string }) => {
     plotOptions: {
       bar: {
         horizontal: true,
-        distributed: true, // biar tiap bar beda warna
+        distributed: true,
         borderRadius: 6,
         barHeight: '50%',
       },

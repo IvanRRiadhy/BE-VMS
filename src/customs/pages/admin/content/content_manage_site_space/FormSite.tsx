@@ -19,6 +19,7 @@ import {
   TableContainer,
   Tooltip,
   IconButton,
+  Autocomplete,
 } from '@mui/material';
 
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
@@ -40,16 +41,9 @@ import {
   Access,
   Parking,
   Tracking,
-  CreateSiteParkingRequest,
-  CreateSiteTrackingRequest,
   UpdateSiteRequestSchema,
-  CreateSiteAccessSchema,
-  CreateSiteAccessRequest,
-  UpdateSiteTrackingSchema,
-  UpdateSiteParkingSchema,
 } from 'src/customs/api/models/Admin/Sites';
 import { IconTrash } from '@tabler/icons-react';
-import { QRCodeCanvas } from 'qrcode.react';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import {
   createSite,
@@ -76,6 +70,7 @@ import {
   createSiteTrackingBulk,
   createSiteParkingBulk,
   getAllDocument,
+  getAllEmployee,
 } from 'src/customs/api/admin';
 import {
   CreateSiteDocumentRequest,
@@ -115,12 +110,6 @@ interface FormSiteProps {
   isBatchEdit?: boolean;
   enabledFields?: EnabledFields;
   setEnabledFields: React.Dispatch<React.SetStateAction<EnabledFields>>;
-}
-const ITEM_TYPE = 'ACCESS_ROW';
-
-interface DragItem {
-  index: number;
-  type: string;
 }
 
 const FormSite = ({
@@ -183,6 +172,21 @@ const FormSite = ({
     retention_time: 0,
   });
 
+  const [employee, setEmployee] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        const res = getAllEmployee(token!);
+        const data = (await res).collection || [];
+        setEmployee(data);
+      } catch (error) {
+        console.error('❌ Failed to fetch employees:', error);
+      }
+    };
+    fetchEmployees();
+  }, [token]);
+
   useEffect(() => {
     if (!editingId || !token) return;
 
@@ -199,10 +203,10 @@ const FormSite = ({
         const site = siteRes.status === 'fulfilled' ? siteRes.value.collection?.access : [];
 
         const parkingList =
-          parkingRes.status === 'fulfilled' ? parkingRes.value.collection ?? [] : [];
+          parkingRes.status === 'fulfilled' ? (parkingRes.value.collection ?? []) : [];
 
         const trackingList =
-          trackingRes.status === 'fulfilled' ? trackingRes.value.collection ?? [] : [];
+          trackingRes.status === 'fulfilled' ? (trackingRes.value.collection ?? []) : [];
         setSiteParking(parkingList);
         setSiteTracking(trackingList);
 
@@ -425,9 +429,9 @@ const FormSite = ({
           };
 
           if (t.id) {
-            await updateSiteTracking(t.id, payload, token); // pakai id record
+            await updateSiteTracking(t.id, payload, token);
           } else {
-            await createSiteTracking(payload, token); // baru
+            await createSiteTracking(payload, token);
           }
         }
 
@@ -441,9 +445,9 @@ const FormSite = ({
           };
 
           if (p.id) {
-            await updateSiteParking(p.id, payload, token); // pakai id record
+            await updateSiteParking(p.id, payload, token);
           } else {
-            await createSiteParking(payload, token); // baru
+            await createSiteParking(payload, token);
           }
         }
 
@@ -533,8 +537,6 @@ const FormSite = ({
 
   const createSiteDocumentsForNewSite = async () => {
     if (!token) return;
-
-    // Cek duplikat documents.id di dalam siteDocument
 
     const allSitesRes = await getAllSite(token);
     const newSite = allSitesRes.collection.find(
@@ -697,7 +699,6 @@ const FormSite = ({
     <>
       <form onSubmit={handleOnSubmit}>
         <Grid container spacing={2} sx={{ mb: 2 }} alignItems="stretch">
-          {/* Location Details */}
           <Grid size={{ xs: 12, md: 5 }} display={'flex'}>
             <Paper sx={{ p: 3, height: '100%', width: '100%' }}>
               <Typography variant="h6" sx={{ mb: 2, borderLeft: '4px solid #673ab7', pl: 1 }}>
@@ -705,8 +706,10 @@ const FormSite = ({
               </Typography>
 
               <Grid container spacing={2}>
-                <Grid size={6}>
-                  <CustomFormLabel htmlFor="name">Location Name</CustomFormLabel>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <CustomFormLabel htmlFor="name" sx={{ mt: 0.5 }}>
+                    Location Name
+                  </CustomFormLabel>
                   <CustomTextField
                     id="name"
                     value={formData.name}
@@ -718,7 +721,9 @@ const FormSite = ({
                     disabled={isBatchEdit}
                     sx={{ mb: 2 }}
                   />
-                  <CustomFormLabel htmlFor="description">Description</CustomFormLabel>
+                  <CustomFormLabel htmlFor="description" sx={{ mt: 0.5 }}>
+                    Description
+                  </CustomFormLabel>
                   <CustomTextField
                     id="description"
                     value={formData.description}
@@ -726,14 +731,15 @@ const FormSite = ({
                     error={Boolean(errors.description)}
                     helperText={errors.description || ''}
                     fullWidth
-                    required
                     disabled={isBatchEdit}
                     sx={{ mb: 2 }}
                   />
                 </Grid>
-                <Grid size={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <Box display="flex" alignItems="center" justifyContent="space-between">
-                    <CustomFormLabel htmlFor="type">Type</CustomFormLabel>
+                    <CustomFormLabel htmlFor="type" sx={{ mt: 0.5 }}>
+                      Type
+                    </CustomFormLabel>
                   </Box>
                   <CustomTextField
                     id="type"
@@ -746,7 +752,11 @@ const FormSite = ({
                     disabled
                   />
                   <Box>
-                    <CustomFormLabel htmlFor="type_approval" required={formData.need_approval}>
+                    <CustomFormLabel
+                      htmlFor="type_approval"
+                      required={formData.need_approval}
+                      sx={{ mt: 0.5 }}
+                    >
                       Type Approval
                     </CustomFormLabel>
                     <CustomSelect
@@ -781,6 +791,28 @@ const FormSite = ({
                     </CustomSelect>
                   </Box>
                 </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <CustomFormLabel sx={{ mt: 0.5 }} required>
+                    Employee
+                  </CustomFormLabel>
+                  <Autocomplete
+                    id="employee"
+                    options={employee}
+                    getOptionLabel={(option) => option.name || ''}
+                    // value={
+                    //   employee.find((emp) => emp.id === formData.employee_id) || null
+                    // }
+                    onChange={(event, newValue) => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        employee_id: newValue ? newValue.id : '',
+                      }));
+                    }}
+                    renderInput={(params) => (
+                      <TextField {...params} fullWidth disabled={isBatchEdit} />
+                    )}
+                  />
+                </Grid>
               </Grid>
             </Paper>
           </Grid>
@@ -796,7 +828,7 @@ const FormSite = ({
                 justifyContent="space-between"
                 sx={{ marginX: 1 }}
               >
-                <CustomFormLabel htmlFor="timezone" required>
+                <CustomFormLabel htmlFor="timezone" required sx={{ mt: 0.5 }}>
                   Timezone
                 </CustomFormLabel>
                 {isBatchEdit && (
@@ -940,7 +972,10 @@ const FormSite = ({
                       label={
                         <Box display="flex" alignItems="center">
                           Need Approval
-                          <Tooltip title="Visitors must be approved before visiting the site." arrow>
+                          <Tooltip
+                            title="Visitors must be approved before visiting the site."
+                            arrow
+                          >
                             <IconButton size="small">
                               <InfoOutlinedIcon fontSize="small" />
                             </IconButton>
@@ -994,9 +1029,12 @@ const FormSite = ({
                       label={
                         <Box display="flex" alignItems="center">
                           Need Swap Card
-                          <Tooltip title="
+                          <Tooltip
+                            title="
                             Visitors must swap card.
-                          " arrow>
+                          "
+                            arrow
+                          >
                             <IconButton size="small">
                               <InfoOutlinedIcon fontSize="small" />
                             </IconButton>
@@ -1054,7 +1092,10 @@ const FormSite = ({
                       label={
                         <Box display="flex" alignItems="center">
                           Auto Check-out
-                          <Tooltip title="Automatically checks out visitors at a specified time." arrow>
+                          <Tooltip
+                            title="Automatically checks out visitors at a specified time."
+                            arrow
+                          >
                             <IconButton size="small">
                               <InfoOutlinedIcon fontSize="small" />
                             </IconButton>
@@ -1111,7 +1152,10 @@ const FormSite = ({
                       label={
                         <Box display="flex" alignItems="center">
                           Need Document
-                          <Tooltip title="Visitors must upload a document before visiting the site." arrow>
+                          <Tooltip
+                            title="Visitors must upload a document before visiting the site."
+                            arrow
+                          >
                             <IconButton size="small">
                               <InfoOutlinedIcon fontSize="small" />
                             </IconButton>
@@ -1138,7 +1182,10 @@ const FormSite = ({
                       label={
                         <Box display="flex" alignItems="center">
                           Registered Site
-                          <Tooltip title="Visitors must register a point before visiting the site." arrow>
+                          <Tooltip
+                            title="Visitors must register a point before visiting the site."
+                            arrow
+                          >
                             <IconButton size="small">
                               <InfoOutlinedIcon fontSize="small" />
                             </IconButton>
@@ -1319,93 +1366,6 @@ const FormSite = ({
             </Grid>
           </Grid>
 
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Paper sx={{ p: 3 }}>
-              <Box>
-                <Typography variant="h6" sx={{ mb: 2, borderLeft: '4px solid #673ab7', pl: 1 }}>
-                  Site Image
-                </Typography>
-                <Box
-                  sx={{
-                    border: '2px dashed #90caf9',
-                    borderRadius: 2,
-                    padding: 4,
-                    textAlign: 'center',
-                    backgroundColor: '#f5faff',
-                    cursor: isBatchEdit ? 'not-allowed' : 'pointer',
-                    width: '100%',
-                    margin: '0 auto',
-                    pointerEvents: isBatchEdit ? 'none' : 'auto',
-                    opacity: isBatchEdit ? 0.5 : 1,
-                  }}
-                  onClick={() => !isBatchEdit && fileInputRef.current?.click()}
-                >
-                  <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
-                  <Typography variant="subtitle1" sx={{ mt: 1 }}>
-                    Upload Site Image
-                  </Typography>
-                  <Typography variant="caption" color="textSecondary">
-                    Supports: JPG, JPEG, PNG, Up to 100KB
-                  </Typography>
-                  {previewUrl && (
-                    <Box
-                      mt={2}
-                      sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
-                    >
-                      <img
-                        src={previewUrl}
-                        alt="preview"
-                        style={{
-                          width: 200,
-                          height: 200,
-                          borderRadius: 12,
-                          objectFit: 'cover',
-                          cursor: 'pointer',
-                          boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
-                        }}
-                      />
-                      <Button
-                        color="error"
-                        size="small"
-                        variant="outlined"
-                        sx={{ mt: 2, minWidth: 120 }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleClear();
-                        }}
-                        startIcon={<IconTrash />}
-                      >
-                        Remove
-                      </Button>
-                    </Box>
-                  )}
-                  {/* hidden file input */}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    hidden
-                    ref={fileInputRef}
-                    onChange={handleFileSelect}
-                    disabled={isBatchEdit}
-                  />
-                </Box>
-                {/* Map Link Field */}
-                <Box sx={{ mt: 4, maxWidth: 600, margin: '0' }}>
-                  <CustomFormLabel htmlFor="map_link">Map Link (Google Maps)</CustomFormLabel>
-                  <CustomTextField
-                    id="map_link"
-                    value={formData.map_link}
-                    onChange={handleChange}
-                    placeholder="https://maps.google.com/..."
-                    disabled={isBatchEdit}
-                    fullWidth
-                    sx={{ mb: 2 }}
-                  />
-                </Box>
-              </Box>
-            </Paper>
-          </Grid>
-
           {formData.need_document && (
             <Grid size={{ xs: 12, md: 6 }}>
               <Paper sx={{ p: 3 }}>
@@ -1531,8 +1491,6 @@ const FormSite = ({
                         value={retentionInput}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                           const value = e.target.value;
-
-                          // Hanya izinkan angka kosong atau angka murni
                           if (/^\d*$/.test(value)) {
                             setRetentionInput(value);
 
@@ -1606,6 +1564,93 @@ const FormSite = ({
               </Paper>
             </Grid>
           )}
+
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Paper sx={{ p: 3 }}>
+              <Box>
+                <Typography variant="h6" sx={{ mb: 2, borderLeft: '4px solid #673ab7', pl: 1 }}>
+                  Site Image
+                </Typography>
+                <Box
+                  sx={{
+                    border: '2px dashed #90caf9',
+                    borderRadius: 2,
+                    padding: 4,
+                    textAlign: 'center',
+                    backgroundColor: '#f5faff',
+                    cursor: isBatchEdit ? 'not-allowed' : 'pointer',
+                    width: '100%',
+                    margin: '0 auto',
+                    pointerEvents: isBatchEdit ? 'none' : 'auto',
+                    opacity: isBatchEdit ? 0.5 : 1,
+                  }}
+                  onClick={() => !isBatchEdit && fileInputRef.current?.click()}
+                >
+                  <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
+                  <Typography variant="subtitle1" sx={{ mt: 1 }}>
+                    Upload Site Image
+                  </Typography>
+                  <Typography variant="caption" color="textSecondary">
+                    Supports: JPG, JPEG, PNG, Up to 100KB
+                  </Typography>
+                  {previewUrl && (
+                    <Box
+                      mt={2}
+                      sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+                    >
+                      <img
+                        src={previewUrl}
+                        alt="preview"
+                        style={{
+                          width: 200,
+                          height: 200,
+                          borderRadius: 12,
+                          objectFit: 'cover',
+                          cursor: 'pointer',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
+                        }}
+                      />
+                      <Button
+                        color="error"
+                        size="small"
+                        variant="outlined"
+                        sx={{ mt: 2, minWidth: 120 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleClear();
+                        }}
+                        startIcon={<IconTrash />}
+                      >
+                        Remove
+                      </Button>
+                    </Box>
+                  )}
+                  {/* hidden file input */}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    hidden
+                    ref={fileInputRef}
+                    onChange={handleFileSelect}
+                    disabled={isBatchEdit}
+                  />
+                </Box>
+                {/* Map Link Field */}
+                <Box sx={{ mt: 4, maxWidth: 600, margin: '0',marginTop: '16px' }}>
+                  <CustomFormLabel htmlFor="map_link">Map Link (Google Maps)</CustomFormLabel>
+                  <CustomTextField
+                    id="map_link"
+                    value={formData.map_link}
+                    onChange={handleChange}
+                    placeholder="https://maps.google.com/..."
+                    disabled={isBatchEdit}
+                    fullWidth
+                    sx={{ mb: 2 }}
+                  />
+                </Box>
+              </Box>
+            </Paper>
+          </Grid>
         </Grid>
 
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
@@ -1625,7 +1670,7 @@ const FormSite = ({
         open={loading}
         sx={{
           color: '#fff',
-          zIndex: 99999,
+          zIndex: 999999,
         }}
       >
         <CircularProgress color="primary" />

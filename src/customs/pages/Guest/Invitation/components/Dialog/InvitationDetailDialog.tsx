@@ -4,6 +4,7 @@ import {
   DialogTitle,
   DialogContent,
   IconButton,
+  // Grid2 as Grid,
   Grid,
   Typography,
   Stack,
@@ -12,12 +13,14 @@ import {
   Avatar,
   Paper,
   Button,
+  DialogActions,
 } from '@mui/material';
 import moment from 'moment';
 import { Download } from '@mui/icons-material';
 import QRCode from 'react-qr-code';
 import { IconX } from '@tabler/icons-react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
+import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 
 interface InvitationDetailDialogProps {
   open: boolean;
@@ -39,6 +42,7 @@ const InvitationDetailDialog: React.FC<InvitationDetailDialogProps> = ({
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>Detail Invitation</DialogTitle>
+      {/* <DialogTitle>Edit Invitation</DialogTitle> */}
 
       <IconButton
         aria-label="close"
@@ -55,7 +59,7 @@ const InvitationDetailDialog: React.FC<InvitationDetailDialogProps> = ({
 
       <DialogContent dividers sx={{ pt: 0 }}>
         <Stack spacing={2} mt={1}>
-          {/* ===== INFO ===== */}
+     
           <Grid container spacing={2}>
             <Grid xs={12} md={6}>
               <CustomFormLabel sx={{ mt: 0 }}>Visit Start</CustomFormLabel>
@@ -96,13 +100,14 @@ const InvitationDetailDialog: React.FC<InvitationDetailDialogProps> = ({
 
             <Grid xs={12} md={6}>
               <CustomFormLabel>PIC Host</CustomFormLabel>
-              <Typography>{invitationDetail?.host_name || invitationDetail?.host || '-'}</Typography>
+              <Typography>
+                {invitationDetail?.host_name || invitationDetail?.host || '-'}
+              </Typography>
             </Grid>
           </Grid>
 
           <Divider />
 
-          {/* ===== ANOTHER VISITOR ===== */}
           <Box>
             <CustomFormLabel sx={{ mb: 1, mt: 0 }}>Another Visitor</CustomFormLabel>
             <Box display="flex" gap={0.5} overflow="auto">
@@ -128,7 +133,7 @@ const InvitationDetailDialog: React.FC<InvitationDetailDialogProps> = ({
 
           <Divider />
 
-          {/* ===== ACCESS PASS ===== */}
+     
           <Box>
             <Box display="flex" justifyContent="space-between" alignItems="center">
               <Typography variant="h6" fontWeight={600}>
@@ -178,6 +183,23 @@ const InvitationDetailDialog: React.FC<InvitationDetailDialogProps> = ({
           </Button>
         </Stack>
       </DialogContent>
+      {/* <DialogContent dividers>
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, md: 12 }}>
+            <CustomFormLabel sx={{ mt: 0.5 }}>Visit Start</CustomFormLabel>
+            <CustomTextField type="date" fullWidth />
+          </Grid>
+          <Grid size={{ xs: 12, md: 12 }}>
+            <CustomFormLabel sx={{ mt: 0.5 }}>Visit End</CustomFormLabel>
+            <CustomTextField type="date" fullWidth />
+          </Grid>
+        </Grid>
+      </DialogContent>
+      <DialogActions>
+        <Button variant="contained" fullWidth sx={{ mt: 3 }} onClick={onExtend}>
+          Submit
+        </Button>
+      </DialogActions> */}
     </Dialog>
   );
 };

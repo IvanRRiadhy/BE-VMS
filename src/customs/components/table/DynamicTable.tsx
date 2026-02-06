@@ -33,6 +33,8 @@ import { RichHtmlCell } from './RichHtmlCell';
 import { fontSize, Stack, useMediaQuery, useTheme } from '@mui/system';
 import {
   IconAlertSquare,
+  IconArrowAutofitLeft,
+  IconCopy,
   IconEye,
   IconEyeOff,
   IconFileExport,
@@ -113,9 +115,13 @@ type DynamicTableProps<
   onExportExcel?: () => void;
   onPrint?: () => void;
   isHaveVisitor?: boolean;
+  isButtonRegisteredSite?: boolean;
+  isButtonGiveAccess?: boolean;
   stickyVisitorCount?: number;
   isHaveSearch?: boolean;
   isHaveSettingOperator?: boolean;
+  isCopyLink?: boolean;
+  isDetailLink?: boolean;
   hasFetched?: boolean;
   isSiteSpaceName?: boolean;
   isHaveFilter?: boolean;
@@ -123,6 +129,7 @@ type DynamicTableProps<
   isAccessControlType?: boolean;
   isHaveView?: boolean;
   isHaveExportXlf?: boolean;
+  isButtonSiteAccess?: boolean;
   isHaveImportExcel?: boolean;
   isTreeSiteType?: boolean;
   isHaveFilterDuration?: boolean;
@@ -135,6 +142,8 @@ type DynamicTableProps<
   isHaveHeader?: boolean;
   isHaveEmployee?: boolean;
   isHaveVerified?: boolean;
+  isButtonEnabled?: boolean;
+  isButtonDisabled?: boolean;
   isHaveImage?: boolean;
   isHaveObjectData?: boolean;
   isHaveVip?: boolean;
@@ -172,6 +181,10 @@ type DynamicTableProps<
   isHaveFilterMore?: boolean;
   filterMoreContent?: React.ReactNode;
   sortColumns?: string[];
+  isOperatorSetting?: boolean;
+  onNavigatePage?: any;
+  onCopyLink?: (row: T) => void;
+  onDetailLink?: (row: T) => void;
   onSettingOperator?: (row: T) => void;
   onAccessAction?: (row: any, action: 'grant' | 'revoke' | 'block' | 'unblock') => void;
   onFileClick?: (row: T) => void;
@@ -180,6 +193,8 @@ type DynamicTableProps<
   onImportExcel?: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onHeaderItemClick?: (item: HeaderItem) => void;
   onCheckedChange?: (selected: T[]) => void;
+  onIsButtonEnabled?: (row: T) => void;
+  onIsButtonDisabled?: (row: T) => void;
   onEdit?: (row: T) => void;
   onBatchEdit?: (row: T[]) => void;
   onDelete?: (row: T) => void;
@@ -187,6 +202,9 @@ type DynamicTableProps<
   onSearchKeywordChange?: (keyword: string) => void;
   onFilterByColumn?: (column: { column: string }) => void;
   onFilterCalenderChange?: (ranges: any) => void;
+  onSiteAccess?: (row: T) => void;
+  onRegisteredSite?: (row: T) => void;
+  onGiveAccess?: (row: T) => void;
   onAddData?: (add: boolean) => void;
   onPaginationChange?: (page: number, rowsPerPage: number) => void;
   onBooleanSwitchChange?: (row: any, field: string, value: boolean) => void;
@@ -216,18 +234,26 @@ export function DynamicTable<
   isHaveImportExcel = false,
   isHaveFilterDuration = false,
   isActionEmployee = false,
+  isButtonSiteAccess = false,
   height,
   isHaveGender = false,
+  isButtonRegisteredSite = false,
+  isButtonGiveAccess = false,
   isAccessControlType,
   isHaveVip = false,
   isHaveAddData = false,
   isHaveHeader = false,
   isHaveBooleanSwitch = false,
   breadcrumbItems,
+  isOperatorSetting = false,
   isActionListVisitor = false,
   isHaveVerified = false,
   isHaveView = false,
   isHaveAccess = false,
+  isCopyLink = false,
+  isDetailLink = false,
+  isButtonDisabled = false,
+  isButtonEnabled = false,
   isHaveEmployee = false,
   isHaveViewAndAction = false,
   isHaveCard = false,
@@ -270,6 +296,7 @@ export function DynamicTable<
   onExportExcel,
   onExportPdf,
   onAccessAction,
+  onNavigatePage,
   onFileClick,
   onChooseCard,
   onEmployeeClick,
@@ -277,7 +304,14 @@ export function DynamicTable<
   onHeaderItemClick,
   onCheckedChange,
   onEdit,
+  onRegisteredSite,
+  onCopyLink,
+  onDetailLink,
+  onIsButtonEnabled,
+  onIsButtonDisabled,
+  onGiveAccess,
   onSettingOperator,
+  onSiteAccess,
   onView,
   onBatchEdit,
   setCurrentId,
@@ -311,11 +345,6 @@ export function DynamicTable<
 
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
-
-  // if (!data || data.length === 0) {
-  //   return <div>Tidak ada data</div>;
-  // }
-
   const hiddenColumns = [
     'id',
     'can_grant',
@@ -517,12 +546,12 @@ export function DynamicTable<
   };
 
   const statusBgMap: Record<string, string> = {
-    Checkin: '#13DEB9', // hijau
+    Checkin: '#21c45d', // hijau
     Checkout: '#F44336', // merah
     Block: '#000000', // hitam
     Deny: '#8B0000', // merah tua
-    Approve: '#13DEB9', // hijau
-    Pracheckin: '#13DEB9', // hijau
+    Approve: '#21c45d', // hijau
+    Pracheckin: '#21c45d', // hijau
   };
 
   const defaultBg = '#9E9E9E'; // abu-abu
@@ -561,6 +590,10 @@ export function DynamicTable<
       false: 'Multi Site Disabled',
     },
     is_used: {
+      true: 'Active',
+      false: 'Inactive',
+    },
+    status_link: {
       true: 'Active',
       false: 'Inactive',
     },
@@ -834,61 +867,77 @@ export function DynamicTable<
               {/* SEARCH MENU */}
               <Stack direction="row" spacing={2}>
                 {isHaveSearch && (
-                  <>
-                    <Grid2
-                      container
-                      spacing={0.5}
-                      display="flex"
-                      justifyContent="space-between"
-                      alignItems="center"
-                      flexWrap={'wrap'}
-                    >
-                      <Grid2 size={{ xs: 10, lg: 10 }}>
-                        <TextField
-                          fullWidth
-                          variant="outlined"
-                          size="small"
-                          value={searchKeyword}
-                          onChange={(e) => setSearchKeyword(e.target.value)}
-                          onKeyDown={handleKeyDown}
-                          sx={{
-                            height: 36,
-                            width: {
-                              xs: '100%',
-                              sm: '320px',
-                            },
-                          }}
-                          InputProps={{
-                            sx: {
-                              height: 36,
-                            },
-                            startAdornment: (
-                              <InputAdornment position="start">
-                                <Search fontSize="small" />
-                              </InputAdornment>
-                            ),
-                          }}
-                        />
-                      </Grid2>
-                      <Grid2 size={{ xs: 2, lg: 2 }}>
+                  <Box
+                    // container
+                    // spacing={0.5}
+
+                    display="flex"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    gap={0.5}
+                    flexWrap={'wrap'}
+                  >
+                    {/* <Grid2 size={{ xs: 12, lg: 10 }}> */}
+                    <TextField
+                      fullWidth
+                      variant="outlined"
+                      size="small"
+                      value={searchKeyword}
+                      onChange={(e) => setSearchKeyword(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      sx={{
+                        height: 36,
+                        width: isSmallScreen ? '100%' : '300px',
+                      }}
+                      InputProps={{
+                        sx: {
+                          height: 36,
+                        },
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <Search fontSize="small" />
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+                    {/* </Grid2>
+                    <Grid2 size={{ xs: 6, lg: 3 }}> */}
+                    <Box display="flex" gap={0.5}>
+                      <Button
+                        variant="contained"
+                        fullWidth
+                        onClick={handleSearch}
+                        sx={{
+                          height: 36,
+                          width: '100%',
+                          fontSize: '0.7rem',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        <Typography fontSize={'0.7rem'} variant="caption" my={0.2}>
+                          {t('search')}
+                        </Typography>
+                      </Button>
+                      {isOperatorSetting && (
                         <Button
                           variant="contained"
-                          fullWidth
-                          onClick={handleSearch}
+                          color="primary"
+                          onClick={onNavigatePage}
+                          startIcon={<IconArrowAutofitLeft width={18} />}
                           sx={{
                             height: 36,
                             width: '100%',
                             fontSize: '0.7rem',
                             whiteSpace: 'nowrap',
                           }}
+                          size="medium"
                         >
-                          <Typography fontSize={'0.7rem'} variant="caption" my={0.2}>
-                            {t('search')}
-                          </Typography>
+                          Operator
                         </Button>
-                      </Grid2>
-                    </Grid2>
-                  </>
+                      )}
+                    </Box>
+                    {/* </Grid2> */}
+                  </Box>
                 )}
                 {isHaveHeaderTitle && (
                   <Typography
@@ -1170,10 +1219,7 @@ export function DynamicTable<
                   >
                     <TableCell
                       colSpan={
-                        columns.length +
-                        (isHaveChecked ? 1 : 0) + // checkbox
-                        1 + // NO
-                        (isHaveAction ? 1 : 0)
+                        columns.length + (isHaveChecked ? 1 : 0) + 1 + (isHaveAction ? 1 : 0)
                       }
                       sx={{ padding: 0 }}
                     >
@@ -1201,8 +1247,7 @@ export function DynamicTable<
                 aria-label="simple table"
                 sx={{
                   width: '100%',
-                  // tableLayout: 'fixed', // 🔥 kunci utama
-                  // whiteSpace: 'normal', // biar teks bisa wrap
+                  // overflowX: 'auto',
                 }}
                 stickyHeader={stickyHeader}
                 // sx={{
@@ -1405,6 +1450,60 @@ export function DynamicTable<
 
                     {/* ✅ Action-only edit */}
                     {isHaveActionOnlyEdit && (
+                      <TableCell
+                        sx={{
+                          position: 'sticky',
+                          right: 0,
+                          background: 'white',
+                          zIndex: 2,
+                          textAlign: 'center',
+                        }}
+                      >
+                        {loading ? (
+                          <Skeleton variant="text" width="40%" height={18} animation="wave" />
+                        ) : (
+                          'Action'
+                        )}
+                      </TableCell>
+                    )}
+
+                    {isCopyLink && (
+                      <TableCell
+                        sx={{
+                          position: 'sticky',
+                          right: 0,
+                          background: 'white',
+                          zIndex: 2,
+                          textAlign: 'center',
+                        }}
+                      >
+                        {loading ? (
+                          <Skeleton variant="text" width="40%" height={18} animation="wave" />
+                        ) : (
+                          'Action'
+                        )}
+                      </TableCell>
+                    )}
+
+                    {isButtonRegisteredSite && (
+                      <TableCell
+                        sx={{
+                          position: 'sticky',
+                          right: 0,
+                          background: 'white',
+                          zIndex: 2,
+                          textAlign: 'center',
+                        }}
+                      >
+                        {loading ? (
+                          <Skeleton variant="text" width="40%" height={18} animation="wave" />
+                        ) : (
+                          'Action'
+                        )}
+                      </TableCell>
+                    )}
+
+                    {isButtonEnabled && (
                       <TableCell
                         sx={{
                           position: 'sticky',
@@ -1742,7 +1841,7 @@ export function DynamicTable<
                               ) : col === 'type' && isAccessControlType ? (
                                 <>{row.type === 0 ? 'Access' : 'Group'}</>
                               ) : col === 'card_status' ? (
-                                CARD_STATUS[Number(row[col])] ?? String(row[col] ?? '-')
+                                (CARD_STATUS[Number(row[col])] ?? String(row[col] ?? '-'))
                               ) : col === 'is_employee' ? (
                                 row[col] ? (
                                   <IconUserCheck size={20} color="green" />
@@ -1768,7 +1867,7 @@ export function DynamicTable<
                                   {row.visitor_status || '-'}
                                 </Box>
                               ) : col === 'document_type' ? (
-                                DOCUMENT_TYPE[Number(row[col])] ?? String(row[col] ?? '-')
+                                (DOCUMENT_TYPE[Number(row[col])] ?? String(row[col] ?? '-'))
                               ) : col === 'status' && isHaveApproval ? (
                                 row[col] === 'Accept' ? (
                                   <Typography
@@ -1865,21 +1964,20 @@ export function DynamicTable<
                                   )}
                                 </>
                               ) : isHaveGender && col === 'gender' ? (
-                                GENDER_MAP[String(row[col])] ?? String(row[col] ?? '-')
+                                (GENDER_MAP[String(row[col])] ?? String(row[col] ?? '-'))
                               ) : isSiteSpaceType && col === 'type' ? (
-                                SITE_MAP[Number(row[col])] ?? String(row[col] ?? '-')
+                                (SITE_MAP[Number(row[col])] ?? String(row[col] ?? '-'))
                               ) : isHaveImage &&
                                 imageFields.includes(col) &&
-                                typeof row[col] === 'string' ? (
+                                typeof row[col] === 'string' &&
+                                row[col].trim() !== '' ? (
                                 <img
                                   src={(() => {
                                     const value = row[col];
-                                    if (!value) return '';
                                     if (value.startsWith('data:image')) return value;
                                     if (value.startsWith('http')) return value;
                                     return `${BASE_URL}${value}`;
                                   })()}
-                                  alt="employee"
                                   style={{
                                     width: 60,
                                     height: 60,
@@ -1887,6 +1985,8 @@ export function DynamicTable<
                                     objectFit: 'cover',
                                   }}
                                 />
+                              ) : isHaveImage && imageFields.includes(col) ? (
+                                <>-</>
                               ) : (isDataVerified && col === 'secure') ||
                                 col === 'can_upload' ||
                                 col === 'can_signed' ||
@@ -1895,6 +1995,7 @@ export function DynamicTable<
                                 col === 'is_employee_used' ||
                                 col === 'is_multi_site' ||
                                 col === 'is_used' ||
+                                col === 'status_link' ||
                                 col === 'early_access' ? (
                                 <Box
                                   display="flex"
@@ -1905,8 +2006,8 @@ export function DynamicTable<
                                   <Tooltip
                                     title={
                                       row[col]
-                                        ? tooltipLabels[col]?.true ?? 'Verified'
-                                        : tooltipLabels[col]?.false ?? 'Not Verified'
+                                        ? (tooltipLabels[col]?.true ?? 'Verified')
+                                        : (tooltipLabels[col]?.false ?? 'Not Verified')
                                     }
                                   >
                                     <Box
@@ -2026,12 +2127,12 @@ export function DynamicTable<
                                             togglePassword(row.id);
                                           }}
                                           sx={{
-                                            bgcolor: 'grey.200', // background
+                                            bgcolor: 'grey.200',
                                             '&:hover': {
-                                              bgcolor: 'grey.300', // background saat hover
+                                              bgcolor: 'grey.300',
                                             },
-                                            borderRadius: '50%', // biar bulat
-                                            p: 0.5, // padding supaya icon nggak terlalu mepet
+                                            borderRadius: '50%',
+                                            p: 0.5,
                                           }}
                                         >
                                           <IconEye size={18} />
@@ -2039,7 +2140,6 @@ export function DynamicTable<
                                       </Tooltip>
                                     )
                                   ) : (
-                                    // Jika fitur password tidak diaktifkan, tampilkan masked statis
                                     '••••••••'
                                   )}
                                 </Box>
@@ -2072,7 +2172,7 @@ export function DynamicTable<
                                 Array.isArray(row[col]) ? (
                                   row[col].map((item: any) => item.name).join(', ')
                                 ) : (
-                                  (row[col] as { name?: string }).name ?? '-'
+                                  ((row[col] as { name?: string }).name ?? '-')
                                 )
                               ) : (
                                 <>
@@ -2245,26 +2345,49 @@ export function DynamicTable<
                                   {getAccessActions(row)}
                                 </TableCell>
                               ) : isHaveView ? (
-                                <Tooltip title="View Invitation">
-                                  <IconButton
-                                    onClick={() => onView?.(row)}
-                                    disableRipple
-                                    sx={{
-                                      color: 'white',
-                                      backgroundColor: 'gray !important',
-                                      width: 28,
-                                      height: 28,
-                                      padding: 0.5,
-                                      borderRadius: '50%',
-                                      '&:hover': {
-                                        backgroundColor: 'success.dark',
+                                <>
+                                  <Tooltip title="View Invitation">
+                                    <IconButton
+                                      onClick={() => onView?.(row)}
+                                      disableRipple
+                                      sx={{
                                         color: 'white',
-                                      },
-                                    }}
-                                  >
-                                    <RemoveRedEyeIcon width={18} height={18} />
-                                  </IconButton>
-                                </Tooltip>
+                                        backgroundColor: 'gray !important',
+                                        width: 28,
+                                        height: 28,
+                                        padding: 0.5,
+                                        borderRadius: '50%',
+                                        '&:hover': {
+                                          backgroundColor: 'success.dark',
+                                          color: 'white',
+                                        },
+                                      }}
+                                    >
+                                      <RemoveRedEyeIcon width={18} height={18} />
+                                    </IconButton>
+                                  </Tooltip>
+
+                                  <Tooltip title="View Invitation">
+                                    <IconButton
+                                      onClick={() => onView?.(row)}
+                                      disableRipple
+                                      sx={{
+                                        color: 'white',
+                                        backgroundColor: '#FA896B',
+                                        width: 28,
+                                        height: 28,
+                                        padding: 0.5,
+                                        borderRadius: '50%',
+                                        '&:hover': {
+                                          backgroundColor: 'success.dark',
+                                          color: 'white',
+                                        },
+                                      }}
+                                    >
+                                      <IconPencil width={18} height={18} />
+                                    </IconButton>
+                                  </Tooltip>
+                                </>
                               ) : isHaveViewAndAction ? (
                                 <>
                                   <Tooltip title="View Detail Schedule">
@@ -2545,6 +2668,175 @@ export function DynamicTable<
                                 >
                                   <IconPencil width={14} height={14} />
                                 </IconButton>
+                              </Tooltip>
+                            </Box>
+                          </TableCell>
+                        )}
+
+                        {isButtonGiveAccess && isButtonRegisteredSite && isButtonSiteAccess && (
+                          <TableCell
+                            sx={{
+                              position: 'sticky',
+                              right: 0,
+                              background: 'white',
+                              zIndex: 2,
+                              display: 'flex',
+                              gap: 1,
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <Box display="flex" alignItems="end" gap={1}>
+                              {/* Tombol Edit (Primary, Kecil) */}
+                              <Tooltip title="Give Access" arrow>
+                                <Button
+                                  onClick={() => onGiveAccess?.(row)}
+                                  // disableRipple
+                                  variant="contained"
+                                  color="primary"
+                                >
+                                  Give Access
+                                </Button>
+                              </Tooltip>
+                              <Tooltip title="Registered Site" arrow>
+                                <Button
+                                  onClick={() => onRegisteredSite?.(row)}
+                                  // disableRipple
+                                  variant="contained"
+                                  color="secondary"
+                                >
+                                  Registered Site
+                                </Button>
+                              </Tooltip>
+                              <Tooltip title="Site Access" arrow>
+                                <Button
+                                  onClick={() => onSiteAccess?.(row)}
+                                  // disableRipple
+                                  variant="contained"
+                                  color="warning"
+                                >
+                                  Site Access
+                                </Button>
+                              </Tooltip>
+                            </Box>
+                          </TableCell>
+                        )}
+
+                        {isCopyLink && (
+                          <TableCell
+                            sx={{
+                              position: 'sticky',
+                              right: 0,
+                              background: 'white',
+                              zIndex: 2,
+                              display: 'flex',
+                              gap: 1,
+                              mt: 0.5,
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <Box display="flex" alignItems="end" gap={1}>
+                              {/* Tombol Edit (Primary, Kecil) */}
+                              <Tooltip title="Copy Link" arrow>
+                                <IconButton
+                                  onClick={() => onCopyLink?.(row)}
+                                  disableRipple
+                                  sx={{
+                                    color: 'white',
+                                    backgroundColor: '#FA896B',
+                                    width: 28,
+                                    height: 28,
+                                    p: 0.5,
+                                    borderRadius: '50%',
+                                    '&:hover': {
+                                      backgroundColor: 'rgba(255, 0, 0, 0.7)',
+                                      color: 'white',
+                                    },
+                                  }}
+                                >
+                                  <IconCopy width={14} height={14} />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Detail Link" arrow>
+                                <IconButton
+                                  onClick={() => onDetailLink?.(row)}
+                                  disableRipple
+                                  sx={{
+                                    color: 'white',
+                                    backgroundColor: 'gray',
+                                    width: 28,
+                                    height: 28,
+                                    p: 0.5,
+                                    borderRadius: '50%',
+                                    '&:hover': {
+                                      backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                                      color: 'white',
+                                    },
+                                  }}
+                                >
+                                  {/* <IconCopy width={14} height={14} /> */}
+                                  <IconEye width={24} height={24} />
+                                </IconButton>
+                              </Tooltip>
+                              {/* <Tooltip title="Registered Site" arrow>
+                                <Button
+                                  onClick={() => onRegisteredSite?.(row)}
+                                  // disableRipple
+                                  variant="contained"
+                                  color="secondary"
+                                >
+                                  Registered Site
+                                </Button>
+                              </Tooltip> */}
+                              {/* <Tooltip title="Site Access" arrow>
+                                <Button
+                                  onClick={() => onSiteAccess?.(row)}
+                                  // disableRipple
+                                  variant="contained"
+                                  color="warning"
+                                >
+                                  Site Access
+                                </Button>
+                              </Tooltip> */}
+                            </Box>
+                          </TableCell>
+                        )}
+
+                        {isButtonEnabled && isButtonDisabled && (
+                          <TableCell
+                            sx={{
+                              position: 'sticky',
+                              right: 0,
+                              background: 'white',
+                              zIndex: 2,
+                              display: 'flex',
+                              gap: 1,
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <Box display="flex" alignItems="end" gap={1}>
+                              {/* Tombol Edit (Primary, Kecil) */}
+                              <Tooltip title="Enabled" arrow>
+                                <Button
+                                  onClick={() => onGiveAccess?.(row)}
+                                  // disableRipple
+                                  variant="contained"
+                                  color="primary"
+                                >
+                                  Enabled
+                                </Button>
+                              </Tooltip>
+                              <Tooltip title="Disabled" arrow>
+                                <Button
+                                  onClick={() => onIsButtonDisabled?.(row)}
+                                  // disableRipple
+                                  variant="contained"
+                                  color="error"
+                                >
+                                  Disabled
+                                </Button>
                               </Tooltip>
                             </Box>
                           </TableCell>

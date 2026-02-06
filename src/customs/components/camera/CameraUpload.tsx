@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { Box, Typography, Divider, IconButton, Button } from '@mui/material';
 import { Grid2 as Grid } from '@mui/material';
 import Webcam from 'react-webcam';
@@ -14,12 +14,12 @@ interface CameraUploadProps {
 }
 
 const CameraUpload: React.FC<CameraUploadProps> = ({ value, onChange, containerRef }) => {
-  const [open, setOpen] = React.useState(false);
-  const [previewUrl, setPreviewUrl] = React.useState<string | null>(value || null);
-  const [screenshot, setScreenshot] = React.useState<string | null>(null);
-  const [removing, setRemoving] = React.useState(false);
-  const webcamRef = React.useRef<Webcam>(null);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [open, setOpen] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(value || null);
+  const [screenshot, setScreenshot] = useState<string | null>(null);
+  const [removing, setRemoving] = useState(false);
+  const webcamRef = useRef<Webcam>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const clearLocal = () => {
     setScreenshot(null);

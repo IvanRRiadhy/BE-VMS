@@ -116,6 +116,9 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useQuery } from '@tanstack/react-query';
 import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
 import CameraUpload from 'src/customs/components/camera/CameraUpload';
+import RenderFieldGroup from '../../Operator/Components/RenderFieldGroup';
+import GlobalBackdropLoading from '../../Operator/Components/GlobalBackdrop';
+import VisitorSelectDialog from '../../Operator/Components/VisitorSelectDialog';
 interface FormVisitorTypeProps {
   formData: CreateVisitorRequest;
   setFormData: React.Dispatch<React.SetStateAction<CreateVisitorRequest>>;
@@ -195,6 +198,9 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
   const [rawSections, setRawSections] = useState<any[]>([]);
   const [selectedInvitations, setSelectedInvitations] = useState<any[]>([]);
   const formsOf = (section: any) => (Array.isArray(section?.[FORM_KEY]) ? section[FORM_KEY] : []);
+  const [openVisitorDialog, setOpenVisitorDialog] = useState(false);
+  const [isEmployeeMode, setIsEmployeeMode] = useState(false);
+
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -563,6 +569,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     });
   }, [sectionsData]);
 
+  
+
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
 
@@ -582,6 +590,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
 
     setSectionsData(reorderedSections);
   };
+  
   const handleSaveGroupVisitor = () => {
     if (activeGroupIdx === null) return;
     console.log('💾 Saving existing group:', activeGroupIdx);
@@ -633,13 +642,13 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     )
       return 'parking';
     if (
-      f.some((x: any) => x.remarks === 'host') &&
+      f.some((x: any) => x.remarks === 'host' || x.remarks === 'agenda') &&
       !section.is_document &&
       section.can_multiple_used
     )
       return 'purpose_visit';
     if (
-      f.some((x: any) => x.remarks === 'host') &&
+      f.some((x: any) => x.remarks === 'host' || x.remarks === 'agenda') &&
       !section.is_document &&
       !section.can_multiple_used
     )
@@ -664,6 +673,11 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       return 'selfie_image';
     if (!section.is_document && !section.can_multiple_used) return 'visitor_information';
     if (!section.is_document && section.can_multiple_used) return 'visitor_information_group';
+  };
+
+  const isEmployeeSelected = (forms: any[]) => {
+    const f = forms.find((x) => x.remarks === 'is_employee');
+    return f?.answer_text === 'true';
   };
 
   const handleSteps = (step: number) => {
@@ -1140,12 +1154,15 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
             })()}
           </Grid>
         )}
+
         {isGroup && (
           <Grid>
             {(() => {
               const section = sectionsData[activeStep - 1];
-              console.log('section', section);
+              console.log('section Group', section);
               const sectionType = getSectionType(section);
+              const firstPage = dataVisitor[0]?.question_page?.[activeStep - 1];
+              const showEmployeeSearchHeader = isEmployeeSelected(firstPage?.form || []);
 
               if (sectionType === 'visitor_information_group') {
                 return (
@@ -1155,7 +1172,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                         {isMobile ? (
                           <>
                             {dataVisitor.length > 0 ? (
-                              dataVisitor.map((group, gIdx) => {
+                              groupVisitors[activeGroupIdx]?.data_visitor?.map((group, gIdx) => {
                                 const page = group.question_page[activeStep - 1];
                                 if (!page) return null;
 
@@ -1166,7 +1183,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                       sx={{
                                         display: 'flex',
                                         alignItems: 'center',
-                                        justifyContent: 'space-between', // 🔹 Biar teks kiri dan tombol kanan sejajar
+                                        justifyContent: 'space-between',
                                         p: 1,
                                       }}
                                     >
@@ -1179,57 +1196,101 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                       {dataVisitor.length > 1 && (
                                         <IconButton
                                           size="small"
+                                          color="error"
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             handleDeleteGroupRow(gIdx);
                                           }}
                                         >
-                                          <IconTrash />
+                                          <IconTrash color="error" />
                                         </IconButton>
                                       )}
                                     </AccordionSummary>
 
                                     <AccordionDetails>
-                                      {page.form?.map((field: any, fIdx: any) => {
-                                        const matchedKey = Object.keys(
-                                          groupedPages.batch_page || {},
-                                        ).find((k) => sameField(groupedPages.batch_page[k], field));
-                                        const shared = matchedKey
-                                          ? groupedPages.batch_page[matchedKey]
-                                          : undefined;
-                                        const proxyField = hasAns(field)
-                                          ? field
-                                          : shared
-                                          ? { ...field, ...pickAns(shared) }
-                                          : field;
+                                      {page.form
+                                        .filter((field: any) => {
+                                          if (
+                                            field.remarks === 'employee' &&
+                                            !showEmployeeSearchHeader
+                                          )
+                                            return false;
 
-                                        return (
-                                          <Box key={fIdx} sx={{ mb: 2 }}>
-                                            {renderFieldInput(
-                                              proxyField,
-                                              fIdx,
-                                              (idx, fieldKey, value) => {
-                                                setDataVisitor((prev) => {
-                                                  const next = [...prev];
-                                                  const s = activeStep - 1;
-                                                  if (!next[gIdx]?.question_page?.[s]?.form?.[fIdx])
-                                                    return prev;
-                                                  next[gIdx].question_page[s].form[fIdx] = {
-                                                    ...next[gIdx].question_page[s].form[fIdx],
-                                                    [fieldKey]: value,
-                                                  };
-                                                  return next;
-                                                });
-                                              },
-                                              undefined,
-                                              {
-                                                showLabel: true,
-                                                uniqueKey: `${activeStep - 1}:${gIdx}:${fIdx}`,
-                                              },
-                                            )}
-                                          </Box>
-                                        );
-                                      })}
+                                          return true;
+                                        })
+                                        .map((field: any, fIdx: any) => {
+                                          const matchedKey = Object.keys(
+                                            groupedPages.batch_page || {},
+                                          ).find((k) =>
+                                            sameField(groupedPages.batch_page[k], field),
+                                          );
+                                          const shared = matchedKey
+                                            ? groupedPages.batch_page[matchedKey]
+                                            : undefined;
+                                          const proxyField = hasAns(field)
+                                            ? field
+                                            : shared
+                                              ? { ...field, ...pickAns(shared) }
+                                              : field;
+                                          const handleChangeGroup = (
+                                            idx: number,
+                                            fieldKey: keyof FormVisitor,
+                                            value: any,
+                                          ) => {
+                                            setDataVisitor((prev) => {
+                                              const next = [...prev];
+                                              const s = activeStep - 1;
+
+                                              if (!next[gIdx]?.question_page?.[s]?.form?.[idx]) {
+                                                return prev;
+                                              }
+
+                                              next[gIdx].question_page[s].form[idx] = {
+                                                ...next[gIdx].question_page[s].form[idx],
+                                                [fieldKey]: value,
+                                              };
+
+                                              return next;
+                                            });
+                                          };
+
+                                          return (
+                                            <Box key={fIdx} sx={{ mb: 2 }}>
+                                              <RenderFieldGroup
+                                                field={proxyField}
+                                                index={fIdx}
+                                                groupIndex={gIdx}
+                                                onChange={handleChangeGroup}
+                                                opts={{
+                                                  showLabel: false,
+                                                  uniqueKey: `${activeStep - 1}:${gIdx}:${fIdx}`,
+                                                }}
+                                                employee={employee}
+                                                allVisitorEmployee={allVisitorEmployee}
+                                                sites={sites}
+                                                inputValues={inputValues}
+                                                setInputValues={setInputValues}
+                                                selectedSiteParentIds={selectedSiteParentIds as any}
+                                                siteTree={siteTree as any}
+                                                setSelectedSiteParentIds={setSelectedSiteParentIds}
+                                                setSiteTree={setSiteTree}
+                                                buildSiteTreeWithParent={buildSiteTreeWithParent}
+                                                renderTree={renderTree}
+                                                activeStep={activeStep}
+                                                containerRef={null as any}
+                                                uploadMethods={uploadMethods}
+                                                handleUploadMethodChange={handleUploadMethodChange}
+                                                handleFileChangeForField={handleFileChangeForField}
+                                                handleRemoveFileForField={handleRemoveFileForField}
+                                                uploadNames={uploadNames}
+                                                removing={removing}
+                                                setIsEmployeeMode={setIsEmployeeMode}
+                                                setOpenVisitorDialog={setOpenVisitorDialog}
+                                                setActiveGroupIdx={setActiveGroupIdx}
+                                              />
+                                            </Box>
+                                          );
+                                        })}
                                     </AccordionDetails>
                                   </Accordion>
                                 );
@@ -1261,18 +1322,24 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                           >
                             <TableHead>
                               <TableRow>
-                                {(dataVisitor[0]?.question_page[activeStep - 1]?.form || []).map(
-                                  (f: any, i: any) => (
+                                {(firstPage?.form || [])
+                                  .filter((field: any) => {
+                                    // employee hanya muncul kalau is_employee = true
+                                    if (field.remarks === 'employee' && !showEmployeeSearchHeader)
+                                      return false;
+
+                                    return true;
+                                  })
+                                  .map((f: any, i: any) => (
                                     <TableCell key={f.custom_field_id || i}>
-                                      <Typography variant="subtitle2" fontWeight={600}>
+                                      <CustomFormLabel required={f.mandatory == true}>
                                         {f.long_display_text}
-                                      </Typography>
+                                      </CustomFormLabel>
                                     </TableCell>
-                                  ),
-                                )}
+                                  ))}
                                 <TableCell align="right">
                                   <Typography variant="subtitle2" fontWeight={600}>
-                                    Actions
+                                    Action
                                   </Typography>
                                 </TableCell>
                               </TableRow>
@@ -1282,65 +1349,119 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                               {dataVisitor.length > 0 ? (
                                 dataVisitor.map((group, gIdx) => {
                                   const page = group.question_page[activeStep - 1];
+                                  console.log('page', page);
                                   if (!page) return null;
 
+                                  const showEmployeeSearch = isEmployeeSelected(page.form as any);
+
                                   return (
-                                    <TableRow key={gIdx}>
-                                      {page.form?.map((field: any, fIdx: any) => {
-                                        const matchedKey = Object.keys(
-                                          groupedPages.batch_page || {},
-                                        ).find((k) => sameField(groupedPages.batch_page[k], field));
-                                        const shared = matchedKey
-                                          ? groupedPages.batch_page[matchedKey]
-                                          : undefined;
-                                        const proxyField = hasAns(field)
-                                          ? field
-                                          : shared
-                                          ? { ...field, ...pickAns(shared) }
-                                          : field;
+                                    <React.Fragment key={gIdx}>
+                                      <TableRow key={gIdx}>
+                                        {page.form
+                                          ?.filter((field: any) => {
+                                            if (field.remarks === 'employee' && !showEmployeeSearch)
+                                              return false;
 
-                                        return (
-                                          <TableCell
-                                            key={field.custom_field_id || `${gIdx}-${fIdx}`}
-                                          >
-                                            {renderFieldInput(
-                                              proxyField,
-                                              fIdx,
-                                              (idx, fieldKey, value) => {
-                                                setDataVisitor((prev) => {
-                                                  const next = [...prev];
-                                                  const s = activeStep - 1;
-                                                  if (!next[gIdx]?.question_page?.[s]?.form?.[fIdx])
-                                                    return prev;
-                                                  next[gIdx].question_page[s].form[fIdx] = {
-                                                    ...next[gIdx].question_page[s].form[fIdx],
-                                                    [fieldKey]: value,
-                                                  };
-                                                  return next;
-                                                });
-                                              },
-                                              undefined,
-                                              {
-                                                showLabel: false,
-                                                uniqueKey: `${activeStep - 1}:${gIdx}:${fIdx}`,
-                                              },
-                                            )}
-                                          </TableCell>
-                                        );
-                                      })}
+                                            return true;
+                                          })
+                                          .map((field: any, fIdx: any) => {
+                                            const matchedKey = Object.keys(
+                                              groupedPages.batch_page || {},
+                                            ).find((k) =>
+                                              sameField(groupedPages.batch_page[k], field),
+                                            );
+                                            const shared = matchedKey
+                                              ? groupedPages.batch_page[matchedKey]
+                                              : undefined;
+                                            const proxyField = hasAns(field)
+                                              ? field
+                                              : shared
+                                                ? { ...field, ...pickAns(shared) }
+                                                : field;
+                                            const handleChangeGroup = (
+                                              idx: number,
+                                              fieldKey: keyof FormVisitor,
+                                              value: any,
+                                            ) => {
+                                              setDataVisitor((prev) => {
+                                                const next = [...prev];
+                                                const s = activeStep - 1;
 
-                                      <TableCell align="right">
-                                        {dataVisitor.length > 1 && (
-                                          <IconButton
-                                            aria-label="delete-row"
-                                            onClick={() => handleDeleteGroupRow(gIdx)}
-                                            size="small"
-                                          >
-                                            <IconTrash />
-                                          </IconButton>
-                                        )}
-                                      </TableCell>
-                                    </TableRow>
+                                                if (!next[gIdx]?.question_page?.[s]?.form?.[idx]) {
+                                                  return prev;
+                                                }
+
+                                                next[gIdx].question_page[s].form[idx] = {
+                                                  ...next[gIdx].question_page[s].form[idx],
+                                                  [fieldKey]: value,
+                                                };
+
+                                                return next;
+                                              });
+                                            };
+
+                                            return (
+                                              <TableCell
+                                                key={field.custom_field_id || `${gIdx}-${fIdx}`}
+                                              >
+                                                <RenderFieldGroup
+                                                  field={proxyField}
+                                                  index={fIdx}
+                                                  groupIndex={gIdx}
+                                                  onChange={handleChangeGroup}
+                                                  opts={{
+                                                    showLabel: false,
+                                                    uniqueKey: `${activeStep - 1}:${gIdx}:${fIdx}`,
+                                                  }}
+                                                  employee={employee}
+                                                  allVisitorEmployee={allVisitorEmployee}
+                                                  sites={sites}
+                                                  inputValues={inputValues}
+                                                  setInputValues={setInputValues}
+                                                  selectedSiteParentIds={selectedSiteParentIds as any} 
+                                                  siteTree={siteTree as any}
+                                                  setSelectedSiteParentIds={
+                                                    setSelectedSiteParentIds
+                                                  }
+                                                  setSiteTree={setSiteTree}
+                                                  buildSiteTreeWithParent={buildSiteTreeWithParent}
+                                                  renderTree={renderTree}
+                                                  activeStep={activeStep}
+                                                  containerRef={null as any}
+                                                  uploadMethods={uploadMethods}
+                                                  handleUploadMethodChange={
+                                                    handleUploadMethodChange
+                                                  }
+                                                  handleFileChangeForField={
+                                                    handleFileChangeForField
+                                                  }
+                                                  handleRemoveFileForField={
+                                                    handleRemoveFileForField
+                                                  }
+                                                  uploadNames={uploadNames}
+                                                  removing={removing}
+                                                  setIsEmployeeMode={setIsEmployeeMode}
+                                                  setOpenVisitorDialog={setOpenVisitorDialog}
+                                                  setActiveGroupIdx={setActiveGroupIdx}
+                                                />
+                                              </TableCell>
+                                            );
+                                          })}
+
+                                        <TableCell align="right">
+                                          {dataVisitor.length > 1 && (
+                                            <IconButton
+                                              aria-label="delete-row"
+                                              onClick={() => handleDeleteGroupRow(gIdx)}
+                                              size="small"
+                                              color="error"
+                                            >
+                                              <IconTrash />
+                                            </IconButton>
+                                          )}
+                                        </TableCell>
+                                      </TableRow>
+                                    </React.Fragment>
                                   );
                                 })
                               ) : (
@@ -1384,7 +1505,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                     a.custom_field_id === b.custom_field_id) ||
                   (a?.remarks && b?.remarks && a.remarks === b.remarks);
 
-                // ✅ Ambil state paling baru: groupPages + section forms
                 const mergedVisitForm = formsOf(section).map((f: any) => {
                   const shared = groupedPages.single_page.find((sf) => sameField(sf, f));
                   return shared ? { ...f, ...pickAns(shared) } : f;
@@ -1396,6 +1516,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                       {renderDetailRows(mergedVisitForm, (idx, fieldKey, value) => {
                         setGroupedPages((prev) => {
                           const next = { ...prev, single_page: [...prev.single_page] };
+
                           const base = formsOf(section)[idx];
                           const found = next.single_page.findIndex((sf) => sameField(sf, base));
 
@@ -1409,7 +1530,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                             ...(found >= 0 ? next.single_page[found] : base),
                             foreign_id:
                               found >= 0
-                                ? next.single_page[found].foreign_id ?? resolvedForeign
+                                ? (next.single_page[found].foreign_id ?? resolvedForeign)
                                 : resolvedForeign,
                             [fieldKey]: value,
                           };
@@ -1477,7 +1598,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     try {
       const page = dataVisitor[rowIdx]?.question_page?.[activeStep - 1];
 
-      // kumpulkan semua URL CDN di baris ini
       const urls: string[] =
         (page?.form ?? [])
           .map((f: any) => f?.answer_file)
@@ -1497,10 +1617,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         ),
       );
 
-      // setelah file dihapus, hapus row di state
       setDataVisitor((prev) => prev.filter((_, i) => i !== rowIdx));
 
-      // atur ulang index aktif kalau perlu
       setActiveGroupIdx((prevIdx) => {
         if (rowIdx < prevIdx) return prevIdx - 1;
         if (rowIdx === prevIdx) return Math.max(0, prevIdx - 1);
@@ -1524,7 +1642,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     const showLabel = opts?.showLabel ?? true;
 
     const renderInput = () => {
-      // const [uploadMethod, setUploadMethod] = React.useState('file'); // default file upload
       const key = opts?.uniqueKey ?? String(index);
       switch (field.field_type) {
         case 0: // Text
@@ -1566,8 +1683,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
 
         case 3: {
           let options: { value: string; name: string }[] = [];
-
-          // 🔹 Build option list berdasarkan remarks
           switch (field.remarks) {
             case 'host':
               options = employee.map((emp: any) => ({
@@ -1702,7 +1817,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         case 6:
           if (field.remarks === 'is_employee') {
             const options = field.multiple_option_fields || [];
-            const value = field.answer_text ?? ''; // '' | 'true' | 'false'
+            const value = field.answer_text ?? '';
 
             return (
               <FormGroup row>
@@ -1757,7 +1872,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                 ampm={false}
                 onChange={(newValue) => {
                   if (newValue) {
-                    const utc = newValue.utc().format(); // hasil: 2025-08-05T10:00:00Z
+                    const utc = newValue.utc().format();
                     onChange(index, 'answer_datetime', utc);
                   }
                 }}
@@ -1779,7 +1894,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         case 10: // Camera
           return (
             <CameraUpload
-              value={field.answer_file}
+              value={field.answer_file as string | undefined}
               onChange={(url) => onChange(index, 'answer_file', url)}
             />
           );
@@ -1828,7 +1943,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
               {fileUrl && (
                 <Box mt={1} display="flex" alignItems="center" gap={1}>
                   <Typography variant="caption" noWrap>
-                    {/* {fileUrl.split('/').pop()} */}
                     {uploadNames[key] ?? ''}
                   </Typography>
                   <IconButton
@@ -1837,8 +1951,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                     onClick={() =>
                       handleRemoveFileForField(
                         (field as any).answer_file,
-                        (url) => onChange(index, 'answer_file', url), // kosongkan state
-                        key, // reset <input id=key>
+                        (url) => onChange(index, 'answer_file', url),
+                        key,
                       )
                     }
                   >
@@ -1859,7 +1973,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
               alignItems={{ xs: 'stretch', md: 'center' }}
               justifyContent="space-between"
               gap={1.5}
-              width="100%" // ⬅️ let it adapt instead of fixed width
+              width="100%"
               sx={{ maxWidth: 400 }}
             >
               <TextField
@@ -1878,7 +1992,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
 
               {(uploadMethods[key] || 'file') === 'camera' ? (
                 <CameraUpload
-                  value={field.answer_file}
+                  value={field.answer_file as string | undefined}
                   onChange={(url) => onChange(index, 'answer_file', url)}
                 />
               ) : (
@@ -2158,6 +2272,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
   };
 
   const [startTime, setStartTime] = useState<Dayjs | null>(dayjs());
+
   const [siteTree, setSiteTree] = useState<any[]>([]);
 
   const buildSiteTree = (
@@ -2172,7 +2287,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       children?: { id: string; name: string; children?: any[] }[];
     }[];
   }[] => {
-    // function body
     return sites
       .filter((s) => {
         const siteParent = s.parent ? s.parent.toLowerCase() : null;
@@ -2186,11 +2300,89 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       }));
   };
 
-  const renderTree = (node: any) => (
-    <TreeItem key={node.id} itemId={String(node.id)} label={node.name}>
-      {node.children?.map((child: any) => renderTree(child))}
-    </TreeItem>
-  );
+  const buildSiteTreeWithParent = (sites: any[], parentId: string) => {
+    const parent = sites.find((s) => s.id === parentId);
+    if (!parent) return [];
+
+    return [
+      {
+        id: parent.id,
+        name: parent.name,
+        children: buildSiteTree(sites, parentId),
+      },
+    ];
+  };
+
+  const [selectedSiteParentIds, setSelectedSiteParentIds] = useState<string[]>([]);
+  const [selectedSiteIds, setSelectedSiteIds] = useState<string[]>([]);
+  const toCsv = (ids: string[]) => ids.join(',');
+
+  const collectAllChildIds = (node: any): string[] => {
+    if (!node.children) return [];
+    return node.children.flatMap((child: any) => [child.id, ...collectAllChildIds(child)]);
+  };
+
+  const renderTree = (
+    node: any,
+    index: number,
+    onChange: (index: number, field: keyof FormVisitor, value: any) => void,
+  ) => {
+    const checked = selectedSiteIds.includes(node.id);
+
+    return (
+      <TreeItem
+        key={`${node.parentId ?? 'root'}-${node.id}`}
+        itemId={`${node.parentId ?? 'root'}-${node.id}`}
+        label={
+          <Box display="flex" alignItems="center" gap={1}>
+            <Checkbox
+              size="small"
+              checked={checked}
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => {
+                const isChecked = e.target.checked;
+                const isParentNode = !!node.children?.length;
+                setSelectedSiteIds((prev) => {
+                  let updated = [...prev];
+
+                  if (isChecked) {
+                    if (!updated.includes(node.id)) {
+                      updated.push(node.id);
+                    }
+                    // if (isParentNode) {
+                    //   const childIds = collectAllChildIds(node);
+                    //   childIds.forEach((cid) => {
+                    //     if (!updated.includes(cid)) {
+                    //       updated.push(cid);
+                    //     }
+                    //   });
+                    // }
+                    if (!isParentNode && node.parentId && !updated.includes(node.parentId)) {
+                      updated.push(node.parentId);
+                    }
+                  } else {
+                    updated = updated.filter((id) => id !== node.id);
+                    if (isParentNode) {
+                      const childIds = collectAllChildIds(node);
+                      updated = updated.filter((id) => !childIds.includes(id));
+                    }
+                  }
+
+                  onChange(index, 'answer_text', toCsv(updated));
+                  return updated;
+                });
+              }}
+            />
+            <Typography variant="body2">{node.name}</Typography>
+          </Box>
+        }
+      >
+        {node.children?.map((child: any) => renderTree(child, index, onChange))}
+      </TreeItem>
+    );
+  };
+
   const renderDetailRows = (
     details: FormVisitor[] | any,
     onChange: (index: number, field: keyof FormVisitor, value: any) => void,
@@ -2204,23 +2396,54 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       );
     }
 
-    return details.map((item, index) => {
+    const getFlag = (key: string) =>
+      details.some((f: any) => {
+        if (f.remarks?.toLowerCase() !== key) return false;
+
+        const val = f.answer_text;
+
+        if (Array.isArray(val)) {
+          return val.some((v) => ['true', '1', 'yes', true].includes(String(v).toLowerCase()));
+        }
+        return ['true', '1', 'yes', true].includes(String(val).toLowerCase());
+      });
+
+    const isDriving = getFlag('is_driving');
+    const isEmployee = getFlag('is_employee');
+
+    const visibilityMap: Record<string, boolean> = {
+      employee: isEmployee,
+      vehicle_type: isDriving,
+      vehicle_plate: isDriving,
+    };
+
+    const filteredDetails = details.filter((item, i) => {
+      const remarks = (item.remarks || '').toLowerCase();
+      const visible = visibilityMap.hasOwnProperty(remarks) ? visibilityMap[remarks] : true;
+
+      if (!visible && item.answer_text) onChange(i, 'answer_text', '');
+      return visible;
+    });
+
+    const handleSitePlaceChange = (idx: number, field: keyof FormVisitor, value: any) => {
+      console.log('[SITE PLACE FORM CHANGE]', {
+        index: idx,
+        field,
+        answer_text: value,
+      });
+      onChange(idx, field, value);
+    };
+
+    return filteredDetails.map((item: any, index: any) => {
       const key = `${activeStep - 1}:${index}`;
       const previewSrc = getPreviewSrc(key, (item as any).answer_file);
       const shownName = uploadNames[key] || fileNameFromAnswer((item as any).answer_file);
       return (
         <TableRow key={key}>
-          {/* Display Text (label) */}
           <TableCell>
-            <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
+            <CustomFormLabel sx={{ mb: 1, mt: 0 }} required={item.mandatory === true}>
               {item.long_display_text}
-              {item.mandatory && (
-                <Typography component="span" color="error" sx={{ ml: 0.5, lineHeight: 1 }}>
-                  *
-                </Typography>
-              )}
-            </Typography>
-            {/* Render sesuai field_type */}
+            </CustomFormLabel>
             {(() => {
               switch (item.field_type) {
                 case 0: // Text
@@ -2267,12 +2490,12 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                         item.remarks === 'name'
                           ? ''
                           : item.remarks === 'phone'
-                          ? ''
-                          : item.remarks === 'organization'
-                          ? ''
-                          : item.remarks === 'indentity_id'
-                          ? ''
-                          : ''
+                            ? ''
+                            : item.remarks === 'organization'
+                              ? ''
+                              : item.remarks === 'indentity_id'
+                                ? ''
+                                : ''
                       }
                       fullWidth
                     />
@@ -2324,55 +2547,101 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                       typeof opt === 'object' ? opt : { value: opt, name: opt },
                     );
                   }
+                  if (item.remarks === 'site_place') {
+                    return (
+                      <>
+                        <Autocomplete
+                          multiple
+                          size="small"
+                          options={options}
+                          getOptionLabel={(option) => option.name}
+                          inputValue={inputValues[index] || ''}
+                          onInputChange={(_, newInputValue, reason) => {
+                            if (reason !== 'input') return;
 
-                  return (
-                    <>
-                      <Autocomplete
-                        size="small"
-                        options={options}
-                        getOptionLabel={(option) => option.name}
-                        getOptionDisabled={(option) => option.disabled || false}
-                        inputValue={inputValues[index] || ''}
-                        onInputChange={(_, newInputValue) =>
-                          setInputValues((prev) => ({ ...prev, [index]: newInputValue }))
-                        }
-                        filterOptions={(opts, state) => {
-                          if (state.inputValue.length < 3) return [];
-                          return opts.filter((opt) =>
-                            opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
-                          );
-                        }}
-                        noOptionsText={
-                          (inputValues[index] || '').length < 3
-                            ? 'Enter at least 3 characters to search'
-                            : 'Not found'
-                        }
-                        value={options.find((opt) => opt.value === item.answer_text) || null}
-                        onChange={(_, newValue) => {
-                          const selectedValue = newValue ? newValue.value : '';
-                          onChange(index, 'answer_text', selectedValue);
-                          if (item.remarks === 'site_place') {
-                            if (!newValue) {
-                              setSiteTree([]);
-                              return;
-                            }
-                            const tree = buildSiteTree(sites, selectedValue);
-                            setSiteTree(tree);
+                            setInputValues((prev) => ({
+                              ...prev,
+                              [index]: newInputValue,
+                            }));
+                          }}
+                          /* 🔥 min 3 char rule */
+                          filterOptions={(opts, state) => {
+                            if (state.inputValue.length < 3) return [];
+                            return opts.filter((opt) =>
+                              opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
+                            );
+                          }}
+                          noOptionsText={
+                            (inputValues[index] || '').length < 3
+                              ? 'Enter at least 3 characters to search'
+                              : 'Not found'
                           }
-                        }}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            label=""
-                            placeholder="Enter at least 3 characters to search"
-                            fullWidth
-                          />
+                          value={options.filter((opt) => selectedSiteParentIds.includes(opt.value))}
+                          onChange={(_, newValues) => {
+                            const parentIds = newValues.map((v) => v.value);
+
+                            setSelectedSiteParentIds(parentIds);
+
+                            setInputValues((prev) => ({
+                              ...prev,
+                              [index]: '',
+                            }));
+                            const trees = parentIds.flatMap((pid) =>
+                              buildSiteTreeWithParent(sites, pid),
+                            );
+
+                            setSiteTree(trees);
+                          }}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              placeholder="Enter at least 3 characters to search"
+                              fullWidth
+                            />
+                          )}
+                        />
+                        {item.remarks === 'site_place' && siteTree.length > 0 && (
+                          <SimpleTreeView>
+                            {siteTree.map((node) => renderTree(node, index, handleSitePlaceChange))}
+                          </SimpleTreeView>
                         )}
-                      />
-                      {item.remarks === 'site_place' && siteTree.length > 0 && (
-                        <SimpleTreeView>{siteTree.map((node) => renderTree(node))}</SimpleTreeView>
+                      </>
+                    );
+                  }
+                  return (
+                    <Autocomplete
+                      size="small"
+                      options={options}
+                      getOptionLabel={(option) => option.name}
+                      inputValue={inputValues[index] || ''}
+                      getOptionDisabled={(option) => option.disabled || false}
+                      onInputChange={(_, newInputValue) =>
+                        setInputValues((prev) => ({ ...prev, [index]: newInputValue }))
+                      }
+                      filterOptions={(opts, state) => {
+                        if (state.inputValue.length < 3) return [];
+                        return opts.filter((opt) =>
+                          opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
+                        );
+                      }}
+                      noOptionsText={
+                        (inputValues[index] || '').length < 3
+                          ? 'Enter at least 3 characters to search'
+                          : 'Not found'
+                      }
+                      value={options.find((opt) => opt.value === item.answer_text) || null}
+                      onChange={(_, newValue) => {
+                        const selectedValue = newValue ? newValue.value : '';
+                        onChange(index, 'answer_text', selectedValue);
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          placeholder="Enter at least 3 characters to search"
+                          fullWidth
+                        />
                       )}
-                    </>
+                    />
                   );
                 }
                 case 4: // Datepicker
@@ -2433,8 +2702,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                         const answerArray = Array.isArray(item.answer_text)
                           ? item.answer_text
                           : item.answer_text
-                          ? [String(item.answer_text)]
-                          : [];
+                            ? [String(item.answer_text)]
+                            : [];
 
                         return (
                           <FormControlLabel
@@ -2475,7 +2744,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                         ampm={false}
                         onChange={(newValue) => {
                           if (newValue) {
-                            const utc = newValue.utc().format(); // hasil: 2025-08-05T10:00:00Z
+                            const utc = newValue.utc().format();
                             onChange(index, 'answer_datetime', utc);
                           }
                         }}
@@ -2520,9 +2789,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                             cursor: 'pointer',
                             p: 2,
                           }}
-                          onClick={() => setOpenCamera(true)} // Bisa langsung dibuka saat klik semua bagian
+                          onClick={() => setOpenCamera(true)}
                         >
-                          {/* <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} /> */}
                           <PhotoCameraIcon sx={{ fontSize: 48, color: '#42a5f5', mr: 0.5 }} />
                           <Box
                             sx={{
@@ -2589,8 +2857,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                 onClick={() =>
                                   handleRemoveFileForField(
                                     (item as any).answer_file,
-                                    (url) => onChange(index, 'answer_file', url), // kosongkan state
-                                    key, // reset <input id=key>
+                                    (url) => onChange(index, 'answer_file', url),
+                                    key,
                                   )
                                 }
                                 startIcon={<IconTrash />}
@@ -2730,7 +2998,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                         </Typography>
 
                         <Typography variant="body2" color="textSecondary" mt={1}>
-                          Supports: PDF, DOCX, JPG, PNG, up to
+                          Supports: JPG, JPEG, PNG, up to
                           <span style={{ fontWeight: 'semibold' }}> 100KB</span>
                         </Typography>
                         {/*preview  */}
@@ -2873,7 +3141,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                   onClick={() =>
                                     handleRemoveFileForField(
                                       (item as any).answer_file,
-                                      (url) => onChange(index, 'answer_file', url), // kosongkan state
+                                      (url) => onChange(index, 'answer_file', url),
                                       key, // reset <input id=key>
                                     )
                                   }
@@ -3018,10 +3286,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       form_visitor_type_id: '',
     };
 
-    // ambil nilai jawaban (kalau ada)
     const ans = pickAns(src ?? {});
 
-    // 🟢 handle khusus datetime agar selalu format UTC ISO
     if (tpl.field_type === 9 && ans?.answer_datetime) {
       const parsed = dayjs(ans.answer_datetime);
       out.answer_datetime = parsed.isValid()
@@ -3096,17 +3362,14 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
 
           if (isPurposeVisit(section)) {
             if (rowSelfOnly) {
-              // per-row override
               pick = (selfOnlyOverrides[`row${rowIdx}`] || []).find((f) => sameField(f, tpl));
             } else {
-              // shared (semua baris sama)
               pick =
                 (r && sharedPVIdx.byRemarks.get(r)) ||
                 (cf && sharedPVIdx.byCF.get(cf)) ||
                 undefined;
             }
           } else {
-            // normal section
             pick =
               (r && rowIdxMap.byRemarks.get(r)) ||
               (cf && rowIdxMap.byCF.get(cf)) ||
@@ -3135,7 +3398,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       return { question_page };
     });
 
-    // --- susun meta payload
     const basePayload: any = {
       visitor_type: meta.visitor_type,
       is_group: !!meta.is_group,
@@ -3201,7 +3463,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
 
       console.log('🕒 Final detected timezone:', tz);
 
-      // 🧩 Helper: Format Field
       const mapField = (field: FormVisitor, sortIdx: number) => {
         const base: any = {
           sort: field.sort ?? sortIdx,
@@ -3630,7 +3891,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
           name: 'Visitor Information (Group)',
           can_multiple_used: true,
           is_document: false,
-          // gabung form VI + dokumen, pastikan sort berlanjut
           [FORM_KEY]: (() => {
             const base = cloneForms(formsOf(viSrc));
             const extra = cloneForms(otherSingles);
@@ -4097,16 +4357,9 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
   const hasSelfOnly = (dataVisitor: any[]) =>
     dataVisitor?.some((dv) => dv.question_page?.some((page: any) => page.self_only === true));
 
-  const [openVisitorDialog, setOpenVisitorDialog] = useState(false);
-  const [selectedVisitor, setSelectedVisitor] = useState<any>(null);
-
-  // ambil list visitor self_only dari dataVisitor
-
   const sameSite = allSite.length > 0 && allSite.every((s) => s === allSite[0]);
 
   const hasSelf = selfOnlyVisitors.length > 0;
-  const showGroupOnly = isGroup && sameSite;
-  const showGroupAndSelf = isGroup && hasSelf;
 
   const [checkedGroupItems, setCheckedGroupItems] = useState<string[]>([]);
   const [checkedSelfItems, setCheckedSelfItems] = useState<string[]>([]);
@@ -4247,8 +4500,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                   backgroundColor: snapshot.isDragging
                                     ? '#1976d2'
                                     : activeStep === index + 1
-                                    ? 'primary.main'
-                                    : '#9e9e9e',
+                                      ? 'primary.main'
+                                      : '#9e9e9e',
                                   color:
                                     snapshot.isDragging || activeStep === index + 1
                                       ? '#fff'
@@ -4801,17 +5054,18 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         </DialogContent>
       </Dialog>
 
-      <Portal>
-        <Backdrop
-          open={loading}
-          sx={{
-            color: '#fff',
-            zIndex: 999999,
-          }}
-        >
-          <CircularProgress color="primary" />
-        </Backdrop>
-      </Portal>
+      <VisitorSelectDialog
+        open={openVisitorDialog}
+        isEmployeeMode={isEmployeeMode}
+        token={token as string}
+        activeGroupIdx={activeGroupIdx}
+        activeStep={activeStep}
+        setOpen={setOpenVisitorDialog}
+        setActiveGroupIdx={setActiveGroupIdx as any}
+        setDataVisitor={setDataVisitor}
+      />
+
+      <GlobalBackdropLoading open={loading} />
       <Portal>
         <Snackbar
           open={snackbar.open}

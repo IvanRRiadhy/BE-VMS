@@ -255,6 +255,99 @@ export const generateReport = async (token: string, payload: any): Promise<any> 
 };
 //#region User
 
+// Operator Setting Register Site
+
+// Operator Setting Give Access
+export const getOperatorSettingRegiterSiteById = async (
+  token: string,
+  id: string,
+): Promise<any> => {
+  const response = axiosInstance.get(`/operator-register-site/user/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response;
+};
+
+// Create
+export const createOperatorSettingRegiterSite = async (
+  token: string,
+  data: any,
+  id: string,
+): Promise<any> => {
+  const response = await axiosInstance.post('/operator-register-site/user/' + id, data, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+// Delete
+export const deleteOperatorSettingRegiterSite = async (token: string, id: string): Promise<any> => {
+  const response = await axiosInstance.delete('/operator-register-site/user/' + id, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+// Operator Setting Give Access
+export const getOperatorSettingGiveAccessById = async (token: string, id: string): Promise<any> => {
+  const response = axiosInstance.get(`/operator-give-access/user/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response;
+};
+
+// Create
+export const createOperatorSettingGiveAccess = async (token: string, data: any, id: string): Promise<any> => {
+  const response = await axiosInstance.post('/operator-give-access/user/' + id, data, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+// Delete
+export const deleteOperatorSettingGiveAccess = async (token: string, id: string): Promise<any> => {
+  const response = await axiosInstance.delete('/operator-give-access/user/' + id, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+// Operator Site Access
+export const getOperatorSiteAccessById = async (token: string, id: string): Promise<any> => {
+  const response = axiosInstance.get(`/operator-site-access/user/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response;
+};
+
+// Create
+export const createOperatorSiteAccess = async (
+  token: string,
+  data: any,
+  id: string,
+): Promise<any> => {
+  const response = await axiosInstance.post('/operator-site-access/user/' + id, data, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+// Delete
+export const deleteOperatorSiteAccess = async (token: string, id: string): Promise<any> => {
+  const response = await axiosInstance.delete('/operator-site-access/user/' + id, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+// Operator vms user
+export const getAllUserOperatorVms = async (token: string): Promise<any> => {
+  const response = await axiosInstance.get('/user/operator-vms', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
 export const getAllUser = async (token: string): Promise<any> => {
   const response = await axiosInstance.get('/user', {
     headers: { Authorization: `Bearer ${token}` },
@@ -900,7 +993,7 @@ export const getAllVisitorTypePagination = async (
       start,
       length,
       sort_column: sortColumn,
-      'sort_dir': sort_dir,
+      sort_dir: sort_dir,
       'search[value]': keyword,
     },
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
@@ -1468,7 +1561,7 @@ export const deleteEmployee = async (
 
 export const uploadImageEmployee = async (
   employeeId: string,
-  data: File,
+  data: any,
   token: string,
 ): Promise<UploadImageEmployeeResponse> => {
   try {
@@ -1481,7 +1574,6 @@ export const uploadImageEmployee = async (
       },
     });
     console.log('Upload Image Site Response:', response.data);
-    console.log('The Data: ', data);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 400) {
@@ -1498,7 +1590,7 @@ export const getAllSitePagination = async (
   token: string,
   start: number,
   length: number,
-  sortColumn: string,
+  // sortColumn: string,
   sortDir?: string,
   keyword: string = '',
   type?: number,
@@ -1509,7 +1601,7 @@ export const getAllSitePagination = async (
     params: {
       start,
       length,
-      sort_column: sortColumn,
+      // sort_column: sortColumn,
       sort_dir: sortDir,
       'search[value]': keyword,
       ...(type !== undefined ? { type } : {}),

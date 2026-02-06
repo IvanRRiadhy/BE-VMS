@@ -8,8 +8,6 @@ import {
   DialogTitle,
   Divider,
   Grid2 as Grid,
-  Card,
-  Skeleton,
   IconButton,
 } from '@mui/material';
 import Container from 'src/components/container/PageContainer';
@@ -35,10 +33,8 @@ import { showConfirmDelete, showErrorAlert, showSwal } from 'src/customs/compone
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 
 const Content = () => {
-  // Pagination state.
   const [tableData, setTableData] = useState<Item[]>([]);
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
-  const [isDataReady, setIsDataReady] = useState(false);
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
   const [page, setPage] = useState(0);
@@ -77,7 +73,6 @@ const Content = () => {
           sortDir,
           searchKeyword,
         );
-        // console.log('Response from API:', response);
         setTableData(response.collection);
         setTotalRecords(response.RecordsTotal);
       } catch (error) {
@@ -96,10 +91,6 @@ const Content = () => {
   const [openPdfDialog, setOpenPdfDialog] = useState(false);
   const [pdfUrl, setPdfUrl] = useState('');
 
-  const handleOpenDialog = () => {
-    setIsDirty(false);
-    setOpenFormAddDocument(true);
-  };
   const handleCloseDialog = () => {
     setOpenFormAddDocument(false);
     localStorage.removeItem('unsavedDocumentData');
@@ -290,7 +281,7 @@ const Content = () => {
       </Container>
       <Dialog open={openFormAddDocument} onClose={handleCloseDialog} fullWidth maxWidth="md">
         <DialogTitle sx={{ position: 'relative', padding: 3 }}>
-         {edittingId ? 'Edit Document' : 'Add New Document'}
+          {edittingId ? 'Edit Document' : 'Add New Document'}
           <IconButton
             aria-label="close"
             onClick={handleCloseDialog}
@@ -315,7 +306,7 @@ const Content = () => {
               localStorage.removeItem('unsavedDocumentData');
               handleCloseDialog();
               setRefreshTrigger(refreshTrigger + 1);
-              console.log('tes');
+              setEdittingId('');
             }}
           />
         </DialogContent>

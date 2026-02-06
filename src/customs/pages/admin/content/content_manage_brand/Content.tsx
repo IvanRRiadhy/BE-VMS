@@ -18,6 +18,7 @@ import {
   showConfirmDelete,
   showErrorAlert,
   showSuccessAlert,
+  showSwal,
 } from 'src/customs/components/alerts/alerts';
 const Content = () => {
   const [tableData, setTableData] = useState<Item[]>([]);
@@ -60,7 +61,7 @@ const Content = () => {
         );
         setTableData(response.collection);
         setTotalRecords(response.collection.length);
-        setIsDataReady(true);
+        // setIsDataReady(true);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -78,8 +79,7 @@ const Content = () => {
     if (!token || rows.length === 0) return;
 
     const confirmed = await showConfirmDelete(
-      `Are you sure to delete ${rows.length} items?`,
-      "You won't be able to revert this!",
+      `Are you sure to delete ${rows.length} brands?`,
     );
 
     if (confirmed) {
@@ -87,11 +87,13 @@ const Content = () => {
       try {
         await Promise.all(rows.map((row) => deleteBrand(row.id, token)));
         setRefreshTrigger((prev) => prev + 1);
-        showSuccessAlert('Deleted!', `${rows.length} items have been deleted.`);
+        // showSuccessAlert('Deleted!', `${rows.length} items have been deleted.`);
+        showSwal('success', `${rows.length} items have been deleted.`);
         setSelectedRows([]);
       } catch (error) {
         console.error(error);
-        showErrorAlert('Error!', 'Failed to delete some items.');
+        // showErrorAlert('Error!', 'Failed to delete some items.');
+        showSwal('error', 'Failed to delete some items.');
       } finally {
         setLoading(false);
       }

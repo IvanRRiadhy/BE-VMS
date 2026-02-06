@@ -12,8 +12,9 @@ import { AuthProvider } from './customs/contexts/AuthProvider';
 import App from './App';
 import './App.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { GlobalLoadingProvider } from './customs/contexts/GlobalLoadingContext';
 import Spinner from './views/spinner/Spinner';
+import { loadRuntimeConfig } from './config';
+import { initializeAxiosBaseURL } from './customs/api/interceptor';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,20 +26,51 @@ const queryClient = new QueryClient({
   },
 });
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <Provider store={store}>
-    <PersistGate loading={<Spinner />} persistor={persistor}>
-      <SessionProvider>
-        {/* <GlobalLoadingProvider> */}
-        <AuthProvider>
-          <QueryClientProvider client={queryClient}>
-            <Suspense fallback={<Spinner />}>
-              <App />
-            </Suspense>
-          </QueryClientProvider>
-        </AuthProvider>
-        {/* </GlobalLoadingProvider> */}
-      </SessionProvider>
-    </PersistGate>
-  </Provider>,
-);
+// ReactDOM.createRoot(document.getElementById('root')!).render(
+//   <Provider store={store}>
+//     <PersistGate loading={<Spinner />} persistor={persistor}>
+//       <SessionProvider>
+//         <AuthProvider>
+//           <QueryClientProvider client={queryClient}>
+//             <Suspense fallback={<Spinner />}>
+//               <App />
+//             </Suspense>
+//           </QueryClientProvider>
+//         </AuthProvider>
+//       </SessionProvider>
+//     </PersistGate>
+//   </Provider>,
+// );
+
+const root = ReactDOM.createRoot(document.getElementById('root')!);
+
+loadRuntimeConfig()
+  .then(() => {
+    initializeAxiosBaseURL();
+    root.render(
+      <Provider store={store}>
+        <PersistGate loading={<Spinner />} persistor={persistor}>
+          <SessionProvider>
+            <AuthProvider>
+              <QueryClientProvider client={queryClient}>
+                <Suspense fallback={<Spinner />}>
+                  <App />
+                </Suspense>
+              </QueryClientProvider>
+            </AuthProvider>
+          </SessionProvider>
+        </PersistGate>
+      </Provider>,
+    );
+  })
+  .catch((err) => {
+    console.error('Failed to load runtime config:', err);
+
+    // Optional: tampilkan error page
+    root.render(
+      <div style={{ padding: 24 }}>
+        <h2>Configuration Error</h2>
+        <p>config.json not found or invalid.</p>
+      </div>,
+    );
+  });

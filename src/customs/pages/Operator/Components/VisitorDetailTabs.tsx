@@ -1,5 +1,5 @@
 import { Box, Tabs, Tab, Grid2 as Grid, Typography, Button } from '@mui/material';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   IconBrandGmail,
   IconPhone,
@@ -43,12 +43,30 @@ const VisitorDetailTabs: React.FC<Props> = ({ invitationCode, handleChooseCard }
     return baseTime.tz(moment.tz.guess()).format('DD MMM YYYY, HH:mm');
   };
 
+  const currentCard = useMemo(() => {
+    const cards = invitationCode?.[0]?.card;
+    if (!Array.isArray(cards) || cards.length === 0) return null;
+
+    return cards[0];
+  }, [invitationCode]);
+
+  const statusBgMap: Record<string, string> = {
+    Checkin: '#21c45d',
+    Checkout: '#F44336',
+    Block: '#000000',
+    Deny: '#8B0000',
+    Approve: '#21c45d',
+    Pracheckin: '#21c45d',
+    Preregis: '#a5a5a5ff',
+  };
+
   return (
     <>
       <Tabs value={tabValue} onChange={(e, newVal) => setTabValue(newVal)} variant="fullWidth">
         <Tab label="Info" />
         <Tab label="Visit Information" />
         <Tab label="Purpose Visit" />
+        {/* <Tab label="Barcode" /> */}
       </Tabs>
 
       {/* TAB 1 — INFO */}
@@ -86,7 +104,7 @@ const VisitorDetailTabs: React.FC<Props> = ({ invitationCode, handleChooseCard }
             </Grid>
 
             {/* ADDRESS */}
-            <Grid size={{ xs: 6, md: 6 }}>
+            {/* <Grid size={{ xs: 6, md: 6 }}>
               <Box display="flex" gap={2} alignItems="flex-start">
                 <IconHome />
                 <Box>
@@ -94,15 +112,23 @@ const VisitorDetailTabs: React.FC<Props> = ({ invitationCode, handleChooseCard }
                   <Typography>{data?.visitor?.address || '-'}</Typography>
                 </Box>
               </Box>
-            </Grid>
+            </Grid> */}
 
-            {/* GENDER */}
             <Grid size={{ xs: 6, md: 6 }}>
               <Box display="flex" gap={2} alignItems="flex-start">
                 <IconGenderMale />
                 <Box>
                   <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Gender</CustomFormLabel>
                   <Typography>{data?.visitor?.gender || '-'}</Typography>
+                </Box>
+              </Box>
+            </Grid>
+            <Grid size={{ xs: 6, md: 6 }}>
+              <Box display="flex" gap={2}>
+                <IconTicket />
+                <Box>
+                  <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Invitation Code</CustomFormLabel>
+                  <Typography>{data?.invitation_code || '-'}</Typography>
                 </Box>
               </Box>
             </Grid>
@@ -136,12 +162,15 @@ const VisitorDetailTabs: React.FC<Props> = ({ invitationCode, handleChooseCard }
                   //     Choose Card
                   //   </Button>
                   ) : null} */}
-                  {data?.card?.length > 0 &&
+                  {/* {data?.card?.length > 0 &&
                   data.card[data.card.length - 1]?.card_number?.trim() ? (
                     <Typography fontWeight={600}>
                       {data.card[data.card.length - 1].card_number}
                     </Typography>
-                  ) : null}
+                  ) : null} */}
+                  {currentCard?.card_number?.trim() && (
+                    <Typography fontWeight={600}>{currentCard.card_number}</Typography>
+                  )}
 
                   {/* <Grid size={{ xs: 6, md: 6 }}>
                             <Box
@@ -242,20 +271,26 @@ const VisitorDetailTabs: React.FC<Props> = ({ invitationCode, handleChooseCard }
 
             <Grid size={{ xs: 6, md: 6 }}>
               <Box display="flex" gap={2}>
-                <IconTicket />
-                <Box>
-                  <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Invitation Code</CustomFormLabel>
-                  <Typography>{data?.invitation_code || '-'}</Typography>
-                </Box>
-              </Box>
-            </Grid>
-
-            <Grid size={{ xs: 6, md: 6 }}>
-              <Box display="flex" gap={2}>
                 <IconCheckupList />
-                <Box>
+                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                   <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Visitor Status</CustomFormLabel>
-                  <Typography>{data?.visitor_status || '-'}</Typography>
+                  <Box
+                    sx={{
+                      backgroundColor: statusBgMap[data?.visitor_status],
+                      borderRadius: '999px',
+                      color: '#fff',
+                      px: 1.5,
+                      py: 0.5,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <Typography>{data?.visitor_status || '-'}</Typography>
+                  </Box>
                 </Box>
               </Box>
             </Grid>
@@ -311,7 +346,7 @@ const VisitorDetailTabs: React.FC<Props> = ({ invitationCode, handleChooseCard }
               <Box display="flex" gap={2}>
                 <IconCalendarTime />
                 <Box>
-                  <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Period Start</CustomFormLabel>
+                  <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Visit Period Start</CustomFormLabel>
                   {formatDateTime(data?.visitor_period_start) || '-'}
                 </Box>
               </Box>
@@ -321,7 +356,7 @@ const VisitorDetailTabs: React.FC<Props> = ({ invitationCode, handleChooseCard }
               <Box display="flex" gap={2}>
                 <IconCalendarEvent />
                 <Box>
-                  <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Period End</CustomFormLabel>
+                  <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Visit Period End</CustomFormLabel>
                   <Typography>
                     {formatDateTime(data?.visitor_period_end, data?.extend_visitor_period)}
                   </Typography>

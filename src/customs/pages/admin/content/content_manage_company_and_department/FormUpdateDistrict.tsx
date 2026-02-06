@@ -8,6 +8,8 @@ import {
   Autocomplete,
   FormControlLabel,
   Backdrop,
+  RadioGroup,
+  Radio,
 } from '@mui/material';
 import { Box } from '@mui/system';
 import React, { useEffect, useState } from 'react';
@@ -231,7 +233,7 @@ const FormUpdateDistrict: React.FC<FormUpdateDistrictProps> = ({
       <form onSubmit={handleSubmit}>
         <Box display="flex" alignItems="center" justifyContent="space-between">
           <CustomFormLabel htmlFor="name" sx={{ marginY: 1, fontWeight: 500 }}>
-           District Name
+            District Name
           </CustomFormLabel>
           {isBatchEdit && (
             <FormControlLabel
@@ -361,6 +363,20 @@ const FormUpdateDistrict: React.FC<FormUpdateDistrictProps> = ({
             />
           )}
         />
+
+        <RadioGroup
+          row
+          // value={formData.visitorType}
+          // onChange={(e) =>
+          //   setFormData((prev) => ({
+          //     ...prev,
+          //     visitorType: e.target.value,
+          //   }))
+          // }
+        >
+          <FormControlLabel value="internal" control={<Radio />} label="Internal" />
+          <FormControlLabel value="external" control={<Radio />} label="External" />
+        </RadioGroup>
 
         <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
           <Button

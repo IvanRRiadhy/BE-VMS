@@ -36,7 +36,8 @@
     "custom_field": "Kolom Kustom",
     "visitor": "Pengunjung",
     "settings": "Pengaturan",
-    "helps": "Bantuan"
+    "helps": "Bantuan",
+    "zone": "Zona"
   },
   "no_visit_today": "Tidak ada kunjungan hari ini.",
   "report": "Laporan",

@@ -63,10 +63,9 @@ const Content = () => {
   // Table states
   const [smtpData, setSmtpData] = useState<SettingSMTPRow[]>([]);
   const [selectedRows, setSelectedRows] = useState<SettingSMTPRow[]>([]);
-  const [isDataReady, setIsDataReady] = useState(false);
   const [totalRecords, setTotalRecords] = useState(0);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -95,9 +94,7 @@ const Content = () => {
   const [formData, setFormData] = useState<Item>(() => initialFormData);
   const [formEmailData, setFormEmailData] = useState<ItemEmail>(initialFormEmailData);
   const [showForm, setShowForm] = useState(false);
-  // Tambah di atas return()
   const [busyId, setBusyId] = useState<string | number | null>(null);
-  // UI states
   const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
   const [tabIndex, setTabIndex] = useState(0);
@@ -192,34 +189,32 @@ const Content = () => {
 
       if (edittingId) {
         await updateSmtp(token as string, validated, edittingId);
-        showSuccessAlert('Success!', 'SMTP updated.');
+        showSwal('success', 'SMTP updated.');
       } else {
         await createSmtp(validated, token as string);
-        showSuccessAlert('Success!', 'SMTP created.');
+        showSwal('success', 'SMTP created.');
       }
 
-      setRefreshTrigger((p) => p + 1); // refresh table
-      setShowForm(false); // kembali ke tabel
-      setEdittingId(''); // reset state edit
+      setRefreshTrigger((p) => p + 1);
+      setShowForm(false);
+      setEdittingId('');
     } catch (error: any) {
       console.error(error);
-      showErrorAlert('Error!', error.message);
+      showSwal('error', error.message || 'Failed to submit SMTP data.');
     }
   };
 
   const handleBooleanSwitchChange = async (id: number | string, field: string, value: boolean) => {
-    // Abaikan switch lain, kita fokus ke selected_email
     if (field !== 'selected_email') return;
     if (!token) return;
 
     try {
       setBusyId(id);
       setLoading(true);
-      // Ambil row yang di-toggle
+
       const row = smtpData.find((x) => String(x.id) === String(id));
       if (!row) return;
 
-      // Payload update (pakai data row lama, ganti selected_email)
       const payload: Item = {
         id: row.id.toString(),
         name: row.name,
@@ -233,13 +228,10 @@ const Content = () => {
         selected_email: value,
       };
 
-      // (opsional) validasi zod
       const validated = CreateSettingSmtpSchema.parse(payload);
 
-      // Update row yang diklik
       await updateSmtp(token, validated, row.id.toString());
 
-      // Jika ingin hanya boleh SATU selected_email=true:
       if (value) {
         const prev = smtpData.find((x) => x.selected_email && x.id !== row.id);
         if (prev) {
@@ -265,11 +257,11 @@ const Content = () => {
 
       setTimeout(() => {
         setLoading(false);
-        showSuccessAlert('Updated!', 'Selected email updated.');
+        showSwal('success', 'Selected email updated.');
       }, 800);
     } catch (err: any) {
       console.error(err);
-      showErrorAlert('Error!', err?.message ?? 'Failed to update selected email.');
+      showSwal('error', err?.message ?? 'Failed to update selected email.');
     } finally {
       setBusyId(null);
       setTimeout(() => setLoading(false), 400);
@@ -280,33 +272,31 @@ const Content = () => {
     if (!token) return;
 
     try {
-      setLoading(true); // BACKDROP ON
+      setLoading(true);
 
-      // Validasi
       const validated = CreateEmailSchema.parse(data);
 
-      // Cari nama provider dari daftar SMTP yang sudah kamu load
       const provider = smtpData.find((x) => String(x.id) === String(validated.setting_smtp_id));
       const providerName = provider?.name ?? 'provider yang dipilih';
 
-      // Kirim email
       await createEmail(validated, token as string);
 
       setFormEmailData(initialFormEmailData);
 
-      // Tutup backdrop dulu, baru tampilkan alert
       flushSync(() => setLoading(false));
-      await showSuccessAlert(
-        'Berhasil!',
-        `Email berhasil dikirim via "${providerName}" ke ${
-          validated.email_sender || '(tanpa alamat)'
+
+      await showSwal(
+        'success',
+        `Successfully sent test email from "${providerName}" to ${
+          validated.email_sender || '(no email provided)'
         }`,
       );
 
       setRefreshTrigger((p) => p + 1);
     } catch (error: any) {
       flushSync(() => setLoading(false));
-      await showErrorAlert('Error!', error.message);
+      // await showErrorAlert('Error!', error.message);
+      showSwal('error', error.message || 'Failed to send test email.');
     } finally {
       setTimeout(() => setLoading(false), 500);
     }
@@ -327,7 +317,7 @@ const Content = () => {
             <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
           </Grid>
 
-          <Paper sx={{ display: 'flex', minHeight: 400, mt: 2, p: 2, overflowX: 'auto' }}>
+          <Paper sx={{ display: 'flex', minHeight: 400, mt: 2, p: 2, overflowX: 'hidden' }}>
             <Tabs
               orientation="vertical"
               value={tabIndex}
@@ -339,14 +329,15 @@ const Content = () => {
               {/* <Tab label="Sender Report" /> */}
             </Tabs>
 
-            <Box sx={{ flex: 1 }}>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
               {/* Tab SMTP Provider */}
               {tabIndex === 0 && (
-                <Box sx={{ overflowX: 'auto', p: 2 }}>
+                <Box sx={{ overflowX: 'auto', p: 2, width: '100%' }}>
                   {!showForm ? (
                     <DynamicTable
                       loading={loading}
-                      isHavePagination
+                      overflowX="auto"
+                      isHavePagination={true}
                       isHaveHeaderTitle={true}
                       titleHeader="SMTP Provider"
                       data={smtpData}
@@ -425,17 +416,6 @@ const Content = () => {
             </Box>
           </Paper>
         </Box>
-        {/* <Portal>
-        <Backdrop
-          open={loading}
-          sx={{
-            color: '#fff',
-            zIndex: (theme) => theme.zIndex.drawer + 1, // di atas drawer & dialog
-          }}
-        >
-          <CircularProgress color="primary" />
-        </Backdrop>
-      </Portal> */}
       </Container>
     </PageContainer>
   );

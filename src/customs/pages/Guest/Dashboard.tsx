@@ -17,6 +17,7 @@ import {
   CircularProgress,
   Snackbar,
   Alert,
+  DialogActions,
 } from '@mui/material';
 
 import Divider from '@mui/material/Divider';
@@ -52,6 +53,8 @@ import { getAccessPass } from 'src/customs/api/admin';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
+import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
+import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 
 const Dashboard = () => {
   const [selectedVisitor, setSelectedVisitor] = useState<any>(null);
@@ -61,6 +64,7 @@ const Dashboard = () => {
   const [activeVisitData, setActiveVisitData] = useState<any[]>([]);
   const [activeAccessPass, setActiveAccessPass] = useState<any>();
   const [openAccess, setOpenAccess] = useState(false);
+  const [openInputInvitationCode, setOpenInputInvitationCode] = useState(false);
   const handleOpenAccess = () => {
     setOpenAccess(true);
   };
@@ -173,17 +177,14 @@ const Dashboard = () => {
       logoEl.style.margin = '0 auto';
       clone.prepend(logoEl);
 
-      // Sembunyikan semua elemen "no-print" di clone
       clone.querySelectorAll('.no-print').forEach((el) => {
         (el as HTMLElement).style.display = 'none';
       });
 
-      // Tambahkan clone ke DOM tapi tersembunyi
       clone.style.position = 'fixed';
       clone.style.left = '-9999px';
       document.body.appendChild(clone);
 
-      // Ambil canvas dari clone
       const canvas = await html2canvas(clone, { scale: 3, useCORS: true });
       const imgData = canvas.toDataURL('image/png');
 
@@ -345,6 +346,13 @@ const Dashboard = () => {
               </Box>
             )}
           </Card>
+          <Button
+            variant="contained"
+            sx={{ mt: 1 }}
+            onClick={() => setOpenInputInvitationCode(true)}
+          >
+            Insert Invitation Code
+          </Button>
         </Grid>
 
         <Grid size={{ xs: 12, lg: 9 }}>
@@ -631,6 +639,43 @@ const Dashboard = () => {
           </DialogContent>
         </Dialog>
       )}
+
+      <Dialog
+        open={openInputInvitationCode}
+        onClose={() => setOpenInputInvitationCode(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>
+          Input Invitation Code
+          <IconButton
+            aria-label="close"
+            onClick={() => setOpenInputInvitationCode(false)}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
+              color: (theme) => theme.palette.grey[500],
+            }}
+          >
+            <IconX />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          <CustomFormLabel sx={{ mt: 0 }}>Invitation Code</CustomFormLabel>
+          <CustomTextField
+            fullWidth
+            variant="outlined"
+            size="small"
+            placeholder="Enter your invitation code"
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenInputInvitationCode(false)} variant="contained">
+            Submit
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Portal>
         <Snackbar

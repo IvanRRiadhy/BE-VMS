@@ -8,6 +8,8 @@ import {
   Autocomplete,
   Switch,
   Backdrop,
+  RadioGroup,
+  Radio,
 } from '@mui/material';
 import { Box } from '@mui/system';
 import React, { useEffect, useState } from 'react';
@@ -357,6 +359,19 @@ const FormUpdateDepartment: React.FC<FormUpdateDepartmentProps> = ({
             />
           )}
         />
+        <RadioGroup
+          row
+          // value={formData.visitorType}
+          // onChange={(e) =>
+          //   setFormData((prev) => ({
+          //     ...prev,
+          //     visitorType: e.target.value,
+          //   }))
+          // }
+        >
+          <FormControlLabel value="internal" control={<Radio />} label="Internal" />
+          <FormControlLabel value="external" control={<Radio />} label="External" />
+        </RadioGroup>
 
         <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
           <Button

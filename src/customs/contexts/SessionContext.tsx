@@ -1,45 +1,3 @@
-// import React, { createContext, useContext, useState, ReactNode } from "react";
-
-// interface SessionContextType {
-//   token: string | null;
-//   saveToken: (token: string) => void;
-//   clearToken: () => void;
-// }
-
-// const SessionContext = createContext<SessionContextType | undefined>(undefined);
-
-// export const useSession = (): SessionContextType => {
-//   const context = useContext(SessionContext);
-//   if (!context) {
-//     throw new Error("useSession must be used within a SessionProvider");
-//   }
-//   return context;
-// };
-
-// interface SessionProviderProps {
-//   children: ReactNode;
-// }
-
-// export const SessionProvider: React.FC<SessionProviderProps> = ({ children }) => {
-//   const [token, setToken] = useState<string | null>(localStorage.getItem("session"));
-
-//   const saveToken = (newToken: string) => {
-//     localStorage.setItem("session", newToken);
-//     setToken(newToken);
-//   };
-
-//   const clearToken = () => {
-//     localStorage.removeItem("session");
-//     setToken(null);
-//   };
-
-//   return (
-//     <SessionContext.Provider value={{ token, saveToken, clearToken }}>
-//       {children}
-//     </SessionContext.Provider>
-//   );
-// };
-
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { revokeToken } from '../api/users';
 
@@ -69,8 +27,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const [groupId, setGroupId] = useState<string | null>(localStorage.getItem('groupId'));
 
   const saveToken = (newToken: string, groupId?: string) => {
-    // if (!type) throw new Error('authType harus diisi (admin/guest)');
-
     localStorage.setItem('session', newToken);
     // localStorage.setItem('authType', type);
     if (groupId) localStorage.setItem('groupId', groupId);

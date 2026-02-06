@@ -1,7 +1,7 @@
 import { Avatar } from '@mui/material';
 import React from 'react';
 import AsyncSelect from 'react-select/async';
-import { getVisitorInvitation } from 'src/customs/api/admin';
+import { getAllEmployee, getVisitorInvitation } from 'src/customs/api/admin';
 import axiosInstance, { axiosInstance2 } from 'src/customs/api/interceptor';
 
 type Visitor = {
@@ -28,58 +28,101 @@ type OptionType = {
 type Props = {
   onSelect: (visitor: Visitor & { faceimage: string }) => void;
   token: string;
+  isEmployee?: boolean;
 };
 
-const DEFAULT_FACE_IMAGE =
-  'https://images.unsplash.com/photo-1575936123452-b67c3203c357?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0';
-
-const VisitorSelect: React.FC<Props> = ({ onSelect, token }) => {
+const VisitorSelect: React.FC<Props> = ({ onSelect, token, isEmployee }) => {
   const BASE_URL = axiosInstance.defaults.baseURL;
-  const BASE_URL2 = axiosInstance2.defaults.baseURL;
+
+  // const loadOptions = async (inputValue: string): Promise<OptionType[]> => {
+  //   if (inputValue.length < 3) return [];
+
+  //   // console.log('🔎 Cari visitor dengan keyword:', inputValue);
+
+  //   try {
+  //     const res = await getVisitorInvitation(token);
+
+  //     if (!res || !res.collection) {
+  //       console.error('⚠️ API tidak mengembalikan data visitor');
+  //       return [];
+  //     }
+
+  //     const allVisitors: Visitor[] = res.collection;
+
+  //     // ✅ Filter berdasarkan keyword
+  //     const filtered = allVisitors.filter((visitor) => {
+  //       const keyword = inputValue.toLowerCase();
+  //       return (
+  //         visitor.name?.toLowerCase().includes(keyword) ||
+  //         visitor.email?.toLowerCase().includes(keyword) ||
+  //         visitor.phone?.toLowerCase().includes(keyword)
+  //       );
+  //     });
+
+  //     // ✅ Map ke bentuk yang bisa ditampilkan
+  //     const enrichedVisitors = filtered.map((visitor) => {
+  //       const faceimage = visitor.selfie_image ? `${BASE_URL}/cdn${visitor.selfie_image}` : '';
+
+  //       return {
+  //         label: visitor.name || '(No Name)',
+  //         value: visitor.id,
+  //         data: {
+  //           ...visitor,
+  //           faceimage,
+  //         },
+  //       };
+  //     });
+
+  //     return enrichedVisitors;
+  //   } catch (error) {
+  //     console.error('❌ Error load visitor:', error);
+  //     return [];
+  //   }
+  // };
 
   const loadOptions = async (inputValue: string): Promise<OptionType[]> => {
     if (inputValue.length < 3) return [];
 
-    console.log('🔎 Cari visitor dengan keyword:', inputValue);
-
     try {
-      // ✅ Ambil data dari API
-      const res = await getVisitorInvitation(token);
+      let list: any[] = [];
 
-      if (!res || !res.collection) {
-        console.error('⚠️ API tidak mengembalikan data visitor');
-        return [];
+      if (isEmployee) {
+        // 🔥 API EMPLOYEE
+        const res = await getAllEmployee(token);
+        list = res?.collection ?? [];
+      } else {
+        // 🔥 API VISITOR
+        const res = await getVisitorInvitation(token);
+        list = res?.collection ?? [];
       }
 
-      const allVisitors: Visitor[] = res.collection;
+      const keyword = inputValue.toLowerCase();
 
-      // ✅ Filter berdasarkan keyword
-      const filtered = allVisitors.filter((visitor) => {
-        const keyword = inputValue.toLowerCase();
-        return (
-          visitor.name?.toLowerCase().includes(keyword) ||
-          visitor.email?.toLowerCase().includes(keyword) ||
-          visitor.phone?.toLowerCase().includes(keyword)
-        );
-      });
+      const filtered = list.filter(
+        (item) =>
+          item.name?.toLowerCase().includes(keyword) ||
+          item.email?.toLowerCase().includes(keyword) ||
+          item.phone?.toLowerCase().includes(keyword),
+      );
 
-      // ✅ Map ke bentuk yang bisa ditampilkan
-      const enrichedVisitors = filtered.map((visitor) => {
-        const faceimage = visitor.selfie_image ? `${BASE_URL}/cdn${visitor.selfie_image}` : '';
+      return filtered.map((item) => {
+        const faceimage = item.selfie_image
+          ? `${BASE_URL}/cdn${item.selfie_image}`
+          : item.photo
+            ? `${BASE_URL}/cdn${item.photo}`
+            : '';
 
         return {
-          label: visitor.name || '(No Name)',
-          value: visitor.id,
+          label: item.name || '(No Name)',
+          value: item.id,
           data: {
-            ...visitor,
+            ...item,
             faceimage,
           },
         };
       });
-
-      return enrichedVisitors;
-    } catch (error) {
-      console.error('❌ Error load visitor:', error);
+    } catch (err) {
+      console.error('❌ loadOptions error', err);
       return [];
     }
   };
@@ -115,12 +158,23 @@ const VisitorSelect: React.FC<Props> = ({ onSelect, token }) => {
       defaultOptions={false}
       loadOptions={loadOptions}
       onChange={(selectedOption) => {
-        if (selectedOption) onSelect(selectedOption.data);
+        if (!selectedOption) {
+          onSelect(null as any);
+          return;
+        }
+        onSelect(selectedOption.data);
       }}
-      placeholder="Cari Visitor..."
-      noOptionsMessage={() => 'Visitor not found'}
+      placeholder={isEmployee ? 'Search Employee' : 'Search Visitor'}
+      noOptionsMessage={() => isEmployee ? 'No employee found' : 'No visitor found'}
       formatOptionLabel={formatOptionLabel}
       isClearable
+      menuPortalTarget={document.body}
+      styles={{
+        menuPortal: (base) => ({
+          ...base,
+          zIndex: 1300, 
+        }),
+      }}
     />
   );
 };

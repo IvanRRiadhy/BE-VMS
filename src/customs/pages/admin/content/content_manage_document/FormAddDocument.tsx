@@ -203,10 +203,10 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
     }
   };
 
-  const acceptByType =
-    formData.document_type === 1
-      ? '.pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-      : 'image/png,image/jpeg,image/jpg,image/bmp,image/webp';
+  // const acceptByType =
+  //   formData.document_type === 1
+  //     ? '.pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  //     : 'image/png,image/jpeg,image/jpg,image/bmp,image/webp';
 
   const handleChangeDocumentType = (e: React.ChangeEvent<HTMLInputElement>) => {
     const nextType = Number(e.target.value);
@@ -242,7 +242,9 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
 
           <Grid2 size={{ xs: 6, lg: 6 }}>
             <FormControl component="fieldset" disabled={loading}>
-              <CustomFormLabel sx={{ mt: 0 }} required>Document Type</CustomFormLabel>
+              <CustomFormLabel sx={{ mt: 0 }} required>
+                Document Type
+              </CustomFormLabel>
               <RadioGroup
                 id="document_type"
                 row
@@ -327,15 +329,15 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
           </Grid2>
 
           <Grid2 size={12}>
-            <CustomFormLabel sx={{ mt: 0 }}>Document Content</CustomFormLabel>
-            {/* Tipe 1 → upload file (PDF/DOCX) */}
             {formData.document_type === 1 && (
-              <Grid2 container spacing={2} sx={{ mt: 1 }}>
-                <Grid2 size={{ xs: 12, lg: 12 }}>
-                  <Box>
-                    {formData.can_signed && (
-                      <Box mb={2}>
-                        {/* <CKEditor
+              <Box>
+                <CustomFormLabel sx={{ mt: 0 }}>Document Content</CustomFormLabel>
+                <Grid2 container spacing={2} sx={{ mt: 1 }}>
+                  <Grid2 size={{ xs: 12, lg: 12 }}>
+                    <Box>
+                      {/* {formData.can_signed && ( */}
+                        <Box mb={2}>
+                          {/* <CKEditor
                           editor={ClassicEditor}
                           data={formData.document_text || ''}
                           disabled={loading}
@@ -350,110 +352,115 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
                             setFormData((prev) => ({ ...prev, document_text: data }));
                           }}
                         /> */}
-                        <MemoEditor
-                          value={formData.document_text}
-                          disabled={loading}
-                          onChange={(data: string) =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              document_text: data,
-                            }))
-                          }
-                        />
-                      </Box>
-                    )}
-                    {formData.can_upload && (
-                      <Box
-                        sx={{
-                          border: '2px dashed #90caf9',
-                          borderRadius: 2,
-                          p: 4,
-                          textAlign: 'center',
-                          bgcolor: '#f5faff',
-                          cursor: loading ? 'not-allowed' : 'pointer',
-                          opacity: loading ? 0.6 : 1,
-                          pointerEvents: loading ? 'none' : 'auto',
-                        }}
-                        onClick={() => fileInputRef.current?.click()}
-                      >
-                        <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
-                        <Typography variant="subtitle1" sx={{ mt: 1 }}>
-                          Upload File
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          Supports: PDF, Up to 100 KB
-                        </Typography>
+                          <MemoEditor
+                            value={formData.document_text}
+                            disabled={loading}
+                            onChange={(data: string) =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                document_text: data,
+                              }))
+                            }
+                          />
+                        </Box>
+                      {/* )} */}
+                      {/* {formData.can_upload && ( */}
+                        <Box
+                          sx={{
+                            border: '2px dashed #90caf9',
+                            borderRadius: 2,
+                            p: 4,
+                            textAlign: 'center',
+                            bgcolor: '#f5faff',
+                            cursor: loading ? 'not-allowed' : 'pointer',
+                            opacity: loading ? 0.6 : 1,
+                            pointerEvents: loading ? 'none' : 'auto',
+                          }}
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
+                          <Typography variant="subtitle1" sx={{ mt: 1 }}>
+                            Upload File
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            Supports: PDF, Up to 100 KB
+                          </Typography>
 
-                        {(preview || file) && (
-                          <Box
-                            mt={2}
-                            sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
-                          >
-                            {preview ? (
-                              <>
-                                <img
-                                  src={preview}
-                                  alt="preview"
-                                  style={{
-                                    width: 200,
-                                    height: 200,
-                                    borderRadius: 12,
-                                    objectFit: 'cover',
-                                    boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
-                                  }}
-                                />
-                              </>
-                            ) : (
-                              <Typography variant="caption" noWrap>
-                                📄 {file?.name}
-                              </Typography>
-                            )}
-
-                            <Button
-                              color="error"
-                              size="small"
-                              variant="outlined"
-                              sx={{ mt: 2, minWidth: 120 }}
-                              onClick={resetFileState}
-                              startIcon={<IconTrash size={16} />}
-                              disabled={loading}
+                          {(preview || file) && (
+                            <Box
+                              mt={2}
+                              sx={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                              }}
                             >
-                              Remove
-                            </Button>
-                          </Box>
-                        )}
+                              {preview ? (
+                                <>
+                                  <img
+                                    src={preview}
+                                    alt="preview"
+                                    style={{
+                                      width: 200,
+                                      height: 200,
+                                      borderRadius: 12,
+                                      objectFit: 'cover',
+                                      boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
+                                    }}
+                                  />
+                                </>
+                              ) : (
+                                <Typography variant="caption" noWrap>
+                                  📄 {file?.name}
+                                </Typography>
+                              )}
 
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          // accept={acceptByType}
-                          accept="*"
-                          hidden
-                          onChange={handleFileChange}
-                          disabled={loading}
-                        />
-                      </Box>
+                              <Button
+                                color="error"
+                                size="small"
+                                variant="outlined"
+                                sx={{ mt: 2, minWidth: 120 }}
+                                onClick={resetFileState}
+                                startIcon={<IconTrash size={16} />}
+                                disabled={loading}
+                              >
+                                Remove
+                              </Button>
+                            </Box>
+                          )}
+
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            // accept={acceptByType}
+                            accept="*"
+                            hidden
+                            onChange={handleFileChange}
+                            disabled={loading}
+                          />
+                        </Box>
+                      {/* )} */}
+                    </Box>
+                  </Grid2>
+
+                  <Grid2 size={{ xs: 12, lg: 6 }}>
+                    {/* Duplikat preview (opsional) */}
+                    {preview && (
+                      <Box
+                        component="img"
+                        src={preview}
+                        alt="Preview"
+                        sx={{
+                          maxWidth: '100%',
+                          maxHeight: 200,
+                          border: '1px solid #ccc',
+                          borderRadius: 1,
+                        }}
+                      />
                     )}
-                  </Box>
+                  </Grid2>
                 </Grid2>
-
-                <Grid2 size={{ xs: 12, lg: 6 }}>
-                  {/* Duplikat preview (opsional) */}
-                  {preview && (
-                    <Box
-                      component="img"
-                      src={preview}
-                      alt="Preview"
-                      sx={{
-                        maxWidth: '100%',
-                        maxHeight: 200,
-                        border: '1px solid #ccc',
-                        borderRadius: 1,
-                      }}
-                    />
-                  )}
-                </Grid2>
-              </Grid2>
+              </Box>
             )}
             <Box display="flex" justifyContent="flex-end" mt={0}>
               <Button

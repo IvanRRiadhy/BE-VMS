@@ -18,57 +18,8 @@ const VisitorFluctuationChart = () => {
   const [series, setSeries] = useState<VisitorSeries[]>([]);
   const { startDate, endDate } = useSelector((state: any) => state.dateRange);
 
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     if (!token) return;
-
-  //     try {
-  //       const today = new Date();
-  //       const end_date = today.toISOString().split('T')[0];
-  //       const start = new Date(today);
-  //       start.setDate(today.getDate() - 7);
-  //       const start_date = start.toISOString().split('T')[0];
-
-  //       const res = await getVisitorChart(token, start_date, end_date);
-
-  //       const rows = res?.collection ?? [];
-
-  //       const mappedDates = rows.map((d: any) => new Date(d.date).getTime());
-  //       setDates(mappedDates);
-
-  //       setSeries([
-  //         {
-  //           id: 'checkedIn',
-  //           label: 'Checked In',
-  //           data: rows.map((d: any) => d.checkedIn),
-  //           color: '#2196f3',
-  //         },
-  //         {
-  //           id: 'checkedOut',
-  //           label: 'Checked Out',
-  //           data: rows.map((d: any) => d.checkedOut),
-  //           color: '#fb923c',
-  //         },
-  //         {
-  //           id: 'denied',
-  //           label: 'Denied',
-  //           data: rows.map((d: any) => d.denied),
-  //           color: '#ef4444',
-  //         },
-  //         {
-  //           id: 'blocked',
-  //           label: 'Blocked',
-  //           data: rows.map((d: any) => d.blocked),
-  //           color: '#22c55e',
-  //         },
-  //       ]);
-  //     } catch (err) {
-  //       console.error('Error fetching visitor fluctuation:', err);
-  //     }
-  //   };
-
-  //   fetchData();
-  // }, [token]);
+  const start = startDate?.toISOString().split('T')[0];
+  const end = endDate?.toISOString().split('T')[0];
 
   useEffect(() => {
     const fetchData = async () => {
@@ -83,8 +34,10 @@ const VisitorFluctuationChart = () => {
 
         const res = await getVisitorChart(
           token,
-          startDate.toLocaleDateString('en-CA'),
-          endDate.toLocaleDateString('en-CA'),
+          // startDate.toLocaleDateString('en-CA'),
+          // endDate.toLocaleDateString('en-CA'),
+          start,
+          end,
         );
         const rows = res?.collection ?? [];
 
@@ -114,7 +67,7 @@ const VisitorFluctuationChart = () => {
     };
 
     fetchData();
-  }, [token, startDate, endDate]);
+  }, [token, start, end]);
 
   return (
     <>

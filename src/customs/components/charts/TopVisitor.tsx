@@ -12,6 +12,10 @@ const TopVisitor = () => {
   const [labels, setLabels] = useState<string[]>([]);
   const [values, setValues] = useState<number[]>([]);
   const { startDate, endDate } = useSelector((state: any) => state.dateRange);
+  const theme = useSelector((state: any) => state.customizer.themeMode);
+
+  const start = startDate?.toISOString().split('T')[0];
+  const end = endDate?.toISOString().split('T')[0];
 
   useEffect(() => {
     const fetchData = async () => {
@@ -19,8 +23,10 @@ const TopVisitor = () => {
       try {
         const res = await getTopVisitors(
           token,
-          startDate.toLocaleDateString('en-CA'),
-          endDate.toLocaleDateString('en-CA'),
+          // startDate.toLocaleDateString('en-CA'),
+          // endDate.toLocaleDateString('en-CA'),
+          start,
+          end,
         );
 
         const sliced = res.collection.slice(0, 10);
@@ -32,7 +38,7 @@ const TopVisitor = () => {
     };
 
     fetchData();
-  }, [token, startDate, endDate]);
+  }, [token, start, end]);
 
   const options: ApexCharts.ApexOptions = {
     chart: {
@@ -92,7 +98,7 @@ const TopVisitor = () => {
       borderColor: '#e5e7eb',
       strokeDashArray: 4,
     },
-    colors: ['#3b82f6'],
+    colors: [theme === 'dark' ? '#055499' : '#055499'],
     tooltip: {
       theme: 'light',
     },

@@ -7,6 +7,11 @@ import {
   CircularProgress,
   Backdrop,
   Portal,
+  FormControlLabel,
+  FormGroup,
+  Checkbox,
+  RadioGroup,
+  Radio,
 } from '@mui/material';
 import { Box } from '@mui/system';
 import React, { useState, useEffect } from 'react';
@@ -141,7 +146,6 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
           fullWidth
           variant="outlined"
         />
-
         <CustomFormLabel htmlFor="code" sx={{ my: 1, fontWeight: 500 }} required>
           Department Code
         </CustomFormLabel>
@@ -154,7 +158,6 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
           fullWidth
           variant="outlined"
         />
-
         <CustomFormLabel htmlFor="host" sx={{ my: 1, fontWeight: 500 }} required>
           Head of Department
         </CustomFormLabel>
@@ -175,7 +178,7 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
               .find((emp: any) => emp.id === formData.host) ?? ''
           }
           onChange={(_, newValue) => {
-            const newHost = typeof newValue === 'string' ? newValue : newValue?.id ?? '';
+            const newHost = typeof newValue === 'string' ? newValue : (newValue?.id ?? '');
             setFormData((prev) => ({ ...prev, host: newHost }));
             setErrors((prev) => ({ ...prev, host: '' }));
           }}
@@ -194,6 +197,20 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
             />
           )}
         />
+        
+        <RadioGroup
+          row
+          // value={formData.visitorType}
+          onChange={(e) =>
+            setFormData((prev) => ({
+              ...prev,
+              visitorType: e.target.value,
+            }))
+          }
+        >
+          <FormControlLabel value="internal" control={<Radio />} label="Internal" />
+          <FormControlLabel value="external" control={<Radio />} label="External" />  
+        </RadioGroup>
         <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
           <Button
             sx={{ mt: 2 }}

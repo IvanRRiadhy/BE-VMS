@@ -36,6 +36,7 @@ import {
 import { CreateUserSchema, Item, UpdateUserSchema } from 'src/customs/api/models/Admin/User';
 import FormUser from './FormUser';
 import PageContainer from 'src/customs/components/container/PageContainer';
+import { useNavigate } from 'react-router';
 
 const Content = () => {
   const { token } = useSession();
@@ -166,6 +167,8 @@ const Content = () => {
     }
   };
 
+  const navigate = useNavigate();
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -179,14 +182,6 @@ const Content = () => {
             </Grid>
 
             <Grid size={{ xs: 12, lg: 12 }}>
-              {/* {isLoading ? (
-                <Card sx={{ width: '100%' }}>
-                  <Skeleton />
-                  <Skeleton animation="wave" />
-                  <Skeleton animation={false} />
-                </Card>
-              ) : ( */}
-
               <DynamicTable
                 loading={isLoading}
                 overflowX="auto"
@@ -201,6 +196,10 @@ const Content = () => {
                 }}
                 isHaveChecked
                 isHaveAction={true}
+                isOperatorSetting={true}
+                onNavigatePage={() => {
+                  navigate('/admin/settings');
+                }}
                 isHaveAddData={true}
                 isHaveSearch={true}
                 isHaveSettingOperator={true}
@@ -212,7 +211,6 @@ const Content = () => {
                 onBatchDelete={handleBatchDelete}
                 onAddData={handleAdd}
               />
-              {/* )} */}
             </Grid>
           </Grid>
         </Box>

@@ -3,7 +3,8 @@ const ThemeColors = [
     name: 'BLUE_THEME',
     palette: {
       primary: {
-        main: '#0074BA',
+        // main: '#0074BA',
+        main: '#055499',
         light: '#EFF9FF',
         dark: '#006DAF',
       },

@@ -81,7 +81,7 @@ const Content = () => {
     hosts: [] as string[],
     visitor_id: null as string | null,
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Jakarta',
-    is_preregister_done: false,
+    is_preregister_done: true,
     visitor_statuss: [] as string[],
     previous: false,
   });
@@ -97,15 +97,17 @@ const Content = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(7);
+  const [rowsPerPage, setRowsPerPage] = useState(100);
   const [sortDir, setSortDir] = useState('desc');
   const [savedReports, setSavedReports] = useState<any[]>([]);
   const [selectedReport, setSelectedReport] = useState<any | null>(null);
   const [debouncedKeyword, setDebouncedSearch] = useState('');
   const [loadingReports, setLoadingReports] = useState(false);
   const [searchVisitor, setSearchVisitor] = useState('');
+  const [reports, setReports] = useState<any[]>([]);
   const [loadedReports, setLoadedReports] = useState<any[]>([]);
   const [hasMore, setHasMore] = useState(true);
+
   const [loadingMore, setLoadingMore] = useState(false);
 
   const [snackbar, setSnackbar] = useState({
@@ -170,18 +172,53 @@ const Content = () => {
     return () => clearTimeout(handler);
   }, [searchKeyword]);
 
-  const fetchReports = async (reset = false) => {
-    if (!token) return;
+  // const fetchReports = async (reset = false) => {
+  //   if (!token) return;
 
-    if (reset) {
-      setPage(0);
-      setLoadedReports([]);
-      setHasMore(true);
-    }
+  //   if (reset) {
+  //     setPage(0);
+  //     setLoadedReports([]);
+  //     setHasMore(true);
+  //   }
+
+  //   setLoadingReports(true);
+  //   try {
+  //     const start = reset ? 0 : page * rowsPerPage;
+  //     const res = await getReportVisitorTransactionDt(token, {
+  //       start,
+  //       length: rowsPerPage,
+  //       sort_dir: sortDir,
+  //       search: debouncedKeyword || '',
+  //     });
+
+  //     if (res.collection && res.collection.length > 0) {
+  //       setLoadedReports((prev) => (reset ? res.collection : [...prev, ...res.collection]));
+  //       setPage((prev) => prev + 1);
+
+  //       if (res.collection.length < rowsPerPage) setHasMore(false);
+  //     } else {
+  //       if (reset) setLoadedReports([]);
+  //       setHasMore(false);
+  //     }
+  //   } catch (err) {
+  //     console.error(err);
+  //   } finally {
+  //     setLoadingReports(false);
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   // fetchReports(true);
+  // }, [debouncedKeyword, sortDir, token]);
+
+  const fetchReports = async (reset = false) => {
+    if (!token || loadingReports) return;
 
     setLoadingReports(true);
+
     try {
-      const start = reset ? 0 : page * rowsPerPage;
+      const start = reset ? 0 : reports.length;
+
       const res = await getReportVisitorTransactionDt(token, {
         start,
         length: rowsPerPage,
@@ -189,14 +226,14 @@ const Content = () => {
         search: debouncedKeyword || '',
       });
 
-      if (res.collection && res.collection.length > 0) {
-        setLoadedReports((prev) => (reset ? res.collection : [...prev, ...res.collection]));
-        setPage((prev) => prev + 1);
+      const newData = res.collection || [];
 
-        if (res.collection.length < rowsPerPage) setHasMore(false);
-      } else {
-        if (reset) setLoadedReports([]);
+      setReports((prev) => (reset ? newData : [...prev, ...newData]));
+
+      if (newData.length < rowsPerPage) {
         setHasMore(false);
+      } else {
+        setHasMore(true);
       }
     } catch (err) {
       console.error(err);
@@ -206,7 +243,8 @@ const Content = () => {
   };
 
   useEffect(() => {
-    // fetchReports(true);
+    setHasMore(true);
+    fetchReports(true);
   }, [debouncedKeyword, sortDir, token]);
 
   const refreshReportList = async () => {
@@ -231,7 +269,7 @@ const Content = () => {
       f.hosts?.length === 0 &&
       !f.visitor_id &&
       f.visitor_statuss?.length === 0 &&
-      f.is_preregister_done === false &&
+      f.is_preregister_done === true &&
       f.previous === false
     );
   };
@@ -260,7 +298,7 @@ const Content = () => {
       const res = rep
         ? await generateReportVisitorById(token, rep)
         : await generateReport(token, formData);
-      console.log('res', res);
+      // console.log('res', res);
       const rowsSummary = res.collection?.summary?.map((item: any) => ({
         id: item.id,
         date: item.date,
@@ -443,7 +481,7 @@ const Content = () => {
       hosts: [],
       visitor_id: '',
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Jakarta',
-      is_preregister_done: false,
+      is_preregister_done: true,
       visitor_statuss: [],
       previous: false,
     });
@@ -470,7 +508,7 @@ const Content = () => {
       time_report: d.time_report || 'all',
       visitor_id: d.visitor_id || null,
       timezone: d.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
-      is_preregister_done: d.is_preregister_done || false,
+      is_preregister_done: d.is_preregister_done || true,
       previous: d.previous || false,
 
       visitor_statuss: d.visitor_statuss || [],
@@ -841,13 +879,13 @@ const Content = () => {
                       <Skeleton height={20} width="80%" />
                     </Card>
                   ))
-                ) : loadedReports.length === 0 ? (
+                ) : reports.length === 0 ? (
                   <Typography variant="h6" color="text.secondary" align="center" mt={5}>
                     Report not found.
                   </Typography>
                 ) : (
                   <>
-                    {loadedReports.map((rep) => (
+                    {reports.map((rep: any) => (
                       <Card
                         key={rep.id}
                         sx={{
@@ -960,11 +998,11 @@ const Content = () => {
                       <Box textAlign="center" mt={2}>
                         <Button
                           onClick={() => fetchReports(false)}
+                          disabled={loadingReports || !hasMore}
                           variant="contained"
-                          color="primary"
                           fullWidth
                         >
-                          {loadingReports || loadingMore ? 'Loading...' : 'Load More'}
+                          {loadingReports ? 'Loading...' : 'Load More'}
                         </Button>
                       </Box>
                     )}

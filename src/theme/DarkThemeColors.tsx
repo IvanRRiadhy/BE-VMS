@@ -3,7 +3,8 @@ const DarkThemeColors = [
     name: 'BLUE_THEME',
     palette: {
       primary: {
-        main: '#5D87FF',
+        // main: '#5D87FF',
+        main: '#055499',
         light: '#253662',
         dark: '#4570EA',
         contrastText: '#ffffff',

@@ -36,10 +36,8 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import { Calendar, Views } from 'react-big-calendar';
-
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { useNavigate, useParams } from 'react-router-dom';
-
 import { getAllDriver, getVisitorDriver } from 'src/customs/api/Delivery/Driver';
 import {
   createDeliveryStaffRegister,
@@ -54,7 +52,6 @@ import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { momentLocalizer } from 'react-big-calendar';
 import { dayjsLocalizer } from 'react-big-calendar';
-import moment from 'moment';
 import { getCalendarSchedule, getSchedulerDeliveryById } from 'src/customs/api/Delivery/Scheduler';
 import { getTimezoneById } from 'src/customs/api/admin';
 import { BASE_URL } from 'src/customs/api/interceptor';
@@ -217,96 +214,10 @@ const ManageDetailScheduler: FC = () => {
   const [currentView, setCurrentView] = useState(Views.MONTH);
   const viewRef = useRef(Views.MONTH);
 
-  // function normalizeRange(range: any, view: string) {
-  //   if (view === Views.MONTH) {
-  //     let dates: Date[];
-
-  //     // Jika RBC kirim array → langsung pakai
-  //     if (Array.isArray(range)) {
-  //       dates = range;
-  //     } else {
-  //       // RBC MONTH selalu 6 minggu (42 hari)
-  //       dates = Array.from({ length: 42 }, (_, i) => dayjs(range.start).add(i, 'day').toDate());
-  //     }
-
-  //     // Ambil tanggal tengah → ini pasti tanggal di bulan yg tampil
-  //     const middleDate = dayjs(dates[Math.floor(dates.length / 2)]);
-
-  //     return {
-  //       start: middleDate.startOf('month').toDate(),
-  //       end: middleDate.endOf('month').toDate(),
-  //     };
-  //   }
-
-  //   // WEEK
-  //   if (view === Views.WEEK) {
-  //     if (Array.isArray(range)) {
-  //       return {
-  //         start: range[0],
-  //         end: range[range.length - 1],
-  //       };
-  //     }
-  //     return { start: range.start, end: range.end };
-  //   }
-
-  //   // DAY
-  //   if (view === Views.DAY) {
-  //     if (range.start) {
-  //       return { start: range.start, end: range.end };
-  //     }
-  //     return { start: range, end: range };
-  //   }
-
-  //   return { start: null, end: null };
-  // }
-
-  // function normalizeRange(range: any, view: string) {
-  //   // --- Jika array (MONTH/WEEK) ---
-  //   if (Array.isArray(range)) {
-  //     const dates = range.filter((d) => d instanceof Date && !isNaN(d.getTime()));
-
-  //     if (dates.length === 0) {
-  //       return { start: null, end: null };
-  //     }
-
-  //     // MONTH → ambil tengah
-  //     if (view === Views.MONTH) {
-  //       const middle = dates[Math.floor(dates.length / 2)];
-  //       const m = dayjs(middle);
-  //       return {
-  //         start: m.startOf('month').toDate(),
-  //         end: m.endOf('month').toDate(),
-  //       };
-  //     }
-
-  //     // WEEK → ambil awal + akhir
-  //     return {
-  //       start: dates[0],
-  //       end: dates[dates.length - 1],
-  //     };
-  //   }
-
-  //   // --- Jika object { start, end } (DAY / WEEK / MONTH kadang) ---
-  //   if (range && typeof range === 'object' && 'start' in range && 'end' in range) {
-  //     return {
-  //       start: new Date(range.start),
-  //       end: new Date(range.end),
-  //     };
-  //   }
-
-  //   // --- Jika single Date (DAY) ---
-  //   if (range instanceof Date) {
-  //     return { start: range, end: range };
-  //   }
-
-  //   // Fallback
-  //   return { start: null, end: null };
-  // }
-
   function normalizeRange(range: any, view: string) {
-    console.log('🟦 normalizeRange CALLED — view:', view);
-    console.log('📦 raw range:', range);
-    // WEEK — Range selalu array 7 hari
+    // console.log('🟦 normalizeRange CALLED — view:', view);
+    // console.log('📦 raw range:', range);
+    // // WEEK — Range selalu array 7 hari
     if (view === Views.WEEK) {
       if (Array.isArray(range) && range.length === 7) {
         return {
@@ -347,30 +258,12 @@ const ManageDetailScheduler: FC = () => {
   }
 
   const [lastRange, setLastRange] = useState({ start: null, end: null });
-
-  // const handleRangeChange = (range: any, view: any) => {
-  //   const activeView = view || currentView;
-
-  //   const { start, end } = normalizeRange(range, activeView);
-
-  //   setLastRange({ start, end });
-
-  //   // const startDate = dayjs(start).subtract(1, 'day').format('YYYY-MM-DD');
-  //   const startDate = dayjs(start).format('YYYY-MM-DD');
-  //   const endDate = dayjs(end).format('YYYY-MM-DD');
-  //   loadSchedule(startDate, endDate);
-  // };
-
   const handleRangeChange = (range: any, view: any) => {
     const activeView = view || currentView;
 
-    // =======================
-    // 🎯 FIX PENTING UNTUK WEEK
-    // =======================
     if (activeView === Views.WEEK) {
       console.log('📅 RAW WEEK RANGE:', range);
 
-      // RBC selalu kirim array 7 hari
       if (Array.isArray(range) && range.length === 7) {
         const start = dayjs(range[0]).startOf('day').toDate();
         const end = dayjs(range[6]).endOf('day').toDate();
@@ -383,9 +276,6 @@ const ManageDetailScheduler: FC = () => {
       }
     }
 
-    // =======================
-    // MONTH & DAY tetap normal
-    // =======================
     const { start, end } = normalizeRange(range, activeView);
 
     setLastRange({ start, end });
@@ -417,11 +307,19 @@ const ManageDetailScheduler: FC = () => {
     setIsDraggingOutside(true);
   };
 
+  const [forceChild, setForceChild] = useState(false);
+
   const handleSubmit = async () => {
+    if (!selectedDeliveryData) {
+      showSwal('error', 'Please select Delivery Staff');
+      return;
+    }
+
     try {
       setLoading(true);
 
-      const isHead = selectedHead == null;
+      // const isHead = selectedHead == null;
+      const isHead = !forceChild;
 
       const payload = {
         employee_id: selectedDeliveryData.id,
@@ -430,6 +328,7 @@ const ManageDetailScheduler: FC = () => {
         group_name: isHead ? selectedDeliveryData.name : selectedHead.name,
         group_delivery_staff_id: isHead ? null : selectedHead.id,
       };
+      console.log('payload', payload);
 
       if (isEditMode && editingId) {
         await updateDeliveryStaffRegister(token as string, payload, editingId);
@@ -446,7 +345,7 @@ const ManageDetailScheduler: FC = () => {
       setSelectedColor('');
       setIsEditMode(false);
       setEditingId(null);
-
+      setForceChild(false);
       setOpenForm(false);
     } catch (err) {
       console.error(err);
@@ -470,26 +369,41 @@ const ManageDetailScheduler: FC = () => {
     }
   };
 
-  const filteredCouriers = couriers.filter((c) =>
-    c.employee_id.toLowerCase().includes(search.toLowerCase()),
-  );
+  // const groupCouriers = (couriers: Courier[]): CourierGroup[] => {
+  //   const groups: Record<string, CourierGroup> = {};
+
+  //   couriers.forEach((c) => {
+  //     const isHead = c.group_delivery_staff_id == null;
+  //     console.log('isHead', isHead);
+
+  //     const groupId = isHead ? c.id : c.group_delivery_staff_id!;
+  //     console.log('groupId', groupId);
+
+  //     if (!groups[groupId]) {
+  //       groups[groupId] = {
+  //         id: groupId,
+  //         colour: c.colour ?? undefined,
+  //         groupName: c.group_name ?? undefined,
+  //         items: [],
+  //       };
+  //     }
+
+  //     groups[groupId].items.push(c);
+  //   });
+
+  //   return Object.values(groups);
+  // };
 
   const groupCouriers = (couriers: Courier[]): CourierGroup[] => {
     const groups: Record<string, CourierGroup> = {};
 
+    // 1️⃣ Kelompokkan dulu TANPA mikirin warna/nama
     couriers.forEach((c) => {
-      const isHead =
-        c.group_delivery_staff_id == null || c.group_delivery_staff_id === c.employee_id;
-
-      const groupId = isHead
-        ? c.employee_id // group ID = head employee_id
-        : c.group_delivery_staff_id!; // member → follow head id
+      const groupId = c.group_delivery_staff_id == null ? c.id : c.group_delivery_staff_id;
 
       if (!groups[groupId]) {
         groups[groupId] = {
           id: groupId,
-          colour: c.colour ?? undefined,
-          groupName: c.group_name ?? undefined,
           items: [],
         };
       }
@@ -497,49 +411,23 @@ const ManageDetailScheduler: FC = () => {
       groups[groupId].items.push(c);
     });
 
-    return Object.values(groups);
+    // 2️⃣ Tentukan HEAD secara eksplisit
+    return Object.values(groups).map((group) => {
+      const head = group.items.find((x) => x.group_delivery_staff_id == null) ?? group.items[0]; // fallback safety
+
+      return {
+        id: group.id,
+        colour: head.colour, 
+        groupName: head.employee.name, 
+        items: [head, ...group.items.filter((x) => x !== head)],
+      };
+    });
   };
   const filtered = couriers.filter((c) =>
     c.employee.name.toLowerCase().includes(search.toLowerCase()),
   );
 
   const groupedCouriers = groupCouriers(filtered);
-
-  // const handleEdit = async (id: string) => {
-  //   const staff = couriers.find((x) => x.id === id);
-  //   if (!staff) return;
-
-  //   setIsEditMode(true);
-  //   setEditingId(id);
-
-  //   // SET EMPLOYEE YANG DI-EDIT
-  //   setSelectedDeliveryData({
-  //     id: staff.employee_id,
-  //     name: staff.employee.name,
-  //   });
-  //   console.log('staf group', staff.group_delivery_staff_id);
-
-  //   // JIKA ADA HEAD
-  //   if (staff.group_delivery_staff_id) {
-  //     // 1. Cari head (courier) berdasar ID staff register
-  //     const headCourier = couriers.find((x) => x.id === staff.group_delivery_staff_id);
-  //     console.log('headCourier', headCourier);
-
-  //     if (headCourier) {
-  //       const headEmployee = deliveryStaff.find((e) => e.id === headCourier.employee_id);
-
-  //       setSelectedHead(headEmployee ? { id: headEmployee.id, name: headEmployee.name } : null);
-  //       // console.log(selectedHead);
-  //     } else {
-  //       setSelectedHead(null);
-  //     }
-  //   } else {
-  //     setSelectedHead(null);
-  //   }
-
-  //   setSelectedColor(staff.colour || '#333');
-  //   setOpenForm(true);
-  // };
 
   const handleEdit = async (id: string) => {
     const staff = couriers.find((x) => x.id === id);
@@ -584,6 +472,27 @@ const ManageDetailScheduler: FC = () => {
     setOpenForm(false);
   };
 
+  const headStaffOptions = useMemo(() => {
+    if (!selectedDeliveryData) return allStaff;
+
+    return allStaff.filter((staff) => staff.id !== selectedDeliveryData.id);
+  }, [allStaff, selectedDeliveryData]);
+
+  const handleAddUnderHead = (group: CourierGroup) => {
+    const headCourier = group.items[0];
+
+    setSelectedHead({
+      id: headCourier.id,
+      name: headCourier.employee.name,
+    });
+
+    setIsEditMode(false);
+    setForceChild(true);
+    setSelectedDeliveryData(null);
+    setEditingId(null);
+    setOpenForm(true);
+  };
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -593,7 +502,6 @@ const ManageDetailScheduler: FC = () => {
         <Box
           sx={{ display: 'flex', flexDirection: mdUp ? 'row' : 'column', backgroundColor: '#fff' }}
         >
-          {/* Sidebar */}
           <Box sx={{ width: mdUp ? secdrawerWidth : '100%', p: 2, borderRight: '1px solid #eee' }}>
             <Tooltip title="Go back to previous page" arrow>
               <Button
@@ -609,7 +517,7 @@ const ManageDetailScheduler: FC = () => {
 
             <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
               <Typography variant="h6" fontSize="1rem">
-                Delivery Staff
+                Corporate Service
               </Typography>
 
               <Button
@@ -674,7 +582,10 @@ const ManageDetailScheduler: FC = () => {
 
                       <IconButton
                         size="small"
-                        onClick={() => setOpenForm(true)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAddUnderHead(group);
+                        }}
                         sx={{
                           backgroundColor: '#5c87ff',
                           borderRadius: '50%',
@@ -824,7 +735,7 @@ const ManageDetailScheduler: FC = () => {
                 <CustomFormLabel sx={{ mt: 0 }}>Head Delivery Staff</CustomFormLabel>
                 <Autocomplete
                   // options={deliveryStaff.filter((x) => x.id !== selectedDeliveryData?.id)}
-                  options={allStaff}
+                  options={headStaffOptions}
                   getOptionLabel={(option) => option.name}
                   value={selectedHead}
                   onChange={(event, newValue) => setSelectedHead(newValue)}
@@ -865,7 +776,7 @@ const ManageDetailScheduler: FC = () => {
         </Dialog>
         <Portal>
           <Backdrop open={loading} sx={{ zIndex: 999999, color: '#fff' }}>
-            <CircularProgress color="inherit" />
+            <CircularProgress color="primary" />
           </Backdrop>
         </Portal>
       </PageContainers>

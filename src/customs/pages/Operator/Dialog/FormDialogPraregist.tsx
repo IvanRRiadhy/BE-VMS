@@ -122,11 +122,6 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
       if (
         f.mandatory &&
         isEmpty(formValues[f.remarks])
-        // &&
-        // !(
-        //   ['vehicle_plate', 'vehicle_type'].includes(f.remarks) &&
-        //   formValues['is_driving'] !== 'true'
-        // )
       ) {
         newErrors[f.remarks] = `${f.long_display_text} is required`;
       }
@@ -1040,6 +1035,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                     placeholder={f.long_display_text || f.remarks}
                     error={!!errors[f.remarks]}
                     helperText={errors[f.remarks]}
+                  required={f.mandatory == true}
                   />
                 )}
             </Grid>

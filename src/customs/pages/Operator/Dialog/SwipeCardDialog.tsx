@@ -13,8 +13,11 @@ import {
   TextField,
 } from '@mui/material';
 import { IconX, IconScan, IconSquareCheck, IconCircleCheck } from '@tabler/icons-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
+import { getVisitorDocuments } from 'src/customs/api/models/Admin/SwapCard';
+import { showSwal } from 'src/customs/components/alerts/alerts';
+import { useSession } from 'src/customs/contexts/SessionContext';
 
 type QrMode = 'manual' | 'scan';
 
@@ -22,28 +25,88 @@ interface SwipeCardDialogProps {
   open: boolean;
   onClose: () => void;
   onSubmit?: (value: string, type: string) => void;
+  invitationId: any;
+  loading?: any;
 }
 
-const SwipeCardDialog = ({ open, onClose, onSubmit }: SwipeCardDialogProps) => {
+const SwipeCardDialog = ({
+  open,
+  onClose,
+  onSubmit,
+  invitationId,
+  loading,
+}: SwipeCardDialogProps) => {
   const [qrMode, setQrMode] = useState<QrMode>('manual');
   const [qrValue, setQrValue] = useState('');
   const [qrType, setQrType] = useState('nik');
   const [hasDecoded, setHasDecoded] = useState(false);
+  const [visitorDocuments, setVisitorDocuments] = useState<any[]>([]);
+  const { token } = useSession();
+
+  useEffect(() => {
+    if (!open) {
+      setQrValue('');
+      setQrType('');
+      setQrMode('manual');
+      setHasDecoded(false);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (!invitationId) return;
+    const fetchData = async () => {
+      const res = await getVisitorDocuments(token as string, invitationId);
+      setVisitorDocuments(res?.collection ?? []);
+    };
+    fetchData();
+  }, [invitationId]);
 
   const handleSubmit = () => {
-    onSubmit?.(qrValue, qrType);
+    loading(true);
+    try {
+      if (!qrValue) {
+        showSwal('error', 'Please input value number');
+        return;
+      }
+
+      if (!qrType) {
+        showSwal('error', 'Please select type');
+        return;
+      }
+
+      onSubmit?.(qrValue, qrType);
+      setQrValue('');
+      setHasDecoded(false);
+      onClose();
+    } catch (error) {
+      console.error(error);
+      showSwal('error', 'Failed to swipe card');
+    } finally {
+      setTimeout(() => loading(false), 500);
+    }
   };
 
   const qrTypeLabelMap: Record<string, string> = {
     NIK: 'NIK',
     KTP: 'No KTP',
     Passport: 'Passport Number',
-    DriverLicense: 'Driver License Number',
-    CardAccess: 'Card Access Number',
+    DriverLicense: 'Driver License',
+    CardAccess: 'Card Access',
     Face: 'Face ID',
-    Nda: 'NDA Number',
-    Other: 'Reference Number',
+    Nda: 'NDA',
+    Other: 'Other',
   };
+
+  const typeDocument = [
+    { value: 'NIK', label: 'NIK' },
+    { value: 'KTP', label: 'KTP' },
+    { value: 'Passport', label: 'Passport' },
+    { value: 'DriverLicense', label: 'Driver License' },
+    { value: 'CardAccess', label: 'Card Access' },
+    { value: 'Face', label: 'Face ID' },
+    { value: 'Nda', label: 'NDA' },
+    { value: 'Other', label: 'Other' },
+  ];
 
   return (
     <>
@@ -82,7 +145,7 @@ const SwipeCardDialog = ({ open, onClose, onSubmit }: SwipeCardDialogProps) => {
               </Button>
             </Tooltip>
 
-            <Tooltip
+            {/* <Tooltip
               title="KTP Scanner"
               arrow
               // slotProps={{
@@ -100,7 +163,7 @@ const SwipeCardDialog = ({ open, onClose, onSubmit }: SwipeCardDialogProps) => {
               >
                 KTP Scanner
               </Button>
-            </Tooltip>
+            </Tooltip> */}
           </Box>
 
           <Divider sx={{ my: 0.5 }} />
@@ -118,16 +181,33 @@ const SwipeCardDialog = ({ open, onClose, onSubmit }: SwipeCardDialogProps) => {
                 value={qrType}
                 onChange={(e: any) => setQrType(e.target.value)}
                 sx={{ mb: 2 }}
+                disabled={visitorDocuments.length === 0}
               >
-                <MenuItem value="NIK">NIK</MenuItem>
-                <MenuItem value="KTP">KTP</MenuItem>
-                <MenuItem value="Passport">Passport</MenuItem>
-                <MenuItem value="DriverLicense">Driver License</MenuItem>
-                <MenuItem value="CardAccess">Card Access</MenuItem>
-                <MenuItem value="Face">Face</MenuItem>
-                <MenuItem value="Nda">NDA</MenuItem>
-                <MenuItem value="Other">Other</MenuItem>
+                {visitorDocuments.length === 0 ? (
+                  <MenuItem value="" disabled>
+                    No document available
+                  </MenuItem>
+                ) : (
+                  visitorDocuments.map((doc) => (
+                    <MenuItem key={doc.id} value={doc.identity_type}>
+                      {doc.identity_type ?? doc.identity_type}
+                    </MenuItem>
+                  ))
+                )}
               </CustomSelect>
+              {/* <CustomSelect
+                fullWidth
+                size="medium"
+                value={qrType}
+                onChange={(e: any) => setQrType(e.target.value)}
+                sx={{ mb: 2 }}
+              >
+                {typeDocument.map((type) => (
+                  <MenuItem key={type.value} value={type.value}>
+                    {type.label}
+                  </MenuItem>
+                ))}
+              </CustomSelect> */}
 
               <Typography variant="body1" mb={1} fontWeight={'500'} textTransform={'capitalize'}>
                 {qrTypeLabelMap[qrType] ?? 'Value'}
@@ -148,7 +228,50 @@ const SwipeCardDialog = ({ open, onClose, onSubmit }: SwipeCardDialogProps) => {
           )}
 
           {/* SCAN MODE */}
-          {qrMode === 'scan' && <>{/* nanti taruh camera / scanner di sini */}</>}
+          {qrMode === 'scan' && (
+            <>
+              <Typography variant="body1" mb={1} fontWeight={'500'}>
+                Type
+              </Typography>
+
+              <CustomSelect
+                fullWidth
+                size="medium"
+                value={qrType}
+                onChange={(e: any) => setQrType(e.target.value)}
+                sx={{ mb: 2 }}
+                disabled={visitorDocuments.length === 0}
+              >
+                {visitorDocuments.length === 0 ? (
+                  <MenuItem value="" disabled>
+                    No document available
+                  </MenuItem>
+                ) : (
+                  visitorDocuments.map((doc) => (
+                    <MenuItem key={doc.id} value={doc.identity_type}>
+                      {doc.identity_type ?? doc.identity_type}
+                    </MenuItem>
+                  ))
+                )}
+              </CustomSelect>
+
+              <Typography variant="body1" mb={1} fontWeight={'500'} textTransform={'capitalize'}>
+                {qrTypeLabelMap[qrType] ?? 'Value'}
+              </Typography>
+
+              {/* <Box display="flex" gap={0.5} alignItems="center">
+                <TextField
+                  fullWidth
+                  size="small"
+                  value={qrValue}
+                  onChange={(e) => setQrValue(e.target.value)}
+                />
+                <IconButton onClick={() => {}} sx={{ p: 0 }}>
+                  <IconCircleCheck color="green" size={35} />
+                </IconButton>
+              </Box> */}
+            </>
+          )}
         </DialogContent>
 
         <DialogActions>

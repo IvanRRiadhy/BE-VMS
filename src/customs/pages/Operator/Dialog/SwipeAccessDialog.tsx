@@ -8,9 +8,15 @@ import {
   FormGroup,
   FormControlLabel,
   Checkbox,
+  TextField,
+  MenuItem,
 } from '@mui/material';
+import { Box } from '@mui/system';
 import { IconX } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
+import { createGiveAccessOperator } from 'src/customs/api/operator';
+import { showSwal } from 'src/customs/components/alerts/alerts';
+import { useSession } from 'src/customs/contexts/SessionContext';
 
 interface AccessItem {
   id: string;
@@ -25,17 +31,26 @@ interface SwipeAccessDialogProps {
     type: string;
   } | null;
   data: AccessItem[];
-  onSubmit?: (payload: {
-    value: string;
-    type: string;
-    access: string[]; 
-  }) => void;
+  onSubmit?: (payload: { value: string; type: string; access: string[] }) => void;
+  invitationId?: string;
 }
 
-const SwipeAccessDialog = ({ open, onClose, payload, data, onSubmit }: SwipeAccessDialogProps) => {
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+interface AccessItem {
+  access_control_id: string;
+  access_control_name: string;
+}
 
-  // reset setiap dialog dibuka
+const SwipeAccessDialog = ({
+  open,
+  onClose,
+  payload,
+  data,
+  onSubmit,
+  invitationId,
+}: SwipeAccessDialogProps) => {
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const { token } = useSession();
+
   useEffect(() => {
     if (open) {
       setSelectedIds([]);
@@ -44,6 +59,7 @@ const SwipeAccessDialog = ({ open, onClose, payload, data, onSubmit }: SwipeAcce
 
   const allChecked = data.length > 0 && selectedIds.length === data.length;
   const indeterminate = selectedIds.length > 0 && selectedIds.length < data.length;
+  const [action, setAction] = useState<1 | 2>(1);
 
   const handleSelectAll = (checked: boolean) => {
     setSelectedIds(checked ? data.map((d) => d.id) : []);
@@ -53,16 +69,37 @@ const SwipeAccessDialog = ({ open, onClose, payload, data, onSubmit }: SwipeAcce
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]));
   };
 
-  const handleSubmit = () => {
-    if (!payload) return;
+  const handleSubmit = async () => {
+    // if (!payload) return;
 
-    onSubmit?.({
-      value: payload.value,
-      type: payload.type,
-      access: selectedIds,
-    });
+    if (selectedIds.length === 0) {
+      showSwal('warning', 'Please select at least one access.');
+      return;
+    }
 
-    onClose();
+    const data_access = selectedIds.map((accessControlId) => ({
+      access_control_id: accessControlId,
+      action,
+      // card_number: payload.value,
+      trx_visitor_id: invitationId,
+    }));
+
+    const payloads = { data_access };
+
+    console.log('📤 GIVE ACCESS PAYLOAD', payloads);
+
+    try {
+      await createGiveAccessOperator(token as string, payloads);
+
+      showSwal(
+        'success',
+        action === 1 ? 'Access granted successfully!' : 'Access revoked successfully!',
+      );
+
+      // onClose();
+    } catch (err: any) {
+      showSwal('error', err?.msg || err?.message || 'Failed to update access');
+    }
   };
 
   return (
@@ -84,9 +121,7 @@ const SwipeAccessDialog = ({ open, onClose, payload, data, onSubmit }: SwipeAcce
 
       <DialogContent dividers sx={{ pt: 0 }}>
         <FormGroup>
-          {/* SELECT ALL */}
           <FormControlLabel
-            sx={{ mb: 0.5 }}
             control={
               <Checkbox
                 checked={allChecked}
@@ -97,8 +132,7 @@ const SwipeAccessDialog = ({ open, onClose, payload, data, onSubmit }: SwipeAcce
             label="Select All"
           />
 
-          {/* ACCESS LIST */}
-          {data.map((item) => (
+          {/* {data.map((item) => (
             <FormControlLabel
               key={item.id}
               control={
@@ -107,7 +141,18 @@ const SwipeAccessDialog = ({ open, onClose, payload, data, onSubmit }: SwipeAcce
                   onChange={() => handleToggle(item.id)}
                 />
               }
-              sx={{ color: 'black' }}
+              label={item.access_control_name}
+            />
+          ))} */}
+          {data.map((item) => (
+            <FormControlLabel
+              key={item.access_control_id}
+              control={
+                <Checkbox
+                  checked={selectedIds.includes(item.access_control_id)}
+                  onChange={() => handleToggle(item.access_control_id)}
+                />
+              }
               label={item.access_control_name}
             />
           ))}
@@ -115,6 +160,19 @@ const SwipeAccessDialog = ({ open, onClose, payload, data, onSubmit }: SwipeAcce
       </DialogContent>
 
       <DialogActions>
+        <Box px={2} mb={0}>
+          <TextField
+            select
+            fullWidth
+            size="small"
+            label="Action"
+            value={action}
+            onChange={(e) => setAction(Number(e.target.value) as 1 | 2)}
+          >
+            <MenuItem value={1}>Grant</MenuItem>
+            <MenuItem value={2}>Revoke</MenuItem>
+          </TextField>
+        </Box>
         <Button
           fullWidth
           variant="contained"

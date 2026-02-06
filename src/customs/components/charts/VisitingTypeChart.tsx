@@ -18,9 +18,12 @@ const VisitingTypeChart = () => {
   const { startDate, endDate } = useSelector((state: any) => state.dateRange);
   const { t, i18n } = useTranslation();
   const [data, setData] = useState<VisitorTypeData[]>([
-    { label: t('repeat_visitor'), value: 0, color: '#2196f3' },
+    { label: t('repeat_visitor'), value: 0, color: '#055499' },
     { label: t('new_visitor'), value: 0, color: '#e5e7eb' },
   ]);
+
+  const start = startDate?.toISOString().split('T')[0];
+  const end = endDate?.toISOString().split('T')[0];
 
   useEffect(() => {
     const fetchData = async () => {
@@ -34,8 +37,10 @@ const VisitingTypeChart = () => {
 
         const res = await getRepeatsVisitor(
           token,
-          startDate.toLocaleDateString('en-CA'),
-          endDate.toLocaleDateString('en-CA'),
+          // startDate.toLocaleDateString('en-CA'),
+          // endDate.toLocaleDateString('en-CA'),
+          start,
+          end,
         );
 
         if (res?.collection) {
@@ -50,7 +55,7 @@ const VisitingTypeChart = () => {
     };
 
     fetchData();
-  }, [token, i18n.language, startDate, endDate]);
+  }, [token, start, end]);
 
   const total = data.reduce((sum, d) => sum + d.value, 0);
   const repeatPercentage = total > 0 ? ((data[0].value / total) * 100).toFixed(1) : '0';
@@ -82,7 +87,7 @@ const VisitingTypeChart = () => {
                   label: d.label,
                   color: d.color,
                 })),
-                innerRadius: 0, 
+                innerRadius: 0,
                 outerRadius: 120,
               },
             ]}

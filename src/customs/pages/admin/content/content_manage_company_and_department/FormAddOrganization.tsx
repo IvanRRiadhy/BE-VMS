@@ -6,6 +6,9 @@ import {
   CircularProgress,
   Autocomplete,
   Backdrop,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
 } from '@mui/material';
 import { Box } from '@mui/system';
 import React, { useEffect, useState } from 'react';
@@ -182,7 +185,7 @@ const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({
           onChange={(_, newValue) => {
             setFormData((prev) => ({
               ...prev,
-              host: typeof newValue === 'string' ? newValue : newValue?.id ?? '',
+              host: typeof newValue === 'string' ? newValue : (newValue?.id ?? ''),
             }));
             // ⬅️ clear error
             setErrors((prev) => ({ ...prev, host: '' }));
@@ -203,6 +206,19 @@ const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({
             />
           )}
         />
+        <RadioGroup
+          row
+          // value={formData.visitorType}
+          onChange={(e) =>
+            setFormData((prev) => ({
+              ...prev,
+              visitorType: e.target.value,
+            }))
+          }
+        >
+          <FormControlLabel value="internal" control={<Radio />} label="Internal" />
+          <FormControlLabel value="external" control={<Radio />} label="External" />
+        </RadioGroup>
         <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
           <Button
             sx={{ mt: 2 }}

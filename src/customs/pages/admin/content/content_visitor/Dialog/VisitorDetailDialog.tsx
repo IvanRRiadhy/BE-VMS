@@ -78,6 +78,7 @@ const VisitorDetailDialog: React.FC<VisitorDetailDialogProps> = ({
       return '-';
     }
   };
+  console.log('detail', detail);
   return (
     <Dialog fullWidth maxWidth="md" open={open} onClose={onClose}>
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -105,7 +106,7 @@ const VisitorDetailDialog: React.FC<VisitorDetailDialogProps> = ({
           <Box>
             <Box display="flex" flexDirection="column" alignItems="center" gap={1.5} mb={2}>
               <Avatar
-                src={`${CDN_BASE}${detail.selfie_image}` || ''}
+                src={`${axiosInstance2.defaults.baseURL}/cdn${detail.selfie_image}` || `${CDN_BASE}${detail.identity_image}` || ''}
                 alt={detail.name || 'visitor'}
                 sx={{ width: 100, height: 100 }}
               />

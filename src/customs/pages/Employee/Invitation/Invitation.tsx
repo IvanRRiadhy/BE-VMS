@@ -403,9 +403,9 @@ const Content = () => {
           name: item.visitor_name || '-',
           identity_id: item.visitor_identity_id || '-',
           email: item.visitor_email || '-',
-          organization: item.visitor_organization || '-',
+          organization: item.visitor_organization_name || '-',
           gender: item.visitor_gender || '-',
-          address: item.visitor_address || '-',
+          // address: item.visitor_address || '-',
           phone: item.visitor_phone || '-',
           is_vip: item.visitor_is_vip || '-',
           visitor_period_start: item.visitor_period_start || '-',
@@ -677,7 +677,7 @@ const Content = () => {
                 defaultRowsPerPage={rowsPerPage}
                 totalCount={totalFilteredRecords}
                 selectedRows={selectedRows}
-                rowsPerPageOptions={[5, 10, 20, 50, 100]}
+                rowsPerPageOptions={[10, 20, 50, 100]}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);

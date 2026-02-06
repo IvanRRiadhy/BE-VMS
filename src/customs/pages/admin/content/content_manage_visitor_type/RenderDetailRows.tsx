@@ -24,6 +24,8 @@ import { CSS } from '@dnd-kit/utilities';
 
 type SectionKey = 'access' | 'parking' | 'tracking' | 'visit_form' | string;
 
+const getRowId = (row: any) => String(row.dnd_id ?? row.id);
+
 function SortableRow({
   id,
   item,
@@ -50,7 +52,7 @@ function SortableRow({
   const filterField = (field: any) => {
     if (isDocument) return field.field_type >= 10 && field.field_type <= 12;
     if (canMultiple) return field.field_type >= 0 && field.field_type <= 12;
-    return field.field_type >= 0 && field.field_type <= 9;
+    return field.field_type >= 0 && field.field_type <= 12;
   };
 
   return (
@@ -160,8 +162,13 @@ export default function RenderDetailRows({
     if (!over || !active) return;
     if (active.id === over.id) return;
 
-    const oldIndex = rows.findIndex((i: any) => String(i.id) === String(active.id));
-    const newIndex = rows.findIndex((i: any) => String(i.id) === String(over.id));
+    // const oldIndex = rows.findIndex((i: any) => String(i.id) === String(active.id));
+    // const newIndex = rows.findIndex((i: any) => String(i.id) === String(over.id));
+
+    const oldIndex = rows.findIndex((r) => getRowId(r) === active.id);
+
+    const newIndex = rows.findIndex((r) => getRowId(r) === over.id);
+
     if (oldIndex === -1 || newIndex === -1) return;
 
     const reordered = arrayMove(rows, oldIndex, newIndex);
@@ -174,7 +181,8 @@ export default function RenderDetailRows({
     <TableContainer component={Paper} sx={{ mb: 1 }}>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext
-          items={rows.map((d: any) => String(d.id))}
+          // items={rows.map((d: any) => String(d.id))}
+          items={rows.map(getRowId)}
           strategy={verticalListSortingStrategy}
         >
           <Table size="small">
@@ -192,8 +200,10 @@ export default function RenderDetailRows({
             <TableBody>
               {rows.map((item: any, index: number) => (
                 <SortableRow
-                  key={item.id ?? index}
-                  id={String(item.id ?? index)}
+                  // key={item.id ?? index}
+                  // id={String(item.id ?? index)}
+                  key={getRowId(item)}
+                  id={getRowId(item)}
                   item={item}
                   index={index}
                   onChange={onChange}

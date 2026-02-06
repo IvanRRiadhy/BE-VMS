@@ -17,17 +17,11 @@ import {
   ListItemText,
   CardActions,
   Avatar,
-  Tabs,
-  Tab,
   CardHeader,
   Checkbox,
   CircularProgress,
   FormControlLabel,
   Paper,
-  Snackbar,
-  Portal,
-  Alert,
-  Backdrop,
   MenuItem,
   Table,
   TableBody,
@@ -48,46 +42,34 @@ import {
   Tooltip,
   Select,
 } from '@mui/material';
-import { Box, display, fontSize, useMediaQuery, useTheme, width } from '@mui/system';
+import { Box, useMediaQuery, useTheme } from '@mui/system';
 import moment from 'moment-timezone';
 import backgroundnodata from 'src/assets/images/backgrounds/bg_nodata.svg';
 import infoPic from 'src/assets/images/backgrounds/info_pic.png';
 import {
   IconArrowLeft,
   IconArrowRight,
-  IconArrowsMaximize,
   IconBan,
   IconCards,
-  IconCheck,
-  IconCheckupList,
   IconClipboard,
   IconClock,
   IconCreditCard,
   IconDoor,
-  IconExternalLink,
   IconForbid2,
-  IconInfoCircle,
   IconKey,
   IconLogin,
-  IconLogin2,
   IconLogout,
-  IconMapPin,
   IconMapPinCheck,
-  IconNumbers,
   IconParking,
-  IconPhone,
+  IconPrinter,
   IconQrcode,
-  IconReport,
-  IconScan,
   IconSearch,
   IconSwipe,
   IconUser,
   IconX,
 } from '@tabler/icons-react';
-import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import PageContainer from 'src/components/container/PageContainer';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
-import QRCode from 'react-qr-code';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import {
@@ -128,15 +110,7 @@ import advancedFormat from 'dayjs/plugin/advancedFormat';
 import utc from 'dayjs/plugin/utc';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 
-import {
-  getAllSite,
-  getRegisteredSite,
-  getVisitorEmployee,
-  getAllVisitorType,
-  updateExtend,
-} from 'src/customs/api/admin';
-import Webcam from 'react-webcam';
-import FormDialogInvitation from '../Employee/FormDialogInvitation';
+import { getAllSite, getRegisteredSite, getVisitorEmployee } from 'src/customs/api/admin';
 import FormDialogPraregist from './Dialog/FormDialogPraregist';
 import CameraUpload from './Components/CameraUpload';
 import { showSwal } from 'src/customs/components/alerts/alerts';
@@ -144,7 +118,6 @@ import FormWizardAddVisitor from './Invitation/FormWizardAddVisitor';
 import FormWizardAddInvitation from './Invitation/FormWizardAddInvitation';
 import ScanQrVisitorDialog from './Dialog/ScanQrVisitorDialog';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import SelectRegisteredSiteDialog from './Dialog/SelectRegisteredSiteDialog';
 import VisitingPurposeDialog from './Dialog/VisitingPurposeDialog';
 import InfoDialog from './Dialog/InfoDialog';
 import ExtendVisitDialog from './Dialog/ExtendVisitDialog';
@@ -157,6 +130,28 @@ import DetailVisitingPurpose from './Dialog/DetailVisitingPurpose';
 import SwipeCardDialog from './Dialog/SwipeCardDialog';
 import SwipeAccessDialog from './Dialog/SwipeAccessDialog';
 import { useDebounce } from 'src/hooks/useDebounce';
+import PrintDialog from './Dialog/PrintDialog';
+import { getPrintBadgeConfig } from 'src/customs/api/models/Admin/PrintBadge';
+import PrintDialogBulk from './Dialog/PrintDialogBluk';
+import {
+  getRegisteredSiteOperator,
+  getSiteAccessOperator,
+  returnCard,
+  swapCard,
+} from 'src/customs/api/models/Admin/SwapCard';
+import SwipeCardNoCodeDialog from './Dialog/SwipeCardNoCodeDialog';
+import InvitationQrCard from './Components/InvitationQrCard';
+import FRLPRCard from './Components/FRLPRCard';
+import VisitorSearchInput from './Components/VisitorSearchInput';
+import OperatorToolbar from './Components/OperatorToolbar';
+import VisitorImage from './Components/VisitorImage';
+import ReturnCardDialog from './Dialog/ReturnCardDialog';
+import SnackbarOperator from './Components/SnackbarOperator';
+import GlobalBackdropLoading from './Components/GlobalBackdrop';
+import RegisteredSiteDialog from './Dialog/RegisteredSiteAccessDialog';
+import RegisteredSiteAccessDialog from './Dialog/RegisteredSiteAccessDialog';
+import AccessDialog from './Dialog/AccessDialog';
+
 dayjs.extend(utc);
 dayjs.extend(weekday);
 dayjs.extend(localizedFormat);
@@ -165,6 +160,8 @@ dayjs.extend(advancedFormat);
 // dayjs.locale('id');
 const OperatorView = () => {
   const theme = useTheme();
+  const lgUp = useMediaQuery(theme.breakpoints.up('lg'));
+  const mdUp = useMediaQuery(theme.breakpoints.up('md'));
   const { token } = useSession();
   const { t } = useTranslation();
 
@@ -182,8 +179,6 @@ const OperatorView = () => {
   const [wizardKey, setWizardKey] = useState(0);
   const scanContainerRef = useRef<HTMLDivElement | null>(null);
   const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [scannerKey, setScannerKey] = useState(0);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMsg, setSnackbarMsg] = useState('');
   const [snackbarType, setSnackbarType] = useState<'success' | 'error' | 'info'>('info');
@@ -218,6 +213,7 @@ const OperatorView = () => {
   const [openDetail, setOpenDetail] = useState(false);
   const [visitorData, setVisitorData] = useState<any[]>([]);
   const [openAccessData, setOpenAccessData] = useState(false);
+  const [openRegisteredSite, setOpenRegisteredSiteDialog] = useState(false);
   const [accessData, setAccessData] = useState<any[]>([]);
   const [selectedActionAccess, setSelectedActionAccess] = useState<string | null>(null);
   const [selectedMinutes, setSelectedMinutes] = useState<number | null>(null);
@@ -236,10 +232,80 @@ const OperatorView = () => {
   const [selectedInvitations, setSelectedInvitations] = useState<any[]>([]);
   const [openSwipeAccess, setOpenSwipeAccess] = useState(false);
   const handle = useFullScreenHandle();
-
+  const [visitorDocuments, setVisitorDocuments] = useState<any[]>([]);
+  const [currentAction, setCurrentAction] = useState<'Checkin' | 'Checkout' | null>(null);
+  const [currentActionBlacklist, setCurrentActionBlacklist] = useState<'Blacklist' | null>(null);
+  const [showExtendButton, setShowExtendButton] = useState(false);
+  const [actionButton, setActionButton] = useState<any | null>(null);
+  const [visitorCards, setVisitorCards] = useState<any[]>([]);
+  const [returnCardNumber, setReturnCardNumber] = useState('');
   const [openListVisitor, setOpenListVisitor] = useState(false);
   const [openBlacklistVisitor, setOpenBlacklistVisitor] = useState(false);
   const [openTriggeredAccess, setOpenTriggeredAccess] = useState(false);
+  const [registerSiteOperator, setRegisterSiteOperator] = useState<any>({});
+  const [openSwipeDialogNoInvitation, setOpenSwipeDialogNoInvitation] = useState(false);
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const debouncedKeyword = useDebounce(searchKeyword, 300);
+  const [oldCard, setOldCard] = useState('');
+  const [newCard, setNewCard] = useState('');
+
+  const [oldVerified, setOldVerified] = useState(false);
+  const [newVerified, setNewVerified] = useState(false);
+  const [oldCardData, setOldCardData] = useState<any | null>(null);
+  const [newCardData, setNewCardData] = useState<any | null>(null);
+  const [focusTarget, setFocusTarget] = useState<'old' | 'new' | null>(null);
+  const oldCardRef = useRef<HTMLInputElement | null>(null);
+  const newCardRef = useRef<HTMLInputElement | null>(null);
+  const [siteRegistered, setSiteRegistered] = useState<any[]>([]);
+  const [action, setAction] = useState<'grant' | 'revoke' | ''>('');
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await getSiteAccessOperator(token as string);
+
+        const sites = Array.isArray(res?.collection)
+          ? res.collection.map((x: any) => x.site).filter(Boolean)
+          : [];
+
+        setSiteRegistered(sites);
+      } catch (error) {
+        console.log(error);
+        setSiteRegistered([]);
+      }
+    };
+
+    fetchData();
+  }, [token]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await getRegisteredSiteOperator(token as string);
+        setRegisterSiteOperator(res?.collection ?? {});
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    fetchData();
+  }, [token]);
+
+  const generateUUIDv4 = () => {
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+
+    return [...bytes]
+      .map((b, i) =>
+        [4, 6, 8, 10].includes(i)
+          ? '-' + b.toString(16).padStart(2, '0')
+          : b.toString(16).padStart(2, '0'),
+      )
+      .join('');
+  };
 
   const handleOpenBlacklistVisitor = () => setOpenBlacklistVisitor(true);
   const handleCloseBlacklistVisitor = () => setOpenBlacklistVisitor(false);
@@ -248,6 +314,56 @@ const OperatorView = () => {
   const handleCloseListVisitor = () => setOpenListVisitor(false);
 
   const handleCloseTriggeredAcceess = () => setOpenTriggeredAccess(false);
+
+  const [wsPayload, setWsPayload] = useState<any>(null);
+  const wsImageQueueRef = useRef<string[]>([]);
+  const wsOcrQueueRef = useRef<string[]>([]);
+  const [tick, forceTick] = useState(0);
+
+  useEffect(() => {
+    const socket = new WebSocket('ws://localhost:8081/ws/');
+    socketRef.current = socket;
+
+    socket.onopen = () => {
+      console.log('🟢 WS connected');
+    };
+
+    socket.onmessage = (event) => {
+      const data = event.data;
+      console.log('data', data);
+
+      if (typeof data === 'string' && data.includes('|data:image')) {
+        wsImageQueueRef.current.push(data);
+      } else {
+        wsOcrQueueRef.current.push(data);
+      }
+
+      forceTick((v) => v + 1);
+    };
+
+    socket.onerror = (e) => console.error('🔴 WS error', e);
+    socket.onclose = () => console.warn('⚠️ WS closed');
+
+    return () => socket.close();
+  }, []);
+
+  const sendToScanner = (payload: any) => {
+    socketRef.current?.send(JSON.stringify(payload));
+  };
+
+  const [printData, setPrintData] = useState<any>(null);
+  useEffect(() => {
+    if (!token) return;
+
+    const fetchData = async () => {
+      const res = await getPrintBadgeConfig(token);
+      setPrintData(res?.collection ?? []);
+    };
+
+    fetchData();
+  }, [token]);
+
+  const socketRef = useRef<WebSocket | null>(null);
 
   const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorRequest>(() => {
     const saved = localStorage.getItem('unsavedVisitorData');
@@ -259,20 +375,138 @@ const OperatorView = () => {
     type: string;
   } | null>(null);
 
-  const handleSwipeCardSubmit = (value: string, type: string) => {
-    setSwipePayload({ value, type });
-    setOpenSwipeDialog(false);
-    setOpenSwipeAccess(true);
+  const [uiCurrentUsedCardNo, setUiCurrentUsedCardNo] = useState<string | null>(null);
+
+  const currentUsedCard = useMemo(() => {
+    if (uiCurrentUsedCardNo) {
+      return visitorCards.find((c) => c.card_number === uiCurrentUsedCardNo);
+    }
+
+    return visitorCards.find((c) => c.current_used && c.card_type !== 'Barcode');
+  }, [visitorCards, uiCurrentUsedCardNo]);
+
+  const handleSwipeCardSubmit = async (value: string, type: string) => {
+    try {
+      const selectedCard = filteredCards.find((c) => c.card_number === selectedCards[0]);
+      console.log('selectedCard', selectedCard);
+
+      const currentUsedCard = visitorCards.find((c) => c.current_used === true);
+
+      console.log('currentUsedCard', currentUsedCard);
+
+      if (!selectedCard || !currentUsedCard) {
+        showSwal('error', 'Invalid card data for swap');
+        return;
+      }
+
+      const payload = {
+        card_number: selectedCard.card_number,
+        trx_visitor_id: invitationId,
+        description:
+          'Give card number ' + selectedCard.card_number + ' from ' + registerSiteOperator.id,
+        swap_card_from_card: value,
+        // trx_card_id: generateUUIDv4(),
+        // swap_card_from_card_id: null,
+        swap_card_from_site_id: registerSiteOperator.user_id,
+        swap_type: type,
+        is_swapcard: true,
+      };
+
+      console.log('SWAP PAYLOAD', payload);
+
+      // call API
+      await createGrandAccessOperator(token as string, payload);
+
+      // 🔥 SET UI FIRST
+      setUiCurrentUsedCardNo(selectedCard.card_number);
+
+      setOpenChooseCardDialog(false);
+      setOpenSwipeDialog(false);
+      setOpenSwipeAccess(true);
+      setSelectedCards([]);
+      setTimeout(() => {
+        showSwal('success', 'Card swaped successfully!');
+      }, 600);
+      setTimeout(() => {
+        fetchRelatedVisitorsByInvitationId(invitationId as string);
+        fetchAvailableCards?.();
+      }, 300);
+    } catch (err: any) {
+      const backendMsg = err?.response?.data?.msg;
+      showSwal('error', backendMsg || 'Failed to swipe card');
+    }
+  };
+
+  type CardActionType = 'Swipe' | 'Give';
+
+  const handleSwipeCardSubmitNoCode = async ({
+    oldCardData,
+    newCardData,
+    actionType,
+  }: {
+    oldCardData: any;
+    newCardData: any;
+    actionType: CardActionType;
+  }) => {
+    try {
+      setLoadingAccess(true);
+
+      const isSwap = actionType === 'Swipe';
+
+      const payload: any = {
+        card_number: newCardData.card_number,
+        description:
+          'Give card number ' + newCardData.card_number + ' from ' + registerSiteOperator.id,
+        // swap_card_from_card: oldCardData.card_number,
+        // swap_card_from_site_id: registerSiteOperator.user_id,
+        swap_type: isSwap ? 'CardAccess' : 'Other',
+        is_swapcard: isSwap,
+      };
+
+      if (isSwap) {
+        payload.swap_card_from_card = oldCardData.card_number;
+        payload.swap_card_from_site_id = registerSiteOperator.user_id;
+      }
+
+      console.log('SWAP PAYLOAD', payload);
+
+      await createGrandAccessOperator(token as string, payload);
+
+      showSwal(
+        'success',
+        `${actionType === 'Swipe' ? 'Card swapped' : 'Card given'} successfully!`,
+      );
+      setOpenSwipeDialogNoInvitation(false);
+    } catch (err: any) {
+      const backendMsg = err?.response?.data?.msg;
+      showSwal('error', backendMsg || 'Failed to swipe card');
+    } finally {
+      setLoadingAccess(false);
+    }
   };
 
   const [selectedPurpose, setSelectedPurpose] = useState<any>(null);
 
   const handleOpenSwipeDialog = () => {
-    setOpenSwipeDialog(true);
+    const hasSwappedBefore = visitorCards.some((c) => c.swap_at);
+
+    if (hasSwappedBefore) {
+      setOpenRegisteredSiteDialog(true);
+    } else {
+      setOpenSwipeDialog(true);
+    }
+    // setOpenSwipeDialog(true);
   };
 
-  const handleOpenSwipeAccess = () => {
-    setOpenSwipeAccess(true);
+  const handleCloseSwipeDialogNoInvitation = () => {
+    setOldCard('');
+    setNewCard('');
+    setOldCardData('');
+    setNewCardData('');
+    setOldVerified(false);
+    setNewVerified(false);
+    setActionButton('');
+    setOpenSwipeDialogNoInvitation(false);
   };
 
   const handleCloseSwipeAccess = () => {
@@ -290,6 +524,55 @@ const OperatorView = () => {
 
   const [dialogContainer, setDialogContainer] = useState<HTMLElement | null>(null);
   const [hidePageContainer, setHidePageContainer] = useState(false);
+
+  // useEffect(() => {
+  //   // Pastikan socket hanya dibuat sekali
+  //   const socket = new WebSocket('ws://localhost:16574/ws');
+
+  //   socket.onopen = () => {
+  //     console.log(' WebSocket connected');
+  //   };
+
+  //   socket.onerror = (err) => {
+  //     console.error(' WebSocket error:', err);
+  //   };
+
+  //   socket.onmessage = (event) => {
+  //     try {
+  //       // Parse JSON
+  //       const msg = JSON.parse(event.data);
+  //       console.log(' Console client:', msg);
+
+  //       // Cek tipe data dari server
+  //       if (msg?.type === 'serial' && msg?.message) {
+  //         const value = msg.message.toString().trim();
+  //         console.log(' QR Value from socket:', value);
+
+  //         //  Update ke state qrValue
+  //         setQrValue(value);
+  //         setLoadingAccess(true);
+  //         //  Panggil handler QR langsung
+  //         handleSubmitQRCode(value);
+
+  //         //  Langsung buka detail QR dialog
+  //         // setOpenDetailQRCode(true);
+  //       }
+  //     } catch (err) {
+  //       console.error(' Failed to parse WebSocket message:', event.data, err);
+  //     } finally {
+  //       setTimeout(() => setLoadingAccess(false), 600);
+  //     }
+  //   };
+
+  //   socket.onclose = () => {
+  //     console.warn('🔌 WebSocket disconnected');
+  //   };
+
+  //   // cleanup saat komponen unmount
+  //   return () => {
+  //     socket.close();
+  //   };
+  // }, [token]);
 
   useEffect(() => {
     const handleBrowserFullscreen = () => {
@@ -318,12 +601,6 @@ const OperatorView = () => {
 
     return `hsl(${hue}, 70%, 55%)`;
   }
-
-  useEffect(() => {
-    if (containerRef.current) {
-      setDialogContainer(containerRef.current);
-    }
-  }, [containerRef]);
 
   const handleExtend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -404,12 +681,22 @@ const OperatorView = () => {
   };
 
   useEffect(() => {
+    if (containerRef.current) {
+      setDialogContainer(containerRef.current);
+    }
+  }, [containerRef]);
+
+  useEffect(() => {
     const fetchData = async () => {
       const res = await getVisitorEmployee(token as string);
       setAllVisitorEmployee(res?.collection ?? []);
     };
     fetchData();
   }, [token]);
+
+  const handleInvitationCreated = (invitationCode: string) => {
+    handleSubmitQRCode(invitationCode);
+  };
 
   const [relatedVisitors, setRelatedVisitors] = useState<
     {
@@ -489,6 +776,8 @@ const OperatorView = () => {
     setOpenInvitationVisitor(false);
     setOpenPreRegistration(false);
     setOpenDialogIndex(null);
+    setActionButton('');
+    setWizardKey((k) => k + 1);
   };
 
   const handleCloseScanQR = () => {
@@ -501,11 +790,12 @@ const OperatorView = () => {
         track.applyConstraints({ advanced: [{ facingMode: 'user' }] });
       }
     } catch {}
-
+    setActionButton(null);
     setTorchOn(false);
     setFacingMode('environment');
     setQrMode('manual');
     setHasDecoded(false);
+
     setQrValue('');
     setOpenDialogIndex(null);
   };
@@ -530,14 +820,14 @@ const OperatorView = () => {
     try {
       setLoadingAccess(true);
       setSelectedCards([]);
+      const visitor = relatedVisitors.find(
+        (v) => v.id?.toLowerCase() === invitationId?.toLowerCase(),
+      );
 
+      setVisitorCards(visitor?.card ?? []);
       setOpenChooseCardDialog(true);
     } catch (error) {
-      // console.error('❌ Gagal mengambil data visitor:', error);
-      // setSnackbarMsg('Failed to fetch visitor data. Please try again.');
-      // setSnackbarType('error');
-      // setSnackbarOpen(true);
-      showSwal('error', 'Failed to fetch visitor data. Please try again.');
+      showSwal('error', 'Failed to choose card');
     } finally {
       setTimeout(() => setLoadingAccess(false), 200);
     }
@@ -565,10 +855,34 @@ const OperatorView = () => {
       }
     };
 
-    if (openChooseCardDialog) {
-      fetchData();
+    fetchData();
+  }, [token]);
+
+  useEffect(() => {
+    if (!openSwipeDialogNoInvitation) return;
+
+    if (focusTarget === 'old') {
+      oldCardRef.current?.focus();
     }
-  }, [token, openChooseCardDialog]);
+
+    if (focusTarget === 'new') {
+      newCardRef.current?.focus();
+    }
+  }, [focusTarget, openSwipeDialogNoInvitation]);
+
+  useEffect(() => {
+    if (openSwipeDialogNoInvitation) {
+      setFocusTarget('old');
+    }
+  }, [openSwipeDialogNoInvitation]);
+
+  // const availableCards = useMemo(
+  //   () => visitorCards.filter((c) => !c.current_used && c.card_type !== 'Barcode'),
+  //   [visitorCards],
+  // );
+
+  const findCard = (cardNumber: string) =>
+    availableCards.find((c) => String(c.card_number).trim() === String(cardNumber).trim());
 
   useEffect(() => {
     const fetchData = async () => {
@@ -576,19 +890,12 @@ const OperatorView = () => {
       setSiteData(response.collection);
     };
     fetchData();
-  }, []);
+  }, [token]);
 
   const fetchAvailableCards = async () => {
     const res = await getAvailableCardOperator(token as string);
     setAvailableCards(res.collection);
   };
-
-  const filteredCards = availableCards.filter((card) =>
-    [card.remarks, card.card_number, card.card_mac]
-      .join(' ')
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase()),
-  );
 
   const handleToggleCard = (cardNumber: string) => {
     setSelectedCards((prev) => {
@@ -610,18 +917,25 @@ const OperatorView = () => {
     });
   };
 
-  const [currentAction, setCurrentAction] = useState<'Checkin' | 'Checkout' | null>(null);
-  const [currentActionBlacklist, setCurrentActionBlacklist] = useState<'Blacklist' | null>(null);
-  const [showExtendButton, setShowExtendButton] = useState(false);
-  const [actionButton, setActionButton] = useState<any | null>(null);
+  const [openReturnCard, setOpenReturnCard] = useState(false);
+  const [openParking, setOpenParking] = useState(false);
 
   const handleOpenAction = (value: string) => {
     setActionButton(value);
 
-    if (value === 'card' && invitationCode.length > 0 && relatedVisitors.length > 0) {
-      handleChooseCard();
+    const hasInvitation = invitationCode.length > 0 && relatedVisitors.length > 0;
+
+    // 🟣 CARD → TIDAK PERNAH buka Scan QR
+    if (value === 'card') {
+      if (!hasInvitation) {
+        setOpenSwipeDialogNoInvitation(true);
+      } else {
+        // setOpenChooseCardDialog(true); // atau handleChooseCard()
+        handleChooseCard();
+      }
       return;
     }
+
     if (value === 'access' && invitationCode.length > 0 && relatedVisitors.length > 0) {
       setOpenAccessData(true);
       return;
@@ -633,6 +947,14 @@ const OperatorView = () => {
     }
     if (value === 'open' && invitationCode.length > 0 && relatedVisitors.length > 0) {
       setOpenTriggeredAccess(true);
+      return;
+    }
+    if (value === 'return' && invitationCode.length > 0 && relatedVisitors.length > 0) {
+      setOpenReturnCard(true);
+      return;
+    }
+    if (value === 'parking' && invitationCode.length > 0 && relatedVisitors.length > 0) {
+      setOpenParking(true);
       return;
     }
     setOpenDialogIndex(1);
@@ -663,6 +985,8 @@ const OperatorView = () => {
     setOpenDialogIndex(1);
   };
 
+  const [invitationId, setInvitationId] = useState<string | null>(null);
+
   const handleSubmitQRCode = async (value: string) => {
     try {
       const res = await getInvitationCode(token as string, value);
@@ -675,6 +999,7 @@ const OperatorView = () => {
         return;
       }
       const invitation = data[0];
+      setInvitationId(invitation.id);
       const invitationId = invitation.id;
 
       setInvitationCode(data);
@@ -695,12 +1020,12 @@ const OperatorView = () => {
       );
 
       const accessList = Array.isArray(invitation.access) ? invitation.access : [invitation.access];
-      console.log('accessList', accessList);
+      // console.log('accessList', accessList);
 
       const filteredAccess = accessList.filter((a: any) =>
         permissionAccess.some((p: any) => p.access_control_id === a.access_control_id),
       );
-      console.log('filteredAccess', filteredAccess);
+      // console.log('filteredAccess', filteredAccess);
 
       const mergedAccess = filteredAccess.map((a: any) => {
         const perm = permissionAccess.find((p: any) => p.access_control_id === a.access_control_id);
@@ -717,7 +1042,7 @@ const OperatorView = () => {
           disabled: !perm,
         };
       });
-      console.log('mergedAccess', mergedAccess);
+      // console.log('mergedAccess', mergedAccess);
 
       // setAccessData([...mergedAccess]);
       setAccessData(mergedAccess);
@@ -774,13 +1099,6 @@ const OperatorView = () => {
     }
   };
 
-  // useEffect(() => {
-  //   if (!relatedVisitors.length) return;
-
-  //   setSelectedVisitors((prevSelected) =>
-  //     prevSelected.filter((id) => relatedVisitors.some((v) => v.id === id)),
-  //   );
-  // }, [relatedVisitors]);
   useEffect(() => {
     if (!relatedVisitors.length) return;
 
@@ -814,6 +1132,8 @@ const OperatorView = () => {
       visitor_status: v.visitor_status ?? '-',
       // card: (v.card ?? []).map((c: any) => c.card_number),
       card: v.card ?? [],
+      host_name: v.host_name ?? '-',
+      site_place_name: v.site_place_name ?? '-',
       is_praregister_done: v.is_praregister_done ?? false,
       access: v.access ?? [],
       block_by: v.block_by ?? null,
@@ -834,7 +1154,7 @@ const OperatorView = () => {
           ...inv,
           selfie_image: updatedVisitor.selfie_image,
           identity_image: updatedVisitor.identity_image,
-          card: updatedVisitor.card?.length > 0 ? updatedVisitor.card : inv.card ?? [],
+          card: updatedVisitor.card?.length > 0 ? updatedVisitor.card : (inv.card ?? []),
         };
       }),
     );
@@ -884,9 +1204,6 @@ const OperatorView = () => {
     assigned_card_remarks?: string | null;
   };
 
-  const [searchKeyword, setSearchKeyword] = useState('');
-  const debouncedKeyword = useDebounce(searchKeyword, 300);
-
   const filteredVisitors = useMemo(() => {
     if (!debouncedKeyword.trim()) return relatedVisitors;
 
@@ -924,6 +1241,32 @@ const OperatorView = () => {
     return new Set(normalizeIdsDeep(selectedInvitations).map(String));
   }, [selectedInvitations]);
 
+  // Function & Variable Card
+  const capacity = selectMultiple ? selectedVisitors.length : invitationCode.length > 0 ? 1 : 0;
+
+  const debouncedSearch = useDebounce(searchTerm, 300);
+
+  const filteredCards = useMemo(() => {
+    const term = debouncedSearch.trim().toLowerCase();
+    if (!term) return availableCards;
+
+    return availableCards.filter((card) =>
+      `${card.remarks ?? ''} ${card.card_number ?? ''} ${card.card_mac ?? ''}`
+        .toLowerCase()
+        .includes(term),
+    );
+  }, [availableCards, debouncedSearch]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const t = setTimeout(() => {
+      oldCardRef.current?.focus();
+    }, 100);
+
+    return () => clearTimeout(t);
+  }, [open]);
+
   const availableVisibleCards = useMemo(() => {
     return filteredCards.filter((c) => {
       const holder = assignedByCard.get(String(c.card_number));
@@ -931,7 +1274,38 @@ const OperatorView = () => {
     });
   }, [filteredCards, assignedByCard, selectedIdSet]);
 
+  const visibleIds = availableVisibleCards.map((c) => String(c.card_number));
   const availableCount = availableVisibleCards.length;
+  const selectedVisibleCount = visibleIds.filter((id) => selectedCards.includes(id)).length;
+  const cappedCount = Math.min(visibleIds.length, capacity);
+  const isChecked = cappedCount > 0 && selectedVisibleCount === cappedCount;
+  const isIndeterminate = selectedVisibleCount > 0 && selectedVisibleCount < cappedCount;
+  const hasSwappedBefore = visitorCards.some((c) => c.swap_at !== null);
+
+  const handleSelectAll = () => {
+    const visible = availableVisibleCards.map((c) => String(c.card_number));
+
+    const capacity = selectMultiple ? selectedVisitors.length : invitationCode.length > 0 ? 1 : 0;
+
+    if (capacity <= 0) {
+      toast('Please select visitor first.', 'warning');
+      return;
+    }
+
+    const selectedVisible = visible.filter((n) => selectedCards.includes(n));
+    const cappedCount = Math.min(visible.length, capacity);
+
+    const fullySelected = cappedCount > 0 && selectedVisible.length === cappedCount;
+
+    if (fullySelected) {
+      setSelectedCards((prev) => prev.filter((n) => !visible.includes(n)));
+      toast('Visible cards cleared.', 'info');
+    } else {
+      const toAdd = visible.slice(0, cappedCount);
+      setSelectedCards(toAdd);
+      toast(`Selected ${toAdd.length} card(s).`, 'success');
+    }
+  };
 
   const handleConfirmChooseCards = async () => {
     try {
@@ -942,13 +1316,6 @@ const OperatorView = () => {
         return;
       }
 
-      // if (!selectedVisitors.length) {
-      //   setSnackbarMsg('No visitor selected.');
-      //   setSnackbarType('info');
-      //   setSnackbarOpen(true);
-      //   return;
-      // }
-
       setLoadingAccess(true);
 
       const alreadyHasCard: string[] = [];
@@ -957,7 +1324,13 @@ const OperatorView = () => {
 
       if (selectedVisitors.length > 1) {
         // 🧩 Multiple visitor (batch)
-        const dataPayload: { card_number: string; trx_visitor_id: string }[] = [];
+        const dataPayload: {
+          card_number: string;
+          trx_visitor_id: string;
+          description: string;
+          is_swapcard: boolean;
+          swap_type: string;
+        }[] = [];
         const pairCount = Math.min(selectedVisitors.length, selectedCards.length);
 
         for (let i = 0; i < pairCount; i++) {
@@ -968,21 +1341,19 @@ const OperatorView = () => {
           );
           if (!visitor) continue;
 
-          if (visitor.card && visitor.card.length > 0) {
-            alreadyHasCard.push(visitor.name || visitorId);
-            continue;
-          }
+          // if (visitor.card && visitor.card.length > 0) {
+          //   alreadyHasCard.push(visitor.name || visitorId);
+          //   continue;
+          // }
 
-          dataPayload.push({ card_number: String(cardNumber), trx_visitor_id: visitorId });
+          dataPayload.push({
+            card_number: String(cardNumber),
+            trx_visitor_id: visitorId,
+            description: 'Give card number' + cardNumber + ' from ' + registerSiteOperator.id,
+            is_swapcard: false,
+            swap_type: 'Other',
+          });
           successAssigned.push(visitor.name || visitorId);
-        }
-
-        if (dataPayload.length === 0) {
-          setSnackbarMsg('All selected visitors already have a card.');
-          setSnackbarType('info');
-          setSnackbarOpen(true);
-          setLoadingAccess(false);
-          return;
         }
 
         response = await createMultipleGrantAccess(token as string, { data: dataPayload });
@@ -1009,21 +1380,20 @@ const OperatorView = () => {
           return;
         }
 
-        if (visitor.card && visitor.card.length > 0) {
-          alreadyHasCard.push(visitor.name || visitorId);
-        } else {
-          for (const cardNumber of selectedCards) {
-            const payload = {
-              card_number: String(cardNumber),
-              trx_visitor_id: visitorId,
-            };
+        for (const cardNumber of selectedCards) {
+          const payload = {
+            card_number: String(cardNumber),
+            trx_visitor_id: visitorId,
+            description: 'Give number card ' + cardNumber + 'from' + registerSiteOperator,
+            swap_type: 'Other',
+            is_swapcard: false,
+          };
 
-            response = await createGrandAccessOperator(token as string, payload);
-            // console.log('response:', JSON.stringify(payload, null, 2));
-          }
-
-          successAssigned.push(visitor.name || visitorId);
+          response = await createGrandAccessOperator(token as string, payload);
+          console.log('response:', JSON.stringify(payload, null, 2));
         }
+
+        successAssigned.push(visitor.name || visitorId);
       }
 
       // 🔁 Refresh visitors setelah semua selesai
@@ -1045,46 +1415,46 @@ const OperatorView = () => {
       // }
 
       // handleCloseChooseCard();
-      const uniqueAssigned = Array.from(new Set(successAssigned));
-      const uniqueSkipped = Array.from(new Set(alreadyHasCard));
+      // const uniqueAssigned = Array.from(new Set(successAssigned));
+      // const uniqueSkipped = Array.from(new Set(alreadyHasCard));
 
-      // 🧾 Build final message
-      let message = '';
+      // // 🧾 Build final message
+      // let message = '';
 
-      if (uniqueAssigned.length > 0) {
-        message += `Successfully assigned ${uniqueAssigned.length} card(s):\n`;
+      // if (uniqueAssigned.length > 0) {
+      //   message += `Successfully assigned ${uniqueAssigned.length} card(s):\n`;
 
-        const visitorListForMessage =
-          selectedVisitors.length > 0 ? selectedVisitors : invitationCode?.map((i) => i.id) || [];
+      //   const visitorListForMessage =
+      //     selectedVisitors.length > 0 ? selectedVisitors : invitationCode?.map((i) => i.id) || [];
 
-        message += visitorListForMessage
-          .map((visitorId, idx) => {
-            const visitor = relatedVisitors.find(
-              (v) => v.id?.toLowerCase() === visitorId?.toLowerCase(),
-            );
-            const cardNumber = selectedCards[idx] || selectedCards[0] || '-';
+      //   message += visitorListForMessage
+      //     .map((visitorId, idx) => {
+      //       const visitor = relatedVisitors.find(
+      //         (v) => v.id?.toLowerCase() === visitorId?.toLowerCase(),
+      //       );
+      //       const cardNumber = selectedCards[idx] || selectedCards[0] || '-';
 
-            if (visitor && !alreadyHasCard.includes(visitor.name || visitorId)) {
-              return `• ${visitor.name || visitorId} - (Card: ${cardNumber})`;
-            }
-            return null;
-          })
-          .filter(Boolean)
-          .join('\n');
-      }
+      //       if (visitor && !alreadyHasCard.includes(visitor.name || visitorId)) {
+      //         return `• ${visitor.name || visitorId} - (Card: ${cardNumber})`;
+      //       }
+      //       return null;
+      //     })
+      //     .filter(Boolean)
+      //     .join('\n');
+      // }
 
-      if (uniqueSkipped.length > 0) {
-        message +=
-          (message ? '\n\n' : '') +
-          `⚠️ Some visitors were skipped because they already have an assigned card:\n` +
-          uniqueSkipped.map((v) => `• ${v}`).join('\n');
-      }
+      // if (uniqueSkipped.length > 0) {
+      //   message +=
+      //     (message ? '\n\n' : '') +
+      //     `⚠️ Some visitors were skipped because they already have an assigned card:\n` +
+      //     uniqueSkipped.map((v) => `• ${v}`).join('\n');
+      // }
 
-      if (!message) {
-        message = 'No cards were assigned.';
-      }
+      // if (!message) {
+      //   message = 'No cards were assigned.';
+      // }
 
-      showSwal('success', message);
+      showSwal('success', 'Successfully assigned card(s).');
 
       setInvitationCode((prev) => {
         if (!prev || prev.length === 0) return prev;
@@ -1104,12 +1474,40 @@ const OperatorView = () => {
         );
       });
 
+      // setInvitationCode((prev) => {
+      //   if (!prev || prev.length === 0) return prev;
+
+      //   return prev.map((inv) => {
+      //     const matchedVisitor = relatedVisitors.find(
+      //       (v) => v.id?.toLowerCase() === inv.id?.toLowerCase(),
+      //     );
+
+      //     if (!matchedVisitor) return inv;
+
+      //     return {
+      //       ...inv,
+      //       card: matchedVisitor.card?.length
+      //         ? matchedVisitor.card
+      //         : [
+      //             {
+      //               card_number: selectedCards[0],
+      //             },
+      //           ],
+      //     };
+      //   });
+      // });
+
       handleCloseChooseCard();
-    } catch (err) {
-      // console.error('Assign card error:', err);
-      // setSnackbarMsg('Failed to assign card(s).');
-      // setSnackbarType('error');
-      // setSnackbarOpen(true);
+    } catch (err: any) {
+      console.error('Assign card error:', err);
+
+      const backendMsg = err?.response?.data?.msg;
+
+      if (backendMsg) {
+        showSwal('error', backendMsg);
+        return;
+      }
+
       showSwal('error', 'Failed to assign card(s).');
     } finally {
       setTimeout(() => setLoadingAccess(false), 600);
@@ -1152,6 +1550,7 @@ const OperatorView = () => {
         showCloseButton: true,
         showCancelButton: true,
         confirmButtonText: 'Yes',
+        reverseButtons: true,
         cancelButtonText: 'No',
         confirmButtonColor: '#000',
         customClass: {
@@ -1357,29 +1756,44 @@ const OperatorView = () => {
 
   const [selectedVisitorId, setSelectedVisitorId] = useState<string | null>(null);
 
+  // Function Related Visitors
+
   const handleSelectRelatedVisitor = (visitor: any) => {
+    if (selectMultiple) {
+      setSelectedVisitors((prev) =>
+        prev.includes(visitor.id) ? prev.filter((id) => id !== visitor.id) : [...prev, visitor.id],
+      );
+      return;
+    }
+    setSelectedVisitors([visitor.id]); // penting: replace
     setSelectedVisitorNumber(visitor.visitor_number);
     setSelectedVisitorId(visitor.id);
 
-    setInvitationCode([
-      {
-        ...invitationCode[0],
-        visitor: {
-          ...invitationCode[0]?.visitor,
-          ...visitor,
+    setSelectedCards([]);
+
+    setInvitationCode((prev) => {
+      if (!prev?.length) return prev;
+
+      return [
+        {
+          ...prev[0],
+          visitor: {
+            ...prev[0]?.visitor,
+            ...visitor,
+          },
+          visitor_number: visitor.visitor_number,
+          visitor_period_start: visitor.visitor_period_start,
+          visitor_period_end: visitor.visitor_period_end,
+          agenda: visitor.agenda,
+          selfie_image: visitor.selfie_image || null,
+          identity_image: visitor.identity_image || null,
+          card: visitor.card ?? [],
+          visitor_status: visitor.visitor_status ?? '-',
+          block_by: visitor.block_by ?? null,
+          is_block: visitor.is_block ?? false,
         },
-        visitor_number: visitor.visitor_number,
-        visitor_period_start: visitor.visitor_period_start,
-        visitor_period_end: visitor.visitor_period_end,
-        agenda: visitor.agenda,
-        selfie_image: visitor.selfie_image || null,
-        identity_image: visitor.identity_image || null,
-        card: visitor.card ?? [],
-        visitor_status: visitor.visitor_status ?? '-',
-        block_by: visitor.block_by ?? null,
-        is_block: visitor.is_block ?? false,
-      },
-    ]);
+      ];
+    });
 
     setVisitorStatus(visitor.visitor_status ?? '-');
   };
@@ -1695,7 +2109,7 @@ const OperatorView = () => {
           : [];
 
         return {
-          id: src?.id ?? crypto.randomUUID(),
+          id: src?.id ?? generateUUIDv4(),
           name,
           is_document: false,
           can_multiple_used: allowMultiple,
@@ -1710,7 +2124,7 @@ const OperatorView = () => {
       ].map((f: any, i: number) => ({ ...f, sort: f.sort ?? i }));
 
       const visitorGroupSection = {
-        id: visitorInfoSrc?.id ?? crypto.randomUUID(),
+        id: visitorInfoSrc?.id ?? generateUUIDv4(),
         name: 'Visitor Information (Group)',
         is_document: false,
         can_multiple_used: true,
@@ -1882,10 +2296,15 @@ const OperatorView = () => {
 
       setFillFormDataVisitor(visitorGroupList);
       setOpenFillForm(true);
-    } catch (error) {
-      console.error('Failed to open fill form:', error);
-      // toast('Failed to load form', 'error');
-      showSwal('error', 'Failed to load form');
+    } catch (e: any) {
+      const message =
+        e?.response?.data?.msg ??
+        e?.response?.data?.message ??
+        e?.message ??
+        e?.msg ??
+        'Failed to load forms';
+
+      showSwal('error', message);
     }
   };
 
@@ -1898,13 +2317,13 @@ const OperatorView = () => {
     )
       return 'parking';
     if (
-      f.some((x: any) => x.remarks === 'host') &&
+      f.some((x: any) => x.remarks === 'host' || x.remarks === 'agenda') &&
       !section.is_document &&
       section.can_multiple_used
     )
       return 'purpose_visit';
     if (
-      f.some((x: any) => x.remarks === 'host') &&
+      f.some((x: any) => x.remarks === 'host' || x.remarks === 'agenda') &&
       !section.is_document &&
       !section.can_multiple_used
     )
@@ -1999,7 +2418,6 @@ const OperatorView = () => {
         case 3: {
           let options: { value: string; name: string }[] = [];
 
-          // 🔹 Ambil value default dari payload form detail
           const hostName = invitationDetail?.collection?.host_name ?? '';
           const hostId = invitationDetail?.collection?.host ?? '';
           const sitePlaceName = invitationDetail?.collection?.site_place_name ?? '';
@@ -2060,7 +2478,7 @@ const OperatorView = () => {
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  placeholder="Ketik minimal 3 karakter"
+                  placeholder="Enter at least 3 characters to search"
                   fullWidth
                   sx={{ minWidth: 160 }}
                 />
@@ -2255,7 +2673,7 @@ const OperatorView = () => {
           if (field.remarks === 'selfie_image') {
             return (
               <CameraUpload
-                value={field.answer_file}
+                value={field.answer_file as string | undefined}
                 onChange={(url) => {
                   onChange(index, 'answer_file', url);
                 }}
@@ -2264,7 +2682,7 @@ const OperatorView = () => {
           }
           return (
             <CameraUpload
-              value={field.answer_file}
+              value={field.answer_file as string | undefined}
               onChange={(url) => onChange(index, 'answer_file', url)}
             />
           );
@@ -2363,7 +2781,7 @@ const OperatorView = () => {
 
               {(uploadMethods[key] || 'file') === 'camera' ? (
                 <CameraUpload
-                  value={field.answer_file}
+                  value={field.answer_file as string | undefined}
                   onChange={(url) => onChange(index, 'answer_file', url)}
                 />
               ) : (
@@ -2454,9 +2872,9 @@ const OperatorView = () => {
         }}
       >
         {showLabel && (!isVehicleField || isDriving) && (
-          <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
+          <CustomFormLabel sx={{ mb: 1 }} required={field.mandatory}>
             {field.long_display_text}
-          </Typography>
+          </CustomFormLabel>
         )}
         {renderInput()}
       </Box>
@@ -2464,6 +2882,8 @@ const OperatorView = () => {
   };
 
   const [selectedAccessIds, setSelectedAccessIds] = useState<string[]>([]);
+
+  // Allowed Actions Logic
 
   const getAllowedActions = (status: number, earlyAccess: boolean) => {
     if (earlyAccess) {
@@ -2586,6 +3006,7 @@ const OperatorView = () => {
     );
   }, [selectedAccessIds, selectedVisitors, accessData, permissionAccess]);
 
+  // Multiple
   const handleSubmitPramultiple = async () => {
     try {
       if (loadingAccess) return;
@@ -2687,7 +3108,7 @@ const OperatorView = () => {
       });
 
       const payload = { list_group: dataList };
-      // console.log('✅ Final Payload (MULTI-VISITOR FIXED):', JSON.stringify(payload, null, 2));
+      console.log('✅ Final Payload (MULTI-VISITOR FIXED):', JSON.stringify(payload, null, 2));
       const result = await createSubmitCompletePraMultiple(token as string, payload);
       showSwal('success', 'Successfully Pra Register!');
       setRelatedVisitors((prev) =>
@@ -2873,6 +3294,8 @@ const OperatorView = () => {
       message: lines.join('\n') || null,
     };
   };
+
+  // Access : Grant dll
   const handleAccessAction = async (
     row: any,
     action: 'no_action' | 'grant' | 'revoke' | 'block' | 'unblock',
@@ -2937,10 +3360,6 @@ const OperatorView = () => {
 
         showSwal('success', backendMsg);
 
-        // setSnackbarMsg(`✅ ${backendMsg}`);
-        // setSnackbarType('success');
-        // setSnackbarOpen(true);
-
         setAccessData((prev) =>
           prev.map((a) =>
             validVisitors.includes(a.trx_visitor_id) && a.access_control_id === accessControlId
@@ -2968,9 +3387,6 @@ const OperatorView = () => {
           err?.message ||
           'Unknown error occurred.';
 
-        // setSnackbarMsg(`${backendMsg}`);
-        // setSnackbarType('error');
-        // setSnackbarOpen(true);
         showSwal('error', backendMsg);
         resolve();
       } finally {
@@ -2979,6 +3395,7 @@ const OperatorView = () => {
     });
   };
 
+  // Faceimage && Upload Identity
   const activeVisitor =
     relatedVisitors.find((v) => v.id === selectedVisitorId) || invitationCode[0];
 
@@ -2986,15 +3403,19 @@ const OperatorView = () => {
     activeVisitor?.selfie_image &&
     activeVisitor?.selfie_image !== '-' &&
     activeVisitor?.selfie_image !== ''
-      ? `${BASE_URL}/cdn${activeVisitor.selfie_image}`
+      ? `${axiosInstance2.defaults.baseURL}/cdn${activeVisitor.selfie_image}`
       : null;
 
   const activeKTP =
     activeVisitor?.identity_image &&
     activeVisitor?.identity_image !== '-' &&
     activeVisitor?.identity_image !== ''
-      ? `${BASE_URL}/cdn${activeVisitor.identity_image}`
+      ? `${axiosInstance2.defaults.baseURL}/cdn${activeVisitor.identity_image}`
       : null;
+
+  const activeBarcode = activeVisitor?.nda
+    ? `${axiosInstance2.defaults.baseURL}/cdn${activeVisitor.nda}`
+    : null;
 
   const [todayVisitingPurpose, setTodayVisitingPurpose] = useState<any[]>([]);
   const [openMore, setOpenMore] = useState(false);
@@ -3014,6 +3435,66 @@ const OperatorView = () => {
       fetchTodayVisitingPurpose();
     }
   }, [token]);
+
+  // Print Preview
+  const [openPreviewPrint, setOpenPreviewPrint] = useState(false);
+  const [openBulkPrint, setOpenBulkPrint] = useState(false);
+
+  const handlePrint = () => {
+    setOpenPreviewPrint(true);
+  };
+
+  const selectedBulkVisitors = relatedVisitors.filter((v) => selectedVisitors.includes(v.id));
+
+  const handlePrintClick = () => {
+    if (selectedVisitors.length === 1) {
+      setOpenPreviewPrint(true);
+    } else if (selectedVisitors.length > 1) {
+      setOpenBulkPrint(true);
+    }
+  };
+
+  // Function Return Card
+  const handleSubmitReturnCard = async () => {
+    try {
+      if (!returnCardNumber.trim()) {
+        showSwal('warning', 'Please enter card number');
+        return;
+      }
+      setLoadingAccess(true);
+
+      const payload = {
+        card_number: returnCardNumber.trim(),
+      };
+
+      console.log('return card payload', payload);
+      await returnCard(token as string, payload);
+      showSwal('success', 'Succesfully returned card');
+      setOpenReturnCard(false);
+      setReturnCardNumber('');
+      // await fetchAvailableCards?.();
+    } catch (error: any) {
+      console.error(error);
+      showSwal('error', error.message || 'Failed to return card');
+    } finally {
+      setLoadingAccess(false);
+    }
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement).tagName;
+      if (['INPUT', 'TEXTAREA'].includes(tag)) return;
+
+      if (e.ctrlKey && e.key.toLowerCase() === 'q') {
+        e.preventDefault(); // cegah browser behavior
+        handleOpenScanQR();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   return (
     <PageContainer title={'Operator View'} description={'Operator View'}>
@@ -3046,207 +3527,19 @@ const OperatorView = () => {
             }}
           >
             <Grid container spacing={1} mb={0}>
-              <Grid size={{ xs: 12, sm: 12, xl: 10 }}>
-                <CustomTextField
-                  fullWidth
-                  size="small"
-                  placeholder="Search Visitor"
-                  onClick={() => setOpenSearch(true)}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <IconButton
-                          onClick={() => setOpen(true)}
-                          edge="start"
-                          color="inherit"
-                          sx={{ cursor: 'pointer' }}
-                        >
-                          <IconSearch size={20} />
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
-                />
+              <Grid size={{ xs: 12, sm: 12, lg: 9 }}>
+                <VisitorSearchInput onOpenSearch={() => setOpenSearch(true)} />
               </Grid>
-              <Grid size={{ xs: 12, sm: 12, xl: 2 }}>
-                <Box display="flex" gap={0.5} alignItems="center" justifyContent={'flex-start'}>
-                  <Tooltip
-                    title="Clear data information"
-                    placement="top"
-                    arrow
-                    slotProps={{
-                      tooltip: {
-                        sx: {
-                          fontSize: '1rem',
-                          padding: '8px 14px',
-                        },
-                      },
-                      popper: {
-                        container: containerRef.current,
-                      },
-                    }}
-                  >
-                    <Button
-                      variant="outlined"
-                      color="error"
-                      startIcon={<IconX size={18} />}
-                      onClick={handleClearAll}
-                      sx={{
-                        textTransform: 'none',
-                        fontWeight: 600,
-                        px: 2,
-                      }}
-                    >
-                      Clear
-                    </Button>
-                  </Tooltip>
-                  <Tooltip
-                    title="List Visitor"
-                    placement="top"
-                    arrow
-                    slotProps={{
-                      tooltip: {
-                        sx: {
-                          fontSize: '1rem',
-                          padding: '8px 14px',
-                        },
-                      },
-                      popper: {
-                        container: containerRef.current,
-                      },
-                    }}
-                  >
-                    <Button
-                      onClick={handleOpenListVisitor}
-                      sx={{
-                        textTransform: 'none',
-                        fontWeight: 600,
-                        px: 0,
-                        display: 'flex',
-                        justifyContent: 'center !important',
-                        alignItems: 'center !important',
-                        paddingRight: 0,
-                        paddingLeft: 0,
-                        backgroundColor: 'gray',
-                        '&:hover': {
-                          backgroundColor: 'gray',
-                          opacity: 0.9,
-                        },
-                      }}
-                    >
-                      <IconUser style={{ color: '#fff' }} size={25} />
-                    </Button>
-                  </Tooltip>
-                  <Tooltip
-                    title="Blacklist Visitor"
-                    placement="top"
-                    arrow
-                    slotProps={{
-                      tooltip: {
-                        sx: {
-                          fontSize: '1rem',
-                          padding: '8px 14px',
-                        },
-                      },
-                      popper: {
-                        container: containerRef.current,
-                      },
-                    }}
-                  >
-                    <Button
-                      onClick={handleOpenBlacklistVisitor}
-                      sx={{
-                        textTransform: 'none',
-                        fontWeight: 600,
-                        backgroundColor: '#000',
-                        px: 0,
-                        display: 'flex',
-                        justifyContent: 'center !important',
-                        alignItems: 'center !important',
-                        paddingRight: 0,
-                        paddingLeft: 0,
-                        '&:hover': {
-                          backgroundColor: '#000',
-                          opacity: 0.9,
-                        },
-                      }}
-                    >
-                      <IconUser style={{ color: '#fff' }} size={25} />
-                    </Button>
-                  </Tooltip>
-                  <Tooltip
-                    title="Information Guide Operator"
-                    placement="top"
-                    arrow
-                    slotProps={{
-                      tooltip: {
-                        sx: {
-                          fontSize: '1rem',
-                          padding: '8px 14px',
-                        },
-                      },
-                      popper: {
-                        container: containerRef.current,
-                      },
-                    }}
-                  >
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={() => setOpenDialogInfo(true)}
-                      sx={{
-                        minWidth: 0,
-                        padding: 0.7,
-                        borderRadius: 1,
-                      }}
-                    >
-                      <IconInfoCircle size={25} />
-                    </Button>
-                  </Tooltip>
-
-                  <Tooltip
-                    title="Tap to toggle Fullscreen"
-                    placement="top"
-                    arrow
-                    slotProps={{
-                      tooltip: {
-                        sx: {
-                          fontSize: '1rem',
-                          padding: '8px 14px',
-                        },
-                      },
-                      popper: {
-                        container: containerRef.current,
-                      },
-                    }}
-                  >
-                    <IconButton
-                      onClick={() => {
-                        if (isFullscreen) {
-                          handle.exit();
-                        } else {
-                          handle.enter();
-                        }
-                      }}
-                      sx={{
-                        backgroundColor: '#5D87FF',
-                        color: 'white',
-                        borderRadius: 1,
-                        width: 36,
-                        height: 36,
-                        '&:hover': { backgroundColor: '#4B6EE2' },
-                      }}
-                    >
-                      <IconArrowsMaximize
-                        size={20}
-                        style={{
-                          transform: isFullscreen ? 'rotate(45deg)' : 'none',
-                          transition: 'transform 0.3s ease',
-                        }}
-                      />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
+              <Grid size={{ xs: 12, sm: 12, lg: 3 }}>
+                <OperatorToolbar
+                  onClear={handleClearAll}
+                  onOpenList={handleOpenListVisitor}
+                  onOpenBlacklist={handleOpenBlacklistVisitor}
+                  onOpenInfo={() => setOpenDialogInfo(true)}
+                  isFullscreen={isFullscreen}
+                  onToggleFullscreen={() => (isFullscreen ? handle.exit() : handle.enter())}
+                  containerRef={containerRef as any}
+                />
               </Grid>
             </Grid>
 
@@ -3264,93 +3557,196 @@ const OperatorView = () => {
                 }}
               >
                 {/* 🧩 Card FR */}
-                <Grid size={{ xs: 12, lg: 4.5 }}>
-                  <Card
+                <Grid
+                  size={{ xs: 12, lg: 4.5 }}
+                  sx={{ border: '1px solid #e0e0e0', borderRadius: '15px' }}
+                >
+                  <Box
                     sx={{
-                      borderRadius: 2,
                       display: 'flex',
-                      justifyContent: 'center',
-                      flexDirection: 'column',
-                      height: '100%',
-                      maxHeight: isFullscreen ? '50vh' : { xs: '100%', sm: '100%', xl: '400px' },
+                      justifyContent: isFullscreen ? 'center' : 'flex-start',
+                      alignItems: isFullscreen ? 'center' : 'stretch',
+                      gap: '5px',
+                      padding: '20px',
+                      // flexDirection: {xs: {}}
+                      flexDirection: { xs: 'column', md: 'row', lg: 'row', xl: 'row' },
+                      // overflow: isFullscreen ? 'auto' : 'hidden',
                     }}
                   >
-                    <CardContent
+                    <Card
                       sx={{
-                        p: 1,
+                        borderRadius: 2,
                         display: 'flex',
-                        alignItems: 'center',
                         justifyContent: 'center',
-                        gap: 1,
-                        flexDirection: { xs: 'row', xl: 'row' },
-                        maxHeight: isFullscreen ? '100%' : { xs: '100%', xl: '300px' },
-                        overflow: 'hidden',
+                        flexDirection: 'column',
+                        height: '100%',
+                        maxHeight: isFullscreen ? '50vh' : { xs: '100%', sm: '100%', xl: '400px' },
+                        // border: '1px solid #e0e0e0',
+                        boxShadow: 'none !important',
+                        backgroundColor: 'none !important',
+                        py: '0 !important',
+                        px: {xs: '0', lg: '10px'},
                       }}
                     >
-                      <Box
+                      <CardContent
                         sx={{
-                          flex: 1,
+                          // p: 1,
+                          padding: '0 !important',
                           display: 'flex',
-                          justifyContent: 'center',
                           alignItems: 'center',
-                          maxHeight: '100%',
-                          borderRadius: 2,
+                          justifyContent: 'center',
+                          gap: 1,
+                          flexDirection: { xs: 'row', md: 'row', lg: 'row', xl: 'row' },
+                          maxHeight: isFullscreen ? '100%' : { xs: '100%', xl: '300px' },
                           overflow: 'hidden',
+                          boxShadow: 'none !important',
+                          backgroundColor: 'none !important',
                         }}
                       >
-                        <img
-                          src={FRImage}
-                          alt="FR"
-                          style={{
-                            width: '100%',
-                            maxWidth: '400px',
-                            height: 'auto',
+                        {/* LPR Image */}
+                        <Box
+                          sx={{
+                            flex: 1,
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
                             maxHeight: '100%',
-                            objectFit: 'contain',
+                            borderRadius: 2,
+                            overflow: 'hidden',
                           }}
-                        />
-                      </Box>
-
-                      <Box
+                        >
+                          {LprImage ? (
+                            <img
+                              src={LprImage}
+                              alt="LPR"
+                              style={{
+                                width: '100%',
+                                // maxWidth: '400px',
+                                height: '100%',
+                                maxHeight: '100%',
+                                objectFit: 'contain',
+                                borderRadius: '15px',
+                              }}
+                            />
+                          ) : (
+                            <Typography color="text.secondary">No LPR image</Typography>
+                          )}
+                        </Box>
+                      </CardContent>
+                    </Card>
+                    {todayVisitingPurpose.length === 0 ? (
+                      <Card
                         sx={{
-                          flex: 1,
-                          display: 'flex',
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                          maxHeight: '100%',
+                          p: 3,
                           borderRadius: 2,
-                          overflow: 'hidden',
+                          background: 'linear-gradient(135deg, #ECEFF1 0%, #CFD8DC 100%)',
+                          textAlign: 'center',
+                          maxHeight: isFullscreen ? '100%' : { xs: '100%', xl: '300px' },
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
                         }}
                       >
-                        <img
-                          src={LprImage}
-                          alt="FR"
-                          style={{
-                            width: '100%',
-                            maxWidth: '400px',
-                            height: 'auto',
-                            maxHeight: '100%',
-                            objectFit: 'contain',
-                            borderRadius: 15,
-                          }}
+                        <CardContent>
+                          <img src={backgroundnodata} alt="No Data" height="100" width="100%" />
+                          <Typography variant="h5" fontWeight={600} color="text.secondary" mt={3}>
+                            {t('no_visit_today')}
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      <>
+                        {todayVisitingPurpose.slice(0, 5).map((item) => (
+                          <Tooltip
+                            arrow
+                            title={'Detail data ' + item.name}
+                            placement="top"
+                            key={item.id}
+                            slotProps={{
+                              tooltip: {
+                                sx: {
+                                  fontSize: '1rem',
+                                  padding: '8px 14px',
+                                  zIndex: 9999999,
+                                },
+                              },
+                            }}
+                          >
+                            <Card
+                              onClick={() => handleOpenDetailVistingPurpose(item)}
+                              key={item.id}
+                              sx={{
+                                p: 1,
+                                borderRadius: 1,
+                                background: getColorByName(item.name),
+                                boxShadow: '0 6px 14px rgba(93, 135, 255, 0.3)',
+                                transition: 'all 0.3s ease',
+                                '&:hover': {
+                                  transform: 'translateY(-4px)',
+                                  boxShadow: '0 10px 18px rgba(93, 135, 255, 0.45)',
+                                },
+                                cursor: 'pointer',
+                                mb: 0,
+                              }}
+                            >
+                              <CardContent
+                                sx={{
+                                  px: 2,
+                                  paddingTop: '0 !important',
+                                  paddingBottom: '0 !important',
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                }}
+                              >
+                                <Typography
+                                  variant="h5"
+                                  fontWeight="bold"
+                                  color="white"
+                                  sx={{ textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}
+                                >
+                                  {item.name}
+                                </Typography>
+                                <Typography variant="h5" fontWeight="bold" color="white">
+                                  {item.count}
+                                </Typography>
+                              </CardContent>
+                            </Card>
+                          </Tooltip>
+                        ))}
+                        {todayVisitingPurpose.length > 5 && (
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            onClick={handleOpenMore}
+                            sx={{ textTransform: 'none', fontWeight: 600 }}
+                          >
+                            Show All
+                          </Button>
+                        )}
+                        <VisitingPurposeDialog
+                          open={openMore}
+                          onClose={() => setOpenMore(false)}
+                          data={todayVisitingPurpose}
                         />
-                      </Box>
-                    </CardContent>
-                    <CardActions
-                      sx={{
-                        justifyContent: 'center',
-                        borderTop: '1px solid #eee',
-                        py: 1,
-                        mt: 1,
-                        backgroundColor: '#f9f9f9',
-                      }}
-                    >
-                      <Typography variant="subtitle1" fontWeight="bold" textAlign="center">
-                        {invitationCode[0]?.visitor?.name ||
-                          'No visitor data found. Please scan QR first.'}
-                      </Typography>
-                    </CardActions>
-                  </Card>
+                      </>
+                    )}
+                  </Box>
+                  <Box
+                    sx={{
+                      justifyContent: 'center',
+                      borderTop: '1px solid #eee',
+                      py: 1,
+                      mt: 0,
+                      backgroundColor: '#f9f9f9',
+                    }}
+                  >
+                    <Typography variant="subtitle1" fontWeight="bold" textAlign="center">
+                      {invitationCode[0]?.visitor?.name ||
+                        'No visitor data found. Please scan QR first.'}
+                    </Typography>
+                  </Box>
                 </Grid>
 
                 {/* Visiting Purpose*/}
@@ -3370,7 +3766,7 @@ const OperatorView = () => {
                       maxHeight: isFullscreen
                         ? { xs: '100%', sm: '100%', lg: '80%', xl: '100%' }
                         : { xs: '100%', sm: '100%', xl: '400px' },
-
+                      border: '1px solid #e0e0e0',
                       overflow: isFullscreen ? 'auto' : 'hidden',
                     }}
                   >
@@ -3407,7 +3803,6 @@ const OperatorView = () => {
                                 textTransform: 'none',
                                 fontWeight: 600,
                                 px: 2.5,
-                                background: 'linear-gradient(135deg, #5D87FF 0%, #4169E1 100%)',
                                 boxShadow: '0 2px 6px rgba(93, 135, 255, 0.4)',
                                 '&:hover': {
                                   background: 'linear-gradient(135deg, #4169E1 0%, #3657D6 100%)',
@@ -3423,621 +3818,361 @@ const OperatorView = () => {
                               </Typography>
                             </Button>
                           </Tooltip>
-                          {todayVisitingPurpose.length === 0 ? (
-                            <Card
+
+                          <Box display={'flex'} mt={0.5} gap={1}>
+                            <Button
+                              variant="contained"
+                              color="primary"
+                              startIcon={<IconClipboard size={25} />}
+                              onClick={() => setOpenPreRegistration(true)}
                               sx={{
-                                p: 3,
-                                borderRadius: 2,
-                                background: 'linear-gradient(135deg, #ECEFF1 0%, #CFD8DC 100%)',
-                                textAlign: 'center',
-                                height: '100%',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                justifyContent: 'center',
+                                textTransform: 'none',
+                                fontWeight: 600,
+                                px: 2.5,
+
+                                // boxShadow: '0 2px 6px rgba(0, 200, 83, 0.4)',
+                                zIndex: 999,
+                                width: '100%',
+                                height: '50px',
+                                p: 0,
+                                backgroundColor: '#',
                               }}
                             >
-                              <img src={backgroundnodata} alt="No Data" height="100" width="100%" />
-                              <Typography
-                                variant="h5"
-                                fontWeight={600}
-                                color="text.secondary"
-                                mt={3}
-                              >
-                                {t('no_visit_today')}
+                              <Typography variant="h6" color="white">
+                                Pra Register
                               </Typography>
-                            </Card>
-                          ) : (
-                            <>
-                              {todayVisitingPurpose.slice(0, 5).map((item) => (
-                                <Tooltip
-                                  arrow
-                                  title={'Detail data ' + item.name}
-                                  placement="top"
-                                  key={item.id}
-                                  slotProps={{
-                                    tooltip: {
-                                      sx: {
-                                        fontSize: '1rem',
-                                        padding: '8px 14px',
-                                        zIndex: 9999999,
-                                      },
-                                    },
-                                  }}
-                                >
-                                  <Card
-                                    onClick={() => handleOpenDetailVistingPurpose(item)}
-                                    key={item.id}
-                                    sx={{
-                                      p: 1,
-                                      borderRadius: 1,
-                                      background: getColorByName(item.name),
-                                      boxShadow: '0 6px 14px rgba(93, 135, 255, 0.3)',
-                                      transition: 'all 0.3s ease',
-                                      '&:hover': {
-                                        transform: 'translateY(-4px)',
-                                        boxShadow: '0 10px 18px rgba(93, 135, 255, 0.45)',
-                                      },
-                                      cursor: 'pointer',
-                                      mb: 0,
-                                    }}
-                                  >
-                                    <CardContent
-                                      sx={{
-                                        px: 2,
-                                        paddingTop: '0 !important',
-                                        paddingBottom: '0 !important',
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                      }}
-                                    >
-                                      <Typography
-                                        variant="h5"
-                                        fontWeight="bold"
-                                        color="white"
-                                        sx={{ textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}
-                                      >
-                                        {item.name}
-                                      </Typography>
-                                      <Typography variant="h5" fontWeight="bold" color="white">
-                                        {item.count}
-                                      </Typography>
-                                    </CardContent>
-                                  </Card>
-                                </Tooltip>
-                              ))}
-                              {todayVisitingPurpose.length > 5 && (
-                                <Button
-                                  variant="outlined"
-                                  size="small"
-                                  onClick={handleOpenMore}
-                                  sx={{ textTransform: 'none', fontWeight: 600 }}
-                                >
-                                  Show All
-                                </Button>
-                              )}
-                              <VisitingPurposeDialog
-                                open={openMore}
-                                onClose={() => setOpenMore(false)}
-                                data={todayVisitingPurpose}
-                              />
-                            </>
-                          )}
+                            </Button>
+
+                            <Button
+                              variant="contained"
+                              color="primary"
+                              startIcon={<IconUser size={25} />}
+                              onClick={() => setOpenInvitationVisitor(true)}
+                              sx={{
+                                textTransform: 'none',
+                                fontWeight: 600,
+                                px: 2.5,
+                                // boxShadow: '0 2px 6px rgba(0, 200, 83, 0.4)',
+                                zIndex: 999,
+                                width: '100%',
+                                height: '50px',
+                                p: 0,
+                              }}
+                            >
+                              <Typography variant="h6" color="white">
+                                Invitation
+                              </Typography>
+                            </Button>
+                          </Box>
+
+                          <Grid container spacing={isFullscreen ? 3 : 1.5}>
+                            {/* Checkin */}
+                            <Grid size={{ xs: 6, lg: 6 }}>
+                              <Button
+                                variant="contained"
+                                startIcon={<IconLogin size={25} />}
+                                onClick={() => handleActionClick('Checkin')}
+                                // color="success"
+                                size="large"
+                                sx={{
+                                  textTransform: 'none',
+                                  fontWeight: 600,
+                                  px: 2.5,
+
+                                  boxShadow: '0 2px 6px rgba(0, 200, 83, 0.4)',
+                                  zIndex: 999,
+                                  width: '100%',
+                                  height: '50px',
+                                  p: 0,
+                                  backgroundColor: '#22C55E',
+                                }}
+                              >
+                                <Typography variant="h6" color="white">
+                                  Checkin
+                                </Typography>
+                              </Button>
+                            </Grid>
+                            <Grid size={{ xs: 6, lg: 6 }}>
+                              <Button
+                                variant="contained"
+                                startIcon={<IconLogout size={25} />}
+                                onClick={() => handleActionClick('Checkout')}
+                                size="large"
+                                sx={{
+                                  textTransform: 'none',
+                                  fontWeight: 600,
+                                  px: 2.5,
+                                  background: 'linear-gradient(135deg, #FF5252 0%, #D50000 100%)',
+                                  boxShadow: '0 2px 6px rgba(255, 82, 82, 0.4)',
+                                  '&:hover': {
+                                    background: 'linear-gradient(135deg, #D50000 0%, #B71C1C 100%)',
+                                  },
+                                  zIndex: 999,
+                                  width: '100%',
+                                  height: '50px',
+                                  p: 0,
+                                }}
+                              >
+                                <Typography variant="h6" color="white">
+                                  Checkout
+                                </Typography>
+                              </Button>
+                            </Grid>
+                            {/* Card */}
+                            <Grid size={{ xs: 6, lg: 6 }}>
+                              <Button
+                                variant="contained"
+                                startIcon={<IconCards size={28} />}
+                                onClick={() => handleOpenAction('card')}
+                                size="large"
+                                sx={{
+                                  textTransform: 'none',
+                                  fontWeight: 600,
+
+                                  px: '10px !important',
+                                  background: 'linear-gradient(135deg, #AB47BC 0%, #6A1B9A 100%)',
+                                  boxShadow: '0 2px 6px rgba(171, 71, 188, 0.4)',
+                                  '&:hover': {
+                                    background: 'linear-gradient(135deg, #8E24AA 0%, #4A148C 100%)',
+                                  },
+                                  zIndex: 999,
+                                  width: '100%',
+                                  height: '50px',
+                                  p: 0,
+                                }}
+                              >
+                                <Typography variant="h6" color="white">
+                                  Card Issuance
+                                </Typography>
+                              </Button>
+                            </Grid>
+
+                            <Grid size={{ xs: 6, lg: 6 }}>
+                              <Button
+                                variant="contained"
+                                startIcon={<IconCards size={28} />}
+                                onClick={() => setOpenReturnCard(true)}
+                                size="large"
+                                sx={{
+                                  textTransform: 'none',
+                                  fontWeight: 600,
+                                  px: '10px !important',
+
+                                  background: 'linear-gradient(135deg, #1E88E5 0%, #3949AB 100%)',
+                                  boxShadow: '0 2px 6px rgba(171, 71, 188, 0.4)',
+                                  '&:hover': {
+                                    background: 'linear-gradient(135deg, #1E88E5 0%, #3949AB 100%)',
+                                  },
+                                  zIndex: 999,
+                                  width: '100%',
+                                  height: '50px',
+                                  p: 0,
+                                }}
+                              >
+                                <Typography variant="h6" color="white">
+                                  Card Return
+                                </Typography>
+                              </Button>
+                            </Grid>
+                          </Grid>
                         </Grid>
                         <Grid size={{ xs: 12, xl: 5 }}>
                           <Grid container spacing={isFullscreen ? 3 : 1.5}>
-                            <Grid size={{ xs: 6, lg: 6 }}>
-                              <Tooltip
-                                title="Pra Register Visitor"
-                                placement="top"
-                                arrow
-                                slotProps={{
-                                  tooltip: {
-                                    sx: {
-                                      fontSize: '1rem',
-                                      padding: '8px 14px',
-                                      zIndex: 99999,
-                                    },
-                                  },
-                                  popper: {
-                                    container: containerRef.current,
-                                  },
-                                }}
-                              >
-                                <Button
-                                  variant="contained"
-                                  color="primary"
-                                  startIcon={<IconClipboard size={25} />}
-                                  onClick={() => setOpenPreRegistration(true)}
-                                  sx={{
-                                    textTransform: 'none',
-                                    fontWeight: 600,
-                                    px: 2.5,
-
-                                    boxShadow: '0 2px 6px rgba(0, 200, 83, 0.4)',
-                                    zIndex: 999,
-                                    width: '100%',
-                                    height: '50px',
-                                    p: 0,
-                                    backgroundColor: '#',
-                                  }}
-                                >
-                                  <Typography variant="h6" color="white">
-                                    Pra Register
-                                  </Typography>
-                                </Button>
-                              </Tooltip>
-                            </Grid>
-                            <Grid size={{ xs: 6, lg: 6 }}>
-                              <Tooltip
-                                title="Invitation Visitor"
-                                placement="top"
-                                arrow
-                                slotProps={{
-                                  tooltip: {
-                                    sx: {
-                                      fontSize: '1rem',
-                                      padding: '8px 14px',
-                                    },
-                                  },
-                                  popper: {
-                                    container: containerRef.current,
-                                  },
-                                }}
-                              >
-                                <Button
-                                  variant="contained"
-                                  color="primary"
-                                  startIcon={<IconUser size={25} />}
-                                  onClick={() => setOpenDialogIndex(2)}
-                                  sx={{
-                                    textTransform: 'none',
-                                    fontWeight: 600,
-                                    px: 2.5,
-
-                                    boxShadow: '0 2px 6px rgba(0, 200, 83, 0.4)',
-                                    zIndex: 999,
-                                    width: '100%',
-                                    height: '50px',
-                                    p: 0,
-                                  }}
-                                >
-                                  <Typography variant="h6" color="white">
-                                    Invitation
-                                  </Typography>
-                                </Button>
-                              </Tooltip>
-                            </Grid>
-                            {/* Checkin */}
-                            <Grid size={{ xs: 6, lg: 6 }}>
-                              <Tooltip
-                                title="Checkin Visitor"
-                                placement="top"
-                                arrow
-                                slotProps={{
-                                  tooltip: {
-                                    sx: {
-                                      fontSize: '1rem',
-                                      padding: '8px 14px',
-                                    },
-                                  },
-                                  popper: {
-                                    container: containerRef.current,
-                                  },
-                                }}
-                              >
-                                <Button
-                                  variant="contained"
-                                  startIcon={<IconLogin size={25} />}
-                                  onClick={() => handleActionClick('Checkin')}
-                                  // color="success"
-                                  size="large"
-                                  sx={{
-                                    textTransform: 'none',
-                                    fontWeight: 600,
-                                    px: 2.5,
-
-                                    boxShadow: '0 2px 6px rgba(0, 200, 83, 0.4)',
-                                    zIndex: 999,
-                                    width: '100%',
-                                    height: '50px',
-                                    p: 0,
-                                    backgroundColor: '#22C55E',
-                                  }}
-                                >
-                                  <Typography variant="h6" color="white">
-                                    Checkin
-                                  </Typography>
-                                </Button>
-                              </Tooltip>
-                            </Grid>
-
-                            {/* Checkout */}
-                            <Grid size={{ xs: 6, lg: 6 }}>
-                              <Tooltip
-                                title="Checkout Visitor"
-                                placement="top"
-                                arrow
-                                slotProps={{
-                                  tooltip: {
-                                    sx: {
-                                      fontSize: '1rem',
-                                      padding: '8px 14px',
-                                    },
-                                  },
-                                  popper: {
-                                    container: containerRef.current,
-                                  },
-                                }}
-                              >
-                                <Button
-                                  variant="contained"
-                                  startIcon={<IconLogout size={25} />}
-                                  onClick={() => handleActionClick('Checkout')}
-                                  size="large"
-                                  sx={{
-                                    textTransform: 'none',
-                                    fontWeight: 600,
-                                    px: 2.5,
-                                    background: 'linear-gradient(135deg, #FF5252 0%, #D50000 100%)',
-                                    boxShadow: '0 2px 6px rgba(255, 82, 82, 0.4)',
-                                    '&:hover': {
-                                      background:
-                                        'linear-gradient(135deg, #D50000 0%, #B71C1C 100%)',
-                                    },
-                                    zIndex: 999,
-                                    width: '100%',
-                                    height: '50px',
-                                    p: 0,
-                                  }}
-                                >
-                                  <Typography variant="h6" color="white">
-                                    Checkout
-                                  </Typography>
-                                </Button>
-                              </Tooltip>
-                            </Grid>
-
-                            {/* Card */}
-                            <Grid size={{ xs: 6, lg: 6 }}>
-                              <Tooltip
-                                title="Choose Card"
-                                placement="top"
-                                arrow
-                                slotProps={{
-                                  tooltip: {
-                                    sx: {
-                                      fontSize: '1rem',
-                                      padding: '8px 14px',
-                                    },
-                                  },
-                                  popper: {
-                                    container: containerRef.current,
-                                  },
-                                }}
-                              >
-                                <Button
-                                  variant="contained"
-                                  startIcon={<IconCards size={28} />}
-                                  onClick={() => handleOpenAction('card')}
-                                  size="large"
-                                  sx={{
-                                    textTransform: 'none',
-                                    fontWeight: 600,
-                                    px: 2.5,
-                                    background: 'linear-gradient(135deg, #AB47BC 0%, #6A1B9A 100%)',
-                                    boxShadow: '0 2px 6px rgba(171, 71, 188, 0.4)',
-                                    '&:hover': {
-                                      background:
-                                        'linear-gradient(135deg, #8E24AA 0%, #4A148C 100%)',
-                                    },
-                                    zIndex: 999,
-                                    width: '100%',
-                                    height: '50px',
-                                    p: 0,
-                                  }}
-                                >
-                                  <Typography variant="h6" color="white">
-                                    Swipe
-                                  </Typography>
-                                </Button>
-                              </Tooltip>
-                            </Grid>
-
                             {/* Access */}
                             <Grid size={{ xs: 6, lg: 6 }}>
-                              <Tooltip
-                                title="Access Control"
-                                placement="top"
-                                arrow
-                                slotProps={{
-                                  tooltip: {
-                                    sx: {
-                                      fontSize: '1rem',
-                                      padding: '8px 14px',
-                                    },
+                              <Button
+                                variant="contained"
+                                startIcon={<IconKey size={25} />}
+                                onClick={() => handleOpenAction('access')}
+                                size="large"
+                                sx={{
+                                  textTransform: 'none',
+                                  fontWeight: 600,
+                                  px: 2.5,
+                                  background: 'linear-gradient(135deg, #FF9800 0%, #F57C00 100%)',
+                                  boxShadow: '0 2px 6px rgba(255, 152, 0, 0.4)',
+                                  '&:hover': {
+                                    background: 'linear-gradient(135deg, #FB8C00 0%, #E65100 100%)',
                                   },
-                                  popper: {
-                                    container: containerRef.current,
-                                  },
+                                  zIndex: 999,
+                                  width: '100%',
+                                  height: '50px',
+                                  p: 0,
                                 }}
                               >
-                                <Button
-                                  variant="contained"
-                                  startIcon={<IconKey size={25} />}
-                                  onClick={() => handleOpenAction('access')}
-                                  size="large"
-                                  sx={{
-                                    textTransform: 'none',
-                                    fontWeight: 600,
-                                    px: 2.5,
-                                    background: 'linear-gradient(135deg, #FF9800 0%, #F57C00 100%)',
-                                    boxShadow: '0 2px 6px rgba(255, 152, 0, 0.4)',
-                                    '&:hover': {
-                                      background:
-                                        'linear-gradient(135deg, #FB8C00 0%, #E65100 100%)',
-                                    },
-                                    zIndex: 999,
-                                    width: '100%',
-                                    height: '50px',
-                                    p: 0,
-                                  }}
-                                >
-                                  <Typography variant="h6" color="white">
-                                    Access
-                                  </Typography>
-                                </Button>
-                              </Tooltip>
+                                <Typography variant="h6" color="white">
+                                  Access
+                                </Typography>
+                              </Button>
                             </Grid>
 
                             {/* Parking */}
                             <Grid size={{ xs: 6, lg: 6 }}>
-                              <Tooltip
-                                title="Parking Information"
-                                placement="top"
-                                arrow
-                                slotProps={{
-                                  tooltip: {
-                                    sx: {
-                                      fontSize: '1rem',
-                                      padding: '8px 14px',
-                                    },
-                                  },
-                                  popper: {
-                                    container: containerRef.current,
-                                  },
+                              <Button
+                                variant="contained"
+                                startIcon={<IconParking size={25} />}
+                                // onClick={handleOpenScanQR}
+                                onClick={() => handleOpenAction('parking')}
+                                size="large"
+                                sx={{
+                                  textTransform: 'none',
+                                  fontWeight: 600,
+                                  px: 2.5,
+                                  background: '#00ACC1',
+                                  boxShadow: '0 2px 6px rgba(0, 172, 193, 0.4)',
+                                  zIndex: 999,
+                                  width: '100%',
+                                  height: '50px',
+                                  p: 0,
                                 }}
                               >
-                                <Button
-                                  variant="contained"
-                                  startIcon={<IconParking size={25} />}
-                                  onClick={handleOpenScanQR}
-                                  size="large"
-                                  sx={{
-                                    textTransform: 'none',
-                                    fontWeight: 600,
-                                    px: 2.5,
-                                    background: '#00ACC1',
-                                    boxShadow: '0 2px 6px rgba(0, 172, 193, 0.4)',
-                                    zIndex: 999,
-                                    width: '100%',
-                                    height: '50px',
-                                    p: 0,
-                                  }}
-                                >
-                                  <Typography variant="h6" color="white">
-                                    Parking
-                                  </Typography>
-                                </Button>
-                              </Tooltip>
+                                <Typography variant="h6" color="white">
+                                  Parking
+                                </Typography>
+                              </Button>
                             </Grid>
 
                             {/* Report */}
                             <Grid size={{ xs: 6, lg: 6 }}>
-                              <Tooltip
-                                title="Open Manual Triggered Access"
-                                placement="top"
-                                arrow
-                                slotProps={{
-                                  tooltip: {
-                                    sx: {
-                                      fontSize: '1rem',
-                                      padding: '8px 14px',
-                                    },
-                                  },
-                                  popper: {
-                                    container: containerRef.current,
-                                  },
-                                }}
-                              >
-                                <Button
-                                  variant="contained"
-                                  startIcon={<IconDoor size={25} />}
-                                  // onClick={handleOpenTriggeredAccess}
-                                  onClick={() => handleOpenAction('open')}
-                                  size="large"
-                                  sx={{
-                                    textTransform: 'none',
-                                    fontWeight: 600,
-                                    px: 2.5,
+                              <Button
+                                variant="contained"
+                                startIcon={<IconDoor size={25} />}
+                                // onClick={handleOpenTriggeredAccess}
+                                onClick={() => handleOpenAction('open')}
+                                size="large"
+                                sx={{
+                                  textTransform: 'none',
+                                  fontWeight: 600,
+                                  px: 2.5,
+                                  background: 'brown',
+                                  boxShadow: '0 2px 6px rgba(96, 125, 139, 0.4)',
+                                  '&:hover': {
                                     background: 'brown',
-                                    boxShadow: '0 2px 6px rgba(96, 125, 139, 0.4)',
-                                    '&:hover': {
-                                      background: 'brown',
-                                    },
-                                    zIndex: 999,
-                                    width: '100%',
-                                    height: '50px',
-                                    p: 0,
-                                  }}
-                                >
-                                  <Typography variant="h6" color="white">
-                                    Open
-                                  </Typography>
-                                </Button>
-                              </Tooltip>
-                            </Grid>
-                            <Grid size={{ xs: 6, lg: 6 }}>
-                              <Tooltip
-                                title="Extend time"
-                                placement="top"
-                                arrow
-                                slotProps={{
-                                  tooltip: {
-                                    sx: {
-                                      fontSize: '1rem',
-                                      padding: '8px 14px',
-                                    },
                                   },
-                                  popper: {
-                                    container: containerRef.current,
-                                  },
+                                  zIndex: 999,
+                                  width: '100%',
+                                  height: '50px',
+                                  p: 0,
                                 }}
                               >
-                                <Button
-                                  variant="contained"
-                                  startIcon={<IconClock size={25} />}
-                                  onClick={() => handleOpenAction('extend')}
-                                  size="large"
-                                  sx={{
-                                    textTransform: 'none',
-                                    fontWeight: 600,
-                                    px: 2.5,
-                                    boxShadow: '0 2px 6px rgba(96, 125, 139, 0.4)',
-                                    background: 'linear-gradient(135deg, #FFE082 0%, #FFCA28 100%)',
-                                    zIndex: 999,
-                                    width: '100%',
-                                    height: '50px',
-                                    p: 0,
-                                  }}
-                                >
-                                  <Typography variant="h6" color="white">
-                                    Extend
-                                  </Typography>
-                                </Button>
-                              </Tooltip>
+                                <Typography variant="h6" color="white">
+                                  Open
+                                </Typography>
+                              </Button>
                             </Grid>
                             <Grid size={{ xs: 6, lg: 6 }}>
-                              <Tooltip
-                                title="Confirm for arrival visitor"
-                                placement="top"
-                                arrow
-                                slotProps={{
-                                  tooltip: {
-                                    sx: {
-                                      fontSize: '1rem',
-                                      padding: '8px 14px',
-                                    },
-                                  },
-                                  popper: {
-                                    container: containerRef.current,
-                                  },
+                              <Button
+                                variant="contained"
+                                startIcon={<IconClock size={25} />}
+                                onClick={() => handleOpenAction('extend')}
+                                size="large"
+                                sx={{
+                                  textTransform: 'none',
+                                  fontWeight: 600,
+                                  px: 2.5,
+                                  boxShadow: '0 2px 6px rgba(96, 125, 139, 0.4)',
+                                  background: 'linear-gradient(135deg, #FFE082 0%, #FFCA28 100%)',
+                                  zIndex: 999,
+                                  width: '100%',
+                                  height: '50px',
+                                  p: 0,
                                 }}
                               >
-                                <Button
-                                  variant="contained"
-                                  startIcon={<IconMapPinCheck size={25} />}
-                                  onClick={handleOpenScanQR}
-                                  size="large"
-                                  sx={{
-                                    textTransform: 'none',
-                                    fontWeight: 600,
-                                    px: 2.5,
-                                    boxShadow: '0 2px 6px rgba(96, 125, 139, 0.4)',
-                                    zIndex: 999,
-                                    width: '100%',
-                                    height: '50px',
-                                    p: 0,
-                                    backgroundColor: '#10B981',
-                                  }}
-                                >
-                                  <Typography variant="h6" color="white">
-                                    Arrival
-                                  </Typography>
-                                </Button>
-                              </Tooltip>
+                                <Typography variant="h6" color="white">
+                                  Extend
+                                </Typography>
+                              </Button>
                             </Grid>
                             <Grid size={{ xs: 6, lg: 6 }}>
-                              <Tooltip
-                                title="Add to Blacklist Visitor"
-                                placement="top"
-                                arrow
-                                slotProps={{
-                                  tooltip: {
-                                    sx: {
-                                      fontSize: '1rem',
-                                      padding: '8px 14px',
-                                    },
-                                  },
-                                  popper: {
-                                    container: containerRef.current,
-                                  },
+                              <Button
+                                variant="contained"
+                                startIcon={<IconMapPinCheck size={25} />}
+                                onClick={handleOpenScanQR}
+                                size="large"
+                                sx={{
+                                  textTransform: 'none',
+                                  fontWeight: 600,
+                                  px: 2.5,
+                                  boxShadow: '0 2px 6px rgba(96, 125, 139, 0.4)',
+                                  zIndex: 999,
+                                  width: '100%',
+                                  height: '50px',
+                                  p: 0,
+                                  backgroundColor: '#10B981',
                                 }}
                               >
-                                <Button
-                                  variant="contained"
-                                  startIcon={<IconUser size={25} />}
-                                  // onClick={handleOpenScanQR}
-                                  onClick={() => handleActionBlacklist('Blacklist')}
-                                  size="large"
-                                  sx={{
-                                    textTransform: 'none',
-                                    fontWeight: 600,
-                                    px: 2.5,
-                                    boxShadow: '0 2px 6px rgba(96, 125, 139, 0.4)',
-                                    zIndex: 999,
-                                    width: '100%',
-                                    height: '50px',
-                                    p: 0,
-                                    backgroundColor: '#000',
-                                  }}
-                                >
-                                  <Typography variant="h6" color="white">
-                                    Blacklist
-                                  </Typography>
-                                </Button>
-                              </Tooltip>
+                                <Typography variant="h6" color="white">
+                                  Arrival
+                                </Typography>
+                              </Button>
                             </Grid>
                             <Grid size={{ xs: 6, lg: 6 }}>
-                              <Tooltip
-                                title="Whitelist Visitor"
-                                placement="top"
-                                arrow
-                                slotProps={{
-                                  tooltip: {
-                                    sx: {
-                                      fontSize: '1rem',
-                                      padding: '8px 14px',
-                                    },
-                                  },
-                                  popper: {
-                                    container: containerRef.current,
-                                  },
+                              <Button
+                                variant="contained"
+                                size="large"
+                                sx={{
+                                  background: '#5f5f5f',
+                                  '&:hover': { backgroundColor: '#5f5f5f' },
+                                  marginLeft: 0,
+                                  textTransform: 'none',
+                                  fontWeight: 600,
+                                  px: 2.5,
+                                  zIndex: 999,
+                                  width: '100%',
+                                  height: '50px',
+                                }}
+                                onClick={handlePrint}
+                                startIcon={<IconPrinter size={25} />}
+                              >
+                                Print
+                              </Button>
+                            </Grid>
+                            <Grid size={{ xs: 6, lg: 6 }}>
+                              <Button
+                                variant="contained"
+                                startIcon={<IconUser size={25} />}
+                                // onClick={handleOpenScanQR}
+                                onClick={() => handleActionBlacklist('Blacklist')}
+                                size="large"
+                                sx={{
+                                  textTransform: 'none',
+                                  fontWeight: 600,
+                                  px: 2.5,
+                                  boxShadow: '0 2px 6px rgba(96, 125, 139, 0.4)',
+                                  zIndex: 999,
+                                  width: '100%',
+                                  height: '50px',
+                                  p: 0,
+                                  backgroundColor: '#000',
                                 }}
                               >
-                                <Button
-                                  variant="contained"
-                                  startIcon={<IconUser size={25} />}
-                                  onClick={handleOpenScanQR}
-                                  size="large"
-                                  sx={{
-                                    textTransform: 'none',
-                                    fontWeight: 600,
-                                    px: 2.5,
-                                    boxShadow: '0 2px 6px rgba(96, 125, 139, 0.4)',
-                                    zIndex: 999,
-                                    width: '100%',
-                                    height: '50px',
-                                    p: 0,
-                                    backgroundColor: 'gray',
-                                  }}
-                                >
-                                  <Typography variant="h6" color="white">
-                                    Whitelist
-                                  </Typography>
-                                </Button>
-                              </Tooltip>
+                                <Typography variant="h6" color="white">
+                                  Blacklist
+                                </Typography>
+                              </Button>
+                            </Grid>
+                            <Grid size={{ xs: 6, lg: 6 }}>
+                              <Button
+                                variant="contained"
+                                startIcon={<IconUser size={25} />}
+                                onClick={handleOpenScanQR}
+                                size="large"
+                                sx={{
+                                  textTransform: 'none',
+                                  fontWeight: 600,
+                                  px: 2.5,
+                                  boxShadow: '0 2px 6px rgba(96, 125, 139, 0.4)',
+                                  zIndex: 999,
+                                  width: '100%',
+                                  height: '50px',
+                                  p: 0,
+                                  backgroundColor: 'gray',
+                                }}
+                              >
+                                <Typography variant="h6" color="white">
+                                  Whitelist
+                                </Typography>
+                              </Button>
                             </Grid>
                           </Grid>
                         </Grid>
@@ -4048,105 +4183,7 @@ const OperatorView = () => {
 
                 {/* Side Right QR Code */}
                 <Grid size={{ xs: 12, lg: 3 }}>
-                  <Card
-                    sx={{
-                      borderRadius: 2,
-                      height: '100%',
-                      width: '100%',
-                      maxHeight: isFullscreen ? '100%' : { xs: '100%', sm: '100%', xl: '400px' },
-                      display: 'flex',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      p: 2,
-                    }}
-                  >
-                    <CardContent
-                      sx={{
-                        flexGrow: 1,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'center',
-                        pb: '0 !important',
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                          minHeight: 120,
-                          mb: 0,
-                        }}
-                      >
-                        {invitationCode[0]?.visitor_number ? (
-                          <QRCode
-                            size={170}
-                            value={invitationCode[0].visitor_number}
-                            viewBox="0 0 256 256"
-                            style={{
-                              boxShadow: '0 0 10px rgba(0, 0, 0, 0.2)',
-                              padding: '10px',
-                              borderRadius: '8px',
-                              background: 'white',
-                            }}
-                          />
-                        ) : (
-                          <Box textAlign="center" color="text.secondary">
-                            <IconCards size={48} style={{ opacity: 0.4, marginBottom: 8 }} />
-                            <Typography variant="h6" fontWeight={500}>
-                              No QR/Card Available
-                            </Typography>
-                            <Typography variant="body1" color="text.disabled">
-                              Scan a visitor to show QR code
-                            </Typography>
-                          </Box>
-                        )}
-                      </Box>
-                      <Box mt={2}>
-                        <Typography variant="h6" fontWeight="bold" mb={1}>
-                          Number
-                        </Typography>
-                        <Typography variant="body1" color="text.secondary" mb={1}>
-                          {invitationCode[0]?.visitor_number || '-'}
-                        </Typography>
-                      </Box>
-                      <Box>
-                        <Typography variant="h6" fontWeight="bold" mb={1}>
-                          Invitation Code
-                        </Typography>
-                        <Typography variant="body1" color="text.secondary" mb={1}>
-                          {invitationCode[0]?.invitation_code || '-'}
-                        </Typography>
-                      </Box>
-                      <Divider sx={{ mt: 0.5 }} />
-                      <Box
-                        display="flex"
-                        justifyContent="space-between"
-                        alignItems="center"
-                        mt="auto"
-                        pt={0}
-                      >
-                        <Typography variant="h6" fontWeight="bold" mb={0}>
-                          Status
-                        </Typography>
-                        <Box
-                          component="span"
-                          sx={{
-                            backgroundColor: '#4CAF50',
-                            color: 'white',
-                            px: 2,
-                            py: 0.5,
-                            mt: 0.5,
-                            borderRadius: '12px',
-                            fontSize: '0.875rem',
-                            fontWeight: 500,
-                          }}
-                        >
-                          Match
-                        </Box>
-                      </Box>
-                    </CardContent>
-                  </Card>
+                  <InvitationQrCard invitationCode={invitationCode} isFullscreen={isFullscreen} />
                 </Grid>
               </Grid>
             </Grid>
@@ -4158,21 +4195,29 @@ const OperatorView = () => {
               sx={{
                 flex: isFullscreen ? 1 : 'unset',
                 minHeight: 0,
+                alignItems: 'stretch',
               }}
             >
               <Grid
                 size={{ xs: 12, lg: 4.5 }}
-                sx={{ boxShadow: '0 2px 8px rgba(0,0,0,0.1)', padding: 1, borderRadius: 2 }}
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  height: '100%',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                  p: 1,
+                  borderRadius: 2,
+                  border: '1px solid #e0e0e0',
+                }}
               >
                 <Card
                   sx={{
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
                     boxShadow: 'none',
                     p: 1,
-                    height: {
-                      lg: '450px',
-                      xs: '100%',
-                    },
-                    maxHeight: isFullscreen ? '100%' : '450px',
+                    minHeight: 450,
                   }}
                 >
                   <CardContent sx={{ boxShadow: 'none', p: 0 }}>
@@ -4182,230 +4227,244 @@ const OperatorView = () => {
                     />
                   </CardContent>
                   {invitationCode.length > 0 && invitationCode[0]?.visitor_number && (
-                    <CardActions sx={{ justifyContent: 'center', mt: 2, flexWrap: 'wrap', gap: 1 }}>
-                      {(() => {
-                        // Tentukan sumber visitor
-                        const selectedVisitor =
-                          relatedVisitors.find(
-                            (v) => v.visitor_number === invitationCode[0]?.visitor_number,
-                          ) ||
-                          relatedVisitors.find((v) => v.visitor_number === selectedVisitorNumber);
+                    <>
+                      <CardActions
+                        sx={{ justifyContent: 'center', mt: 2, flexWrap: 'wrap', gap: 1 }}
+                      >
+                        {(() => {
+                          const selectedVisitor =
+                            relatedVisitors.find(
+                              (v) => v.visitor_number === invitationCode[0]?.visitor_number,
+                            ) ||
+                            relatedVisitors.find((v) => v.visitor_number === selectedVisitorNumber);
 
-                        if (
-                          selectedVisitor &&
-                          (selectedVisitor.is_praregister_done == null ||
-                            selectedVisitor.is_praregister_done === false)
-                        ) {
-                          return (
-                            <Button
-                              variant="contained"
-                              color="primary"
-                              size="large"
-                              onClick={() => handleView(selectedVisitor.id)}
-                            >
-                              Fill Form
-                            </Button>
-                          );
-                        }
-
-                        const data = invitationCode[0];
-                        const status = data?.visitor_status;
-                        const isBlocked = !!data?.is_block;
-
-                        if (
-                          !selectedVisitor ||
-                          selectedVisitor.is_praregister_done == null ||
-                          selectedVisitor.is_praregister_done === false
-                        ) {
-                          return null;
-                        }
-                        if (!['Checkin', 'Checkout', 'Block', 'Unblock'].includes(status || '')) {
-                          return (
-                            <Box display="flex" gap={1}>
-                              <Tooltip
-                                title="Check In"
-                                placement="top"
-                                arrow
-                                slotProps={{
-                                  tooltip: {
-                                    sx: {
-                                      fontSize: '1rem',
-                                      padding: '8px 14px',
-                                    },
-                                  },
-                                  popper: {
-                                    container: containerRef.current,
-                                  },
-                                }}
-                              >
-                                <Button
-                                  variant="contained"
-                                  color="success"
-                                  size="large"
-                                  onClick={() => handleConfirmStatus('Checkin')}
-                                  startIcon={<IconLogin2 />}
-                                >
-                                  Check In
-                                </Button>
-                              </Tooltip>
-                              <Tooltip
-                                title="Block"
-                                placement="top"
-                                arrow
-                                slotProps={{
-                                  tooltip: {
-                                    sx: {
-                                      fontSize: '1rem',
-                                      padding: '8px 14px',
-                                    },
-                                  },
-                                  popper: {
-                                    container: containerRef.current,
-                                  },
-                                }}
-                              >
-                                <Button
-                                  variant="contained"
-                                  size="large"
-                                  sx={{ backgroundColor: '#000' }}
-                                  onClick={() => handleConfirmStatus('Block')}
-                                  startIcon={<IconForbid2 />}
-                                >
-                                  Block
-                                </Button>
-                              </Tooltip>
-                            </Box>
-                          );
-                        }
-
-                        if (status === 'Checkin' && !isBlocked) {
-                          return (
-                            <Box display="flex" gap={1}>
-                              <Tooltip
-                                title="Check Out"
-                                placement="top"
-                                arrow
-                                slotProps={{
-                                  tooltip: {
-                                    sx: {
-                                      fontSize: '1rem',
-                                      padding: '8px 14px',
-                                    },
-                                  },
-                                  popper: {
-                                    container: containerRef.current,
-                                  },
-                                }}
-                              >
-                                <Button
-                                  variant="contained"
-                                  color="error"
-                                  size="large"
-                                  onClick={() => handleConfirmStatus('Checkout')}
-                                  startIcon={<IconLogout />}
-                                >
-                                  Check Out
-                                </Button>
-                              </Tooltip>
-                              <Tooltip
-                                title="Block"
-                                placement="top"
-                                arrow
-                                slotProps={{
-                                  tooltip: {
-                                    sx: {
-                                      fontSize: '1rem',
-                                      padding: '8px 14px',
-                                    },
-                                  },
-                                  popper: {
-                                    container: containerRef.current,
-                                  },
-                                }}
-                              >
-                                <Button
-                                  variant="contained"
-                                  size="large"
-                                  sx={{ backgroundColor: '#000' }}
-                                  onClick={() => handleConfirmStatus('Block')}
-                                  startIcon={<IconForbid2 />}
-                                >
-                                  Block
-                                </Button>
-                              </Tooltip>
-                            </Box>
-                          );
-                        }
-                        if (status === 'Checkout' && !isBlocked) {
-                          return (
-                            <Box display="flex" gap={1}>
-                              <Tooltip
-                                title="Block Visitor"
-                                placement="top"
-                                arrow
-                                slotProps={{
-                                  tooltip: {
-                                    sx: {
-                                      fontSize: '1rem',
-                                      padding: '8px 14px',
-                                    },
-                                  },
-                                  popper: {
-                                    container: containerRef.current,
-                                  },
-                                }}
-                              >
-                                <Button
-                                  variant="contained"
-                                  size="large"
-                                  sx={{ backgroundColor: '#000' }}
-                                  onClick={() => handleConfirmStatus('Block')}
-                                  startIcon={<IconForbid2 />}
-                                >
-                                  Block
-                                </Button>
-                              </Tooltip>
-                            </Box>
-                          );
-                        }
-
-                        if (isBlocked) {
-                          return (
-                            <Tooltip
-                              title="Unblock"
-                              placement="top"
-                              arrow
-                              slotProps={{
-                                tooltip: {
-                                  sx: {
-                                    fontSize: '1rem',
-                                    padding: '8px 14px',
-                                  },
-                                },
-                                popper: {
-                                  container: containerRef.current,
-                                },
-                              }}
-                            >
+                          if (
+                            selectedVisitor &&
+                            (selectedVisitor.is_praregister_done == null ||
+                              selectedVisitor.is_praregister_done === false)
+                          ) {
+                            return (
                               <Button
                                 variant="contained"
+                                color="primary"
                                 size="large"
-                                sx={{
-                                  backgroundColor: '#f44336',
-                                  '&:hover': { backgroundColor: '#d32f2f' },
-                                }}
-                                onClick={() => handleConfirmStatus('Unblock')}
-                                startIcon={<IconBan />}
+                                onClick={() => handleView(selectedVisitor.id)}
                               >
-                                Unblock
+                                Fill Form
                               </Button>
-                            </Tooltip>
-                          );
-                        }
+                            );
+                          }
 
-                        return null;
-                      })()}
-                    </CardActions>
+                          const data = invitationCode[0];
+                          const status = data?.visitor_status;
+                          const isBlocked = !!data?.is_block;
+
+                          if (
+                            !selectedVisitor ||
+                            selectedVisitor.is_praregister_done == null ||
+                            selectedVisitor.is_praregister_done === false
+                          ) {
+                            return null;
+                          }
+                          if (!['Checkin', 'Checkout', 'Block', 'Unblock'].includes(status || '')) {
+                            return (
+                              <Box display="flex" gap={1}>
+                                <Tooltip
+                                  title="Check In"
+                                  placement="top"
+                                  arrow
+                                  slotProps={{
+                                    tooltip: {
+                                      sx: {
+                                        fontSize: '1rem',
+                                        padding: '8px 14px',
+                                      },
+                                    },
+                                    popper: {
+                                      container: containerRef.current,
+                                    },
+                                  }}
+                                >
+                                  <Button
+                                    variant="contained"
+                                    // color="#21c45d"
+                                    size="large"
+                                    onClick={() => handleConfirmStatus('Checkin')}
+                                    startIcon={<IconLogin />}
+                                    sx={{ backgroundColor: '#21c45d' }}
+                                  >
+                                    Check In
+                                  </Button>
+                                </Tooltip>
+                                <Tooltip
+                                  title="Block"
+                                  placement="top"
+                                  arrow
+                                  slotProps={{
+                                    tooltip: {
+                                      sx: {
+                                        fontSize: '1rem',
+                                        padding: '8px 14px',
+                                      },
+                                    },
+                                    popper: {
+                                      container: containerRef.current,
+                                    },
+                                  }}
+                                >
+                                  <Button
+                                    variant="contained"
+                                    size="large"
+                                    sx={{ backgroundColor: '#000' }}
+                                    onClick={() => handleConfirmStatus('Block')}
+                                    startIcon={<IconForbid2 />}
+                                  >
+                                    Block
+                                  </Button>
+                                </Tooltip>
+                              </Box>
+                            );
+                          }
+
+                          if (status === 'Checkin' && !isBlocked) {
+                            return (
+                              <Box display="flex" gap={1}>
+                                <Tooltip
+                                  title="Check Out"
+                                  placement="top"
+                                  arrow
+                                  slotProps={{
+                                    tooltip: {
+                                      sx: {
+                                        fontSize: '1rem',
+                                        padding: '8px 14px',
+                                      },
+                                    },
+                                    popper: {
+                                      container: containerRef.current,
+                                    },
+                                  }}
+                                >
+                                  <Button
+                                    variant="contained"
+                                    color="error"
+                                    size="large"
+                                    onClick={() => handleConfirmStatus('Checkout')}
+                                    startIcon={<IconLogout />}
+                                  >
+                                    Check Out
+                                  </Button>
+                                </Tooltip>
+                                <Tooltip
+                                  title="Block"
+                                  placement="top"
+                                  arrow
+                                  slotProps={{
+                                    tooltip: {
+                                      sx: {
+                                        fontSize: '1rem',
+                                        padding: '8px 14px',
+                                      },
+                                    },
+                                    popper: {
+                                      container: containerRef.current,
+                                    },
+                                  }}
+                                >
+                                  <Button
+                                    variant="contained"
+                                    size="large"
+                                    sx={{ backgroundColor: '#000' }}
+                                    onClick={() => handleConfirmStatus('Block')}
+                                    startIcon={<IconForbid2 />}
+                                  >
+                                    Block
+                                  </Button>
+                                </Tooltip>
+                              </Box>
+                            );
+                          }
+                          if (status === 'Checkout' && !isBlocked) {
+                            return (
+                              <Box display="flex" gap={1}>
+                                <Tooltip
+                                  title="Block Visitor"
+                                  placement="top"
+                                  arrow
+                                  slotProps={{
+                                    tooltip: {
+                                      sx: {
+                                        fontSize: '1rem',
+                                        padding: '8px 14px',
+                                      },
+                                    },
+                                    popper: {
+                                      container: containerRef.current,
+                                    },
+                                  }}
+                                >
+                                  <Button
+                                    variant="contained"
+                                    size="large"
+                                    sx={{ backgroundColor: '#000' }}
+                                    onClick={() => handleConfirmStatus('Block')}
+                                    startIcon={<IconForbid2 />}
+                                  >
+                                    Block
+                                  </Button>
+                                </Tooltip>
+                              </Box>
+                            );
+                          }
+
+                          if (isBlocked) {
+                            return (
+                              <Tooltip
+                                title="Unblock"
+                                placement="top"
+                                arrow
+                                slotProps={{
+                                  tooltip: {
+                                    sx: {
+                                      fontSize: '1rem',
+                                      padding: '8px 14px',
+                                    },
+                                  },
+                                  popper: {
+                                    container: containerRef.current,
+                                  },
+                                }}
+                              >
+                                <Button
+                                  variant="contained"
+                                  size="large"
+                                  sx={{
+                                    backgroundColor: '#f44336',
+                                    '&:hover': { backgroundColor: '#d32f2f' },
+                                  }}
+                                  onClick={() => handleConfirmStatus('Unblock')}
+                                  startIcon={<IconBan />}
+                                >
+                                  Unblock
+                                </Button>
+                              </Tooltip>
+                            );
+                          }
+
+                          return null;
+                        })()}
+                      </CardActions>
+                      {/* Barcode */}
+                      <Box>
+                        {activeBarcode && (
+                          <img
+                            src={activeBarcode}
+                            alt="Barcode"
+                            style={{ width: '100%', height: '135px', objectFit: 'cover' }}
+                          />
+                        )}
+                      </Box>
+                    </>
                   )}
                 </Card>
               </Grid>
@@ -4419,6 +4478,7 @@ const OperatorView = () => {
                     flexDirection: 'column',
                     boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                     overflow: 'auto',
+                    border: '1px solid #e0e0e0',
                   }}
                 >
                   <Box display="flex" justifyContent="space-between">
@@ -4490,7 +4550,6 @@ const OperatorView = () => {
                         visitor.visitor_number &&
                         scannedVisitorNumber &&
                         visitor.visitor_number === scannedVisitorNumber;
-                      const isSelected = visitor.visitor_number === selectedVisitorNumber;
 
                       return (
                         <React.Fragment key={visitor.id || index}>
@@ -4514,7 +4573,7 @@ const OperatorView = () => {
                             {/* Avatar + Info */}
                             <Box display="flex" alignItems="center" gap={2}>
                               <Avatar
-                                src={`${BASE_URL}/cdn${visitor.selfie_image}`}
+                                src={`${axiosInstance2.defaults.baseURL}/cdn${visitor.selfie_image}`}
                                 alt={visitor.name}
                                 sx={{ width: 45, height: 45 }}
                               />
@@ -4658,18 +4717,23 @@ const OperatorView = () => {
                       );
                     })}
                   </CardContent>
-                  <CardActions sx={{ overflow: 'visible' }}>
+                  <CardActions sx={{ overflow: 'visible', p: '0' }}>
                     <Divider />
                     <Box
                       display={'flex'}
-                      gap={2}
+                      gap={1}
                       width={'100%'}
-                      sx={{ mt: 2, justifyContent: 'space-between' }}
-                      flexWrap={'wrap'}
+                      sx={{ mt: 2, justifyContent: 'space-between', marginLeft: '0 !important' }}
+                      flexWrap={theme.breakpoints.down('lg') ? 'nowrap' : 'wrap'}
                     >
-                      <Box display="flex" gap={1} ref={containerRef}>
+                      <Box
+                        display="flex"
+                        gap={1}
+                        ref={containerRef}
+                        sx={{ marginLeft: '0 !important' }}
+                      >
                         <Select
-                          sx={{ width: '150px' }}
+                          sx={{ width: '130px', height: '40px' }}
                           value={bulkAction}
                           onChange={(e: any) => setBulkAction(e.target.value)}
                           MenuProps={{
@@ -4687,7 +4751,7 @@ const OperatorView = () => {
                         <Button
                           variant="contained"
                           color="primary"
-                          sx={{ width: '100px' }}
+                          sx={{ width: '80px', height: '40px' }}
                           disabled={!bulkAction || selectedVisitors.length === 0}
                           onClick={handleApplyBulkAction}
                         >
@@ -4699,7 +4763,9 @@ const OperatorView = () => {
                           display={'flex'}
                           gap={0.5}
                           alignItems={'center'}
-                          justifyContent={'flex-end'}
+                          justifyContent={lgUp ? 'flex-end' : 'start'}
+                          flexWrap={lgUp ? 'nowrap' : 'wrap'}
+                          // sx={{ px: 1}}
                         >
                           <Tooltip
                             title="Extend Time"
@@ -4772,11 +4838,15 @@ const OperatorView = () => {
                               sx={{
                                 background: 'linear-gradient(135deg, #AB47BC 0%, #6A1B9A 100%)',
                                 color: '#fff',
+                                textWrap: 'wrap',
+                                whiteSpace: 'normal',
+                                lineHeight: 1.2,
+                                textAlign: 'center',
                               }}
                               onClick={handleChooseCard}
                               startIcon={<IconCreditCard size={18} />}
                             >
-                              Swipe
+                              Card Issuance
                             </Button>
                           </Tooltip>
 
@@ -4802,6 +4872,31 @@ const OperatorView = () => {
                               Access
                             </Button>
                           </Tooltip>
+                          <Tooltip
+                            title="Print Badge"
+                            placement="top"
+                            arrow
+                            slotProps={{
+                              tooltip: { sx: { fontSize: '1rem', padding: '8px 14px' } },
+                              popper: {
+                                container: containerRef.current,
+                              },
+                            }}
+                          >
+                            <Button
+                              sx={{
+                                backgroundColor: '#5f5f5f',
+                                color: '#fff',
+                                '&:hover': {
+                                  backgroundColor: '#5f5f5f',
+                                },
+                              }}
+                              onClick={handlePrintClick}
+                              startIcon={<IconPrinter size={18} />}
+                            >
+                              Print
+                            </Button>
+                          </Tooltip>
                         </Box>
                       )}
                     </Box>
@@ -4810,156 +4905,28 @@ const OperatorView = () => {
               </Grid>
 
               <Grid size={{ xs: 12, lg: 3 }} sx={{ height: '100%' }}>
-                <Grid
-                  container
-                  direction="column"
-                  spacing={1}
-                  sx={{ height: '100%', flexGrow: 1, flexWrap: 'nowrap' }}
-                >
-                  <Grid sx={{ flex: 1, display: 'flex' }}>
-                    <Card
-                      sx={{
-                        flex: 1,
-                        display: 'flex',
-                        flexDirection: 'column !important',
-                        // height: { xs: '100%', md: '100%' },
-                        // maxHeight: '100%',
-                      }}
-                    >
-                      <CardHeader
-                        title="Faceimage"
-                        sx={{ p: 0 }}
-                        slotProps={{
-                          title: {
-                            sx: {
-                              fontSize: '15px !important',
-                              marginBottom: '2px',
-                            },
-                          },
-                        }}
-                      />
-                      <CardContent
-                        sx={{
-                          flex: 1,
-                          p: 0,
-                          overflow: 'hidden',
-                          pb: '0 ! important',
-                          // height: '100%',
-                        }}
-                      >
-                        {activeSelfie ? (
-                          <Box
-                            component="img"
-                            src={activeSelfie}
-                            alt="Face Image"
-                            sx={{
-                              width: '100%',
-                              height: isFullscreen
-                                ? { xs: '250px', md: '100%', xl: '270px' }
-                                : '200px',
-                              borderRadius: '8px',
-                              overflow: 'hidden',
-                              objectFit: isFullscreen ? 'cover' : 'cover',
-                              objectPosition: 'center center',
-                              display: 'block',
-                            }}
-                            onError={(e) => (e.currentTarget.style.display = 'none')}
-                          />
-                        ) : (
-                          <Box
-                            display="flex"
-                            alignItems="center"
-                            justifyContent="center"
-                            // height={isFullscreen ? '100%' : '170px'}
-                            height={isFullscreen ? '100%' : { xs: '200px', md: '100%' }}
-                            sx={{
-                              borderRadius: '8px',
-                              backgroundColor: '#f9f9f9',
-                              color: '#888',
-                              fontStyle: 'italic',
-                              fontSize: '0.9rem',
-                            }}
-                          >
-                            No Face Image
-                          </Box>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </Grid>
-
-                  <Grid sx={{ flex: 1, display: 'flex' }}>
-                    <Card
-                      sx={{
-                        flex: 1,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        height: { xs: '100%', md: '100%' },
-                        maxHeight: '100%',
-                      }}
-                    >
-                      <CardHeader
-                        title="Identity Image"
-                        sx={{ p: 0 }}
-                        slotProps={{
-                          title: {
-                            sx: {
-                              fontSize: '15px !important',
-                              marginBottom: '2px',
-                            },
-                          },
-                        }}
-                      />
-                      <CardContent
-                        sx={{
-                          flex: 1,
-                          p: 0,
-                          // overflowY: 'auto',
-                          overflow: 'hidden',
-                          pb: '0 ! important',
-                        }}
-                      >
-                        {activeKTP ? (
-                          <Box
-                            component="img"
-                            src={activeKTP}
-                            alt="Face Image"
-                            sx={{
-                              width: '100%',
-                              height: isFullscreen
-                                ? { xs: '250px', md: '100%', xl: '270px' }
-                                : '200px',
-                              borderRadius: '8px',
-                              // overflow: 'hidden',
-                              objectFit: isFullscreen ? 'cover' : 'cover',
-                              objectPosition: 'center center',
-                              display: 'block',
-                            }}
-                            onError={(e) => (e.currentTarget.style.display = 'none')}
-                          />
-                        ) : (
-                          <Box
-                            display="flex"
-                            alignItems="center"
-                            justifyContent="center"
-                            height={isFullscreen ? '100%' : { xs: '200px', md: '100%' }}
-                            sx={{
-                              borderRadius: '8px',
-                              backgroundColor: '#f9f9f9',
-                              color: '#888',
-                              fontStyle: 'italic',
-                              fontSize: '0.9rem',
-                            }}
-                          >
-                            No Identity Image
-                          </Box>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                </Grid>
+                <VisitorImage
+                  faceImage={activeSelfie}
+                  identityImage={activeKTP}
+                  isFullscreen={isFullscreen}
+                />
               </Grid>
             </Grid>
           </Box>
+          {/* Print */}
+          <PrintDialogBulk
+            open={openBulkPrint}
+            onClose={() => setOpenBulkPrint(false)}
+            visitors={selectedBulkVisitors}
+            printData={printData}
+          />
+          <PrintDialog
+            open={openPreviewPrint}
+            onClose={() => setOpenPreviewPrint(false)}
+            invitationData={invitationCode[0]}
+            printData={printData}
+          />
+          {/* Detail Purpose */}
           <DetailVisitingPurpose
             open={openDetailVisitingPurpose}
             onClose={() => setOpenDetailVistingPurpose(false)}
@@ -4995,6 +4962,15 @@ const OperatorView = () => {
           />
           <ListVisitorDialog open={openListVisitor} onClose={handleCloseListVisitor} />
           <TriggeredAccessDialog open={openTriggeredAccess} onClose={handleCloseTriggeredAcceess} />
+          {/* Dialog Swipe No Code */}
+          <SwipeCardNoCodeDialog
+            open={openSwipeDialogNoInvitation}
+            onClose={handleCloseSwipeDialogNoInvitation}
+            findCard={findCard}
+            showSwal={showSwal}
+            setSnackbar={setSnackbar}
+            onSubmit={handleSwipeCardSubmitNoCode}
+          />
           {/* Choose Card */}
           <Dialog
             open={openChooseCardDialog}
@@ -5004,9 +4980,13 @@ const OperatorView = () => {
             container={containerRef.current}
           >
             <DialogTitle>Choose Card</DialogTitle>
+
             <IconButton
               aria-label="close"
-              onClick={() => setOpenChooseCardDialog(false)}
+              onClick={() => {
+                setOpenChooseCardDialog(false);
+                setActionButton('');
+              }}
               sx={{
                 position: 'absolute',
                 right: 8,
@@ -5035,6 +5015,108 @@ const OperatorView = () => {
                 />
               </Box>
 
+              <Box mb={2} onClick={(e) => e.stopPropagation()}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={isChecked}
+                      indeterminate={isIndeterminate}
+                      onChange={handleSelectAll}
+                      disabled={capacity === 0}
+                    />
+                  }
+                  label="Select All"
+                />
+              </Box>
+
+              {currentUsedCard && (
+                <>
+                  <Grid container spacing={2} mb={2}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+                      <Paper
+                        sx={(theme) => ({
+                          p: 2,
+                          borderRadius: 2,
+                          position: 'relative',
+                          height: 280,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          textAlign: 'center',
+                          border: '2px solid',
+                          borderColor: theme.palette.warning.main,
+                          backgroundColor: theme.palette.warning.light,
+                          boxShadow: theme.shadows[6],
+                        })}
+                      >
+                        <Box
+                          flexGrow={1}
+                          display="flex"
+                          flexDirection="column"
+                          justifyContent="center"
+                          alignItems="center"
+                        >
+                          <Typography variant="h1" color="text.secondary" mt={1}>
+                            {currentUsedCard.card_number}
+                          </Typography>
+
+                          <Box
+                            display="flex"
+                            justifyContent="space-between"
+                            width="100%"
+                            maxWidth={300}
+                            mt={1}
+                          >
+                            <Typography variant="body1" fontWeight={600}>
+                              Card
+                            </Typography>
+                            <Typography variant="body1">{currentUsedCard.card_number}</Typography>
+                          </Box>
+
+                          <Box
+                            display="flex"
+                            justifyContent="space-between"
+                            width="100%"
+                            maxWidth={300}
+                            flexWrap="wrap"
+                            gap={1}
+                          >
+                            <Typography variant="body1" fontWeight={600}>
+                              BLE
+                            </Typography>
+                            <Typography variant="body1">
+                              {currentUsedCard.card_mac || '-'}
+                            </Typography>
+                          </Box>
+                        </Box>
+
+                        <Typography variant="body1">{currentUsedCard.name}</Typography>
+
+                        <Typography variant="body2" color="warning.main" fontWeight={600}>
+                          Swipe Card (Last Used Card)
+                        </Typography>
+
+                        <FormControlLabel
+                          onClick={(e) => e.stopPropagation()}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          control={
+                            <Checkbox
+                              checked={selectedCards.includes(currentUsedCard.card_number)}
+                              // disabled={!isChosen}
+                              onChange={() => handleToggleCard(currentUsedCard.card_number)}
+                            />
+                          }
+                          label=""
+                          sx={{ m: 0 }}
+                        />
+                      </Paper>
+                    </Grid>
+                  </Grid>
+                  <Divider sx={{ mb: 2 }} />
+                </>
+              )}
+
               <Grid container spacing={2}>
                 {filteredCards.map((card) => {
                   const isChosen = selectedCards.includes(card.card_number);
@@ -5043,7 +5125,9 @@ const OperatorView = () => {
                   return (
                     <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={card.id}>
                       <Paper
-                        onClick={() => {
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                          e.stopPropagation();
                           handleToggleCard(card.card_number);
                         }}
                         sx={(theme) => ({
@@ -5126,7 +5210,7 @@ const OperatorView = () => {
                           control={
                             <Checkbox
                               checked={isChosen}
-                              disabled={!isChosen}
+                              // disabled={!isChosen}
                               onChange={() => handleToggleCard(card.card_number)}
                             />
                           }
@@ -5156,6 +5240,7 @@ const OperatorView = () => {
                 color="warning"
                 sx={{ fontSize: '16px' }}
                 startIcon={<IconSwipe />}
+                disabled={!!currentUsedCard && selectedCards.includes(currentUsedCard.card_number)}
               >
                 Swipe
               </Button>
@@ -5177,6 +5262,26 @@ const OperatorView = () => {
             open={openSwipeDialog}
             onClose={handleCloseSwipeDialog}
             onSubmit={handleSwipeCardSubmit}
+            invitationId={invitationId}
+            loading={setLoadingAccess}
+          />
+          {/* Dialog Choose registered Site Access Site */}
+          <RegisteredSiteAccessDialog
+            open={openRegisteredSite}
+            onClose={() => {
+              setSelectedSite(null);
+              setOpenRegisteredSiteDialog(false);
+              setAction('');
+            }}
+            siteRegistered={siteRegistered}
+            selectedSite={selectedSite}
+            setSelectedSite={setSelectedSite}
+            action={action}
+            setAction={setAction}
+            containerRef={containerRef.current}
+            onSubmit={(action: 'grant' | 'revoke', site) => {
+              console.log(action, site);
+            }}
           />
           {/* Dialog Swipe Access */}
           <SwipeAccessDialog
@@ -5184,8 +5289,8 @@ const OperatorView = () => {
             onClose={handleCloseSwipeAccess}
             data={accessData}
             payload={swipePayload}
+            invitationId={invitationId as string}
           />
-
           {/* Fill Form Pra regist Multiple*/}
           <Dialog
             open={openFillForm}
@@ -5245,9 +5350,6 @@ const OperatorView = () => {
                           ?.flatMap((q) => q.form || [])
                           ?.find((f) => f.remarks === 'is_driving');
 
-                        const isDriving =
-                          isDrivingField?.answer_text === 'true' ||
-                          isDrivingField?.answer_text === true;
                         return (
                           <Grid>
                             <Box>
@@ -5431,7 +5533,7 @@ const OperatorView = () => {
             maxWidth="xl"
             container={containerRef.current}
           >
-            <DialogTitle>Praregister</DialogTitle>
+            <DialogTitle>Fill Pra Registration</DialogTitle>
             <IconButton
               aria-label="close"
               onClick={() => setOpenDialogInvitation(false)}
@@ -5479,116 +5581,26 @@ const OperatorView = () => {
               </DialogContent>
             )}
           </Dialog>
-          {/* Access */}
-          <Dialog
+          {/* Access Dialog */}
+          <AccessDialog
             open={openAccessData}
-            onClose={() => setOpenAccessData(false)}
-            fullWidth
-            maxWidth="md"
-            container={containerRef.current}
-          >
-            <DialogTitle>Give Access</DialogTitle>
-            <IconButton
-              aria-label="close"
-              onClick={() => setOpenAccessData(false)}
-              sx={{
-                position: 'absolute',
-                right: 8,
-                top: 8,
-
-                color: (theme) => theme.palette.grey[500],
-              }}
-            >
-              <IconX />
-            </IconButton>
-            <DialogContent dividers>
-              <DynamicTable
-                data={accessData.map(({ trx_visitor_id, visitors, ...rest }) => rest)}
-                isHaveChecked={true}
-                isHaveHeaderTitle={true}
-                // titleHeader="Access"
-                overflowX="auto"
-                isHaveAccess={true}
-                isNoActionTableHead={true}
-                onAccessAction={handleAccessAction}
-                onCheckedChange={(checkedRows) => {
-                  const ids = checkedRows.map((r) => r.access_control_id);
-                  console.log('id', ids);
-                  setSelectedAccessIds(ids);
-                }}
-              />
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <CustomSelect
-                  sx={{ width: '30%', p: 0, mt: 2, backgroundColor: 'white' }}
-                  value={selectedActionAccess}
-                  onChange={(e: any) => setSelectedActionAccess(e.target.value)}
-                  displayEmpty
-                  disabled={!selectedAccessIds.length}
-                >
-                  <MenuItem value="">Select Action</MenuItem>
-                  <MenuItem value="grant" disabled={!allowedActions.includes('Grant')}>
-                    Grant
-                  </MenuItem>
-                  <MenuItem value="revoke" disabled={!allowedActions.includes('Revoke')}>
-                    Revoke
-                  </MenuItem>
-                  <MenuItem value="block" disabled={!allowedActions.includes('Block')}>
-                    Block
-                  </MenuItem>
-                </CustomSelect>
-
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={async () => {
-                    if (!selectedAccessIds.length || !selectedActionAccess) {
-                      setSnackbarMsg('Please select rows and an action first.');
-                      setSnackbarType('info');
-                      setSnackbarOpen(true);
-                      return;
-                    }
-
-                    if (
-                      !allowedActions.includes(
-                        selectedActionAccess.charAt(0).toUpperCase() +
-                          selectedActionAccess.slice(1),
-                      )
-                    ) {
-                      setSnackbarMsg(
-                        `Action "${selectedActionAccess}" is not allowed for selected access.`,
-                      );
-                      setSnackbarType('info');
-                      setSnackbarOpen(true);
-                      return;
-                    }
-
-                    for (const id of selectedAccessIds) {
-                      const row = accessData.find(
-                        (r) =>
-                          r.access_control_id?.toLowerCase() === id.toLowerCase() &&
-                          selectedVisitors.some(
-                            (v) =>
-                              v.toLowerCase() === r.trx_visitor_id?.toLowerCase() ||
-                              v.toLowerCase() === r.trxVisitorId?.toLowerCase(),
-                          ),
-                      );
-
-                      if (!row) {
-                        continue;
-                      }
-
-                      await handleAccessAction(row, selectedActionAccess.toLowerCase() as any);
-                    }
-                    setSelectedActionAccess('');
-                  }}
-                  sx={{ mb: 0, mt: 2 }}
-                  disabled={!selectedActionAccess || allowedActions.length === 0}
-                >
-                  Apply
-                </Button>
-              </Box>
-            </DialogContent>
-          </Dialog>
+            onClose={() => {
+              setAction('');
+              setOpenAccessData(false);
+            }}
+            containerRef={containerRef.current || null}
+            accessData={accessData}
+            selectedVisitors={selectedVisitors}
+            allowedActions={allowedActions}
+            selectedAccessIds={selectedAccessIds}
+            setSelectedAccessIds={setSelectedAccessIds}
+            selectedActionAccess={selectedActionAccess || ''}
+            setSelectedActionAccess={setSelectedActionAccess}
+            handleAccessAction={handleAccessAction}
+            setSnackbarOpen={setSnackbarOpen}
+            setSnackbarMsg={setSnackbarMsg}
+            setSnackbarType={setSnackbarType}
+          />
           {/* Extend Visit */}
           <ExtendVisitDialog
             open={openExtendVisit}
@@ -5613,7 +5625,7 @@ const OperatorView = () => {
             }}
             open={openInvitationVisitor}
             onClose={handleCloseDialog}
-            keepMounted
+            // keepMounted
             container={containerRef.current ?? undefined}
           >
             <DialogTitle display="flex" justifyContent={'space-between'} alignItems="center">
@@ -5630,13 +5642,23 @@ const OperatorView = () => {
             <Divider />
             <DialogContent>
               <FormWizardAddVisitor
-                key={wizardKey}
+                // key={wizardKey}
                 formData={formDataAddVisitor}
                 setFormData={setFormDataAddVisitor}
                 onSuccess={handleSuccess}
                 containerRef={containerRef}
                 fullscreenHandle={handle}
                 resetStep={resetStep}
+                onInvitationCreated={handleInvitationCreated}
+                ws={{
+                  imageQueue: wsImageQueueRef,
+                  ocrQueue: wsOcrQueueRef,
+                  send: sendToScanner,
+                }}
+                // ws={ws}
+                setWsPayload={setWsPayload}
+                registeredSite={registerSiteOperator.user_id}
+                forceTick={tick}
               />
             </DialogContent>
           </Dialog>
@@ -5677,72 +5699,38 @@ const OperatorView = () => {
               />
             </DialogContent>
           </Dialog>
-          {/* Registered Site */}
+
+          {/* Parking /Vehicle Dialog */}
           <Dialog
-            open={openDialogIndex === 2}
-            onClose={handleCloseDialog}
-            fullWidth
-            maxWidth="sm"
+            open={openParking}
+            onClose={() => setOpenParking(false)}
             container={containerRef.current ?? undefined}
+            fullWidth
+            maxWidth="md"
           >
-            <DialogTitle display="flex" justifyContent={'space-between'} alignItems="center">
-              Select Registered Site
+            <DialogTitle>
+              List Parking
               <IconButton
                 aria-label="close"
                 onClick={() => {
-                  handleCloseDialog();
+                  setOpenParking(false);
+                  setAction('');
+                }}
+                sx={{
+                  position: 'absolute',
+                  right: 8,
+                  top: 8,
+                  color: (theme) => theme.palette.grey[500],
                 }}
               >
                 <IconX />
               </IconButton>
             </DialogTitle>
-            <Divider />
-            <DialogContent>
-              <CustomFormLabel sx={{ marginTop: 0 }}>Registered Site</CustomFormLabel>
-              <Autocomplete
-                fullWidth
-                options={siteData}
-                getOptionLabel={(o) => o.name || ''}
-                value={selectedSite}
-                onChange={(_, nv) => {
-                  setSelectedSite(nv);
-                  setFormDataAddVisitor((prev) => ({
-                    ...prev,
-                    registered_site: nv?.id || '',
-                  }));
-                }}
-                slotProps={{
-                  popper: {
-                    container: containerRef.current,
-                  },
-                }}
-                isOptionEqualToValue={(option, value) => option.id === value?.id}
-                renderInput={(params) => <TextField {...params} label="" />}
-              />
-              <Box display="flex" justifyContent="flex-end" mt={2}>
-                <Button
-                  variant="contained"
-                  onClick={() => {
-                    if (!selectedSite) {
-                      toast('Minimal pilih 1 Registered Site.', 'warning');
-                      return;
-                    }
-                    setFormDataAddVisitor((prev) => ({
-                      ...prev,
-                      registered_site: selectedSite.id,
-                    }));
-                    setOpenDialogIndex(null);
-
-                    setOpenInvitationVisitor(true);
-                  }}
-                  color="primary"
-                  endIcon={<IconArrowRight width={18} />}
-                >
-                  Next
-                </Button>
-              </Box>
+            <DialogContent dividers>
+              <DynamicTable data={[]} isHaveSearch={true} />
             </DialogContent>
           </Dialog>
+
           {/* Info Dialog */}
           <InfoDialog
             open={openDialogInfo}
@@ -5750,53 +5738,22 @@ const OperatorView = () => {
             data={dataImage}
             container={containerRef ?? null}
           />
-          <Portal>
-            <Snackbar
-              open={snackbarOpen}
-              autoHideDuration={3000}
-              onClose={() => setSnackbarOpen(false)}
-              anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-              sx={{
-                zIndex: 99999,
-                position: 'fixed',
-                top: 20,
-                left: 0,
-                right: 0,
-                margin: '0 auto',
-                maxWidth: 500,
-                '& .MuiPaper-root': {
-                  minWidth: 420,
-                  maxWidth: 600,
-                  fontSize: '1rem',
-                  whiteSpace: 'pre-line',
-                  lineHeight: 1.5,
-                  p: 2.5,
-                  borderRadius: 2,
-                },
-              }}
-            >
-              <Alert
-                onClose={() => setSnackbarOpen(false)}
-                severity={snackbarType}
-                variant="filled"
-                sx={{ width: '100%', fontSize: '16px', whiteSpace: 'pre-line' }}
-              >
-                {snackbarMsg}
-              </Alert>
-            </Snackbar>
-          </Portal>
-          <Portal>
-            <Backdrop
-              sx={{
-                zIndex: 999999,
-                position: 'fixed',
-                margin: '0 auto',
-              }}
-              open={loadingAccess}
-            >
-              <CircularProgress color="primary" />
-            </Backdrop>
-          </Portal>
+          <ReturnCardDialog
+            open={openReturnCard}
+            value={returnCardNumber}
+            loading={loadingAccess}
+            onClose={() => setOpenReturnCard(false)}
+            onChange={setReturnCardNumber}
+            onSubmit={handleSubmitReturnCard}
+          />
+
+          <SnackbarOperator
+            open={snackbarOpen}
+            message={snackbarMsg}
+            severity={snackbarType}
+            onClose={() => setSnackbarOpen(false)}
+          />
+          <GlobalBackdropLoading open={loadingAccess} />
         </Box>
       </FullScreen>
     </PageContainer>

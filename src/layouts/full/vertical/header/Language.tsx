@@ -46,9 +46,10 @@ const Language = () => {
     setAnchorEl(null);
   };
   useEffect(() => {
-    i18n.changeLanguage(customizer.isLanguage);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (i18n.language !== customizer.isLanguage) {
+      i18n.changeLanguage(customizer.isLanguage);
+    }
+  }, [customizer.isLanguage]);
 
   return (
     <>

@@ -1,6 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import { useState } from 'react';
 import { useSelector } from 'src/store/Store';
@@ -65,7 +65,7 @@ const NavCollapse = ({
   };
 
   // menu collapse for sub-levels
-  React.useEffect(() => {
+  useEffect(() => {
     setOpen(false);
     menu?.children?.forEach((item: any) => {
       if (item?.href === pathname) {
@@ -82,6 +82,9 @@ const NavCollapse = ({
     borderRadius: `${customizer.borderRadius}px`,
     backgroundColor: open && level < 2 ? theme.palette.primary.main : '',
     color: open && level < 2 ? theme.palette.primary.light : '',
+    // '&:hover': {
+    //   backgroundColor: theme.palette.action.hover,
+    // }
   }));
 
   // If Menu has Children

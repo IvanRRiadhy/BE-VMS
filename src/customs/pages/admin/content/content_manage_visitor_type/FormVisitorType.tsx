@@ -30,9 +30,11 @@ import {
   Select,
   InputLabel,
   Autocomplete,
+  Box,
+  Divider,
+  Checkbox,
 } from '@mui/material';
-import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
-import { Box } from '@mui/system';
+
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import React, { useEffect, useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
@@ -43,8 +45,6 @@ import {
   CreateVisitorTypeRequestSchema,
   FormVisitorTypes,
   SectionPageVisitorType,
-  UpdateVisitorTypeRequest,
-  updateVisitorTypeSchmea,
 } from 'src/customs/api/models/Admin/VisitorType';
 import { IconArrowLeft, IconArrowRight, IconPencil, IconTrash } from '@tabler/icons-react';
 import {
@@ -165,30 +165,35 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
   }, [edittingId, token, accessData]);
 
   useEffect(() => {
-    if (!edittingId) return;
+    if (!edittingId) {
+      setSelectedAnalytics(null);
+      return;
+    }
 
     const fetchVisitorTypeAnalytics = async () => {
-      const res = await getVisitorTypeAnalyticsByVisitorId(edittingId, token as string);
+      try {
+        const res = await getVisitorTypeAnalyticsByVisitorId(edittingId, token as string);
 
-      const existing = res.collection?.[0];
+        const existing = res?.collection?.[0];
 
-      if (!existing) {
+        if (!existing) {
+          setSelectedAnalytics(null);
+          return;
+        }
+
+        setSelectedAnalytics({
+          id: existing.id,
+          integration_id: existing.integration_id,
+          name: existing.integration_name,
+        });
+      } catch (error) {
+        console.error('Failed fetch visitor type analytics:', error);
         setSelectedAnalytics(null);
-        return;
       }
-
-      // const matched = analyticCctv.find((a: any) => a.id === existing.integration_id);
-
-      // setSelectedAnalytics(matched ?? null);
-      setSelectedAnalytics({
-        id: existing.id, // 🔥 visitor_type_analytics.id
-        integration_id: existing.integration_id, // 🔥 integration.id
-        name: existing.integration_name, // untuk label Autocomplete
-      });
     };
 
     fetchVisitorTypeAnalytics();
-  }, [edittingId, token, analyticCctv]);
+  }, [edittingId, token]);
 
   const buildUpdateAccessPayload = (visitorTypeId: string) =>
     selectedAccess.map((a, index) => ({
@@ -259,7 +264,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
             custom_field_id: field.custom_field_id ?? '',
             multiple_option_fields: field.multiple_option_fields?.length
               ? field.multiple_option_fields
-              : matchedField?.multiple_option_fields ?? [],
+              : (matchedField?.multiple_option_fields ?? []),
             visitor_form_type: 0,
             document_id: field.document_id ?? null,
           };
@@ -278,7 +283,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
             custom_field_id: field.custom_field_id ?? '',
             multiple_option_fields: field.multiple_option_fields?.length
               ? field.multiple_option_fields
-              : matchedField?.multiple_option_fields ?? [],
+              : (matchedField?.multiple_option_fields ?? []),
             visitor_form_type: 2,
             document_id: field.document_id ?? null,
           };
@@ -325,10 +330,10 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         for (const payload of analyticsPayloads) {
           if (edittingId) {
             const resUpdate = await updateVisitorTypeAnalytics(payload.id, payload, token);
-            console.log('res analytic', resUpdate);
+            // console.log('res analytic', resUpdate);
           } else {
             const resUpdate = await createVisitorTypeAnalytics(payload, token);
-            console.log('res analytic Create', resUpdate);
+            // console.log('res analytic Create', resUpdate);
           }
         }
         // console.log('analyticsPayloads', analyticsPayloads);
@@ -364,72 +369,87 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     }
   };
 
-  useEffect(() => {
-    if (!formData.can_parking) {
-      setSectionsData((prevSections) =>
-        prevSections.map((s) => {
-          if (
-            s.name.toLowerCase().includes('parking') ||
-            s.name.toLowerCase().includes('vehicle information')
-          ) {
-            return {
-              ...s,
-              visit_form: (s.visit_form || []).filter(
-                (f) =>
-                  !['Vehicle Type', 'Vehicle Plate', 'Is Driving/Riding'].includes(
-                    f.short_name || '',
-                  ),
-              ),
-            };
-          }
-          return s;
-        }),
-      );
-      return;
-    }
+  // useEffect(() => {
+  //   if (!formData.can_parking) {
+  //     setSectionsData((prevSections) =>
+  //       prevSections.map((s) => {
+  //         if (
+  //           s.name.toLowerCase().includes('parking') ||
+  //           s.name.toLowerCase().includes('vehicle information')
+  //         ) {
+  //           return {
+  //             ...s,
+  //             visit_form: (s.visit_form || []).filter(
+  //               (f) =>
+  //                 !['Vehicle Type', 'Vehicle Plate', 'Is Driving/Riding'].includes(
+  //                   f.short_name || '',
+  //                 ),
+  //             ),
+  //           };
+  //         }
+  //         return s;
+  //       }),
+  //     );
+  //     return;
+  //   }
 
-    setSectionsData((prevSections) => {
-      const updated = [...prevSections];
-      const targetIndex = updated.findIndex(
-        (s) =>
-          s.name.toLowerCase().includes('parking') ||
-          s.name.toLowerCase().includes('vehicle information'),
-      );
+  //   setSectionsData((prevSections) => {
+  //     const updated = [...prevSections];
+  //     const targetIndex = updated.findIndex(
+  //       (s) =>
+  //         s.name.toLowerCase().includes('parking') ||
+  //         s.name.toLowerCase().includes('vehicle information'),
+  //     );
 
-      if (targetIndex === -1) return prevSections;
+  //     if (targetIndex === -1) return prevSections;
 
-      const section = { ...updated[targetIndex] };
-      section.visit_form = [...(section.visit_form || [])];
+  //     const section = { ...updated[targetIndex] };
+  //     section.visit_form = [...(section.visit_form || [])];
 
-      const requiredShortNames = ['Vehicle Type', 'Vehicle Plate', 'Is Driving/Riding'];
+  //     const requiredShortNames = ['Vehicle Type', 'Vehicle Plate', 'Is Driving/Riding'];
 
-      for (const short of requiredShortNames) {
-        const exists = section.visit_form.some((f) => f.short_name === short);
-        if (!exists) {
-          // cari dari customField agar field_type, remarks dll sinkron
-          const matchedField = customField.find(
-            (f) => f.short_name === short || f.remarks === short,
-          );
+  //     for (const short of requiredShortNames) {
+  //       const exists = section.visit_form.some((f) => f.short_name === short);
+  //       if (!exists) {
+  //         const matchedField = customField.find(
+  //           (f) => f.short_name === short || f.remarks === short,
+  //         );
 
-          section.visit_form.push({
-            sort: section.visit_form.length,
-            short_name: short,
-            long_display_text: '',
-            is_enable: false,
-            is_primary: false,
-            mandatory: false,
-            field_type: matchedField?.field_type ?? 0,
-            remarks: matchedField?.remarks ?? short,
-            custom_field_id: matchedField?.id ?? '',
-            multiple_option_fields: matchedField?.multiple_option_fields ?? [],
-          });
-        }
-      }
+  //         section.visit_form.push({
+  //           sort: section.visit_form.length,
+  //           short_name: short,
+  //           long_display_text: '',
+  //           is_enable: false,
+  //           is_primary: false,
+  //           mandatory: false,
+  //           field_type: matchedField?.field_type ?? 0,
+  //           remarks: matchedField?.remarks ?? short,
+  //           custom_field_id: matchedField?.id ?? '',
+  //           multiple_option_fields: matchedField?.multiple_option_fields ?? [],
+  //         });
+  //       }
+  //     }
 
-      updated[targetIndex] = section;
-      return updated;
-    });
-  }, [formData.can_parking, customField]);
+  //     updated[targetIndex] = section;
+  //     return updated;
+  //   });
+  // }, [formData.can_parking, customField]);
+
+  const generateUUIDv4 = () => {
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+
+    return [...bytes]
+      .map((b, i) =>
+        [4, 6, 8, 10].includes(i)
+          ? '-' + b.toString(16).padStart(2, '0')
+          : b.toString(16).padStart(2, '0'),
+      )
+      .join('');
+  };
 
   type SectionKey = 'visit_form' | 'pra_form' | 'checkout_form';
 
@@ -440,7 +460,9 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
           const currentDetails = Array.isArray(section[sectionKey]) ? section[sectionKey] : [];
           const sortIndex = currentDetails.length;
 
-          const newItem: FormVisitorTypes = {
+          const newItem: any = {
+            id: null,
+            dnd_id: generateUUIDv4(),
             sort: sortIndex,
             short_name: '',
             long_display_text: '',
@@ -462,13 +484,13 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
       }),
     );
   };
+
   const handleDetailChange = (
     sectionKey: SectionKey,
     index: number,
     field: keyof FormVisitorTypes,
     value: any,
   ) => {
-    console.log(`Changing [${sectionKey}][${index}].${String(field)} =`, value);
     setSectionsData((prev) =>
       prev.map((section, i) => {
         if (i === activeStep - 1) {
@@ -606,7 +628,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     const fetchAnalytic = async () => {
       try {
         const res = await getCameraAnalytics(token);
-        console.log('res analytic', res.collection);
         setAnalyticCctv(res.collection ?? []);
       } catch (error) {
         console.log(error);
@@ -620,7 +641,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     { value: -1, label: '' },
     { value: 0, label: 'NIK' },
     { value: 1, label: 'KTP' },
-    { value: 2, label: 'PASSPORT' },
+    { value: 2, label: 'Passport' },
     { value: 3, label: 'Driver License' },
     { value: 4, label: 'Card Access' },
     { value: 5, label: 'Face' },
@@ -660,9 +681,10 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     ]);
   };
 
-  const handleAddSite = () => {
-    setSelectedSite((prev) => [...prev, { id: '', name: '' }]);
-  };
+  const options = [
+    { label: 'SPU', value: 'SPU' },
+    { label: 'DC', value: 'DC' },
+  ];
 
   const StepContent = (step: number) => {
     if (step === 0) {
@@ -1399,7 +1421,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                 }
                 label={
                   <Box display="flex" alignItems="center">
-                    Is Enable
+                    Status (Enable/Disable)
                     <Tooltip title="When turned on, this type will appear on the visitor portal for selection.">
                       <IconButton size="small">
                         <InfoOutlinedIcon fontSize="small" />
@@ -1436,6 +1458,62 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                 />
               </Box>
             </Grid>
+
+            <Grid size={3} mt={1}>
+              <Box>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      // checked={formData.is_multi_site ?? false}
+                      onChange={(e) => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          is_multi_site: e.target.checked,
+                        }));
+                      }}
+                    />
+                  }
+                  label={
+                    <Box display="flex" alignItems="center">
+                      Multi Site
+                      <Tooltip title="When turned on, this visitor type can be used across multiple sites.">
+                        <IconButton size="small">
+                          <InfoOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  }
+                />
+              </Box>
+            </Grid>
+
+            {/* <Grid size={12} mt={1}>
+              <Box>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.simple_visitor}
+                      onChange={(e) => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          simple_visitor: e.target.checked,
+                        }));
+                      }}
+                    />
+                  }
+                  label={
+                    <Box display="flex" alignItems="center">
+                      Simple Visitor
+                      <Tooltip title="When turned on, this visit type is treated as a short or minimal-duration visit.">
+                        <IconButton size="small">
+                          <InfoOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  }
+                />
+              </Box>
+            </Grid> */}
 
             <Grid size={12} mt={1}>
               <Box>
@@ -1494,6 +1572,41 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                 </Box>
               </Grid>
             )}
+
+            <Divider sx={{ mt: 1 }} />
+
+            <Grid size={12} mt={1}>
+              <Box>
+                <Typography
+                  variant="h6"
+                  sx={{ mb: 1, borderLeft: '4px solid #673ab7', pl: 1, mt: 2 }}
+                >
+                  Special Visitor
+                </Typography>
+                <Autocomplete
+                  options={options}
+                  // value={value}
+                  // onChange={(event, newValue) => {
+                  //   setValue(newValue); // hanya 1 yang bisa dipilih
+                  // }}
+                  disableCloseOnSelect={false}
+                  renderOption={(props, option, { selected }) => (
+                    <li {...props}>
+                      <Checkbox checked={selected} sx={{ mr: 0.5 }} />
+                      {option.label}
+                    </li>
+                  )}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label=""
+                      placeholder="Select special visitor"
+                      sx={{ mt: 1 }}
+                    />
+                  )}
+                />
+              </Box>
+            </Grid>
           </Grid>
         </Grid>
       );
@@ -1564,113 +1677,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
           />
         </Box>
 
-        {/* {!currentSection.is_document && !currentSection.can_multiple_used && (
-            <>
-              <Grid size={12}>
-                <Box mt={3}>
-                  <Typography variant="subtitle1" fontWeight={600}>
-                    Visit Form
-                  </Typography>
-                  <TableContainer component={Paper} sx={{ mb: 1 }}>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Field Name</TableCell>
-                          <TableCell>Display</TableCell>
-                          <TableCell>Enabled</TableCell>
-                          <TableCell>Mandatory</TableCell>
-                          <TableCell sx={{ textAlign: 'center' }}>Action</TableCell>
-                        </TableRow>
-                      </TableHead>
-
-                      {renderDetailRows(
-                        currentSection.visit_form || [],
-                        (index, field, value) =>
-                          handleDetailChange('visit_form', index, field, value),
-                        (index) => handleDeleteDetail('visit_form', index),
-                        true,
-                        false,
-                        false,
-                        'visit_form',
-                      )}
-                    </Table>
-                  </TableContainer>
-                  <MuiButton size="small" onClick={() => handleAddDetail('visit_form')}>
-                    Add New
-                  </MuiButton>
-                </Box>
-              </Grid>
-
-              <Grid size={12}>
-                <Box mt={3}>
-                  <Typography variant="subtitle1" fontWeight={600}>
-                    Pra Form
-                  </Typography>
-                  <TableContainer component={Paper} sx={{ mb: 1 }}>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Field Name</TableCell>
-                          <TableCell>Display</TableCell>
-                          <TableCell>Enabled</TableCell>
-                          <TableCell>Mandatory</TableCell>
-                          <TableCell sx={{ textAlign: 'center' }}>Action</TableCell>
-                        </TableRow>
-                      </TableHead>
-
-                      {renderDetailRows(
-                        currentSection.pra_form || [],
-                        (i, f, v) => handleDetailChange('pra_form', i, f, v),
-                        (i) => handleDeleteDetail('pra_form', i),
-                        true,
-                        false,
-                        false,
-                        'pra_form',
-                      )}
-                    </Table>
-                  </TableContainer>
-                  <MuiButton size="small" onClick={() => handleAddDetail('pra_form')}>
-                    Add New
-                  </MuiButton>
-                </Box>
-              </Grid>
-
-              <Grid size={12}>
-                <Box mt={3}>
-                  <Typography variant="subtitle1" fontWeight={600}>
-                    Checkout Form
-                  </Typography>
-                  <TableContainer component={Paper} sx={{ mb: 1 }}>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Field Name</TableCell>
-                          <TableCell>Display</TableCell>
-                          <TableCell>Enabled</TableCell>
-                          <TableCell>Mandatory</TableCell>
-                          <TableCell sx={{ textAlign: 'center' }}>Action</TableCell>
-                        </TableRow>
-                      </TableHead>
-
-                      {renderDetailRows(
-                        currentSection.checkout_form || [],
-                        (i, f, v) => handleDetailChange('checkout_form', i, f, v),
-                        (i) => handleDeleteDetail('checkout_form', i),
-                        true,
-                        false,
-                        false,
-                        'checkout_form',
-                      )}
-                    </Table>
-                  </TableContainer>
-                  <MuiButton size="small" onClick={() => handleAddDetail('checkout_form')}>
-                    Add New
-                  </MuiButton>
-                </Box>
-              </Grid>
-            </>
-          )} */}
-
         {!currentSection.is_document && !currentSection.can_multiple_used && (
           <>
             {/* Visit Form */}
@@ -1679,18 +1685,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                 <Typography variant="subtitle1" fontWeight={600}>
                   Visit Form
                 </Typography>
-
-                {/* ✅ Komponen drag & drop baru */}
-                {/* <RenderDetailRows
-                    title="visit_form"
-                    data={currentSection.visit_form || []}
-                    customField={customField}
-                    onChange={(index: any, field: any, value: any) =>
-                      handleDetailChange('visit_form', index, field as any, value)
-                    }
-                    onDelete={(index: any) => handleDeleteDetail('visit_form', index)}
-                    onReorder={(newData: any) => handleReorder('visit_form', newData)}
-                  /> */}
 
                 <RenderDetailRows
                   title="visit_form"
@@ -1724,18 +1718,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                 <Typography variant="subtitle1" fontWeight={600}>
                   Pra Form
                 </Typography>
-                {/* 
-                  <RenderDetailRows
-                    title="pra_form"
-                    data={currentSection.pra_form || []}
-                    customField={customField}
-                    onChange={(index: any, field: any, value: any) =>
-                      handleDetailChange('pra_form', index, field as any, value)
-                    }
-                    onDelete={(index: any) => handleDeleteDetail('pra_form', index)}
-                    onReorder={(newData: any) => handleReorder('pra_form', newData)}
-                  /> */}
-
                 <RenderDetailRows
                   title="pra_form"
                   data={currentSection.pra_form || []}
@@ -1768,18 +1750,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                 <Typography variant="subtitle1" fontWeight={600}>
                   Checkout Form
                 </Typography>
-
-                {/* <RenderDetailRows
-                    title="checkout_form"
-                    data={currentSection.checkout_form || []}
-                    customField={customField}
-                    onChange={(index: any, field: any, value: any) =>
-                      handleDetailChange('checkout_form', index, field as any, value)
-                    }
-                    onDelete={(index: any) => handleDeleteDetail('checkout_form', index)}
-                    onReorder={(newData: any) => handleReorder('checkout_form', newData)}
-                  /> */}
-
                 <RenderDetailRows
                   title="checkout_form"
                   data={currentSection.checkout_form || []}
@@ -2123,10 +2093,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
   const totalSteps = 1 + draggableSteps.length;
   const isLastStep = activeStep === totalSteps - 1;
 
-  // useEffect(() => {
-  //   setDraggableSteps([...dynamicSteps]);
-  // }, [dynamicSteps]);
-
   useEffect(() => {
     setDraggableSteps(sectionsData.map((s) => s.name));
   }, [sectionsData]);
@@ -2359,8 +2325,8 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                                   backgroundColor: snapshot.isDragging
                                     ? '#1976d2'
                                     : activeStep === index + 1
-                                    ? 'primary.main'
-                                    : '#9e9e9e',
+                                      ? 'primary.main'
+                                      : '#9e9e9e',
                                   color: '#fff',
                                   width: 30,
                                   height: 30,
@@ -2496,7 +2462,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         open={loading}
         sx={{
           color: '#fff',
-          zIndex: (theme) => theme.zIndex.drawer + 1,
+          zIndex: 999999,
         }}
       >
         <CircularProgress color="primary" />

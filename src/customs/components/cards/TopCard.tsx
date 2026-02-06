@@ -76,14 +76,14 @@ const TopCard: React.FC<TopCardsProps> = ({ items, onImageClick, cardMarginBotto
                           sx={{
                             backgroundColor:
                               card.title === 'Check In'
-                                ? '#13DEB9' // hijau
+                                ? '#21c45d' // hijau
                                 : card.title === 'Check Out'
-                                ? '#F44336' // merah
-                                : card.title === 'Denied'
-                                ? '#8B0000' // merah tua
-                                : card.title === 'Block'
-                                ? '#000000' // hitam
-                                : '#5c87ff', // default biru
+                                  ? '#F44336' // merah
+                                  : card.title === 'Denied'
+                                    ? '#8B0000' // merah tua
+                                    : card.title === 'Block'
+                                      ? '#000000' // hitam
+                                      : '#055499', // default biru
                             borderRadius: '50%',
                             color: '#fff',
                             padding: 1,

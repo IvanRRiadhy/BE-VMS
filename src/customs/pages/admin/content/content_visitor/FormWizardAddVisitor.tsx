@@ -202,7 +202,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     severity: AlertColor; // 'success' | 'info' | 'warning' | 'error'
   }>({ open: false, message: '', severity: 'info' });
 
-  // 3) helper supaya snackbar pasti muncul walau pesannya sama
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [openCamera, setOpenCamera] = useState(false);
+  const [screenshot, setScreenshot] = useState<string | null>(null);
+
+  const [inputValues, setInputValues] = useState<{ [key: number]: string }>({});
+  const webcamRef = useRef<Webcam>(null);
   const toast = (message: string, severity: AlertColor = 'info') => {
     setSnackbar((s) => ({ ...s, open: false }));
     setTimeout(() => setSnackbar({ open: true, message, severity }), 0);
@@ -252,7 +257,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       moment.tz?.guess?.() || Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Jakarta';
 
     const newGroup: GroupVisitor = {
-      id: crypto.randomUUID(),
+      id: generateUUIDv4(),
       group_name: '',
       group_code: randomCode,
       is_group: formData.is_group || false,
@@ -270,16 +275,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   };
 
   const [grantAccessMap, setGrantAccessMap] = useState<Record<string, any[]>>({});
-  const allSite = dataVisitor
-    .map(
-      (v) =>
-        v.question_page
-          ?.flatMap((p: any) => p.form ?? [])
-          ?.find((f: any) => f.remarks === 'site_place')?.answer_text,
-    )
-    .filter(Boolean);
-
-  // const isSingle = !isGroup;
 
   const [groupAccessData, setGroupAccessData] = useState<any[]>([]);
 
@@ -594,15 +589,27 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             answer_datetime: '',
             answer_file: '',
           }));
-          // kalau belum ada, seed dengan 1 lembar
-          // if (!next[secIdx] || next[secIdx].length === 0) {
-          //   next[secIdx] = [template];
-          // }
         }
       });
       return next;
     });
   }, [sectionsData]);
+
+  const generateUUIDv4 = () => {
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+
+    return [...bytes]
+      .map((b, i) =>
+        [4, 6, 8, 10].includes(i)
+          ? '-' + b.toString(16).padStart(2, '0')
+          : b.toString(16).padStart(2, '0'),
+      )
+      .join('');
+  };
 
   const handleSaveGroupVisitor = () => {
     if (activeGroupIdx === null) return;
@@ -626,7 +633,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       const cleanDataVisitor = deepClone(dataVisitor).map((dv: any) => ({
         ...dv,
         question_page: (dv.question_page || []).map((qp: any) => ({
-          id: qp.id || crypto.randomUUID(),
+          id: qp.id || generateUUIDv4(),
           sort: qp.sort ?? 0,
           name: qp.name ?? '',
           is_document: qp.is_document ?? false,
@@ -655,13 +662,13 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     )
       return 'parking';
     if (
-      f.some((x: any) => x.remarks === 'host') &&
+      f.some((x: any) => x.remarks === 'host' || x.remarks === 'agenda') &&
       !section.is_document &&
       section.can_multiple_used
     )
       return 'purpose_visit';
     if (
-      f.some((x: any) => x.remarks === 'host') &&
+      f.some((x: any) => x.remarks === 'host' || x.remarks === 'agenda') &&
       !section.is_document &&
       !section.can_multiple_used
     )
@@ -1275,8 +1282,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                         const proxyField = hasAns(field)
                                           ? field
                                           : shared
-                                          ? { ...field, ...pickAns(shared) }
-                                          : field;
+                                            ? { ...field, ...pickAns(shared) }
+                                            : field;
 
                                         return (
                                           <Box key={fIdx} sx={{ mb: 2 }}>
@@ -1371,8 +1378,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                         const proxyField = hasAns(field)
                                           ? field
                                           : shared
-                                          ? { ...field, ...pickAns(shared) }
-                                          : field;
+                                            ? { ...field, ...pickAns(shared) }
+                                            : field;
 
                                         return (
                                           <TableCell
@@ -1486,7 +1493,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             ...(found >= 0 ? next.single_page[found] : base),
                             foreign_id:
                               found >= 0
-                                ? next.single_page[found].foreign_id ?? resolvedForeign
+                                ? (next.single_page[found].foreign_id ?? resolvedForeign)
                                 : resolvedForeign,
                             [fieldKey]: value,
                           };
@@ -1854,7 +1861,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         case 10: // Camera
           return (
             <CameraUpload
-              value={field.answer_file}
+              value={field.answer_file as string | undefined}
               onChange={(url) => onChange(index, 'answer_file', url)}
             />
           );
@@ -1950,7 +1957,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
               {(uploadMethods[key] || 'file') === 'camera' ? (
                 <CameraUpload
-                  value={field.answer_file}
+                  value={field.answer_file as string | undefined}
                   onChange={(url) => onChange(index, 'answer_file', url)}
                 />
               ) : (
@@ -2055,16 +2062,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       </Box>
     );
   };
-
-  // Upload Image && file
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [previewUrls, setPreviewUrls] = useState<{ [index: number]: string | null }>({});
-  const [openCamera, setOpenCamera] = useState(false);
-  const [screenshot, setScreenshot] = useState<string | null>(null);
-
-  const [inputValues, setInputValues] = useState<{ [key: number]: string }>({});
-  const webcamRef = useRef<Webcam>(null);
 
   const resetMediaState = () => {
     setPreviews({});
@@ -2283,7 +2280,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       children?: { id: string; name: string; children?: any[] }[];
     }[];
   }[] => {
-    // function body
     return sites
       .filter((s) => {
         const siteParent = s.parent ? s.parent.toLowerCase() : null;
@@ -2297,11 +2293,94 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       }));
   };
 
-  const renderTree = (node: any) => (
-    <TreeItem key={node.id} itemId={String(node.id)} label={node.name}>
-      {node.children?.map((child: any) => renderTree(child))}
-    </TreeItem>
-  );
+  const buildSiteTreeWithParent = (sites: any[], parentId: string) => {
+    const parent = sites.find((s) => s.id === parentId);
+    if (!parent) return [];
+
+    return [
+      {
+        id: parent.id,
+        name: parent.name,
+        children: buildSiteTree(sites, parentId),
+      },
+    ];
+  };
+
+  const [selectedSiteParentIds, setSelectedSiteParentIds] = useState<string[]>([]);
+  const [selectedSiteIds, setSelectedSiteIds] = useState<string[]>([]);
+  const toCsv = (ids: string[]) => ids.join(',');
+
+  const collectAllChildIds = (node: any): string[] => {
+    if (!node.children) return [];
+    return node.children.flatMap((child: any) => [child.id, ...collectAllChildIds(child)]);
+  };
+
+  const renderTree = (
+    node: any,
+    index: number,
+    onChange: (index: number, field: keyof FormVisitor, value: any) => void,
+  ) => {
+    const checked = selectedSiteIds.includes(node.id);
+
+    return (
+      <TreeItem
+        key={`${node.parentId ?? 'root'}-${node.id}`}
+        itemId={`${node.parentId ?? 'root'}-${node.id}`}
+        label={
+          <Box display="flex" alignItems="center" gap={1}>
+            <Checkbox
+              size="small"
+              checked={checked}
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => {
+                const isChecked = e.target.checked;
+                const isParentNode = !!node.children?.length;
+                setSelectedSiteIds((prev) => {
+                  let updated = [...prev];
+
+                  if (isChecked) {
+                    if (!updated.includes(node.id)) {
+                      updated.push(node.id);
+                    }
+                    // if (isParentNode) {
+                    //   const childIds = collectAllChildIds(node);
+                    //   childIds.forEach((cid) => {
+                    //     if (!updated.includes(cid)) {
+                    //       updated.push(cid);
+                    //     }
+                    //   });
+                    // }
+                    if (!isParentNode && node.parentId && !updated.includes(node.parentId)) {
+                      updated.push(node.parentId);
+                    }
+                  } else {
+                    updated = updated.filter((id) => id !== node.id);
+                    if (isParentNode) {
+                      const childIds = collectAllChildIds(node);
+                      updated = updated.filter((id) => !childIds.includes(id));
+                    }
+                  }
+
+                  onChange(index, 'answer_text', toCsv(updated));
+                  console.log('[TREE CHECK]', {
+                    clicked: node.id,
+                    isChecked,
+                    result: updated,
+                  });
+
+                  return updated;
+                });
+              }}
+            />
+            <Typography variant="body2">{node.name}</Typography>
+          </Box>
+        }
+      >
+        {node.children?.map((child: any) => renderTree(child, index, onChange))}
+      </TreeItem>
+    );
+  };
 
   const renderDetailRows = (
     details: FormVisitor[] | any,
@@ -2315,7 +2394,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         </TableRow>
       );
     }
-    // 🚦 Deteksi flag dengan dukungan array & string value
     const getFlag = (key: string) =>
       details.some((f: any) => {
         if (f.remarks?.toLowerCase() !== key) return false;
@@ -2337,6 +2415,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       vehicle_type: isDriving,
       vehicle_plate: isDriving,
       employee: isEmployee,
+    };
+
+    const handleSitePlaceChange = (idx: number, field: keyof FormVisitor, value: any) => {
+      onChange(idx, field, value);
     };
 
     // 🧹 Filter dan reset otomatis field dependent
@@ -2410,12 +2492,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         item.remarks === 'name'
                           ? ''
                           : item.remarks === 'phone'
-                          ? ''
-                          : item.remarks === 'organization'
-                          ? ''
-                          : item.remarks === 'indentity_id'
-                          ? ''
-                          : ''
+                            ? ''
+                            : item.remarks === 'organization'
+                              ? ''
+                              : item.remarks === 'indentity_id'
+                                ? ''
+                                : ''
                       }
                       fullWidth
                     />
@@ -2467,54 +2549,103 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       typeof opt === 'object' ? opt : { value: opt, name: opt },
                     );
                   }
-                  return (
-                    <>
-                      <Autocomplete
-                        size="small"
-                        options={options}
-                        getOptionLabel={(option) => option.name}
-                        inputValue={inputValues[index] || ''}
-                        onInputChange={(_, newInputValue) =>
-                          setInputValues((prev) => ({ ...prev, [index]: newInputValue }))
-                        }
-                        getOptionDisabled={(option) => option.disabled || false}
-                        filterOptions={(opts, state) => {
-                          if (state.inputValue.length < 3) return [];
-                          return opts.filter((opt) =>
-                            opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
-                          );
-                        }}
-                        noOptionsText={
-                          (inputValues[index] || '').length < 3
-                            ? 'Enter at least 3 characters to search'
-                            : 'Not found'
-                        }
-                        value={options.find((opt) => opt.value === item.answer_text) || null}
-                        onChange={(_, newValue) => {
-                          const selectedValue = newValue ? newValue.value : '';
-                          onChange(index, 'answer_text', selectedValue);
-                          if (item.remarks === 'site_place') {
-                            if (!newValue) {
-                              setSiteTree([]);
-                              return;
-                            }
-                            const tree = buildSiteTree(sites, selectedValue);
-                            setSiteTree(tree);
+                  if (item.remarks === 'site_place') {
+                    return (
+                      <>
+                        <Autocomplete
+                          multiple
+                          size="small"
+                          options={options}
+                          getOptionLabel={(option) => option.name}
+                          inputValue={inputValues[index] || ''}
+                          onInputChange={(_, newInputValue, reason) => {
+                            if (reason !== 'input') return;
+
+                            setInputValues((prev) => ({
+                              ...prev,
+                              [index]: newInputValue,
+                            }));
+                          }}
+                          /* 🔥 min 3 char rule */
+                          filterOptions={(opts, state) => {
+                            if (state.inputValue.length < 3) return [];
+                            return opts.filter((opt) =>
+                              opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
+                            );
+                          }}
+                          noOptionsText={
+                            (inputValues[index] || '').length < 3
+                              ? 'Enter at least 3 characters to search'
+                              : 'Not found'
                           }
-                        }}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            label=""
-                            placeholder="Enter at least 3 characters to search"
-                            fullWidth
-                          />
+                          value={options.filter((opt) => selectedSiteParentIds.includes(opt.value))}
+                          onChange={(_, newValues) => {
+                            const parentIds = newValues.map((v) => v.value);
+
+                            setSelectedSiteParentIds(parentIds);
+
+                            setInputValues((prev) => ({
+                              ...prev,
+                              [index]: '',
+                            }));
+                            const trees = parentIds.flatMap((pid) =>
+                              buildSiteTreeWithParent(sites, pid),
+                            );
+
+                            setSiteTree(trees);
+
+                            console.log('[SITE PLACE MULTI PARENT]', parentIds);
+                          }}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              placeholder="Enter at least 3 characters to search"
+                              fullWidth
+                            />
+                          )}
+                        />
+                        {item.remarks === 'site_place' && siteTree.length > 0 && (
+                          <SimpleTreeView>
+                            {siteTree.map((node) => renderTree(node, index, handleSitePlaceChange))}
+                          </SimpleTreeView>
                         )}
-                      />
-                      {item.remarks === 'site_place' && siteTree.length > 0 && (
-                        <SimpleTreeView>{siteTree.map((node) => renderTree(node))}</SimpleTreeView>
+                      </>
+                    );
+                  }
+                  return (
+                    <Autocomplete
+                      size="small"
+                      options={options}
+                      getOptionLabel={(option) => option.name}
+                      inputValue={inputValues[index] || ''}
+                      getOptionDisabled={(option) => option.disabled || false}
+                      onInputChange={(_, newInputValue) =>
+                        setInputValues((prev) => ({ ...prev, [index]: newInputValue }))
+                      }
+                      filterOptions={(opts, state) => {
+                        if (state.inputValue.length < 3) return [];
+                        return opts.filter((opt) =>
+                          opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
+                        );
+                      }}
+                      noOptionsText={
+                        (inputValues[index] || '').length < 3
+                          ? 'Enter at least 3 characters to search'
+                          : 'Not found'
+                      }
+                      value={options.find((opt) => opt.value === item.answer_text) || null}
+                      onChange={(_, newValue) => {
+                        const selectedValue = newValue ? newValue.value : '';
+                        onChange(index, 'answer_text', selectedValue);
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          placeholder="Enter at least 3 characters to search"
+                          fullWidth
+                        />
                       )}
-                    </>
+                    />
                   );
                 }
                 case 4: // Datepicker
@@ -2576,8 +2707,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         const answerArray = Array.isArray(item.answer_text)
                           ? item.answer_text
                           : item.answer_text
-                          ? [String(item.answer_text)]
-                          : [];
+                            ? [String(item.answer_text)]
+                            : [];
 
                         return (
                           <FormControlLabel
@@ -2618,7 +2749,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         ampm={false}
                         onChange={(newValue) => {
                           if (newValue) {
-                            const utc = newValue.utc().format(); // hasil: 2025-08-05T10:00:00Z
+                            const utc = newValue.utc().format();
                             onChange(index, 'answer_datetime', utc);
                           }
                         }}
@@ -2663,9 +2794,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             cursor: 'pointer',
                             p: 2,
                           }}
-                          onClick={() => setOpenCamera(true)} // Bisa langsung dibuka saat klik semua bagian
+                          onClick={() => setOpenCamera(true)}
                         >
-                          {/* <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} /> */}
                           <PhotoCameraIcon sx={{ fontSize: 48, color: '#42a5f5', mr: 0.5 }} />
                           <Box
                             sx={{
@@ -2879,7 +3009,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         </Typography>
 
                         <Typography variant="body2" color="textSecondary" mt={1}>
-                          Supports: PDF, DOCX, JPG, PNG, up to
+                          Supports: JPG, JPEG, PNG, up to
                           <span style={{ fontWeight: 'semibold' }}> 100KB</span>
                         </Typography>
                         {/*preview  */}
@@ -2910,8 +3040,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   onClick={() =>
                                     handleRemoveFileForField(
                                       (item as any).answer_file,
-                                      (url) => onChange(index, 'answer_file', url), // kosongkan state
-                                      key, // reset <input id=key>
+                                      (url) => onChange(index, 'answer_file', url),
+                                      key,
                                     )
                                   }
                                   startIcon={<IconTrash />}
@@ -3426,7 +3556,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           const cleanDataVisitor = (built.data_visitor ?? []).map((dv: any) => ({
             ...dv,
             question_page: (dv.question_page ?? []).map((qp: any, sIdx: number) => ({
-              id: qp.id || qp.Id || rawSections?.[sIdx]?.Id || crypto.randomUUID(),
+              id: qp.id || qp.Id || rawSections?.[sIdx]?.Id || generateUUIDv4(),
               sort: qp.sort ?? sIdx,
               name: qp.name ?? `Section ${sIdx + 1}`,
               status: qp.status ?? 0,
@@ -3641,7 +3771,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   };
 
   const asStr = (v: any) => (v == null ? '' : String(v));
- 
+
   const cloneForms = (forms?: any[]) =>
     Array.isArray(forms)
       ? forms.map((f, idx) => ({
@@ -4418,8 +4548,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   backgroundColor: snapshot.isDragging
                                     ? '#1976d2'
                                     : activeStep === index + 1
-                                    ? 'primary.main'
-                                    : '#9e9e9e',
+                                      ? 'primary.main'
+                                      : '#9e9e9e',
                                   color:
                                     snapshot.isDragging || activeStep === index + 1
                                       ? '#fff'

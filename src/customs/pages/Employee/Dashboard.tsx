@@ -1,26 +1,30 @@
 import {
   Alert,
+  Autocomplete,
   Avatar,
   Backdrop,
   Button,
   Card,
   CardContent,
+  Checkbox,
   CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Divider,
+  FormControlLabel,
   Grid2 as Grid,
   IconButton,
   Portal,
   Snackbar,
+  Switch,
   Tab,
   Tabs,
   TextField,
   Typography,
 } from '@mui/material';
-import { Box } from '@mui/system';
+import { Box, Stack } from '@mui/system';
 import moment from 'moment-timezone';
 import {
   IconBan,
@@ -32,6 +36,7 @@ import {
   IconLogin2,
   IconLogout,
   IconPlus,
+  IconSend,
   IconX,
 } from '@tabler/icons-react';
 import { Scanner } from '@yudiel/react-qr-scanner';
@@ -58,6 +63,8 @@ import jsPDF from 'jspdf';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import Swal from 'sweetalert2';
 import { showSwal } from 'src/customs/components/alerts/alerts';
+import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 const DashboardEmployee = () => {
   const cards = [
     { title: 'Check In', icon: IconLogin, subTitle: `0`, subTitleSetting: 10, color: 'none' },
@@ -94,11 +101,23 @@ const DashboardEmployee = () => {
   const [activeAccessPass, setActiveAccessPass] = useState<any>();
   const printRef = useRef<HTMLDivElement>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  /*************  ✨ Windsurf Command ⭐  *************/
-  /**
-   * Opens the dialog for accessing the access pass.
-   */
-  /*******  b976c85f-50a7-4180-9ef5-11a30904f248  *******/
+  const [openInviteOrCreateLink, setOpenInviteOrCreateLink] = useState(false);
+  const [openCreateLink, setOpenCreateLink] = useState(false);
+  const [openDetailLink, setOpenDetailLink] = useState(false);
+  const [openSendEmail, setOpenSendEmail] = useState(false);
+
+  const handleOpenInviteOrCreateLink = () => {
+    setOpenInviteOrCreateLink(true);
+  };
+
+  const handleCloseInviteOrCreateLink = () => {
+    setOpenInviteOrCreateLink(false);
+  };
+
+  const handleOpenCreateLink = () => {
+    setOpenCreateLink(true);
+  };
+
   const handleOpenAccess = () => {
     setOpenAccess(true);
   };
@@ -162,7 +181,6 @@ const DashboardEmployee = () => {
         const startDate = dayjs().subtract(30, 'day').format('YYYY-MM-DD');
         const endDate = dayjs().add(31, 'day').format('YYYY-MM-DD');
 
-        // 🚀 Ambil data approval tanpa pagination
         const response = await getApproval(
           token as string,
           startDate,
@@ -182,13 +200,13 @@ const DashboardEmployee = () => {
             id: item.id,
             visitor_name: item.visitor?.name || '-',
             // site_place_name: trx.site_place_name || '-',
-            visitor_type: trx.visitor_type_name || '-',
+            // visitor_type: trx.visitor_type_name || '-',
             agenda: trx.agenda || '-',
-            visitor_period_start: trx.visitor_period_start || '-',
+            // visitor_period_start: trx.visitor_period_start || '-',
             // visitor_period_end: trx.visitor_period_end || '-',
-            visitor_period_end: trx.visitor_period_end
-              ? formatDateTime(trx.visitor_period_end, trx.extend_visitor_period)
-              : trx.visitor_period_end || '-',
+            // visitor_period_end: trx.visitor_period_end
+            //   ? formatDateTime(trx.visitor_period_end, trx.extend_visitor_period)
+            //   : trx.visitor_period_end || '-',
             action_by: item.action_by || '-',
             status: item.action,
           };
@@ -255,7 +273,6 @@ const DashboardEmployee = () => {
     const fetchData = async () => {
       try {
         const resAccess = await getAccessPass(token as string);
-        // console.log('res', resAccess.collection.data);
         setActiveAccessPass(resAccess);
       } catch (e) {
         console.error(e);
@@ -386,7 +403,6 @@ const DashboardEmployee = () => {
 
       setTimeout(() => setLoading(false), 200);
 
-   
       // setRefreshTrigger((prev) => prev + 1);
     } catch (error) {
       console.error('Approval action error:', error);
@@ -394,6 +410,60 @@ const DashboardEmployee = () => {
       showSwal('error', 'Something went wrong while processing approval.');
     }
   };
+
+  const dataLink = [
+    {
+      id: 1,
+      name: 'https://www.vms-portal.com/invite/83KAK8209',
+      status_link: true,
+    },
+    {
+      id: 2,
+      name: 'https://www.vms-portal.com/invite/83KAK8256',
+      status_link: false,
+    },
+    {
+      id: 3,
+      name: 'https://www.vms-portal.com/invite/83KAK8202',
+      status_link: false,
+    },
+    {
+      id: 4,
+      name: 'https://www.vms-portal.com/invite/83KAK8201',
+      status_link: false,
+    },
+  ];
+
+  const handleCopyLink = (link: string) => {
+    navigator.clipboard.writeText(link);
+    showSwal('success', 'Link copied to clipboard.' + '\n' + link);
+  };
+
+  const handleDetailLink = (link: string) => {
+    // window.open(link, '_blank');
+    setOpenDetailLink(true);
+  };
+
+  const dataVisitor = [
+    {
+      id: 1,
+      name: 'Dedy',
+      agenda: 'Agenda 1',
+      visitor_type: 'Visitor',
+      destination: 'Gedung Sinergi',
+      visitor_period_start: '2023-04-01, 08:00',
+      visitor_period_end: '2023-04-01, 09:00',
+    },
+    {
+      id: 2,
+      name: 'Budi',
+      agenda: 'Agenda 2',
+      visitor_type: 'Visitor',
+      destination: 'Gedung Sinergi',
+      visitor_period_start: '2026-04-01, 10:00',
+      visitor_period_end: '2026-04-01, 11:00',
+    },
+  ];
 
   return (
     <PageContainer title="Dashboard Employee" description="This is Employee Dashboard">
@@ -471,22 +541,17 @@ const DashboardEmployee = () => {
               </Box>
             )}
           </Card>
+          <Button
+            variant="contained"
+            color="primary"
+            sx={{ mt: 0.5 }}
+            onClick={handleOpenInviteOrCreateLink}
+          >
+            Invite
+          </Button>
         </Grid>
 
         {/* Tabel */}
-        <Grid size={{ xs: 12, lg: 6 }}>
-          <DynamicTable
-            height={420}
-            isHavePagination={false}
-            overflowX="auto"
-            data={activeInvitation}
-            isHaveChecked={false}
-            isHavePeriod={true}
-            isHaveAction={false}
-            isHaveHeaderTitle
-            titleHeader="Active Visit"
-          />
-        </Grid>
 
         <Grid size={{ xs: 12, lg: 6 }}>
           <DynamicTable
@@ -503,6 +568,31 @@ const DashboardEmployee = () => {
             onAccept={(row: { id: string }) => handleActionApproval(row.id, 'Accept')}
             onDenied={(row: { id: string }) => handleActionApproval(row.id, 'Deny')}
             isHavePeriod={true}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, lg: 3 }}>
+          <DynamicTable
+            height={420}
+            isHavePagination={false}
+            overflowX="auto"
+            data={activeInvitation}
+            isHaveChecked={false}
+            isHavePeriod={true}
+            isHaveAction={false}
+            isHaveHeaderTitle
+            titleHeader="Active Visit"
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, lg: 3 }}>
+          <DynamicTable
+            data={dataLink}
+            titleHeader="Link Share Visitor"
+            isHaveHeaderTitle={true}
+            isCopyLink={true}
+            isDetailLink={true}
+            onCopyLink={(row: any) => handleCopyLink(row.name)}
+            onDetailLink={(row: any) => handleDetailLink(row)}
           />
         </Grid>
         <Grid size={{ xs: 12, lg: 6 }} sx={{ height: '100%' }}>
@@ -525,6 +615,54 @@ const DashboardEmployee = () => {
         </Grid>
       </Grid>
 
+      {/* Dialog Praregist or Create link */}
+      <Dialog
+        open={openInviteOrCreateLink}
+        onClose={handleCloseInviteOrCreateLink}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>
+          Invite or Create Link
+          <IconButton
+            aria-label="close"
+            onClick={handleCloseInviteOrCreateLink}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
+              color: (theme) => theme.palette.grey[500],
+            }}
+          >
+            <IconX />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          <Box
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+            flexDirection="column"
+            textAlign="center"
+            py={3}
+          >
+            <Button
+              variant="contained"
+              color="primary"
+              fullWidth
+              sx={{ mb: 2 }}
+              // onClick={() => setOpenDialogInvitation(true)}
+            >
+              Praregister
+            </Button>
+            <Button variant="outlined" color="primary" fullWidth onClick={handleOpenCreateLink}>
+              Share Link Invitation
+            </Button>
+          </Box>
+        </DialogContent>
+      </Dialog>
+
+      {/* Open Alert Invitation */}
       <Dialog
         open={openAlertInvitation}
         onClose={() => setOpenAlertInvitation(false)}
@@ -567,6 +705,254 @@ const DashboardEmployee = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Open Create Link */}
+      <Dialog
+        open={openCreateLink}
+        onClose={() => setOpenCreateLink(false)}
+        fullWidth
+        maxWidth="md"
+      >
+        <DialogTitle>Create Link Invitation</DialogTitle>
+        <IconButton
+          aria-label="close"
+          onClick={() => setOpenCreateLink(false)}
+          sx={{
+            position: 'absolute',
+            right: 8,
+            top: 8,
+            color: (theme) => theme.palette.grey[500],
+          }}
+        >
+          <IconX />
+        </IconButton>
+        <DialogContent dividers>
+          <Grid container spacing={2} mb={0}>
+            <Grid size={{ xs: 12, lg: 6 }}>
+              <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent={'space-between'}
+                spacing={1}
+              >
+                <CustomFormLabel sx={{ marginTop: 0 }}>Visitor Type</CustomFormLabel>
+                <FormControlLabel
+                  control={<Switch size="small" checked={false} />}
+                  label=""
+                  labelPlacement="start"
+                  sx={{ mt: 2 }}
+                />
+              </Stack>
+
+              <CustomTextField
+                id="guest-id"
+                variant="outlined"
+                fullWidth
+                size="medium"
+                sx={{ marginTop: '10px' }}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, lg: 6 }}>
+              <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent={'space-between'}
+                spacing={1}
+              >
+                <CustomFormLabel sx={{ marginTop: 0 }}>Visitor Quantity</CustomFormLabel>
+                <FormControlLabel
+                  control={<Switch size="small" checked={false} />}
+                  label=""
+                  labelPlacement="start"
+                  sx={{ mt: 2 }}
+                />
+              </Stack>
+
+              <CustomTextField
+                id="guest-id"
+                variant="outlined"
+                fullWidth
+                size="medium"
+                sx={{ marginTop: '10px' }}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, lg: 6 }}>
+              <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent={'space-between'}
+                spacing={1}
+              >
+                <CustomFormLabel sx={{ marginTop: 0 }}>Destination</CustomFormLabel>
+                <FormControlLabel
+                  control={<Switch size="small" checked={false} />}
+                  label=""
+                  labelPlacement="start"
+                  sx={{ mt: 2 }}
+                />
+              </Stack>
+
+              <CustomTextField
+                id="guest-id"
+                variant="outlined"
+                fullWidth
+                size="medium"
+                sx={{ marginTop: '10px' }}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, lg: 6 }}>
+              <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent={'space-between'}
+                spacing={1}
+              >
+                <CustomFormLabel sx={{ marginTop: 0 }}>Agenda</CustomFormLabel>
+                <FormControlLabel
+                  control={<Switch size="small" checked={false} />}
+                  label=""
+                  labelPlacement="start"
+                  sx={{ mt: 2 }}
+                />
+              </Stack>
+
+              <CustomTextField
+                id="guest-id"
+                variant="outlined"
+                fullWidth
+                size="medium"
+                sx={{ marginTop: '10px' }}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, lg: 6 }}>
+              <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent={'space-between'}
+                spacing={1}
+              >
+                <CustomFormLabel sx={{ marginTop: 0 }}>Visit Start</CustomFormLabel>
+                <FormControlLabel
+                  control={<Switch size="small" checked={false} />}
+                  label=""
+                  labelPlacement="start"
+                  sx={{ mt: 2 }}
+                />
+              </Stack>
+
+              <CustomTextField
+                type="date"
+                id="guest-id"
+                variant="outlined"
+                fullWidth
+                size="medium"
+                sx={{ marginTop: '10px' }}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, lg: 6 }}>
+              <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent={'space-between'}
+                spacing={1}
+              >
+                <CustomFormLabel sx={{ marginTop: 0 }}>Visit End</CustomFormLabel>
+                <FormControlLabel
+                  control={<Switch size="small" checked={false} />}
+                  label=""
+                  labelPlacement="start"
+                  sx={{ mt: 2 }}
+                />
+              </Stack>
+
+              <CustomTextField
+                type="date"
+                id="guest-id"
+                variant="outlined"
+                fullWidth
+                size="medium"
+                sx={{ marginTop: '10px' }}
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="contained" color="primary" fullWidth>
+            Create Link
+          </Button>
+          <Button
+            variant="outlined"
+            color="primary"
+            fullWidth
+            onClick={() => setOpenSendEmail(true)}
+          >
+            Create Link And Send Email
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Open Detail Link */}
+      <Dialog
+        open={openDetailLink}
+        onClose={() => setOpenDetailLink(false)}
+        fullWidth
+        maxWidth="lg"
+      >
+        <DialogTitle>Detail Visitor</DialogTitle>
+        <IconButton
+          aria-label="close"
+          onClick={() => setOpenDetailLink(false)}
+          sx={{
+            position: 'absolute',
+            right: 8,
+            top: 8,
+            color: (theme) => theme.palette.grey[500],
+          }}
+        >
+          <IconX />
+        </IconButton>
+        <DialogContent dividers>
+          <DynamicTable
+            data={dataVisitor}
+            titleHeader="Visitor"
+            isHaveHeaderTitle={true}
+            isHaveChecked={true}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Send Email Link */}
+      <Dialog open={openSendEmail} onClose={() => setOpenSendEmail(false)} fullWidth maxWidth="md">
+        <DialogTitle>Send Invitation Link</DialogTitle>
+        <IconButton
+          aria-label="close"
+          onClick={() => setOpenSendEmail(false)}
+          sx={{
+            position: 'absolute',
+            right: 8,
+            top: 8,
+            color: (theme) => theme.palette.grey[500],
+          }}
+        >
+          <IconX />
+        </IconButton>
+        <DialogContent dividers>
+          <Typography variant="h6" color="primary">
+            Send Via Email
+          </Typography>
+          <Typography mb={2}>
+            Please enter a valid email address of the reccipient to send the invitation link via
+            email
+          </Typography>
+          <Autocomplete multiple options={[]} renderInput={(params) => <TextField {...params} />} />
+        </DialogContent>
+        <DialogActions>
+          <Button variant="contained" color="primary" startIcon={<IconSend />}>
+            Send
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Praregister */}
       <Dialog
         open={openDialogInvitation}
         onClose={() => setOpenDialogInvitation(false)}
@@ -605,6 +991,7 @@ const DashboardEmployee = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Active Pass */}
       {activeAccessPass && (
         <Dialog open={openAccess} onClose={handleCloseAccess} fullWidth maxWidth="sm">
           <DialogTitle textAlign={'center'} sx={{ p: 2 }}>

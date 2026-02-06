@@ -19,6 +19,9 @@ const AvarageDurationChart = () => {
   const [avgMinutes, setAvgMinutes] = useState<number>(0);
   const { startDate, endDate } = useSelector((state: any) => state.dateRange);
 
+  const start = startDate?.toISOString().split('T')[0];
+  const end = endDate?.toISOString().split('T')[0];
+
   useEffect(() => {
     const fetchData = async () => {
       if (!token) return;
@@ -32,8 +35,10 @@ const AvarageDurationChart = () => {
 
         const res = await getAvarageDuration(
           token,
-          startDate.toLocaleDateString('en-CA'),
-          endDate.toLocaleDateString('en-CA'),
+          // startDate.toLocaleDateString('en-CA'),
+          // endDate.toLocaleDateString('en-CA'),
+          start,
+          end,
         );
 
         if (Array.isArray(res?.collection)) {
@@ -70,7 +75,7 @@ const AvarageDurationChart = () => {
     };
 
     fetchData();
-  }, [token, startDate, endDate]);
+  }, [token, start, end]);
 
   return (
     <>

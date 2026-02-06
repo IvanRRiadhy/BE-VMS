@@ -8,6 +8,8 @@ import {
   FormControlLabel,
   Autocomplete,
   Switch,
+  RadioGroup,
+  Radio,
 } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
@@ -340,6 +342,20 @@ const FormUpdateOrganization: React.FC<FormUpdateOrganizationProps> = ({
             />
           )}
         />
+
+        <RadioGroup
+          row
+          // value={formData.visitorType}
+          // onChange={(e) =>
+          //   setFormData((prev) => ({
+          //     ...prev,
+          //     visitorType: e.target.value,
+          //   }))
+          // }
+        >
+          <FormControlLabel value="internal" control={<Radio />} label="Internal" />
+          <FormControlLabel value="external" control={<Radio />} label="External" />
+        </RadioGroup>
 
         <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
           <Button

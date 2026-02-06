@@ -45,10 +45,7 @@ import Swal from 'sweetalert2';
 import { IconUsersGroup } from '@tabler/icons-react';
 import { useRef } from 'react';
 import TopCard from 'src/customs/components/cards/TopCard';
-import {
-  showConfirmDelete,
-  showSwal,
-} from 'src/customs/components/alerts/alerts';
+import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 
 type VisitorTypeTableRow = {
   id: string;
@@ -151,6 +148,7 @@ const Content = () => {
           name: item.name,
           description: item.description,
           period: item.period,
+          grace_time: item.grace_time,
         }));
         if (rows) {
           setTableRowVisitorType(rows);
@@ -178,7 +176,7 @@ const Content = () => {
     let freshForm;
     if (saved) {
       freshForm = JSON.parse(saved);
-    } else {
+    } else { 
       freshForm = CreateVisitorTypeRequestSchema.parse({});
       localStorage.setItem('unsavedVisitorTypeData', JSON.stringify(freshForm));
     }
@@ -191,7 +189,7 @@ const Content = () => {
   const identityValueMap: Record<string, number> = {
     NIK: 0,
     KTP: 1,
-    PASSPORT: 2,
+    Passport: 2,
     DriverLicense: 3,
     CardAccess: 4,
     Face: 5,
@@ -217,7 +215,6 @@ const Content = () => {
 
       const resp = await getVisitorTypeById(token as string, id);
       const raw = resp?.collection;
-
 
       const hydrated = normalizeDetail(raw);
 
@@ -406,7 +403,7 @@ const Content = () => {
         await Promise.all(rows.map((row) => deleteVisitorType(token, row.id)));
         setRefreshTrigger((prev) => prev + 1);
         showSwal('success', 'Successfully deleted selected items!');
-        setSelectedRows([]); 
+        setSelectedRows([]);
       } catch (error) {
         showSwal('error', 'Failed to delete some items.');
       } finally {
@@ -527,7 +524,7 @@ const Content = () => {
           </Button>
         </DialogActions>
       </Dialog>
-      <Portal>
+      {/* <Portal> */}
         <Backdrop
           open={loadingData}
           sx={{
@@ -537,7 +534,7 @@ const Content = () => {
         >
           <CircularProgress color="primary" />
         </Backdrop>
-      </Portal>
+      {/* </Portal> */}
     </PageContainer>
   );
 };

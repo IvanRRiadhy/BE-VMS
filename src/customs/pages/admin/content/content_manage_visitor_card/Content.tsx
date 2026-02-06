@@ -17,6 +17,7 @@ import {
   Typography,
   TableContainer,
   FormControl,
+  Paper,
   FormControlLabel,
   Card,
   Divider,
@@ -132,7 +133,7 @@ const Content = () => {
       title: 'Total Card',
       icon: IconCards,
       subTitle: `${totalRecords}`,
-      subTitleSetting: tableVisitorCard.length,
+      subTitleSetting: totalRecords,
       color: 'none',
     },
     {
@@ -205,7 +206,7 @@ const Content = () => {
             // checkout_at: x.checkout_at,
           }));
           setTableVisitorCard(mapped);
-          setIsDataReady(true);
+
           const activeCount = res.collection.filter((item: any) => item.card_status === 1).length;
           const nonActiveCount = res.collection.filter(
             (item: any) => item.card_status === 0,
@@ -396,10 +397,36 @@ const Content = () => {
     }
   };
 
-  const handleBatchEdit = (rows: any[]) => {
-    const selectedId = rows[0]?.id;
-    setEdittingId(selectedId);
+  // const handleBatchEdit = (rows: any[]) => {
+  //   const selectedId = rows[0]?.id;
+  //   setEdittingId(selectedId);
+  //   setIsBatchEdit(true);
+  //   handleOpenDialog();
+  // };
+
+  const handleBatchEdit = (rows: Item[]) => {
+    if (!rows.length) return;
+
+    setEdittingId(rows[0].id);
     setIsBatchEdit(true);
+
+    // 🔑 RESET enabledFields (INI KUNCI)
+    setEnabledFields({
+      employee_id: false,
+      registered_site: false,
+      is_multi_site: false,
+      is_employee_used: false,
+    });
+
+    // 🔑 JUGA reset form ke nilai aman
+    setFormAddVisitorCard((prev) => ({
+      ...prev,
+      employee_id: null,
+      registered_site: null,
+      is_multi_site: false,
+      is_employee_used: false,
+    }));
+
     handleOpenDialog();
   };
 
@@ -425,7 +452,7 @@ const Content = () => {
         body: formData,
       });
 
-      const text = await resp.text(); // aman untuk semua
+      const text = await resp.text(); 
       let json: any;
       try {
         json = JSON.parse(text);
@@ -625,8 +652,8 @@ const Content = () => {
                     d.card_status === 1
                       ? 'Active'
                       : d.card_status === 0
-                      ? 'Inactive'
-                      : d.card_status ?? '-';
+                        ? 'Inactive'
+                        : (d.card_status ?? '-');
                   return (
                     <TableRow key={i}>
                       <TableCell>{i + 1}</TableCell>

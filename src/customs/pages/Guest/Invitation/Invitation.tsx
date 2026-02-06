@@ -541,7 +541,6 @@ const Invitation = () => {
               options = [{ id: 'default', value: field.answer_text, name: field.answer_text }];
             }
 
-    
             if (options.length === 0) {
               options = [
                 { id: '1', value: 'truck', name: 'Truck' },
@@ -660,7 +659,7 @@ const Invitation = () => {
         case 10: // Camera
           return (
             <CameraUpload
-              value={field.answer_file}
+              value={field.answer_file as string | undefined}
               onChange={(url) => onChange(index, 'answer_file', url)}
             />
           );
@@ -758,7 +757,7 @@ const Invitation = () => {
 
               {(uploadMethods[key] || 'file') === 'camera' ? (
                 <CameraUpload
-                  value={field.answer_file}
+                  value={field.answer_file as string | undefined}
                   onChange={(url) => onChange(index, 'answer_file', url)}
                 />
               ) : (
@@ -1234,7 +1233,6 @@ const Invitation = () => {
     try {
       setLoadingAccess(true);
 
-
       await new Promise((resolve) => setTimeout(resolve, 0));
 
       await updateExtend(token, {
@@ -1277,11 +1275,11 @@ const Invitation = () => {
   const finalEndTime = extendedEndTime
     ? extendedEndTime
     : invitationDetail?.visitor_period_end
-    ? moment
-        .utc(invitationDetail.visitor_period_end)
-        .add(invitationDetail.extend_visitor_period || 0, 'minutes')
-        .local()
-    : null;
+      ? moment
+          .utc(invitationDetail.visitor_period_end)
+          .add(invitationDetail.extend_visitor_period || 0, 'minutes')
+          .local()
+      : null;
 
   const handleCloseExtend = () => {
     setApplyToAll(false);
@@ -1364,7 +1362,8 @@ const Invitation = () => {
             },
           }}
         >
-          <DialogTitle>Detail Invitation</DialogTitle>
+          {/* <DialogTitle>Detail Invitation</DialogTitle> */}
+          <DialogTitle>Edit Invitation</DialogTitle>
           <IconButton
             aria-label="close"
             onClick={() => setInvitatioOpenDetail(false)}
@@ -1423,6 +1422,14 @@ const Invitation = () => {
               </Grid>
             </Grid>
           </DialogContent>
+          {/* <DialogContent dividers>
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, md: 12 }}>
+                <CustomFormLabel sx={{ mt: 0.5 }}>Visit Start</CustomFormLabel>
+                <CustomTextField type='date' />
+              </Grid>
+            </Grid>
+          </DialogContent> */}
         </Dialog>
 
         <InvitationDetailDialog

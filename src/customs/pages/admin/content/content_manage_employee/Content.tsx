@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   Box,
   Button,
@@ -81,7 +81,6 @@ interface Filters {
 }
 
 const Content = () => {
-  // Pagination state.
   const [tableData, setTableData] = useState<Item[]>([]);
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
   const [isDataReady, setIsDataReady] = useState(false);
@@ -156,7 +155,6 @@ const Content = () => {
     fetchDataDistrict();
   }, [token]);
 
-  // Fetch table data when pagination or Filter changes.
   useEffect(() => {
     if (!token) return;
     const fetchData = async () => {
@@ -187,10 +185,9 @@ const Content = () => {
             setTableRowEmployee([]);
             setTotalRecords(0);
             setTotalFilteredRecords(0);
-            setIsDataReady(true);
-            return; // (finally di luar tetap setLoading(false))
+            return;
           }
-          throw err; // error lain biar ditangani catch luar
+          throw err;
         }
 
         const safeCollection = Array.isArray(employeeRes?.collection) ? employeeRes.collection : [];
@@ -208,7 +205,6 @@ const Content = () => {
           return;
         }
 
-        // Lanjut mapping seperti biasa
         setTableData(safeCollection);
         setTotalRecords(employeeRes?.RecordsTotal ?? safeCollection.length ?? 0);
         setTotalFilteredRecords(employeeRes?.RecordsFiltered ?? safeCollection.length ?? 0);
@@ -219,21 +215,19 @@ const Content = () => {
           faceimage: item.faceimage,
           organization: item.organization?.name || '-',
           department: item.department?.name || '-',
-          // district: item.district?.name || '-',
         }));
         setTableRowEmployee(rows);
         setIsDataReady(true);
       } catch (error: any) {
         console.error('Error fetching data:', error.message);
       } finally {
-        // setTimeout(() => setLoading(false), 300); // beri waktu render skeleton
         setLoading(false);
       }
     };
     fetchData();
   }, [token, page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword]);
 
-  const [initialFormData, setInitialFormData] = React.useState<CreateEmployeeRequest>(() => {
+  const [initialFormData, setInitialFormData] = useState<CreateEmployeeRequest>(() => {
     const saved = localStorage.getItem('unsavedEmployeeData');
     try {
       const parsed = saved ? JSON.parse(saved) : {};
@@ -243,30 +237,25 @@ const Content = () => {
     }
   });
 
-  const [formDataAddEmployee, setFormDataAddEmployee] = React.useState<CreateEmployeeRequest>(
-    () => {
-      const saved = localStorage.getItem('unsavedEmployeeData');
+  const [formDataAddEmployee, setFormDataAddEmployee] = useState<CreateEmployeeRequest>(() => {
+    const saved = localStorage.getItem('unsavedEmployeeData');
 
-      try {
-        const parsed = saved ? JSON.parse(saved) : {};
-        return CreateEmployeeRequestSchema.parse(parsed);
-      } catch (e) {
-        console.error('Invalid saved data, fallback to default schema.');
-        return CreateEmployeeRequestSchema.parse({});
-      }
-    },
-  );
+    try {
+      const parsed = saved ? JSON.parse(saved) : {};
+      return CreateEmployeeRequestSchema.parse(parsed);
+    } catch (e) {
+      console.error('Invalid saved data, fallback to default schema.');
+      return CreateEmployeeRequestSchema.parse({});
+    }
+  });
 
   const [isEditing, setIsEditing] = useState(false);
 
-  const isFormChanged = React.useMemo(() => {
+  const isFormChanged = useMemo(() => {
     return JSON.stringify(formDataAddEmployee) !== JSON.stringify(initialFormData);
   }, [formDataAddEmployee]);
 
   useEffect(() => {
-    // if (Object.keys(formDataAddEmployee).length > 0 && !isEditing && isFormChanged) {
-    //   localStorage.setItem('unsavedEmployeeData', JSON.stringify(formDataAddEmployee));
-    // }
     const defaultFormData = CreateEmployeeRequestSchema.parse({});
     const isChanged = JSON.stringify(formDataAddEmployee) !== JSON.stringify(defaultFormData);
 
@@ -324,7 +313,6 @@ const Content = () => {
       // pastikan tidak NaN:
       gender: toNum(s?.gender, { female: 0, male: 1, f: 0, m: 1, '0': 0, '1': 1 }, 0),
 
-      // kalau backend kirim string "Active"/"Non Active", amankan juga:
       status_employee: toNum(
         s?.status_employee,
         { active: 1, 'non active': 2, nonactive: 2, inactive: 2, '0': 0, '1': 1, '2': 2 },
@@ -379,7 +367,7 @@ const Content = () => {
         };
         setEdittingId(pendingEditId);
         setFormDataAddEmployee(parsedData);
-        setInitialFormData(parsedData); // <--- set initial form juga
+        setInitialFormData(parsedData);
         localStorage.setItem('unsavedEmployeeData', JSON.stringify(parsedData));
         setPendingEditId(null);
         setOpenFormAddEmployee(true);
@@ -389,7 +377,7 @@ const Content = () => {
       setEdittingId('');
       const newForm = CreateEmployeeRequestSchema.parse({});
       setFormDataAddEmployee(newForm);
-      setInitialFormData(newForm); // <--- set initial form juga
+      setInitialFormData(newForm);
       localStorage.setItem('unsavedEmployeeData', JSON.stringify(newForm));
       handleCloseDialog();
       setIsEditing(false);
@@ -415,10 +403,8 @@ const Content = () => {
         // showSuccessAlert('Deleted!', 'Employee has been deleted.');
         showSwal('success', 'Succesfully deleted employee.');
       } catch (error) {
-        console.error(error);
-        // showErrorAlert('Gagal!', 'Failed to delete employee.');
         showSwal('error', 'Failed to delete employee.');
-        setTimeout(() => setLoading(false), 500);
+        // setTimeout(() => setLoading(false), 500);
       } finally {
         setTimeout(() => setLoading(false), 500);
       }
@@ -428,21 +414,19 @@ const Content = () => {
   const handleBatchDelete = async (rows: EmployeesTableRow[]) => {
     if (!token || rows.length === 0) return;
 
-    const confirmed = await showConfirmDelete(
-      `Are you sure to delete ${rows.length} items?`,
-      "You won't be able to revert this!",
-    );
+    const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} employees?`);
 
     if (confirmed) {
       setLoading(true);
       try {
         await Promise.all(rows.map((row) => deleteEmployee(row.id, token)));
         setRefreshTrigger((prev) => prev + 1);
-        showSuccessAlert('Deleted!', `${rows.length} items have been deleted.`);
-        setSelectedRows([]); // reset selected rows
+        // showSuccessAlert('Deleted!', `${rows.length} items have been deleted.`);
+        showSwal('success', `Succesfully deleted ${rows.length} employees.`);
+        setSelectedRows([]);
       } catch (error) {
         console.error(error);
-        showErrorAlert('Error!', 'Failed to delete some items.');
+        showErrorAlert('Error!', 'Failed to delete some employees.');
       } finally {
         setLoading(false);
       }
@@ -469,10 +453,7 @@ const Content = () => {
   };
 
   const handleSuccess = () => {
-    // refresh table dsb
     setRefreshTrigger((prev) => prev + 1);
-
-    // <<— penting: set baseline = current form
     setInitialFormData((_) => formDataAddEmployee);
     setOpenFormAddEmployee(false);
 

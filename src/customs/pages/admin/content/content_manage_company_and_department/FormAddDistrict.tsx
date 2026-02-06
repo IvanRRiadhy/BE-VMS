@@ -7,6 +7,9 @@ import {
   Autocomplete,
   Backdrop,
   Portal,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
 } from '@mui/material';
 import { Box } from '@mui/system';
 import React, { useState, useEffect } from 'react';
@@ -181,7 +184,7 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({ formData, setFormData
           onChange={(_, newValue) => {
             setFormData((prev) => ({
               ...prev,
-              host: typeof newValue === 'string' ? newValue : newValue?.id ?? '',
+              host: typeof newValue === 'string' ? newValue : (newValue?.id ?? ''),
             }));
             // ⬅️ clear validation error
             setErrors((prev) => ({ ...prev, host: '' }));
@@ -202,6 +205,19 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({ formData, setFormData
             />
           )}
         />
+        <RadioGroup
+          row
+          // value={formData.visitorType}
+          onChange={(e) =>
+            setFormData((prev) => ({
+              ...prev,
+              visitorType: e.target.value,
+            }))
+          }
+        >
+          <FormControlLabel value="internal" control={<Radio />} label="Internal" />
+          <FormControlLabel value="external" control={<Radio />} label="External" />
+        </RadioGroup>
         <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
           <Button
             sx={{ mt: 2 }}

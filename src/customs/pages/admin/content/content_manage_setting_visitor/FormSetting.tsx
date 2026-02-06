@@ -81,7 +81,7 @@ const FormSetting: React.FC<FormSettingSmtpProps> = ({
             Cancel
           </Button>
           <Button type="submit" variant="contained" color="primary" sx={{ mt: 2 }}>
-            Save
+            Submit
           </Button>
         </Box>
       </Box>

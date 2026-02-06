@@ -264,6 +264,11 @@ const Content = () => {
     Block: 'Block',
   };
 
+  const resolveVisitorStatus = (item: any): string => {
+    if (item.is_block) return 'Block';
+    return item.visitor_status || '-';
+  };
+
   useEffect(() => {
     if (!token) return;
     const fetchData = async () => {
@@ -284,6 +289,7 @@ const Content = () => {
           status,
         );
         let rows = response.collection.map((item: any) => {
+          const displayStatus = resolveVisitorStatus(item);
           return {
             id: item.id,
             visitor_type: item.visitor_type_name || '-',

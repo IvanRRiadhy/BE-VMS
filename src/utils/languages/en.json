@@ -19,7 +19,7 @@
   "navigation": {
     "delivery": "Delivery",
     "staff": "Staff",
-    "scheduler": "Scheduler",
+    "scheduler": "Scheduler Visit",
     "dashboard": "Dasboard",
     "manage_system": "Manage System",
     "company_department": "Company & Department",
@@ -36,7 +36,8 @@
     "custom_field": "Custom Field",
     "visitor": "Visitor",
     "settings": "Settings",
-    "helps": "Helps"
+    "helps": "Helps",
+    "zone": "Zone"
   },
   "no_visit_today": "No Visit data for today.",
   "report": "Report",

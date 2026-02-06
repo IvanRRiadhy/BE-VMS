@@ -73,7 +73,8 @@ const formVisitorSchema = z.object({
   visitor_form_type: z.number().optional(),
   answer_text: z.string().optional(),
   answer_datetime: z.string().datetime().optional(), // atau nullable().optional() jika butuh null
-  answer_file: z.string().optional(),
+  // answer_file: z.string().optional(),
+  answer_file: z.string().nullable().optional(),
 });
 
 export type FormVisitor = z.infer<typeof formVisitorSchema>;

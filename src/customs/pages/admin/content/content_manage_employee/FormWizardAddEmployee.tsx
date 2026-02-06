@@ -76,7 +76,7 @@ interface FormEmployeeProps {
   edittingId?: string;
   onSuccess?: () => void;
   isBatchEdit?: boolean;
-  selectedRows?: Item[]; // For batch edit, this will be the selected employee rows
+  selectedRows?: Item[];
   enabledFields?: EnabledFields;
   setEnabledFields: React.Dispatch<React.SetStateAction<EnabledFields>>;
 }
@@ -160,7 +160,7 @@ const FormWizardAddEmployee = ({
       const imageSrc = webcamRef.current.getScreenshot();
       if (imageSrc) {
         setScreenshot(imageSrc);
-        setPreviewUrl(imageSrc); // <-- tambahkan ini agar masuk preview
+        setPreviewUrl(imageSrc); 
         setFormData((prev) => ({
           ...prev,
           faceimage: imageSrc,
@@ -276,8 +276,6 @@ const FormWizardAddEmployee = ({
 
       return true;
     }
-
-    // Normal edit → validasi semua
     if (step === 1) {
       (payload as any).district_id = String((payload as any).district_id ?? '');
       (payload as any).organization_id = String((payload as any).organization_id ?? '');
@@ -320,10 +318,9 @@ const FormWizardAddEmployee = ({
       organization_id: '',
       department_id: '',
       district_id: '',
-      gender: 0, // atau biarkan '' jika skema mengizinkan
+      gender: 0,
     }));
 
-    // (opsional) reset switches ke false di parent
     setEnabledFields?.({
       organization_id: false,
       department_id: false,
@@ -458,6 +455,7 @@ const FormWizardAddEmployee = ({
               ? 0
               : 1
             : Number(formData.gender ?? 0),
+        identity_type: formData.identity_type,
       });
 
       const result = CreateEmployeeSubmitSchema.safeParse(mergedFormData);
@@ -480,7 +478,6 @@ const FormWizardAddEmployee = ({
       const hasNewImage = Boolean(rawFileImage) || isDataUrl(rawFaceImage);
 
       if (edittingId) {
-        /** ✏️ UPDATE */
         const { faceimage: _drop, ...withoutImage } = data;
         const editData: UpdateEmployeeRequest = {
           ...withoutImage,
@@ -495,6 +492,7 @@ const FormWizardAddEmployee = ({
         if (hasNewImage) {
           await handleFileUploads(edittingId, rawFileImage, rawFaceImage);
         }
+        console.log('hasNewImage', hasNewImage);
 
         showSwal('success', 'Employee successfully updated!');
       } else {
@@ -525,25 +523,47 @@ const FormWizardAddEmployee = ({
       }, 650);
     }
   };
-  const handleFileUploads = async (employeeId: any, fileFromInput: any, faceImage: any) => {
-    try {
-      //  console.log('UPLOAD START', { fileFromInput, faceImage });
-      if (fileFromInput) {
-        await uploadImageEmployee(employeeId, fileFromInput, token as string);
-        return;
-      }
+  // const handleFileUploads = async (employeeId: any, fileFromInput: any, faceImage: any) => {
+  //   try {
+  //     //  console.log('UPLOAD START', { fileFromInput, faceImage });
+  //     if (fileFromInput) {
+  //       await uploadImageEmployee(employeeId, fileFromInput, token as string);
+  //       return;
+  //     }
 
-      if (faceImage) {
-        const blob = await fetch(faceImage).then((res) => res.blob());
-        const file = new File([blob], 'webcam.jpg', { type: 'image/jpeg' });
-        await uploadImageEmployee(employeeId, file, token as string);
-        return;
-      }
+  //     if (faceImage) {
+  //       const blob = await fetch(faceImage).then((res) => res.blob());
+  //       const file = new File([blob], 'webcam.jpg', { type: 'image/jpeg' });
+  //       await uploadImageEmployee(employeeId, file, token as string);
+  //       return;
+  //     }
 
-      console.log('No image to upload');
-    } catch (error) {
-      console.error('Error uploading image:', error);
+  //     console.log('No image to upload');
+  //   } catch (error) {
+  //     console.error('Error uploading image:', error);
+  //   }
+  // };
+
+  const handleFileUploads = async (
+    employeeId: string,
+    fileFromInput?: File | null,
+    faceImage?: string | null,
+  ) => {
+    const tasks: Promise<any>[] = [];
+
+    if (fileFromInput instanceof File) {
+      tasks.push(uploadImageEmployee(employeeId, fileFromInput, token as string));
     }
+
+    if (faceImage && isDataUrl(faceImage)) {
+      const blob = await fetch(faceImage).then((res) => res.blob());
+      const file = new File([blob], 'webcam.jpg', { type: 'image/jpeg' });
+      tasks.push(uploadImageEmployee(employeeId, file, token as string));
+    }
+
+    if (tasks.length === 0) return;
+
+    await Promise.all(tasks);
   };
 
   // Handle Change Image
@@ -563,19 +583,14 @@ const FormWizardAddEmployee = ({
       setPreviewUrl(null);
       return;
     }
-
-    // Sudah berupa dataURL / blob / http(s)
     if (/^(data:image\/|blob:|https?:\/\/)/i.test(v)) {
       setPreviewUrl(v);
       return;
     }
 
-    // Relative path dari server
     const rel = v.startsWith('/') ? v : `/${v}`;
 
-    // ⬇️ KUNCI: jangan dobel /cdn
     const url = rel.startsWith('/cdn/') ? `${BASE_URL}${rel}` : `${BASE_URL}/cdn${rel}`;
-    // console.log('Preview URL:', url);
 
     setPreviewUrl(url);
   }, [formData.faceimage, siteImageFile]);
@@ -620,7 +635,7 @@ const FormWizardAddEmployee = ({
             </Grid2>
 
             <Grid2 size={{ xs: 12, sm: 12 }}>
-              <CustomFormLabel sx={{ my: 1 }} htmlFor="employeeType">
+              <CustomFormLabel sx={{ my: 1 }} htmlFor="employeeType" required>
                 <Typography variant="caption">Identity Type</Typography>
               </CustomFormLabel>
               <CustomSelect
@@ -1477,10 +1492,10 @@ const FormWizardAddEmployee = ({
         open={loading}
         sx={{
           color: '#fff',
-          zIndex: (theme) => theme.zIndex.drawer + 1, // di atas drawer & dialog
+          zIndex: 999999,
         }}
       >
-        <CircularProgress color="inherit" />
+        <CircularProgress color="primary" />
       </Backdrop>
     </form>
   );

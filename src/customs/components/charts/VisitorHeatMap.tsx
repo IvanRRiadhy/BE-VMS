@@ -18,6 +18,9 @@ const VisitorHeatMap = () => {
   const [hours, setHours] = useState<string[]>([]);
   const { startDate, endDate } = useSelector((state: any) => state.dateRange);
 
+  const start = startDate?.toISOString().split('T')[0];
+  const end = endDate?.toISOString().split('T')[0];
+
   const generateHourLabels = () =>
     Array.from({ length: 24 }, (_, i) => {
       const start = String(i).padStart(2, '0') + ':01';
@@ -34,8 +37,10 @@ const VisitorHeatMap = () => {
 
         const res = await getHeatmaps(
           token!,
-          startDate.toLocaleDateString('en-CA'),
-          endDate.toLocaleDateString('en-CA'),
+          // startDate.toLocaleDateString('en-CA'),
+          // endDate.toLocaleDateString('en-CA'),
+          start,
+          end,
         );
 
         const collection = res.collection ?? [];
@@ -60,7 +65,7 @@ const VisitorHeatMap = () => {
     };
 
     if (token) fetchHeatmap();
-  }, [token, startDate, endDate]);
+  }, [token, start, end]);
 
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 

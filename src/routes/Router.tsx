@@ -8,6 +8,11 @@ import { GroupRoleId } from '../constant/GroupRoleId';
 import AuthRedirector from './AuthRedirector';
 import { element } from 'prop-types';
 import StaffLayout from 'src/customs/pages/Employee/DeliveryStaff/StaffLayout';
+import Register from 'src/views/authentication/auth2/Register';
+import ForgotPassword from 'src/views/authentication/auth2/ForgotPassword';
+import ExpiredPage from 'src/views/authentication/auth2/ExpiredPage';
+import LimitedInvitation from 'src/views/authentication/auth2/LimitedInvitation';
+// import ForgotPassword2 from 'src/views/authentication/auth2/ForgotPassword2';
 
 /* ***Layouts**** */
 const GuestLayout = Loadable(lazy(() => import('src/customs/pages/Guest/GuestLayout')));
@@ -17,7 +22,7 @@ const ManagerLayout = Loadable(lazy(() => import('src/customs/pages/Manager/Mana
 const BlankLayout = Loadable(lazy(() => import('src/layouts/blank/BlankLayout')));
 
 /* ****AUTH & COMMON PAGES***** */
-const Login2 = Loadable(lazy(() => import('src/views/authentication/auth2/Login2')));
+const Login = Loadable(lazy(() => import('src/views/authentication/auth2/Login')));
 const UnauthorizedPage = Loadable(
   lazy(() => import('src/customs/components/page/UnauthorizedPage')),
 );
@@ -48,6 +53,9 @@ const Dashboard = Loadable(
 );
 const ManageVisitor = Loadable(
   lazy(() => import('src/customs/pages/admin/content/content_visitor/Content')),
+);
+const ManageTransactionVisitor = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/content_visitor/Transaction/Content')),
 );
 const ManageListVisitor = Loadable(
   lazy(() => import('src/customs/pages/admin/content/content_visitor/List/Content')),
@@ -135,7 +143,10 @@ const ManageReportApproval = Loadable(
 const ManageReportOperatorActivityLog = Loadable(
   lazy(() => import('src/customs/pages/admin/content/content_report/OperatorActivityLog/Content')),
 );
-
+const ManageZone = Loadable(lazy(() => import('src/customs/pages/admin/content/Zone/Content')));
+const ManagePrintBadge = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/PrintBadge/Content')),
+)
 /* ****EMPLOYEE PAGES**** */
 const DashboardEmployee = Loadable(lazy(() => import('src/customs/pages/Employee/Dashboard')));
 const ApprovalEmployee = Loadable(lazy(() => import('src/customs/pages/Employee/Approval')));
@@ -205,7 +216,7 @@ const Router = [
     //   {
     //     element: <BlankLayout />,
     //     children: [
-    //       { path: '/auth/login', element: <Login2 /> },
+    //       { path: '/auth/login', element: <Login /> },
     //       { path: '/unauthorized', element: <UnauthorizedPage /> },
     //       { path: '/portal/information', element: <GuestInformation /> },
     //       { path: '/portal/waiting', element: <WaitingPage /> },
@@ -223,7 +234,11 @@ const Router = [
           {
             element: <BlankLayout />,
             children: [
-              { path: '/auth/login', element: <Login2 /> },
+              { path: '/auth/login', element: <Login /> },
+              { path: '/auth/register', element: <Register /> },
+              { path: '/auth/expired', element: <ExpiredPage /> },
+              { path: '/auth/limited', element: <LimitedInvitation /> },
+              { path: '/auth/forgot-password', element: <ForgotPassword /> },
               { path: '/unauthorized', element: <UnauthorizedPage /> },
               { path: '/portal/information', element: <GuestInformation /> },
               { path: '/portal/waiting', element: <WaitingPage /> },
@@ -269,14 +284,15 @@ const Router = [
           { path: '/admin/dashboard', element: <Dashboard /> },
           { path: '/admin/visitor', element: <ManageVisitor /> },
           { path: '/admin/visitor/list-visitor', element: <ManageListVisitor /> },
-          { path: '/admin/visitor/transaction-visitor', element: <ManageVisitor /> },
+          { path: '/admin/visitor/invitation-visitor', element: <ManageVisitor /> },
+          { path: '/admin/visitor/transaction-visitor', element: <ManageTransactionVisitor /> },
           { path: '/admin/manage/companys-deparments', element: <ManageCompanyAndDepartment /> },
           { path: '/admin/manage/employees', element: <ManageEmployee /> },
           { path: '/admin/manage/delivery', element: <ManageDelivery /> },
           { path: '/admin/manage/delivery/staff', element: <ManageDelivery /> },
-          { path: '/admin/manage/delivery/scheduler', element: <ManageDeliveryScheduler /> },
+          { path: '/admin/visitor/scheduler', element: <ManageDeliveryScheduler /> },
           {
-            path: '/admin/manage/delivery/scheduler/detail/:id',
+            path: '/admin/visitor/scheduler/detail/:id',
             element: <ManageDetailScheduler />,
           },
           { path: '/admin/manage/delivery/visit', element: <ManageDeliveryVisit /> },
@@ -284,25 +300,19 @@ const Router = [
             path: '/admin/manage/site-space/*',
             element: <ManageSiteSpace />,
           },
-          // {
-          //   path: '/admin/manage/site-space/:id',
-          //   element: <ManageSiteSpace />,
-          // },
-          { path: '/admin/manage/card', element: <ManageVisitorCard /> },
 
+          { path: '/admin/manage/card', element: <ManageVisitorCard /> },
           { path: '/admin/manage/time-access', element: <ManageTimezone /> },
           { path: '/admin/manage/visitor-type', element: <ManageVisitorType /> },
-          // { path: '/admin/manage/device-kiosk', element: <ManageDeviceKiosk /> },
           { path: '/admin/manage/document', element: <ManageDocument /> },
           { path: '/admin/manage/brand', element: <ManageBrand /> },
           { path: '/admin/manage/integration', element: <ManageIntegration /> },
           { path: '/admin/manage/integration/:id', element: <ManageIntegrationDetail /> },
           { path: '/admin/manage/access-control', element: <ManageAccessControl /> },
           { path: '/admin/manage/custom-field', element: <ManageCustomField /> },
+          { path: '/admin/manage/zone', element: <ManageZone /> },
           { path: '/admin/manage/setting-smtp', element: <ManageSettingSmtp /> },
           { path: '/admin/settings', element: <ManageSettingVisitor /> },
-          // { path: '/admin/setting/users', element: <SettingUser /> },
-          // { path: '/admin/setting/users/add-user', element: <FormAddUser /> },
           { path: '/admin/user', element: <ManageUser /> },
           { path: '/admin/report/transaction-log', element: <ManageReportTransaction /> },
           { path: '/admin/report/approval-workflow', element: <ManageReportApproval /> },
@@ -311,6 +321,7 @@ const Router = [
             element: <ManageReportOperatorActivityLog />,
           },
           { path: '/profile', element: <DetailProfile /> },
+          { path: '/admin/print-badge', element: <ManagePrintBadge /> },
         ],
       },
 

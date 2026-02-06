@@ -25,6 +25,9 @@ const TopCards = () => {
 
   const [stats, setStats] = useState<Record<string, number>>({});
 
+  const start = startDate?.toISOString().split('T')[0];
+  const end = endDate?.toISOString().split('T')[0];
+
   useEffect(() => {
     if (!token) return;
 
@@ -32,8 +35,10 @@ const TopCards = () => {
       try {
         const res = await getVisitorChart(
           token,
-          startDate.toISOString().split('T')[0],
-          endDate.toISOString().split('T')[0],
+          // startDate.toISOString().split('T')[0],
+          // endDate.toISOString().split('T')[0],
+          start,
+          end
         );
 
         const collection: ApiDateGroup[] = res.collection ?? [];

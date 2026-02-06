@@ -107,7 +107,7 @@ const Content = () => {
     if (!id) return;
 
     try {
-      navigate(`/admin/manage/delivery/scheduler/detail/${id}`);
+      navigate(`/admin/visitor/scheduler/detail/${id}`);
     } catch (error) {
       // navigate(`/admin/manage/delivery/scheduler/detail/${id}`);
       console.log(error);
@@ -232,7 +232,7 @@ const Content = () => {
   const [errorDialogRows, setErrorDialogRows] = useState<any[]>([]);
 
   const handleSubmitScheduler = async (payload: any) => {
-    setLoading(true);
+    setLoadingData(true);
     try {
       console.log('📤 Submitting payload:', JSON.stringify(payload, null, 2));
 
@@ -247,11 +247,6 @@ const Content = () => {
       setOpenDialogScheduler(false);
       setRefreshTrigger((prev) => prev + 1);
     } catch (error: any) {
-      // if (error.collection && Array.isArray(error.collection)) {
-      //   setErrorDialogRows(error.collection);
-      //   setErrorDialogOpen(true);
-      //   return;
-      // }
       if (error.collection && Array.isArray(error.collection)) {
         const missing = error.collection.map((item: any) => item.short_name);
 
@@ -261,7 +256,7 @@ const Content = () => {
         showSwal('error', 'Failed to create schedule ');
       }
     } finally {
-      setTimeout(() => setLoading(false), 500);
+      setTimeout(() => setLoadingData(false), 500);
     }
   };
 
@@ -389,7 +384,6 @@ const Content = () => {
               defaultValue={selectedScheduler}
               mode={formMode}
               onSubmit={handleSubmitScheduler}
-              loading={loading}
             />
           </DialogContent>
         </Dialog>
@@ -482,7 +476,7 @@ const Content = () => {
               zIndex: 999999,
             }}
           >
-            <CircularProgress color="inherit" />
+            <CircularProgress color="primary" />
           </Backdrop>
         </Portal>
       </Container>

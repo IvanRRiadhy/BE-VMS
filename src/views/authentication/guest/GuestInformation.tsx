@@ -16,30 +16,34 @@ import {
   Alert,
   Divider,
   IconButton,
+  Container,
   Backdrop,
+  Tooltip,
 } from '@mui/material';
 import { Grid2 as Grid } from '@mui/material';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import PageContainer from 'src/components/container/PageContainer';
-import { IconDeviceFloppy, IconError404, IconMan, IconTrash, IconWoman } from '@tabler/icons-react';
 import { ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { AuthVisitor, SubmitPraForm } from 'src/customs/api/users';
 import dayjs from 'dayjs';
 import 'dayjs/locale/id';
 import utc from 'dayjs/plugin/utc';
+import weekday from 'dayjs/plugin/weekday';
+import localizedFormat from 'dayjs/plugin/localizedFormat';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+import advancedFormat from 'dayjs/plugin/advancedFormat';
 import timezone from 'dayjs/plugin/timezone';
-import MuiButton from 'src/views/forms/form-elements/MuiButton';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import Webcam from 'react-webcam';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import { IconX } from '@tabler/icons-react';
+import { IconGenderTransgender, IconMan, IconTrash, IconWoman, IconX } from '@tabler/icons-react';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { GroupRoleId } from '../../../constant/GroupRoleId';
-// import Logo from 'src/assets/images/logos/BI_Logo.png';
-import Logo from 'src/assets/images/logos/bio-experience-1x1-logo.png';
+import Logo from 'src/assets/images/logos/BI_Logo.png';
+// import Logo from 'src/assets/images/logos/bio-experience-1x1-logo.png';
 import { Snackbar } from '@mui/material';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { IconCamera } from '@tabler/icons-react';
@@ -47,10 +51,19 @@ import { IconCamera } from '@tabler/icons-react';
 import { useTheme, useMediaQuery, MobileStepper } from '@mui/material';
 import KeyboardArrowLeft from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRight from '@mui/icons-material/KeyboardArrowRight';
+import Footer from '../components/Footer';
+import { KeyboardArrowUp } from '@mui/icons-material';
+import { IconDeviceFloppy } from '@tabler/icons-react';
+import PreviewDialog from '../components/PreviewDialog';
 
 dayjs.extend(utc);
+dayjs.extend(weekday);
+dayjs.extend(localizedFormat);
+dayjs.extend(customParseFormat);
+dayjs.extend(advancedFormat);
 dayjs.extend(timezone);
-// dayjs.locale('id');
+
+dayjs.locale('id');
 
 const GuestInformationStepper = () => {
   const [activeStep, setActiveStep] = useState(0);
@@ -63,6 +76,7 @@ const GuestInformationStepper = () => {
   const [uploadNames, setUploadNames] = useState<Record<string, string>>({});
   const [previews, setPreviews] = useState<Record<string, string | null>>({});
   const [removing, setRemoving] = useState<Record<string, boolean>>({});
+  const [openPreview, setOpenPreview] = useState(false);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
@@ -72,9 +86,32 @@ const GuestInformationStepper = () => {
   const webcamRef = useRef<Webcam>(null);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [showBackToTop, setShowBackToTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowBackToTop(window.scrollY > 20);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.snackbar) {
+      setSnackbar(location.state.snackbar);
+
+      // bersihin state biar nggak muncul lagi
+      window.history.replaceState({}, document.title);
+    }
+  }, []);
+
   const formatDateTime = (value: string | null) => {
     if (!value) return '-';
-    return dayjs(value).tz(dayjs.tz.guess()).format('dddd, DD MMMM YYYY, HH:mm');
+
+    return dayjs.utc(value).tz(dayjs.tz.guess()).format('dddd, DD MMMM YYYY, HH:mm');
   };
 
   const { saveToken } = useSession();
@@ -109,7 +146,7 @@ const GuestInformationStepper = () => {
 
       const res = await AuthVisitor({ code });
       setInvitationData(res.collection);
-      console.log(res);
+      // console.log(res);
 
       const initial: Record<string, any> = {};
       res.collection.question_page.forEach((section: any) => {
@@ -345,7 +382,7 @@ const GuestInformationStepper = () => {
                       alt="preview"
                       style={{
                         width: 350,
-                        height: 220,
+                        height: 200,
                         objectFit: 'cover',
                         borderRadius: 8,
                         boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
@@ -593,8 +630,9 @@ const GuestInformationStepper = () => {
     );
   };
 
-  const renderUploadWithCamera = (f: any, idx: number) => {
-    const key = f.remarks;
+  const renderUploadWithCamera = (f: any, idx: number, section: any) => {
+    // const key = f.remarks;
+    const key = `${section.name}_${f.remarks}`;
     const previewSrc = previews[key];
     const shownName = uploadNames[key];
 
@@ -620,7 +658,7 @@ const GuestInformationStepper = () => {
           </Typography>
 
           <Typography variant="caption" color="textSecondary">
-            Supports: PDF, JPG, PNG, JPEG, Up to <span style={{ fontWeight: '700' }}> 100KB</span>
+            Supports: JPG, PNG, JPEG, Up to <span style={{ fontWeight: '700' }}> 100KB</span>
           </Typography>
 
           <Typography
@@ -806,6 +844,11 @@ const GuestInformationStepper = () => {
       <Box mt={1}>
         <Grid container spacing={2}>
           {section.form?.map((f: any, idx: number) => {
+            if (!isDriving && ['vehicle_type', 'vehicle_plate'].includes(f.remarks)) {
+              return null;
+            }
+
+            const fieldKey = `${section.name}_${f.remarks}`;
             let displayValue = formValues[f.remarks] ?? '';
 
             const type = getFieldTypeByRemarks(f.remarks) ?? f.field_type;
@@ -815,6 +858,9 @@ const GuestInformationStepper = () => {
             } else if (f.remarks === 'site_place') {
               displayValue = invitationData.site_place_data?.name || displayValue;
             }
+
+
+
             if (!isDriving && ['vehicle_type', 'vehicle_plate'].includes(f.remarks)) {
               return null;
             }
@@ -822,7 +868,7 @@ const GuestInformationStepper = () => {
             const gridSize = { xs: 12 };
 
             return (
-              <Grid key={idx} size={gridSize}>
+              <Grid key={fieldKey} size={gridSize}>
                 <CustomFormLabel sx={{ mt: 0 }} required={f.mandatory === true}>
                   {f.long_display_text || f.remarks}
                 </CustomFormLabel>
@@ -833,7 +879,7 @@ const GuestInformationStepper = () => {
                     case 11:
                       return renderFileUploadField(f, idx);
                     case 12:
-                      return renderUploadWithCamera(f, idx);
+                      return renderUploadWithCamera(f, idx, section);
                     default:
                       return null;
                   }
@@ -899,7 +945,8 @@ const GuestInformationStepper = () => {
                         <IconWoman size={16} style={{ marginRight: 6 }} /> Female
                       </ToggleButton>
                       <ToggleButton value="2">
-                        <IconWoman size={16} style={{ marginRight: 6 }} /> Prefer not to say
+                        <IconGenderTransgender size={16} style={{ marginRight: 6 }} /> Prefer not to
+                        say
                       </ToggleButton>
                     </ToggleButtonGroup>
                     {errors[f.remarks] && (
@@ -1060,37 +1107,37 @@ const GuestInformationStepper = () => {
 
       const payload = transformToSubmitPayload(invitationData);
       console.log('payload', JSON.stringify(payload, null, 2));
-      const visitorId = invitationData?.id;
-      if (!visitorId) {
-        return;
-      }
+      // const visitorId = invitationData?.id;
+      // if (!visitorId) {
+      //   return;
+      // }
 
-      const res = await SubmitPraForm(payload, visitorId);
-      console.log('✅ SubmitPraForm success:', JSON.stringify(res || {}, null, 2));
+      // const res = await SubmitPraForm(payload, visitorId);
+      // console.log('✅ SubmitPraForm success:', JSON.stringify(res || {}, null, 2));
 
-      // await new Promise((r) => setTimeout(r, 500));
+      // // await new Promise((r) => setTimeout(r, 500));
 
-      const authRes = await AuthVisitor({ code });
-      console.log('✅ AuthVisitor success:', JSON.stringify(authRes || {}, null, 2));
-      const token = authRes?.collection?.token;
-      console.log('token', token);
+      // const authRes = await AuthVisitor({ code });
+      // console.log('✅ AuthVisitor success:', JSON.stringify(authRes || {}, null, 2));
+      // const token = authRes?.collection?.token;
+      // console.log('token', token);
 
-      const status = authRes.status;
+      // const status = authRes.status;
 
-      if (status === 'process') {
-        setSubmitting(false);
-        navigate('/portal/waiting', { replace: true });
-        return;
-      }
+      // if (status === 'process') {
+      //   setSubmitting(false);
+      //   navigate('/portal/waiting', { replace: true });
+      //   return;
+      // }
 
-      if (token) {
-        await saveToken(token, GroupRoleId.Visitor);
-        showSwal('success', 'Successfully Pra Register Visitor');
+      // if (token) {
+      //   await saveToken(token, GroupRoleId.Visitor);
+      //   showSwal('success', 'Successfully Pra Register Visitor');
 
-        navigate('/guest/dashboard', { replace: true });
-        localStorage.removeItem('visitor_ref_code');
-        return;
-      }
+      //   navigate('/guest/dashboard', { replace: true });
+      //   localStorage.removeItem('visitor_ref_code');
+      //   return;
+      // }
     } catch (error) {
       setSubmitting(false);
       showSwal('error', 'Failed to submit guest information form.');
@@ -1101,145 +1148,165 @@ const GuestInformationStepper = () => {
 
   return (
     <PageContainer title="Guest Information" description="Guest Information">
-      <Grid
-        container
-        justifyContent="center"
-        alignItems="center"
-        sx={{ height: '100vh', backgroundColor: '#f4f6f8' }}
-      >
-        <Grid size={{ xs: 12, sm: 11, xl: 8 }} sx={{ p: { xs: 2 } }}>
-          <Card elevation={10} sx={{ p: 3, borderRadius: 3, bgcolor: 'white', boxShadow: 3 }}>
-            <Box
-              textAlign="center"
-              mb={3}
-              display="flex"
-              flexDirection="column"
-              alignItems="center"
-            >
-              <img src={Logo} width={100} height={100} alt="Logo" />
-              {code && (
-                <Typography variant="h6" fontWeight={600} mt={2}>
-                  Invitation Code: {code}
-                </Typography>
-              )}
-            </Box>
-
-            {!isMobile && (
-              <>
-                <Stepper activeStep={activeStep} alternativeLabel>
-                  {steps.map((label: any, idx: number) => (
-                    <Step key={idx}>
-                      <StepLabel
-                        StepIconComponent={CustomStepIcon}
-                        onClick={() => setActiveStep(idx)}
-                        sx={{
-                          cursor: 'pointer',
-                          '& .MuiStepLabel-label': {
-                            typography: 'body1',
-                            fontWeight: activeStep === idx ? 600 : 400,
-                          },
-                        }}
-                      >
-                        {label}
-                      </StepLabel>
-                    </Step>
-                  ))}
-                </Stepper>
-              </>
-            )}
-
-            {isMobile && (
+      <Box>
+        <Grid
+          container
+          justifyContent="center"
+          alignItems="center"
+          sx={{ height: { xs: '100vh', lg: '80vh' }, backgroundColor: '#f4f6f8' }}
+        >
+          <Grid size={{ xs: 12, sm: 11, xl: 8 }} sx={{ p: { xs: 2 } }}>
+            <Card elevation={10} sx={{ p: 3, borderRadius: 3, bgcolor: 'white', boxShadow: 3 }}>
               <Box
-                sx={{
-                  mt: 1,
-                  mb: 1,
-                  px: 2,
-                  py: 1,
-                  width: 'fit-content',
-                  mx: 'auto',
-                  // bgcolor: 'primary.main',
-                  borderRadius: 2,
-                  color: 'primary',
-                  textAlign: 'center',
-                }}
+                textAlign="center"
+                mb={3}
+                display="flex"
+                flexDirection="column"
+                alignItems="center"
               >
-                <Typography variant="h5" fontWeight={600}>
-                  {steps[activeStep]}
-                </Typography>
+                <img src={Logo} width={100} height={100} alt="Logo" />
+                {code && (
+                  <Typography variant="h6" fontWeight={600} mt={2}>
+                    Invitation Code: {code}
+                  </Typography>
+                )}
               </Box>
-            )}
 
-            <Box mt={2}>{StepContent(formSections[activeStep])}</Box>
+              {!isMobile && (
+                <>
+                  <Stepper activeStep={activeStep} alternativeLabel>
+                    {steps.map((label: any, idx: number) => (
+                      <Step key={idx}>
+                        <StepLabel
+                          StepIconComponent={CustomStepIcon}
+                          onClick={() => setActiveStep(idx)}
+                          sx={{
+                            cursor: 'pointer',
+                            '& .MuiStepLabel-label': {
+                              typography: 'body1',
+                              fontWeight: activeStep === idx ? 600 : 400,
+                            },
+                          }}
+                        >
+                          {label}
+                        </StepLabel>
+                      </Step>
+                    ))}
+                  </Stepper>
+                </>
+              )}
 
-            {isMobile && (
-              <Box sx={{ mt: 2 }}>
-                <MobileStepper
-                  variant="dots"
-                  steps={steps.length}
-                  position="static"
-                  activeStep={activeStep}
-                  nextButton={
-                    activeStep === steps.length - 1 ? (
+              {isMobile && (
+                <Box
+                  sx={{
+                    mt: 1,
+                    mb: 1,
+                    px: 2,
+                    py: 1,
+                    width: 'fit-content',
+                    mx: 'auto',
+                    // bgcolor: 'primary.main',
+                    borderRadius: 2,
+                    color: 'primary',
+                    textAlign: 'center',
+                  }}
+                >
+                  <Typography variant="h5" fontWeight={600}>
+                    {steps[activeStep]}
+                  </Typography>
+                </Box>
+              )}
+
+              <Box mt={2}>{StepContent(formSections[activeStep])}</Box>
+
+              {isMobile && (
+                <Box sx={{ mt: 2 }}>
+                  <MobileStepper
+                    variant="dots"
+                    steps={steps.length}
+                    position="static"
+                    activeStep={activeStep}
+                    nextButton={
+                      activeStep === steps.length - 1 ? (
+                        <Button
+                          size="medium"
+                          variant="contained"
+                          color="primary"
+                          // onClick={handleSubmit}
+                          onClick={() => setOpenPreview(true)}
+                        >
+                          Submit
+                        </Button>
+                      ) : (
+                        <Button
+                          size="medium"
+                          variant="contained"
+                          color="primary"
+                          onClick={handleNext}
+                        >
+                          Next
+                          <KeyboardArrowRight />
+                        </Button>
+                      )
+                    }
+                    backButton={
+                      <Button size="medium" onClick={handleBack} disabled={activeStep === 0}>
+                        <KeyboardArrowLeft />
+                        Back
+                      </Button>
+                    }
+                  />
+                </Box>
+              )}
+
+              <>
+                {!isMobile && (
+                  <Box display="flex" flexDirection="row" mt={4}>
+                    <Button
+                      disabled={activeStep === 0}
+                      onClick={handleBack}
+                      startIcon={<KeyboardArrowLeft />}
+                    >
+                      Back
+                    </Button>
+                    <Box flex="1 1 auto" />
+                    {activeStep !== steps.length - 1 ? (
                       <Button
-                        size="medium"
+                        onClick={handleNext}
                         variant="contained"
-                        color="primary"
-                        onClick={handleSubmit}
+                        endIcon={<KeyboardArrowRight />}
                       >
-                        Submit
+                        Next
                       </Button>
                     ) : (
                       <Button
-                        size="medium"
+                        // onClick={handleSubmit}
+                        onClick={() => setOpenPreview(true)}
                         variant="contained"
                         color="primary"
-                        onClick={handleNext}
                       >
-                        Next
-                        <KeyboardArrowRight />
+                        Submit
                       </Button>
-                    )
-                  }
-                  backButton={
-                    <Button size="medium" onClick={handleBack} disabled={activeStep === 0}>
-                      <KeyboardArrowLeft />
-                      Back
-                    </Button>
-                  }
-                />
-              </Box>
-            )}
-
-            <>
-              {!isMobile && (
-                <Box display="flex" flexDirection="row" mt={4}>
-                  <Button
-                    disabled={activeStep === 0}
-                    onClick={handleBack}
-                    startIcon={<KeyboardArrowLeft />}
-                  >
-                    Back
-                  </Button>
-                  <Box flex="1 1 auto" />
-                  {activeStep !== steps.length - 1 ? (
-                    <Button
-                      onClick={handleNext}
-                      variant="contained"
-                      endIcon={<KeyboardArrowRight />}
-                    >
-                      Next
-                    </Button>
-                  ) : (
-                    <Button onClick={handleSubmit} variant="contained" color="primary">
-                      Submit
-                    </Button>
-                  )}
-                </Box>
-              )}
-            </>
-          </Card>
+                    )}
+                  </Box>
+                )}
+              </>
+            </Card>
+          </Grid>
         </Grid>
-      </Grid>
+        <Footer />
+      </Box>
+
+      <PreviewDialog
+        open={openPreview}
+        onClose={() => setOpenPreview(false)}
+        onConfirm={(e: any) => {
+          setOpenPreview(false);
+          handleSubmit(e);
+        }}
+        invitationData={invitationData}
+        formValues={formValues}
+      />
       <Backdrop
         open={submitting}
         sx={{
@@ -1250,11 +1317,12 @@ const GuestInformationStepper = () => {
           <CircularProgress color="primary" />
         </Box>
       </Backdrop>
+      
       <Snackbar
         open={snackbar.open}
-        autoHideDuration={4000}
+        autoHideDuration={3000}
         onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
         <Alert
           severity={snackbar.severity as any}
@@ -1264,6 +1332,35 @@ const GuestInformationStepper = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
+      {showBackToTop && (
+        <Tooltip title="Back to Top" placement="left" arrow>
+          <Box
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            sx={{
+              position: 'fixed',
+              bottom: 24,
+              right: 24,
+              width: 48,
+              height: 48,
+              borderRadius: '50%',
+              backgroundColor: 'primary.main',
+              border: '2px solid #fff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              zIndex: 9999,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+              '&:hover': {
+                backgroundColor: 'primary.main',
+                transform: 'scale(1.05)',
+              },
+            }}
+          >
+            <KeyboardArrowUp sx={{ color: '#fff', fontSize: 30 }} />
+          </Box>
+        </Tooltip>
+      )}
     </PageContainer>
   );
 };

@@ -56,7 +56,7 @@ const Header = () => {
         }}
       >
         <Box sx={{ width: lgDown ? '45px' : 'auto', overflow: 'hidden' }}>
-          <img src="https://upload.wikimedia.org/wikipedia/commons/3/39/BI_Logo.png" />
+          {/* <img src="https://upload.wikimedia.org/wikipedia/commons/3/39/BI_Logo.png" /> */}
         </Box>
         {/* ------------------------------------------- */}
         {/* Toggle Button Sidebar */}
