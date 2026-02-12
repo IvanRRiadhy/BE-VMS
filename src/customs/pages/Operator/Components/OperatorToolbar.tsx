@@ -14,6 +14,7 @@ interface OperatorToolbarProps {
   onClear: () => void;
   onOpenList: () => void;
   onOpenBlacklist: () => void;
+  onOpenVehicle: () => void;
   onOpenInfo: () => void;
   isFullscreen: boolean;
   onToggleFullscreen: () => void;
@@ -24,6 +25,7 @@ const OperatorToolbar = ({
   onClear,
   onOpenList,
   onOpenBlacklist,
+  onOpenVehicle,
   onOpenInfo,
   isFullscreen,
   onToggleFullscreen,
@@ -53,7 +55,12 @@ const OperatorToolbar = ({
       display="flex"
       gap={0.5}
       alignItems="center"
-      sx={{ mb: { xs: 2, md: '1px' }, flexWrap: { xs: 'wrap', xl: 'nowrap' }, width: '100%' }}
+      sx={{
+        mb: { xs: 2, md: '2px' },
+        flexWrap: { xs: 'wrap', xl: 'nowrap' },
+        width: '100%',
+        px: '5px',
+      }}
     >
       <Tooltip title="Clear data information" {...tooltipProps}>
         <Button variant="outlined" color="error" startIcon={<IconX size={18} />} onClick={onClear}>
@@ -114,11 +121,16 @@ const OperatorToolbar = ({
           Blacklist Visitor
         </MenuItem>
       </Menu>
-      <Tooltip title="Vehicle" {...tooltipProps}>
-        <Button variant="contained" color="secondary" startIcon={<IconCar size={18} />}>
+      {/* <Tooltip title="Vehicle" {...tooltipProps}>
+        <Button
+          variant="contained"
+          color="secondary"
+          startIcon={<IconCar size={18} />}
+          onClick={onOpenVehicle}
+        >
           Vehicle
         </Button>
-      </Tooltip>
+      </Tooltip> */}
 
       <Tooltip title="Information Guide Operator" {...tooltipProps}>
         <Button variant="contained" onClick={onOpenInfo} sx={{ width: 36, height: 36, p: 0.7 }}>

@@ -78,7 +78,6 @@ const VisitorDetailDialog: React.FC<VisitorDetailDialogProps> = ({
       return '-';
     }
   };
-  console.log('detail', detail);
   return (
     <Dialog fullWidth maxWidth="md" open={open} onClose={onClose}>
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

@@ -7,6 +7,11 @@ type Props = {
   setFormData: React.Dispatch<React.SetStateAction<CreateVisitorRequest>>;
   edittingId?: string;
   onSuccess?: () => void;
+  vtLoading?: any;
+  visitorType?: any;
+  sites?: any;
+  employee?: any;
+  allVisitorEmployee?: any;
 };
 
 const FormWizardAddInvitation: React.FC<Props> = (props) => {

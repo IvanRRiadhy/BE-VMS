@@ -33,6 +33,7 @@ interface SwipeAccessDialogProps {
   data: AccessItem[];
   onSubmit?: (payload: { value: string; type: string; access: string[] }) => void;
   invitationId?: string;
+  visitor: any;
 }
 
 interface AccessItem {
@@ -47,6 +48,7 @@ const SwipeAccessDialog = ({
   data,
   onSubmit,
   invitationId,
+  visitor,
 }: SwipeAccessDialogProps) => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const { token } = useSession();
@@ -81,7 +83,7 @@ const SwipeAccessDialog = ({
       access_control_id: accessControlId,
       action,
       // card_number: payload.value,
-      trx_visitor_id: invitationId,
+      trx_visitor_id: visitor.id,
     }));
 
     const payloads = { data_access };
@@ -131,19 +133,6 @@ const SwipeAccessDialog = ({
             }
             label="Select All"
           />
-
-          {/* {data.map((item) => (
-            <FormControlLabel
-              key={item.id}
-              control={
-                <Checkbox
-                  checked={selectedIds.includes(item.id)}
-                  onChange={() => handleToggle(item.id)}
-                />
-              }
-              label={item.access_control_name}
-            />
-          ))} */}
           {data.map((item) => (
             <FormControlLabel
               key={item.access_control_id}
@@ -179,7 +168,16 @@ const SwipeAccessDialog = ({
           disabled={selectedIds.length === 0}
           onClick={handleSubmit}
         >
-          Submit
+          Apply
+        </Button>
+        <Button
+          fullWidth
+          variant="contained"
+          // disabled={selectedIds.length === 0}
+          // onClick={handleSubmit}
+          onClick={onClose}
+        >
+          Done
         </Button>
       </DialogActions>
     </Dialog>

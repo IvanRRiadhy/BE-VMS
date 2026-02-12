@@ -30,6 +30,13 @@ import {
   useTheme,
   useMediaQuery,
   Tooltip,
+  InputAdornment,
+  Drawer,
+  FormGroup,
+  FormControlLabel,
+  Checkbox,
+  FormControl,
+  RadioGroup,
 } from '@mui/material';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -37,8 +44,8 @@ import timezone from 'dayjs/plugin/timezone';
 import bg_nodata from 'src/assets/images/backgrounds/bg_nodata.svg';
 
 import type { AlertColor } from '@mui/material/Alert';
-import Container from 'src/components/container/PageContainer';
 import PageContainer from 'src/customs/components/container/PageContainer';
+import Container from 'src/components/container/PageContainer';
 import {
   AdminCustomSidebarItemsData,
   AdminNavListingData,
@@ -47,7 +54,6 @@ import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel
 import iconScanQR from 'src/assets/images/svgs/scan-qr.svg';
 import iconAdd from 'src/assets/images/svgs/add-circle.svg';
 import TopCard from 'src/customs/components/cards/TopCard';
-import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import CloseIcon from '@mui/icons-material/Close';
 import FormWizardAddInvitation from '../FormWizardAddInvitation';
 import FormWizardAddVisitor from '../FormWizardAddVisitor';
@@ -58,10 +64,15 @@ import {
   CreateVisitorRequest,
 } from 'src/customs/api/models/Admin/Visitor';
 import {
-  getAllVisitorPagination,
-  getEmployeeById,
+  getAllSite,
+  getAllVisitorType,
   getRegisteredSite,
   getVisitorById,
+  getVisitorEmployee,
+  getVisitorTransaction,
+  getVisitorTransactionById,
+  getVisitorTransactionByIds,
+  getVisitorTransactionPagination,
 } from 'src/customs/api/admin';
 import { Scanner } from '@yudiel/react-qr-scanner';
 import FlipCameraAndroidIcon from '@mui/icons-material/FlipCameraAndroid';
@@ -72,10 +83,12 @@ import {
   IconCamera,
   IconClipboard,
   IconFileSpreadsheet,
+  IconFilterFilled,
   IconPdf,
   IconQrcode,
   IconUser,
   IconUsers,
+  IconX,
 } from '@tabler/icons-react';
 import EmployeeDetailDialog from '../Dialog/EmployeeDetailDialog';
 import VisitorDetailDialog from '../Dialog/VisitorDetailDialog';
@@ -84,11 +97,15 @@ import { showSwal } from 'src/customs/components/alerts/alerts';
 import DetailVisitorDialog from 'src/customs/pages/Operator/Dialog/DetailVisitorDialog';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import {
+  FilterList,
   KeyboardArrowDown,
   KeyboardArrowDownOutlined,
   KeyboardArrowUpOutlined,
 } from '@mui/icons-material';
 import { useDebounce } from 'src/hooks/useDebounce';
+import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import CustomRadio from 'src/components/forms/theme-elements/CustomRadio';
+import VisitorRow from './VisitorRow';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -118,7 +135,7 @@ type Group = {
 const Content = () => {
   const { token } = useSession();
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(100);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [sortDir, setSortDir] = useState<string>('desc');
   const [loading, setLoading] = useState(false);
@@ -131,14 +148,11 @@ const Content = () => {
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [totalRecords, setTotalRecords] = useState(0);
   const [searchKeyword, setSearchKeyword] = useState('');
-  const [isDataReady, setIsDataReady] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
   // mode konfirmasi: "close-add" atau "edit"
   const [discardMode, setDiscardMode] = useState<'close-add' | 'edit' | null>(null);
-  const [tableRowVisitors, setTableRowVisitors] = useState<Item[]>([]);
-  const [tableCustomVisitor, setTableCustomVisitor] = useState<VisitorTableRow[]>([]);
-  const [selectedRows, setSelectedRows] = useState<[]>([]);
+  const [tableRowVisitors, setTableRowVisitors] = useState<any[]>([]);
   const [openDetail, setOpenDetail] = useState(false);
   const [visitorData, setVisitorData] = useState<any[]>([]);
   const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorRequest>(() => {
@@ -150,6 +164,7 @@ const Content = () => {
     {
       title: 'Total Visitor',
       icon: IconUsers,
+      // subTitle: `${totalFilteredRecords}`,
       subTitle: `${totalFilteredRecords}`,
       subTitleSetting: 10,
       color: 'none',
@@ -204,19 +219,6 @@ const Content = () => {
   const [openInvitationVisitor, setOpenInvitationVisitor] = useState(false);
   const [openPreRegistration, setOpenPreRegistration] = useState(false);
   const [flowTarget, setFlowTarget] = useState<'invitation' | 'preReg' | null>(null);
-  // Employee Detail
-  const [openEmployeeDialog, setOpenEmployeeDialog] = useState(false);
-  const [employeeLoading, setEmployeeLoading] = useState(false);
-  const [employeeError, setEmployeeError] = useState<string | null>(null);
-  const [employeeDetail, setEmployeeDetail] = useState<any>(null);
-  const [startDate, setStartDate] = useState<string>('');
-  const [endDate, setEndDate] = useState<string>('');
-
-  // Visitor Detail
-  const [openVisitorDialog, setOpenVisitorDialog] = useState(false);
-  const [visitorLoading, setVisitorLoading] = useState(false);
-  const [visitorError, setVisitorError] = useState<string | null>(null);
-  const [visitorDetail, setVisitorDetail] = useState<any>(null);
 
   // Registered Site
   const [siteData, setSiteData] = useState<any[]>([]);
@@ -231,9 +233,14 @@ const Content = () => {
   const [wizardKey, setWizardKey] = useState(0);
   const secdrawerWidth = 260;
   const [search, setSearch] = useState('');
-  const debounceSearch = useDebounce(search, 500);
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const [openGroup, setOpenGroup] = useState(true);
+  const [showDrawerFilterMore, setShowDrawerFilterMore] = useState(false);
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [groupDetail, setGroupDetail] = useState<any | null>(null);
+  const [groupDetailLoading, setGroupDetailLoading] = useState(false);
+  const [groupHeader, setGroupHeader] = useState<any | null>(null);
+  const [groupVisitors, setGroupVisitors] = useState<any[]>([]);
 
   const resetRegisteredFlow = () => {
     setSelectedSite(null);
@@ -244,12 +251,6 @@ const Content = () => {
     setOpenInvitationVisitor(false);
     setOpenPreRegistration(false);
     resetRegisteredFlow();
-  };
-
-  const handleCloseEmployeeDialog = () => {
-    setOpenEmployeeDialog(false);
-    setEmployeeDetail(null);
-    setEmployeeError(null);
   };
 
   const [selectedType, setSelectedType] = useState<
@@ -265,82 +266,116 @@ const Content = () => {
     Block: 'Block',
   };
 
+  const visitorRole: Record<string, string> = {
+    Visitor: 'Visitor',
+    Delivery: 'Delivery',
+    Vip: 'Vip',
+  };
+
+  const visitorRoleOptions = Object.values(visitorRole);
+
+  const statusOptions = Object.values(statusMap);
+
   const resolveVisitorStatus = (item: any): string => {
     if (item.is_block) return 'Block';
     return item.visitor_status || '-';
   };
 
+  const [searchAgenda, setSearchAgenda] = useState('');
+  const debouncedSearchAgenda = useDebounce(searchAgenda, 400);
+
+  const [filters, setFilters] = useState<any>({
+    status: undefined,
+    visitor_type: '',
+    visitor_role: '',
+    host_id: '',
+    site_id: '',
+    is_employee: '',
+    is_block: '',
+    transaction_status: '',
+    emergency_situation: '',
+    start_date: '',
+    end_date: '',
+  });
+
+  const [appliedFilters, setAppliedFilters] = useState<any>({
+    status: undefined,
+    visitor_status: '',
+    visitor_type: '',
+    visitor_role: '',
+    host_id: '',
+    site_id: '',
+    is_block: '',
+    transaction_status: '',
+    emergency_situation: '',
+    start_date: '',
+    end_date: '',
+  });
+
+  const fetchData = async () => {
+    if (!token) return;
+
+    setLoading(true);
+    try {
+      const start = page * rowsPerPage;
+
+      const isEmergencyParam =
+        appliedFilters.emergency_situation === ''
+          ? undefined
+          : appliedFilters.emergency_situation === 'true';
+
+      const isBlockParam =
+        appliedFilters.is_block === '' ? undefined : appliedFilters.is_block === 'true';
+
+      const res = await getVisitorTransactionPagination(
+        token,
+        start,
+        rowsPerPage,
+        sortDir,
+        // 🔍 SEARCH (dipisah)
+        debouncedSearchAgenda,
+        // 📅 DATE
+        appliedFilters.start_date || undefined,
+        appliedFilters.end_date || undefined,
+        // 📌 STATUS
+        appliedFilters.visitor_status || undefined,
+        appliedFilters.data_filter,
+        // 🔁 TRANSACTION
+        appliedFilters.transaction_status || undefined,
+        // 🏢 SITE
+        appliedFilters.site_id || undefined,
+        // 👤 ROLE
+        appliedFilters.visitor_role || undefined,
+        // 🚨 EMERGENCY
+        isEmergencyParam,
+        // ⛔ BLOCK
+        isBlockParam,
+        // 👨‍💼 HOST
+        appliedFilters.host_id || undefined,
+      );
+
+      setTableRowVisitors(
+        res.collection.map((item: any) => ({
+          id: item.id,
+          agenda: item.agenda || '-',
+          visitor_type: item.visitor_type_name || '-',
+        })),
+      );
+
+      setTotalRecords(res.RecordsTotal);
+      setTotalFilteredRecords(res.RecordsFiltered);
+    } catch (err) {
+      console.error('fetchData error:', err);
+      setTableRowVisitors([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!token) return;
-    const fetchData = async () => {
-      setLoading(true);
-      // setIsDataReady(false);
-
-      try {
-        const start = page * rowsPerPage;
-        const status = selectedType === 'All' ? undefined : statusMap[selectedType];
-        const response = await getAllVisitorPagination(
-          token,
-          start,
-          rowsPerPage,
-          sortDir,
-          searchKeyword,
-          startDate,
-          endDate,
-          status,
-        );
-        let rows = response.collection.map((item: any) => {
-          const displayStatus = resolveVisitorStatus(item);
-          return {
-            id: item.id,
-            visitor_type: item.visitor_type_name || '-',
-            name: item.visitor_name || '-',
-            identity_id: item.visitor_identity_id || '-',
-            email: item.visitor_email || '-',
-            organization: item.visitor_organization_name || '-',
-            gender: item.visitor_gender || '-',
-            phone: item.visitor_phone || '-',
-            // is_vip: item.is_vip || '-',
-            visitor_period_start: item.visitor_period_start || '-',
-            visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
-            host: item.host ?? '-',
-            visitor_status: item.visitor_status || '-',
-          };
-        });
-
-        // if (selectedType !== 'All') {
-        //   const apiStatus = statusMap[selectedType];
-        //   rows = rows.filter((r) => r.visitor_status === apiStatus);
-        // }
-
-        setTableRowVisitors(response.collection);
-        setTotalRecords(response.RecordsTotal);
-        setTotalFilteredRecords(response.RecordsFiltered);
-        setTableCustomVisitor(rows);
-        // setIsDataReady(true);
-      } catch (err) {
-        console.error('Failed to fetch visitor data:', err);
-        setTableCustomVisitor([]);
-        setTotalRecords(0);
-        setTotalFilteredRecords(0);
-        setTableRowVisitors([]);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchData();
-  }, [
-    token,
-    page,
-    rowsPerPage,
-    // sortColumn,
-    sortDir,
-    refreshTrigger,
-    searchKeyword,
-    startDate,
-    endDate,
-    selectedType,
-  ]);
+  }, [token, page, rowsPerPage, sortDir, appliedFilters, debouncedSearchAgenda]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -416,51 +451,6 @@ const Content = () => {
     handleDialogClose();
   };
 
-  type VisitorAction = 'checkin' | 'checkout' | 'deny' | 'block';
-
-  const [confirm, setConfirm] = React.useState<{
-    type: VisitorAction;
-    loading: boolean;
-  } | null>(null);
-
-  // label & warna tombol sesuai aksi
-  const actionMeta: Record<
-    VisitorAction,
-    { title: string; ok: string; color: 'success' | 'error' | 'warning' | 'info' }
-  > = {
-    checkin: { title: 'Confirm Check In', ok: 'Check In', color: 'success' },
-    checkout: { title: 'Confirm Check Out', ok: 'Check Out', color: 'error' },
-    deny: { title: 'Confirm Deny', ok: 'Deny', color: 'warning' },
-    block: { title: 'Confirm Block', ok: 'Block', color: 'info' },
-  };
-
-  const openConfirm = (type: VisitorAction) => setConfirm({ type, loading: false });
-  const closeConfirm = () => {
-    if (!confirm?.loading) setConfirm(null);
-  };
-
-  const runConfirmedAction = async () => {
-    if (!confirm || !token || !visitorDetail?.id) return;
-    setConfirm((c) => (c ? { ...c, loading: true } : c));
-
-    try {
-      await new Promise((r) => setTimeout(r, 400));
-
-      setConfirm(null);
-      setOpenVisitorDialog(false);
-      setRefreshTrigger((p) => p + 1);
-    } catch (e) {
-      setConfirm((c) => (c ? { ...c, loading: false } : c));
-    }
-  };
-
-  const [filters, setFilters] = useState<any>({
-    visitor_type: '',
-    site: '',
-    status: '',
-    created_at: '',
-  });
-
   const handleSubmitQRCode = async (value: string) => {
     try {
       setLoading(true);
@@ -475,170 +465,112 @@ const Content = () => {
         return;
       }
     } catch (error) {
-      showSwal('error', 'Failed to fetch visitor data. Please try again.');
+      showSwal('error', 'Failed to fetch visitor data.');
     } finally {
       setLoading(false);
     }
   };
 
-  function createData(
-    name: string,
-    calories: number,
-    fat: number,
-    carbs: number,
-    protein: number,
-    price: number,
-  ) {
-    return {
-      name,
-      calories,
-      fat,
-      carbs,
-      protein,
-      price,
-      history: [
-        {
-          date: '2020-01-05',
-          customerId: '11091700',
-          amount: 3,
-        },
-        {
-          date: '2020-01-02',
-          customerId: 'Anonymous',
-          amount: 1,
-        },
-      ],
+  useEffect(() => {
+    if (!selectedGroupId || !token) return;
+
+    const fetchDetail = async () => {
+      setGroupDetailLoading(true);
+      try {
+        const res = await getVisitorTransactionByIds(token, selectedGroupId);
+        setGroupHeader(res.collection[0]);
+        setGroupVisitors(res.collection);
+      } catch (e) {
+        setGroupDetail(null);
+        setGroupVisitors([]);
+      } finally {
+        setGroupDetailLoading(false);
+      }
     };
-  }
-  const rows = [
-    createData('Frozen yoghurt', 159, 6.0, 24, 4.0, 3.99),
-    createData('Ice cream sandwich', 237, 9.0, 37, 4.3, 4.99),
-    createData('Eclair', 262, 16.0, 24, 6.0, 3.79),
-    createData('Cupcake', 305, 3.7, 67, 4.3, 2.5),
-    createData('Gingerbread', 356, 16.0, 49, 3.9, 1.5),
-  ];
-  const groups = [
-    {
-      id: 'g1',
-      name: 'Group Albert',
-      agenda: 'Agenda 1',
-      rows: rows,
-    },
-    {
-      id: 'g2',
-      name: 'Group Bob',
-      agenda: 'Agenda 2',
-      rows: rows,
-    },
-  ];
 
-  function Row(props: { row: ReturnType<typeof createData>; index: number }) {
-    const { row, index } = props;
+    fetchDetail();
+  }, [selectedGroupId, token]);
 
-    const [open, setOpen] = useState(false);
+  const handleResetFilter = () => {
+    const empty = {
+      visitor_status: '',
+      visitor_type: '',
+      visitor_role: '',
+      host_id: '',
+      site_id: '',
+      is_block: '',
+      transaction_status: '',
+      emergency_situation: '',
+      start_date: '',
+      end_date: '',
+    };
 
-    return (
-      <React.Fragment>
-        <TableRow
-          sx={{
-            '& > *': { borderBottom: 'unset' },
-            backgroundColor: index % 2 === 0 ? '#ffffff' : '#f7faff',
-            '&:hover': {
-              backgroundColor: '#e3f2fd',
-            },
-          }}
-        >
-          <TableCell sx={{ width: '50px' }}>
-            <IconButton
-              aria-label={`expand row ${row.name}`}
-              size="small"
-              onClick={() => setOpen(!open)}
-            >
-              {open ? <KeyboardArrowUpOutlined /> : <KeyboardArrowDownOutlined />}
-            </IconButton>
-          </TableCell>
-          <TableCell component="th" scope="row">
-            <Box>
-              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                Agenda
-              </Typography>
-              <Typography variant="body2">Meeting</Typography>
-            </Box>
-          </TableCell>
-          <TableCell component="th" scope="row">
-            <Box>
-              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                Visitor Type
-              </Typography>
-              <Typography variant="body2">Visitor</Typography>
-            </Box>
-          </TableCell>
-          <TableCell component="th" scope="row">
-            <Box>
-              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                Visit Start
-              </Typography>
-              <Typography variant="body2">2026-01-01, 09:00</Typography>
-            </Box>
-          </TableCell>
-          <TableCell component="th" scope="row">
-            <Box>
-              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                Visit End
-              </Typography>
-              <Typography variant="body2">2026-01-01, 19:00</Typography>
-            </Box>
-          </TableCell>
-        </TableRow>
-        <TableRow>
-          <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
-            <Collapse in={open} timeout="auto" unmountOnExit>
-              <Box sx={{ margin: 1 }}>
-                {/* <Typography variant="h6" gutterBottom component="div">
-                  History
-                </Typography> */}
-                <Table size="small" aria-label="purchases">
-                  <TableHead>
-                    <TableRow>
-                      {/* <TableCell sx={{ width: '50px' }}>
-                        <Avatar />
-                      </TableCell> */}
-                      <TableCell sx={{ width: '50px', textAlign: 'center' }}>#</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Name</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Email</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Phone</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Indentity Id</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {/* {row.history.map((historyRow) => (
-                      <TableRow key={historyRow.date}>
-                        <TableCell component="th" scope="row">
-                          {historyRow.date}
-                        </TableCell>
-                        <TableCell>{historyRow.customerId}</TableCell>
-                        <TableCell align="right">{historyRow.amount}</TableCell>
-                        <TableCell align="right">
-                          {Math.round(historyRow.amount * row.price * 100) / 100}
-                        </TableCell>
-                      </TableRow>
-                    ))} */}
-                    <TableCell sx={{ width: '50px' }}>
-                      <Avatar />
-                    </TableCell>
-                    <TableCell>Albert</TableCell>
-                    <TableCell>albert@gmail.com</TableCell>
-                    <TableCell>085123123123</TableCell>
-                    <TableCell>1512312312</TableCell>
-                  </TableBody>
-                </Table>
-              </Box>
-            </Collapse>
-          </TableCell>
-        </TableRow>
-      </React.Fragment>
-    );
-  }
+    setFilters(empty);
+    setAppliedFilters({
+      status: undefined,
+      ...empty,
+    });
+
+    setSearch('');
+    setSelectedType('All');
+    setPage(0);
+  };
+
+  const handleApplyFilter = () => {
+    setAppliedFilters({
+      status: selectedType === 'All' ? undefined : statusMap[selectedType],
+      ...filters,
+    });
+
+    setPage(0);
+    setSelectedGroupId(null);
+    setGroupVisitors([]);
+    setShowDrawerFilterMore(false);
+  };
+
+  const [visitorType, setVisitorType] = useState<any[]>([]);
+  const [sites, setSites] = useState<any[]>([]);
+  const [employee, setEmployee] = useState<any[]>([]);
+  const [vtLoading, setVTLoading] = useState(false);
+  const [allVisitorEmployee, setAllVisitorEmployee] = useState<any[]>([]);
+
+  const fetchVisitorType = async () => {
+    try {
+      setVTLoading(true);
+      const res = await getAllVisitorType(token as string);
+      setVisitorType(res?.collection || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setVTLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (token) {
+      fetchVisitorType();
+    }
+  }, [token]);
+  useEffect(() => {
+    if (!token) return;
+
+    const fetchData = async () => {
+      try {
+        const [siteRes, employeeRes] = await Promise.all([
+          getAllSite(token),
+          getVisitorEmployee(token),
+        ]);
+
+        setSites(siteRes?.collection ?? []);
+        setEmployee(employeeRes?.collection ?? []);
+        setAllVisitorEmployee(employeeRes?.collection ?? []);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchData();
+  }, [token]);
 
   return (
     <PageContainer
@@ -698,14 +630,23 @@ const Content = () => {
               <TextField
                 fullWidth
                 size="small"
-                placeholder="Search Agenda/Group Name"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search Agenda"
+                value={searchAgenda}
+                onChange={(e) => setSearchAgenda(e.target.value)}
                 sx={{ mb: 2 }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton edge="end" onClick={() => setShowDrawerFilterMore(true)}>
+                        <IconFilterFilled />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
               />
               <Box>
                 <Box>
-                  {groups.map((group: Group) => (
+                  {tableRowVisitors.map((group: any) => (
                     <Box
                       key={group.id}
                       sx={{
@@ -718,26 +659,26 @@ const Content = () => {
                           backgroundColor: '#eee',
                         },
                       }}
-                      onClick={() =>
-                        setSelectedGroup((prev) => (prev?.id === group.id ? null : group))
-                      }
+                      onClick={() => {
+                        setSelectedGroup(group);
+                        setSelectedGroupId(group.id);
+                      }}
                     >
                       <Typography variant="body1" fontWeight="bold">
                         {group.agenda}
                       </Typography>
-                      <Typography>{group.name}</Typography>
+                      <Typography>{group.visitor_type}</Typography>
                     </Box>
                   ))}
                 </Box>
               </Box>
             </Box>
             <Box flexGrow={1} p={2} sx={{ height: { xs: 'auto', xl: '78vh' }, overflow: 'auto' }}>
-              {selectedGroup ? (
+              {selectedGroupId ? (
                 <TableContainer component={Paper} sx={{ border: '1px solid #d6d6d6ff' }}>
                   <Table aria-label="collapsible table">
                     <TableHead>
                       <TableRow>
-                        {/* tombol expand */}
                         <TableCell sx={{ width: 50 }}>
                           <IconButton size="small" onClick={() => setOpenGroup(!openGroup)}>
                             {openGroup ? (
@@ -747,23 +688,23 @@ const Content = () => {
                             )}
                           </IconButton>
                         </TableCell>
-
-                        {/* nama group */}
                         <TableCell colSpan={5}>
-                          <Box display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
+                          <Box
+                            display={'flex'}
+                            justifyContent={'space-between'}
+                            alignItems={'center'}
+                          >
                             <Typography sx={{ fontWeight: 'bold', fontSize: '18px' }}>
-                              {selectedGroup.name}
+                              {groupHeader?.group_name ?? '-'}
                             </Typography>
                             <Box display={'flex'} gap={0.5}>
                               <Tooltip title="Export PDF" arrow>
                                 <Button variant="contained" color="error">
-                                  {/* Export PDF */}
                                   <IconPdf />
                                 </Button>
                               </Tooltip>
                               <Tooltip title="Export Excel" arrow>
                                 <Button variant="contained" color="success">
-                                  {/* Export Excel*/}
                                   <IconFileSpreadsheet />
                                 </Button>
                               </Tooltip>
@@ -772,22 +713,25 @@ const Content = () => {
                         </TableCell>
                       </TableRow>
                     </TableHead>
-
-                    {openGroup && (
-                      <TableBody>
-                        {selectedGroup.rows.length > 0 ? (
-                          selectedGroup.rows.map((row: any, index) => (
-                            <Row key={row.id} row={row} index={index} />
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell colSpan={6} align="center">
-                              <Typography color="text.secondary">No data available</Typography>
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    )}
+                    <TableBody>
+                      {groupDetailLoading ? (
+                        <TableRow>
+                          <TableCell colSpan={6} align="center">
+                            <CircularProgress size={24} />
+                          </TableCell>
+                        </TableRow>
+                      ) : groupVisitors.length > 0 ? (
+                        groupVisitors.map((visitor: any, index: number) => (
+                          <VisitorRow key={visitor.id} visitor={visitor} index={index} />
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={6} align="center">
+                            <Typography color="text.secondary">No visitor data</Typography>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
                   </Table>
                 </TableContainer>
               ) : (
@@ -835,9 +779,9 @@ const Content = () => {
             aria-label="close"
             onClick={() => {
               if (isFormChanged) {
-                openDiscardForCloseAdd(); // <── ini saja
+                openDiscardForCloseAdd();
               } else {
-                handleCloseDialog(); // aman langsung tutup
+                handleCloseDialog();
               }
             }}
           >
@@ -853,6 +797,11 @@ const Content = () => {
             setFormData={setFormDataAddVisitor}
             edittingId={edittingId}
             onSuccess={handleSuccess}
+            visitorType={visitorType}
+            sites={sites}
+            employee={employee}
+            allVisitorEmployee={allVisitorEmployee}
+            vtLoading={vtLoading}
           />
         </DialogContent>
       </Dialog>
@@ -893,17 +842,14 @@ const Content = () => {
             setFormData={setFormDataAddVisitor}
             edittingId={edittingId}
             onSuccess={handleSuccess}
+            visitorType={visitorType}
+            sites={sites}
+            employee={employee}
+            allVisitorEmployee={allVisitorEmployee}
+            vtLoading={vtLoading}
           />
         </DialogContent>
       </Dialog>
-
-      <EmployeeDetailDialog
-        open={openEmployeeDialog}
-        onClose={handleCloseEmployeeDialog}
-        employeeDetail={employeeDetail}
-        employeeLoading={employeeLoading}
-        employeeError={employeeError}
-      />
 
       {/* Select Registered Site */}
       <Dialog open={openDialogIndex === 2} onClose={handleDialogClose} fullWidth maxWidth="sm">
@@ -1285,55 +1231,11 @@ const Content = () => {
         </DialogContent>
       </Dialog>
 
-      <VisitorDetailDialog
-        open={openVisitorDialog}
-        loading={visitorLoading}
-        error={visitorError}
-        detail={visitorDetail}
-        onClose={() => setOpenVisitorDialog(false)}
-        onConfirm={(action: any) => openConfirm(action)}
-      />
-
       <DetailVisitorDialog
         open={openDetail}
         onClose={() => setOpenDetail(false)}
         visitorData={visitorData}
       />
-
-      {/* Dialog Confirm */}
-      <Dialog open={!!confirm} onClose={closeConfirm} fullWidth>
-        <Box display="flex" alignItems="center" justifyContent="space-between" sx={{ px: 0.2 }}>
-          <DialogTitle>{confirm ? actionMeta[confirm.type].title : 'Confirm'}</DialogTitle>
-          <IconButton onClick={closeConfirm}>
-            <CloseIcon />
-          </IconButton>
-        </Box>
-        <Divider />
-        <DialogContent sx={{ pt: 2 }}>
-          <Typography>
-            {`Are you sure you want to ${
-              confirm ? actionMeta[confirm.type].ok.toLowerCase() : 'proceed'
-            } `}
-            <b>{visitorDetail?.name ?? 'this visitor'}</b>?
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={closeConfirm} disabled={!!confirm?.loading}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            // color={confirm ? actionMeta[confirm.type].color : 'primary'}
-            color="primary"
-            onClick={runConfirmedAction}
-            disabled={!!confirm?.loading}
-            startIcon={confirm?.loading ? <CircularProgress size={16} /> : undefined}
-          >
-            {/* {confirm ? actionMeta[confirm.type].ok : 'Confirm'} */}
-            Submit
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       {/* Unsaved Changes */}
       <Dialog open={confirmDialogOpen} onClose={handleCancelDiscard} fullWidth maxWidth="sm">
@@ -1367,6 +1269,278 @@ const Content = () => {
           </Alert>
         </Snackbar>
       </Portal>
+      <Drawer
+        anchor="right"
+        PaperProps={{
+          sx: {
+            width: { xs: '60vw', sm: '40vw' },
+          },
+        }}
+        open={showDrawerFilterMore}
+        onClose={() => setShowDrawerFilterMore(false)}
+      >
+        <Box sx={{ padding: { xs: 0, lg: 3 }, margin: 1 }}>
+          <Box display="flex" alignItems="center" justifyContent="space-between">
+            <Typography variant="h5" gutterBottom>
+              Filter Transaction
+            </Typography>
+            <IconX onClick={() => setShowDrawerFilterMore(false)} style={{ cursor: 'pointer' }} />
+          </Box>
+          <Divider />
+
+          <Grid container spacing={1} sx={{ p: 1 }}>
+            <Grid size={{ xs: 12, lg: 12 }}>
+              <CustomFormLabel sx={{ mt: { xs: 0, lg: 2 } }}>Visitor Status</CustomFormLabel>
+
+              <Autocomplete
+                options={statusOptions}
+                value={filters.status || null}
+                onChange={(_, val) =>
+                  setFilters((prev: any) => ({
+                    ...prev,
+                    status: val || '',
+                  }))
+                }
+                renderInput={(params) => (
+                  <CustomTextField
+                    {...params}
+                    placeholder="Select Visitor Status"
+                    variant="outlined"
+                    InputProps={{
+                      ...params.InputProps,
+                      sx: { fontSize: '0.8rem' },
+                    }}
+                  />
+                )}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, lg: 12 }}>
+              <CustomFormLabel sx={{ mt: { xs: 0, lg: 2 } }}>Visitor Role</CustomFormLabel>
+              <Autocomplete
+                options={visitorRoleOptions}
+                value={filters.visitor_role || null}
+                onChange={(_, val) =>
+                  setFilters((prev: any) => ({
+                    ...prev,
+                    visitor_role: val || '',
+                  }))
+                }
+                renderInput={(params) => (
+                  <CustomTextField
+                    {...params}
+                    placeholder="Select Visitor Role"
+                    variant="outlined"
+                    InputProps={{ ...params.InputProps, sx: { fontSize: '0.8rem' } }}
+                  />
+                )}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, lg: 6 }}>
+              <CustomFormLabel sx={{ mt: { xs: 0, lg: 2 } }}>Visitor Period Start</CustomFormLabel>
+
+              <CustomTextField
+                type="date"
+                fullWidth
+                value={filters.start_date}
+                onChange={(e) =>
+                  setFilters((prev: any) => ({
+                    ...prev,
+                    start_date: e.target.value,
+                  }))
+                }
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, lg: 6 }}>
+              <CustomFormLabel sx={{ mt: { xs: 0, lg: 2 } }}>Visitor Period End</CustomFormLabel>
+
+              <CustomTextField
+                type="date"
+                fullWidth
+                value={filters.end_date}
+                onChange={(e) =>
+                  setFilters((prev: any) => ({
+                    ...prev,
+                    end_date: e.target.value,
+                  }))
+                }
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, lg: 6 }}>
+              <CustomFormLabel sx={{ mt: { xs: 0, lg: 2 } }}>Host</CustomFormLabel>
+              <Autocomplete
+                options={[]}
+                // options={districtData}
+                // value={districtData.find((o) => o.id === filters.district_id) || null}
+                // onChange={(_, val) =>
+                //   setFilters((prev) => ({
+                //     ...prev,
+                //     district_id: val ? val.id : '',
+                //   }))
+                // }
+                // isOptionEqualToValue={(opt, val) => opt.id === val.id}
+                // getOptionLabel={(opt) => opt?.name ?? ''}
+                renderInput={(params) => (
+                  <CustomTextField
+                    {...params}
+                    placeholder="Select Host"
+                    variant="outlined"
+                    InputProps={{ ...params.InputProps, sx: { fontSize: '0.8rem' } }}
+                  />
+                )}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, lg: 6 }}>
+              <CustomFormLabel sx={{ mt: { xs: 0, lg: 2 } }}>Site</CustomFormLabel>
+              <Autocomplete
+                options={[]}
+                // options={districtData}
+                // value={districtData.find((o) => o.id === filters.district_id) || null}
+                // onChange={(_, val) =>
+                //   setFilters((prev) => ({
+                //     ...prev,
+                //     district_id: val ? val.id : '',
+                //   }))
+                // }
+                // isOptionEqualToValue={(opt, val) => opt.id === val.id}
+                // getOptionLabel={(opt) => opt?.name ?? ''}
+                renderInput={(params) => (
+                  <CustomTextField
+                    {...params}
+                    placeholder="Select Sites"
+                    variant="outlined"
+                    InputProps={{ ...params.InputProps, sx: { fontSize: '0.8rem' } }}
+                  />
+                )}
+              />
+            </Grid>
+
+            {/* Blacklist */}
+            <Grid size={{ xs: 12, lg: 4 }}>
+              <CustomFormLabel sx={{ mt: 0 }}>Block</CustomFormLabel>
+              <FormGroup row>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={filters.is_block === 'true'}
+                      onChange={() =>
+                        setFilters((prev: any) => ({
+                          ...prev,
+                          is_block: 'true',
+                        }))
+                      }
+                    />
+                  }
+                  label="Yes"
+                  sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
+                />
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={filters.is_block === 'false'}
+                      onChange={() =>
+                        setFilters((prev: any) => ({
+                          ...prev,
+                          is_block: 'false',
+                        }))
+                      }
+                    />
+                  }
+                  label="No"
+                  sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
+                />
+              </FormGroup>
+            </Grid>
+
+            <Grid size={{ xs: 12, lg: 4 }}>
+              <CustomFormLabel sx={{ mt: 0 }}>Transaction Status</CustomFormLabel>
+              <FormGroup row>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={filters.transaction_status === 'true'}
+                      onChange={() =>
+                        setFilters((prev: any) => ({
+                          ...prev,
+                          transaction_status: 'true',
+                        }))
+                      }
+                    />
+                  }
+                  label="Available"
+                  sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
+                />
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={filters.transaction_status === 'false'}
+                      onChange={() =>
+                        setFilters((prev: any) => ({
+                          ...prev,
+                          transaction_status: 'false',
+                        }))
+                      }
+                    />
+                  }
+                  label="Not Available"
+                  sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
+                />
+              </FormGroup>
+            </Grid>
+
+            <Grid size={{ xs: 12, lg: 4 }}>
+              <CustomFormLabel sx={{ mt: 0 }}>Emergency Situation</CustomFormLabel>
+              <FormGroup row>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={filters.emergency_situation === 'true'}
+                      onChange={() =>
+                        setFilters((prev: any) => ({
+                          ...prev,
+                          emergency_situation: 'true',
+                        }))
+                      }
+                    />
+                  }
+                  label="Yes"
+                  sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
+                />
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={filters.emergency_situation === 'false'}
+                      onChange={() =>
+                        setFilters((prev: any) => ({
+                          ...prev,
+                          emergency_situation: 'false',
+                        }))
+                      }
+                    />
+                  }
+                  label="No"
+                  sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
+                />
+              </FormGroup>
+            </Grid>
+
+            {/* Apply Button */}
+            <Grid size={{ xs: 12 }} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+              {/* Reset */}
+              <Button variant="outlined" color="primary" onClick={handleResetFilter}>
+                Reset
+              </Button>
+              <Button variant="contained" color="primary" onClick={handleApplyFilter}>
+                Apply
+              </Button>
+            </Grid>
+          </Grid>
+        </Box>
+      </Drawer>
     </PageContainer>
   );
 };

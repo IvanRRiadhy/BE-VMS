@@ -68,6 +68,17 @@ const ManageCompanyAndDepartment = Loadable(
 const ManageEmployee = Loadable(
   lazy(() => import('src/customs/pages/admin/content/content_manage_employee/Content')),
 );
+
+const ManageVip = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Enrollment/Vip/Content')),
+)
+
+
+const ManageVendor = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Enrollment/Vendor/Content')),
+);
+
+
 const ManageSiteSpace = Loadable(
   lazy(() => import('src/customs/pages/admin/content/content_manage_site_space/Content')),
 );
@@ -146,6 +157,9 @@ const ManageReportOperatorActivityLog = Loadable(
 const ManageZone = Loadable(lazy(() => import('src/customs/pages/admin/content/Zone/Content')));
 const ManagePrintBadge = Loadable(
   lazy(() => import('src/customs/pages/admin/content/PrintBadge/Content')),
+)
+const ManageEvacuate = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Evacuate/Content')),
 )
 /* ****EMPLOYEE PAGES**** */
 const DashboardEmployee = Loadable(lazy(() => import('src/customs/pages/Employee/Dashboard')));
@@ -288,6 +302,8 @@ const Router = [
           { path: '/admin/visitor/transaction-visitor', element: <ManageTransactionVisitor /> },
           { path: '/admin/manage/companys-deparments', element: <ManageCompanyAndDepartment /> },
           { path: '/admin/manage/employees', element: <ManageEmployee /> },
+          { path: '/admin/manage/vip', element: <ManageVip /> },
+          { path: '/admin/manage/vendor', element: <ManageVendor /> },
           { path: '/admin/manage/delivery', element: <ManageDelivery /> },
           { path: '/admin/manage/delivery/staff', element: <ManageDelivery /> },
           { path: '/admin/visitor/scheduler', element: <ManageDeliveryScheduler /> },
@@ -300,7 +316,6 @@ const Router = [
             path: '/admin/manage/site-space/*',
             element: <ManageSiteSpace />,
           },
-
           { path: '/admin/manage/card', element: <ManageVisitorCard /> },
           { path: '/admin/manage/time-access', element: <ManageTimezone /> },
           { path: '/admin/manage/visitor-type', element: <ManageVisitorType /> },
@@ -322,6 +337,7 @@ const Router = [
           },
           { path: '/profile', element: <DetailProfile /> },
           { path: '/admin/print-badge', element: <ManagePrintBadge /> },
+          { path: '/admin/evacuate', element: <ManageEvacuate /> },
         ],
       },
 

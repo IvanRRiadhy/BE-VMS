@@ -18,20 +18,16 @@ import {
   AdminNavListingData,
 } from 'src/customs/components/header/navigation/AdminMenu';
 import PageContainer from 'src/customs/components/container/PageContainer';
-
+import { useSession } from 'src/customs/contexts/SessionContext';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import CloseIcon from '@mui/icons-material/Close';
-
 import FormAddDepartment from './FormAddDepartment';
 import FormAddDistrict from './FormAddDistrict';
 import FormAddOrganization from './FormAddOrganization';
-
 import FormUpdateDistrict from './FormUpdateDistrict';
 import FormUpdateDepartment from './FormUpdateDepartment';
 import FormUpdateOrganization from './FormUpdateOrganization';
-
-import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   getAllDepartmentsPagination,
   getAllDistrictsPagination,
@@ -60,8 +56,6 @@ import {
 import { IconBuilding, IconBuildingSkyscraper, IconMapPins } from '@tabler/icons-react';
 import {
   showConfirmDelete,
-  showSuccessAlert,
-  showErrorAlert,
   showSwal,
 } from 'src/customs/components/alerts/alerts';
 
@@ -86,8 +80,8 @@ const entityLabel = (e?: DialogEntity) =>
     ? e === 'Organizations'
       ? 'Organization'
       : e === 'Departments'
-      ? 'Department'
-      : 'District'
+        ? 'Department'
+        : 'District'
     : '';
 
 const Content = () => {
@@ -134,84 +128,44 @@ const Content = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [hasFetched, setHasFetched] = useState(false);
 
+  const [employeeMap, setEmployeeMap] = useState<Record<string, string>>({});
+
   useEffect(() => {
     if (!token) return;
 
-    const fetchData = async () => {
-      setLoading(true);
-
+    const fetchEmployees = async () => {
       try {
-        const start = page * rowsPerPage;
-        let response: any;
-
-        if (selectedType === 'organization') {
-          response = await getAllOrganizationPagination(
-            token,
-            start,
-            rowsPerPage,
-            sortColumn,
-            sortDir,
-            searchKeyword,
-          );
-        } else if (selectedType === 'department') {
-          response = await getAllDepartmentsPagination(
-            token,
-            start,
-            rowsPerPage,
-            sortColumn,
-            sortDir,
-            searchKeyword,
-          );
-        } else {
-          response = await getAllDistrictsPagination(
-            token,
-            start,
-            rowsPerPage,
-            sortColumn,
-            sortDir,
-            searchKeyword,
-          );
-        }
-
-        if (response) {
-          const employees = await getVisitorEmployee(token);
-          const employeeMap = Array.isArray(employees?.collection)
-            ? employees.collection.reduce((acc: any, emp: any) => {
-                acc[emp.id] = emp.name;
-                return acc;
-              }, {})
-            : {};
-
-          const mapped = (response.collection ?? []).map((item: any) => ({
-            id: item.id,
-            name: item.name,
-            code: item.code,
-            host: employeeMap[item.host] || item.host,
-          }));
-
-          setTableData(mapped);
-          setTotalRecords(response.RecordsTotal ?? mapped.length ?? 0);
-          setIsDataReady(true);
-        }
-      } catch (error: any) {
-        console.error('Fetch error:', error.message);
-      } finally {
-        setLoading(false);
+        const res = await getVisitorEmployee(token);
+        const map = Array.isArray(res?.collection)
+          ? res.collection.reduce((acc: any, emp: any) => {
+              acc[emp.id] = emp.name;
+              return acc;
+            }, {})
+          : {};
+        setEmployeeMap(map);
+      } catch (err) {
+        console.error('Failed to fetch employees:', err);
       }
     };
 
+    fetchEmployees();
+  }, [token]);
+
+  useEffect(() => {
+    if (!token) return;
+
     const fetchTotals = async () => {
-      if (!token) return;
       try {
         const [orgRes, depRes, distRes] = await Promise.all([
-          getAllOrganizationPagination(token, 0, 99999, 'id'),
-          getAllDepartmentsPagination(token, 0, 99999, 'id'),
-          getAllDistrictsPagination(token, 0, 99999, 'id'),
+          getAllOrganizationPagination(token, 0, 1, 'id'),
+          getAllDepartmentsPagination(token, 0, 1, 'id'),
+          getAllDistrictsPagination(token, 0, 1, 'id'),
         ]);
+
         setTotals({
-          organization: orgRes.RecordsTotal,
-          department: depRes.RecordsTotal,
-          district: distRes.RecordsTotal,
+          organization: orgRes?.RecordsTotal ?? 0,
+          department: depRes?.RecordsTotal ?? 0,
+          district: distRes?.RecordsTotal ?? 0,
         });
       } catch (err) {
         console.error('Failed to fetch totals:', err);
@@ -219,17 +173,96 @@ const Content = () => {
     };
 
     fetchTotals();
-    fetchData();
-  }, [token, selectedType, page, rowsPerPage, sortColumn, sortDir, refreshTrigger, searchKeyword]);
+  }, [token, refreshTrigger]);
 
-  // ======= Single dialog state (Add & Edit) =======
+  useEffect(() => {
+    if (!token) return;
+
+    let cancelled = false;
+
+    const fetchTableData = async () => {
+      setLoading(true);
+
+      try {
+        const start = page * rowsPerPage;
+        let response: any;
+
+        switch (selectedType) {
+          case 'organization':
+            response = await getAllOrganizationPagination(
+              token,
+              start,
+              rowsPerPage,
+              sortColumn,
+              sortDir,
+              searchKeyword,
+            );
+            break;
+
+          case 'department':
+            response = await getAllDepartmentsPagination(
+              token,
+              start,
+              rowsPerPage,
+              sortColumn,
+              sortDir,
+              searchKeyword,
+            );
+            break;
+
+          default:
+            response = await getAllDistrictsPagination(
+              token,
+              start,
+              rowsPerPage,
+              sortColumn,
+              sortDir,
+              searchKeyword,
+            );
+        }
+
+        if (cancelled) return;
+
+        const mapped = (response?.collection ?? []).map((item: any) => ({
+          id: item.id,
+          name: item.name,
+          code: item.code,
+          host: employeeMap[item.host] || item.host,
+        }));
+
+        setTableData(mapped);
+        setTotalRecords(response?.RecordsTotal ?? 0);
+        setIsDataReady(true);
+        setHasFetched(true);
+      } catch (err: any) {
+        if (!cancelled) {
+          console.error('Fetch error:', err.message);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    fetchTableData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    token,
+    selectedType,
+    page,
+    rowsPerPage,
+    sortColumn,
+    sortDir,
+    searchKeyword,
+    refreshTrigger,
+    employeeMap,
+  ]);
+
   const [dialog, setDialog] = useState<DialogState>(null);
-  const editTokenRef = useRef(0); // anti-stale untuk fetch detail edit
-
-  // Data edit
+  const editTokenRef = useRef(0);
   const [editingRow, setEditingRow] = useState<Item | null>(null);
-
-  // Batch edit (kalau dipakai form update)
   const [isBatchEdit, setIsBatchEdit] = useState(false);
   const [enabledFields, setEnabledFields] = useState<EnableField>({
     name: false,
@@ -237,7 +270,6 @@ const Content = () => {
     host: false,
   });
 
-  // ======= ADD forms state + draft =======
   const [formDataAddDepartment, setFormDataAddDepartment] = useState<CreateDepartmentRequest>(
     () => {
       const saved = localStorage.getItem('unsavedDepartmentFormAdd');
@@ -269,8 +301,6 @@ const Content = () => {
       }
     },
   );
-
-  // Persist draft add-forms
   useEffect(() => {
     const def = CreateDepartmentSchema.parse({});
     if (JSON.stringify(formDataAddDepartment) !== JSON.stringify(def)) {
@@ -306,14 +336,14 @@ const Content = () => {
   const openEdit = async (entity: DialogEntity, row: Item) => {
     if (!token) return;
     // setLoading(true);
-    const myToken = ++editTokenRef.current; // generate token
+    const myToken = ++editTokenRef.current;
     try {
       let res: any;
       if (entity === 'Organizations') res = await getOrganizationById(row.id, token);
       else if (entity === 'Departments') res = await getDepartmentById(row.id, token);
       else res = await getDistrictById(row.id, token);
 
-      if (myToken !== editTokenRef.current) return; // stale → abaikan
+      if (myToken !== editTokenRef.current) return;
 
       const full = res?.collection ?? res ?? row;
       setEditingRow(full);
@@ -321,21 +351,15 @@ const Content = () => {
     } catch (e) {
       console.error('Fetch detail error:', e);
     }
-
-    // finally {
-    //   setLoading(false);
-    // }
   };
 
   const closeDialog = () => {
-    // invalidate semua fetch in-flight
     editTokenRef.current++;
     setDialog(null);
     setEditingRow(null);
     setIsBatchEdit(false);
   };
 
-  // ======= Confirm discard untuk ADD (unsaved drafts) =======
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 
   const currentAddChanged = useMemo(() => {
@@ -378,7 +402,6 @@ const Content = () => {
     closeDialog();
   };
 
-  // ======= Table actions =======
   const handleDelete = async (id: string) => {
     if (!token) return;
 
@@ -411,8 +434,7 @@ const Content = () => {
       setRefreshTrigger((p) => p + 1);
       showSwal('success', successText);
     } catch (error) {
-      console.error(error);
-      showErrorAlert('Error!', `Failed to delete ${selectedType}.`);
+      showSwal('error', `Failed to delete ${selectedType}.`);
     }
   };
 
@@ -434,12 +456,10 @@ const Content = () => {
         }),
       );
       setRefreshTrigger((p) => p + 1);
-      // showSuccessAlert('Deleted!', `${rows.length} items have been deleted.`);
       showSwal('success', `${rows.length} items have been deleted.`);
       setSelectedRows([]);
     } catch (error) {
-      console.error(error);
-      showErrorAlert('Error!', 'Something went wrong while deleting items.');
+      showSwal('error', 'Failed to delete some items.');
     } finally {
       setLoading(false);
     }
@@ -448,19 +468,15 @@ const Content = () => {
   const handleBatchEdit = () => {
     if (selectedRows.length === 0) return;
     setIsBatchEdit(true);
-    // Optional: kalau satu item, fetch detail sekalian
     if (selectedRows.length === 1) {
       openEdit(mapSelectedToEntity, selectedRows[0]);
     } else {
-      // kalau banyak, langsung buka dialog edit kosong (tergantung FormUpdateXXX mendukung batch)
       setEditingRow(null);
       setDialog({ mode: 'edit', entity: mapSelectedToEntity });
     }
   };
 
-  // ======= Success handler (Add & Edit) =======
   const handleSuccess = ({ entity, action, keepOpen }: SuccessOpts) => {
-    // bersihkan draft add
     const lsKey: Record<SuccessOpts['entity'], string> = {
       department: 'unsavedDepartmentFormAdd',
       district: 'unsavedDistrictFormAdd',
@@ -545,7 +561,6 @@ const Content = () => {
         </Box>
       </Container>
 
-      {/* ======= Unified Dialog for ADD & EDIT ======= */}
       <Dialog
         open={!!dialog}
         onClose={(_, __) => attemptCloseDialog()}
@@ -643,7 +658,6 @@ const Content = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Confirm discard for unsaved ADD forms */}
       <Dialog open={confirmDialogOpen} onClose={() => setConfirmDialogOpen(false)}>
         <DialogTitle>Unsaved Changes</DialogTitle>
         <DialogContent>

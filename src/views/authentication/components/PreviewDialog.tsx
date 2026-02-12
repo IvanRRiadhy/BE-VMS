@@ -76,7 +76,7 @@ const PreviewDialog = ({ open, onClose, onConfirm, invitationData, formValues }:
                 if (f.remarks === 'host') {
                   value = invitationData?.host_data?.name || value;
                 } else if (f.remarks === 'site_place') {
-                  value = invitationData?.site_place_data?.name || value;
+                  value = invitationData?.site_place_name || value;
                 }
                 if (['visitor_period_start', 'visitor_period_end'].includes(f.remarks)) {
                   return (
@@ -101,9 +101,9 @@ const PreviewDialog = ({ open, onClose, onConfirm, invitationData, formValues }:
 
                 return (
                   <Grid item xs={12} sm={6} key={idx}>
-                    {/* <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" color="text.secondary">
                       {f.long_display_text}
-                    </Typography> */}
+                    </Typography>
 
                     {/* FILE / IMAGE */}
                     {[10, 11, 12].includes(f.field_type) ? (

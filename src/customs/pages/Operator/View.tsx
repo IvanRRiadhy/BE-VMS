@@ -42,7 +42,7 @@ import {
   Tooltip,
   Select,
 } from '@mui/material';
-import { Box, Stack, useMediaQuery, useTheme } from '@mui/system';
+import { Box, useMediaQuery, useTheme } from '@mui/system';
 import moment from 'moment-timezone';
 import backgroundnodata from 'src/assets/images/backgrounds/bg_nodata.svg';
 import infoPic from 'src/assets/images/backgrounds/info_pic.png';
@@ -110,12 +110,7 @@ import advancedFormat from 'dayjs/plugin/advancedFormat';
 import utc from 'dayjs/plugin/utc';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 
-import {
-  getAllSite,
-  getAllVisitorType,
-  getRegisteredSite,
-  getVisitorEmployee,
-} from 'src/customs/api/admin';
+import { getAllSite, getRegisteredSite, getVisitorEmployee } from 'src/customs/api/admin';
 import FormDialogPraregist from './Dialog/FormDialogPraregist';
 import CameraUpload from './Components/CameraUpload';
 import { showSwal } from 'src/customs/components/alerts/alerts';
@@ -156,10 +151,6 @@ import GlobalBackdropLoading from './Components/GlobalBackdrop';
 import RegisteredSiteDialog from './Dialog/RegisteredSiteAccessDialog';
 import RegisteredSiteAccessDialog from './Dialog/RegisteredSiteAccessDialog';
 import AccessDialog from './Dialog/AccessDialog';
-import { useQuery } from '@tanstack/react-query';
-import ParkingDialog from './Dialog/ParkingDialog';
-import WhiteListDialog from './Dialog/WhiteListDialog';
-import VehicleDialog from './Dialog/VehicleDialog';
 
 dayjs.extend(utc);
 dayjs.extend(weekday);
@@ -255,6 +246,13 @@ const OperatorView = () => {
   const [openSwipeDialogNoInvitation, setOpenSwipeDialogNoInvitation] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
   const debouncedKeyword = useDebounce(searchKeyword, 300);
+  const [oldCard, setOldCard] = useState('');
+  const [newCard, setNewCard] = useState('');
+
+  const [oldVerified, setOldVerified] = useState(false);
+  const [newVerified, setNewVerified] = useState(false);
+  const [oldCardData, setOldCardData] = useState<any | null>(null);
+  const [newCardData, setNewCardData] = useState<any | null>(null);
   const [focusTarget, setFocusTarget] = useState<'old' | 'new' | null>(null);
   const oldCardRef = useRef<HTMLInputElement | null>(null);
   const newCardRef = useRef<HTMLInputElement | null>(null);
@@ -311,44 +309,43 @@ const OperatorView = () => {
 
   const handleOpenBlacklistVisitor = () => setOpenBlacklistVisitor(true);
   const handleCloseBlacklistVisitor = () => setOpenBlacklistVisitor(false);
+
   const handleOpenListVisitor = () => setOpenListVisitor(true);
-  const handleOpenVehicle = () => setOpenVehicle(true);
   const handleCloseListVisitor = () => setOpenListVisitor(false);
+
   const handleCloseTriggeredAcceess = () => setOpenTriggeredAccess(false);
 
   const [wsPayload, setWsPayload] = useState<any>(null);
   const wsImageQueueRef = useRef<string[]>([]);
   const wsOcrQueueRef = useRef<string[]>([]);
   const [tick, forceTick] = useState(0);
-  const socketRef = useRef<WebSocket | null>(null);
 
-  // Webscoket
-  // useEffect(() => {
-  //   const socket = new WebSocket('ws://localhost:8081/ws/');
-  //   socketRef.current = socket;
+  useEffect(() => {
+    const socket = new WebSocket('ws://localhost:8081/ws/');
+    socketRef.current = socket;
 
-  //   socket.onopen = () => {
-  //     console.log('🟢 WS connected');
-  //   };
+    socket.onopen = () => {
+      console.log('🟢 WS connected');
+    };
 
-  //   socket.onmessage = (event) => {
-  //     const data = event.data;
-  //     console.log('data', data);
+    socket.onmessage = (event) => {
+      const data = event.data;
+      console.log('data', data);
 
-  //     if (typeof data === 'string' && data.includes('|data:image')) {
-  //       wsImageQueueRef.current.push(data);
-  //     } else {
-  //       wsOcrQueueRef.current.push(data);
-  //     }
+      if (typeof data === 'string' && data.includes('|data:image')) {
+        wsImageQueueRef.current.push(data);
+      } else {
+        wsOcrQueueRef.current.push(data);
+      }
 
-  //     forceTick((v) => v + 1);
-  //   };
+      forceTick((v) => v + 1);
+    };
 
-  //   socket.onerror = (e) => console.error('🔴 WS error', e);
-  //   socket.onclose = () => console.warn('⚠️ WS closed');
+    socket.onerror = (e) => console.error('🔴 WS error', e);
+    socket.onclose = () => console.warn('⚠️ WS closed');
 
-  //   return () => socket.close();
-  // }, []);
+    return () => socket.close();
+  }, []);
 
   const sendToScanner = (payload: any) => {
     socketRef.current?.send(JSON.stringify(payload));
@@ -365,6 +362,8 @@ const OperatorView = () => {
 
     fetchData();
   }, [token]);
+
+  const socketRef = useRef<WebSocket | null>(null);
 
   const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorRequest>(() => {
     const saved = localStorage.getItem('unsavedVisitorData');
@@ -386,181 +385,55 @@ const OperatorView = () => {
     return visitorCards.find((c) => c.current_used && c.card_type !== 'Barcode');
   }, [visitorCards, uiCurrentUsedCardNo]);
 
-  // const [swapPayloads, setSwapPayloads] = useState<any[]>([]);
-
-  // const handleSwipeCardSubmit = async (value: string, type: string, visitor: any) => {
-  //   try {
-  //     const selectedCard = filteredCards.find((c) => c.card_number === selectedCards[0]);
-  //     console.log('selectedCard', selectedCard);
-
-  //     const currentUsedCard = visitorCards.find((c) => c.current_used === true);
-
-  //     console.log('currentUsedCard', currentUsedCard);
-
-  //     if (!selectedCard || !currentUsedCard) {
-  //       showSwal('error', 'Invalid card data for swap');
-  //       return;
-  //     }
-
-  //     const payload = {
-  //       card_number: selectedCard.card_number,
-  //       trx_visitor_id: invitationId,
-  //       description:
-  //         'Give card number ' + selectedCard.card_number + ' from ' + registerSiteOperator.id,
-  //       swap_card_from_card: value,
-  //       // trx_card_id: generateUUIDv4(),
-  //       // swap_card_from_card_id: null,
-  //       swap_card_from_site_id: registerSiteOperator.user_id,
-  //       swap_type: type,
-  //       is_swapcard: true,
-  //     };
-
-  //     // kalau lebih dari 1 visitor pakai ini createMultipleGrantAccess
-  //     //   {
-  //     // "data": [
-  //     //     {
-  //     //         "card_number": "30285",
-  //     //         "trx_visitor_id": "CAE31043-C78C-4AF6-92B9-17C318D90093",
-  //     //         "description": "",
-  //     //         "trx_card_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6", // trx_card_awal
-  //     //         "swap_card_from_card": "", // nomor kartu
-  //     //         "swap_card_from_card_id": null, // isi dengan id kartu
-  //     //         "swap_card_from_site_id": "", // isi dengan id site yg dituju awal
-  //     //         "swap_type": "NIK", // NIK, KTP , DriverLicense, Passport, CardAccess, Face, NDA, Other
-  //     //         "swap_card_in": "3fa85f64-5717-4562-b3fc-2c963f66afa6",  // isi dengan id lokasi swipe kartu atau site
-  //     //         "swap_card_in_name": "lobby 1"
-  //     //     },
-
-  //     console.log('SWAP PAYLOAD', payload);
-
-  //     // call API
-  //     // await createGrandAccessOperator(token as string, payload);
-
-  //     setUiCurrentUsedCardNo(selectedCard.card_number);
-
-  //     setOpenChooseCardDialog(false);
-  //     setOpenSwipeDialog(false);
-  //     setOpenSwipeAccess(true);
-  //     setSelectedCards([]);
-  //     setTimeout(() => {
-  //       showSwal('success', 'Card swaped successfully!');
-  //     }, 600);
-  //     setTimeout(() => {
-  //       fetchRelatedVisitorsByInvitationId(invitationId as string);
-  //       fetchAvailableCards?.();
-  //     }, 300);
-  //   } catch (err: any) {
-  //     const backendMsg = err?.response?.data?.msg;
-  //     showSwal('error', backendMsg || 'Failed to swipe card');
-  //   }
-  // };
-
-  // v1
-  // const handleSwipeCardSubmit = async (
-  //   value: string,
-  //   type: string,
-  //   visitor: any,
-  //   isLastVisitor: boolean,
-  //   visitorIndex: number,
-  // ) => {
-  //   try {
-  //     // const selectedCard = filteredCards.find((c) => c.card_number === selectedCards[0]);
-  //     const selectedCardNumber = selectedCards[visitorIndex];
-  //     const selectedCard = filteredCards.find((c) => c.card_number === selectedCardNumber);
-
-  //     const currentUsedCard = visitorCards.find((c) => c.current_used === true);
-
-  //     if (!selectedCard || !currentUsedCard) {
-  //       showSwal('error', 'Invalid card data for swap');
-  //       return;
-  //     }
-
-  //     const payloadItem = {
-  //       card_number: selectedCard.card_number,
-  //       trx_visitor_id: visitor.id, // 🔥 FIX PENTING
-  //       description: `Give card number ${selectedCard.card_number} from ${registerSiteOperator.id}`,
-  //       swap_card_from_card: value,
-  //       swap_card_from_site_id: registerSiteOperator.user_id,
-  //       swap_type: type,
-  //       is_swapcard: true,
-  //     };
-
-  //     // 🔥 KUMPULKAN PAYLOAD
-  //     setSwapPayloads((prev) => {
-  //       const next = [...prev, payloadItem];
-
-  //       console.log('paylod', next);
-
-  //       if (isLastVisitor) {
-  //         (async () => {
-  //           try {
-  //             // if (next.length === 1) {
-  //             //   await createGrandAccessOperator(token as string, next[0]);
-  //             // } else {
-  //             //   await createMultipleGrantAccess(token as string, {
-  //             //     data: next,
-  //             //   });
-  //             // }
-
-  //             showSwal('success', 'Card swaped successfully!');
-  //             // setUiCurrentUsedCardNo(selectedCard.card_number);
-  //             setSwapPayloads([]);
-  //             // setSelectedCards([]);
-  //             // setOpenChooseCardDialog(false);
-  //             // setOpenSwipeDialog(false);
-  //             setOpenSwipeAccess(true);
-
-  //             // fetchRelatedVisitorsByInvitationId(invitationId as string);
-  //             // fetchAvailableCards?.();
-  //           } catch (err: any) {
-  //             showSwal('error', err?.response?.data?.msg || 'Failed to swipe card');
-  //           }
-  //         })();
-  //       }
-
-  //       return next;
-  //     });
-  //   } catch (err: any) {
-  //     showSwal('error', err?.response?.data?.msg || 'Failed to swipe card');
-  //   }
-  // };
-
-  const [currentAccessVisitor, setCurrentAccessVisitor] = useState<any>(null);
-
-  const handleSwipeCardSubmit = async (
-    value: string,
-    type: string,
-    visitor: any,
-    isLastVisitor: boolean,
-    visitorIndex: number,
-  ) => {
-    const selectedCardNumber = selectedCards[visitorIndex];
-    const selectedCard = filteredCards.find((c) => c.card_number === selectedCardNumber);
-
-    if (!selectedCard) {
-      showSwal('error', 'Card not found');
-      return;
-    }
-
+  const handleSwipeCardSubmit = async (value: string, type: string) => {
     try {
-      await createGrandAccessOperator(token as string, {
+      const selectedCard = filteredCards.find((c) => c.card_number === selectedCards[0]);
+      console.log('selectedCard', selectedCard);
+
+      const currentUsedCard = visitorCards.find((c) => c.current_used === true);
+
+      console.log('currentUsedCard', currentUsedCard);
+
+      if (!selectedCard || !currentUsedCard) {
+        showSwal('error', 'Invalid card data for swap');
+        return;
+      }
+
+      const payload = {
         card_number: selectedCard.card_number,
-        trx_visitor_id: visitor.id,
-        description: `Give card number ${selectedCard.card_number} from ${registerSiteOperator.id}`,
+        trx_visitor_id: invitationId,
+        description:
+          'Give card number ' + selectedCard.card_number + ' from ' + registerSiteOperator.id,
         swap_card_from_card: value,
-        swap_type: type,
+        // trx_card_id: generateUUIDv4(),
+        // swap_card_from_card_id: null,
         swap_card_from_site_id: registerSiteOperator.user_id,
+        swap_type: type,
         is_swapcard: true,
-      });
+      };
 
-      // 🔥 SIMPAN VISITOR UNTUK ACCESS
-      setCurrentAccessVisitor(visitor);
+      console.log('SWAP PAYLOAD', payload);
 
-      // 🔥 TUTUP SWIPE → BUKA ACCESS
+      // call API
+      await createGrandAccessOperator(token as string, payload);
+
+      // 🔥 SET UI FIRST
+      setUiCurrentUsedCardNo(selectedCard.card_number);
+
+      setOpenChooseCardDialog(false);
       setOpenSwipeDialog(false);
       setOpenSwipeAccess(true);
+      setSelectedCards([]);
+      setTimeout(() => {
+        showSwal('success', 'Card swaped successfully!');
+      }, 600);
+      setTimeout(() => {
+        fetchRelatedVisitorsByInvitationId(invitationId as string);
+        fetchAvailableCards?.();
+      }, 300);
     } catch (err: any) {
-      showSwal('error', err?.response?.data?.msg || 'Failed to swipe card');
+      const backendMsg = err?.response?.data?.msg;
+      showSwal('error', backendMsg || 'Failed to swipe card');
     }
   };
 
@@ -622,11 +495,22 @@ const OperatorView = () => {
     } else {
       setOpenSwipeDialog(true);
     }
+    // setOpenSwipeDialog(true);
   };
 
   const handleCloseSwipeDialogNoInvitation = () => {
+    setOldCard('');
+    setNewCard('');
+    setOldCardData('');
+    setNewCardData('');
+    setOldVerified(false);
+    setNewVerified(false);
     setActionButton('');
     setOpenSwipeDialogNoInvitation(false);
+  };
+
+  const handleCloseSwipeAccess = () => {
+    setOpenSwipeAccess(false);
   };
 
   const handleCloseSwipeDialog = () => {
@@ -802,35 +686,11 @@ const OperatorView = () => {
     }
   }, [containerRef]);
 
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     const res = await getVisitorEmployee(token as string);
-  //     setAllVisitorEmployee(res?.collection ?? []);
-  //   };
-  //   fetchData();
-  // }, [token]);
-
-  const [sites, setSites] = useState<any[]>([]);
-  const [employee, setEmployee] = useState<any[]>([]);
-
   useEffect(() => {
-    if (!token) return;
-
     const fetchData = async () => {
-      try {
-        const [siteRes, employeeRes] = await Promise.all([
-          getAllSite(token),
-          getVisitorEmployee(token),
-        ]);
-
-        setSites(siteRes?.collection ?? []);
-        setEmployee(employeeRes?.collection ?? []);
-        setAllVisitorEmployee(employeeRes?.collection ?? []);
-      } catch (err) {
-        console.error(err);
-      }
+      const res = await getVisitorEmployee(token as string);
+      setAllVisitorEmployee(res?.collection ?? []);
     };
-
     fetchData();
   }, [token]);
 
@@ -1059,7 +919,6 @@ const OperatorView = () => {
 
   const [openReturnCard, setOpenReturnCard] = useState(false);
   const [openParking, setOpenParking] = useState(false);
-  const [openVehicle, setOpenVehicle] = useState(false);
 
   const handleOpenAction = (value: string) => {
     setActionButton(value);
@@ -1094,12 +953,8 @@ const OperatorView = () => {
       setOpenReturnCard(true);
       return;
     }
-    if (value === 'parking') {
-      if (!hasInvitation) {
-        setOpenParking(true);
-      } else {
-        setOpenParking(true);
-      }
+    if (value === 'parking' && invitationCode.length > 0 && relatedVisitors.length > 0) {
+      setOpenParking(true);
       return;
     }
     setOpenDialogIndex(1);
@@ -1452,153 +1307,6 @@ const OperatorView = () => {
     }
   };
 
-  // const handleConfirmChooseCards = async () => {
-  //   try {
-  //     if (!selectedCards.length) {
-  //       setSnackbarMsg('Please choose at least one card.');
-  //       setSnackbarType('info');
-  //       setSnackbarOpen(true);
-  //       return;
-  //     }
-
-  //     setLoadingAccess(true);
-
-  //     const alreadyHasCard: string[] = [];
-  //     const successAssigned: string[] = [];
-  //     let response: any = null;
-
-  //     if (selectedVisitors.length > 1) {
-  //       // 🧩 Multiple visitor (batch)
-  //       const dataPayload: {
-  //         card_number: string;
-  //         trx_visitor_id: string;
-  //         description: string;
-  //         is_swapcard: boolean;
-  //         swap_type: string;
-  //       }[] = [];
-  //       const pairCount = Math.min(selectedVisitors.length, selectedCards.length);
-
-  //       for (let i = 0; i < pairCount; i++) {
-  //         const visitorId = selectedVisitors[i];
-  //         const cardNumber = selectedCards[i];
-  //         const visitor = relatedVisitors.find(
-  //           (v) => v.id?.toLowerCase() === visitorId.toLowerCase(),
-  //         );
-  //         if (!visitor) continue;
-
-  //         dataPayload.push({
-  //           card_number: String(cardNumber),
-  //           trx_visitor_id: visitorId,
-  //           description: 'Give card number' + cardNumber + ' from ' + registerSiteOperator.id,
-  //           is_swapcard: false,
-  //           swap_type: 'Other',
-  //         });
-  //         successAssigned.push(visitor.name || visitorId);
-  //       }
-
-  //       response = await createMultipleGrantAccess(token as string, { data: dataPayload });
-  //     } else {
-  //       const visitorId = invitationCode[0]?.id;
-
-  //       if (!visitorId) {
-  //         setSnackbarMsg('No visitor found to assign card.');
-  //         setSnackbarType('info');
-  //         setSnackbarOpen(true);
-  //         setLoadingAccess(false);
-  //         return;
-  //       }
-
-  //       const visitor = relatedVisitors.find(
-  //         (v) => v.id?.toLowerCase() === visitorId.toLowerCase(),
-  //       );
-
-  //       if (!visitor) {
-  //         setSnackbarMsg('Visitor not found.');
-  //         setSnackbarType('error');
-  //         setSnackbarOpen(true);
-  //         setLoadingAccess(false);
-  //         return;
-  //       }
-
-  //       for (const cardNumber of selectedCards) {
-  //         const payload = {
-  //           card_number: String(cardNumber),
-  //           trx_visitor_id: visitorId,
-  //           description: 'Give number card ' + cardNumber + 'from' + registerSiteOperator,
-  //           swap_type: 'Other',
-  //           is_swapcard: false,
-  //         };
-
-  //         response = await createGrandAccessOperator(token as string, payload);
-  //         console.log('response:', JSON.stringify(payload, null, 2));
-  //       }
-
-  //       successAssigned.push(visitor.name || visitorId);
-  //     }
-
-  //     // 🔁 Refresh visitors setelah semua selesai
-  //     const invitationId = invitationCode?.[0]?.id;
-  //     if (invitationId) {
-  //       await fetchRelatedVisitorsByInvitationId(invitationId);
-  //     }
-
-  //     await fetchAvailableCards();
-
-  //     // if (response?.collection && response.collection.length > 0) {
-  //     //   const messages = response.collection.map((item: any) => item.message).join(', ');
-  //     //   // setSnackbarMsg(`⚠️ ${messages}`);
-  //     //   // setSnackbarType('error');
-  //     //   showSwal('error', `${messages}`);
-  //     //   // setSnackbarOpen(true);
-  //     //   setLoadingAccess(false);
-  //     //   return;
-  //     // }
-
-  //     // give card number
-  //     showSwal('success', `Successfully assigned card(s): ${selectedCards.join(', ')}`);
-
-  //     setInvitationCode((prev) => {
-  //       if (!prev || prev.length === 0) return prev;
-
-  //       return prev.map((inv) =>
-  //         selectedVisitors.some((vId) => vId.toLowerCase() === inv.id?.toLowerCase())
-  //           ? {
-  //               ...inv,
-  //               card: [
-  //                 {
-  //                   ...(inv.card?.[0] || {}),
-  //                   card_number: selectedCards[0],
-  //                 },
-  //               ],
-  //             }
-  //           : inv,
-  //       );
-  //     });
-
-  //     handleCloseChooseCard();
-  //   } catch (err: any) {
-  //     console.error('Assign card error:', err);
-
-  //     const backendMsg = err?.response?.data?.msg;
-
-  //     if (backendMsg) {
-  //       showSwal('error', backendMsg);
-  //       return;
-  //     }
-
-  //     showSwal('error', 'Failed to assign card(s).');
-  //   } finally {
-  //     setTimeout(() => setLoadingAccess(false), 600);
-  //   }
-  // };
-
-  const pairVisitorsWithCards = (visitorIds: string[], cards: (string | number)[]) => {
-    return visitorIds.map((visitorId, idx) => ({
-      visitorId,
-      cardNumber: cards[idx] ?? cards[0],
-    }));
-  };
-
   const handleConfirmChooseCards = async () => {
     try {
       if (!selectedCards.length) {
@@ -1610,47 +1318,85 @@ const OperatorView = () => {
 
       setLoadingAccess(true);
 
-      const visitorIds =
-        selectedVisitors.length > 0 ? selectedVisitors : [invitationCode?.[0]?.id].filter(Boolean);
+      const alreadyHasCard: string[] = [];
+      const successAssigned: string[] = [];
+      let response: any = null;
 
-      if (!visitorIds.length) {
-        showSwal('info', 'No visitor found to assign card.');
-        return;
-      }
+      if (selectedVisitors.length > 1) {
+        // 🧩 Multiple visitor (batch)
+        const dataPayload: {
+          card_number: string;
+          trx_visitor_id: string;
+          description: string;
+          is_swapcard: boolean;
+          swap_type: string;
+        }[] = [];
+        const pairCount = Math.min(selectedVisitors.length, selectedCards.length);
 
-      const pairs = pairVisitorsWithCards(visitorIds, selectedCards);
-
-      const payloads = pairs
-        .map(({ visitorId, cardNumber }) => {
+        for (let i = 0; i < pairCount; i++) {
+          const visitorId = selectedVisitors[i];
+          const cardNumber = selectedCards[i];
           const visitor = relatedVisitors.find(
             (v) => v.id?.toLowerCase() === visitorId.toLowerCase(),
           );
-          if (!visitor) return null;
+          if (!visitor) continue;
 
-          return {
+          // if (visitor.card && visitor.card.length > 0) {
+          //   alreadyHasCard.push(visitor.name || visitorId);
+          //   continue;
+          // }
+
+          dataPayload.push({
             card_number: String(cardNumber),
             trx_visitor_id: visitorId,
-            description: `Give card number ${cardNumber} from ${registerSiteOperator.id}`,
+            description: 'Give card number' + cardNumber + ' from ' + registerSiteOperator.id,
             is_swapcard: false,
             swap_type: 'Other',
-            visitorName: visitor.name || visitorId,
-          };
-        })
-        .filter(Boolean) as any[];
+          });
+          successAssigned.push(visitor.name || visitorId);
+        }
 
-      if (!payloads.length) {
-        showSwal('error', 'No valid visitor to assign card.');
-        return;
-      }
-      if (payloads.length > 1) {
-        await createMultipleGrantAccess(token as string, {
-          data: payloads.map(({ visitorName, ...p }) => p),
-        });
+        response = await createMultipleGrantAccess(token as string, { data: dataPayload });
       } else {
-        const { visitorName, ...payload } = payloads[0];
-        await createGrandAccessOperator(token as string, payload);
+        const visitorId = invitationCode[0]?.id;
+
+        if (!visitorId) {
+          setSnackbarMsg('No visitor found to assign card.');
+          setSnackbarType('info');
+          setSnackbarOpen(true);
+          setLoadingAccess(false);
+          return;
+        }
+
+        const visitor = relatedVisitors.find(
+          (v) => v.id?.toLowerCase() === visitorId.toLowerCase(),
+        );
+
+        if (!visitor) {
+          setSnackbarMsg('Visitor not found.');
+          setSnackbarType('error');
+          setSnackbarOpen(true);
+          setLoadingAccess(false);
+          return;
+        }
+
+        for (const cardNumber of selectedCards) {
+          const payload = {
+            card_number: String(cardNumber),
+            trx_visitor_id: visitorId,
+            description: 'Give number card ' + cardNumber + 'from' + registerSiteOperator,
+            swap_type: 'Other',
+            is_swapcard: false,
+          };
+
+          response = await createGrandAccessOperator(token as string, payload);
+          console.log('response:', JSON.stringify(payload, null, 2));
+        }
+
+        successAssigned.push(visitor.name || visitorId);
       }
 
+      // 🔁 Refresh visitors setelah semua selesai
       const invitationId = invitationCode?.[0]?.id;
       if (invitationId) {
         await fetchRelatedVisitorsByInvitationId(invitationId);
@@ -1658,28 +1404,111 @@ const OperatorView = () => {
 
       await fetchAvailableCards();
 
-      const message = payloads.map((p) => `• ${p.visitorName} (Card: ${p.card_number})`).join('\n');
+      // if (response?.collection && response.collection.length > 0) {
+      //   const messages = response.collection.map((item: any) => item.message).join(', ');
+      //   // setSnackbarMsg(`⚠️ ${messages}`);
+      //   // setSnackbarType('error');
+      //   showSwal('error', `${messages}`);
+      //   // setSnackbarOpen(true);
+      //   setLoadingAccess(false);
+      //   return;
+      // }
 
-      showSwal('success', `Successfully assigned card(s):\n${message}`);
+      // handleCloseChooseCard();
+      // const uniqueAssigned = Array.from(new Set(successAssigned));
+      // const uniqueSkipped = Array.from(new Set(alreadyHasCard));
 
-      setInvitationCode((prev) =>
-        prev.map((inv) => {
-          const match = payloads.find(
-            (p) => p.trx_visitor_id.toLowerCase() === inv.id?.toLowerCase(),
-          );
-          if (!match) return inv;
+      // // 🧾 Build final message
+      // let message = '';
 
-          return {
-            ...inv,
-            card: [{ ...(inv.card?.[0] || {}), card_number: match.card_number }],
-          };
-        }),
-      );
+      // if (uniqueAssigned.length > 0) {
+      //   message += `Successfully assigned ${uniqueAssigned.length} card(s):\n`;
+
+      //   const visitorListForMessage =
+      //     selectedVisitors.length > 0 ? selectedVisitors : invitationCode?.map((i) => i.id) || [];
+
+      //   message += visitorListForMessage
+      //     .map((visitorId, idx) => {
+      //       const visitor = relatedVisitors.find(
+      //         (v) => v.id?.toLowerCase() === visitorId?.toLowerCase(),
+      //       );
+      //       const cardNumber = selectedCards[idx] || selectedCards[0] || '-';
+
+      //       if (visitor && !alreadyHasCard.includes(visitor.name || visitorId)) {
+      //         return `• ${visitor.name || visitorId} - (Card: ${cardNumber})`;
+      //       }
+      //       return null;
+      //     })
+      //     .filter(Boolean)
+      //     .join('\n');
+      // }
+
+      // if (uniqueSkipped.length > 0) {
+      //   message +=
+      //     (message ? '\n\n' : '') +
+      //     `⚠️ Some visitors were skipped because they already have an assigned card:\n` +
+      //     uniqueSkipped.map((v) => `• ${v}`).join('\n');
+      // }
+
+      // if (!message) {
+      //   message = 'No cards were assigned.';
+      // }
+
+      showSwal('success', 'Successfully assigned card(s).');
+
+      setInvitationCode((prev) => {
+        if (!prev || prev.length === 0) return prev;
+
+        return prev.map((inv) =>
+          selectedVisitors.some((vId) => vId.toLowerCase() === inv.id?.toLowerCase())
+            ? {
+                ...inv,
+                card: [
+                  {
+                    ...(inv.card?.[0] || {}),
+                    card_number: selectedCards[0],
+                  },
+                ],
+              }
+            : inv,
+        );
+      });
+
+      // setInvitationCode((prev) => {
+      //   if (!prev || prev.length === 0) return prev;
+
+      //   return prev.map((inv) => {
+      //     const matchedVisitor = relatedVisitors.find(
+      //       (v) => v.id?.toLowerCase() === inv.id?.toLowerCase(),
+      //     );
+
+      //     if (!matchedVisitor) return inv;
+
+      //     return {
+      //       ...inv,
+      //       card: matchedVisitor.card?.length
+      //         ? matchedVisitor.card
+      //         : [
+      //             {
+      //               card_number: selectedCards[0],
+      //             },
+      //           ],
+      //     };
+      //   });
+      // });
 
       handleCloseChooseCard();
     } catch (err: any) {
       console.error('Assign card error:', err);
-      showSwal('error', err?.response?.data?.msg || 'Failed to assign card(s).');
+
+      const backendMsg = err?.response?.data?.msg;
+
+      if (backendMsg) {
+        showSwal('error', backendMsg);
+        return;
+      }
+
+      showSwal('error', 'Failed to assign card(s).');
     } finally {
       setTimeout(() => setLoadingAccess(false), 600);
     }
@@ -1723,7 +1552,7 @@ const OperatorView = () => {
         confirmButtonText: 'Yes',
         reverseButtons: true,
         cancelButtonText: 'No',
-        confirmButtonColor: '#16a34a',
+        confirmButtonColor: '#000',
         customClass: {
           title: 'swal2-title-custom',
           popup: 'swal-popup-custom',
@@ -1770,8 +1599,8 @@ const OperatorView = () => {
           inputAttributes: { maxlength: '200' },
           showCloseButton: true,
           showCancelButton: true,
-          confirmButtonText: 'Yes',
-          confirmButtonColor: action === 'Block' || action === 'Unblock' ? '#16a34a' : '#16a34a',
+          confirmButtonText: action,
+          confirmButtonColor: action === 'Block' || action === 'Unblock' ? '#000' : '#000',
           cancelButtonText: 'Cancel',
           reverseButtons: true,
           customClass: {
@@ -3589,7 +3418,6 @@ const OperatorView = () => {
     : null;
 
   const [todayVisitingPurpose, setTodayVisitingPurpose] = useState<any[]>([]);
-  const [visitorType, setVisitorType] = useState<any[]>([]);
   const [openMore, setOpenMore] = useState(false);
   const handleOpenMore = () => setOpenMore(true);
 
@@ -3601,26 +3429,6 @@ const OperatorView = () => {
       console.error(err);
     }
   };
-
-  const [vtLoading, setVTLoading] = useState(false);
-
-  const fetchVisitorType = async () => {
-    try {
-      setVTLoading(true);
-      const res = await getAllVisitorType(token as string);
-      setVisitorType(res?.collection || []);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setVTLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (token) {
-      fetchVisitorType();
-    }
-  }, [token]);
 
   useEffect(() => {
     if (token) {
@@ -3679,7 +3487,7 @@ const OperatorView = () => {
       if (['INPUT', 'TEXTAREA'].includes(tag)) return;
 
       if (e.ctrlKey && e.key.toLowerCase() === 'q') {
-        e.preventDefault();
+        e.preventDefault(); // cegah browser behavior
         handleOpenScanQR();
       }
     };
@@ -3687,63 +3495,6 @@ const OperatorView = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
-
-  const [currentVisitorIndex, setCurrentVisitorIndex] = useState(0);
-
-  const handleCloseSwipeAccess = () => {
-    setOpenSwipeAccess(false);
-
-    if (currentVisitorIndex < filteredVisitors.length - 1) {
-      setCurrentVisitorIndex((prev) => prev + 1);
-      setOpenSwipeDialog(true);
-    } else {
-      showSwal('success', 'All visitors processed');
-      setCurrentVisitorIndex(0);
-    }
-  };
-
-  // const {
-  //   data: visitorType = [],
-  //   isLoading: vtLoading,
-  //   isError: vtError,
-  // } = useQuery({
-  //   queryKey: ['visitorType', token],
-  //   queryFn: async () => {
-  //     if (!token) return [];
-  //     const res = await getAllVisitorType(token);
-  //     return res?.collection ?? [];
-  //   },
-  //   staleTime: 5 * 60 * 1000,
-  //   gcTime: 30 * 60 * 1000,
-  //   refetchOnWindowFocus: false,
-  //   enabled: !!token,
-  // });
-
-  const parkingData = [
-    { id: 1, vehicle_type: 'Car', vehicle_plate_number: 'BG 817 AS' },
-    { id: 2, vehicle_type: 'Motorcycle', vehicle_plate_number: 'B 1512 AA' },
-  ];
-
-  const vehicleData = [
-    { id: 1, visitor_type: 'Visitor', vehicle_type: 'Car', vehicle_plate_number: 'BG 817 AS' },
-    { id: 2, visitor_type: 'Visitor', vehicle_type: 'Car', vehicle_plate_number: 'AA 817 AS' },
-    { id: 3, visitor_type: 'Visitor', vehicle_type: 'Car', vehicle_plate_number: 'B 817 AS' },
-    // { id: 2, vehicle_type: 'Motorcycle', sum: 2 },
-  ];
-
-  const [openWhiteList, setOpenWhiteList] = useState(false);
-
-  const whiteListData = [
-    {
-      id: 1,
-      name: 'John Doe',
-      gender: 'Male',
-      phone: '0892312312',
-      email: 'JohnDoe@gmail.com',
-      identity_id: '1234567890',
-      organization: 'Oap Corp',
-    },
-  ];
 
   return (
     <PageContainer title={'Operator View'} description={'Operator View'}>
@@ -3776,16 +3527,15 @@ const OperatorView = () => {
             }}
           >
             <Grid container spacing={1} mb={0}>
-              <Grid size={{ xs: 12, sm: 12, lg: 9}}>
+              <Grid size={{ xs: 12, sm: 12, lg: 9 }}>
                 <VisitorSearchInput onOpenSearch={() => setOpenSearch(true)} />
               </Grid>
-              <Grid size={{ xs: 12, sm: 12, lg: 3 }} >
+              <Grid size={{ xs: 12, sm: 12, lg: 3 }}>
                 <OperatorToolbar
                   onClear={handleClearAll}
                   onOpenList={handleOpenListVisitor}
                   onOpenBlacklist={handleOpenBlacklistVisitor}
                   onOpenInfo={() => setOpenDialogInfo(true)}
-                  onOpenVehicle={handleOpenVehicle}
                   isFullscreen={isFullscreen}
                   onToggleFullscreen={() => (isFullscreen ? handle.exit() : handle.enter())}
                   containerRef={containerRef as any}
@@ -3815,8 +3565,7 @@ const OperatorView = () => {
                     sx={{
                       display: 'flex',
                       justifyContent: isFullscreen ? 'center' : 'flex-start',
-                      // alignItems: isFullscreen ? 'center' : 'start',
-                      alignItems: 'start',
+                      alignItems: isFullscreen ? 'center' : 'stretch',
                       gap: '5px',
                       padding: '20px',
                       flexDirection: { xs: 'column', md: 'row', lg: 'row', xl: 'row' },
@@ -3825,7 +3574,6 @@ const OperatorView = () => {
                   >
                     <Card
                       sx={{
-                        flex: 1,
                         borderRadius: 2,
                         display: 'flex',
                         justifyContent: 'center',
@@ -3874,9 +3622,8 @@ const OperatorView = () => {
                                 width: '100%',
                                 // maxWidth: '400px',
                                 height: '100%',
-                                minHeight: '300px',
-                                maxHeight: lgUp ? '400px' : '300px',
-                                objectFit: 'cover',
+                                maxHeight: '100%',
+                                objectFit: 'contain',
                                 borderRadius: '15px',
                               }}
                             />
@@ -3889,14 +3636,11 @@ const OperatorView = () => {
                     {todayVisitingPurpose.length === 0 ? (
                       <Card
                         sx={{
-                          flex: 1,
                           p: 3,
                           borderRadius: 2,
                           background: 'linear-gradient(135deg, #ECEFF1 0%, #CFD8DC 100%)',
                           textAlign: 'center',
                           maxHeight: isFullscreen ? '100%' : { xs: '100%', xl: '300px' },
-                          height: { xs: '100%', sm: '100%', xl: '290px' },
-                          minHeight: { xs: '100%', sm: '300px', xl: '300px' },
                           display: 'flex',
                           flexDirection: 'column',
                           alignItems: 'center',
@@ -3911,52 +3655,64 @@ const OperatorView = () => {
                         </CardContent>
                       </Card>
                     ) : (
-                      <Stack spacing={2} sx={{ flex: 1 }}>
+                      <>
                         {todayVisitingPurpose.slice(0, 5).map((item) => (
-                          <Card
-                            onClick={() => handleOpenDetailVistingPurpose(item)}
+                          <Tooltip
+                            arrow
+                            title={'Detail data ' + item.name}
+                            placement="top"
                             key={item.id}
-                            sx={{
-                              flex: 1,
-                              height: 'auto',
-                              minHeight: 0,
-                              p: 0,
-                              borderRadius: 1,
-                              background: getColorByName(item.name),
-                              boxShadow: '0 6px 14px rgba(93, 135, 255, 0.3)',
-                              transition: 'all 0.3s ease',
-                              '&:hover': {
-                                transform: 'translateY(-4px)',
-                                boxShadow: '0 10px 18px rgba(93, 135, 255, 0.45)',
+                            slotProps={{
+                              tooltip: {
+                                sx: {
+                                  fontSize: '1rem',
+                                  padding: '8px 14px',
+                                  zIndex: 9999999,
+                                },
                               },
-                              cursor: 'pointer',
-                              mb: 0,
                             }}
                           >
-                            <CardContent
+                            <Card
+                              onClick={() => handleOpenDetailVistingPurpose(item)}
+                              key={item.id}
                               sx={{
-                                px: 2,
-                                paddingTop: '0 !important',
-                                paddingBottom: '0 !important',
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                height: '50px',
+                                p: 1,
+                                borderRadius: 1,
+                                background: getColorByName(item.name),
+                                boxShadow: '0 6px 14px rgba(93, 135, 255, 0.3)',
+                                transition: 'all 0.3s ease',
+                                '&:hover': {
+                                  transform: 'translateY(-4px)',
+                                  boxShadow: '0 10px 18px rgba(93, 135, 255, 0.45)',
+                                },
+                                cursor: 'pointer',
+                                mb: 0,
                               }}
                             >
-                              <Typography
-                                variant="h5"
-                                fontWeight="bold"
-                                color="white"
-                                sx={{ textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}
+                              <CardContent
+                                sx={{
+                                  px: 2,
+                                  paddingTop: '0 !important',
+                                  paddingBottom: '0 !important',
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                }}
                               >
-                                {item.name}
-                              </Typography>
-                              <Typography variant="h5" fontWeight="bold" color="white">
-                                {item.count}
-                              </Typography>
-                            </CardContent>
-                          </Card>
+                                <Typography
+                                  variant="h5"
+                                  fontWeight="bold"
+                                  color="white"
+                                  sx={{ textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}
+                                >
+                                  {item.name}
+                                </Typography>
+                                <Typography variant="h5" fontWeight="bold" color="white">
+                                  {item.count}
+                                </Typography>
+                              </CardContent>
+                            </Card>
+                          </Tooltip>
                         ))}
                         {todayVisitingPurpose.length > 5 && (
                           <Button
@@ -3973,7 +3729,7 @@ const OperatorView = () => {
                           onClose={() => setOpenMore(false)}
                           data={todayVisitingPurpose}
                         />
-                      </Stack>
+                      </>
                     )}
                   </Box>
                   <Box
@@ -4108,7 +3864,7 @@ const OperatorView = () => {
                             </Button>
                           </Box>
 
-                          <Grid container spacing={isFullscreen ? 1 : 1.5}>
+                          <Grid container spacing={isFullscreen ? 3 : 1.5}>
                             {/* Checkin */}
                             <Grid size={{ xs: 6, lg: 6 }}>
                               <Button
@@ -4220,7 +3976,7 @@ const OperatorView = () => {
                           </Grid>
                         </Grid>
                         <Grid size={{ xs: 12, xl: 5 }}>
-                          <Grid container spacing={isFullscreen ? 1.5 : 1.5}>
+                          <Grid container spacing={isFullscreen ? 3 : 1.5}>
                             {/* Access */}
                             <Grid size={{ xs: 6, lg: 6 }}>
                               <Button
@@ -4254,6 +4010,7 @@ const OperatorView = () => {
                               <Button
                                 variant="contained"
                                 startIcon={<IconParking size={25} />}
+                                // onClick={handleOpenScanQR}
                                 onClick={() => handleOpenAction('parking')}
                                 size="large"
                                 sx={{
@@ -4397,10 +4154,7 @@ const OperatorView = () => {
                               <Button
                                 variant="contained"
                                 startIcon={<IconUser size={25} />}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setOpenWhiteList(true);
-                                }}
+                                onClick={handleOpenScanQR}
                                 size="large"
                                 sx={{
                                   textTransform: 'none',
@@ -5177,7 +4931,6 @@ const OperatorView = () => {
             onClose={() => setOpenDetailVistingPurpose(false)}
             data={selectedPurpose}
           />
-          {/* Search Visitor */}
           <SearchVisitorDialog
             open={openSearch}
             onClose={() => setOpenSearch(false)}
@@ -5206,9 +4959,7 @@ const OperatorView = () => {
             open={openBlacklistVisitor}
             onClose={handleCloseBlacklistVisitor}
           />
-          {/* List Visitor */}
           <ListVisitorDialog open={openListVisitor} onClose={handleCloseListVisitor} />
-          {/* Open */}
           <TriggeredAccessDialog open={openTriggeredAccess} onClose={handleCloseTriggeredAcceess} />
           {/* Dialog Swipe No Code */}
           <SwipeCardNoCodeDialog
@@ -5472,13 +5223,9 @@ const OperatorView = () => {
               </Grid>
 
               <Box mt={3} display="flex" justifyContent="space-between" alignItems="center">
-                <Box display="flex" flexDirection="row" gap={1}>
+                <Box display="flex" flexDirection="column" gap={0.5}>
                   <Typography variant="body1">
-                    Cards chosen: {selectedCards.length} / {availableCount} |
-                  </Typography>
-                  <Typography variant="body1">
-                    {/* You selected <b>{selectedVisitors.length || 1}</b> visitor(s). */}
-                    Maximum cards allowed: <b>{selectedVisitors.length || 1}</b>
+                    Cards chosen: {selectedCards.length} / {availableCount}
                   </Typography>
                 </Box>
               </Box>
@@ -5510,16 +5257,13 @@ const OperatorView = () => {
             </DialogActions>
           </Dialog>
           {/* Dialog Swipe */}
-          <SwipeCardDialog
+          {/* <SwipeCardDialog
             open={openSwipeDialog}
             onClose={handleCloseSwipeDialog}
             onSubmit={handleSwipeCardSubmit}
             invitationId={invitationId}
-            visitors={filteredVisitors}
             loading={setLoadingAccess}
-            currentVisitorIndex={currentVisitorIndex}
-            setCurrentVisitorIndex={setCurrentVisitorIndex}
-          />
+          /> */}
           {/* Dialog Choose registered Site Access Site */}
           <RegisteredSiteAccessDialog
             open={openRegisteredSite}
@@ -5539,14 +5283,13 @@ const OperatorView = () => {
             }}
           />
           {/* Dialog Swipe Access */}
-          <SwipeAccessDialog
+          {/* <SwipeAccessDialog
             open={openSwipeAccess}
             onClose={handleCloseSwipeAccess}
             data={accessData}
             payload={swipePayload}
             invitationId={invitationId as string}
-            visitor={currentAccessVisitor}
-          />
+          /> */}
           {/* Fill Form Pra regist Multiple*/}
           <Dialog
             open={openFillForm}
@@ -5602,6 +5345,11 @@ const OperatorView = () => {
                       const sectionType = getSectionType(section);
                       console.log('section', sectionType);
                       if (sectionType === 'visitor_information_group') {
+                        const isDrivingField = fillFormDataVisitor
+                          ?.flatMap((v) => v.question_page)
+                          ?.flatMap((q) => q.form || [])
+                          ?.find((f) => f.remarks === 'is_driving');
+
                         return (
                           <Grid>
                             <Box>
@@ -5911,11 +5659,6 @@ const OperatorView = () => {
                 setWsPayload={setWsPayload}
                 registeredSite={registerSiteOperator.user_id}
                 forceTick={tick}
-                visitorType={visitorType}
-                sites={sites}
-                employee={employee}
-                allVisitorEmployee={allVisitorEmployee}
-                vtLoading={vtLoading}
               />
             </DialogContent>
           </Dialog>
@@ -5953,40 +5696,40 @@ const OperatorView = () => {
                 setFormData={setFormDataAddVisitor}
                 onSuccess={handleSuccess}
                 containerRef={containerRef ?? null}
-                visitorType={visitorType}
-                sites={sites}
-                employee={employee}
-                allVisitorEmployee={allVisitorEmployee}
-                vtLoading={vtLoading}
               />
             </DialogContent>
           </Dialog>
 
           {/* Parking /Vehicle Dialog */}
-          <ParkingDialog
+          <Dialog
             open={openParking}
-            onClose={() => {
-              setActionButton('');
-              setOpenParking(false);
-            }}
-            data={parkingData}
-          />
-
-          <VehicleDialog
-            open={openVehicle}
-            onClose={() => {
-              setActionButton('');
-              setOpenVehicle(false);
-              console.log('vehicle');
-            }}
-            data={vehicleData}
-          />
-
-          <WhiteListDialog
-            open={openWhiteList}
-            onClose={() => setOpenWhiteList(false)}
-            data={whiteListData}
-          />
+            onClose={() => setOpenParking(false)}
+            container={containerRef.current ?? undefined}
+            fullWidth
+            maxWidth="md"
+          >
+            <DialogTitle>
+              List Parking
+              <IconButton
+                aria-label="close"
+                onClick={() => {
+                  setOpenParking(false);
+                  setAction('');
+                }}
+                sx={{
+                  position: 'absolute',
+                  right: 8,
+                  top: 8,
+                  color: (theme) => theme.palette.grey[500],
+                }}
+              >
+                <IconX />
+              </IconButton>
+            </DialogTitle>
+            <DialogContent dividers>
+              <DynamicTable data={[]} isHaveSearch={true} />
+            </DialogContent>
+          </Dialog>
 
           {/* Info Dialog */}
           <InfoDialog

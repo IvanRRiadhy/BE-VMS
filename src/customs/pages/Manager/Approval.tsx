@@ -105,13 +105,13 @@ const Approval = () => {
 
             return {
               id: item.id,
-              visitor_name: trx.visitor_name,
+              visitor_name: item.visitor_name ?? '-',
               // site_place_name: trx.site_place_name || '-',
               agenda: trx.agenda || '-',
-              visitor_period_start: trx.visitor_period_start || '-',
-              visitor_period_end: trx.visitor_period_end
-                ? formatDateTime(trx.visitor_period_end, trx.extend_visitor_period)
-                : trx.visitor_period_end || '-',
+              // visitor_period_start: trx.visitor_period_start || '-',
+              // visitor_period_end: trx.visitor_period_end
+              //   ? formatDateTime(trx.visitor_period_end, trx.extend_visitor_period)
+              //   : trx.visitor_period_end || '-',
 
               action_by: item.action_by || '-',
               status: item.action,

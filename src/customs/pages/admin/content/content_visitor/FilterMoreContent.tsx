@@ -8,18 +8,17 @@ import {
   Autocomplete,
   FormControlLabel,
   RadioGroup,
+  FormGroup,
+  Checkbox,
 } from '@mui/material';
+import { IconX } from '@tabler/icons-react';
+import { useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomRadio from 'src/components/forms/theme-elements/CustomRadio';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 
 interface VisitorFilters {
-  organization_id: string;
-  department_id: string;
-  district_id: string;
   is_employee: string;
-  gender: string;
-  is_email_verified: string;
   is_blacklist: string;
 }
 
@@ -29,20 +28,13 @@ type OptionItem = {
 };
 
 type FilterMoreContentProps = {
-  filters: VisitorFilters;
-  setFilters: React.Dispatch<React.SetStateAction<VisitorFilters>>;
+  filters: any;
+  setFilters: React.Dispatch<React.SetStateAction<any>>;
   onApplyFilter: () => void;
-  organizationData?: OptionItem[];
-  departmentData?: OptionItem[];
-  districtData?: OptionItem[];
+  onResetFilter: () => void;
 };
 const defaultFilters: VisitorFilters = {
-  organization_id: '',
-  department_id: '',
-  district_id: '',
   is_employee: '',
-  gender: '',
-  is_email_verified: '',
   is_blacklist: '',
 };
 
@@ -50,41 +42,81 @@ const FilterMoreContentVisitor: React.FC<FilterMoreContentProps> = ({
   filters,
   setFilters,
   onApplyFilter,
-  organizationData = [],
-  departmentData = [],
-  districtData = [],
+  onResetFilter,
 }) => {
-  const handleRadioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFilters((prev) => ({ ...prev, [name]: value }));
+  const statusMap: Record<string, string> = {
+    All: 'All',
+    Preregis: 'Preregis',
+    Checkin: 'Checkin',
+    Checkout: 'Checkout',
+    Denied: 'Denied',
+    Block: 'Block',
   };
+
+  const visitorRole: Record<string, string> = {
+    Visitor: 'Visitor',
+    Delivery: 'Delivery',
+    Vip: 'Vip',
+  };
+
+  const visitorRoleOptions = Object.values(visitorRole);
+
+  const statusOptions = Object.values(statusMap);
+
+
 
   return (
     <Box sx={{ padding: { xs: 0, lg: 3 }, margin: 1.5 }}>
-      <Typography variant="h5" gutterBottom>
-        Filter Visitor
-      </Typography>
+      <Box display="flex" alignItems="center" justifyContent="space-between">
+        <Typography variant="h5" gutterBottom>
+          Filter Visitor
+        </Typography>
+        {/* <IconX onClick={() => setShowDrawerFilterMore(false)} style={{ cursor: 'pointer' }} /> */}
+      </Box>
       <Divider />
 
-      <Grid container spacing={3} sx={{ marginTop: '5px' }}>
-        {/* Organization */}
-        <Grid size={{ xs: 12, lg: 4 }}>
-          <CustomFormLabel sx={{ mt: { xs: 0, lg: 2 } }}>Organization</CustomFormLabel>
+      <Grid container spacing={1} sx={{ p: 1 }}>
+        <Grid size={{ xs: 12, lg: 12 }}>
+          <CustomFormLabel sx={{ mt: { xs: 0, lg: 2 } }}>Visitor Status</CustomFormLabel>
+
           <Autocomplete
-            options={organizationData}
-            value={organizationData.find((o) => o.id === filters.organization_id) || null}
+            options={statusOptions}
+            value={filters.status || null}
             onChange={(_, val) =>
-              setFilters((prev) => ({
+              setFilters((prev: any) => ({
                 ...prev,
-                organization_id: val ? val.id : '',
+                status: val || '',
               }))
             }
-            isOptionEqualToValue={(opt, val) => opt.id === val.id}
-            getOptionLabel={(opt) => opt?.name ?? ''}
             renderInput={(params) => (
               <CustomTextField
                 {...params}
-                placeholder="Select organization"
+                placeholder="Select Visitor Status"
+                variant="outlined"
+                InputProps={{
+                  ...params.InputProps,
+                  sx: { fontSize: '0.8rem' },
+                }}
+              />
+            )}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, lg: 12 }}>
+          <CustomFormLabel sx={{ mt: { xs: 0, lg: 2 } }}>Visitor Role</CustomFormLabel>
+          <Autocomplete
+            options={visitorRoleOptions}
+            value={filters.visitor_role || null}
+            onChange={(_, val) =>
+              setFilters((prev: any) => ({
+                ...prev,
+                visitor_role: val || '',
+              }))
+            }
+            renderInput={(params) => (
+              <CustomTextField
+                {...params}
+                placeholder="Select Visitor Role"
                 variant="outlined"
                 InputProps={{ ...params.InputProps, sx: { fontSize: '0.8rem' } }}
               />
@@ -92,24 +124,56 @@ const FilterMoreContentVisitor: React.FC<FilterMoreContentProps> = ({
           />
         </Grid>
 
-        {/* Department */}
-        <Grid size={{ xs: 12, lg: 4 }}>
-          <CustomFormLabel sx={{ mt: { xs: 0, lg: 2 } }}>Department</CustomFormLabel>
-          <Autocomplete
-            options={departmentData}
-            value={departmentData.find((o) => o.id === filters.department_id) || null}
-            onChange={(_, val) =>
-              setFilters((prev) => ({
+        <Grid size={{ xs: 12, lg: 6 }}>
+          <CustomFormLabel sx={{ mt: { xs: 0, lg: 2 } }}>Visitor Period Start</CustomFormLabel>
+
+          <CustomTextField
+            type="datetime-local"
+            fullWidth
+            value={filters.start_date}
+            onChange={(e) =>
+              setFilters((prev: any) => ({
                 ...prev,
-                department_id: val ? val.id : '',
+                start_date: e.target.value,
               }))
             }
-            isOptionEqualToValue={(opt, val) => opt.id === val.id}
-            getOptionLabel={(opt) => opt?.name ?? ''}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, lg: 6 }}>
+          <CustomFormLabel sx={{ mt: { xs: 0, lg: 2 } }}>Visitor Period End</CustomFormLabel>
+
+          <CustomTextField
+            type="datetime-local"
+            fullWidth
+            value={filters.end_date}
+            onChange={(e) =>
+              setFilters((prev: any) => ({
+                ...prev,
+                end_date: e.target.value,
+              }))
+            }
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, lg: 6 }}>
+          <CustomFormLabel sx={{ mt: { xs: 0, lg: 2 } }}>Host</CustomFormLabel>
+          <Autocomplete
+            options={[]}
+            // options={districtData}
+            // value={districtData.find((o) => o.id === filters.district_id) || null}
+            // onChange={(_, val) =>
+            //   setFilters((prev) => ({
+            //     ...prev,
+            //     district_id: val ? val.id : '',
+            //   }))
+            // }
+            // isOptionEqualToValue={(opt, val) => opt.id === val.id}
+            // getOptionLabel={(opt) => opt?.name ?? ''}
             renderInput={(params) => (
               <CustomTextField
                 {...params}
-                placeholder="Select department"
+                placeholder="Select Host"
                 variant="outlined"
                 InputProps={{ ...params.InputProps, sx: { fontSize: '0.8rem' } }}
               />
@@ -117,134 +181,144 @@ const FilterMoreContentVisitor: React.FC<FilterMoreContentProps> = ({
           />
         </Grid>
 
-        {/* District */}
-        <Grid size={{ xs: 12, lg: 4 }}>
-          <CustomFormLabel sx={{ mt: { xs: 0, lg: 2 } }}>District</CustomFormLabel>
+        <Grid size={{ xs: 12, lg: 6 }}>
+          <CustomFormLabel sx={{ mt: { xs: 0, lg: 2 } }}>Site</CustomFormLabel>
           <Autocomplete
-            options={districtData}
-            value={districtData.find((o) => o.id === filters.district_id) || null}
-            onChange={(_, val) =>
-              setFilters((prev) => ({
-                ...prev,
-                district_id: val ? val.id : '',
-              }))
-            }
-            isOptionEqualToValue={(opt, val) => opt.id === val.id}
-            getOptionLabel={(opt) => opt?.name ?? ''}
+            options={[]}
+            // options={districtData}
+            // value={districtData.find((o) => o.id === filters.district_id) || null}
+            // onChange={(_, val) =>
+            //   setFilters((prev) => ({
+            //     ...prev,
+            //     district_id: val ? val.id : '',
+            //   }))
+            // }
+            // isOptionEqualToValue={(opt, val) => opt.id === val.id}
+            // getOptionLabel={(opt) => opt?.name ?? ''}
             renderInput={(params) => (
               <CustomTextField
                 {...params}
-                placeholder="Select district"
+                placeholder="Select Sites"
                 variant="outlined"
                 InputProps={{ ...params.InputProps, sx: { fontSize: '0.8rem' } }}
               />
             )}
           />
-        </Grid>
-
-        {/* Gender */}
-        <Grid size={{ xs: 12, lg: 4 }}>
-          <CustomFormLabel sx={{ mt: 0 }}>Gender</CustomFormLabel>
-          <FormControl>
-            <RadioGroup row name="gender" value={filters.gender} onChange={handleRadioChange}>
-              <FormControlLabel
-                value="0"
-                control={<CustomRadio />}
-                label="Female"
-                sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
-              />
-              <FormControlLabel
-                value="1"
-                control={<CustomRadio />}
-                label="Male"
-                sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
-              />
-            </RadioGroup>
-          </FormControl>
-        </Grid>
-
-        {/* Email Verified */}
-        <Grid size={{ xs: 12, lg: 4 }}>
-          <CustomFormLabel sx={{ mt: 0 }}>Is Email Verified</CustomFormLabel>
-          <FormControl>
-            <RadioGroup
-              row
-              name="is_email_verified"
-              value={filters.is_email_verified}
-              onChange={handleRadioChange}
-            >
-              <FormControlLabel
-                value="true"
-                control={<CustomRadio />}
-                label="True"
-                sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
-              />
-              <FormControlLabel
-                value="false"
-                control={<CustomRadio />}
-                label="False"
-                sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
-              />
-            </RadioGroup>
-          </FormControl>
-        </Grid>
-
-        {/* Is Employee */}
-        <Grid size={{ xs: 12, lg: 4 }}>
-          <CustomFormLabel sx={{ mt: 0 }}>Is Employee</CustomFormLabel>
-          <FormControl>
-            <RadioGroup
-              row
-              name="is_employee"
-              value={filters.is_employee}
-              onChange={handleRadioChange}
-            >
-              <FormControlLabel
-                value="true"
-                control={<CustomRadio />}
-                label="True"
-                sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
-              />
-              <FormControlLabel
-                value="false"
-                control={<CustomRadio />}
-                label="False"
-                sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
-              />
-            </RadioGroup>
-          </FormControl>
         </Grid>
 
         {/* Blacklist */}
-        <Grid size={{ xs: 12, lg: 6 }}>
-          <CustomFormLabel sx={{ mt: 0 }}>Blacklist</CustomFormLabel>
-          <FormControl>
-            <RadioGroup
-              row
-              name="is_blacklist"
-              value={filters.is_blacklist}
-              onChange={handleRadioChange}
-            >
-              <FormControlLabel
-                value="true"
-                control={<CustomRadio />}
-                label="True"
-                sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
-              />
-              <FormControlLabel
-                value="false"
-                control={<CustomRadio />}
-                label="False"
-                sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
-              />
-            </RadioGroup>
-          </FormControl>
+        <Grid size={{ xs: 12, lg: 4 }}>
+          <CustomFormLabel sx={{ mt: 0 }}>Block</CustomFormLabel>
+          <FormGroup row>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={filters.is_block === 'true'}
+                  onChange={() =>
+                    setFilters((prev: any) => ({
+                      ...prev,
+                      is_block: 'true',
+                    }))
+                  }
+                />
+              }
+              label="Yes"
+              sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={filters.is_block === 'false'}
+                  onChange={() =>
+                    setFilters((prev: any) => ({
+                      ...prev,
+                      is_block: 'false',
+                    }))
+                  }
+                />
+              }
+              label="No"
+              sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
+            />
+          </FormGroup>
+        </Grid>
+
+        <Grid size={{ xs: 12, lg: 4 }}>
+          <CustomFormLabel sx={{ mt: 0 }}>Transaction Status</CustomFormLabel>
+          <FormGroup row>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={filters.transaction_status === 'true'}
+                  onChange={() =>
+                    setFilters((prev: any) => ({
+                      ...prev,
+                      transaction_status: 'true',
+                    }))
+                  }
+                />
+              }
+              label="Available"
+              sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={filters.transaction_status === 'false'}
+                  onChange={() =>
+                    setFilters((prev: any) => ({
+                      ...prev,
+                      transaction_status: 'false',
+                    }))
+                  }
+                />
+              }
+              label="Not Available"
+              sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
+            />
+          </FormGroup>
+        </Grid>
+
+        <Grid size={{ xs: 12, lg: 4 }}>
+          <CustomFormLabel sx={{ mt: 0 }}>Emergency Situation</CustomFormLabel>
+          <FormGroup row>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={filters.emergency_situation === 'true'}
+                  onChange={() =>
+                    setFilters((prev: any) => ({
+                      ...prev,
+                      emergency_situation: 'true',
+                    }))
+                  }
+                />
+              }
+              label="Yes"
+              sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={filters.emergency_situation === 'false'}
+                  onChange={() =>
+                    setFilters((prev: any) => ({
+                      ...prev,
+                      emergency_situation: 'false',
+                    }))
+                  }
+                />
+              }
+              label="No"
+              sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.75rem' } }}
+            />
+          </FormGroup>
         </Grid>
 
         {/* Apply Button */}
         <Grid size={{ xs: 12 }} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
           {/* Reset */}
-          <Button variant="outlined" color="primary" onClick={() => setFilters(defaultFilters)}>
+          <Button variant="outlined" color="primary" onClick={onResetFilter}>
             Reset
           </Button>
           <Button variant="contained" color="primary" onClick={onApplyFilter}>

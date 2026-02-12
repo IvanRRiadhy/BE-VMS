@@ -1,3 +1,4 @@
+import { flow } from 'lodash';
 import { z } from 'zod';
 
 export type Item = {
@@ -149,6 +150,8 @@ export const CreateVisitorRequestSchema = z.object({
   is_group: z.boolean().default(false).optional(),
   tz: z.string().optional(),
   registered_site: z.string().optional(),
+  flow: z.string().optional(),
+  visitor_role : z.string().optional(),
   data_visitor: z.array(visitorItemSchema).optional(),
 });
 

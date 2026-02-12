@@ -109,7 +109,7 @@ const Content = () => {
 
   const cards = [
     {
-      title: 'Total Employee',
+      title: 'Total Vendor',
       icon: IconUsers,
       subTitle: `${totalFilteredRecords}`,
       subTitleSetting: 10,
@@ -472,7 +472,7 @@ const Content = () => {
       itemDataCustomNavListing={AdminNavListingData}
       itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
     >
-      <Container title="Employee" description="this is Employee page">
+      <Container title="Vendor" description="this is Vendor page">
         <Box>
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, lg: 12 }}>

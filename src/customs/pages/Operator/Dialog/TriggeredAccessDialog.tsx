@@ -67,7 +67,7 @@ export default function TriggeredAccessDialog({ open, onClose }: any) {
             <TextField
               fullWidth
               size="small"
-              placeholder="Search Name Access Control"
+              placeholder="Search Name Access"
               variant="outlined"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}

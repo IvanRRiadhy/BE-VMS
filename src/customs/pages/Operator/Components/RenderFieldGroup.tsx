@@ -704,7 +704,7 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
     <Box sx={{ overflow: 'auto', width: '100%' }}>
       {showLabel && (
         <>
-          <CustomFormLabel required={field.mandatory}>{field.long_display_text}</CustomFormLabel>
+          <CustomFormLabel required={field.mandatory === true}>{field.long_display_text}</CustomFormLabel>
         </>
       )}
 

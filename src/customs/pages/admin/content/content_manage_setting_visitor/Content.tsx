@@ -253,9 +253,9 @@ const Content = () => {
 
     try {
       const res = await getOperatorSettingRegiterSiteById(token as string, userId);
-
+      console.log('res', res.data.collection);
       // normalisasi response
-      const data = res.data.collection[0];
+      const data = res.data.collection;
       console.log('data', data);
 
       if (data) {
@@ -289,7 +289,8 @@ const Content = () => {
       });
     }
 
-    setShowForm(true);
+    // setShowForm(true);
+    setOpenRegisteredSite(true);
   };
 
   const [openGiveAccess, setOpenGiveAccess] = useState(false);
@@ -459,6 +460,8 @@ const Content = () => {
     setOpenSiteAccess(true);
   };
 
+  const [openRegisteredSite, setOpenRegisteredSite] = useState(false);
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -545,15 +548,7 @@ const Content = () => {
                       // onDelete={(row) => handleDelete(row.id.toString())}
                       onSearchKeywordChange={setSearchKeyword}
                     />
-                  ) : (
-                    <FormSettingRegisteredSite
-                      formData={formDataRegisteredSite}
-                      setFormData={setFormDataRegisteredSite}
-                      editingId={edittingId}
-                      onSubmit={handleSubmitRegisteredSite}
-                      onCancel={handleCancelForm}
-                    />
-                  )}
+                  ) : null}
                 </Box>
               )}
             </Box>
@@ -571,6 +566,10 @@ const Content = () => {
           </Backdrop>
         </Portal>
       </Container>
+
+      {/* Registered Site */}
+
+      {/* Give Access */}
       <Dialog
         open={openGiveAccess}
         onClose={() => setOpenGiveAccess(false)}
@@ -831,6 +830,34 @@ const Content = () => {
             Submit
           </Button>
         </DialogActions>
+      </Dialog>
+
+      {/* Registered Site */}
+      <Dialog open={openRegisteredSite} onClose={handleCancelForm} fullWidth maxWidth="md">
+        <DialogTitle>
+          {edittingId ? 'Edit' : 'Add'} Registered Site
+          <IconButton
+            aria-label="close"
+            onClick={() => setOpenRegisteredSite(false)}
+            sx={{
+              position: 'absolute',
+              right: 10,
+              top: 10,
+              color: (theme) => theme.palette.grey[500],
+            }}
+          >
+            <IconX />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          <FormSettingRegisteredSite
+            formData={formDataRegisteredSite}
+            setFormData={setFormDataRegisteredSite}
+            editingId={edittingId}
+            onSubmit={handleSubmitRegisteredSite}
+            onCancel={() => setOpenRegisteredSite(false)}
+          />
+        </DialogContent>
       </Dialog>
     </PageContainer>
   );

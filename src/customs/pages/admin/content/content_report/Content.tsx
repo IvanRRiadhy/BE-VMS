@@ -245,8 +245,8 @@ const Content = () => {
           const year = formData.start_date
             ? dayjs(formData.start_date).format('YYYY')
             : formData.end_date
-            ? dayjs(formData.end_date).format('YYYY')
-            : dayjs().format('YYYY');
+              ? dayjs(formData.end_date).format('YYYY')
+              : dayjs().format('YYYY');
           periodForTitle = year;
           periodForSave = year;
           break;

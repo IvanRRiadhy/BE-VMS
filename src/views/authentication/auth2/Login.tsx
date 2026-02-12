@@ -18,6 +18,7 @@ import {
   Alert,
   Tooltip,
   Divider,
+  useTheme,
 } from '@mui/material';
 import { useSearchParams } from 'react-router-dom';
 
@@ -42,12 +43,14 @@ import { KeyboardArrowUp } from '@mui/icons-material';
 // import Logo from 'src/assets/images/logos/bio-experience-1x1-logo.png';
 
 const Login = () => {
+  const theme = useTheme();
   const { isAuthenticated } = useAuth();
   const { saveToken } = useSession();
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const lgUp = useMediaQuery((theme: Theme) => theme.breakpoints.up('lg'));
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
@@ -146,7 +149,7 @@ const Login = () => {
       const res = await AuthVisitor({ code: guestCode });
 
       const status = res.status;
-      console.log('Status:', status);
+      // console.log('Status:', status);
 
       localStorage.setItem('visitor_ref_code', guestCode);
       // setLoading(false);
@@ -291,7 +294,17 @@ const Login = () => {
                   </Box>
 
                   {/* Tabs Switch */}
-                  <Tabs value={tab} onChange={(_, v) => setTab(v)} centered sx={{ mb: 2 }}>
+                  <Tabs
+                    value={tab}
+                    onChange={(_, v) => setTab(v)}
+                    // centered
+                    sx={{ mb: 2 }}
+                    centered={true}
+                    // variant="scrollable"
+                    scrollButtons="auto"
+                    allowScrollButtonsMobile
+                    variant={isMobile ? 'scrollable' : 'standard'} 
+                  >
                     <Tab icon={<IconUser size={18} />} iconPosition="start" label="User/Staff" />
                     <Tab
                       icon={<IconUserPlus size={18} />}

@@ -11,6 +11,7 @@ import {
   Button,
   Card,
   Checkbox,
+  Chip,
   CircularProgress,
   Dialog,
   DialogContent,
@@ -81,7 +82,7 @@ const Content = () => {
     hosts: [] as string[],
     visitor_id: null as string | null,
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Jakarta',
-    is_preregister_done: true,
+    is_preregister_done: false,
     visitor_statuss: [] as string[],
     previous: false,
   });
@@ -97,17 +98,16 @@ const Content = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(100);
+  const [rowsPerPage, setRowsPerPage] = useState(7);
   const [sortDir, setSortDir] = useState('desc');
   const [savedReports, setSavedReports] = useState<any[]>([]);
   const [selectedReport, setSelectedReport] = useState<any | null>(null);
   const [debouncedKeyword, setDebouncedSearch] = useState('');
   const [loadingReports, setLoadingReports] = useState(false);
   const [searchVisitor, setSearchVisitor] = useState('');
+  // const [loadedReports, setLoadedReports] = useState<any[]>([]);
   const [reports, setReports] = useState<any[]>([]);
-  const [loadedReports, setLoadedReports] = useState<any[]>([]);
   const [hasMore, setHasMore] = useState(true);
-
   const [loadingMore, setLoadingMore] = useState(false);
 
   const [snackbar, setSnackbar] = useState({
@@ -131,12 +131,12 @@ const Content = () => {
   useEffect(() => {
     const fetchData = async () => {
       if (!token) return;
-      // const resSite = await getAllSite(token);
-      // setSiteOptions(resSite.collection);
-      // const resEmployeee = await getVisitorEmployee(token);
-      // setEmployeeOptions(resEmployeee.collection);
-      // const resVisitor = await getAllVisitor(token);
-      // setVisitorOptions(resVisitor.collection);
+      const resSite = await getAllSite(token);
+      setSiteOptions(resSite.collection);
+      const resEmployeee = await getVisitorEmployee(token);
+      setEmployeeOptions(resEmployeee.collection);
+      const resVisitor = await getAllVisitor(token);
+      setVisitorOptions(resVisitor.collection);
     };
 
     fetchData();
@@ -171,45 +171,6 @@ const Content = () => {
 
     return () => clearTimeout(handler);
   }, [searchKeyword]);
-
-  // const fetchReports = async (reset = false) => {
-  //   if (!token) return;
-
-  //   if (reset) {
-  //     setPage(0);
-  //     setLoadedReports([]);
-  //     setHasMore(true);
-  //   }
-
-  //   setLoadingReports(true);
-  //   try {
-  //     const start = reset ? 0 : page * rowsPerPage;
-  //     const res = await getReportVisitorTransactionDt(token, {
-  //       start,
-  //       length: rowsPerPage,
-  //       sort_dir: sortDir,
-  //       search: debouncedKeyword || '',
-  //     });
-
-  //     if (res.collection && res.collection.length > 0) {
-  //       setLoadedReports((prev) => (reset ? res.collection : [...prev, ...res.collection]));
-  //       setPage((prev) => prev + 1);
-
-  //       if (res.collection.length < rowsPerPage) setHasMore(false);
-  //     } else {
-  //       if (reset) setLoadedReports([]);
-  //       setHasMore(false);
-  //     }
-  //   } catch (err) {
-  //     console.error(err);
-  //   } finally {
-  //     setLoadingReports(false);
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   // fetchReports(true);
-  // }, [debouncedKeyword, sortDir, token]);
 
   const fetchReports = async (reset = false) => {
     if (!token || loadingReports) return;
@@ -269,7 +230,7 @@ const Content = () => {
       f.hosts?.length === 0 &&
       !f.visitor_id &&
       f.visitor_statuss?.length === 0 &&
-      f.is_preregister_done === true &&
+      f.is_preregister_done === false &&
       f.previous === false
     );
   };
@@ -298,7 +259,7 @@ const Content = () => {
       const res = rep
         ? await generateReportVisitorById(token, rep)
         : await generateReport(token, formData);
-      // console.log('res', res);
+      console.log('res', res);
       const rowsSummary = res.collection?.summary?.map((item: any) => ({
         id: item.id,
         date: item.date,
@@ -331,9 +292,6 @@ const Content = () => {
         })) ?? [];
 
       setReportData(rows);
-      // setTimeout(() => {
-      //   setOpenDialog(true);
-      // }, 400);
     } catch (err) {
       console.error('Error generating report:', err);
       setTimeout(() => {
@@ -481,7 +439,7 @@ const Content = () => {
       hosts: [],
       visitor_id: '',
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Jakarta',
-      is_preregister_done: true,
+      is_preregister_done: false,
       visitor_statuss: [],
       previous: false,
     });
@@ -508,7 +466,7 @@ const Content = () => {
       time_report: d.time_report || 'all',
       visitor_id: d.visitor_id || null,
       timezone: d.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
-      is_preregister_done: d.is_preregister_done || true,
+      is_preregister_done: d.is_preregister_done || false,
       previous: d.previous || false,
 
       visitor_statuss: d.visitor_statuss || [],
@@ -560,14 +518,16 @@ const Content = () => {
 
     try {
       await updateReportVisitorTransaction(token as string, selectedReport.id, formData);
-      await refreshReportList();
+      // await refreshReportList();
+      await fetchReports(true);
       setEditingId(null);
       setTimeout(() => {
         showSwal('success', 'Report updated successfully!');
       }, 600);
     } catch (err) {
       console.error(err);
-      showSnackbar('Failed to update report.', 'error');
+      // showSnackbar('Failed to update report.', 'error');
+      showSwal('error', 'Failed to update report.');
     } finally {
       setTimeout(() => setLoading(false), 500);
     }
@@ -596,6 +556,14 @@ const Content = () => {
     }
   };
 
+  const visitorStatusOptions = [
+    { id: 'Preregis', label: 'Preregis' },
+    { id: 'Checkin', label: 'Checkin' },
+    { id: 'Checkout', label: 'Checkout' },
+    { id: 'Block', label: 'Block' },
+    { id: 'Unblock', label: 'Unblock' },
+  ];
+
   return (
     <Container title="Report" description="This is Content Report page">
       <Grid container spacing={1}>
@@ -607,7 +575,6 @@ const Content = () => {
             <Divider sx={{ mb: 2 }} />
             <Grid container spacing={3}>
               <Grid size={{ xs: 12 }}>
-                {/* name */}
                 <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Report Name</CustomFormLabel>
                 <TextField
                   fullWidth
@@ -620,7 +587,6 @@ const Content = () => {
                   sx={{ mt: 0.5 }}
                 />
               </Grid>
-              {/* Description */}
               <Grid size={{ xs: 12 }}>
                 <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Description</CustomFormLabel>
                 <TextField
@@ -710,22 +676,36 @@ const Content = () => {
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Visitor Status</CustomFormLabel>
-                <CustomSelect
-                  fullWidth
-                  value={formData.visitor_statuss}
-                  onChange={(e: any): any => handleChange('visitor_statuss', e.target.value)}
-                  placeholder="Select Visitor Status"
+                <Autocomplete
+                  multiple
+                  size="small"
+                  options={visitorStatusOptions}
+                  getOptionLabel={(option) => option.label}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
+                  value={visitorStatusOptions.filter((opt) =>
+                    formData.visitor_statuss?.includes(opt.id),
+                  )}
+                  onChange={(_, values) =>
+                    handleChange(
+                      'visitor_statuss',
+                      values.map((v) => v.id),
+                    )
+                  }
+                  renderTags={(value, getTagProps) =>
+                    value.map((option, index) => (
+                      <Chip
+                        label={option.label}
+                        size="small"
+                        {...getTagProps({ index })}
+                        key={option.id}
+                      />
+                    ))
+                  }
+                  renderInput={(params) => (
+                    <TextField {...params} placeholder="Select Visitor Status" fullWidth />
+                  )}
                   sx={{ mt: 0.5 }}
-                >
-                  <MenuItem value="" hidden>
-                    Select Visitor Status
-                  </MenuItem>
-                  <MenuItem value="Preregis">Preregis</MenuItem>
-                  <MenuItem value="Checkin">Checkin</MenuItem>
-                  <MenuItem value="Checkout">Checkout</MenuItem>
-                  <MenuItem value="Block">Block</MenuItem>
-                  <MenuItem value="Unblock">Unblock</MenuItem>
-                </CustomSelect>
+                />
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Sites</CustomFormLabel>
@@ -778,6 +758,19 @@ const Content = () => {
                   />
                 </FormGroup>
               </Grid>
+              <Grid size={{ xs: 12, md: 6, lg: 8 }}>
+                <FormGroup>
+                  <FormControlLabel
+                    label="Preregister Done"
+                    control={
+                      <Checkbox
+                        checked={formData.is_preregister_done}
+                        onChange={(e) => handleChange('is_preregister_done', e.target.checked)}
+                      />
+                    }
+                  />
+                </FormGroup>
+              </Grid>
             </Grid>
             <Grid size={{ xs: 12, md: 12 }} mt={2}>
               <Box
@@ -789,13 +782,16 @@ const Content = () => {
                 <Button
                   variant="contained"
                   color="primary"
-                  onClick={() => handlePostReport(null)}
-                  startIcon={!loading && <IconReport size={20} />}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePostReport(null);
+                  }}
+                  startIcon={<IconReport size={20} />}
                   disabled={loading}
                   sx={{ fontSize: 12 }}
                   size="medium"
                 >
-                  {loading ? <CircularProgress size={18} color="inherit" /> : 'Generate Report'}
+                  {loading ? <CircularProgress size={18} /> : 'Generate Report'}
                 </Button>
 
                 <Button
@@ -853,7 +849,6 @@ const Content = () => {
             <Divider sx={{ mb: 1 }} />
             <Grid container spacing={2} gap={2}>
               <Grid size={{ xs: 12, xl: 2.5 }}>
-                {/* Search */}
                 <FormControl sx={{ width: '100%' }}>
                   <CustomTextField
                     fullWidth
@@ -885,7 +880,7 @@ const Content = () => {
                   </Typography>
                 ) : (
                   <>
-                    {reports.map((rep: any) => (
+                    {reports.map((rep) => (
                       <Card
                         key={rep.id}
                         sx={{
@@ -945,10 +940,12 @@ const Content = () => {
                               variant="contained"
                               color="primary"
                               sx={{ mt: 2, me: 1 }}
-                              // startIcon={<IconReport size={20} />}
-                              onClick={() => handlePostReport(rep.id)}
+                              // disabled={loading}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handlePostReport(rep.id);
+                              }}
                             >
-                              {/* Generate */}
                               <IconReport size={20} />
                             </Button>
                           </Tooltip>
@@ -956,9 +953,11 @@ const Content = () => {
                             <Button
                               variant="contained"
                               color="secondary"
-                              // startIcon={<IconPencil size={20} />}
                               sx={{ mt: 2, backgroundColor: '#FA896B' }}
-                              onClick={() => handleEditReport(rep)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditReport(rep);
+                              }}
                             >
                               {/* Edit */}
                               <IconPencil size={20} />
@@ -970,7 +969,10 @@ const Content = () => {
                                 variant="contained"
                                 color="warning"
                                 startIcon={<IconDeviceFloppy size={20} />}
-                                onClick={handleUpdateReport}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleUpdateReport();
+                                }}
                                 disabled={loading}
                                 sx={{ mt: 2, me: 1 }}
                               >
@@ -983,9 +985,11 @@ const Content = () => {
                               variant="contained"
                               color="error"
                               size="small"
-                              // startIcon={<IconTrash size={20} />}
                               sx={{ mt: 2 }}
-                              onClick={() => handleDelete(rep.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(rep.id);
+                              }}
                             >
                               {/* Edit */}
                               <IconTrash size={20} />
@@ -998,11 +1002,15 @@ const Content = () => {
                       <Box textAlign="center" mt={2}>
                         <Button
                           onClick={() => fetchReports(false)}
-                          disabled={loadingReports || !hasMore}
                           variant="contained"
+                          color="primary"
                           fullWidth
                         >
-                          {loadingReports ? 'Loading...' : 'Load More'}
+                          {loadingReports || loadingMore ? (
+                            <CircularProgress size={20} />
+                          ) : (
+                            'Load More'
+                          )}
                         </Button>
                       </Box>
                     )}
@@ -1021,7 +1029,6 @@ const Content = () => {
                 size={{ xs: 12, xl: 0.1 }}
               />
 
-              {/* Kanan - preview */}
               <Grid size={{ xs: 12, xl: 9 }} flexGrow={1}>
                 {isHavePreview ? (
                   <>
@@ -1136,8 +1143,6 @@ const Content = () => {
               <Tab label="Table Report" />
             </Tabs>
           </Box>
-
-          {/* 🔹 TAB 1 - SUMMARY */}
           {activeTab === 0 && (
             <Box>
               {summary ? (
@@ -1159,8 +1164,6 @@ const Content = () => {
               )}
             </Box>
           )}
-
-          {/* 🔹 TAB 2 - TABLE */}
           {activeTab === 1 && (
             <Box>
               <div id="print-report-area">

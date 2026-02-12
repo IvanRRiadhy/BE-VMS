@@ -9,9 +9,11 @@ import {
   Box,
   Typography,
   TextField,
+  InputAdornment,
+  IconButton,
 } from '@mui/material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import { IconX } from '@tabler/icons-react';
+import { IconCards, IconCheck, IconX } from '@tabler/icons-react';
 
 interface SwipeCardDialogProps {
   open: boolean;
@@ -158,7 +160,12 @@ const SwipeCardNoCodeDialog: React.FC<SwipeCardDialogProps> = ({
                     <Typography color="success.main">Verified ✓</Typography>
                   </Box>
                 ) : (
-                  <Typography fontWeight={600}>Old Card</Typography>
+                  <Box textAlign="center">
+                    <IconCards size={80} stroke={1.5} color="#d8d5d5ff" />
+                    <Typography mt={1} fontWeight={600} color="text.secondary">
+                      Old Card
+                    </Typography>
+                  </Box>
                 )}
               </Box>
 
@@ -170,6 +177,15 @@ const SwipeCardNoCodeDialog: React.FC<SwipeCardDialogProps> = ({
                 value={oldCard}
                 onChange={(e) => setOldCard(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleOldCardEnter()}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton onClick={handleOldCardEnter} sx={{ color: 'success.main' }}>
+                        <IconCheck size={18} />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
               />
             </Box>
           </Grid>
@@ -213,7 +229,12 @@ const SwipeCardNoCodeDialog: React.FC<SwipeCardDialogProps> = ({
                     <Typography color="success.main">Verified ✓</Typography>
                   </Box>
                 ) : (
-                  <Typography fontWeight={600}>New Card</Typography>
+                  <Box textAlign="center">
+                    <IconCards size={80} stroke={1.5} color="#d8d5d5ff" />
+                    <Typography mt={1} fontWeight={600} color="text.secondary">
+                      New Card
+                    </Typography>
+                  </Box>
                 )}
               </Box>
 
@@ -221,10 +242,20 @@ const SwipeCardNoCodeDialog: React.FC<SwipeCardDialogProps> = ({
                 fullWidth
                 size="small"
                 placeholder="Enter new card number"
+                disabled={!oldCardData}
                 inputRef={newCardRef}
                 value={newCard}
                 onChange={(e) => setNewCard(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleNewCardEnter()}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton onClick={handleNewCardEnter} sx={{ color: 'success.main' }}>
+                        <IconCheck size={18} />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
               />
             </Box>
           </Grid>

@@ -95,6 +95,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
       try {
         const res = await getDetailInvitationForm(token, id);
         const data = res.collection;
+        console.log('dat', data);
         setInvitationData(data);
 
       

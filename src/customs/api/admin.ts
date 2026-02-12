@@ -297,7 +297,11 @@ export const getOperatorSettingGiveAccessById = async (token: string, id: string
 };
 
 // Create
-export const createOperatorSettingGiveAccess = async (token: string, data: any, id: string): Promise<any> => {
+export const createOperatorSettingGiveAccess = async (
+  token: string,
+  data: any,
+  id: string,
+): Promise<any> => {
   const response = await axiosInstance.post('/operator-give-access/user/' + id, data, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -766,15 +770,6 @@ export const getListVisitor = async (token: string): Promise<any> => {
   return response.data;
 };
 
-const filters = {};
-
-const toKebabKeys = (obj: Record<string, any>) =>
-  Object.fromEntries(
-    Object.entries(obj)
-      .filter(([_, v]) => v !== '' && v !== null && v !== undefined)
-      .map(([k, v]) => [k.replace(/_/g, '-'), v]),
-  );
-
 export const getListVisitorPagination = async (
   token: string,
   start: number,
@@ -840,17 +835,37 @@ export const getAllVisitorPagination = async (
   start_date: string,
   end_date: string,
   status?: string,
+  data_filter?: string,
+  transaction_status?: string,
+  site?: string,
+  visitor_role?: string,
+  is_emergency?: boolean,
+  is_block?: boolean,
+  host?: string,
 ): Promise<GetAllVisitorPaginationResponse> => {
   const params: Record<string, any> = {
     start,
     length,
-    // sort_column: sortColumn,
     sort_dir: sortDir,
     'search[value]': keyword,
-    'start-date': start_date ? format(new Date(start_date), 'yyyy-MM-dd') : '',
-    'end-date': end_date ? format(new Date(end_date), 'yyyy-MM-dd') : '',
-    status,
+    // start_date: start_date,
+    // end_date: end_date,
+    // 'start-date': start_date ? format(new Date(start_date), 'yyyy-MM-dd') : '',
+    // 'end-date': end_date ? format(new Date(end_date), 'yyyy-MM-dd') : '',
+    // 'start-date': start_date ? format(new Date(start_date), 'yyyy-MM-dd') : '',
+    // 'end-date': end_date ? format(new Date(end_date), 'yyyy-MM-dd') : '',
+    'start-date': start_date,
+    'end-date': end_date,
+    'visitor-status': status,
+    'date-filter-type': data_filter,
+    'transaction-status': transaction_status,
+    site: site,
+    'visitor-role': visitor_role,
+    'is-emergency-situation': is_emergency,
+    'is-block': is_block,
+    host: host,
   };
+
   const response = await axiosInstance.get('/visitor/dt', {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
     params,
@@ -933,6 +948,68 @@ export const deleteVisitor = async (
   return response.data;
 };
 
+// Transaction Visitor
+// Get
+export const getVisitorTransaction = async (token: string): Promise<any> => {
+  const response = await axiosInstance.get('/visitor/transaction', {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+export const getVisitorTransactionById = async (token: string, id: string): Promise<any> => {
+  const response = await axiosInstance.get(`/visitor/transaction/${id}`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+export const getVisitorTransactionByIds = async (token: string, id: string): Promise<any> => {
+  const response = await axiosInstance.get(`/visitor/transaction/${id}/visitors`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+export const getVisitorTransactionPagination = async (
+  token: string,
+  start: number,
+  length: number,
+  // sortColumn: string,
+  sortDir = 'desc',
+  keyword: string = '',
+  start_date?: string,
+  end_date?: string,
+  status?: string,
+  data_filter?: string,
+  transaction_status?: string,
+  site?: string,
+  visitor_role?: string,
+  is_emergency?: boolean,
+  is_block?: boolean,
+  host?: string,
+): Promise<any> => {
+  const response = await axiosInstance.get(`/visitor/transaction/dt`, {
+    params: {
+      start,
+      length,
+      sort_dir: sortDir,
+      'search[value]': keyword,
+      'start-date': start_date,
+      'end-date': end_date,
+      'visitor-status': status,
+      'date-filter-type': data_filter,
+      'transaction-status': transaction_status,
+      site: site,
+      'visitor-role': visitor_role,
+      'is-emergency-situation': is_emergency,
+      'is-block': is_block,
+      host: host,
+    },
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
 //end visitor
 
 //#region Visitor Type

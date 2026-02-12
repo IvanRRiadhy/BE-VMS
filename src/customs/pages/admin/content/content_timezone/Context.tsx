@@ -45,38 +45,6 @@ const dayKeyMap: Record<string, string> = {
   Sat: 'saturday',
 };
 
-// function mapApiToDaySchedule(apiData: any) {
-//   if (!apiData) return null;
-
-//   return {
-//     id: apiData.id,
-//     name: apiData.name,
-//     description: apiData.description,
-//     days: daysOfWeek.map((day) => {
-//       const key = dayKeyMap[day]; // "sunday", "monday", dst
-//       const start = apiData[key];
-//       const end = apiData[key + '_end'];
-
-//       // console.log('Mapping', day, '->', key, start, end); // DEBUG
-
-//       return {
-//         id: `day-${day}`,
-//         day,
-//         hours:
-//           start !== null && end !== null
-//             ? [
-//                 {
-//                   id: `block-${day}`,
-//                   startTime: start.substring(0, 5), // "00:00"
-//                   endTime: end.substring(0, 5), // "06:00"
-//                 },
-//               ]
-//             : [],
-//       };
-//     }),
-//   };
-// }
-
 function mapApiToDaySchedule(apiData: any) {
   if (!apiData) return null;
 

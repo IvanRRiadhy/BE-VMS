@@ -35,7 +35,7 @@ import {
   getAllDistricts,
 } from 'src/customs/api/admin';
 
-import { IconUsers } from '@tabler/icons-react';
+import { IconStars, IconUsers } from '@tabler/icons-react';
 
 // Alert
 import {
@@ -109,8 +109,8 @@ const Content = () => {
 
   const cards = [
     {
-      title: 'Total Employee',
-      icon: IconUsers,
+      title: 'Total Vip',
+      icon: IconStars,
       subTitle: `${totalFilteredRecords}`,
       subTitleSetting: 10,
       color: 'none',
@@ -472,7 +472,7 @@ const Content = () => {
       itemDataCustomNavListing={AdminNavListingData}
       itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
     >
-      <Container title="Employee" description="this is Employee page">
+      <Container title="Vip" description="this is Employee page">
         <Box>
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, lg: 12 }}>

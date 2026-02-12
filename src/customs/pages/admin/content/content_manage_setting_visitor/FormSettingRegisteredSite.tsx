@@ -33,6 +33,7 @@ const FormSettingRegisteredSite: React.FC<FormSettingRegisteredSiterops> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(formData);
+    onCancel?.();
   };
 
   const [AllOrganization, setAllOrganization] = useState<any[]>([]);
@@ -51,7 +52,7 @@ const FormSettingRegisteredSite: React.FC<FormSettingRegisteredSiterops> = ({
       <Box
         sx={{
           overflowX: 'auto',
-          p: 2,
+          p: 1,
           paddingTop: 0,
           height: '100%',
           display: 'flex',

@@ -856,7 +856,7 @@ const GuestInformationStepper = () => {
             if (f.remarks === 'host') {
               displayValue = invitationData.host_data?.name || displayValue;
             } else if (f.remarks === 'site_place') {
-              displayValue = invitationData.site_place_data?.name || displayValue;
+              displayValue = invitationData.site_place_name || displayValue;
             }
 
 
@@ -1107,37 +1107,37 @@ const GuestInformationStepper = () => {
 
       const payload = transformToSubmitPayload(invitationData);
       console.log('payload', JSON.stringify(payload, null, 2));
-      // const visitorId = invitationData?.id;
-      // if (!visitorId) {
-      //   return;
-      // }
+      const visitorId = invitationData?.id;
+      if (!visitorId) {
+        return;
+      }
 
-      // const res = await SubmitPraForm(payload, visitorId);
-      // console.log('✅ SubmitPraForm success:', JSON.stringify(res || {}, null, 2));
+      const res = await SubmitPraForm(payload, visitorId);
+      console.log('✅ SubmitPraForm success:', JSON.stringify(res || {}, null, 2));
 
-      // // await new Promise((r) => setTimeout(r, 500));
+      // await new Promise((r) => setTimeout(r, 500));
 
-      // const authRes = await AuthVisitor({ code });
-      // console.log('✅ AuthVisitor success:', JSON.stringify(authRes || {}, null, 2));
-      // const token = authRes?.collection?.token;
+      const authRes = await AuthVisitor({ code });
+      console.log('✅ AuthVisitor success:', JSON.stringify(authRes || {}, null, 2));
+      const token = authRes?.collection?.token;
       // console.log('token', token);
 
-      // const status = authRes.status;
+      const status = authRes.status;
 
-      // if (status === 'process') {
-      //   setSubmitting(false);
-      //   navigate('/portal/waiting', { replace: true });
-      //   return;
-      // }
+      if (status === 'process') {
+        setSubmitting(false);
+        navigate('/portal/waiting', { replace: true });
+        return;
+      }
 
-      // if (token) {
-      //   await saveToken(token, GroupRoleId.Visitor);
-      //   showSwal('success', 'Successfully Pra Register Visitor');
+      if (token) {
+        await saveToken(token, GroupRoleId.Visitor);
+        showSwal('success', 'Successfully Pra Register Visitor');
 
-      //   navigate('/guest/dashboard', { replace: true });
-      //   localStorage.removeItem('visitor_ref_code');
-      //   return;
-      // }
+        navigate('/guest/dashboard', { replace: true });
+        localStorage.removeItem('visitor_ref_code');
+        return;
+      }
     } catch (error) {
       setSubmitting(false);
       showSwal('error', 'Failed to submit guest information form.');
@@ -1153,7 +1153,7 @@ const GuestInformationStepper = () => {
           container
           justifyContent="center"
           alignItems="center"
-          sx={{ height: { xs: '100vh', lg: '80vh' }, backgroundColor: '#f4f6f8' }}
+          sx={{ height: { xs: '100vh', lg: '100vh' }, backgroundColor: '#f4f6f8' }}
         >
           <Grid size={{ xs: 12, sm: 11, xl: 8 }} sx={{ p: { xs: 2 } }}>
             <Card elevation={10} sx={{ p: 3, borderRadius: 3, bgcolor: 'white', boxShadow: 3 }}>

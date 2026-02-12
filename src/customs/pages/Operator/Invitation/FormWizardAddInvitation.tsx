@@ -8,10 +8,15 @@ type Props = {
   edittingId?: string;
   onSuccess?: () => void;
   containerRef?: any | null;
+  vtLoading?: any;
+  visitorType?: any;
+  sites?: any;
+  employee?: any;
+  allVisitorEmployee?: any;
 };
 
 const FormWizardAddInvitation: React.FC<Props> = (props) => {
-  return <FormWizardAddVisitor {...props} formKey="pra_form"   />;
+  return <FormWizardAddVisitor {...props} formKey="pra_form" />;
 };
 
 export default FormWizardAddInvitation;

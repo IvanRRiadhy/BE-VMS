@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import type { AlertColor } from '@mui/material/Alert';
 import {
   Box,
@@ -83,10 +83,6 @@ import {
   createPraRegisterGroup,
   createVisitor,
   createVisitorsGroup,
-  getAllCustomField,
-  getAllSite,
-  getAllVisitor,
-  getAllVisitorType,
   getGrantAccess,
   getVisitorEmployee,
   getVisitorTypeById,
@@ -118,6 +114,7 @@ import CameraUpload from 'src/customs/components/camera/CameraUpload';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { TreeItem, TreeView } from '@mui/x-tree-view';
 import { SimpleTreeView } from '@mui/x-tree-view';
+import VisitorTypeList from 'src/customs/pages/Operator/Invitation/components/VisitorTypeList';
 
 interface FormVisitorTypeProps {
   formData: CreateVisitorRequest;
@@ -125,6 +122,11 @@ interface FormVisitorTypeProps {
   edittingId?: string;
   onSuccess?: () => void;
   formKey?: 'visit_form' | 'pra_form';
+  vtLoading?: any;
+  visitorType?: any;
+  sites?: any;
+  employee?: any;
+  allVisitorEmployee?: any;
 }
 
 dayjs.extend(utc);
@@ -156,6 +158,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   edittingId,
   onSuccess,
   formKey = 'visit_form',
+  vtLoading,
+  visitorType,
+  sites,
+  employee,
+  allVisitorEmployee,
 }) => {
   const THEME = useTheme();
   const isMobile = useMediaQuery(THEME.breakpoints.down('sm'));
@@ -163,14 +170,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
   const [alertType, setAlertType] = useState<'info' | 'success' | 'error'>('info');
-  const [customField, setCustomField] = useState<any[]>([]);
-  const [employee, setEmployee] = useState<any[]>([]);
-  const [sites, setSites] = useState<any[]>([]);
   const { token } = useSession();
   const [searchKeyword, setSearchKeyword] = useState('');
   const [activeStep, setActiveStep] = React.useState(0);
   const [skipped, setSkipped] = React.useState(new Set());
-  const [vtLoading, setVtLoading] = useState(true);
   // const [visitorType, setVisitorType] = useState<any[]>([]);
   const [selfOnlyOverrides, setSelfOnlyOverrides] = useState<Record<string, any[]>>({});
   // const visitor type by id
@@ -695,18 +698,29 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     if (!section.is_document && section.can_multiple_used) return 'visitor_information_group';
   };
 
+  const handleVisitorTypeChange = useCallback((e: any) => {
+    const newType = e.target.value;
+
+    setFormData((prev) => ({
+      ...prev,
+      visitor_type: newType,
+    }));
+
+    localStorage.removeItem('unsavedVisitorData');
+    setSectionsData([]);
+    setDataVisitor([]);
+    setGroupedPages({} as any);
+    setDraggableSteps([]);
+    setRawSections([]);
+    setActiveStep(0);
+  }, []);
+
   const handleSteps = (step: number) => {
-    const hasVisitorTypes = (visitorType?.length ?? 0) > 0;
-    const showVTListSkeleton = vtLoading || !hasVisitorTypes;
+    const showVTListSkeleton = vtLoading;
     if (step == 0) {
       return (
         <Box>
           <Grid container spacing={2}>
-            <Grid sx={{ mt: 0 }} size={{ xs: 12, sm: 12 }}>
-              {/* <Alert severity="info">Complete the following data properly and correctly</Alert> */}
-              <Divider />
-            </Grid>
-
             <Grid size={{ xs: 12, md: 6 }}>
               <CustomFormLabel
                 htmlFor="visitor-type"
@@ -715,74 +729,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 Visitor Type
               </CustomFormLabel>
               <FormControl component="fieldset">
-                <RadioGroup
-                  row
-                  value={formData.visitor_type}
-                  onChange={(e) => {
-                    const newType = e.target.value;
-
-                    // 💡 Reset data tanpa ubah mode (isGroup tetap!)
-                    setFormData((prev: any) => ({
-                      ...prev,
-                      visitor_type: newType,
-                    }));
-
-                    localStorage.removeItem('unsavedVisitorData');
-                    setSectionsData([]);
-                    setDataVisitor([]);
-                    setGroupedPages({} as any);
-                    setDraggableSteps([]);
-                    setRawSections([]);
-                    setActiveStep(0);
-                  }}
-                >
-                  {/* <Fade in={!showVTListSkeleton} timeout={100}> */}
-                  <Grid container spacing={1}>
-                    {showVTListSkeleton
-                      ? Array.from({ length: 6 }).map((_, i) => (
-                          <Grid size={{ xs: 6, sm: 6 }} key={`sk-${i}`}>
-                            <Card sx={{ width: '100%', p: 1 }}>
-                              <Skeleton />
-                              <Skeleton animation="wave" />
-                              <Skeleton animation={false} />
-                            </Card>
-                          </Grid>
-                        ))
-                      : visitorType.map((type) => (
-                          <Grid size={{ xs: 12, md: 6 }} key={type.id}>
-                            <FormControlLabel
-                              value={type.id}
-                              control={<Radio sx={{}} />}
-                              sx={{ m: 0, width: '100%' }}
-                              label={
-                                <Paper
-                                  sx={{
-                                    px: 2,
-                                    py: 1,
-                                    cursor: 'pointer',
-                                    transition: '0.2s',
-                                    textAlign: 'center',
-                                    fontWeight: formData.visitor_type === type.id ? 600 : 400,
-                                    border: '1px solid',
-                                    borderColor:
-                                      formData.visitor_type === type.id
-                                        ? 'primary.main'
-                                        : 'divider',
-                                    bgcolor:
-                                      formData.visitor_type === type.id
-                                        ? 'primary.light'
-                                        : 'background.paper',
-                                  }}
-                                >
-                                  {type.name}
-                                </Paper>
-                              }
-                            />
-                          </Grid>
-                        ))}
-                  </Grid>
-                  {/* </Fade> */}
-                </RadioGroup>
+                <VisitorTypeList
+                  visitorType={visitorType || []}
+                  formData={formData}
+                  showVTListSkeleton={showVTListSkeleton}
+                  onChange={(e: any) => handleVisitorTypeChange(e)}
+                />
               </FormControl>
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
@@ -981,14 +933,16 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       </TableBody>
                     </Table>
                   </TableContainer>
-                  <Button
-                    variant="contained"
-                    size="small"
-                    onClick={handleAddGroup}
-                    sx={{ mb: 1, mt: 1 }}
-                  >
-                    + Add Group
-                  </Button>
+                  {groupVisitors.length === 0  && (
+                    <Button
+                      variant="contained"
+                      size="small"
+                      onClick={handleAddGroup}
+                      sx={{ mb: 1, mt: 1 }}
+                    >
+                      + Add Group
+                    </Button>
+                  )}
                 </Box>
               )}
               {/* )} */}
@@ -1346,9 +1300,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 {(dataVisitor[0]?.question_page[activeStep - 1]?.form || []).map(
                                   (f: any, i: any) => (
                                     <TableCell key={f.custom_field_id || i}>
-                                      <Typography variant="subtitle2" fontWeight={600}>
+                                      <CustomFormLabel required={f.mandatory === true}>
                                         {f.long_display_text}
-                                      </Typography>
+                                      </CustomFormLabel>
                                     </TableCell>
                                   ),
                                 )}
@@ -1417,6 +1371,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                             aria-label="delete-row"
                                             onClick={() => handleDeleteGroupRow(gIdx)}
                                             size="small"
+                                            color="error"
                                           >
                                             <IconTrash />
                                           </IconButton>
@@ -2054,9 +2009,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     return (
       <Box sx={{ overflow: 'auto', width: '100%' }}>
         {showLabel && (
-          <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
+          <CustomFormLabel required={field.mandatory === true}>
             {field.long_display_text}
-          </Typography>
+          </CustomFormLabel>
         )}
         {renderInput()}
       </Box>
@@ -2255,16 +2210,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   };
 
   const [startTime, setStartTime] = useState<Dayjs | null>(dayjs());
-
-  const [allVisitorEmployee, setAllVisitorEmployee] = useState<any[]>([]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const res = await getVisitorEmployee(token as string);
-      setAllVisitorEmployee(res?.collection ?? []);
-    };
-    fetchData();
-  }, [token]);
 
   const [siteTree, setSiteTree] = useState<any[]>([]);
 
@@ -3531,12 +3476,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         type_registered: TYPE_REGISTERED,
         tz: tz,
         is_group: isGroup,
+        flow: TYPE_REGISTERED === 0 ? 'Praregister' : 'Invitation',
+        visitor_role: 'Visitor',
         ...(TYPE_REGISTERED !== 0 && { registered_site: formData.registered_site ?? '' }),
       };
 
       let payload: CreateVisitorRequest | CreateGroupVisitorRequest;
-
-      // 🟩 GROUP MODE
       if (isGroup) {
         const list_group = groupVisitors.map((g) => {
           const built = buildFinalPayload(
@@ -3750,12 +3695,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     setDataVisitor((prev) => {
       if (prev.length === 0) return prev;
 
-      // Clone dari group pertama sebagai template
       const clone = JSON.parse(JSON.stringify(prev[0])) as {
         question_page: SectionPageVisitor[];
       };
-
-      // Kosongkan semua jawaban di clone
       clone.question_page.forEach((page) => {
         (page.form ?? []).forEach((f) => {
           f.answer_text = '';
@@ -3833,7 +3775,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     return forms.some((f: any) => PV.has((f?.remarks ?? '').trim().toLowerCase()));
   };
 
-  const pvIndex = React.useMemo(() => sectionsData.findIndex(isPurposeVisit), [sectionsData]);
+  const pvIndex = useMemo(() => sectionsData.findIndex(isPurposeVisit), [sectionsData]);
   const hasAns = (f: any) => !!(f?.answer_text || f?.answer_datetime || f?.answer_file);
 
   const buildGroupedPages = (sections: any[] = []): GroupedPages => {
@@ -3846,13 +3788,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       // Purpose Visit → single_page
       if (isPurposeVisit(section)) {
         if (!section?.self_only) {
-          // hanya Purpose Visit global (shared)
           forms.forEach((f: any, idx: number) => {
             const existing = (section.form_answers || []).find((ans: any) => sameField(ans, f));
             single_page.push(existing ? { ...f, ...existing } : cloneFormWithEmptyAnswers(f, idx));
           });
         }
-        // kalau self_only = true → biarkan kosong di groupedPages
         return;
       }
 
@@ -3903,11 +3843,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       .filter((f) => DOC_REMARKS.has(f.remarks));
   };
 
-  // >>> GANTI fungsi buildGroupSections kamu dengan ini
   const buildGroupSections = (sections?: any[]) => {
     const list = Array.isArray(sections) ? sections : [];
 
-    // sumber Visitor Info (single) untuk dijadikan Group
     const viSrc = pickVisitorInfoSingle(list);
     const pvSrc = pickPurposeVisit(list);
 
@@ -4064,84 +4002,66 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     return result;
   };
 
-  const {
-    data: visitorType = [],
-    isLoading: vtFetching,
-    isError: vtError,
-  } = useQuery({
-    queryKey: ['visitorType', token],
-    queryFn: async () => {
-      if (!token) return [];
-      const res = await getAllVisitorType(token);
-      return res?.collection ?? [];
-    },
-    staleTime: 10 * 60 * 1000,
-    gcTime: 30 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    enabled: !!token,
-  });
+  // useEffect(() => {
+  //   if (!token) return;
+  //   let cancelled = false;
+  //   const min = 500;
 
-  // ✅ useEffect lain tetap dipakai untuk data lainnya
-  useEffect(() => {
-    if (!token) return;
-    let cancelled = false;
-    const min = 500;
+  //   const fetchMainData = async () => {
+  //     const t0 = Date.now();
+  //     setVtLoading(true);
 
-    const fetchMainData = async () => {
-      const t0 = Date.now();
-      setVtLoading(true);
+  //     try {
+  //       const siteSpaceRes = await getAllSite(token);
+  //       if (cancelled) return;
 
-      try {
-        const siteSpaceRes = await getAllSite(token);
-        if (cancelled) return;
+  //       setSites(siteSpaceRes?.collection ?? []);
 
-        setSites(siteSpaceRes?.collection ?? []);
+  //       // lanjut background
+  //       fetchSecondaryData();
+  //     } catch (error) {
+  //       console.error('❌ Error fetching main data:', error);
+  //     } finally {
+  //       const elapsed = Date.now() - t0;
+  //       const wait = Math.max(0, min - elapsed);
+  //       setTimeout(() => {
+  //         if (!cancelled) setVtLoading(false);
+  //       }, wait);
+  //     }
+  //   };
 
-        // lanjut background
-        fetchSecondaryData();
-      } catch (error) {
-        console.error('❌ Error fetching main data:', error);
-      } finally {
-        const elapsed = Date.now() - t0;
-        const wait = Math.max(0, min - elapsed);
-        setTimeout(() => {
-          if (!cancelled) setVtLoading(false);
-        }, wait);
-      }
-    };
+  //   const fetchSecondaryData = async () => {
+  //     try {
+  //       const results = await Promise.allSettled([
+  //         getAllCustomField(token),
+  //         getVisitorEmployee(token),
+  //         getVisitorEmployee(token),
+  //       ]);
 
-    const fetchSecondaryData = async () => {
-      try {
-        const results = await Promise.allSettled([
-          getAllCustomField(token),
-          getVisitorEmployee(token),
-          getVisitorEmployee(token),
-        ]);
+  //       if (cancelled) return;
 
-        if (cancelled) return;
+  //       const [customFieldRes, employeeRes, allEmployeeRes] = results;
 
-        const [customFieldRes, employeeRes, allEmployeeRes] = results;
+  //       setCustomField(
+  //         customFieldRes.status === 'fulfilled' ? customFieldRes.value.collection : [],
+  //       );
 
-        setCustomField(
-          customFieldRes.status === 'fulfilled' ? customFieldRes.value.collection : [],
-        );
+  //       setEmployee(employeeRes.status === 'fulfilled' ? employeeRes.value.collection : []);
 
-        setEmployee(employeeRes.status === 'fulfilled' ? employeeRes.value.collection : []);
+  //       setAllVisitorEmployee(
+  //         allEmployeeRes.status === 'fulfilled' ? allEmployeeRes.value.collection : [],
+  //       );
+  //     } catch (error) {
+  //       console.error('⚠️ Error:', error);
+  //     }
+  //   };
 
-        setAllVisitorEmployee(
-          allEmployeeRes.status === 'fulfilled' ? allEmployeeRes.value.collection : [],
-        );
-      } catch (error) {
-        console.error('⚠️ Error:', error);
-      }
-    };
+  //   fetchMainData();
 
-    fetchMainData();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [token]);
+  //   return () => {
+  //     cancelled = true;
+  //   };
+  // }, [token]);
 
   useEffect(() => {
     if (!formData.visitor_type || !token) return;
@@ -4162,65 +4082,56 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     }
 
     const fetchVisitorTypeDetails = async () => {
-      setVtLoading(true);
-      try {
-        // const res = await getVisitorTypeById(token, formData.visitor_type as string);
-        const res = visitorType.find((vt: any) => vt.id === formData.visitor_type);
-        // let sections = res?.collection?.section_page_visitor_types ?? [];
-        let sections = res?.section_page_visitor_types ?? [];
+      const res = visitorType.find((vt: any) => vt.id === formData.visitor_type);
 
-        if (TYPE_REGISTERED === 0 || FORM_KEY == 'pra_form')
-          sections = sections.filter((s: any) => (s.pra_form || []).length > 0);
+      let sections = res?.section_page_visitor_types ?? [];
 
-        setRawSections(sections);
+      if (TYPE_REGISTERED === 0 || FORM_KEY === 'pra_form') {
+        sections = sections.filter((s: any) => (s.pra_form || []).length > 0);
+      }
 
-        if (isGroup) {
-          const groupSections = buildGroupSections(sections);
-          setSectionsData(groupSections);
-          setDraggableSteps(groupSections.map((s) => s.name));
-          seedDataVisitorFromSections(groupSections);
-          setGroupedPages(buildGroupedPages(groupSections));
-        } else {
-          setSectionsData(sections);
-          setDraggableSteps(sections.map((s: any) => s.name));
-          setDataVisitor([]);
-          setGroupedPages({} as any);
-        }
-      } catch (err) {
-        console.error('Failed to fetch visitor type details', err);
-        setSectionsData([]);
-        setDraggableSteps([]);
-      } finally {
-        setVtLoading(false);
+      setRawSections(sections);
+
+      if (isGroup) {
+        const groupSections = buildGroupSections(sections);
+        setSectionsData(groupSections);
+        setDraggableSteps(groupSections.map((s) => s.name));
+        seedDataVisitorFromSections(groupSections);
+        setGroupedPages(buildGroupedPages(groupSections));
+      } else {
+        setSectionsData(sections);
+        setDraggableSteps(sections.map((s: any) => s.name));
+        setDataVisitor([]);
+        setGroupedPages({} as any);
       }
     };
 
     fetchVisitorTypeDetails();
-  }, [formData.visitor_type, token]);
+  }, [formData.visitor_type, visitorType]);
 
-  useEffect(() => {
-    if (!isGroup) return;
+  // useEffect(() => {
+  //   if (!isGroup) return;
 
-    setDataVisitor((prev) => {
-      if (!prev[0]) return prev;
-      const next = [...prev];
-      const qps = next[0].question_page;
+  //   setDataVisitor((prev) => {
+  //     if (!prev[0]) return prev;
+  //     const next = [...prev];
+  //     const qps = next[0].question_page;
 
-      // merge groupedPages.single_page ke Purpose Visit section
-      const purpose = qps.find((s) => s.name.toLowerCase().includes('purpose visit'));
-      if (purpose) {
-        purpose.form = purpose?.form?.map((f: any) => {
-          const match = groupedPages.single_page.find(
-            (sf) =>
-              (sf.custom_field_id && sf.custom_field_id === f.custom_field_id) ||
-              (sf.remarks && sf.remarks === f.remarks),
-          );
-          return match ? { ...f, ...match } : f;
-        });
-      }
-      return next;
-    });
-  }, [isGroup, groupedPages.single_page]);
+  //     // merge groupedPages.single_page ke Purpose Visit section
+  //     const purpose = qps.find((s) => s.name.toLowerCase().includes('purpose visit'));
+  //     if (purpose) {
+  //       purpose.form = purpose?.form?.map((f: any) => {
+  //         const match = groupedPages.single_page.find(
+  //           (sf) =>
+  //             (sf.custom_field_id && sf.custom_field_id === f.custom_field_id) ||
+  //             (sf.remarks && sf.remarks === f.remarks),
+  //         );
+  //         return match ? { ...f, ...match } : f;
+  //       });
+  //     }
+  //     return next;
+  //   });
+  // }, [isGroup, groupedPages.single_page]);
 
   useEffect(() => {
     if (!formData.visitor_type || !rawSections.length) return;

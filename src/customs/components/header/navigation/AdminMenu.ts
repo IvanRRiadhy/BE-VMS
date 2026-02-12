@@ -29,6 +29,7 @@ import {
   IconDeviceCctv,
   IconPrinter,
   IconStars,
+  IconRun,
 } from '@tabler/icons-react';
 import { uniqueId } from 'lodash';
 import { ItemDataCustomNavListing } from './CustomNavListing';
@@ -86,12 +87,6 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
             icon: IconUsers,
             href: '/admin/manage/vendor',
           },
-          // {
-          //   id: uniqueId(),
-          //   title: 'Visit',
-          //   icon: IconMapPin,
-          //   href: '/admin/manage/delivery/visit',
-          // },
         ],
       },
       {
@@ -187,7 +182,7 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
       },
       {
         id: uniqueId(),
-        title: 'Invitation Visitor',
+        title: 'Live Visitor',
         icon: IconUserCircle,
         chipColor: 'secondary',
         href: '/admin/visitor/invitation-visitor',
@@ -251,6 +246,12 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
     icon: IconPrinter,
     chipColor: 'secondary',
     href: '/admin/print-badge',
+  },
+  {
+    id: uniqueId(),
+    title: 'Evacuate',
+    icon: IconRun,
+    href: '/admin/evacuate',
   },
   // {
   //   id: uniqueId(),
@@ -324,12 +325,6 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
             icon: IconUsers,
             href: '/admin/manage/vendor',
           },
-          // {
-          //   id: uniqueId(),
-          //   title: 'Visit',
-          //   icon: IconMapPin,
-          //   href: '/admin/manage/delivery/visit',
-          // },
         ],
       },
       {
@@ -407,6 +402,7 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
       },
     ],
   },
+
   {
     id: uniqueId(),
     title: 'navigation.visitor',
@@ -419,6 +415,13 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
         icon: IconUserCircle,
         chipColor: 'secondary',
         href: '/admin/visitor/list-visitor',
+      },
+      {
+        id: uniqueId(),
+        title: 'Invitation Visitor',
+        icon: IconUserCircle,
+        chipColor: 'secondary',
+        href: '/admin/visitor/invitation-visitor',
       },
       {
         id: uniqueId(),
@@ -479,6 +482,12 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
     icon: IconPrinter,
     chipColor: 'secondary',
     href: '/admin/print-badge',
+  },
+  {
+    id: uniqueId(),
+    title: 'Evacuate',
+    icon: IconRun,
+    href: '/admin/evacuate',
   },
 
   // {
@@ -747,6 +756,7 @@ export const OperatorNavListingData: ItemDataCustomNavListing[] = [
     icon: IconReport,
     href: '/operator/transaction-log',
   },
+
   // {
   //   id: uniqueId(),
   //   title: 'Approval Workflow',

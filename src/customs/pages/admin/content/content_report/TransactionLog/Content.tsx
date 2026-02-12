@@ -172,41 +172,6 @@ const Content = () => {
     return () => clearTimeout(handler);
   }, [searchKeyword]);
 
-  // const fetchReports = async (reset = false) => {
-  //   if (!token) return;
-
-  //   if (reset) {
-  //     setPage(0);
-  //     setLoadedReports([]);
-  //     setHasMore(true);
-  //   }
-
-  //   setLoadingReports(true);
-  //   try {
-  //     const start = reset ? 0 : page * rowsPerPage;
-  //     const res = await getReportVisitorTransactionDt(token, {
-  //       start,
-  //       length: rowsPerPage,
-  //       sort_dir: sortDir,
-  //       search: debouncedKeyword || '',
-  //     });
-
-  //     if (res.collection && res.collection.length > 0) {
-  //       setLoadedReports((prev) => (reset ? res.collection : [...prev, ...res.collection]));
-  //       setPage((prev) => prev + 1);
-
-  //       if (res.collection.length < rowsPerPage) setHasMore(false);
-  //     } else {
-  //       if (reset) setLoadedReports([]);
-  //       setHasMore(false);
-  //     }
-  //   } catch (err) {
-  //     console.error(err);
-  //   } finally {
-  //     setLoadingReports(false);
-  //   }
-  // };
-
   const fetchReports = async (reset = false) => {
     if (!token || loadingReports) return;
 

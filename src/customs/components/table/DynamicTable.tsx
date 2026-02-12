@@ -114,6 +114,7 @@ type DynamicTableProps<
   onExportCsv?: () => void;
   onExportExcel?: () => void;
   onPrint?: () => void;
+  onBlacklist?: (row: T) => void;
   isHaveVisitor?: boolean;
   isButtonRegisteredSite?: boolean;
   isButtonGiveAccess?: boolean;
@@ -141,6 +142,7 @@ type DynamicTableProps<
   height?: number | string;
   isHaveHeader?: boolean;
   isHaveEmployee?: boolean;
+  isBlacklistAction?: boolean;
   isHaveVerified?: boolean;
   isButtonEnabled?: boolean;
   isButtonDisabled?: boolean;
@@ -268,12 +270,14 @@ export function DynamicTable<
   isSiteSpaceName,
   isNoActionTableHead = false,
   onDenied,
+  onBlacklist,
   isHaveApproval = false,
   defaultSelectedHeaderItem,
   isHavePassword = false,
   isHavePagination,
   isHavePdf,
   isSiteSpaceType = false,
+  isBlacklistAction = false,
   isHaveIntegration,
   onNameClick,
   isDataVerified = false,
@@ -432,9 +436,11 @@ export function DynamicTable<
     onFilterByColumn?.({ column: value });
   };
 
-  const onChangeFilterCalender = (ranges: any) => {
-    onFilterCalenderChange?.(ranges);
-  };
+const onApplyFilterCalender = (ranges: { startDate: Date; endDate: Date }) => {
+  onFilterCalenderChange?.(ranges);
+  setShowDrawer(false);
+};
+
 
   const handleChangePage = (_event: unknown, newPage: number) => {
     setPage(newPage);
@@ -453,7 +459,7 @@ export function DynamicTable<
   const toTitleCase = (text: string) => {
     return text
       .replace(/_/g, ' ') // ganti underscore jadi spasi
-      .replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1)); // kapital di setiap kata
+      .replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1)); 
   };
 
   const imageFields = ['faceimage', 'photo', 'avatar', 'image'];
@@ -2470,6 +2476,41 @@ export function DynamicTable<
                                     </IconButton>
                                   </Tooltip>
                                 </>
+                              ) : isBlacklistAction ? (
+                                <>
+                                  {' '}
+                                  <Tooltip
+                                    title="Blacklist Visitor"
+                                    arrow
+                                    placement="top"
+                                    slotProps={{
+                                      tooltip: {
+                                        sx: {
+                                          fontSize: '0.8rem',
+                                          padding: '8px 14px',
+                                        },
+                                      },
+                                    }}
+                                  >
+                                    <Button
+                                      // variant="contained"
+                                      // color="error"
+                                      size="small"
+                                      startIcon={<IconXboxX />}
+                                      onClick={() => onBlacklist?.(row)} 
+                                      sx={{
+                                        textTransform: 'none',
+                                        borderRadius: 1,
+                                        fontWeight: 500,
+                                        backgroundColor: '#6B0000',
+                                        color: 'white',
+                                        '&:hover': { backgroundColor: '#000 ', opacity: 0.8 },
+                                      }}
+                                    >
+                                      Blacklist
+                                    </Button>
+                                  </Tooltip>
+                                </>
                               ) : isActionListVisitor ? (
                                 <>
                                   <Tooltip
@@ -2864,7 +2905,7 @@ export function DynamicTable<
       </BlankCard>
       {/* DRAWER CALENDER RANGE FILTER */}
       <Drawer anchor="right" open={showDrawer} onClose={() => setShowDrawer(false)}>
-        <Calendar onChange={onChangeFilterCalender} />
+        <Calendar onChange={onApplyFilterCalender} />
       </Drawer>
 
       <Drawer

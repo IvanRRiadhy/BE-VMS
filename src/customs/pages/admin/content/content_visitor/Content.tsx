@@ -50,10 +50,13 @@ import {
   CreateVisitorRequest,
 } from 'src/customs/api/models/Admin/Visitor';
 import {
+  getAllSite,
   getAllVisitorPagination,
+  getAllVisitorType,
   getEmployeeById,
   getRegisteredSite,
   getVisitorById,
+  getVisitorEmployee,
 } from 'src/customs/api/admin';
 import { Scanner } from '@yudiel/react-qr-scanner';
 import FlipCameraAndroidIcon from '@mui/icons-material/FlipCameraAndroid';
@@ -185,6 +188,7 @@ const Content = () => {
   const [employeeDetail, setEmployeeDetail] = useState<any>(null);
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
+  const [visitorType, setVisitorType] = useState<any[]>([]);
 
   // Visitor Detail
   const [openVisitorDialog, setOpenVisitorDialog] = useState(false);
@@ -203,18 +207,57 @@ const Content = () => {
   const [torchOn, setTorchOn] = useState(false);
   const scanContainerRef = useRef<HTMLDivElement | null>(null);
   const [wizardKey, setWizardKey] = useState(0);
+  const [allVisitorEmployee, setAllVisitorEmployee] = useState<any[]>([]);
+  const [sites, setSites] = useState<any[]>([]);
+  const [employee, setEmployee] = useState<any[]>([]);
+  const [vtLoading, setVTLoading] = useState(false);
 
-  // function mapIntegrationToTableRow(item: any) {
-  //   return {
-  //     id: item.id,
-  //     name: item.name,
-  //     brand_name: item.brand_name,
-  //     brand_type: formatEnumLabel(BrandType[item.brand_type]),
-  //     integration_type: formatEnumLabel(IntegrationType[item.integration_type]),
-  //     api_type_auth: formatEnumLabel(ApiTypeAuth[item.api_type_auth]),
-  //     api_url: item.api_url || '',
-  //   };
-  // }
+  const [dateRange, setDateRange] = useState<{
+    startDate: Date | null;
+    endDate: Date | null;
+  }>({
+    startDate: null,
+    endDate: null,
+  });
+
+  const fetchVisitorType = async () => {
+    try {
+      setVTLoading(true);
+      const res = await getAllVisitorType(token as string);
+      setVisitorType(res?.collection || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setVTLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (token) {
+      fetchVisitorType();
+    }
+  }, [token]);
+
+  useEffect(() => {
+    if (!token) return;
+
+    const fetchData = async () => {
+      try {
+        const [siteRes, employeeRes] = await Promise.all([
+          getAllSite(token),
+          getVisitorEmployee(token),
+        ]);
+
+        setSites(siteRes?.collection ?? []);
+        setEmployee(employeeRes?.collection ?? []);
+        setAllVisitorEmployee(employeeRes?.collection ?? []);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchData();
+  }, [token]);
 
   const resetRegisteredFlow = () => {
     setSelectedSite(null);
@@ -252,7 +295,7 @@ const Content = () => {
   };
 
   const [selectedType, setSelectedType] = useState<
-    'All' | 'Preregis' | 'Checkin' | 'Checkout' | 'Denied' | 'Block'
+    'All' | 'Preregis' | 'Checkin' | 'Checkout' | 'Denied' | 'Block' | 'Waiting'
   >('All');
 
   const statusMap: Record<string, string> = {
@@ -262,7 +305,36 @@ const Content = () => {
     Checkout: 'Checkout',
     Denied: 'Denied',
     Block: 'Block',
+    Waiting: 'Waiting',
   };
+
+  const [filters, setFilters] = useState<any>({
+    status: undefined,
+    visitor_type: '',
+    visitor_role: '',
+    host_id: '',
+    site_id: '',
+    is_employee: '',
+    is_block: '',
+    transaction_status: '',
+    emergency_situation: '',
+    start_date: '',
+    end_date: '',
+  });
+
+  const [appliedFilters, setAppliedFilters] = useState<any>({
+    status: undefined,
+    visitor_status: '',
+    visitor_type: '',
+    visitor_role: '',
+    host_id: '',
+    site_id: '',
+    is_block: '',
+    transaction_status: '',
+    emergency_situation: '',
+    start_date: '',
+    end_date: '',
+  });
 
   const resolveVisitorStatus = (item: any): string => {
     if (item.is_block) return 'Block';
@@ -278,15 +350,41 @@ const Content = () => {
       try {
         const start = page * rowsPerPage;
         const status = selectedType === 'All' ? undefined : statusMap[selectedType];
+        const isEmergencyParam =
+          appliedFilters.emergency_situation === ''
+            ? undefined
+            : appliedFilters.emergency_situation === 'true';
+
+        const isBlockParam =
+          appliedFilters.is_block === '' ? undefined : appliedFilters.is_block === 'true';
+
         const response = await getAllVisitorPagination(
           token,
           start,
           rowsPerPage,
           sortDir,
           searchKeyword,
-          startDate,
-          endDate,
-          status,
+          // startDate,
+          // endDate,
+          // (dateRange.startDate ? dateRange.startDate.toISOString() : undefined) as string,
+          // (dateRange.endDate ? dateRange.endDate.toISOString() : undefined) as string,
+          appliedFilters.start_date ? dayjs(appliedFilters.start_date).utc().toISOString() : '',
+          appliedFilters.end_date ? dayjs(appliedFilters.end_date).utc().toISOString() : '',
+          // 📌 STATUS
+          appliedFilters.visitor_status || undefined,
+          appliedFilters.data_filter,
+          // 🔁 TRANSACTION
+          appliedFilters.transaction_status || undefined,
+          // 🏢 SITE
+          appliedFilters.site_id || undefined,
+          // 👤 ROLE
+          appliedFilters.visitor_role || undefined,
+          // 🚨 EMERGENCY
+          isEmergencyParam,
+          // ⛔ BLOCK
+          isBlockParam,
+          // 👨‍💼 HOST
+          appliedFilters.host_id || undefined,
         );
         let rows = response.collection.map((item: any) => {
           const displayStatus = resolveVisitorStatus(item);
@@ -307,10 +405,10 @@ const Content = () => {
           };
         });
 
-        // if (selectedType !== 'All') {
-        //   const apiStatus = statusMap[selectedType];
-        //   rows = rows.filter((r) => r.visitor_status === apiStatus);
-        // }
+        if (selectedType !== 'All') {
+          const apiStatus = statusMap[selectedType];
+          rows = rows.filter((r) => r.visitor_status === apiStatus);
+        }
 
         setTableRowVisitors(response.collection);
         setTotalRecords(response.RecordsTotal);
@@ -336,9 +434,9 @@ const Content = () => {
     sortDir,
     refreshTrigger,
     searchKeyword,
-    startDate,
-    endDate,
+    dateRange,
     selectedType,
+    appliedFilters,
   ]);
 
   useEffect(() => {
@@ -474,35 +572,13 @@ const Content = () => {
     }
   };
 
-  const [filters, setFilters] = useState<any>({
-    visitor_type: '',
-    site: '',
-    status: '',
-    created_at: '',
-  });
-
   const handleApplyFilter = () => {
+    setAppliedFilters({
+      status: selectedType === 'All' ? undefined : statusMap[selectedType],
+      ...filters,
+    });
+
     setPage(0);
-    setRefreshTrigger((prev) => prev + 1);
-  };
-
-  const handleCloseScanQR = () => {
-    try {
-      const video = scanContainerRef.current?.querySelector('video') as HTMLVideoElement | null;
-      const stream = video?.srcObject as MediaStream | null;
-      const track = stream?.getVideoTracks()?.[0];
-      const caps = track?.getCapabilities?.() as any;
-      if (track && caps?.torch && torchOn) {
-        track.applyConstraints({ advanced: [{ facingMode: 'user' }] });
-      }
-    } catch {}
-
-    setTorchOn(false);
-    setFacingMode('environment');
-    setQrMode('manual');
-    setHasDecoded(false);
-    setQrValue('');
-    setOpenDialogIndex(null);
   };
 
   const handleSubmitQRCode = async (value: string) => {
@@ -525,12 +601,36 @@ const Content = () => {
     }
   };
 
+  const handleResetFilter = () => {
+    const empty = {
+      visitor_status: '',
+      visitor_type: '',
+      visitor_role: '',
+      host_id: '',
+      site_id: '',
+      is_block: '',
+      transaction_status: '',
+      emergency_situation: '',
+      start_date: '',
+      end_date: '',
+    };
+
+    setFilters(empty);
+    setAppliedFilters({
+      status: undefined,
+      ...empty,
+    });
+
+    setSelectedType('All');
+    setPage(0);
+  };
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
       itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
     >
-      <Container title="Transaction Visitor" description="this is Dashboard page">
+      <Container title="Live Visitor" description="this is Dashboard page">
         <Box>
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, lg: 12 }}>
@@ -575,7 +675,7 @@ const Content = () => {
                 // isHaveFilter={true}
                 isHaveExportPdf={false}
                 isHaveExportXlf={false}
-                isHaveFilterDuration={true}
+                isHaveFilterDuration={false}
                 isHaveVip={true}
                 isHavePeriod={true}
                 // isVip={(row) => row.is_vip === true}
@@ -601,6 +701,7 @@ const Content = () => {
                     { name: 'Checkout' },
                     { name: 'Block' },
                     { name: 'Denied' },
+                    { name: 'Waiting' },
                   ],
                 }}
                 onHeaderItemClick={(item) => {
@@ -610,7 +711,8 @@ const Content = () => {
                     item.name === 'Checkout' ||
                     item.name === 'Preregis' ||
                     item.name === 'Denied' ||
-                    item.name === 'Block'
+                    item.name === 'Block' ||
+                    item.name === 'Waiting'
                   ) {
                     setSelectedType(item.name);
                   }
@@ -625,22 +727,25 @@ const Content = () => {
                   if (ranges.startDate && ranges.endDate) {
                     setStartDate(ranges.startDate.toISOString());
                     setEndDate(ranges.endDate.toISOString());
-                    setPage(0); // reset ke halaman pertama
+                    // setStartDate(ranges.startDate);
+                    // setEndDate(ranges.endDate);
+                    setPage(0);
                     setRefreshTrigger((prev) => prev + 1);
                   }
                 }}
                 onAddData={() => {
                   handleAdd();
                 }}
-                isHaveFilterMore={false}
+                isHaveFilterMore={true}
                 // isHaveFilter={true}
-                // filterMoreContent={
-                //   <FilterMoreContent
-                //     filters={filters}
-                //     setFilters={setFilters}
-                //     onApplyFilter={handleApplyFilter}
-                //   />
-                // }
+                filterMoreContent={
+                  <FilterMoreContent
+                    filters={filters}
+                    setFilters={setFilters}
+                    onApplyFilter={handleApplyFilter}
+                    onResetFilter={handleResetFilter}
+                  />
+                }
               />
             </Grid>
           </Grid>
@@ -691,6 +796,11 @@ const Content = () => {
             setFormData={setFormDataAddVisitor}
             edittingId={edittingId}
             onSuccess={handleSuccess}
+            visitorType={visitorType}
+            sites={sites}
+            employee={employee}
+            allVisitorEmployee={allVisitorEmployee}
+            vtLoading={vtLoading}
           />
         </DialogContent>
       </Dialog>
@@ -731,6 +841,11 @@ const Content = () => {
             setFormData={setFormDataAddVisitor}
             edittingId={edittingId}
             onSuccess={handleSuccess}
+            visitorType={visitorType}
+            sites={sites}
+            employee={employee}
+            allVisitorEmployee={allVisitorEmployee}
+            vtLoading={vtLoading}
           />
         </DialogContent>
       </Dialog>
@@ -939,10 +1054,6 @@ const Content = () => {
                 <Scanner
                   constraints={{ facingMode }}
                   onScan={async (result: any) => {
-                    // if (!result) return;
-                    // if (hasDecoded) return; // cegah spam callback
-                    // setHasDecoded(true);
-                    // setQrValue(typeof result === 'string' ? result : String(result));
                     if (!result || hasDecoded) return;
 
                     console.log('📸 QR scan raw result:', result);
@@ -1096,28 +1207,6 @@ const Content = () => {
                   </Button>
                 </Box>
               </Box>
-              {/* <Box mt={2} display="flex" gap={1} justifyContent="space-between">
-                <Button
-                  variant="outlined"
-                  onClick={() => {
-                    setHasDecoded(false);
-                    setQrValue('');
-                  }}
-                >
-                  Reset
-                </Button>
-                <Box>
-                  <Button
-                    variant="contained"
-                    onClick={(e) => {
-                      handleSubmitQRCode(qrValue);
-                    }}
-                    disabled={!qrValue}
-                  >
-                    Submit
-                  </Button>
-                </Box>
-              </Box> */}
             </>
           )}
         </DialogContent>

@@ -569,8 +569,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     });
   }, [sectionsData]);
 
-  
-
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
 
@@ -590,7 +588,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
 
     setSectionsData(reorderedSections);
   };
-  
+
   const handleSaveGroupVisitor = () => {
     if (activeGroupIdx === null) return;
     console.log('💾 Saving existing group:', activeGroupIdx);
@@ -883,12 +881,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                   if (g.data_visitor && g.data_visitor.length > 0) {
                                     const cloned = deepClone(g.data_visitor);
                                     setDataVisitor(cloned);
-                                    console.log(
-                                      `📋 Load group ${g.group_name || '(no name)'}`,
-                                      cloned,
-                                    );
                                   } else {
-                                    // Kalau belum pernah isi, buat baru dari template sectionsData
                                     const fresh = deepClone(
                                       seedDataVisitorFromSections(sectionsData),
                                     );
@@ -926,14 +919,16 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                           </TableRow>
                         )}
                       </TableBody>
-                      <MuiButton
-                        variant="contained"
-                        size="small"
-                        onClick={handleAddGroup}
-                        sx={{ mb: 1, ml: 2, mt: 1 }}
-                      >
-                        + Add Group
-                      </MuiButton>
+                      {groupVisitors.length === 0 && (
+                        <MuiButton
+                          variant="contained"
+                          size="small"
+                          onClick={handleAddGroup}
+                          sx={{ mb: 1, ml: 2, mt: 1 }}
+                        >
+                          + Add Group
+                        </MuiButton>
+                      )}
                     </Table>
                   </TableContainer>
                 </Box>
@@ -1418,7 +1413,9 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                                   sites={sites}
                                                   inputValues={inputValues}
                                                   setInputValues={setInputValues}
-                                                  selectedSiteParentIds={selectedSiteParentIds as any} 
+                                                  selectedSiteParentIds={
+                                                    selectedSiteParentIds as any
+                                                  }
                                                   siteTree={siteTree as any}
                                                   setSelectedSiteParentIds={
                                                     setSelectedSiteParentIds
