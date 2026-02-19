@@ -26,7 +26,7 @@ const isTokenValid = (token: string | null): boolean => {
 };
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const { token, authType, saveToken, clearToken, groupId } = useSession(); // ✅ ambil groupId
+  const { token, authType, saveToken, clearToken, groupId } = useSession(); 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<JwtPayload | null>(null);

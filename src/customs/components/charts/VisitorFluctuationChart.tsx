@@ -5,11 +5,14 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 import { getVisitorChart } from 'src/customs/api/admin';
 import { t } from 'i18next';
 import { useSelector } from 'react-redux';
+import Chart from 'react-apexcharts';
+
 type VisitorSeries = {
   id: string;
   label: string;
   color: string;
   data: number[];
+  area: any;
 };
 
 const VisitorFluctuationChart = () => {
@@ -32,13 +35,7 @@ const VisitorFluctuationChart = () => {
         // start.setDate(today.getDate() - 7);
         // const start_date = start.toISOString().split('T')[0];
 
-        const res = await getVisitorChart(
-          token,
-          // startDate.toLocaleDateString('en-CA'),
-          // endDate.toLocaleDateString('en-CA'),
-          start,
-          end,
-        );
+        const res = await getVisitorChart(token, start, end);
         const rows = res?.collection ?? [];
 
         // 🔹 Ambil tanggal
@@ -56,10 +53,22 @@ const VisitorFluctuationChart = () => {
         const blockedSeries = rows.map((r: any) => getCount(r.Status, 'Block'));
 
         setSeries([
-          { id: 'checkedIn', label: 'Checked In', data: checkinSeries, color: '#2196f3' },
-          { id: 'checkedOut', label: 'Checked Out', data: checkoutSeries, color: '#fb923c' },
-          { id: 'denied', label: 'Denied', data: deniedSeries, color: '#ef4444' },
-          { id: 'blocked', label: 'Blocked', data: blockedSeries, color: '#22c55e' },
+          {
+            id: 'checkedIn',
+            label: 'Checked In',
+            data: checkinSeries,
+            color: '#22c55e',
+            area: true,
+          },
+          {
+            id: 'checkedOut',
+            label: 'Checked Out',
+            data: checkoutSeries,
+            color: '#F44336',
+            area: true,
+          },
+          { id: 'denied', label: 'Denied', data: deniedSeries, color: '#8B0000', area: true },
+          { id: 'blocked', label: 'Blocked', data: blockedSeries, color: '#000000', area: true },
         ]);
       } catch (err) {
         console.error('Error fetching visitor fluctuation:', err);
@@ -71,9 +80,6 @@ const VisitorFluctuationChart = () => {
 
   return (
     <>
-      <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-        {t('fluctuation_visitor')}
-      </Typography>
       <Box
         sx={{
           p: 3,
@@ -83,12 +89,15 @@ const VisitorFluctuationChart = () => {
           // border: '1px solid #d6d3d3ff',
           height: {
             xs: 420, // layar kecil → 420px
-            lg: 400, // layar medium ke atas → 400px
+            lg: 420, // layar medium ke atas → 400px
           },
           width: '100%',
         }}
       >
-        <LineChart
+        <Typography variant="h5" sx={{ mb: 1, fontWeight: 600 }}>
+          {t('fluctuation_visitor')}
+        </Typography>
+        {/* <LineChart
           height={350}
           xAxis={[
             {
@@ -102,11 +111,78 @@ const VisitorFluctuationChart = () => {
                 }).format(new Date(timestamp as number)),
             },
           ]}
-          series={series}
+          series={series.map((s) => ({
+            ...s,
+            curve: 'monotoneX',
+          }))}
           margin={{ top: 20, bottom: 70, left: 50, right: 20 }}
           grid={{ horizontal: true, vertical: false }}
           slotProps={{
             legend: { hidden: true },
+          }}
+        /> */}
+
+        <Chart
+          type="area"
+          height={340}
+          series={series.map((s) => ({
+            name: s.label,
+            data: s.data,
+          }))}
+          options={{
+            chart: {
+              type: 'area',
+              toolbar: { show: false },
+              zoom: { enabled: false },
+            },
+            colors: series.map((s) => s.color),
+            stroke: {
+              curve: 'smooth',
+              width: 3,
+            },
+            fill: {
+              type: 'gradient',
+              gradient: {
+                shadeIntensity: 1,
+                opacityFrom: 0.4,
+                opacityTo: 0.05,
+                stops: [0, 90, 100],
+              },
+            },
+            dataLabels: {
+              enabled: false,
+            },
+            xaxis: {
+              categories: dates.map((d) =>
+                new Intl.DateTimeFormat('en-GB', {
+                  day: '2-digit',
+                  month: 'short',
+                }).format(new Date(d)),
+              ),
+              // axisBorder: {
+              //   show: false,
+              // },
+              // axisTicks: {
+              //   show: false,
+              // },
+            },
+            yaxis: {
+              labels: {
+                formatter: (val: number) => Math.round(val).toString(),
+              },
+            },
+            grid: {
+              borderColor: '#e5e7eb',
+              strokeDashArray: 4,
+            },
+            legend: {
+              show: false,
+            },
+            tooltip: {
+              y: {
+                formatter: (val: number) => `${val}`,
+              },
+            },
           }}
         />
 

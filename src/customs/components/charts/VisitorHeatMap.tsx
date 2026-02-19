@@ -45,7 +45,6 @@ const VisitorHeatMap = () => {
 
         const collection = res.collection ?? [];
         if (collection.length > 0) {
-          // ✅ langsung ambil label jam dari API
           const hourLabels = collection[0].hours.map((h: any) => h.hour);
           setHours(hourLabels);
 
@@ -133,18 +132,19 @@ const VisitorHeatMap = () => {
 
   return (
     <>
-      <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-        {t('heatmap_visitor')}
-      </Typography>
-
       <Box
         sx={{
           borderRadius: 3, // 4px
           overflow: 'hidden', // penting biar sudut chart ikut ke-clip
           boxShadow: 3, // opsional, biar ada bayangan
           // border: '1px solid #d6d3d3ff',
+          height: 420,
+          backgroundColor: '#fff',
         }}
       >
+        <Typography variant="h5" sx={{ mb: 0, fontWeight: 600, pt: 2, pl: 2 }}>
+          {t('heatmap_visitor')}
+        </Typography>
         <HighchartsReact highcharts={Highcharts} options={options} />
       </Box>
     </>

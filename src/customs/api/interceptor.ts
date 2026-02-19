@@ -96,10 +96,10 @@ const errorInterceptor = (error: any) => {
     //   clearTokenCallback();
     // }
     // window.location.href = '/';
-     if (error.response?.status === 401) {
-       clearTokenCallback?.();
-       window.location.href = '/';
-     }
+    //  if (error.response?.status === 401) {
+    //    clearTokenCallback?.();
+    //    window.location.href = '/';
+    //  }
   }
   return Promise.reject(error);
 };

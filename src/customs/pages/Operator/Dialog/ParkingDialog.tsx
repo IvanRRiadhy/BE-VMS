@@ -97,10 +97,19 @@ const ParkingDialog: React.FC<ParkingDialogProps> = ({
         <Box display="flex" gap={3} flexWrap="wrap">
           <Box flex={3} minWidth={300}>
             <Box>
-              <Typography variant="h5" sx={{ borderBottom: '1px solid #f0f0f0' }}>
-                Vehicle
-              </Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography variant="h5" sx={{ borderBottom: '1px solid #f0f0f0' }}>
+                  Vehicle
+                </Typography>
 
+                <TextField label="" select size="small" sx={{ width: '200px' }}>
+                  {templates.map((t, i) => (
+                    <MenuItem key={i} onClick={() => handleLoadTemplate(t)}>
+                      {t.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Box>
               <Box display="flex" gap={2} mt={2} flexWrap="wrap">
                 <InfoCard
                   icon={<IconCar size={24} />}
@@ -205,6 +214,10 @@ const ParkingDialog: React.FC<ParkingDialogProps> = ({
 
               <Divider />
 
+              <Button variant="contained" onClick={handleSaveTemplate}>
+                Generate
+              </Button>
+
               <Typography variant="subtitle2">Save as Template</Typography>
 
               <TextField
@@ -214,17 +227,9 @@ const ParkingDialog: React.FC<ParkingDialogProps> = ({
                 onChange={(e) => setTemplateName(e.target.value)}
               />
 
-              <Button variant="contained" onClick={handleSaveTemplate}>
+              <Button variant="contained" color="success" onClick={handleSaveTemplate}>
                 Save Template
               </Button>
-
-              <TextField label="Load Template" select size="small">
-                {templates.map((t, i) => (
-                  <MenuItem key={i} onClick={() => handleLoadTemplate(t)}>
-                    {t.name}
-                  </MenuItem>
-                ))}
-              </TextField>
             </Stack>
           </Box>
         </Box>

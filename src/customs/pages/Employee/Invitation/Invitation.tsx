@@ -51,10 +51,6 @@ import {
   getVisitorById,
 } from 'src/customs/api/admin';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
-import { Scanner } from '@yudiel/react-qr-scanner';
-import FlipCameraAndroidIcon from '@mui/icons-material/FlipCameraAndroid';
-import FlashOnIcon from '@mui/icons-material/FlashOn';
-import FlashOffIcon from '@mui/icons-material/FlashOff';
 // import FilterMoreContent from './FilterMoreContent';
 import {
   IconBrandGmail,
@@ -82,8 +78,9 @@ import {
   getInvitations,
 } from 'src/customs/api/visitor';
 import { useSelector } from 'react-redux';
-import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import { useQuery } from '@tanstack/react-query';
+import EmployeeDetailDialog from '../Components/Dialog/EmployeeDetailDialog';
+import SelectRegisteredSiteDialog from '../Components/Dialog/SelectRegisteredSiteDialog';
 
 type VisitorTableRow = {
   id: string;
@@ -104,7 +101,6 @@ type VisitorTableRow = {
 
 const Content = () => {
   const { token } = useSession();
-
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState<string>('id');
@@ -114,7 +110,6 @@ const Content = () => {
   const [edittingId, setEdittingId] = useState('');
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [searchKeyword, setSearchKeyword] = useState('');
-  const [isDataReady, setIsDataReady] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
   // mode konfirmasi: "close-add" atau "edit"
@@ -127,31 +122,10 @@ const Content = () => {
     return saved ? JSON.parse(saved) : CreateVisitorRequestSchema.parse({});
   });
 
-  const [orgDict, setOrgDict] = useState<{ [id: string]: string }>({});
-  const [deptDict, setDeptDict] = useState<{ [id: string]: string }>({});
-  const [distDict, setDistDict] = useState<{ [id: string]: string }>({});
-
-  // useEffect(() => {
-  //   const fetchMasters = async () => {
-  //     try {
-  //       const orgRes = await getAllOrganizations(token as string);
-  //       const deptRes = await getAllDepartments(token as string);
-  //       const distRes = await getAllDistricts(token as string);
-
-  //       setOrgDict(Object.fromEntries(orgRes.collection.map((o: any) => [o.id, o.name])));
-  //       setDeptDict(Object.fromEntries(deptRes.collection.map((d: any) => [d.id, d.name])));
-  //       setDistDict(Object.fromEntries(distRes.collection.map((d: any) => [d.id, d.name])));
-  //     } catch (e) {
-  //       console.error('Failed to fetch master data', e);
-  //     }
-  //   };
-  //   if (token) fetchMasters();
-  // }, [token]);
-
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
-    severity: AlertColor; // 'success' | 'info' | 'warning' | 'error'
+    severity: AlertColor;
   }>({ open: false, message: '', severity: 'info' });
 
   const toast = (message: string, severity: AlertColor = 'info') => {
@@ -166,7 +140,6 @@ const Content = () => {
     if (isFormChanged) {
       localStorage.setItem('unsavedVisitorData', JSON.stringify(formDataAddVisitor));
     } else {
-      // kalau balik ke default, hapus jejak draft
       localStorage.removeItem('unsavedVisitorData');
     }
   }, [formDataAddVisitor, isFormChanged]);
@@ -213,16 +186,8 @@ const Content = () => {
   // Registered Site
   const [siteData, setSiteData] = useState<any[]>([]);
   const [selectedSite, setSelectedSite] = useState<any | null>(null);
-  // Qr Scanner
-  const [qrValue, setQrValue] = useState('');
-  const [qrMode, setQrMode] = useState<'manual' | 'scan'>('manual');
-  const [hasDecoded, setHasDecoded] = useState(false); // cegah multi-callback beruntun
-  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
-  const [torchOn, setTorchOn] = useState(false);
-  const scanContainerRef = useRef<HTMLDivElement | null>(null);
   const [wizardKey, setWizardKey] = useState(0);
 
-  // bikin CDN base dari baseURL axios
   const CDN_BASE = `${axiosInstance2?.defaults?.baseURL?.replace(/\/+$/, '') ?? ''}/cdn`;
   const resolveImg = (v?: string) => {
     if (!v) return '';
@@ -236,7 +201,7 @@ const Content = () => {
 
   const resetRegisteredFlow = () => {
     setSelectedSite(null);
-    setFormDataAddVisitor(defaultFormData); // reset form data jika perlu
+    setFormDataAddVisitor(defaultFormData);
   };
   const handleDialogClose = () => {
     setOpenDialogIndex(null);
@@ -420,14 +385,10 @@ const Content = () => {
         const apiStatus = statusMap[selectedType]; // ambil versi backend
         mapped = mapped.filter((r: any) => r.visitor_status === apiStatus);
       }
-
-      // ✅ simpan data mentah (unfiltered)
       setTableRowVisitors(mapped);
-      // ✅ tampilkan default (semua)
       setTableCustomVisitor(mapped);
 
       setTotalRecords(mapped.length);
-      setIsDataReady(true);
       setLoading(false);
     };
 
@@ -437,10 +398,8 @@ const Content = () => {
   useEffect(() => {
     if (!tableRowVisitors.length) return;
 
-    // ambil semua data dulu
     let filtered = [...tableRowVisitors];
 
-    // 🔍 Keyword search
     const keyword = searchKeyword.trim().toLowerCase();
     if (keyword) {
       filtered = filtered.filter((r) =>
@@ -458,7 +417,6 @@ const Content = () => {
       filtered = filtered.filter((r) => r.visitor_status === apiStatus);
     }
 
-    // 🔢 Pagination (ambil 10-10)
     const startIndex = page * rowsPerPage;
     const endIndex = startIndex + rowsPerPage;
     const paginated = filtered.slice(startIndex, endIndex);
@@ -483,7 +441,7 @@ const Content = () => {
     setSelectedSite(null);
     // setFormDataAddVisitor((prev) => ({
     //   ...prev,
-    //   registered_site: '', // reset registered site
+    //   registered_site: '',
     // }));
     setOpenDialog(false);
     setOpenInvitationVisitor(false);
@@ -501,7 +459,6 @@ const Content = () => {
         freshForm = CreateVisitorRequestSchema.parse({});
       }
     } else {
-      // <── penting: pakai parse baru, bukan defaultFormData state lama
       freshForm = CreateVisitorRequestSchema.parse({});
     }
 
@@ -649,16 +606,14 @@ const Content = () => {
                 items={cards}
                 onImageClick={(_, index) => {
                   if (index === 2) {
-                    // Invitation → pilih Registered Site dulu
                     setFlowTarget('invitation');
                     // setOpenDialogIndex(2);
                     setOpenInvitationVisitor(true);
                   } else if (index === 1) {
-                    // Pra Registration → pilih Registered Site dulu
                     setFlowTarget('preReg');
                     setOpenPreRegistration(true);
                   } else {
-                    setOpenDialogIndex(index); // misal Scan QR dll
+                    setOpenDialogIndex(index);
                   }
                 }}
                 size={{ xs: 12, lg: 3 }}
@@ -666,7 +621,6 @@ const Content = () => {
             </Grid>
 
             <Grid size={{ xs: 12, lg: 12 }}>
-              {/* {isDataReady ? ( */}
               <DynamicTable
                 loading={loading}
                 isHavePagination={true}
@@ -756,13 +710,6 @@ const Content = () => {
                 //   />
                 // }
               />
-              {/* ) : (
-                <Card sx={{ width: '100%' }}>
-                  <Skeleton />
-                  <Skeleton animation="wave" />
-                  <Skeleton animation={false} />
-                </Card>
-              )} */}
             </Grid>
           </Grid>
         </Box>
@@ -788,9 +735,9 @@ const Content = () => {
             aria-label="close"
             onClick={() => {
               if (isFormChanged) {
-                openDiscardForCloseAdd(); // <── ini saja
+                openDiscardForCloseAdd();
               } else {
-                handleCloseDialog(); // aman langsung tutup
+                handleCloseDialog();
               }
             }}
           >
@@ -810,12 +757,7 @@ const Content = () => {
         </DialogContent>
       </Dialog>
       {/* Add Pre registration */}
-      <Dialog
-        fullWidth
-        maxWidth="xl"
-        open={openPreRegistration} // ✅ bukan openDialogIndex === 3 lagi
-        onClose={handleDialogClose}
-      >
+      <Dialog fullWidth maxWidth="xl" open={openPreRegistration} onClose={handleDialogClose}>
         <DialogTitle
           display="flex"
           justifyContent={'space-between'}
@@ -829,9 +771,9 @@ const Content = () => {
             aria-label="close"
             onClick={() => {
               if (isFormChanged) {
-                openDiscardForCloseAdd(); // <── ini saja
+                openDiscardForCloseAdd();
               } else {
-                handleCloseDialog(); // aman langsung tutup
+                handleCloseDialog();
               }
             }}
           >
@@ -851,292 +793,17 @@ const Content = () => {
         </DialogContent>
       </Dialog>
       {/* Employee Detail */}
-      <Dialog fullWidth maxWidth="sm" open={openEmployeeDialog} onClose={handleCloseEmployeeDialog}>
-        <DialogTitle
-          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-        >
-          Detail PIC Host
-          <IconButton onClick={handleCloseEmployeeDialog}>
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <Divider />
-        <DialogContent sx={{ pt: 1 }}>
-          {employeeLoading ? (
-            <Box display="flex" justifyContent="center" alignItems="center" py={6} height={'100%'}>
-              <CircularProgress />
-            </Box>
-          ) : (
-            <Box>
-              <Grid
-                container
-                spacing={2}
-                justifyContent="center" // horizontal center
-                alignItems="center" // vertical center
-              >
-                <Grid size={12} display="flex" justifyContent="center" alignItems="center">
-                  {/* avatar */}
-                  <Avatar
-                    alt={employeeDetail?.name || 'Employee'}
-                    src={
-                      'http://192.168.1.116:8000/cdn' + employeeDetail?.faceimage ||
-                      '/static/images/avatar/1.jpg'
-                    }
-                    onError={(e: any) => {
-                      e.currentTarget.onerror = null; // cegah loop
-                      e.currentTarget.src = '/static/images/avatar/1.jpg';
-                    }}
-                    sx={{ width: 120, height: 120, my: 2 }}
-                  />
-                </Grid>
-
-                <Grid
-                  size={{ xs: 12, md: 6 }}
-                  display="flex"
-                  flexDirection="column"
-                  alignItems="start"
-                >
-                  <Box display="flex" alignItems="start" gap={1}>
-                    <IconIdBadge2 />
-                    <Box>
-                      <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
-                        Name
-                      </CustomFormLabel>
-                      <Typography variant="body1">{employeeDetail?.name}</Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-
-                <Grid
-                  size={{ xs: 12, md: 6 }}
-                  display="flex"
-                  flexDirection="column"
-                  alignItems="start"
-                >
-                  <Box display="flex" alignItems="start" gap={1}>
-                    <IconPhone />
-                    <Box>
-                      <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
-                        Phone
-                      </CustomFormLabel>
-                      <Typography variant="body1">{employeeDetail?.phone || '-'}</Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-                <Grid
-                  size={{ xs: 12, md: 6 }}
-                  display="flex"
-                  flexDirection="column"
-                  alignItems="start"
-                >
-                  <Box display="flex" alignItems="start" gap={1}>
-                    <IconBrandGmail />
-                    <Box>
-                      <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
-                        Email
-                      </CustomFormLabel>
-                      <Typography variant="body1">{employeeDetail?.email || '-'}</Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-
-                <Grid
-                  size={{ xs: 12, md: 6 }}
-                  display="flex"
-                  flexDirection="column"
-                  alignItems="start"
-                >
-                  <Box display="flex" alignItems="start" gap={1}>
-                    <IconGenderBigender />
-                    <Box>
-                      <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
-                        Gender
-                      </CustomFormLabel>
-                      <Typography variant="body1">{employeeDetail?.gender || '-'}</Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-                <Grid
-                  size={{ xs: 12, md: 6 }}
-                  display="flex"
-                  flexDirection="column"
-                  alignItems="start"
-                >
-                  <Box display="flex" alignItems="start" gap={1}>
-                    <IconCards />
-                    <Box>
-                      <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
-                        Address
-                      </CustomFormLabel>
-                      <Typography variant="body1">{employeeDetail?.address || '-'}</Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-
-                <Grid
-                  size={{ xs: 12, md: 6 }}
-                  display="flex"
-                  flexDirection="column"
-                  alignItems="start"
-                >
-                  <Box display="flex" alignItems="start" gap={1}>
-                    <IconBuildingSkyscraper />
-                    <Box>
-                      <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
-                        Organization
-                      </CustomFormLabel>
-                      <Typography variant="body1">
-                        {/* {orgDict[employeeDetail?.organization_id] || '-'} */}
-                        {employeeDetail?.organization_id || '-'}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-                <Grid
-                  size={{ xs: 12, md: 6 }}
-                  display="flex"
-                  flexDirection="column"
-                  alignItems="start"
-                >
-                  <Box display="flex" alignItems="start" gap={1}>
-                    <IconBuilding />
-                    <Box>
-                      <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
-                        Department
-                      </CustomFormLabel>
-                      <Typography variant="body1">
-                        {/* {deptDict[employeeDetail?.department_id] || '-'} */}
-                        {employeeDetail?.department_id || '-'}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-                <Grid
-                  size={{ xs: 12, md: 6 }}
-                  display="flex"
-                  flexDirection="column"
-                  alignItems="start"
-                >
-                  <Box display="flex" alignItems="start" gap={1}>
-                    <IconMapPin />
-                    <Box>
-                      <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
-                        District
-                      </CustomFormLabel>
-                      <Typography variant="body1">
-                        {' '}
-                        {/* {distDict[employeeDetail?.district_id] || '-'} */}
-                        {employeeDetail?.district_id || '-'}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-                <Grid
-                  size={{ xs: 12, md: 6 }}
-                  display="flex"
-                  flexDirection="column"
-                  alignItems="start"
-                >
-                  <Box display="flex" alignItems="start" gap={1}>
-                    <IconCheck />
-                    <Box>
-                      <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
-                        Status
-                      </CustomFormLabel>
-                      <Typography variant="body1">
-                        {employeeDetail?.status_employee || '-'}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-                <Grid
-                  size={{ xs: 12, md: 6 }}
-                  display="flex"
-                  flexDirection="column"
-                  alignItems="start"
-                >
-                  <Box display="flex" alignItems="start" gap={1}>
-                    <IconCalendarStats />
-                    <Box>
-                      <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
-                        Birth Date
-                      </CustomFormLabel>
-                      <Typography variant="body1">{employeeDetail?.birth_date}</Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-                <Grid
-                  size={{ xs: 12, md: 6 }}
-                  display="flex"
-                  flexDirection="column"
-                  alignItems="start"
-                >
-                  <Box display="flex" alignItems="start" gap={1}>
-                    <IconCalendarStats />
-                    <Box>
-                      <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
-                        Join Date
-                      </CustomFormLabel>
-                      <Typography variant="body1">{employeeDetail?.join_date}</Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-                <Grid
-                  size={{ xs: 12, md: 6 }}
-                  display="flex"
-                  flexDirection="column"
-                  alignItems="start"
-                >
-                  <Box display="flex" alignItems="start" gap={1}>
-                    <IconCalendarStats />
-                    <Box>
-                      <CustomFormLabel htmlFor="name" sx={{ marginTop: 0 }}>
-                        Exit Date
-                      </CustomFormLabel>
-                      <Typography variant="body1">{employeeDetail?.exit_date}</Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-
-                {/* Grid lain sama konsepnya */}
-              </Grid>
-            </Box>
-          )}
-
-          {!employeeLoading && employeeError && (
-            <Box>
-              <Card sx={{ p: 2, color: 'error.main' }}>{employeeError}</Card>
-            </Box>
-          )}
-          {/* 
-          {!employeeLoading && !employeeError && employeeDetail && (
-            <Box display="grid" gridTemplateColumns="110px 1fr" gap={2}>
-              <Box gridColumn="1 / 2">
-                <Box
-                  component="img"
-                  src={
-                    resolveImg(
-                      employeeDetail.faceimage || employeeDetail.photo || employeeDetail.avatar,
-                    ) || undefined
-                  }
-                  alt="employee"
-                  onError={(e: any) => (e.currentTarget.style.display = 'none')}
-                  sx={{
-                    width: 96,
-                    height: 96,
-                    borderRadius: '50%',
-                    objectFit: 'cover',
-                    border: '1px solid #eee',
-                  }}
-                />
-              </Box>
-            </Box>
-          )} */}
-        </DialogContent>
-      </Dialog>
+      <EmployeeDetailDialog
+        open={openEmployeeDialog}
+        onClose={handleCloseEmployeeDialog}
+        employeeDetail={employeeDetail}
+        employeeLoading={employeeLoading}
+        employeeError={employeeError}
+        axiosInstance2={axiosInstance2}
+      />
 
       {/* Select Registered Site */}
-      <Dialog open={openDialogIndex === 2} onClose={handleDialogClose} fullWidth maxWidth="sm">
+      {/* <Dialog open={openDialogIndex === 2} onClose={handleDialogClose} fullWidth maxWidth="sm">
         <DialogTitle
           display="flex"
           justifyContent={'space-between'}
@@ -1150,9 +817,9 @@ const Content = () => {
             aria-label="close"
             onClick={() => {
               if (isFormChanged) {
-                openDiscardForCloseAdd(); // <── ini saja
+                openDiscardForCloseAdd();
               } else {
-                handleCloseDialog(); // aman langsung tutup
+                handleCloseDialog();
               }
             }}
           >
@@ -1166,12 +833,12 @@ const Content = () => {
             fullWidth
             options={siteData}
             getOptionLabel={(o) => o.name || ''}
-            value={selectedSite} // harus null setelah reset
+            value={selectedSite}
             onChange={(_, nv) => {
               setSelectedSite(nv);
               setFormDataAddVisitor((prev) => ({
                 ...prev,
-                registered_site: nv?.id || '', // isi kalau ada pilihan, kosong kalau null
+                registered_site: nv?.id || '',
               }));
             }}
             isOptionEqualToValue={(option, value) => option.id === value?.id} // penting
@@ -1202,7 +869,30 @@ const Content = () => {
             </Button>
           </Box>
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
+      <SelectRegisteredSiteDialog
+        open={openDialogIndex === 2}
+        siteData={siteData}
+        selectedSite={selectedSite}
+        setSelectedSite={setSelectedSite}
+        isFormChanged={isFormChanged}
+        onDiscard={openDiscardForCloseAdd}
+        onClose={handleCloseDialog}
+        onNext={(site: any) => {
+          setFormDataAddVisitor((prev) => ({
+            ...prev,
+            registered_site: site.id,
+          }));
+
+          setOpenDialogIndex(null);
+
+          if (flowTarget === 'invitation') {
+            setOpenInvitationVisitor(true);
+          } else if (flowTarget === 'preReg') {
+            setOpenPreRegistration(true);
+          }
+        }}
+      />
 
       {/* Related Visitor */}
       <Dialog open={openRelatedInvitation} onClose={handleCloseRelation} fullWidth maxWidth="xl">
@@ -1271,7 +961,7 @@ const Content = () => {
                         }}
                       >
                         <Avatar
-                          src={'http://localhost:3000/cdn' + v.selfie_image}
+                          src={`${axiosInstance2.defaults.baseURL}/cdn` + v.selfie_image}
                           alt={v.name}
                           sx={{ width: 60, height: 60 }}
                         />
@@ -1359,20 +1049,15 @@ const Content = () => {
 
                         switch (action) {
                           case 'Checkin':
-                            // ❌ Tidak bisa Checkin jika status sudah Checkin atau Checkout
                             return status === 'Checkin' || status === 'Checkout' ? i : null;
 
                           case 'Checkout':
-                            // ❌ Tidak bisa Checkout jika status bukan Checkin
-                            // (berarti juga tidak bisa kalau sudah Checkout)
                             return status !== 'Checkin' ? i : null;
 
                           case 'Block':
-                            // ❌ Tidak bisa Block kalau sudah Block
                             return status === 'Block' ? i : null;
 
                           case 'Unblock':
-                            // ❌ Tidak bisa Unblock kalau bukan Block
                             return status !== 'Block' ? i : null;
 
                           default:
@@ -1415,8 +1100,6 @@ const Content = () => {
                 </Button>
               </Box> */}
             </Grid>
-
-            {/* Kanan: daftar Access */}
           </Grid>
         </DialogContent>
       </Dialog>
@@ -1445,9 +1128,9 @@ const Content = () => {
         >
           <Alert
             onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-            severity={snackbar.severity} // ← beda warna/ikon sesuai severity
+            severity={snackbar.severity}
             sx={{ width: '100%' }}
-            variant="filled" // optional: biar lebih kontras
+            variant="filled"
           >
             {snackbar.message}
           </Alert>

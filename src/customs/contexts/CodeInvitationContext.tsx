@@ -10,7 +10,7 @@ const CodeInvitationContext = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     if (!code) {
-      navigate('/', { replace: true }); // redirect ke login kalau code hilang
+      navigate('/', { replace: true });
     }
   }, [code, navigate]);
 

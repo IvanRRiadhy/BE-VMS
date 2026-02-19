@@ -3776,10 +3776,10 @@ const OperatorView = () => {
             }}
           >
             <Grid container spacing={1} mb={0}>
-              <Grid size={{ xs: 12, sm: 12, lg: 9}}>
+              <Grid size={{ xs: 12, sm: 12, lg: 9 }}>
                 <VisitorSearchInput onOpenSearch={() => setOpenSearch(true)} />
               </Grid>
-              <Grid size={{ xs: 12, sm: 12, lg: 3 }} >
+              <Grid size={{ xs: 12, sm: 12, lg: 3 }}>
                 <OperatorToolbar
                   onClear={handleClearAll}
                   onOpenList={handleOpenListVisitor}
@@ -4393,7 +4393,7 @@ const OperatorView = () => {
                                 </Typography>
                               </Button>
                             </Grid>
-                            <Grid size={{ xs: 6, lg: 6 }}>
+                            {/* <Grid size={{ xs: 6, lg: 6 }}>
                               <Button
                                 variant="contained"
                                 startIcon={<IconUser size={25} />}
@@ -4418,7 +4418,7 @@ const OperatorView = () => {
                                   Whitelist
                                 </Typography>
                               </Button>
-                            </Grid>
+                            </Grid> */}
                           </Grid>
                         </Grid>
                       </Grid>

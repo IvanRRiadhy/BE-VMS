@@ -154,7 +154,7 @@ export default function BlacklistVisitorDialog({ open, onClose }: any) {
 
                   <Box>
                     <Typography variant="h6" color="text.secondary" fontWeight={'semibold'}>
-                      Pending / Unblacklist
+                      Non Active Blacklist
                     </Typography>
 
                     <Typography variant="h5" fontWeight={600}>

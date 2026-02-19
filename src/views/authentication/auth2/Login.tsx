@@ -105,8 +105,8 @@ const Login = () => {
       // recaptchaRef.current?.reset();
 
       // const { token, group_id } = response.collection;
-      const { token, group_id, employee_id, type } = response.collection;
-      saveToken(token, group_id);
+      const { token, user_group_id, employee_id, type } = response.collection;
+      saveToken(token, user_group_id);
 
       dispatch(
         setUser({
@@ -114,14 +114,15 @@ const Login = () => {
         }),
       );
 
-      if (group_id.toUpperCase() === GroupRoleId.Admin) navigate('/admin/dashboard');
-      else if (group_id.toUpperCase() === GroupRoleId.Manager) navigate('/manager/dashboard');
-      else if (group_id.toUpperCase() === GroupRoleId.Employee) navigate('/employee/dashboard');
-      else if (group_id.toUpperCase() === GroupRoleId.Employee && type == 0)
+      if (user_group_id.toUpperCase() === GroupRoleId.Admin) navigate('/admin/dashboard');
+      else if (user_group_id.toUpperCase() === GroupRoleId.Manager) navigate('/manager/dashboard');
+      else if (user_group_id.toUpperCase() === GroupRoleId.Employee)
+        navigate('/employee/dashboard');
+      else if (user_group_id.toUpperCase() === GroupRoleId.Employee && type == 0)
         navigate('/delivery-staff/dashboard');
-      else if (group_id.toUpperCase() === GroupRoleId.OperatorVMS) navigate('/operator/view');
-      // else if (group_id.toUpperCase() === GroupRoleId.OperatorAdmin) navigate('/operator-admin/dashboard');
-      else if (group_id.toUpperCase() === GroupRoleId.Visitor) navigate('/guest/dashboard');
+      else if (user_group_id.toUpperCase() === GroupRoleId.OperatorVMS) navigate('/operator/view');
+      // else if (user_group_id.toUpperCase() === GroupRoleId.OperatorAdmin) navigate('/operator-admin/dashboard');
+      else if (user_group_id.toUpperCase() === GroupRoleId.Visitor) navigate('/guest/dashboard');
     } catch (err) {
       setTimeout(() => {
         if (err instanceof AxiosError && err.response) {
@@ -303,7 +304,7 @@ const Login = () => {
                     // variant="scrollable"
                     scrollButtons="auto"
                     allowScrollButtonsMobile
-                    variant={isMobile ? 'scrollable' : 'standard'} 
+                    variant={isMobile ? 'scrollable' : 'standard'}
                   >
                     <Tab icon={<IconUser size={18} />} iconPosition="start" label="User/Staff" />
                     <Tab

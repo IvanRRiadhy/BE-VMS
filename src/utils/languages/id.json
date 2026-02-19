@@ -1,9 +1,9 @@
 {
   "export": "Ekspor",
-  "top_visitor": "Pengunjung Teratas",
+  "top_visitor": "Pengunjung 5 Teratas",
   "top_visitor_purpose": "Tujuan Pengunjung Teratas",
   "visiting_type": "Jenis Pengunjung",
-  "avarage_duration": "Durasi Rata-rata",
+  "avarage_duration": "Durasi Pengunjung Rata-rata",
   "fluctuation_visitor": "Fluktuasi Pengunjung",
   "heatmap_visitor": "Heatmap Pengunjung",
   "visitor_praregist": "Daftar Pengunjung Pra Registrasi",

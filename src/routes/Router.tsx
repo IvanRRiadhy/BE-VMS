@@ -6,7 +6,6 @@ import Loadable from 'src/layouts/full/shared/loadable/Loadable';
 import { ProtectedRoute } from 'src/customs/contexts/ProtectedRoute';
 import { GroupRoleId } from '../constant/GroupRoleId';
 import AuthRedirector from './AuthRedirector';
-import { element } from 'prop-types';
 import StaffLayout from 'src/customs/pages/Employee/DeliveryStaff/StaffLayout';
 import Register from 'src/views/authentication/auth2/Register';
 import ForgotPassword from 'src/views/authentication/auth2/ForgotPassword';
@@ -21,7 +20,7 @@ const OperatorLayout = Loadable(lazy(() => import('src/customs/pages/Operator/Op
 const ManagerLayout = Loadable(lazy(() => import('src/customs/pages/Manager/ManagerLayout')));
 const BlankLayout = Loadable(lazy(() => import('src/layouts/blank/BlankLayout')));
 
-/* ****AUTH & COMMON PAGES***** */
+/* Auth Pages */
 const Login = Loadable(lazy(() => import('src/views/authentication/auth2/Login')));
 const UnauthorizedPage = Loadable(
   lazy(() => import('src/customs/components/page/UnauthorizedPage')),
@@ -34,8 +33,9 @@ const WaitingPage = Loadable(lazy(() => import('src/customs/components/page/Wait
 const DetailProfile = Loadable(
   lazy(() => import('src/layouts/full/vertical/header/DetailProfile')),
 );
+//
 
-/* ****GUEST PAGES**** */
+/* Guest Pages */
 const DashboardLayout = Loadable(lazy(() => import('src/customs/pages/Guest/Dashboard')));
 const PageAcces = Loadable(lazy(() => import('src/customs/pages/Guest/PageAcces')));
 const Invitation = Loadable(lazy(() => import('src/customs/pages/Guest/Invitation/Invitation')));
@@ -47,52 +47,48 @@ const AlarmPage = Loadable(lazy(() => import('src/customs/pages/Guest/Alarm/Alar
 const Evacuate = Loadable(lazy(() => import('src/customs/pages/Guest/Evacuate/Evacuate')));
 const Visitor = Loadable(lazy(() => import('src/customs/pages/Guest/Visitor/Visitor')));
 
-/* ****ADMIN PAGES**** */
-const Dashboard = Loadable(
-  lazy(() => import('src/customs/pages/admin/content/content_dashboard/Content')),
-);
+/* Admin Pages */
+const Dashboard = Loadable(lazy(() => import('src/customs/pages/admin/content/Dashboard/Content')));
 const ManageVisitor = Loadable(
-  lazy(() => import('src/customs/pages/admin/content/content_visitor/Content')),
+  lazy(() => import('src/customs/pages/admin/content/Visitor/Trx/Content')),
 );
 const ManageTransactionVisitor = Loadable(
-  lazy(() => import('src/customs/pages/admin/content/content_visitor/Transaction/Content')),
+  lazy(() => import('src/customs/pages/admin/content/Visitor/Transaction/Content')),
 );
+const ManageBlacklistVisitor = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Visitor/Blacklist/Content')),
+);
+
 const ManageListVisitor = Loadable(
-  lazy(() => import('src/customs/pages/admin/content/content_visitor/List/Content')),
+  lazy(() => import('src/customs/pages/admin/content/Visitor/List/Content')),
 );
 const ManageCompanyAndDepartment = Loadable(
-  lazy(
-    () => import('src/customs/pages/admin/content/content_manage_company_and_department/Content'),
-  ),
+  lazy(() => import('src/customs/pages/admin/content/CompanyDepartment/Content')),
 );
 const ManageEmployee = Loadable(
-  lazy(() => import('src/customs/pages/admin/content/content_manage_employee/Content')),
+  lazy(() => import('src/customs/pages/admin/content/Employee/Content')),
 );
 
 const ManageVip = Loadable(
   lazy(() => import('src/customs/pages/admin/content/Enrollment/Vip/Content')),
-)
-
+);
 
 const ManageVendor = Loadable(
   lazy(() => import('src/customs/pages/admin/content/Enrollment/Vendor/Content')),
 );
 
-
 const ManageSiteSpace = Loadable(
-  lazy(() => import('src/customs/pages/admin/content/content_manage_site_space/Content')),
+  lazy(() => import('src/customs/pages/admin/content/SiteSpace/Content')),
 );
 const ManageVisitorCard = Loadable(
-  lazy(() => import('src/customs/pages/admin/content/content_manage_visitor_card/Content')),
+  lazy(() => import('src/customs/pages/admin/content/Card/Content')),
 );
 // const ManageDeviceKiosk = Loadable(lazy(() => import('src/customs/pages/admin/ManageDeviceKiosk')));
 
 const ManageDocument = Loadable(
-  lazy(() => import('src/customs/pages/admin/content/content_manage_document/Content')),
+  lazy(() => import('src/customs/pages/admin/content/Document/Content')),
 );
-const ManageBrand = Loadable(
-  lazy(() => import('src/customs/pages/admin/content/content_manage_brand/Content')),
-);
+const ManageBrand = Loadable(lazy(() => import('src/customs/pages/admin/content/Brand/Content')));
 // const SettingUser = Loadable(
 //   lazy(() => import('src/customs/pages/admin/content/content_setting_user/Content')),
 // );
@@ -100,67 +96,64 @@ const ManageBrand = Loadable(
 //   lazy(() => import('src/customs/pages/admin/content/content_setting_user/FormAddUser')),
 // );
 const ManageVisitorType = Loadable(
-  lazy(() => import('src/customs/pages/admin/content/content_manage_visitor_type/Content')),
+  lazy(() => import('src/customs/pages/admin/content/VisitorType/Content')),
 );
 const ManageIntegration = Loadable(
-  lazy(() => import('src/customs/pages/admin/content/content_manage_integration/Content')),
+  lazy(() => import('src/customs/pages/admin/content/Integration/Content')),
 );
 const ManageIntegrationDetail = Loadable(
-  lazy(() => import('src/customs/pages/admin/ManageIntegrationDetail')),
+  lazy(() => import('src/customs/pages/admin/content/Integration/ManageIntegrationDetail')),
 );
 const ManageAccessControl = Loadable(
-  lazy(() => import('src/customs/pages/admin/content/content_manage_access_control/Content')),
+  lazy(() => import('src/customs/pages/admin/content/AccessControl/Content')),
 );
 const ManageCustomField = Loadable(
-  lazy(() => import('src/customs/pages/admin/content/content_manage_custom_field/Content')),
+  lazy(() => import('src/customs/pages/admin/content/CustomField/Content')),
 );
 const ManageSettingSmtp = Loadable(
-  lazy(() => import('src/customs/pages/admin/content/content_manage_setting_smtp/Content')),
+  lazy(() => import('src/customs/pages/admin/content/SettingSmtp/Content')),
 );
 // const ManageGroupCardAccess = Loadable(
 //   lazy(() => import('src/customs/pages/admin/ManageGroupCardAccess')),
 // );
 const ManageTimezone = Loadable(
-  lazy(() => import('src/customs/pages/admin/content/content_timezone/Context')),
+  lazy(() => import('src/customs/pages/admin/content/Timezone/Context')),
 );
 const ManageSettingVisitor = Loadable(
-  lazy(() => import('src/customs/pages/admin/content/content_manage_setting_visitor/Content')),
+  lazy(() => import('src/customs/pages/admin/content/SettingVisitorOperator/Content')),
 );
 const ManageDelivery = Loadable(
-  lazy(() => import('src/customs/pages/admin/content/content_manage_delivery/Driver/Content')),
+  lazy(() => import('src/customs/pages/admin/content/Delivery/Driver/Content')),
 );
 const ManageDeliveryScheduler = Loadable(
-  lazy(() => import('src/customs/pages/admin/content/content_manage_delivery/Schduler/Content')),
+  lazy(() => import('src/customs/pages/admin/content/Delivery/Schduler/Content')),
 );
 const ManageDeliveryVisit = Loadable(
-  lazy(() => import('src/customs/pages/admin/content/content_manage_delivery/Visit/Content')),
+  lazy(() => import('src/customs/pages/admin/content/Delivery/Visit/Content')),
 );
 const ManageDetailScheduler = Loadable(
-  lazy(
-    () => import('src/customs/pages/admin/content/content_manage_delivery/Schduler/DetailSchduler'),
-  ),
+  lazy(() => import('src/customs/pages/admin/content/Delivery/Schduler/DetailSchduler')),
 );
-const ManageUser = Loadable(
-  lazy(() => import('src/customs/pages/admin/content/content_user/Content')),
-);
+const ManageUser = Loadable(lazy(() => import('src/customs/pages/admin/content/User/Content')));
+const ManageUserGroup = Loadable(lazy(() => import('src/customs/pages/admin/content/User/UserGroup/Content')));
 const ManageReportTransaction = Loadable(
-  lazy(() => import('src/customs/pages/admin/content/content_report/TransactionLog/Content')),
+  lazy(() => import('src/customs/pages/admin/content/Report/TransactionLog/Content')),
 );
 
 const ManageReportApproval = Loadable(
-  lazy(() => import('src/customs/pages/admin/content/content_report/Approval/Content')),
+  lazy(() => import('src/customs/pages/admin/content/Report/Approval/Content')),
 );
 
 const ManageReportOperatorActivityLog = Loadable(
-  lazy(() => import('src/customs/pages/admin/content/content_report/OperatorActivityLog/Content')),
+  lazy(() => import('src/customs/pages/admin/content/Report/OperatorActivityLog/Content')),
 );
 const ManageZone = Loadable(lazy(() => import('src/customs/pages/admin/content/Zone/Content')));
 const ManagePrintBadge = Loadable(
   lazy(() => import('src/customs/pages/admin/content/PrintBadge/Content')),
-)
+);
 const ManageEvacuate = Loadable(
   lazy(() => import('src/customs/pages/admin/content/Evacuate/Content')),
-)
+);
 /* ****EMPLOYEE PAGES**** */
 const DashboardEmployee = Loadable(lazy(() => import('src/customs/pages/Employee/Dashboard')));
 const ApprovalEmployee = Loadable(lazy(() => import('src/customs/pages/Employee/Approval')));
@@ -173,7 +166,7 @@ const VisitorEmployee = Loadable(lazy(() => import('src/customs/pages/Employee/V
 const HistoryEmployee = Loadable(lazy(() => import('src/customs/pages/Employee/History')));
 const ProfileEmployee = Loadable(lazy(() => import('src/customs/pages/Employee/DetailProfile')));
 
-/* ****OPERATOR PAGES**** */
+/* Operator Pages* */
 const DashboardOperator = Loadable(lazy(() => import('src/customs/pages/Operator/Dashboard')));
 const OperatorView = Loadable(lazy(() => import('src/customs/pages/Operator/OperatorView')));
 const TransactionOperatorLog = Loadable(
@@ -189,7 +182,7 @@ const MonitoringDashboard = Loadable(
   lazy(() => import('src/customs/pages/Operator/Monitoring/Content')),
 );
 
-/* ****MANAGER PAGES**** */
+/* Manager Pages*/
 const DashboardManager = Loadable(lazy(() => import('src/customs/pages/Manager/Dashboard')));
 const ApprovalManager = Loadable(lazy(() => import('src/customs/pages/Manager/Approval')));
 const ParkingManager = Loadable(lazy(() => import('src/customs/pages/Manager/Parking')));
@@ -291,6 +284,66 @@ const Router = [
         ],
       },
 
+      // Operator Admin
+      // {
+      //   element: <ProtectedRoute allowedGroups={[GroupRoleId.OperatorAdmin]} />,
+      //   children: [
+      //     { path: '/operator-admin/dashboard', element: <Dashboard /> },
+      //     { path: '/operator-admin/visitor', element: <ManageVisitor /> },
+      //     { path: '/operator-admin/visitor/list-visitor', element: <ManageListVisitor /> },
+      //     { path: '/operator-admin/visitor/live-visitor', element: <ManageVisitor /> },
+      //     {
+      //       path: '/operator-admin/visitor/transaction-visitor',
+      //       element: <ManageTransactionVisitor />,
+      //     },
+      //     {
+      //       path: '/operator-admin/visitor/blacklist-visitor',
+      //       element: <ManageBlacklistVisitor />,
+      //     },
+      //     {
+      //       path: '/operator-admin/manage/companys-deparments',
+      //       element: <ManageCompanyAndDepartment />,
+      //     },
+      //     { path: '/operator-admin/manage/employees', element: <ManageEmployee /> },
+      //     { path: '/operator-admin/manage/vip', element: <ManageVip /> },
+      //     { path: '/operator-admin/manage/vendor', element: <ManageVendor /> },
+      //     { path: '/operator-admin/manage/delivery', element: <ManageDelivery /> },
+      //     { path: '/operator-admin/manage/delivery/staff', element: <ManageDelivery /> },
+      //     { path: '/operator-admin/visitor/scheduler', element: <ManageDeliveryScheduler /> },
+      //     {
+      //       path: '/operator-admin/visitor/scheduler/detail/:id',
+      //       element: <ManageDetailScheduler />,
+      //     },
+      //     { path: '/operator-admin/manage/delivery/visit', element: <ManageDeliveryVisit /> },
+      //     {
+      //       path: '/operator-admin/manage/site-space/*',
+      //       element: <ManageSiteSpace />,
+      //     },
+      //     { path: '/operator-admin/manage/card', element: <ManageVisitorCard /> },
+      //     { path: '/operator-admin/manage/time-access', element: <ManageTimezone /> },
+      //     { path: '/operator-admin/manage/visitor-type', element: <ManageVisitorType /> },
+      //     { path: '/operator-admin/manage/document', element: <ManageDocument /> },
+      //     { path: '/operator-admin/manage/brand', element: <ManageBrand /> },
+      //     { path: '/operator-admin/manage/integration', element: <ManageIntegration /> },
+      //     { path: '/operator-admin/manage/integration/:id', element: <ManageIntegrationDetail /> },
+      //     { path: '/operator-admin/manage/access-control', element: <ManageAccessControl /> },
+      //     { path: '/operator-admin/manage/custom-field', element: <ManageCustomField /> },
+      //     { path: '/operator-admin/manage/zone', element: <ManageZone /> },
+      //     { path: '/operator-admin/manage/setting-smtp', element: <ManageSettingSmtp /> },
+      //     { path: '/operator-admin/settings', element: <ManageSettingVisitor /> },
+      //     { path: '/operator-admin/user', element: <ManageUser /> },
+      //     { path: '/operator-admin/report/transaction-log', element: <ManageReportTransaction /> },
+      //     { path: '/operator-admin/report/approval-workflow', element: <ManageReportApproval /> },
+      //     {
+      //       path: '/operator-admin/report/operator-activity-log',
+      //       element: <ManageReportOperatorActivityLog />,
+      //     },
+      //     { path: '/profile', element: <DetailProfile /> },
+      //     { path: '/operator-admin/print-badge', element: <ManagePrintBadge /> },
+      //     { path: '/operator-admin/evacuate', element: <ManageEvacuate /> },
+      //   ],
+      // },
+
       // ✅ Admin routes
       {
         element: <ProtectedRoute allowedGroups={[GroupRoleId.Admin]} />,
@@ -298,8 +351,9 @@ const Router = [
           { path: '/admin/dashboard', element: <Dashboard /> },
           { path: '/admin/visitor', element: <ManageVisitor /> },
           { path: '/admin/visitor/list-visitor', element: <ManageListVisitor /> },
-          { path: '/admin/visitor/invitation-visitor', element: <ManageVisitor /> },
+          { path: '/admin/visitor/live-visitor', element: <ManageVisitor /> },
           { path: '/admin/visitor/transaction-visitor', element: <ManageTransactionVisitor /> },
+          { path: '/admin/visitor/blacklist-visitor', element: <ManageBlacklistVisitor /> },
           { path: '/admin/manage/companys-deparments', element: <ManageCompanyAndDepartment /> },
           { path: '/admin/manage/employees', element: <ManageEmployee /> },
           { path: '/admin/manage/vip', element: <ManageVip /> },
@@ -329,6 +383,7 @@ const Router = [
           { path: '/admin/manage/setting-smtp', element: <ManageSettingSmtp /> },
           { path: '/admin/settings', element: <ManageSettingVisitor /> },
           { path: '/admin/user', element: <ManageUser /> },
+          { path: '/admin/user-group', element: <ManageUserGroup /> },
           { path: '/admin/report/transaction-log', element: <ManageReportTransaction /> },
           { path: '/admin/report/approval-workflow', element: <ManageReportApproval /> },
           {

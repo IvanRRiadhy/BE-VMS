@@ -21,15 +21,9 @@ const TopVisitor = () => {
     const fetchData = async () => {
       if (!token) return;
       try {
-        const res = await getTopVisitors(
-          token,
-          // startDate.toLocaleDateString('en-CA'),
-          // endDate.toLocaleDateString('en-CA'),
-          start,
-          end,
-        );
+        const res = await getTopVisitors(token, start, end);
 
-        const sliced = res.collection.slice(0, 10);
+        const sliced = res.collection.slice(0, 5);
         setLabels(sliced.map((item: any) => item.name));
         setValues(sliced.map((item: any) => item.count));
       } catch (error) {
@@ -53,14 +47,21 @@ const TopVisitor = () => {
         borderRadiusApplication: 'end',
         columnWidth: '50%',
         distributed: false,
-        // endingShape: 'rounded',
+        dataLabels: {
+          position: 'top', // penting
+        },
       },
     },
     dataLabels: {
-      enabled: false,
+      enabled: true,
+      offsetY: -22, // supaya naik ke atas bar
       style: {
         fontFamily: 'Plus Jakarta Sans, sans-serif',
+        fontSize: '13px',
+        fontWeight: 600,
+        colors: ['#374151'],
       },
+      formatter: (val: number) => `(${val})`,
     },
     xaxis: {
       categories: labels,
@@ -73,19 +74,19 @@ const TopVisitor = () => {
           colors: '#000',
           fontSize: '12px',
         },
-        formatter: (value: string) => {
-          if (value.length > 5) {
-            const words = value.split(' ');
-            if (words.length > 1) {
-              // gabungkan kata jadi 2 baris
-              const half = Math.ceil(words.length / 2);
-              return words.slice(0, half).join(' ') + '\n' + words.slice(half).join(' ');
-            } else {
-              // potong berdasarkan panjang karakter
-              return value.slice(0, 5) + '\n' + value.slice(12);
-            }
-          }
-          return value;
+        formatter: (value: any) => {
+          if (value === null || value === undefined) return '';
+
+          const str = String(value);
+
+          const maxLength = 16;
+
+          if (str.length <= maxLength) return str;
+
+          const firstLine = str.substring(0, 7);
+          const secondLine = str.substring(7, 16);
+
+          return `${firstLine}\n${secondLine}...`;
         },
       },
     },
@@ -100,7 +101,12 @@ const TopVisitor = () => {
     },
     colors: [theme === 'dark' ? '#055499' : '#055499'],
     tooltip: {
-      theme: 'light',
+      theme: theme === 'dark' ? 'dark' : 'light',
+      x: {
+        formatter: function (_: any, opts: any) {
+          return labels[opts.dataPointIndex];
+        },
+      },
     },
   };
 
@@ -113,9 +119,6 @@ const TopVisitor = () => {
 
   return (
     <>
-      <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-        {t('top_visitor')}
-      </Typography>
       <Box
         sx={{
           // py: 2,
@@ -123,8 +126,12 @@ const TopVisitor = () => {
           bgcolor: 'background.paper',
           boxShadow: 3,
           p: 2,
+          height: 420,
         }}
       >
+        <Typography variant="h5" sx={{ mb: 1, fontWeight: 600 }}>
+          {t('top_visitor')}
+        </Typography>
         <Chart options={options} series={series} type="bar" height={350} />
       </Box>
     </>

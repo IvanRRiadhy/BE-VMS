@@ -32,18 +32,21 @@ import {
   IconCards,
   IconCheck,
   IconCircleOff,
+  IconCircleX,
+  IconForbid2,
   IconLogin,
   IconLogin2,
   IconLogout,
   IconPlus,
   IconSend,
+  IconUsersGroup,
   IconX,
 } from '@tabler/icons-react';
 import { Scanner } from '@yudiel/react-qr-scanner';
 import React, { useEffect, useRef, useState } from 'react';
 import QRCode from 'react-qr-code';
 import PageContainer from 'src/components/container/PageContainer';
-import TopCard from 'src/customs/components/cards/TopCard';
+import TopCards from './Dashboard/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import Heatmap from './Heatmap';
@@ -66,11 +69,23 @@ import { showSwal } from 'src/customs/components/alerts/alerts';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 const DashboardEmployee = () => {
-  const cards = [
-    { title: 'Check In', icon: IconLogin, subTitle: `0`, subTitleSetting: 10, color: 'none' },
-    { title: 'Check Out', icon: IconLogout, subTitle: `0`, subTitleSetting: 10, color: 'none' },
-    { title: 'Denied', icon: IconCircleOff, subTitle: `0`, subTitleSetting: 10, color: 'none' },
-    { title: 'Block', icon: IconBan, subTitle: `0`, subTitleSetting: 10, color: 'none' },
+  // const cards = [
+  //   { title: 'Check In', icon: IconLogin, subTitle: `0`, subTitleSetting: 10, color: 'none' },
+  //   { title: 'Check Out', icon: IconLogout, subTitle: `0`, subTitleSetting: 10, color: 'none' },
+  //   { title: 'Denied', icon: IconCircleOff, subTitle: `0`, subTitleSetting: 10, color: 'none' },
+  //   { title: 'Block', icon: IconBan, subTitle: `0`, subTitleSetting: 10, color: 'none' },
+  // ];
+
+  const CardItems = [
+    { title: 'checkin', key: 'Checkin', icon: <IconLogin size={25} /> },
+    { title: 'checkout', key: 'Checkout', icon: <IconLogout size={25} /> },
+    { title: 'denied', key: 'Denied', icon: <IconCircleX size={25} /> },
+    { title: 'block', key: 'Block', icon: <IconForbid2 size={25} /> },
+    // {
+    //   title: 'blacklist',
+    //   key: 'blacklist',
+    //   icon: <IconUsersGroup size={22} />,
+    // },
   ];
 
   const { token } = useSession();
@@ -469,7 +484,8 @@ const DashboardEmployee = () => {
     <PageContainer title="Dashboard Employee" description="This is Employee Dashboard">
       <Grid container spacing={2} sx={{ mt: 0 }}>
         <Grid size={{ xs: 12, lg: 9 }}>
-          <TopCard items={cards} size={{ xs: 12, lg: 6 }} />
+          {/* <TopCard items={cards} size={{ xs: 12, lg: 6 }} /> */}
+          <TopCards items={CardItems} size={{ xs: 12, lg: 6 }} />
         </Grid>
 
         <Grid

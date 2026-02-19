@@ -1,66 +1,26 @@
 import {
   Avatar,
   Button,
-  Card,
-  CardContent,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Divider,
   Grid2 as Grid,
-  IconButton,
-  Tab,
-  Tabs,
-  TextField,
-  Typography,
 } from '@mui/material';
 import { Box } from '@mui/system';
 import {
   IconBan,
-  IconBrandGmail,
-  IconBuildingSkyscraper,
-  IconCalendarTime,
-  IconCalendarUp,
-  IconCamera,
-  IconCar,
   IconCheck,
-  IconCheckupList,
-  IconCircleOff,
+  IconCircleX,
   IconForbid2,
-  IconGenderMale,
-  IconHome,
-  IconIdBadge2,
-  IconLicense,
   IconLogin,
   IconLogin2,
   IconLogout,
-  IconMapPin,
-  IconNumbers,
-  IconQrcode,
   IconReport,
-  IconTicket,
-  IconUser,
-  IconUsersGroup,
-  IconX,
 } from '@tabler/icons-react';
 import { Scanner } from '@yudiel/react-qr-scanner';
 import React, { useEffect, useRef, useState } from 'react';
 import QRCode from 'react-qr-code';
 import PageContainer from 'src/components/container/PageContainer';
-import TopCard from 'src/customs/components/cards/TopCard';
+import TopCard from './Dashboard/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import FlipCameraAndroidIcon from '@mui/icons-material/FlipCameraAndroid';
-import FlashOnIcon from '@mui/icons-material/FlashOn';
-import FlashOffIcon from '@mui/icons-material/FlashOff';
-import CloseIcon from '@mui/icons-material/Close';
-import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
-import { IconPhone } from '@tabler/icons-react';
-import { IconCalendarEvent } from '@tabler/icons-react';
-import { IconUserCheck } from '@tabler/icons-react';
-import VisitorStatusPieChart from '../Guest/Components/charts/VisitorStatusPieChart';
-import VisitorHeatMap from 'src/customs/components/charts/VisitorHeatMap';
 import Heatmap from './Heatmap';
 import PieCharts from './PieCharts';
 import { getAllApprovalDT, getApproval } from 'src/customs/api/employee';
@@ -72,52 +32,33 @@ import { getActiveInvitation } from 'src/customs/api/visitor';
 import moment from 'moment';
 
 const DashboardEmployee = () => {
-  const cards = [
-    { title: 'Check In', icon: IconLogin, subTitle: `0`, subTitleSetting: 10, color: 'none' },
-    { title: 'Check Out', icon: IconLogout, subTitle: `0`, subTitleSetting: 10, color: 'none' },
-    { title: 'Denied', icon: IconCircleOff, subTitle: `0`, subTitleSetting: 10, color: 'none' },
-    { title: 'Block', icon: IconBan, subTitle: `0`, subTitleSetting: 10, color: 'none' },
+  // const cards = [
+  //   { title: 'Check In', icon: IconLogin, subTitle: `0`, subTitleSetting: 10, color: 'none' },
+  //   { title: 'Check Out', icon: IconLogout, subTitle: `0`, subTitleSetting: 10, color: 'none' },
+  //   { title: 'Denied', icon: IconCircleOff, subTitle: `0`, subTitleSetting: 10, color: 'none' },
+  //   { title: 'Block', icon: IconBan, subTitle: `0`, subTitleSetting: 10, color: 'none' },
+  // ];
+
+  const CardItems = [
+    { title: 'checkin', key: 'Checkin', icon: <IconLogin size={25} /> },
+    { title: 'checkout', key: 'Checkout', icon: <IconLogout size={25} /> },
+    { title: 'denied', key: 'Denied', icon: <IconCircleX size={25} /> },
+    { title: 'block', key: 'Block', icon: <IconForbid2 size={25} /> },
+    // {
+    //   title: 'blacklist',
+    //   key: 'blacklist',
+    //   icon: <IconUsersGroup size={22} />,
+    // },
   ];
-
   const { token } = useSession();
-
-  const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
-  const [openDetailQRCode, setOpenDetailQRCode] = useState(false);
-  const [tabValue, setTabValue] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [qrValue, setQrValue] = useState('');
-  const [qrMode, setQrMode] = useState<'manual' | 'scan'>('manual');
-  const [hasDecoded, setHasDecoded] = useState(false);
-  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
-  const [torchOn, setTorchOn] = useState(false);
   const [approvalData, setApprovalData] = useState<any[]>([]);
-  const scanContainerRef = useRef<HTMLDivElement | null>(null);
   const [activeInvitation, setActiveInvitation] = useState<any[]>([]);
   const navigate = useNavigate();
   const [page, setPage] = useState(0);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
-
-  const handleOpenScanQR = () => setOpenDialogIndex(1);
-  const handleCloseScanQR = () => {
-    try {
-      const video = scanContainerRef.current?.querySelector('video') as HTMLVideoElement | null;
-      const stream = video?.srcObject as MediaStream | null;
-      const track = stream?.getVideoTracks()?.[0];
-      const caps = track?.getCapabilities?.() as any;
-      if (track && caps?.torch && torchOn) {
-        track.applyConstraints({ advanced: [{ facingMode: 'user' }] });
-      }
-    } catch {}
-
-    setTorchOn(false);
-    setFacingMode('environment');
-    setQrMode('manual');
-    setHasDecoded(false);
-    setQrValue('');
-    setOpenDialogIndex(null);
-  };
 
   const formatDate = (date?: string) => {
     if (!date) return '-'; // fallback kalau kosong
@@ -224,7 +165,7 @@ const DashboardEmployee = () => {
     <PageContainer title="Dashboard Manager" description="This is Manager Dashboard">
       <Grid container spacing={2} sx={{ mt: 0 }}>
         <Grid size={{ xs: 12, lg: 9 }}>
-          <TopCard items={cards} size={{ xs: 12, lg: 3 }} />
+          <TopCard items={CardItems} size={{ xs: 12, lg: 3 }} />
         </Grid>
         <Grid size={{ xs: 12, lg: 3 }}>
           <Box display={'flex'} flexDirection={'column'} width={'100%'} gap={1}>

@@ -859,8 +859,6 @@ const GuestInformationStepper = () => {
               displayValue = invitationData.site_place_name || displayValue;
             }
 
-
-
             if (!isDriving && ['vehicle_type', 'vehicle_plate'].includes(f.remarks)) {
               return null;
             }
@@ -1153,7 +1151,7 @@ const GuestInformationStepper = () => {
           container
           justifyContent="center"
           alignItems="center"
-          sx={{ height: { xs: '100vh', lg: '100vh' }, backgroundColor: '#f4f6f8' }}
+          sx={{ height: { xs: '100vh', lg: '90vh' }, backgroundColor: '#f4f6f8' }}
         >
           <Grid size={{ xs: 12, sm: 11, xl: 8 }} sx={{ p: { xs: 2 } }}>
             <Card elevation={10} sx={{ p: 3, borderRadius: 3, bgcolor: 'white', boxShadow: 3 }}>
@@ -1317,7 +1315,7 @@ const GuestInformationStepper = () => {
           <CircularProgress color="primary" />
         </Box>
       </Backdrop>
-      
+
       <Snackbar
         open={snackbar.open}
         autoHideDuration={3000}

@@ -27,14 +27,16 @@ import {
   IconCalendar,
   IconCards,
   IconCircleOff,
+  IconCircleX,
   IconDownload,
+  IconForbid2,
   IconLogin,
   IconLogout,
   IconX,
 } from '@tabler/icons-react';
 import QRCode from 'react-qr-code';
 import VisitorStatusPieChart from 'src/customs/pages/Guest/Components/charts/VisitorStatusPieChart';
-import TopCard from './TopCard';
+import TopCard from './Dashboard/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { getActiveInvitation, openParkingBlocker } from 'src/customs/api/visitor';
 import { useSession } from 'src/customs/contexts/SessionContext';
@@ -73,36 +75,16 @@ const Dashboard = () => {
     setOpenAccess(false);
   };
 
-  const cards = [
-    {
-      title: 'Check In',
-      icon: IconLogin,
-      subTitle: `0`,
-      subTitleSetting: 10,
-      color: 'none',
-    },
-    {
-      title: 'Check Out',
-      icon: IconLogout,
-      subTitle: `0`,
-      subTitleSetting: 10,
-      color: 'none',
-    },
-
-    {
-      title: 'Denied',
-      icon: IconCircleOff,
-      subTitle: `0`,
-      subTitleSetting: 10,
-      color: 'none',
-    },
-    {
-      title: 'Block',
-      icon: IconBan,
-      subTitle: `0`,
-      subTitleSetting: 10,
-      color: 'none',
-    },
+  const CardItems = [
+    { title: 'checkin', key: 'Checkin', icon: <IconLogin size={25} /> },
+    { title: 'checkout', key: 'Checkout', icon: <IconLogout size={25} /> },
+    { title: 'denied', key: 'Denied', icon: <IconCircleX size={25} /> },
+    { title: 'block', key: 'Block', icon: <IconForbid2 size={25} /> },
+    // {
+    //   title: 'blacklist',
+    //   key: 'blacklist',
+    //   icon: <IconUsersGroup size={22} />,
+    // },
   ];
 
   useEffect(() => {
@@ -240,7 +222,7 @@ const Dashboard = () => {
           justifyContent="flex-end"
           alignItems="center"
           gap={2}
-          sx={{ mt: 2 }}
+          sx={{ mt: 0.5 }}
         >
           <Button
             size="small"
@@ -275,7 +257,7 @@ const Dashboard = () => {
           </Drawer>
         </Grid>
         <Grid size={{ xs: 12, xl: 9 }}>
-          <TopCard items={cards} size={{ xs: 12, lg: 6 }} />
+          <TopCard items={CardItems} size={{ xs: 12, lg: 6 }} />
         </Grid>
         <Grid
           size={{ xs: 12, xl: 3 }}

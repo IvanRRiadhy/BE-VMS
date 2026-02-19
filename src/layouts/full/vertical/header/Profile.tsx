@@ -40,13 +40,14 @@ const Profile = () => {
 
   const { token, clearToken, groupId } = useSession();
 
-  const handleLogout = useCallback(() => {
+  const handleLogout = useCallback(async () => {
     handleClose2();
     clearToken();
 
     dispatch(clearUser());
-    persistor.purge();
-    localStorage.removeItem('persist:root');
+    await persistor.purge();
+    await persistor.flush();
+
     localStorage.clear();
     sessionStorage.clear();
 

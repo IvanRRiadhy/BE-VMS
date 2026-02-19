@@ -120,13 +120,13 @@ import { useSelector } from 'react-redux';
 
 const COLORS = [
   '#055499',
-  '#f97316',
-  '#22c55e',
-  '#eab308',
-  '#ef4444',
-  '#8b5cf6',
-  '#06b6d4',
-  '#84cc16',
+  // '#f97316',
+  // '#22c55e',
+  // '#eab308',
+  // '#ef4444',
+  // '#8b5cf6',
+  // '#06b6d4',
+  // '#84cc16',
 ];
 
 const TopVisitingPurposeChart = ({ title }: { title: string }) => {
@@ -157,13 +157,7 @@ const TopVisitingPurposeChart = ({ title }: { title: string }) => {
         // start.setDate(today.getDate() - 7);
         // const start_date = start.toISOString().split('T')[0];
 
-        const res = await getTopVisitingPurpose(
-          token,
-          // startDate.toLocaleDateString('en-CA'),
-          // endDate.toLocaleDateString('en-CA'),
-          start,
-          end,
-        );
+        const res = await getTopVisitingPurpose(token, start, end);
 
         const labels = res.collection.map((item: any) => item.name);
         const values = res.collection.map((item: any) => item.count);
@@ -190,13 +184,22 @@ const TopVisitingPurposeChart = ({ title }: { title: string }) => {
         distributed: true,
         borderRadius: 6,
         barHeight: '50%',
+        dataLabels: {
+          position: 'right', // 🔥 ini penting
+        },
       },
     },
     colors: chartData.colors,
     dataLabels: {
-      enabled: false,
-      style: { colors: ['#fff'], fontWeight: 600 },
-      formatter: (val: number) => `${val}`,
+      enabled: true,
+      textAnchor: 'start',
+      offsetX: 5,
+      style: {
+        colors: ['#545454ff'],
+        fontWeight: 600,
+        fontSize: '13px',
+      },
+      formatter: (val: number) => `(${val})`,
     },
     xaxis: {
       categories: chartData.labels,
@@ -236,9 +239,6 @@ const TopVisitingPurposeChart = ({ title }: { title: string }) => {
 
   return (
     <>
-      <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-        {title || t('top_visitor_purpose')}
-      </Typography>
       <Box
         sx={{
           p: 0,
@@ -248,10 +248,13 @@ const TopVisitingPurposeChart = ({ title }: { title: string }) => {
           boxShadow: 3,
           height: {
             xs: 420, // layar kecil → 420px
-            lg: 400, // layar medium ke atas → 400px
+            lg: 420, // layar medium ke atas → 400px
           },
         }}
       >
+        <Typography variant="h5" sx={{ fontWeight: 600, mb: 0, pt: 2, pl: 2 }}>
+          {title || t('top_visitor_purpose')}
+        </Typography>
         <ReactApexChart options={options} series={series} type="bar" height={370} />
       </Box>
     </>

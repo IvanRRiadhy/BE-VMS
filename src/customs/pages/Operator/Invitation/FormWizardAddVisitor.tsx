@@ -1313,14 +1313,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                               sIdx !== activeStep - 1
                                 ? s
                                 : updateSectionForm(s, (arr) => {
-                                    console.log(
-                                      '🧪 remarks list:',
-                                      arr.map((x) => x.remarks),
-                                    );
-
                                     return arr.map((item) =>
                                       clearKeys.includes(item.remarks)
-                                        ? { ...item, answer_text: null }
+                                        ? { ...item, answer_text: '' }
                                         : item,
                                     );
                                   }),

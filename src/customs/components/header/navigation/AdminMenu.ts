@@ -43,6 +43,7 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
     icon: IconHome,
     href: '/admin/dashboard',
   },
+
   {
     id: uniqueId(),
     title: 'navigation.manage_system',
@@ -166,7 +167,6 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
       },
     ],
   },
-
   {
     id: uniqueId(),
     title: 'navigation.visitor',
@@ -185,7 +185,7 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
         title: 'Live Visitor',
         icon: IconUserCircle,
         chipColor: 'secondary',
-        href: '/admin/visitor/invitation-visitor',
+        href: '/admin/visitor/live-visitor',
       },
       {
         id: uniqueId(),
@@ -193,6 +193,13 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
         icon: IconUserCircle,
         chipColor: 'secondary',
         href: '/admin/visitor/transaction-visitor',
+      },
+      {
+        id: uniqueId(),
+        title: 'Blacklist Visitor',
+        icon: IconUserCircle,
+        chipColor: 'secondary',
+        href: '/admin/visitor/blacklist-visitor',
       },
       {
         id: uniqueId(),
@@ -206,10 +213,26 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
   {
     id: uniqueId(),
     title: 'User',
-    icon: IconUsers,
-    chipColor: 'secondary',
+    icon: IconUser,
     href: '/admin/user',
+    children: [
+      {
+        id: uniqueId(),
+        title: 'User',
+        icon: IconUsers,
+        chipColor: 'secondary',
+        href: '/admin/user',
+      },
+      {
+        id: uniqueId(),
+        title: 'User Group',
+        icon: IconUsers,
+        chipColor: 'secondary',
+        href: '/admin/user-group',
+      },
+    ],
   },
+
   {
     id: uniqueId(),
     title: 'report',
@@ -267,6 +290,452 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
   // },
 ];
 
+// export const OperatorAdminNavListingData: ItemDataCustomNavListing[] = [
+//   // Operator Admin
+//   {
+//     id: uniqueId(),
+//     title: 'Dashboard',
+//     icon: IconHome,
+//     chip: 'Main View',
+//     chipColor: 'secondary',
+//     href: '/operator-admin/dashboard',
+//   },
+//   {
+//     id: uniqueId(),
+//     title: 'navigation.manage_system',
+//     icon: IconSettings,
+//     href: '/operator-admin/manage/',
+//     children: [
+//       {
+//         id: uniqueId(),
+//         title: 'navigation.company_department',
+//         icon: IconBuildingSkyscraper,
+//         href: '/operator-admin/manage/companys-deparments',
+//       },
+//       {
+//         id: uniqueId(),
+//         title: 'Enrollment',
+//         icon: IconPackageExport,
+//         href: '/operator-admin/manage/enrollment',
+//         children: [
+//           {
+//             id: uniqueId(),
+//             title: 'navigation.employees',
+//             icon: IconUsers,
+//             href: '/operator-admin/manage/employees',
+//           },
+//           {
+//             id: uniqueId(),
+//             title: 'navigation.staff',
+//             icon: IconSteeringWheel,
+//             href: '/operator-admin/manage/delivery/staff',
+//           },
+//           {
+//             id: uniqueId(),
+//             title: 'VIP',
+//             icon: IconStars,
+//             href: '/operator-admin/manage/vip',
+//           },
+//           {
+//             id: uniqueId(),
+//             title: 'Vendor',
+//             icon: IconUsers,
+//             href: '/operator-admin/manage/vendor',
+//           },
+//         ],
+//       },
+//       {
+//         id: uniqueId(),
+//         title: 'navigation.site_space',
+//         icon: IconSitemap,
+//         href: '/operator-admin/manage/site-space',
+//       },
+//       {
+//         id: uniqueId(),
+//         title: 'navigation.card',
+//         icon: IconCards,
+//         href: '/operator-admin/manage/card',
+//       },
+//       {
+//         id: uniqueId(),
+//         title: 'navigation.timeaccess',
+//         icon: IconCalendarCheck,
+//         href: '/operator-admin/manage/time-access',
+//       },
+//       {
+//         id: uniqueId(),
+//         title: 'navigation.visitor_type',
+//         icon: IconUsersGroup,
+//         href: '/operator-admin/manage/visitor-type',
+//       },
+//       {
+//         id: uniqueId(),
+//         title: 'navigation.document',
+//         icon: IconScript,
+//         href: '/operator-admin/manage/document',
+//       },
+//       {
+//         id: uniqueId(),
+//         title: 'navigation.brand',
+//         icon: IconBrandMedium,
+//         href: '/operator-admin/manage/brand',
+//       },
+//       {
+//         id: uniqueId(),
+//         title: 'navigation.integration',
+//         icon: IconWorldCog,
+//         href: '/operator-admin/manage/integration',
+//       },
+//       {
+//         id: uniqueId(),
+//         title: 'navigation.setting_smtp',
+//         icon: IconMailFilled,
+//         href: '/operator-admin/manage/setting-smtp',
+//       },
+//       {
+//         id: uniqueId(),
+//         title: 'navigation.access_control',
+//         icon: IconAccessible,
+//         href: '/operator-admin/manage/access-control',
+//       },
+//       {
+//         id: uniqueId(),
+//         title: 'navigation.custom_field',
+//         icon: IconSettings,
+//         href: '/operator-admin/manage/custom-field',
+//       },
+//       // {
+//       //   id: uniqueId(),
+//       //   title: 'navigation.zone',
+//       //   icon: IconMapPin,
+//       //   href: '/operator-admin/manage/zone',
+//       // },
+//       {
+//         id: uniqueId(),
+//         title: 'navigation.settings',
+//         icon: IconSettingsFilled,
+//         chipColor: 'secondary',
+//         href: '/operator-admin/settings',
+//       },
+//     ],
+//   },
+//   {
+//     id: uniqueId(),
+//     title: 'navigation.visitor',
+//     icon: IconUser,
+//     href: '/operator-admin/visitor',
+//     children: [
+//       {
+//         id: uniqueId(),
+//         title: 'List Visitor',
+//         icon: IconUserCircle,
+//         chipColor: 'secondary',
+//         href: '/operator-admin/visitor/list-visitor',
+//       },
+//       {
+//         id: uniqueId(),
+//         title: 'Live Visitor',
+//         icon: IconUserCircle,
+//         chipColor: 'secondary',
+//         href: '/operator-admin/visitor/live-visitor',
+//       },
+//       {
+//         id: uniqueId(),
+//         title: 'Transaction Visitor',
+//         icon: IconUserCircle,
+//         chipColor: 'secondary',
+//         href: '/operator-admin/visitor/transaction-visitor',
+//       },
+//       {
+//         id: uniqueId(),
+//         title: 'Blacklist Visitor',
+//         icon: IconUserCircle,
+//         chipColor: 'secondary',
+//         href: '/operator-admin/visitor/blacklist-visitor',
+//       },
+//       {
+//         id: uniqueId(),
+//         title: 'navigation.scheduler',
+//         icon: IconCalendarClock,
+//         href: '/operator-admin/visitor/scheduler',
+//       },
+//     ],
+//   },
+//   {
+//     id: uniqueId(),
+//     title: 'User',
+//     icon: IconUsers,
+//     chipColor: 'secondary',
+//     href: '/operator-admin/user',
+//   },
+//   {
+//     id: uniqueId(),
+//     title: 'report',
+//     icon: IconReport,
+//     chipColor: 'secondary',
+//     href: '/operator-admin/report',
+//     children: [
+//       {
+//         id: uniqueId(),
+//         title: 'Transaction Log',
+//         icon: IconReport,
+//         chipColor: 'secondary',
+//         href: '/operator-admin/report/transaction-log',
+//       },
+//       // {
+//       //   id: uniqueId(),
+//       //   title: 'Approval Workflow',
+//       //   icon: IconReport,
+//       //   chipColor: 'secondary',
+//       //   href: '/admin/report/approval-workflow',
+//       // },
+//       // {
+//       //   id: uniqueId(),
+//       //   title: 'Operator Activity Log',
+//       //   icon: IconReport,
+//       //   chipColor: 'secondary',
+//       //   href: '/admin/report/operator-activity-log',
+//       // },
+//     ],
+//   },
+//   {
+//     id: uniqueId(),
+//     title: 'Print Badge',
+//     icon: IconPrinter,
+//     chipColor: 'secondary',
+//     href: '/operator-admin/print-badge',
+//   },
+//   {
+//     id: uniqueId(),
+//     title: 'Evacuate',
+//     icon: IconRun,
+//     href: '/operator-admin/evacuate',
+//   },
+// ];
+
+// export const OperatorAdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
+//   {
+//     id: uniqueId(),
+//     title: 'Dashboard',
+//     icon: IconHome,
+//     chip: 'Main View',
+//     chipColor: 'secondary',
+//     href: '/operator-admin/dashboard',
+//   },
+//   // Operator Admin
+//   {
+//     id: uniqueId(),
+//     title: 'navigation.manage_system',
+//     icon: IconSettings,
+//     href: '/operator-admin/manage/',
+//     children: [
+//       {
+//         id: uniqueId(),
+//         title: 'navigation.company_department',
+//         icon: IconBuildingSkyscraper,
+//         href: '/operator-admin/manage/companys-deparments',
+//       },
+//       {
+//         id: uniqueId(),
+//         title: 'Enrollment',
+//         icon: IconPackageExport,
+//         href: '/operator-admin/manage/enrollment',
+//         children: [
+//           {
+//             id: uniqueId(),
+//             title: 'navigation.employees',
+//             icon: IconUsers,
+//             href: '/operator-admin/manage/employees',
+//           },
+//           {
+//             id: uniqueId(),
+//             title: 'navigation.staff',
+//             icon: IconSteeringWheel,
+//             href: '/operator-admin/manage/delivery/staff',
+//           },
+//           {
+//             id: uniqueId(),
+//             title: 'VIP',
+//             icon: IconStars,
+//             href: '/operator-admin/manage/vip',
+//           },
+//           {
+//             id: uniqueId(),
+//             title: 'Vendor',
+//             icon: IconUsers,
+//             href: '/operator-admin/manage/vendor',
+//           },
+//         ],
+//       },
+//       {
+//         id: uniqueId(),
+//         title: 'navigation.site_space',
+//         icon: IconSitemap,
+//         href: '/operator-admin/manage/site-space',
+//       },
+//       {
+//         id: uniqueId(),
+//         title: 'navigation.card',
+//         icon: IconCards,
+//         href: '/operator-admin/manage/card',
+//       },
+//       {
+//         id: uniqueId(),
+//         title: 'navigation.timeaccess',
+//         icon: IconCalendarCheck,
+//         href: '/operator-admin/manage/time-access',
+//       },
+//       {
+//         id: uniqueId(),
+//         title: 'navigation.visitor_type',
+//         icon: IconUsersGroup,
+//         href: '/operator-admin/manage/visitor-type',
+//       },
+//       {
+//         id: uniqueId(),
+//         title: 'navigation.document',
+//         icon: IconScript,
+//         href: '/operator-admin/manage/document',
+//       },
+//       {
+//         id: uniqueId(),
+//         title: 'navigation.brand',
+//         icon: IconBrandMedium,
+//         href: '/operator-admin/manage/brand',
+//       },
+//       {
+//         id: uniqueId(),
+//         title: 'navigation.integration',
+//         icon: IconWorldCog,
+//         href: '/operator-admin/manage/integration',
+//       },
+//       {
+//         id: uniqueId(),
+//         title: 'navigation.setting_smtp',
+//         icon: IconMailFilled,
+//         href: '/operator-admin/manage/setting-smtp',
+//       },
+//       {
+//         id: uniqueId(),
+//         title: 'navigation.access_control',
+//         icon: IconAccessible,
+//         href: '/operator-admin/manage/access-control',
+//       },
+//       {
+//         id: uniqueId(),
+//         title: 'navigation.custom_field',
+//         icon: IconSettings,
+//         href: '/operator-admin/manage/custom-field',
+//       },
+//       // {
+//       //   id: uniqueId(),
+//       //   title: 'navigation.zone',
+//       //   icon: IconMapPin,
+//       //   href: '/operator-admin/manage/zone',
+//       // },
+//       {
+//         id: uniqueId(),
+//         title: 'navigation.settings',
+//         icon: IconSettingsFilled,
+//         chipColor: 'secondary',
+//         href: '/operator-admin/settings',
+//       },
+//     ],
+//   },
+//   {
+//     id: uniqueId(),
+//     title: 'navigation.visitor',
+//     icon: IconUser,
+//     href: '/operator-admin/visitor',
+//     children: [
+//       {
+//         id: uniqueId(),
+//         title: 'List Visitor',
+//         icon: IconUserCircle,
+//         chipColor: 'secondary',
+//         href: '/operator-admin/visitor/list-visitor',
+//       },
+//       {
+//         id: uniqueId(),
+//         title: 'Live Visitor',
+//         icon: IconUserCircle,
+//         chipColor: 'secondary',
+//         href: '/operator-admin/visitor/live-visitor',
+//       },
+//       {
+//         id: uniqueId(),
+//         title: 'Transaction Visitor',
+//         icon: IconUserCircle,
+//         chipColor: 'secondary',
+//         href: '/operator-admin/visitor/transaction-visitor',
+//       },
+//       {
+//         id: uniqueId(),
+//         title: 'Blacklist Visitor',
+//         icon: IconUserCircle,
+//         chipColor: 'secondary',
+//         href: '/operator-admin/visitor/blacklist-visitor',
+//       },
+//       {
+//         id: uniqueId(),
+//         title: 'navigation.scheduler',
+//         icon: IconCalendarClock,
+//         href: '/operator-admin/visitor/scheduler',
+//       },
+//     ],
+//   },
+//   {
+//     id: uniqueId(),
+//     title: 'User',
+//     icon: IconUsers,
+//     chipColor: 'secondary',
+//     href: '/operator-admin/user',
+//   },
+//   {
+//     id: uniqueId(),
+//     title: 'report',
+//     icon: IconReport,
+//     chipColor: 'secondary',
+//     href: '/operator-admin/report',
+//     children: [
+//       {
+//         id: uniqueId(),
+//         title: 'Transaction Log',
+//         icon: IconReport,
+//         chipColor: 'secondary',
+//         href: '/operator-admin/report/transaction-log',
+//       },
+//       // {
+//       //   id: uniqueId(),
+//       //   title: 'Approval Workflow',
+//       //   icon: IconReport,
+//       //   chipColor: 'secondary',
+//       //   href: '/admin/report/approval-workflow',
+//       // },
+//       // {
+//       //   id: uniqueId(),
+//       //   title: 'Operator Activity Log',
+//       //   icon: IconReport,
+//       //   chipColor: 'secondary',
+//       //   href: '/admin/report/operator-activity-log',
+//       // },
+//     ],
+//   },
+//   {
+//     id: uniqueId(),
+//     title: 'Print Badge',
+//     icon: IconPrinter,
+//     chipColor: 'secondary',
+//     href: '/operator-admin/print-badge',
+//   },
+//   {
+//     id: uniqueId(),
+//     title: 'Evacuate',
+//     icon: IconRun,
+//     href: '/operator-admin/evacuate',
+//   },
+// ];
+
 export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
   {
     navlabel: true,
@@ -281,7 +750,6 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
     href: '/admin/dashboard',
   },
 
-  //   MANAGE.
   {
     id: uniqueId(),
     title: 'Manages system',
@@ -421,7 +889,7 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
         title: 'Invitation Visitor',
         icon: IconUserCircle,
         chipColor: 'secondary',
-        href: '/admin/visitor/invitation-visitor',
+        href: '/admin/visitor/live-visitor',
       },
       {
         id: uniqueId(),
@@ -429,6 +897,13 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
         icon: IconUserCircle,
         chipColor: 'secondary',
         href: '/admin/visitor/transaction-visitor',
+      },
+      {
+        id: uniqueId(),
+        title: 'Blacklist Visitor',
+        icon: IconUserCircle,
+        chipColor: 'secondary',
+        href: '/admin/visitor/blacklist-visitor',
       },
       {
         id: uniqueId(),
@@ -442,9 +917,24 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
   {
     id: uniqueId(),
     title: 'User',
-    icon: IconUsers,
-    chipColor: 'secondary',
+    icon: IconUser,
     href: '/admin/user',
+    children: [
+      {
+        id: uniqueId(),
+        title: 'User',
+        icon: IconUsers,
+        chipColor: 'secondary',
+        href: '/admin/user',
+      },
+      {
+        id: uniqueId(),
+        title: 'User Group',
+        icon: IconUsers,
+        chipColor: 'secondary',
+        href: '/admin/user-group',
+      },
+    ],
   },
   {
     id: uniqueId(),

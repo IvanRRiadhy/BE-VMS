@@ -79,9 +79,6 @@ const AvarageDurationChart = () => {
 
   return (
     <>
-      <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-        {t('avarage_duration')}
-      </Typography>
       <Box
         sx={{
           py: 2,
@@ -92,6 +89,9 @@ const AvarageDurationChart = () => {
           // border: '1px solid #d6d3d3ff',
         }}
       >
+        <Typography variant="h5" sx={{ mb: 1, fontWeight: 600, pl: 2 }}>
+          {t('avarage_duration')}
+        </Typography>
         <GlobalStyles
           styles={{
             '.MuiChartsAxis-line': { display: 'none' },

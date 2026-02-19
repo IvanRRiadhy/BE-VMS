@@ -3,9 +3,9 @@ import { Box, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { getRepeatsVisitor } from 'src/customs/api/admin';
-import { t } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
+import Chart from 'react-apexcharts';
 
 type VisitorTypeData = {
   label: string;
@@ -35,17 +35,11 @@ const VisitingTypeChart = () => {
         // start.setDate(today.getDate() - 7);
         // const start_date = start.toISOString().split('T')[0];
 
-        const res = await getRepeatsVisitor(
-          token,
-          // startDate.toLocaleDateString('en-CA'),
-          // endDate.toLocaleDateString('en-CA'),
-          start,
-          end,
-        );
+        const res = await getRepeatsVisitor(token, start, end);
 
         if (res?.collection) {
           setData([
-            { label: t('repeat_visitor'), value: res.collection.repeat ?? 0, color: '#2196f3' },
+            { label: t('repeat_visitor'), value: res.collection.repeat ?? 0, color: '#055499' },
             { label: t('new_visitor'), value: res.collection.new ?? 0, color: '#e5e7eb' },
           ]);
         }
@@ -62,9 +56,6 @@ const VisitingTypeChart = () => {
 
   return (
     <>
-      <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-        {t('visiting_type')}
-      </Typography>
       <Box
         sx={{
           p: 3,
@@ -72,13 +63,16 @@ const VisitingTypeChart = () => {
           bgcolor: 'background.paper',
           boxShadow: 3,
           // border: '1px solid #d6d3d3ff',
-          height: 400,
+          height: 420,
           display: 'flex',
           flexDirection: 'column',
         }}
       >
+        <Typography variant="h5" sx={{ mb: 1, fontWeight: 600 }}>
+          {t('visiting_type')}
+        </Typography>
         <Box sx={{ position: 'relative' }}>
-          <PieChart
+          {/* <PieChart
             series={[
               {
                 data: data.map((d, i) => ({
@@ -96,10 +90,72 @@ const VisitingTypeChart = () => {
             slotProps={{
               legend: { hidden: true },
             }}
+          /> */}
+
+          <Chart
+            type="donut"
+            height={320}
+            series={data.map((d) => d.value)}
+            options={{
+              labels: data.map((d) => d.label),
+              colors: data.map((d) => d.color),
+              legend: {
+                show: false,
+              },
+              plotOptions: {
+                pie: {
+                  donut: {
+                    size: '70%',
+                    labels: {
+                      show: true,
+                      name: {
+                        show: true,
+                        offsetY: -10,
+                      },
+                      value: {
+                        show: true,
+                        fontSize: '24px',
+                        fontWeight: 600,
+                        formatter: (val: string) => `${val}`,
+                      },
+                      total: {
+                        show: true,
+                        showAlways: true,
+                        label: 'Total:',
+                        fontSize: '18px',
+                        formatter: function () {
+                          const total = data.reduce((sum, d) => sum + d.value, 0);
+                          const repeat = data[0]?.value ?? 0;
+                          const percentage = total > 0 ? ((repeat / total) * 100).toFixed(1) : '0';
+
+                          return `${total}`;
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+              dataLabels: {
+                enabled: true,
+                formatter: function (val: number) {
+                  return `${val.toFixed(1)}%`;
+                },
+                style: {
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  colors: ['#fff'],
+                },
+              },
+              tooltip: {
+                y: {
+                  formatter: (val: number) => `${val}`,
+                },
+              },
+            }}
           />
 
           {/* angka di tengah */}
-          <Box
+          {/* <Box
             sx={{
               position: 'absolute',
               top: '50%',
@@ -111,14 +167,14 @@ const VisitingTypeChart = () => {
             <Typography variant="h6" fontWeight={700} color="white">
               {repeatPercentage} %
             </Typography>
-          </Box>
+          </Box> */}
 
           {/* legend custom */}
           <Box
             sx={{
               display: 'flex',
               justifyContent: 'center',
-              mt: -2,
+              mt: 2,
               gap: 1,
             }}
           >
@@ -132,7 +188,9 @@ const VisitingTypeChart = () => {
                     bgcolor: item.color,
                   }}
                 />
-                <Typography variant="body2">{item.label}</Typography>
+                <Typography variant="body1">
+                  {item.label} ({item.value})
+                </Typography>
               </Box>
             ))}
           </Box>

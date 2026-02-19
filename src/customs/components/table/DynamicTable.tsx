@@ -30,7 +30,7 @@ import {
 } from '@mui/material';
 import BlankCard from 'src/components/shared/BlankCard';
 import { RichHtmlCell } from './RichHtmlCell';
-import { fontSize, Stack, useMediaQuery, useTheme } from '@mui/system';
+import { Stack, useMediaQuery, useTheme } from '@mui/system';
 import {
   IconAlertSquare,
   IconArrowAutofitLeft,
@@ -147,6 +147,7 @@ type DynamicTableProps<
   isButtonEnabled?: boolean;
   isButtonDisabled?: boolean;
   isHaveImage?: boolean;
+  isHavePermission?: boolean;
   isHaveObjectData?: boolean;
   isHaveVip?: boolean;
   isNoActionTableHead?: boolean;
@@ -184,6 +185,7 @@ type DynamicTableProps<
   filterMoreContent?: React.ReactNode;
   sortColumns?: string[];
   isOperatorSetting?: boolean;
+  isBlacklistPage?: boolean;
   onNavigatePage?: any;
   onCopyLink?: (row: T) => void;
   onDetailLink?: (row: T) => void;
@@ -198,6 +200,7 @@ type DynamicTableProps<
   onIsButtonEnabled?: (row: T) => void;
   onIsButtonDisabled?: (row: T) => void;
   onEdit?: (row: T) => void;
+  onPermission?: (row: T) => void;
   onBatchEdit?: (row: T[]) => void;
   onDelete?: (row: T) => void;
   onBatchDelete?: (row: T[]) => void;
@@ -246,8 +249,10 @@ export function DynamicTable<
   isHaveAddData = false,
   isHaveHeader = false,
   isHaveBooleanSwitch = false,
+  isHavePermission = false,
   breadcrumbItems,
   isOperatorSetting = false,
+  isBlacklistPage = false,
   isActionListVisitor = false,
   isHaveVerified = false,
   isHaveView = false,
@@ -277,7 +282,7 @@ export function DynamicTable<
   isHavePagination,
   isHavePdf,
   isSiteSpaceType = false,
-  isBlacklistAction = false,
+  isBlacklistAction,
   isHaveIntegration,
   onNameClick,
   isDataVerified = false,
@@ -318,6 +323,7 @@ export function DynamicTable<
   onSiteAccess,
   onView,
   onBatchEdit,
+  onPermission,
   setCurrentId,
   onDelete,
   onBatchDelete,
@@ -436,11 +442,10 @@ export function DynamicTable<
     onFilterByColumn?.({ column: value });
   };
 
-const onApplyFilterCalender = (ranges: { startDate: Date; endDate: Date }) => {
-  onFilterCalenderChange?.(ranges);
-  setShowDrawer(false);
-};
-
+  const onApplyFilterCalender = (ranges: { startDate: Date; endDate: Date }) => {
+    onFilterCalenderChange?.(ranges);
+    setShowDrawer(false);
+  };
 
   const handleChangePage = (_event: unknown, newPage: number) => {
     setPage(newPage);
@@ -459,7 +464,7 @@ const onApplyFilterCalender = (ranges: { startDate: Date; endDate: Date }) => {
   const toTitleCase = (text: string) => {
     return text
       .replace(/_/g, ' ') // ganti underscore jadi spasi
-      .replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1)); 
+      .replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1));
   };
 
   const imageFields = ['faceimage', 'photo', 'avatar', 'image'];
@@ -941,6 +946,23 @@ const onApplyFilterCalender = (ranges: { startDate: Date; endDate: Date }) => {
                           Operator
                         </Button>
                       )}
+                      {isBlacklistPage && (
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={onNavigatePage}
+                          startIcon={<IconArrowAutofitLeft width={18} />}
+                          sx={{
+                            height: 36,
+                            width: '100%',
+                            fontSize: '0.7rem',
+                            whiteSpace: 'nowrap',
+                          }}
+                          size="medium"
+                        >
+                          Blacklist
+                        </Button>
+                      )}
                     </Box>
                     {/* </Grid2> */}
                   </Box>
@@ -1258,7 +1280,7 @@ const onApplyFilterCalender = (ranges: { startDate: Date; endDate: Date }) => {
                 stickyHeader={stickyHeader}
                 // sx={{
                 // width: '100%',
-                // tableLayout: 'fixed', // 🔥 kunci utama
+                // tableLayout: 'fixed',
                 // whiteSpace: 'normal', // biar teks bisa wrap
                 // }}
               >
@@ -1366,7 +1388,7 @@ const onApplyFilterCalender = (ranges: { startDate: Date; endDate: Date }) => {
                     {/* {paginatedData.length > 0 && ( */}
                     <TableCell
                       sx={{
-                        position: 'sticky',
+                        position: { xs: 'static', lg: 'sticky' },
                         left:
                           (isHaveChecked ? CHECKBOX_COL_WIDTH : 0) +
                           (isActionVisitor ? ACTION_COL_WIDTH : 0),
@@ -1374,7 +1396,6 @@ const onApplyFilterCalender = (ranges: { startDate: Date; endDate: Date }) => {
                         background: 'white',
                         minWidth: INDEX_COL_WIDTH,
                         maxWidth: INDEX_COL_WIDTH,
-                        // textAlign: 'center',
                       }}
                     >
                       {loading ? (
@@ -1393,7 +1414,7 @@ const onApplyFilterCalender = (ranges: { startDate: Date; endDate: Date }) => {
                       const isEarlyAccess = colName === 'early_access';
                       let label: string = colName;
                       if (label.startsWith('is_')) {
-                        label = label.replace(/^is_/, ''); // hapus "is_"
+                        label = label.replace(/^is_/, '');
                       }
 
                       const pretty = label
@@ -1798,7 +1819,7 @@ const onApplyFilterCalender = (ranges: { startDate: Date; endDate: Date }) => {
 
                         <TableCell
                           sx={{
-                            position: 'sticky',
+                            position: { xs: 'static', lg: 'sticky' },
                             left:
                               (isHaveChecked ? CHECKBOX_COL_WIDTH : 0) +
                               (isActionVisitor ? ACTION_COL_WIDTH : 0),
@@ -1928,18 +1949,12 @@ const onApplyFilterCalender = (ranges: { startDate: Date; endDate: Date }) => {
                                   {formatDate(row[col] as string)}
                                   <br />
                                 </>
-                              ) : // )
-
-                              // : isHavePeriod && col === 'visitor_period_end' ? (
-                              //   <>
-
-                              //   </>
-                              isHaveEmployee && col === 'host' ? (
+                              ) : isHaveEmployee && col === 'host' ? (
                                 <Tooltip title="View Host">
                                   <IconButton
                                     size="small"
                                     color="primary"
-                                    onClick={() => onEmployeeClick?.(row)} // kirim seluruh row
+                                    onClick={() => onEmployeeClick?.(row)}
                                     sx={{
                                       borderRadius: '50%',
                                       width: 30,
@@ -1952,13 +1967,6 @@ const onApplyFilterCalender = (ranges: { startDate: Date; endDate: Date }) => {
                                 </Tooltip>
                               ) : col === 'employee' ? (
                                 <>
-                                  {/* <Tooltip title="You are the host">
-                                    <IconStarFilled
-                                      color="gold"
-                                      size={16}
-                                      style={{ color: 'gold' }}
-                                    />
-                                  </Tooltip> */}
                                   {row.employee && (
                                     <Tooltip title="You are the host">
                                       <IconStarFilled
@@ -2002,6 +2010,7 @@ const onApplyFilterCalender = (ranges: { startDate: Date; endDate: Date }) => {
                                 col === 'is_multi_site' ||
                                 col === 'is_used' ||
                                 col === 'status_link' ||
+                                col === 'is_active' ||
                                 col === 'early_access' ? (
                                 <Box
                                   display="flex"
@@ -2041,7 +2050,7 @@ const onApplyFilterCalender = (ranges: { startDate: Date; endDate: Date }) => {
                                   <IconButton
                                     size="small"
                                     color="primary"
-                                    onClick={() => onFileClick?.(row)} // kirim seluruh row
+                                    onClick={() => onFileClick?.(row)}
                                     sx={{
                                       borderRadius: '50%',
                                       width: 30,
@@ -2155,6 +2164,31 @@ const onApplyFilterCalender = (ranges: { startDate: Date; endDate: Date }) => {
                                 ) : (
                                   <>-</>
                                 )
+                              ) : col === 'is_blacklist' ? (
+                                <>
+                                  <Box
+                                    sx={(theme) => ({
+                                      backgroundColor: row[col]
+                                        ? theme.palette.success.main
+                                        : theme.palette.error.main,
+                                      borderRadius: '50%',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      p: '2px',
+                                    })}
+                                  >
+                                    {row[col] ? (
+                                      <Tooltip title="Blacklist" arrow>
+                                        <IconCheck color="white" size={18} />
+                                      </Tooltip>
+                                    ) : (
+                                      <Tooltip title="Not Blacklist" arrow>
+                                        <IconX color="white" size={16} />
+                                      </Tooltip>
+                                    )}
+                                  </Box>
+                                </>
                               ) : isHaveBooleanSwitch && typeof row[col] === 'boolean' ? (
                                 <Box
                                   display="flex"
@@ -2394,6 +2428,62 @@ const onApplyFilterCalender = (ranges: { startDate: Date; endDate: Date }) => {
                                     </IconButton>
                                   </Tooltip>
                                 </>
+                              ) : isHavePermission ? (
+                                <>
+                                  <Tooltip title="Edit">
+                                    <IconButton
+                                      onClick={() => onEdit?.(row)}
+                                      disableRipple
+                                      sx={{
+                                        color: 'white',
+                                        backgroundColor: '#FA896B',
+                                        width: 28,
+                                        height: 28,
+                                        p: 0.5,
+                                        borderRadius: '50%',
+                                        '&:hover': { backgroundColor: '#e06f52', color: 'white' },
+                                      }}
+                                    >
+                                      <IconPencil width={14} height={14} />
+                                    </IconButton>
+                                  </Tooltip>
+
+                                  {/* 🗑 Delete */}
+                                  <Tooltip title="Delete">
+                                    <IconButton
+                                      onClick={() => onDelete?.(row)}
+                                      disableRipple
+                                      sx={{
+                                        color: 'white',
+                                        backgroundColor: 'error.main',
+                                        width: 28,
+                                        height: 28,
+                                        p: 0.5,
+                                        borderRadius: '50%',
+                                        '&:hover': {
+                                          backgroundColor: 'rgba(255, 0, 0, 0.7)',
+                                          color: 'white',
+                                        },
+                                      }}
+                                    >
+                                      <IconTrash width={14} height={14} />
+                                    </IconButton>
+                                  </Tooltip>
+                                  <Tooltip title="Sync Visitor Type">
+                                    <Button
+                                      onClick={() => onPermission?.(row)}
+                                      disableRipple
+                                      sx={{
+                                        color: 'white',
+                                      }}
+                                      variant="contained"
+                                      color="primary"
+                                    >
+                                      {/* <IconRefresh width={18} height={18} /> */}
+                                      Permission
+                                    </Button>
+                                  </Tooltip>
+                                </>
                               ) : isHaveViewAndAction ? (
                                 <>
                                   <Tooltip title="View Detail Schedule">
@@ -2477,8 +2567,7 @@ const onApplyFilterCalender = (ranges: { startDate: Date; endDate: Date }) => {
                                   </Tooltip>
                                 </>
                               ) : isBlacklistAction ? (
-                                <>
-                                  {' '}
+                                !row.is_blacklist ? (
                                   <Tooltip
                                     title="Blacklist Visitor"
                                     arrow
@@ -2493,24 +2582,22 @@ const onApplyFilterCalender = (ranges: { startDate: Date; endDate: Date }) => {
                                     }}
                                   >
                                     <Button
-                                      // variant="contained"
-                                      // color="error"
                                       size="small"
                                       startIcon={<IconXboxX />}
-                                      onClick={() => onBlacklist?.(row)} 
+                                      onClick={() => onBlacklist?.(row)}
                                       sx={{
                                         textTransform: 'none',
                                         borderRadius: 1,
                                         fontWeight: 500,
-                                        backgroundColor: '#6B0000',
+                                        backgroundColor: '#000',
                                         color: 'white',
-                                        '&:hover': { backgroundColor: '#000 ', opacity: 0.8 },
+                                        '&:hover': { backgroundColor: '#000', opacity: 0.8 },
                                       }}
                                     >
                                       Blacklist
                                     </Button>
                                   </Tooltip>
-                                </>
+                                ) : null
                               ) : isActionListVisitor ? (
                                 <>
                                   <Tooltip

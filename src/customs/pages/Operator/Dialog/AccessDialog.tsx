@@ -50,6 +50,8 @@ export default function AccessDialog({
   setSnackbarMsg,
   setSnackbarType,
 }: AccessDialogProps) {
+  console.log('allowed actions', allowedActions);
+  console.log('selected access ids', selectedAccessIds);
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md" container={containerRef}>
       <DialogTitle>Give Access</DialogTitle>

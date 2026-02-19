@@ -15,7 +15,7 @@ export interface GroupAccess {
 
 export interface LoginResponseCollection {
   organization_id: string;
-  group_id: string;
+  user_group_id: string;
   email: string;
   username: string;
   fullname: string;
@@ -24,7 +24,7 @@ export interface LoginResponseCollection {
   token: string;
   employee_id: string;
   distributor_id: string;
-  menu: any[]; 
+  menu: any[];
   groupAccess: GroupAccess[];
   id: string;
   status: number;

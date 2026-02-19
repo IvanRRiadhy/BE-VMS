@@ -1,9 +1,9 @@
 {
   "export ": "Export",
-  "top_visitor": "Top Visitor",
+  "top_visitor": "Top 5 Visitor",
   "top_visitor_purpose": "Top Visiting Purpose",
   "visiting_type": "Visiting Type",
-  "avarage_duration": "Average Duration",
+  "avarage_duration": "Average Visiting Duration",
   "fluctuation_visitor": "Fluctuation Visitor",
   "heatmap_visitor": "Heatmap Visitor",
   "visitor_praregist": "Pre Registration Visitor List",
