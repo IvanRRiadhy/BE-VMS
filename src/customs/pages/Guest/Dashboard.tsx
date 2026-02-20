@@ -35,7 +35,8 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import QRCode from 'react-qr-code';
-import VisitorStatusPieChart from 'src/customs/pages/Guest/Components/charts/VisitorStatusPieChart';
+// import VisitorStatusPieChart from 'src/customs/pages/Guest/Components/charts/VisitorStatusPieChart';
+import VisitorStatusPieChart from 'src/customs/components/charts/VisitorStatusPieChart';
 import TopCard from './Dashboard/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { getActiveInvitation, openParkingBlocker } from 'src/customs/api/visitor';

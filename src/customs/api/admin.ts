@@ -506,15 +506,15 @@ export const getPermissionById = async (id: string, token: string): Promise<any>
   return response.data;
 };
 
-export const createPermission = async (token: string, data: any): Promise<any> => {
-  const response = await axiosInstance.post('/user-group-permission', data, {
+export const createPermission = async (token: string, data: any, groupId: string): Promise<any> => {
+  const response = await axiosInstance.post(`/user-group-permission/group/${groupId}`, data, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return response.data;
 };
 
 export const deletePermission = async (token: string, id: string): Promise<any> => {
-  const response = await axiosInstance.delete(`/user-group-permission/${id}`, {
+  const response = await axiosInstance.delete(`/user-group-permission/group/${id}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return response.data;
@@ -535,22 +535,29 @@ export const getPermissionSiteById = async (id: string, token: string): Promise<
   return response.data;
 };
 
-export const createPermissionSite = async (token: string, data: any): Promise<any> => {
-  const response = await axiosInstance.post('/user-group-site', data, {
+export const createPermissionSite = async (
+  token: string,
+  data: any,
+  groupId: string,
+): Promise<any> => {
+  const response = await axiosInstance.post(`/user-group-site/group/${groupId}`, data, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return response.data;
 };
 
 export const deletePermissionSite = async (token: string, id: string): Promise<any> => {
-  const response = await axiosInstance.delete(`/user-group-site/${id}`, {
+  const response = await axiosInstance.delete(`/user-group-site/group/${id}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return response.data;
 };
 
 // permission register site
-export const getAllPermissionRegisterSite = async (token: string, groupId: string): Promise<any> => {
+export const getAllPermissionRegisterSite = async (
+  token: string,
+  groupId: string,
+): Promise<any> => {
   const response = await axiosInstance.get('/user-group-registersite/group/' + groupId, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -564,30 +571,65 @@ export const getPermissionRegisterSiteById = async (id: string, token: string): 
   return response.data;
 };
 
-export const createPermissionRegisterSite = async (token: string, data: any): Promise<any> => {
-  const response = await axiosInstance.post('/user-group-registersite', data, {
+export const createPermissionRegisterSite = async (
+  token: string,
+  data: any,
+  groupId: string,
+): Promise<any> => {
+  const response = await axiosInstance.post(`/user-group-registersite/group/${groupId}`, data, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return response.data;
 };
 
 export const deletePermissionRegisterSite = async (token: string, id: string): Promise<any> => {
-  const response = await axiosInstance.delete(`/user-group-registersite/${id}`, {
+  const response = await axiosInstance.delete(`/user-group-registersite/group/${id}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return response.data;
 };
 
 // permission organization
-export const getAllPermissionOrganization = async (token: string, groupId: string): Promise<any> => {
+export const getAllPermissionOrganization = async (
+  token: string,
+  groupId: string,
+): Promise<any> => {
   const response = await axiosInstance.get('/user-group-org/group/' + groupId, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return response.data;
 };
 
+export const getPermissionOrganizationById = async (id: string, token: string): Promise<any> => {
+  const response = await axiosInstance.get(`/user-group-org/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+export const createPermissionOrganization = async (
+  token: string,
+  data: any,
+  groupId: string,
+): Promise<any> => {
+  const response = await axiosInstance.post(`/user-group-org/group/${groupId}`, data, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+export const deletePermissionOrganization = async (token: string, id: string): Promise<any> => {
+  const response = await axiosInstance.delete(`/user-group-org/group/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
 // permission manage visitor
-export const getAllPermissionManageVisitor = async (token: string, groupId: string): Promise<any> => {
+export const getAllPermissionManageVisitor = async (
+  token: string,
+  groupId: string,
+): Promise<any> => {
   const response = await axiosInstance.get('/user-group-managevisitor/group/' + groupId, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -601,15 +643,19 @@ export const getPermissionManageVisitorById = async (id: string, token: string):
   return response.data;
 };
 
-export const createPermissionManageVisitor = async (token: string, data: any): Promise<any> => {
-  const response = await axiosInstance.post('/user-group-managevisitor', data, {
+export const createPermissionManageVisitor = async (
+  token: string,
+  data: any,
+  groupId: string,
+): Promise<any> => {
+  const response = await axiosInstance.post('/user-group-managevisitor/group/' + groupId, data, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return response.data;
 };
 
 export const deletePermissionManageVisitor = async (token: string, id: string): Promise<any> => {
-  const response = await axiosInstance.delete(`/user-group-managevisitor/${id}`, {
+  const response = await axiosInstance.delete(`/user-group-managevisitor/group/${id}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return response.data;

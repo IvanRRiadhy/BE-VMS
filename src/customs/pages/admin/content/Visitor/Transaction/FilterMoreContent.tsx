@@ -17,7 +17,7 @@ import { useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomRadio from 'src/components/forms/theme-elements/CustomRadio';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import { useHost } from 'src/hooks/UseHost';
+import { useHost } from 'src/hooks/useHost';
 import { useSites } from 'src/hooks/useSites';
 
 interface VisitorFilters {

@@ -15,7 +15,7 @@ import TopVisitingPurposeChart from 'src/customs/components/charts/TopVisitingPu
 import TopVisitor from 'src/customs/components/charts/TopVisitor';
 import VisitingTypeChart from 'src/customs/components/charts/VisitingTypeChart';
 import VisitorFluctuationChart from 'src/customs/components/charts/VisitorFluctuationChart';
-import VisitorHeatMap from '../../../../components/charts/VisitorHeatMap';
+import VisitorHeatMap from 'src/customs/components/charts/VisitorHeatMap';
 import AvarageDurationChart from 'src/customs/components/charts/AverageDurationChart';
 import {
   IconCalendar,
@@ -51,11 +51,11 @@ const Content = () => {
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
 
-    const imgWidth = pdfWidth - 20; // margin kiri kanan
+    const imgWidth = pdfWidth - 20; 
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
     let heightLeft = imgHeight;
-    let position = 10; // margin atas pertama
+    let position = 10; 
 
     // Halaman pertama
     pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);

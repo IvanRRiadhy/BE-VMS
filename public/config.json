@@ -1,4 +1,4 @@
 {
-  "API_BASE_URL": "http://192.168.1.116:8000",
-  "API_URL": "http://192.168.1.116:8000/api"
+  "API_BASE_URL": "https://directed-emotions-gains-florida.trycloudflare.com",
+  "API_URL": "https://directed-emotions-gains-florida.trycloudflare.com/api"
 }

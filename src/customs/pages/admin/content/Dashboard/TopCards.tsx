@@ -46,6 +46,26 @@ const TopCards = ({ items = [], size }: any) => {
   const [statsYesterday, setStatsYesterday] = useState<Record<string, number>>({});
   const [isChartReady, setIsChartReady] = useState(false);
 
+  const [normalizedData, setNormalizedData] = useState<
+    { Date: string; StatusMap: Record<string, number> }[]
+  >([]);
+
+  const normalizeCollection = (collection: ApiDateGroup[]) => {
+    return collection.map((day) => {
+      const grouped: Record<string, number> = {};
+
+      day.Status.forEach((item) => {
+        const key = item.visitor_status.trim();
+        grouped[key] = (grouped[key] || 0) + Number(item.Count || 0);
+      });
+
+      return {
+        Date: day.Date,
+        StatusMap: grouped,
+      };
+    });
+  };
+
   useEffect(() => {
     if (!token) return;
 
@@ -114,7 +134,9 @@ const TopCards = ({ items = [], size }: any) => {
           });
         });
 
-        setRawCollection(collection);
+        // setRawCollection(collection);
+        const normalized = normalizeCollection(collection);
+        setNormalizedData(normalized);
 
         setStatsToday(currentTotals);
         setStatsYesterday(previousTotals);
@@ -185,10 +207,35 @@ const TopCards = ({ items = [], size }: any) => {
 
   const [rawCollection, setRawCollection] = useState<ApiDateGroup[]>([]);
 
+  // const getLast7DaysSeries = (key: string): number[] => {
+  //   if (!key || !rawCollection || !Array.isArray(rawCollection)) {
+  //     return [0, 0, 0, 0, 0, 0, 0];
+  //   }
+
+  //   const today = new Date();
+  //   const values: number[] = [];
+
+  //   for (let i = 6; i >= 0; i--) {
+  //     const d = new Date();
+  //     d.setDate(today.getDate() - i);
+
+  //     const dateStr = d.toISOString().split('T')[0];
+
+  //     const found = rawCollection.find((x) => x?.Date && x.Date.startsWith(dateStr));
+
+  //     if (found && Array.isArray(found.Status)) {
+  //       const status = found.Status.find((s) => s?.visitor_status?.trim() === key);
+  //       values.push(status?.Count ?? 0);
+  //     } else {
+  //       values.push(0);
+  //     }
+  //   }
+
+  //   return values;
+  // };
+
   const getLast7DaysSeries = (key: string): number[] => {
-    if (!key || !rawCollection || !Array.isArray(rawCollection)) {
-      return [0, 0, 0, 0, 0, 0, 0];
-    }
+    if (!normalizedData.length) return [0, 0, 0, 0, 0, 0, 0];
 
     const today = new Date();
     const values: number[] = [];
@@ -196,17 +243,11 @@ const TopCards = ({ items = [], size }: any) => {
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
       d.setDate(today.getDate() - i);
-
       const dateStr = d.toISOString().split('T')[0];
 
-      const found = rawCollection.find((x) => x?.Date && x.Date.startsWith(dateStr));
+      const found = normalizedData.find((x) => x.Date === dateStr);
 
-      if (found && Array.isArray(found.Status)) {
-        const status = found.Status.find((s) => s?.visitor_status?.trim() === key);
-        values.push(status?.Count ?? 0);
-      } else {
-        values.push(0);
-      }
+      values.push(found?.StatusMap?.[key] ?? 0);
     }
 
     return values;
@@ -240,15 +281,6 @@ const TopCards = ({ items = [], size }: any) => {
           const key = String(card.key);
           const change = getPercentageChange(key);
           const baseColor = getColorByKey(key);
-
-          const data = getLast7DaysSeries(key);
-
-          const safeSeries = [
-            {
-              name: card.title ?? '',
-              data: Array.isArray(data) && data.length === 7 ? data : [0, 0, 0, 0, 0, 0, 0],
-            },
-          ];
           return (
             <Grid key={key ?? index} size={size}>
               <CardContent
@@ -320,55 +352,73 @@ const TopCards = ({ items = [], size }: any) => {
                     )}
                   </Typography>
 
-                  {rawCollection.length > 0 && (
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        bottom: -20,
-                        left: 0,
-                        right: 0,
-                        height: 80,
-                        opacity: 0.5,
-                        pointerEvents: 'none',
-                      }}
-                    >
-                      {isChartReady &&
-                        rawCollection &&
-                        Array.isArray(rawCollection) &&
-                        rawCollection.length > 0 &&
-                        safeSeries &&
-                        Array.isArray(safeSeries) &&
-                        Array.isArray(safeSeries[0]?.data) && (
-                          <Chart
-                            options={{
-                              chart: {
-                                type: 'area',
-                                sparkline: { enabled: true },
-                              },
-                              stroke: {
-                                curve: 'smooth',
-                                width: 2,
-                              },
-                              fill: {
-                                opacity: 0.3,
-                              },
-                              // colors: [baseColor],
-                              colors: [change.color],
-                              tooltip: { enabled: false },
-                            }}
-                            series={safeSeries}
-                            type="area"
-                            height={50}
-                          />
-                        )}
-                    </Box>
-                  )}
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      bottom: -20,
+                      left: 0,
+                      right: 0,
+                      height: 80,
+                      opacity: 0.5,
+                      pointerEvents: 'none',
+                    }}
+                  >
+                    {isChartReady && normalizedData.length > 0 && (
+                      <MiniChart normalizedData={normalizedData} card={card} change={change} />
+                    )}
+                  </Box>
                 </Box>
               </CardContent>
             </Grid>
           );
         })}
     </Grid>
+  );
+};
+
+const MiniChart = ({ normalizedData, card, change, isChartReady }: any) => {
+  const key = String(card.key);
+
+  const series = useMemo(() => {
+    if (!normalizedData.length) {
+      return [{ name: card.title, data: [0, 0, 0, 0, 0, 0, 0] }];
+    }
+
+    const today = new Date();
+    const values: number[] = [];
+
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(today.getDate() - i);
+      const dateStr = d.toISOString().split('T')[0];
+
+      const found = normalizedData.find((x: any) => x.Date === dateStr);
+      values.push(found?.StatusMap?.[key] ?? 0);
+    }
+
+    return [
+      {
+        name: card.title,
+        data: values.map((v) => Number(v) || 0),
+      },
+    ];
+  }, [normalizedData, key, card.title]);
+
+  if (!isChartReady || series[0].data.length !== 7) return null;
+
+  return (
+    <Chart
+      options={{
+        chart: { type: 'area', sparkline: { enabled: true } },
+        stroke: { curve: 'smooth', width: 2 },
+        fill: { opacity: 0.3 },
+        colors: [change.color],
+        tooltip: { enabled: false },
+      }}
+      series={series}
+      type="area"
+      height={50}
+    />
   );
 };
 

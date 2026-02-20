@@ -8,51 +8,17 @@ import {
   Backdrop,
   MenuItem,
   Snackbar,
-  Checkbox,
-  Switch,
-  TableContainer,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  FormControl,
-  Select,
-  TableBody,
-  IconButton,
-  Paper,
 } from '@mui/material';
 import { Box } from '@mui/system';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import {
-  createOperatorSettingGiveAccess,
-  createPermission,
-  createUser,
   createUserGroup,
-  getAllAccessControl,
-  getAllOrganizations,
-  getAllSite,
-  getAllUserGroup,
-  getRegisteredSite,
-  getVisitorEmployee,
-  updateUser,
   updateUserGroup,
 } from 'src/customs/api/admin';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { CreateUserRequest } from 'src/customs/api/models/Admin/User';
-import {
-  Autocomplete,
-  TextField,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
-  FormHelperText,
-} from '@mui/material';
-import { GroupRoleId } from 'src/constant/GroupRoleId';
-import { showSwal } from 'src/customs/components/alerts/alerts';
-import { IconTrash } from '@tabler/icons-react';
-import PermissionSection from '../PermissionSection';
 
+import { showSwal } from 'src/customs/components/alerts/alerts';
 interface FormWizardUserGroupProps {
   formData: any;
   setFormData: React.Dispatch<React.SetStateAction<any>>;
@@ -72,10 +38,6 @@ const FormWizardUserGroup: React.FC<FormWizardUserGroupProps> = ({
   const [snackbarMsg, setSnackbarMsg] = useState('');
   const [snackbarType, setSnackbarType] = useState<'success' | 'error' | 'info'>('info');
   const [alertType, setAlertType] = useState<'info' | 'success' | 'error'>('info');
-  const [employeeRes, setEmployeeRes] = useState<any[]>([]);
-  const [selectedAccess, setSelectedAccess] = useState<any[]>([]);
-  const [selectedSiteAccess, setSelectedSiteAccess] = useState<any[]>([]);
-  const [deletedAccessIds, setDeletedAccessIds] = useState<string[]>([]);
   // const [siteOptions, setSiteOptions] = useState<any[]>([]);
   const [permissionSites, setPermissionSites] = useState<Record<string, string[]>>({});
   // const [regsiteredSiteOptions, setRegisteredSiteOptions] = useState<any[]>([]);
@@ -104,22 +66,6 @@ const FormWizardUserGroup: React.FC<FormWizardUserGroupProps> = ({
     setFormData((prev: any) => ({ ...prev, [id]: value }));
   };
 
-  const handleSubmitPermission = async (userGroupId: string, permissions: string[]) => {
-    try {
-      const payload = permissions.map((perm: string) => ({
-        user_group_id: userGroupId,
-        permission: perm,
-      }));
-
-      console.log('payload', payload);
-      // await createPermission(token as string, payload);
-
-      // showSwal('success', 'Successfully create permission');
-    } catch (error: any) {
-      console.error(error);
-      showSwal('error', error.response?.data?.msg ?? 'Failed update permission');
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -139,7 +85,6 @@ const FormWizardUserGroup: React.FC<FormWizardUserGroupProps> = ({
         await createUserGroup(token, formData);
       }
 
-      // await handleSubmitPermission(formData.group_id, formData.permissions ?? []);
 
       showSwal('success', edittingId ? 'User successfully updated!' : 'User successfully created!');
       setTimeout(() => {
@@ -153,147 +98,17 @@ const FormWizardUserGroup: React.FC<FormWizardUserGroupProps> = ({
     }
   };
 
-  const GROUP_PERMISSION_MAP: Record<string, string[]> = {
-    [GroupRoleId.Employee.toLowerCase()]: [
-      'AsHead',
-      'InviteVisitor',
-      'InviteWithinOwnOrganization',
-      'InviteWithinOwnSite',
-      'InviteWithinAllowPreRegister',
-      'ManageSchedule',
-      'ManageApprove',
-    ],
-
-    [GroupRoleId.OperatorVMS.toLowerCase()]: [
-      'AsHead',
-      'InviteVisitor',
-      'InviteWithinOwnOrganization',
-      'InviteWithinOwnSite',
-      'InviteWithinAllowPreRegister',
-      'ManageApprove',
-      'OperatorAsWatcher',
-      'ManageInvite',
-      'ManageVisitor',
-      'ManageBlacklist',
-      'ManageOperator',
-      'ManageSite',
-      'ManageRegisterSite',
-      'ManageAccess',
-    ],
-
-    [GroupRoleId.Manager.toLowerCase()]: ['ManageApprove'],
-  };
-
-  const formatPermissionLabel = (value: string) => {
-    const custom: Record<string, string> = {
-      InviteWithinOwnOrganization: 'Invite Within Organization',
-      InviteWithinOwnSite: 'Invite Within Site',
-      InviteWithinAllowPreRegister: 'Invite Allow Pre Register',
-    };
-
-    if (custom[value]) return custom[value];
-
-    return value
-      .replace(/([A-Z])/g, ' $1')
-      .trim()
-      .replace(/\b\w/g, (char) => char.toUpperCase());
-  };
 
   const handleGroupChange = (value: string) => {
     setFormData((prev: any) => ({
       ...prev,
       role_access: value,
+      permissions: [],
     }));
 
     setPermissionSites({});
   };
 
-  const [acessData, setAcessData] = useState<any[]>([]);
-
-  const PERMISSION_NEED_SITE = [
-    'InviteWithinOwnOrganization',
-    'InviteWithinOwnSite',
-    'ManageSite',
-    'ManageOperator',
-    'ManageRegisterSite',
-    'ManageAccess',
-  ];
-
-  //   const getDropdownOptions = (perm: string) => {
-  //     switch (perm) {
-  //       case 'ManageSite':
-  //         return siteOptions;
-  //       case 'InviteWithinOwnOrganization':
-  //         return organizationSiteOptions;
-  //       case 'InviteWithinOwnSite':
-  //         return siteOptions;
-  //       case 'ManageAccess':
-  //         return accessOptions;
-  //       case 'ManageRegisterSite':
-  //         return regsiteredSiteOptions;
-  //       default:
-  //         return [];
-  //     }
-  //   };
-
-  const handleAddNewAccess = () => {
-    setSelectedAccess((prev) => [
-      ...prev,
-      {
-        access_control_id: '',
-        can_grant: false,
-        can_revoke: false,
-        can_block: false,
-      },
-    ]);
-  };
-
-  const handleSubmitGiveAccess = async () => {
-    try {
-      if (!edittingId) {
-        showSwal('error', 'User ID not found');
-        return;
-      }
-
-      const payload = {
-        data: selectedAccess.map((row) => ({
-          user_id: edittingId,
-          access_control_id: row.access_control_id,
-          can_grant: true,
-          can_revoke: true,
-          can_block: true,
-        })),
-        deleted_ids: deletedAccessIds,
-      };
-
-      // console.log('payload', payload);
-
-      await createOperatorSettingGiveAccess(token as string, payload, edittingId);
-
-      showSwal('success', 'Give access successfully');
-      // setOpenGiveAccess(false);
-    } catch (error: any) {
-      console.error(error);
-      showSwal('error', error.response.data.msg ?? 'Failed give access');
-    }
-  };
-
-  // const handleSubmitPermission = async () => {
-  //   try {
-
-  //     const res = await createPermission(token as string, {
-  //       user_group_id: formData.group_id,
-  //       permissions: formData.permissions,
-  //     })
-
-  //     console.log('res', res);
-
-  //     showSwal('success', 'Successfully create permission');
-  //   } catch (error: any) {
-  //     console.error(error);
-  //     showSwal('error', error.response.data.msg ?? 'Failed update permission');
-  //   }
-  // };
 
   return (
     <>

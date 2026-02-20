@@ -247,21 +247,21 @@ const Content = () => {
     const printWindow = window.open('', '_blank');
     const tableHtml = document.getElementById('print-report-area')?.innerHTML;
 
-    printWindow!.document.write(`
-    <html>
-      <head>
-        <title>Visitor Report</title>
-      </head>
-      <body>
-        ${tableHtml}
-      </body>
-    </html>
-  `);
+  //   printWindow!.document.write(`
+  //   <html>
+  //     <head>
+  //       <title>Visitor Report</title>
+  //     </head>
+  //     <body>
+  //       ${tableHtml}
+  //     </body>
+  //   </html>
+  // `);
 
-    printWindow!.document.close();
-    printWindow!.focus();
-    printWindow!.print();
-    printWindow!.close();
+  //   printWindow!.document.close();
+  //   printWindow!.focus();
+  //   printWindow!.print();
+  //   printWindow!.close();
   };
 
   const handleConfirmSaveReport = async () => {

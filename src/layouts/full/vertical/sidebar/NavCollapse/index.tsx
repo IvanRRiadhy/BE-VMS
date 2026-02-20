@@ -80,11 +80,12 @@ const NavCollapse = ({
     marginTop: '13px',
     paddingLeft: hideMenu ? '10px' : level > 2 ? `${level * 15}px` : '10px',
     borderRadius: `${customizer.borderRadius}px`,
-    backgroundColor: open && level < 2 ? theme.palette.primary.main : '',
-    color: open && level < 2 ? theme.palette.primary.light : '',
-    // '&:hover': {
-    //   backgroundColor: theme.palette.action.hover,
-    // }
+    backgroundColor: open ? theme.palette.primary.main : '',
+    color: open && level < 2 ? '#fff' : '',
+    '&:hover': {
+      backgroundColor: theme.palette.primary.main,
+      color: '#fff',
+    },
   }));
 
   // If Menu has Children
@@ -122,7 +123,7 @@ const NavCollapse = ({
         selected={pathWithoutLastPart === menu.href}
         key={menu?.id}
         // sx={{ backgroundColor: 'red' }}
-        sx={{ ':hover': { backgroundColor: 'primary.main'} }}
+        sx={{ ':hover': { backgroundColor: 'primary.main' } }}
       >
         <ListItemIcon
           sx={{

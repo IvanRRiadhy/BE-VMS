@@ -35,6 +35,9 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 import { useQuery } from '@tanstack/react-query';
 import {
   createPermission,
+  createPermissionOrganization,
+  createPermissionRegisterSite,
+  createPermissionSite,
   deleteUser,
   deleteUserGroup,
   getAllAccessControl,
@@ -174,6 +177,7 @@ const Content = () => {
   const [accessOptions, setAccessOptions] = useState<any[]>([]);
   const [organizaitonRes, setOrganizaitonRes] = useState<any[]>([]);
   const [acessData, setAcessData] = useState<any[]>([]);
+  const [selectedRoleAccess, setSelectedRoleAccess] = useState<string>('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -200,24 +204,23 @@ const Content = () => {
 
   const [openPermission, setOpenPermission] = useState(false);
 
-  const handlePermission = async (id: string) => {
-    setEdittingId(id);
+  const handlePermission = async (row: any) => {
+    setEdittingId(row.id);
+    setSelectedRoleAccess(row.role_access?.toLowerCase() ?? '');
 
-    try {
-      const response = await getUserGroupById(id, token as string);
-
-      //   // misalnya backend kirim permissions: string[]
-      //   setActivePermissions(response.collection.permissions ?? []);
-
-      //   setPermissionSites(response.collection.permission_sites ?? {});
-      //   setSelectedAccess(response.collection.accesses ?? []);
-    } catch (error) {
-      showSwal('error', 'Failed to load permission data.');
-    }
+    // reset form
+    setFormData({
+      group_id: row.id,
+      permissions: [],
+      permission_sites: {},
+      accesses: [],
+      organization: [],
+      deleted_access_ids: [],
+      registeredSite: [],
+    });
 
     setOpenPermission(true);
   };
-
   const [selectedAccess, setSelectedAccess] = useState<any[]>([]);
 
   const formatPermissionLabel = (value: string) => {
@@ -237,24 +240,27 @@ const Content = () => {
 
   const [deletedAccessIds, setDeletedAccessIds] = useState<string[]>([]);
 
-  const handleAddNewAccess = () => {
-    setSelectedAccess((prev) => [
+  const handleAddSiteAssignment = () => {
+    setFormData((prev) => ({
       ...prev,
-      {
-        access_control_id: '',
-        can_grant: false,
-        can_revoke: false,
-        can_block: false,
-      },
-    ]);
+      accesses: [
+        ...prev.accesses,
+        {
+          site_id: '',
+          can_grant: false,
+          can_revoke: false,
+          can_block: false,
+        },
+      ],
+    }));
   };
 
   const PERMISSION_NEED_SITE = [
     'OrganizationAssigment',
-    'InviteWithinOwnSite',
+    // 'InviteWithinOwnSite',
     // 'ManageSite',
     'ManageOperator',
-    'ManageRegisterSite',
+    'OperatorRegisterSite',
     'ManageAccessScope',
   ];
 
@@ -268,7 +274,7 @@ const Content = () => {
         return siteOptions;
       case 'ManageAccessScope':
         return accessOptions;
-      case 'ManageRegisterSite':
+      case 'OperatorRegisterSite':
         return regsiteredSiteOptions;
       default:
         return [];
@@ -276,48 +282,72 @@ const Content = () => {
   };
 
   const GROUP_PERMISSION_MAP: Record<string, string[]> = {
-    [GroupRoleId.Employee.toLowerCase()]: [
+    employee: [
       'AsHead',
       'InviteVisitor',
       'InviteWithinAllowPreRegister',
-      'InviteWithin Own Organization',
-      'InviteWithin Own Site',
+      'InviteWithinOwnOrganization',
+      'InviteWithinOwnSite',
       'AllowMobileLogin',
-      'Allow SSO ActiveDirectory',
+      'AllowSSOActiveDirectory',
       'OrganizationAssigment',
-      'SiteAssigment',
+      'SiteAssignment',
     ],
 
-    [GroupRoleId.OperatorVMS.toLowerCase()]: [
+    operatorvms: [
       'AsHead',
-      'InviteVisitor',
-      'InviteWithin Own Organization',
-      'InviteWithin Own Site',
-      'InviteWithinAllowPreRegister',
-      'ManageApprove',
+      // 'InviteVisitor',
+      // 'InviteWithinOwnOrganization',
+      // 'InviteWithinOwnSite', 
+      // 'InviteWithinAllowPreRegister',
+      // 'ManageApprove',
       'OperatorAsWatcher',
       'ManageInvite',
       'ManageVisitor',
-      'ManageBlacklist',
-      'ManageRegisterSite',
       'ManageAccessScope',
+      'ManageBlacklist',
+      'OperatorRegisterSite',
+      'AllowMobileLogin',
+      'AllowSSOActiveDirectory',
+      'OrganizationAssigment',
     ],
 
-    [GroupRoleId.Manager.toLowerCase()]: ['ManageApprove'],
-  };
+    manager: [
+      'AsHead',
+      'ManageApprove',
+      'ManageSchedule',
+      'AllowMobileLogin',
+      'AllowSSOActiveDirectory',
+    ],
 
+    operatoradmin: [
+      'AllowSSOLoginParking',
+      'AllowSSOLoginTracking',
+      'ManageSchedule',
+      'AllowMobileLogin',
+      'AllowSSOActiveDirectory',
+      'ManageUser',
+    ],
+  };
   const [formData, setFormData] = useState({
     group_id: '',
     permissions: [] as string[],
     permission_sites: {} as Record<string, string[]>,
-    accesses: [] as any[],
+    accesses: [] as {
+      id?: string;
+      site_id: string;
+      can_grant: boolean;
+      can_revoke: boolean;
+      can_block: boolean;
+    }[],
     organization: [] as string[],
     deleted_access_ids: [] as string[],
+    registeredSite: [] as string[],
   });
 
   const handleSubmitPermission = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    // setLoading(true);
 
     try {
       if (!token) {
@@ -325,20 +355,16 @@ const Content = () => {
       }
 
       console.log('payload submit', formData);
-
-      //   if (edittingId) {
-      //     await updateUser(token, edittingId, formData);
-      //   } else {
-      //     await createUser(token, formData);
-      //   }
-
       await handleSubmitPermissions(formData.permissions ?? []);
+      await handleRegisteredSite();
       await handleOrganizationnPermission();
+      await handleSitePermission();
+      // setOpenPermission(false);
 
-      showSwal('success', edittingId ? 'User successfully updated!' : 'User successfully created!');
-      //   setTimeout(() => {
-      //     onSuccess?.();
-      //   }, 600);
+      // showSwal(
+      //   'success',
+      //   edittingId ? 'Permission successfully updated!' : 'Permission successfully created!',
+      // );
     } catch (err: any) {
       //   if (err?.errors) setErrors(err.errors);
       showSwal('error', 'Something went wrong. Please try again later.');
@@ -346,6 +372,64 @@ const Content = () => {
       setTimeout(() => setLoading(false), 600);
     }
   };
+
+  // const handleSubmitPermission = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   setLoading(true);
+
+  //   try {
+  //     if (!token) return;
+
+  //     const promises: Promise<any>[] = [];
+
+  //     // PERMISSION BASIC
+  //     // if (formData.permissions.length) {
+  //     //   const payload = formData.permissions.map((perm) => ({
+  //     //     user_group_id: edittingId,
+  //     //     permission: perm,
+  //     //   }));
+
+  //     //   promises.push(createPermission(token, payload, edittingId));
+  //     // }
+
+  //     // ORGANIZATION
+  //     if (formData.organization.length) {
+  //       const payload = formData.organization.map((orgId) => ({
+  //         user_group_id: edittingId,
+  //         organization_id: orgId,
+  //         organization_type: 'Organization',
+  //       }));
+
+  //       promises.push(createPermissionOrganization(token, payload, edittingId));
+  //     }
+
+  //     // SITE ASSIGNMENT
+  //     if (formData.accesses.length) {
+  //       const payload = formData.accesses.map((site) => ({
+  //         user_group_id: edittingId,
+  //         site_id: site.site_id,
+  //         can_grant: site.can_grant,
+  //         can_revoke: site.can_revoke,
+  //         can_block: site.can_block,
+  //         permission: 'SiteAssignment',
+  //       }));
+
+  //       promises.push(createPermissionSite(token, payload, edittingId));
+  //     }
+
+  //     // 🔥 Execute All
+  //     await Promise.all(promises);
+
+  //     showSwal('success', 'Permission successfully updated!');
+  //     setOpenPermission(false);
+  //   } catch (error: any) {
+  //     console.error(error);
+  //     showSwal('error', error?.response?.data?.msg ?? 'Failed to update permission.');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const handleSubmitPermissions = async (permissions: string[]) => {
     try {
       const payload = permissions.map((perm: string) => ({
@@ -354,7 +438,7 @@ const Content = () => {
       }));
 
       console.log('Permission', payload);
-      // await createPermission(token as string, payload);
+      await createPermission(token as string, payload, edittingId);
 
       // showSwal('success', 'Successfully create permission');
     } catch (error: any) {
@@ -363,26 +447,27 @@ const Content = () => {
     }
   };
 
-  const handleSitenPermission = async (permissions: string[]) => {
+  const handleSitePermission = async () => {
     try {
-      const payload = permissions.map((perm: string) => ({
+      if (!formData.accesses.length) return;
+
+      const payload = formData.accesses.map((site) => ({
         user_group_id: edittingId,
-        site_id: '',
-        can_grant: true,
-        can_revoke: true,
-        can_block: true,
-        permission: 'ManageSiteScope',
+        site_id: site.site_id,
+        can_grant: site.can_grant,
+        can_revoke: site.can_revoke,
+        can_block: site.can_block,
+        permission: 'SiteAssignment',
       }));
 
-      console.log('Permission', payload);
-      // await createPermission(token as string, payload);
+      console.log('Site Permission Payload', payload);
 
-      // showSwal('success', 'Successfully create permission');
+      await createPermissionSite(token as string, payload, edittingId);
     } catch (error: any) {
-      console.error(error);
-      showSwal('error', error.response?.data?.msg ?? 'Failed update permission');
+      showSwal('error', error.response?.data?.msg ?? 'Failed update site permission');
     }
   };
+
   const handleOrganizationnPermission = async () => {
     try {
       if (!formData.organization.length) return;
@@ -395,10 +480,32 @@ const Content = () => {
 
       console.log('Organization Payload', payload);
 
-      // await createOrganizationPermission(token as string, payload);
+      await createPermissionOrganization(token as string, payload, edittingId);
     } catch (error: any) {
       console.error(error);
       showSwal('error', error.response?.data?.msg ?? 'Failed update organization');
+    }
+  };
+
+  const handleRegisteredSite = async () => {
+    try {
+      // Pastikan ada data
+      if (!formData.registeredSite.length) {
+        return;
+      }
+
+      const payload = formData.registeredSite.map((siteId: string) => ({
+        user_group_id: edittingId,
+        site_id: siteId,
+        permission: 'OperatorRegisterSite',
+      }));
+
+      console.log('Registered Site Payload', payload);
+
+      await createPermissionRegisterSite(token as string, payload, edittingId);
+    } catch (error: any) {
+      console.error(error);
+      throw error;
     }
   };
   return (
@@ -443,7 +550,7 @@ const Content = () => {
                 onDelete={(row) => handleDelete(row.id)}
                 onAddData={handleAdd}
                 isHavePermission={true}
-                onPermission={(row) => handlePermission(row.id)}
+                onPermission={(row) => handlePermission(row)}
               />
             </Grid>
           </Grid>
@@ -543,6 +650,7 @@ const Content = () => {
               accesses: [],
               organization: [],
               deleted_access_ids: [],
+              registeredSite: [],
             });
           }}
           sx={{
@@ -557,14 +665,14 @@ const Content = () => {
         <DialogContent dividers>
           <Grid size={{ xs: 12 }}>
             <Grid container spacing={2}>
-              {(GROUP_PERMISSION_MAP[edittingId] ?? []).map((perm: any) => {
+              {(GROUP_PERMISSION_MAP[selectedRoleAccess] ?? []).map((perm: any) => {
                 const checked = formData.permissions?.includes(perm);
 
                 return (
                   <Grid
                     size={
-                      perm === 'ManageAccessScope' ||
-                      perm === 'ManageRegisterSite' ||
+                      perm === 'SiteAssignment' ||
+                      perm === 'OperatorRegisterSite' ||
                       perm === 'OrganizationAssigment'
                         ? { xs: 12 }
                         : { xs: 12, md: 6 }
@@ -602,12 +710,12 @@ const Content = () => {
                           },
                         }}
                       />
-                      {checked && perm === 'ManageAccessScope' && (
+                      {checked && perm === 'SiteAssignment' && (
                         <TableContainer component={Paper} sx={{ mt: 1 }}>
                           <Table size="small">
                             <TableHead>
                               <TableRow>
-                                <TableCell>Access</TableCell>
+                                <TableCell>Site</TableCell>
                                 <TableCell align="center">Can Grant</TableCell>
                                 <TableCell align="center">Can Revoke</TableCell>
                                 <TableCell align="center">Can Block</TableCell>
@@ -616,38 +724,32 @@ const Content = () => {
                             </TableHead>
 
                             <TableBody>
-                              {selectedAccess.map((row, index) => (
+                              {formData.accesses.map((row, index) => (
                                 <TableRow key={index}>
                                   <TableCell>
                                     <FormControl size="small" fullWidth>
                                       <Select
-                                        value={row.access_control_id}
+                                        value={row.site_id}
                                         onChange={(e) => {
                                           const value = e.target.value as string;
-                                          setSelectedAccess((prev) =>
-                                            prev.map((r, i) =>
-                                              i === index
-                                                ? {
-                                                    ...r,
-                                                    access_control_id: value,
-                                                    access_control_name:
-                                                      acessData.find((a) => a.id === value)?.name ??
-                                                      '',
-                                                  }
-                                                : r,
+
+                                          setFormData((prev) => ({
+                                            ...prev,
+                                            accesses: prev.accesses.map((r, i) =>
+                                              i === index ? { ...r, site_id: value } : r,
                                             ),
-                                          );
+                                          }));
                                         }}
                                       >
-                                        {acessData.map((a) => (
+                                        {siteOptions.map((site) => (
                                           <MenuItem
-                                            key={a.id}
-                                            value={a.id}
-                                            disabled={selectedAccess.some(
-                                              (x, i) => x.access_control_id === a.id && i !== index,
+                                            key={site.id}
+                                            value={site.id}
+                                            disabled={formData.accesses.some(
+                                              (x, i) => x.site_id === site.id && i !== index,
                                             )}
                                           >
-                                            {a.name}
+                                            {site.name}
                                           </MenuItem>
                                         ))}
                                       </Select>
@@ -656,60 +758,48 @@ const Content = () => {
 
                                   <TableCell align="center">
                                     <Switch
-                                      checked={row.can_grant ?? false}
+                                      checked={row.can_grant}
                                       onChange={(e) => {
                                         const checked = e.target.checked;
 
-                                        setSelectedAccess((prev) =>
-                                          prev.map((r, i) =>
-                                            i === index
-                                              ? {
-                                                  ...r,
-                                                  can_grant: checked,
-                                                }
-                                              : r,
+                                        setFormData((prev) => ({
+                                          ...prev,
+                                          accesses: prev.accesses.map((r, i) =>
+                                            i === index ? { ...r, can_grant: checked } : r,
                                           ),
-                                        );
+                                        }));
                                       }}
                                     />
                                   </TableCell>
 
                                   <TableCell align="center">
                                     <Switch
-                                      checked={row.can_revoke ?? false}
+                                      checked={row.can_revoke}
                                       onChange={(e) => {
                                         const checked = e.target.checked;
 
-                                        setSelectedAccess((prev) =>
-                                          prev.map((r, i) =>
-                                            i === index
-                                              ? {
-                                                  ...r,
-                                                  can_revoke: checked,
-                                                }
-                                              : r,
+                                        setFormData((prev) => ({
+                                          ...prev,
+                                          accesses: prev.accesses.map((r, i) =>
+                                            i === index ? { ...r, can_revoke: checked } : r,
                                           ),
-                                        );
+                                        }));
                                       }}
                                     />
                                   </TableCell>
 
                                   <TableCell align="center">
                                     <Switch
-                                      checked={row.can_block ?? false}
+                                      checked={row.can_block}
                                       onChange={(e) => {
                                         const checked = e.target.checked;
 
-                                        setSelectedAccess((prev) =>
-                                          prev.map((r, i) =>
-                                            i === index
-                                              ? {
-                                                  ...r,
-                                                  can_block: checked,
-                                                }
-                                              : r,
+                                        setFormData((prev) => ({
+                                          ...prev,
+                                          accesses: prev.accesses.map((r, i) =>
+                                            i === index ? { ...r, can_block: checked } : r,
                                           ),
-                                        );
+                                        }));
                                       }}
                                     />
                                   </TableCell>
@@ -718,14 +808,16 @@ const Content = () => {
                                     <IconButton
                                       color="error"
                                       onClick={() => {
-                                        setSelectedAccess((prev) => {
-                                          const removed = prev[index];
+                                        setFormData((prev) => {
+                                          const removed = prev.accesses[index];
 
-                                          if (removed?.id) {
-                                            setDeletedAccessIds((ids) => [...ids, removed.id]);
-                                          }
-
-                                          return prev.filter((_, i) => i !== index);
+                                          return {
+                                            ...prev,
+                                            accesses: prev.accesses.filter((_, i) => i !== index),
+                                            deleted_access_ids: removed?.id
+                                              ? [...prev.deleted_access_ids, removed.id]
+                                              : prev.deleted_access_ids,
+                                          };
                                         });
                                       }}
                                     >
@@ -735,14 +827,10 @@ const Content = () => {
                                 </TableRow>
                               ))}
 
-                              {selectedAccess.length === 0 && (
+                              {formData.accesses.length === 0 && (
                                 <TableRow>
-                                  <TableCell
-                                    colSpan={5}
-                                    align="center"
-                                    sx={{ color: 'text.secondary' }}
-                                  >
-                                    No access added yet
+                                  <TableCell colSpan={5} align="center">
+                                    No site added yet
                                   </TableCell>
                                 </TableRow>
                               )}
@@ -750,8 +838,8 @@ const Content = () => {
                           </Table>
 
                           <Box sx={{ p: 2 }}>
-                            <Button variant="contained" onClick={handleAddNewAccess}>
-                              Add New
+                            <Button variant="contained" onClick={handleAddSiteAssignment}>
+                              Add Site
                             </Button>
                           </Box>
                         </TableContainer>
@@ -783,7 +871,33 @@ const Content = () => {
                         />
                       )}
 
-                      {checked && perm === 'ManageRegisterSite' && (
+                      {checked && perm === 'OperatorRegisterSite' && (
+                        <Autocomplete
+                          multiple
+                          options={regsiteredSiteOptions}
+                          getOptionLabel={(option: any) => option.name || ''}
+                          value={regsiteredSiteOptions.filter((opt: any) =>
+                            formData.registeredSite.includes(opt.id),
+                          )}
+                          onChange={(_, newValues) => {
+                            setFormData((prev) => ({
+                              ...prev,
+                              registeredSite: newValues.map((v: any) => v.id),
+                            }));
+                          }}
+                          renderInput={(params) => (
+                            <CustomTextField
+                              {...params}
+                              placeholder="Select registered site"
+                              size="small"
+                              sx={{ mt: 1, ml: 2 }}
+                              fullWidth
+                            />
+                          )}
+                        />
+                      )}
+
+                      {/* {checked && perm === 'OperatorRegisterSite' && (
                         <TableContainer component={Paper} sx={{ mt: 1 }}>
                           <Table size="small">
                             <TableHead>
@@ -931,16 +1045,17 @@ const Content = () => {
                           </Table>
 
                           <Box sx={{ p: 2 }}>
-                            <Button variant="contained" onClick={handleAddNewAccess}>
+                            <Button variant="contained" onClick={handleAddSiteAssignment}>
                               Add New
                             </Button>
                           </Box>
                         </TableContainer>
-                      )}
+                      )} */}
 
                       {checked &&
-                        perm !== 'ManageAccessScope' &&
-                        perm !== 'ManageRegisterSite' &&
+                        perm !== 'SiteAssignment' &&
+                        perm !== 'OperatorRegisterSite' &&
+                        PERMISSION_NEED_SITE.includes(perm) &&
                         perm !== 'OrganizationAssigment' && (
                           <Autocomplete
                             multiple

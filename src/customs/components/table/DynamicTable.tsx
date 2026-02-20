@@ -1986,6 +1986,7 @@ export function DynamicTable<
                                 typeof row[col] === 'string' &&
                                 row[col].trim() !== '' ? (
                                 <img
+                                  loading="lazy"
                                   src={(() => {
                                     const value = row[col];
                                     if (value.startsWith('data:image')) return value;

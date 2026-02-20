@@ -4448,7 +4448,7 @@ const OperatorView = () => {
                 sx={{
                   display: 'flex',
                   flexDirection: 'column',
-                  height: '100%',
+                  // height: '100%',
                   boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                   p: 1,
                   borderRadius: 2,
@@ -5149,7 +5149,7 @@ const OperatorView = () => {
                 </Card>
               </Grid>
 
-              <Grid size={{ xs: 12, lg: 3 }} sx={{ height: '100%' }}>
+              <Grid size={{ xs: 12, lg: 3 }}>
                 <VisitorImage
                   faceImage={activeSelfie}
                   identityImage={activeKTP}
