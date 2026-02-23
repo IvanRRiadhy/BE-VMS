@@ -737,7 +737,7 @@ const OperatorView = () => {
         apply_to_all: applyToAll,
       };
 
-      console.log('📤 Sending extend payload:', payload);
+      // console.log('📤 Sending extend payload:', payload);
 
       await extendPeriodOperator(token as string, payload);
 
@@ -1316,7 +1316,7 @@ const OperatorView = () => {
         early_access: !!a.early_access,
       })),
     );
-    console.log('allAccess', allAccess);
+    // console.log('allAccess', allAccess);
 
     setAllAccessData(allAccess);
     // setAccessData(allAccess);

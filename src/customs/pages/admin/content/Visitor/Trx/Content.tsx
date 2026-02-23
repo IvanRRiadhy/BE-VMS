@@ -50,6 +50,7 @@ import {
   CreateVisitorRequest,
 } from 'src/customs/api/models/Admin/Visitor';
 import {
+  getAllEmployee,
   getAllSite,
   getAllVisitorPagination,
   getAllVisitorType,
@@ -242,11 +243,21 @@ const Content = () => {
     }
   };
 
+    const fetchEmployee = async () => {
+      try {
+        const res = await getAllEmployee(token as string);
+        setEmployee(res?.collection || []);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
   useEffect(() => {
     if (token) {
       fetchVisitorType();
       fetchAllSites();
       fetchVisitorEmployee();
+      fetchEmployee();
     }
   }, [token]);
 
@@ -751,7 +762,6 @@ const Content = () => {
         </DialogTitle>
         <Divider />
         <DialogContent>
-          {/* <br /> */}
           <FormWizardAddVisitor
             key={wizardKey}
             formData={formDataAddVisitor}

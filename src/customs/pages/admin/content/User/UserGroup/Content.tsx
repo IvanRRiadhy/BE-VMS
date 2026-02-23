@@ -35,6 +35,7 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 import { useQuery } from '@tanstack/react-query';
 import {
   createPermission,
+  createPermissionManageVisitor,
   createPermissionOrganization,
   createPermissionRegisterSite,
   createPermissionSite,
@@ -179,6 +180,8 @@ const Content = () => {
   const [acessData, setAcessData] = useState<any[]>([]);
   const [selectedRoleAccess, setSelectedRoleAccess] = useState<string>('');
 
+  const [manageVisitorPermissionData, setManageVisitorPermissionData] = useState<any[]>([]);
+
   useEffect(() => {
     const fetchData = async () => {
       if (!token) return;
@@ -262,6 +265,7 @@ const Content = () => {
     'ManageOperator',
     'OperatorRegisterSite',
     'ManageAccessScope',
+    'ManageVisitor'
   ];
 
   const getDropdownOptions = (perm: string) => {
@@ -275,6 +279,8 @@ const Content = () => {
       case 'ManageAccessScope':
         return accessOptions;
       case 'OperatorRegisterSite':
+        return regsiteredSiteOptions;
+      case 'ManageVisitor':
         return regsiteredSiteOptions;
       default:
         return [];
@@ -298,7 +304,7 @@ const Content = () => {
       'AsHead',
       // 'InviteVisitor',
       // 'InviteWithinOwnOrganization',
-      // 'InviteWithinOwnSite', 
+      // 'InviteWithinOwnSite',
       // 'InviteWithinAllowPreRegister',
       // 'ManageApprove',
       'OperatorAsWatcher',
@@ -447,6 +453,23 @@ const Content = () => {
     }
   };
 
+    const handleSubmitManageVisitor = async (permissions: string[]) => {
+      try {
+        const payload = permissions.map((perm: string) => ({
+          user_group_id: edittingId,
+          permission: '',
+        }));
+
+        console.log('Permission', payload);
+        await createPermissionManageVisitor(token as string, payload, edittingId);
+
+        // showSwal('success', 'Successfully create permission');
+      } catch (error: any) {
+        console.error(error);
+        showSwal('error', error.response?.data?.msg ?? 'Failed update permission');
+      }
+    };
+
   const handleSitePermission = async () => {
     try {
       if (!formData.accesses.length) return;
@@ -508,6 +531,8 @@ const Content = () => {
       throw error;
     }
   };
+
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
