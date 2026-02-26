@@ -32,8 +32,6 @@ import iconAdd from '../../../..//assets/images/svgs/add-circle.svg';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import CloseIcon from '@mui/icons-material/Close';
-import FormWizardAddInvitation from './FormInvitation';
-import FormWizardAddVisitor from './Praregist';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   CreateVisitorRequestSchema,
@@ -41,41 +39,28 @@ import {
   CreateVisitorRequest,
 } from 'src/customs/api/models/Admin/Visitor';
 import {
+  getAllCustomField,
   getAllDepartments,
   getAllDistricts,
   getAllOrganizations,
+  getAllSite,
+  getAllVisitor,
   getAllVisitorPagination,
   getAllVisitorType,
   getEmployeeById,
+  getFormEmployee,
   getRegisteredSite,
   getVisitorById,
+  getVisitorEmployee,
 } from 'src/customs/api/admin';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
-// import FilterMoreContent from './FilterMoreContent';
-import {
-  IconBrandGmail,
-  IconBuilding,
-  IconBuildingSkyscraper,
-  IconCalendarEvent,
-  IconCalendarStats,
-  IconCar,
-  IconCards,
-  IconCheck,
-  IconClipboard,
-  IconGenderBigender,
-  IconIdBadge2,
-  IconMapPin,
-  IconPhone,
-  IconUsers,
-} from '@tabler/icons-react';
-import FormInvitation from './FormInvitation';
+import { IconClipboard, IconUsers } from '@tabler/icons-react';
 import dayjs from 'dayjs';
 import Praregist from './Praregist';
 import {
-  getInvitation,
-  getInvitationById,
   getInvitationRelatedVisitor,
   getInvitations,
+  getOngoingInvitation,
 } from 'src/customs/api/visitor';
 import { useSelector } from 'react-redux';
 import { useQuery } from '@tanstack/react-query';
@@ -127,11 +112,6 @@ const Content = () => {
     message: string;
     severity: AlertColor;
   }>({ open: false, message: '', severity: 'info' });
-
-  const toast = (message: string, severity: AlertColor = 'info') => {
-    setSnackbar((s) => ({ ...s, open: false }));
-    setTimeout(() => setSnackbar({ open: true, message, severity }), 0);
-  };
 
   const defaultFormData = CreateVisitorRequestSchema.parse({});
   const isFormChanged = JSON.stringify(formDataAddVisitor) !== JSON.stringify(defaultFormData);
@@ -188,17 +168,6 @@ const Content = () => {
   const [selectedSite, setSelectedSite] = useState<any | null>(null);
   const [wizardKey, setWizardKey] = useState(0);
 
-  const CDN_BASE = `${axiosInstance2?.defaults?.baseURL?.replace(/\/+$/, '') ?? ''}/cdn`;
-  const resolveImg = (v?: string) => {
-    if (!v) return '';
-    // sudah absolute (http/https, data URL, blob)
-    if (/^(https?:)?\/\/|^data:image\/|^blob:/.test(v)) return v;
-
-    // bereskan path agar tidak dobel /cdn dan tidak double slash
-    const path = v.replace(/^\/+/, '').replace(/^cdn\//, '');
-    return `${CDN_BASE}/${path}`;
-  };
-
   const resetRegisteredFlow = () => {
     setSelectedSite(null);
     setFormDataAddVisitor(defaultFormData);
@@ -227,33 +196,12 @@ const Content = () => {
     queryKey: ['employee', selectedEmployeeId],
     queryFn: async () => {
       const res = await getEmployeeById(selectedEmployeeId!, token as string);
-      return res.collection; // ✅ hanya ambil object karyawan
+      return res.collection ?? [];
     },
     enabled: !!selectedEmployeeId && !!token,
     staleTime: 5 * 60 * 1000,
     retry: 1,
   });
-
-  // const handleEmployeeClick = async (employeeId: string) => {
-  //   if (!token) return;
-
-  //   console.log('Employee Clicked:', employeeId);
-  //   setOpenEmployeeDialog(true);
-  //   setEmployeeLoading(true);
-  //   setEmployeeError(null);
-  //   setEmployeeDetail(null);
-
-  //   try {
-  //     const res = await getEmployeeById(employeeId, token);
-  //     // asumsi payload: { collection: {...employee} }
-  //     setEmployeeDetail(res?.collection ?? null);
-  //     console.log('Employee Detail:', res);
-  //   } catch (err: any) {
-  //     setEmployeeError(err?.message || 'Failed to fetch employee details.');
-  //   } finally {
-  //     setEmployeeLoading(false);
-  //   }
-  // };
 
   const handleCloseEmployeeDialog = () => {
     setOpenEmployeeDialog(false);
@@ -261,93 +209,19 @@ const Content = () => {
     setEmployeeError(null);
   };
 
-  const [visitorTypes, setVisitorTypes] = useState<{ [key: string]: string }>({});
-
   const [selectedType, setSelectedType] = useState<
-    'All' | 'Preregis' | 'Checkin' | 'Checkout' | 'Denied' | 'Block'
+    'All' | 'Preregis' | 'Checkin' | 'Checkout' | 'Denied' | 'Block' | 'Waiting'
   >('All');
-
-  // useEffect(() => {
-  //   const fetchVisitorTypes = async () => {
-  //     const res = await getAllVisitorType(token as string); // API master visitor type
-  //     // ubah array ke object dictionary { id: name }
-  //     const dict: { [key: string]: string } = {};
-  //     res.collection.forEach((vt) => {
-  //       dict[vt.id] = vt.name;
-  //     });
-  //     setVisitorTypes(dict);
-  //   };
-  //   fetchVisitorTypes();
-  // }, [token]);
 
   const statusMap: Record<string, string> = {
     All: 'All',
-    Preregis: 'Preregis', // 👈 mapping fix
+    Preregis: 'Preregis',
     Checkin: 'Checkin',
     Checkout: 'Checkout',
     Denied: 'denied',
     Block: 'Block',
+    Waiting: 'Waiting',
   };
-
-  // const [rowsPerPage, setRowsPerPage] = useState(10);
-
-  // useEffect(() => {
-  //   if (!token) return;
-  //   const fetchData = async () => {
-  //     setLoading(true);
-  //     const start_date = dayjs().subtract(7, 'day').format('YYYY-MM-DD');
-  //     const end_date = dayjs().format('YYYY-MM-DD'); // ✅ hanya sampai hari ini
-
-  //     // if (isDataReady) {
-  //     const response = await getInvitations(token as string, start_date, end_date);
-
-  //     let rows = response.collection.map((item: any) => {
-  //       const isEmployeeHost = item.host === employeeId?.toUpperCase();
-
-  //       return {
-  //         id: item.id,
-  //         visitor_type: visitorTypes[item.visitor_type] || item.visitor_type,
-  //         name: item.visitor.name,
-  //         identity_id: item.visitor.identity_id,
-  //         email: item.visitor.email,
-  //         organization: item.visitor.organization,
-  //         gender: item.visitor.gender,
-  //         address: item.visitor.address,
-  //         phone: item.visitor.phone,
-  //         is_vip: item.visitor.is_vip,
-  //         visitor_period_start: item.visitor_period_start,
-  //         visitor_period_end: item.visitor_period_end,
-  //         host: item.host ?? '-',
-  //         employee: isEmployeeHost ?? '-',
-  //         visitor_status: item.visitor_status,
-  //       };
-  //     });
-
-  //     if (searchKeyword.trim()) {
-  //       const keyword = searchKeyword.toLowerCase();
-  //       rows = rows.filter((r: any) =>
-  //         [r.name, r.email, r.phone, r.organization, r.identity_id].some((val) =>
-  //           String(val || '')
-  //             .toLowerCase()
-  //             .includes(keyword),
-  //         ),
-  //       );
-  //     }
-
-  //     if (selectedType !== 'All') {
-  //       const apiStatus = statusMap[selectedType]; // ambil versi backend
-  //       rows = rows.filter((r: any) => r.visitor_status === apiStatus);
-  //     }
-
-  //     // setTableRowVisitors(response.collection);
-  //     setTotalRecords(response.collection.length);
-  //     // setTotalFilteredRecords(response.RecordsFiltered);
-  //     setTableCustomVisitor(rows);
-  //     setIsDataReady(true);
-  //     setLoading(false);
-  //   };
-  //   fetchData();
-  // }, [token, refreshTrigger, searchKeyword, startDate, endDate, employeeId, selectedType]);
 
   useEffect(() => {
     if (!token) return;
@@ -357,43 +231,50 @@ const Content = () => {
       const start_date = dayjs().subtract(7, 'day').format('YYYY-MM-DD');
       const end_date = dayjs().format('YYYY-MM-DD');
 
-      const response = await getInvitations(token as string, start_date, end_date);
+      try {
+        // const response = await getInvitations(token as string, start_date, end_date);
+        const response = await getOngoingInvitation(token as string);
 
-      let mapped = response.collection.map((item: any) => {
-        const isEmployeeHost = item.host === employeeId?.toUpperCase();
+        let mapped = response.collection.map((item: any) => {
+          const isEmployeeHost = item.host === employeeId?.toUpperCase();
 
-        return {
-          id: item.id,
-          visitor_type: item.visitor_type_name || '-',
-          name: item.visitor_name || '-',
-          identity_id: item.visitor_identity_id || '-',
-          email: item.visitor_email || '-',
-          organization: item.visitor_organization_name || '-',
-          gender: item.visitor_gender || '-',
-          // address: item.visitor_address || '-',
-          phone: item.visitor_phone || '-',
-          is_vip: item.visitor_is_vip || '-',
-          visitor_period_start: item.visitor_period_start || '-',
-          visitor_period_end: item.visitor_period_end || '-',
-          host: item.host ?? '-',
-          employee: isEmployeeHost ?? '-',
-          visitor_status: item.visitor_status || '-',
-        };
-      });
+          return {
+            id: item.id,
+            visitor_type: item.visitor_type_name || '-',
+            name: item.visitor_name || '-',
+            identity_id: item.visitor_identity_id || '-',
+            email: item.visitor_email || '-',
+            organization: item.visitor_organization_name || '-',
+            gender: item.visitor_gender || '-',
+            // address: item.visitor_address || '-',
+            phone: item.visitor_phone || '-',
+            is_vip: item.visitor_is_vip || '-',
+            visitor_period_start: item.visitor_period_start || '-',
+            visitor_period_end: item.visitor_period_end || '-',
+            host: item.host ?? '-',
+            employee: isEmployeeHost ?? '-',
+            visitor_status: item.visitor_status || '-',
+          };
+        });
 
-      if (selectedType !== 'All') {
-        const apiStatus = statusMap[selectedType]; // ambil versi backend
-        mapped = mapped.filter((r: any) => r.visitor_status === apiStatus);
+        if (selectedType !== 'All') {
+          const apiStatus = statusMap[selectedType];
+          mapped = mapped.filter((r: any) => r.visitor_status === apiStatus);
+        }
+        setTableRowVisitors(mapped);
+        setTableCustomVisitor(mapped);
+
+        setTotalRecords(mapped.length);
+        setLoading(false);
+      } catch (error) {
+        setLoading(false);
+        setTableCustomVisitor([]);
+        setTableRowVisitors([]);
       }
-      setTableRowVisitors(mapped);
-      setTableCustomVisitor(mapped);
-
-      setTotalRecords(mapped.length);
-      setLoading(false);
     };
 
     fetchData();
-  }, [token, refreshTrigger, startDate, endDate, employeeId, selectedType]);
+  }, [token, refreshTrigger, startDate, endDate, selectedType]);
 
   useEffect(() => {
     if (!tableRowVisitors.length) return;
@@ -439,10 +320,6 @@ const Content = () => {
 
   const handleCloseDialog = () => {
     setSelectedSite(null);
-    // setFormDataAddVisitor((prev) => ({
-    //   ...prev,
-    //   registered_site: '',
-    // }));
     setOpenDialog(false);
     setOpenInvitationVisitor(false);
     setOpenPreRegistration(false);
@@ -484,12 +361,6 @@ const Content = () => {
     setConfirmDialogOpen(true);
   };
 
-  const openDiscardForEdit = (id: string) => {
-    setPendingEditId(id);
-    setDiscardMode('edit');
-    setConfirmDialogOpen(true);
-  };
-
   const handleCancelDiscard = () => {
     setConfirmDialogOpen(false);
     setDiscardMode(null);
@@ -517,9 +388,6 @@ const Content = () => {
     if (!id || !token) return;
 
     setOpenRelatedInvitation(true);
-    // setVisitorLoading(true);
-    // setVisitorError(null);
-    // setVisitorDetail(null);
 
     try {
       const res = await getInvitationRelatedVisitor(id, token);
@@ -532,50 +400,7 @@ const Content = () => {
     }
   };
 
-  // const handleCloseVisitorDialog = () => {
-  //   setOpenVisitorDialog(false);
-  //   setVisitorDetail(null);
-  //   setVisitorError(null);
-  // };
-
-  // jenis aksi yang dikonfirmasi
-  type VisitorAction = 'checkin' | 'checkout' | 'deny' | 'block';
-
-  const [confirm, setConfirm] = React.useState<{
-    type: VisitorAction;
-    loading: boolean;
-  } | null>(null);
-
-  // label & warna tombol sesuai aksi
-  const actionMeta: Record<
-    VisitorAction,
-    { title: string; ok: string; color: 'success' | 'error' | 'warning' | 'info' }
-  > = {
-    checkin: { title: 'Confirm Check In', ok: 'Check In', color: 'success' },
-    checkout: { title: 'Confirm Check Out', ok: 'Check Out', color: 'error' },
-    deny: { title: 'Confirm Deny', ok: 'Deny', color: 'warning' },
-    block: { title: 'Confirm Block', ok: 'Block', color: 'info' },
-  };
-
-  const openConfirm = (type: VisitorAction) => setConfirm({ type, loading: false });
-  const closeConfirm = () => {
-    if (!confirm?.loading) setConfirm(null);
-  };
-
-  const [filters, setFilters] = useState<any>({
-    visitor_type: '',
-    site: '',
-    status: '',
-    created_at: '',
-  });
-
-  const handleApplyFilter = () => {
-    setPage(0);
-    setRefreshTrigger((prev) => prev + 1);
-  };
-
   const [selected, setSelected] = useState<number[]>([]);
-  const [selectedAction, setSelectedAction] = useState('');
   const [disabledIndexes, setDisabledIndexes] = useState<number[]>([]);
 
   const selectedVisitorData = useMemo(() => {
@@ -595,6 +420,55 @@ const Content = () => {
     setVisitorError(null);
   };
 
+  const [visitorType, setVisitorType] = useState<any[]>([]);
+  const [vtLoading, setVtLoading] = useState(false);
+  const [sites, setSites] = useState<any[]>([]);
+  const [employee, setEmployee] = useState<any[]>([]);
+  const [allVisitorEmployee, setAllVisitorEmployee] = useState<any[]>([]);
+  const [customField, setCustomField] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!token) return;
+
+    const fetchSecondaryData = async () => {
+      try {
+        const [customFieldRes, employeeRes, allEmployeeRes, siteRes] = await Promise.all([
+          getAllCustomField(token),
+          getFormEmployee(token),
+          getVisitorEmployee(token),
+          getAllSite(token),
+        ]);
+
+        // if (cancelled) return;
+
+        setCustomField(customFieldRes?.collection ?? []);
+        setEmployee(employeeRes?.collection ?? []);
+        setAllVisitorEmployee(allEmployeeRes?.collection ?? []);
+        setSites(siteRes?.collection ?? []);
+      } catch (error) {
+        console.error('⚠️ Error fetching secondary data:', error);
+      }
+    };
+
+    fetchSecondaryData();
+  }, [token]);
+
+  const fetchVisitorType = async () => {
+    try {
+      setVtLoading(true);
+      const res = await getAllVisitorType(token as string);
+      setVisitorType(res?.collection || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setVtLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchVisitorType();
+  }, [token]);
+
   return (
     <>
       <PageContainer title="Invitation" description="invitation page">
@@ -607,7 +481,6 @@ const Content = () => {
                 onImageClick={(_, index) => {
                   if (index === 2) {
                     setFlowTarget('invitation');
-                    // setOpenDialogIndex(2);
                     setOpenInvitationVisitor(true);
                   } else if (index === 1) {
                     setFlowTarget('preReg');
@@ -631,7 +504,7 @@ const Content = () => {
                 defaultRowsPerPage={rowsPerPage}
                 totalCount={totalFilteredRecords}
                 selectedRows={selectedRows}
-                rowsPerPageOptions={[10, 20, 50, 100]}
+                rowsPerPageOptions={[10, 20, 50, 100, 500]}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);
@@ -639,7 +512,7 @@ const Content = () => {
                 isHaveChecked={true}
                 isHaveAction={true}
                 isHaveImage={true}
-                isHaveSearch={true}
+                isHaveSearch={false}
                 // isHaveFilter={true}
                 isHaveExportPdf={false}
                 isHaveExportXlf={false}
@@ -648,7 +521,7 @@ const Content = () => {
                 isHavePeriod={true}
                 // isVip={(row) => row.is_vip === true}
                 isHaveAddData={false}
-                isHaveHeader={true}
+                isHaveHeader={false}
                 isHaveGender={true}
                 isHaveVisitor={true}
                 isActionVisitor={true}
@@ -669,6 +542,7 @@ const Content = () => {
                     { name: 'Checkout' },
                     { name: 'Block' },
                     { name: 'Denied' },
+                    { name: 'Waiting' },
                   ],
                 }}
                 onHeaderItemClick={(item) => {
@@ -678,7 +552,8 @@ const Content = () => {
                     item.name === 'Checkout' ||
                     item.name === 'Preregis' ||
                     item.name === 'Denied' ||
-                    item.name === 'Block'
+                    item.name === 'Block' ||
+                    item.name === 'Waiting'
                   ) {
                     setSelectedType(item.name);
                   }
@@ -693,79 +568,22 @@ const Content = () => {
                   if (ranges.startDate && ranges.endDate) {
                     setStartDate(ranges.startDate.toISOString());
                     setEndDate(ranges.endDate.toISOString());
-                    setPage(0); // reset ke halaman pertama
-                    setRefreshTrigger((prev) => prev + 1); // trigger fetch
+                    setPage(0);
+                    setRefreshTrigger((prev) => prev + 1);
                   }
                 }}
                 onAddData={() => {
                   handleAdd();
                 }}
                 isHaveFilterMore={false}
-                // isHaveFilter={true}
-                // filterMoreContent={
-                //   <FilterMoreContent
-                //     filters={filters}
-                //     setFilters={setFilters}
-                //     onApplyFilter={handleApplyFilter}
-                //   />
-                // }
               />
             </Grid>
           </Grid>
         </Box>
       </PageContainer>
-      {/* Add New Invitation Visitor */}
-      <Dialog
-        fullWidth
-        maxWidth="xl"
-        open={openInvitationVisitor}
-        onClose={handleDialogClose}
-        keepMounted
-      >
-        <DialogTitle
-          display="flex"
-          justifyContent={'space-between'}
-          alignItems="center"
-          sx={{
-            background: 'linear-gradient(135deg, rgba(2,132,199,0.05), rgba(99,102,241,0.08))',
-          }}
-        >
-          Add Invitation Visitor
-          <IconButton
-            aria-label="close"
-            onClick={() => {
-              if (isFormChanged) {
-                openDiscardForCloseAdd();
-              } else {
-                handleCloseDialog();
-              }
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <Divider />
-        <DialogContent>
-          {/* <br /> */}
-          <FormInvitation
-            key={wizardKey}
-            formData={formDataAddVisitor}
-            setFormData={setFormDataAddVisitor}
-            edittingId={edittingId}
-            onSuccess={handleSuccess}
-          />
-        </DialogContent>
-      </Dialog>
       {/* Add Pre registration */}
       <Dialog fullWidth maxWidth="xl" open={openPreRegistration} onClose={handleDialogClose}>
-        <DialogTitle
-          display="flex"
-          justifyContent={'space-between'}
-          alignItems="center"
-          // sx={{
-          //   background: 'linear-gradient(135deg, rgba(2,132,199,0.05), rgba(99,102,241,0.08))',
-          // }}
-        >
+        <DialogTitle display="flex" justifyContent={'space-between'} alignItems="center">
           Add Pra Registration
           <IconButton
             aria-label="close"
@@ -782,13 +600,18 @@ const Content = () => {
         </DialogTitle>
         <Divider />
         <DialogContent sx={{ paddingTop: '0px' }}>
-          <br />
           <Praregist
             key={wizardKey}
             formData={formDataAddVisitor}
             setFormData={setFormDataAddVisitor}
             edittingId={edittingId}
             onSuccess={handleSuccess}
+            visitorType={visitorType}
+            sites={sites}
+            employee={employee}
+            allVisitorEmployee={allVisitorEmployee}
+            customField={customField}
+            vtLoading={vtLoading}
           />
         </DialogContent>
       </Dialog>
@@ -802,74 +625,6 @@ const Content = () => {
         axiosInstance2={axiosInstance2}
       />
 
-      {/* Select Registered Site */}
-      {/* <Dialog open={openDialogIndex === 2} onClose={handleDialogClose} fullWidth maxWidth="sm">
-        <DialogTitle
-          display="flex"
-          justifyContent={'space-between'}
-          alignItems="center"
-          sx={{
-            background: 'linear-gradient(135deg, rgba(2,132,199,0.05), rgba(99,102,241,0.08))',
-          }}
-        >
-          Select Registered Site
-          <IconButton
-            aria-label="close"
-            onClick={() => {
-              if (isFormChanged) {
-                openDiscardForCloseAdd();
-              } else {
-                handleCloseDialog();
-              }
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <Divider />
-        <DialogContent>
-          <CustomFormLabel sx={{ marginTop: 0 }}>Registered Site</CustomFormLabel>
-          <Autocomplete
-            fullWidth
-            options={siteData}
-            getOptionLabel={(o) => o.name || ''}
-            value={selectedSite}
-            onChange={(_, nv) => {
-              setSelectedSite(nv);
-              setFormDataAddVisitor((prev) => ({
-                ...prev,
-                registered_site: nv?.id || '',
-              }));
-            }}
-            isOptionEqualToValue={(option, value) => option.id === value?.id} // penting
-            renderInput={(params) => <TextField {...params} label="" />}
-          />
-          <Box display="flex" justifyContent="flex-end" mt={2}>
-            <Button
-              variant="contained"
-              onClick={() => {
-                if (!selectedSite) {
-                  toast('Minimal pilih 1 Registered Site.', 'warning');
-                  return;
-                }
-                setFormDataAddVisitor((prev) => ({
-                  ...prev,
-                  registered_site: selectedSite.id,
-                }));
-                setOpenDialogIndex(null); // tutup Registered Site
-                if (flowTarget === 'invitation') {
-                  setOpenInvitationVisitor(true);
-                } else if (flowTarget === 'preReg') {
-                  setOpenPreRegistration(true);
-                }
-              }}
-              color="primary"
-            >
-              Next
-            </Button>
-          </Box>
-        </DialogContent>
-      </Dialog> */}
       <SelectRegisteredSiteDialog
         open={openDialogIndex === 2}
         siteData={siteData}

@@ -51,7 +51,7 @@ import {
 } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import 'select2'; // Select2 secara otomatis akan attach ke jQuery global
+import 'select2';
 import 'select2/dist/css/select2.min.css';
 import {
   IconArrowLeft,
@@ -72,7 +72,6 @@ import {
   CreateGroupVisitorRequestSchema,
   CreateVisitorRequest,
   CreateVisitorRequestSchema,
-  DataVisitor,
   Item,
   SectionPageVisitor,
 } from 'src/customs/api/models/Admin/Visitor';
@@ -84,13 +83,11 @@ import {
   createVisitor,
   createVisitorsGroup,
   getGrantAccess,
-  getVisitorEmployee,
-  getVisitorTypeById,
 } from 'src/customs/api/admin';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import CloseIcon from '@mui/icons-material/Close';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { SectionPageVisitorType } from 'src/customs/api/models/Admin/VisitorType';
 import { FormVisitor } from 'src/customs/api/models/Admin/Visitor';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
@@ -116,6 +113,7 @@ import { TreeItem, TreeView } from '@mui/x-tree-view';
 import { SimpleTreeView } from '@mui/x-tree-view';
 import VisitorTypeList from 'src/customs/pages/Operator/Invitation/components/VisitorTypeList';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import { createGrandAccessOperator, createMultipleGrantAccess } from 'src/customs/api/operator';
 
 interface FormVisitorTypeProps {
   formData: CreateVisitorRequest;
@@ -150,7 +148,7 @@ interface GroupVisitor {
   is_group?: boolean;
   tz?: string;
   registered_site?: string;
-  data_visitor: any[]; // nanti hasil form visitor per group
+  data_visitor: any[];
 }
 
 const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
@@ -173,11 +171,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const [alertType, setAlertType] = useState<'info' | 'success' | 'error'>('info');
   const { token } = useSession();
   const [searchKeyword, setSearchKeyword] = useState('');
-  const [activeStep, setActiveStep] = React.useState(0);
-  const [skipped, setSkipped] = React.useState(new Set());
-  // const [visitorType, setVisitorType] = useState<any[]>([]);
+  const [activeStep, setActiveStep] = useState(0);
   const [selfOnlyOverrides, setSelfOnlyOverrides] = useState<Record<string, any[]>>({});
-  // const visitor type by id
+
   const [submitted, setSubmitted] = useState(false);
   const [accessDialogOpen, setAccessDialogOpen] = useState(false);
   const [dynamicSteps, setDynamicSteps] = useState<string[]>([]);
@@ -188,8 +184,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const isLastStep = activeStep === totalSteps - 1;
   const [isSingle, setIsSingle] = useState(false);
   const [isGroup, setIsGroup] = useState(false);
-  const [visitorDatas, setVisitorDatas] = useState<Item[]>([]);
-  // (opsional) jika mau pilih group yang sedang diedit
   const [activeGroupIdx, setActiveGroupIdx] = useState(0);
   // Duplikat Question Page
   const [groupForms, setGroupForms] = useState<Record<number, FormVisitor[][]>>({});
@@ -218,16 +212,13 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   };
 
   const [searchTerm, setSearchTerm] = useState('');
-
-  // const [cards, setCard] = useState<any[]>([]);
-
   const [groupedPages, setGroupedPages] = useState<GroupedPages>({
     single_page: [],
     batch_page: {},
   });
   const TYPE_REGISTERED: 0 | 1 = FORM_KEY === 'pra_form' ? 0 : 1;
 
-  const [previews, setPreviews] = useState<Record<string, string | null>>({}); // blob/CDN preview
+  const [previews, setPreviews] = useState<Record<string, string | null>>({});
 
   const updateSectionForm = (sec: any, updater: (arr: any[]) => any[]) => ({
     ...sec,
@@ -241,7 +232,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   });
 
   const [accessData, setAccessData] = useState<any[]>([]);
-  const [selfOnlyAccessData, setSelfOnlyAccessData] = useState<Record<string, any[]>>({});
   const [checkedItems, setCheckedItems] = useState<number[]>([]);
   const [availableCards, setAvailableCards] = useState<any[]>([]);
 
@@ -278,47 +268,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     setGroupVisitors((prev) => prev.filter((g) => g.id !== id));
   };
 
-  const [grantAccessMap, setGrantAccessMap] = useState<Record<string, any[]>>({});
-
-  const [groupAccessData, setGroupAccessData] = useState<any[]>([]);
-
-  const selfOnlyVisitors = useMemo(() => {
-    return (dataVisitor || [])
-      .map((dv, idx) => {
-        const hasSelf = dv?.question_page?.some((p: any) => p?.self_only === true);
-        if (!hasSelf) return null;
-
-        // ambil field name
-        const nameField = dv?.question_page
-          ?.flatMap((p: any) => p.form || [])
-          ?.find((f: any) => f.remarks === 'name');
-
-        // ambil site_place (optional, kalau mau ditampilkan)
-        const siteField = dv?.question_page
-          ?.flatMap((p: any) => p.form || [])
-          ?.find((f: any) => f.remarks === 'site_place');
-
-        return {
-          key: `row${idx + 1}`, // ✅ konsisten dengan overrides
-          idx,
-          dv,
-          name: nameField?.answer_text || `Visitor ${idx + 1}`,
-          sitePlace: siteField?.answer_text || null,
-        };
-      })
-      .filter(Boolean);
-  }, [dataVisitor]);
-
-  function getSitePlaceFromOverrides(overrides: any, idx: number) {
-    if (!overrides) return null;
-
-    const forms = overrides[`row${idx + 1}`];
-    if (!Array.isArray(forms)) return null;
-
-    const siteField = forms.find((f: any) => f.remarks === 'site_place');
-    return siteField?.answer_text || null;
-  }
-
   useEffect(() => {
     const fetchGrantAccess = async () => {
       if (!dataVisitor?.length) return;
@@ -332,30 +281,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           const res = await getGrantAccess(token as string, siteAnswer);
 
           setAccessData(res.collection ?? []);
-          setGroupAccessData(res.collection ?? []);
+          // setGroupAccessData(res.collection ?? []);
         }
 
-        // 2️⃣ Self only access dari localStorage.selfOnlyOverrides
-        const overrides = JSON.parse(localStorage.getItem('selfOnlyOverrides') || '{}');
-        const map: Record<string, any[]> = {};
-
-        for (const v of selfOnlyVisitors) {
-          const sitePlaceId = getSitePlaceFromOverrides(overrides, v?.idx || 0);
-          if (sitePlaceId) {
-            const resSelf = await getGrantAccess(token as string, sitePlaceId);
-            // console.log(`✅ Response getGrantAccess (self only ${v?.name}):`, resSelf);
-            if (v?.key !== undefined) {
-              map[v.key] = resSelf.collection ?? [];
-            }
-          } else {
-            // console.log(`⚠️ self_only ${v?.name} tidak punya site_place`);
-            if (v?.key !== undefined) {
-              map[v.key] = [];
-            }
-          }
-        }
-
-        setGrantAccessMap(map);
+        // setGrantAccessMap(map);
       } catch (err) {
         console.error('❌ Failed to fetch grant access:', err);
       }
@@ -375,35 +304,23 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         for (const page of visitor.question_page ?? []) {
           const found = page.form?.find((f: any) => f.remarks === 'site_place');
           if (found?.answer_text) {
-            // console.log('[getSiteFromForm] ✅ Group mode → site_place:', found.answer_text);
             return found.answer_text;
           }
         }
       }
-      console.log('[getSiteFromForm] ⚠️ Group mode → site_place belum diisi');
       return null;
     } else {
       const purposeVisitPage = sectionsData.find((p: any) => p.name === 'Purpose Visit');
       const siteFieldUI =
         purposeVisitPage?.visit_form?.find((f: any) => f.remarks === 'site_place') ??
-        purposeVisitPage?.form?.find((f: any) => f.remarks === 'site_place'); // 👈 fallback ke form juga
-
+        purposeVisitPage?.form?.find((f: any) => f.remarks === 'site_place');
       if (siteFieldUI?.answer_text) {
-        // console.log(
-        //   '[getSiteFromForm] ✅ Single mode (sectionsData) → site_place:',
-        //   siteFieldUI.answer_text,
-        // );
         return siteFieldUI.answer_text;
       }
 
-      // ✅ Kalau tidak ada di sectionsData, fallback ke dataVisitor
       for (const page of dataVisitor[0]?.question_page ?? []) {
         const found = page.form?.find((f: any) => f.remarks === 'site_place');
         if (found?.answer_text) {
-          // console.log(
-          //   '[getSiteFromForm] ✅ Single mode (dataVisitor) → site_place:',
-          //   found.answer_text,
-          // );
           return found.answer_text;
         }
       }
@@ -425,7 +342,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
   const normalizeIdsDeep = (payload: any): string[] => {
     const flat = flatDeep(payload);
-    const ids = flat.map((v) => (typeof v === 'object' && v !== null ? v.id : v)).filter((n) => n); // filter null / undefined
+    const ids = flat.map((v) => (typeof v === 'object' && v !== null ? v.id : v)).filter((n) => n);
     // dedupe
     return Array.from(new Set(ids));
   };
@@ -438,7 +355,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     setSelectedInvitations(payload);
   };
 
-  // kalau klik choose card (dari DynamicTable)
   const handleOpenChooseCard = () => {
     if (!selectedInvitations?.length) {
       toast('Please select at least one invitation first.');
@@ -455,9 +371,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     setSelectedCards([]);
   };
 
-  // amankan juga kalau ditutup via ESC/backdrop
-
-  // amankan pagination/reopen Grant dialog
   useEffect(() => {
     if (!nextDialogOpen) {
       setSelectedInvitations([]);
@@ -465,137 +378,173 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     }
   }, [nextDialogOpen]);
 
-  function buildDataAccess(rows: Row[], selectedInvitations: Row[], checkedItems: string[]) {
-    const data_access: any[] = [];
+  // const handleAccessSubmit = async () => {
+  //   if (!selectedInvitations?.length) {
+  //     console.warn('No visitor selected');
+  //     return;
+  //   }
 
-    for (const visitorRow of selectedInvitations) {
-      const trxVisitorId = visitorRow.trx_visitor_id;
-      const cardNumber = visitorRow.card;
+  //   setLoading(true);
 
-      if (!trxVisitorId || !cardNumber) continue;
+  //   const data_access: any[] = [];
 
-      for (const accessControlId of checkedItems) {
-        data_access.push({
-          access_control_id: accessControlId,
-          action: 1, // 1 = Grant
-          card_number: cardNumber,
-          trx_visitor_id: trxVisitorId,
-        });
-      }
-    }
+  //   // 1️⃣ Group Access → apply ke semua selected visitors
+  //   for (const visitorRow of selectedInvitations) {
+  //     const trxVisitorId = visitorRow.trx_visitor_id;
+  //     console.log('visitorRow:', visitorRow);
+  //     const cardNumber = visitorRow.assigned_card_number;
+  //     console.log('cardNumber:', cardNumber);
+  //     if (!trxVisitorId || !cardNumber) continue;
 
-    return { data_access };
-  }
+  //     for (const acId of checkedGroupItems) {
+  //       data_access.push({
+  //         access_control_id: acId,
+  //         action: 1,
+  //         card_number: cardNumber,
+  //         trx_visitor_id: trxVisitorId,
+  //       });
+  //     }
+  //   }
+
+  //   for (const visitorRow of selectedInvitations) {
+  //     // if (!hasSelfOnly([visitorRow])) continue;
+
+  //     const trxVisitorId = visitorRow.trx_visitor_id;
+  //     console.log('visitorRow:', visitorRow);
+  //     const cardNumber = visitorRow.assigned_card_number;
+  //     if (!trxVisitorId || !cardNumber) continue;
+
+  //     for (const fullId of checkedSelfItems) {
+  //       const parts = fullId.split(':');
+  //       const acId = parts.length > 1 ? parts[1] : parts[0];
+
+  //       data_access.push({
+  //         access_control_id: acId,
+  //         action: 1,
+  //         card_number: cardNumber,
+  //         trx_visitor_id: trxVisitorId,
+  //       });
+  //     }
+  //     console.log('Visitor:', trxVisitorId, 'Card:', cardNumber);
+  //   }
+
+  //   const payload = { data_access };
+  //   console.log('📤 Payload yang dikirim ke APIs:', JSON.stringify(payload, null, 2));
+
+  //   try {
+  //     const res = await createCheckGiveAccess(token as string, payload);
+  //     console.log('📤 Response dari API:', JSON.stringify(res, null, 2));
+  //     toast('Grant access successful', 'success');
+  //     console.log('✅ Grant access success:', res);
+  //     // setSelectedInvitations([]);
+  //     // setSelectedCards([]);
+  //     // setCheckedGroupItems([]);
+  //     // setCheckedSelfItems([]);
+  //     // setNextDialogOpen(false);
+  //     // setAccessDialogOpen(false);
+  //     onSuccess?.();
+  //   } catch (err) {
+  //     console.error('❌ Failed grant access:', err);
+  //   } finally {
+  //     setTimeout(() => setLoading(false), 500);
+  //   }
+  // };
 
   const handleAccessSubmit = async () => {
-    if (!selectedInvitations?.length) {
-      console.warn('No visitor selected');
+    setLoading(true);
+
+    const data_access: any[] = [];
+
+    const visitorsWithCard = rows.filter((r) => r.trx_visitor_id && r.card?.card_number);
+
+    if (!visitorsWithCard.length) {
+      console.warn('No visitor with assigned card');
+      setLoading(false);
       return;
     }
 
-    setLoading(true);
-
-    // payload akhir
-    const data_access: any[] = [];
-
-    // 1️⃣ Group Access → apply ke semua selected visitors
-    for (const visitorRow of selectedInvitations) {
+    for (const visitorRow of visitorsWithCard) {
       const trxVisitorId = visitorRow.trx_visitor_id;
-      const cardNumber = visitorRow.assigned_card_number; // ⬅️ pakai assigned card
+      const cardNumber = visitorRow.card?.card_number;
+
       if (!trxVisitorId || !cardNumber) continue;
 
-      for (const acId of checkedGroupItems) {
-        data_access.push({
-          access_control_id: acId,
-          action: 1,
-          card_number: cardNumber,
-          trx_visitor_id: trxVisitorId,
-        });
+      // ✅ SINGLE MODE
+      if (!isGroup) {
+        for (const acId of checkedItems) {
+          data_access.push({
+            access_control_id: acId,
+            action: 1,
+            card_number: cardNumber,
+            trx_visitor_id: trxVisitorId,
+          });
+        }
+      }
+
+      // ✅ GROUP MODE
+      if (isGroup) {
+        for (const acId of checkedGroupItems) {
+          data_access.push({
+            access_control_id: acId,
+            action: 1,
+            card_number: cardNumber,
+            trx_visitor_id: trxVisitorId,
+          });
+        }
+
+        for (const fullId of checkedSelfItems) {
+          const parts = fullId.split(':');
+          const acId = parts.length > 1 ? parts[1] : parts[0];
+
+          data_access.push({
+            access_control_id: acId,
+            action: 1,
+            card_number: cardNumber,
+            trx_visitor_id: trxVisitorId,
+          });
+        }
       }
     }
 
-    // 2️⃣ Self Only Access → apply hanya ke row visitor yg punya override
-    // for (const visitorRow of selectedInvitations) {
-    //   if (!hasSelfOnly([visitorRow])) continue; // skip kalau row ini bukan self_only
-
-    //   const trxVisitorId = visitorRow.trx_visitor_id;
-    //   const cardNumber = visitorRow.assigned_card_number;
-    //   if (!trxVisitorId || !cardNumber) continue;
-
-    //   for (const acId of checkedSelfItems) {
-    //     data_access.push({
-    //       access_control_id: acId,
-    //       action: 1,
-    //       card_number: cardNumber,
-    //       trx_visitor_id: trxVisitorId,
-    //     });
-    //   }
-    // }
-
-    for (const visitorRow of selectedInvitations) {
-      if (!hasSelfOnly([visitorRow])) continue; // skip kalau row ini bukan self_only
-
-      const trxVisitorId = visitorRow.trx_visitor_id;
-      const cardNumber = visitorRow.assigned_card_number;
-      if (!trxVisitorId || !cardNumber) continue;
-
-      for (const fullId of checkedSelfItems) {
-        // ✅ parse "visitorKey:acId" → ambil hanya acId
-        const parts = fullId.split(':');
-        const acId = parts.length > 1 ? parts[1] : parts[0];
-
-        data_access.push({
-          access_control_id: acId,
-          action: 1,
-          card_number: cardNumber,
-          trx_visitor_id: trxVisitorId,
-        });
-      }
+    if (!data_access.length) {
+      console.warn('No access selected');
+      setLoading(false);
+      return;
     }
 
     const payload = { data_access };
-    console.log('📤 Payload yang dikirim ke APIs:', JSON.stringify(payload, null, 2));
+    console.log('📤 Payload:', JSON.stringify(payload, null, 2));
 
     try {
       const res = await createCheckGiveAccess(token as string, payload);
-      console.log('📤 Response dari API:', JSON.stringify(res, null, 2));
       toast('Grant access successful', 'success');
-      console.log('✅ Grant access success:', res);
-    } catch (err) {
+      onSuccess?.();
+    } catch (err: any) {
       console.error('❌ Failed grant access:', err);
+      showSwal('error', 'Failed to update access');
     } finally {
-      // reset
-      setSelectedInvitations([]);
-      setSelectedCards([]);
-      setCheckedGroupItems([]);
-      setCheckedSelfItems([]);
       setTimeout(() => setLoading(false), 500);
-      // setNextDialogOpen(false);
-      // setAccessDialogOpen(false);
-      // setTimeout(() => {
-      //   onSuccess && onSuccess();
-      // }, 500);
     }
   };
 
-  useEffect(() => {
-    if (!sectionsData?.length) return;
+  // useEffect(() => {
+  //   if (!sectionsData?.length) return;
 
-    setGroupForms((prev) => {
-      const next = { ...prev };
-      sectionsData.forEach((section, secIdx) => {
-        if (section.can_multiple_used) {
-          const template = formsOf(section).map((f) => ({
-            ...f,
-            answer_text: '',
-            answer_datetime: '',
-            answer_file: '',
-          }));
-        }
-      });
-      return next;
-    });
-  }, [sectionsData]);
+  //   setGroupForms((prev) => {
+  //     const next = { ...prev };
+  //     sectionsData.forEach((section, secIdx) => {
+  //       if (section.can_multiple_used) {
+  //         const template = formsOf(section).map((f) => ({
+  //           ...f,
+  //           answer_text: '',
+  //           answer_datetime: '',
+  //           answer_file: '',
+  //         }));
+  //       }
+  //     });
+  //     return next;
+  //   });
+  // }, [sectionsData]);
 
   const generateUUIDv4 = () => {
     const bytes = new Uint8Array(16);
@@ -615,7 +564,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
   const handleSaveGroupVisitor = () => {
     if (activeGroupIdx === null) return;
-    // console.log('💾 Saving existing group:', activeGroupIdx);
 
     const deepClone = (obj: any) => {
       try {
@@ -728,15 +676,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     );
   };
 
-  const getVisibleFields = (fields: any[]) => {
-    const visibilityMap: any = getVisibilityMap(fields);
-
-    return fields.filter((field) => {
-      const remark = (field.remarks || '').toLowerCase();
-      return visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
-    });
-  };
-
   const handleSteps = (step: number) => {
     const showVTListSkeleton = vtLoading;
     if (step == 0) {
@@ -778,7 +717,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         setIsGroup(false);
                         setFormData((prev: any) => ({
                           ...prev,
-                          is_group: false, // ubah nilainya jadi false
+                          is_group: false,
                         }));
                       }}
                     />
@@ -796,7 +735,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         setIsGroup(true);
                         setFormData((prev: any) => ({
                           ...prev,
-                          is_group: true, // ubah nilainya jadi true
+                          is_group: true,
                         }));
                       }}
                     />
@@ -958,15 +897,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     }
     const currentSection = sectionsData[step - 1];
     if (!currentSection) return null;
-
-    // split access berdasarkan apakah datang dari section self_only
-    const groupSections = sectionsData.filter((s) => !s.self_only);
-    const selfOnlySections = sectionsData.filter((s) => s.self_only);
-
-    // lalu masing-masing bisa dipetakan ke accessData
-    const groupAccess = accessData.filter((a) =>
-      groupSections.some((s) => s.foreign_id === a.section_id),
-    );
 
     const handleDetailChange = (
       sectionKey: SectionKey,
@@ -3775,7 +3705,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       group_code?: string;
       group_name?: string;
     },
-    selfOnlyOverrides: Record<string, any[]> = {},
   ) {
     const sharedPVIdx = indexBy(groupedPages.single_page || []);
     const batchIdx = indexBy(Object.values(groupedPages.batch_page || {}));
@@ -3789,10 +3718,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       const question_page = rawSections.map((section: any, sIdx: number) => {
         const formsTpl = formsOf(section);
 
-        const rowSelfOnly =
-          row?.question_page?.[sIdx]?.self_only === true ||
-          !!selfOnlyOverrides[`row${rowIdx}`]?.length;
-
         const form = formsTpl.map((tpl: any, fIdx: number) => {
           const r = sanitize(tpl?.remarks);
           const cf = tpl?.custom_field_id;
@@ -3800,14 +3725,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           let pick: any;
 
           if (isPurposeVisit(section)) {
-            if (rowSelfOnly) {
-              pick = (selfOnlyOverrides[`row${rowIdx}`] || []).find((f) => sameField(f, tpl));
-            } else {
-              pick =
-                (r && sharedPVIdx.byRemarks.get(r)) ||
-                (cf && sharedPVIdx.byCF.get(cf)) ||
-                undefined;
-            }
+            pick =
+              (r && sharedPVIdx.byRemarks.get(r)) || (cf && sharedPVIdx.byCF.get(cf)) || undefined;
           } else {
             // normal section
             pick =
@@ -3827,7 +3746,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           name: section.name ?? `Page ${sIdx + 1}`,
           is_document: !!section.is_document,
           can_multiple_used: !!section.can_multiple_used,
-          self_only: !!rowSelfOnly,
+          self_only: false,
           foreign_id: asStr(section.foreign_id),
           form,
         };
@@ -3857,7 +3776,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const removeIdsDeep = (obj: any): any => {
     if (Array.isArray(obj)) return obj.map(removeIdsDeep);
     if (obj && typeof obj === 'object') {
-      const { id, Id, ...rest } = obj; // hapus id & Id
+      const { id, Id, ...rest } = obj;
       const cleaned = Object.fromEntries(
         Object.entries(rest).map(([k, v]) => [k, removeIdsDeep(v)]),
       );
@@ -3954,7 +3873,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
               tz: tz,
               registered_site: formData.registered_site ?? '',
             },
-            selfOnlyOverrides,
           );
 
           const cleanDataVisitor = (built.data_visitor ?? []).map((dv: any) => ({
@@ -3989,36 +3907,36 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         const parsed = CreateGroupVisitorRequestSchema.parse(payload);
         console.log('🚀 Final Payload (Group):', JSON.stringify(parsed, null, 2));
 
-         const submitFn = TYPE_REGISTERED === 0 ? createPraRegisterGroup : createVisitorsGroup;
-          const backendResponse = await submitFn(token, parsed as any);
-          toast('Group visitor created successfully.', 'success');
-          resetMediaState();
-          clearAnswerFiles();
-          const visitors = backendResponse.collection?.visitors || [];
+        const submitFn = TYPE_REGISTERED === 0 ? createPraRegisterGroup : createVisitorsGroup;
+        const backendResponse = await submitFn(token, parsed as any);
+        toast('Group visitor created successfully.', 'success');
+        resetMediaState();
+        clearAnswerFiles();
+        const visitors = backendResponse.collection?.visitors || [];
 
-          const availableCards = backendResponse.collection?.available_cards || [];
-          setAvailableCards(availableCards);
+        const availableCards = backendResponse.collection?.available_cards || [];
+        setAvailableCards(availableCards);
 
-          setRows(
-            visitors.map((v: any, i: number) => ({
-              id: v.id,
-              visitor: v.visitor_name,
-              trx_visitor_id: v.id ?? null,
-              card: null,
-            })),
-          );
+        setRows(
+          visitors.map((v: any, i: number) => ({
+            id: v.id,
+            visitor: v.visitor_name,
+            trx_visitor_id: v.id ?? null,
+            card: null,
+          })),
+        );
 
-          // Cek akses site
-          const siteAnswer = getSiteFromForm(false, sectionsData, dataVisitor);
-          if (siteAnswer) {
-            try {
-              const res = await getGrantAccess(token, siteAnswer);
-              setAccessData(res.collection ?? []);
-              // console.log('Grant access by site_place:', siteAnswer, res.collection);
-            } catch (err) {
-              console.error('Failed to fetch grant access:', err);
-            }
+        // Cek akses site
+        const siteAnswer = getSiteFromForm(false, sectionsData, dataVisitor);
+        if (siteAnswer) {
+          try {
+            const res = await getGrantAccess(token, siteAnswer);
+            setAccessData(res.collection ?? []);
+            console.log('Grant access by site_place:', siteAnswer, res.collection);
+          } catch (err) {
+            console.error('Failed to fetch grant access:', err);
           }
+        }
       }
 
       // 🟦 SINGLE MODE
@@ -4046,18 +3964,18 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         };
 
         const parsed = CreateVisitorRequestSchema.parse(payload);
-        console.log('✅ Final Payload (Single):', JSON.stringify(parsed, null, 2));
+        console.log('Final Payload (Single):', JSON.stringify(parsed, null, 2));
 
         // // Submit ke endpoint single
         const submitFn = TYPE_REGISTERED === 0 ? createPraRegister : createVisitor;
         const backendResponse = await submitFn(token, parsed);
-        console.log('Visitor created:', backendResponse);
+        console.log('Visitor created:', backendResponse); 
         const successMessage =
           TYPE_REGISTERED === 0
             ? 'Pre-registration created successfully.'
             : 'Invitation Visitor created successfully.';
 
-        showSwal('success', successMessage);
+        showSwal('success', successMessage, 500);
 
         resetMediaState();
         clearAnswerFiles();
@@ -4075,9 +3993,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           })),
         );
 
-        console.log('rows', rows);
-
-        // Cek akses site
         const siteAnswer = getSiteFromForm(false, sectionsData, dataVisitor);
         if (siteAnswer) {
           try {
@@ -4094,7 +4009,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         if (TYPE_REGISTERED !== 0) {
           setNextDialogOpen(true);
         }
-      }, 500);
+      }, 700);
     } catch (err: any) {
       setTimeout(() => {
         setLoading(false);
@@ -4232,7 +4147,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     return forms.some((f: any) => PV.has((f?.remarks ?? '').trim().toLowerCase()));
   };
 
-  const pvIndex = useMemo(() => sectionsData.findIndex(isPurposeVisit), [sectionsData]);
   const hasAns = (f: any) => !!(f?.answer_text || f?.answer_datetime || f?.answer_file);
 
   const buildGroupedPages = (sections: any[] = []): GroupedPages => {
@@ -4256,7 +4170,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       // Non-document → batch_page (template kolom)
       if (!section?.is_document) {
         forms.forEach((f: any, idx: number) => {
-          const secId = (section as any)?.id ?? (section as any)?.Id ?? null;
           const formId = (f as any)?.id ?? (f as any)?.Id ?? idx;
           const secForeign = (section as any)?.foreign_id ?? (section as any)?.foreignId ?? null;
           const formForeign = (f as any)?.foreign_id ?? (f as any)?.foreignId ?? null;
@@ -4458,67 +4371,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     return result;
   };
 
-  // useEffect(() => {
-  //   if (!token) return;
-  //   let cancelled = false;
-  //   const min = 500;
-
-  //   const fetchMainData = async () => {
-  //     const t0 = Date.now();
-  //     setVtLoading(true);
-
-  //     try {
-  //       const siteSpaceRes = await getAllSite(token);
-  //       if (cancelled) return;
-
-  //       setSites(siteSpaceRes?.collection ?? []);
-
-  //       // lanjut background
-  //       fetchSecondaryData();
-  //     } catch (error) {
-  //       console.error('❌ Error fetching main data:', error);
-  //     } finally {
-  //       const elapsed = Date.now() - t0;
-  //       const wait = Math.max(0, min - elapsed);
-  //       setTimeout(() => {
-  //         if (!cancelled) setVtLoading(false);
-  //       }, wait);
-  //     }
-  //   };
-
-  //   const fetchSecondaryData = async () => {
-  //     try {
-  //       const results = await Promise.allSettled([
-  //         getAllCustomField(token),
-  //         getVisitorEmployee(token),
-  //         getVisitorEmployee(token),
-  //       ]);
-
-  //       if (cancelled) return;
-
-  //       const [customFieldRes, employeeRes, allEmployeeRes] = results;
-
-  //       setCustomField(
-  //         customFieldRes.status === 'fulfilled' ? customFieldRes.value.collection : [],
-  //       );
-
-  //       setEmployee(employeeRes.status === 'fulfilled' ? employeeRes.value.collection : []);
-
-  //       setAllVisitorEmployee(
-  //         allEmployeeRes.status === 'fulfilled' ? allEmployeeRes.value.collection : [],
-  //       );
-  //     } catch (error) {
-  //       console.error('⚠️ Error:', error);
-  //     }
-  //   };
-
-  //   fetchMainData();
-
-  //   return () => {
-  //     cancelled = true;
-  //   };
-  // }, [token]);
-
   useEffect(() => {
     if (!formData.visitor_type || !token) return;
 
@@ -4563,30 +4415,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
     fetchVisitorTypeDetails();
   }, [formData.visitor_type, visitorType]);
-
-  // useEffect(() => {
-  //   if (!isGroup) return;
-
-  //   setDataVisitor((prev) => {
-  //     if (!prev[0]) return prev;
-  //     const next = [...prev];
-  //     const qps = next[0].question_page;
-
-  //     // merge groupedPages.single_page ke Purpose Visit section
-  //     const purpose = qps.find((s) => s.name.toLowerCase().includes('purpose visit'));
-  //     if (purpose) {
-  //       purpose.form = purpose?.form?.map((f: any) => {
-  //         const match = groupedPages.single_page.find(
-  //           (sf) =>
-  //             (sf.custom_field_id && sf.custom_field_id === f.custom_field_id) ||
-  //             (sf.remarks && sf.remarks === f.remarks),
-  //         );
-  //         return match ? { ...f, ...match } : f;
-  //       });
-  //     }
-  //     return next;
-  //   });
-  // }, [isGroup, groupedPages.single_page]);
 
   useEffect(() => {
     if (!formData.visitor_type || !rawSections.length) return;
@@ -4640,14 +4468,27 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     resetSelections();
   };
 
+  // type Row = {
+  //   id: number;
+  //   visitor?: string;
+  //   card: string | React.ReactNode | null;
+  //   trx_visitor_id?: string | null;
+  //   assigned_card_number?: string | null;
+  //   assigned_card_remarks?: string | null;
+  // };
+
+  type CardInfo = {
+    card_number: string;
+    remarks: string;
+  };
+
   type Row = {
     id: number;
     visitor?: string;
-    card: string | React.ReactNode | null;
+    card: CardInfo | null;
     trx_visitor_id?: string | null;
-    assigned_card_number?: string | null;
-    assigned_card_remarks?: string | null;
   };
+
   const [rows, setRows] = useState<Row[]>([]);
 
   const cardIndex = useMemo(() => {
@@ -4656,53 +4497,73 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     return m;
   }, [availableCards]);
 
-  const handleConfirmChooseCards = () => {
-    const ids = normalizeIdsDeep(selectedInvitations);
-    console.log('raw selectedInvitations:', selectedInvitations);
-    console.log('id', ids);
+  const handleConfirmChooseCards = async () => {
+    try {
+      const ids = normalizeIdsDeep(selectedInvitations);
 
-    if (!ids.length || !selectedCards.length) {
+      if (!ids.length || !selectedCards.length) {
+        handleCloseChooseCard();
+        return;
+      }
+
+      const N = Math.min(ids.length, selectedCards.length);
+
+      // pair: id ↔ (remarks, card_number)
+      const pairs = ids.slice(0, N).map((id, i) => {
+        const num = selectedCards[i];
+        const meta = cardIndex.get(num);
+        return { id, card_number: num, remarks: meta?.remarks ?? '-' };
+      });
+
+      setRows((prevRows: any) =>
+        prevRows.map((row: any) => {
+          const p = pairs.find((x) => x.id === String(row.id));
+          if (!p) return row;
+
+          return {
+            ...row,
+            card: {
+              card_number: p.card_number,
+              remarks: p.remarks,
+            },
+            assigned_card_number: p.card_number,
+            assigned_card_remarks: p.remarks,
+          };
+        }),
+      );
+
+      const payload = pairs.map((p) => ({
+        card_number: p.card_number,
+        trx_visitor_id: p.id,
+        description: `Give card number ${p.card_number}`,
+        is_swapcard: false,
+        swap_type: 'Other',
+      }));
+
+      console.log('Payload for granting access:', { data: payload });
+      
+      // { data: []}
+
+      // createMultipleGrantAccess
+      // const res = await createGrandAccessOperator(token as string, payload);
+      const res = await createMultipleGrantAccess(token as string, { data: payload });
+
+      console.log('Grand access operator response:', res);
+
+      toast(`Assigned ${N} card(s) to ${N} invitation(s).`, 'success');
+
+      // setSelectedInvitations([]);
       handleCloseChooseCard();
-      return;
+    } catch (error: any) {
+      console.error('Failed to assign cards:', error);
+
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        'Failed to assign cards. Please try again.';
+
+      toast(message, 'error');
     }
-
-    const N = Math.min(ids.length, selectedCards.length);
-
-    // pair: id ↔ (remarks, card_number)
-    const pairs = ids.slice(0, N).map((id, i) => {
-      const num = selectedCards[i];
-      const meta = cardIndex.get(num);
-      return { id, card_number: num, remarks: meta?.remarks ?? '-' };
-    });
-
-    setRows((prevRows) =>
-      prevRows.map((row) => {
-        const p = pairs.find((x) => x.id === String(row.id));
-        if (!p) return row;
-
-        return {
-          ...row,
-          card: (
-            <Box display="flex" flexDirection="column">
-              <Typography variant="body2" fontWeight={600}>
-                {p.remarks}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {p.card_number}
-              </Typography>
-            </Box>
-          ),
-          assigned_card_number: p.card_number,
-          assigned_card_remarks: p.remarks,
-        };
-      }),
-    );
-
-    toast(`Assigned ${N} card(s) to ${N} invitation(s).`, 'success');
-
-    // kosongkan selection
-    setSelectedInvitations([]);
-    handleCloseChooseCard();
   };
 
   const filteredRows = useMemo(() => {
@@ -4836,6 +4697,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
     setActiveStep(targetStep);
   };
+
+  const tableData = filteredRows.map((row: Row) => ({
+    id: row.id,
+    visitor: row.visitor,
+    card: row.card ? `${row.card.remarks} - ${row.card.card_number}` : '-',
+  }));
 
   return (
     <PageContainer title="Visitor" description="this is Add Visitor page">
@@ -5150,10 +5017,13 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           >
             <DynamicTable
               key={tableKey}
-              data={filteredRows.map(
-                ({ trx_visitor_id, assigned_card_number, assigned_card_remarks, ...rest }) => rest,
-              )}
+              // data={filteredRows.map((row: any) => ({
+              //   ...row,
+              //   card: row.card ? `${row.card.remarks} - ${row.card.card_number}` : '-',
+              // }))}
+              data={tableData as any}
               isHaveChecked={true}
+              isNoActionTableHead={true}
               isHaveSearch={true}
               isHaveHeaderTitle={false}
               // titleHeader="Invitation"

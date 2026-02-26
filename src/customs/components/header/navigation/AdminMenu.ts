@@ -23,10 +23,8 @@ import {
   IconSteeringWheel,
   IconCalendarClock,
   IconPackageExport,
-  IconMapPin,
   IconUser,
   IconEye,
-  IconDeviceCctv,
   IconPrinter,
   IconStars,
   IconRun,
@@ -76,18 +74,18 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
             href: '/admin/manage/delivery/staff',
           },
 
-          {
-            id: uniqueId(),
-            title: 'VIP',
-            icon: IconStars,
-            href: '/admin/manage/vip',
-          },
-          {
-            id: uniqueId(),
-            title: 'Vendor',
-            icon: IconUsers,
-            href: '/admin/manage/vendor',
-          },
+          // {
+          //   id: uniqueId(),
+          //   title: 'VIP',
+          //   icon: IconStars,
+          //   href: '/admin/manage/vip',
+          // },
+          // {
+          //   id: uniqueId(),
+          //   title: 'Vendor',
+          //   icon: IconUsers,
+          //   href: '/admin/manage/vendor',
+          // },
         ],
       },
       {
@@ -276,6 +274,12 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
     icon: IconRun,
     href: '/admin/evacuate',
   },
+  {
+    id: uniqueId(),
+    title: 'Admin View',
+    icon: IconEye,
+    href: '/admin/view',
+  },
   // {
   //   id: uniqueId(),
   //   title: 'navigation.helps',
@@ -330,18 +334,18 @@ export const OperatorAdminNavListingData: ItemDataCustomNavListing[] = [
             icon: IconSteeringWheel,
             href: '/operator-admin/manage/delivery/staff',
           },
-          {
-            id: uniqueId(),
-            title: 'VIP',
-            icon: IconStars,
-            href: '/operator-admin/manage/vip',
-          },
-          {
-            id: uniqueId(),
-            title: 'Vendor',
-            icon: IconUsers,
-            href: '/operator-admin/manage/vendor',
-          },
+          // {
+          //   id: uniqueId(),
+          //   title: 'VIP',
+          //   icon: IconStars,
+          //   href: '/operator-admin/manage/vip',
+          // },
+          // {
+          //   id: uniqueId(),
+          //   title: 'Vendor',
+          //   icon: IconUsers,
+          //   href: '/operator-admin/manage/vendor',
+          // },
         ],
       },
       {
@@ -510,6 +514,12 @@ export const OperatorAdminNavListingData: ItemDataCustomNavListing[] = [
     title: 'Evacuate',
     icon: IconRun,
     href: '/operator-admin/evacuate',
+  },
+  {
+    id: uniqueId(),
+    title: 'Admin View',
+    icon: IconEye,
+    href: '/operator-admin/view',
   },
 ];
 
@@ -733,6 +743,12 @@ export const OperatorAdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] =
     title: 'Evacuate',
     icon: IconRun,
     href: '/operator-admin/evacuate',
+  },
+  {
+    id: uniqueId(),
+    title: 'Admin View',
+    icon: IconEye,
+    href: '/operator-admin/view',
   },
 ];
 
@@ -978,6 +994,13 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
     title: 'Evacuate',
     icon: IconRun,
     href: '/admin/evacuate',
+  },
+
+  {
+    id: uniqueId(),
+    title: 'Admin View',
+    icon: IconEye,
+    href: '/admin/view',
   },
 
   // {
@@ -1240,12 +1263,12 @@ export const OperatorNavListingData: ItemDataCustomNavListing[] = [
   //   icon: IconDeviceCctv,
   //   href: '/operator/monitoring',
   // },
-  {
-    id: uniqueId(),
-    title: 'Transaction Log',
-    icon: IconReport,
-    href: '/operator/transaction-log',
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Transaction Log',
+  //   icon: IconReport,
+  //   href: '/operator/transaction-log',
+  // },
 
   // {
   //   id: uniqueId(),
@@ -1280,12 +1303,12 @@ export const OperatorCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
   //   icon: IconDeviceCctv,
   //   href: '/operator/monitoring',
   // },
-  {
-    id: uniqueId(),
-    title: 'Transaction Log',
-    icon: IconReport,
-    href: '/operator/transaction-log',
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Transaction Log',
+  //   icon: IconReport,
+  //   href: '/operator/transaction-log',
+  // },
   // {
   //   id: uniqueId(),
   //   title: 'Approval Workflow',

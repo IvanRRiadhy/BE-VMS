@@ -470,6 +470,28 @@ export const getUserGroupById = async (id: string, token: string): Promise<any> 
   return response.data;
 };
 
+// getdt
+export const getUserGroupDt = async (
+  token: string,
+  start: number,
+  length: number,
+  keyword: string = '',
+  start_date?: string,
+  end_date?: string,
+): Promise<any> => {
+  const response = await axiosInstance.get('/user-group/dt', {
+    headers: { Authorization: `Bearer ${token}` },
+    params:{
+      start,
+      length,
+      'search[value]': keyword,
+      start_date,
+      end_date
+    }
+  });
+  return response.data;
+};
+
 export const createUserGroup = async (token: string, data: any): Promise<any> => {
   const response = await axiosInstance.post('/user-group', data, {
     headers: { Authorization: `Bearer ${token}` },
@@ -630,10 +652,17 @@ export const getAllPermissionManageVisitor = async (
   token: string,
   groupId: string,
 ): Promise<any> => {
-  const response = await axiosInstance.get('/user-group-managevisitor/group/' + groupId, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return response.data;
+  try {
+    const response = await axiosInstance.get('/user-group-managevisitor/group/' + groupId, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error: any) {
+    if (error.response?.status === 404) {
+      return { collection: [] };
+    }
+    throw error;
+  }
 };
 
 export const getPermissionManageVisitorById = async (id: string, token: string): Promise<any> => {

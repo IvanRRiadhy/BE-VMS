@@ -937,13 +937,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     const f = forms.find((x) => x.remarks === 'is_employee');
     return f?.answer_text === 'true';
   };
-  const normalizeForm = (form: any[]) =>
-    form.map((f) => ({
-      ...f,
-      answer_text: f.answer_text ?? null,
-      answer_datetime: f.answer_datetime ?? null,
-      answer_file: f.answer_file ?? null,
-    }));
 
   const handleSteps = (step: number) => {
     const showVTListSkeleton = vtLoading;
@@ -3597,7 +3590,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         is_group: isGroup,
         flow: TYPE_REGISTERED === 0 ? 'Praregister' : 'Invitation',
         visitor_role: 'Visitor',
-        ...(TYPE_REGISTERED !== 0 && { registered_site: registeredSite ?? '' }),
+        // ...(TYPE_REGISTERED !== 0 && { registered_site: registeredSite ?? '' }),
+        ...(TYPE_REGISTERED !== 0 && {
+          registered_site: '9A1373D6-4252-4551-BB50-2A221CCFE665',
+        }),
       };
 
       let payload: CreateVisitorRequest | CreateGroupVisitorRequest;
@@ -3614,7 +3610,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
               type_registered: TYPE_REGISTERED,
               tz: tz,
               // registered_site: formData.registered_site ?? '',
-              registered_site: registeredSite ?? '',
+              // registered_site: registeredSite ?? '',
+              registered_site: '9A1373D6-4252-4551-BB50-2A221CCFE665',
             },
             selfOnlyOverrides,
           );
@@ -3644,7 +3641,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             is_group: true,
             visitor_type: formData.visitor_type ?? '',
             tz: tz,
-            registered_site: registeredSite ?? '',
+            // registered_site: registeredSite ?? '',
+            registered_site: '9A1373D6-4252-4551-BB50-2A221CCFE665',
             type_registered: TYPE_REGISTERED,
             data_visitor: cleanDataVisitor,
           };

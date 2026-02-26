@@ -38,6 +38,7 @@ import FormUser from './FormUser';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import { useNavigate } from 'react-router';
 import DialogFormUser from './components/DialogFormUser';
+import { GroupRoleId } from 'src/constant/GroupRoleId';
 
 const Content = () => {
   const { token } = useSession();
@@ -66,13 +67,13 @@ const Content = () => {
         id: item.id,
         fullname: item.fullname,
         username: item.username,
-        // group_id: item.group_id,
+        // user_group_id: item.user_group_id,
         email: item.email,
         group_name: item.group_name,
         description: item.description || '',
         // status: item.status,
       }));
-      const dataForTable = filteredData.map(({ group_id, ...rest }: any) => rest);
+      const dataForTable = filteredData.map(({ user_group_id, ...rest }: any) => rest);
 
       return {
         collection: filteredData,
@@ -106,11 +107,20 @@ const Content = () => {
   const handleEdit = async (id: string) => {
     try {
       const response = await getUserById(id, token as string);
-      console.log('response', response.collection);
+
+      const rawGroup = response?.collection?.user_group_id;
+
+      const matched = Object.values(GroupRoleId).find(
+        (value) => value.toLowerCase() === rawGroup?.toLowerCase(),
+      );
+
+      console.log('matched', matched);
+
       setFormAddUser({
         ...response.collection,
-        group_id: response?.collection?.group_id?.toUpperCase(),
+        user_group_id: matched ?? '',
       });
+
       setEdittingId(id);
       setOpenFormAddDocument(true);
     } catch (error) {
@@ -143,7 +153,6 @@ const Content = () => {
     }
   };
 
-
   const navigate = useNavigate();
 
   const [organizaitonRes, setOrganizaitonRes] = useState<any[]>([]);
@@ -157,8 +166,6 @@ const Content = () => {
 
     fetchData();
   }, [token]);
-
-  
 
   return (
     <PageContainer

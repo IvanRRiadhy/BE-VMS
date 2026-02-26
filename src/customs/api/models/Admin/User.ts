@@ -12,7 +12,7 @@ export type Item = {
   id: string;
   application_id: string;
   organization_id: string;
-  group_id: string;
+  user_group_id: string;
   email: string;
   username: string;
   fullname: string;
@@ -32,7 +32,7 @@ export const CreateUserSchema = z.object({
   description: z.string().optional(),
   access: z.string().optional(),
   password: z.string().optional(),
-  group_id: z.string().optional(),
+  user_group_id: z.string().optional(),
   employee_id: z.string().optional(),
   distributor_id: z.string().optional(),
   organization_id: z.string().optional(),

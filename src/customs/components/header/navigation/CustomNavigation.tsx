@@ -18,11 +18,11 @@ const CustomNavigation: React.FC<CustomNavigationProps> = ({
   itemDataCustomNavListing,
   itemDataCustomSidebarItems,
 }) => {
-  const lgUp = useMediaQuery((theme: Theme) => theme.breakpoints.up('lg'));
+  const lgUp = useMediaQuery((theme: Theme) => theme.breakpoints.up('xl'));
   const customizer = useSelector((state: AppState) => state.customizer);
   const dispatch = useDispatch();
 
-  const [currentTime, setCurrentTime] = useState<string>('');
+  const [currentTime, setCurrentTime] = useState<string>();
 
   if (lgUp) {
     return (
@@ -40,7 +40,7 @@ const CustomNavigation: React.FC<CustomNavigationProps> = ({
         {/* NavListing on top for desktop (FULL WIDTH) */}
         {/* ------------------------------------------- */}
         <Box
-          sx={{ px: 2, zIndex: 9999 }}
+          sx={{ px: 1, zIndex: 9999 }}
           display={'flex'}
           justifyContent={'space-between'}
           alignItems={'center'}

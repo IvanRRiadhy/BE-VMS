@@ -21,6 +21,7 @@ import { getVisitorChart } from 'src/customs/api/admin';
 import { useSelector } from 'react-redux';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import Chart from 'react-apexcharts';
+import { set } from 'lodash';
 
 interface VisitorStatusItem {
   visitor_status: string;
@@ -99,6 +100,7 @@ const TopCards = ({ items = [], size }: any) => {
 
     const fetchData = async () => {
       try {
+        setIsChartReady(true);
         const res = await getVisitorChart(token as any, start, end);
         const collection: ApiDateGroup[] = res.collection ?? [];
 
@@ -140,9 +142,14 @@ const TopCards = ({ items = [], size }: any) => {
 
         setStatsToday(currentTotals);
         setStatsYesterday(previousTotals);
-        setIsChartReady(true);
       } catch (err) {
         console.error('Failed to fetch visitor count:', err);
+        setStatsToday({});
+        setStatsYesterday({});
+        setNormalizedData([]);
+        setIsChartReady(false);
+      } finally {
+        setIsChartReady(false);
       }
     };
 
@@ -203,54 +210,6 @@ const TopCards = ({ items = [], size }: any) => {
       default:
         return '#5c87ff'; // biru default
     }
-  };
-
-  const [rawCollection, setRawCollection] = useState<ApiDateGroup[]>([]);
-
-  // const getLast7DaysSeries = (key: string): number[] => {
-  //   if (!key || !rawCollection || !Array.isArray(rawCollection)) {
-  //     return [0, 0, 0, 0, 0, 0, 0];
-  //   }
-
-  //   const today = new Date();
-  //   const values: number[] = [];
-
-  //   for (let i = 6; i >= 0; i--) {
-  //     const d = new Date();
-  //     d.setDate(today.getDate() - i);
-
-  //     const dateStr = d.toISOString().split('T')[0];
-
-  //     const found = rawCollection.find((x) => x?.Date && x.Date.startsWith(dateStr));
-
-  //     if (found && Array.isArray(found.Status)) {
-  //       const status = found.Status.find((s) => s?.visitor_status?.trim() === key);
-  //       values.push(status?.Count ?? 0);
-  //     } else {
-  //       values.push(0);
-  //     }
-  //   }
-
-  //   return values;
-  // };
-
-  const getLast7DaysSeries = (key: string): number[] => {
-    if (!normalizedData.length) return [0, 0, 0, 0, 0, 0, 0];
-
-    const today = new Date();
-    const values: number[] = [];
-
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(today.getDate() - i);
-      const dateStr = d.toISOString().split('T')[0];
-
-      const found = normalizedData.find((x) => x.Date === dateStr);
-
-      values.push(found?.StatusMap?.[key] ?? 0);
-    }
-
-    return values;
   };
 
   const getColorByKey = (key: string) => {
@@ -364,7 +323,12 @@ const TopCards = ({ items = [], size }: any) => {
                     }}
                   >
                     {isChartReady && normalizedData.length > 0 && (
-                      <MiniChart normalizedData={normalizedData} card={card} change={change} />
+                      <MiniChart
+                        normalizedData={normalizedData}
+                        card={card}
+                        change={change}
+                        isChartReady={isChartReady}
+                      />
                     )}
                   </Box>
                 </Box>
@@ -381,7 +345,7 @@ const MiniChart = ({ normalizedData, card, change, isChartReady }: any) => {
 
   const series = useMemo(() => {
     if (!normalizedData.length) {
-      return [{ name: card.title, data: [0, 0, 0, 0, 0, 0, 0] }];
+      return [{ name: card.title, data: [0, 0, 0, 0, 0, 0] }];
     }
 
     const today = new Date();

@@ -7,20 +7,14 @@ import {
   Divider,
   DialogActions,
   CircularProgress,
-  TextField,
-  Card,
-  Skeleton,
   Grid2 as Grid,
   IconButton,
   Button,
-  Avatar,
   Typography,
   Portal,
   Autocomplete,
   Snackbar,
   Alert,
-  Tabs,
-  Tab,
 } from '@mui/material';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -35,7 +29,6 @@ import {
   AdminCustomSidebarItemsData,
   AdminNavListingData,
 } from 'src/customs/components/header/navigation/AdminMenu';
-import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import iconScanQR from 'src/assets/images/svgs/scan-qr.svg';
 import iconAdd from 'src/assets/images/svgs/add-circle.svg';
 import TopCard from 'src/customs/components/cards/TopCard';
@@ -61,8 +54,6 @@ import {
 } from 'src/customs/api/admin';
 import FilterMoreContent from './FilterMoreContent';
 import {
-  IconArrowRight,
-  IconCamera,
   IconClipboard,
   IconQrcode,
   IconUser,
@@ -108,7 +99,6 @@ const Content = () => {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
   const [discardMode, setDiscardMode] = useState<'close-add' | 'edit' | null>(null);
-  const [tableRowVisitors, setTableRowVisitors] = useState<Item[]>([]);
   const [tableCustomVisitor, setTableCustomVisitor] = useState<VisitorTableRow[]>([]);
   const [selectedRows, setSelectedRows] = useState<[]>([]);
   const [openDetail, setOpenDetail] = useState(false);
@@ -213,6 +203,8 @@ const Content = () => {
     endDate: null,
   });
 
+/*************  ✨ Windsurf Command ⭐  *************/
+/*******  39f34b8b-9c01-4dd4-bc67-c10900a24b20  *******/
   const fetchVisitorType = async () => {
     try {
       setVTLoading(true);
@@ -243,14 +235,14 @@ const Content = () => {
     }
   };
 
-    const fetchEmployee = async () => {
-      try {
-        const res = await getAllEmployee(token as string);
-        setEmployee(res?.collection || []);
-      } catch (err) {
-        console.error(err);
-      }
-    };
+  const fetchEmployee = async () => {
+    try {
+      const res = await getAllEmployee(token as string);
+      setEmployee(res?.collection || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   useEffect(() => {
     if (token) {
@@ -393,7 +385,7 @@ const Content = () => {
           rows = rows.filter((r) => r.visitor_status === apiStatus);
         }
 
-        setTableRowVisitors(response.collection);
+        // setTableRowVisitors(response.collection);
         setTotalRecords(response.RecordsTotal);
         setTotalFilteredRecords(response.RecordsFiltered);
         setTableCustomVisitor(rows);
@@ -401,7 +393,7 @@ const Content = () => {
         setTableCustomVisitor([]);
         setTotalRecords(0);
         setTotalFilteredRecords(0);
-        setTableRowVisitors([]);
+        // setTableRowVisitors([]);
       } finally {
         setLoading(false);
       }
@@ -434,6 +426,7 @@ const Content = () => {
     setOpenPreRegistration(false);
     handleDialogClose();
   };
+  
   const handleAdd = () => {
     const saved = localStorage.getItem('unsavedVisitorData');
     let freshForm;
@@ -513,7 +506,7 @@ const Content = () => {
 
   type VisitorAction = 'checkin' | 'checkout' | 'deny' | 'block';
 
-  const [confirm, setConfirm] = React.useState<{
+  const [confirm, setConfirm] = useState<{
     type: VisitorAction;
     loading: boolean;
   } | null>(null);
@@ -538,7 +531,6 @@ const Content = () => {
     setConfirm((c) => (c ? { ...c, loading: true } : c));
 
     try {
-      // dummy delay biar kelihatan loading
       await new Promise((r) => setTimeout(r, 400));
 
       setConfirm(null);
@@ -640,7 +632,7 @@ const Content = () => {
                 totalCount={totalFilteredRecords}
                 isNoActionTableHead={true}
                 selectedRows={selectedRows}
-                rowsPerPageOptions={[10, 50, 100, 500]}
+                rowsPerPageOptions={[10, 50, 100, 500, 999]}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);
@@ -806,7 +798,6 @@ const Content = () => {
         </DialogTitle>
         <Divider />
         <DialogContent sx={{ paddingTop: '0px' }}>
-          <br />
           <FormWizardAddInvitation
             key={wizardKey}
             formData={formDataAddVisitor}

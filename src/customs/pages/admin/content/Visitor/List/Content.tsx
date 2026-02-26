@@ -15,29 +15,14 @@ import {
 
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import CloseIcon from '@mui/icons-material/Close';
-
 import { useSession } from 'src/customs/contexts/SessionContext';
 import {
-  CreateVisitorRequestSchema,
-  Item,
-  CreateVisitorRequest,
-} from 'src/customs/api/models/Admin/Visitor';
-import {
   createBlacklist,
-  getAllDepartments,
-  getAllDistricts,
-  getAllOrganizations,
-  getAllVisitorPagination,
-  getEmployeeById,
-  getListVisitor,
   getListVisitorPagination,
-  getRegisteredSite,
   getVisitorById,
 } from 'src/customs/api/admin';
 
 import VisitorDetailDialog from '../Dialog/VisitorDetailDialog';
-import FilterMoreContentVisitor from '../Trx/FilterMoreContent';
 import { IconUsers } from '@tabler/icons-react';
 import Swal from 'sweetalert2';
 import { showSwal } from 'src/customs/components/alerts/alerts';
@@ -81,24 +66,12 @@ const Content = () => {
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [loadingData, setLoadingData] = useState(false);
-
-  const [edittingId, setEdittingId] = useState('');
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [totalRecords, setTotalRecords] = useState(0);
   const [searchKeyword, setSearchKeyword] = useState('');
-  const [isDataReady, setIsDataReady] = useState(false);
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [pendingEditId, setPendingEditId] = useState<string | null>(null);
-  // mode konfirmasi: "close-add" atau "edit"
-  const [discardMode, setDiscardMode] = useState<'close-add' | 'edit' | null>(null);
-  const [tableRowVisitors, setTableRowVisitors] = useState<Item[]>([]);
   const [tableCustomVisitor, setTableCustomVisitor] = useState<VisitorTableRow[]>([]);
   const [selectedRows, setSelectedRows] = useState<[]>([]);
   const debouncedSearch = useDebounce(searchKeyword, 500);
-  const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorRequest>(() => {
-    const saved = localStorage.getItem('unsavedVisitorData');
-    return saved ? JSON.parse(saved) : CreateVisitorRequestSchema.parse({});
-  });
 
   const cards = [
     {
@@ -110,10 +83,6 @@ const Content = () => {
     },
   ];
 
-  const defaultFormData = CreateVisitorRequestSchema.parse({});
-  const isFormChanged = JSON.stringify(formDataAddVisitor) !== JSON.stringify(defaultFormData);
-
-  const [openDialog, setOpenDialog] = useState(false);
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
 
@@ -122,13 +91,6 @@ const Content = () => {
   const [visitorLoading, setVisitorLoading] = useState(false);
   const [visitorError, setVisitorError] = useState<string | null>(null);
   const [visitorDetail, setVisitorDetail] = useState<any>(null);
-
-  // Registered Site
-  // const [siteData, setSiteData] = useState<any[]>([]);
-  const [selectedSite, setSelectedSite] = useState<any | null>(null);
-  // const [organizationData, setOrganizationData] = useState<any[]>([]);
-  // const [departmentData, setDepartmentData] = useState<any[]>([]);
-  // const [districtData, setDistrictData] = useState<any[]>([]);
 
   useEffect(() => {
     if (!token) return;
@@ -164,15 +126,13 @@ const Content = () => {
           };
         });
 
-        setTableRowVisitors(response.collection);
+        // setTableRowVisitors(response.collection);
         setTotalRecords(response.RecordsTotal);
         setTotalFilteredRecords(response.RecordsFiltered);
         setTableCustomVisitor(rows);
-        setIsDataReady(true);
       } catch (err) {
         console.error('Failed to fetch visitor data:', err);
         setTableCustomVisitor([]);
-        setTableRowVisitors([]);
       } finally {
         setLoading(false);
       }
@@ -180,26 +140,6 @@ const Content = () => {
     fetchData();
   }, [token, page, rowsPerPage, sortDir, refreshTrigger, debouncedSearch]);
 
-  const handleAdd = () => {
-    const saved = localStorage.getItem('unsavedVisitorData');
-    let freshForm;
-
-    if (saved) {
-      try {
-        freshForm = JSON.parse(saved);
-      } catch {
-        freshForm = CreateVisitorRequestSchema.parse({});
-      }
-    } else {
-      freshForm = CreateVisitorRequestSchema.parse({});
-    }
-
-    setEdittingId('');
-    setFormDataAddVisitor(freshForm);
-    setSelectedSite(null);
-    setPendingEditId(null);
-    setOpenDialog(true);
-  };
 
   const handleView = async (id: string) => {
     if (!id || !token) return;
@@ -245,20 +185,22 @@ const Content = () => {
   };
 
   const handleBlacklist = async (id: string, isBlacklist?: boolean) => {
-    if (isBlacklist) return; // already blacklisted
-
     try {
+      const isWhitelist = isBlacklist === true;
+
       const { value: inputReason } = await Swal.fire({
-        icon: 'warning',
-        title: 'Blacklist Visitor',
-        text: 'Please provide a reason for blacklist this visitor',
+        icon: isWhitelist ? 'question' : 'warning',
+        title: isWhitelist ? 'Whitelist Visitor' : 'Blacklist Visitor',
+        text: isWhitelist
+          ? 'Please provide a reason for whitelist this visitor'
+          : 'Please provide a reason for blacklist this visitor',
         input: 'text',
         inputPlaceholder: 'Enter reason...',
         inputAttributes: { maxlength: '200' },
         showCloseButton: true,
         showCancelButton: true,
         confirmButtonText: 'Yes',
-        confirmButtonColor: '#16a34a',
+        confirmButtonColor: isWhitelist ? '#16a34a' : '#dc2626',
         cancelButtonText: 'Cancel',
         reverseButtons: true,
         inputValidator: (value) => {
@@ -275,17 +217,21 @@ const Content = () => {
 
       const payload = {
         visitor_id: id,
-        action: 'blacklist',
+        action: isWhitelist ? 'whitelist' : 'blacklist',
         reason: inputReason.trim(),
       };
 
       await createBlacklist(token as string, payload);
 
-      showSwal('success', 'Successfully blacklisted visitor');
+      showSwal(
+        'success',
+        isWhitelist ? 'Successfully whitelisted visitor' : 'Successfully blacklisted visitor',
+      );
+
       setRefreshTrigger((prev) => prev + 1);
     } catch (error: any) {
       console.error(error);
-      showSwal('error', error?.response.data.msg ?? 'Failed to blacklist visitor');
+      showSwal('error', error?.response?.data?.msg ?? 'Action failed');
     } finally {
       setLoadingData(false);
     }
@@ -347,9 +293,7 @@ const Content = () => {
                   isHaveVisitor={true}
                   isBlacklistAction={true}
                   onBlacklist={(row) => {
-                    if (!row.is_blacklist) {
-                      handleBlacklist(row.id);
-                    }
+                    handleBlacklist(row.id, row.is_blacklist as any);
                   }}
                   isActionVisitor={false}
                   onView={(row) => {

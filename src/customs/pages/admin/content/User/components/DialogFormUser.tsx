@@ -30,9 +30,10 @@ const DialogFormUser: React.FC<Props> = ({
     const loadData = async () => {
       if (edittingId && token) {
         const response = await getUserById(edittingId, token);
+
         setFormData({
           ...response.collection,
-          group_id: response.collection?.group_id?.toUpperCase(),
+          user_group_id: response.collection?.user_group_id ?? '',
         });
       } else {
         setFormData(CreateUserSchema.parse({}));

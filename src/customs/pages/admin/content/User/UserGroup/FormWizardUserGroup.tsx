@@ -77,12 +77,22 @@ const FormWizardUserGroup: React.FC<FormWizardUserGroupProps> = ({
         return;
       }
 
-      console.log('payload submit', formData);
+      // console.log('payload submit', formData);
+
+      const payload = {
+        name: formData.name,
+        description: formData.description,
+        homepage: formData.homepage,
+        role_access: formData.role_access,
+      }
+
+      console.log('payload submit', payload);
+
 
       if (edittingId) {
-        await updateUserGroup(token, edittingId, formData);
+        await updateUserGroup(token, edittingId, payload);
       } else {
-        await createUserGroup(token, formData);
+        await createUserGroup(token, payload);
       }
 
 

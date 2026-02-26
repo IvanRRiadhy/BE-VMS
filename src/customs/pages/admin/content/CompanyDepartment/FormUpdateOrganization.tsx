@@ -216,7 +216,7 @@ const FormUpdateOrganization: React.FC<FormUpdateOrganizationProps> = ({
         </Grid2> */}
         <Box display="flex" alignItems="center" justifyContent="space-between">
           <CustomFormLabel htmlFor="name" sx={{ marginY: 1 }}>
-            <Typography variant="body1">Organization Name</Typography>
+            Organization Name
           </CustomFormLabel>
           {isBatchEdit && (
             <FormControlLabel
@@ -250,7 +250,7 @@ const FormUpdateOrganization: React.FC<FormUpdateOrganizationProps> = ({
         />
         <Box display="flex" alignItems="center" justifyContent="space-between">
           <CustomFormLabel htmlFor="code" sx={{ marginY: 1 }}>
-            <Typography variant="body1">Organization Code</Typography>
+            Organization Code
           </CustomFormLabel>
           {isBatchEdit && (
             <FormControlLabel
@@ -284,7 +284,7 @@ const FormUpdateOrganization: React.FC<FormUpdateOrganizationProps> = ({
         />
         <Box display="flex" alignItems="center" justifyContent="space-between">
           <CustomFormLabel htmlFor="host" sx={{ marginY: 1 }}>
-            <Typography variant="body1">Head Of Organization</Typography>
+            Head Of Organization
           </CustomFormLabel>
           {isBatchEdit && (
             <FormControlLabel
@@ -343,7 +343,7 @@ const FormUpdateOrganization: React.FC<FormUpdateOrganizationProps> = ({
           )}
         />
 
-        <RadioGroup
+        {/* <RadioGroup
           row
           // value={formData.visitorType}
           // onChange={(e) =>
@@ -355,7 +355,7 @@ const FormUpdateOrganization: React.FC<FormUpdateOrganizationProps> = ({
         >
           <FormControlLabel value="internal" control={<Radio />} label="Internal" />
           <FormControlLabel value="external" control={<Radio />} label="External" />
-        </RadioGroup>
+        </RadioGroup> */}
 
         <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
           <Button

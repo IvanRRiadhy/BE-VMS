@@ -20,7 +20,7 @@ import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import BI_LOGO from 'src/assets/images/logos/BI_Logo.png';
-import FilterMoreContent from './FilterMoreContent';
+import FilterMoreContent from '../FilterMoreContent';
 import Swal from 'sweetalert2';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';

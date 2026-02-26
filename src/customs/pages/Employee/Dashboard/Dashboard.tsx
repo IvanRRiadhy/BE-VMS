@@ -46,10 +46,10 @@ import { Scanner } from '@yudiel/react-qr-scanner';
 import React, { useEffect, useRef, useState } from 'react';
 import QRCode from 'react-qr-code';
 import PageContainer from 'src/components/container/PageContainer';
-import TopCards from './Dashboard/TopCard';
+import TopCards from './TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import Heatmap from './Heatmap';
+import Heatmap from '../Heatmap';
 import { createApproval, getApproval } from 'src/customs/api/employee';
 import dayjs from 'dayjs';
 import {
@@ -58,7 +58,7 @@ import {
   getOngoingInvitation,
   openParkingBlocker,
 } from 'src/customs/api/visitor';
-import FormDialogInvitation from './FormDialogInvitation';
+import FormDialogInvitation from '../FormDialogInvitation';
 import { getAccessPass } from 'src/customs/api/admin';
 import { Download } from '@mui/icons-material';
 import html2canvas from 'html2canvas';
@@ -68,6 +68,10 @@ import Swal from 'sweetalert2';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
+import CreateLinkDialog from '../Components/Dialog/CreateLinkDialog';
+import DetailLinkDialog from '../Components/Dialog/DetailLinkDialog';
+import SendEmailDialog from '../Components/Dialog/SendEmailDialog';
+import { useNavigate } from 'react-router';
 const DashboardEmployee = () => {
   // const cards = [
   //   { title: 'Check In', icon: IconLogin, subTitle: `0`, subTitleSetting: 10, color: 'none' },
@@ -120,6 +124,7 @@ const DashboardEmployee = () => {
   const [openCreateLink, setOpenCreateLink] = useState(false);
   const [openDetailLink, setOpenDetailLink] = useState(false);
   const [openSendEmail, setOpenSendEmail] = useState(false);
+  const navigate = useNavigate();
 
   const handleOpenInviteOrCreateLink = () => {
     setOpenInviteOrCreateLink(true);
@@ -139,25 +144,6 @@ const DashboardEmployee = () => {
 
   const handleCloseAccess = () => {
     setOpenAccess(false);
-  };
-
-  const handleCloseScanQR = () => {
-    try {
-      const video = scanContainerRef.current?.querySelector('video') as HTMLVideoElement | null;
-      const stream = video?.srcObject as MediaStream | null;
-      const track = stream?.getVideoTracks()?.[0];
-      const caps = track?.getCapabilities?.() as any;
-      if (track && caps?.torch && torchOn) {
-        track.applyConstraints({ advanced: [{ facingMode: 'user' }] });
-      }
-    } catch {}
-
-    setTorchOn(false);
-    setFacingMode('environment');
-    setQrMode('manual');
-    setHasDecoded(false);
-    setQrValue('');
-    setOpenDialogIndex(null);
   };
 
   useEffect(() => {
@@ -668,6 +654,9 @@ const DashboardEmployee = () => {
               fullWidth
               sx={{ mb: 2 }}
               // onClick={() => setOpenDialogInvitation(true)}
+              onClick={() => {
+                navigate('/employee/invitation');
+              }}
             >
               Praregister
             </Button>
@@ -721,253 +710,26 @@ const DashboardEmployee = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Open Create Link */}
-      <Dialog
+      <CreateLinkDialog
         open={openCreateLink}
         onClose={() => setOpenCreateLink(false)}
-        fullWidth
-        maxWidth="md"
-      >
-        <DialogTitle>Create Link Invitation</DialogTitle>
-        <IconButton
-          aria-label="close"
-          onClick={() => setOpenCreateLink(false)}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            color: (theme) => theme.palette.grey[500],
-          }}
-        >
-          <IconX />
-        </IconButton>
-        <DialogContent dividers>
-          <Grid container spacing={2} mb={0}>
-            <Grid size={{ xs: 12, lg: 6 }}>
-              <Stack
-                direction="row"
-                alignItems="center"
-                justifyContent={'space-between'}
-                spacing={1}
-              >
-                <CustomFormLabel sx={{ marginTop: 0 }}>Visitor Type</CustomFormLabel>
-                <FormControlLabel
-                  control={<Switch size="small" checked={false} />}
-                  label=""
-                  labelPlacement="start"
-                  sx={{ mt: 2 }}
-                />
-              </Stack>
+        onSendEmail={() => {
+          setOpenCreateLink(false);
+          setOpenSendEmail(true);
+        }}
+      />
 
-              <CustomTextField
-                id="guest-id"
-                variant="outlined"
-                fullWidth
-                size="medium"
-                sx={{ marginTop: '10px' }}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, lg: 6 }}>
-              <Stack
-                direction="row"
-                alignItems="center"
-                justifyContent={'space-between'}
-                spacing={1}
-              >
-                <CustomFormLabel sx={{ marginTop: 0 }}>Visitor Quantity</CustomFormLabel>
-                <FormControlLabel
-                  control={<Switch size="small" checked={false} />}
-                  label=""
-                  labelPlacement="start"
-                  sx={{ mt: 2 }}
-                />
-              </Stack>
-
-              <CustomTextField
-                id="guest-id"
-                variant="outlined"
-                fullWidth
-                size="medium"
-                sx={{ marginTop: '10px' }}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, lg: 6 }}>
-              <Stack
-                direction="row"
-                alignItems="center"
-                justifyContent={'space-between'}
-                spacing={1}
-              >
-                <CustomFormLabel sx={{ marginTop: 0 }}>Destination</CustomFormLabel>
-                <FormControlLabel
-                  control={<Switch size="small" checked={false} />}
-                  label=""
-                  labelPlacement="start"
-                  sx={{ mt: 2 }}
-                />
-              </Stack>
-
-              <CustomTextField
-                id="guest-id"
-                variant="outlined"
-                fullWidth
-                size="medium"
-                sx={{ marginTop: '10px' }}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, lg: 6 }}>
-              <Stack
-                direction="row"
-                alignItems="center"
-                justifyContent={'space-between'}
-                spacing={1}
-              >
-                <CustomFormLabel sx={{ marginTop: 0 }}>Agenda</CustomFormLabel>
-                <FormControlLabel
-                  control={<Switch size="small" checked={false} />}
-                  label=""
-                  labelPlacement="start"
-                  sx={{ mt: 2 }}
-                />
-              </Stack>
-
-              <CustomTextField
-                id="guest-id"
-                variant="outlined"
-                fullWidth
-                size="medium"
-                sx={{ marginTop: '10px' }}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, lg: 6 }}>
-              <Stack
-                direction="row"
-                alignItems="center"
-                justifyContent={'space-between'}
-                spacing={1}
-              >
-                <CustomFormLabel sx={{ marginTop: 0 }}>Visit Start</CustomFormLabel>
-                <FormControlLabel
-                  control={<Switch size="small" checked={false} />}
-                  label=""
-                  labelPlacement="start"
-                  sx={{ mt: 2 }}
-                />
-              </Stack>
-
-              <CustomTextField
-                type="date"
-                id="guest-id"
-                variant="outlined"
-                fullWidth
-                size="medium"
-                sx={{ marginTop: '10px' }}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, lg: 6 }}>
-              <Stack
-                direction="row"
-                alignItems="center"
-                justifyContent={'space-between'}
-                spacing={1}
-              >
-                <CustomFormLabel sx={{ marginTop: 0 }}>Visit End</CustomFormLabel>
-                <FormControlLabel
-                  control={<Switch size="small" checked={false} />}
-                  label=""
-                  labelPlacement="start"
-                  sx={{ mt: 2 }}
-                />
-              </Stack>
-
-              <CustomTextField
-                type="date"
-                id="guest-id"
-                variant="outlined"
-                fullWidth
-                size="medium"
-                sx={{ marginTop: '10px' }}
-              />
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button variant="contained" color="primary" fullWidth>
-            Create Link
-          </Button>
-          <Button
-            variant="outlined"
-            color="primary"
-            fullWidth
-            onClick={() => setOpenSendEmail(true)}
-          >
-            Create Link And Send Email
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Open Detail Link */}
-      <Dialog
+      <DetailLinkDialog
         open={openDetailLink}
         onClose={() => setOpenDetailLink(false)}
-        fullWidth
-        maxWidth="lg"
-      >
-        <DialogTitle>Detail Visitor</DialogTitle>
-        <IconButton
-          aria-label="close"
-          onClick={() => setOpenDetailLink(false)}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            color: (theme) => theme.palette.grey[500],
-          }}
-        >
-          <IconX />
-        </IconButton>
-        <DialogContent dividers>
-          <DynamicTable
-            data={dataVisitor}
-            titleHeader="Visitor"
-            isHaveHeaderTitle={true}
-            isHaveChecked={true}
-          />
-        </DialogContent>
-      </Dialog>
+        dataVisitor={dataVisitor}
+      />
 
-      {/* Send Email Link */}
-      <Dialog open={openSendEmail} onClose={() => setOpenSendEmail(false)} fullWidth maxWidth="md">
-        <DialogTitle>Send Invitation Link</DialogTitle>
-        <IconButton
-          aria-label="close"
-          onClick={() => setOpenSendEmail(false)}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            color: (theme) => theme.palette.grey[500],
-          }}
-        >
-          <IconX />
-        </IconButton>
-        <DialogContent dividers>
-          <Typography variant="h6" color="primary">
-            Send Via Email
-          </Typography>
-          <Typography mb={2}>
-            Please enter a valid email address of the reccipient to send the invitation link via
-            email
-          </Typography>
-          <Autocomplete multiple options={[]} renderInput={(params) => <TextField {...params} />} />
-        </DialogContent>
-        <DialogActions>
-          <Button variant="contained" color="primary" startIcon={<IconSend />}>
-            Send
-          </Button>
-        </DialogActions>
-      </Dialog>
-
+      <SendEmailDialog
+        open={openSendEmail}
+        onClose={() => setOpenSendEmail(false)}
+        onSend={() => console.log('Send email')}
+      />
       {/* Praregister */}
       <Dialog
         open={openDialogInvitation}

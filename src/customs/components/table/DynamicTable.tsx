@@ -2568,37 +2568,40 @@ export function DynamicTable<
                                   </Tooltip>
                                 </>
                               ) : isBlacklistAction ? (
-                                !row.is_blacklist ? (
-                                  <Tooltip
-                                    title="Blacklist Visitor"
-                                    arrow
-                                    placement="top"
-                                    slotProps={{
-                                      tooltip: {
-                                        sx: {
-                                          fontSize: '0.8rem',
-                                          padding: '8px 14px',
-                                        },
+                                <Tooltip
+                                  title={
+                                    row.is_blacklist ? 'Whitelist Visitor' : 'Blacklist Visitor'
+                                  }
+                                  arrow
+                                  placement="top"
+                                  slotProps={{
+                                    tooltip: {
+                                      sx: {
+                                        fontSize: '0.8rem',
+                                        padding: '8px 14px',
+                                      },
+                                    },
+                                  }}
+                                >
+                                  <Button
+                                    size="small"
+                                    startIcon={row.is_blacklist ? <IconCheck /> : <IconXboxX />}
+                                    onClick={() => onBlacklist?.(row)}
+                                    sx={{
+                                      textTransform: 'none',
+                                      borderRadius: 1,
+                                      fontWeight: 500,
+                                      backgroundColor: row.is_blacklist ? '#16a34a' : '#000',
+                                      color: 'white',
+                                      '&:hover': {
+                                        backgroundColor: row.is_blacklist ? '#15803d' : '#000',
+                                        opacity: 0.8,
                                       },
                                     }}
                                   >
-                                    <Button
-                                      size="small"
-                                      startIcon={<IconXboxX />}
-                                      onClick={() => onBlacklist?.(row)}
-                                      sx={{
-                                        textTransform: 'none',
-                                        borderRadius: 1,
-                                        fontWeight: 500,
-                                        backgroundColor: '#000',
-                                        color: 'white',
-                                        '&:hover': { backgroundColor: '#000', opacity: 0.8 },
-                                      }}
-                                    >
-                                      Blacklist
-                                    </Button>
-                                  </Tooltip>
-                                ) : null
+                                    {row.is_blacklist ? 'Whitelist' : 'Blacklist'}
+                                  </Button>
+                                </Tooltip>
                               ) : isActionListVisitor ? (
                                 <>
                                   <Tooltip

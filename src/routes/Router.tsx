@@ -135,7 +135,9 @@ const ManageDetailScheduler = Loadable(
   lazy(() => import('src/customs/pages/admin/content/Delivery/Schduler/DetailSchduler')),
 );
 const ManageUser = Loadable(lazy(() => import('src/customs/pages/admin/content/User/Content')));
-const ManageUserGroup = Loadable(lazy(() => import('src/customs/pages/admin/content/User/UserGroup/Content')));
+const ManageUserGroup = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/User/UserGroup/Content')),
+);
 const ManageReportTransaction = Loadable(
   lazy(() => import('src/customs/pages/admin/content/Report/TransactionLog/Content')),
 );
@@ -154,9 +156,16 @@ const ManagePrintBadge = Loadable(
 const ManageEvacuate = Loadable(
   lazy(() => import('src/customs/pages/admin/content/Evacuate/Content')),
 );
+const ManageAdminView = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/AdminView/Content')),
+);
 /* ****EMPLOYEE PAGES**** */
-const DashboardEmployee = Loadable(lazy(() => import('src/customs/pages/Employee/Dashboard')));
-const ApprovalEmployee = Loadable(lazy(() => import('src/customs/pages/Employee/Approval')));
+const DashboardEmployee = Loadable(
+  lazy(() => import('src/customs/pages/Employee/Dashboard/Dashboard')),
+);
+const ApprovalEmployee = Loadable(
+  lazy(() => import('src/customs/pages/Employee/Approval/Approval')),
+);
 const InvitationEmployee = Loadable(
   lazy(() => import('src/customs/pages/Employee/Invitation/Invitation')),
 );
@@ -393,6 +402,7 @@ const Router = [
           { path: '/profile', element: <DetailProfile /> },
           { path: '/admin/print-badge', element: <ManagePrintBadge /> },
           { path: '/admin/evacuate', element: <ManageEvacuate /> },
+          { path: '/admin/view', element: <ManageAdminView /> },
         ],
       },
 

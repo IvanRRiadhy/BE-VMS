@@ -25,10 +25,8 @@ import {
   DialogContent,
   DialogActions,
   Backdrop,
-  Button as MuiButton,
   FormControl,
   Select,
-  InputLabel,
   Autocomplete,
   Box,
   Divider,
@@ -51,7 +49,6 @@ import {
   createVisitorType,
   getAllAccessControl,
   getAllCustomField,
-  getAllCustomFieldPagination,
   getAllDocument,
   getAllSite,
   getCameraAnalytics,
@@ -65,6 +62,7 @@ import RenderDetailRows from './RenderDetailRows';
 import {
   createVisitorTypeAccess,
   createVisitorTypeAccessBulk,
+  deleteVisitorTypeAccess,
   getVisitorTypeAccessByVisitorId,
   updateVisitorTypeAccess,
 } from 'src/customs/api/VisitorType/Access';
@@ -74,6 +72,7 @@ import {
   getVisitorTypeAnalyticsByVisitorId,
   updateVisitorTypeAnalytics,
 } from 'src/customs/api/VisitorType/Analytics';
+import StepComponent from './components/StepComponent';
 
 interface FormVisitorTypeProps {
   formData: CreateVisitorTypeRequest;
@@ -112,8 +111,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
       id?: string;
     }[]
   >([]);
-
-  const [selectedSite, setSelectedSite] = useState<any[]>([]);
 
   const [siteData, setSiteData] = useState<any[]>([]);
   const [accessData, setAccessData] = useState<any[]>([]);
@@ -308,35 +305,34 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
       const parseData: CreateVisitorTypeRequest = CreateVisitorTypeRequestSchema.parse(data);
 
       if (edittingId) {
-        const res = await updateVisitorType(token, edittingId, parseData);
+        await updateVisitorType(token, edittingId, parseData);
 
-        console.log('res', res);
+        // 1️⃣ Delete removed access
+        if (deletedAccessIds.length > 0) {
+          await Promise.all(deletedAccessIds.map((id) => deleteVisitorTypeAccess(id, token)));
+        }
+
+        // 2️⃣ Update / Create remaining
         const accessPayloads = buildUpdateAccessPayload(edittingId);
-        // console.log('accessPayloads', accessPayloads);
-
-        // await deleteVisitorTypeAccessBulk(edittingId, token);
 
         for (const payload of accessPayloads) {
           if (payload.id) {
-            const resUpdate = await updateVisitorTypeAccess(payload.id, payload, token);
-            // console.log('resUpdate', resUpdate);
+            await updateVisitorTypeAccess(payload.id, payload, token);
           } else {
-            const resAccess = await createVisitorTypeAccess(payload, token);
-            // console.log('resAccess', resAccess);
+            await createVisitorTypeAccess(payload, token);
           }
         }
+
+        setDeletedAccessIds([]);
 
         const analyticsPayloads = buildUpdateAnalyticsPayload(edittingId);
         for (const payload of analyticsPayloads) {
           if (edittingId) {
-            const resUpdate = await updateVisitorTypeAnalytics(payload.id, payload, token);
-            // console.log('res analytic', resUpdate);
+            await updateVisitorTypeAnalytics(payload.id, payload, token);
           } else {
-            const resUpdate = await createVisitorTypeAnalytics(payload, token);
-            // console.log('res analytic Create', resUpdate);
+            await createVisitorTypeAnalytics(payload, token);
           }
         }
-        // console.log('analyticsPayloads', analyticsPayloads);
 
         showSwal(
           'success',
@@ -344,7 +340,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         );
       } else {
         const res = await createVisitorType(token, parseData);
-        // console.log('res', res);
+
         const visitorTypeId = res.collection?.id;
 
         if (selectedAccess.length > 0) {
@@ -624,6 +620,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
 
   useEffect(() => {
     if (!token) return;
+    if (!formData.can_track_cctv) return;
 
     const fetchAnalytic = async () => {
       try {
@@ -635,7 +632,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     };
 
     fetchAnalytic();
-  }, [token]);
+  }, [token, formData.can_track_cctv]);
 
   const identityOptions = [
     { value: -1, label: '' },
@@ -685,6 +682,18 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     { label: 'SPU', value: 'SPU' },
     { label: 'DC', value: 'DC' },
   ];
+
+  const handleReorder = (
+    sectionIndex: number,
+    sectionKey: 'visit_form' | 'pra_form' | 'checkout_form',
+    newData: any[],
+  ) => {
+    setSectionsData((prev: any[]) =>
+      prev.map((section, idx) =>
+        idx === sectionIndex ? { ...section, [sectionKey]: newData } : section,
+      ),
+    );
+  };
 
   const StepContent = (step: number) => {
     if (step === 0) {
@@ -918,88 +927,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                 </Box>
               </TableContainer>
             </Grid>
-            {/* <Grid size={12}>
-              <Typography variant="h6" sx={{ mb: 2, mt: 1 }}>
-                Site
-              </Typography>
-              <TableContainer component={Paper} sx={{ mt: 1 }}>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Site</TableCell>
 
-                      <TableCell align="center">Action</TableCell>
-                    </TableRow>
-                  </TableHead>
-
-                  <TableBody>
-                    {selectedSite.map((row, index) => (
-                      <TableRow key={index}>
-                        <TableCell>
-                          <FormControl size="small" fullWidth>
-                            <Select
-                              value={row.access_control_id ?? ''}
-                              onChange={(e) => {
-                                const value = e.target.value as string;
-                                setSelectedAccess((prev) =>
-                                  prev.map((r, i) =>
-                                    i === index ? { ...r, access_control_id: value } : r,
-                                  ),
-                                );
-                              }}
-                            >
-                              {siteData.map((a) => (
-                                <MenuItem
-                                  key={a.id}
-                                  value={a.id}
-                                  disabled={selectedSite.some(
-                                    (x, i) => x.id === a.id && i !== index,
-                                  )}
-                                >
-                                  {a.name}
-                                </MenuItem>
-                              ))}
-                            </Select>
-                          </FormControl>
-                        </TableCell>
-                        <TableCell align="center">
-                          <IconButton
-                            color="error"
-                            onClick={() => {
-                              setSelectedSite((prev) => {
-                                const removed = prev[index];
-
-                                if (removed?.id) {
-                                  setDeletedAccessIds((ids) => [...ids, removed.id!]);
-                                }
-
-                                return prev.filter((_, i) => i !== index);
-                              });
-                            }}
-                          >
-                            <IconTrash size={18} />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-
-                    {selectedSite.length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={4} align="center" sx={{ color: 'text.secondary' }}>
-                          No site added yet
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-
-                <Box sx={{ p: 2 }}>
-                  <Button variant="contained" onClick={handleAddSite}>
-                    Add New
-                  </Button>
-                </Box>
-              </TableContainer>
-            </Grid> */}
             {formData.can_track_cctv && (
               <Grid size={12}>
                 <Typography variant="h6" sx={{ mb: 2, mt: 2 }}>
@@ -1009,9 +937,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                   options={analyticCctv}
                   value={selectedAnalytics}
                   getOptionLabel={(option: any) => option.name ?? ''}
-                  // onChange={(_, newValue) => {
-                  //   setSelectedAnalytics(newValue);
-                  // }}
                   onChange={(_, newValue) => {
                     if (!newValue) {
                       setSelectedAnalytics(null);
@@ -1701,14 +1626,14 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                   sectionKey="visit_form"
                 />
 
-                <MuiButton
+                <Button
                   size="small"
                   onClick={() => handleAddDetail('visit_form')}
                   variant="contained"
                   color="primary"
                 >
                   Add New
-                </MuiButton>
+                </Button>
               </Box>
             </Grid>
 
@@ -1733,14 +1658,14 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                   sectionKey="pra_form"
                 />
 
-                <MuiButton
+                <Button
                   size="small"
                   onClick={() => handleAddDetail('pra_form')}
                   variant="contained"
                   color="primary"
                 >
                   Add New
-                </MuiButton>
+                </Button>
               </Box>
             </Grid>
 
@@ -1765,14 +1690,14 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                   sectionKey="checkout_form"
                 />
 
-                <MuiButton
+                <Button
                   size="small"
                   onClick={() => handleAddDetail('checkout_form')}
                   variant="contained"
                   color="primary"
                 >
                   Add New
-                </MuiButton>
+                </Button>
               </Box>
             </Grid>
           </>
@@ -1800,14 +1725,14 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                   canMultiple={true}
                   sectionKey="visit_form"
                 />
-                <MuiButton
+                <Button
                   size="small"
                   onClick={() => handleAddDetail('visit_form')}
                   variant="contained"
                   color="primary"
                 >
                   Add New
-                </MuiButton>
+                </Button>
               </Box>
             </Grid>
             {/* Pra Form */}
@@ -1830,14 +1755,14 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                   canMultiple={true}
                   sectionKey="pra_form"
                 />
-                <MuiButton
+                <Button
                   size="small"
                   onClick={() => handleAddDetail('pra_form' as const)}
                   variant="contained"
                   color="primary"
                 >
                   Add New
-                </MuiButton>
+                </Button>
               </Box>
             </Grid>
             {/*Checkout Form */}
@@ -1886,14 +1811,14 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                   canMultiple={true}
                   sectionKey="checkout_form"
                 />
-                <MuiButton
+                <Button
                   size="small"
                   onClick={() => handleAddDetail('checkout_form')}
                   variant="contained"
                   color="primary"
                 >
                   Add New
-                </MuiButton>
+                </Button>
               </Box>
             </Grid>
           </>
@@ -1944,14 +1869,14 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                   canMultiple={false}
                   sectionKey="visit_form"
                 />
-                <MuiButton
+                <Button
                   size="small"
                   onClick={() => handleAddDetail('visit_form')}
                   variant="contained"
                   color="primary"
                 >
                   Add New
-                </MuiButton>
+                </Button>
               </Box>
             </Grid>
 
@@ -1998,14 +1923,14 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                   canMultiple={false}
                   sectionKey="pra_form"
                 />
-                <MuiButton
+                <Button
                   size="small"
                   onClick={() => handleAddDetail('pra_form')}
                   variant="contained"
                   color="primary"
                 >
                   Add New
-                </MuiButton>
+                </Button>
               </Box>
             </Grid>
 
@@ -2425,7 +2350,37 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
             </Droppable>
           </DragDropContext>
 
-          <Box mt={1}>{StepContent(activeStep)}</Box>
+          <Box mt={1}>
+            <StepComponent
+              activeStep={activeStep}
+              formData={formData}
+              errors={errors}
+              sectionsData={sectionsData}
+              setSectionsData={setSectionsData}
+              customField={customField}
+              selectedAccess={selectedAccess}
+              selectedAnalytics={selectedAnalytics}
+              accessData={accessData}
+              documents={documents}
+              documentIdentities={documentIdentities}
+              analyticCctv={analyticCctv}
+              handleChange={handleChange}
+              handleAddDetail={handleAddDetail}
+              handleDetailChange={handleDetailChange}
+              handleDeleteDetail={handleDeleteDetail}
+              handleReorder={handleReorder}
+              handleChangeDocument={handleChangeDocument}
+              handleRemoveDocument={handleRemoveDocument}
+              handleAddDocument={handleAddDocument}
+              handleAddAccess={handleAddAccess}
+              setFormData={setFormData}
+              setSelectedAccess={setSelectedAccess}
+              setSelectedAnalytics={setSelectedAnalytics}
+              setDeletedAccessIds={setDeletedAccessIds}
+            />
+          </Box>
+
+          {/* <Box mt={1}>{StepContent(activeStep)}</Box> */}
 
           <Box mt={3} display="flex" justifyContent="space-between">
             <Button

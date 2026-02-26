@@ -303,24 +303,36 @@ const Content = () => {
     },
   );
   useEffect(() => {
-    const def = CreateDepartmentSchema.parse({});
-    if (JSON.stringify(formDataAddDepartment) !== JSON.stringify(def)) {
-      localStorage.setItem('unsavedDepartmentFormAdd', JSON.stringify(formDataAddDepartment));
-    }
+    const handler = setTimeout(() => {
+      const def = CreateDepartmentSchema.parse({});
+      if (JSON.stringify(formDataAddDepartment) !== JSON.stringify(def)) {
+        localStorage.setItem('unsavedDepartmentFormAdd', JSON.stringify(formDataAddDepartment));
+      }
+    }, 500);
+
+    return () => clearTimeout(handler);
   }, [formDataAddDepartment]);
 
   useEffect(() => {
-    const def = CreateDistrictSchema.parse({});
-    if (JSON.stringify(formDataAddDistrict) !== JSON.stringify(def)) {
-      localStorage.setItem('unsavedDistrictFormAdd', JSON.stringify(formDataAddDistrict));
-    }
+    const handler = setTimeout(() => {
+      const def = CreateDistrictSchema.parse({});
+      if (JSON.stringify(formDataAddDistrict) !== JSON.stringify(def)) {
+        localStorage.setItem('unsavedDistrictFormAdd', JSON.stringify(formDataAddDistrict));
+      }
+    }, 500);
+
+    return () => clearTimeout(handler);
   }, [formDataAddDistrict]);
 
   useEffect(() => {
-    const def = CreateOrganizationSchema.parse({});
-    if (JSON.stringify(formDataAddOrganization) !== JSON.stringify(def)) {
-      localStorage.setItem('unsavedOrganizationFormAdd', JSON.stringify(formDataAddOrganization));
-    }
+    const handler = setTimeout(() => {
+      const def = CreateOrganizationSchema.parse({});
+      if (JSON.stringify(formDataAddOrganization) !== JSON.stringify(def)) {
+        localStorage.setItem('unsavedOrganizationFormAdd', JSON.stringify(formDataAddOrganization));
+      }
+    }, 500);
+
+    return () => clearTimeout(handler);
   }, [formDataAddOrganization]);
 
   // ======= Open/Close dialog helpers =======

@@ -538,9 +538,9 @@ const Content = () => {
                       isNoActionTableHead
                       isHaveActionOnlyEdit={false}
                       isHaveHeader={false}
-                      isButtonRegisteredSite={true}
-                      isButtonGiveAccess={true}
-                      isButtonSiteAccess={true}
+                      isButtonRegisteredSite={false}
+                      isButtonGiveAccess={false}
+                      isButtonSiteAccess={false}
                       // onCheckedChange={setSelectedRows}
                       onRegisteredSite={(row) => handleRegisteredSite(row.id)}
                       onGiveAccess={(row) => handleOpenGiveAccess(row.id)}

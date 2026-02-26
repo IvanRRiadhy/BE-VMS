@@ -146,7 +146,7 @@ function SortableRow({
   );
 }
 
-export default function RenderDetailRows({
+export default function  RenderDetailRows({
   title,
   data = [],
   customField = [],

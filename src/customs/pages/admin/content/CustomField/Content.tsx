@@ -105,10 +105,7 @@ const Content = () => {
           multiple_option_fields: item.multiple_option_fields,
         }));
 
-        if (rows) {
-          setTableRowSite(rows);
-          setIsDataReady(true);
-        }
+        setTableRowSite(rows);
       } catch (error) {
         console.error('Fetch error:', error);
       } finally {
@@ -272,8 +269,7 @@ const Content = () => {
         setRefreshTrigger((prev) => prev + 1);
         // showSuccessAlert('Deleted!', 'Custom Field has been deleted.');
       } catch (error) {
-        console.error(error);
-        showErrorAlert('Failed!', 'Failed to delete custom field.');
+        showSwal('error', 'Failed to delete custom field.');
         setTimeout(() => setLoading(false), 500);
       } finally {
         setTimeout(() => setLoading(false), 500);
@@ -298,7 +294,8 @@ const Content = () => {
         // showSuccessAlert('Deleted!', `${rows.length} items have been deleted.`);
       } catch (error) {
         console.error(error);
-        showErrorAlert('Error!', 'Failed to delete some items.');
+        // showErrorAlert('Error!', 'Failed to delete some items.');
+        showSwal('error', 'Failed to delete some items.');
       } finally {
         setLoading(false);
       }
@@ -313,11 +310,9 @@ const Content = () => {
       <Container title="Custom Field" description="Custom Field page">
         <Box>
           <Grid container spacing={3}>
-            {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
               <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
             </Grid>
-            {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
               <DynamicTable
                 loading={loading}
@@ -405,7 +400,7 @@ const Content = () => {
                 // });
                 showSwal('success', 'Custom Field successfully updated!');
               } else {
-                 showSwal('success', 'Custom Field successfully created!');
+                showSwal('success', 'Custom Field successfully created!');
               }
             }}
             editingId={edittingId}
