@@ -160,7 +160,7 @@ const FormWizardAddEmployee = ({
       const imageSrc = webcamRef.current.getScreenshot();
       if (imageSrc) {
         setScreenshot(imageSrc);
-        setPreviewUrl(imageSrc); 
+        setPreviewUrl(imageSrc);
         setFormData((prev) => ({
           ...prev,
           faceimage: imageSrc,
@@ -449,16 +449,35 @@ const FormWizardAddEmployee = ({
       /** 🧩 Normal Create / Update Mode */
       const mergedFormData = normalizeForSubmit({
         ...formData,
+
+        type:
+          typeof formData.type === 'string'
+            ? formData.type === 'Permanent'
+              ? 1
+              : formData.type === 'contract'
+                ? 2
+                : 0
+            : Number(formData.type ?? 0),
+
+        // status_employee:
+        //   typeof formData.status_employee === 'string'
+        //     ? formData.status_employee === 'active'
+        //       ? 1
+        //       : 2
+        //     : Number(formData.status_employee ?? 0),
+
         gender:
           typeof formData.gender === 'string'
             ? formData.gender === 'Female'
               ? 0
               : 1
             : Number(formData.gender ?? 0),
-        identity_type: formData.identity_type,
       });
 
+      console.log('Merged form data:', mergedFormData);
+
       const result = CreateEmployeeSubmitSchema.safeParse(mergedFormData);
+      console.log(result);
       if (!result.success) {
         const em = toErrorMap(result.error.issues);
         setErrors(em);

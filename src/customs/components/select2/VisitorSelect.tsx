@@ -1,8 +1,11 @@
 import { Avatar } from '@mui/material';
-import React from 'react';
+import { debounce } from 'lodash';
+import React, { useMemo } from 'react';
 import AsyncSelect from 'react-select/async';
 import { getAllEmployee, getListVisitor, getVisitorInvitation } from 'src/customs/api/admin';
 import axiosInstance, { axiosInstance2 } from 'src/customs/api/interceptor';
+import { getInvitationVisitor } from 'src/customs/api/InvitationData';
+import { useDebounce } from 'src/hooks/useDebounce';
 
 type Visitor = {
   id: string;
@@ -48,7 +51,7 @@ const VisitorSelect: React.FC<Props> = ({ onSelect, token, isEmployee }) => {
         console.log('res', res);
         list = res?.collection ?? [];
       } else {
-        const res = await getListVisitor(token);
+        const res = await getInvitationVisitor(token);
         list = res?.collection ?? [];
       }
 
@@ -84,11 +87,29 @@ const VisitorSelect: React.FC<Props> = ({ onSelect, token, isEmployee }) => {
     }
   };
 
+  const debouncedLoadOptions = useMemo(
+    () =>
+      debounce(
+        (inputValue: string, callback: (options: OptionType[]) => void) => {
+          loadOptions(inputValue).then(callback);
+        },
+        500, // delay 500ms
+      ),
+    [],
+  );
+
   const formatOptionLabel = ({ data }: OptionType) => {
     const imageUrl = data.faceimage || '';
 
     return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, borderBottom: '1px solid #eaeaea' }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          borderBottom: '1px solid #eaeaea',
+        }}
+      >
         <Avatar
           src={imageUrl}
           alt={data.name || 'Profile'}
@@ -131,7 +152,7 @@ const VisitorSelect: React.FC<Props> = ({ onSelect, token, isEmployee }) => {
     <AsyncSelect
       cacheOptions
       defaultOptions={false}
-      loadOptions={loadOptions}
+      loadOptions={debouncedLoadOptions}
       isOptionDisabled={(option) => option.data?.is_blacklist === true}
       onChange={(option) => {
         setSelectedOption(option as any | null);

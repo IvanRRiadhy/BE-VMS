@@ -1,6 +1,7 @@
 import React from 'react';
 import AsyncSelect from 'react-select/async';
 import { components } from 'react-select';
+import { axiosInstance2 } from 'src/customs/api/interceptor';
 
 type Employee = {
   id: string;
@@ -26,12 +27,15 @@ const EmployeeSelect: React.FC<Props> = ({ onSelect, token }) => {
     if (inputValue.length < 3) return [];
 
     try {
-      const res = await fetch(`http://192.168.1.116:8000/api/employee?search=${inputValue}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/json',
+      const res = await fetch(
+        `${axiosInstance2.defaults.baseURL}/api/employee?search=${inputValue}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/json',
+          },
         },
-      });
+      );
 
       if (!res.ok) {
         console.error('Fetch error:', res.statusText);
@@ -39,7 +43,7 @@ const EmployeeSelect: React.FC<Props> = ({ onSelect, token }) => {
       }
 
       const json = await res.json();
-      const data: Employee[] = json.collection; // 👈 Ambil dari field 'collection'
+      const data: Employee[] = json.collection; 
 
       return data.map((emp) => ({
         label: emp.name,
@@ -47,7 +51,7 @@ const EmployeeSelect: React.FC<Props> = ({ onSelect, token }) => {
         data: {
           ...emp,
           faceimage: emp.faceimage
-            ? `http://192.168.1.116:8000/cdn${emp.faceimage.replace(/^\/+/, '')}`
+            ? `${axiosInstance2.defaults.baseURL}/cdn${emp.faceimage.replace(/^\/+/, '')}`
             : 'https://via.placeholder.com/40x40?text=No+Img',
         },
       }));

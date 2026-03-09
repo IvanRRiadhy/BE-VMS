@@ -304,7 +304,7 @@ export const openParkingBlocker = async (token: string, data: any): Promise<any>
 export const submitPraFormEmployee = async (token: string, id: string, data: any): Promise<any> => {
   try {
     const response = await axiosInstance.post(
-      `/invitation/submit/pra-form?id=${id}`, // ✅ pakai query param
+      `/invitation/submit/pra-form?id=${id}`, 
       data,
       {
         headers: {

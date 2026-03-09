@@ -111,7 +111,6 @@ const PreviewDialog = ({ open, onClose, onConfirm, invitationData, formValues }:
                         <Box mt={1}>
                           <img
                             src={`${axiosInstance2.defaults.baseURL}/cdn${value}`}
-                            // src='http://192.168.1.116:8000/cdn'
                             alt={f.remarks}
                             style={{
                               width: '100%',

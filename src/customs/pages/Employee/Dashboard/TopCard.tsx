@@ -325,7 +325,7 @@ const TopCard = ({ items = [], size }: any) => {
                       </Box>
                     )}
                   </Typography>
-                  <Box
+                  {/* <Box
                     sx={{
                       position: 'absolute',
                       bottom: -20,
@@ -363,7 +363,7 @@ const TopCard = ({ items = [], size }: any) => {
                       type="area"
                       height={50}
                     />
-                  </Box>
+                  </Box> */}
                 </Box>
               </Box>
             </CardContent>

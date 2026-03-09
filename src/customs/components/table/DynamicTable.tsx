@@ -43,6 +43,7 @@ import {
   IconFileTypePdf,
   IconForbid2,
   IconHome,
+  IconKeyOff,
   IconLogin2,
   IconLogout2,
   IconPencil,
@@ -112,6 +113,7 @@ type DynamicTableProps<
   isHavePrint?: boolean;
   onExportPdf?: () => void;
   onExportCsv?: () => void;
+  onActionRevoke ?: (row: T) => void;
   onExportExcel?: () => void;
   onPrint?: () => void;
   onBlacklist?: (row: T) => void;
@@ -170,6 +172,7 @@ type DynamicTableProps<
   defaultRowsPerPage?: number;
   isHaveApproval?: boolean;
   isHaveIntegration?: boolean;
+  isHaveActionRevoke?: boolean;
   isSelectedType?: boolean;
   htmlFields?: string[];
   htmlClampLines?: number;
@@ -177,6 +180,7 @@ type DynamicTableProps<
   htmlMaxWidth?: number | string;
   onChooseCard?: (row?: T) => void;
   onNameClick?: (row: T) => void;
+
   isVip?: (row: T) => boolean;
   isHaveArrival?: boolean;
   isActionEmployee?: boolean;
@@ -250,6 +254,7 @@ export function DynamicTable<
   isHaveHeader = false,
   isHaveBooleanSwitch = false,
   isHavePermission = false,
+  isHaveActionRevoke,
   breadcrumbItems,
   isOperatorSetting = false,
   isBlacklistPage = false,
@@ -275,6 +280,7 @@ export function DynamicTable<
   isSiteSpaceName,
   isNoActionTableHead = false,
   onDenied,
+  onActionRevoke,
   onBlacklist,
   isHaveApproval = false,
   defaultSelectedHeaderItem,
@@ -364,6 +370,7 @@ export function DynamicTable<
     'access_control_id',
     'registered_site',
     'is_email_verified',
+    'url',
   ];
 
   const fallbackColumns = React.useMemo(() => {
@@ -604,7 +611,7 @@ export function DynamicTable<
       true: 'Active',
       false: 'Inactive',
     },
-    status_link: {
+    link_status: {
       true: 'Active',
       false: 'Inactive',
     },
@@ -1494,6 +1501,24 @@ export function DynamicTable<
                       </TableCell>
                     )}
 
+                    {isHaveActionRevoke && (
+                      <TableCell
+                        sx={{
+                          position: 'sticky',
+                          right: 0,
+                          background: 'white',
+                          zIndex: 2,
+                          textAlign: 'center',
+                        }}
+                      >
+                        {loading ? (
+                          <Skeleton variant="text" width="40%" height={18} animation="wave" />
+                        ) : (
+                          'Action'
+                        )}
+                      </TableCell>
+                    )}
+
                     {isCopyLink && (
                       <TableCell
                         sx={{
@@ -2010,7 +2035,7 @@ export function DynamicTable<
                                 col === 'is_employee_used' ||
                                 col === 'is_multi_site' ||
                                 col === 'is_used' ||
-                                col === 'status_link' ||
+                                col === 'link_status' ||
                                 col === 'is_active' ||
                                 col === 'early_access' ? (
                                 <Box
@@ -2470,7 +2495,7 @@ export function DynamicTable<
                                       <IconTrash width={14} height={14} />
                                     </IconButton>
                                   </Tooltip>
-                                  <Tooltip title="Sync Visitor Type">
+                                  <Tooltip title="Permission">
                                     <Button
                                       onClick={() => onPermission?.(row)}
                                       disableRipple
@@ -2604,7 +2629,7 @@ export function DynamicTable<
                                 </Tooltip>
                               ) : isActionListVisitor ? (
                                 <>
-                                  <Tooltip
+                                  {/* <Tooltip
                                     title="Block Visitor"
                                     arrow
                                     placement="top"
@@ -2634,7 +2659,7 @@ export function DynamicTable<
                                     >
                                       Block
                                     </Button>
-                                  </Tooltip>
+                                  </Tooltip> */}
                                   <Tooltip
                                     title="Blacklist Visitor"
                                     arrow
@@ -2769,6 +2794,41 @@ export function DynamicTable<
                           </TableCell>
                         )}
 
+                        {isHaveActionRevoke && !isActionVisitor && (
+                          <TableCell
+                            sx={{
+                              position: 'sticky',
+                              right: 0,
+                              background: 'white',
+                              zIndex: 2,
+                              display: 'flex',
+                              gap: 1,
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <Tooltip title="Edit">
+                              <Button
+                                onClick={() => onActionRevoke?.(row)}
+                                disableRipple
+                                sx={{
+                                  color: 'white',
+                                  backgroundColor: '#000',
+
+                                  // width: 28,
+                                  // height: 28,
+                                  // padding: 0.5,
+                                  // borderRadius: '50%',
+                                }}
+                              >
+                                {/* <IconKeyOff width={14} height={14} />
+                                 */}
+                                 Revoke
+                              </Button>
+                            </Tooltip>
+                          </TableCell>
+                        )}
+
                         {isHaveActionOnlyEdit && !isActionVisitor && isSelectedType && (
                           <TableCell
                             sx={{
@@ -2862,7 +2922,7 @@ export function DynamicTable<
                               background: 'white',
                               zIndex: 2,
                               display: 'flex',
-                              gap: 1,
+                              gap: 0.5,
                               mt: 0.5,
                               alignItems: 'center',
                               justifyContent: 'center',
@@ -2911,26 +2971,27 @@ export function DynamicTable<
                                   <IconEye width={24} height={24} />
                                 </IconButton>
                               </Tooltip>
-                              {/* <Tooltip title="Registered Site" arrow>
-                                <Button
-                                  onClick={() => onRegisteredSite?.(row)}
-                                  // disableRipple
-                                  variant="contained"
-                                  color="secondary"
+                              <Tooltip title="Delete Link" arrow>
+                                <IconButton
+                                  onClick={() => onDelete?.(row)}
+                                  disableRipple
+                                  sx={{
+                                    color: 'white',
+                                    backgroundColor: 'red',
+                                    width: 28,
+                                    height: 28,
+                                    p: 0.5,
+                                    borderRadius: '50%',
+                                    '&:hover': {
+                                      backgroundColor: 'red',
+                                      color: 'white',
+                                    },
+                                  }}
                                 >
-                                  Registered Site
-                                </Button>
-                              </Tooltip> */}
-                              {/* <Tooltip title="Site Access" arrow>
-                                <Button
-                                  onClick={() => onSiteAccess?.(row)}
-                                  // disableRipple
-                                  variant="contained"
-                                  color="warning"
-                                >
-                                  Site Access
-                                </Button>
-                              </Tooltip> */}
+                                  {/* <IconCopy width={14} height={14} /> */}
+                                  <IconTrash width={24} height={24} />
+                                </IconButton>
+                              </Tooltip>
                             </Box>
                           </TableCell>
                         )}
@@ -3013,4 +3074,4 @@ export function DynamicTable<
       </Drawer>
     </>
   );
-}
+} 

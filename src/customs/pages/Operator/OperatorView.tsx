@@ -12,9 +12,7 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  List,
   ListItem,
-  ListItemText,
   CardActions,
   Avatar,
   CardHeader,
@@ -23,53 +21,39 @@ import {
   FormControlLabel,
   Paper,
   MenuItem,
-  Table,
-  TableBody,
-  TableRow,
-  TableCell,
-  Stepper,
-  Step,
-  StepLabel,
-  TableContainer,
-  TableHead,
   DialogActions,
   AlertColor,
-  FormGroup,
   Autocomplete,
   FormControl,
   RadioGroup,
   Radio,
   Tooltip,
   Select,
+  Portal,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import { Box, Stack, useMediaQuery, useTheme } from '@mui/system';
 import moment from 'moment-timezone';
 import backgroundnodata from 'src/assets/images/backgrounds/bg_nodata.svg';
 import infoPic from 'src/assets/images/backgrounds/info_pic.png';
 import {
-  IconArrowLeft,
-  IconArrowRight,
   IconBan,
   IconCards,
-  IconClipboard,
   IconClock,
   IconCreditCard,
-  IconDoor,
   IconForbid2,
   IconKey,
+  IconKeyOff,
   IconLogin,
   IconLogout,
-  IconMapPinCheck,
-  IconParking,
   IconPrinter,
   IconQrcode,
   IconSearch,
   IconSwipe,
-  IconUser,
   IconX,
 } from '@tabler/icons-react';
 import PageContainer from 'src/components/container/PageContainer';
-import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import {
@@ -78,6 +62,7 @@ import {
   createInvitationActionOperator,
   createMultipleGrantAccess,
   createMultipleInvitationActionOperator,
+  createOperatorBlacklist,
   createSubmitCompletePraMultiple,
   extendPeriodOperator,
   getAvailableCardOperator,
@@ -87,13 +72,11 @@ import {
   getTodayVisitingPurpose,
 } from 'src/customs/api/operator';
 import { BASE_URL, axiosInstance2 } from 'src/customs/api/interceptor';
-import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import LprImage from 'src/assets/images/products/pic_lpr.png';
 import FRImage from 'src/assets/images/products/pic_fr.png';
 import SearchVisitorDialog from './Dialog/SearchVisitorDialog';
 import DetailVisitorDialog from './Dialog/DetailVisitorDialog';
 import Swal from 'sweetalert2';
-import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import { getDetailInvitationForm } from 'src/customs/api/visitor';
 import { FullScreen, useFullScreenHandle } from 'react-full-screen';
 import {
@@ -156,11 +139,19 @@ import GlobalBackdropLoading from './Components/GlobalBackdrop';
 import RegisteredSiteDialog from './Dialog/RegisteredSiteAccessDialog';
 import RegisteredSiteAccessDialog from './Dialog/RegisteredSiteAccessDialog';
 import AccessDialog from './Dialog/AccessDialog';
-import { useQuery } from '@tanstack/react-query';
 import ParkingDialog from './Dialog/ParkingDialog';
-import WhiteListDialog from './Dialog/WhiteListDialog';
-import VehicleDialog from './Dialog/VehicleDialog';
 import ActionPanelCard from './Components/ActionPanelCard';
+import {
+  getInvitationAccessControl,
+  getInvitationSite,
+  getInvitationVisitorEmployee,
+  getInvitationVisitorHost,
+} from 'src/customs/api/InvitationData';
+import FillPraregistrationGroup from './Invitation/components/FillPraregistrationGroup';
+import { DynamicTable } from 'src/customs/components/table/DynamicTable';
+import GrantAccessDialog from './Dialog/GrantAccessDialog';
+import LprVisitorCard from './Components/LprVisitorCard';
+import ChooseCardDialog from './Dialog/ChooseCardDialog';
 
 dayjs.extend(utc);
 dayjs.extend(weekday);
@@ -180,11 +171,6 @@ const OperatorView = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [open, setOpen] = useState(false);
-  const [tabValue, setTabValue] = useState(0);
-  const [qrValue, setQrValue] = useState('');
-  const [qrMode, setQrMode] = useState<'manual' | 'scan'>('manual');
-  const [hasDecoded, setHasDecoded] = useState(false);
-  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
   const [torchOn, setTorchOn] = useState(false);
   const [wizardKey, setWizardKey] = useState(0);
   const scanContainerRef = useRef<HTMLDivElement | null>(null);
@@ -195,7 +181,6 @@ const OperatorView = () => {
   const [openInvitationVisitor, setOpenInvitationVisitor] = useState(false);
   const [permissionAccess, setPermissionAccess] = useState<any[]>([]);
   const [search, setSearch] = useState('');
-  const [openDetailSearching, setOpenDetailSearching] = useState(false);
   const handleOpenScanQR = () => setOpenDialogIndex(1);
   const [visitorStatus, setVisitorStatus] = useState<string | null>(null);
   const [selectedCards, setSelectedCards] = useState<string[]>([]);
@@ -244,7 +229,7 @@ const OperatorView = () => {
   const handle = useFullScreenHandle();
   const [visitorDocuments, setVisitorDocuments] = useState<any[]>([]);
   const [currentAction, setCurrentAction] = useState<'Checkin' | 'Checkout' | null>(null);
-  const [currentActionBlacklist, setCurrentActionBlacklist] = useState<'Blacklist' | null>(null);
+  const [currentActionBlacklist, setCurrentActionBlacklist] = useState<'blacklist' | null>(null);
   const [showExtendButton, setShowExtendButton] = useState(false);
   const [actionButton, setActionButton] = useState<any | null>(null);
   const [visitorCards, setVisitorCards] = useState<any[]>([]);
@@ -259,25 +244,72 @@ const OperatorView = () => {
   const [focusTarget, setFocusTarget] = useState<'old' | 'new' | null>(null);
   const oldCardRef = useRef<HTMLInputElement | null>(null);
   const newCardRef = useRef<HTMLInputElement | null>(null);
-  const [siteRegistered, setSiteRegistered] = useState<any[]>([]);
-  const [action, setAction] = useState<'grant' | 'revoke' | ''>('');
+  const [currentAccessVisitor, setCurrentAccessVisitor] = useState<any>(null);
+  const [selectedVisitorId, setSelectedVisitorId] = useState<string | null>(null);
+  // const [siteRegistered, setSiteRegistered] = useState<any[]>([]);
+
+  const handleOpenBlacklistVisitor = () => setOpenBlacklistVisitor(true);
+  const handleCloseBlacklistVisitor = () => setOpenBlacklistVisitor(false);
+  const handleOpenListVisitor = () => setOpenListVisitor(true);
+  const handleOpenVehicle = () => setOpenVehicle(true);
+  const handleCloseListVisitor = () => setOpenListVisitor(false);
+  const handleCloseTriggeredAcceess = () => setOpenTriggeredAccess(false);
+
+  const [wsPayload, setWsPayload] = useState<any>(null);
+  const wsImageQueueRef = useRef<string[]>([]);
+  const wsOcrQueueRef = useRef<string[]>([]);
+  const [tick, forceTick] = useState(0);
+  const socketRef = useRef<WebSocket | null>(null);
+  const [sitesOperator, setSitesOperator] = useState<any[]>([]);
+  const [dataDummyAccess, setDataDummyAccess] = useState<any[]>([
+    {
+      id: '1',
+      site: 'SPU',
+      // visitor_name: 'Dummy Visitor',
+      // status: 'Active',
+    },
+    {
+      id: '2',
+      site: 'SPU 2',
+      // visitor_name: 'Dummy Visitor',
+      // status: 'Active',
+    },
+  ]);
+  const [printData, setPrintData] = useState<any>(null);
+  const [resetStep, setResetStep] = useState(0);
+  const [openRevokeDialog, setOpenRevokeDialog] = useState(false);
+
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     try {
+  //       const res = await getSiteAccessOperator(token as string);
+
+  //       const sites = Array.isArray(res?.collection)
+  //         ? res.collection.map((x: any) => x.site).filter(Boolean)
+  //         : [];
+
+  //       setSiteRegistered(sites);
+  //     } catch (error) {
+  //       console.log(error);
+  //       setSiteRegistered([]);
+  //     }
+  //   };
+
+  //   fetchData();
+  // }, [token]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await getSiteAccessOperator(token as string);
+        const res = await getInvitationSite(token as string);
+        const filteredSites =
+          res?.collection?.filter((site: any) => site.can_visited === true) ?? [];
 
-        const sites = Array.isArray(res?.collection)
-          ? res.collection.map((x: any) => x.site).filter(Boolean)
-          : [];
-
-        setSiteRegistered(sites);
+        setSitesOperator(filteredSites);
       } catch (error) {
         console.log(error);
-        setSiteRegistered([]);
       }
     };
-
     fetchData();
   }, [token]);
 
@@ -285,7 +317,8 @@ const OperatorView = () => {
     const fetchData = async () => {
       try {
         const res = await getRegisteredSiteOperator(token as string);
-        setRegisterSiteOperator(res?.collection ?? {});
+        const firstSite = res?.collection?.[0];
+        setRegisterSiteOperator(firstSite?.id ?? '');
       } catch (error) {
         console.log(error);
       }
@@ -310,52 +343,10 @@ const OperatorView = () => {
       .join('');
   };
 
-  const handleOpenBlacklistVisitor = () => setOpenBlacklistVisitor(true);
-  const handleCloseBlacklistVisitor = () => setOpenBlacklistVisitor(false);
-  const handleOpenListVisitor = () => setOpenListVisitor(true);
-  const handleOpenVehicle = () => setOpenVehicle(true);
-  const handleCloseListVisitor = () => setOpenListVisitor(false);
-  const handleCloseTriggeredAcceess = () => setOpenTriggeredAccess(false);
-
-  const [wsPayload, setWsPayload] = useState<any>(null);
-  const wsImageQueueRef = useRef<string[]>([]);
-  const wsOcrQueueRef = useRef<string[]>([]);
-  const [tick, forceTick] = useState(0);
-  const socketRef = useRef<WebSocket | null>(null);
-
-  // Webscoket
-  // useEffect(() => {
-  //   const socket = new WebSocket('ws://localhost:8081/ws/');
-  //   socketRef.current = socket;
-
-  //   socket.onopen = () => {
-  //     console.log('🟢 WS connected');
-  //   };
-
-  //   socket.onmessage = (event) => {
-  //     const data = event.data;
-  //     console.log('data', data);
-
-  //     if (typeof data === 'string' && data.includes('|data:image')) {
-  //       wsImageQueueRef.current.push(data);
-  //     } else {
-  //       wsOcrQueueRef.current.push(data);
-  //     }
-
-  //     forceTick((v) => v + 1);
-  //   };
-
-  //   socket.onerror = (e) => console.error('🔴 WS error', e);
-  //   socket.onclose = () => console.warn('⚠️ WS closed');
-
-  //   return () => socket.close();
-  // }, []);
-
   const sendToScanner = (payload: any) => {
     socketRef.current?.send(JSON.stringify(payload));
   };
 
-  const [printData, setPrintData] = useState<any>(null);
   useEffect(() => {
     if (!token) return;
 
@@ -372,21 +363,22 @@ const OperatorView = () => {
     return saved ? JSON.parse(saved) : CreateVisitorRequestSchema.parse({});
   });
 
-  const [swipePayload, setSwipePayload] = useState<{
-    value: string;
-    type: string;
-  } | null>(null);
+  const [swipePayload, setSwipePayload] = useState<any | null>(null);
 
   const [uiCurrentUsedCardNo, setUiCurrentUsedCardNo] = useState<string | null>(null);
 
-  const currentUsedCard = useMemo(() => {
-    if (uiCurrentUsedCardNo) {
-      return visitorCards.find((c) => c.card_number === uiCurrentUsedCardNo);
-    }
+  const currentUsedCards = useMemo(() => {
+    if (!Array.isArray(visitorCards)) return [];
 
-    return visitorCards.find((c) => c.current_used && c.card_type !== 'Barcode');
-  }, [visitorCards, uiCurrentUsedCardNo]);
+    return visitorCards
+      .filter((c) => c.is_swapcard && c.card_type !== 'Barcode')
+      .sort((a, b) => Number(a.current_used) - Number(b.current_used));
+  }, [visitorCards]);
 
+  useEffect(() => {
+    setUiCurrentUsedCardNo(null);
+    setSelectedCards([]);
+  }, [selectedVisitorId]);
   // const [swapPayloads, setSwapPayloads] = useState<any[]>([]);
 
   // const handleSwipeCardSubmit = async (value: string, type: string, visitor: any) => {
@@ -526,8 +518,6 @@ const OperatorView = () => {
   //   }
   // };
 
-  const [currentAccessVisitor, setCurrentAccessVisitor] = useState<any>(null);
-
   const handleSwipeCardSubmit = async (
     value: string,
     type: string,
@@ -535,33 +525,51 @@ const OperatorView = () => {
     isLastVisitor: boolean,
     visitorIndex: number,
   ) => {
-    const selectedCardNumber = selectedCards[visitorIndex];
-    const selectedCard = filteredCards.find((c) => c.card_number === selectedCardNumber);
-
-    if (!selectedCard) {
-      showSwal('error', 'Card not found');
-      return;
-    }
-
+    setLoadingAccess(true);
     try {
-      await createGrandAccessOperator(token as string, {
+      // const selectedCardNumber = selectedCards[visitorIndex];
+      const selectedCardNumber = selectedCards[0];
+      const selectedCard = filteredCards.find((c) => c.card_number === selectedCardNumber);
+
+      if (!selectedCard) {
+        showSwal('error', 'Card not found');
+        return;
+      }
+
+      const hasSwappedCard = visitor?.card?.some((c: any) => c.is_swapcard);
+
+      const payload = {
         card_number: selectedCard.card_number,
         trx_visitor_id: visitor.id,
-        description: `Give card number ${selectedCard.card_number} from ${registerSiteOperator.id}`,
+        description: `Give card number ${selectedCard.card_number} from ${registerSiteOperator}`,
         swap_card_from_card: value,
         swap_type: type,
-        swap_card_from_site_id: registerSiteOperator.user_id,
+        swap_card_from_site_id: registerSiteOperator,
         is_swapcard: true,
-      });
+      };
 
-      // 🔥 SIMPAN VISITOR UNTUK ACCESS
-      setCurrentAccessVisitor(visitor);
+      console.log('SWAP PAYLOAD', payload);
 
-      // 🔥 TUTUP SWIPE → BUKA ACCESS
+      if (!hasSwappedCard) {
+        console.log('FIRST SWIPE', payload);
+        await createGrandAccessOperator(token as string, payload);
+        showSwal('success', 'Card swaped successfully!');
+        setOpenChooseCardDialog(false);
+        setSearchTerm('');
+        await fetchRelatedVisitorsByInvitationId(invitationId as string);
+      } else {
+        console.log('SECOND SWIPE NEED SITE');
+        // setSwipePayload(payload);
+        setSwipePayload([payload]);
+        setCurrentAccessVisitor(visitor);
+        setOpenSwipeAccess(true);
+      }
+
       setOpenSwipeDialog(false);
-      setOpenSwipeAccess(true);
     } catch (err: any) {
       showSwal('error', err?.response?.data?.msg || 'Failed to swipe card');
+    } finally {
+      setLoadingAccess(false);
     }
   };
 
@@ -584,16 +592,16 @@ const OperatorView = () => {
       const payload: any = {
         card_number: newCardData.card_number,
         description:
-          'Give card number ' + newCardData.card_number + ' from ' + registerSiteOperator.id,
+          'Give card number ' + newCardData.card_number + ' from ' + registerSiteOperator,
         // swap_card_from_card: oldCardData.card_number,
-        // swap_card_from_site_id: registerSiteOperator.user_id,
+        swap_card_from_site_id: registerSiteOperator,
         swap_type: isSwap ? 'CardAccess' : 'Other',
         is_swapcard: isSwap,
       };
 
       if (isSwap) {
         payload.swap_card_from_card = oldCardData.card_number;
-        payload.swap_card_from_site_id = registerSiteOperator.user_id;
+        payload.swap_card_from_site_id = registerSiteOperator;
       }
 
       console.log('SWAP PAYLOAD', payload);
@@ -616,10 +624,10 @@ const OperatorView = () => {
   const [selectedPurpose, setSelectedPurpose] = useState<any>(null);
 
   const handleOpenSwipeDialog = () => {
-    const hasSwappedBefore = visitorCards.some((c) => c.swap_at);
+    const hasSwappedBefore = visitorCards.some((c) => c.is_swapcard === true);
 
     if (hasSwappedBefore) {
-      setOpenRegisteredSiteDialog(true);
+      setOpenSwipeDialog(true);
     } else {
       setOpenSwipeDialog(true);
     }
@@ -641,55 +649,6 @@ const OperatorView = () => {
 
   const [dialogContainer, setDialogContainer] = useState<HTMLElement | null>(null);
   const [hidePageContainer, setHidePageContainer] = useState(false);
-
-  // useEffect(() => {
-  //   // Pastikan socket hanya dibuat sekali
-  //   const socket = new WebSocket('ws://localhost:16574/ws');
-
-  //   socket.onopen = () => {
-  //     console.log(' WebSocket connected');
-  //   };
-
-  //   socket.onerror = (err) => {
-  //     console.error(' WebSocket error:', err);
-  //   };
-
-  //   socket.onmessage = (event) => {
-  //     try {
-  //       // Parse JSON
-  //       const msg = JSON.parse(event.data);
-  //       console.log(' Console client:', msg);
-
-  //       // Cek tipe data dari server
-  //       if (msg?.type === 'serial' && msg?.message) {
-  //         const value = msg.message.toString().trim();
-  //         console.log(' QR Value from socket:', value);
-
-  //         //  Update ke state qrValue
-  //         setQrValue(value);
-  //         setLoadingAccess(true);
-  //         //  Panggil handler QR langsung
-  //         handleSubmitQRCode(value);
-
-  //         //  Langsung buka detail QR dialog
-  //         // setOpenDetailQRCode(true);
-  //       }
-  //     } catch (err) {
-  //       console.error(' Failed to parse WebSocket message:', event.data, err);
-  //     } finally {
-  //       setTimeout(() => setLoadingAccess(false), 600);
-  //     }
-  //   };
-
-  //   socket.onclose = () => {
-  //     console.warn('🔌 WebSocket disconnected');
-  //   };
-
-  //   // cleanup saat komponen unmount
-  //   return () => {
-  //     socket.close();
-  //   };
-  // }, [token]);
 
   useEffect(() => {
     const handleBrowserFullscreen = () => {
@@ -803,7 +762,6 @@ const OperatorView = () => {
     }
   }, [containerRef]);
 
-
   const [sites, setSites] = useState<any[]>([]);
   const [employee, setEmployee] = useState<any[]>([]);
 
@@ -812,14 +770,18 @@ const OperatorView = () => {
 
     const fetchData = async () => {
       try {
-        const [siteRes, employeeRes] = await Promise.all([
-          getAllSite(token),
-          getVisitorEmployee(token),
+        const [siteRes, employeeRes, allVisitorEmployee] = await Promise.all([
+          // getAllSite(token),
+          // getVisitorEmployee(token),
+          getInvitationSite(token),
+          getInvitationVisitorHost(token),
+          // getVisitorEmployee(token),
+          getInvitationVisitorEmployee(token),
         ]);
 
         setSites(siteRes?.collection ?? []);
         setEmployee(employeeRes?.collection ?? []);
-        setAllVisitorEmployee(employeeRes?.collection ?? []);
+        setAllVisitorEmployee(allVisitorEmployee?.collection ?? []);
       } catch (err) {
         console.error(err);
       }
@@ -853,14 +815,15 @@ const OperatorView = () => {
       visitor_status: string;
       block_by: string;
       is_block: boolean;
+      nda: string;
     }[]
   >([]);
 
-  const [resetStep, setResetStep] = useState(0);
   const uploadFileToCDN = async (file: File | Blob): Promise<string | null> => {
     const formData = new FormData();
 
     const filename = file instanceof File && file.name ? file.name : 'selfie.png';
+    console.log('filename', filename);
     formData.append('file_name', filename);
     formData.append('file', file, filename);
     formData.append('path', 'visitor');
@@ -926,11 +889,6 @@ const OperatorView = () => {
     } catch {}
     setActionButton(null);
     setTorchOn(false);
-    setFacingMode('environment');
-    setQrMode('manual');
-    setHasDecoded(false);
-
-    setQrValue('');
     setOpenDialogIndex(null);
   };
 
@@ -943,9 +901,33 @@ const OperatorView = () => {
     resetSelections();
   };
 
+  // const handleChooseCard = async () => {
+  //   if (!invitationCode.length) {
+  //     setSnackbarMsg('No visitor data found. Please scan QR first.');
+  //     setSnackbarType('info');
+  //     setSnackbarOpen(true);
+  //     return;
+  //   }
+
+  //   try {
+  //     setLoadingAccess(true);
+  //     setSelectedCards([]);
+  //     const visitor = relatedVisitors.find(
+  //       (v) => v.id?.toLowerCase() === invitationId?.toLowerCase(),
+  //     );
+
+  //     setVisitorCards(visitor?.card ?? []);
+  //     setOpenChooseCardDialog(true);
+  //   } catch (error) {
+  //     showSwal('error', 'Failed to choose card');
+  //   } finally {
+  //     setTimeout(() => setLoadingAccess(false), 200);
+  //   }
+  // };
+
   const handleChooseCard = async () => {
-    if (!invitationCode.length) {
-      setSnackbarMsg('No visitor data found. Please scan QR first.');
+    if (!selectedVisitors.length) {
+      setSnackbarMsg('Please select a visitor first.');
       setSnackbarType('info');
       setSnackbarOpen(true);
       return;
@@ -954,8 +936,9 @@ const OperatorView = () => {
     try {
       setLoadingAccess(true);
       setSelectedCards([]);
+
       const visitor = relatedVisitors.find(
-        (v) => v.id?.toLowerCase() === invitationId?.toLowerCase(),
+        (v) => v.id?.toLowerCase() === selectedVisitors[0]?.toLowerCase(),
       );
 
       setVisitorCards(visitor?.card ?? []);
@@ -1010,11 +993,6 @@ const OperatorView = () => {
     }
   }, [openSwipeDialogNoInvitation]);
 
-  // const availableCards = useMemo(
-  //   () => visitorCards.filter((c) => !c.current_used && c.card_type !== 'Barcode'),
-  //   [visitorCards],
-  // );
-
   const findCard = (cardNumber: string) =>
     availableCards.find((c) => String(c.card_number).trim() === String(cardNumber).trim());
 
@@ -1041,9 +1019,7 @@ const OperatorView = () => {
       }
 
       if (prev.length >= maxCards) {
-        setSnackbarMsg(`You can only select up to ${maxCards} cards.`);
-        setSnackbarType('info');
-        setSnackbarOpen(true);
+        toast(`You can only select up to ${maxCards} cards.`, 'info');
         return prev;
       }
 
@@ -1112,20 +1088,20 @@ const OperatorView = () => {
     setOpenDialogIndex(1);
   };
 
-  const handleActionBlacklist = async (action: 'Blacklist') => {
-    setCurrentActionBlacklist(action);
+  const handleActionBlacklist = async () => {
+    const id = selectedVisitorId ?? invitationCode?.[0]?.visitor_id;
 
-    if (invitationCode.length > 0 || relatedVisitors.length > 0) {
-      setSelectedVisitors([selectedVisitorId ?? invitationCode?.[0]?.id]);
-      await handleBlacklistStatus(action);
-      setCurrentAction(null);
+    if (!id) {
+      toast('Please select visitor first.', 'warning');
+      setOpenDialogIndex(1);
       return;
     }
-    setOpenDialogIndex(1);
+
+    await handleBlacklistStatus(id);
   };
 
   const [invitationId, setInvitationId] = useState<string | null>(null);
-
+  // const [activeVisitor, setActiveVisitor] = useState<any | null>(null);
   const handleSubmitQRCode = async (value: string) => {
     try {
       const res = await getInvitationCode(token as string, value);
@@ -1146,7 +1122,20 @@ const OperatorView = () => {
       setSelectedVisitorNumber(data[0]?.visitor_number ?? null);
       setScannedVisitorNumber(data[0]?.visitor_number ?? null);
 
+      setSelectedVisitors([]);
+
       await fetchRelatedVisitorsByInvitationId(invitationId);
+
+      const freshVisitors = await getInvitationOperatorRelated(invitationId, token as string);
+      // console.log('freshVisitors', freshVisitors);
+      const scannedNumber = data[0]?.visitor_number;
+
+      const matchedIds = freshVisitors.collection
+        ?.filter((v: any) => v.visitor_number === scannedNumber)
+        .map((v: any) => v.id?.toLowerCase())
+        .filter(Boolean);
+
+      setSelectedVisitors(matchedIds ?? []);
 
       setInvitationCode((prev) =>
         prev.map((inv) => {
@@ -1158,42 +1147,43 @@ const OperatorView = () => {
         }),
       );
 
-      const accessList = Array.isArray(invitation.access) ? invitation.access : [invitation.access];
-      // console.log('accessList', accessList);
+      // const accessList = Array.isArray(invitation.access) ? invitation.access : [invitation.access];
+      // // console.log('accessList', accessList);
 
-      const filteredAccess = accessList.filter((a: any) =>
-        permissionAccess.some((p: any) => p.access_control_id === a.access_control_id),
-      );
-      // console.log('filteredAccess', filteredAccess);
+      // const filteredAccess = accessList.filter((a: any) =>
+      //   permissionAccess.some((p: any) => p.access_control_id === a.access_control_id),
+      // );
+      // // console.log('filteredAccess', filteredAccess);
 
-      const mergedAccess = filteredAccess.map((a: any) => {
-        const perm = permissionAccess.find((p: any) => p.access_control_id === a.access_control_id);
-        return {
-          // ...a,
-          id: a.id,
-          name: a.access_control_name ?? '-',
-          access_control_id: a.access_control_id,
-          early_access: a.early_access,
-          visitor_give_access: a.visitor_give_access,
-          can_grant: perm?.can_grant ?? false,
-          can_revoke: perm?.can_revoke ?? false,
-          can_block: perm?.can_block ?? false,
-          disabled: !perm,
-        };
-      });
+      // const mergedAccess = filteredAccess.map((a: any) => {
+      //   const perm = permissionAccess.find((p: any) => p.access_control_id === a.access_control_id);
+      //   return {
+      //     // ...a,
+      //     id: a.id,
+      //     name: a.access_control_name ?? '-',
+      //     access_control_id: a.access_control_id,
+      //     early_access: a.early_access,
+      //     visitor_give_access: a.visitor_give_access,
+      //     can_grant: perm?.can_grant ?? false,
+      //     can_revoke: perm?.can_revoke ?? false,
+      //     can_block: perm?.can_block ?? false,
+      //     disabled: !perm,
+      //   };
+      // });
       // console.log('mergedAccess', mergedAccess);
 
-      // setAccessData([...mergedAccess]);
-      setAccessData(mergedAccess);
-      if (invitation?.id) {
-        setSelectedVisitors((prev) => {
-          if (!prev.includes(invitation.id)) {
-            const updated = [...prev, invitation.id];
-            return updated;
-          }
-          return prev;
-        });
-      }
+      // // setAccessData([...mergedAccess]);
+      // setAccessData(mergedAccess);
+
+      const resAccess = await getInvitationAccessControl(token as string);
+      const rowsAccess = resAccess.collection.map((item: any) => ({
+        id: item.Id,
+        name: item.Name ?? '-',
+        description: item.Description ?? '-',
+      }));
+      // console.log('resAccess', resAccess);
+      // setAccessData(resAccess.collection ?? []);
+      setAccessData(rowsAccess ?? []);
 
       if (currentAction) {
         setSelectedVisitors([invitationId]);
@@ -1261,7 +1251,7 @@ const OperatorView = () => {
       visitor_period_end: v.visitor_period_end ?? '-',
       agenda: v.agenda ?? '-',
       is_driving: v.is_driving ?? '-',
-      organization: v.visitor?.organization ?? '-',
+      organization: v.visitor_organization_name ?? '-',
       extend_visitor_period: v.extend_visitor_period ?? 0,
       visitor_number: v.visitor_number ?? '-',
       email: v.visitor?.email ?? '-',
@@ -1314,11 +1304,6 @@ const OperatorView = () => {
 
     setAllAccessData(allAccess);
     // setAccessData(allAccess);
-
-    if (relatedData.length > 0 && selectedVisitors.length === 0) {
-      const firstVisitorId = relatedData[0].id?.toLowerCase();
-      setSelectedVisitors([firstVisitorId]);
-    }
   };
 
   const formatDateTime = (dateStr?: string, extendMinutes?: number) => {
@@ -1352,6 +1337,10 @@ const OperatorView = () => {
       [v.name].filter(Boolean).some((field) => field.includes(keyword)),
     );
   }, [relatedVisitors, debouncedKeyword]);
+
+  const visitorsForSwipe = useMemo(() => {
+    return relatedVisitors.filter((v) => selectedVisitors.includes(v.id));
+  }, [relatedVisitors, selectedVisitors]);
 
   const [rows, setRows] = useState<Row[]>([]);
 
@@ -1419,7 +1408,6 @@ const OperatorView = () => {
   const cappedCount = Math.min(visibleIds.length, capacity);
   const isChecked = cappedCount > 0 && selectedVisibleCount === cappedCount;
   const isIndeterminate = selectedVisibleCount > 0 && selectedVisibleCount < cappedCount;
-  const hasSwappedBefore = visitorCards.some((c) => c.swap_at !== null);
 
   const handleSelectAll = () => {
     const visible = availableVisibleCards.map((c) => String(c.card_number));
@@ -1438,7 +1426,7 @@ const OperatorView = () => {
 
     if (fullySelected) {
       setSelectedCards((prev) => prev.filter((n) => !visible.includes(n)));
-      toast('Visible cards cleared.', 'info');
+      // toast('Visible cards cleared.', 'info');
     } else {
       const toAdd = visible.slice(0, cappedCount);
       setSelectedCards(toAdd);
@@ -1446,150 +1434,10 @@ const OperatorView = () => {
     }
   };
 
-  // const handleConfirmChooseCards = async () => {
-  //   try {
-  //     if (!selectedCards.length) {
-  //       setSnackbarMsg('Please choose at least one card.');
-  //       setSnackbarType('info');
-  //       setSnackbarOpen(true);
-  //       return;
-  //     }
-
-  //     setLoadingAccess(true);
-
-  //     const alreadyHasCard: string[] = [];
-  //     const successAssigned: string[] = [];
-  //     let response: any = null;
-
-  //     if (selectedVisitors.length > 1) {
-  //       // 🧩 Multiple visitor (batch)
-  //       const dataPayload: {
-  //         card_number: string;
-  //         trx_visitor_id: string;
-  //         description: string;
-  //         is_swapcard: boolean;
-  //         swap_type: string;
-  //       }[] = [];
-  //       const pairCount = Math.min(selectedVisitors.length, selectedCards.length);
-
-  //       for (let i = 0; i < pairCount; i++) {
-  //         const visitorId = selectedVisitors[i];
-  //         const cardNumber = selectedCards[i];
-  //         const visitor = relatedVisitors.find(
-  //           (v) => v.id?.toLowerCase() === visitorId.toLowerCase(),
-  //         );
-  //         if (!visitor) continue;
-
-  //         dataPayload.push({
-  //           card_number: String(cardNumber),
-  //           trx_visitor_id: visitorId,
-  //           description: 'Give card number' + cardNumber + ' from ' + registerSiteOperator.id,
-  //           is_swapcard: false,
-  //           swap_type: 'Other',
-  //         });
-  //         successAssigned.push(visitor.name || visitorId);
-  //       }
-
-  //       response = await createMultipleGrantAccess(token as string, { data: dataPayload });
-  //     } else {
-  //       const visitorId = invitationCode[0]?.id;
-
-  //       if (!visitorId) {
-  //         setSnackbarMsg('No visitor found to assign card.');
-  //         setSnackbarType('info');
-  //         setSnackbarOpen(true);
-  //         setLoadingAccess(false);
-  //         return;
-  //       }
-
-  //       const visitor = relatedVisitors.find(
-  //         (v) => v.id?.toLowerCase() === visitorId.toLowerCase(),
-  //       );
-
-  //       if (!visitor) {
-  //         setSnackbarMsg('Visitor not found.');
-  //         setSnackbarType('error');
-  //         setSnackbarOpen(true);
-  //         setLoadingAccess(false);
-  //         return;
-  //       }
-
-  //       for (const cardNumber of selectedCards) {
-  //         const payload = {
-  //           card_number: String(cardNumber),
-  //           trx_visitor_id: visitorId,
-  //           description: 'Give number card ' + cardNumber + 'from' + registerSiteOperator,
-  //           swap_type: 'Other',
-  //           is_swapcard: false,
-  //         };
-
-  //         response = await createGrandAccessOperator(token as string, payload);
-  //         console.log('response:', JSON.stringify(payload, null, 2));
-  //       }
-
-  //       successAssigned.push(visitor.name || visitorId);
-  //     }
-
-  //     // 🔁 Refresh visitors setelah semua selesai
-  //     const invitationId = invitationCode?.[0]?.id;
-  //     if (invitationId) {
-  //       await fetchRelatedVisitorsByInvitationId(invitationId);
-  //     }
-
-  //     await fetchAvailableCards();
-
-  //     // if (response?.collection && response.collection.length > 0) {
-  //     //   const messages = response.collection.map((item: any) => item.message).join(', ');
-  //     //   // setSnackbarMsg(`⚠️ ${messages}`);
-  //     //   // setSnackbarType('error');
-  //     //   showSwal('error', `${messages}`);
-  //     //   // setSnackbarOpen(true);
-  //     //   setLoadingAccess(false);
-  //     //   return;
-  //     // }
-
-  //     // give card number
-  //     showSwal('success', `Successfully assigned card(s): ${selectedCards.join(', ')}`);
-
-  //     setInvitationCode((prev) => {
-  //       if (!prev || prev.length === 0) return prev;
-
-  //       return prev.map((inv) =>
-  //         selectedVisitors.some((vId) => vId.toLowerCase() === inv.id?.toLowerCase())
-  //           ? {
-  //               ...inv,
-  //               card: [
-  //                 {
-  //                   ...(inv.card?.[0] || {}),
-  //                   card_number: selectedCards[0],
-  //                 },
-  //               ],
-  //             }
-  //           : inv,
-  //       );
-  //     });
-
-  //     handleCloseChooseCard();
-  //   } catch (err: any) {
-  //     console.error('Assign card error:', err);
-
-  //     const backendMsg = err?.response?.data?.msg;
-
-  //     if (backendMsg) {
-  //       showSwal('error', backendMsg);
-  //       return;
-  //     }
-
-  //     showSwal('error', 'Failed to assign card(s).');
-  //   } finally {
-  //     setTimeout(() => setLoadingAccess(false), 600);
-  //   }
-  // };
-
   const pairVisitorsWithCards = (visitorIds: string[], cards: (string | number)[]) => {
     return visitorIds.map((visitorId, idx) => ({
       visitorId,
-      cardNumber: cards[idx] ?? cards[0],
+      cardNumber: cards[idx],
     }));
   };
 
@@ -1606,6 +1454,34 @@ const OperatorView = () => {
 
       const visitorIds =
         selectedVisitors.length > 0 ? selectedVisitors : [invitationCode?.[0]?.id].filter(Boolean);
+
+      const visitor = relatedVisitors.find(
+        (v) => v.id?.toLowerCase() === visitorIds[0]?.toLowerCase(),
+      );
+
+      // const currentUsed = visitor?.card?.find((c: any) => c.current_used === true);
+      const currentUsed = (visitor?.card as any[])?.find((c) => c.current_used === true);
+
+      if (currentUsed) {
+        const pairs = pairVisitorsWithCards(visitorIds, selectedCards);
+
+        const payloads = pairs.map(({ visitorId, cardNumber }) => ({
+          card_number: String(cardNumber),
+          trx_visitor_id: visitorId,
+          description: `Give card number ${cardNumber} from ${registerSiteOperator}`,
+          swap_card_from_card: currentUsed?.card_number ?? null,
+          swap_card_from_card_id: currentUsed?.id ?? null,
+          swap_card_from_site_id: registerSiteOperator,
+          is_swapcard: false,
+          swap_type: 'Other',
+        }));
+        console.log('payloads', payloads);
+
+        setSwipePayload(payloads);
+        setCurrentAccessVisitor(visitor);
+        setOpenSwipeAccess(true);
+        return;
+      }
 
       if (!visitorIds.length) {
         showSwal('info', 'No visitor found to assign card.');
@@ -1624,7 +1500,10 @@ const OperatorView = () => {
           return {
             card_number: String(cardNumber),
             trx_visitor_id: visitorId,
-            description: `Give card number ${cardNumber} from ${registerSiteOperator.id}`,
+            description: `Give card number ${cardNumber} from ${registerSiteOperator}`,
+            swap_card_from_card: currentUsed?.card_number ?? null,
+            swap_card_from_card_id: currentUsed?.id ?? null,
+            swap_card_from_site_id: registerSiteOperator,
             is_swapcard: false,
             swap_type: 'Other',
             visitorName: visitor.name || visitorId,
@@ -1642,6 +1521,7 @@ const OperatorView = () => {
         });
       } else {
         const { visitorName, ...payload } = payloads[0];
+        console.log('payload', payload);
         await createGrandAccessOperator(token as string, payload);
       }
 
@@ -1651,6 +1531,22 @@ const OperatorView = () => {
       }
 
       await fetchAvailableCards();
+
+      setVisitorCards((prev) =>
+        prev.map((card) => {
+          if (selectedCards.includes(card.card_number)) {
+            return {
+              ...card,
+              current_used: true,
+            };
+          }
+
+          return {
+            ...card,
+            current_used: false,
+          };
+        }),
+      );
 
       const message = payloads.map((p) => `• ${p.visitorName} (Card: ${p.card_number})`).join('\n');
 
@@ -1680,54 +1576,54 @@ const OperatorView = () => {
   };
 
   const handleClearAll = () => {
-    setQrValue('');
     setSearch('');
-    setQrMode('manual');
-    setHasDecoded(false);
     setInvitationCode([]);
     setRelatedVisitors([]);
     setOpen(false);
     setOpenDialogIndex(null);
-    setOpenDetailSearching(false);
-    setTabValue(0);
-    setFacingMode('environment');
     setTorchOn(false);
+    setActionButton('');
   };
 
-  const handleBlacklistStatus = async (action: 'Blacklist') => {
-    const id = selectedVisitorId ?? invitationCode?.[0]?.id;
-
-    if (!id) {
-      showSwal('error', 'Visitor ID not found.');
-      return;
-    }
-
+  const handleBlacklistStatus = async (id: string) => {
     try {
       const res = await Swal.fire({
-        // imageUrl: '/assets/images/BI_Logo.png',
         icon: 'warning',
-        imageWidth: 80,
-        imageHeight: 80,
-        imageAlt: 'Logo',
         target: containerRef.current,
         title: 'Blacklist Visitor',
-        text: 'Are you sure you want to blacklist this visitor?',
+        text: 'Please provide a reason for blacklist this visitor',
+        input: 'text',
+        inputPlaceholder: 'Enter reason...',
         showCloseButton: true,
         showCancelButton: true,
         confirmButtonText: 'Yes',
         reverseButtons: true,
         cancelButtonText: 'No',
         confirmButtonColor: '#16a34a',
-        customClass: {
-          title: 'swal2-title-custom',
-          popup: 'swal-popup-custom',
-          closeButton: 'swal-close-red',
+        preConfirm: (value) => {
+          if (!value) {
+            toast('Please provide a reason for blacklist this visitor.', 'info');
+            return false;
+          }
+          return value;
         },
       });
 
       if (!res.isConfirmed) return;
 
-      // await blacklistVisitor(token as string, id, action);
+      // if (!res.value) {
+      //   toast('Please provide a reason for blacklist this visitor.', 'info');
+      //   return;
+      // }
+
+      const payload = {
+        visitor_id: id,
+        action: 'blacklist',
+        reason: res.value,
+      };
+
+      await createOperatorBlacklist(token as string, payload);
+
       showSwal('success', 'Visitor has been successfully blacklisted.');
     } catch (err) {
       showSwal('error', 'Failed to blacklist visitor.');
@@ -1809,12 +1705,22 @@ const OperatorView = () => {
       }
 
       setLoadingAccess(true);
-      const res = await createInvitationActionOperator(token as string, id!, {
-        action,
-        reason,
-      });
+      // const res = await createInvitationActionOperator(token as string, id!, {
+      //   action,
+      //   reason,
+      // });
 
-      // console.log('✅ Action Response:', res);
+      const payload: any = { action };
+
+      console.log('payload', payload);
+
+      if (reason) {
+        payload.reason = reason;
+      }
+
+      const res = await createInvitationActionOperator(token as string, id!, payload);
+
+      console.log('✅ Action Response:', res);
 
       setRelatedVisitors((prev) =>
         prev.map((v) =>
@@ -1919,10 +1825,6 @@ const OperatorView = () => {
     setTimeout(() => setSnackbar({ open: true, message, severity }), 0);
   };
 
-  const [selectedVisitorId, setSelectedVisitorId] = useState<string | null>(null);
-
-  // Function Related Visitors
-
   const handleSelectRelatedVisitor = (visitor: any) => {
     if (selectMultiple) {
       setSelectedVisitors((prev) =>
@@ -1930,7 +1832,7 @@ const OperatorView = () => {
       );
       return;
     }
-    setSelectedVisitors([visitor.id]); // penting: replace
+    setSelectedVisitors([visitor.id]);
     setSelectedVisitorNumber(visitor.visitor_number);
     setSelectedVisitorId(visitor.id);
 
@@ -2074,14 +1976,16 @@ const OperatorView = () => {
         if (!prev.length) return prev;
 
         const currentVisitorId = prev[0]?.visitor?.id || prev[0]?.id;
-        const updated = validForApi.find((v) => v.id === currentVisitorId);
-        if (!updated) return prev;
 
-        let newStatus = updated.visitor_status;
+        const isAffected = validForApi.some((v) => v.id === currentVisitorId);
+        if (!isAffected) return prev;
+
+        let newStatus = prev[0].visitor_status;
+
         if (bulkAction === 'checkin') newStatus = 'Checkin';
         else if (bulkAction === 'checkout') newStatus = 'Checkout';
         else if (bulkAction === 'block') newStatus = 'Block';
-        else if (bulkAction === 'unblock') newStatus = 'Unblock';
+        else if (bulkAction === 'unblock') newStatus = 'Preregis';
 
         let newIsBlock = prev[0]?.is_block ?? null;
         if (bulkAction === 'block') newIsBlock = 1;
@@ -2256,9 +2160,7 @@ const OperatorView = () => {
       const visitorInfoSrc = nonDocSections.find((s) =>
         s.name.toLowerCase().includes('visitor information'),
       );
-      const parkingSrc = nonDocSections.find((s) =>
-        s.name.toLowerCase().includes('parking/vehicle'),
-      );
+      const parkingSrc = nonDocSections.find((s) => s.name.toLowerCase().includes('vehicle'));
       const purposeVisitSrc = nonDocSections.find((s) =>
         s.name.toLowerCase().includes('purpose visit'),
       );
@@ -2432,7 +2334,9 @@ const OperatorView = () => {
       );
 
       const firstResult = results[0];
+      console.log('firstResult', firstResult);
       const questionPagesTemplate = firstResult?.collection?.question_page ?? [];
+      console.log('questionPagesTemplate', questionPagesTemplate);
 
       setInvitationDetail(firstResult);
       setQuestionPageTemplate(questionPagesTemplate);
@@ -2524,28 +2428,28 @@ const OperatorView = () => {
   ) => {
     const showLabel = opts?.showLabel ?? true;
 
-    const isDrivingField = fillFormDataVisitor
-      ?.flatMap((v) => v.question_page)
-      ?.flatMap((q) => q.form || [])
-      ?.find((f) => f.remarks === 'is_driving');
+    // const isDrivingField = fillFormDataVisitor
+    //   ?.flatMap((v) => v.question_page)
+    //   ?.flatMap((q) => q.form || [])
+    //   ?.find((f) => f.remarks === 'is_driving');
 
-    const isDriving =
-      isDrivingField?.answer_text === 'true' || isDrivingField?.answer_text === true;
+    // const isDriving =
+    //   isDrivingField?.answer_text === 'true' || isDrivingField?.answer_text === true;
 
-    // 🔥 Hide field kendaraan jika belum pilih "Yes"
-    if (!isDriving && ['vehicle_type', 'vehicle_plate'].includes(field.remarks)) {
-      return null;
-    }
-    const isVehicleField = ['vehicle_type', 'vehicle_plate'].includes(field.remarks);
-    if (!isDriving && isVehicleField) {
-      return null;
-    }
+    // // 🔥 Hide field kendaraan jika belum pilih "Yes"
+    // if (!isDriving && ['vehicle_type', 'vehicle_plate'].includes(field.remarks)) {
+    //   return null;
+    // }
+    // const isVehicleField = ['vehicle_type', 'vehicle_plate'].includes(field.remarks);
+    // if (!isDriving && isVehicleField) {
+    //   return null;
+    // }
 
     const renderInput = () => {
       switch (field.field_type) {
         case 0: // Text
           return (
-            <TextField
+            <CustomTextField
               size="small"
               value={field.answer_text}
               onChange={(e) => onChange(index, 'answer_text', e.target.value)}
@@ -2557,7 +2461,7 @@ const OperatorView = () => {
 
         case 1: // Number
           return (
-            <TextField
+            <CustomTextField
               type="number"
               size="small"
               value={field.answer_text}
@@ -2569,7 +2473,7 @@ const OperatorView = () => {
 
         case 2: // Email
           return (
-            <TextField
+            <CustomTextField
               type="email"
               size="small"
               value={field.answer_text}
@@ -2600,8 +2504,19 @@ const OperatorView = () => {
               }));
               break;
 
+            // case 'site_place':
+            //   options = [{ value: sitePlaceId, name: sitePlaceName }];
+            //   break;
+
             case 'site_place':
-              options = [{ value: sitePlaceId, name: sitePlaceName }];
+              options = sitePlaceName
+                ? [
+                    {
+                      value: field.answer_text || sitePlaceId,
+                      name: sitePlaceName,
+                    },
+                  ]
+                : [];
               break;
 
             default:
@@ -2631,10 +2546,15 @@ const OperatorView = () => {
               noOptionsText={
                 inputVal.length < 3 ? 'Enter at least 3 characters to search.' : 'Not found'
               }
+              // value={
+              //   options.find(
+              //     (opt: { value: string; name: string }) =>
+              //       opt.value?.toLowerCase?.() === field.answer_text?.toLowerCase?.(),
+              //   ) || null
+              // }
               value={
                 options.find(
-                  (opt: { value: string; name: string }) =>
-                    opt.value?.toLowerCase?.() === field.answer_text?.toLowerCase?.(),
+                  (opt: { value: string; name: string }) => opt.value === field.answer_text,
                 ) || null
               }
               onChange={(_, newValue) =>
@@ -2654,7 +2574,7 @@ const OperatorView = () => {
 
         case 4: // Date
           return (
-            <TextField
+            <CustomTextField
               type="date"
               size="small"
               value={field.answer_datetime}
@@ -2769,7 +2689,7 @@ const OperatorView = () => {
           }
 
           return (
-            <TextField
+            <CustomTextField
               select
               size="small"
               value={field.answer_text || ''}
@@ -2781,7 +2701,7 @@ const OperatorView = () => {
                   {opt.name}
                 </MenuItem>
               ))}
-            </TextField>
+            </CustomTextField>
           );
 
         case 6:
@@ -3018,7 +2938,7 @@ const OperatorView = () => {
         }
         default:
           return (
-            <TextField
+            <CustomTextField
               size="small"
               value={field.long_display_text}
               onChange={(e) => onChange(index, 'long_display_text', e.target.value)}
@@ -3036,11 +2956,11 @@ const OperatorView = () => {
           width: '100%',
         }}
       >
-        {showLabel && (!isVehicleField || isDriving) && (
-          <CustomFormLabel sx={{ mb: 1 }} required={field.mandatory}>
+        {/* {showLabel && (!isVehicleField || isDriving) && ( */}
+        {/* <CustomFormLabel sx={{ mb: 1 }} required={field.mandatory}>
             {field.long_display_text}
-          </CustomFormLabel>
-        )}
+          </CustomFormLabel> */}
+        {/* )} */}
         {renderInput()}
       </Box>
     );
@@ -3248,7 +3168,7 @@ const OperatorView = () => {
                     }
                   }
 
-                  return {
+                  const fieldPayload: any = {
                     sort: templateField.sort ?? fIdx,
                     short_name: templateField.short_name,
                     long_display_text: templateField.long_display_text,
@@ -3258,10 +3178,21 @@ const OperatorView = () => {
                     mandatory: !!templateField.mandatory,
                     remarks: templateField.remarks,
                     visitor_form_type: 1,
-                    answer_text,
-                    answer_datetime,
-                    answer_file,
                   };
+
+                  if (answer_text !== null && answer_text !== '') {
+                    fieldPayload.answer_text = answer_text;
+                  }
+
+                  if (answer_datetime) {
+                    fieldPayload.answer_datetime = answer_datetime;
+                  }
+
+                  if (answer_file) {
+                    fieldPayload.answer_file = answer_file;
+                  }
+
+                  return fieldPayload;
                 }),
               })),
             },
@@ -3312,40 +3243,41 @@ const OperatorView = () => {
     setOpenDialogInvitation(true);
   };
 
-  useEffect(() => {
-    if (!selectedVisitors.length) {
-      setAccessData([]);
-      return;
-    }
+  // cmd
+  // useEffect(() => {
+  //   if (!selectedVisitors.length) {
+  //     setAccessData([]);
+  //     return;
+  //   }
 
-    const filtered = allAccessData.filter((a) =>
-      selectedVisitors.some((id) => id.toLowerCase() === a.trx_visitor_id?.toLowerCase()),
-    );
+  //   const filtered = allAccessData.filter((a) =>
+  //     selectedVisitors.some((id) => id.toLowerCase() === a.trx_visitor_id?.toLowerCase()),
+  //   );
 
-    const mergedAccess = Object.values(
-      filtered.reduce((acc: any, curr: any) => {
-        const key = curr.access_control_id;
-        if (!acc[key]) {
-          acc[key] = {
-            ...curr,
-            visitors: [curr.trx_visitor_id],
-          };
-        } else {
-          acc[key].visitors.push(curr.trx_visitor_id);
+  //   const mergedAccess = Object.values(
+  //     filtered.reduce((acc: any, curr: any) => {
+  //       const key = curr.access_control_id;
+  //       if (!acc[key]) {
+  //         acc[key] = {
+  //           ...curr,
+  //           visitors: [curr.trx_visitor_id],
+  //         };
+  //       } else {
+  //         acc[key].visitors.push(curr.trx_visitor_id);
 
-          acc[key].visitor_give_access = Math.max(
-            acc[key].visitor_give_access ?? 0,
-            curr.visitor_give_access ?? 0,
-          );
+  //         acc[key].visitor_give_access = Math.max(
+  //           acc[key].visitor_give_access ?? 0,
+  //           curr.visitor_give_access ?? 0,
+  //         );
 
-          acc[key].early_access = acc[key].early_access || curr.early_access;
-        }
-        return acc;
-      }, {}),
-    );
+  //         acc[key].early_access = acc[key].early_access || curr.early_access;
+  //       }
+  //       return acc;
+  //     }, {}),
+  //   );
 
-    setAccessData(mergedAccess);
-  }, [selectedVisitors]);
+  //   setAccessData(mergedAccess);
+  // }, [selectedVisitors]);
 
   const validateMultiVisitorAccess = (
     accessId: string,
@@ -3498,7 +3430,7 @@ const OperatorView = () => {
 
         if (invalidVisitors.length) {
           setSnackbarMsg(
-            '⚠️ Some visitors cannot perform this action:\n' + invalidVisitors.join('\n'),
+            'Some visitors cannot perform this action:\n' + invalidVisitors.join('\n'),
           );
           setSnackbarType('info');
           setSnackbarOpen(true);
@@ -3557,27 +3489,27 @@ const OperatorView = () => {
     });
   };
 
+  const activeVisitor = useMemo(() => {
+    if (selectedVisitorId) {
+      const visitor = relatedVisitors.find((v) => v.id === selectedVisitorId);
+      if (visitor) return visitor;
+    }
+
+    return relatedVisitors?.[0] ?? invitationCode?.[0] ?? null;
+  }, [selectedVisitorId, relatedVisitors, invitationCode]);
+
   // Faceimage && Upload Identity
-  const activeVisitor =
-    relatedVisitors.find((v) => v.id === selectedVisitorId) || invitationCode[0];
+  const getCdnUrl = (path?: string) => {
+    if (!path || path === '-' || path.trim() === '') return null;
 
-  const activeSelfie =
-    activeVisitor?.selfie_image &&
-    activeVisitor?.selfie_image !== '-' &&
-    activeVisitor?.selfie_image !== ''
-      ? `${axiosInstance2.defaults.baseURL}/cdn${activeVisitor.selfie_image}`
-      : null;
+    const cleanPath = path.startsWith('/') ? path : `/${path}`;
 
-  const activeKTP =
-    activeVisitor?.identity_image &&
-    activeVisitor?.identity_image !== '-' &&
-    activeVisitor?.identity_image !== ''
-      ? `${axiosInstance2.defaults.baseURL}/cdn${activeVisitor.identity_image}`
-      : null;
+    return `${axiosInstance2.defaults.baseURL}/cdn${cleanPath}`;
+  };
 
-  const activeBarcode = activeVisitor?.nda
-    ? `${axiosInstance2.defaults.baseURL}/cdn${activeVisitor.nda}`
-    : null;
+  const activeSelfie = getCdnUrl(activeVisitor?.selfie_image);
+  const activeKTP = getCdnUrl(activeVisitor?.identity_image);
+  const activeBarcode = getCdnUrl(activeVisitor?.nda);
 
   const [todayVisitingPurpose, setTodayVisitingPurpose] = useState<any[]>([]);
   const [visitorType, setVisitorType] = useState<any[]>([]);
@@ -3610,11 +3542,6 @@ const OperatorView = () => {
   useEffect(() => {
     if (token) {
       fetchVisitorType();
-    }
-  }, [token]);
-
-  useEffect(() => {
-    if (token) {
       fetchTodayVisitingPurpose();
     }
   }, [token]);
@@ -3683,57 +3610,21 @@ const OperatorView = () => {
 
   const handleCloseSwipeAccess = () => {
     setOpenSwipeAccess(false);
-
-    if (currentVisitorIndex < filteredVisitors.length - 1) {
-      setCurrentVisitorIndex((prev) => prev + 1);
-      setOpenSwipeDialog(true);
-    } else {
-      showSwal('success', 'All visitors processed');
-      setCurrentVisitorIndex(0);
-    }
+    setOpenChooseCardDialog(false);
+    setSearchTerm('');
+    // if (currentVisitorIndex < filteredVisitors.length - 1) {
+    //   setCurrentVisitorIndex((prev) => prev + 1);
+    //   setOpenSwipeDialog(true);
+    // } else {
+    //   // showSwal('success', 'All visitors processed');
+    //   setCurrentVisitorIndex(0);
+    // }
   };
-
-  // const {
-  //   data: visitorType = [],
-  //   isLoading: vtLoading,
-  //   isError: vtError,
-  // } = useQuery({
-  //   queryKey: ['visitorType', token],
-  //   queryFn: async () => {
-  //     if (!token) return [];
-  //     const res = await getAllVisitorType(token);
-  //     return res?.collection ?? [];
-  //   },
-  //   staleTime: 5 * 60 * 1000,
-  //   gcTime: 30 * 60 * 1000,
-  //   refetchOnWindowFocus: false,
-  //   enabled: !!token,
-  // });
 
   const parkingData = [
     { id: 1, vehicle_type: 'Car', vehicle_plate_number: 'BG 817 AS' },
     { id: 2, vehicle_type: 'Motorcycle', vehicle_plate_number: 'B 1512 AA' },
   ];
-
-  const vehicleData = [
-    { id: 1, visitor_type: 'Visitor', vehicle_type: 'Car', vehicle_plate_number: 'BG 817 AS' },
-    { id: 2, visitor_type: 'Visitor', vehicle_type: 'Car', vehicle_plate_number: 'AA 817 AS' },
-    { id: 3, visitor_type: 'Visitor', vehicle_type: 'Car', vehicle_plate_number: 'B 817 AS' },
-  ];
-
-  // const [openWhiteList, setOpenWhiteList] = useState(false);
-
-  // const whiteListData = [
-  //   {
-  //     id: 1,
-  //     name: 'John Doe',
-  //     gender: 'Male',
-  //     phone: '0892312312',
-  //     email: 'JohnDoe@gmail.com',
-  //     identity_id: '1234567890',
-  //     organization: 'Oap Corp',
-  //   },
-  // ];
 
   return (
     <PageContainer title={'Operator View'} description={'Operator View'}>
@@ -3801,185 +3692,20 @@ const OperatorView = () => {
                   size={{ xs: 12, lg: 4.5 }}
                   sx={{ border: '1px solid #e0e0e0', borderRadius: '15px' }}
                 >
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      justifyContent: isFullscreen ? 'center' : 'flex-start',
-                      // alignItems: isFullscreen ? 'center' : 'start',
-                      alignItems: 'start',
-                      gap: '5px',
-                      padding: '20px',
-                      flexDirection: { xs: 'column', md: 'row', lg: 'row', xl: 'row' },
-                      // overflow: isFullscreen ? 'auto' : 'hidden',
-                    }}
-                  >
-                    <Card
-                      sx={{
-                        flex: 1,
-                        borderRadius: 2,
-                        display: 'flex',
-                        justifyContent: 'center',
-                        flexDirection: 'column',
-                        height: '100%',
-                        maxHeight: isFullscreen ? '50vh' : { xs: '100%', sm: '100%', xl: '400px' },
-                        // border: '1px solid #e0e0e0',
-                        boxShadow: 'none !important',
-                        backgroundColor: 'none !important',
-                        py: '0 !important',
-                        px: { xs: '0', lg: '10px' },
-                      }}
-                    >
-                      <CardContent
-                        sx={{
-                          // p: 1,
-                          padding: '0 !important',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: 1,
-                          flexDirection: { xs: 'row', md: 'row', lg: 'row', xl: 'row' },
-                          maxHeight: isFullscreen ? '100%' : { xs: '100%', xl: '300px' },
-                          overflow: 'hidden',
-                          boxShadow: 'none !important',
-                          backgroundColor: 'none !important',
-                        }}
-                      >
-                        {/* LPR Image */}
-                        <Box
-                          sx={{
-                            flex: 1,
-                            display: 'flex',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            maxHeight: '100%',
-                            borderRadius: 2,
-                            overflow: 'hidden',
-                          }}
-                        >
-                          {LprImage ? (
-                            <img
-                              src={LprImage}
-                              alt="LPR"
-                              style={{
-                                width: '100%',
-                                // maxWidth: '400px',
-                                height: '100%',
-                                minHeight: '300px',
-                                maxHeight: lgUp ? '400px' : '300px',
-                                objectFit: 'cover',
-                                borderRadius: '15px',
-                              }}
-                            />
-                          ) : (
-                            <Typography color="text.secondary">No LPR image</Typography>
-                          )}
-                        </Box>
-                      </CardContent>
-                    </Card>
-                    {todayVisitingPurpose.length === 0 ? (
-                      <Card
-                        sx={{
-                          flex: 1,
-                          p: 3,
-                          borderRadius: 2,
-                          background: 'linear-gradient(135deg, #ECEFF1 0%, #CFD8DC 100%)',
-                          textAlign: 'center',
-                          maxHeight: isFullscreen ? '100%' : { xs: '100%', xl: '300px' },
-                          height: { xs: '100%', sm: '100%', xl: '290px' },
-                          minHeight: { xs: '100%', sm: '300px', xl: '300px' },
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <CardContent>
-                          <img src={backgroundnodata} alt="No Data" height="100" width="100%" />
-                          <Typography variant="h5" fontWeight={600} color="text.secondary" mt={3}>
-                            {t('no_visit_today')}
-                          </Typography>
-                        </CardContent>
-                      </Card>
-                    ) : (
-                      <Stack spacing={2} sx={{ flex: 1 }}>
-                        {todayVisitingPurpose.slice(0, 5).map((item) => (
-                          <Card
-                            onClick={() => handleOpenDetailVistingPurpose(item)}
-                            key={item.id}
-                            sx={{
-                              flex: 1,
-                              height: 'auto',
-                              minHeight: 0,
-                              p: 0,
-                              borderRadius: 1,
-                              background: getColorByName(item.name),
-                              boxShadow: '0 6px 14px rgba(93, 135, 255, 0.3)',
-                              transition: 'all 0.3s ease',
-                              '&:hover': {
-                                transform: 'translateY(-4px)',
-                                boxShadow: '0 10px 18px rgba(93, 135, 255, 0.45)',
-                              },
-                              cursor: 'pointer',
-                              mb: 0,
-                            }}
-                          >
-                            <CardContent
-                              sx={{
-                                px: 2,
-                                paddingTop: '0 !important',
-                                paddingBottom: '0 !important',
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                height: '50px',
-                              }}
-                            >
-                              <Typography
-                                variant="h5"
-                                fontWeight="bold"
-                                color="white"
-                                sx={{ textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}
-                              >
-                                {item.name}
-                              </Typography>
-                              <Typography variant="h5" fontWeight="bold" color="white">
-                                {item.count}
-                              </Typography>
-                            </CardContent>
-                          </Card>
-                        ))}
-                        {todayVisitingPurpose.length > 5 && (
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            onClick={handleOpenMore}
-                            sx={{ textTransform: 'none', fontWeight: 600 }}
-                          >
-                            Show All
-                          </Button>
-                        )}
-                        <VisitingPurposeDialog
-                          open={openMore}
-                          onClose={() => setOpenMore(false)}
-                          data={todayVisitingPurpose}
-                        />
-                      </Stack>
-                    )}
-                  </Box>
-                  <Box
-                    sx={{
-                      justifyContent: 'center',
-                      borderTop: '1px solid #eee',
-                      py: 1,
-                      mt: 0,
-                      backgroundColor: '#f9f9f9',
-                    }}
-                  >
-                    <Typography variant="subtitle1" fontWeight="bold" textAlign="center">
-                      {invitationCode[0]?.visitor?.name ||
-                        'No visitor data found. Please scan QR first.'}
-                    </Typography>
-                  </Box>
+                  <LprVisitorCard
+                    LprImage={LprImage}
+                    todayVisitingPurpose={todayVisitingPurpose}
+                    invitationCode={invitationCode}
+                    isFullscreen={isFullscreen}
+                    lgUp={lgUp}
+                    openMore={openMore}
+                    setOpenMore={setOpenMore}
+                    handleOpenMore={handleOpenMore}
+                    handleOpenDetailVistingPurpose={handleOpenDetailVistingPurpose}
+                    getColorByName={getColorByName}
+                    backgroundnodata={backgroundnodata}
+                    t={t}
+                  />
                 </Grid>
 
                 {/* Visiting Purpose*/}
@@ -4051,7 +3777,6 @@ const OperatorView = () => {
                               (v) => v.visitor_number === invitationCode[0]?.visitor_number,
                             ) ||
                             relatedVisitors.find((v) => v.visitor_number === selectedVisitorNumber);
-
                           if (
                             selectedVisitor &&
                             (selectedVisitor.is_praregister_done == null ||
@@ -4269,7 +3994,7 @@ const OperatorView = () => {
                         })()}
                       </CardActions>
                       {/* Barcode */}
-                      <Box>
+                      {/* <Box>
                         {activeBarcode && (
                           <img
                             src={activeBarcode}
@@ -4277,11 +4002,13 @@ const OperatorView = () => {
                             style={{ width: '100%', height: '135px', objectFit: 'cover' }}
                           />
                         )}
-                      </Box>
+                      </Box> */}
                     </>
                   )}
                 </Card>
               </Grid>
+
+              {/* Related Visitor */}
               <Grid size={{ xs: 12, lg: 4.5 }} sx={{ display: 'flex', flexDirection: 'column' }}>
                 <Card
                   sx={{
@@ -4384,10 +4111,9 @@ const OperatorView = () => {
                             }}
                             onClick={() => handleSelectRelatedVisitor(visitor)}
                           >
-                            {/* Avatar + Info */}
                             <Box display="flex" alignItems="center" gap={2}>
                               <Avatar
-                                src={`${axiosInstance2.defaults.baseURL}/cdn${visitor.selfie_image}`}
+                                src={activeSelfie || undefined}
                                 alt={visitor.name}
                                 sx={{ width: 45, height: 45 }}
                               />
@@ -4569,7 +4295,7 @@ const OperatorView = () => {
                           disabled={!bulkAction || selectedVisitors.length === 0}
                           onClick={handleApplyBulkAction}
                         >
-                          {loadingAccess ? <CircularProgress size={24} color="inherit" /> : 'Apply'}
+                          {loadingAccess ? 'Apply' : 'Apply'}
                         </Button>
                       </Box>
                       {invitationCode.length > 0 && (
@@ -4789,7 +4515,7 @@ const OperatorView = () => {
             onSubmit={handleSwipeCardSubmitNoCode}
           />
           {/* Choose Card */}
-          <Dialog
+          {/* <Dialog
             open={openChooseCardDialog}
             onClose={() => setOpenChooseCardDialog(false)}
             fullWidth
@@ -4911,7 +4637,7 @@ const OperatorView = () => {
                         <Typography variant="body1">{currentUsedCard.name}</Typography>
 
                         <Typography variant="body2" color="warning.main" fontWeight={600}>
-                          Swipe Card (Last Used Card)
+                          (Last Used Card)
                         </Typography>
 
                         <FormControlLabel
@@ -5046,7 +4772,7 @@ const OperatorView = () => {
                     Cards chosen: {selectedCards.length} / {availableCount} |
                   </Typography>
                   <Typography variant="body1">
-                    {/* You selected <b>{selectedVisitors.length || 1}</b> visitor(s). */}
+               
                     Maximum cards allowed: <b>{selectedVisitors.length || 1}</b>
                   </Typography>
                 </Box>
@@ -5076,21 +4802,81 @@ const OperatorView = () => {
               >
                 Give
               </Button>
+              <Button
+                fullWidth
+                variant="contained"
+                // disabled={selectedCards.length === 0}
+                // onClick={handleConfirmChooseCards}
+                onClick={() => setOpenRevokeDialog(true)}
+                color="error"
+                sx={{ fontSize: '16px' }}
+                startIcon={<IconKeyOff />}
+              >
+                Revoke
+              </Button>
             </DialogActions>
-          </Dialog>
-          {/* Dialog Swipe */}
+          </Dialog> */}
+
+          <ChooseCardDialog
+            open={openChooseCardDialog}
+            onClose={() => {
+              setOpenChooseCardDialog(false);
+              setSearchTerm('');
+            }}
+            containerRef={containerRef}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            isChecked={isChecked}
+            isIndeterminate={isIndeterminate}
+            handleSelectAll={handleSelectAll}
+            capacity={capacity}
+            currentUsedCards={currentUsedCards}
+            selectedCards={selectedCards}
+            handleToggleCard={handleToggleCard}
+            filteredCards={filteredCards}
+            selectedVisitors={selectedVisitors}
+            availableCount={availableCount}
+            handleOpenSwipeDialog={handleOpenSwipeDialog}
+            handleConfirmChooseCards={handleConfirmChooseCards}
+            setOpenRevokeDialog={setOpenRevokeDialog}
+          />
+          {/* Dialog Swipe Card */}
           <SwipeCardDialog
             open={openSwipeDialog}
             onClose={handleCloseSwipeDialog}
             onSubmit={handleSwipeCardSubmit}
             invitationId={invitationId}
-            visitors={filteredVisitors}
+            visitors={visitorsForSwipe}
             loading={setLoadingAccess}
             currentVisitorIndex={currentVisitorIndex}
             setCurrentVisitorIndex={setCurrentVisitorIndex}
           />
+
+          {/* Dialog Swipe Access */}
+          <SwipeAccessDialog
+            open={openSwipeAccess}
+            onClose={handleCloseSwipeAccess}
+            data={sitesOperator}
+            payload={swipePayload}
+            invitationId={invitationId as string}
+            visitor={currentAccessVisitor}
+            setLoadingAccess={setLoadingAccess}
+            onSuccessRefresh={() => fetchRelatedVisitorsByInvitationId(invitationId as string)}
+          />
+
+          {/* Dialog QR Access Issuance */}
+          <GrantAccessDialog
+            open={openRevokeDialog}
+            onClose={() => setOpenRevokeDialog(false)}
+            invitationCode={invitationCode}
+            selectedCards={selectedCards}
+            handleToggleCard={handleToggleCard}
+            dataDummyAccess={dataDummyAccess}
+            formatDateTime={formatDateTime}
+          />
+
           {/* Dialog Choose registered Site Access Site */}
-          <RegisteredSiteAccessDialog
+          {/* <RegisteredSiteAccessDialog
             open={openRegisteredSite}
             onClose={() => {
               setSelectedSite(null);
@@ -5106,246 +4892,24 @@ const OperatorView = () => {
             onSubmit={(action: 'grant' | 'revoke', site) => {
               console.log(action, site);
             }}
-          />
-          {/* Dialog Swipe Access */}
-          <SwipeAccessDialog
-            open={openSwipeAccess}
-            onClose={handleCloseSwipeAccess}
-            data={accessData}
-            payload={swipePayload}
-            invitationId={invitationId as string}
-            visitor={currentAccessVisitor}
-          />
+          /> */}
+
           {/* Fill Form Pra regist Multiple*/}
-          <Dialog
+          <FillPraregistrationGroup
             open={openFillForm}
             onClose={() => setOpenFillForm(false)}
-            fullWidth
-            maxWidth={false}
-            PaperProps={{
-              sx: {
-                width: '100vw',
-              },
-            }}
-            container={containerRef.current}
-          >
-            <DialogTitle sx={{ pb: 1, fontWeight: 600 }}>Fill Pre-Registration Form</DialogTitle>
-            <IconButton
-              aria-label="close"
-              sx={{
-                position: 'absolute',
-                right: 8,
-                top: 8,
-                color: (theme) => theme.palette.grey[500],
-              }}
-              onClick={() => setOpenFillForm(false)}
-            >
-              <IconX />
-            </IconButton>
-            <DialogContent dividers>
-              {fillFormData.length > 0 && (
-                <>
-                  <Stepper activeStep={fillFormActiveStep} alternativeLabel sx={{ mb: 3 }}>
-                    {fillFormData.map((s, i) => (
-                      <Step key={i}>
-                        <StepLabel
-                          onClick={() => setFillFormActiveStep(i)}
-                          sx={{
-                            '& .MuiStepLabel-label': {
-                              fontSize: '0.9rem !important',
-                              fontWeight: 600,
-                              cursor: 'pointer',
-                            },
-                          }}
-                        >
-                          {s.name}
-                        </StepLabel>
-                      </Step>
-                    ))}
-                  </Stepper>
-                  <Box>
-                    {(() => {
-                      const section = fillFormData[fillFormActiveStep];
-                      if (!section) return null;
-
-                      const sectionType = getSectionType(section);
-                      console.log('section', sectionType);
-                      if (sectionType === 'visitor_information_group') {
-                        return (
-                          <Grid>
-                            <Box>
-                              <TableContainer component={Paper} sx={{ mb: 1 }}>
-                                <Table size="small">
-                                  <TableHead>
-                                    <TableRow>
-                                      {(
-                                        fillFormDataVisitor[0]?.question_page?.[fillFormActiveStep]
-                                          ?.visit_form ||
-                                        formsOf(section) ||
-                                        []
-                                      )
-                                        .filter(
-                                          (f: any) =>
-                                            fillFormDataVisitor[0]?.question_page?.[
-                                              fillFormActiveStep
-                                            ]?.form?.find(
-                                              (x: any) =>
-                                                x.remarks === 'is_driving' &&
-                                                x.answer_text === 'true',
-                                            ) ||
-                                            !['vehicle_type', 'vehicle_plate'].includes(f.remarks),
-                                        )
-                                        .map((f: any, i: any) => (
-                                          <TableCell key={i}>
-                                            <CustomFormLabel required={f.mandatory == true}>
-                                              {f.long_display_text}
-                                            </CustomFormLabel>
-                                          </TableCell>
-                                        ))}
-                                    </TableRow>
-                                  </TableHead>
-
-                                  <TableBody>
-                                    {fillFormDataVisitor.length > 0 ? (
-                                      fillFormDataVisitor.map((group, gIdx) => {
-                                        const page =
-                                          group.question_page?.[fillFormActiveStep] ?? section;
-                                        if (!page) return null;
-                                        const isDrivingField = page.form?.find(
-                                          (f: any) => f.remarks === 'is_driving',
-                                        );
-                                        const isDriving =
-                                          isDrivingField?.answer_text === 'true' ||
-                                          isDrivingField?.answer_text === true;
-
-                                        return (
-                                          <TableRow key={gIdx}>
-                                            {page.form
-                                              ?.filter(
-                                                (field: any) =>
-                                                  isDriving ||
-                                                  !['vehicle_type', 'vehicle_plate'].includes(
-                                                    field.remarks,
-                                                  ),
-                                              )
-                                              .map((field: any) => {
-                                                const formIdx = page.form.findIndex(
-                                                  (x: any) => x.remarks === field.remarks,
-                                                );
-
-                                                return (
-                                                  <TableCell key={field.remarks}>
-                                                    {renderFieldInput(
-                                                      field,
-                                                      formIdx,
-                                                      (idx, fieldKey, value) => {
-                                                        setFillFormDataVisitor((prev) => {
-                                                          const next = structuredClone(prev);
-                                                          const s = fillFormActiveStep;
-
-                                                          const targetIdx = next[
-                                                            gIdx
-                                                          ].question_page[s].form.findIndex(
-                                                            (x: any) => x.remarks === field.remarks,
-                                                          );
-                                                          if (targetIdx === -1) return prev;
-
-                                                          next[gIdx].question_page[s].form[
-                                                            targetIdx
-                                                          ] = {
-                                                            ...next[gIdx].question_page[s].form[
-                                                              targetIdx
-                                                            ],
-                                                            [fieldKey]: value,
-                                                          };
-                                                          return next;
-                                                        });
-                                                      },
-                                                      undefined,
-                                                      {
-                                                        showLabel: false,
-                                                        uniqueKey: `${fillFormActiveStep}:${gIdx}:${field.remarks}`,
-                                                      },
-                                                    )}
-                                                  </TableCell>
-                                                );
-                                              })}
-                                          </TableRow>
-                                        );
-                                      })
-                                    ) : (
-                                      <TableRow>
-                                        <TableCell colSpan={12} align="center">
-                                          No visitor data. Click “Add New” to start.
-                                        </TableCell>
-                                      </TableRow>
-                                    )}
-                                  </TableBody>
-                                </Table>
-                              </TableContainer>
-                            </Box>
-                          </Grid>
-                        );
-                      } else if (sectionType === 'purpose_visit') {
-                        const mergedVisitForm = formsOf(section);
-                        return (
-                          <Grid container spacing={2} sx={{ px: 1 }}>
-                            {mergedVisitForm.map((f: any, idx: number) => (
-                              <Grid size={{ xs: 12 }} key={idx}>
-                                <Box display="flex" flexDirection="column" gap={0.5}>
-                                  <Typography variant="subtitle2" fontWeight={600}>
-                                    {f.long_display_text}
-                                  </Typography>
-                                  <Box sx={{ pointerEvents: 'none', opacity: 0.6 }}>
-                                    {renderFieldInput(f, idx, () => {}, undefined, {
-                                      showLabel: false,
-                                      uniqueKey: `${fillFormActiveStep}:${idx}`,
-                                    })}
-                                  </Box>
-                                </Box>
-                              </Grid>
-                            ))}
-                          </Grid>
-                        );
-                      }
-
-                      return null;
-                    })()}
-                  </Box>
-                </>
-              )}
-            </DialogContent>
-
-            <DialogActions style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Button
-                onClick={() => setFillFormActiveStep((p) => Math.max(p - 1, 0))}
-                disabled={fillFormActiveStep === 0}
-                startIcon={<IconArrowLeft />}
-              >
-                Back
-              </Button>
-              {fillFormActiveStep < fillFormData.length - 1 ? (
-                <Button
-                  variant="contained"
-                  onClick={() => {
-                    setFillFormActiveStep((p) => p + 1);
-                  }}
-                  endIcon={<IconArrowRight />}
-                >
-                  Next
-                </Button>
-              ) : (
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={handleSubmitPramultiple}
-                  disabled={loadingAccess}
-                >
-                  Submit
-                </Button>
-              )}
-            </DialogActions>
-          </Dialog>
+            containerRef={containerRef}
+            fillFormData={fillFormData}
+            fillFormActiveStep={fillFormActiveStep}
+            setFillFormActiveStep={setFillFormActiveStep}
+            fillFormDataVisitor={fillFormDataVisitor}
+            setFillFormDataVisitor={setFillFormDataVisitor}
+            loadingAccess={loadingAccess}
+            handleSubmitPramultiple={handleSubmitPramultiple}
+            renderFieldInput={renderFieldInput}
+            getSectionType={getSectionType}
+            formsOf={formsOf}
+          />
           {/* Submit Praregister */}
           <Dialog
             open={openDialogInvitation}
@@ -5406,7 +4970,7 @@ const OperatorView = () => {
           <AccessDialog
             open={openAccessData}
             onClose={() => {
-              setAction('');
+              // setAction('');
               setOpenAccessData(false);
             }}
             containerRef={containerRef.current || null}
@@ -5478,7 +5042,7 @@ const OperatorView = () => {
                 }}
                 // ws={ws}
                 setWsPayload={setWsPayload}
-                registeredSite={registerSiteOperator.user_id}
+                registeredSite={registerSiteOperator}
                 forceTick={tick}
                 visitorType={visitorType}
                 sites={sites}
@@ -5541,23 +5105,6 @@ const OperatorView = () => {
             data={parkingData}
           />
 
-          <VehicleDialog
-            open={openVehicle}
-            onClose={() => {
-              setActionButton('');
-              setOpenVehicle(false);
-              console.log('vehicle');
-            }}
-            data={vehicleData}
-          />
-
-          {/* <WhiteListDialog
-            open={openWhiteList}
-            onClose={() => setOpenWhiteList(false)}
-            data={whiteListData}
-          /> */}
-
-          {/* Info Dialog */}
           <InfoDialog
             open={openDialogInfo}
             onClose={() => setOpenDialogInfo(false)}
@@ -5573,12 +5120,24 @@ const OperatorView = () => {
             onSubmit={handleSubmitReturnCard}
           />
 
-          <SnackbarOperator
-            open={snackbarOpen}
-            message={snackbarMsg}
-            severity={snackbarType}
-            onClose={() => setSnackbarOpen(false)}
-          />
+          <Portal>
+            <Snackbar
+              open={snackbar.open}
+              autoHideDuration={3000}
+              onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+              anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+              sx={{ zIndex: 9999999 }}
+            >
+              <Alert
+                onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+                severity={snackbar.severity}
+                sx={{ width: '100%' }}
+                variant="filled"
+              >
+                {snackbar.message}
+              </Alert>
+            </Snackbar>
+          </Portal>
           <GlobalBackdropLoading open={loadingAccess} />
         </Box>
       </FullScreen>

@@ -113,7 +113,6 @@ const Content = () => {
   const debounceSearch = useDebounce(searchKeyword, 500);
   const [totalRecords, setTotalRecords] = useState(0);
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
-  const [isDataReady, setIsDataReady] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
   const [isBatchEdit, setIsBatchEdit] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -240,7 +239,7 @@ const Content = () => {
   };
   const handleCloseModalCreateVisitorCard = () => {
     setOpenFormCreateVisitorCard(false);
-    setEdittingId(''); // Reset editing state
+    setEdittingId('');
     setIsBatchEdit(false);
     localStorage.removeItem('unsavedVisitorCardData');
   };
@@ -288,48 +287,14 @@ const Content = () => {
     handleOpenDialog();
   }, []);
 
-  // Handle Edit Visitor Card
-  // const handleEdit = (id: string) => {
-  //   const existingData = tableVisitorCard.find((item) => item.id === id);
-  //   if (!existingData) return;
-
-  //   const editing = localStorage.getItem('unsavedVisitorCardData');
-
-  //   if (!editing) {
-  //     const parsedData = CreateVisitorCardRequestSchema.parse(existingData);
-  //     setEdittingId(id);
-  //     setFormAddVisitorCard(parsedData);
-  //     localStorage.setItem('unsavedVisitorCardData', JSON.stringify({ ...parsedData, id }));
-  //     handleOpenDialog();
-  //     return;
-  //   }
-
-  //   const editingData = JSON.parse(editing);
-
-  //   const formChanged =
-  //     JSON.stringify(editingData) !== JSON.stringify(CreateVisitorCardRequestSchema.parse({}));
-
-  //   if (editingData.id === id || !formChanged) {
-  //     const parsedData = CreateVisitorCardRequestSchema.parse(existingData);
-  //     setEdittingId(id);
-  //     setFormAddVisitorCard(parsedData);
-  //     setInitialFormData(parsedData);
-  //     handleOpenDialog();
-  //     return;
-  //   }
-
-  //   setPendingEditId(id);
-  //   setConfirmDialogOpen(true);
-  // };
-
   const handleEdit = (id: string) => {
     const existingData = tableVisitorCard.find((item) => item.id === id);
     if (!existingData) return;
 
     const parsedData = {
       ...existingData,
-      registered_site: existingData.registered_site ?? '', // simpan id string
-      type: typeMap[existingData.type] ?? 0, // Convert to number
+      registered_site: existingData.registered_site ?? '', 
+      type: typeMap[existingData.type] ?? 0, 
     } as CreateVisitorCardRequest;
 
     setEdittingId(id);
@@ -491,7 +456,7 @@ const Content = () => {
       const parsed = CreateVisitorCardRequestSchema.parse(existingData ?? {});
       setEdittingId(pendingEditId);
       setFormAddVisitorCard(parsed);
-      +setInitialFormData(parsed); // ⬅️ baseline baru
+      +setInitialFormData(parsed); 
       setOpenFormCreateVisitorCard(true);
       setPendingEditId(null);
       return;

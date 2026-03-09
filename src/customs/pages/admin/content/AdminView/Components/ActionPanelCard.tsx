@@ -274,8 +274,7 @@ const ActionPanelCard: FC<Props> = ({
             </Grid>
             <Grid size={{ xs: 12, xl: 5 }}>
               <Grid container spacing={isFullscreen ? 1.5 : 1.5}>
-                {/* Access */}
-                <Grid size={{ xs: 6, lg: 6 }}>
+                {/* <Grid size={{ xs: 6, lg: 6 }}>
                   <Button
                     variant="contained"
                     startIcon={<IconKey size={25} />}
@@ -300,7 +299,7 @@ const ActionPanelCard: FC<Props> = ({
                       Access
                     </Typography>
                   </Button>
-                </Grid>
+                </Grid>  */}
 
                 {/* Parking */}
                 <Grid size={{ xs: 6, lg: 6 }}>

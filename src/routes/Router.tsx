@@ -29,6 +29,10 @@ const NotFoundPage = Loadable(lazy(() => import('src/views/authentication/NotFou
 const GuestInformation = Loadable(
   lazy(() => import('src/views/authentication/guest/GuestInformation')),
 );
+
+const SelfPraregistration = Loadable(
+  lazy(() => import('src/customs/pages/Guest/SelfPraregistration/Content')),
+);
 const WaitingPage = Loadable(lazy(() => import('src/customs/components/page/WaitingPage')));
 const DetailProfile = Loadable(
   lazy(() => import('src/layouts/full/vertical/header/DetailProfile')),
@@ -171,13 +175,15 @@ const InvitationEmployee = Loadable(
 );
 const ParkingEmployee = Loadable(lazy(() => import('src/customs/pages/Employee/Parking')));
 const ReportEmployee = Loadable(lazy(() => import('src/customs/pages/Employee/Report')));
-const VisitorEmployee = Loadable(lazy(() => import('src/customs/pages/Employee/Visitor')));
 const HistoryEmployee = Loadable(lazy(() => import('src/customs/pages/Employee/History')));
 const ProfileEmployee = Loadable(lazy(() => import('src/customs/pages/Employee/DetailProfile')));
 
 /* Operator Pages* */
 const DashboardOperator = Loadable(lazy(() => import('src/customs/pages/Operator/Dashboard')));
 const OperatorView = Loadable(lazy(() => import('src/customs/pages/Operator/OperatorView')));
+const ManageVisitorOperator = Loadable(
+  lazy(() => import('src/customs/pages/Operator/Visitor/content')),
+);
 const TransactionOperatorLog = Loadable(
   lazy(() => import('src/customs/pages/Operator/Report/TranasctionLog/Content')),
 );
@@ -257,6 +263,7 @@ const Router = [
               { path: '/auth/forgot-password', element: <ForgotPassword /> },
               { path: '/unauthorized', element: <UnauthorizedPage /> },
               { path: '/portal/information', element: <GuestInformation /> },
+              { path: '/invitation-share', element: <SelfPraregistration /> },
               { path: '/portal/waiting', element: <WaitingPage /> },
               { path: '*', element: <NotFoundPage /> },
             ],
@@ -340,7 +347,8 @@ const Router = [
           { path: '/operator-admin/manage/zone', element: <ManageZone /> },
           { path: '/operator-admin/manage/setting-smtp', element: <ManageSettingSmtp /> },
           { path: '/operator-admin/settings', element: <ManageSettingVisitor /> },
-          { path: '/operator-admin/user', element: <ManageUser /> },
+          { path: '/operator-admin/users', element: <ManageUser /> },
+          { path: '/operator-admin/users-group', element: <ManageUserGroup /> },
           { path: '/operator-admin/report/transaction-log', element: <ManageReportTransaction /> },
           { path: '/operator-admin/report/approval-workflow', element: <ManageReportApproval /> },
           {
@@ -391,8 +399,8 @@ const Router = [
           { path: '/admin/manage/zone', element: <ManageZone /> },
           { path: '/admin/manage/setting-smtp', element: <ManageSettingSmtp /> },
           { path: '/admin/settings', element: <ManageSettingVisitor /> },
-          { path: '/admin/user', element: <ManageUser /> },
-          { path: '/admin/user-group', element: <ManageUserGroup /> },
+          { path: '/admin/users', element: <ManageUser /> },
+          { path: '/admin/users-group', element: <ManageUserGroup /> },
           { path: '/admin/report/transaction-log', element: <ManageReportTransaction /> },
           { path: '/admin/report/approval-workflow', element: <ManageReportApproval /> },
           {
@@ -451,6 +459,7 @@ const Router = [
               { index: true, element: <DashboardOperator /> },
               { path: 'dashboard', element: <DashboardOperator /> },
               { path: 'view', element: <OperatorView /> },
+              { path: 'visitor', element: <ManageVisitorOperator /> },
               { path: 'transaction-log', element: <TransactionOperatorLog /> },
               { path: 'approval-workflow', element: <ApprovalOperator /> },
               { path: 'operator-activity-log', element: <OperatorActivityLog /> },

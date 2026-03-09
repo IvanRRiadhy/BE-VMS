@@ -5,23 +5,15 @@ import {
   Backdrop,
   Button,
   Card,
-  CardContent,
-  Checkbox,
   CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  Divider,
-  FormControlLabel,
   Grid2 as Grid,
   IconButton,
   Portal,
   Snackbar,
-  Switch,
-  Tab,
-  Tabs,
-  TextField,
   Typography,
 } from '@mui/material';
 import { Box, Stack } from '@mui/system';
@@ -35,11 +27,7 @@ import {
   IconCircleX,
   IconForbid2,
   IconLogin,
-  IconLogin2,
   IconLogout,
-  IconPlus,
-  IconSend,
-  IconUsersGroup,
   IconX,
 } from '@tabler/icons-react';
 import { Scanner } from '@yudiel/react-qr-scanner';
@@ -66,20 +54,21 @@ import jsPDF from 'jspdf';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import Swal from 'sweetalert2';
 import { showSwal } from 'src/customs/components/alerts/alerts';
-import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
+
 import CreateLinkDialog from '../Components/Dialog/CreateLinkDialog';
 import DetailLinkDialog from '../Components/Dialog/DetailLinkDialog';
 import SendEmailDialog from '../Components/Dialog/SendEmailDialog';
 import { useNavigate } from 'react-router';
+import {
+  createShareLink,
+  deleteShareLink,
+  getShareLink,
+  getShareLinkByDt,
+} from 'src/customs/api/ShareLink';
+import AccessPassDialog from '../Components/Dialog/AccessPassDialog';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { set } from 'lodash';
 const DashboardEmployee = () => {
-  // const cards = [
-  //   { title: 'Check In', icon: IconLogin, subTitle: `0`, subTitleSetting: 10, color: 'none' },
-  //   { title: 'Check Out', icon: IconLogout, subTitle: `0`, subTitleSetting: 10, color: 'none' },
-  //   { title: 'Denied', icon: IconCircleOff, subTitle: `0`, subTitleSetting: 10, color: 'none' },
-  //   { title: 'Block', icon: IconBan, subTitle: `0`, subTitleSetting: 10, color: 'none' },
-  // ];
-
   const CardItems = [
     { title: 'checkin', key: 'Checkin', icon: <IconLogin size={25} /> },
     { title: 'checkout', key: 'Checkout', icon: <IconLogout size={25} /> },
@@ -93,19 +82,9 @@ const DashboardEmployee = () => {
   ];
 
   const { token } = useSession();
-
-  // ✅ state untuk buka tutup dialog QR
-  const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
-  const [openDetailQRCode, setOpenDetailQRCode] = useState(false);
-  const [tabValue, setTabValue] = useState(0);
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
-  // QR Scanner state
-  const [qrValue, setQrValue] = useState('');
-  const [qrMode, setQrMode] = useState<'manual' | 'scan'>('manual');
-  const [hasDecoded, setHasDecoded] = useState(false);
-  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
-  const [torchOn, setTorchOn] = useState(false);
-  const scanContainerRef = useRef<HTMLDivElement | null>(null);
+
   const [openDialogInvitation, setOpenDialogInvitation] = useState(false);
   const [approvalData, setApprovalData] = useState<any[]>([]);
   const [invitationDetailVisitor, setInvitationDetailVisitor] = useState<any[]>([]);
@@ -113,7 +92,7 @@ const DashboardEmployee = () => {
   const [invitationList, setInvitationList] = useState<any[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [selectedInvitationId, setSelectedInvitationId] = useState<string | null>(null);
-  const [alertInvitationData, setAlertInvitationData] = useState<any | null>(null);
+
   const [openAlertInvitation, setOpenAlertInvitation] = useState(false);
   const [pendingInvitationCount, setPendingInvitationCount] = useState(0);
   const [openAccess, setOpenAccess] = useState(false);
@@ -135,6 +114,7 @@ const DashboardEmployee = () => {
   };
 
   const handleOpenCreateLink = () => {
+    setOpenInviteOrCreateLink(false);
     setOpenCreateLink(true);
   };
 
@@ -145,6 +125,54 @@ const DashboardEmployee = () => {
   const handleCloseAccess = () => {
     setOpenAccess(false);
   };
+
+  // const [shareLinkList, setShareLinkList] = useState<any[]>([]);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [searchKeyword, setSearchKeyword] = useState('');
+
+  const [sortDir, setSortDir] = useState('desc');
+
+  const start = page * rowsPerPage;
+
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: ['share-links', page, rowsPerPage, searchKeyword, sortDir],
+    queryFn: async () => {
+      const res = await getShareLinkByDt(
+        token as string,
+        start,
+        rowsPerPage,
+        searchKeyword,
+        sortDir,
+      );
+
+      return res;
+    },
+
+    staleTime: 1000 * 60 * 5,
+    enabled: !!token,
+    gcTime: 1000 * 60 * 2,
+    placeholderData: (previousData) => previousData,
+  });
+
+  const shareLinkList =
+    data?.collection?.map((item: any) => ({
+      id: item.id,
+      agenda: item.agenda,
+      url: item.url,
+      max_usage: item.max_usage,
+      expired: new Date(item.expired_at + 'Z').toLocaleString(undefined, {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+      link_status: item.link_status,
+    })) || [];
+
+  const totalRecords = data?.RecordsTotal ?? 0;
+  const totalFilteredRecords = data?.RecordsFiltered ?? 0;
 
   useEffect(() => {
     const fetchDataActiveInvtiation = async () => {
@@ -412,32 +440,9 @@ const DashboardEmployee = () => {
     }
   };
 
-  const dataLink = [
-    {
-      id: 1,
-      name: 'https://www.vms-portal.com/invite/83KAK8209',
-      status_link: true,
-    },
-    {
-      id: 2,
-      name: 'https://www.vms-portal.com/invite/83KAK8256',
-      status_link: false,
-    },
-    {
-      id: 3,
-      name: 'https://www.vms-portal.com/invite/83KAK8202',
-      status_link: false,
-    },
-    {
-      id: 4,
-      name: 'https://www.vms-portal.com/invite/83KAK8201',
-      status_link: false,
-    },
-  ];
-
   const handleCopyLink = (link: string) => {
     navigator.clipboard.writeText(link);
-    showSwal('success', 'Link copied to clipboard.' + '\n' + link);
+    showSwal('success', 'Link copied to clipboard.');
   };
 
   const handleDetailLink = (link: string) => {
@@ -465,6 +470,37 @@ const DashboardEmployee = () => {
       visitor_period_end: '2026-04-01, 11:00',
     },
   ];
+
+  const [pendingPayload, setPendingPayload] = useState<any>(null);
+
+  const handleDeleteLink = async (id: string) => {
+    try {
+      const confirm = await Swal.fire({
+        title: 'Do you want to delete this link?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Yes',
+        cancelButtonText: 'Cancel',
+        reverseButtons: true,
+        confirmButtonColor: '#4caf50',
+        customClass: {
+          title: 'swal2-title-custom',
+          htmlContainer: 'swal2-text-custom',
+        },
+      });
+
+      if (!confirm.isConfirmed) return;
+
+      await deleteShareLink(token as string, id);
+      await queryClient.invalidateQueries({
+        queryKey: ['share-links'],
+      });
+      showSwal('success', 'Link deleted successfully.');
+    } catch (error) {
+      console.error('Delete link error:', error);
+      showSwal('error', 'Something went wrong while deleting link.');
+    }
+  };
 
   return (
     <PageContainer title="Dashboard Employee" description="This is Employee Dashboard">
@@ -557,7 +593,7 @@ const DashboardEmployee = () => {
 
         <Grid size={{ xs: 12, lg: 6 }}>
           <DynamicTable
-            height={420}
+            height={510}
             isHavePagination={false}
             overflowX="auto"
             data={approvalData}
@@ -572,9 +608,9 @@ const DashboardEmployee = () => {
             isHavePeriod={true}
           />
         </Grid>
-        <Grid size={{ xs: 12, lg: 3 }}>
+        {/* <Grid size={{ xs: 12, lg: 3 }}>
           <DynamicTable
-            height={420}
+            height={430}
             isHavePagination={false}
             overflowX="auto"
             data={activeInvitation}
@@ -584,17 +620,28 @@ const DashboardEmployee = () => {
             isHaveHeaderTitle
             titleHeader="Active Visit"
           />
-        </Grid>
+        </Grid> */}
 
-        <Grid size={{ xs: 12, lg: 3 }}>
+        <Grid size={{ xs: 12, lg: 6 }}>
           <DynamicTable
-            data={dataLink}
+            loading={isFetching}
+            height={510}
+            overflowX="auto"
+            data={shareLinkList}
             titleHeader="Link Share Visitor"
             isHaveHeaderTitle={true}
             isCopyLink={true}
+            isHavePagination={true}
+            defaultRowsPerPage={rowsPerPage}
+            rowsPerPageOptions={[5, 10]}
+            onPaginationChange={(page, rowsPerPage) => {
+              setPage(page);
+              setRowsPerPage(rowsPerPage);
+            }}
             isDetailLink={true}
-            onCopyLink={(row: any) => handleCopyLink(row.name)}
+            onCopyLink={(row: any) => handleCopyLink(row.url)}
             onDetailLink={(row: any) => handleDetailLink(row)}
+            onDelete={(row: any) => handleDeleteLink(row)}
           />
         </Grid>
         <Grid size={{ xs: 12, lg: 6 }} sx={{ height: '100%' }}>
@@ -713,8 +760,25 @@ const DashboardEmployee = () => {
       <CreateLinkDialog
         open={openCreateLink}
         onClose={() => setOpenCreateLink(false)}
-        onSendEmail={() => {
-          setOpenCreateLink(false);
+        onCreateLink={async (payload) => {
+          try {
+            setIsGenerating(true);
+
+            await createShareLink(token as string, payload);
+            await queryClient.invalidateQueries({
+              queryKey: ['share-links'],
+            });
+            setOpenCreateLink(false);
+            showSwal('success', 'Share link created successfully');
+          } catch (err) {
+            console.error(err);
+            showSwal('error', 'Failed to create share link');
+          } finally {
+            setIsGenerating(false);
+          }
+        }}
+        onSendEmail={(payload) => {
+          setPendingPayload(payload);
           setOpenSendEmail(true);
         }}
       />
@@ -728,7 +792,30 @@ const DashboardEmployee = () => {
       <SendEmailDialog
         open={openSendEmail}
         onClose={() => setOpenSendEmail(false)}
-        onSend={() => console.log('Send email')}
+        onSend={async (emails: string[]) => {
+          try {
+            setIsGenerating(true);
+
+            const finalPayload = {
+              ...pendingPayload,
+              emails: emails,
+            };
+
+            await createShareLink(token as string, finalPayload);
+            await queryClient.invalidateQueries({
+              queryKey: ['share-links'],
+            });
+            setOpenSendEmail(false);
+            setOpenCreateLink(false);
+
+            showSwal('success', 'Share link sent successfully');
+          } catch (err) {
+            console.error(err);
+            showSwal('error', 'Failed to send share link');
+          } finally {
+            setIsGenerating(false);
+          }
+        }}
       />
       {/* Praregister */}
       <Dialog
@@ -771,255 +858,17 @@ const DashboardEmployee = () => {
 
       {/* Active Pass */}
       {activeAccessPass && (
-        <Dialog open={openAccess} onClose={handleCloseAccess} fullWidth maxWidth="sm">
-          <DialogTitle textAlign={'center'} sx={{ p: 2 }}>
-            Your Access Pass
-          </DialogTitle>
-          <IconButton
-            aria-label="close"
-            onClick={handleCloseAccess}
-            sx={{
-              position: 'absolute',
-              right: 8,
-              top: 8,
-              color: (theme) => theme.palette.grey[500],
-            }}
-          >
-            <IconX />
-          </IconButton>
-          <DialogContent
-            sx={{
-              paddingTop: 2,
-              position: 'relative',
-            }}
-            dividers
-            ref={printRef}
-          >
-            <img
-              src="src/assets/images/backgrounds/back-test.jpg"
-              alt="background"
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                zIndex: -1,
-              }}
-            />
-            <Box
-              display="flex"
-              justifyContent="center"
-              className="only-print"
-              sx={{
-                display: 'none',
-                '@media print': {
-                  display: 'flex',
-                },
-              }}
-            >
-              <img
-                src="/src/assets/images/logos/BI_Logo.png"
-                alt="logo"
-                width={100}
-                height={100}
-                style={{
-                  objectFit: 'contain',
-                  maxHeight: '100px',
-                }}
-              />
-            </Box>
-            <Box mt={1} zIndex={1} position={'relative'}>
-              <Grid container spacing={2} justifyContent="center">
-                <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
-                  <Typography variant="body1" color="textSecondary" fontWeight={500}>
-                    Invitation Code
-                  </Typography>
-                  <Typography variant="body1" fontWeight="bold">
-                    {activeAccessPass.invitation_code}
-                  </Typography>
-                </Grid>
-
-                <Grid size={{ xs: 12, sm: 6 }} textAlign="center" position={'relative'}>
-                  <Typography variant="body1" color="textSecondary" fontWeight={500}>
-                    Card
-                  </Typography>
-                  <Typography variant="body1" fontWeight="bold">
-                    {activeAccessPass.card_number || '-'}
-                  </Typography>
-                </Grid>
-                {!isGenerating && (
-                  <IconButton
-                    color="primary"
-                    className="no-print"
-                    sx={{
-                      backgroundColor: 'primary.main',
-                      color: 'white',
-                      position: 'absolute',
-                      right: 20,
-                      '&:hover': { backgroundColor: 'primary.dark' },
-                      '@media print': {
-                        display: 'none !important',
-                      },
-                    }}
-                    onClick={handleDownloadPDF}
-                  >
-                    <Download />
-                  </IconButton>
-                )}
-
-                <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
-                  <Typography variant="body1" color="textSecondary" fontWeight={500}>
-                    Host
-                  </Typography>
-                  <Typography variant="body1" fontWeight="bold">
-                    {activeAccessPass.host_name || '-'}
-                  </Typography>
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
-                  <Typography variant="body1" color="textSecondary" fontWeight={500}>
-                    Group Code
-                  </Typography>
-                  <Typography variant="body1" fontWeight="bold">
-                    {activeAccessPass.group_code || '-'}
-                  </Typography>
-                </Grid>
-                <Grid size={{ xs: 12, sm: 12 }} textAlign="center">
-                  <Typography variant="body1" color="textSecondary" fontWeight={500}>
-                    Period Visit
-                  </Typography>
-                  <Typography variant="body1" fontWeight="bold">
-                    {formatVisitorPeriodLocal(
-                      activeAccessPass.visitor_period_start as string,
-                      activeAccessPass.visitor_period_end as string,
-                    )}
-                  </Typography>
-                </Grid>
-              </Grid>
-            </Box>
-
-            <Box mt={1}>
-              <Typography variant="h5" sx={{ fontWeight: 'bold' }} textAlign={'center'}>
-                {activeAccessPass.site_place_name}
-              </Typography>
-              <Box
-                display="flex"
-                justifyContent="center"
-                mt={0}
-                mb={1}
-                flexDirection={'column'}
-                alignItems={'center'}
-              >
-                <Box
-                  sx={{
-                    display: 'inline-block',
-                    p: 3,
-                    borderRadius: 2,
-                    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.2)',
-                    backgroundColor: 'white',
-                  }}
-                  my={2}
-                >
-                  <QRCode
-                    value={activeAccessPass.visitor_number || activeAccessPass.invitation_code}
-                    size={180}
-                    style={{
-                      height: 'auto',
-                      width: '180px',
-                      borderRadius: 8,
-                    }}
-                  />
-                </Box>
-                <Box display="flex" gap={3} mb={2}>
-                  <Typography color="error">Tracked</Typography>
-                  <Typography color="error">Low Battery</Typography>
-                </Box>
-                <Typography variant="body2" mb={1}>
-                  Show this while visiting
-                </Typography>
-                <Typography variant="h6">ID : {activeAccessPass.visitor_code}</Typography>
-                <Divider sx={{ width: '100%', my: 2, borderColor: 'grey' }} />
-                <Typography
-                  variant="h5"
-                  color="textSecondary"
-                  fontWeight={700}
-                  mb={1}
-                  textAlign={'start'}
-                >
-                  Parking
-                </Typography>
-                <Grid container spacing={2}>
-                  <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
-                    <Typography variant="body1" color="textSecondary" fontWeight={500}>
-                      Parking Area
-                    </Typography>
-                    <Typography variant="body1" fontWeight="bold">
-                      {activeAccessPass?.parking_area || '-'}
-                    </Typography>
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
-                    <Typography variant="body1" color="textSecondary" fontWeight={500}>
-                      Parking Slot
-                    </Typography>
-                    <Typography variant="body1" fontWeight="bold">
-                      {activeAccessPass?.parking_slot || '-'}
-                    </Typography>
-                  </Grid>
-
-                  <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
-                    <Typography variant="body1" color="textSecondary" fontWeight={500}>
-                      Vehicle Plate
-                    </Typography>
-                    <Typography variant="body1" fontWeight="bold">
-                      {activeAccessPass.vehicle_plate_number || '-'}
-                    </Typography>
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
-                    <Typography variant="body1" color="textSecondary" fontWeight={500}>
-                      Vehicle Type
-                    </Typography>
-                    <Typography
-                      variant="body1"
-                      fontWeight="bold"
-                      sx={{ textTransform: 'capitalize' }}
-                    >
-                      {activeAccessPass.vehicle_type || '-'}
-                    </Typography>
-                  </Grid>
-                </Grid>
-                {!isGenerating && (
-                  <Button
-                    size="small"
-                    variant="contained"
-                    className="no-print"
-                    onClick={handleOpenParkingBlocker}
-                    disabled={isParkingLoading}
-                    sx={{
-                      mt: 2,
-                      width: '100%',
-                      position: 'relative',
-                      '@media print': {
-                        display: 'none',
-                      },
-                    }}
-                  >
-                    {isParkingLoading ? (
-                      <CircularProgress
-                        size={22}
-                        sx={{
-                          color: 'white',
-                        }}
-                      />
-                    ) : (
-                      'Open Parking Blocker'
-                    )}
-                  </Button>
-                )}
-              </Box>
-            </Box>
-          </DialogContent>
-        </Dialog>
+        <AccessPassDialog
+          open={openAccess}
+          onClose={handleCloseAccess}
+          data={activeAccessPass}
+          isGenerating={isGenerating}
+          isParkingLoading={isParkingLoading}
+          onDownload={handleDownloadPDF}
+          onOpenParking={handleOpenParkingBlocker}
+          formatVisitorPeriodLocal={formatVisitorPeriodLocal}
+          ref={printRef}
+        />
       )}
       <Portal>
         <Snackbar

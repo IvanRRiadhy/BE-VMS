@@ -219,14 +219,14 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
         title: 'User',
         icon: IconUsers,
         chipColor: 'secondary',
-        href: '/admin/user',
+        href: '/admin/users',
       },
       {
         id: uniqueId(),
         title: 'User Group',
         icon: IconUsers,
         chipColor: 'secondary',
-        href: '/admin/user-group',
+        href: '/admin/users-group',
       },
     ],
   },
@@ -276,7 +276,7 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
   },
   {
     id: uniqueId(),
-    title: 'Admin View',
+    title: 'Operator View',
     icon: IconEye,
     href: '/admin/view',
   },
@@ -517,7 +517,7 @@ export const OperatorAdminNavListingData: ItemDataCustomNavListing[] = [
   },
   {
     id: uniqueId(),
-    title: 'Admin View',
+    title: 'Operator View',
     icon: IconEye,
     href: '/operator-admin/view',
   },
@@ -746,7 +746,7 @@ export const OperatorAdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] =
   },
   {
     id: uniqueId(),
-    title: 'Admin View',
+    title: 'Operator View',
     icon: IconEye,
     href: '/operator-admin/view',
   },
@@ -998,7 +998,7 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
 
   {
     id: uniqueId(),
-    title: 'Admin View',
+    title: 'Operator View',
     icon: IconEye,
     href: '/admin/view',
   },
@@ -1263,12 +1263,18 @@ export const OperatorNavListingData: ItemDataCustomNavListing[] = [
   //   icon: IconDeviceCctv,
   //   href: '/operator/monitoring',
   // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Transaction Log',
-  //   icon: IconReport,
-  //   href: '/operator/transaction-log',
-  // },
+  {
+    id: uniqueId(),
+    title: 'Transaction Log',
+    icon: IconReport,
+    href: '/operator/transaction-log',
+  },
+  {
+    id: uniqueId(),
+    title: 'Visitor',
+    icon: IconReport,
+    href: '/operator/visitor',
+  },
 
   // {
   //   id: uniqueId(),
@@ -1303,12 +1309,12 @@ export const OperatorCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
   //   icon: IconDeviceCctv,
   //   href: '/operator/monitoring',
   // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Transaction Log',
-  //   icon: IconReport,
-  //   href: '/operator/transaction-log',
-  // },
+  {
+    id: uniqueId(),
+    title: 'Transaction Log',
+    icon: IconReport,
+    href: '/operator/transaction-log',
+  },
   // {
   //   id: uniqueId(),
   //   title: 'Approval Workflow',
@@ -1321,4 +1327,10 @@ export const OperatorCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
   //   icon: IconReport,
   //   href: '/operator/operator-activity-log',
   // },
+  {
+    id: uniqueId(),
+    title: 'Visitor',
+    icon: IconReport,
+    href: '/operator/visitor',
+  },
 ];

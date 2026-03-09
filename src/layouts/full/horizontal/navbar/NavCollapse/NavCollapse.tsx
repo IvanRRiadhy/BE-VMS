@@ -265,6 +265,8 @@ const NavCollapse = ({
     setOpen(isActive);
   }, [pathname, menu.children]);
 
+  const isActive = pathname === menu.href || pathname.startsWith(menu.href + '/');
+
   // ✅ Styled main list item
   const ListItemStyled = styled(ListItemButton)(() => ({
     width: '100%',
@@ -277,11 +279,11 @@ const NavCollapse = ({
     position: 'relative',
     whiteSpace: 'nowrap',
     color:
-      open || pathname.includes(menu.href)
+      open || isActive
         ? theme.palette.common.white
         : theme.palette.text.secondary,
     backgroundColor:
-      open || pathname.includes(menu.href) ? theme.palette.primary.main : 'transparent',
+      open || isActive ? theme.palette.primary.main : 'transparent',
     transition: 'all 0.2s ease',
     '&:hover': {
       backgroundColor: theme.palette.primary.main,

@@ -90,7 +90,7 @@ const Content = () => {
   const debouncedSearch = useDebounce(searchKeyword, 400);
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['users', token, page, rowsPerPage, debouncedSearch],
+    queryKey: ['users-group', token, page, rowsPerPage, debouncedSearch],
     queryFn: async () => {
       const start = page * rowsPerPage;
       const response = await getUserGroupDt(token as string, start, rowsPerPage, debouncedSearch);
@@ -237,6 +237,7 @@ const Content = () => {
       const manageVisitor: string[] = [];
       const visitorType: any[] = [];
       const manageSite: any[] = [];
+      const siteAssignment: any[] = [];
 
       manageVisitorCollection.forEach((item: any) => {
         if (item.permission) {
@@ -261,6 +262,12 @@ const Content = () => {
           permissions.push('ManageSiteScope');
           return;
         }
+        if (item.permission === 'SiteAssignment') {
+          siteAssignment.push(item.site_id?.toLowerCase());
+
+          permissions.push('SiteAssignment');
+          return;
+        }
       });
 
       accessControlCollection.forEach((item: any) => {
@@ -279,19 +286,6 @@ const Content = () => {
       });
 
       permissionCollection.forEach((item: any) => {
-        // if (item.permission === 'SiteAssignment') {
-        //   accesses.push({
-        //     id: item.id,
-        //     site_id: item.site_id,
-        //     can_grant: item.can_grant,
-        //     can_revoke: item.can_revoke,
-        //     can_block: item.can_block,
-        //   });
-
-        //   permissions.push('SiteAssignment');
-        //   return;
-        // }
-
         // BASIC PERMISSION
         if (item.permission) {
           permissions.push(item.permission);
@@ -307,16 +301,18 @@ const Content = () => {
       if (organization.length > 0) {
         permissions.push('OrganizationAssignment');
       }
-
       visitorTypeCollection.forEach((item: any) => {
-        if (item.visitor_type_id) {
+        if (item.visitor_type_id && item.permission) {
           visitorType.push(item.visitor_type_id);
+
+          if (
+            item.permission === 'ManageVisitorTypeScope' ||
+            item.permission === 'VisitorTypeAssignment'
+          ) {
+            permissions.push(item.permission);
+          }
         }
       });
-
-      if (visitorType.length > 0) {
-        permissions.push('ManageVisitorTypeScope');
-      }
 
       setFormData({
         group_id: row.id,
@@ -328,6 +324,7 @@ const Content = () => {
         registeredSite,
         visitorType,
         manageSite,
+        siteAssignment,
       });
 
       setPermissionSites((prev) => ({
@@ -423,7 +420,7 @@ const Content = () => {
   const GROUP_PERMISSION_MAP: Record<string, string[]> = {
     employee: [
       'AsHead',
-      'InviteVisitor',
+      'InviteVistor',
       'InviteWithinAllowPreRegister',
       'InviteWithinOwnOrganization',
       'InviteWithinOwnSite',
@@ -482,66 +479,8 @@ const Content = () => {
     registeredSite: [] as string[],
     manageSite: [] as any[],
     visitorType: [] as any[],
+    siteAssignment: [] as any[],
   });
-
-  // const handleSubmitPermission = async () => {
-  //   // e.preventDefault();
-  //   if (!token) return;
-
-  //   try {
-  //     setLoading(true);
-
-  //     // 1️⃣ Delete dulu
-  //     await handleDeleteAll();
-
-  //     if (formData.permissions.length > 0) {
-  //       await handleSubmitPermissions(formData.permissions);
-  //     }
-
-  //     if (
-  //       formData.permissions.includes('OrganizationAssignment') &&
-  //       formData.organization.length > 0
-  //     ) {
-  //       await handleOrganizationnPermission();
-  //     }
-
-  //     if (formData.permissions.includes('ManageSiteScope') && formData.manageSite.length > 0) {
-  //       await handleManageSitePermission();
-  //     }
-
-  //     if (
-  //       formData.permissions.includes('ManageVisitorTypeScope') &&
-  //       formData.visitorType.length > 0
-  //     ) {
-  //       await handleManageVisitorTypeScope();
-  //     }
-
-  //     // if (formData.permissions.includes('SiteAssignment') && formData.accesses.length > 0) {
-  //     //   await handleSitePermission();
-  //     // }
-
-  //     if (
-  //       formData.permissions.includes('OperatorRegisterSite') &&
-  //       formData.registeredSite.length > 0
-  //     ) {
-  //       await handleRegisteredSite();
-  //     }
-
-  //     if (
-  //       formData.permissions.includes('ManageVisitor') &&
-  //       (permissionSites['ManageVisitor'] ?? []).length > 0
-  //     ) {
-  //       await handleSubmitManageVisitor();
-  //     }
-
-  //     showSwal('success', 'All permissions updated successfully');
-  //     setOpenPermission(false);
-  //   } catch (err) {
-  //     showSwal('error', 'Unexpected error occurred');
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
 
   const handleSubmitPermission = async () => {
     if (!token) return;
@@ -568,6 +507,10 @@ const Content = () => {
         formData.organization.length > 0
       ) {
         await handleOrganizationnPermission();
+      }
+
+      if (formData.permissions.includes('SiteAssignment')) {
+        await handleSiteAssignment();
       }
 
       // 5️⃣ MANAGE SITE
@@ -615,6 +558,8 @@ const Content = () => {
         user_group_id: edittingId,
         permission: perm,
       }));
+
+      console.log('payload', payload);
 
       await createPermission(token as string, payload, edittingId);
     } catch (error: any) {
@@ -692,21 +637,6 @@ const Content = () => {
     }
   };
 
-  // const handleSitePermission = async () => {
-  //   try {
-  //     if (!formData.accesses.length) return;
-
-  //     const payload = formData.accesses.map((site) => ({
-  //       user_group_id: edittingId,
-  //       site_id: site.site_id,
-  //       permission: 'SiteAssignment',
-  //     }));
-  //     await createPermissionSite(token as string, payload, edittingId);
-  //   } catch (error: any) {
-  //     showSwal('error', error.response?.data?.msg ?? 'Failed update site permission');
-  //   }
-  // };
-
   const handleManageSitePermission = async () => {
     try {
       if (!formData.manageSite.length) return;
@@ -715,6 +645,22 @@ const Content = () => {
         user_group_id: edittingId,
         site_id: site,
         permission: 'ManageSiteScope',
+      }));
+
+      await createPermissionSite(token as string, payload, edittingId);
+    } catch (error: any) {
+      showSwal('error', error.response?.data?.msg ?? 'Failed update site permission');
+    }
+  };
+
+  const handleSiteAssignment = async () => {
+    try {
+      if (!formData.siteAssignment.length) return;
+
+      const payload = formData.siteAssignment.map((site) => ({
+        user_group_id: edittingId,
+        site_id: site,
+        permission: 'SiteAssignment',
       }));
 
       await createPermissionSite(token as string, payload, edittingId);
@@ -769,6 +715,8 @@ const Content = () => {
         permission: permissionName,
       }));
 
+      console.log('Payload Visitor Type Permission:', payload);
+
       await createPermissionVisitorType(token as string, payload, edittingId);
     } catch (error: any) {
       console.error(error);
@@ -815,6 +763,7 @@ const Content = () => {
       visitorType: [],
       manageSite: [],
       deleted_access_ids: [],
+      siteAssignment: [],
     });
 
     setPermissionSites({});
@@ -860,6 +809,7 @@ const Content = () => {
       visitorType: [],
       manageSite: [],
       deleted_access_ids: [],
+      siteAssignment: [],
     });
 
     setPermissionSites({});

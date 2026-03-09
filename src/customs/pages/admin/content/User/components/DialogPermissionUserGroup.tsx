@@ -139,19 +139,35 @@ const DialogPermissionUserGroup: React.FC<Props> = ({
                         onChange={(e) => {
                           const isChecked = e.target.checked;
 
-                          setFormData((prev: any) => ({
-                            ...prev,
-                            permissions: isChecked
-                              ? [...(prev.permissions ?? []), perm]
-                              : prev.permissions.filter((p: any) => p !== perm),
-                          }));
+                          setFormData((prev: any) => {
+                            let newPermissions = prev.permissions ?? [];
 
-                          if (!isChecked) {
-                            setPermissionSites((prev) => ({
-                              ...prev,
-                              [perm]: [],
-                            }));
-                          }
+                            if (isChecked) {
+                              newPermissions = [...newPermissions, perm];
+                              return {
+                                ...prev,
+                                permissions: newPermissions,
+                              };
+                            } else {
+                              newPermissions = newPermissions.filter((p: string) => p !== perm);
+
+                              if (
+                                perm === 'VisitorTypeAssignment' ||
+                                perm === 'ManageVisitorTypeScope'
+                              ) {
+                                return {
+                                  ...prev,
+                                  permissions: newPermissions,
+                                  visitorType: [],
+                                };
+                              }
+
+                              return {
+                                ...prev,
+                                permissions: newPermissions,
+                              };
+                            }
+                          });
                         }}
                       />
                     }
@@ -328,6 +344,29 @@ const DialogPermissionUserGroup: React.FC<Props> = ({
                     />
                   )}
 
+                  {checked && perm === 'SiteAssignment' && (
+                    <Autocomplete
+                      multiple
+                      options={siteOptions}
+                      getOptionLabel={(option: any) => option.name || ''}
+                      value={siteOptions.filter((opt: any) => formData.siteAssignment.includes(opt.id))}
+                      onChange={(_, newValues) => {
+                        setFormData((prev: any) => ({
+                          ...prev,
+                          siteAssignment: newValues.map((v: any) => v.id),
+                        }));
+                      }}
+                      renderInput={(params) => (
+                        <CustomTextField
+                          {...params}
+                          placeholder="Select sites"
+                          size="small"
+                          fullWidth
+                        />
+                      )}
+                    />
+                  )}
+
                   {/* REGISTERED SITE */}
                   {checked && perm === 'OperatorRegisterSite' && (
                     <Autocomplete
@@ -404,13 +443,40 @@ const DialogPermissionUserGroup: React.FC<Props> = ({
                     />
                   )}
 
+                  {checked && perm === 'VisitorTypeAssignment' && (
+                    <Autocomplete
+                      multiple
+                      options={visitorTypeOptions}
+                      getOptionLabel={(option: any) => option.name || ''}
+                      value={visitorTypeOptions.filter((opt: any) =>
+                        formData.visitorType.includes(opt.id),
+                      )}
+                      onChange={(_, newValues) => {
+                        setFormData((prev: any) => ({
+                          ...prev,
+                          visitorType: newValues.map((v: any) => v.id),
+                        }));
+                      }}
+                      renderInput={(params) => (
+                        <CustomTextField
+                          {...params}
+                          placeholder="Select visitor type"
+                          size="small"
+                          fullWidth
+                        />
+                      )}
+                    />
+                  )}
+
                   {/* GENERIC PERMISSION DROPDOWN */}
                   {checked &&
                     permissionNeedSite.includes(perm) &&
                     perm !== 'OrganizationAssignment' &&
                     perm !== 'ManageSiteScope' &&
                     perm !== 'ManageVisitorTypeScope' &&
+                    perm !== 'VisitorTypeAssignment' &&
                     perm !== 'ManageAccessScope' &&
+                    perm !== 'SiteAssignment' &&
                     perm !== 'OperatorRegisterSite' && (
                       <Autocomplete
                         multiple

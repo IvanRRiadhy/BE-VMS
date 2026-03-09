@@ -67,10 +67,10 @@ export default function AccessDialog({
         <IconX />
       </IconButton>
 
-      <DialogContent dividers>
+      <DialogContent dividers >
         <DynamicTable
           data={accessData.map(({ trx_visitor_id, visitors, ...rest }) => rest)}
-          isHaveChecked
+          isHaveChecked={false}
           isHaveHeaderTitle
           titleHeader="Access"
           overflowX="auto"
@@ -78,12 +78,12 @@ export default function AccessDialog({
           isNoActionTableHead
           onAccessAction={handleAccessAction as any}
           onCheckedChange={(checkedRows) => {
-            const ids = checkedRows.map((r: any) => r.access_control_id);
+            const ids = checkedRows.map((r: any) => r.id);
             setSelectedAccessIds(ids);
           }}
         />
 
-        <Box sx={{ display: 'flex', gap: 1 }}>
+        {/* <Box sx={{ display: 'flex', gap: 1 }}>
           <CustomSelect
             sx={{ width: '30%', p: 0, mt: 2, backgroundColor: 'white' }}
             value={selectedActionAccess}
@@ -149,7 +149,7 @@ export default function AccessDialog({
           >
             Apply
           </Button>
-        </Box>
+        </Box> */}
       </DialogContent>
     </Dialog>
   );

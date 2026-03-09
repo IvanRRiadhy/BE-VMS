@@ -23,6 +23,7 @@ import {
   Tab,
   MenuItem,
   Checkbox,
+  Chip,
 } from '@mui/material';
 import type { AlertColor } from '@mui/material/Alert';
 import PageContainer from 'src/components/container/PageContainer';
@@ -54,7 +55,7 @@ import {
   getVisitorEmployee,
 } from 'src/customs/api/admin';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
-import { IconClipboard, IconUsers } from '@tabler/icons-react';
+import { IconClipboard, IconLink, IconUsers, IconX } from '@tabler/icons-react';
 import dayjs from 'dayjs';
 import Praregist from './Praregist';
 import {
@@ -63,9 +64,26 @@ import {
   getOngoingInvitation,
 } from 'src/customs/api/visitor';
 import { useSelector } from 'react-redux';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import EmployeeDetailDialog from '../Components/Dialog/EmployeeDetailDialog';
 import SelectRegisteredSiteDialog from '../Components/Dialog/SelectRegisteredSiteDialog';
+import { getInvitationVisitorType } from 'src/customs/api/InvitationData';
+import {
+  createShareLink,
+  createShareLinkByEmail,
+  createShareLinkByEmailById,
+  deleteShareLink,
+  getShareLinkByDt,
+} from 'src/customs/api/ShareLink';
+import Swal from 'sweetalert2';
+import { showSwal } from 'src/customs/components/alerts/alerts';
+import CreateLinkDialog from '../Components/Dialog/CreateLinkDialog';
+import DetailLinkDialog from '../Components/Dialog/DetailLinkDialog';
+import SendEmailDialog from '../Components/Dialog/SendEmailDialog';
+import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
+import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import RelatedInvitationDialog from '../Components/Dialog/RelatedInvitationDialog';
+import InvitationShareDialog from '../../admin/content/Visitor/Trx/components/Dialog/InvitationShareDialog';
 
 type VisitorTableRow = {
   id: string;
@@ -139,6 +157,13 @@ const Content = () => {
       subTitleSetting: 'image',
       color: 'none',
     },
+    {
+      title: 'Share Link',
+      icon: IconLink,
+      subTitle: iconAdd,
+      subTitleSetting: 'image',
+      color: 'none',
+    },
   ];
 
   const employeeId = useSelector((state: any) => state.userReducer.data?.employee_id);
@@ -162,11 +187,14 @@ const Content = () => {
   const [visitorError, setVisitorError] = useState<string | null>(null);
   const [visitorDetail, setVisitorDetail] = useState<any[]>([]);
   const [openRelatedInvitation, setOpenRelatedInvitation] = useState(false);
-
+  const [emails, setEmails] = useState<string[]>([]);
   // Registered Site
   const [siteData, setSiteData] = useState<any[]>([]);
   const [selectedSite, setSelectedSite] = useState<any | null>(null);
   const [wizardKey, setWizardKey] = useState(0);
+  const [generatedLink, setGeneratedLink] = useState('');
+  const [openInviteViaLinkEmail, setOpenInviteViaLinkEmail] = useState(false);
+  const [tabValue, setTabValue] = useState(0);
 
   const resetRegisteredFlow = () => {
     setSelectedSite(null);
@@ -181,6 +209,8 @@ const Content = () => {
 
   // const [openEmployeeDialog, setOpenEmployeeDialog] = useState(false);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
+  const [emailInput, setEmailInput] = useState('');
+  const [selectedShareLinkId, setSelectedShareLinkId] = useState<string | null>(null);
 
   const handleEmployeeClick = (employeeId: string) => {
     setSelectedEmployeeId(employeeId);
@@ -232,8 +262,8 @@ const Content = () => {
       const end_date = dayjs().format('YYYY-MM-DD');
 
       try {
-        // const response = await getInvitations(token as string, start_date, end_date);
-        const response = await getOngoingInvitation(token as string);
+        const response = await getInvitations(token as string, start_date, end_date);
+        // const response = await getOngoingInvitation(token as string);
 
         let mapped = response.collection.map((item: any) => {
           const isEmployeeHost = item.host === employeeId?.toUpperCase();
@@ -469,6 +499,159 @@ const Content = () => {
     fetchVisitorType();
   }, [token]);
 
+  const [openDetailShareLink, setOpenDetailShareLink] = useState(false);
+  const [openDetailLink, setOpenDetailLink] = useState(false);
+  const [openCreateLink, setOpenCreateLink] = useState(false);
+  const [pendingPayload, setPendingPayload] = useState<any>(null);
+  const [openSendEmail, setOpenSendEmail] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [sortDir, setSortDir] = useState<string>('desc');
+  const queryClient = useQueryClient();
+  const [expiredAt, setExpiredAt] = useState<string | null>(null);
+
+  const handleDeleteLink = async (id: string) => {
+    try {
+      const confirm = await Swal.fire({
+        title: 'Do you want to delete this link?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Yes',
+        cancelButtonText: 'Cancel',
+        reverseButtons: true,
+        confirmButtonColor: '#4caf50',
+        customClass: {
+          title: 'swal2-title-custom',
+          htmlContainer: 'swal2-text-custom',
+        },
+      });
+
+      if (!confirm.isConfirmed) return;
+
+      await deleteShareLink(token as string, id);
+      await queryClient.invalidateQueries({
+        queryKey: ['share-links'],
+      });
+      showSwal('success', 'Link deleted successfully.');
+    } catch (error) {
+      console.error('Delete link error:', error);
+      showSwal('error', 'Something went wrong while deleting link.');
+    }
+  };
+
+  const handleCopyLink = (link: string) => {
+    navigator.clipboard.writeText(link);
+    showSwal('success', 'Link copied to clipboard.');
+  };
+
+  const handleDetailLink = (link: string) => {
+    setOpenDetailLink(true);
+  };
+
+  const start = page * rowsPerPage;
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: ['share-links', page, rowsPerPage, searchKeyword, sortDir],
+    queryFn: async () => {
+      const res = await getShareLinkByDt(
+        token as string,
+        start,
+        rowsPerPage,
+        searchKeyword,
+        sortDir,
+      );
+
+      return res;
+    },
+
+    staleTime: 1000 * 60 * 5,
+    enabled: !!token,
+    gcTime: 1000 * 60 * 2,
+    placeholderData: (previousData) => previousData,
+  });
+
+  const shareLinkList =
+    data?.collection?.map((item: any) => ({
+      id: item.id,
+      agenda: item.agenda,
+      url: item.url,
+      max_usage: item.max_usage,
+      visitor_period_start: formatDateTime(item.visitor_period_start),
+      visitor_period_end: formatDateTime(item.visitor_period_end),
+      expired: new Date(item.expired_at + 'Z').toLocaleString(undefined, {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+      link_status: item.link_status,
+    })) || [];
+
+  const totalFilterRecords = data?.RecordsFiltered || 0;
+  const handleAddShareLink = () => {
+    setOpenCreateLink(true);
+  };
+
+  const getExpireText = () => {
+    if (!expiredAt) return '';
+
+    const now = new Date();
+    const expireDate = new Date(expiredAt);
+
+    const diffMs = expireDate.getTime() - now.getTime();
+
+    if (diffMs <= 0) return '0';
+
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+
+    if (diffDays > 0) {
+      return `${diffDays} day${diffDays > 1 ? 's' : ''}`;
+    }
+
+    return `${diffHours} hour${diffHours > 1 ? 's' : ''}`;
+  };
+
+  const handleSendInvitation = async () => {
+    let finalEmails = [...emails];
+
+    if (emailInput.trim() !== '') {
+      finalEmails.push(emailInput.trim());
+    }
+
+    if (!finalEmails.length || !selectedShareLinkId) {
+      showSwal('error', 'Please enter at least one email');
+      return;
+    }
+
+    try {
+      const payload = {
+        emails: finalEmails,
+      };
+
+      console.log('payload', payload);
+      await createShareLinkByEmailById(token as string, payload, selectedShareLinkId);
+      showSwal('success', 'Invitation sent successfully');
+
+      setEmails([]);
+      setEmailInput('');
+    } catch (error) {
+      console.error(error);
+      showSwal('error', 'Failed to send invitation');
+    }
+  };
+
+  const handleChangeTab = (event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
+  };
+
+  const handleOpenInviteDialog = (id: string, link: string, expired_at: string) => {
+    setSelectedShareLinkId(id);
+    setGeneratedLink(link);
+    setExpiredAt(expired_at);
+    setTabValue(0);
+    setOpenInviteViaLinkEmail(true);
+  };
+
   return (
     <>
       <PageContainer title="Invitation" description="invitation page">
@@ -479,12 +662,11 @@ const Content = () => {
                 cardMarginBottom={1}
                 items={cards}
                 onImageClick={(_, index) => {
-                  if (index === 2) {
-                    setFlowTarget('invitation');
-                    setOpenInvitationVisitor(true);
-                  } else if (index === 1) {
+                  if (index === 1) {
                     setFlowTarget('preReg');
                     setOpenPreRegistration(true);
+                  } else if (index === 2) {
+                    setOpenDetailShareLink(true);
                   } else {
                     setOpenDialogIndex(index);
                   }
@@ -599,7 +781,7 @@ const Content = () => {
           </IconButton>
         </DialogTitle>
         <Divider />
-        <DialogContent sx={{ paddingTop: '0px' }}>
+        <DialogContent sx={{ paddingTop: '10px' }}>
           <Praregist
             key={wizardKey}
             formData={formDataAddVisitor}
@@ -650,214 +832,133 @@ const Content = () => {
       />
 
       {/* Related Visitor */}
-      <Dialog open={openRelatedInvitation} onClose={handleCloseRelation} fullWidth maxWidth="xl">
-        <DialogTitle>Related Visitor Invitation</DialogTitle>
-        <IconButton
-          aria-label="close"
-          onClick={handleCloseRelation}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            color: (theme) => theme.palette.grey[500],
-          }}
-        >
-          <CloseIcon />
-        </IconButton>
+      <RelatedInvitationDialog
+        open={openRelatedInvitation}
+        onClose={handleCloseRelation}
+        visitorDetail={visitorDetail}
+        selected={selected}
+        setSelected={setSelected}
+        disabledIndexes={disabledIndexes}
+        selectedVisitorData={selectedVisitorData}
+      />
 
+      {/* Share Link */}
+      <Dialog
+        open={openDetailShareLink}
+        onClose={() => setOpenDetailShareLink(false)}
+        fullWidth
+        maxWidth="xl"
+      >
+        <DialogTitle>
+          List Share Link
+          <IconButton
+            aria-label="close"
+            onClick={() => {
+              setOpenDetailShareLink(false);
+            }}
+            sx={{
+              position: 'absolute',
+              top: 8,
+              right: 8,
+            }}
+          >
+            <IconX />
+          </IconButton>
+        </DialogTitle>
         <DialogContent dividers>
-          <Grid container spacing={2} alignItems={'stretch'}>
-            {/* Kiri: daftar avatar visitor */}
-            <Grid size={{ xs: 12 }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 2,
-                  overflowX: 'auto',
-                  p: 1,
-                  maxWidth: '100%',
-                  '&::-webkit-scrollbar': {
-                    height: 6,
-                  },
-                  '&::-webkit-scrollbar-thumb': {
-                    backgroundColor: 'rgba(0,0,0,0.3)',
-                    borderRadius: 3,
-                  },
-                }}
-              >
-                {visitorDetail.length === 0 ? (
-                  <Typography color="text.secondary">No related visitors found</Typography>
-                ) : (
-                  visitorDetail.map((v: any, index: any) => {
-                    const isDisabled = disabledIndexes.includes(index);
-                    const isSelected = selected.includes(index);
-
-                    return (
-                      <Box
-                        key={index}
-                        sx={{
-                          position: 'relative',
-                          cursor: isDisabled ? 'not-allowed' : 'pointer',
-                          opacity: isDisabled ? 0.4 : 1,
-                          textAlign: 'center',
-                          borderRadius: '50%',
-                          transition: 'all 0.2s ease',
-                          flex: '0 0 auto',
-                          '&:hover': { transform: isDisabled ? 'none' : 'scale(1.05)' },
-                        }}
-                        onClick={() => {
-                          if (isDisabled) return;
-                          setSelected((prev) =>
-                            prev.includes(index)
-                              ? prev.filter((i) => i !== index)
-                              : [...prev, index],
-                          );
-                        }}
-                      >
-                        <Avatar
-                          src={`${axiosInstance2.defaults.baseURL}/cdn` + v.selfie_image}
-                          alt={v.name}
-                          sx={{ width: 60, height: 60 }}
-                        />
-                        <Checkbox
-                          checked={isSelected}
-                          disabled={isDisabled}
-                          sx={{
-                            position: 'absolute',
-                            top: -6,
-                            right: -6,
-                            bgcolor: 'white',
-                            borderRadius: '50%',
-                            p: 0.2,
-                            '& .MuiSvgIcon-root': { fontSize: 16 },
-                          }}
-                        />
-                        <Typography mt={1} fontSize={14} noWrap width={60}>
-                          {v.visitor.name}
-                        </Typography>
-                      </Box>
-                    );
-                  })
-                )}
-              </Box>
-
-              {/* Tombol select/unselect */}
-              {/* <Box display="flex" justifyContent="flex-start" gap={1}>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={() =>
-                    setSelected(
-                      visitorDetail.map((_, i) => i).filter((i) => !disabledIndexes.includes(i)),
-                    )
-                  }
-                  disabled={visitorDetail.length === 0}
-                >
-                  Select All
-                </Button>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  color="error"
-                  onClick={() => setSelected([])}
-                  disabled={selected.length === 0}
-                >
-                  Unselect All
-                </Button>
-              </Box> */}
-
-              <Divider sx={{ mt: 2, mb: 2 }} />
-
-              {/* Tabel visitor terpilih */}
-              <DynamicTable
-                data={selectedVisitorData}
-                isHaveChecked={false}
-                isHavePagination={false}
-                isHaveHeaderTitle={true}
-                titleHeader="Selected Visitor"
-              />
-
-              {/* Dropdown Action + Apply */}
-              {/* <Box display="flex" alignItems="center" gap={2} mt={2}>
-                <CustomSelect
-                  sx={{ width: '20%' }}
-                  value={selectedAction}
-                  onChange={(e: any) => {
-                    const action = e.target.value;
-                    setSelectedAction(action);
-
-                    // Kalau belum pilih, reset semua
-                    if (!action) {
-                      setDisabledIndexes([]);
-                      setSelected([]);
-                      return;
-                    }
-
-                    const newDisabledIndexes = visitorDetail
-                      .map((v, i) => {
-                        const status = (v.visitor_status || '').trim();
-
-                        if (status === 'Block' && action !== 'Unblock') {
-                          return i;
-                        }
-
-                        switch (action) {
-                          case 'Checkin':
-                            return status === 'Checkin' || status === 'Checkout' ? i : null;
-
-                          case 'Checkout':
-                            return status !== 'Checkin' ? i : null;
-
-                          case 'Block':
-                            return status === 'Block' ? i : null;
-
-                          case 'Unblock':
-                            return status !== 'Block' ? i : null;
-
-                          default:
-                            return null;
-                        }
-                      })
-                      .filter((x) => x !== null);
-
-                    // console.log('🎯 Action:', action);
-                    // console.log('🚫 Disabled indexes:', newDisabledIndexes);
-
-                    // Update state
-                    setDisabledIndexes(newDisabledIndexes);
-
-                    // Pastikan selected tidak mengandung index yang baru di-disable
-                    setSelected((prev) => prev.filter((i) => !newDisabledIndexes.includes(i)));
-                  }}
-                  displayEmpty
-                >
-                  <MenuItem value="">Select Action</MenuItem>
-                  <MenuItem value="Checkin">Check In</MenuItem>
-                  <MenuItem value="Checkout">Check Out</MenuItem>
-                  <MenuItem value="Block">Block</MenuItem>
-                  <MenuItem value="Unblock">Unblock</MenuItem>
-                </CustomSelect>
-
-                <Button
-                  sx={{ width: '10%' }}
-                  variant="contained"
-                  color="primary"
-                  disabled={
-                    !selectedAction ||
-                    visitorDetail.length === 0 ||
-                    disabledIndexes.length === visitorDetail.length ||
-                    selected.length === 0
-                  }
-                  onClick={() => confirmMultipleAction(selectedAction as any)}
-                >
-                  Apply
-                </Button>
-              </Box> */}
-            </Grid>
-          </Grid>
+          <DynamicTable
+            data={shareLinkList}
+            isHaveHeaderTitle
+            isHaveChecked={true}
+            isNoActionTableHead={true}
+            titleHeader="Share Link"
+            isCopyLink={true}
+            isHavePagination={true}
+            totalCount={totalFilterRecords}
+            rowsPerPageOptions={[10, 50, 100]}
+            onPaginationChange={(page, rowsPerPage) => {
+              setPage(page);
+              setRowsPerPage(rowsPerPage);
+            }}
+            onCopyLink={(row: any) => handleOpenInviteDialog(row.id, row.url, row.expired_at)}
+            onDetailLink={(row: any) => handleDetailLink(row)}
+            onDelete={(row: any) => handleDeleteLink(row.id)}
+            isHaveAddData={true}
+            onAddData={handleAddShareLink}
+          />
         </DialogContent>
       </Dialog>
+
+      {/* Dialog Invite via link & invite via email */}
+      <InvitationShareDialog
+        open={openInviteViaLinkEmail}
+        onClose={() => setOpenInviteViaLinkEmail(false)}
+        generatedLink={generatedLink}
+        getExpireText={getExpireText}
+        handleCopyLink={handleCopyLink}
+        handleSendInvitation={handleSendInvitation}
+      />
+
+      <CreateLinkDialog
+        open={openCreateLink}
+        onClose={() => setOpenCreateLink(false)}
+        onCreateLink={async (payload) => {
+          try {
+            setIsGenerating(true);
+
+            await createShareLink(token as string, payload);
+            await queryClient.invalidateQueries({
+              queryKey: ['share-links'],
+            });
+            setOpenCreateLink(false);
+            showSwal('success', 'Share link created successfully');
+          } catch (err) {
+            console.error(err);
+            showSwal('error', 'Failed to create share link');
+          } finally {
+            setIsGenerating(false);
+          }
+        }}
+        onSendEmail={(payload) => {
+          setPendingPayload(payload);
+          setOpenSendEmail(true);
+        }}
+      />
+
+      <DetailLinkDialog
+        open={openDetailLink}
+        onClose={() => setOpenDetailLink(false)}
+        dataVisitor={[]}
+      />
+
+      <SendEmailDialog
+        open={openSendEmail}
+        onClose={() => setOpenSendEmail(false)}
+        onSend={async (emails: string[]) => {
+          try {
+            setIsGenerating(true);
+
+            const finalPayload = {
+              ...pendingPayload,
+              emails: emails,
+            };
+
+            await createShareLinkByEmail(token as string, finalPayload);
+            await queryClient.invalidateQueries({
+              queryKey: ['share-links'],
+            });
+            setOpenSendEmail(false);
+            setOpenCreateLink(false);
+
+            showSwal('success', 'Share link sent successfully');
+          } catch (err) {
+            console.error(err);
+            showSwal('error', 'Failed to send share link');
+          } finally {
+            setIsGenerating(false);
+          }
+        }}
+      />
 
       {/* Unsaved Changes */}
       <Dialog open={confirmDialogOpen} onClose={handleCancelDiscard} fullWidth maxWidth="sm">

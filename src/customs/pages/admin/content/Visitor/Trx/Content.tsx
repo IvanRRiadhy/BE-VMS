@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Dialog,
@@ -15,6 +15,13 @@ import {
   Autocomplete,
   Snackbar,
   Alert,
+  Backdrop,
+  Tabs,
+  FormGroup,
+  FormControlLabel,
+  Tab,
+  TextareaAutosize,
+  Chip,
 } from '@mui/material';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -55,9 +62,11 @@ import {
 import FilterMoreContent from './FilterMoreContent';
 import {
   IconClipboard,
+  IconLink,
   IconQrcode,
   IconUser,
   IconUsers,
+  IconX,
 } from '@tabler/icons-react';
 import EmployeeDetailDialog from '../Dialog/EmployeeDetailDialog';
 import VisitorDetailDialog from '../Dialog/VisitorDetailDialog';
@@ -68,6 +77,21 @@ import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import { useNavigate } from 'react-router';
 import RegisteredSiteDialog from './components/Dialog/RegisteredSiteDialog';
 import QrScannerDialog from './components/Dialog/QrScannerDialog';
+import Swal from 'sweetalert2';
+import {
+  createShareLink,
+  createShareLinkByEmail,
+  createShareLinkByEmailById,
+  deleteShareLink,
+  getShareLinkByDt,
+} from 'src/customs/api/ShareLink';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import CreateLinkDialog from 'src/customs/pages/Employee/Components/Dialog/CreateLinkDialog';
+import DetailLinkDialog from 'src/customs/pages/Employee/Components/Dialog/DetailLinkDialog';
+import SendEmailDialog from 'src/customs/pages/Employee/Components/Dialog/SendEmailDialog';
+import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import InvitationShareDialog from './components/Dialog/InvitationShareDialog';
+import moment from 'moment';
 
 type VisitorTableRow = {
   id: string;
@@ -102,42 +126,13 @@ const Content = () => {
   const [tableCustomVisitor, setTableCustomVisitor] = useState<VisitorTableRow[]>([]);
   const [selectedRows, setSelectedRows] = useState<[]>([]);
   const [openDetail, setOpenDetail] = useState(false);
+  const [openInviteViaLinkEmail, setOpenInviteViaLinkEmail] = useState(false);
+  const [generatedLink, setGeneratedLink] = useState('');
   const [visitorData, setVisitorData] = useState<any[]>([]);
   const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorRequest>(() => {
     const saved = localStorage.getItem('unsavedVisitorData');
     return saved ? JSON.parse(saved) : CreateVisitorRequestSchema.parse({});
   });
-
-  const cards = [
-    {
-      title: 'Total Visitor',
-      icon: IconUsers,
-      subTitle: `${totalFilteredRecords}`,
-      subTitleSetting: 10,
-      color: 'none',
-    },
-    {
-      title: 'Scan QR Visitor',
-      icon: IconQrcode,
-      subTitle: iconScanQR,
-      subTitleSetting: 'image',
-      color: 'none',
-    },
-    {
-      title: 'Add Invitation',
-      icon: IconUser,
-      subTitle: iconAdd,
-      subTitleSetting: 'image',
-      color: 'none',
-    },
-    {
-      title: 'Add Pre Registration',
-      icon: IconClipboard,
-      subTitle: iconAdd,
-      subTitleSetting: 'image',
-      color: 'none',
-    },
-  ];
 
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
@@ -183,6 +178,7 @@ const Content = () => {
   // Registered Site
   const [siteData, setSiteData] = useState<any[]>([]);
   const [selectedSite, setSelectedSite] = useState<any | null>(null);
+  const queryClient = useQueryClient();
   // Qr Scanner
   const [qrValue, setQrValue] = useState('');
   const [qrMode, setQrMode] = useState<'manual' | 'scan'>('manual');
@@ -193,8 +189,11 @@ const Content = () => {
   const [wizardKey, setWizardKey] = useState(0);
   const [allVisitorEmployee, setAllVisitorEmployee] = useState<any[]>([]);
   const [sites, setSites] = useState<any[]>([]);
+  const [visitorPage, setVisitorPage] = useState(0);
+  const [visitorRowsPerPage, setVisitorRowsPerPage] = useState(10);
   const [employee, setEmployee] = useState<any[]>([]);
   const [vtLoading, setVTLoading] = useState(false);
+  const [emailInput, setEmailInput] = useState('');
   const [dateRange, setDateRange] = useState<{
     startDate: Date | null;
     endDate: Date | null;
@@ -203,8 +202,44 @@ const Content = () => {
     endDate: null,
   });
 
-/*************  ✨ Windsurf Command ⭐  *************/
-/*******  39f34b8b-9c01-4dd4-bc67-c10900a24b20  *******/
+  const cards = [
+    {
+      title: 'Total Visitor',
+      icon: IconUsers,
+      subTitle: `${totalFilteredRecords}`,
+      subTitleSetting: 10,
+      color: 'none',
+    },
+    {
+      title: 'Scan QR Visitor',
+      icon: IconQrcode,
+      subTitle: iconScanQR,
+      subTitleSetting: 'image',
+      color: 'none',
+    },
+    {
+      title: 'Add Invitation',
+      icon: IconUser,
+      subTitle: iconAdd,
+      subTitleSetting: 'image',
+      color: 'none',
+    },
+    {
+      title: 'Add Pre Registration',
+      icon: IconClipboard,
+      subTitle: iconAdd,
+      subTitleSetting: 'image',
+      color: 'none',
+    },
+    {
+      title: 'Share Link',
+      icon: IconLink,
+      subTitle: iconAdd,
+      subTitleSetting: 'image',
+      color: 'none',
+    },
+  ];
+
   const fetchVisitorType = async () => {
     try {
       setVTLoading(true);
@@ -288,7 +323,7 @@ const Content = () => {
   };
 
   const [selectedType, setSelectedType] = useState<
-    'All' | 'Preregis' | 'Checkin' | 'Checkout' | 'Denied' | 'Block' | 'Waiting'
+    'All' | 'Preregis' | 'Checkin' | 'Checkout' | 'Denied' | 'Block' | 'Waiting' | 'Precheckin'
   >('All');
 
   const statusMap: Record<string, string> = {
@@ -336,7 +371,7 @@ const Content = () => {
 
       try {
         const start = page * rowsPerPage;
-        const status = selectedType === 'All' ? undefined : statusMap[selectedType];
+        const statusParam = selectedType === 'All' ? undefined : statusMap[selectedType];
         const isEmergencyParam =
           appliedFilters.emergency_situation === ''
             ? undefined
@@ -354,7 +389,8 @@ const Content = () => {
             ? dayjs(appliedFilters.start_date).utc().toISOString()
             : undefined,
           appliedFilters.end_date ? dayjs(appliedFilters.end_date).utc().toISOString() : undefined,
-          appliedFilters.visitor_status || undefined,
+          // appliedFilters.visitor_status || undefined,
+          statusParam,
           appliedFilters.data_filter,
           appliedFilters.site_id || undefined,
           appliedFilters.visitor_role || undefined,
@@ -367,6 +403,7 @@ const Content = () => {
             id: item.id,
             visitor_type: item.visitor_type_name || '-',
             name: item.visitor_name || '-',
+            invitation_code: item.invitation_code,
             identity_id: item.visitor_identity_id || '-',
             email: item.visitor_email || '-',
             organization: item.visitor_organization_name || '-',
@@ -380,10 +417,10 @@ const Content = () => {
           };
         });
 
-        if (selectedType !== 'All') {
-          const apiStatus = statusMap[selectedType];
-          rows = rows.filter((r) => r.visitor_status === apiStatus);
-        }
+        // if (selectedType !== 'All') {
+        //   const apiStatus = statusMap[selectedType];
+        //   rows = rows.filter((r) => r.visitor_status === apiStatus);
+        // }
 
         // setTableRowVisitors(response.collection);
         setTotalRecords(response.RecordsTotal);
@@ -411,6 +448,86 @@ const Content = () => {
     appliedFilters,
   ]);
 
+  // const start = page * rowsPerPage;
+
+  // const {
+  //   data: visitorResponse,
+  //   isLoading: isLoadingVisitor,
+  //   isFetching: isFetchingVisitor,
+  // } = useQuery({
+  //   queryKey: [
+  //     'visitors',
+  //     visitorPage,
+  //     rowsPerPage,
+  //     sortDir,
+  //     searchKeyword,
+  //     selectedType,
+  //     appliedFilters.start_date,
+  //     appliedFilters.end_date,
+  //     appliedFilters.emergency_situation,
+  //     appliedFilters.is_block,
+  //     appliedFilters.data_filter,
+  //     appliedFilters.site_id,
+  //     appliedFilters.visitor_role,
+  //     appliedFilters.host_id,
+  //   ],
+  //   queryFn: async () => {
+  //     if (!token) return null;
+
+  //     const statusParam = selectedType === 'All' ? undefined : statusMap[selectedType];
+  //     const start = visitorPage * visitorRowsPerPage;
+
+  //     const isEmergencyParam =
+  //       appliedFilters.emergency_situation === ''
+  //         ? undefined
+  //         : appliedFilters.emergency_situation === 'true';
+
+  //     const isBlockParam =
+  //       appliedFilters.is_block === '' ? undefined : appliedFilters.is_block === 'true';
+
+  //     return await getAllVisitorPagination(
+  //       token!,
+  //       start,
+  //       visitorRowsPerPage,
+  //       sortDir,
+  //       searchKeyword || undefined,
+  //       appliedFilters.start_date
+  //         ? dayjs(appliedFilters.start_date).utc().toISOString()
+  //         : undefined,
+  //       appliedFilters.end_date ? dayjs(appliedFilters.end_date).utc().toISOString() : undefined,
+  //       statusParam,
+  //       appliedFilters.data_filter,
+  //       appliedFilters.site_id || undefined,
+  //       appliedFilters.visitor_role || undefined,
+  //       isEmergencyParam,
+  //       isBlockParam,
+  //       appliedFilters.host_id || undefined,
+  //     );
+  //   },
+  //   enabled: !!token,
+  //   placeholderData: (prev) => prev,
+  // });
+
+  // const tableCustomVisitor =
+  //   visitorResponse?.collection?.map((item: any) => ({
+  //     id: item.id,
+  //     visitor_type: item.visitor_type_name || '-',
+  //     name: item.visitor_name || '-',
+  //     identity_id: item.visitor_identity_id || '-',
+  //     email: item.visitor_email || '-',
+  //     organization: item.visitor_organization_name || '-',
+  //     gender: item.visitor_gender || '-',
+  //     phone: item.visitor_phone || '-',
+  //     visitor_period_start: item.visitor_period_start || '-',
+  //     visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
+  //     host: item.host ?? '-',
+  //     visitor_status: item.visitor_status || '-',
+  //   })) || [];
+
+  // console.log('tableCustomVisitor', tableCustomVisitor);
+
+  // const totalFilteredRecords = visitorResponse?.RecordsFiltered || 0;
+
   useEffect(() => {
     const fetchData = async () => {
       const response = await getRegisteredSite(token as string);
@@ -426,7 +543,7 @@ const Content = () => {
     setOpenPreRegistration(false);
     handleDialogClose();
   };
-  
+
   const handleAdd = () => {
     const saved = localStorage.getItem('unsavedVisitorData');
     let freshForm;
@@ -594,6 +711,184 @@ const Content = () => {
     setPage(0);
   };
 
+  const [openDetailShareLink, setOpenDetailShareLink] = useState(false);
+  const [openDetailLink, setOpenDetailLink] = useState(false);
+  const [openCreateLink, setOpenCreateLink] = useState(false);
+  const [pendingPayload, setPendingPayload] = useState<any>(null);
+  const [openSendEmail, setOpenSendEmail] = useState(false);
+
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [expiredAt, setExpiredAt] = useState<string | null>(null);
+  const [tabValue, setTabValue] = useState(0);
+  const [emails, setEmails] = useState<string[]>([]);
+
+  const handleDeleteLink = async (id: string) => {
+    try {
+      const confirm = await Swal.fire({
+        title: 'Do you want to delete this link?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Yes',
+        cancelButtonText: 'Cancel',
+        reverseButtons: true,
+        confirmButtonColor: '#4caf50',
+        customClass: {
+          title: 'swal2-title-custom',
+          htmlContainer: 'swal2-text-custom',
+        },
+      });
+
+      if (!confirm.isConfirmed) return;
+
+      await deleteShareLink(token as string, id);
+      await queryClient.invalidateQueries({
+        queryKey: ['share-links'],
+      });
+      showSwal('success', 'Link deleted successfully.');
+    } catch (error) {
+      console.error('Delete link error:', error);
+      showSwal('error', 'Something went wrong while deleting link.');
+    }
+  };
+
+  const handleChangeTab = (event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
+  };
+
+  const handleOpenInviteDialog = (id: string, link: string, expired_at: string) => {
+    setSelectedShareLinkId(id);
+    setGeneratedLink(link);
+    setExpiredAt(expired_at);
+    setTabValue(0);
+    setOpenInviteViaLinkEmail(true);
+  };
+
+  const handleCopyLink = (link: string) => {
+    navigator.clipboard.writeText(link);
+
+    showSwal('success', 'Link copied to clipboard.');
+  };
+
+  const handleDetailLink = (link: string) => {
+    setOpenDetailLink(true);
+  };
+
+  const start = page * rowsPerPage;
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: ['share-links', page, rowsPerPage, searchKeyword, sortDir],
+    queryFn: async () => {
+      const res = await getShareLinkByDt(
+        token as string,
+        start,
+        rowsPerPage,
+        searchKeyword,
+        sortDir,
+      );
+
+      return res;
+    },
+
+    staleTime: 1000 * 60 * 5,
+    enabled: !!token,
+    gcTime: 1000 * 60 * 2,
+    placeholderData: (previousData) => previousData,
+  });
+
+  const formatDateTimes = (dateStr?: string, extendMinutes = 0) => {
+    if (!dateStr) return '-';
+
+    const base = moment.utc(dateStr);
+
+    if (extendMinutes !== 0) {
+      base.add(extendMinutes, 'minutes');
+    }
+
+    return base.tz('Asia/Jakarta').format('DD-MM-YYYY, HH:mm');
+  };
+
+  const shareLinkList =
+    data?.collection?.map((item: any) => ({
+      id: item.id,
+      agenda: item.agenda,
+      url: item.url,
+      current_usage: item.current_usage,
+      max_usage: item.max_usage,
+      visitor_period_start: formatDateTime(item.visitor_period_start),
+      visitor_period_end: formatDateTime(item.visitor_period_end),
+      // expired_at: new Date(item.expired_at + 'Z').toLocaleString(undefined, {
+      //   year: 'numeric',
+      //   month: '2-digit',
+      //   day: '2-digit',
+      //   hour: '2-digit',
+      //   minute: '2-digit',
+      // }),
+      // expired_at: formatDateTimes(item.expired_at),
+      // expired_at_raw: item.expired_at,
+
+      // ✅ format hanya untuk display
+      expired_at: dayjs.utc(item.expired_at).tz('Asia/Jakarta').format('DD/MM/YYYY HH:mm'),
+
+      link_status: item.link_status,
+    })) || [];
+
+  const totalFilterRecords = data?.RecordsFiltered || 0;
+  const handleAddShareLink = () => {
+    setOpenCreateLink(true);
+  };
+
+  const getExpireText = () => {
+    if (!expiredAt) return '';
+
+    // bersihkan microseconds + paksa jadi UTC
+    const cleanDate = expiredAt.replace(/\.\d+/, '') + 'Z';
+    const expireDate = new Date(cleanDate);
+
+    if (isNaN(expireDate.getTime())) return '';
+
+    const now = new Date();
+    const diffMs = expireDate.getTime() - now.getTime();
+
+    if (diffMs <= 0) return 'Expired';
+
+    const totalHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const days = Math.floor(totalHours / 24);
+    const hours = totalHours % 24;
+
+    if (days > 0) {
+      return `${days} day${days > 1 ? 's' : ''} ${hours} hour${hours !== 1 ? 's' : ''} left`;
+    }
+
+    return `${hours} hour${hours !== 1 ? 's' : ''} left`;
+  };
+
+  const [selectedShareLinkId, setSelectedShareLinkId] = useState<string | null>(null);
+
+  const handleSendInvitation = async () => {
+    let finalEmails = [...emails];
+
+    if (emailInput.trim() !== '') {
+      finalEmails.push(emailInput.trim());
+    }
+
+    if (!finalEmails.length || !selectedShareLinkId) {
+      showSwal('error', 'Please enter at least one email');
+      return;
+    }
+
+    try {
+      const payload = {
+        emails: finalEmails,
+      };
+      await createShareLinkByEmailById(token as string, payload, selectedShareLinkId);
+      showSwal('success', 'Invitation sent successfully');
+      setEmails([]);
+      setEmailInput('');
+    } catch (error) {
+      console.error(error);
+      showSwal('error', 'Failed to send invitation');
+    }
+  };
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -601,7 +896,7 @@ const Content = () => {
     >
       <Container title="Live Visitor" description="this is live visitor page">
         <Box>
-          <Grid container spacing={3}>
+          <Grid container spacing={1}>
             <Grid size={{ xs: 12, lg: 12 }}>
               <TopCard
                 cardMarginBottom={1}
@@ -613,11 +908,13 @@ const Content = () => {
                   } else if (index === 3) {
                     setFlowTarget('preReg');
                     setOpenPreRegistration(true);
+                  } else if (index === 4) {
+                    setOpenDetailShareLink(true);
                   } else {
                     setOpenDialogIndex(index);
                   }
                 }}
-                size={{ xs: 12, lg: 3 }}
+                size={{ xs: 12, lg: 2.4 }}
               />
             </Grid>
 
@@ -632,7 +929,7 @@ const Content = () => {
                 totalCount={totalFilteredRecords}
                 isNoActionTableHead={true}
                 selectedRows={selectedRows}
-                rowsPerPageOptions={[10, 50, 100, 500, 999]}
+                rowsPerPageOptions={[10, 25, 50, 100, 500]}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);
@@ -674,6 +971,7 @@ const Content = () => {
                     { name: 'Block' },
                     { name: 'Denied' },
                     { name: 'Waiting' },
+                    { name: 'Precheckin' },
                   ],
                 }}
                 onHeaderItemClick={(item) => {
@@ -684,9 +982,11 @@ const Content = () => {
                     item.name === 'Preregis' ||
                     item.name === 'Denied' ||
                     item.name === 'Block' ||
-                    item.name === 'Waiting'
+                    item.name === 'Waiting' ||
+                    item.name === 'Precheckin'
                   ) {
                     setSelectedType(item.name);
+                    setPage(0);
                   }
                 }}
                 defaultSelectedHeaderItem="All"
@@ -841,9 +1141,7 @@ const Content = () => {
             ...prev,
             registered_site: site.id,
           }));
-
           setOpenDialogIndex(null);
-
           if (flowTarget === 'invitation') {
             setOpenInvitationVisitor(true);
           } else if (flowTarget === 'preReg') {
@@ -915,11 +1213,128 @@ const Content = () => {
             disabled={!!confirm?.loading}
             startIcon={confirm?.loading ? <CircularProgress size={16} /> : undefined}
           >
-            {/* {confirm ? actionMeta[confirm.type].ok : 'Confirm'} */}
             Submit
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* List Share  Link */}
+      <Dialog
+        open={openDetailShareLink}
+        onClose={() => setOpenDetailShareLink(false)}
+        fullWidth
+        maxWidth="xl"
+      >
+        <DialogTitle>
+          List Share Link
+          <IconButton
+            aria-label="close"
+            onClick={() => {
+              setOpenDetailShareLink(false);
+            }}
+            sx={{
+              position: 'absolute',
+              top: 8,
+              right: 8,
+            }}
+          >
+            <IconX />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          <DynamicTable
+            data={shareLinkList}
+            isHaveHeaderTitle
+            isHaveChecked={true}
+            isNoActionTableHead={true}
+            titleHeader="Share Link"
+            isCopyLink={true}
+            isHavePagination={true}
+            totalCount={totalFilterRecords}
+            rowsPerPageOptions={[10, 50, 100]}
+            onPaginationChange={(page, rowsPerPage) => {
+              setPage(page);
+              setRowsPerPage(rowsPerPage);
+            }}
+            onCopyLink={(row: any) => handleOpenInviteDialog(row.id, row.url, row.expired_at)}
+            onDetailLink={(row: any) => handleDetailLink(row)}
+            onDelete={(row: any) => handleDeleteLink(row.id)}
+            isHaveAddData={true}
+            onAddData={handleAddShareLink}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Invite via link & invite via email */}
+      <InvitationShareDialog
+        open={openInviteViaLinkEmail}
+        onClose={() => setOpenInviteViaLinkEmail(false)}
+        generatedLink={generatedLink}
+        getExpireText={getExpireText}
+        expiredAt={expiredAt}
+        handleCopyLink={handleCopyLink}
+        handleSendInvitation={handleSendInvitation}
+      />
+
+      <CreateLinkDialog
+        open={openCreateLink}
+        onClose={() => setOpenCreateLink(false)}
+        onCreateLink={async (payload) => {
+          try {
+            setIsGenerating(true);
+            await createShareLink(token as string, payload);
+            await queryClient.invalidateQueries({
+              queryKey: ['share-links'],
+            });
+            setOpenCreateLink(false);
+            showSwal('success', 'Share link created successfully');
+          } catch (err) {
+            console.error(err);
+            showSwal('error', 'Failed to create share link');
+          } finally {
+            setIsGenerating(false);
+          }
+        }}
+        onSendEmail={(payload) => {
+          setPendingPayload(payload);
+          setOpenSendEmail(true);
+        }}
+      />
+
+      <DetailLinkDialog
+        open={openDetailLink}
+        onClose={() => setOpenDetailLink(false)}
+        dataVisitor={[]}
+      />
+
+      <SendEmailDialog
+        open={openSendEmail}
+        onClose={() => setOpenSendEmail(false)}
+        onSend={async (emails: string[]) => {
+          try {
+            setIsGenerating(true);
+
+            const finalPayload = {
+              ...pendingPayload,
+              emails: emails,
+            };
+
+            await createShareLinkByEmail(token as string, finalPayload);
+            await queryClient.invalidateQueries({
+              queryKey: ['share-links'],
+            });
+            setOpenSendEmail(false);
+            setOpenCreateLink(false);
+
+            showSwal('success', 'Share link sent successfully');
+          } catch (err) {
+            console.error(err);
+            showSwal('error', 'Failed to send share link');
+          } finally {
+            setIsGenerating(false);
+          }
+        }}
+      />
 
       {/* Unsaved Changes */}
       <Dialog open={confirmDialogOpen} onClose={handleCancelDiscard} fullWidth maxWidth="sm">
@@ -952,6 +1367,19 @@ const Content = () => {
             {snackbar.message}
           </Alert>
         </Snackbar>
+      </Portal>
+      <Portal>
+        <Backdrop
+          sx={{
+            zIndex: 99999,
+            position: 'fixed',
+            margin: '0 auto',
+            color: 'primary',
+          }}
+          open={isGenerating}
+        >
+          <CircularProgress color="primary" />
+        </Backdrop>
       </Portal>
     </PageContainer>
   );

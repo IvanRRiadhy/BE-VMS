@@ -69,7 +69,7 @@ export const CreateEmployeeRequestSchema = z.object({
   identity_id: z.string().default(''),
   card_number: z.string().default(''),
   ble_card_number: z.string().default(''),
-  type: z.number().default(0),
+  type: z.coerce.number().default(0),
   vehicle_plate_number: z.string().default(''),
   vehicle_type: z.string().default(''),
   name: z.string().default(''),

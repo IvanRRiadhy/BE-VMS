@@ -35,7 +35,7 @@ export const refreshToken = async (body: RefreshTokenRequest): Promise<RefreshTo
 
 export const AuthVisitor = async (body: AuthVisitorRequest): Promise<AuthVisitorResponse> => {
   try {
-    const response = await axiosInstance.post(`/_Auth/VisitorRequest`, body, {
+    const response = await axiosInstance.post(`/on-portal/VisitorRequest`, body, {
       headers: { 'Content-Type': 'application/json' },
     });
     return response.data;
@@ -46,7 +46,7 @@ export const AuthVisitor = async (body: AuthVisitorRequest): Promise<AuthVisitor
 
 export const SubmitPraForm = async (body: any, id: string): Promise<AuthVisitorResponse> => {
   try {
-    const response = await axiosInstance.post(`/_Auth/submit/pra-form`, body, {
+    const response = await axiosInstance.post(`/on-portal/submit/pra-form`, body, {
       headers: { 'Content-Type': 'application/json' },
       params: { id },
     });
@@ -76,6 +76,56 @@ export const getProfile = async (token: string): Promise<GetProfileResponse> => 
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 400) {
       throw error.response.data;
+    }
+    throw error;
+  }
+};
+
+// POST Sharelink
+export const invitationLink = async (token: string, data: any): Promise<any> => {
+  try {
+    const response = await axiosInstance.post('/_Auth/invitation-link', data, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error: any) {
+    if (error.response?.status === 404) {
+      return { collection: [] };
+    }
+    throw error;
+  }
+};
+
+export const getInvitationLink = async (
+  token: string,
+  d: string,
+  code: string,
+  timestamp: string,
+  sig: string,
+): Promise<any> => {
+  try {
+    const response = await axiosInstance.get('/on-portal/invitation-link', {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      params: { d, code, timestamp, sig },
+    });
+    return response.data;
+  } catch (error: any) {
+    if (error.response?.status === 404) {
+      return { collection: [] };
+    }
+    throw error;
+  }
+};
+
+export const getPermission = async (token: string): Promise<any> => {
+  try {
+    const response = await axiosInstance.get('/user-permission', {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error: any) {
+    if (error.response?.status === 404) {
+      return { collection: [] };
     }
     throw error;
   }

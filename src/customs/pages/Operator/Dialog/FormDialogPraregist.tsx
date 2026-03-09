@@ -43,7 +43,7 @@ import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import Webcam from 'react-webcam';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import {  getDetailInvitationForm } from 'src/customs/api/visitor';
+import { getDetailInvitationForm } from 'src/customs/api/visitor';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { getVisitorEmployee } from 'src/customs/api/admin';
 import { showSwal } from 'src/customs/components/alerts/alerts';
@@ -52,6 +52,8 @@ import { KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
+
+dayjs.locale('id');
 
 interface FormDialogPraregistProps {
   id: string;
@@ -95,10 +97,8 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
       try {
         const res = await getDetailInvitationForm(token, id);
         const data = res.collection;
-        console.log('dat', data);
         setInvitationData(data);
 
-      
         const initial: Record<string, any> = {};
         data?.question_page?.forEach((section: any) => {
           section.form?.forEach((f: any) => {
@@ -109,7 +109,6 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
         });
         setFormValues(initial);
       } catch (err) {
-      
       } finally {
         setLoading(false);
       }
@@ -120,10 +119,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
   const validateStep = (section: any) => {
     const newErrors: Record<string, string> = {};
     section?.form?.forEach((f: any) => {
-      if (
-        f.mandatory &&
-        isEmpty(formValues[f.remarks])
-      ) {
+      if (f.mandatory && isEmpty(formValues[f.remarks])) {
         newErrors[f.remarks] = `${f.long_display_text} is required`;
       }
     });
@@ -278,8 +274,6 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                   }}
                 />
               </Grid>
-
-              {/* PREVIEW FOTO */}
               <Grid size={{ xs: 12, sm: 6 }}>
                 {previewSrc ? (
                   <img
@@ -311,8 +305,6 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
             </Grid>
 
             <Divider sx={{ my: 2 }} />
-
-            {/* ACTION BUTTONS */}
             <Box sx={{ textAlign: 'right' }}>
               <Button
                 color="error"
@@ -356,7 +348,6 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
 
     return (
       <Box>
-        {/* Upload Box */}
         <Box
           sx={{
             border: '2px dashed #90caf9',
@@ -438,8 +429,6 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                   {shownName}
                 </Typography>
               )}
-
-              {/* Remove button */}
               <Button
                 color="error"
                 size="small"
@@ -791,9 +780,9 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
           const type = getFieldTypeByRemarks(f.remarks) ?? f.field_type;
 
           if (f.remarks === 'host') {
-            displayValue = invitationData.host_data?.name || displayValue;
+            displayValue = invitationData.host_name || displayValue;
           } else if (f.remarks === 'site_place') {
-            displayValue = invitationData.site_place_data?.name || displayValue;
+            displayValue = invitationData.site_place_name || displayValue;
           }
 
           const gridSize = { xs: 12 };
@@ -1036,7 +1025,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
                     placeholder={f.long_display_text || f.remarks}
                     error={!!errors[f.remarks]}
                     helperText={errors[f.remarks]}
-                  required={f.mandatory == true}
+                    required={f.mandatory == true}
                   />
                 )}
             </Grid>
@@ -1121,10 +1110,9 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
         onSubmitted?.(invitationData.id);
       } else {
         await new Promise((r) => setTimeout(r, 600));
-        showSwal('error', res.msg ?? 'Something went wrong');
+        showSwal('error', res.msg ?? 'Failed Praregister');
       }
     } catch (err) {
-      // console.error('❌ Submit error:', err);
       const errMsg =
         (err as any)?.response?.collection?.message ??
         (err as any)?.message ??
@@ -1201,6 +1189,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
               </Box>
             )}
           </Box>
+          <Divider sx={{ my: 1 }} />
 
           {isMobile && (
             <Box sx={{ mt: 2 }}>

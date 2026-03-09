@@ -12,7 +12,6 @@ import {
   Tab,
   IconButton,
   InputAdornment,
-  CardActions,
   Snackbar,
   Theme,
   Alert,
@@ -48,8 +47,6 @@ const Login = () => {
   const { saveToken } = useSession();
   const dispatch = useDispatch();
   const navigate = useNavigate();
-
-  const lgUp = useMediaQuery((theme: Theme) => theme.breakpoints.up('lg'));
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const [loading, setLoading] = useState(false);
@@ -64,7 +61,10 @@ const Login = () => {
   const [captchaError, setCaptchaError] = useState(false);
 
   const [searchParams] = useSearchParams();
-  const [guestCode, setGuestCode] = useState(searchParams.get('code') || '');
+  const codeFromUrl = searchParams.get('code') || '';
+
+  const [guestCode, setGuestCode] = useState(codeFromUrl);
+  // const [guestCode, setGuestCode] = useState(searchParams.get('code') || '');
   const [guestError, setGuestError] = useState(false);
   const [showCaptcha, setShowCaptcha] = useState(true);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -121,7 +121,8 @@ const Login = () => {
       else if (user_group_id.toUpperCase() === GroupRoleId.Employee && type == 0)
         navigate('/delivery-staff/dashboard');
       else if (user_group_id.toUpperCase() === GroupRoleId.OperatorVMS) navigate('/operator/view');
-      // else if (user_group_id.toUpperCase() === GroupRoleId.OperatorAdmin) navigate('/operator-admin/dashboard');
+      else if (user_group_id.toUpperCase() === GroupRoleId.OperatorAdmin)
+        navigate('/operator-admin/dashboard');
       else if (user_group_id.toUpperCase() === GroupRoleId.Visitor) navigate('/guest/dashboard');
     } catch (err) {
       setTimeout(() => {
@@ -147,10 +148,12 @@ const Login = () => {
     }
 
     try {
-      const res = await AuthVisitor({ code: guestCode });
+      // const res = await AuthVisitor({ code: guestCode });
+      const code = searchParams.get('code') || guestCode;
+
+      const res = await AuthVisitor({ code });
 
       const status = res.status;
-      // console.log('Status:', status);
 
       localStorage.setItem('visitor_ref_code', guestCode);
       // setLoading(false);
@@ -163,8 +166,8 @@ const Login = () => {
       }
 
       if (status === 'fiil_form') {
-        navigate(`/portal/information?code=${guestCode}`, {
-          replace: true,
+        navigate(`/portal/information?code=${code}`, {
+          // replace: true,
           state: {
             snackbar: {
               open: true,
@@ -181,7 +184,6 @@ const Login = () => {
         return;
       }
     } catch (err) {
-      // console.error('Guest login gagal:', err);
       setGuestError(true);
       setLoading(false);
     }
@@ -197,6 +199,12 @@ const Login = () => {
       sessionStorage.removeItem('logoutMsg');
     }
   }, []);
+
+  useEffect(() => {
+    if (codeFromUrl) {
+      setTab(1);
+    }
+  }, [codeFromUrl]);
 
   return (
     <>
@@ -250,8 +258,17 @@ const Login = () => {
                     backgroundColor: 'primary.main',
                   }}
                 >
-                  <Box display="flex" alignItems="center" justifyContent="center" mb={1}>
-                    <img src={BannerBI} width={500} height={250} style={{ borderRadius: '10px' }} />
+                  <Box mb={2}>
+                    <img
+                      src={BannerBI}
+                      style={{
+                        width: '100%',
+                        maxWidth: '100%',
+                        height: '200px',
+                        borderRadius: '10px',
+                        display: 'block',
+                      }}
+                    />
                   </Box>
                   <Typography
                     sx={{ color: '#fff', lineHeight: 1.5 }}

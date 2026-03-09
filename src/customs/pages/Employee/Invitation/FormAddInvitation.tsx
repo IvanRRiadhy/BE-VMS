@@ -49,9 +49,7 @@ import {
   useMediaQuery,
   MobileStepper,
 } from '@mui/material';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import 'select2'; // Select2 secara otomatis akan attach ke jQuery global
+import 'select2';
 import 'select2/dist/css/select2.min.css';
 import {
   IconArrowLeft,
@@ -59,6 +57,8 @@ import {
   IconCircleCheck,
   IconDeviceFloppy,
   IconTrash,
+  IconUser,
+  IconUsers,
 } from '@tabler/icons-react';
 import PageContainer from 'src/components/container/PageContainer';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
@@ -66,7 +66,6 @@ import Webcam from 'react-webcam';
 import 'react-image-crop/dist/ReactCrop.css';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import { IconSearch } from '@tabler/icons-react';
 import {
   CreateGroupVisitorRequest,
   CreateGroupVisitorRequestSchema,
@@ -108,7 +107,6 @@ import { DateTimePicker, renderTimeViewClock } from '@mui/x-date-pickers';
 import { IconX } from '@tabler/icons-react';
 import { IconArrowRight } from '@tabler/icons-react';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { useQuery } from '@tanstack/react-query';
 import CameraUpload from 'src/customs/components/camera/CameraUpload';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { TreeItem, TreeView } from '@mui/x-tree-view';
@@ -149,7 +147,7 @@ interface GroupVisitor {
   is_group?: boolean;
   tz?: string;
   registered_site?: string;
-  data_visitor: any[]; // nanti hasil form visitor per group
+  data_visitor: any[];
 }
 
 const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
@@ -186,15 +184,13 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
   const [isSingle, setIsSingle] = useState(false);
   const [isGroup, setIsGroup] = useState(false);
   const [activeGroupIdx, setActiveGroupIdx] = useState(0);
-  // Duplikat Question Page
-  const [groupForms, setGroupForms] = useState<Record<number, FormVisitor[][]>>({});
   const [removing, setRemoving] = useState<Record<string, boolean>>({});
   const [nextDialogOpen, setNextDialogOpen] = useState(false);
   const BASE_URL = axiosInstance2.defaults.baseURL;
+  const [uploadNames, setUploadNames] = useState<Record<string, string>>({});
   const [rawSections, setRawSections] = useState<any[]>([]);
   const [selectedInvitations, setSelectedInvitations] = useState<any[]>([]);
   const formsOf = (section: any) => (Array.isArray(section?.[FORM_KEY]) ? section[FORM_KEY] : []);
-  const [accessAction, setAccessAction] = useState<'grant' | 'revoke' | 'block'>('grant');
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -212,7 +208,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     setTimeout(() => setSnackbar({ open: true, message, severity }), 0);
   };
 
-  const [searchTerm, setSearchTerm] = useState('');
   const [groupedPages, setGroupedPages] = useState<GroupedPages>({
     single_page: [],
     batch_page: {},
@@ -226,21 +221,9 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     [FORM_KEY]: updater(formsOf(sec)),
   });
 
-  const [pvDlg, setPvDlg] = useState<{ open: boolean; rowIdx: number | null; forms: any[] }>({
-    open: false,
-    rowIdx: null,
-    forms: [],
-  });
-
   const [accessData, setAccessData] = useState<any[]>([]);
-  const [checkedItems, setCheckedItems] = useState<number[]>([]);
   const [availableCards, setAvailableCards] = useState<any[]>([]);
 
-  const handleToggle = (id: number) => {
-    setCheckedItems((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
-    );
-  };
   const [groupVisitors, setGroupVisitors] = useState<GroupVisitor[]>([]);
 
   const handleAddGroup = () => {
@@ -269,30 +252,30 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     setGroupVisitors((prev) => prev.filter((g) => g.id !== id));
   };
 
-  useEffect(() => {
-    const fetchGrantAccess = async () => {
-      if (!dataVisitor?.length) return;
+  // useEffect(() => {
+  //   const fetchGrantAccess = async () => {
+  //     if (!dataVisitor?.length) return;
 
-      try {
-        // 1️⃣ Group access
-        const siteAnswer = getSiteFromForm(isGroup, sectionsData, dataVisitor);
-        console.log('🔎 siteAnswer dari getSiteFromForm:', siteAnswer);
+  //     try {
+  //       // 1️⃣ Group access
+  //       const siteAnswer = getSiteFromForm(isGroup, sectionsData, dataVisitor);
+  //       console.log('🔎 siteAnswer dari getSiteFromForm:', siteAnswer);
 
-        if (siteAnswer) {
-          const res = await getGrantAccess(token as string, siteAnswer);
+  //       if (siteAnswer) {
+  //         const res = await getGrantAccess(token as string, siteAnswer);
 
-          setAccessData(res.collection ?? []);
-          // setGroupAccessData(res.collection ?? []);
-        }
+  //         setAccessData(res.collection ?? []);
+  //         // setGroupAccessData(res.collection ?? []);
+  //       }
 
-        // setGrantAccessMap(map);
-      } catch (err) {
-        console.error('❌ Failed to fetch grant access:', err);
-      }
-    };
+  //       // setGrantAccessMap(map);
+  //     } catch (err) {
+  //       console.error('❌ Failed to fetch grant access:', err);
+  //     }
+  //   };
 
-    if (token && submitted) fetchGrantAccess();
-  }, [token, submitted, isGroup, dataVisitor, sectionsData]);
+  //   if (token && submitted) fetchGrantAccess();
+  // }, [token, submitted, isGroup, dataVisitor, sectionsData]);
 
   function getSiteFromForm(
     isGroup: boolean,
@@ -300,7 +283,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     dataVisitor: any[],
   ): string | null {
     if (isGroup) {
-      // ✅ Group → ambil dari dataVisitor
       for (const visitor of dataVisitor) {
         for (const page of visitor.question_page ?? []) {
           const found = page.form?.find((f: any) => f.remarks === 'site_place');
@@ -330,222 +312,12 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     }
   }
 
-  // filter cards berdasarkan search
-  const filteredCards = availableCards.filter((card) =>
-    [card.remarks, card.card_number, card.card_mac]
-      .join(' ')
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase()),
-  );
-
-  // utils
-  const flatDeep = (x: any): any[] => (Array.isArray(x) ? x.flat(Infinity) : [x]);
-
-  const normalizeIdsDeep = (payload: any): string[] => {
-    const flat = flatDeep(payload);
-    const ids = flat.map((v) => (typeof v === 'object' && v !== null ? v.id : v)).filter((n) => n);
-    // dedupe
-    return Array.from(new Set(ids));
-  };
-
-  const handleSelectInvitation = (payload: Row[]) => {
-    console.group('onCheckedChange');
-    console.log('raw payload (rows):', payload);
-    console.groupEnd();
-
-    setSelectedInvitations(payload);
-  };
-
-  const handleOpenChooseCard = () => {
-    if (!selectedInvitations?.length) {
-      toast('Please select at least one invitation first.');
-
-      return;
-    }
-    setSelectedCards([]);
-    setOpenChooseCardDialog(true);
-  };
-
-  const handleCloseGrantDialog = () => {
-    setNextDialogOpen(false);
-    setSelectedInvitations([]);
-    setSelectedCards([]);
-  };
-
   useEffect(() => {
     if (!nextDialogOpen) {
       setSelectedInvitations([]);
       setSelectedCards([]);
     }
   }, [nextDialogOpen]);
-
-  // const handleAccessSubmit = async () => {
-  //   if (!selectedInvitations?.length) {
-  //     console.warn('No visitor selected');
-  //     return;
-  //   }
-
-  //   setLoading(true);
-
-  //   const data_access: any[] = [];
-
-  //   // 1️⃣ Group Access → apply ke semua selected visitors
-  //   for (const visitorRow of selectedInvitations) {
-  //     const trxVisitorId = visitorRow.trx_visitor_id;
-  //     console.log('visitorRow:', visitorRow);
-  //     const cardNumber = visitorRow.assigned_card_number;
-  //     console.log('cardNumber:', cardNumber);
-  //     if (!trxVisitorId || !cardNumber) continue;
-
-  //     for (const acId of checkedGroupItems) {
-  //       data_access.push({
-  //         access_control_id: acId,
-  //         action: 1,
-  //         card_number: cardNumber,
-  //         trx_visitor_id: trxVisitorId,
-  //       });
-  //     }
-  //   }
-
-  //   for (const visitorRow of selectedInvitations) {
-  //     // if (!hasSelfOnly([visitorRow])) continue;
-
-  //     const trxVisitorId = visitorRow.trx_visitor_id;
-  //     console.log('visitorRow:', visitorRow);
-  //     const cardNumber = visitorRow.assigned_card_number;
-  //     if (!trxVisitorId || !cardNumber) continue;
-
-  //     for (const fullId of checkedSelfItems) {
-  //       const parts = fullId.split(':');
-  //       const acId = parts.length > 1 ? parts[1] : parts[0];
-
-  //       data_access.push({
-  //         access_control_id: acId,
-  //         action: 1,
-  //         card_number: cardNumber,
-  //         trx_visitor_id: trxVisitorId,
-  //       });
-  //     }
-  //     console.log('Visitor:', trxVisitorId, 'Card:', cardNumber);
-  //   }
-
-  //   const payload = { data_access };
-  //   console.log('📤 Payload yang dikirim ke APIs:', JSON.stringify(payload, null, 2));
-
-  //   try {
-  //     const res = await createCheckGiveAccess(token as string, payload);
-  //     console.log('📤 Response dari API:', JSON.stringify(res, null, 2));
-  //     toast('Grant access successful', 'success');
-  //     console.log('✅ Grant access success:', res);
-  //     // setSelectedInvitations([]);
-  //     // setSelectedCards([]);
-  //     // setCheckedGroupItems([]);
-  //     // setCheckedSelfItems([]);
-  //     // setNextDialogOpen(false);
-  //     // setAccessDialogOpen(false);
-  //     onSuccess?.();
-  //   } catch (err) {
-  //     console.error('❌ Failed grant access:', err);
-  //   } finally {
-  //     setTimeout(() => setLoading(false), 500);
-  //   }
-  // };
-
-  const handleAccessSubmit = async () => {
-    setLoading(true);
-
-    const data_access: any[] = [];
-
-    const visitorsWithCard = rows.filter((r) => r.trx_visitor_id && r.card?.card_number);
-
-    if (!visitorsWithCard.length) {
-      console.warn('No visitor with assigned card');
-      setLoading(false);
-      return;
-    }
-
-    for (const visitorRow of visitorsWithCard) {
-      const trxVisitorId = visitorRow.trx_visitor_id;
-      const cardNumber = visitorRow.card?.card_number;
-
-      if (!trxVisitorId || !cardNumber) continue;
-
-      // ✅ SINGLE MODE
-      if (!isGroup) {
-        for (const acId of checkedItems) {
-          data_access.push({
-            access_control_id: acId,
-            action: 1,
-            card_number: cardNumber,
-            trx_visitor_id: trxVisitorId,
-          });
-        }
-      }
-
-      // ✅ GROUP MODE
-      if (isGroup) {
-        for (const acId of checkedGroupItems) {
-          data_access.push({
-            access_control_id: acId,
-            action: 1,
-            card_number: cardNumber,
-            trx_visitor_id: trxVisitorId,
-          });
-        }
-
-        for (const fullId of checkedSelfItems) {
-          const parts = fullId.split(':');
-          const acId = parts.length > 1 ? parts[1] : parts[0];
-
-          data_access.push({
-            access_control_id: acId,
-            action: 1,
-            card_number: cardNumber,
-            trx_visitor_id: trxVisitorId,
-          });
-        }
-      }
-    }
-
-    if (!data_access.length) {
-      console.warn('No access selected');
-      setLoading(false);
-      return;
-    }
-
-    const payload = { data_access };
-    console.log('📤 Payload:', JSON.stringify(payload, null, 2));
-
-    try {
-      const res = await createCheckGiveAccess(token as string, payload);
-      toast('Grant access successful', 'success');
-      onSuccess?.();
-    } catch (err: any) {
-      console.error('❌ Failed grant access:', err);
-      showSwal('error', 'Failed to update access');
-    } finally {
-      setTimeout(() => setLoading(false), 500);
-    }
-  };
-
-  // useEffect(() => {
-  //   if (!sectionsData?.length) return;
-
-  //   setGroupForms((prev) => {
-  //     const next = { ...prev };
-  //     sectionsData.forEach((section, secIdx) => {
-  //       if (section.can_multiple_used) {
-  //         const template = formsOf(section).map((f) => ({
-  //           ...f,
-  //           answer_text: '',
-  //           answer_datetime: '',
-  //           answer_file: '',
-  //         }));
-  //       }
-  //     });
-  //     return next;
-  //   });
-  // }, [sectionsData]);
 
   const generateUUIDv4 = () => {
     const bytes = new Uint8Array(16);
@@ -681,7 +453,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     const showVTListSkeleton = vtLoading;
     if (step == 0) {
       return (
-        <Box>
+        <Box sx={{ mt: 2 }}>
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, md: 6 }}>
               <CustomFormLabel
@@ -723,7 +495,12 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                       }}
                     />
                   }
-                  label="Single"
+                  label={
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <IconUser size={18} />
+                      Single
+                    </Box>
+                  }
                 />
 
                 <FormControlLabel
@@ -742,13 +519,14 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                     />
                   }
                   label={
-                    <Box display="flex" alignItems="center">
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <IconUsers size={18} />
                       Group
-                      <Tooltip title="When activated, you can add more than one visitor">
-                        <IconButton size="small" sx={{ ml: 1 }}>
-                          <InfoOutlinedIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
+                      {/* <Tooltip title="When activated, you can add more than one visitor">
+                                         <IconButton size="small" sx={{ ml: 0.5 }}>
+                                           <IconInfoCircle size={16} />
+                                         </IconButton>
+                                       </Tooltip> */}
                     </Box>
                   }
                 />
@@ -898,36 +676,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     }
     const currentSection = sectionsData[step - 1];
     if (!currentSection) return null;
-
-    const handleDetailChange = (
-      sectionKey: SectionKey,
-      index: number,
-      field: keyof FormVisitor,
-      value: any,
-    ) => {
-      setSectionsData((prev) =>
-        prev.map((section, i) => {
-          if (i === activeStep - 1) {
-            const originalFields = section[sectionKey];
-            if (!Array.isArray(originalFields)) {
-              return section;
-            }
-
-            const updatedFields = [...originalFields];
-            updatedFields[index] = {
-              ...updatedFields[index],
-              [field]: value,
-            };
-
-            return {
-              ...section,
-              [sectionKey]: updatedFields,
-            };
-          }
-          return section;
-        }),
-      );
-    };
 
     return (
       <>
@@ -1562,9 +1310,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     }
   };
 
-  const fieldKey = (f: any) => f?.custom_field_id || sanitize(f?.remarks) || '';
-  const [uploadNames, setUploadNames] = useState<Record<string, string>>({});
-
   const renderFieldInput = (
     field: FormVisitor,
     index: number,
@@ -1577,17 +1322,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     const errorMessage = fieldErrors[errorKey];
 
     let shouldDisable = false;
-
-    // if (opts?.details) {
-    //   const visibilityMap: any = getVisibilityMap(opts.details);
-    //   const remark = (field.remarks || '').toLowerCase().trim();
-
-    //   if (remark && visibilityMap.hasOwnProperty(remark)) {
-    //     const flag = visibilityMap[remark];
-
-    //     shouldDisable = flag === false || flag === 'false' || flag === 0 || flag === '0';
-    //   }
-    // }
 
     const renderInput = () => {
       switch (field.field_type) {
@@ -2220,13 +1954,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       const file = e.target.files?.[0];
       if (!file) return;
 
-      // ⬇️ Kalau mau batasi PDF saja, uncomment ini
-      // if (file.type !== 'application/pdf') {
-      //   console.warn('Hanya file PDF yang diperbolehkan.');
-      //   e.target.value = '';
-      //   return;
-      // }
-
       const path = await uploadFileToCDN(file);
       if (path) onChange(idx, 'answer_file', path); // ⬅️ update baris yang benar
 
@@ -2234,40 +1961,12 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       e.target.value = '';
     };
 
-  const onChangesByFieldTypes = (key: keyof FormVisitor, value: any, targetFieldType: number) => {
-    setSectionsData((prev) =>
-      prev.map((sec) =>
-        updateSectionForm(sec, (arr) =>
-          arr.map((form) =>
-            form.field_type === targetFieldType ? { ...form, [key]: value } : form,
-          ),
-        ),
-      ),
-    );
-
-    // (opsional) sinkronisasi tambahan kamu tetap bisa lanjut di bawah ini
-    setGroupedPages((prev) => {
-      const pvSection = sectionsData.find(isPurposeVisit);
-      if (!pvSection) return prev;
-      return {
-        ...prev,
-        single_page: prev.single_page.map((f) =>
-          f.field_type === targetFieldType ? { ...f, [key]: value } : f,
-        ),
-      };
-    });
-  };
-
   const makeCdnUrl = (rel?: string | null) => {
     if (!rel) return null;
     if (/^(data:|blob:|https?:\/\/)/i.test(rel)) return rel;
     const r = rel.startsWith('/') ? rel : `/${rel}`;
     return r.startsWith('/cdn/') ? `${BASE_URL}${r}` : `${BASE_URL}/cdn${r}`;
   };
-
-  // tentukan preview yg ditampilkan:
-  // 1) kalau ada previews[key] (ObjectURL hasil pilih file / kamera) -> pakai itu
-  // 2) else, kalau answer_file punya ekstensi image -> pakai cdn url
   const getPreviewSrc = (key: string, answerFile?: string) => {
     if (previews[key]) return previews[key];
     if (!answerFile) return null;
@@ -2535,22 +2234,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     const errors: Record<string, string> = {};
 
     if (isGroup) {
-      // dataVisitor.forEach((visitor, gIdx) => {
-      //   const page = visitor.question_page?.[activeStep - 1];
-      //   if (!page?.form) return;
-
-      //   page.form.forEach((item: any, fIdx: number) => {
-      //     if (!item?.mandatory) return;
-
-      //     const key = `${activeStep - 1}:${gIdx}:${fIdx}`;
-
-      //     const isEmpty = !item.answer_text && !item.answer_file && !item.answer_datetime;
-
-      //     if (isEmpty) {
-      //       errors[key] = `${item.long_display_text} is required`;
-      //     }
-      //   });
-      // });
       dataVisitor.forEach((visitor, gIdx) => {
         const page = visitor.question_page?.[activeStep - 1];
         if (!page?.form) return;
@@ -2572,28 +2255,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
           validateField(item, key, errors);
         });
       });
-
-      // dataVisitor.forEach((visitor, gIdx) => {
-      //   const page = visitor.question_page?.[activeStep - 1];
-      //   if (!page?.form) return;
-
-      //   const details = page.form;
-      //   const visibilityMap: any = getVisibilityMap(details);
-
-      //   details.forEach((item: any, fIdx: number) => {
-      //     if (!item?.mandatory) return;
-
-      //     const remark = (item.remarks || '').toLowerCase();
-      //     const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
-
-      //     if (!isVisible) return;
-
-      //     // const key = `${activeStep - 1}:${gIdx}:${fIdx}`;
-      //     const key = `${activeStep - 1}:${gIdx}:${item.id}`;
-
-      //     validateField(item, key, errors);
-      //   });
-      // });
     } else {
       // const section = sectionsData[activeStep - 1];
       // const details = formsOf(section);
@@ -3925,31 +3586,31 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         toast('Group visitor created successfully.', 'success');
         resetMediaState();
         clearAnswerFiles();
-        const visitors = backendResponse.collection?.visitors || [];
+        // const visitors = backendResponse.collection?.visitors || [];
 
-        const availableCards = backendResponse.collection?.available_cards || [];
-        setAvailableCards(availableCards);
+        // const availableCards = backendResponse.collection?.available_cards || [];
+        // setAvailableCards(availableCards);
 
-        setRows(
-          visitors.map((v: any, i: number) => ({
-            id: v.id,
-            visitor: v.visitor_name,
-            trx_visitor_id: v.id ?? null,
-            card: null,
-          })),
-        );
+        // setRows(
+        //   visitors.map((v: any, i: number) => ({
+        //     id: v.id,
+        //     visitor: v.visitor_name,
+        //     trx_visitor_id: v.id ?? null,
+        //     card: null,
+        //   })),
+        // );
 
-        // Cek akses site
-        const siteAnswer = getSiteFromForm(false, sectionsData, dataVisitor);
-        if (siteAnswer) {
-          try {
-            const res = await getGrantAccess(token, siteAnswer);
-            setAccessData(res.collection ?? []);
-            console.log('Grant access by site_place:', siteAnswer, res.collection);
-          } catch (err) {
-            console.error('Failed to fetch grant access:', err);
-          }
-        }
+        // // Cek akses site
+        // const siteAnswer = getSiteFromForm(false, sectionsData, dataVisitor);
+        // if (siteAnswer) {
+        //   try {
+        //     const res = await getGrantAccess(token, siteAnswer);
+        //     setAccessData(res.collection ?? []);
+        //     console.log('Grant access by site_place:', siteAnswer, res.collection);
+        //   } catch (err) {
+        //     console.error('Failed to fetch grant access:', err);
+        //   }
+        // }
       }
 
       // 🟦 SINGLE MODE
@@ -3993,30 +3654,30 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         resetMediaState();
         clearAnswerFiles();
 
-        const visitors = backendResponse.collection?.visitors || [];
-        const availableCards = backendResponse.collection?.available_cards || [];
-        setAvailableCards(availableCards);
+        // const visitors = backendResponse.collection?.visitors || [];
+        // const availableCards = backendResponse.collection?.available_cards || [];
+        // setAvailableCards(availableCards);
 
-        setRows(
-          visitors.map((v: any, i: number) => ({
-            id: v.id,
-            visitor: v.visitor?.name,
-            trx_visitor_id: v.id ?? null,
-            card: null,
-          })),
-        );
+        // setRows(
+        //   visitors.map((v: any, i: number) => ({
+        //     id: v.id,
+        //     visitor: v.visitor?.name,
+        //     trx_visitor_id: v.id ?? null,
+        //     card: null,
+        //   })),
+        // );
 
-        console.log('rows', rows);
+        // console.log('rows', rows);
 
-        const siteAnswer = getSiteFromForm(false, sectionsData, dataVisitor);
-        if (siteAnswer) {
-          try {
-            const res = await getGrantAccess(token, siteAnswer);
-            setAccessData(res.collection ?? []);
-          } catch (err) {
-            console.error('❌ Failed to fetch grant access:', err);
-          }
-        }
+        // const siteAnswer = getSiteFromForm(false, sectionsData, dataVisitor);
+        // if (siteAnswer) {
+        //   try {
+        //     const res = await getGrantAccess(token, siteAnswer);
+        //     setAccessData(res.collection ?? []);
+        //   } catch (err) {
+        //     console.error('❌ Failed to fetch grant access:', err);
+        //   }
+        // }
       }
       setTimeout(() => {
         setLoading(false);
@@ -4470,28 +4131,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
   }, [openChooseCardDialog]);
   const [selectedCards, setSelectedCards] = useState<string[]>([]);
 
-  const [tableKey, setTableKey] = useState(0);
-
-  const resetSelections = () => {
-    setSelectedInvitations([]);
-    setSelectedCards([]);
-    setTableKey((k) => k + 1);
-  };
-
-  const handleCloseChooseCard = () => {
-    setOpenChooseCardDialog(false);
-    resetSelections();
-  };
-
-  // type Row = {
-  //   id: number;
-  //   visitor?: string;
-  //   card: string | React.ReactNode | null;
-  //   trx_visitor_id?: string | null;
-  //   assigned_card_number?: string | null;
-  //   assigned_card_remarks?: string | null;
-  // };
-
   type CardInfo = {
     card_number: string;
     remarks: string;
@@ -4505,185 +4144,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
   };
 
   const [rows, setRows] = useState<Row[]>([]);
-
-  const cardIndex = useMemo(() => {
-    const m = new Map<string, (typeof availableCards)[number]>();
-    availableCards.forEach((c) => m.set(c.card_number, c));
-    return m;
-  }, [availableCards]);
-
-  const handleConfirmChooseCards = () => {
-    const ids = normalizeIdsDeep(selectedInvitations);
-    console.log('raw selectedInvitations:', selectedInvitations);
-    console.log('id', ids);
-
-    if (!ids.length || !selectedCards.length) {
-      handleCloseChooseCard();
-      return;
-    }
-
-    const N = Math.min(ids.length, selectedCards.length);
-
-    // pair: id ↔ (remarks, card_number)
-    const pairs = ids.slice(0, N).map((id, i) => {
-      const num = selectedCards[i];
-      const meta = cardIndex.get(num);
-      return { id, card_number: num, remarks: meta?.remarks ?? '-' };
-    });
-
-    // setRows((prevRows) =>
-    //   prevRows.map((row) => {
-    //     const p = pairs.find((x) => x.id === String(row.id));
-    //     if (!p) return row;
-
-    //     return {
-    //       ...row,
-    //       card: (
-    //         <Box display="flex" flexDirection="column">
-    //           <Typography variant="body2" fontWeight={600}>
-    //             {p.remarks}
-    //           </Typography>
-    //           <Typography variant="caption" color="text.secondary">
-    //             {p.card_number}
-    //           </Typography>
-    //         </Box>
-    //       ),
-    //       assigned_card_number: p.card_number,
-    //       assigned_card_remarks: p.remarks,
-    //     };
-    //   }),
-    // );
-
-    setRows((prevRows: any) =>
-      prevRows.map((row: any) => {
-        const p = pairs.find((x) => x.id === String(row.id));
-        if (!p) return row;
-
-        return {
-          ...row,
-          card: {
-            card_number: p.card_number,
-            remarks: p.remarks,
-          },
-          assigned_card_number: p.card_number,
-          assigned_card_remarks: p.remarks,
-        };
-      }),
-    );
-
-    toast(`Assigned ${N} card(s) to ${N} invitation(s).`, 'success');
-
-    // kosongkan selection
-    // setSelectedInvitations([]);
-    handleCloseChooseCard();
-  };
-
-  const filteredRows = useMemo(() => {
-    if (!searchKeyword) return rows;
-    return rows.filter((r) => r.visitor?.toLowerCase().includes(searchKeyword.toLowerCase()));
-  }, [rows, searchKeyword]);
-
-  const assignedByCard = useMemo(() => {
-    const m = new Map<string, string | number>();
-    rows.forEach((r: any) => {
-      if (r.assigned_card_number) {
-        m.set(String(r.assigned_card_number), r.id);
-      }
-    });
-    return m;
-  }, [rows]);
-
-  const selectedIdSet = useMemo(() => {
-    return new Set(normalizeIdsDeep(selectedInvitations).map(String));
-  }, [selectedInvitations]);
-
-  const handleToggleCard = (cardNumber: string) => {
-    const holderRowId = assignedByCard.get(String(cardNumber));
-    const isUsedByOther = !!holderRowId && !selectedIdSet.has(String(holderRowId));
-
-    if (isUsedByOther) return;
-
-    setSelectedCards((prev) => {
-      if (prev.includes(cardNumber)) {
-        // sudah ada → remove
-        return prev.filter((c) => c !== cardNumber);
-      }
-      if (prev.length >= selectedInvitations.length) {
-        toast('You have reached the maximum number of invitations.', 'warning');
-        return prev; // tidak nambah
-      }
-      return [...prev, cardNumber];
-    });
-  };
-
-  const availableVisibleCards = useMemo(() => {
-    return filteredCards.filter((c) => {
-      const holder = assignedByCard.get(String(c.card_number));
-      return !(holder && !selectedIdSet.has(String(holder)));
-    });
-  }, [filteredCards, assignedByCard, selectedIdSet]);
-
-  const availableCount = availableVisibleCards.length;
-
-  const handleSelectAll = () => {
-    const visible = availableVisibleCards.map((c) => c.card_number);
-    const capacity = selectedInvitations.length;
-    const cappedVisibleCount = Math.min(visible.length, capacity);
-    const visibleSelectedCount = visible.filter((n) => selectedCards.includes(n)).length;
-
-    const fullySelected = cappedVisibleCount > 0 && visibleSelectedCount === cappedVisibleCount;
-
-    if (fullySelected) {
-      // klik kedua: hapus semua yg terlihat
-      setSelectedCards((prev) => prev.filter((n) => !visible.includes(n)));
-      toast('Visible cards cleared.', 'info');
-    } else {
-      if (capacity <= 0) return toast('Please select invitations first.', 'warning');
-      const toAdd = visible.slice(0, capacity);
-      setSelectedCards(toAdd);
-      toast(`Selected ${toAdd.length} available card(s).`, 'success');
-    }
-  };
-
-  const hasSelfOnly = (dataVisitor: any[]) =>
-    dataVisitor?.some((dv) => dv.question_page?.some((page: any) => page.self_only === true));
-
-  const [checkedGroupItems, setCheckedGroupItems] = useState<string[]>([]);
-  const [checkedSelfItems, setCheckedSelfItems] = useState<string[]>([]);
-
-  const handleToggleGroup = (id: string) => {
-    setCheckedGroupItems((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-    );
-  };
-
-  const getCheckedCount = () => {
-    if (!isGroup) {
-      return checkedItems.length; // Single Access
-    }
-
-    if (isGroup && !hasSelfOnly(dataVisitor)) {
-      return checkedGroupItems.length; // Group only
-    }
-
-    if (isGroup && hasSelfOnly(dataVisitor)) {
-      return checkedSelfItems.length + checkedItems.length;
-    }
-
-    return 0;
-  };
-
-  useEffect(() => {
-    if (openChooseCardDialog) {
-      const preselected: string[] = [];
-      for (const [cardNumber, holderRowId] of assignedByCard.entries()) {
-        if (selectedIdSet.has(String(holderRowId))) {
-          preselected.push(cardNumber);
-        }
-      }
-      setSelectedCards(preselected);
-    }
-  }, [openChooseCardDialog, assignedByCard, selectedIdSet]);
 
   const stepLabels = useMemo(() => ['User Type', ...draggableSteps], [draggableSteps]);
 
@@ -4709,12 +4169,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
 
     setActiveStep(targetStep);
   };
-
-  const tableData = filteredRows.map((row: Row) => ({
-    id: row.id,
-    visitor: row.visitor,
-    card: row.card ? `${row.card.remarks} - ${row.card.card_number}` : '-',
-  }));
 
   return (
     <PageContainer title="Visitor" description="this is Add Visitor page">

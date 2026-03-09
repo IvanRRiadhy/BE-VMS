@@ -305,7 +305,18 @@ const Content = () => {
 
     const coerceEmployee = (s: any) => ({
       ...s,
-      // pastikan tidak NaN:
+      type: toNum(
+        s?.type,
+        {
+          permanent: 1,
+          contract: 2,
+          internship: 3,
+          '0': 0,
+          '1': 1,
+          '2': 2,
+        },
+        0,
+      ),
       gender: toNum(s?.gender, { female: 0, male: 1, f: 0, m: 1, '0': 0, '1': 1 }, 0),
 
       status_employee: toNum(
@@ -563,7 +574,6 @@ const Content = () => {
         </DialogTitle>
         <Divider />
         <DialogContent>
-          <br />
           <FormWizardAddEmployee
             formData={formDataAddEmployee}
             setFormData={setFormDataAddEmployee}

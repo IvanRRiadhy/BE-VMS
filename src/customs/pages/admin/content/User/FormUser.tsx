@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Button,
   Grid2,
@@ -8,48 +8,15 @@ import {
   Backdrop,
   MenuItem,
   Snackbar,
-  Checkbox,
-  Switch,
-  TableContainer,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  FormControl,
-  Select,
-  TableBody,
-  IconButton,
-  Paper,
 } from '@mui/material';
 import { Box } from '@mui/system';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import {
-  createOperatorSettingGiveAccess,
-  createPermission,
-  createUser,
-  getAllAccessControl,
-  getAllOrganizations,
-  getAllSite,
-  getAllUserGroup,
-  getRegisteredSite,
-  getVisitorEmployee,
-  updateUser,
-} from 'src/customs/api/admin';
+import { createUser, getAllUserGroup, updateUser } from 'src/customs/api/admin';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { CreateUserRequest } from 'src/customs/api/models/Admin/User';
-import {
-  Autocomplete,
-  TextField,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
-  FormHelperText,
-} from '@mui/material';
+import { Autocomplete, TextField } from '@mui/material';
 import { GroupRoleId } from 'src/constant/GroupRoleId';
 import { showSwal } from 'src/customs/components/alerts/alerts';
-import { IconTrash } from '@tabler/icons-react';
-import PermissionSection from './PermissionSection';
 
 interface FormUserProps {
   formData: any;
@@ -77,11 +44,31 @@ const FormUser: React.FC<FormUserProps> = ({
   const [snackbarType, setSnackbarType] = useState<'success' | 'error' | 'info'>('info');
   const [alertType, setAlertType] = useState<'info' | 'success' | 'error'>('info');
   const [employeeRes, setEmployeeRes] = useState<any[]>([]);
+  const [userGroup, setUserGroup] = useState<any[]>([]);
   const { token } = useSession();
-  const groupOptions = Object.entries(GroupRoleId).map(([key, value]) => ({
-    id: value.toLowerCase(), // ⬅ normalize ke lowercase
-    label: key.replace(/([A-Z])/g, ' $1'),
-  }));
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await getAllUserGroup(token as string);
+        setUserGroup(res?.collection ?? []);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchData();
+  }, []);
+  // const groupOptions = Object.entries(GroupRoleId).map(([key, value]) => ({
+  //   id: value.toLowerCase(), // ⬅ normalize ke lowercase
+  //   label: key.replace(/([A-Z])/g, ' $1'),
+  // }));
+
+  const groupOptions = useMemo(() => {
+    return userGroup.map((g: any) => ({
+      id: g.id,
+      label: g.name,
+    }));
+  }, [userGroup]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -98,15 +85,13 @@ const FormUser: React.FC<FormUserProps> = ({
         return;
       }
 
-      console.log('payload submit', formData);
+      const { application_id, ...payload } = formData;
 
       if (edittingId) {
-        await updateUser(token, edittingId, formData);
+        await updateUser(token, edittingId, payload);
       } else {
-        await createUser(token, formData);
+        await createUser(token, payload);
       }
-
-      // await handleSubmitPermission(formData.group_id, formData.permissions ?? []);
 
       showSwal('success', edittingId ? 'User successfully updated!' : 'User successfully created!');
       setTimeout(() => {
@@ -205,7 +190,7 @@ const FormUser: React.FC<FormUserProps> = ({
           </Grid2>
 
           {/* GROUP */}
-          <Grid2 size={{ xs: 12, lg: 6 }}>
+          {/* <Grid2 size={{ xs: 12, lg: 6 }}>
             <CustomFormLabel htmlFor="user_group_id" sx={{ mt: 0.5 }}>
               Group
             </CustomFormLabel>
@@ -214,6 +199,32 @@ const FormUser: React.FC<FormUserProps> = ({
               id="user_group_id"
               select
               value={formData.user_group_id || ''}
+              onChange={(e) => handleGroupChange(e.target.value)}
+              error={Boolean(errors.user_group_id)}
+              helperText={errors.user_group_id ?? ''}
+              fullWidth
+            >
+              <MenuItem value="" disabled>
+                Select Group
+              </MenuItem>
+
+              {groupOptions.map((group) => (
+                <MenuItem key={group.id} value={group.id}>
+                  {group.label}
+                </MenuItem>
+              ))}
+            </CustomTextField>
+          </Grid2> */}
+
+          <Grid2 size={{ xs: 12, lg: 6 }}>
+            <CustomFormLabel htmlFor="user_group_id" sx={{ mt: 0.5 }}>
+              Group
+            </CustomFormLabel>
+
+            <CustomTextField
+              id="user_group_id"
+              select
+              value={formData.user_group_id ?? ''}
               onChange={(e) => handleGroupChange(e.target.value)}
               error={Boolean(errors.user_group_id)}
               helperText={errors.user_group_id ?? ''}
@@ -309,7 +320,7 @@ const FormUser: React.FC<FormUserProps> = ({
           <Grid2 size={12}>
             <Box display="flex" justifyContent="flex-end" mt={1}>
               <Button color="primary" variant="contained" type="submit" disabled={loading}>
-                {loading ? <CircularProgress size={20} /> : 'Submit'}
+                {loading ? 'Submit' : 'Submit'}
               </Button>
             </Box>
           </Grid2>
@@ -347,7 +358,7 @@ const FormUser: React.FC<FormUserProps> = ({
           open={loading}
           sx={{
             color: '#fff',
-            zIndex: (t) => 999999,
+            zIndex: 999999,
           }}
         >
           <CircularProgress color="primary" />

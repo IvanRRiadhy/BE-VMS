@@ -124,7 +124,7 @@ export const getActiveInvitation = async (token: string): Promise<any> => {
 export const createInvitationActionOperator = async (
   token: string,
   id: string,
-  data: CreateInvitationActionOperatorRequest,
+  data: any,
 ): Promise<any> => {
   try {
     const response = await axiosInstance.post(`/operator-invitation/action/${id}`, data, {
@@ -329,4 +329,59 @@ export const getTodayVisitingPurpose = async (token: string): Promise<any> => {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });
   return response.data;
+};
+
+// Blacklist
+
+export const getOperatorBlacklist = async (
+  token: string,
+  start: number,
+  sortDir: string,
+  length: number,
+  keyword: string = '',
+  startDate?: string,
+  endDate?: string,
+  status?: string | boolean,
+  visitor?: string,
+): Promise<any> => {
+  const params: any = {
+    start,
+    length,
+    sort_dir: sortDir,
+  };
+  if (keyword) params['search[value]'] = keyword;
+  if (startDate) params['start-date'] = startDate;
+  if (endDate) params['end-date'] = endDate;
+  if (visitor) params.visitor = visitor;
+
+  if (status !== undefined && status !== '' && status !== null) {
+    params['status-blacklist'] =
+      status === 'true' || status === true
+        ? true
+        : status === 'false' || status === false
+          ? false
+          : status;
+  }
+
+  const response = await axiosInstance.get('/operator-invitation/blacklist/dt', {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    params,
+  });
+  return response.data;
+};
+
+// get by id blacklist
+export const getOperatorBlacklistById = async (token: string, id: string): Promise<any> => {
+  const response = await axiosInstance.get('/operator-invitation/blacklist/' + id, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+// create blacklist
+export const createOperatorBlacklist = async (token: string, data: any): Promise<any> => {
+  const response = await axiosInstance.post('/operator-invitation/blacklist', data, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;   
 };

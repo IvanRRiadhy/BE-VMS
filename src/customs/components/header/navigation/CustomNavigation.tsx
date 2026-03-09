@@ -18,7 +18,7 @@ const CustomNavigation: React.FC<CustomNavigationProps> = ({
   itemDataCustomNavListing,
   itemDataCustomSidebarItems,
 }) => {
-  const lgUp = useMediaQuery((theme: Theme) => theme.breakpoints.up('xl'));
+  const lgUp = useMediaQuery((theme: Theme) => theme.breakpoints.up('lg'));
   const customizer = useSelector((state: AppState) => state.customizer);
   const dispatch = useDispatch();
 
@@ -36,9 +36,6 @@ const CustomNavigation: React.FC<CustomNavigationProps> = ({
           borderRadius: 0,
         }}
       >
-        {/* ------------------------------------------- */}
-        {/* NavListing on top for desktop (FULL WIDTH) */}
-        {/* ------------------------------------------- */}
         <Box
           sx={{ px: 1, zIndex: 9999 }}
           display={'flex'}
