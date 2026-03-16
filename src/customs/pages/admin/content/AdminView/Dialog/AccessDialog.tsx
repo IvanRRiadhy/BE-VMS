@@ -15,20 +15,14 @@ type AccessDialogProps = {
   open: boolean;
   onClose: () => void;
   containerRef?: any;
-
   accessData: any[];
   selectedVisitors: string[];
-
   allowedActions: string[];
-
   selectedAccessIds: string[];
   setSelectedAccessIds: (ids: string[]) => void;
-
   selectedActionAccess: string;
   setSelectedActionAccess: (val: string) => void;
-
   handleAccessAction: (row: any, action: 'grant' | 'revoke' | 'block') => Promise<void>;
-
   setSnackbarOpen: (v: boolean) => void;
   setSnackbarMsg: (v: string) => void;
   setSnackbarType: (v: 'info' | 'success' | 'error') => void;
@@ -67,10 +61,10 @@ export default function AccessDialog({
         <IconX />
       </IconButton>
 
-      <DialogContent dividers>
+      <DialogContent dividers >
         <DynamicTable
           data={accessData.map(({ trx_visitor_id, visitors, ...rest }) => rest)}
-          isHaveChecked
+          isHaveChecked={false}
           isHaveHeaderTitle
           titleHeader="Access"
           overflowX="auto"
@@ -78,12 +72,12 @@ export default function AccessDialog({
           isNoActionTableHead
           onAccessAction={handleAccessAction as any}
           onCheckedChange={(checkedRows) => {
-            const ids = checkedRows.map((r: any) => r.access_control_id);
+            const ids = checkedRows.map((r: any) => r.id);
             setSelectedAccessIds(ids);
           }}
         />
 
-        <Box sx={{ display: 'flex', gap: 1 }}>
+        {/* <Box sx={{ display: 'flex', gap: 1 }}>
           <CustomSelect
             sx={{ width: '30%', p: 0, mt: 2, backgroundColor: 'white' }}
             value={selectedActionAccess}
@@ -149,7 +143,7 @@ export default function AccessDialog({
           >
             Apply
           </Button>
-        </Box>
+        </Box> */}
       </DialogContent>
     </Dialog>
   );

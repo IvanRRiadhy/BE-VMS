@@ -49,8 +49,6 @@ import {
   useMediaQuery,
   MobileStepper,
 } from '@mui/material';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import 'select2';
 import 'select2/dist/css/select2.min.css';
 import {
@@ -690,6 +688,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 name="group_name"
                                 value={g.group_name}
                                 placeholder="Enter group name"
+                                sx={{ minWidth: '100px' }}
                                 onChange={(e) =>
                                   setGroupVisitors((prev) =>
                                     prev.map((item) =>
@@ -708,6 +707,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 name="group_code"
                                 value={g.group_code}
                                 InputProps={{ readOnly: true }}
+                                sx={{ minWidth: '100px' }}
+                                disabled
                               />
                             </TableCell>
                             <TableCell>
@@ -1023,33 +1024,38 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                                 return (
                                   <Accordion key={gIdx} sx={{ mb: 1 }}>
-                                    <AccordionSummary
-                                      expandIcon={<ExpandMoreIcon />}
-                                      sx={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between',
-                                        p: 1,
-                                      }}
-                                    >
-                                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                    <Box sx={{ position: 'relative' }}>
+                                      <AccordionSummary
+                                        expandIcon={<ExpandMoreIcon />}
+                                        sx={{
+                                          p: 1,
+                                          // pr: 6,
+                                        }}
+                                      >
                                         <Typography fontWeight="bold" mb={0}>
                                           Visitor {gIdx + 1}
                                         </Typography>
-                                      </Box>
-
+                                      </AccordionSummary>
                                       {dataVisitor.length > 1 && (
                                         <IconButton
                                           size="small"
+                                          color="error"
+                                          sx={{
+                                            position: 'absolute',
+                                            right: 50,
+                                            top: '50%',
+                                            transform: 'translateY(-50%)',
+                                            backgroundColor: 'red',
+                                          }}
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             handleDeleteGroupRow(gIdx);
                                           }}
                                         >
-                                          <IconTrash color="error" />
+                                          <IconTrash color="white" />
                                         </IconButton>
                                       )}
-                                    </AccordionSummary>
+                                    </Box>
 
                                     <AccordionDetails>
                                       {page.form?.map((field: any, fIdx: any) => {
@@ -1266,8 +1272,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     b?.custom_field_id &&
                     a.custom_field_id === b.custom_field_id) ||
                   (a?.remarks && b?.remarks && a.remarks === b.remarks);
-
-                // ✅ Ambil state paling baru: groupPages + section forms
                 const mergedVisitForm = formsOf(section).map((f: any) => {
                   const shared = groupedPages.single_page.find((sf) => sameField(sf, f));
                   return shared ? { ...f, ...pickAns(shared) } : f;
@@ -1727,7 +1731,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     clearFieldError(errorKey);
                   }
                 }}
-                format="dddd, DD MMMMM YYYY, HH:mm"
+                format="dddd, DD MMMM YYYY, HH:mm"
                 viewRenderers={{
                   hours: renderTimeViewClock,
                   minutes: renderTimeViewClock,
@@ -2627,7 +2631,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         value={startTime}
                         ampm={false}
                         onChange={setStartTime}
-                        format="dddd, DD  MMMMM YYYY, HH:mm"
+                        format="dddd, DD  MMMM YYYY, HH:mm"
                         viewRenderers={{
                           hours: renderTimeViewClock,
                           minutes: renderTimeViewClock,
@@ -2761,7 +2765,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             clearFieldError(key);
                           }
                         }}
-                        format="dddd, DD  MMMMM YYYY, HH:mm"
+                        format="dddd, DD  MMMM YYYY, HH:mm"
                         viewRenderers={{
                           hours: renderTimeViewClock,
                           minutes: renderTimeViewClock,
@@ -4282,27 +4286,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const [checkedGroupItems, setCheckedGroupItems] = useState<string[]>([]);
   const [checkedSelfItems, setCheckedSelfItems] = useState<string[]>([]);
 
-  const handleToggleGroup = (id: string) => {
-    setCheckedGroupItems((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-    );
-  };
 
-  const getCheckedCount = () => {
-    if (!isGroup) {
-      return checkedItems.length;
-    }
-
-    if (isGroup && !hasSelfOnly(dataVisitor)) {
-      return checkedGroupItems.length;
-    }
-
-    if (isGroup && hasSelfOnly(dataVisitor)) {
-      return checkedSelfItems.length + checkedItems.length;
-    }
-
-    return 0;
-  };
 
   useEffect(() => {
     if (openChooseCardDialog) {

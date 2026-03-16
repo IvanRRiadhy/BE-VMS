@@ -11,13 +11,8 @@ import {
   Box,
   Button,
   CircularProgress,
-  Dialog,
-  DialogContent,
-  DialogTitle,
   Divider,
   Grid2 as Grid,
-  IconButton,
-  TextField,
   Typography,
 } from '@mui/material';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
@@ -25,12 +20,8 @@ import printBadge from 'src/assets/images/print_badge.jpeg';
 import { PrintBadgeSchema } from 'src/customs/api/validations/PrintBadgeSchema';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import axiosInstance, { axiosInstance2, BASE_URL } from 'src/customs/api/interceptor';
-import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import {
-  getPrintBadgeConfig,
-  updatePrintBadgeConfig,
-} from 'src/customs/api/models/Admin/PrintBadge';
+import { getPrintBadgeConfig, updatePrintBadgeConfig } from 'src/customs/api/Admin/PrintBadge';
 import FormPrintBadge from './FormPrintBadge';
 
 type PrintBadgeForm = {
@@ -70,12 +61,12 @@ const Content = () => {
     formData.append('logo', file);
 
     try {
-    const response = await axiosInstance2.post(`/api/print-badge/upload/${id}`, formData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    console.log('response', response);
+      const response = await axiosInstance2.post(`/api/print-badge/upload/${id}`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log('response', response);
 
       const fileUrl = response.data?.collection?.file_url;
       if (!fileUrl) return null;

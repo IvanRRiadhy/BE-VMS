@@ -67,7 +67,7 @@ import { useSelector } from 'react-redux';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import EmployeeDetailDialog from '../Components/Dialog/EmployeeDetailDialog';
 import SelectRegisteredSiteDialog from '../Components/Dialog/SelectRegisteredSiteDialog';
-import { getInvitationVisitorType } from 'src/customs/api/InvitationData';
+import { getInvitationSite, getInvitationVisitorType } from 'src/customs/api/Admin/InvitationData';
 import {
   createShareLink,
   createShareLinkByEmail,
@@ -195,6 +195,15 @@ const Content = () => {
   const [generatedLink, setGeneratedLink] = useState('');
   const [openInviteViaLinkEmail, setOpenInviteViaLinkEmail] = useState(false);
   const [tabValue, setTabValue] = useState(0);
+  const [openDetailShareLink, setOpenDetailShareLink] = useState(false);
+  const [openDetailLink, setOpenDetailLink] = useState(false);
+  const [openCreateLink, setOpenCreateLink] = useState(false);
+  const [pendingPayload, setPendingPayload] = useState<any>(null);
+  const [openSendEmail, setOpenSendEmail] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [sortDir, setSortDir] = useState<string>('desc');
+  const queryClient = useQueryClient();
+  const [expiredAt, setExpiredAt] = useState<string | null>(null);
 
   const resetRegisteredFlow = () => {
     setSelectedSite(null);
@@ -262,11 +271,12 @@ const Content = () => {
       const end_date = dayjs().format('YYYY-MM-DD');
 
       try {
-        const response = await getInvitations(token as string, start_date, end_date);
-        // const response = await getOngoingInvitation(token as string);
+        // const response = await getInvitations(token as string, start_date, end_date);
+        const response = await getOngoingInvitation(token as string);
 
         let mapped = response.collection.map((item: any) => {
-          const isEmployeeHost = item.host === employeeId?.toUpperCase();
+          // const isEmployeeHost = item.host === employeeId?.toUpperCase();
+          const isEmployeeHost = item.host === employeeId;
 
           return {
             id: item.id,
@@ -466,7 +476,8 @@ const Content = () => {
           getAllCustomField(token),
           getFormEmployee(token),
           getVisitorEmployee(token),
-          getAllSite(token),
+          // getAllSite(token),
+          getInvitationSite(token),
         ]);
 
         // if (cancelled) return;
@@ -486,7 +497,7 @@ const Content = () => {
   const fetchVisitorType = async () => {
     try {
       setVtLoading(true);
-      const res = await getAllVisitorType(token as string);
+      const res = await getInvitationVisitorType(token as string);
       setVisitorType(res?.collection || []);
     } catch (err) {
       console.error(err);
@@ -498,16 +509,6 @@ const Content = () => {
   useEffect(() => {
     fetchVisitorType();
   }, [token]);
-
-  const [openDetailShareLink, setOpenDetailShareLink] = useState(false);
-  const [openDetailLink, setOpenDetailLink] = useState(false);
-  const [openCreateLink, setOpenCreateLink] = useState(false);
-  const [pendingPayload, setPendingPayload] = useState<any>(null);
-  const [openSendEmail, setOpenSendEmail] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [sortDir, setSortDir] = useState<string>('desc');
-  const queryClient = useQueryClient();
-  const [expiredAt, setExpiredAt] = useState<string | null>(null);
 
   const handleDeleteLink = async (id: string) => {
     try {
@@ -547,16 +548,31 @@ const Content = () => {
     setOpenDetailLink(true);
   };
 
-  const start = page * rowsPerPage;
-  const { data, isLoading, isFetching } = useQuery({
-    queryKey: ['share-links', page, rowsPerPage, searchKeyword, sortDir],
+  const [pageSharelink, setPageSharelink] = useState(0);
+  const [rowsPerPageSharelink, setRowsPerPageSharelink] = useState(10);
+  const [searchKeywordSharelink, setSearchKeywordSharelink] = useState('');
+  const [sortDirSharelink, setSortDirSharelink] = useState('desc');
+
+  const startShareLink = pageSharelink * rowsPerPageSharelink;
+  const {
+    data,
+    isLoading: isLoadingSharelink,
+    isFetching,
+  } = useQuery({
+    queryKey: [
+      'share-links',
+      pageSharelink,
+      rowsPerPageSharelink,
+      searchKeywordSharelink,
+      sortDirSharelink,
+    ],
     queryFn: async () => {
       const res = await getShareLinkByDt(
         token as string,
-        start,
-        rowsPerPage,
-        searchKeyword,
-        sortDir,
+        startShareLink,
+        rowsPerPageSharelink,
+        searchKeywordSharelink,
+        sortDirSharelink,
       );
 
       return res;
@@ -652,6 +668,53 @@ const Content = () => {
     setOpenInviteViaLinkEmail(true);
   };
 
+  const handleSendEmail = async (emails: string[]) => {
+    try {
+      setIsGenerating(true);
+
+      const finalPayload = {
+        ...pendingPayload,
+        emails: emails,
+      };
+
+      await createShareLink(token as string, finalPayload);
+
+      await queryClient.invalidateQueries({
+        queryKey: ['share-links'],
+      });
+
+      setOpenSendEmail(false);
+      setOpenCreateLink(false);
+
+      showSwal('success', 'Share link sent successfully');
+    } catch (err) {
+      console.error(err);
+      showSwal('error', 'Failed to send share link');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleCreateLink = async (payload: any) => {
+    try {
+      setIsGenerating(true);
+
+      await createShareLink(token as string, payload);
+
+      await queryClient.invalidateQueries({
+        queryKey: ['share-links'],
+      });
+
+      setOpenCreateLink(false);
+      showSwal('success', 'Share link created successfully');
+    } catch (err) {
+      console.error(err);
+      showSwal('error', 'Failed to create share link');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
     <>
       <PageContainer title="Invitation" description="invitation page">
@@ -686,7 +749,7 @@ const Content = () => {
                 defaultRowsPerPage={rowsPerPage}
                 totalCount={totalFilteredRecords}
                 selectedRows={selectedRows}
-                rowsPerPageOptions={[10, 20, 50, 100, 500]}
+                rowsPerPageOptions={[10, 20, 50, 100]}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);
@@ -694,7 +757,7 @@ const Content = () => {
                 isHaveChecked={true}
                 isHaveAction={true}
                 isHaveImage={true}
-                isHaveSearch={false}
+                isHaveSearch={true}
                 // isHaveFilter={true}
                 isHaveExportPdf={false}
                 isHaveExportXlf={false}
@@ -867,6 +930,7 @@ const Content = () => {
         </DialogTitle>
         <DialogContent dividers>
           <DynamicTable
+            loading={isLoadingSharelink}
             data={shareLinkList}
             isHaveHeaderTitle
             isHaveChecked={true}
@@ -902,23 +966,7 @@ const Content = () => {
       <CreateLinkDialog
         open={openCreateLink}
         onClose={() => setOpenCreateLink(false)}
-        onCreateLink={async (payload) => {
-          try {
-            setIsGenerating(true);
-
-            await createShareLink(token as string, payload);
-            await queryClient.invalidateQueries({
-              queryKey: ['share-links'],
-            });
-            setOpenCreateLink(false);
-            showSwal('success', 'Share link created successfully');
-          } catch (err) {
-            console.error(err);
-            showSwal('error', 'Failed to create share link');
-          } finally {
-            setIsGenerating(false);
-          }
-        }}
+        onCreateLink={handleCreateLink}
         onSendEmail={(payload) => {
           setPendingPayload(payload);
           setOpenSendEmail(true);
@@ -934,30 +982,7 @@ const Content = () => {
       <SendEmailDialog
         open={openSendEmail}
         onClose={() => setOpenSendEmail(false)}
-        onSend={async (emails: string[]) => {
-          try {
-            setIsGenerating(true);
-
-            const finalPayload = {
-              ...pendingPayload,
-              emails: emails,
-            };
-
-            await createShareLinkByEmail(token as string, finalPayload);
-            await queryClient.invalidateQueries({
-              queryKey: ['share-links'],
-            });
-            setOpenSendEmail(false);
-            setOpenCreateLink(false);
-
-            showSwal('success', 'Share link sent successfully');
-          } catch (err) {
-            console.error(err);
-            showSwal('error', 'Failed to send share link');
-          } finally {
-            setIsGenerating(false);
-          }
-        }}
+        onSend={handleSendEmail}
       />
 
       {/* Unsaved Changes */}

@@ -64,9 +64,6 @@ loadRuntimeConfig()
     );
   })
   .catch((err) => {
-    console.error('Failed to load runtime config:', err);
-
-    // Optional: tampilkan error page
     root.render(
       <div style={{ padding: 24 }}>
         <h2>Configuration Error</h2>

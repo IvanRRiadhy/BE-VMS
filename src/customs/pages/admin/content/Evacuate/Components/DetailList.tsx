@@ -19,7 +19,9 @@ import {
   TableRow,
   TableBody,
   Chip,
+  useTheme,
 } from '@mui/material';
+import { useMediaQuery } from '@mui/system';
 
 const Evacuated = 20;
 const confirmedEvacuating = 15;
@@ -158,198 +160,205 @@ const remainingVisitors = [
     status: 'notConfirmed',
   },
 ];
+const DetailList: React.FC = () => {
+  const theme = useTheme();
+  const lg = useMediaQuery(theme.breakpoints.up('lg'));
 
-const DetailList: React.FC = () => (
-  <Card
-    sx={{
-      minWidth: 260,
-      minHeight: '80vh',
-      maxWidth: '80vh',
-      p: 3,
-      borderRadius: 4,
-      boxShadow: 8,
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      bgcolor: '#fff',
-      mx: 0,
-    }}
-  >
-    <CardContent sx={{ width: '100%', textAlign: 'center', px: 0 }}>
-      {/* <Typography variant="h6" fontWeight={700} mb={4}>
+  return (
+    <Card
+      sx={{
+        maxWidth: lg ? '260' : '100%',
+        minHeight: '80vh',
+        p: 3,
+        borderRadius: 4,
+        boxShadow: 8,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        bgcolor: '#fff',
+        mx: 0,
+      }}
+    >
+      <CardContent sx={{ width: '100%', textAlign: 'center', px: 0 }}>
+        {/* <Typography variant="h6" fontWeight={700} mb={4}>
         Left Card
       </Typography> */}
-      <Stack
-        direction="row"
-        spacing={3}
-        justifyContent="center"
-        alignItems="flex-start"
-        width="100%"
-        mb={4}
-      >
-        {/* Evacuated */}
-        <Box
-          sx={{
-            width: '50%',
-            minWidth: 120,
-            maxWidth: 180,
-            aspectRatio: '1/1', // Keep it square
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderRadius: 4,
-            boxShadow: 1,
-            bgcolor: 'rgba(0, 255, 213, 0.08)',
-            border: '2px solid',
-            borderColor: 'success.light',
-            mb: 2,
-          }}
+        <Stack
+          direction="row"
+          spacing={3}
+          justifyContent="center"
+          alignItems="flex-start"
+          width="100%"
+          mb={4}
         >
-          <Typography variant="h5" fontWeight={1000} color="success.main" mb={1}>
-            Evacuated
-          </Typography>
-          <Typography variant="h1" fontWeight={800} color="success.main">
-            {Evacuated}
-          </Typography>
-        </Box>
-        {/* Confirmed Evacuating */}
-        <Box
-          sx={{
-            width: '50%',
-            minWidth: 120,
-            maxWidth: 180,
-            aspectRatio: '1/1', // Keep it square
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderRadius: 4,
-            boxShadow: 1,
-            bgcolor: 'rgba(163, 240, 87, 0.08)',
-            border: '2px solid',
-            borderColor: 'warning.light',
-            mb: 2,
-          }}
-        >
-          <Typography variant="h5" fontWeight={1000} color="warning.main" mb={1}>
-            Confirmed Evacuating
-          </Typography>
-          <Typography variant="h1" fontWeight={800} color="warning.main">
-            {confirmedEvacuating}
-          </Typography>
-        </Box>
-        {/* Not Confirmed */}
-        <Box
-          sx={{
-            width: '50%',
-            minWidth: 120,
-            maxWidth: 180,
-            aspectRatio: '1/1',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderRadius: 4,
-            boxShadow: 1,
-            bgcolor: 'rgba(255, 88, 44, 0.08)',
-            border: '2px solid',
-            borderColor: 'error.light',
-          }}
-        >
-          <Typography variant="h5" fontWeight={1000} color="error.main" mb={1}>
-            Not Confirmed
-          </Typography>
-          <Typography variant="h1" fontWeight={800} color="error.main">
-            {nonConfirmed}
-          </Typography>
-        </Box>
-      </Stack>
-    </CardContent>
-
-    {/* Visitor List Scrollable */}
-    <Box sx={{ mt: 1, width: '100%' }}>
-      <List disablePadding sx={{ width: '100%', border: '1px solid #ccc', borderRadius: 2 }}>
-        <Box sx={{ mt: 2, width: '100%' }}>
-          <Typography variant="subtitle1" fontWeight={700} sx={{ px: 2, mb: 1, textAlign: 'left' }}>
-            Remaining Visitor
-          </Typography>
-          <TableContainer
-            component={Paper}
+          {/* Evacuated */}
+          <Box
             sx={{
-              boxShadow: 2,
-              borderRadius: 2,
-              maxHeight: { xs: '100%', lg: '500px' }, 
-              overflow: 'auto',
+              width: '50%',
+              minWidth: 120,
+              maxWidth: 180,
+              aspectRatio: '1/1', // Keep it square
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 4,
+              boxShadow: 1,
+              bgcolor: 'rgba(0, 255, 213, 0.08)',
+              border: '2px solid',
+              borderColor: 'success.light',
+              mb: 2,
             }}
           >
-            <Table size="small" stickyHeader aria-label="evacuated visitor table">
-              <TableHead>
-                <TableRow>
-                  <TableCell align="left" sx={{ fontWeight: 700, width: 140 }}>
-                    Visitor
-                  </TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 700, width: 100 }}>
-                    Status
-                  </TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 700, width: 140 }}>
-                    Last Detected Area
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {remainingVisitors.map((visitor) => (
-                  <TableRow key={visitor.id} hover>
-                    <TableCell align="left" sx={{ borderRight: '1px solid #eee' }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Avatar
-                          src={visitor.faceUrl}
-                          alt={visitor.name}
-                          sx={{ width: 38, height: 38, mr: 1 }}
-                        />
-                        <Box>
-                          <Typography fontWeight={700} fontSize={16} align="left">
-                            {visitor.name}
-                          </Typography>
-                          <Typography fontSize={12} color="text.secondary" align="left">
-                            Card #{visitor.cardNumber}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </TableCell>
-                    <TableCell align="center" sx={{ borderRight: '1px solid #eee', width: 100 }}>
-                      <Chip
-                        label={visitor.status === 'confirmed' ? 'Confirmed' : 'Not Confirmed'}
-                        color={visitor.status === 'confirmed' ? 'warning' : 'error'}
-                        variant="outlined"
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell align="right" sx={{ width: 140 }}>
-                      <Typography fontSize={13} color="text.secondary">
-                        {visitor.lastDetected.area} – Flr {visitor.lastDetected.floor} – Bldg{' '}
-                        {visitor.lastDetected.building}
-                      </Typography>
-                      <Typography fontSize={12} color="text.disabled">
-                        {visitor.lastDetected.timestamp}
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {remainingVisitors.length === 0 && (
+            <Typography variant="h5" fontWeight={1000} color="success.main" mb={1}>
+              Evacuated
+            </Typography>
+            <Typography variant="h1" fontWeight={800} color="success.main">
+              {Evacuated}
+            </Typography>
+          </Box>
+          {/* Confirmed Evacuating */}
+          <Box
+            sx={{
+              width: '50%',
+              minWidth: 120,
+              maxWidth: 180,
+              aspectRatio: '1/1', // Keep it square
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 4,
+              boxShadow: 1,
+              bgcolor: 'rgba(163, 240, 87, 0.08)',
+              border: '2px solid',
+              borderColor: 'warning.light',
+              mb: 2,
+            }}
+          >
+            <Typography variant="h5" fontWeight={1000} color="warning.main" mb={1}>
+              Confirmed Evacuating
+            </Typography>
+            <Typography variant="h1" fontWeight={800} color="warning.main">
+              {confirmedEvacuating}
+            </Typography>
+          </Box>
+          {/* Not Confirmed */}
+          <Box
+            sx={{
+              width: '50%',
+              minWidth: 120,
+              maxWidth: 180,
+              aspectRatio: '1/1',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 4,
+              boxShadow: 1,
+              bgcolor: 'rgba(255, 88, 44, 0.08)',
+              border: '2px solid',
+              borderColor: 'error.light',
+            }}
+          >
+            <Typography variant="h5" fontWeight={1000} color="error.main" mb={1}>
+              Not Confirmed
+            </Typography>
+            <Typography variant="h1" fontWeight={800} color="error.main">
+              {nonConfirmed}
+            </Typography>
+          </Box>
+        </Stack>
+      </CardContent>
+
+      {/* Visitor List Scrollable */}
+      <Box sx={{ mt: 1, width: '100%' }}>
+        <List disablePadding sx={{ width: '100%', border: '1px solid #ccc', borderRadius: 2 }}>
+          <Box sx={{ mt: 2, width: '100%' }}>
+            <Typography
+              variant="subtitle1"
+              fontWeight={700}
+              sx={{ px: 2, mb: 1, textAlign: 'left' }}
+            >
+              Remaining Visitor
+            </Typography>
+            <TableContainer
+              component={Paper}
+              sx={{
+                boxShadow: 2,
+                borderRadius: 2,
+                maxHeight: { xs: '100%', lg: '500px' },
+                overflow: 'auto',
+              }}
+            >
+              <Table size="small" stickyHeader aria-label="evacuated visitor table">
+                <TableHead>
                   <TableRow>
-                    <TableCell colSpan={3} align="center" sx={{ color: 'text.disabled' }}>
-                      No confirmed evacuated visitors.
+                    <TableCell align="left" sx={{ fontWeight: 700, width: 140 }}>
+                      Visitor
+                    </TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 700, width: 100 }}>
+                      Status
+                    </TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 700, width: 140 }}>
+                      Last Detected Area
                     </TableCell>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Box>
-      </List>
-    </Box>
-  </Card>
-);
+                </TableHead>
+                <TableBody>
+                  {remainingVisitors.map((visitor) => (
+                    <TableRow key={visitor.id} hover>
+                      <TableCell align="left" sx={{ borderRight: '1px solid #eee' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Avatar
+                            src={visitor.faceUrl}
+                            alt={visitor.name}
+                            sx={{ width: 38, height: 38, mr: 1 }}
+                          />
+                          <Box>
+                            <Typography fontWeight={700} fontSize={16} align="left">
+                              {visitor.name}
+                            </Typography>
+                            <Typography fontSize={12} color="text.secondary" align="left">
+                              Card #{visitor.cardNumber}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </TableCell>
+                      <TableCell align="center" sx={{ borderRight: '1px solid #eee', width: 100 }}>
+                        <Chip
+                          label={visitor.status === 'confirmed' ? 'Confirmed' : 'Not Confirmed'}
+                          color={visitor.status === 'confirmed' ? 'warning' : 'error'}
+                          variant="outlined"
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell align="right" sx={{ width: 140 }}>
+                        <Typography fontSize={13} color="text.secondary">
+                          {visitor.lastDetected.area} – Flr {visitor.lastDetected.floor} – Bldg{' '}
+                          {visitor.lastDetected.building}
+                        </Typography>
+                        <Typography fontSize={12} color="text.disabled">
+                          {visitor.lastDetected.timestamp}
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {remainingVisitors.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={3} align="center" sx={{ color: 'text.disabled' }}>
+                        No confirmed evacuated visitors.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Box>
+        </List>
+      </Box>
+    </Card>
+  );
+};
 
 export default DetailList;

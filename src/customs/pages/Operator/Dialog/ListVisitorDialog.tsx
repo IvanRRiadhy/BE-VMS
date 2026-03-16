@@ -1,7 +1,7 @@
 import { Dialog, DialogTitle, DialogContent, IconButton } from '@mui/material';
 import { IconX } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
-import { getInvitationVisitor } from 'src/customs/api/InvitationData';
+import { getInvitationVisitor } from 'src/customs/api/Admin/InvitationData';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
 

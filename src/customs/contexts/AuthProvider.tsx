@@ -26,7 +26,7 @@ const isTokenValid = (token: string | null): boolean => {
 };
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const { token, authType, saveToken, clearToken, groupId } = useSession(); 
+  const { token, authType, saveToken, clearToken, groupId, roleAccess } = useSession();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<JwtPayload | null>(null);
@@ -40,7 +40,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } else if (token) {
         try {
           const res = await refreshToken({ token });
-          saveToken(res.collection.token, groupId ?? undefined); 
+          saveToken(res.collection.token, groupId ?? undefined, res.collection.role_access);
           const newDecoded = jwtDecode<JwtPayload>(res.collection.token);
           setUser(newDecoded);
           setIsAuthenticated(true);

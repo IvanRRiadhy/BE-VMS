@@ -2,26 +2,13 @@ import { Box, CardContent, Typography, Grid2 as Grid } from '@mui/material';
 import { Stack } from '@mui/system';
 import { useTranslation } from 'react-i18next';
 import BlankCard from 'src/components/shared/BlankCard';
-import {
-  IconX,
-  IconForbid2,
-  IconLogout,
-  IconLogin,
-  IconUsersGroup,
-  IconUser,
-  IconUserPlus,
-  IconCircleX,
-  IconHourglass,
-  IconTrendingUp,
-  IconTrendingDown,
-  IconMinus,
-} from '@tabler/icons-react';
-import { useEffect, useMemo, useState } from 'react';
+import { IconTrendingUp, IconTrendingDown, IconMinus } from '@tabler/icons-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { getVisitorChart } from 'src/customs/api/admin';
 import { useSelector } from 'react-redux';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import Chart from 'react-apexcharts';
-import { set } from 'lodash';
+import { ApexOptions } from 'apexcharts';
 
 interface VisitorStatusItem {
   visitor_status: string;
@@ -38,69 +25,41 @@ const TopCards = ({ items = [], size }: any) => {
   const { token } = useSession();
   const { startDate, endDate } = useSelector((state: any) => state.dateRange);
 
-  const [stats, setStats] = useState<Record<string, number>>({});
-
   const start = startDate?.toISOString().split('T')[0];
   const end = endDate?.toISOString().split('T')[0];
 
   const [statsToday, setStatsToday] = useState<Record<string, number>>({});
   const [statsYesterday, setStatsYesterday] = useState<Record<string, number>>({});
-  const [isChartReady, setIsChartReady] = useState(false);
+  // const [isChartReady, setIsChartReady] = useState(false);
 
   const [normalizedData, setNormalizedData] = useState<
     { Date: string; StatusMap: Record<string, number> }[]
   >([]);
-
   const normalizeCollection = (collection: ApiDateGroup[]) => {
     return collection.map((day) => {
       const grouped: Record<string, number> = {};
 
-      day.Status.forEach((item) => {
+      (day.Status || []).forEach((item) => {
         const key = item.visitor_status.trim();
         grouped[key] = (grouped[key] || 0) + Number(item.Count || 0);
       });
 
       return {
-        Date: day.Date,
+        Date: day.Date.split('T')[0],
         StatusMap: grouped,
       };
     });
   };
 
+  const fetched = useRef(false);
+
   useEffect(() => {
-    if (!token) return;
+    if (!token || fetched.current) return;
 
-    // const fetchData = async () => {
-    //   try {
-    //     const res = await getVisitorChart(
-    //       token,
-    //       // startDate.toISOString().split('T')[0],
-    //       // endDate.toISOString().split('T')[0],
-    //       start,
-    //       end,
-    //     );
-
-    //     const collection: ApiDateGroup[] = res.collection ?? [];
-
-    //     // 🔧 Gabungkan total count per visitor_status dari semua tanggal
-    //     const totals: Record<string, number> = {};
-
-    //     collection.forEach((day) => {
-    //       day.Status.forEach((item) => {
-    //         const key = item.visitor_status.trim();
-    //         totals[key] = (totals[key] || 0) + item.Count;
-    //       });
-    //     });
-
-    //     setStats(totals);
-    //   } catch (err) {
-    //     console.error('Failed to fetch visitor count:', err);
-    //   }
-    // };
+    fetched.current = true;
 
     const fetchData = async () => {
       try {
-        setIsChartReady(true);
         const res = await getVisitorChart(token as any, start, end);
         const collection: ApiDateGroup[] = res.collection ?? [];
 
@@ -121,7 +80,8 @@ const TopCards = ({ items = [], size }: any) => {
         collection.forEach((day) => {
           const dayDate = new Date(day.Date);
 
-          day.Status.forEach((item) => {
+          // day.Status.forEach((item) => {
+          (day.Status || []).forEach((item) => {
             const key = item.visitor_status.trim();
 
             // 7 hari terakhir
@@ -142,14 +102,15 @@ const TopCards = ({ items = [], size }: any) => {
 
         setStatsToday(currentTotals);
         setStatsYesterday(previousTotals);
+        // setIsChartReady(true);
+
+        // console.log('isChartReady', isChartReady);
       } catch (err) {
         console.error('Failed to fetch visitor count:', err);
         setStatsToday({});
         setStatsYesterday({});
         setNormalizedData([]);
-        setIsChartReady(false);
-      } finally {
-        setIsChartReady(false);
+        // setIsChartReady(false);
       }
     };
 
@@ -311,7 +272,7 @@ const TopCards = ({ items = [], size }: any) => {
                     )}
                   </Typography>
 
-                  <Box
+                  {/* <Box
                     sx={{
                       position: 'absolute',
                       bottom: -20,
@@ -322,15 +283,15 @@ const TopCards = ({ items = [], size }: any) => {
                       pointerEvents: 'none',
                     }}
                   >
-                    {isChartReady && normalizedData.length > 0 && (
+                    {normalizedData.length > 0 && (
                       <MiniChart
                         normalizedData={normalizedData}
                         card={card}
                         change={change}
-                        isChartReady={isChartReady}
+                        // isChartReady={isChartReady}
                       />
                     )}
-                  </Box>
+                  </Box> */}
                 </Box>
               </CardContent>
             </Grid>
@@ -340,50 +301,105 @@ const TopCards = ({ items = [], size }: any) => {
   );
 };
 
-const MiniChart = ({ normalizedData, card, change, isChartReady }: any) => {
+// const MiniChart = ({ normalizedData, card, change, isChartReady }: any) => {
+//   const [mounted, setMounted] = useState(false);
+
+//   useEffect(() => {
+//     setMounted(true);
+//   }, []);
+
+//   const key = String(card.key);
+
+//   const series = useMemo(() => {
+//     if (!normalizedData || normalizedData.length === 0) {
+//       return [{ name: card.title, data: [0, 0, 0, 0, 0, 0, 0] }];
+//     }
+
+//     const today = new Date();
+//     const values: number[] = [];
+
+//     for (let i = 6; i >= 0; i--) {
+//       const d = new Date();
+//       d.setDate(today.getDate() - i);
+//       const dateStr = d.toISOString().split('T')[0];
+
+//       const found = normalizedData.find((x: any) => x.Date === dateStr);
+//       values.push(found?.StatusMap?.[key] ?? 0);
+//     }
+
+//     return [
+//       {
+//         name: card.title,
+//         data: values,
+//       },
+//     ];
+//   }, [normalizedData, key, card.title]);
+
+//   if (!mounted || !isChartReady || !series?.[0]?.data?.length) {
+//     return null;
+//   }
+
+//   return (
+//     <Chart
+//       options={{
+//         chart: { type: 'area', sparkline: { enabled: true } },
+//         stroke: { curve: 'smooth', width: 2 },
+//         fill: { opacity: 0.3 },
+//         colors: [change?.color || '#999'],
+//         tooltip: { enabled: false },
+//       }}
+//       series={series}
+//       type="area"
+//       height={50}
+//     />
+//   );
+// };
+
+const MiniChart = ({ normalizedData, card, change }: any) => {
   const key = String(card.key);
 
   const series = useMemo(() => {
-    if (!normalizedData.length) {
-      return [{ name: card.title, data: [0, 0, 0, 0, 0, 0] }];
-    }
-
     const today = new Date();
     const values: number[] = [];
 
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
       d.setDate(today.getDate() - i);
+
       const dateStr = d.toISOString().split('T')[0];
 
-      const found = normalizedData.find((x: any) => x.Date === dateStr);
+      const found = normalizedData?.find((x: any) => x.Date === dateStr);
+
       values.push(found?.StatusMap?.[key] ?? 0);
     }
 
     return [
       {
         name: card.title,
-        data: values.map((v) => Number(v) || 0),
+        data: values,
       },
     ];
   }, [normalizedData, key, card.title]);
 
-  if (!isChartReady || series[0].data.length !== 7) return null;
+  const options: ApexOptions = {
+    chart: {
+      type: 'area',
+      sparkline: { enabled: true },
+    },
+    stroke: {
+      curve: 'smooth',
+      width: 2,
+    },
+    fill: {
+      opacity: 0.3,
+    },
+    colors: [change?.color || '#999'],
+    tooltip: {
+      enabled: false,
+    },
+  };
 
-  return (
-    <Chart
-      options={{
-        chart: { type: 'area', sparkline: { enabled: true } },
-        stroke: { curve: 'smooth', width: 2 },
-        fill: { opacity: 0.3 },
-        colors: [change.color],
-        tooltip: { enabled: false },
-      }}
-      series={series}
-      type="area"
-      height={50}
-    />
-  );
+  return <Chart options={options} series={series} type="area" height={50} />;
 };
 
 export default TopCards;

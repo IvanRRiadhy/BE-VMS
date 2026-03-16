@@ -15,7 +15,7 @@ import {
 import { IconX, IconScan, IconSquareCheck, IconCircleCheck } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
-import { getVisitorDocuments } from 'src/customs/api/models/Admin/SwapCard';
+import { getVisitorDocuments } from 'src/customs/api/Admin/SwapCard';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { useSession } from 'src/customs/contexts/SessionContext';
 

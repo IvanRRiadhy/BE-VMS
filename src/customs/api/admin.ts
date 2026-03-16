@@ -475,18 +475,20 @@ export const getUserGroupDt = async (
   start: number,
   length: number,
   keyword: string = '',
+  sort_dir ?: string,
   start_date?: string,
   end_date?: string,
 ): Promise<any> => {
   const response = await axiosInstance.get('/user-group/dt', {
     headers: { Authorization: `Bearer ${token}` },
-    params:{
+    params: {
       start,
       length,
+      'sort_dir': sort_dir,
       'search[value]': keyword,
       start_date,
-      end_date
-    }
+      end_date,
+    },
   });
   return response.data;
 };
@@ -701,7 +703,7 @@ export const getAccessPass = async (token: string): Promise<any> => {
     headers: { Authorization: `Bearer ${token}` },
     // params: { 'start-date': start_date, 'end-date': end_date },
   });
-  console.log('response', response);
+  // console.log('response', response);
   return response.data.collection[0];
 };
 
@@ -1127,6 +1129,7 @@ export const getVisitorById = async (
 import { GetAllUserResponse, GetUserByIdResponse } from './models/Admin/User';
 // Pagination
 export const getAllVisitorPagination = async (
+  // draw: number,
   token: string,
   start: number,
   length: number,
@@ -1144,13 +1147,14 @@ export const getAllVisitorPagination = async (
   host?: string,
 ): Promise<GetAllVisitorPaginationResponse> => {
   const params: Record<string, any> = {
+    // draw,
     start,
     length,
     sort_dir: sortDir,
     'search[value]': keyword,
     'start-date': start_date,
     'end-date': end_date,
-    'visitor-status': visitor_status,
+    'status': visitor_status,
     'date-filter-type': data_filter,
     site: site,
     'visitor-role': visitor_role,
@@ -2020,6 +2024,13 @@ export const getSitesTracking = async (token: string): Promise<any> => {
 
 export const getSitesAccess = async (token: string): Promise<any> => {
   const response = await axiosInstance.get(`/site-access`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  return response.data;
+};
+
+export const getSitesAccessById = async (token: string, id: string): Promise<any> => {
+  const response = await axiosInstance.get(`/site-access/site/${id} `, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });
   return response.data;

@@ -84,11 +84,11 @@ const FilterMoreContentVisitor: React.FC<FilterMoreContentProps> = ({
 
           <Autocomplete
             options={statusOptions}
-            value={filters.visitor_status || null}
+            value={filters.status || null}
             onChange={(_, val) =>
               setFilters((prev: any) => ({
                 ...prev,
-                visitor_status: val || '',
+                status: val || '',
               }))
             }
             renderInput={(params) => (

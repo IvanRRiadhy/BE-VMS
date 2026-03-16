@@ -30,7 +30,7 @@ const CustomNavListing: React.FC<CustomNavListingProps> = ({ itemData }) => {
 
   return (
     <Box>
-      <List sx={{ p: 0, display: 'flex', gap: '3px', zIndex: '100' }}>
+      <List sx={{ p: 0, display: 'flex', gap: '3px', zIndex: '100', alignItems: 'center' }}>
         {itemData.map((item) => {
           if (item.children) {
             return (

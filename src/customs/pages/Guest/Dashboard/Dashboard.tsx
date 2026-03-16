@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import GuestLayout from './GuestLayout';
+import GuestLayout from '../GuestLayout';
 import PageContainer from 'src/components/container/PageContainer';
 import { Box } from '@mui/system';
 import {
@@ -26,6 +26,7 @@ import {
   IconBan,
   IconCalendar,
   IconCards,
+  IconCircleMinus,
   IconCircleOff,
   IconCircleX,
   IconDownload,
@@ -37,7 +38,7 @@ import {
 import QRCode from 'react-qr-code';
 // import VisitorStatusPieChart from 'src/customs/pages/Guest/Components/charts/VisitorStatusPieChart';
 import VisitorStatusPieChart from 'src/customs/components/charts/VisitorStatusPieChart';
-import TopCard from './Dashboard/TopCard';
+import TopCard from './TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { getActiveInvitation, openParkingBlocker } from 'src/customs/api/visitor';
 import { useSession } from 'src/customs/contexts/SessionContext';
@@ -60,7 +61,6 @@ import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 
 const Dashboard = () => {
-  const [selectedVisitor, setSelectedVisitor] = useState<any>(null);
   const { token } = useSession();
   const [loading, setLoading] = useState(false);
 
@@ -79,8 +79,8 @@ const Dashboard = () => {
   const CardItems = [
     { title: 'checkin', key: 'Checkin', icon: <IconLogin size={25} /> },
     { title: 'checkout', key: 'Checkout', icon: <IconLogout size={25} /> },
-    { title: 'denied', key: 'Denied', icon: <IconCircleX size={25} /> },
-    { title: 'block', key: 'Block', icon: <IconForbid2 size={25} /> },
+    { title: 'denied', key: 'Denied', icon: <IconX size={25} /> },
+    { title: 'block', key: 'Block', icon: <IconCircleMinus size={25} /> },
     // {
     //   title: 'blacklist',
     //   key: 'blacklist',

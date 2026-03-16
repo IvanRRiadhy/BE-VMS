@@ -47,7 +47,7 @@ const VisitorDetailTabs: React.FC<Props> = ({ invitationCode, handleChooseCard }
     const cards = invitationCode?.[0]?.card;
     if (!Array.isArray(cards) || cards.length === 0) return null;
 
-    return cards[0];
+    return cards.find((c) => c.current_used === true) ?? cards[cards.length - 1] ?? null;
   }, [invitationCode]);
 
   const statusBgMap: Record<string, string> = {
@@ -98,7 +98,7 @@ const VisitorDetailTabs: React.FC<Props> = ({ invitationCode, handleChooseCard }
                 <IconPhone />
                 <Box>
                   <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Phone</CustomFormLabel>
-                  <Typography>{data?.visitor?.phone || '-'}</Typography>
+                  <Typography>{data?.visitor_phone || '-'}</Typography>
                 </Box>
               </Box>
             </Grid>
@@ -139,7 +139,7 @@ const VisitorDetailTabs: React.FC<Props> = ({ invitationCode, handleChooseCard }
                 <IconBuildingSkyscraper />
                 <Box>
                   <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Organization</CustomFormLabel>
-                  <Typography>{data?.visitor?.organization || '-'}</Typography>
+                  <Typography>{data?.visitor_organization_name || '-'}</Typography>
                 </Box>
               </Box>
             </Grid>
@@ -245,6 +245,24 @@ const VisitorDetailTabs: React.FC<Props> = ({ invitationCode, handleChooseCard }
                 <Box>
                   <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Group Code</CustomFormLabel>
                   <Typography>{data?.group_code || '-'}</Typography>
+                </Box>
+              </Box>
+            </Grid>
+            <Grid size={{ xs: 6, md: 6 }}>
+              <Box display="flex" gap={2}>
+                <IconUsersGroup />
+                <Box>
+                  <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Visitor Code</CustomFormLabel>
+                  <Typography>{data?.visitor_code || '-'}</Typography>
+                </Box>
+              </Box>
+            </Grid>
+            <Grid size={{ xs: 6, md: 6 }}>
+              <Box display="flex" gap={2}>
+                <IconUsersGroup />
+                <Box>
+                  <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Identity ID</CustomFormLabel>
+                  <Typography>{data?.visitor_identity_id || '-'}</Typography>
                 </Box>
               </Box>
             </Grid>
@@ -368,7 +386,7 @@ const VisitorDetailTabs: React.FC<Props> = ({ invitationCode, handleChooseCard }
               <Box display="flex" gap={2}>
                 <IconMapPin />
                 <Box>
-                  <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Registered Site</CustomFormLabel>
+                  <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Site</CustomFormLabel>
                   <Typography>{data?.site_place_name || '-'}</Typography>
                 </Box>
               </Box>

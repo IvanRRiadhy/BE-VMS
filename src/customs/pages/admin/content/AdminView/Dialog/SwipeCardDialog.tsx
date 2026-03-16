@@ -15,7 +15,7 @@ import {
 import { IconX, IconScan, IconSquareCheck, IconCircleCheck } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
-import { getVisitorDocuments } from 'src/customs/api/models/Admin/SwapCard';
+import { getVisitorDocuments } from 'src/customs/api/Admin/SwapCard';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { useSession } from 'src/customs/contexts/SessionContext';
 
@@ -68,16 +68,16 @@ const SwipeCardDialog = ({
     }
   }, [open]);
 
-  useEffect(() => {
-    if (!invitationId) return;
+  // useEffect(() => {
+  //   if (!invitationId) return;
 
-    const fetchData = async () => {
-      const res = await getVisitorDocuments(token as string, invitationId);
-      setVisitorDocuments(res?.collection ?? []);
-    };
+  //   const fetchData = async () => {
+  //     const res = await getVisitorDocuments(token as string, invitationId);
+  //     setVisitorDocuments(res?.collection ?? []);
+  //   };
 
-    fetchData();
-  }, [invitationId]);
+  //   fetchData();
+  // }, [invitationId]);
 
   // const handleSubmit = () => {
   //   loading(true);
@@ -119,13 +119,6 @@ const SwipeCardDialog = ({
       }
       const isLastVisitor = currentVisitorIndex === visitors.length - 1;
       onSubmit?.(qrValue, qrType, currentVisitor, isLastVisitor, currentVisitorIndex);
-
-      // if (!isLastVisitor) {
-      //   setCurrentVisitorIndex((prev:any) => prev + 1);
-      //   setQrValue('');
-      //   setHasDecoded(false);
-      //   return;
-      // }
 
       onClose();
     } catch (error) {
@@ -217,16 +210,16 @@ const SwipeCardDialog = ({
                 value={qrType}
                 onChange={(e: any) => setQrType(e.target.value)}
                 sx={{ mb: 2 }}
-                disabled={visitorDocuments.length === 0}
+                disabled={typeDocument.length === 0}
               >
-                {visitorDocuments.length === 0 ? (
+                {typeDocument.length === 0 ? (
                   <MenuItem value="" disabled>
                     No document available
                   </MenuItem>
                 ) : (
-                  visitorDocuments.map((doc) => (
-                    <MenuItem key={doc.id} value={doc.identity_type}>
-                      {doc.identity_type}
+                  typeDocument.map((doc) => (
+                    <MenuItem key={doc.value} value={doc.value}>
+                      {doc.label}
                     </MenuItem>
                   ))
                 )}
@@ -249,7 +242,7 @@ const SwipeCardDialog = ({
 
         <DialogActions>
           <Button fullWidth variant="contained" onClick={handleSubmit}>
-            {currentVisitorIndex === (visitors?.length || 1) - 1 ? 'Finish Swipe' : 'Swipe & Next'}
+            {currentVisitorIndex === (visitors?.length || 1) - 1 ? 'Swipe' : 'Swipe & Next'}
           </Button>
         </DialogActions>
       </Dialog>

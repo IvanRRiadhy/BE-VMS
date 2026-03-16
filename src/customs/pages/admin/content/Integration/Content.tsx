@@ -380,7 +380,8 @@ const Content = () => {
                       borderRadius: 2,
                       padding: 2,
                       marginBottom: 2,
-                      backgroundColor: brandTypeBgColorMap[integration.brand_type] || '#fff',
+                      // backgroundColor: brandTypeBgColorMap[integration.brand_type] || '#fff',
+                      backgroundColor: 'primary.light'
                     }}
                   >
                     <Box component="h3">{integration.name}</Box>

@@ -18,24 +18,14 @@ const Content = () => {
       itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
     >
       <Container title="Evacuate" description="Manage Timezone">
-        {/* <Box
-          // minHeight="80vh"
-          width="100%"
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-          gap={2}
-          // bgcolor="#f5f5f5"
-          p={2}
-        > */}
         <Grid container spacing={3}>
-          <Grid size={{ xs: 12, lg: 4 }}>
+          <Grid size={{ xs: 12, xl: 4 }}>
             <DetailList />
           </Grid>
-          <Grid size={{ xs: 12, lg: 4 }}>
+          <Grid size={{ xs: 12, xl: 4 }}>
             <TimerButton />
           </Grid>
-          <Grid size={{ xs: 12, lg: 4 }}>
+          <Grid size={{ xs: 12, xl: 4 }}>
             <GraphDisplay />
           </Grid>
         </Grid>

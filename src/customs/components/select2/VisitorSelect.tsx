@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import AsyncSelect from 'react-select/async';
 import { getAllEmployee, getListVisitor, getVisitorInvitation } from 'src/customs/api/admin';
 import axiosInstance, { axiosInstance2 } from 'src/customs/api/interceptor';
-import { getInvitationVisitor } from 'src/customs/api/InvitationData';
+import { getInvitationVisitor } from 'src/customs/api/Admin/InvitationData';
 import { useDebounce } from 'src/hooks/useDebounce';
 
 type Visitor = {

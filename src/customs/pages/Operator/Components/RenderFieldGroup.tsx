@@ -2,6 +2,7 @@ import {
   Autocomplete,
   Box,
   Checkbox,
+  FormControl,
   FormControlLabel,
   IconButton,
   MenuItem,
@@ -26,6 +27,8 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import CameraUpload from 'src/customs/components/camera/CameraUpload';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import { useState } from 'react';
 
 dayjs.extend(utc);
 dayjs.extend(weekday);
@@ -68,6 +71,8 @@ type RenderFieldGroupProps = {
   setIsEmployeeMode: (v: boolean) => void;
   setOpenVisitorDialog: (v: boolean) => void;
   setActiveGroupIdx: (v: number) => void;
+  fieldErrors: Record<string, string>;
+  setFieldErrors: React.Dispatch<React.SetStateAction<any>>;
 };
 
 const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
@@ -99,19 +104,32 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
     setIsEmployeeMode,
     setOpenVisitorDialog,
     setActiveGroupIdx,
+    fieldErrors,
+    setFieldErrors,
   } = props;
 
+  // const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const showLabel = opts?.showLabel ?? true;
-
+  const errorKey = opts?.uniqueKey ? opts.uniqueKey : `${activeStep - 1}:${index}`;
+  const errorMessage = fieldErrors[errorKey];
   const handleSitePlaceChange = (idx: number, fieldKey: keyof FormVisitor, value: any) => {
     onChange(idx, fieldKey, value);
+  };
+
+  const clearFieldError = (key: string) => {
+    setFieldErrors((prev: any) => {
+      if (!prev[key]) return prev;
+      const copy = { ...prev };
+      delete copy[key];
+      return copy;
+    });
   };
 
   const renderInput = () => {
     switch (field.field_type) {
       case 0: // Text
         return (
-          <TextField
+          <CustomTextField
             type="text"
             size="small"
             value={field.answer_text}
@@ -119,24 +137,28 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
             placeholder=""
             fullWidth
             sx={{ minWidth: 160, maxWidth: '100%' }}
+            error={!!errorMessage}
+            helperText={errorMessage}
           />
         );
 
       case 1: // Number
         return (
-          <TextField
+          <CustomTextField
             type="number"
             size="small"
             value={field.answer_text}
             onChange={(e) => onChange(index, 'answer_text', e.target.value)}
             placeholder="Enter number"
             fullWidth
+            error={!!errorMessage}
+            helperText={errorMessage}
           />
         );
 
       case 2: // Email
         return (
-          <TextField
+          <CustomTextField
             type="email"
             size="small"
             value={field.answer_text}
@@ -144,6 +166,8 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
             placeholder=""
             fullWidth
             sx={{ minWidth: 160, maxWidth: '100%' }}
+            error={!!errorMessage}
+            helperText={errorMessage}
           />
         );
 
@@ -263,10 +287,12 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
                   onChange(index, 'answer_text', parentIds.join(','));
                 }}
                 renderInput={(params) => (
-                  <TextField
+                  <CustomTextField
                     {...params}
                     placeholder="Enter at least 3 characters to search"
                     fullWidth
+                    error={!!errorMessage}
+                    helperText={errorMessage}
                   />
                 )}
               />
@@ -314,7 +340,14 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
               onChange(index, 'answer_text', newValue instanceof Object ? newValue.value : '')
             }
             renderInput={(params) => (
-              <TextField {...params} placeholder="" fullWidth sx={{ minWidth: 160 }} />
+              <CustomTextField
+                {...params}
+                placeholder=""
+                fullWidth
+                sx={{ minWidth: 160 }}
+                error={!!errorMessage}
+                helperText={errorMessage}
+              />
             )}
           />
         );
@@ -322,36 +355,40 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
 
       case 4: // Date
         return (
-          <TextField
+          <CustomTextField
             type="date"
             size="small"
             value={field.answer_datetime}
             onChange={(e) => onChange(index, 'answer_datetime', e.target.value)}
             fullWidth
+            error={!!errorMessage}
+            helperText={errorMessage}
           />
         );
 
       case 5: // Radio
         if (field.remarks === 'gender') {
           return (
-            <Select
-              // select
-              size="small"
-              value={field.answer_text || ''}
-              onChange={(e) => onChange(index, 'answer_text', e.target.value)}
-              fullWidth
-              sx={{ width: 100 }}
-              MenuProps={{
-                disablePortal: true,
-                container: containerRef?.current || null,
-              }}
-            >
-              {field.multiple_option_fields?.map((opt: any) => (
-                <MenuItem key={opt.id} value={opt.value}>
-                  {opt.name}
-                </MenuItem>
-              ))}
-            </Select>
+            <>
+              <Select
+                // select
+                size="small"
+                value={field.answer_text || ''}
+                onChange={(e) => onChange(index, 'answer_text', e.target.value)}
+                fullWidth
+                sx={{ width: 100 }}
+                MenuProps={{
+                  disablePortal: true,
+                  container: containerRef?.current || null,
+                }}
+              >
+                {field.multiple_option_fields?.map((opt: any) => (
+                  <MenuItem key={opt.id} value={opt.value}>
+                    {opt.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </>
           );
         }
 
@@ -379,79 +416,131 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
 
         if (field.remarks === 'is_employee') {
           return (
-            <RadioGroup
-              row
-              value={field.answer_text || ''}
-              onChange={(e) => {
-                const value = e.target.value;
+            <>
+              <FormControl error={!!errorMessage}>
+                <RadioGroup
+                  row
+                  value={field.answer_text || ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
 
-                onChange(index, 'answer_text', value);
-                const isYes = value === 'true';
-                setIsEmployeeMode(isYes);
-
-                // 3️⃣ set group aktif
-                setActiveGroupIdx(groupIndex);
-
-                setOpenVisitorDialog(true);
-              }}
-              sx={{
-                justifyContent: 'center',
-              }}
-            >
-              {field.multiple_option_fields?.map((opt: any) => (
-                <FormControlLabel
-                  key={opt.id}
-                  value={opt.value}
-                  control={<Radio size="small" />}
-                  label={opt.name}
-                />
-              ))}
-            </RadioGroup>
+                    onChange(index, 'answer_text', value);
+                    const isYes = value === 'true';
+                    setIsEmployeeMode(isYes);
+                    setActiveGroupIdx(groupIndex);
+                    setOpenVisitorDialog(true);
+                  }}
+                  sx={{
+                    justifyContent: 'center',
+                  }}
+                >
+                  {field.multiple_option_fields?.map((opt: any) => (
+                    <FormControlLabel
+                      key={opt.id}
+                      value={opt.value}
+                      control={<Radio size="small" />}
+                      label={opt.name}
+                    />
+                  ))}
+                </RadioGroup>
+              </FormControl>
+              <br />
+              {errorMessage && (
+                <Typography variant="caption" color="error">
+                  {errorMessage}
+                </Typography>
+              )}
+            </>
           );
         }
 
         if (field.remarks === 'is_driving') {
           return (
-            <RadioGroup
-              row
-              value={field.answer_text || ''}
-              onChange={(e) => onChange(index, 'answer_text', e.target.value)}
-              sx={{
-                justifyContent: 'center',
-              }}
-            >
-              {field.multiple_option_fields?.map((opt: any) => (
-                <FormControlLabel
-                  key={opt.id}
-                  value={opt.value}
-                  control={<Radio size="small" />}
-                  label={opt.name}
-                />
-              ))}
-            </RadioGroup>
+            <>
+              <FormControl error={!!errorMessage}>
+                <RadioGroup
+                  row
+                  value={field.answer_text || ''}
+                  onChange={(e) => onChange(index, 'answer_text', e.target.value)}
+                  sx={{
+                    justifyContent: 'center',
+                  }}
+                >
+                  {field.multiple_option_fields?.map((opt: any) => (
+                    <FormControlLabel
+                      key={opt.id}
+                      value={opt.value}
+                      control={<Radio size="small" />}
+                      label={opt.name}
+                    />
+                  ))}
+                </RadioGroup>
+              </FormControl>
+              <br />
+              {errorMessage && (
+                <Typography variant="caption" color="error">
+                  {errorMessage}
+                </Typography>
+              )}
+            </>
           );
         }
         return (
-          <TextField
-            size="small"
-            value={field.answer_text}
-            onChange={(e) => onChange(index, 'answer_text', e.target.value)}
-            placeholder="Enter text"
-            fullWidth
-          />
+          <>
+            <FormControl error={!!errorMessage}>
+              <RadioGroup
+                row
+                value={field.answer_text || ''}
+                onChange={(e) => {
+                  onChange(index, 'answer_text', e.target.value);
+                  if (e.target.value) clearFieldError(errorKey);
+                }}
+                sx={{
+                  justifyContent: 'center',
+                  flexDirection: 'row',
+                }}
+              >
+                {field.multiple_option_fields?.map((opt: any) => (
+                  <FormControlLabel
+                    key={opt.id}
+                    value={opt.value}
+                    control={<Radio size="small" />}
+                    label={opt.name}
+                  />
+                ))}
+              </RadioGroup>
+            </FormControl>
+            <br />
+            {errorMessage && (
+              <Typography variant="caption" color="error">
+                {errorMessage}
+              </Typography>
+            )}
+          </>
         );
 
       case 6:
         return (
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={Boolean(field.answer_text)}
-                onChange={(e) => onChange(index, 'answer_text', e.target.checked)}
-              />
-            }
-            label=""
-          />
+          <>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={Boolean(field.answer_text)}
+                  onChange={(e) => {
+                    onChange(index, 'answer_text', e.target.checked);
+                    if (e.target.checked) clearFieldError(errorKey);
+                  }}
+                />
+              }
+              label=""
+            />
+            <br />
+            {errorMessage && (
+              <Typography variant="caption" color="error">
+                {errorMessage}
+              </Typography>
+            )}
+          </>
         );
 
       case 8: // Time
@@ -486,9 +575,10 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
                 if (newValue) {
                   const utc = newValue.utc().format();
                   onChange(index, 'answer_datetime', utc);
+                  clearFieldError(errorKey);
                 }
               }}
-              format="ddd, DD - MMM - YYYY, HH:mm"
+              format="dddd, DD MMMM YYYY, HH:mm"
               viewRenderers={{
                 hours: renderTimeViewClock,
                 minutes: renderTimeViewClock,
@@ -497,6 +587,8 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
               slotProps={{
                 textField: {
                   fullWidth: true,
+                  error: !!errorMessage,
+                  helperText: errorMessage,
                 },
                 popper: {
                   container: containerRef.current,
@@ -508,11 +600,21 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
 
       case 10: // Camera
         return (
-          <CameraUpload
-            value={field.answer_file as string | undefined}
-            onChange={(url) => onChange(index, 'answer_file', url)}
-            containerRef={containerRef.current || undefined}
-          />
+          <>
+            <CameraUpload
+              value={field.answer_file as string | undefined}
+              onChange={(url) => {
+                onChange(index, 'answer_file', url);
+                if (url) clearFieldError(errorKey);
+              }}
+              containerRef={containerRef.current || undefined}
+            />
+            {errorMessage && (
+              <Typography variant="caption" color="error">
+                {errorMessage}
+              </Typography>
+            )}
+          </>
         );
 
       case 11: {
@@ -549,7 +651,9 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
               onChange={(e) =>
                 handleFileChangeForField(
                   e as React.ChangeEvent<HTMLInputElement>,
-                  (url: any) => onChange(index, 'answer_file', url),
+                  (url: any) => {
+                    (onChange(index, 'answer_file', url), clearFieldError(errorKey));
+                  },
                   key,
                 )
               }
@@ -575,6 +679,11 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
                 </IconButton>
               </Box>
             )}
+            {errorMessage && (
+              <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
+                {errorMessage}
+              </Typography>
+            )}
           </Box>
         );
       }
@@ -591,7 +700,7 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
             width="100%"
             sx={{ maxWidth: 400 }}
           >
-            <TextField
+            <CustomTextField
               select
               size="small"
               value={uploadMethods[key]}
@@ -603,11 +712,14 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
             >
               <MenuItem value="file">Choose File</MenuItem>
               <MenuItem value="camera">Take Photo</MenuItem>
-            </TextField>
+            </CustomTextField>
             {(uploadMethods[key] || 'file') === 'camera' ? (
               <CameraUpload
                 value={field.answer_file as string | undefined}
-                onChange={(url) => onChange(index, 'answer_file', url)}
+                onChange={(url) => {
+                  onChange(index, 'answer_file', url);
+                  if (url) clearFieldError(errorKey);
+                }}
               />
             ) : (
               <Box sx={{ width: { xs: '100%', md: '200px' } }}>
@@ -684,17 +796,25 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
                 )}
               </Box>
             )}
+            {errorMessage && (
+              <Typography variant="caption" color="error">
+                {errorMessage}
+              </Typography>
+            )}
           </Box>
         );
       }
       default:
         return (
-          <TextField
+          <CustomTextField
             size="small"
             value={field.long_display_text}
             onChange={(e) => onChange(index, 'long_display_text', e.target.value)}
             placeholder="Enter value"
             fullWidth
+            sx={{ minWidth: 160, maxWidth: '100%' }}
+            error={!!errorMessage}
+            helperText={errorMessage}
           />
         );
     }
@@ -704,7 +824,9 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
     <Box sx={{ overflow: 'auto', width: '100%' }}>
       {showLabel && (
         <>
-          <CustomFormLabel required={field.mandatory === true}>{field.long_display_text}</CustomFormLabel>
+          <CustomFormLabel required={field.mandatory === true}>
+            {field.long_display_text}
+          </CustomFormLabel>
         </>
       )}
 

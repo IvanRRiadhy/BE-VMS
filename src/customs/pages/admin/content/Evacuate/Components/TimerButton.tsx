@@ -22,9 +22,11 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  useTheme,
 } from '@mui/material';
 import { AppDispatch, useDispatch } from 'src/store/Store';
 import { setEvacuationState } from 'src/store/customizer/CustomizerSlice';
+import { useMediaQuery } from '@mui/system';
 
 const STORAGE_KEY = 'evac-timer-state';
 
@@ -223,6 +225,9 @@ const TimerButton: React.FC = () => {
     localStorage.removeItem(STORAGE_KEY);
   };
 
+  const theme = useTheme();
+  const lg = useMediaQuery(theme.breakpoints.up('lg'));
+
   return (
     <>
       {evacState === 'running' && (
@@ -253,9 +258,11 @@ const TimerButton: React.FC = () => {
 
       <Card
         sx={{
-          minWidth: 340,
+          // minWidth: 340,
+          maxWidth: lg ? '340' : '100%',
           minHeight: '80vh',
-          maxWidth: '80vh',
+          // maxWidth: '100vh',
+          overflow: 'hidden',
           p: 3,
           borderRadius: 4,
           boxShadow: 8,
@@ -275,10 +282,11 @@ const TimerButton: React.FC = () => {
               fontSize: '4rem',
               fontFamily: 'monospace',
               letterSpacing: '0.1em',
-              width: '14ch',
+              // width: '14ch',
               textAlign: 'center',
               background: 'rgba(255,255,255,0.7)',
               borderRadius: 2,
+
               userSelect: 'none',
               mx: 'auto',
             }}

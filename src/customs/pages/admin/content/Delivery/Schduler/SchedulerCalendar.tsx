@@ -323,6 +323,7 @@ export default function DnDOutsideCourier({
 
       const payload = {
         // trx_visitor_id: rescheduleVisitorId,
+        flow: "UpdateInvitation",
         initial_trx_code: initialTrxCodeData,
         visitor_period_end: dayjs(rescheduleData.newEnd).utc().format(),
         visitor_period_start: dayjs(rescheduleData.newStart).utc().format(),
@@ -718,6 +719,7 @@ export default function DnDOutsideCourier({
       is_group: isGroup,
       tz,
       data_visitor,
+      flow: 'SchedulerVisit',
     };
   };
 

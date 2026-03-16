@@ -88,12 +88,19 @@ const Content = () => {
   const [openPermission, setOpenPermission] = useState(false);
   const [originalData, setOriginalData] = useState<any>(null);
   const debouncedSearch = useDebounce(searchKeyword, 400);
+  const [sortDir, setSortDir] = useState('desc');
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['users-group', token, page, rowsPerPage, debouncedSearch],
+    queryKey: ['users-group', token, page, rowsPerPage, sortDir, debouncedSearch],
     queryFn: async () => {
       const start = page * rowsPerPage;
-      const response = await getUserGroupDt(token as string, start, rowsPerPage, debouncedSearch);
+      const response = await getUserGroupDt(
+        token as string,
+        start,
+        rowsPerPage,
+        debouncedSearch,
+        sortDir,
+      );
 
       const filteredData = response.collection.map((item: any) => ({
         id: item.id,
@@ -409,7 +416,6 @@ const Content = () => {
         return visitorTypeOptions;
       case 'VisitorTypeAssignment':
         return visitorTypeOptions;
-
       case 'SiteAssignment':
         return siteOptions;
       default:
@@ -426,6 +432,8 @@ const Content = () => {
       'InviteWithinOwnSite',
       'AllowMobileLogin',
       'AllowSSOActiveDirectory',
+      'External',
+      'ManageTeam',
       'VisitorTypeAssignment',
       'OrganizationAssignment',
       'SiteAssignment',
@@ -488,20 +496,16 @@ const Content = () => {
     try {
       setLoading(true);
 
-      // 1️⃣ DELETE SEMUA DULU (HARUS BERHASIL)
       await handleDeleteAll();
 
-      // 2️⃣ INSERT BASIC PERMISSION
       if (formData.permissions.length > 0) {
         await handleSubmitPermissions(formData.permissions);
       }
 
-      // 3️⃣ ACCESS SCOPE
       if (formData.permissions.includes('ManageAccessScope')) {
         await handleAccessScope();
       }
 
-      // 4️⃣ ORGANIZATION
       if (
         formData.permissions.includes('OrganizationAssignment') ||
         formData.organization.length > 0
@@ -513,7 +517,6 @@ const Content = () => {
         await handleSiteAssignment();
       }
 
-      // 5️⃣ MANAGE SITE
       if (formData.permissions.includes('ManageSiteScope') || formData.manageSite.length > 0) {
         await handleManageSitePermission();
       }
@@ -533,7 +536,6 @@ const Content = () => {
         await handleRegisteredSite();
       }
 
-      // 8️⃣ MANAGE VISITOR
       if (
         formData.permissions.includes('ManageVisitor') ||
         (permissionSites['ManageVisitor'] ?? []).length > 0

@@ -23,6 +23,7 @@ import { Box } from '@mui/system';
 import {
   IconArrowAutofitRight,
   IconBan,
+  IconCircleMinus,
   IconCircleOff,
   IconForbid2,
   IconGenderMale,
@@ -31,6 +32,8 @@ import {
   IconLogin,
   IconLogin2,
   IconLogout,
+  IconMinus,
+  IconX,
 } from '@tabler/icons-react';
 import { Scanner } from '@yudiel/react-qr-scanner';
 import moment from 'moment-timezone';
@@ -62,8 +65,8 @@ const DashboardOperator = () => {
   const CardItems = [
     { title: 'checkin', key: 'Checkin', icon: <IconLogin size={25} /> },
     { title: 'checkout', key: 'Checkout', icon: <IconLogout size={25} /> },
-    { title: 'denied', key: 'Denied', icon: <IconCircleX size={25} /> },
-    { title: 'block', key: 'Block', icon: <IconForbid2 size={25} /> },
+    { title: 'denied', key: 'Denied', icon: <IconX size={25} /> },
+    { title: 'block', key: 'Block', icon: <IconCircleMinus size={25} /> },
     // { title: 'waiting', key: 'waiting', icon: <IconHourglass size={25} /> },
     {
       title: 'blacklist',

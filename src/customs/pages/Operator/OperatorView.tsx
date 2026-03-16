@@ -119,14 +119,14 @@ import SwipeCardDialog from './Dialog/SwipeCardDialog';
 import SwipeAccessDialog from './Dialog/SwipeAccessDialog';
 import { useDebounce } from 'src/hooks/useDebounce';
 import PrintDialog from './Dialog/PrintDialog';
-import { getPrintBadgeConfig } from 'src/customs/api/models/Admin/PrintBadge';
+import { getPrintBadgeConfig } from 'src/customs/api/Admin/PrintBadge';
 import PrintDialogBulk from './Dialog/PrintDialogBluk';
 import {
   getRegisteredSiteOperator,
   getSiteAccessOperator,
   returnCard,
   swapCard,
-} from 'src/customs/api/models/Admin/SwapCard';
+} from 'src/customs/api/Admin/SwapCard';
 import SwipeCardNoCodeDialog from './Dialog/SwipeCardNoCodeDialog';
 import InvitationQrCard from './Components/InvitationQrCard';
 import FRLPRCard from './Components/FRLPRCard';
@@ -134,7 +134,6 @@ import VisitorSearchInput from './Components/VisitorSearchInput';
 import OperatorToolbar from './Components/OperatorToolbar';
 import VisitorImage from './Components/VisitorImage';
 import ReturnCardDialog from './Dialog/ReturnCardDialog';
-import SnackbarOperator from './Components/SnackbarOperator';
 import GlobalBackdropLoading from './Components/GlobalBackdrop';
 import RegisteredSiteDialog from './Dialog/RegisteredSiteAccessDialog';
 import RegisteredSiteAccessDialog from './Dialog/RegisteredSiteAccessDialog';
@@ -146,12 +145,13 @@ import {
   getInvitationSite,
   getInvitationVisitorEmployee,
   getInvitationVisitorHost,
-} from 'src/customs/api/InvitationData';
+} from 'src/customs/api/Admin/InvitationData';
 import FillPraregistrationGroup from './Invitation/components/FillPraregistrationGroup';
-import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import GrantAccessDialog from './Dialog/GrantAccessDialog';
 import LprVisitorCard from './Components/LprVisitorCard';
 import ChooseCardDialog from './Dialog/ChooseCardDialog';
+import { getPermission } from 'src/customs/api/users';
+import { usePermission } from 'src/hooks/usePermission';
 
 dayjs.extend(utc);
 dayjs.extend(weekday);
@@ -175,9 +175,9 @@ const OperatorView = () => {
   const [wizardKey, setWizardKey] = useState(0);
   const scanContainerRef = useRef<HTMLDivElement | null>(null);
   const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMsg, setSnackbarMsg] = useState('');
-  const [snackbarType, setSnackbarType] = useState<'success' | 'error' | 'info'>('info');
+  // const [snackbarOpen, setSnackbarOpen] = useState(false);
+  // const [snackbarMsg, setSnackbarMsg] = useState('');
+  // const [snackbarType, setSnackbarType] = useState<'success' | 'error' | 'info'>('info');
   const [openInvitationVisitor, setOpenInvitationVisitor] = useState(false);
   const [permissionAccess, setPermissionAccess] = useState<any[]>([]);
   const [search, setSearch] = useState('');
@@ -229,7 +229,6 @@ const OperatorView = () => {
   const handle = useFullScreenHandle();
   const [visitorDocuments, setVisitorDocuments] = useState<any[]>([]);
   const [currentAction, setCurrentAction] = useState<'Checkin' | 'Checkout' | null>(null);
-  const [currentActionBlacklist, setCurrentActionBlacklist] = useState<'blacklist' | null>(null);
   const [showExtendButton, setShowExtendButton] = useState(false);
   const [actionButton, setActionButton] = useState<any | null>(null);
   const [visitorCards, setVisitorCards] = useState<any[]>([]);
@@ -237,7 +236,8 @@ const OperatorView = () => {
   const [openListVisitor, setOpenListVisitor] = useState(false);
   const [openBlacklistVisitor, setOpenBlacklistVisitor] = useState(false);
   const [openTriggeredAccess, setOpenTriggeredAccess] = useState(false);
-  const [registerSiteOperator, setRegisterSiteOperator] = useState<any>({});
+  // const [registerSiteOperator, setRegisterSiteOperator] = useState<any>({});
+  const [registerSiteOperator, setRegisterSiteOperator] = useState<string>('');
   const [openSwipeDialogNoInvitation, setOpenSwipeDialogNoInvitation] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
   const debouncedKeyword = useDebounce(searchKeyword, 300);
@@ -246,8 +246,14 @@ const OperatorView = () => {
   const newCardRef = useRef<HTMLInputElement | null>(null);
   const [currentAccessVisitor, setCurrentAccessVisitor] = useState<any>(null);
   const [selectedVisitorId, setSelectedVisitorId] = useState<string | null>(null);
+  const [sites, setSites] = useState<any[]>([]);
+  const [employee, setEmployee] = useState<any[]>([]);
+  const [dialogContainer, setDialogContainer] = useState<HTMLElement | null>(null);
+  const [hidePageContainer, setHidePageContainer] = useState(false);
   // const [siteRegistered, setSiteRegistered] = useState<any[]>([]);
 
+  const [openPreviewPrint, setOpenPreviewPrint] = useState(false);
+  const [openBulkPrint, setOpenBulkPrint] = useState(false);
   const handleOpenBlacklistVisitor = () => setOpenBlacklistVisitor(true);
   const handleCloseBlacklistVisitor = () => setOpenBlacklistVisitor(false);
   const handleOpenListVisitor = () => setOpenListVisitor(true);
@@ -261,50 +267,32 @@ const OperatorView = () => {
   const [tick, forceTick] = useState(0);
   const socketRef = useRef<WebSocket | null>(null);
   const [sitesOperator, setSitesOperator] = useState<any[]>([]);
-  const [dataDummyAccess, setDataDummyAccess] = useState<any[]>([
-    {
-      id: '1',
-      site: 'SPU',
-      // visitor_name: 'Dummy Visitor',
-      // status: 'Active',
-    },
-    {
-      id: '2',
-      site: 'SPU 2',
-      // visitor_name: 'Dummy Visitor',
-      // status: 'Active',
-    },
-  ]);
   const [printData, setPrintData] = useState<any>(null);
   const [resetStep, setResetStep] = useState(0);
   const [openRevokeDialog, setOpenRevokeDialog] = useState(false);
 
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     try {
-  //       const res = await getSiteAccessOperator(token as string);
-
-  //       const sites = Array.isArray(res?.collection)
-  //         ? res.collection.map((x: any) => x.site).filter(Boolean)
-  //         : [];
-
-  //       setSiteRegistered(sites);
-  //     } catch (error) {
-  //       console.log(error);
-  //       setSiteRegistered([]);
-  //     }
-  //   };
-
-  //   fetchData();
-  // }, [token]);
+  const [dataDummyAccess, setDataDummyAccess] = useState<any[]>([
+    {
+      id: '1',
+      site: 'SCP 3A',
+    },
+    {
+      id: '2',
+      site: 'SPU 2B',
+    },
+    {
+      id: '3',
+      site: 'SPU 1D',
+    },
+  ]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const res = await getInvitationSite(token as string);
+        // const res = await getAllSite(token as string);
         const filteredSites =
           res?.collection?.filter((site: any) => site.can_visited === true) ?? [];
-
         setSitesOperator(filteredSites);
       } catch (error) {
         console.log(error);
@@ -365,158 +353,22 @@ const OperatorView = () => {
 
   const [swipePayload, setSwipePayload] = useState<any | null>(null);
 
-  const [uiCurrentUsedCardNo, setUiCurrentUsedCardNo] = useState<string | null>(null);
-
   const currentUsedCards = useMemo(() => {
     if (!Array.isArray(visitorCards)) return [];
 
     return visitorCards
-      .filter((c) => c.is_swapcard && c.card_type !== 'Barcode')
+      .filter(
+        (c) =>
+          (c.is_swapcard == false || c.is_swapcard == true) &&
+          c.card_type !== 'Barcode' &&
+          c.current_used === true,
+      )
       .sort((a, b) => Number(a.current_used) - Number(b.current_used));
   }, [visitorCards]);
 
   useEffect(() => {
-    setUiCurrentUsedCardNo(null);
     setSelectedCards([]);
   }, [selectedVisitorId]);
-  // const [swapPayloads, setSwapPayloads] = useState<any[]>([]);
-
-  // const handleSwipeCardSubmit = async (value: string, type: string, visitor: any) => {
-  //   try {
-  //     const selectedCard = filteredCards.find((c) => c.card_number === selectedCards[0]);
-  //     console.log('selectedCard', selectedCard);
-
-  //     const currentUsedCard = visitorCards.find((c) => c.current_used === true);
-
-  //     console.log('currentUsedCard', currentUsedCard);
-
-  //     if (!selectedCard || !currentUsedCard) {
-  //       showSwal('error', 'Invalid card data for swap');
-  //       return;
-  //     }
-
-  //     const payload = {
-  //       card_number: selectedCard.card_number,
-  //       trx_visitor_id: invitationId,
-  //       description:
-  //         'Give card number ' + selectedCard.card_number + ' from ' + registerSiteOperator.id,
-  //       swap_card_from_card: value,
-  //       // trx_card_id: generateUUIDv4(),
-  //       // swap_card_from_card_id: null,
-  //       swap_card_from_site_id: registerSiteOperator.user_id,
-  //       swap_type: type,
-  //       is_swapcard: true,
-  //     };
-
-  //     // kalau lebih dari 1 visitor pakai ini createMultipleGrantAccess
-  //     //   {
-  //     // "data": [
-  //     //     {
-  //     //         "card_number": "30285",
-  //     //         "trx_visitor_id": "CAE31043-C78C-4AF6-92B9-17C318D90093",
-  //     //         "description": "",
-  //     //         "trx_card_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6", // trx_card_awal
-  //     //         "swap_card_from_card": "", // nomor kartu
-  //     //         "swap_card_from_card_id": null, // isi dengan id kartu
-  //     //         "swap_card_from_site_id": "", // isi dengan id site yg dituju awal
-  //     //         "swap_type": "NIK", // NIK, KTP , DriverLicense, Passport, CardAccess, Face, NDA, Other
-  //     //         "swap_card_in": "3fa85f64-5717-4562-b3fc-2c963f66afa6",  // isi dengan id lokasi swipe kartu atau site
-  //     //         "swap_card_in_name": "lobby 1"
-  //     //     },
-
-  //     console.log('SWAP PAYLOAD', payload);
-
-  //     // call API
-  //     // await createGrandAccessOperator(token as string, payload);
-
-  //     setUiCurrentUsedCardNo(selectedCard.card_number);
-
-  //     setOpenChooseCardDialog(false);
-  //     setOpenSwipeDialog(false);
-  //     setOpenSwipeAccess(true);
-  //     setSelectedCards([]);
-  //     setTimeout(() => {
-  //       showSwal('success', 'Card swaped successfully!');
-  //     }, 600);
-  //     setTimeout(() => {
-  //       fetchRelatedVisitorsByInvitationId(invitationId as string);
-  //       fetchAvailableCards?.();
-  //     }, 300);
-  //   } catch (err: any) {
-  //     const backendMsg = err?.response?.data?.msg;
-  //     showSwal('error', backendMsg || 'Failed to swipe card');
-  //   }
-  // };
-
-  // v1
-  // const handleSwipeCardSubmit = async (
-  //   value: string,
-  //   type: string,
-  //   visitor: any,
-  //   isLastVisitor: boolean,
-  //   visitorIndex: number,
-  // ) => {
-  //   try {
-  //     // const selectedCard = filteredCards.find((c) => c.card_number === selectedCards[0]);
-  //     const selectedCardNumber = selectedCards[visitorIndex];
-  //     const selectedCard = filteredCards.find((c) => c.card_number === selectedCardNumber);
-
-  //     const currentUsedCard = visitorCards.find((c) => c.current_used === true);
-
-  //     if (!selectedCard || !currentUsedCard) {
-  //       showSwal('error', 'Invalid card data for swap');
-  //       return;
-  //     }
-
-  //     const payloadItem = {
-  //       card_number: selectedCard.card_number,
-  //       trx_visitor_id: visitor.id, // 🔥 FIX PENTING
-  //       description: `Give card number ${selectedCard.card_number} from ${registerSiteOperator.id}`,
-  //       swap_card_from_card: value,
-  //       swap_card_from_site_id: registerSiteOperator.user_id,
-  //       swap_type: type,
-  //       is_swapcard: true,
-  //     };
-
-  //     // 🔥 KUMPULKAN PAYLOAD
-  //     setSwapPayloads((prev) => {
-  //       const next = [...prev, payloadItem];
-
-  //       console.log('paylod', next);
-
-  //       if (isLastVisitor) {
-  //         (async () => {
-  //           try {
-  //             // if (next.length === 1) {
-  //             //   await createGrandAccessOperator(token as string, next[0]);
-  //             // } else {
-  //             //   await createMultipleGrantAccess(token as string, {
-  //             //     data: next,
-  //             //   });
-  //             // }
-
-  //             showSwal('success', 'Card swaped successfully!');
-  //             // setUiCurrentUsedCardNo(selectedCard.card_number);
-  //             setSwapPayloads([]);
-  //             // setSelectedCards([]);
-  //             // setOpenChooseCardDialog(false);
-  //             // setOpenSwipeDialog(false);
-  //             setOpenSwipeAccess(true);
-
-  //             // fetchRelatedVisitorsByInvitationId(invitationId as string);
-  //             // fetchAvailableCards?.();
-  //           } catch (err: any) {
-  //             showSwal('error', err?.response?.data?.msg || 'Failed to swipe card');
-  //           }
-  //         })();
-  //       }
-
-  //       return next;
-  //     });
-  //   } catch (err: any) {
-  //     showSwal('error', err?.response?.data?.msg || 'Failed to swipe card');
-  //   }
-  // };
 
   const handleSwipeCardSubmit = async (
     value: string,
@@ -558,7 +410,6 @@ const OperatorView = () => {
         setSearchTerm('');
         await fetchRelatedVisitorsByInvitationId(invitationId as string);
       } else {
-        console.log('SECOND SWIPE NEED SITE');
         // setSwipePayload(payload);
         setSwipePayload([payload]);
         setCurrentAccessVisitor(visitor);
@@ -647,8 +498,43 @@ const OperatorView = () => {
     setOpenDetailVistingPurpose(true);
   };
 
-  const [dialogContainer, setDialogContainer] = useState<HTMLElement | null>(null);
-  const [hidePageContainer, setHidePageContainer] = useState(false);
+  const [permission, setPermission] = useState<any>({});
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!token) return;
+
+      try {
+        const [vtRes, purposeRes, permissionRes] = await Promise.allSettled([
+          getAllVisitorType(token),
+          getTodayVisitingPurpose(token),
+          getPermission(token),
+        ]);
+
+        if (vtRes.status === 'fulfilled') {
+          setVisitorType(vtRes.value?.collection ?? []);
+        } else {
+          console.error('VisitorType error:', vtRes.reason);
+        }
+
+        if (purposeRes.status === 'fulfilled') {
+          setTodayVisitingPurpose(purposeRes.value?.collection ?? []);
+        } else {
+          console.error('VisitingPurpose error:', purposeRes.reason);
+        }
+
+        if (permissionRes.status === 'fulfilled') {
+          setPermission(permissionRes.value?.collection ?? {});
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchData();
+  }, [token]);
+
+  const permissionHook = usePermission(permission);
 
   useEffect(() => {
     const handleBrowserFullscreen = () => {
@@ -683,9 +569,7 @@ const OperatorView = () => {
 
     if (!selectedMinutes) return;
     if (!selectedVisitors || selectedVisitors.length === 0) {
-      setSnackbarMsg('No visitor selected.');
-      setSnackbarType('error');
-      setSnackbarOpen(true);
+      toast('Please select visitor first.', 'info');
       return;
     }
 
@@ -696,8 +580,6 @@ const OperatorView = () => {
         period: selectedMinutes,
         apply_to_all: applyToAll,
       };
-
-      // console.log('📤 Sending extend payload:', payload);
 
       await extendPeriodOperator(token as string, payload);
 
@@ -736,10 +618,7 @@ const OperatorView = () => {
         msg = error.response.data.msg || error.response.data.message || msg;
         status = error.response.data.status;
       }
-
-      setSnackbarMsg(msg);
-      setSnackbarType('error');
-      setSnackbarOpen(true);
+      toast(msg, 'error');
     } finally {
       setTimeout(() => setLoadingAccess(false), 600);
     }
@@ -762,9 +641,6 @@ const OperatorView = () => {
     }
   }, [containerRef]);
 
-  const [sites, setSites] = useState<any[]>([]);
-  const [employee, setEmployee] = useState<any[]>([]);
-
   useEffect(() => {
     if (!token) return;
 
@@ -773,7 +649,8 @@ const OperatorView = () => {
         const [siteRes, employeeRes, allVisitorEmployee] = await Promise.all([
           // getAllSite(token),
           // getVisitorEmployee(token),
-          getInvitationSite(token),
+          // getInvitationSite(token),
+          getAllSite(token),
           getInvitationVisitorHost(token),
           // getVisitorEmployee(token),
           getInvitationVisitorEmployee(token),
@@ -901,35 +778,9 @@ const OperatorView = () => {
     resetSelections();
   };
 
-  // const handleChooseCard = async () => {
-  //   if (!invitationCode.length) {
-  //     setSnackbarMsg('No visitor data found. Please scan QR first.');
-  //     setSnackbarType('info');
-  //     setSnackbarOpen(true);
-  //     return;
-  //   }
-
-  //   try {
-  //     setLoadingAccess(true);
-  //     setSelectedCards([]);
-  //     const visitor = relatedVisitors.find(
-  //       (v) => v.id?.toLowerCase() === invitationId?.toLowerCase(),
-  //     );
-
-  //     setVisitorCards(visitor?.card ?? []);
-  //     setOpenChooseCardDialog(true);
-  //   } catch (error) {
-  //     showSwal('error', 'Failed to choose card');
-  //   } finally {
-  //     setTimeout(() => setLoadingAccess(false), 200);
-  //   }
-  // };
-
   const handleChooseCard = async () => {
     if (!selectedVisitors.length) {
-      setSnackbarMsg('Please select a visitor first.');
-      setSnackbarType('info');
-      setSnackbarOpen(true);
+      toast('Please select a visitor first.', 'info');
       return;
     }
 
@@ -996,14 +847,6 @@ const OperatorView = () => {
   const findCard = (cardNumber: string) =>
     availableCards.find((c) => String(c.card_number).trim() === String(cardNumber).trim());
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const response = await getRegisteredSite(token as string);
-      setSiteData(response.collection);
-    };
-    fetchData();
-  }, [token]);
-
   const fetchAvailableCards = async () => {
     const res = await getAvailableCardOperator(token as string);
     setAvailableCards(res.collection);
@@ -1031,12 +874,25 @@ const OperatorView = () => {
   const [openParking, setOpenParking] = useState(false);
   const [openVehicle, setOpenVehicle] = useState(false);
 
+  const handleEnableEditing = () => {
+    const confirmed = Swal.fire({
+      title: 'Enable Editing',
+      text: 'Are you sure you want to enable editing? ',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#16a34a',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes',
+      cancelButtonText: 'Cancel',
+      reverseButtons: true,
+      showCloseButton: true,
+    });
+  };
+
   const handleOpenAction = (value: string) => {
     setActionButton(value);
 
     const hasInvitation = invitationCode.length > 0 && relatedVisitors.length > 0;
-
-    // 🟣 CARD → TIDAK PERNAH buka Scan QR
     if (value === 'card') {
       if (!hasInvitation) {
         setOpenSwipeDialogNoInvitation(true);
@@ -1044,6 +900,11 @@ const OperatorView = () => {
         // setOpenChooseCardDialog(true); // atau handleChooseCard()
         handleChooseCard();
       }
+      return;
+    }
+
+    if (value === 'enable' && invitationCode.length > 0 && relatedVisitors.length > 0) {
+      handleEnableEditing();
       return;
     }
 
@@ -1108,11 +969,10 @@ const OperatorView = () => {
       const data = res.collection?.data ?? [];
 
       if (data.length === 0) {
-        setSnackbarMsg('Your code does not exist.');
-        setSnackbarType('error');
-        setSnackbarOpen(true);
+        toast('Your code does not exist.', 'error');
         return;
       }
+
       const invitation = data[0];
       setInvitationId(invitation.id);
       const invitationId = invitation.id;
@@ -1147,43 +1007,43 @@ const OperatorView = () => {
         }),
       );
 
-      // const accessList = Array.isArray(invitation.access) ? invitation.access : [invitation.access];
-      // // console.log('accessList', accessList);
+      const accessList = Array.isArray(invitation.access) ? invitation.access : [invitation.access];
+      // console.log('accessList', accessList);
 
-      // const filteredAccess = accessList.filter((a: any) =>
-      //   permissionAccess.some((p: any) => p.access_control_id === a.access_control_id),
-      // );
-      // // console.log('filteredAccess', filteredAccess);
+      const filteredAccess = accessList.filter((a: any) =>
+        permissionAccess.some((p: any) => p.access_control_id === a.access_control_id),
+      );
+      // console.log('filteredAccess', filteredAccess);
 
-      // const mergedAccess = filteredAccess.map((a: any) => {
-      //   const perm = permissionAccess.find((p: any) => p.access_control_id === a.access_control_id);
-      //   return {
-      //     // ...a,
-      //     id: a.id,
-      //     name: a.access_control_name ?? '-',
-      //     access_control_id: a.access_control_id,
-      //     early_access: a.early_access,
-      //     visitor_give_access: a.visitor_give_access,
-      //     can_grant: perm?.can_grant ?? false,
-      //     can_revoke: perm?.can_revoke ?? false,
-      //     can_block: perm?.can_block ?? false,
-      //     disabled: !perm,
-      //   };
-      // });
+      const mergedAccess = filteredAccess.map((a: any) => {
+        const perm = permissionAccess.find((p: any) => p.access_control_id === a.access_control_id);
+        return {
+          // ...a,
+          id: a.id,
+          name: a.access_control_name ?? '-',
+          access_control_id: a.access_control_id,
+          early_access: a.early_access,
+          visitor_give_access: a.visitor_give_access,
+          can_grant: perm?.can_grant ?? false,
+          can_revoke: perm?.can_revoke ?? false,
+          can_block: perm?.can_block ?? false,
+          disabled: !perm,
+        };
+      });
       // console.log('mergedAccess', mergedAccess);
 
-      // // setAccessData([...mergedAccess]);
-      // setAccessData(mergedAccess);
+      // setAccessData([...mergedAccess]);
+      setAccessData(mergedAccess);
 
-      const resAccess = await getInvitationAccessControl(token as string);
-      const rowsAccess = resAccess.collection.map((item: any) => ({
-        id: item.Id,
-        name: item.Name ?? '-',
-        description: item.Description ?? '-',
-      }));
+      // const resAccess = await getInvitationAccessControl(token as string);
+      // const rowsAccess = resAccess.collection.map((item: any) => ({
+      //   id: item.Id,
+      //   name: item.Name ?? '-',
+      //   description: item.Description ?? '-',
+      // }));
       // console.log('resAccess', resAccess);
       // setAccessData(resAccess.collection ?? []);
-      setAccessData(rowsAccess ?? []);
+      // setAccessData(rowsAccess ?? []);
 
       if (currentAction) {
         setSelectedVisitors([invitationId]);
@@ -1259,7 +1119,6 @@ const OperatorView = () => {
       gender: v.visitor?.gender ?? '-',
       address: v.visitor?.address ?? '-',
       visitor_status: v.visitor_status ?? '-',
-      // card: (v.card ?? []).map((c: any) => c.card_number),
       card: v.card ?? [],
       host_name: v.host_name ?? '-',
       site_place_name: v.site_place_name ?? '-',
@@ -1444,9 +1303,10 @@ const OperatorView = () => {
   const handleConfirmChooseCards = async () => {
     try {
       if (!selectedCards.length) {
-        setSnackbarMsg('Please choose at least one card.');
-        setSnackbarType('info');
-        setSnackbarOpen(true);
+        // setSnackbarMsg('Please choose at least one card.');
+        // setSnackbarType('info');
+        // setSnackbarOpen(true);
+        toast('Please choose at least one card.', 'info');
         return;
       }
 
@@ -1460,7 +1320,9 @@ const OperatorView = () => {
       );
 
       // const currentUsed = visitor?.card?.find((c: any) => c.current_used === true);
-      const currentUsed = (visitor?.card as any[])?.find((c) => c.current_used === true);
+      const currentUsed = (visitor?.card as any[])?.find(
+        (c) => c.current_used === true && c.is_swap == true,
+      );
 
       if (currentUsed) {
         const pairs = pairVisitorsWithCards(visitorIds, selectedCards);
@@ -1611,10 +1473,10 @@ const OperatorView = () => {
 
       if (!res.isConfirmed) return;
 
-      // if (!res.value) {
-      //   toast('Please provide a reason for blacklist this visitor.', 'info');
-      //   return;
-      // }
+      if (!res.value) {
+        toast('Please provide a reason for blacklist this visitor.', 'info');
+        return;
+      }
 
       const payload = {
         visitor_id: id,
@@ -2426,25 +2288,6 @@ const OperatorView = () => {
     onDelete?: (index: number) => void,
     opts?: { showLabel?: boolean; uniqueKey?: string },
   ) => {
-    const showLabel = opts?.showLabel ?? true;
-
-    // const isDrivingField = fillFormDataVisitor
-    //   ?.flatMap((v) => v.question_page)
-    //   ?.flatMap((q) => q.form || [])
-    //   ?.find((f) => f.remarks === 'is_driving');
-
-    // const isDriving =
-    //   isDrivingField?.answer_text === 'true' || isDrivingField?.answer_text === true;
-
-    // // 🔥 Hide field kendaraan jika belum pilih "Yes"
-    // if (!isDriving && ['vehicle_type', 'vehicle_plate'].includes(field.remarks)) {
-    //   return null;
-    // }
-    // const isVehicleField = ['vehicle_type', 'vehicle_plate'].includes(field.remarks);
-    // if (!isDriving && isVehicleField) {
-    //   return null;
-    // }
-
     const renderInput = () => {
       switch (field.field_type) {
         case 0: // Text
@@ -3000,6 +2843,7 @@ const OperatorView = () => {
     const perm = permissionAccess.find(
       (p) => p.access_control_id?.toLowerCase() === accessId.toLowerCase(),
     );
+    console.log('perm', perm);
 
     if (!perm) return [];
 
@@ -3042,6 +2886,8 @@ const OperatorView = () => {
 
     const permissionActions = getAllowedActionsByPermission(accessId, permissionAccess);
 
+    console.log('commonActions', commonActions, 'permissionActions', permissionActions);
+
     return commonActions.filter((action) => permissionActions.includes(action));
   };
 
@@ -3064,17 +2910,17 @@ const OperatorView = () => {
   };
 
   const allowedActions = useMemo(() => {
-    if (!selectedAccessIds.length || !selectedVisitors.length) return [];
+    if (!selectedAccessIds.length) return [];
 
     if (selectedVisitors.length > 1) {
       const allActions = ['Grant', 'Revoke', 'Block'];
 
-      const permissionActions = selectedAccessIds.flatMap((id) =>
+      const permissionActions = selectedAccessIds.map((id) =>
         getAllowedActionsByPermission(id, permissionAccess),
       );
 
-      const commonPermissionActions = allActions.filter((a) =>
-        permissionActions.every((perm) => perm.includes(a)),
+      const commonPermissionActions = allActions.filter((action) =>
+        permissionActions.every((permList) => permList.includes(action)),
       );
 
       return commonPermissionActions;
@@ -3421,19 +3267,23 @@ const OperatorView = () => {
         );
 
         if (!validVisitors.length) {
-          setSnackbarMsg(message || 'No valid visitors to process.');
-          setSnackbarType('error');
-          setSnackbarOpen(true);
+          // setSnackbarMsg(message || 'No valid visitors to process.');
+          // setSnackbarType('error');
+          // setSnackbarOpen(true);
+          toast(message || 'No valid visitors to process.', 'error');
           resolve();
           return;
         }
 
         if (invalidVisitors.length) {
-          setSnackbarMsg(
-            'Some visitors cannot perform this action:\n' + invalidVisitors.join('\n'),
-          );
-          setSnackbarType('info');
-          setSnackbarOpen(true);
+          // setSnackbarMsg(
+          //   'Some visitors cannot perform this action:\n' + invalidVisitors.join('\n'),
+          // );
+          // setSnackbarType('info');
+          // setSnackbarOpen(true);
+          toast('Some visitors cannot perform this action:\n' + invalidVisitors.join('\n'), 'info');
+          resolve();
+          return;
         }
 
         const payload = {
@@ -3526,29 +3376,7 @@ const OperatorView = () => {
   };
 
   const [vtLoading, setVTLoading] = useState(false);
-
-  const fetchVisitorType = async () => {
-    try {
-      setVTLoading(true);
-      const res = await getAllVisitorType(token as string);
-      setVisitorType(res?.collection || []);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setVTLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (token) {
-      fetchVisitorType();
-      fetchTodayVisitingPurpose();
-    }
-  }, [token]);
-
-  // Print Preview
-  const [openPreviewPrint, setOpenPreviewPrint] = useState(false);
-  const [openBulkPrint, setOpenBulkPrint] = useState(false);
+  // const [permission, setPermission] = useState<any[]>([]);
 
   const handlePrint = () => {
     setOpenPreviewPrint(true);
@@ -3710,6 +3538,7 @@ const OperatorView = () => {
 
                 {/* Visiting Purpose*/}
                 <ActionPanelCard
+                  permission={permissionHook}
                   isFullscreen={isFullscreen}
                   handleOpenScanQR={handleOpenScanQR}
                   handleActionClick={handleActionClick as any}
@@ -3808,59 +3637,63 @@ const OperatorView = () => {
                           if (!['Checkin', 'Checkout', 'Block', 'Unblock'].includes(status || '')) {
                             return (
                               <Box display="flex" gap={1}>
-                                <Tooltip
-                                  title="Check In"
-                                  placement="top"
-                                  arrow
-                                  slotProps={{
-                                    tooltip: {
-                                      sx: {
-                                        fontSize: '1rem',
-                                        padding: '8px 14px',
+                                {permissionHook.canCheckin && (
+                                  <Tooltip
+                                    title="Check In"
+                                    placement="top"
+                                    arrow
+                                    slotProps={{
+                                      tooltip: {
+                                        sx: {
+                                          fontSize: '1rem',
+                                          padding: '8px 14px',
+                                        },
                                       },
-                                    },
-                                    popper: {
-                                      container: containerRef.current,
-                                    },
-                                  }}
-                                >
-                                  <Button
-                                    variant="contained"
-                                    // color="#21c45d"
-                                    size="large"
-                                    onClick={() => handleConfirmStatus('Checkin')}
-                                    startIcon={<IconLogin />}
-                                    sx={{ backgroundColor: '#21c45d' }}
-                                  >
-                                    Check In
-                                  </Button>
-                                </Tooltip>
-                                <Tooltip
-                                  title="Block"
-                                  placement="top"
-                                  arrow
-                                  slotProps={{
-                                    tooltip: {
-                                      sx: {
-                                        fontSize: '1rem',
-                                        padding: '8px 14px',
+                                      popper: {
+                                        container: containerRef.current,
                                       },
-                                    },
-                                    popper: {
-                                      container: containerRef.current,
-                                    },
-                                  }}
-                                >
-                                  <Button
-                                    variant="contained"
-                                    size="large"
-                                    sx={{ backgroundColor: '#000' }}
-                                    onClick={() => handleConfirmStatus('Block')}
-                                    startIcon={<IconForbid2 />}
+                                    }}
                                   >
-                                    Block
-                                  </Button>
-                                </Tooltip>
+                                    <Button
+                                      variant="contained"
+                                      // color="#21c45d"
+                                      size="large"
+                                      onClick={() => handleConfirmStatus('Checkin')}
+                                      startIcon={<IconLogin />}
+                                      sx={{ backgroundColor: '#21c45d' }}
+                                    >
+                                      Check In
+                                    </Button>
+                                  </Tooltip>
+                                )}
+                                {permissionHook.canBlock && (
+                                  <Tooltip
+                                    title="Block"
+                                    placement="top"
+                                    arrow
+                                    slotProps={{
+                                      tooltip: {
+                                        sx: {
+                                          fontSize: '1rem',
+                                          padding: '8px 14px',
+                                        },
+                                      },
+                                      popper: {
+                                        container: containerRef.current,
+                                      },
+                                    }}
+                                  >
+                                    <Button
+                                      variant="contained"
+                                      size="large"
+                                      sx={{ backgroundColor: '#000' }}
+                                      onClick={() => handleConfirmStatus('Block')}
+                                      startIcon={<IconForbid2 />}
+                                    >
+                                      Block
+                                    </Button>
+                                  </Tooltip>
+                                )}
                               </Box>
                             );
                           }
@@ -3868,125 +3701,135 @@ const OperatorView = () => {
                           if (status === 'Checkin' && !isBlocked) {
                             return (
                               <Box display="flex" gap={1}>
-                                <Tooltip
-                                  title="Check Out"
-                                  placement="top"
-                                  arrow
-                                  slotProps={{
-                                    tooltip: {
-                                      sx: {
-                                        fontSize: '1rem',
-                                        padding: '8px 14px',
+                                {permissionHook.canCheckout && (
+                                  <Tooltip
+                                    title="Check Out"
+                                    placement="top"
+                                    arrow
+                                    slotProps={{
+                                      tooltip: {
+                                        sx: {
+                                          fontSize: '1rem',
+                                          padding: '8px 14px',
+                                        },
                                       },
-                                    },
-                                    popper: {
-                                      container: containerRef.current,
-                                    },
-                                  }}
-                                >
-                                  <Button
-                                    variant="contained"
-                                    color="error"
-                                    size="large"
-                                    onClick={() => handleConfirmStatus('Checkout')}
-                                    startIcon={<IconLogout />}
-                                  >
-                                    Check Out
-                                  </Button>
-                                </Tooltip>
-                                <Tooltip
-                                  title="Block"
-                                  placement="top"
-                                  arrow
-                                  slotProps={{
-                                    tooltip: {
-                                      sx: {
-                                        fontSize: '1rem',
-                                        padding: '8px 14px',
+                                      popper: {
+                                        container: containerRef.current,
                                       },
-                                    },
-                                    popper: {
-                                      container: containerRef.current,
-                                    },
-                                  }}
-                                >
-                                  <Button
-                                    variant="contained"
-                                    size="large"
-                                    sx={{ backgroundColor: '#000' }}
-                                    onClick={() => handleConfirmStatus('Block')}
-                                    startIcon={<IconForbid2 />}
+                                    }}
                                   >
-                                    Block
-                                  </Button>
-                                </Tooltip>
+                                    <Button
+                                      variant="contained"
+                                      color="error"
+                                      size="large"
+                                      onClick={() => handleConfirmStatus('Checkout')}
+                                      startIcon={<IconLogout />}
+                                    >
+                                      Check Out
+                                    </Button>
+                                  </Tooltip>
+                                )}
+                                {permissionHook.canBlock && (
+                                  <Tooltip
+                                    title="Block"
+                                    placement="top"
+                                    arrow
+                                    slotProps={{
+                                      tooltip: {
+                                        sx: {
+                                          fontSize: '1rem',
+                                          padding: '8px 14px',
+                                        },
+                                      },
+                                      popper: {
+                                        container: containerRef.current,
+                                      },
+                                    }}
+                                  >
+                                    <Button
+                                      variant="contained"
+                                      size="large"
+                                      sx={{ backgroundColor: '#000' }}
+                                      onClick={() => handleConfirmStatus('Block')}
+                                      startIcon={<IconForbid2 />}
+                                    >
+                                      Block
+                                    </Button>
+                                  </Tooltip>
+                                )}
                               </Box>
                             );
                           }
                           if (status === 'Checkout' && !isBlocked) {
                             return (
                               <Box display="flex" gap={1}>
-                                <Tooltip
-                                  title="Block Visitor"
-                                  placement="top"
-                                  arrow
-                                  slotProps={{
-                                    tooltip: {
-                                      sx: {
-                                        fontSize: '1rem',
-                                        padding: '8px 14px',
+                                {permissionHook.canBlock && (
+                                  <Tooltip
+                                    title="Block Visitor"
+                                    placement="top"
+                                    arrow
+                                    slotProps={{
+                                      tooltip: {
+                                        sx: {
+                                          fontSize: '1rem',
+                                          padding: '8px 14px',
+                                        },
                                       },
-                                    },
-                                    popper: {
-                                      container: containerRef.current,
-                                    },
-                                  }}
-                                >
-                                  <Button
-                                    variant="contained"
-                                    size="large"
-                                    sx={{ backgroundColor: '#000' }}
-                                    onClick={() => handleConfirmStatus('Block')}
-                                    startIcon={<IconForbid2 />}
+                                      popper: {
+                                        container: containerRef.current,
+                                      },
+                                    }}
                                   >
-                                    Block
-                                  </Button>
-                                </Tooltip>
+                                    <Button
+                                      variant="contained"
+                                      size="large"
+                                      sx={{ backgroundColor: '#000' }}
+                                      onClick={() => handleConfirmStatus('Block')}
+                                      startIcon={<IconForbid2 />}
+                                    >
+                                      Block
+                                    </Button>
+                                  </Tooltip>
+                                )}
                               </Box>
                             );
                           }
 
                           if (isBlocked) {
                             return (
-                              <Tooltip
-                                title="Unblock"
-                                placement="top"
-                                arrow
-                                slotProps={{
-                                  tooltip: {
-                                    sx: {
-                                      fontSize: '1rem',
-                                      padding: '8px 14px',
-                                    },
-                                  },
-                                  popper: {
-                                    container: containerRef.current,
-                                  },
-                                }}
-                              >
-                                <Button
-                                  variant="contained"
-                                  size="large"
-                                  sx={{
-                                    backgroundColor: '#f44336',
-                                    '&:hover': { backgroundColor: '#d32f2f' },
-                                  }}
-                                  onClick={() => handleConfirmStatus('Unblock')}
-                                  startIcon={<IconBan />}
-                                >
-                                  Unblock
-                                </Button>
-                              </Tooltip>
+                              <>
+                                {permissionHook.canBlock && (
+                                  <Tooltip
+                                    title="Unblock"
+                                    placement="top"
+                                    arrow
+                                    slotProps={{
+                                      tooltip: {
+                                        sx: {
+                                          fontSize: '1rem',
+                                          padding: '8px 14px',
+                                        },
+                                      },
+                                      popper: {
+                                        container: containerRef.current,
+                                      },
+                                    }}
+                                  >
+                                    <Button
+                                      variant="contained"
+                                      size="large"
+                                      sx={{
+                                        backgroundColor: '#f44336',
+                                        '&:hover': { backgroundColor: '#d32f2f' },
+                                      }}
+                                      onClick={() => handleConfirmStatus('Unblock')}
+                                      startIcon={<IconBan />}
+                                    >
+                                      Unblock
+                                    </Button>
+                                  </Tooltip>
+                                )}
+                              </>
                             );
                           }
 
@@ -4022,7 +3865,7 @@ const OperatorView = () => {
                     border: '1px solid #e0e0e0',
                   }}
                 >
-                  <Box display="flex" justifyContent="space-between">
+                  <Box display="flex" justifyContent="space-between" flexWrap={'wrap'} gap={1}>
                     <CardHeader title="Related Visitors" sx={{ p: 0 }} />
                     <Box display={'flex'} gap={1}>
                       <FormControl sx={{ width: '100%' }}>
@@ -4307,89 +4150,93 @@ const OperatorView = () => {
                           flexWrap={lgUp ? 'nowrap' : 'wrap'}
                           // sx={{ px: 1}}
                         >
-                          <Tooltip
-                            title="Extend Time"
-                            placement="top"
-                            arrow
-                            slotProps={{
-                              tooltip: {
-                                sx: {
-                                  fontSize: '1rem',
-                                  padding: '8px 14px',
+                          {permissionHook.canExtend && (
+                            <Tooltip
+                              title="Extend Time"
+                              placement="top"
+                              arrow
+                              slotProps={{
+                                tooltip: {
+                                  sx: {
+                                    fontSize: '1rem',
+                                    padding: '8px 14px',
+                                  },
                                 },
-                              },
-                              popper: {
-                                container: containerRef.current,
-                              },
-                            }}
-                          >
-                            <Button
-                              variant="contained"
-                              onClick={() => setOpenExtendVisit(true)}
-                              startIcon={<IconClock size={18} />}
-                              sx={{
-                                color: '#fff',
-
-                                background: !relatedVisitors.some(
-                                  (v) =>
-                                    selectedVisitors.includes(v.id) &&
-                                    v.visitor_status === 'Checkin',
-                                )
-                                  ? undefined
-                                  : 'linear-gradient(135deg, #FFE082 0%, #FFCA28 100%)',
-
-                                '&.Mui-disabled': {
-                                  background: '#BDBDBD !important',
-                                  color: '#FFFFFF !important',
-                                  opacity: 0.8,
+                                popper: {
+                                  container: containerRef.current,
                                 },
                               }}
-                              disabled={
-                                !(
-                                  // invitationCode?.[0]?.visitor_status === 'Checkin' ||
-                                  relatedVisitors.some(
+                            >
+                              <Button
+                                variant="contained"
+                                onClick={() => setOpenExtendVisit(true)}
+                                startIcon={<IconClock size={18} />}
+                                sx={{
+                                  color: '#fff',
+
+                                  background: !relatedVisitors.some(
                                     (v) =>
                                       selectedVisitors.includes(v.id) &&
                                       v.visitor_status === 'Checkin',
                                   )
-                                )
-                              }
-                            >
-                              Extend
-                            </Button>
-                          </Tooltip>
-                          <Tooltip
-                            title="Card"
-                            placement="top"
-                            arrow
-                            slotProps={{
-                              tooltip: {
-                                sx: {
-                                  fontSize: '1rem',
-                                  padding: '8px 14px',
-                                },
-                              },
-                              popper: {
-                                container: containerRef.current,
-                              },
-                            }}
-                          >
-                            <Button
-                              sx={{
-                                background: 'linear-gradient(135deg, #AB47BC 0%, #6A1B9A 100%)',
-                                color: '#fff',
-                                textWrap: 'wrap',
-                                whiteSpace: 'normal',
-                                lineHeight: 1.2,
-                                textAlign: 'center',
-                              }}
-                              onClick={handleChooseCard}
-                              startIcon={<IconCreditCard size={18} />}
-                            >
-                              Card Issuance
-                            </Button>
-                          </Tooltip>
+                                    ? undefined
+                                    : 'linear-gradient(135deg, #FFE082 0%, #FFCA28 100%)',
 
+                                  '&.Mui-disabled': {
+                                    background: '#BDBDBD !important',
+                                    color: '#FFFFFF !important',
+                                    opacity: 0.8,
+                                  },
+                                }}
+                                disabled={
+                                  !(
+                                    // invitationCode?.[0]?.visitor_status === 'Checkin' ||
+                                    relatedVisitors.some(
+                                      (v) =>
+                                        selectedVisitors.includes(v.id) &&
+                                        v.visitor_status === 'Checkin',
+                                    )
+                                  )
+                                }
+                              >
+                                Extend
+                              </Button>
+                            </Tooltip>
+                          )}
+                          {permissionHook.canCardIssuance && (
+                            <Tooltip
+                              title="Card"
+                              placement="top"
+                              arrow
+                              slotProps={{
+                                tooltip: {
+                                  sx: {
+                                    fontSize: '1rem',
+                                    padding: '8px 14px',
+                                  },
+                                },
+                                popper: {
+                                  container: containerRef.current,
+                                },
+                              }}
+                            >
+                              <Button
+                                sx={{
+                                  background: 'linear-gradient(135deg, #AB47BC 0%, #6A1B9A 100%)',
+                                  color: '#fff',
+                                  textWrap: 'wrap',
+                                  whiteSpace: 'normal',
+                                  // lineHeight: 1.2,
+                                  textAlign: 'center',
+                                }}
+                                onClick={handleChooseCard}
+                                startIcon={<IconCreditCard size={18} />}
+                              >
+                                Card Issuance
+                              </Button>
+                            </Tooltip>
+                          )}
+                          {/* 
                           <Tooltip
                             title="Access Control"
                             placement="top"
@@ -4411,7 +4258,7 @@ const OperatorView = () => {
                             >
                               Access
                             </Button>
-                          </Tooltip>
+                          </Tooltip> */}
                           <Tooltip
                             title="Print Badge"
                             placement="top"
@@ -4514,309 +4361,8 @@ const OperatorView = () => {
             setSnackbar={setSnackbar}
             onSubmit={handleSwipeCardSubmitNoCode}
           />
+
           {/* Choose Card */}
-          {/* <Dialog
-            open={openChooseCardDialog}
-            onClose={() => setOpenChooseCardDialog(false)}
-            fullWidth
-            maxWidth="lg"
-            container={containerRef.current}
-          >
-            <DialogTitle>Choose Card</DialogTitle>
-
-            <IconButton
-              aria-label="close"
-              onClick={() => {
-                setOpenChooseCardDialog(false);
-                setActionButton('');
-              }}
-              sx={{
-                position: 'absolute',
-                right: 8,
-                top: 8,
-                color: (theme) => theme.palette.grey[500],
-              }}
-            >
-              <IconX />
-            </IconButton>
-            <DialogContent dividers>
-              <Box mb={2}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  placeholder="Search card"
-                  variant="outlined"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <IconSearch size={20} />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              </Box>
-
-              <Box mb={2} onClick={(e) => e.stopPropagation()}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={isChecked}
-                      indeterminate={isIndeterminate}
-                      onChange={handleSelectAll}
-                      disabled={capacity === 0}
-                    />
-                  }
-                  label="Select All"
-                />
-              </Box>
-
-              {currentUsedCard && (
-                <>
-                  <Grid container spacing={2} mb={2}>
-                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-                      <Paper
-                        sx={(theme) => ({
-                          p: 2,
-                          borderRadius: 2,
-                          position: 'relative',
-                          height: 280,
-                          display: 'flex',
-                          flexDirection: 'column',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          textAlign: 'center',
-                          border: '2px solid',
-                          borderColor: theme.palette.warning.main,
-                          backgroundColor: theme.palette.warning.light,
-                          boxShadow: theme.shadows[6],
-                        })}
-                      >
-                        <Box
-                          flexGrow={1}
-                          display="flex"
-                          flexDirection="column"
-                          justifyContent="center"
-                          alignItems="center"
-                        >
-                          <Typography variant="h1" color="text.secondary" mt={1}>
-                            {currentUsedCard.card_number}
-                          </Typography>
-
-                          <Box
-                            display="flex"
-                            justifyContent="space-between"
-                            width="100%"
-                            maxWidth={300}
-                            mt={1}
-                          >
-                            <Typography variant="body1" fontWeight={600}>
-                              Card
-                            </Typography>
-                            <Typography variant="body1">{currentUsedCard.card_number}</Typography>
-                          </Box>
-
-                          <Box
-                            display="flex"
-                            justifyContent="space-between"
-                            width="100%"
-                            maxWidth={300}
-                            flexWrap="wrap"
-                            gap={1}
-                          >
-                            <Typography variant="body1" fontWeight={600}>
-                              BLE
-                            </Typography>
-                            <Typography variant="body1">
-                              {currentUsedCard.card_mac || '-'}
-                            </Typography>
-                          </Box>
-                        </Box>
-
-                        <Typography variant="body1">{currentUsedCard.name}</Typography>
-
-                        <Typography variant="body2" color="warning.main" fontWeight={600}>
-                          (Last Used Card)
-                        </Typography>
-
-                        <FormControlLabel
-                          onClick={(e) => e.stopPropagation()}
-                          onMouseDown={(e) => e.stopPropagation()}
-                          control={
-                            <Checkbox
-                              checked={selectedCards.includes(currentUsedCard.card_number)}
-                              // disabled={!isChosen}
-                              onChange={() => handleToggleCard(currentUsedCard.card_number)}
-                            />
-                          }
-                          label=""
-                          sx={{ m: 0 }}
-                        />
-                      </Paper>
-                    </Grid>
-                  </Grid>
-                  <Divider sx={{ mb: 2 }} />
-                </>
-              )}
-
-              <Grid container spacing={2}>
-                {filteredCards.map((card) => {
-                  const isChosen = selectedCards.includes(card.card_number);
-                  const isLimitReached =
-                    selectedCards.length >= (selectedVisitors.length || 1) && !isChosen;
-                  return (
-                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={card.id}>
-                      <Paper
-                        onMouseDown={(e) => e.stopPropagation()}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleToggleCard(card.card_number);
-                        }}
-                        sx={(theme) => ({
-                          p: 2,
-                          borderRadius: 2,
-                          position: 'relative',
-                          height: 280,
-                          display: 'flex',
-                          flexDirection: 'column',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          textAlign: 'center',
-                          cursor: 'pointer',
-                          border: '1px solid',
-                          borderColor: isChosen ? theme.palette.primary.main : 'divider',
-                          boxShadow: isChosen ? theme.shadows[8] : theme.shadows[2],
-                          backgroundColor: isChosen
-                            ? theme.palette.primary.light
-                            : 'background.paper',
-                          transition: theme.transitions.create(
-                            ['transform', 'box-shadow', 'border-color', 'background-color'],
-                            {
-                              duration: theme.transitions.duration.shorter,
-                            },
-                          ),
-                          '&:hover': {
-                            transform: isLimitReached ? 'none' : 'translateY(-3px)',
-                            boxShadow: isLimitReached ? theme.shadows[1] : theme.shadows[6],
-                          },
-                        })}
-                      >
-                        <Box
-                          flexGrow={1}
-                          display="flex"
-                          flexDirection="column"
-                          justifyContent="center"
-                          alignItems="center"
-                        >
-                          <Typography variant="h1" color="text.secondary" mt={2}>
-                            {card.remarks || '-'}
-                          </Typography>
-
-                          <Box
-                            display="flex"
-                            justifyContent="space-between"
-                            width="100%"
-                            maxWidth={300}
-                            mt={1}
-                          >
-                            <Typography variant="body1" fontWeight={600}>
-                              Card
-                            </Typography>
-                            <Typography variant="body1" color="text.secondary">
-                              {card.card_number || '-'}
-                            </Typography>
-                          </Box>
-
-                          <Box
-                            display="flex"
-                            justifyContent="space-between"
-                            width="100%"
-                            maxWidth={300}
-                            flexWrap={'wrap'}
-                            gap={1}
-                          >
-                            <Typography variant="body1" fontWeight={600}>
-                              BLE
-                            </Typography>
-                            <Typography variant="body1" fontWeight={500}>
-                              {card.card_mac || '-'}
-                            </Typography>
-                          </Box>
-                        </Box>
-
-                        <Typography variant="body1">{card.name}</Typography>
-
-                        <FormControlLabel
-                          onClick={(e) => e.stopPropagation()}
-                          onMouseDown={(e) => e.stopPropagation()}
-                          control={
-                            <Checkbox
-                              checked={isChosen}
-                              // disabled={!isChosen}
-                              onChange={() => handleToggleCard(card.card_number)}
-                            />
-                          }
-                          label=""
-                          sx={{ m: 0 }}
-                        />
-                      </Paper>
-                    </Grid>
-                  );
-                })}
-              </Grid>
-
-              <Box mt={3} display="flex" justifyContent="space-between" alignItems="center">
-                <Box display="flex" flexDirection="row" gap={1}>
-                  <Typography variant="body1">
-                    Cards chosen: {selectedCards.length} / {availableCount} |
-                  </Typography>
-                  <Typography variant="body1">
-               
-                    Maximum cards allowed: <b>{selectedVisitors.length || 1}</b>
-                  </Typography>
-                </Box>
-              </Box>
-            </DialogContent>
-            <DialogActions>
-              <Button
-                fullWidth
-                variant="contained"
-                // disabled={selectedCards.length === 0}
-                onClick={handleOpenSwipeDialog}
-                color="warning"
-                sx={{ fontSize: '16px' }}
-                startIcon={<IconSwipe />}
-                disabled={!!currentUsedCard && selectedCards.includes(currentUsedCard.card_number)}
-              >
-                Swipe
-              </Button>
-              <Button
-                fullWidth
-                variant="contained"
-                // disabled={selectedCards.length === 0}
-                onClick={handleConfirmChooseCards}
-                color="primary"
-                sx={{ fontSize: '16px' }}
-                startIcon={<IconCards />}
-              >
-                Give
-              </Button>
-              <Button
-                fullWidth
-                variant="contained"
-                // disabled={selectedCards.length === 0}
-                // onClick={handleConfirmChooseCards}
-                onClick={() => setOpenRevokeDialog(true)}
-                color="error"
-                sx={{ fontSize: '16px' }}
-                startIcon={<IconKeyOff />}
-              >
-                Revoke
-              </Button>
-            </DialogActions>
-          </Dialog> */}
-
           <ChooseCardDialog
             open={openChooseCardDialog}
             onClose={() => {
@@ -4982,9 +4528,7 @@ const OperatorView = () => {
             selectedActionAccess={selectedActionAccess || ''}
             setSelectedActionAccess={setSelectedActionAccess}
             handleAccessAction={handleAccessAction}
-            setSnackbarOpen={setSnackbarOpen}
-            setSnackbarMsg={setSnackbarMsg}
-            setSnackbarType={setSnackbarType}
+            toast={toast}
           />
           {/* Extend Visit */}
           <ExtendVisitDialog

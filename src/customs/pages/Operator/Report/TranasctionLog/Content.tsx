@@ -619,7 +619,7 @@ const Content = () => {
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>Start Date</CustomFormLabel>
-                <TextField
+                <CustomTextField
                   type="date"
                   fullWidth
                   value={formData.start_date || ''}
@@ -632,7 +632,7 @@ const Content = () => {
 
               <Grid size={{ xs: 12 }}>
                 <CustomFormLabel sx={{ marginY: 0, marginX: 0 }}>End Date</CustomFormLabel>
-                <TextField
+                <CustomTextField
                   type="date"
                   fullWidth
                   value={formData.end_date || ''}
@@ -669,7 +669,7 @@ const Content = () => {
                     </li>
                   )}
                   renderInput={(params) => (
-                    <TextField {...params} placeholder="Search Visitor" fullWidth />
+                    <CustomTextField {...params} placeholder="Search Visitor" fullWidth />
                   )}
                   sx={{ mt: 0.5 }}
                 />
@@ -724,7 +724,7 @@ const Content = () => {
                       val.map((v) => v.id),
                     )
                   }
-                  renderInput={(params) => <TextField {...params} placeholder="Select Sites" />}
+                  renderInput={(params) => <CustomTextField {...params} placeholder="Select Sites" />}
                   sx={{ mt: 0.5 }}
                 />
               </Grid>
@@ -741,11 +741,11 @@ const Content = () => {
                       val.map((v) => v.id),
                     )
                   }
-                  renderInput={(params) => <TextField {...params} placeholder="Select Host" />}
+                  renderInput={(params) => <CustomTextField {...params} placeholder="Select Host" />}
                   sx={{ mt: 0.5 }}
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+              <Grid size={{ xs: 12, md: 8, lg: 6 }}>
                 <FormGroup>
                   <FormControlLabel
                     label="Previous"
@@ -758,7 +758,7 @@ const Content = () => {
                   />
                 </FormGroup>
               </Grid>
-              <Grid size={{ xs: 12, md: 6, lg: 8 }}>
+              <Grid size={{ xs: 12, md: 6, lg: 6 }}>
                 <FormGroup>
                   <FormControlLabel
                     label="Preregister Done"

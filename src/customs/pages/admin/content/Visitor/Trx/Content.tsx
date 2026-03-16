@@ -194,6 +194,17 @@ const Content = () => {
   const [employee, setEmployee] = useState<any[]>([]);
   const [vtLoading, setVTLoading] = useState(false);
   const [emailInput, setEmailInput] = useState('');
+  const [draw, setDraw] = useState(1);
+  const [openDetailShareLink, setOpenDetailShareLink] = useState(false);
+  const [openDetailLink, setOpenDetailLink] = useState(false);
+  const [openCreateLink, setOpenCreateLink] = useState(false);
+  const [pendingPayload, setPendingPayload] = useState<any>(null);
+  const [openSendEmail, setOpenSendEmail] = useState(false);
+
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [expiredAt, setExpiredAt] = useState<string | null>(null);
+  const [tabValue, setTabValue] = useState(0);
+  const [emails, setEmails] = useState<string[]>([]);
   const [dateRange, setDateRange] = useState<{
     startDate: Date | null;
     endDate: Date | null;
@@ -364,6 +375,8 @@ const Content = () => {
     end_date: '',
   });
 
+  const drawRef = useRef(0);
+
   useEffect(() => {
     if (!token) return;
     const fetchData = async () => {
@@ -371,7 +384,10 @@ const Content = () => {
 
       try {
         const start = page * rowsPerPage;
-        const statusParam = selectedType === 'All' ? undefined : statusMap[selectedType];
+        const statusParam =
+          appliedFilters.status && appliedFilters.status !== 'All'
+            ? appliedFilters.status
+            : undefined;
         const isEmergencyParam =
           appliedFilters.emergency_situation === ''
             ? undefined
@@ -379,7 +395,12 @@ const Content = () => {
 
         const isBlockParam =
           appliedFilters.is_block === '' ? undefined : appliedFilters.is_block === 'true';
+
+        // drawRef.current += 1;
+        // const draw = drawRef.current;
         const response = await getAllVisitorPagination(
+          // draw,
+          // draw,
           token,
           start,
           rowsPerPage,
@@ -417,12 +438,6 @@ const Content = () => {
           };
         });
 
-        // if (selectedType !== 'All') {
-        //   const apiStatus = statusMap[selectedType];
-        //   rows = rows.filter((r) => r.visitor_status === apiStatus);
-        // }
-
-        // setTableRowVisitors(response.collection);
         setTotalRecords(response.RecordsTotal);
         setTotalFilteredRecords(response.RecordsFiltered);
         setTableCustomVisitor(rows);
@@ -430,7 +445,6 @@ const Content = () => {
         setTableCustomVisitor([]);
         setTotalRecords(0);
         setTotalFilteredRecords(0);
-        // setTableRowVisitors([]);
       } finally {
         setLoading(false);
       }
@@ -447,86 +461,6 @@ const Content = () => {
     selectedType,
     appliedFilters,
   ]);
-
-  // const start = page * rowsPerPage;
-
-  // const {
-  //   data: visitorResponse,
-  //   isLoading: isLoadingVisitor,
-  //   isFetching: isFetchingVisitor,
-  // } = useQuery({
-  //   queryKey: [
-  //     'visitors',
-  //     visitorPage,
-  //     rowsPerPage,
-  //     sortDir,
-  //     searchKeyword,
-  //     selectedType,
-  //     appliedFilters.start_date,
-  //     appliedFilters.end_date,
-  //     appliedFilters.emergency_situation,
-  //     appliedFilters.is_block,
-  //     appliedFilters.data_filter,
-  //     appliedFilters.site_id,
-  //     appliedFilters.visitor_role,
-  //     appliedFilters.host_id,
-  //   ],
-  //   queryFn: async () => {
-  //     if (!token) return null;
-
-  //     const statusParam = selectedType === 'All' ? undefined : statusMap[selectedType];
-  //     const start = visitorPage * visitorRowsPerPage;
-
-  //     const isEmergencyParam =
-  //       appliedFilters.emergency_situation === ''
-  //         ? undefined
-  //         : appliedFilters.emergency_situation === 'true';
-
-  //     const isBlockParam =
-  //       appliedFilters.is_block === '' ? undefined : appliedFilters.is_block === 'true';
-
-  //     return await getAllVisitorPagination(
-  //       token!,
-  //       start,
-  //       visitorRowsPerPage,
-  //       sortDir,
-  //       searchKeyword || undefined,
-  //       appliedFilters.start_date
-  //         ? dayjs(appliedFilters.start_date).utc().toISOString()
-  //         : undefined,
-  //       appliedFilters.end_date ? dayjs(appliedFilters.end_date).utc().toISOString() : undefined,
-  //       statusParam,
-  //       appliedFilters.data_filter,
-  //       appliedFilters.site_id || undefined,
-  //       appliedFilters.visitor_role || undefined,
-  //       isEmergencyParam,
-  //       isBlockParam,
-  //       appliedFilters.host_id || undefined,
-  //     );
-  //   },
-  //   enabled: !!token,
-  //   placeholderData: (prev) => prev,
-  // });
-
-  // const tableCustomVisitor =
-  //   visitorResponse?.collection?.map((item: any) => ({
-  //     id: item.id,
-  //     visitor_type: item.visitor_type_name || '-',
-  //     name: item.visitor_name || '-',
-  //     identity_id: item.visitor_identity_id || '-',
-  //     email: item.visitor_email || '-',
-  //     organization: item.visitor_organization_name || '-',
-  //     gender: item.visitor_gender || '-',
-  //     phone: item.visitor_phone || '-',
-  //     visitor_period_start: item.visitor_period_start || '-',
-  //     visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
-  //     host: item.host ?? '-',
-  //     visitor_status: item.visitor_status || '-',
-  //   })) || [];
-
-  // console.log('tableCustomVisitor', tableCustomVisitor);
-
-  // const totalFilteredRecords = visitorResponse?.RecordsFiltered || 0;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -660,13 +594,13 @@ const Content = () => {
 
   const handleApplyFilter = () => {
     setAppliedFilters({
-      status: selectedType === 'All' ? undefined : statusMap[selectedType],
       ...filters,
     });
 
-    setPage(0);
+    if (page !== 0) {
+      setPage(0);
+    }
   };
-
   const handleSubmitQRCode = async (value: string) => {
     try {
       setLoading(true);
@@ -711,17 +645,6 @@ const Content = () => {
     setPage(0);
   };
 
-  const [openDetailShareLink, setOpenDetailShareLink] = useState(false);
-  const [openDetailLink, setOpenDetailLink] = useState(false);
-  const [openCreateLink, setOpenCreateLink] = useState(false);
-  const [pendingPayload, setPendingPayload] = useState<any>(null);
-  const [openSendEmail, setOpenSendEmail] = useState(false);
-
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [expiredAt, setExpiredAt] = useState<string | null>(null);
-  const [tabValue, setTabValue] = useState(0);
-  const [emails, setEmails] = useState<string[]>([]);
-
   const handleDeleteLink = async (id: string) => {
     try {
       const confirm = await Swal.fire({
@@ -751,10 +674,6 @@ const Content = () => {
     }
   };
 
-  const handleChangeTab = (event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
-  };
-
   const handleOpenInviteDialog = (id: string, link: string, expired_at: string) => {
     setSelectedShareLinkId(id);
     setGeneratedLink(link);
@@ -773,16 +692,27 @@ const Content = () => {
     setOpenDetailLink(true);
   };
 
-  const start = page * rowsPerPage;
+  const [pageShareLink, setPageShareLink] = useState(0);
+  const [rowsPerPageShareLink, setRowsPerPageShareLink] = useState(10);
+  const [shareLinkSearchKeyword, setShareLinkSearchKeyword] = useState('');
+  const [shareLinkSortDir, setShareLinkSortDir] = useState('desc');
+
+  const startPage = pageShareLink * rowsPerPageShareLink;
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: ['share-links', page, rowsPerPage, searchKeyword, sortDir],
+    queryKey: [
+      'share-links',
+      startPage,
+      rowsPerPageShareLink,
+      shareLinkSearchKeyword,
+      shareLinkSortDir,
+    ],
     queryFn: async () => {
       const res = await getShareLinkByDt(
         token as string,
-        start,
-        rowsPerPage,
-        searchKeyword,
-        sortDir,
+        startPage,
+        rowsPerPageShareLink,
+        shareLinkSearchKeyword,
+        shareLinkSortDir,
       );
 
       return res;
@@ -794,18 +724,6 @@ const Content = () => {
     placeholderData: (previousData) => previousData,
   });
 
-  const formatDateTimes = (dateStr?: string, extendMinutes = 0) => {
-    if (!dateStr) return '-';
-
-    const base = moment.utc(dateStr);
-
-    if (extendMinutes !== 0) {
-      base.add(extendMinutes, 'minutes');
-    }
-
-    return base.tz('Asia/Jakarta').format('DD-MM-YYYY, HH:mm');
-  };
-
   const shareLinkList =
     data?.collection?.map((item: any) => ({
       id: item.id,
@@ -815,18 +733,13 @@ const Content = () => {
       max_usage: item.max_usage,
       visitor_period_start: formatDateTime(item.visitor_period_start),
       visitor_period_end: formatDateTime(item.visitor_period_end),
-      // expired_at: new Date(item.expired_at + 'Z').toLocaleString(undefined, {
-      //   year: 'numeric',
-      //   month: '2-digit',
-      //   day: '2-digit',
-      //   hour: '2-digit',
-      //   minute: '2-digit',
-      // }),
-      // expired_at: formatDateTimes(item.expired_at),
-      // expired_at_raw: item.expired_at,
-
-      // ✅ format hanya untuk display
-      expired_at: dayjs.utc(item.expired_at).tz('Asia/Jakarta').format('DD/MM/YYYY HH:mm'),
+      expired_at: new Date(item.expired_at + 'Z').toLocaleString(undefined, {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
 
       link_status: item.link_status,
     })) || [];
@@ -886,6 +799,53 @@ const Content = () => {
     } catch (error) {
       console.error(error);
       showSwal('error', 'Failed to send invitation');
+    }
+  };
+
+  const handleCreateLink = async (payload: any) => {
+    try {
+      setIsGenerating(true);
+
+      await createShareLink(token as string, payload);
+
+      await queryClient.invalidateQueries({
+        queryKey: ['share-links'],
+      });
+
+      setOpenCreateLink(false);
+      showSwal('success', 'Share link created successfully');
+    } catch (err) {
+      console.error(err);
+      showSwal('error', 'Failed to create share link');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleSendEmail = async (emails: string[]) => {
+    try {
+      setIsGenerating(true);
+
+      const finalPayload = {
+        ...pendingPayload,
+        emails: emails,
+      };
+
+      await createShareLink(token as string, finalPayload);
+
+      await queryClient.invalidateQueries({
+        queryKey: ['share-links'],
+      });
+
+      setOpenSendEmail(false);
+      setOpenCreateLink(false);
+
+      showSwal('success', 'Share link sent successfully');
+    } catch (err) {
+      console.error(err);
+      showSwal('error', 'Failed to send share link');
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -971,7 +931,6 @@ const Content = () => {
                     { name: 'Block' },
                     { name: 'Denied' },
                     { name: 'Waiting' },
-                    { name: 'Precheckin' },
                   ],
                 }}
                 onHeaderItemClick={(item) => {
@@ -982,11 +941,14 @@ const Content = () => {
                     item.name === 'Preregis' ||
                     item.name === 'Denied' ||
                     item.name === 'Block' ||
-                    item.name === 'Waiting' ||
-                    item.name === 'Precheckin'
+                    item.name === 'Waiting'
                   ) {
                     setSelectedType(item.name);
                     setPage(0);
+                    setAppliedFilters((prev: any) => ({
+                      ...prev,
+                      status: item.name === 'All' ? undefined : item.name,
+                    }));
                   }
                 }}
                 defaultSelectedHeaderItem="All"
@@ -999,8 +961,6 @@ const Content = () => {
                   if (ranges.startDate && ranges.endDate) {
                     setStartDate(ranges.startDate.toISOString());
                     setEndDate(ranges.endDate.toISOString());
-                    // setStartDate(ranges.startDate);
-                    // setEndDate(ranges.endDate);
                     setPage(0);
                     setRefreshTrigger((prev) => prev + 1);
                   }
@@ -1279,22 +1239,7 @@ const Content = () => {
       <CreateLinkDialog
         open={openCreateLink}
         onClose={() => setOpenCreateLink(false)}
-        onCreateLink={async (payload) => {
-          try {
-            setIsGenerating(true);
-            await createShareLink(token as string, payload);
-            await queryClient.invalidateQueries({
-              queryKey: ['share-links'],
-            });
-            setOpenCreateLink(false);
-            showSwal('success', 'Share link created successfully');
-          } catch (err) {
-            console.error(err);
-            showSwal('error', 'Failed to create share link');
-          } finally {
-            setIsGenerating(false);
-          }
-        }}
+        onCreateLink={handleCreateLink}
         onSendEmail={(payload) => {
           setPendingPayload(payload);
           setOpenSendEmail(true);
@@ -1310,30 +1255,7 @@ const Content = () => {
       <SendEmailDialog
         open={openSendEmail}
         onClose={() => setOpenSendEmail(false)}
-        onSend={async (emails: string[]) => {
-          try {
-            setIsGenerating(true);
-
-            const finalPayload = {
-              ...pendingPayload,
-              emails: emails,
-            };
-
-            await createShareLinkByEmail(token as string, finalPayload);
-            await queryClient.invalidateQueries({
-              queryKey: ['share-links'],
-            });
-            setOpenSendEmail(false);
-            setOpenCreateLink(false);
-
-            showSwal('success', 'Share link sent successfully');
-          } catch (err) {
-            console.error(err);
-            showSwal('error', 'Failed to send share link');
-          } finally {
-            setIsGenerating(false);
-          }
-        }}
+        onSend={handleSendEmail}
       />
 
       {/* Unsaved Changes */}

@@ -600,7 +600,7 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
                     src={previewSrc}
                     alt="preview"
                     style={{
-                      width: 200,
+                      width: 300,
                       height: 200,
                       borderRadius: 12,
                       objectFit: 'cover',
@@ -749,7 +749,7 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
           if (f.remarks === 'host') {
             displayValue = invitationData.host_data?.name || displayValue;
           } else if (f.remarks === 'site_place') {
-            displayValue = invitationData.site_place_data?.name || displayValue;
+            displayValue = invitationData.site_place_name || displayValue;
           }
           if (!isDriving && ['vehicle_type', 'vehicle_plate'].includes(f.remarks)) {
             return null;
@@ -999,12 +999,14 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
   );
 
   const transformToSubmitPayload = (data: any) => ({
+    trx_visitor_id: data.trx_visitor_id,
     visitor_type: data.visitor_type,
     type_registered: 1,
     is_group: true, // tergantung kebutuhan
     group_name: data.group_name ?? '',
+    // group_code: data.group_code ?? '',
     tz: data.site_place_data?.timezone ?? 'Asia/Jakarta',
-    registered_site: data.site_place_data?.id ?? '',
+    flow: 'SubmitPraregister',
     data_visitor: [
       {
         question_page: data.question_page?.map((section: any) => ({
@@ -1017,8 +1019,8 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
           self_only: section.self_only ?? false,
           foreign_id: section.foreign_id ?? '',
           form: section.form?.map((f: any) => {
-            const value = formValues[f.remarks] ?? '';
-            const base = {
+            const value = formValues[f.remarks] ?? null;
+            const base: any = {
               sort: f.sort,
               short_name: f.short_name,
               long_display_text: f.long_display_text,
@@ -1029,11 +1031,7 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
               remarks: f.remarks,
               multiple_option_fields: f.multiple_option_fields ?? [],
               visitor_form_type: f.visitor_form_type ?? 1,
-              answer_text: '',
-              answer_datetime: null,
-              answer_file: '',
             };
-
             // mapping per tipe
             if ([10, 11, 12].includes(f.field_type)) {
               // file (selfie_image, nda, identity)
@@ -1061,7 +1059,7 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
       setSubmitting(true);
 
       const payload = transformToSubmitPayload(invitationData);
-      const res = await submitPraFormEmployee(token as string, id, payload);
+      const res = await submitPraFormEmployee(token as string, payload);
 
       // console.log('submitPraFormEmployee response:', res);
 
@@ -1080,7 +1078,6 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
         onSubmitted?.();
       } else {
         await new Promise((r) => setTimeout(r, 600));
-        // showErrorAlert('Error!', res.msg ?? 'Something went wrong');
         showSwal('error', res.msg ?? 'Failed created invitation.');
       }
     } catch (err) {

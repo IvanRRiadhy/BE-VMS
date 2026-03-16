@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Accordion,
   AccordionDetails,
@@ -9,12 +9,10 @@ import {
   Button,
   Checkbox,
   CircularProgress,
-  Dialog,
-  Divider,
   FormControl,
   FormControlLabel,
   FormGroup,
-  Grid as Grid2,
+  Grid2 as Grid,
   IconButton,
   MobileStepper,
   Paper,
@@ -37,8 +35,6 @@ import {
   useTheme,
 } from '@mui/material';
 import type { AlertColor } from '@mui/material/Alert';
-import StepConnector, { stepConnectorClasses } from '@mui/material/StepConnector';
-import { styled } from '@mui/material/styles';
 import {
   IconArrowLeft,
   IconArrowRight,
@@ -51,11 +47,12 @@ import {
 } from '@tabler/icons-react';
 import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
-import VisitorTypeList from '../../admin/content/AdminView/Invitation/components/VisitorTypeList';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import { Box, Grid, useMediaQuery } from '@mui/system';
+import VisitorTypeList from '../../admin/content/AdminView/VisitorTypeList';
+import { Box, useMediaQuery } from '@mui/system';
 import {
+  CreateGroupVisitorRequest,
   CreateGroupVisitorRequestSchema,
+  CreateVisitorRequest,
   CreateVisitorRequestSchema,
   FormVisitor,
   SectionPageVisitor,
@@ -68,7 +65,6 @@ import Webcam from 'react-webcam';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import dayjs, { Dayjs, tz } from 'dayjs';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import moment from 'moment-timezone';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -82,7 +78,9 @@ import {
   getPublicVisitorType,
   getPublicVisitorTypeById,
 } from 'src/customs/api/Public';
-import { useQuery } from '@tanstack/react-query';
+import PreviewDialog from './components/PreviewDialog';
+import { useNavigate } from 'react-router';
+import Swal from 'sweetalert2';
 
 const FormSelfPraregistration = ({
   invitation = {},
@@ -100,6 +98,7 @@ const FormSelfPraregistration = ({
   allVisitorEmployee?: any;
 }) => {
   const THEME = useTheme();
+  const navigate = useNavigate();
   const isMobile = useMediaQuery(THEME.breakpoints.down('sm'));
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -116,11 +115,11 @@ const FormSelfPraregistration = ({
   const [formData, setFormData] = useState<any>({});
   const [dynamicSteps, setDynamicSteps] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  // const [employee, setEmployee] = useState<any[]>([]);
-  // const [sites, setSites] = useState<any[]>([]);
-  // const [allVisitorEmployee, setAllVisitorEmployee] = useState<any[]>([]);
   const [openCamera, setOpenCamera] = useState(false);
   const [rawSections, setRawSections] = useState<any[]>([]);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewPayload, setPreviewPayload] = useState<any>(null);
+  const [previewSections, setPreviewSections] = useState<any>(null);
   const [siteTree, setSiteTree] = useState<any[]>([]);
   const [screenshot, setScreenshot] = useState<string | null>(null);
   const [activeGroupIdx, setActiveGroupIdx] = useState(0);
@@ -137,7 +136,6 @@ const FormSelfPraregistration = ({
   const [removing, setRemoving] = useState<Record<string, boolean>>({});
   const [inputValues, setInputValues] = useState<{ [key: number]: string }>({});
   const [selectedSiteParentIds, setSelectedSiteParentIds] = useState<string[]>([]);
-  const [startTime, setStartTime] = useState<Dayjs | null>(dayjs());
   const [selectedSiteIds, setSelectedSiteIds] = useState<string[]>([]);
   const webcamRef = useRef<Webcam>(null);
   const [snackbar, setSnackbar] = useState<{
@@ -171,6 +169,7 @@ const FormSelfPraregistration = ({
       out.answer_datetime = parsed.isValid()
         ? parsed.utc().format('YYYY-MM-DDTHH:mm:ss[Z]')
         : ans.answer_datetime;
+      // out.answer_datetime = dayjs(ans.answer_datetime).toISOString();
     } else if ([10, 11, 12].includes(tpl.field_type) && ans?.answer_file) {
       out.answer_file = ans.answer_file;
     } else if (ans?.answer_text) {
@@ -293,6 +292,24 @@ const FormSelfPraregistration = ({
     }
   };
 
+  const resetSingleFormState = () => {
+    resetMediaState();
+    clearAnswerFiles();
+    setFieldErrors({});
+    setActiveStep(0);
+
+    setPreviewPayload(null);
+    setPreviewSections(null);
+    setPreviewOpen(false);
+
+    // reset state UI
+    setInputValues({});
+    setSelectedSiteParentIds([]);
+    setSelectedSiteIds([]);
+    setSiteTree([]);
+    setSectionsData(rawSections);
+  };
+
   const clearAnswerFiles = () => {
     setSectionsData((prev) =>
       prev.map((section) => ({
@@ -304,14 +321,31 @@ const FormSelfPraregistration = ({
     );
   };
 
+  const resetGroupFormState = () => {
+    resetMediaState();
+    clearAnswerFiles();
+    setFieldErrors({});
+    setActiveStep(0);
+    setPreviewPayload(null);
+    setPreviewSections(null);
+    setPreviewOpen(false);
+    setGroupVisitors([]);
+    setDataVisitor([]);
+    const groupSections = buildGroupSections(rawSections);
+
+    setSectionsData(groupSections);
+    setDraggableSteps(groupSections.map((s) => s.name));
+
+    seedDataVisitorFromSections(groupSections);
+    setGroupedPages(buildGroupedPages(groupSections));
+  };
+
   const handleOnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     // setErrors({});
     if (!token) return;
 
     try {
-      setLoading(true);
-
       const tz =
         moment.tz?.guess?.() || Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Jakarta';
       const mapField = (field: FormVisitor, sortIdx: number) => {
@@ -337,8 +371,8 @@ const FormSelfPraregistration = ({
 
         switch (base.field_type) {
           case 9: // Date/Datetime
-            if (typeof field.answer_datetime === 'string') {
-              base.answer_datetime = dayjs(field.answer_datetime).utc().toISOString();
+            if (field.answer_datetime) {
+              base.answer_datetime = dayjs.utc(field.answer_datetime).toISOString();
             }
             break;
 
@@ -381,7 +415,86 @@ const FormSelfPraregistration = ({
 
       // let payload: CreateVisitorRequest | CreateGroupVisitorRequest;
       let payload;
+      // if (isGroup) {
+      //   const list_group = groupVisitors.map((g) => {
+      //     const built = buildFinalPayload(
+      //       rawSections,
+      //       groupedPages,
+      //       g.data_visitor.length ? g.data_visitor : dataVisitor,
+      //       {
+      //         visitor_type: formData.visitor_type ?? '',
+      //         is_group: true,
+      //         type_registered: TYPE_REGISTERED,
+      //         tz: tz,
+      //         registered_site: formData.registered_site ?? '',
+      //       },
+      //     );
+
+      //     const cleanDataVisitor = (built.data_visitor ?? []).map((dv: any) => ({
+      //       ...dv,
+      //       question_page: (dv.question_page ?? []).map((qp: any, sIdx: number) => ({
+      //         id: qp.id || qp.Id || rawSections?.[sIdx]?.Id || generateUUIDv4(),
+      //         sort: qp.sort ?? sIdx,
+      //         name: qp.name ?? `Section ${sIdx + 1}`,
+      //         status: qp.status ?? 0,
+      //         is_document: qp.is_document ?? false,
+      //         can_multiple_used: qp.can_multiple_used ?? false,
+      //         foreign_id: qp.foreign_id ?? '',
+      //         self_only: qp.self_only ?? false,
+      //         form: (qp.form ?? []).map(({ id, Id, ...rest }: any) => rest),
+      //       })),
+      //     }));
+
+      //     return {
+      //       group_name: g.group_name ?? '',
+      //       group_code: g.group_code ?? '',
+      //       is_group: true,
+      //       visitor_type: formData.visitor_type ?? '',
+      //       tz: tz,
+      //       // registered_site: formData.registered_site ?? '',
+      //       flow: 'InvitationShareLink',
+      //       type_registered: TYPE_REGISTERED,
+      //       data_visitor: cleanDataVisitor,
+      //     };
+      //   });
+
+      //   payload = { list_group };
+
+      //   const parsed = CreateGroupVisitorRequestSchema.parse(payload);
+      //   console.log('🚀 Final Payload (Group):', JSON.stringify(parsed, null, 2));
+
+      //   // const submitFn = await createSubmitGroupShareLink(token, code, timestamp, parsed);
+      //   // console.log('submitFn', submitFn);
+      //   // toast('Group visitor created successfully.', 'success');
+      //   showSwal('success', 'Group visitor created successfully.');
+      //   resetGroupFormState();
+      //   navigate('/invitation-share/success')
+      // }
+
       if (isGroup) {
+        const totalVisitors = groupVisitors.reduce((sum, g) => {
+          const visitors = g.data_visitor?.length ? g.data_visitor : dataVisitor;
+          return sum + (visitors?.length || 0);
+        }, 0);
+        const confirm = await Swal.fire({
+          title: 'Confirm Submission',
+          html: `You are about to submit <b>${totalVisitors}</b> visitor(s) in <b>${groupVisitors.length}</b> group(s).<br/>Continue?`,
+          icon: 'question',
+          showCancelButton: true,
+          reverseButtons: true,
+          showCloseButton: true,
+          confirmButtonText: 'Yes, Submit',
+          confirmButtonColor: '#16a34a',
+          cancelButtonText: 'Cancel',
+        });
+
+        if (!confirm.isConfirmed) {
+          setLoading(false);
+          return;
+        }
+
+        setLoading(true);
+
         const list_group = groupVisitors.map((g) => {
           const built = buildFinalPayload(
             rawSections,
@@ -417,7 +530,6 @@ const FormSelfPraregistration = ({
             is_group: true,
             visitor_type: formData.visitor_type ?? '',
             tz: tz,
-            // registered_site: formData.registered_site ?? '',
             flow: 'InvitationShareLink',
             type_registered: TYPE_REGISTERED,
             data_visitor: cleanDataVisitor,
@@ -427,18 +539,15 @@ const FormSelfPraregistration = ({
         payload = { list_group };
 
         const parsed = CreateGroupVisitorRequestSchema.parse(payload);
-        console.log('🚀 Final Payload (Group):', JSON.stringify(parsed, null, 2));
+        // console.log('🚀 Final Payload (Group):', JSON.stringify(parsed, null, 2));
 
-        const submitFn = await createSubmitGroupShareLink(token, code, timestamp, parsed);
-        console.log('submitFn', submitFn);
-        // const backendResponse = await submitFn(token, parsed as any);
-        toast('Group visitor created successfully.', 'success');
-        resetMediaState();
-        clearAnswerFiles();
-      }
-
-      // 🟦 SINGLE MODE
-      else {
+        // submit API
+        await createSubmitGroupShareLink(token, code, timestamp, parsed);
+        setLoading(false);
+        showSwal('success', 'Group visitor created successfully.',1000);
+        resetGroupFormState();
+        navigate('/invitation-share/success');
+      } else {
         if (!sectionsData.length) {
           toast('Minimal isi 1 data visitor.', 'warning');
           return;
@@ -460,35 +569,31 @@ const FormSelfPraregistration = ({
           ...baseMeta,
           data_visitor: [{ question_page }],
         };
+        console.log('🚀 Final Payload (Single):', JSON.stringify(payload, null, 2));
 
         const parsed = CreateVisitorRequestSchema.parse(payload);
-        console.log('Final Payload (Single):', JSON.stringify(parsed, null, 2));
+        // console.log('Final Payload (Single):', JSON.stringify(parsed, null, 2));
+        setLoading(false);
+        setPreviewPayload(parsed);
+        setPreviewSections(parsed?.data_visitor?.[0]);
+        setPreviewOpen(true);
+        return;
 
         // // // Submit ke endpoint single
-        const submitFn = await createSubmitShareLink(token, code, timestamp, parsed);
-        // const backendResponse = await submitFn(token, parsed);
-        console.log('Visitor created:', submitFn);
-        const successMessage =
-          TYPE_REGISTERED === 0
-            ? 'Pre-registration created successfully.'
-            : 'Invitation Visitor created successfully.';
+        // const submitFn = await createSubmitShareLink(token, code, timestamp, parsed);
+        // // const backendResponse = await submitFn(token, parsed);
+        // console.log('Visitor created:', submitFn);
+        // const successMessage =
+        //   TYPE_REGISTERED === 0
+        //     ? 'Pre-registration created successfully.'
+        //     : 'Invitation Visitor created successfully.';
 
-        showSwal('success', successMessage);
+        // showSwal('success', successMessage);
 
-        resetMediaState();
-        clearAnswerFiles();
-
-        // setTimeout(() => {
-        //   setLoading(false);
-        //   // onSuccess?.();
-        // }, 700);
+        // resetMediaState();
+        // clearAnswerFiles();
       }
     } catch (err: any) {
-      // setTimeout(() => {
-      //   setLoading(false);
-      // }, 700);
-
-      // toast('Failed to create visitor.', 'error');
       showSwal('error', 'Failed to create visitor.');
       console.error(err);
 
@@ -499,6 +604,7 @@ const FormSelfPraregistration = ({
       } else if (err?.errors) {
         // setErrors(err.errors);
       }
+      setLoading(false);
     } finally {
       setLoading(false);
     }
@@ -537,6 +643,30 @@ const FormSelfPraregistration = ({
     setActiveStep((prev) => prev + 1);
   };
 
+  const syncPurposeVisitToAllVisitors = (visitors: any[]) => {
+    if (!visitors.length) return visitors;
+
+    const source = visitors[0];
+    const pIdx = source.question_page.findIndex((p: any) =>
+      p.name.toLowerCase().includes('purpose visit'),
+    );
+    if (pIdx < 0) return visitors;
+
+    const pvForm = structuredClone(source.question_page[pIdx].form);
+
+    return visitors.map((v) => {
+      const page = v.question_page[pIdx];
+      if (!page) return v;
+
+      return {
+        ...v,
+        question_page: v.question_page.map((p: any, i: any) =>
+          i === pIdx ? { ...p, form: pvForm } : p,
+        ),
+      };
+    });
+  };
+
   const handleSaveGroupVisitor = () => {
     if (activeGroupIdx === null) return;
 
@@ -554,7 +684,7 @@ const FormSelfPraregistration = ({
         return prev;
       }
 
-      const cleanDataVisitor = deepClone(dataVisitor).map((dv: any) => ({
+      let cleanDataVisitor = deepClone(dataVisitor).map((dv: any) => ({
         ...dv,
         question_page: (dv.question_page || []).map((qp: any) => ({
           id: qp.id || generateUUIDv4(),
@@ -568,6 +698,7 @@ const FormSelfPraregistration = ({
         })),
       }));
 
+      cleanDataVisitor = syncPurposeVisitToAllVisitors(cleanDataVisitor);
       next[activeGroupIdx] = {
         ...next[activeGroupIdx],
         data_visitor: cleanDataVisitor,
@@ -959,10 +1090,10 @@ const FormSelfPraregistration = ({
           axiosInstance2
             .delete(`/cdn${u}`)
             .then(() => {
-              console.log(`✅ Berhasil hapus file CDN: ${u}`);
+              // console.log(`✅ Berhasil hapus file CDN: ${u}`);
             })
             .catch((err) => {
-              console.warn(`⚠️ Gagal hapus file CDN ${u}:`, err);
+              // console.warn(`⚠️ Gagal hapus file CDN ${u}:`, err);
             }),
         ),
       );
@@ -1177,1036 +1308,11 @@ const FormSelfPraregistration = ({
     setGroupVisitors((prev) => [...prev, newGroup]);
   };
 
-  const renderDetailRows = (
-    details: FormVisitor[] | any,
-    onChange: (index: number, field: keyof FormVisitor, value: any) => void,
-  ) => {
-    if (!Array.isArray(details)) {
-      console.error('Expected array for details, but got:', details);
-      return (
-        <TableRow>
-          <TableCell colSpan={5}>Invalid data format</TableCell>
-        </TableRow>
-      );
+  useEffect(() => {
+    if (invitation?.site_id) {
+      setSelectedSiteParentIds([invitation.site_id]);
     }
-
-    const handleSitePlaceChange = (idx: number, field: keyof FormVisitor, value: any) => {
-      onChange(idx, field, value);
-    };
-
-    const visibilityMap: any = getVisibilityMap(details);
-    const filteredDetails = details.filter((item, i) => {
-      const remark = (item.remarks || '').toLowerCase();
-      const visible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
-
-      if (!visible && item.answer_text) {
-        onChange(i, 'answer_text', '');
-      }
-
-      return visible;
-    });
-
-    return filteredDetails.map((item, index) => {
-      // const key = `${activeStep - 1}:${index}`;
-      const key = `${activeStep - 1}:${item.id}`;
-      const previewSrc = getPreviewSrc(key, (item as any).answer_file);
-      const shownName = uploadNames[key] || fileNameFromAnswer((item as any).answer_file);
-      const errorMessage = fieldErrors[key];
-      console.log('VISIBILITY MAP:', visibilityMap);
-      console.log('FILTERED DETAILS:', filteredDetails);
-      return (
-        <TableRow key={key}>
-          <TableCell>
-            <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
-              {item.long_display_text}
-              {item.mandatory && (
-                <Typography component="span" color="error" sx={{ ml: 0.5, lineHeight: 1 }}>
-                  *
-                </Typography>
-              )}
-            </Typography>
-            {(() => {
-              switch (item.field_type) {
-                case 0: // Text
-                  if (item.remarks === 'agenda') {
-                    const isLockedAgenda = !!invitation?.agenda;
-
-                    if (isLockedAgenda) {
-                      return (
-                        <CustomTextField
-                          size="small"
-                          value={item.answer_text || ''}
-                          fullWidth
-                          disabled
-                        />
-                      );
-                    }
-
-                    return (
-                      <Autocomplete
-                        size="small"
-                        freeSolo
-                        options={['Meeting', 'Presentation', 'Visit', 'Training', 'Report']}
-                        value={item.answer_text || null}
-                        onChange={(event, newValue) => {
-                          onChange(index, 'answer_text', newValue || '');
-                          if (newValue) clearFieldError(key);
-                        }}
-                        renderInput={(params) => (
-                          <CustomTextField
-                            {...params}
-                            placeholder="Choose or write manually agenda"
-                            fullWidth
-                            error={!!errorMessage}
-                            helperText={errorMessage}
-                          />
-                        )}
-                      />
-                    );
-                  }
-                  return (
-                    <CustomTextField
-                      size="small"
-                      value={item.answer_text || ''}
-                      onChange={(e) => {
-                        onChange(index, 'answer_text', e.target.value);
-                        if (e.target.value) clearFieldError(key);
-                      }}
-                      placeholder={
-                        item.remarks === 'name'
-                          ? ''
-                          : item.remarks === 'phone'
-                            ? ''
-                            : item.remarks === 'organization'
-                              ? ''
-                              : item.remarks === 'indentity_id'
-                                ? ''
-                                : ''
-                      }
-                      fullWidth
-                      error={!!errorMessage}
-                      helperText={errorMessage}
-                    />
-                  );
-                case 1: // Number
-                  return (
-                    <CustomTextField
-                      type="number"
-                      size="small"
-                      value={item.answer_text}
-                      onChange={(e) => {
-                        onChange(index, 'answer_text', e.target.value);
-                        if (e.target.value) clearFieldError(key);
-                      }}
-                      placeholder="Enter number"
-                      fullWidth
-                      error={!!errorMessage}
-                      helperText={errorMessage}
-                    />
-                  );
-                case 2: // Email
-                  return (
-                    <CustomTextField
-                      type="email"
-                      size="small"
-                      value={item.answer_text}
-                      onChange={(e) => {
-                        onChange(index, 'answer_text', e.target.value);
-                        if (e.target.value) clearFieldError(key);
-                      }}
-                      placeholder={item.remarks === 'email' ? '' : ''}
-                      fullWidth
-                      error={!!errorMessage}
-                      helperText={errorMessage}
-                    />
-                  );
-                case 3: {
-                  let options: { value: string; name: string; disabled?: boolean | undefined }[] =
-                    [];
-
-                  if (item.remarks === 'host') {
-                    // options = employee.map((emp: any) => ({
-                    //   value: emp.id,
-                    //   name: emp.name,
-                    // }));
-                    options = invitation.host
-                      ? [
-                          {
-                            value: invitation.host.id,
-                            name: invitation.host.name,
-                          },
-                        ]
-                      : employee.map((emp: any) => ({
-                          value: emp.id,
-                          name: emp.name,
-                        }));
-                  } else if (item.remarks === 'employee') {
-                    // options = allVisitorEmployee.map((emp: any) => ({
-                    //   value: emp.id,
-                    //   name: emp.name,
-                    // }));
-                    options = invitation.host
-                      ? [
-                          {
-                            value: invitation.host.id,
-                            name: invitation.host.name,
-                          },
-                        ]
-                      : allVisitorEmployee.map((emp: any) => ({
-                          value: emp.id,
-                          name: emp.name,
-                        }));
-                  } else if (item.remarks === 'site_place') {
-                    // options = sites.map((site: any) => ({
-                    //   value: site.id,
-                    //   name: site.name,
-                    //   disabled: site.can_visited === false,
-                    // }));
-                    options = invitation.site
-                      ? [
-                          {
-                            value: invitation.site.id,
-                            name: invitation.site.name,
-                          },
-                        ]
-                      : sites.map((site: any) => ({
-                          value: site.id,
-                          name: site.name,
-                          disabled: site.can_visited === false,
-                        }));
-                  } else {
-                    options = (item.multiple_option_fields || []).map((opt: any) =>
-                      typeof opt === 'object' ? opt : { value: opt, name: opt },
-                    );
-                  }
-                  if (item.remarks === 'site_place') {
-                    return (
-                      <>
-                        <Autocomplete
-                          multiple
-                          size="small"
-                          options={options}
-                          getOptionLabel={(option) => option.name}
-                          inputValue={inputValues[index] || ''}
-                          onInputChange={(_, newInputValue, reason) => {
-                            if (reason !== 'input') return;
-
-                            setInputValues((prev) => ({
-                              ...prev,
-                              [index]: newInputValue,
-                            }));
-                          }}
-                          filterOptions={(opts, state) => {
-                            if (state.inputValue.length < 3) return [];
-                            return opts.filter((opt) =>
-                              opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
-                            );
-                          }}
-                          noOptionsText={
-                            (inputValues[index] || '').length < 3
-                              ? 'Enter at least 3 characters to search'
-                              : 'Not found'
-                          }
-                          value={options.filter((opt) => selectedSiteParentIds.includes(opt.value))}
-                          onChange={(_, newValues) => {
-                            const parentIds = newValues.map((v) => v.value);
-
-                            setSelectedSiteParentIds(parentIds);
-
-                            setInputValues((prev) => ({
-                              ...prev,
-                              [index]: '',
-                            }));
-                            const trees = parentIds.flatMap((pid) =>
-                              buildSiteTreeWithParent(sites, pid),
-                            );
-
-                            setSiteTree(trees);
-                          }}
-                          renderInput={(params) => (
-                            <CustomTextField
-                              {...params}
-                              placeholder="Enter at least 3 characters to search"
-                              fullWidth
-                              error={!!errorMessage}
-                              helperText={errorMessage}
-                            />
-                          )}
-                        />
-                        {item.remarks === 'site_place' && siteTree.length > 0 && (
-                          <SimpleTreeView>
-                            {siteTree.map((node) => renderTree(node, index, handleSitePlaceChange))}
-                          </SimpleTreeView>
-                        )}
-                      </>
-                    );
-                  }
-                  return (
-                    <Autocomplete
-                      size="small"
-                      options={options}
-                      getOptionLabel={(option) => option.name}
-                      inputValue={inputValues[index] || ''}
-                      getOptionDisabled={(option) => option.disabled || false}
-                      onInputChange={(_, newInputValue) =>
-                        setInputValues((prev) => ({ ...prev, [index]: newInputValue }))
-                      }
-                      filterOptions={(opts, state) => {
-                        if (state.inputValue.length < 3) return [];
-                        const result = opts.filter((opt) =>
-                          opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
-                        );
-
-                        console.log('opts after filter:', result);
-                        return result;
-                      }}
-                      noOptionsText={
-                        (inputValues[index] || '').length < 3
-                          ? 'Enter at least 3 characters to search'
-                          : 'Not found'
-                      }
-                      value={options.find((opt) => opt.value === item.answer_text) || null}
-                      onChange={(_, newValue) => {
-                        const selectedValue = newValue ? newValue.value : '';
-                        onChange(index, 'answer_text', selectedValue);
-                        if (selectedValue) clearFieldError(key);
-                      }}
-                      renderInput={(params) => (
-                        <CustomTextField
-                          {...params}
-                          placeholder="Enter at least 3 characters to search"
-                          fullWidth
-                          error={!!errorMessage}
-                          helperText={errorMessage}
-                        />
-                      )}
-                    />
-                  );
-                }
-                case 4: // Datepicker
-                  return (
-                    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
-                      <DateTimePicker
-                        value={startTime}
-                        ampm={false}
-                        onChange={setStartTime}
-                        format="ddd, DD - MMM - YYYY, HH:mm"
-                        viewRenderers={{
-                          hours: renderTimeViewClock,
-                          minutes: renderTimeViewClock,
-                          seconds: renderTimeViewClock,
-                        }}
-                        slotProps={{
-                          textField: {
-                            fullWidth: true,
-                          },
-                        }}
-                      />
-                    </LocalizationProvider>
-                  );
-                case 5: // Radio
-                  return (
-                    <>
-                      <FormControl component="fieldset" error={!!errorMessage}>
-                        <RadioGroup
-                          value={String(item.answer_text)}
-                          onChange={(e) => {
-                            onChange(index, 'answer_text', e.target.value);
-                            if (e.target.value) clearFieldError(key);
-                          }}
-                          sx={{ flexDirection: 'row', flexWrap: 'wrap', gap: 1 }}
-                        >
-                          {(item.multiple_option_fields || [])
-                            .sort((a: any, b: any) => {
-                              if (item.remarks === 'is_driving') {
-                                const order: Record<string, number> = { true: 0, false: 1 };
-                                return order[a.value] - order[b.value];
-                              }
-                              return 0;
-                            })
-                            .map((opt: any, idx: number) => (
-                              <FormControlLabel
-                                key={idx}
-                                value={String(opt.value)}
-                                control={<Radio />}
-                                label={opt.name}
-                              />
-                            ))}
-                        </RadioGroup>
-                      </FormControl>
-                      <br />
-                      {errorMessage && (
-                        <Typography variant="caption" color="error">
-                          {errorMessage}
-                        </Typography>
-                      )}
-                    </>
-                  );
-
-                case 6: // Checkbox
-                  return (
-                    <>
-                      <FormControl error={!!errorMessage}>
-                        <FormGroup>
-                          {(item.multiple_option_fields || []).map((opt: any, idx: number) => {
-                            const val = typeof opt === 'object' ? opt.value : opt;
-                            const label = typeof opt === 'object' ? opt.name : opt;
-                            const answerArray = Array.isArray(item.answer_text)
-                              ? item.answer_text
-                              : item.answer_text
-                                ? [String(item.answer_text)]
-                                : [];
-
-                            return (
-                              <FormControlLabel
-                                key={idx}
-                                control={
-                                  <Checkbox
-                                    checked={answerArray.includes(val)}
-                                    onChange={(e) => {
-                                      const newValue = e.target.checked
-                                        ? [...answerArray, val]
-                                        : answerArray.filter((v: string) => v !== val);
-                                      onChange(index, 'answer_text', newValue);
-                                      if (newValue.length > 0) {
-                                        clearFieldError(key);
-                                      }
-                                    }}
-                                  />
-                                }
-                                label={label}
-                              />
-                            );
-                          })}
-                        </FormGroup>
-                      </FormControl>
-                      <br />
-                      {errorMessage && (
-                        <Typography variant="caption" color="error">
-                          {errorMessage}
-                        </Typography>
-                      )}
-                    </>
-                  );
-
-                case 8: // TimePicker
-                  return (
-                    <TextField
-                      type="time"
-                      size="small"
-                      value={item.answer_datetime}
-                      onChange={(e) => onChange(index, 'answer_datetime', e.target.value)}
-                      fullWidth
-                      error={!!errorMessage}
-                      helperText={errorMessage}
-                    />
-                  );
-                case 9:
-                  const hasValue = !!item.answer_datetime;
-                  return (
-                    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
-                      <DateTimePicker
-                        disabled={hasValue}
-                        value={item.answer_datetime ? dayjs(item.answer_datetime) : null}
-                        ampm={false}
-                        onChange={(newValue) => {
-                          if (newValue) {
-                            const utc = newValue.utc().format();
-                            onChange(index, 'answer_datetime', utc);
-                            clearFieldError(key);
-                          }
-                        }}
-                        format="dddd, DD  MMMM  YYYY, HH:mm"
-                        viewRenderers={{
-                          hours: renderTimeViewClock,
-                          minutes: renderTimeViewClock,
-                          seconds: renderTimeViewClock,
-                        }}
-                        slotProps={{
-                          textField: {
-                            fullWidth: true,
-                            error: !!errorMessage,
-                            helperText: errorMessage,
-                            sx: {
-                              '& .MuiInputBase-root.Mui-disabled': {
-                                backgroundColor: '#f3f4f6',
-                              },
-                              '& .MuiInputBase-input.Mui-disabled': {
-                                WebkitTextFillColor: '#909294ff',
-                              },
-                            },
-                          },
-                        }}
-                      />
-                    </LocalizationProvider>
-                  );
-
-                case 10: // TakePicture (Assuming image capture from device camera)
-                  return (
-                    <Box>
-                      <Box
-                        sx={{
-                          border: '2px dashed #90caf9',
-                          borderRadius: 2,
-                          padding: 4,
-                          textAlign: 'center',
-                          backgroundColor: '#f5faff',
-                          cursor: 'pointer',
-                          width: '100%',
-                          pointerEvents: 'auto',
-                          opacity: 1,
-                        }}
-                        // onClick={() => !isBatchEdit && fileInputRef.current?.click()}
-                      >
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer',
-                            p: 2,
-                          }}
-                          onClick={() => setOpenCamera(true)}
-                        >
-                          <PhotoCameraIcon sx={{ fontSize: 48, color: '#42a5f5', mr: 0.5 }} />
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              mt: 1,
-                            }}
-                          >
-                            <Typography
-                              variant="h6"
-                              component="span"
-                              color="primary"
-                              sx={{ fontWeight: 600 }}
-                            >
-                              Use Camera
-                            </Typography>
-                          </Box>
-                        </Box>
-                        <input
-                          id={`file-${key}`}
-                          type="file"
-                          accept="*"
-                          hidden
-                          ref={fileInputRef}
-                          onChange={(e) =>
-                            handleFileChangeForField(
-                              e as React.ChangeEvent<HTMLInputElement>,
-                              (url) => {
-                                onChange(index, 'answer_file', url);
-                                if (url) clearFieldError(key);
-                              },
-                              key,
-                            )
-                          }
-                        />
-                        <br />
-                      </Box>
-
-                      {/* PREVIEW / INFO */}
-                      {(previewSrc || shownName) && (
-                        <Box
-                          mt={1}
-                          display="flex"
-                          alignItems="center"
-                          gap={1}
-                          justifyContent={'center'}
-                        >
-                          {previewSrc ? (
-                            <Box display={'flex'} flexDirection={'column'} alignItems={'center'}>
-                              <img
-                                src={previewSrc}
-                                alt="preview"
-                                style={{
-                                  width: 350,
-                                  height: 200,
-                                  objectFit: 'cover',
-                                  borderRadius: 8,
-                                }}
-                              />
-                              <Button
-                                color="error"
-                                size="small"
-                                variant="outlined"
-                                sx={{ mt: 2, minWidth: 120 }}
-                                onClick={() =>
-                                  handleRemoveFileForField(
-                                    (item as any).answer_file,
-                                    (url) => onChange(index, 'answer_file', url),
-                                    key,
-                                  )
-                                }
-                                startIcon={<IconTrash />}
-                              >
-                                Remove
-                              </Button>
-                            </Box>
-                          ) : (
-                            <></>
-                          )}
-                        </Box>
-                      )}
-
-                      {errorMessage && (
-                        <Typography color="error" variant="caption" display="block" mt={1}>
-                          {errorMessage}
-                        </Typography>
-                      )}
-
-                      <Dialog
-                        open={openCamera}
-                        onClose={() => setOpenCamera(false)}
-                        maxWidth="md"
-                        fullWidth
-                      >
-                        <Box sx={{ p: 3 }}>
-                          <Box>
-                            <Typography variant="h6" mb={2}>
-                              Take Photo From Camera
-                            </Typography>
-                            {/* close button */}
-                            <IconButton
-                              onClick={() => setOpenCamera(false)}
-                              sx={{ position: 'absolute', top: 10, right: 10 }}
-                            >
-                              <IconX size={22} />
-                            </IconButton>
-                          </Box>
-                          <Grid container spacing={2}>
-                            <Grid size={{ xs: 12, sm: 6 }}>
-                              <Webcam
-                                audio={false}
-                                ref={webcamRef}
-                                screenshotFormat="image/jpeg"
-                                videoConstraints={{ facingMode: 'environment' }}
-                                style={{
-                                  width: '100%',
-                                  borderRadius: 8,
-                                  border: '2px solid #ccc',
-                                }}
-                              />
-                            </Grid>
-
-                            <Grid size={{ xs: 12, sm: 6 }}>
-                              {previews[key] ? (
-                                <img
-                                  src={previews[key] as string}
-                                  alt="Captured"
-                                  style={{
-                                    width: '100%',
-                                    borderRadius: 8,
-                                    border: '2px solid #ccc',
-                                  }}
-                                />
-                              ) : (
-                                <Box
-                                  sx={{
-                                    width: '100%',
-                                    height: '100%',
-                                    border: '2px dashed #ccc',
-                                    borderRadius: 8,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    minHeight: 240,
-                                  }}
-                                >
-                                  <Typography color="text.secondary">
-                                    No Photos Have Been Taken Yet
-                                  </Typography>
-                                </Box>
-                              )}
-                            </Grid>
-                          </Grid>
-
-                          <Divider sx={{ my: 2 }} />
-
-                          <Box sx={{ textAlign: 'right' }}>
-                            <Button
-                              onClick={() =>
-                                handleRemoveFileForField(
-                                  (item as any).answer_file,
-                                  (url) => onChange(index, 'answer_file', url),
-                                  key,
-                                )
-                              }
-                              color="error"
-                              startIcon={<IconTrash />}
-                              sx={{ mr: 1 }}
-                            >
-                              Clear Foto
-                            </Button>
-                            <Button
-                              variant="contained"
-                              onClick={() =>
-                                handleCaptureForField((url) => {
-                                  onChange(index, 'answer_file', url);
-                                  if (url) clearFieldError(key);
-                                }, key)
-                              }
-                              startIcon={<IconCamera />}
-                            >
-                              Take Foto
-                            </Button>
-                            <Button
-                              startIcon={<IconDeviceFloppy />}
-                              onClick={() => setOpenCamera(false)}
-                              sx={{ ml: 1 }}
-                            >
-                              Submit
-                            </Button>
-                          </Box>
-                        </Box>
-                      </Dialog>
-                    </Box>
-                  );
-
-                case 11: {
-                  // FileUpload
-                  return (
-                    <Box>
-                      <Box
-                        sx={{
-                          border: '2px dashed #90caf9',
-                          borderRadius: 2,
-                          padding: 4,
-                          textAlign: 'center',
-                          backgroundColor: '#f5faff',
-                          cursor: 'pointer',
-                          width: '100%',
-                          pointerEvents: 'auto',
-                          opacity: 1,
-                        }}
-                        onClick={() => fileInputRef.current?.click()}
-                      >
-                        <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
-                        <Typography variant="subtitle1" sx={{ mt: 1 }}>
-                          Upload File
-                        </Typography>
-
-                        <Typography variant="body2" color="textSecondary" mt={1}>
-                          Supports: JPG, JPEG, PNG, up to
-                          <span style={{ fontWeight: 'semibold' }}> 100KB</span>
-                        </Typography>
-                        {(previewSrc || shownName) && (
-                          <Box
-                            mt={2}
-                            sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
-                          >
-                            {previewSrc ? (
-                              <>
-                                <img
-                                  src={previewSrc}
-                                  alt="preview"
-                                  style={{
-                                    width: 350,
-                                    height: 200,
-                                    borderRadius: 12,
-                                    objectFit: 'cover',
-                                    cursor: 'pointer',
-                                    boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
-                                  }}
-                                />
-                                <Button
-                                  color="error"
-                                  size="small"
-                                  variant="outlined"
-                                  sx={{ mt: 2, minWidth: 120 }}
-                                  onClick={() =>
-                                    handleRemoveFileForField(
-                                      (item as any).answer_file,
-                                      (url) => onChange(index, 'answer_file', url),
-                                      key,
-                                    )
-                                  }
-                                  startIcon={<IconTrash />}
-                                >
-                                  Remove
-                                </Button>
-                              </>
-                            ) : (
-                              <Typography variant="caption" noWrap>
-                                {shownName}
-                              </Typography>
-                            )}
-                          </Box>
-                        )}
-
-                        <input
-                          id={`file-${key}`}
-                          type="file"
-                          accept="*"
-                          hidden
-                          ref={fileInputRef}
-                          // onChange={handlePDFUploadFor(index, onChange)}
-                          onChange={(e) =>
-                            handlePDFUploadFor(index, (idx, field, url) => {
-                              onChange(idx, field, url);
-                              if (url) clearFieldError(key);
-                            })(e)
-                          }
-                        />
-                      </Box>
-                      {errorMessage && (
-                        <Typography
-                          variant="caption"
-                          color="error"
-                          sx={{ mt: 1, display: 'block' }}
-                        >
-                          {errorMessage}
-                        </Typography>
-                      )}
-                    </Box>
-                  );
-                }
-
-                case 12: {
-                  return (
-                    <Box>
-                      <Box
-                        sx={{
-                          border: '2px dashed #90caf9',
-                          borderRadius: 2,
-                          padding: 4,
-                          textAlign: 'center',
-                          backgroundColor: '#f5faff',
-                          cursor: 'pointer',
-                          width: '100%',
-                          pointerEvents: 'auto',
-                          opacity: 1,
-                        }}
-                        onClick={() => fileInputRef.current?.click()}
-                      >
-                        <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
-                        <Typography variant="h6" sx={{ mt: 1, mb: 2 }}>
-                          Upload File
-                        </Typography>
-
-                        <Box
-                          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                        >
-                          <Typography variant="body1" color="textSecondary">
-                            Supports: PDF, JPG, PNG, JPEG Up to
-                            <span style={{ fontWeight: '700' }}> 100KB</span>
-                          </Typography>
-
-                          <Typography
-                            variant="h6"
-                            component="span"
-                            color="primary"
-                            sx={{ fontWeight: 600, ml: 1, cursor: 'pointer' }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setOpenCamera(true);
-                            }}
-                          >
-                            Use Camera
-                          </Typography>
-                        </Box>
-
-                        <input
-                          id={`file-${key}`}
-                          type="file"
-                          accept="*"
-                          hidden
-                          ref={fileInputRef}
-                          onChange={(e) =>
-                            handleFileChangeForField(
-                              e as React.ChangeEvent<HTMLInputElement>,
-                              (url) => {
-                                onChange(index, 'answer_file', url);
-                                if (url) clearFieldError(key);
-                              },
-                              key,
-                            )
-                          }
-                        />
-
-                        {/*preview  */}
-                        {(previewSrc || shownName) && (
-                          <Box
-                            mt={2}
-                            sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
-                          >
-                            {previewSrc ? (
-                              <>
-                                <img
-                                  src={previewSrc}
-                                  alt="preview"
-                                  style={{
-                                    width: 350,
-                                    height: 200,
-                                    borderRadius: 12,
-                                    objectFit: 'cover',
-                                    cursor: 'pointer',
-                                    boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
-                                  }}
-                                />
-                                <Button
-                                  color="error"
-                                  size="small"
-                                  variant="outlined"
-                                  sx={{ mt: 2, minWidth: 120 }}
-                                  onClick={() =>
-                                    handleRemoveFileForField(
-                                      (item as any).answer_file,
-                                      (url) => onChange(index, 'answer_file', url),
-                                      key,
-                                    )
-                                  }
-                                  startIcon={<IconTrash />}
-                                >
-                                  Remove
-                                </Button>
-                              </>
-                            ) : (
-                              <Typography variant="caption" noWrap>
-                                {shownName}
-                              </Typography>
-                            )}
-                          </Box>
-                        )}
-                      </Box>
-
-                      {errorMessage && (
-                        <Typography
-                          variant="caption"
-                          color="error"
-                          sx={{ mt: 1, display: 'block' }}
-                        >
-                          {errorMessage}
-                        </Typography>
-                      )}
-
-                      <Dialog
-                        open={openCamera}
-                        onClose={() => setOpenCamera(false)}
-                        maxWidth="md"
-                        fullWidth
-                      >
-                        <Box sx={{ p: 2 }}>
-                          <Box
-                            display={'flex'}
-                            justifyContent={'space-between'}
-                            alignItems={'center'}
-                            mb={1}
-                          >
-                            <Typography variant="h6" mb={0}>
-                              Take Photo From Camera
-                            </Typography>
-                            <IconButton onClick={() => setOpenCamera(false)}>
-                              <IconX />
-                            </IconButton>
-                          </Box>
-
-                          <Grid container spacing={2}>
-                            <Grid size={{ xs: 12, sm: 6 }}>
-                              <Webcam
-                                audio={false}
-                                ref={webcamRef}
-                                screenshotFormat="image/jpeg"
-                                videoConstraints={{ facingMode: 'environment' }}
-                                style={{
-                                  width: '100%',
-                                  borderRadius: 8,
-                                  border: '2px solid #ccc',
-                                }}
-                              />
-                            </Grid>
-
-                            <Grid size={{ xs: 12, sm: 6 }}>
-                              {screenshot ? (
-                                <img
-                                  src={screenshot}
-                                  alt="Captured"
-                                  style={{
-                                    width: '100%',
-                                    borderRadius: 8,
-                                    border: '2px solid #ccc',
-                                  }}
-                                />
-                              ) : (
-                                <Box
-                                  sx={{
-                                    width: '100%',
-                                    height: '100%',
-                                    border: '2px dashed #ccc',
-                                    borderRadius: 8,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    minHeight: 240,
-                                  }}
-                                >
-                                  <Typography color="text.secondary">
-                                    No Photos Have Been Taken Yet
-                                  </Typography>
-                                </Box>
-                              )}
-                            </Grid>
-                          </Grid>
-
-                          <Divider sx={{ my: 2 }} />
-
-                          <Box sx={{ textAlign: 'right' }}>
-                            <Button
-                              onClick={() =>
-                                handleRemoveFileForField(
-                                  (item as any).answer_file,
-                                  (url) => onChange(index, 'answer_file', url),
-                                  key,
-                                )
-                              }
-                              color="error"
-                              sx={{ mr: 1 }}
-                              startIcon={<IconTrash />}
-                            >
-                              Clear Foto
-                            </Button>
-                            <Button
-                              variant="contained"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleCaptureForField((url) => onChange(index, 'answer_file', url));
-                              }}
-                              startIcon={<IconCamera />}
-                            >
-                              Take Foto
-                            </Button>
-                            <Button
-                              startIcon={<IconDeviceFloppy />}
-                              onClick={() => setOpenCamera(false)}
-                              sx={{ ml: 1 }}
-                            >
-                              Submit
-                            </Button>
-                          </Box>
-                        </Box>
-                      </Dialog>
-                    </Box>
-                  );
-                }
-                default:
-                  return (
-                    <TextField
-                      size="small"
-                      value={item.long_display_text}
-                      onChange={(e) => onChange(index, 'long_display_text', e.target.value)}
-                      placeholder="Enter value"
-                      fullWidth
-                    />
-                  );
-              }
-            })()}
-          </TableCell>
-        </TableRow>
-      );
-    });
-  };
+  }, [invitation?.site_id]);
 
   const renderFieldInput = (
     field: FormVisitor,
@@ -2307,12 +1413,13 @@ const FormSelfPraregistration = ({
           );
 
         case 3: {
-          let options: { value: string; name: string }[] = [];
+          // let options: { value: string; name: string }[] = [];
+          let options: { value: string; name: string; disabled?: boolean }[] = [];
 
           const isLockedByInvitation =
             (field.remarks === 'host' && !!invitation?.host) ||
             (field.remarks === 'employee' && !!invitation?.host) ||
-            (field.remarks === 'site_place' && !!invitation?.site);
+            (field.remarks === 'site_place' && !!invitation?.site_id);
 
           switch (field.remarks) {
             // case 'host':
@@ -2323,12 +1430,16 @@ const FormSelfPraregistration = ({
             //   break;
 
             case 'host':
-              options = invitation?.host
-                ? [{ value: invitation.host.id, name: invitation.host.name }]
-                : employee.map((emp: any) => ({
-                    value: emp.id,
-                    name: emp.name,
-                  }));
+              if (invitation?.host) {
+                const hostEmployee = employee.find((emp: any) => emp.id === invitation.host);
+
+                options = hostEmployee ? [{ value: hostEmployee.id, name: hostEmployee.name }] : [];
+              } else {
+                options = employee.map((emp: any) => ({
+                  value: emp.id,
+                  name: emp.name,
+                }));
+              }
               break;
 
             case 'employee':
@@ -2341,13 +1452,17 @@ const FormSelfPraregistration = ({
               break;
 
             case 'site_place':
-              options = invitation?.site
-                ? [{ value: invitation.site.id, name: invitation.site.name }]
-                : sites.map((site: any) => ({
-                    value: site.id,
-                    name: site.name,
-                    disabled: site.can_visited === false,
-                  }));
+              if (invitation?.site_id) {
+                const site = sites.find((s: any) => s.id === invitation.site_id);
+
+                options = site ? [{ value: site.id, name: site.name }] : [];
+              } else {
+                options = sites.map((site: any) => ({
+                  value: site.id,
+                  name: site.name,
+                  disabled: site.can_visited === false,
+                }));
+              }
               break;
             default:
               options = (field.multiple_option_fields || []).map((opt: any) =>
@@ -2362,8 +1477,9 @@ const FormSelfPraregistration = ({
           return (
             <Autocomplete
               size="small"
-              freeSolo
-              disabled={shouldDisable}
+              disabled={isLockedByInvitation}
+              // freeSolo
+              // disabled={shouldDisable}
               options={options}
               getOptionLabel={(option) => (typeof option === 'string' ? option : option.name)}
               inputValue={inputVal}
@@ -2383,6 +1499,7 @@ const FormSelfPraregistration = ({
                   (opt: { value: string; name: string }) => opt.value === field.answer_text,
                 ) || null
               }
+              getOptionDisabled={(option) => option.disabled || false}
               onChange={(_, newValue) => {
                 const value = newValue instanceof Object ? newValue.value : '';
                 onChange(index, 'answer_text', value);
@@ -2393,7 +1510,7 @@ const FormSelfPraregistration = ({
                   {...params}
                   placeholder="Enter at least 3 characters to search"
                   fullWidth
-                  disabled={shouldDisable}
+                  // disabled={shouldDisable}
                   sx={{ minWidth: 160 }}
                   error={!!errorMessage}
                   helperText={errorMessage}
@@ -2471,7 +1588,7 @@ const FormSelfPraregistration = ({
 
           if (field.remarks === 'is_employee' || field.remarks === 'is_driving') {
             return (
-              <>
+              <Box key={`${field.custom_field_id}-${index}`}>
                 <FormControl error={!!errorMessage}>
                   <RadioGroup
                     row
@@ -2487,7 +1604,7 @@ const FormSelfPraregistration = ({
                   >
                     {field.multiple_option_fields?.map((opt: any) => (
                       <FormControlLabel
-                        key={opt.id}
+                        key={opt.value}
                         value={opt.value}
                         control={<Radio size="small" />}
                         label={opt.name}
@@ -2501,7 +1618,7 @@ const FormSelfPraregistration = ({
                     {errorMessage}
                   </Typography>
                 )}
-              </>
+              </Box>
             );
           }
           return (
@@ -2853,40 +1970,6 @@ const FormSelfPraregistration = ({
   const isLockedVisitorType = !!invitation?.visitor_type?.id;
   const [visitorType, setVisitorType] = useState<any[]>([]);
 
-  // useEffect(() => {
-  //   if (!formData.visitor_type || !token) return;
-
-  //   const fetchVisitorTypeDetails = async () => {
-  //     // const res = visitorType.find((vt: any) => vt.id === formData.visitor_type);
-  //     const res =  await getPublicVisitorTypeById(token, code, 'InvitationLink', formData.visitor_type);
-
-  //     console.log('res', res);
-  //     let sections = res?.collection.section_page_visitor_types ?? [];
-  //     console.log('sections', sections);
-
-  //     // if (TYPE_REGISTERED === 0 || FORM_KEY === 'pra_form') {
-  //     //   sections = sections.filter((s: any) => (s.pra_form || []).length > 0);
-  //     // }
-
-  //     setRawSections(sections);
-
-  //     if (isGroup) {
-  //       const groupSections = buildGroupSections(sections);
-  //       setSectionsData(groupSections);
-  //       setDraggableSteps(groupSections.map((s) => s.name));
-  //       seedDataVisitorFromSections(groupSections);
-  //       setGroupedPages(buildGroupedPages(groupSections));
-  //     } else {
-  //       setSectionsData(sections);
-  //       setDraggableSteps(sections.map((s: any) => s.name));
-  //       setDataVisitor([]);
-  //       setGroupedPages({} as any);
-  //     }
-  //   };
-
-  //   fetchVisitorTypeDetails();
-  // }, [formData.visitor_type, visitorType]);
-
   const injectInvitationData = (sections: any[], invitation: any) => {
     if (!invitation) return sections;
 
@@ -2903,9 +1986,23 @@ const FormSelfPraregistration = ({
           case 'site_place':
             return { ...field, answer_text: site?.id ?? '' };
           case 'visitor_period_start':
-            return { ...field, answer_datetime: visitor_period_start ?? null };
+            return {
+              ...field,
+              answer_datetime: visitor_period_start
+                ? visitor_period_start.endsWith('Z')
+                  ? visitor_period_start
+                  : visitor_period_start + 'Z'
+                : null,
+            };
           case 'visitor_period_end':
-            return { ...field, answer_datetime: visitor_period_end ?? null };
+            return {
+              ...field,
+              answer_datetime: visitor_period_end
+                ? visitor_period_end.endsWith('Z')
+                  ? visitor_period_end
+                  : visitor_period_end + 'Z'
+                : null,
+            };
           default:
             return field;
         }
@@ -2923,12 +2020,10 @@ const FormSelfPraregistration = ({
         'InvitationLink',
         formData.visitor_type,
       );
-
       const sections = res?.collection?.section_page_visitor_types ?? [];
       const injected = injectInvitationData(sections, invitation);
       setRawSections(injected);
     };
-
     fetchDetail();
   }, [formData.visitor_type]);
 
@@ -2960,7 +2055,6 @@ const FormSelfPraregistration = ({
     const fetchVisitorTypes = async () => {
       try {
         setVtLoading(true);
-        // const res = await getAllVisitorType(token as string);
         const res = await getPublicVisitorType(token as string, code, 'InvitationLink');
         setVisitorType(res.collection || []);
       } finally {
@@ -3186,7 +2280,6 @@ const FormSelfPraregistration = ({
                   )}
                 </Box>
               )}
-              {/* )} */}
             </Grid>
           </Grid>
         </Box>
@@ -3269,9 +2362,6 @@ const FormSelfPraregistration = ({
               // const section = sectionsData[activeStep - 1];
               const section = currentSection;
               const sectionType = getSectionType(section);
-              console.log('SECTION TYPE:', sectionType);
-              console.log('CURRENT SECTION:', section);
-
               if (sectionType === 'visitor_information_group') {
                 return (
                   <Grid>
@@ -3523,7 +2613,7 @@ const FormSelfPraregistration = ({
 
                 const mergedVisitForm = formsOf(section).map((f: any) => {
                   const shared = groupedPages.single_page.find((sf: any) => sameField(sf, f));
-                  // return shared ? { ...f, ...pickAns(shared) } : f;
+                  // // return shared ? { ...f, ...pickAns(shared) } : f;
                   return shared
                     ? {
                         ...f,
@@ -3535,41 +2625,42 @@ const FormSelfPraregistration = ({
                       }
                     : f;
                 });
-
                 return (
                   <Table>
                     <TableBody>
-                      {renderDetailRows(mergedVisitForm, (idx, fieldKey, value) => {
-                        setGroupedPages((prev: any) => {
-                          const next = { ...prev, single_page: [...prev.single_page] };
+                      <RenderDetailRows
+                        details={mergedVisitForm}
+                        activeStep={activeStep}
+                        invitation={invitation}
+                        fieldErrors={fieldErrors}
+                        setFieldErrors={setFieldErrors}
+                        uploadNames={uploadNames}
+                        setUploadNames={setUploadNames}
+                        sites={sites}
+                        employee={employee}
+                        allVisitorEmployee={allVisitorEmployee}
+                        onChange={(index, field, value) => {
+                          setGroupedPages((prev: any) => {
+                            const next = { ...prev, single_page: [...prev.single_page] };
 
-                          // 🔄 gunakan mergedVisitForm bukan formsOf(section)
-                          const base = formsOf(section)[idx];
-                          const found = next.single_page.findIndex((sf: any) =>
-                            sameField(sf, base),
-                          );
+                            const base = mergedVisitForm[index];
 
-                          const resolvedForeign =
-                            base?.foreign_id ??
-                            section?.foreign_id ??
-                            base?.custom_field_id ??
-                            null;
+                            const found = next.single_page.findIndex((sf: any) =>
+                              sameField(sf, base),
+                            );
 
-                          const payload = {
-                            ...(found >= 0 ? next.single_page[found] : base),
-                            foreign_id:
-                              found >= 0
-                                ? (next.single_page[found].foreign_id ?? resolvedForeign)
-                                : resolvedForeign,
-                            [fieldKey]: value,
-                          };
+                            const payload = {
+                              ...(found >= 0 ? next.single_page[found] : base),
+                              [field]: value,
+                            };
 
-                          if (found >= 0) next.single_page[found] = payload;
-                          else next.single_page.push(payload);
+                            if (found >= 0) next.single_page[found] = payload;
+                            else next.single_page.push(payload);
 
-                          return next;
-                        });
-                      })}
+                            return next;
+                          });
+                        }}
+                      />
                     </TableBody>
                   </Table>
                 );
@@ -3585,6 +2676,36 @@ const FormSelfPraregistration = ({
   useEffect(() => {
     setDraggableSteps([...dynamicSteps]);
   }, [dynamicSteps]);
+
+  useEffect(() => {
+    if (!isGroup || !rawSections?.length) return;
+
+    const purposeFields = rawSections
+      .flatMap((s: any) => s.visit_form || [])
+      .filter((f: any) =>
+        ['host', 'agenda', 'site_place', 'visitor_period_start', 'visitor_period_end'].includes(
+          f.remarks,
+        ),
+      );
+
+    const injected = purposeFields
+      .filter((f: any) => f.answer_text || f.answer_datetime)
+      .map((f: any) => ({
+        remarks: f.remarks,
+        custom_field_id: f.custom_field_id,
+        answer_text: f.answer_text ?? null,
+        // answer_datetime: f.answer_datetime ? dayjs(f.answer_datetime).utc().format() : null,
+        answer_datetime: f.answer_datetime ?? null,
+        answer_file: f.answer_file ?? null,
+      }));
+
+    if (!injected.length) return;
+
+    setGroupedPages((prev: any) => ({
+      ...prev,
+      single_page: injected,
+    }));
+  }, [rawSections, isGroup]);
 
   const sanitizeRemarks = (r?: string | null) => {
     const v = (r ?? '').trim().toLowerCase();
@@ -3824,8 +2945,6 @@ const FormSelfPraregistration = ({
         }
         return;
       }
-
-      // Non-document → batch_page (template kolom)
       if (!section?.is_document) {
         forms.forEach((f: any, idx: number) => {
           const formId = (f as any)?.id ?? (f as any)?.Id ?? idx;
@@ -3849,24 +2968,39 @@ const FormSelfPraregistration = ({
     };
   };
 
-  const CustomConnector = styled(StepConnector)(({ theme }) => ({
-    [`&.${stepConnectorClasses.alternativeLabel}`]: {
-      top: 15,
-    },
-    [`& .${stepConnectorClasses.line}`]: {
-      height: 3,
-      border: 0,
-      backgroundColor: '#e0e0e0',
-      borderRadius: 2,
-      transition: 'all 0.3s ease',
-    },
-    [`&.${stepConnectorClasses.active} .${stepConnectorClasses.line}`]: {
-      backgroundColor: theme.palette.primary.main,
-    },
-    [`&.${stepConnectorClasses.completed} .${stepConnectorClasses.line}`]: {
-      backgroundColor: theme.palette.primary.main,
-    },
-  }));
+  const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  const handleConfirmSubmit = async () => {
+    if (!token || !previewPayload) return;
+
+    try {
+      setLoading(true);
+      await sleep(100);
+
+      if (isGroup) {
+        await createSubmitGroupShareLink(token, code, timestamp, previewPayload);
+        toast('Group visitor created successfully.', 'success');
+      } else {
+        await createSubmitShareLink(token, code, timestamp, previewPayload);
+
+        const successMessage =
+          TYPE_REGISTERED === 0
+            ? 'Pre-registration created successfully.'
+            : 'Self pre-registration successfully.';
+
+        setLoading(false);
+        await showSwal('success', successMessage, 2000);
+      }
+
+      setPreviewOpen(false);
+      resetSingleFormState();
+      navigate('/invitation-share/success');
+    } catch (err) {
+      console.error(err);
+      setLoading(false);
+      await showSwal('error', 'Failed to create visitor.');
+    }
+  };
 
   return (
     <div>
@@ -3894,6 +3028,7 @@ const FormSelfPraregistration = ({
                   >
                     <Stepper
                       activeStep={activeStep}
+                      // onClick={() => handleStepChange(0)}
                       // connector={<CustomConnector />}
                       alternativeLabel
                       sx={{
@@ -4105,6 +3240,7 @@ const FormSelfPraregistration = ({
                 variant="contained"
                 onClick={handleNext}
                 endIcon={<IconArrowRight width={18} />}
+                disabled={!isSingle && !isGroup}
               >
                 Next
               </Button>
@@ -4112,6 +3248,16 @@ const FormSelfPraregistration = ({
           </Box>
         </Box>
       </form>
+      <PreviewDialog
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        onConfirm={handleConfirmSubmit}
+        invitationData={previewSections}
+        formValues={previewPayload}
+        employee={employee}
+        sites={sites}
+        invitation={invitation}
+      />
       <Portal>
         <Backdrop
           open={loading}

@@ -113,7 +113,7 @@ type DynamicTableProps<
   isHavePrint?: boolean;
   onExportPdf?: () => void;
   onExportCsv?: () => void;
-  onActionRevoke ?: (row: T) => void;
+  onActionRevoke?: (row: T) => void;
   onExportExcel?: () => void;
   onPrint?: () => void;
   onBlacklist?: (row: T) => void;
@@ -761,7 +761,7 @@ export function DynamicTable<
                   justifyContent={{ xs: 'flex-start', sm: 'flex-start' }}
                 >
                   <Stack direction="column" sx={{ width: '100%' }}>
-                    <Typography sx={{ fontSize: '1rem' }} variant="subtitle2" fontWeight={600}>
+                    <Typography sx={{ fontSize: '1rem' }} variant="subtitle1" fontWeight={600}>
                       {headerContent.title}
                     </Typography>
                     <Tabs
@@ -795,7 +795,7 @@ export function DynamicTable<
                           whiteSpace: 'nowrap',
                           minHeight: 20,
                           textTransform: 'none',
-                          fontSize: '0.6rem',
+                          fontSize: '0.8rem',
                           px: 1.5,
                           // mt: { xs: 1, sm: 2 },
                           borderRadius: '999px',
@@ -853,7 +853,10 @@ export function DynamicTable<
                   {breadcrumbItems?.map((item, index) => {
                     const isLast = index === breadcrumbItems.length - 1;
                     return isLast ? (
-                      <Typography key={item.id} sx={{ color: 'text.primary', fontSize: '16px' }}>
+                      <Typography
+                        key={item.id}
+                        sx={{ color: 'primary.main', fontSize: '17px', fontWeight: 'semibold' }}
+                      >
                         {item.name}
                       </Typography>
                     ) : (
@@ -886,14 +889,12 @@ export function DynamicTable<
               <Stack direction="row" spacing={2}>
                 {isHaveSearch && (
                   <Box
-                    // container
-                    // spacing={0.5}
-
                     display="flex"
                     justifyContent="space-between"
                     alignItems="center"
                     gap={0.5}
-                    flexWrap={'wrap'}
+                    width="100%"
+                    // flexWrap={'wrap'}
                   >
                     {/* <Grid2 size={{ xs: 12, lg: 10 }}> */}
                     <TextField
@@ -903,9 +904,12 @@ export function DynamicTable<
                       value={searchKeyword}
                       onChange={(e) => setSearchKeyword(e.target.value)}
                       onKeyDown={handleKeyDown}
+                      // sx={{
+                      //   height: 36,
+                      //   width: isSmallScreen ? '100%' : '300px',
+                      // }}
                       sx={{
-                        height: 36,
-                        width: isSmallScreen ? '100%' : '300px',
+                        flexGrow: 1,
                       }}
                       InputProps={{
                         sx: {
@@ -1403,12 +1407,13 @@ export function DynamicTable<
                         background: 'white',
                         minWidth: INDEX_COL_WIDTH,
                         maxWidth: INDEX_COL_WIDTH,
+                        fontSize: '0.8rem !important',
                       }}
                     >
                       {loading ? (
                         <Skeleton variant="text" width="40%" height={18} animation="wave" />
                       ) : paginatedData.length > 0 ? (
-                        '#'
+                        'Id'
                       ) : (
                         ''
                       )}
@@ -1439,6 +1444,7 @@ export function DynamicTable<
                             background: 'white',
                             minWidth: DATA_COL_WIDTH,
                             maxWidth: DATA_COL_WIDTH,
+                            fontSize: '0.8rem !important',
                             // ...(isEarlyAccess && { textAlign: 'center' }),
                           }}
                         >
@@ -1466,6 +1472,7 @@ export function DynamicTable<
                           bgcolor: 'background.paper',
                           zIndex: 4,
                           textAlign: 'center',
+                          fontSize: '0.8rem !important',
                         }}
                       >
                         {loading ? (
@@ -1631,7 +1638,7 @@ export function DynamicTable<
                           </TableCell>
                         )}
 
-                        {/* ✅ Action visitor left-side (mis. dashboard visitor) */}
+                        {/* ✅ Action visitor left-side  */}
                         {isHaveAction && isActionVisitor && (
                           <TableCell
                             sx={{
@@ -1705,8 +1712,6 @@ export function DynamicTable<
                             </Box>
                           </TableCell>
                         ))}
-
-                        {/* ✅ Action right-side */}
                         {isHaveAction && !isActionVisitor && (
                           <TableCell
                             align="center"
@@ -1852,6 +1857,7 @@ export function DynamicTable<
                             background: 'white',
                             minWidth: INDEX_COL_WIDTH,
                             maxWidth: INDEX_COL_WIDTH,
+                            fontSize: '0.8rem !important',
                           }}
                         >
                           {index + 1 + page * rowsPerPage}
@@ -1867,11 +1873,12 @@ export function DynamicTable<
                                 ...(makeSticky && {
                                   position: { xs: 'static', lg: 'sticky' },
                                   left: getStickyLeft(idx),
-                                  zIndex: 3, // body < header
+                                  zIndex: 3,
                                   background: 'white',
                                   minWidth: DATA_COL_WIDTH,
                                   maxWidth: DATA_COL_WIDTH,
                                 }),
+                                fontSize: '0.8rem !important',
                               }}
                             >
                               {isHaveVip && col === 'is_vip' ? (
@@ -2433,9 +2440,9 @@ export function DynamicTable<
                                     </IconButton>
                                   </Tooltip>
 
-                                  <Tooltip title="View Invitation">
+                                  <Tooltip title="Edit Invitation">
                                     <IconButton
-                                      onClick={() => onView?.(row)}
+                                      onClick={() => onEdit?.(row)}
                                       disableRipple
                                       sx={{
                                         color: 'white',
@@ -2445,7 +2452,7 @@ export function DynamicTable<
                                         padding: 0.5,
                                         borderRadius: '50%',
                                         '&:hover': {
-                                          backgroundColor: 'success.dark',
+                                          backgroundColor: '#FA896B',
                                           color: 'white',
                                         },
                                       }}
@@ -2823,7 +2830,7 @@ export function DynamicTable<
                               >
                                 {/* <IconKeyOff width={14} height={14} />
                                  */}
-                                 Revoke
+                                Revoke
                               </Button>
                             </Tooltip>
                           </TableCell>
@@ -3074,4 +3081,4 @@ export function DynamicTable<
       </Drawer>
     </>
   );
-} 
+}

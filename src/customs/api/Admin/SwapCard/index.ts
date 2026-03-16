@@ -1,4 +1,4 @@
-import axiosInstance from '../../../interceptor';
+import axiosInstance from '../../interceptor';
 
 export const getVisitorDocuments = async (token: string, id: string): Promise<any> => {
   const response = await axiosInstance.get(`/swap-card/visitor-documents/${id}`, {

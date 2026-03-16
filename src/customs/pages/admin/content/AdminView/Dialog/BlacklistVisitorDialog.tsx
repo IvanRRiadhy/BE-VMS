@@ -11,86 +11,99 @@ import {
   Grid2 as Grid,
 } from '@mui/material';
 import { IconX, IconUserX, IconClock } from '@tabler/icons-react';
+import { useQuery } from '@tanstack/react-query';
+import { useEffect, useMemo, useState } from 'react';
+import { getOperatorBlacklist } from 'src/customs/api/operator';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import Swal from 'sweetalert2';
+import { useSession } from 'src/customs/contexts/SessionContext';
 
 export default function BlacklistVisitorDialog({ open, onClose }: any) {
-  const dummyData = [
-    {
-      id: 1,
-      name: 'John Doe',
-      site: 'PT Alpha Tower',
-      blacklist_at: '2025-01-10 14:32',
-      blacklist_reason: 'Melanggar aturan keamanan',
-      blacklist_by: 'Security Admin',
-      status: 'active',
-      blacklist: true,
-    },
-    {
-      id: 2,
-      name: 'Sarah Smith',
-      site: 'Mega Plaza',
-      blacklist_at: '2025-01-08 10:15',
-      blacklist_reason: 'Perilaku tidak kooperatif',
-      blacklist_by: 'Building Manager',
-      status: 'inactive',
-      blacklist: false,
-    },
-  ];
 
-  // ===== Summary Count =====
-  const totalBlacklist = dummyData.filter((x) => x.status === 'active').length;
-  const totalPending = dummyData.filter((x) => x.status === 'inactive').length;
+  const { token } = useSession();
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [sortDir, setSortDir] = useState('desc');
+  const [sortColumn, setSortColumn] = useState('id');
+  const [searchKeyword, setSearchKeyword] = useState('');
+  // const [totalActive, setTotalActive] = useState(0);
+  // const [totalNonActive, setTotalNonActive] = useState(0);
 
-  const handleActionBlacklist = async (row: any) => {
-    if (!row.blacklist) {
-      await Swal.fire({
-        icon: 'warning',
-        title: 'Blacklist Visitor',
-        text: 'Blacklist action is not allowed for this visitor.',
-        confirmButtonText: 'OK',
-      });
-      return;
-    }
+  // const [blacklistData, setBlacklistData] = useState<any>([]);
 
-    await handleBlacklistStatus(row.id);
-  };
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     try {
+  //       const start = page * rowsPerPage;
+  //       const res = await getOperatorBlacklist(
+  //         token as string,
+  //         start,
+  //         sortDir,
+  //         rowsPerPage,
+  //         searchKeyword || '',
+  //       );
+  //       let rows = res.collection.map((item: any) => {
+  //         return {
+  //           id: item.id,
+  //           name: item.visitor.name || '-',
+  //           phone: item.visitor.phone || '-',
+  //           reason: item.reason || '-',
+  //           is_active: item.is_active,
+  //           approved_by: item.approved_by_name || '-',
+  //         };
+  //       });
 
-  const handleBlacklistStatus = async (id: number) => {
-    if (!id) {
-      showSwal('error', 'Visitor ID not found.');
-      return;
-    }
+  //       const activeCount = rows.filter((x: any) => x.is_active).length;
+  //       const nonActiveCount = rows.filter((x: any) => !x.is_active).length;
+  //       setTotalActive(activeCount);
+  //       setTotalNonActive(nonActiveCount);
 
-    try {
-      const res = await Swal.fire({
-        icon: 'warning',
-        title: 'Blacklist Visitor',
-        text: 'Are you sure you want to blacklist this visitor?',
-        showCloseButton: true,
-        showCancelButton: true,
-        confirmButtonText: 'Yes',
-        cancelButtonText: 'No',
-        reverseButtons: true,
-        confirmButtonColor: '#16a34a',
-        customClass: {
-          title: 'swal2-title-custom',
-          popup: 'swal-popup-custom',
-          closeButton: 'swal-close-red',
-        },
-      });
+  //       setBlacklistData(rows ?? []);
+  //     } catch (error) {}
+  //   };
 
-      if (!res.isConfirmed) return;
+  //   fetchData();
+  // }, [token, page, rowsPerPage, sortDir, searchKeyword]);
 
-      // await blacklistVisitor(token, id);
 
-      showSwal('success', 'Visitor has been successfully blacklisted.');
-    } catch (err) {
-      showSwal('error', 'Failed to blacklist visitor.');
-    }
-  };
+    const start = page * rowsPerPage;
 
+    const { data, isLoading } = useQuery({
+      queryKey: ['operator-blacklist', page, rowsPerPage, sortDir, searchKeyword],
+      queryFn: async () => {
+        const res = await getOperatorBlacklist(
+          token as string,
+          start,
+          sortDir,
+          rowsPerPage,
+          searchKeyword || '',
+        );
+
+        return res.collection.map((item: any) => ({
+          id: item.id,
+          name: item.visitor?.name || '-',
+          phone: item.visitor?.phone || '-',
+          reason: item.reason || '-',
+          is_active: item.is_active,
+          approved_by: item.approved_by_name || '-',
+        }));
+      },
+      enabled: !!token && open,
+      placeholderData: (previousData) => previousData,
+    });
+
+    const blacklistData = data ?? [];
+
+    const { totalActive, totalNonActive } = useMemo(() => {
+      const active = blacklistData.filter((x: any) => x.is_active).length;
+      const nonActive = blacklistData.filter((x: any) => !x.is_active).length;
+
+      return {
+        totalActive: active,
+        totalNonActive: nonActive,
+      };
+    }, [blacklistData]);
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
       <DialogTitle>Blacklist Visitor</DialogTitle>
@@ -106,7 +119,6 @@ export default function BlacklistVisitorDialog({ open, onClose }: any) {
       <Divider />
 
       <DialogContent>
-        {/* ===== Summary Card ===== */}
         <Grid container spacing={3} mb={2}>
           <Grid size={6}>
             <Card sx={{ borderRadius: 3, bgcolor: 'error.light' }}>
@@ -129,7 +141,7 @@ export default function BlacklistVisitorDialog({ open, onClose }: any) {
                     </Typography>
 
                     <Typography variant="h5" fontWeight={600}>
-                      {totalBlacklist}
+                      {totalActive}
                     </Typography>
                   </Box>
                 </Box>
@@ -158,7 +170,7 @@ export default function BlacklistVisitorDialog({ open, onClose }: any) {
                     </Typography>
 
                     <Typography variant="h5" fontWeight={600}>
-                      {totalPending}
+                      {totalNonActive}
                     </Typography>
                   </Box>
                 </Box>
@@ -167,13 +179,17 @@ export default function BlacklistVisitorDialog({ open, onClose }: any) {
           </Grid>
         </Grid>
         <DynamicTable
-          data={dummyData}
-          isHaveSearch
-          isBlacklistAction
-          isHaveAction
-          onBlacklist={handleActionBlacklist}
+          data={blacklistData}
+          isHaveSearch={false}
+          isBlacklistAction={false}
+          isHaveAction={false}
+          // onBlacklist={handleActionBlacklist}
           isHaveChecked
-          isNoActionTableHead
+          isNoActionTableHead={true}
+          defaultRowsPerPage={rowsPerPage}
+          rowsPerPageOptions={[10, 20, 50, 100]}
+          onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+          isHavePagination={true}
         />
       </DialogContent>
     </Dialog>

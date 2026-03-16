@@ -82,7 +82,7 @@ export default function GrantAccessDialog({
 
           {/* Card History */}
           <Grid item xs={12}>
-            <Typography fontWeight={600} variant="h6" mb={2}>
+            <Typography fontWeight={600} variant="h5" mb={2}>
               History Cards
             </Typography>
 
@@ -199,6 +199,9 @@ export default function GrantAccessDialog({
 
           {/* Table */}
           <Grid item xs={12}>
+            <Typography fontWeight={600} variant="h5" mb={2}>
+              Access
+            </Typography>
             <DynamicTable
               data={dataDummyAccess}
               isHaveChecked

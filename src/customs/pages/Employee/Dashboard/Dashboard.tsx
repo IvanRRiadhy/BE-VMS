@@ -23,6 +23,7 @@ import {
   IconBellRingingFilled,
   IconCards,
   IconCheck,
+  IconCircleMinus,
   IconCircleOff,
   IconCircleX,
   IconForbid2,
@@ -72,8 +73,8 @@ const DashboardEmployee = () => {
   const CardItems = [
     { title: 'checkin', key: 'Checkin', icon: <IconLogin size={25} /> },
     { title: 'checkout', key: 'Checkout', icon: <IconLogout size={25} /> },
-    { title: 'denied', key: 'Denied', icon: <IconCircleX size={25} /> },
-    { title: 'block', key: 'Block', icon: <IconForbid2 size={25} /> },
+    { title: 'denied', key: 'Denied', icon: <IconX size={25} /> },
+    { title: 'block', key: 'Block', icon: <IconCircleMinus size={25} /> },
     // {
     //   title: 'blacklist',
     //   key: 'blacklist',
@@ -502,6 +503,53 @@ const DashboardEmployee = () => {
     }
   };
 
+  const handleCreateLink = async (payload: any) => {
+    try {
+      setIsGenerating(true);
+
+      await createShareLink(token as string, payload);
+
+      await queryClient.invalidateQueries({
+        queryKey: ['share-links'],
+      });
+
+      setOpenCreateLink(false);
+      showSwal('success', 'Share link created successfully');
+    } catch (err) {
+      console.error(err);
+      showSwal('error', 'Failed to create share link');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleSendEmail = async (emails: string[]) => {
+    try {
+      setIsGenerating(true);
+
+      const finalPayload = {
+        ...pendingPayload,
+        emails: emails,
+      };
+
+      await createShareLink(token as string, finalPayload);
+
+      await queryClient.invalidateQueries({
+        queryKey: ['share-links'],
+      });
+
+      setOpenSendEmail(false);
+      setOpenCreateLink(false);
+
+      showSwal('success', 'Share link sent successfully');
+    } catch (err) {
+      console.error(err);
+      showSwal('error', 'Failed to send share link');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
     <PageContainer title="Dashboard Employee" description="This is Employee Dashboard">
       <Grid container spacing={2} sx={{ mt: 0 }}>
@@ -760,23 +808,7 @@ const DashboardEmployee = () => {
       <CreateLinkDialog
         open={openCreateLink}
         onClose={() => setOpenCreateLink(false)}
-        onCreateLink={async (payload) => {
-          try {
-            setIsGenerating(true);
-
-            await createShareLink(token as string, payload);
-            await queryClient.invalidateQueries({
-              queryKey: ['share-links'],
-            });
-            setOpenCreateLink(false);
-            showSwal('success', 'Share link created successfully');
-          } catch (err) {
-            console.error(err);
-            showSwal('error', 'Failed to create share link');
-          } finally {
-            setIsGenerating(false);
-          }
-        }}
+        onCreateLink={handleCreateLink}
         onSendEmail={(payload) => {
           setPendingPayload(payload);
           setOpenSendEmail(true);
@@ -792,30 +824,7 @@ const DashboardEmployee = () => {
       <SendEmailDialog
         open={openSendEmail}
         onClose={() => setOpenSendEmail(false)}
-        onSend={async (emails: string[]) => {
-          try {
-            setIsGenerating(true);
-
-            const finalPayload = {
-              ...pendingPayload,
-              emails: emails,
-            };
-
-            await createShareLink(token as string, finalPayload);
-            await queryClient.invalidateQueries({
-              queryKey: ['share-links'],
-            });
-            setOpenSendEmail(false);
-            setOpenCreateLink(false);
-
-            showSwal('success', 'Share link sent successfully');
-          } catch (err) {
-            console.error(err);
-            showSwal('error', 'Failed to send share link');
-          } finally {
-            setIsGenerating(false);
-          }
-        }}
+        onSend={handleSendEmail}
       />
       {/* Praregister */}
       <Dialog
@@ -824,7 +833,7 @@ const DashboardEmployee = () => {
         fullWidth
         maxWidth="xl"
       >
-        <DialogTitle>Praregister</DialogTitle>
+        <DialogTitle>Fill Praregister</DialogTitle>
         <IconButton
           aria-label="close"
           onClick={() => setOpenDialogInvitation(false)}

@@ -14,8 +14,10 @@ import {
   Divider,
   FormControl,
   InputLabel,
+  useTheme,
 } from '@mui/material';
 import { PieChart, Pie, Cell, Legend, Tooltip, ResponsiveContainer } from 'recharts';
+import { useMediaQuery } from '@mui/system';
 
 // Dummy data as before...
 const dataMap = {
@@ -221,12 +223,15 @@ const GraphDisplay: React.FC = () => {
   };
   const donutColors = generateColors(donutData.length);
 
+  const theme = useTheme();
+  const lg = useMediaQuery(theme.breakpoints.up('lg'));
+
   return (
     <Card
       sx={{
-        minWidth: 260,
+        maxWidth: lg ? '260' : '100%',
         minHeight: '80vh',
-        maxHeight: '80vh',
+        // maxHeight: '80vh',
         p: 2,
         borderRadius: 4,
         boxShadow: 8,
@@ -278,13 +283,17 @@ const GraphDisplay: React.FC = () => {
           <Grid size={{ xs: 12, sm: 6 }}>
             <Stack
               direction="row"
-              spacing={0}
+              spacing={1}
               alignItems="center"
               justifyContent="flex-start"
               sx={{ mt: 1, flexWrap: 'wrap' }}
+              gap={1}
             >
               {/* Building Dropdown */}
-              <FormControl size="small" sx={{ minWidth: 80, maxWidth: 80 }}>
+              <FormControl
+                size="small"
+                sx={{ minWidth: 100, maxWidth: 100, marginLeft: '0 !important' }}
+              >
                 <InputLabel id="building-label">Building</InputLabel>
                 <Select
                   labelId="building-label"
@@ -306,7 +315,10 @@ const GraphDisplay: React.FC = () => {
               </FormControl>
 
               {/* Floor Dropdown */}
-              <FormControl size="small" sx={{ minWidth: 80, maxWidth: 80 }}>
+              <FormControl
+                size="small"
+                sx={{ minWidth: 100, maxWidth: 100, marginLeft: '0 !important' }}
+              >
                 <InputLabel id="floor-label">Floor</InputLabel>
                 <Select
                   labelId="floor-label"
@@ -330,7 +342,10 @@ const GraphDisplay: React.FC = () => {
               </FormControl>
 
               {/* Area Dropdown */}
-              <FormControl size="small" sx={{ minWidth: 80, maxWidth: 80 }}>
+              <FormControl
+                size="small"
+                sx={{ minWidth: 100, maxWidth: 100, marginLeft: '0 !important' }}
+              >
                 <InputLabel id="area-label">Area</InputLabel>
                 <Select
                   labelId="area-label"
@@ -351,16 +366,16 @@ const GraphDisplay: React.FC = () => {
                 </Select>
               </FormControl>
             </Stack>
-            <Stack direction="row" spacing={2} mt={3}>
-              <Stack direction="row" alignItems="center" spacing={1}>
+            <Stack direction="row" spacing={2} mt={3} flexWrap={'wrap'} gap={1}>
+              <Stack direction="row" alignItems="center" spacing={1} marginLeft={'0 !important'}>
                 <Box sx={{ width: 16, height: 16, bgcolor: '#43a047', borderRadius: '3px' }} />
                 <Typography variant="body2">Evacuated</Typography>
               </Stack>
-              <Stack direction="row" alignItems="center" spacing={1}>
+              <Stack direction="row" alignItems="center" spacing={1} marginLeft={'0 !important'}>
                 <Box sx={{ width: 16, height: 16, bgcolor: '#ffca28', borderRadius: '3px' }} />
                 <Typography variant="body2">Confirmed</Typography>
               </Stack>
-              <Stack direction="row" alignItems="center" spacing={1}>
+              <Stack direction="row" alignItems="center" spacing={1} marginLeft={'0 !important'}>
                 <Box sx={{ width: 16, height: 16, bgcolor: '#ff5252', borderRadius: '3px' }} />
                 <Typography variant="body2">Not Confirmed</Typography>
               </Stack>
@@ -512,16 +527,31 @@ const GraphDisplay: React.FC = () => {
               </Select>
               <Box sx={{ mt: 2 }}>
                 {/* Manual Legend */}
-                <Stack direction="row" spacing={2}>
-                  <Stack direction="row" alignItems="center" spacing={1}>
+                <Stack direction="row" spacing={2} gap={1} flexWrap={'wrap'}>
+                  <Stack
+                    direction="row"
+                    alignItems="center"
+                    spacing={1}
+                    marginLeft={'0 !important'}
+                  >
                     <Box sx={{ width: 16, height: 16, bgcolor: '#43a047', borderRadius: '3px' }} />
                     <Typography variant="body2">Evacuated</Typography>
                   </Stack>
-                  <Stack direction="row" alignItems="center" spacing={1}>
+                  <Stack
+                    direction="row"
+                    alignItems="center"
+                    spacing={1}
+                    marginLeft={'0 !important'}
+                  >
                     <Box sx={{ width: 16, height: 16, bgcolor: '#ffca28', borderRadius: '3px' }} />
                     <Typography variant="body2">Confirmed</Typography>
                   </Stack>
-                  <Stack direction="row" alignItems="center" spacing={1}>
+                  <Stack
+                    direction="row"
+                    alignItems="center"
+                    spacing={1}
+                    marginLeft={'0 !important'}
+                  >
                     <Box sx={{ width: 16, height: 16, bgcolor: '#ff5252', borderRadius: '3px' }} />
                     <Typography variant="body2">Not Confirmed</Typography>
                   </Stack>

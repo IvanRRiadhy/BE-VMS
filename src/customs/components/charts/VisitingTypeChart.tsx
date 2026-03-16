@@ -105,7 +105,7 @@ const VisitingTypeChart = () => {
               plotOptions: {
                 pie: {
                   donut: {
-                    size: '70%',
+                    size: '60%',
                     labels: {
                       show: true,
                       name: {

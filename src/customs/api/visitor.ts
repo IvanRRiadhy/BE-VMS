@@ -301,18 +301,14 @@ export const openParkingBlocker = async (token: string, data: any): Promise<any>
   }
 };
 
-export const submitPraFormEmployee = async (token: string, id: string, data: any): Promise<any> => {
+export const submitPraFormEmployee = async (token: string, data: any): Promise<any> => {
   try {
-    const response = await axiosInstance.post(
-      `/invitation/submit/pra-form?id=${id}`, 
-      data,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/json',
-        },
+    const response = await axiosInstance.post(`/invitation/submit/pra-form`, data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
       },
-    );
+    });
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 400) {

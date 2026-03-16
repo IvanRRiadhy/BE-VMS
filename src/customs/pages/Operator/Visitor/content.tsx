@@ -52,7 +52,7 @@ import {
   CreateVisitorRequestSchema,
 } from 'src/customs/api/models/Admin/Visitor';
 import Swal from 'sweetalert2';
-import { getInvitationSite, getInvitationVisitorEmployee } from 'src/customs/api/InvitationData';
+import { getInvitationSite, getInvitationVisitorEmployee } from 'src/customs/api/Admin/InvitationData';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import InvitationShareDialog from '../../admin/content/Visitor/Trx/components/Dialog/InvitationShareDialog';
 import moment from 'moment';
@@ -133,6 +133,8 @@ const Visitor = () => {
   const totalRecords = data?.RecordsTotal ?? 0;
   const totalFilteredRecords = data?.RecordsFiltered ?? 0;
 
+  const [draw, setDraw] = useState(1);
+
   const {
     data: dataPreRegistration,
     isLoading: isLoadingPreRegistration,
@@ -142,6 +144,7 @@ const Visitor = () => {
     queryFn: async () => {
       //   const res = await getInvitationVisitor(token as string);
       const res = await getAllVisitorPagination(
+        // draw,
         token as string,
         start,
         rowsPerPage,
@@ -361,6 +364,53 @@ const Visitor = () => {
     setOpenInviteViaLinkEmail(true);
   };
 
+  const handleSendEmail = async (emails: string[]) => {
+    try {
+      setIsGenerating(true);
+
+      const finalPayload = {
+        ...pendingPayload,
+        emails: emails,
+      };
+
+      await createShareLink(token as string, finalPayload);
+
+      await queryClient.invalidateQueries({
+        queryKey: ['share-links'],
+      });
+
+      setOpenSendEmail(false);
+      setOpenCreateLink(false);
+
+      showSwal('success', 'Share link sent successfully');
+    } catch (err) {
+      console.error(err);
+      showSwal('error', 'Failed to send share link');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleCreateLink = async (payload: any) => {
+    try {
+      setIsGenerating(true);
+
+      await createShareLink(token as string, payload);
+
+      await queryClient.invalidateQueries({
+        queryKey: ['share-links'],
+      });
+
+      setOpenCreateLink(false);
+      showSwal('success', 'Share link created successfully');
+    } catch (err) {
+      console.error(err);
+      showSwal('error', 'Failed to create share link');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
     <PageContainer title="Visitor" description="Visitor page">
       <Box>
@@ -423,23 +473,7 @@ const Visitor = () => {
           <CreateLinkDialog
             open={openCreateLink}
             onClose={() => setOpenCreateLink(false)}
-            onCreateLink={async (payload) => {
-              try {
-                setIsGenerating(true);
-
-                await createShareLink(token as string, payload);
-                await queryClient.invalidateQueries({
-                  queryKey: ['share-links'],
-                });
-                setOpenCreateLink(false);
-                showSwal('success', 'Share link created successfully');
-              } catch (err) {
-                console.error(err);
-                showSwal('error', 'Failed to create share link');
-              } finally {
-                setIsGenerating(false);
-              }
-            }}
+            onCreateLink={handleCreateLink}
             onSendEmail={(payload) => {
               setPendingPayload(payload);
               setOpenSendEmail(true);
@@ -455,30 +489,7 @@ const Visitor = () => {
           <SendEmailDialog
             open={openSendEmail}
             onClose={() => setOpenSendEmail(false)}
-            onSend={async (emails: string[]) => {
-              try {
-                setIsGenerating(true);
-
-                const finalPayload = {
-                  ...pendingPayload,
-                  emails: emails,
-                };
-
-                await createShareLinkByEmail(token as string, finalPayload);
-                await queryClient.invalidateQueries({
-                  queryKey: ['share-links'],
-                });
-                setOpenSendEmail(false);
-                setOpenCreateLink(false);
-
-                showSwal('success', 'Share link sent successfully');
-              } catch (err) {
-                console.error(err);
-                showSwal('error', 'Failed to send share link');
-              } finally {
-                setIsGenerating(false);
-              }
-            }}
+            onSend={handleSendEmail}
           />
 
           {/* List Share Link */}

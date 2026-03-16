@@ -71,6 +71,7 @@ import {
   createSiteParkingBulk,
   getAllDocument,
   getAllEmployee,
+  getSitesAccessById,
 } from 'src/customs/api/admin';
 import {
   CreateSiteDocumentRequest,
@@ -192,15 +193,16 @@ const FormSite = ({
     (async () => {
       try {
         const results = await Promise.allSettled([
-          getSiteById(editingId, token),
+          // getSiteById(editingId, token),
+          getSitesAccessById(token, editingId),
           getSitesParking(token),
           getSitesTracking(token),
         ]);
 
         const [siteRes, parkingRes, trackingRes] = results;
 
-        const site = siteRes.status === 'fulfilled' ? siteRes.value.collection?.access : [];
-        console.log('site', site);
+        // const site = siteRes.status === 'fulfilled' ? siteRes.value.collection?.access : [];
+        const site = siteRes.status === 'fulfilled' ? siteRes.value.collection : [];
 
         const parkingList =
           parkingRes.status === 'fulfilled' ? (parkingRes.value.collection ?? []) : [];

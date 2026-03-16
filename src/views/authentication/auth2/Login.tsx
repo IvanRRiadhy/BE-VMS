@@ -84,8 +84,6 @@ const Login = () => {
 
   // Tabs state
   const [tab, setTab] = useState(0);
-
-  // On Submit (login normal)
   async function loginSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
@@ -102,11 +100,9 @@ const Login = () => {
 
     try {
       const response = await login(body);
-      // recaptchaRef.current?.reset();
-
       // const { token, group_id } = response.collection;
-      const { token, user_group_id, employee_id, type } = response.collection;
-      saveToken(token, user_group_id);
+      const { token, user_group_id, employee_id, type, role_access } = response.collection;
+      saveToken(token, user_group_id, role_access);
 
       dispatch(
         setUser({
@@ -114,16 +110,61 @@ const Login = () => {
         }),
       );
 
-      if (user_group_id.toUpperCase() === GroupRoleId.Admin) navigate('/admin/dashboard');
-      else if (user_group_id.toUpperCase() === GroupRoleId.Manager) navigate('/manager/dashboard');
-      else if (user_group_id.toUpperCase() === GroupRoleId.Employee)
-        navigate('/employee/dashboard');
-      else if (user_group_id.toUpperCase() === GroupRoleId.Employee && type == 0)
-        navigate('/delivery-staff/dashboard');
-      else if (user_group_id.toUpperCase() === GroupRoleId.OperatorVMS) navigate('/operator/view');
-      else if (user_group_id.toUpperCase() === GroupRoleId.OperatorAdmin)
-        navigate('/operator-admin/dashboard');
-      else if (user_group_id.toUpperCase() === GroupRoleId.Visitor) navigate('/guest/dashboard');
+      switch (role_access) {
+        case 'OperatorVMS':
+          navigate('/operator/view');
+          break;
+
+        case 'Visitor':
+          navigate('/guest/dashboard');
+          break;
+
+        case 'OperatorAdmin':
+          navigate('/operator-admin/dashboard');
+          break;
+
+        case 'Manager':
+          navigate('/manager/dashboard');
+          break;
+
+        case 'Admin':
+          navigate('/admin/dashboard');
+          break;
+
+        case 'Employee':
+          if (type == 0) navigate('/delivery-staff/dashboard');
+          else navigate('/employee/dashboard');
+          break;
+      }
+
+      // if (role_access == 'OperatorVMS') {
+      //   navigate('/operator/view');
+      // } else if (role_access == 'Visitor') {
+      //   navigate('/guest/dashboard');
+      // } else if (role_access == 'OperatorAdmin') {
+      //   navigate('/operator-admin/dashboard');
+      // } else if (role_access == 'Manager') {
+      //   navigate('/manager/dashboard');
+      // } else if (role_access == 'Admin') {
+      //   navigate('/admin/dashboard');
+      // } else if (role_access == 'Employee' && type == 0) {
+      //   navigate('/delivery-staff/dashboard');
+      // } else if (role_access == 'Employee') {
+      //   navigate('/employee/dashboard');
+      // }
+
+      // if (user_group_id.toUpperCase() === GroupRoleId.Admin) navigate('/admin/dashboard');
+      // else if (user_group_id.toUpperCase() === GroupRoleId.OperatorAdmin) {
+      //   navigate('/operator-admin/dashboard');
+      // } else if (user_group_id.toUpperCase() === GroupRoleId.Manager)
+      //   navigate('/manager/dashboard');
+      // else if (user_group_id.toUpperCase() === GroupRoleId.Employee)
+      //   navigate('/employee/dashboard');
+      // else if (user_group_id.toUpperCase() === GroupRoleId.Employee && type == 0)
+      //   navigate('/delivery-staff/dashboard');
+      // else if (user_group_id.toUpperCase() === GroupRoleId.OperatorVMS) navigate('/operator/view');
+      // else if (user_group_id.toUpperCase() === GroupRoleId.Visitor) navigate('/guest/dashboard');
+      console.log('ROLE LOGIN:', role_access);
     } catch (err) {
       setTimeout(() => {
         if (err instanceof AxiosError && err.response) {
@@ -152,11 +193,13 @@ const Login = () => {
       const code = searchParams.get('code') || guestCode;
 
       const res = await AuthVisitor({ code });
+      console.log('✅ AuthVisitor success:', JSON.stringify(res || {}, null, 2));
 
       const status = res.status;
+      console.log('status', status);
 
       localStorage.setItem('visitor_ref_code', guestCode);
-      // setLoading(false);
+      setLoading(false);
       if (status === 'process') {
         // navigate(`/portal/waiting?code=${guestCode}`);
         navigate('/portal/waiting', {
@@ -206,272 +249,204 @@ const Login = () => {
     }
   }, [codeFromUrl]);
 
+  const lg = useMediaQuery(theme.breakpoints.up('lg'));
+
   return (
     <>
       {!isAuthenticated && (
         <PageContainer title="Login | Bank Indonesia" description="this is Login page">
           <Box
             sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              minHeight: '100vh',
               position: 'relative',
-              '&:before': {
-                content: '""',
-                background: 'radial-gradient(#d2f1df, #d3d7fa, #bad8f4)',
-                backgroundSize: '400% 400%',
-                animation: 'gradient 15s ease infinite',
-                position: 'absolute',
-                height: '100%',
-                width: '100%',
-                opacity: '0.3',
-              },
+              // '&:before': {
+              //   content: '""',
+              //   background: 'radial-gradient(#d2f1df, #d3d7fa, #bad8f4)',
+              //   backgroundSize: '400% 400%',
+              //   animation: 'gradient 15s ease infinite',
+              //   position: 'absolute',
+              //   height: '100%',
+              //   width: '100%',
+              //   opacity: '0.3',
+              // },
             }}
           >
-            <Grid
-              container
-              spacing={0}
-              justifyContent="center"
-              sx={{ height: { xs: '100vh', lg: '80vh' } }}
+            <Box
+              sx={{
+                flexGrow: 1,
+              }}
             >
               <Grid
-                size={{ xs: 12, sm: 12, lg: 6 }}
-                // display="flex"
-                // justifyContent="end"
-                // alignItems="center"
-                sx={{
-                  display: { xs: 'none', sm: 'none', lg: 'flex' },
-                  justifyContent: 'end',
-                  alignItems: 'center',
-                }}
+                container
+                spacing={0}
+                justifyContent="center"
+                alignItems={'stretch'}
+                sx={{ height: { xs: '100vh', lg: '95vh' } }}
               >
-                <Card
-                  elevation={8}
+                <Grid
+                  size={{ xs: 12, sm: 12, lg: 6 }}
                   sx={{
-                    p: 4,
-                    zIndex: 1,
-                    width: '100%',
-                    maxWidth: '550px',
-                    height: { xs: '65%', lg: '80%' },
-                    // borderRadius: 3,
-                    // borderTopLeftRadius: 10,
-                    // borderBottomRightRadius: 10,
-                    borderTopLeftRadius: '20px',
-                    borderBottomLeftRadius: '20px',
-                    backgroundColor: 'primary.main',
+                    display: { xs: 'none', lg: 'flex' },
+                    justifyContent: 'end',
+                    alignItems: 'center',
                   }}
                 >
-                  <Box mb={2}>
-                    <img
-                      src={BannerBI}
-                      style={{
-                        width: '100%',
-                        maxWidth: '100%',
-                        height: '200px',
-                        borderRadius: '10px',
-                        display: 'block',
-                      }}
-                    />
-                  </Box>
-                  <Typography
-                    sx={{ color: '#fff', lineHeight: 1.5 }}
-                    fontSize={24}
-                    mb={2}
-                    mt={4}
-                    fontWeight={600}
+                  <Card
+                    elevation={8}
+                    sx={{
+                      p: 4,
+                      zIndex: 1,
+                      height: lg ? '600px' : '100%',
+                      width: '100%',
+                      maxWidth: '550px',
+                      borderTopLeftRadius: '20px',
+                      borderBottomLeftRadius: '20px',
+                      backgroundColor: 'primary.main',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'start',
+                    }}
                   >
-                    Bank Indonesia - Di Setiap Makna Indonesia
-                  </Typography>
+                    <Box mb={2}>
+                      <img
+                        src={BannerBI}
+                        style={{
+                          width: '100%',
+                          maxWidth: '100%',
+                          height: '200px',
+                          borderRadius: '10px',
+                          display: 'block',
+                        }}
+                      />
+                    </Box>
+                    <Typography
+                      sx={{ color: '#fff', lineHeight: 1.5 }}
+                      fontSize={24}
+                      mb={2}
+                      mt={4}
+                      fontWeight={600}
+                    >
+                      Bank Indonesia - Di Setiap Makna Indonesia
+                    </Typography>
 
-                  <Typography sx={{ color: '#fff', lineHeight: 1.5 }} fontSize={16} mb={2} mt={5}>
-                    Indonesia adalah Bank Sentral Republik Indonesia dengan Satu Tujuan Tunggal
-                    yaitu Mencapai dan Memelihara Kestabilan Nilai Rupiah.
-                  </Typography>
-                </Card>
-              </Grid>
-              <Grid
-                size={{ xs: 11, sm: 11, lg: 6, xl: 6 }}
-                sx={{
-                  display: { xs: 'flex', sm: 'flex', lg: 'flex' },
-                  justifyContent: { xs: 'center', sm: 'center', lg: 'start' },
-                  alignItems: 'center',
-                }}
-              >
-                <Card
-                  elevation={8}
+                    <Typography sx={{ color: '#fff', lineHeight: 1.5 }} fontSize={16} mb={2} mt={5}>
+                      Indonesia adalah Bank Sentral Republik Indonesia dengan Satu Tujuan Tunggal
+                      yaitu Mencapai dan Memelihara Kestabilan Nilai Rupiah.
+                    </Typography>
+                  </Card>
+                </Grid>
+                <Grid
+                  size={{ xs: 12, lg: 6, xl: 6 }}
                   sx={{
-                    p: 4,
-                    zIndex: 1,
-                    width: '100%',
-                    height: { md: '65%', lg: '80%' },
-                    maxWidth: '550px',
-                    borderLeft: '0 !important',
-                    borderRadius: 2,
-                    // borderLeftRadius: 10,
+                    display: 'flex',
+                    justifyContent: { xs: 'center', lg: 'start' },
+                    alignItems: 'center',
                   }}
                 >
-                  <Box display="flex" alignItems="center" justifyContent="center" mb={0}>
-                    <img src={Logo} width={250} height={80} />
-                  </Box>
-
-                  {/* Tabs Switch */}
-                  <Tabs
-                    value={tab}
-                    onChange={(_, v) => setTab(v)}
-                    // centered
-                    sx={{ mb: 2 }}
-                    centered={true}
-                    // variant="scrollable"
-                    scrollButtons="auto"
-                    allowScrollButtonsMobile
-                    variant={isMobile ? 'scrollable' : 'standard'}
+                  <Card
+                    elevation={8}
+                    sx={{
+                      p: 4,
+                      height: lg ? '600px' : '600px',
+                      zIndex: 1,
+                      width: '100%',
+                      maxWidth: '550px',
+                      // boxShadow: 'none',
+                      boxShadow: '0 0 5px rgba(0,0,0,0.2)',
+                      borderLeft: '0 !important',
+                      borderRadius: 2,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'center',
+                      // borderLeftRadius: 10,
+                    }}
                   >
-                    <Tab icon={<IconUser size={18} />} iconPosition="start" label="User/Staff" />
-                    <Tab
-                      icon={<IconUserPlus size={18} />}
-                      iconPosition="start"
-                      label="Guest/Visitor Code"
-                    />
-                    <Tab
+                    <Box display="flex" alignItems="center" justifyContent="center" mb={0}>
+                      <img src={Logo} width={250} height={80} />
+                    </Box>
+
+                    {/* Tabs Switch */}
+                    <Tabs
+                      value={tab}
+                      onChange={(_, v) => setTab(v)}
+                      // centered
+                      // sx={{ mb: 2 }}
+                      centered={true}
+                      // variant="scrollable"
+                      scrollButtons="auto"
+                      allowScrollButtonsMobile
+                      // variant={isMobile ? 'scrollable' : 'standard'}
+                    >
+                      <Tab icon={<IconUser size={18} />} iconPosition="start" label="User/Staff" />
+                      <Tab
+                        icon={<IconUserPlus size={18} />}
+                        iconPosition="start"
+                        label="Guest/Visitor Code"
+                      />
+                      {/* <Tab
                       icon={<IconUserPlus size={18} />}
                       iconPosition="start"
                       label="Guest Login"
-                    />
-                  </Tabs>
+                    /> */}
+                    </Tabs>
 
-                  {/* Login Form */}
-                  {tab === 0 && (
-                    <form onSubmit={loginSubmit}>
-                      <Typography variant="h6" mb={0} textAlign="center">
-                        Sign in to your account
-                      </Typography>
-                      <Stack spacing={2}>
-                        <Box>
-                          <CustomFormLabel htmlFor="username" sx={{ marginTop: 0 }}>
-                            Username
-                          </CustomFormLabel>
-                          <CustomTextField
-                            id="username"
-                            variant="outlined"
-                            fullWidth
-                            value={username}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                              setUsername(e.target.value)
-                            }
-                          />
-                        </Box>
-                        <Box>
-                          <CustomFormLabel htmlFor="password" sx={{ marginTop: 0 }}>
-                            Password
-                          </CustomFormLabel>
-                          <CustomTextField
-                            id="password"
-                            type={showPassword ? 'text' : 'password'}
-                            variant="outlined"
-                            fullWidth
-                            value={password}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                              setPassword(e.target.value)
-                            }
-                            InputProps={{
-                              endAdornment: (
-                                <InputAdornment position="end">
-                                  <IconButton
-                                    onClick={() => setShowPassword((prev) => !prev)}
-                                    edge="end"
-                                  >
-                                    {showPassword ? (
-                                      <IconEyeOff size={20} />
-                                    ) : (
-                                      <IconEye size={20} />
-                                    )}
-                                  </IconButton>
-                                </InputAdornment>
-                              ),
-                            }}
-                          />
-                        </Box>
-
-                        {/* reCAPTCHA v2 Checkbox (visible) - placed under password as requested */}
-                        {/* {showCaptcha && (
-                          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
-                            <ReCAPTCHA
-                              ref={recaptchaRef}
-                              sitekey={'6Lew4dsrAAAAACvlJCqJjIfjmwzD0tTJxZVFIwWw'} // static dummy site key
-                              onChange={onCaptchaChange}
-                            />
-                          </Box>
-                        )}
-                        {captchaError && (
-                          <Typography variant="body2" color="error" textAlign="center">
-                            Silakan centang captcha sebelum melanjutkan.
-                          </Typography>
-                        )} */}
-                        <Link
-                          to={'/auth/forgot-password'}
-                          // variant="body1"
-                          color="textSecondary"
-                          // textAlign="start"
-                          // sx={{ opacity: 0.7, cursor: 'pointer', marginTop: '10px !important' }}
-                          style={{ opacity: '0.5', color: '#000', cursor: 'pointer' }}
-                        >
-                          Forgot Password?
-                        </Link>
-                      </Stack>
-
-                      <Box marginTop={3}>
-                        <Button
-                          color="primary"
-                          variant="contained"
-                          size="large"
-                          fullWidth
-                          type="submit"
-                          disabled={loading}
-                        >
-                          {loading ? (
-                            <>
-                              {' '}
-                              <CircularProgress sx={{ color: 'white' }} size={24} />
-                            </>
-                          ) : (
-                            'Login'
-                          )}
-                        </Button>
-                      </Box>
-                      {error && tab === 0 && (
-                        <Typography
-                          sx={{ display: 'flex', justifyContent: 'center', marginTop: '10px' }}
-                          variant="subtitle1"
-                          color="error"
-                        >
-                          Username or Password is invalid
+                    {/* Login Form */}
+                    {tab === 0 && (
+                      <form onSubmit={loginSubmit}>
+                        <Typography variant="h6" mb={0} mt={1} textAlign="center">
+                          Sign in to your account
                         </Typography>
-                      )}
-                    </form>
-                  )}
+                        <Stack spacing={2}>
+                          <Box>
+                            <CustomFormLabel htmlFor="username" sx={{ marginTop: 0 }}>
+                              Username
+                            </CustomFormLabel>
+                            <CustomTextField
+                              id="username"
+                              variant="outlined"
+                              fullWidth
+                              value={username}
+                              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                setUsername(e.target.value)
+                              }
+                            />
+                          </Box>
+                          <Box>
+                            <CustomFormLabel htmlFor="password" sx={{ marginTop: 0 }}>
+                              Password
+                            </CustomFormLabel>
+                            <CustomTextField
+                              id="password"
+                              type={showPassword ? 'text' : 'password'}
+                              variant="outlined"
+                              fullWidth
+                              value={password}
+                              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                setPassword(e.target.value)
+                              }
+                              InputProps={{
+                                endAdornment: (
+                                  <InputAdornment position="end">
+                                    <IconButton
+                                      onClick={() => setShowPassword((prev) => !prev)}
+                                      edge="end"
+                                    >
+                                      {showPassword ? (
+                                        <IconEyeOff size={20} />
+                                      ) : (
+                                        <IconEye size={20} />
+                                      )}
+                                    </IconButton>
+                                  </InputAdornment>
+                                ),
+                              }}
+                            />
+                          </Box>
 
-                  {/* Guest Form */}
-                  {tab === 1 && (
-                    <form onSubmit={guestSubmit}>
-                      <Typography variant="h6" mb={1} textAlign="center">
-                        Guest/Visitor Code
-                      </Typography>
-                      <Typography variant="body1" textAlign="center" color="text.secondary">
-                        Please enter your invitation code
-                      </Typography>
-                      <Stack spacing={2}>
-                        <Box>
-                          <CustomFormLabel htmlFor="guest-id">Invitation Code</CustomFormLabel>
-                          <CustomTextField
-                            id="guest-id"
-                            variant="outlined"
-                            fullWidth
-                            value={guestCode}
-                            onChange={(e) => {
-                              setGuestCode(e.target.value);
-                              if (guestError) setGuestError(false);
-                            }}
-                            error={guestError}
-                          />
-                        </Box>
-                        {/* {showCaptcha && (
+                          {/* reCAPTCHA v2 Checkbox (visible) - placed under password as requested */}
+                          {/* {showCaptcha && (
                           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
                             <ReCAPTCHA
                               ref={recaptchaRef}
@@ -485,190 +460,319 @@ const Login = () => {
                             Silakan centang captcha sebelum melanjutkan.
                           </Typography>
                         )} */}
-                      </Stack>
-
-                      <Box marginTop={3}>
-                        <Button
-                          color="primary"
-                          variant="contained"
-                          size="large"
-                          fullWidth
-                          type="submit"
-                          disabled={loading}
-                        >
-                          {loading ? (
-                            <CircularProgress sx={{ color: 'white' }} size={24} />
-                          ) : (
-                            'Verify'
-                          )}
-                        </Button>
-                      </Box>
-
-                      {guestError && (
-                        <Typography
-                          sx={{ display: 'flex', justifyContent: 'center', marginTop: '15px' }}
-                          variant="subtitle1"
-                          color="error"
-                        >
-                          Invitation Code not found
-                        </Typography>
-                      )}
-                    </form>
-                  )}
-
-                  {tab === 2 && (
-                    <form onSubmit={loginSubmit}>
-                      <Typography variant="h6" mb={0} textAlign="center">
-                        Login or Register Guest
-                      </Typography>
-                      <Stack spacing={2}>
-                        <Box>
-                          <CustomFormLabel htmlFor="username" sx={{ marginTop: 0 }}>
-                            Username
-                          </CustomFormLabel>
-                          <CustomTextField
-                            id="username"
-                            variant="outlined"
-                            fullWidth
-                            value={username}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                              setUsername(e.target.value)
-                            }
-                          />
-                        </Box>
-                        <Box>
-                          <CustomFormLabel htmlFor="password" sx={{ marginTop: 0 }}>
-                            Password
-                          </CustomFormLabel>
-                          <CustomTextField
-                            id="password"
-                            type={showPassword ? 'text' : 'password'}
-                            variant="outlined"
-                            fullWidth
-                            value={password}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                              setPassword(e.target.value)
-                            }
-                            InputProps={{
-                              endAdornment: (
-                                <InputAdornment position="end">
-                                  <IconButton
-                                    onClick={() => setShowPassword((prev) => !prev)}
-                                    edge="end"
-                                  >
-                                    {showPassword ? (
-                                      <IconEyeOff size={20} />
-                                    ) : (
-                                      <IconEye size={20} />
-                                    )}
-                                  </IconButton>
-                                </InputAdornment>
-                              ),
+                          <Link
+                            to={'/auth/forgot-password'}
+                            // variant="body1"
+                            color="textSecondary"
+                            // textAlign="start"
+                            // sx={{ opacity: 0.7, cursor: 'pointer', marginTop: '10px !important' }}
+                            style={{
+                              opacity: '0.5',
+                              color: '#000',
+                              cursor: 'pointer',
+                              marginTop: '10px',
                             }}
-                          />
+                          >
+                            Forgot Password?
+                          </Link>
+                        </Stack>
+
+                        <Box marginTop={1.5}>
+                          <Button
+                            color="primary"
+                            variant="contained"
+                            size="large"
+                            fullWidth
+                            type="submit"
+                            disabled={loading}
+                          >
+                            {/* {loading ? (
+                              <>
+                                {' '}
+                                <CircularProgress sx={{ color: 'white' }} size={24} />
+                              </>
+                            ) : ( */}
+                            Login
+                            {/* )} */}
+                          </Button>
+                          <Divider sx={{ my: 1 }} />
+                          <Button
+                            color="primary"
+                            variant="outlined"
+                            size="large"
+                            fullWidth
+                            // type="submit"
+                            disabled={loading}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate('/auth/register');
+                            }}
+                          >
+                            {/* {loading ? (
+                              <>
+                                {' '}
+                                <CircularProgress sx={{ color: 'white' }} size={24} />
+                              </>
+                            ) : ( */}
+                            Register
+                            {/* )} */}
+                          </Button>
                         </Box>
 
-                        {/* reCAPTCHA v2 Checkbox (visible) - placed under password as requested */}
-                        {/* {showCaptcha && (
-                          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
-                            <ReCAPTCHA
-                              ref={recaptchaRef}
-                              sitekey={'6Lew4dsrAAAAACvlJCqJjIfjmwzD0tTJxZVFIwWw'} // static dummy site key
-                              onChange={onCaptchaChange}
-                            />
-                          </Box>
-                        )}
-                        {captchaError && (
-                          <Typography variant="body2" color="error" textAlign="center">
-                            Silakan centang captcha sebelum melanjutkan.
-                          </Typography>
-                        )} */}
-                        <Link
-                          to={'/auth/forgot-password'}
-                          // variant="body1"
-                          color="textSecondary"
-                          // textAlign="start"
-                          // sx={{ opacity: 0.7, cursor: 'pointer', marginTop: '10px !important' }}
-                          style={{ opacity: '0.5', color: '#000', cursor: 'pointer' }}
-                        >
-                          Forgot Password?
-                        </Link>
-                      </Stack>
-
-                      <Box marginTop={1}>
-                        <Button
-                          color="primary"
-                          variant="contained"
-                          size="large"
-                          fullWidth
-                          type="submit"
-                          disabled={loading}
-                        >
-                          {loading ? (
-                            <>
-                              {' '}
-                              <CircularProgress sx={{ color: 'white' }} size={24} />
-                            </>
-                          ) : (
-                            'Login'
-                          )}
-                        </Button>
-                        <Divider sx={{ my: 1 }} />
-                        <Button
-                          color="primary"
-                          variant="outlined"
-                          size="large"
-                          fullWidth
-                          // type="submit"
-                          disabled={loading}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate('/auth/register');
+                        <Box
+                          sx={{
+                            height: 28,
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            mt: 0.5,
                           }}
                         >
-                          {loading ? (
-                            <>
-                              {' '}
-                              <CircularProgress sx={{ color: 'white' }} size={24} />
-                            </>
-                          ) : (
-                            'Register'
+                          {error && (
+                            <Typography variant="subtitle2" color="error">
+                              Username or Password is invalid
+                            </Typography>
                           )}
-                        </Button>
-                      </Box>
-                      {error && tab === 2 && (
-                        <Typography
-                          sx={{ display: 'flex', justifyContent: 'center', marginTop: '10px' }}
-                          variant="subtitle1"
-                          color="error"
-                        >
-                          Username or Password is invalid
+                        </Box>
+                      </form>
+                    )}
+
+                    {/* Guest Form */}
+                    {tab === 1 && (
+                      <form onSubmit={guestSubmit}>
+                        <Typography variant="h6" mb={1} textAlign="center">
+                          Guest/Visitor Code
                         </Typography>
-                      )}
-                    </form>
-                  )}
+                        <Typography variant="body1" textAlign="center" color="text.secondary">
+                          Please enter your invitation code
+                        </Typography>
+                        <Stack spacing={2}>
+                          <Box>
+                            <CustomFormLabel htmlFor="guest-id">Invitation Code</CustomFormLabel>
+                            <CustomTextField
+                              id="guest-id"
+                              variant="outlined"
+                              fullWidth
+                              value={guestCode}
+                              onChange={(e) => {
+                                setGuestCode(e.target.value);
+                                if (guestError) setGuestError(false);
+                              }}
+                              error={guestError}
+                            />
+                          </Box>
+                          {/* {showCaptcha && (
+                          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
+                            <ReCAPTCHA
+                              ref={recaptchaRef}
+                              sitekey={'6Lew4dsrAAAAACvlJCqJjIfjmwzD0tTJxZVFIwWw'} // static dummy site key
+                              onChange={onCaptchaChange}
+                            />
+                          </Box>
+                        )}
+                        {captchaError && (
+                          <Typography variant="body2" color="error" textAlign="center">
+                            Silakan centang captcha sebelum melanjutkan.
+                          </Typography>
+                        )} */}
+                        </Stack>
 
-                  <Box display="flex" alignItems="center" justifyContent="center" marginTop={2}>
-                    <Typography
-                      variant="subtitle2"
-                      sx={{ color: 'grey.600', opacity: 0.7 }}
-                      fontWeight={200}
-                    >
-                      Need some help?
-                    </Typography>
-                    <Typography
-                      variant="subtitle2"
-                      color="primary"
-                      fontWeight={600}
-                      component={RouterLink}
-                      to="/"
-                      sx={{ marginLeft: 1 }}
-                    >
-                      Contact Us
-                    </Typography>
-                  </Box>
+                        <Box marginTop={3}>
+                          <Button
+                            color="primary"
+                            variant="contained"
+                            size="large"
+                            fullWidth
+                            type="submit"
+                            disabled={loading}
+                          >
+                            {loading ? (
+                              <CircularProgress sx={{ color: 'white' }} size={24} />
+                            ) : (
+                              'Verify'
+                            )}
+                          </Button>
+                        </Box>
 
-                  {/* <CardActions sx={{ justifyContent: 'center' }}>
+                        <Box
+                          sx={{
+                            height: 28,
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            mt: 1,
+                          }}
+                        >
+                          {guestError && (
+                            <Typography
+                              sx={{ display: 'flex', justifyContent: 'center', marginTop: '15px' }}
+                              variant="subtitle1"
+                              color="error"
+                            >
+                              Invitation Code not found
+                            </Typography>
+                          )}
+                        </Box>
+                      </form>
+                    )}
+
+                    {tab === 2 && (
+                      <form onSubmit={loginSubmit}>
+                        <Typography variant="h6" mb={0} textAlign="center">
+                          Login or Register Guest
+                        </Typography>
+                        <Stack spacing={2}>
+                          <Box>
+                            <CustomFormLabel htmlFor="username" sx={{ marginTop: 0 }}>
+                              Username
+                            </CustomFormLabel>
+                            <CustomTextField
+                              id="username"
+                              variant="outlined"
+                              fullWidth
+                              value={username}
+                              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                setUsername(e.target.value)
+                              }
+                            />
+                          </Box>
+                          <Box>
+                            <CustomFormLabel htmlFor="password" sx={{ marginTop: 0 }}>
+                              Password
+                            </CustomFormLabel>
+                            <CustomTextField
+                              id="password"
+                              type={showPassword ? 'text' : 'password'}
+                              variant="outlined"
+                              fullWidth
+                              value={password}
+                              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                setPassword(e.target.value)
+                              }
+                              InputProps={{
+                                endAdornment: (
+                                  <InputAdornment position="end">
+                                    <IconButton
+                                      onClick={() => setShowPassword((prev) => !prev)}
+                                      edge="end"
+                                    >
+                                      {showPassword ? (
+                                        <IconEyeOff size={20} />
+                                      ) : (
+                                        <IconEye size={20} />
+                                      )}
+                                    </IconButton>
+                                  </InputAdornment>
+                                ),
+                              }}
+                            />
+                          </Box>
+
+                          {/* reCAPTCHA v2 Checkbox (visible) - placed under password as requested */}
+                          {/* {showCaptcha && (
+                          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
+                            <ReCAPTCHA
+                              ref={recaptchaRef}
+                              sitekey={'6Lew4dsrAAAAACvlJCqJjIfjmwzD0tTJxZVFIwWw'} // static dummy site key
+                              onChange={onCaptchaChange}
+                            />
+                          </Box>
+                        )}
+                        {captchaError && (
+                          <Typography variant="body2" color="error" textAlign="center">
+                            Silakan centang captcha sebelum melanjutkan.
+                          </Typography>
+                        )} */}
+                          <Link
+                            to={'/auth/forgot-password'}
+                            // variant="body1"
+                            color="textSecondary"
+                            // textAlign="start"
+                            // sx={{ opacity: 0.7, cursor: 'pointer', marginTop: '10px !important' }}
+                            style={{
+                              opacity: '0.5',
+                              color: '#000',
+                              cursor: 'pointer',
+                              marginTop: '10px',
+                            }}
+                          >
+                            Forgot Password?
+                          </Link>
+                        </Stack>
+
+                        <Box marginTop={1}>
+                          <Button
+                            color="primary"
+                            variant="contained"
+                            size="large"
+                            fullWidth
+                            type="submit"
+                            disabled={loading}
+                          >
+                            {loading ? (
+                              <>
+                                <CircularProgress sx={{ color: 'white' }} size={24} />
+                              </>
+                            ) : (
+                              'Login'
+                            )}
+                          </Button>
+                          <Divider sx={{ my: 1 }} />
+                          <Button
+                            color="primary"
+                            variant="outlined"
+                            size="large"
+                            fullWidth
+                            // type="submit"
+                            disabled={loading}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate('/auth/register');
+                            }}
+                          >
+                            {loading ? (
+                              <>
+                                {' '}
+                                <CircularProgress sx={{ color: 'white' }} size={24} />
+                              </>
+                            ) : (
+                              'Register'
+                            )}
+                          </Button>
+                        </Box>
+                        {error && tab === 2 && (
+                          <Typography
+                            sx={{ display: 'flex', justifyContent: 'center', marginTop: '10px' }}
+                            variant="subtitle1"
+                            color="error"
+                          >
+                            Username or Password is invalid
+                          </Typography>
+                        )}
+                      </form>
+                    )}
+
+                    <Box display="flex" alignItems="center" justifyContent="center" marginTop={1}>
+                      <Typography
+                        variant="subtitle2"
+                        sx={{ color: 'grey.600', opacity: 0.7 }}
+                        fontWeight={200}
+                      >
+                        Need some help?
+                      </Typography>
+                      <Typography
+                        variant="subtitle2"
+                        color="primary"
+                        fontWeight={600}
+                        component={RouterLink}
+                        to="/"
+                        sx={{ marginLeft: 1 }}
+                      >
+                        Contact Us
+                      </Typography>
+                    </Box>
+
+                    {/* <CardActions sx={{ justifyContent: 'center' }}>
                     <Typography
                       variant="subtitle2"
                       sx={{ color: 'grey.600', opacity: 0.7 }}
@@ -677,11 +781,12 @@ const Login = () => {
                       Version 1.02 - <span style={{}}>Build</span> 071125
                     </Typography>
                   </CardActions> */}
-                </Card>
+                  </Card>
+                </Grid>
               </Grid>
-            </Grid>
+            </Box>
+            <Footer />
           </Box>
-          <Footer />
           <Snackbar
             open={snackbarOpen}
             autoHideDuration={3000}

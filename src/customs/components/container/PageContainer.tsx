@@ -47,7 +47,7 @@ const PageContainer: React.FC<CustomPageContainerProps> = ({
     };
 
     // listen F11 fullscreen changes
-    window.addEventListener('resize', checkFullscreen);
+    // window.addEventListener('resize', checkFullscreen);
 
     // listen react-full-screen child events
     const handler = (e: any) => {
@@ -58,7 +58,7 @@ const PageContainer: React.FC<CustomPageContainerProps> = ({
     checkFullscreen(); // initial
 
     return () => {
-      window.removeEventListener('resize', checkFullscreen);
+      // window.removeEventListener('resize', checkFullscreen);
       window.removeEventListener('operator-fullscreen-changed', handler);
     };
   }, []);

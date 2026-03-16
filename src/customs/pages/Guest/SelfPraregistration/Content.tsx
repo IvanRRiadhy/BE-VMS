@@ -1,22 +1,11 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import PageContainer from 'src/components/container/PageContainer';
-import { Box, Grid, useMediaQuery } from '@mui/system';
-import {
-  Button,
-  Card,
-  CircularProgress,
-  FormControl,
-  FormControlLabel,
-  Grid as Grid2,
-  Tooltip,
-  Typography,
-  useTheme,
-} from '@mui/material';
+import { Box } from '@mui/system';
+import { Card, CircularProgress, Grid2 as Grid, Tooltip } from '@mui/material';
 import Logo from 'src/assets/images/logos/BI_Logo.png';
 import Footer from 'src/views/authentication/components/Footer';
 import { KeyboardArrowUp } from '@mui/icons-material';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import FormSelfPraregistration from './FormSelfPraregistration';
 import { getInvitationLink, invitationLink } from 'src/customs/api/users';
 import { useSession } from 'src/customs/contexts/SessionContext';
@@ -127,10 +116,6 @@ export default function InvitationShare() {
 
   return (
     <PageContainer title="Self Praregistration" description="this is self praregistration">
-      {/* <Box>
-        <Box></Box>
-        <Box></Box>
-      </Box> */}
       <Box>
         <Grid
           container
@@ -143,8 +128,10 @@ export default function InvitationShare() {
               elevation={10}
               sx={{
                 p: 3,
-                borderTopRightRadius: 5,
-                borderTopLeftRadius: 5,
+                borderTopRightRadius: '5px !important',
+                borderTopLeftRadius: '5px !important',
+                borderBottomLeftRadius: '0 !important',
+                borderBottomRightRadius: '0 !important',
                 bgcolor: 'white',
                 pb: '0 !important',
               }}
@@ -172,7 +159,7 @@ export default function InvitationShare() {
                   }}
                 >
                   <IconUsers size={16} />
-                  Capacity: {invitation?.max_usage}
+                  Capacity: {invitation?.current_usage ?? 0} / {invitation?.max_usage ?? 0}
                 </Box>
               </Box>
             </Card>
@@ -181,6 +168,8 @@ export default function InvitationShare() {
                 mt: 0,
                 backgroundColor: 'white',
                 p: 3,
+                borderTopRightRadius: '0px !important',
+                borderTopLeftRadius: '0px !important',
                 borderBottomRightRadius: 5,
                 borderBottomLeftRadius: 5,
               }}

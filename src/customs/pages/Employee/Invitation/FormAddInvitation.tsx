@@ -1644,7 +1644,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                     clearFieldError(errorKey);
                   }
                 }}
-                format="ddd, DD - MMM - YYYY, HH:mm"
+                format="dddd, DD  MMMM YYYY, HH:mm"
                 viewRenderers={{
                   hours: renderTimeViewClock,
                   minutes: renderTimeViewClock,
@@ -3468,6 +3468,60 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
 
       const tz =
         moment.tz?.guess?.() || Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Jakarta';
+      // const mapField = (field: FormVisitor, sortIdx: number) => {
+      //   const base: any = {
+      //     sort: field.sort ?? sortIdx,
+      //     short_name: field.short_name ?? '',
+      //     long_display_text: field.long_display_text ?? '',
+      //     field_type: field.field_type ?? 0,
+      //     is_primary: field.is_primary ?? false,
+      //     is_enable: field.is_enable ?? false,
+      //     mandatory: field.mandatory ?? false,
+      //     remarks: field.remarks ?? '',
+      //     custom_field_id: field.custom_field_id ?? '',
+      //     multiple_option_fields: field.multiple_option_fields ?? [],
+      //     visitor_form_type: field.visitor_form_type ?? DEFAULT_VFT,
+      //   };
+      //   const safeTrim = (val: any): string => {
+      //     if (val === undefined || val === null) return '';
+      //     if (typeof val === 'string') return val.trim();
+      //     if (Array.isArray(val)) return val.map(String).join(',');
+      //     return String(val).trim();
+      //   };
+
+      //   switch (base.field_type) {
+      //     case 9: // Date/Datetime
+      //       if (typeof field.answer_datetime === 'string') {
+      //         base.answer_datetime = dayjs(field.answer_datetime).utc().toISOString();
+      //       }
+      //       break;
+
+      //     case 10:
+      //     case 11:
+      //     case 12: // File upload
+      //       base.answer_file = safeTrim(field.answer_file);
+      //       break;
+
+      //     case 5:
+      //     case 6:
+      //     case 7: // Radio, Checkbox, Dropdown
+      //       if (Array.isArray(field.answer_text)) {
+      //         base.answer_text = field.answer_text.map(String).join(',');
+      //       } else if (typeof field.answer_text === 'boolean') {
+      //         base.answer_text = field.answer_text ? 'true' : 'false';
+      //       } else {
+      //         base.answer_text = safeTrim(field.answer_text);
+      //       }
+      //       break;
+
+      //     default:
+      //       base.answer_text = safeTrim(field.answer_text);
+      //       break;
+      //   }
+
+      //   return base;
+      // };
+
       const mapField = (field: FormVisitor, sortIdx: number) => {
         const base: any = {
           sort: field.sort ?? sortIdx,
@@ -3482,6 +3536,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
           multiple_option_fields: field.multiple_option_fields ?? [],
           visitor_form_type: field.visitor_form_type ?? DEFAULT_VFT,
         };
+
         const safeTrim = (val: any): string => {
           if (val === undefined || val === null) return '';
           if (typeof val === 'string') return val.trim();
@@ -3490,21 +3545,21 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         };
 
         switch (base.field_type) {
-          case 9: // Date/Datetime
-            if (typeof field.answer_datetime === 'string') {
+          case 9: // datetime
+            if (field.answer_datetime) {
               base.answer_datetime = dayjs(field.answer_datetime).utc().toISOString();
             }
             break;
 
           case 10:
           case 11:
-          case 12: // File upload
+          case 12: // file
             base.answer_file = safeTrim(field.answer_file);
             break;
 
           case 5:
           case 6:
-          case 7: // Radio, Checkbox, Dropdown
+          case 7: // option
             if (Array.isArray(field.answer_text)) {
               base.answer_text = field.answer_text.map(String).join(',');
             } else if (typeof field.answer_text === 'boolean') {
@@ -3521,7 +3576,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
 
         return base;
       };
-
       const baseMeta = {
         visitor_type: formData.visitor_type ?? '',
         type_registered: TYPE_REGISTERED,
@@ -3586,31 +3640,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         toast('Group visitor created successfully.', 'success');
         resetMediaState();
         clearAnswerFiles();
-        // const visitors = backendResponse.collection?.visitors || [];
-
-        // const availableCards = backendResponse.collection?.available_cards || [];
-        // setAvailableCards(availableCards);
-
-        // setRows(
-        //   visitors.map((v: any, i: number) => ({
-        //     id: v.id,
-        //     visitor: v.visitor_name,
-        //     trx_visitor_id: v.id ?? null,
-        //     card: null,
-        //   })),
-        // );
-
-        // // Cek akses site
-        // const siteAnswer = getSiteFromForm(false, sectionsData, dataVisitor);
-        // if (siteAnswer) {
-        //   try {
-        //     const res = await getGrantAccess(token, siteAnswer);
-        //     setAccessData(res.collection ?? []);
-        //     console.log('Grant access by site_place:', siteAnswer, res.collection);
-        //   } catch (err) {
-        //     console.error('Failed to fetch grant access:', err);
-        //   }
-        // }
       }
 
       // 🟦 SINGLE MODE
@@ -3653,43 +3682,18 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
 
         resetMediaState();
         clearAnswerFiles();
-
-        // const visitors = backendResponse.collection?.visitors || [];
-        // const availableCards = backendResponse.collection?.available_cards || [];
-        // setAvailableCards(availableCards);
-
-        // setRows(
-        //   visitors.map((v: any, i: number) => ({
-        //     id: v.id,
-        //     visitor: v.visitor?.name,
-        //     trx_visitor_id: v.id ?? null,
-        //     card: null,
-        //   })),
-        // );
-
-        // console.log('rows', rows);
-
-        // const siteAnswer = getSiteFromForm(false, sectionsData, dataVisitor);
-        // if (siteAnswer) {
-        //   try {
-        //     const res = await getGrantAccess(token, siteAnswer);
-        //     setAccessData(res.collection ?? []);
-        //   } catch (err) {
-        //     console.error('❌ Failed to fetch grant access:', err);
-        //   }
-        // }
       }
       setTimeout(() => {
         setLoading(false);
         onSuccess?.();
-        if (TYPE_REGISTERED !== 0) {
-          setNextDialogOpen(true);
-        }
+        // if (TYPE_REGISTERED !== 0) {
+        //   setNextDialogOpen(true);
+        // }
       }, 700);
     } catch (err: any) {
       setTimeout(() => {
         setLoading(false);
-        setNextDialogOpen(false);
+        // setNextDialogOpen(false);
       }, 700);
 
       toast('Failed to create visitor.', 'error');

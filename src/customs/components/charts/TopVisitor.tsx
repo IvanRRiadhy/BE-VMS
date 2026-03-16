@@ -54,7 +54,7 @@ const TopVisitor = () => {
     },
     dataLabels: {
       enabled: true,
-      offsetY: -22, // supaya naik ke atas bar
+      offsetY: -30, // supaya naik ke atas bar
       style: {
         fontFamily: 'Plus Jakarta Sans, sans-serif',
         fontSize: '13px',
@@ -91,6 +91,7 @@ const TopVisitor = () => {
       },
     },
     yaxis: {
+      max: Math.max(...values) + 1,
       labels: {
         style: { colors: '#6b7280', fontSize: '14px' },
       },

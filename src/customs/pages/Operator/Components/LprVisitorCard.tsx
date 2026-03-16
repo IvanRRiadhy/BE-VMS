@@ -114,7 +114,7 @@ const LprVisitorCard = ({
             </CardContent>
           </Card>
         ) : (
-          <Stack spacing={2} sx={{ flex: 1 }}>
+          <Stack spacing={2} sx={{ flex: 1, width: '100%' }}>
             {todayVisitingPurpose.slice(0, 5).map((item: any) => (
               <Card
                 key={item.id}

@@ -19,13 +19,16 @@ import VisitorHeatMap from 'src/customs/components/charts/VisitorHeatMap';
 import AvarageDurationChart from 'src/customs/components/charts/AverageDurationChart';
 import {
   IconCalendar,
+  IconCircleMinus,
   IconCircleX,
   IconDownload,
+  IconForbid,
   IconForbid2,
   IconHourglass,
   IconLogin,
   IconLogout,
   IconUsersGroup,
+  IconX,
 } from '@tabler/icons-react';
 import Calendar from 'src/customs/components/calendar/Calendar';
 import { useDispatch, useSelector } from 'react-redux';
@@ -40,6 +43,8 @@ const Content = () => {
   const { token } = useSession();
 
   const [dataPraregist, setDataPraregist] = useState<any[]>([]);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [page, setPage] = useState(0);
   const exportRef = useRef<HTMLDivElement>(null);
   const handleExportPdf = async () => {
     if (!exportRef.current) return;
@@ -105,8 +110,8 @@ const Content = () => {
   const CardItems = [
     { title: 'checkin', key: 'Checkin', icon: <IconLogin size={25} /> },
     { title: 'checkout', key: 'Checkout', icon: <IconLogout size={25} /> },
-    { title: 'denied', key: 'Denied', icon: <IconCircleX size={25} /> },
-    { title: 'block', key: 'Block', icon: <IconForbid2 size={25} /> },
+    { title: 'denied', key: 'Denied', icon: <IconX size={25} /> },
+    { title: 'block', key: 'Block', icon: <IconCircleMinus size={25} /> },
     { title: 'waiting', key: 'waiting', icon: <IconHourglass size={25} /> },
     {
       title: 'blacklist',
@@ -214,12 +219,12 @@ const Content = () => {
                     isHaveExportXlf={false}
                     isHaveHeaderTitle={true}
                     titleHeader="Pre-Registration Visitor List"
-                    // defaultRowsPerPage={rowsPerPage}
+                    defaultRowsPerPage={rowsPerPage}
                     rowsPerPageOptions={[10, 20, 50, 100]}
-                    // onPaginationChange={(page, rowsPerPage) => {
-                    //   setPage(page);
-                    //   setRowsPerPage(rowsPerPage);
-                    // }}
+                    onPaginationChange={(page, rowsPerPage) => {
+                      setPage(page);
+                      setRowsPerPage(rowsPerPage);
+                    }}
                     isHaveFilterDuration={false}
                     isHaveAddData={false}
                     isHaveHeader={false}

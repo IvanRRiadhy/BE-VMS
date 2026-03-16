@@ -184,6 +184,8 @@ const FormPermission: React.FC<FormPermissionProps> = ({
       'InviteWithinAllowPreRegister',
       'ManageSchedule',
       'ManageApprove',
+      'External',
+      'ManageTeam',
     ],
 
     [GroupRoleId.OperatorVMS.toLowerCase()]: [

@@ -185,7 +185,7 @@ const TopVisitingPurposeChart = ({ title }: { title: string }) => {
         borderRadius: 6,
         barHeight: '50%',
         dataLabels: {
-          position: 'right', // 🔥 ini penting
+          position: 'right',
         },
       },
     },
@@ -193,7 +193,7 @@ const TopVisitingPurposeChart = ({ title }: { title: string }) => {
     dataLabels: {
       enabled: true,
       textAnchor: 'start',
-      offsetX: 5,
+      offsetX: 15,
       style: {
         colors: ['#545454ff'],
         fontWeight: 600,
@@ -204,6 +204,7 @@ const TopVisitingPurposeChart = ({ title }: { title: string }) => {
     xaxis: {
       categories: chartData.labels,
       labels: { style: { colors: '#6b7280', fontWeight: 400 } },
+      max: Math.max(...chartData.values) + 2,
     },
     yaxis: {
       labels: {
@@ -227,6 +228,9 @@ const TopVisitingPurposeChart = ({ title }: { title: string }) => {
       borderColor: '#e5e7eb',
       strokeDashArray: 4,
       xaxis: { lines: { show: false } },
+      padding: {
+        right: 20,
+      },
     },
   };
 

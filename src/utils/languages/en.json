@@ -37,9 +37,14 @@
     "visitor": "Visitor",
     "settings": "Settings",
     "helps": "Helps",
-    "zone": "Zone"
+    "zone": "Zone",
+    "transaction_log": "Transaction Log"
   },
+  "print_badge": "Print Badge",
+  "transction_visitor": "Transction Visitor",
+  "blacklist_visitor": "Blacklist Visitor",
   "no_visit_today": "No Visit data for today.",
   "report": "Report",
-  "search": "Search"
+  "search": "Search",
+  "evacuate": "Evacuate"
 }

@@ -206,19 +206,19 @@ const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({
             />
           )}
         />
-        {/* <RadioGroup
+        <RadioGroup
           row
           // value={formData.visitorType}
-          onChange={(e) =>
-            setFormData((prev) => ({
-              ...prev,
-              visitorType: e.target.value,
-            }))
-          }
+          // onChange={(e) =>
+          //   setFormData((prev) => ({
+          //     ...prev,
+          //     visitorType: e.target.value,
+          //   }))
+          // }
         >
           <FormControlLabel value="internal" control={<Radio />} label="Internal" />
           <FormControlLabel value="external" control={<Radio />} label="External" />
-        </RadioGroup> */}
+        </RadioGroup>
         <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
           <Button
             sx={{ mt: 2 }}

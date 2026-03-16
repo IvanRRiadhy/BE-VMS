@@ -6,7 +6,7 @@ import { getUserById, getUserGroupById } from 'src/customs/api/admin';
 import { CreateUserSchema } from 'src/customs/api/models/Admin/User';
 import FormUser from '../FormUser';
 import FormWizardUserGroup from '../UserGroup/FormWizardUserGroup';
-import { CreateUserGroupSchema } from 'src/customs/api/models/Admin/UserGroup';
+import { CreateUserGroupSchema } from 'src/customs/api/Admin/UserGroup';
 
 interface Props {
   open: boolean;

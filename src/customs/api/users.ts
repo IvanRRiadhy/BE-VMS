@@ -10,6 +10,7 @@ import {
 } from './models/Users';
 import axiosInstance from './interceptor';
 import { GetProfileResponse } from './models/profile';
+import { AnyAaaaRecord } from 'dns';
 
 export const login = async (body: LoginRequest): Promise<LoginResponse> => {
   try {
@@ -44,11 +45,11 @@ export const AuthVisitor = async (body: AuthVisitorRequest): Promise<AuthVisitor
   }
 };
 
-export const SubmitPraForm = async (body: any, id: string): Promise<AuthVisitorResponse> => {
+
+export const SubmitPraForm = async (body: any): Promise<AuthVisitorResponse> => {
   try {
     const response = await axiosInstance.post(`/on-portal/submit/pra-form`, body, {
       headers: { 'Content-Type': 'application/json' },
-      params: { id },
     });
     return response.data;
   } catch (error) {

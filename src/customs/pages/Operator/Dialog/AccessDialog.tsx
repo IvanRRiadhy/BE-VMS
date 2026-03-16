@@ -29,9 +29,10 @@ type AccessDialogProps = {
 
   handleAccessAction: (row: any, action: 'grant' | 'revoke' | 'block') => Promise<void>;
 
-  setSnackbarOpen: (v: boolean) => void;
-  setSnackbarMsg: (v: string) => void;
-  setSnackbarType: (v: 'info' | 'success' | 'error') => void;
+  // setSnackbarOpen: (v: boolean) => void;
+  // setSnackbarMsg: (v: string) => void;
+  // setSnackbarType: (v: 'info' | 'success' | 'error') => void;
+  toast: any;
 };
 
 export default function AccessDialog({
@@ -46,9 +47,10 @@ export default function AccessDialog({
   selectedActionAccess,
   setSelectedActionAccess,
   handleAccessAction,
-  setSnackbarOpen,
-  setSnackbarMsg,
-  setSnackbarType,
+  toast,
+  // setSnackbarOpen,
+  // setSnackbarMsg,
+  // setSnackbarType,
 }: AccessDialogProps) {
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md" container={containerRef}>
@@ -67,10 +69,10 @@ export default function AccessDialog({
         <IconX />
       </IconButton>
 
-      <DialogContent dividers >
+      <DialogContent dividers>
         <DynamicTable
           data={accessData.map(({ trx_visitor_id, visitors, ...rest }) => rest)}
-          isHaveChecked={false}
+          isHaveChecked={true}
           isHaveHeaderTitle
           titleHeader="Access"
           overflowX="auto"
@@ -78,12 +80,16 @@ export default function AccessDialog({
           isNoActionTableHead
           onAccessAction={handleAccessAction as any}
           onCheckedChange={(checkedRows) => {
-            const ids = checkedRows.map((r: any) => r.id);
+            console.log('checkedRows', checkedRows);
+
+            const ids = checkedRows.map((r: any) => r.access_control_id);
+            console.log('selected ids', ids);
+
             setSelectedAccessIds(ids);
           }}
         />
 
-        {/* <Box sx={{ display: 'flex', gap: 1 }}>
+        <Box sx={{ display: 'flex', gap: 1 }}>
           <CustomSelect
             sx={{ width: '30%', p: 0, mt: 2, backgroundColor: 'white' }}
             value={selectedActionAccess}
@@ -109,9 +115,10 @@ export default function AccessDialog({
             disabled={!selectedActionAccess || allowedActions.length === 0}
             onClick={async () => {
               if (!selectedAccessIds.length || !selectedActionAccess) {
-                setSnackbarMsg('Please select rows and an action first.');
-                setSnackbarType('info');
-                setSnackbarOpen(true);
+                // setSnackbarMsg('Please select rows and an action first.');
+                // setSnackbarType('info');
+                // setSnackbarOpen(true);
+                toast('Please select rows and an action first.', 'info');
                 return;
               }
 
@@ -120,11 +127,15 @@ export default function AccessDialog({
                   selectedActionAccess.charAt(0).toUpperCase() + selectedActionAccess.slice(1),
                 )
               ) {
-                setSnackbarMsg(
+                // setSnackbarMsg(
+                //   `Action "${selectedActionAccess}" is not allowed for selected access.`,
+                // );
+                // setSnackbarType('info');
+                // setSnackbarOpen(true);
+                toast(
                   `Action "${selectedActionAccess}" is not allowed for selected access.`,
+                  'info',
                 );
-                setSnackbarType('info');
-                setSnackbarOpen(true);
                 return;
               }
 
@@ -149,7 +160,7 @@ export default function AccessDialog({
           >
             Apply
           </Button>
-        </Box> */}
+        </Box>
       </DialogContent>
     </Dialog>
   );

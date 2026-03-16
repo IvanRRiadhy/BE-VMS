@@ -749,7 +749,7 @@ const Content = () => {
                     sx={{ mt: 0.5 }}
                   />
                 </Grid>
-                <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+                <Grid size={{ xs: 12, md: 8, lg: 6 }}>
                   <FormGroup>
                     <FormControlLabel
                       label="Previous"
@@ -762,7 +762,7 @@ const Content = () => {
                     />
                   </FormGroup>
                 </Grid>
-                <Grid size={{ xs: 12, md: 6, lg: 8 }}>
+                <Grid size={{ xs: 12, md: 6, xl: 6 }}>
                   <FormGroup>
                     <FormControlLabel
                       label="Preregister Done"

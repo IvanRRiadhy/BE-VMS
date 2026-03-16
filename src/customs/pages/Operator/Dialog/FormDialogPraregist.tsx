@@ -1036,6 +1036,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
   );
 
   const transformToSubmitPayload = (data: any) => ({
+    // trx_visitor_id: id,
     visitor_type: data.visitor_type,
     type_registered: 0,
     trx_visitor_id: id,
@@ -1043,6 +1044,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
     group_name: data.group_name ?? '',
     tz: data.site_place_data?.timezone ?? 'Asia/Jakarta',
     // registered_site: data.site_place_data?.id ?? '',
+    flow: 'SubmitPraregister',
     data_visitor: [
       {
         question_page: data.question_page?.map((section: any) => ({
@@ -1055,7 +1057,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
           self_only: section.self_only ?? false,
           foreign_id: section.foreign_id ?? '',
           form: section.form?.map((f: any) => {
-            const value = formValues[f.remarks] ?? '';
+            const value = formValues[f.remarks] ?? null;
             const base = {
               sort: f.sort,
               short_name: f.short_name,
@@ -1067,19 +1069,16 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
               remarks: f.remarks,
               multiple_option_fields: f.multiple_option_fields ?? [],
               visitor_form_type: f.visitor_form_type ?? 1,
-              answer_text: null,
-              answer_datetime: null,
-              answer_file: null,
             };
 
             if ([10, 11, 12].includes(f.field_type)) {
-              base.answer_file = value;
+              return { ...base, answer_file: value };
             } else if (f.field_type === 9) {
-              base.answer_datetime = value;
+              return { ...base, answer_datetime: value};
             } else {
-              base.answer_text = value;
+              return { ...base, answer_text: value };
             }
-            return base;
+            // return base;
           }),
         })),
       },

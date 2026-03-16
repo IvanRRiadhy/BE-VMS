@@ -23,6 +23,7 @@ export interface LoginResponseCollection {
   access: string;
   token: string;
   employee_id: string;
+  role_access: string;
   distributor_id: string;
   menu: any[];
   groupAccess: GroupAccess[];
@@ -114,6 +115,7 @@ export interface RefreshTokenResponse {
   msg: string;
   collection: {
     token: string;
+    role_access: string;
   };
 }
 

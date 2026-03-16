@@ -1,44 +1,3 @@
-// import { useEffect } from 'react';
-// import { useNavigate, useLocation } from 'react-router-dom';
-// import { useAuth } from 'src/customs/contexts/AuthProvider';
-// import { GroupRoleId } from 'src/constant/GroupRoleId';
-// import { Backdrop, CircularProgress } from '@mui/material';
-// import { useSession } from 'src/customs/contexts/SessionContext';
-// import { setClearTokenCallback } from 'src/customs/api/interceptor';
-
-// export default function AuthRedirector() {
-//   const { clearToken } = useSession();
-//   const { loading: authLoading, isAuthenticated, groupId } = useAuth();
-//   const location = useLocation();
-
-//   useEffect(() => {
-//     setClearTokenCallback(clearToken);
-//   }, [clearToken]);
-
-//   const isAuthReady = !authLoading && isAuthenticated && !!groupId;
-
-//     useEffect(() => {
-//       if (isAuthReady) {
-//         const redirectPath =
-//           groupId?.toUpperCase() === GroupRoleId.Admin
-//             ? '/admin/dashboard'
-//             : groupId?.toUpperCase() === GroupRoleId.Manager
-//             ? '/manager/dashboard'
-//             : groupId?.toUpperCase() === GroupRoleId.Employee
-//             ? '/employee/dashboard'
-//             : groupId?.toUpperCase() === GroupRoleId.OperatorVMS
-//             ? '/operator/dashboard'
-//             : '/guest/dashboard';
-
-//         if (location.pathname === '/' || location.pathname === '/*') {
-//           window.location.replace(redirectPath);
-//         }
-//       }
-//     }, [isAuthReady, groupId, location.pathname]);
-
-//   return null;
-// }
-
 import { useEffect } from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from 'src/customs/contexts/AuthProvider';
@@ -48,7 +7,7 @@ import { setClearTokenCallback } from 'src/customs/api/interceptor';
 import { Backdrop, CircularProgress } from '@mui/material';
 
 export default function AuthRedirector() {
-  const { clearToken } = useSession();
+  const { clearToken, roleAccess } = useSession();
   const { loading: authLoading, isAuthenticated, groupId } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -63,13 +22,21 @@ export default function AuthRedirector() {
 
     if (isAuthenticated && groupId) {
       const upperGroup = groupId.toUpperCase();
-      let redirectPath = '/guest/dashboard';
+      let redirectPath = '/';
 
-      if (upperGroup === GroupRoleId.Admin) redirectPath = '/admin/dashboard';
-      else if (upperGroup === GroupRoleId.Manager) redirectPath = '/manager/dashboard';
-      else if (upperGroup === GroupRoleId.Employee) redirectPath = '/employee/dashboard';
-      else if (upperGroup === GroupRoleId.OperatorVMS) redirectPath = '/operator/view';
-      // hanya redirect dari root
+      // if (upperGroup === GroupRoleId.Admin) redirectPath = '/admin/dashboard';
+      // else if (upperGroup === GroupRoleId.Manager) redirectPath = '/manager/dashboard';
+      // else if (upperGroup === GroupRoleId.Employee) redirectPath = '/employee/dashboard';
+      // else if (upperGroup === GroupRoleId.OperatorVMS) redirectPath = '/operator/view';
+      // else if (upperGroup === GroupRoleId.OperatorAdmin) redirectPath = '/operator-admin/dashboard';
+      // else if (upperGroup === GroupRoleId.Visitor) redirectPath = '/guest/dashboard';
+      if (roleAccess === 'Admin') redirectPath = '/admin/dashboard';
+      else if (roleAccess === 'Manager') redirectPath = '/manager/dashboard';
+      else if (roleAccess === 'Employee') redirectPath = '/employee/dashboard';
+      else if (roleAccess === 'OperatorVMS') redirectPath = '/operator/view';
+      else if (roleAccess === 'OperatorAdmin') redirectPath = '/operator-admin/dashboard';
+      else if (roleAccess === 'Visitor') redirectPath = '/guest/dashboard';
+
       if (
         location.pathname === '/auth/login' ||
         location.pathname === '/auth/register' ||
@@ -79,12 +46,17 @@ export default function AuthRedirector() {
       } else if (location.pathname === '/') {
         navigate(redirectPath, { replace: true });
       }
+      // } else if (!authLoading && !isAuthenticated) {
+      //   if (!location.pathname.startsWith('/auth')) {
+      //     navigate('/auth/login', { replace: true });
+      //   }
+      // }
     } else if (!authLoading && !isAuthenticated) {
       if (location.pathname === '/auth/login' || location.pathname === '/') {
         navigate('/auth/login', { replace: true });
       }
     }
-  }, [authLoading, isAuthenticated, groupId, location.pathname, navigate]);
+  }, [authLoading, isAuthenticated, groupId, location.pathname, navigate, roleAccess]);
 
   // if (authLoading) {
   //   return (

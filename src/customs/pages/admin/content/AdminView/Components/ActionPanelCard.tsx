@@ -10,13 +10,16 @@ import {
   IconLogout,
   IconMapPinCheck,
   IconParking,
+  IconPencil,
   IconPrinter,
   IconQrcode,
   IconUser,
 } from '@tabler/icons-react';
 import { FC } from 'react';
+import { usePermission } from 'src/hooks/usePermission';
 
 interface Props {
+  permission: any;
   isFullscreen: boolean;
   handleOpenScanQR: () => void;
   handleActionClick: (type: string) => void;
@@ -26,10 +29,10 @@ interface Props {
   setOpenPreRegistration: (value: boolean) => void;
   setOpenInvitationVisitor: (value: boolean) => void;
   setOpenReturnCard: (value: boolean) => void;
-  setOpenDialogIndex: (value: number) => void;
 }
 
 const ActionPanelCard: FC<Props> = ({
+  permission,
   isFullscreen,
   handleOpenScanQR,
   handleActionClick,
@@ -39,8 +42,17 @@ const ActionPanelCard: FC<Props> = ({
   setOpenPreRegistration,
   setOpenInvitationVisitor,
   setOpenReturnCard,
-  setOpenDialogIndex,
 }) => {
+  // const {
+  //   canCheckin,
+  //   canCheckout,
+  //   canManageInvite,
+  //   canBlacklist,
+  //   canCardIssuance,
+  //   canVisitorTriggerOpen,
+  //   canParking,
+  //   canExtend,
+  // } = permission;
   return (
     <Grid
       size={{ xs: 12, lg: 4.5 }}
@@ -68,6 +80,7 @@ const ActionPanelCard: FC<Props> = ({
           sx={{
             flex: 1,
             p: 2,
+            px: '5px !important',
             overflow: 'auto',
           }}
         >
@@ -142,8 +155,7 @@ const ActionPanelCard: FC<Props> = ({
                   variant="contained"
                   color="primary"
                   startIcon={<IconUser size={25} />}
-                  // onClick={() => setOpenInvitationVisitor(true)}
-                  onClick={() => setOpenDialogIndex(2)}
+                  onClick={() => setOpenInvitationVisitor(true)}
                   sx={{
                     textTransform: 'none',
                     fontWeight: 600,
@@ -162,7 +174,6 @@ const ActionPanelCard: FC<Props> = ({
               </Box>
 
               <Grid container spacing={isFullscreen ? 1 : 1.5}>
-                {/* Checkin */}
                 <Grid size={{ xs: 6, lg: 6 }}>
                   <Button
                     variant="contained"
@@ -188,6 +199,7 @@ const ActionPanelCard: FC<Props> = ({
                     </Typography>
                   </Button>
                 </Grid>
+
                 <Grid size={{ xs: 6, lg: 6 }}>
                   <Button
                     variant="contained"
@@ -214,7 +226,7 @@ const ActionPanelCard: FC<Props> = ({
                     </Typography>
                   </Button>
                 </Grid>
-                {/* Card */}
+
                 <Grid size={{ xs: 6, lg: 6 }}>
                   <Button
                     variant="contained"
@@ -274,6 +286,7 @@ const ActionPanelCard: FC<Props> = ({
             </Grid>
             <Grid size={{ xs: 12, xl: 5 }}>
               <Grid container spacing={isFullscreen ? 1.5 : 1.5}>
+                {/* Access */}
                 {/* <Grid size={{ xs: 6, lg: 6 }}>
                   <Button
                     variant="contained"
@@ -299,9 +312,10 @@ const ActionPanelCard: FC<Props> = ({
                       Access
                     </Typography>
                   </Button>
-                </Grid>  */}
+                </Grid> */}
 
                 {/* Parking */}
+
                 <Grid size={{ xs: 6, lg: 6 }}>
                   <Button
                     variant="contained"
@@ -326,7 +340,6 @@ const ActionPanelCard: FC<Props> = ({
                   </Button>
                 </Grid>
 
-                {/* Report */}
                 <Grid size={{ xs: 6, lg: 6 }}>
                   <Button
                     variant="contained"
@@ -354,6 +367,7 @@ const ActionPanelCard: FC<Props> = ({
                     </Typography>
                   </Button>
                 </Grid>
+
                 <Grid size={{ xs: 6, lg: 6 }}>
                   <Button
                     variant="contained"
@@ -377,6 +391,7 @@ const ActionPanelCard: FC<Props> = ({
                     </Typography>
                   </Button>
                 </Grid>
+
                 <Grid size={{ xs: 6, lg: 6 }}>
                   <Button
                     variant="contained"
@@ -421,12 +436,13 @@ const ActionPanelCard: FC<Props> = ({
                     Print
                   </Button>
                 </Grid>
+
                 <Grid size={{ xs: 6, lg: 6 }}>
                   <Button
                     variant="contained"
                     startIcon={<IconUser size={25} />}
                     // onClick={handleOpenScanQR}
-                    onClick={() => handleActionBlacklist('Blacklist')}
+                    onClick={() => handleActionBlacklist('blacklist')}
                     size="large"
                     sx={{
                       textTransform: 'none',
@@ -445,32 +461,55 @@ const ActionPanelCard: FC<Props> = ({
                     </Typography>
                   </Button>
                 </Grid>
-                {/* <Grid size={{ xs: 6, lg: 6 }}>
-                                <Button
-                                  variant="contained"
-                                  startIcon={<IconUser size={25} />}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setOpenWhiteList(true);
-                                  }}
-                                  size="large"
-                                  sx={{
-                                    textTransform: 'none',
-                                    fontWeight: 600,
-                                    px: 2.5,
-                                    boxShadow: '0 2px 6px rgba(96, 125, 139, 0.4)',
-                                    zIndex: 999,
-                                    width: '100%',
-                                    height: '50px',
-                                    p: 0,
-                                    backgroundColor: 'gray',
-                                  }}
-                                >
-                                  <Typography variant="h6" color="white">
-                                    Whitelist
-                                  </Typography>
-                                </Button>
-                              </Grid> */}
+
+                <Grid size={{ xs: 6, lg: 6 }}>
+                  <Button
+                    variant="contained"
+                    startIcon={<IconPencil size={25} />}
+                    // onClick={handleOpenScanQR}
+                    // onClick={() => handleActionBlacklist('blacklist')}
+                    size="large"
+                    sx={{
+                      // background: '#5f5f5f',
+                      // '&:hover': { backgroundColor: '#5f5f5f' },
+                      marginLeft: 0,
+                      textTransform: 'none',
+                      fontWeight: 600,
+                      px: 2.5,
+                      zIndex: 999,
+                      width: '100%',
+                      height: '50px',
+                    }}
+                  >
+                    <Typography variant="h6" color="white">
+                      Enable Edit
+                    </Typography>
+                  </Button>
+                </Grid>
+                <Grid size={{ xs: 6, lg: 6 }}>
+                  <Button
+                    variant="contained"
+                    startIcon={<IconPencil size={25} />}
+                    // onClick={handleOpenScanQR}
+                    // onClick={() => handleActionBlacklist('blacklist')}
+                    size="large"
+                    sx={{
+                      // background: '#5f5f5f',
+                      // '&:hover': { backgroundColor: '#5f5f5f' },
+                      marginLeft: 0,
+                      textTransform: 'none',
+                      fontWeight: 600,
+                      px: 2.5,
+                      zIndex: 999,
+                      width: '100%',
+                      height: '50px',
+                    }}
+                  >
+                    <Typography variant="h6" color="white">
+                      Edit Form
+                    </Typography>
+                  </Button>
+                </Grid>
               </Grid>
             </Grid>
           </Grid>

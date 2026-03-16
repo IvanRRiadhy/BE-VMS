@@ -160,7 +160,7 @@ const FormWizardUserGroup: React.FC<FormWizardUserGroupProps> = ({
 
           <Grid2 size={{ xs: 12, lg: 12 }}>
             <CustomFormLabel htmlFor="role_access" sx={{ mt: 0.5 }}>
-              Group
+              Role Access
             </CustomFormLabel>
 
             <CustomTextField

@@ -201,12 +201,12 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
         <RadioGroup
           row
           // value={formData.visitorType}
-          onChange={(e) =>
-            setFormData((prev) => ({
-              ...prev,
-              visitorType: e.target.value,
-            }))
-          }
+          // onChange={(e) =>
+          //   setFormData((prev) => ({
+          //     ...prev,
+          //     visitorType: e.target.value,
+          //   }))
+          // }
         >
           <FormControlLabel value="internal" control={<Radio />} label="Internal" />
           <FormControlLabel value="external" control={<Radio />} label="External" />  

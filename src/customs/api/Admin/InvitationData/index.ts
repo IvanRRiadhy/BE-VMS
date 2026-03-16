@@ -1,4 +1,4 @@
-import axiosInstance from '../interceptor';
+import axiosInstance from 'src/customs/api/interceptor';
 
 export const getInvitationSite = async (token: string): Promise<any> => {
   try {

@@ -19,7 +19,7 @@
   "navigation": {
     "delivery": "Pengiriman",
     "staff": "Staff",
-    "scheduler": "Jadwal",
+    "scheduler": "Jadwal Kunjungan",
     "dashboard": "Dasboard",
     "manage_system": "Kelola Sistem",
     "company_department": "Perusahaan & Departemen",
@@ -37,9 +37,14 @@
     "visitor": "Pengunjung",
     "settings": "Pengaturan",
     "helps": "Bantuan",
-    "zone": "Zona"
+    "zone": "Zona",
+    "transaction_log": "Riwayat Transaksi"
   },
+  "print_badge": "Cetak Badge",
+  "transction_visitor": "Transaksi Pengunjung",
+  "blacklist_visitor": "Daftar Hitam Pengunjung",
   "no_visit_today": "Tidak ada kunjungan hari ini.",
   "report": "Laporan",
-  "search": "Cari"
+  "search": "Cari",
+  "evacuate": "Evakuasi"
 }

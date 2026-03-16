@@ -38,13 +38,13 @@ const ChooseCardDialog = ({
   handleConfirmChooseCards,
   setOpenRevokeDialog,
 }: any) => {
- const isSwipeDisabled =
-  //  currentUsedCards.length === 0 ||
-   selectedCards.some((cardNumber: string) => {
-     const card = currentUsedCards.find((c: any) => c.card_number === cardNumber);
+  const isSwipeDisabled =
+    //  currentUsedCards.length === 0 ||
+    selectedCards.some((cardNumber: string) => {
+      const card = currentUsedCards.find((c: any) => c.card_number === cardNumber);
 
-     return card?.current_used === true && card?.is_swapcard === true;
-   });
+      return card?.current_used === true && card?.is_swapcard === true;
+    });
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg" container={containerRef?.current}>
       <DialogTitle>Choose Card</DialogTitle>
@@ -120,7 +120,7 @@ const ChooseCardDialog = ({
                       onClick={(e) => {
                         if (!isSelectable) return;
                         e.stopPropagation();
-                        
+
                         handleToggleCard(card.card_number);
                       }}
                     >
@@ -286,7 +286,6 @@ const ChooseCardDialog = ({
                         checked={isChosen}
                         // disabled={!isChosen}
                         onChange={() => {
-                          
                           handleToggleCard(card.card_number);
                         }}
                       />

@@ -17,6 +17,8 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 import { Autocomplete, TextField } from '@mui/material';
 import { GroupRoleId } from 'src/constant/GroupRoleId';
 import { showSwal } from 'src/customs/components/alerts/alerts';
+import { IconEye, IconEyeOff } from '@tabler/icons-react';
+import { InputAdornment, IconButton } from '@mui/material';
 
 interface FormUserProps {
   formData: any;
@@ -43,9 +45,14 @@ const FormUser: React.FC<FormUserProps> = ({
   const [snackbarMsg, setSnackbarMsg] = useState('');
   const [snackbarType, setSnackbarType] = useState<'success' | 'error' | 'info'>('info');
   const [alertType, setAlertType] = useState<'info' | 'success' | 'error'>('info');
-  const [employeeRes, setEmployeeRes] = useState<any[]>([]);
   const [userGroup, setUserGroup] = useState<any[]>([]);
   const { token } = useSession();
+
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleTogglePassword = () => {
+    setShowPassword((prev) => !prev);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -112,7 +119,7 @@ const FormUser: React.FC<FormUserProps> = ({
         setFormData((prev: any) => ({ ...prev, organization_id: foundOrg.id }));
       }
     }
-  }, [organizationRes, employeeRes]);
+  }, [organizationRes]);
 
   const handleGroupChange = (value: string) => {
     setFormData((prev: any) => ({
@@ -229,10 +236,9 @@ const FormUser: React.FC<FormUserProps> = ({
               error={Boolean(errors.user_group_id)}
               helperText={errors.user_group_id ?? ''}
               fullWidth
+              SelectProps={{ displayEmpty: true }}
             >
-              <MenuItem value="" disabled>
-                Select Group
-              </MenuItem>
+              <MenuItem value="" disabled>Select Group</MenuItem>
 
               {groupOptions.map((group) => (
                 <MenuItem key={group.id} value={group.id}>
@@ -284,21 +290,29 @@ const FormUser: React.FC<FormUserProps> = ({
               <CustomFormLabel htmlFor="password" sx={{ mt: 0.5 }}>
                 Password
               </CustomFormLabel>
+
               <CustomTextField
                 id="password"
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 value={formData.password || ''}
                 onChange={handleChange}
                 error={Boolean(errors.password)}
                 helperText={errors.password ?? ''}
                 fullWidth
                 placeholder="Enter your password"
-                // required
                 disabled={loading}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton onClick={handleTogglePassword} edge="end">
+                        {showPassword ? <IconEyeOff size={20} /> : <IconEye size={20} />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
               />
             </Grid2>
           )}
-
           <Grid2 size={12}>
             <CustomFormLabel htmlFor="description" sx={{ mt: 0.5 }}>
               Description

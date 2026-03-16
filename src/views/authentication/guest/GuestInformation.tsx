@@ -146,7 +146,6 @@ const GuestInformationStepper = () => {
 
       const res = await AuthVisitor({ code });
       setInvitationData(res.collection);
-      // console.log(res);
 
       const initial: Record<string, any> = {};
       res.collection.question_page.forEach((section: any) => {
@@ -1036,11 +1035,14 @@ const GuestInformationStepper = () => {
     const { question_page = [], site_place_data, visitor_type, visitor_type_data } = invitationData;
 
     return {
+      // trx_visitor_id : visitor_id,
+      trx_visitor_id: invitationData?.id,
       visitor_type: visitor_type,
       type_registered: 0,
       is_group: false,
       tz: site_place_data?.timezone ?? 'Asia/Jakarta',
       registered_site: site_place_data?.id,
+      flow: 'SubmitPraregister',
       data_visitor: [
         {
           question_page: question_page.map((section: any) => {
@@ -1110,13 +1112,13 @@ const GuestInformationStepper = () => {
         return;
       }
 
-      const res = await SubmitPraForm(payload, visitorId);
+      const res = await SubmitPraForm(payload);
       console.log('✅ SubmitPraForm success:', JSON.stringify(res || {}, null, 2));
 
       // await new Promise((r) => setTimeout(r, 500));
 
       const authRes = await AuthVisitor({ code });
-      console.log('✅ AuthVisitor success:', JSON.stringify(authRes || {}, null, 2));
+      // console.log('✅ AuthVisitor success:', JSON.stringify(authRes || {}, null, 2));
       const token = authRes?.collection?.token;
       // console.log('token', token);
 

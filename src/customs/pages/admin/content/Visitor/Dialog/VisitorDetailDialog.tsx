@@ -34,7 +34,7 @@ import {
   IconCar,
   IconLicense,
   IconCalendarUp,
-  IconMapPin,   
+  IconMapPin,
   IconUserCheck,
   IconLogin2,
   IconLogout2,
@@ -78,6 +78,11 @@ const VisitorDetailDialog: React.FC<VisitorDetailDialogProps> = ({
       return '-';
     }
   };
+  const avatarSrc = detail?.selfie_image
+    ? `${axiosInstance2.defaults.baseURL}/cdn${detail.selfie_image}`
+    : detail?.identity_image
+      ? `${axiosInstance2.defaults.baseURL}/cdn${detail.identity_image}`
+      : undefined;
   return (
     <Dialog fullWidth maxWidth="md" open={open} onClose={onClose}>
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -105,7 +110,7 @@ const VisitorDetailDialog: React.FC<VisitorDetailDialogProps> = ({
           <Box>
             <Box display="flex" flexDirection="column" alignItems="center" gap={1.5} mb={2}>
               <Avatar
-                src={`${axiosInstance2.defaults.baseURL}/cdn${detail.selfie_image}` || `${CDN_BASE}${detail.identity_image}` || ''}
+                src={avatarSrc}
                 alt={detail.name || 'visitor'}
                 sx={{ width: 100, height: 100 }}
               />

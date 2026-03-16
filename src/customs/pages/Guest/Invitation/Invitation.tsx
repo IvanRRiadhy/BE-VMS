@@ -962,7 +962,6 @@ const Invitation = () => {
 
     if (current.type === 'visitor_information_group') {
       const visitorSections = current.sections || [];
-      // 🔹 kumpulkan semua form dari semua section
       const allForms = visitorSections.flatMap((section: any) => section.form || []);
 
       const uniqueForms = allForms.filter(
@@ -1180,14 +1179,11 @@ const Invitation = () => {
             let displayValue = '-';
 
             if (f.remarks === 'host') {
-              // tampilkan nama host, bukan ID
               displayValue = invitationData?.collection?.host_data?.name ?? f.answer_text ?? '-';
             } else if (f.remarks === 'site_place') {
-              // tampilkan nama site, bukan ID
               displayValue =
                 invitationData?.collection?.site_place_data?.name ?? f.answer_text ?? '-';
             } else if (f.remarks === 'visitor_period_start' || f.remarks === 'visitor_period_end') {
-              // 🕒 khusus untuk field waktu (convert UTC → local)
               const dt = moment.utc(f.answer_datetime).local();
               const raw = f.answer_datetime;
 
@@ -1260,7 +1256,6 @@ const Invitation = () => {
       }
       setTimeout(() => setLoadingAccess(false), 800);
 
-      // 🟢 BARU MUNCULKAN ALERT
       setTimeout(() => showSwal('success', 'Successfully extended visit.'), 1000);
 
       setOpenExtendVisit(false);
@@ -1285,6 +1280,10 @@ const Invitation = () => {
     setApplyToAll(false);
     setSelectedMinutes(null);
     setOpenExtendVisit(false);
+  };
+
+  const handleEdit = (id: string) => {
+    setInvitatioOpenDetail(true);
   };
 
   return (
@@ -1313,7 +1312,7 @@ const Invitation = () => {
                 isHaveAction={true}
                 titleHeader="Invitation"
                 isHaveHeaderTitle={true}
-                isHaveSearch={false}
+                isHaveSearch={true}
                 isHavePeriod={true}
                 isHaveFilter={false}
                 isHaveExportPdf={false}
@@ -1324,6 +1323,10 @@ const Invitation = () => {
                 isHaveFilterMore={false}
                 onView={(row: { id: string }) => {
                   handleView(row.id);
+                }}
+                onEdit={(row) => {
+                  handleEdit(row.id);
+                  // setEdittingId(row.id);
                 }}
                 isHaveHeader={false}
                 isHavePdf={true}
@@ -1354,13 +1357,13 @@ const Invitation = () => {
           open={invitatioOpenDetail}
           onClose={() => setInvitatioOpenDetail(false)}
           fullWidth
-          // maxWidth="xl"
-          maxWidth={false}
-          PaperProps={{
-            sx: {
-              width: '100vw',
-            },
-          }}
+          maxWidth="md"
+          // maxWidth={false}
+          // PaperProps={{
+          //   sx: {
+          //     width: '100vw',
+          //   },
+          // }}
         >
           {/* <DialogTitle>Detail Invitation</DialogTitle> */}
           <DialogTitle>Edit Invitation</DialogTitle>
@@ -1377,8 +1380,8 @@ const Invitation = () => {
             <IconX />
           </IconButton>
           <Divider />
-          <DialogContent dividers>
-            <Grid container spacing={2}>
+          {/* <DialogContent dividers> */}
+          {/* <Grid container spacing={2}>
               <Grid size={{ xs: 12, md: 12 }}>
                 <Stepper activeStep={activeStep} alternativeLabel>
                   {groupedSections.map((s, idx) => (
@@ -1420,16 +1423,30 @@ const Invitation = () => {
                   </Box>
                 </>
               </Grid>
-            </Grid>
-          </DialogContent>
-          {/* <DialogContent dividers>
+            </Grid> */}
+          {/* </DialogContent> */}
+          <DialogContent dividers>
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, md: 12 }}>
                 <CustomFormLabel sx={{ mt: 0.5 }}>Visit Start</CustomFormLabel>
-                <CustomTextField type='date' />
+                <CustomTextField type="datetime-local" fullWidth />
+              </Grid>
+              <Grid size={{ xs: 12, md: 12 }}>
+                <CustomFormLabel sx={{ mt: 0.5 }}>Visit End</CustomFormLabel>
+                <CustomTextField type="datetime-local" fullWidth />
               </Grid>
             </Grid>
-          </DialogContent> */}
+          </DialogContent>
+          <DialogActions>
+            <Button
+              onClick={() => setInvitatioOpenDetail(false)}
+              fullWidth
+              color="primary"
+              variant="contained"
+            >
+              Submit
+            </Button>
+          </DialogActions>
         </Dialog>
 
         <InvitationDetailDialog

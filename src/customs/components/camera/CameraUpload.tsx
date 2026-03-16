@@ -83,11 +83,11 @@ const CameraUpload: React.FC<CameraUploadProps> = ({ value, onChange, containerR
   };
 
   return (
-    <Box>
+    <>
       <Box
         sx={{
           borderRadius: 2,
-          p: 2,
+          py: 1,
           textAlign: 'center',
           display: 'flex',
           alignItems: 'center',
@@ -185,7 +185,7 @@ const CameraUpload: React.FC<CameraUploadProps> = ({ value, onChange, containerR
           </Box>
         </Box>
       </Dialog>
-    </Box>
+    </>
   );
 };
 

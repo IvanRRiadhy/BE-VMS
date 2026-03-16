@@ -18,7 +18,9 @@ const CustomNavigation: React.FC<CustomNavigationProps> = ({
   itemDataCustomNavListing,
   itemDataCustomSidebarItems,
 }) => {
+  const sm = useMediaQuery((theme: Theme) => theme.breakpoints.down('sm'));
   const lgUp = useMediaQuery((theme: Theme) => theme.breakpoints.up('lg'));
+  const xl = useMediaQuery((theme: Theme) => theme.breakpoints.up('xl'));
   const customizer = useSelector((state: AppState) => state.customizer);
   const dispatch = useDispatch();
 
@@ -43,7 +45,7 @@ const CustomNavigation: React.FC<CustomNavigationProps> = ({
           alignItems={'center'}
         >
           <CustomNavListing itemData={itemDataCustomNavListing} />
-          <CurrentTime />
+          {xl && <CurrentTime />}
         </Box>
       </Box>
     );

@@ -1,5 +1,5 @@
 import { Typography } from '@mui/material';
-import { Box, Container, Stack } from '@mui/system';
+import { Box, Container, Stack, useMediaQuery, useTheme } from '@mui/system';
 import {
   IconBrandFacebook,
   IconBrandInstagram,
@@ -10,6 +10,9 @@ import {
 import FooterBg from 'src/assets/images/backgrounds/footer-bg.jpg';
 
 const Footer = () => {
+  const theme = useTheme();
+  const lg = useMediaQuery(theme.breakpoints.up('lg'));
+
   return (
     <Box>
       <Box
@@ -17,11 +20,12 @@ const Footer = () => {
           backgroundImage: `url(${FooterBg})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          height: 250,
+          height: lg ? '180px' : '250px',
           width: '100%',
           borderTop: '2px solid #055499',
           display: 'flex',
           alignItems: 'center',
+          mt: 0,
         }}
       >
         <Container
@@ -132,7 +136,7 @@ const Footer = () => {
             <Typography variant="h6">Contact Center Bank Indonesia Bicara</Typography>
             <Typography variant="h6">Telp. : 131 dan 1500131 (dari luar negeri)</Typography>
             <Typography variant="h6">E-mail : bicara@bi.go.id</Typography>
-            <Typography variant="h6">Chatbot LISA : 081 131 131 131</Typography>
+            {/* <Typography variant="h6">Chatbot LISA : 081 131 131 131</Typography> */}
           </Stack>
         </Container>
       </Box>
