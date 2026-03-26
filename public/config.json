@@ -1,4 +1,4 @@
 {
-  "API_BASE_URL": "https://vms.app.bio-experience.com",
-  "API_URL":  "https://vms.app.bio-experience.com/api"
+  "API_BASE_URL": "https://be-vms.app.bio-experience.com",
+  "API_URL":  "https://be-vms.app.bio-experience.com/api"
 }
