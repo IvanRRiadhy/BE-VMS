@@ -169,6 +169,7 @@ const Content = () => {
   };
   const handleCloseDialog = () => {
     setOpenFormCreateVisitorType(false);
+    localStorage.removeItem('unsavedVisitorTypeData');
   };
 
   const handleAdd = useCallback(() => {

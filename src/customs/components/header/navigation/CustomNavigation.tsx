@@ -36,6 +36,7 @@ const CustomNavigation: React.FC<CustomNavigationProps> = ({
           px: 1.5,
           py: 2,
           borderRadius: 0,
+          // overflow: 'hidden',
         }}
       >
         <Box

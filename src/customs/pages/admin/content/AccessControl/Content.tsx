@@ -29,14 +29,10 @@ import {
   deleteAccessControl,
 } from 'src/customs/api/admin';
 import {
-  GetAllAccessControlResponse,
-  GetAccessControlPaginationResponse,
-  // Item,
   CreateAccessControlRequest,
   CreateAccessControlRequestSchema,
 } from 'src/customs/api/models/Admin/AccessControl';
 import FormAccessControl from './FormAccessControl';
-import Swal from 'sweetalert2';
 
 interface Item {
   brand_id: string;
@@ -93,7 +89,6 @@ const Content = () => {
         const response = await getAllAccessControlPagination(
           token,
           start,
-          //  page,
           rowsPerPage,
           sortColumn,
           searchKeyword,
@@ -103,7 +98,6 @@ const Content = () => {
         setTotalFilteredRecords(response.RecordsFiltered);
 
         const rows: any[] = response.collection.map((item: any) => ({
-          // brand_id: item.brand_id,
           brand_name: item.brand_name,
           type: item.type,
           name: item.name,
@@ -405,8 +399,8 @@ const Content = () => {
         <Divider />
         <DialogContent>
           <FormAccessControl
-            formData={formDataAddAccessControl}
-            setFormData={setFormDataAddAccessControl}
+            // formData={formDataAddAccessControl}
+            // setFormData={setFormDataAddAccessControl}
             onSuccess={handleSuccess}
             editingId={edittingId}
           />

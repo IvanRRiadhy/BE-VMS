@@ -49,16 +49,17 @@ export type GetAccessControlByIdResponse = {
 };
 //CREATE
 export const CreateAccessControlRequestSchema = z.object({
-  brand_id: z.string().default(''),
-  brand_name: z.string().default(''),
-  type: z.number().default(-1),
+  brand_id: z.string(),
+  brand_name: z.string(),
+  // type: z.number().default(-1),
+  type: z.coerce.number(),
   name: z.string().min(1, 'Name is required'),
-  description: z.string().nullable().default(''),
-  channel: z.string().default(''),
-  door_id: z.string().default(''),
-  raw: z.string().default('{}'),
+  description: z.string().nullable(),
+  channel: z.string(),
+  door_id: z.string(),
+  raw: z.string(),
   integration_id: z.string().min(1, 'Integration is required'),
-  integration_name: z.string().default(''),
+  integration_name: z.string(),
 });
 
 export type CreateAccessControlRequest = z.infer<typeof CreateAccessControlRequestSchema>;
@@ -80,18 +81,17 @@ export type DeleteAccessControlResponse<T = any> = {
   collection: T | null;
 };
 
-
 export const UpdateAccessControlRequestSchema = z.object({
-  brand_id: z.string().default(''),
-  brand_name: z.string().default('').optional(),
-  type: z.number().default(0),
-  name: z.string().default(''),
-  description: z.string().default('').optional(),
-  channel: z.string().default(''),
-  door_id: z.string().default(''),
-  raw: z.string().default('{}'),
-  integration_id: z.string().default(''),
-  integration_name: z.string().default('').optional(),
+  brand_id: z.string(),
+  brand_name: z.string().optional(),
+  type: z.coerce.number(),
+  name: z.string(),
+  description: z.string().optional(),
+  channel: z.string(),
+  door_id: z.string(),
+  raw: z.string(),
+  integration_id: z.string(),
+  integration_name: z.string().optional(),
 });
 
 export type UpdateAccessControlRequest = z.infer<typeof UpdateAccessControlRequestSchema>;

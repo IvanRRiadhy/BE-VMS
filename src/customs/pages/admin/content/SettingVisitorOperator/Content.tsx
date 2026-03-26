@@ -1,13 +1,10 @@
 import { useEffect, useState } from 'react';
-import { flushSync } from 'react-dom';
 import {
   Box,
   Grid2 as Grid,
   Paper,
   Tab,
   Tabs,
-  Card,
-  Skeleton,
   CircularProgress,
   Backdrop,
   Portal,
@@ -30,6 +27,8 @@ import {
   Switch,
   TableBody,
   MenuItem,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import {
@@ -42,12 +41,11 @@ import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { Item } from 'src/customs/api/models/Admin/Setting';
+import ApprovalWorkflow from 'src/customs/pages/admin/content/Approve/content';
 import {
   createOperatorSettingGiveAccess,
   createOperatorSettingRegiterSite,
   createOperatorSiteAccess,
-  deleteOperatorSettingGiveAccess,
-  getAccessControl,
   getAllAccessControl,
   getAllOrganizations,
   getAllSite,
@@ -58,45 +56,27 @@ import {
   getSetting,
   updateSetting,
 } from 'src/customs/api/admin';
-import {
-  showConfirmDelete,
-  showErrorAlert,
-  showSuccessAlert,
-  showSwal,
-} from 'src/customs/components/alerts/alerts';
+import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 
 import FormSetting from './FormSetting';
 import FormSettingRegisteredSite from './FormSettingRegisteredSite';
-import { access } from 'fs';
-import { id } from 'date-fns/locale';
-import { create } from 'lodash';
-// import FormSettingSmtp from './FormSettingSmtp';
-// import FormSendTestEmail from './FormSendTestEmail';
+import { getApprovalWorkflowByDt } from 'src/customs/api/Admin/ApprovalWorkflow';
 
 type SettingSMTPRow = {
   id: number;
   organization_id: string;
 };
-interface RegisteredSite {
-  id?: string;
-  user_id?: string | null;
-  site_id?: string | null;
-  can_confirmation_arrival?: boolean;
-  can_extend_period?: boolean;
-  can_extend_visit?: boolean;
-}
 
 const Content = () => {
   const { token } = useSession();
 
-  // Table states
   const [settingData, setSettingData] = useState<any[]>([]);
   const [operatorSettingData, setOperatorSettingData] = useState<any[]>([]);
   const [selectedRows, setSelectedRows] = useState<SettingSMTPRow[]>([]);
   const [isDataReady, setIsDataReady] = useState(false);
   const [totalRecords, setTotalRecords] = useState(0);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -118,11 +98,7 @@ const Content = () => {
   });
 
   const [showForm, setShowForm] = useState(false);
-  // Tambah di atas return()
-  const [busyId, setBusyId] = useState<string | number | null>(null);
-  // UI states
   const [loading, setLoading] = useState(false);
-
   const [loadingData, setLoadingData] = useState(false);
   const [edittingId, setEdittingId] = useState('');
   const [tabIndex, setTabIndex] = useState(0);
@@ -135,9 +111,16 @@ const Content = () => {
       icon: IconSettingsFilled,
       color: 'none',
     },
+    // {
+    //   title: 'Total Operator Setting',
+    //   subTitle: `${operatorSettingData.length ?? 0}`,
+    //   subTitleSetting: 10,
+    //   icon: IconSettingsFilled,
+    //   color: 'none',
+    // },
     {
-      title: 'Total Operator Setting',
-      subTitle: `${operatorSettingData.length ?? 0}`,
+      title: 'Total Approval Workflow',
+      subTitle: `${totalRecords ?? 0}`,
       subTitleSetting: 10,
       icon: IconSettingsFilled,
       color: 'none',
@@ -147,19 +130,18 @@ const Content = () => {
   const handleSubmit = async () => {
     try {
       // const validated = CreateSettingSmtpSchema.parse(data);
-
       if (edittingId) {
         await updateSetting(token as string, edittingId, formData);
-        // showSuccessAlert('Success!', 'Setting updated.');
         showSwal('success', 'Setting updated successfully!');
       }
 
-      setRefreshTrigger((p) => p + 1); // refresh table
-      setShowForm(false); // kembali ke tabel
-      setEdittingId(''); // reset state edit
+      setRefreshTrigger((p) => p + 1);
+      setShowForm(false);
+      setEdittingId('');
     } catch (error: any) {
       console.error(error);
-      showErrorAlert('Error!', error.message);
+      // showErrorAlert('Error!', error.message);
+      showSwal('error', error.message || 'Failed to update setting');
     }
   };
 
@@ -184,20 +166,13 @@ const Content = () => {
     } catch (error: any) {
       console.error(error);
       // showErrorAlert('Error!', error.message);
-      showSwal('error', error.message);
+      showSwal('error', error.message || 'Failed to update registered site.');
     }
   };
 
   const handleCancelForm = () => {
     setShowForm(false);
   };
-  const normalizeSetting = (raw: any) => ({
-    id: raw.id,
-    // organization_id: raw.organization_id,
-    organization_name: raw.organization?.name ?? '-', // ambil nama
-  });
-
-  const [organizations, setOrganizations] = useState<any[]>([]);
 
   useEffect(() => {
     if (!token) return;
@@ -207,9 +182,7 @@ const Content = () => {
       try {
         const resSetting = await getSetting(token as string);
         const resOrgs = await getAllOrganizations(token as string);
-
         const orgs = resOrgs.collection ?? [];
-        setOrganizations(orgs);
 
         let raw = resSetting.collection;
         let data: any[] = [];
@@ -220,7 +193,6 @@ const Content = () => {
           data = [raw];
         }
 
-        // enrich data dengan nama organisasi
         const enriched = data.map((item) => {
           const org = orgs.find((o: any) => o.id === item.organization_id);
           return {
@@ -299,120 +271,6 @@ const Content = () => {
   const [acessData, setAcessData] = useState<any[]>([]);
   const [siteAccessData, setSiteAccessData] = useState<any[]>([]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const res = await getAllAccessControl(token as string);
-      const resMapp = res.collection.map((item: any) => ({
-        id: item.id,
-        name: item.name,
-      }));
-      setAcessData(resMapp ?? []);
-    };
-
-    fetchData();
-  }, [token]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const res = await getAllSite(token as string);
-      const resMapp = res.collection.map((item: any) => ({
-        id: item.id,
-        name: item.name,
-      }));
-      setSiteAccessData(resMapp ?? []);
-    };
-    fetchData();
-  }, [token]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const res = await getAllUserOperatorVms(token as string);
-      const resMapp = res.collection.map((item: any) => ({
-        id: item.id,
-        fullname: item.fullname,
-        username: item.username,
-        email: item.email,
-        group_name: item.group_name,
-      }));
-      setOperatorSettingData(resMapp ?? []);
-    };
-
-    fetchData();
-  }, [token]);
-
-  const handleSubmitGiveAccess = async () => {
-    try {
-      if (!edittingId) {
-        showSwal('error', 'User ID not found');
-        return;
-      }
-
-      const payload = {
-        data: selectedAccess.map((row) => ({
-          user_id: edittingId,
-          access_control_id: row.access_control_id,
-          can_grant: true,
-          can_revoke: true,
-          can_block: true,
-        })),
-        deleted_ids: deletedAccessIds,
-      };
-
-      // console.log('payload', payload);
-
-      await createOperatorSettingGiveAccess(token as string, payload, edittingId);
-
-      showSwal('success', 'Give access successfully');
-      setOpenGiveAccess(false);
-    } catch (error: any) {
-      console.error(error);
-      showSwal('error', error.message);
-    }
-  };
-
-  const handleSubmitSiteAccess = async () => {
-    try {
-      const payload = {
-        data: selectedSiteAccess.map((row) => ({
-          user_id: edittingId,
-          site_id: row.site_id,
-        })),
-      };
-      console.log('payload', payload);
-      await createOperatorSiteAccess(token as string, payload, edittingId);
-      showSwal('success', 'Save site access successfully');
-      setOpenSiteAccess(false);
-    } catch (error: any) {
-      console.error(error);
-      showSwal('error', error.message);
-    }
-  };
-
-  const handleOpenGiveAccess = async (userId: string) => {
-    setEdittingId(userId);
-    setDeletedAccessIds([]);
-
-    try {
-      const res = await getOperatorSettingGiveAccessById(token as string, userId);
-      const rows = res.data.collection ?? [];
-
-      setSelectedAccess(
-        rows.map((r: any) => ({
-          id: r.id,
-          user_id: r.user_id,
-          access_control_id: r.access_control_id,
-          access_control_name: r.access_control?.name ?? '',
-          can_grant: !!r.can_grant,
-          can_revoke: !!r.can_revoke,
-          can_block: !!r.can_block,
-        })),
-      );
-    } catch {
-      setSelectedAccess([]);
-    }
-
-    setOpenGiveAccess(true);
-  };
 
   const [selectedAccess, setSelectedAccess] = useState<any[]>([]);
   const [selectedSiteAccess, setSelectedSiteAccess] = useState<any[]>([]);
@@ -439,28 +297,37 @@ const Content = () => {
     ]);
   };
 
-  const handleSiteAccess = async (userId: string) => {
-    setEdittingId(userId);
-
-    try {
-      const res = await getOperatorSiteAccessById(token as string, userId);
-      const rows = res.data.collection ?? [];
-
-      setSelectedSiteAccess(
-        rows.map((r: any) => ({
-          id: r.id,
-          user_id: r.user_id,
-          site_id: r.site_id?.toLowerCase(),
-        })),
-      );
-    } catch (error) {
-      setSelectedSiteAccess([]);
-    }
-
-    setOpenSiteAccess(true);
-  };
-
   const [openRegisteredSite, setOpenRegisteredSite] = useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [sortDir, setSortDir] = useState('desc');
+  const [tableData, setTableData] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!token) return;
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const start = page * rowsPerPage;
+        const response = await getApprovalWorkflowByDt(
+          token,
+          start,
+          rowsPerPage,
+          sortDir,
+          searchKeyword,
+        );
+        setTableData(response.collection.map(({ conditions, ...rest }: any) => rest));
+        setTotalRecords(response.RecordsTotal);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        setTableData([]);
+        setTotalRecords(0);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [token, page, rowsPerPage, sortDir, refreshTrigger, searchKeyword]);
 
   return (
     <PageContainer
@@ -472,21 +339,42 @@ const Content = () => {
           <Grid size={{ xs: 12 }}>
             <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
           </Grid>
-
-          <Paper sx={{ display: 'flex', minHeight: 400, mt: 2, p: 2, overflowX: 'auto' }}>
+          <Paper
+            sx={{
+              display: 'flex',
+              flexDirection: isMobile ? 'column' : 'row',
+              minHeight: 400,
+              mt: 2,
+              p: 2,
+              overflowX: 'auto',
+            }}
+          >
             <Tabs
-              orientation="vertical"
+              orientation={isMobile ? 'horizontal' : 'vertical'}
               value={tabIndex}
               onChange={(_, newValue) => setTabIndex(newValue)}
-              sx={{ borderRight: 1, borderColor: 'divider', minWidth: 180 }}
+              variant={isMobile ? 'scrollable' : 'standard'}
+              scrollButtons={isMobile ? 'auto' : false}
+              sx={{
+                borderRight: isMobile ? 0 : 1,
+                borderBottom: isMobile ? 1 : 0,
+                borderColor: 'divider',
+                minWidth: isMobile ? '100%' : 180,
+              }}
             >
               <Tab label="Visitor Setting" />
-              <Tab label="Operator Setting" />
+              {/* <Tab label="Operator Setting" /> */}
+              <Tab label="Approval Workflow" />
             </Tabs>
 
-            <Box sx={{ flex: 1 }}>
+            <Box
+              sx={{
+                flex: 1,
+                mt: isMobile ? 2 : 0,
+              }}
+            >
               {tabIndex === 0 ? (
-                <Box sx={{ overflowX: 'auto', p: 2, height: '100%' }}>
+                <Box sx={{ overflowX: 'auto', p: { xs: 0, md: 2 }, height: '100%' }}>
                   {!showForm ? (
                     <DynamicTable
                       loading={loading}
@@ -519,7 +407,9 @@ const Content = () => {
                     />
                   )}
                 </Box>
-              ) : (
+              ) : null}
+
+              {/* {tabIndex === 1 ? (
                 <Box sx={{ overflowX: 'auto', p: 2, height: '100%' }}>
                   {!showForm ? (
                     <DynamicTable
@@ -550,7 +440,21 @@ const Content = () => {
                     />
                   ) : null}
                 </Box>
-              )}
+              ) : null} */}
+
+              {tabIndex === 1 ? (
+                <Box sx={{ overflowX: 'auto', p: { xs: 0, md: 2 }, height: '100%' }}>
+                  {!showForm ? (
+                    <ApprovalWorkflow
+                      tableData={tableData}
+                      searchKeyword={searchKeyword}
+                      setSearchKeyword={setSearchKeyword}
+                      refreshTrigger={refreshTrigger}
+                      setRefreshTrigger={setRefreshTrigger}
+                    />
+                  ) : null}
+                </Box>
+              ) : null}
             </Box>
           </Paper>
         </Box>
@@ -566,299 +470,6 @@ const Content = () => {
           </Backdrop>
         </Portal>
       </Container>
-
-      {/* Registered Site */}
-
-      {/* Give Access */}
-      <Dialog
-        open={openGiveAccess}
-        onClose={() => setOpenGiveAccess(false)}
-        fullWidth
-        maxWidth="md"
-      >
-        <DialogTitle>Give Access</DialogTitle>
-        <IconButton
-          aria-label="close"
-          onClick={() => setOpenGiveAccess(false)}
-          sx={{
-            position: 'absolute',
-            right: 10,
-            top: 10,
-            color: (theme) => theme.palette.grey[500],
-          }}
-        >
-          <IconX />
-        </IconButton>
-        <DialogContent dividers>
-          <TableContainer component={Paper} sx={{ mt: 1 }}>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Access</TableCell>
-                  {/* <TableCell align="center">Can Grant</TableCell>
-                  <TableCell align="center">Can Revoke</TableCell>
-                  <TableCell align="center">Can Block</TableCell> */}
-                  <TableCell align="center">Action</TableCell>
-                </TableRow>
-              </TableHead>
-
-              <TableBody>
-                {selectedAccess.map((row, index) => (
-                  <TableRow key={index}>
-                    <TableCell>
-                      <FormControl size="small" fullWidth>
-                        <Select
-                          value={row.access_control_id}
-                          onChange={(e) => {
-                            const value = e.target.value as string;
-                            setSelectedAccess((prev) =>
-                              prev.map((r, i) =>
-                                i === index
-                                  ? {
-                                      ...r,
-                                      access_control_id: value,
-                                      access_control_name:
-                                        acessData.find((a) => a.id === value)?.name ?? '',
-                                    }
-                                  : r,
-                              ),
-                            );
-                          }}
-                        >
-                          {acessData.map((a) => (
-                            <MenuItem
-                              key={a.id}
-                              value={a.id}
-                              disabled={selectedAccess.some(
-                                (x, i) => x.access_control_id === a.id && i !== index,
-                              )}
-                            >
-                              {a.name}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </TableCell>
-
-                    {/* <TableCell align="center">
-                      <Switch
-                        checked={giveAccessForm.can_grant}
-                        onChange={(e) =>
-                          setGiveAccessForm((prev) => ({
-                            ...prev,
-                            can_grant: e.target.checked,
-                          }))
-                        }
-                      />
-                    </TableCell>
-
-                    <TableCell align="center">
-                      <Switch
-                        checked={giveAccessForm.can_revoke}
-                        onChange={(e) =>
-                          setGiveAccessForm((prev) => ({
-                            ...prev,
-                            can_revoke: e.target.checked,
-                          }))
-                        }
-                      />
-                    </TableCell>
-
-                    <TableCell align="center">
-                      <Switch
-                        checked={giveAccessForm.can_block}
-                        onChange={(e) =>
-                          setGiveAccessForm((prev) => ({
-                            ...prev,
-                            can_block: e.target.checked,
-                          }))
-                        }
-                      />
-                    </TableCell> */}
-
-                    <TableCell align="center">
-                      <IconButton
-                        color="error"
-                        onClick={() => {
-                          setSelectedAccess((prev) => {
-                            const removed = prev[index];
-
-                            if (removed?.id) {
-                              setDeletedAccessIds((ids) => [...ids, removed.id]);
-                            }
-
-                            return prev.filter((_, i) => i !== index);
-                          });
-                        }}
-                      >
-                        <IconTrash size={18} />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-
-                {selectedAccess.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={6} align="center" sx={{ color: 'text.secondary' }}>
-                      No access added yet
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-
-            {/* ADD NEW */}
-            <Box sx={{ p: 2 }}>
-              <Button variant="contained" onClick={handleAddNewAccess}>
-                Add New
-              </Button>
-            </Box>
-          </TableContainer>
-        </DialogContent>
-
-        <DialogActions>
-          <Button onClick={() => setOpenGiveAccess(false)} color="secondary">
-            Cancel
-          </Button>
-
-          <Button variant="contained" onClick={handleSubmitGiveAccess}>
-            Submit
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Give Site Access */}
-      <Dialog
-        open={openSiteAccess}
-        onClose={() => setOpenSiteAccess(false)}
-        fullWidth
-        maxWidth="md"
-      >
-        <DialogTitle>Site Access</DialogTitle>
-        <IconButton
-          aria-label="close"
-          onClick={() => setOpenSiteAccess(false)}
-          sx={{
-            position: 'absolute',
-            right: 10,
-            top: 10,
-            color: (theme) => theme.palette.grey[500],
-          }}
-        >
-          <IconX />
-        </IconButton>
-        <DialogContent dividers>
-          <TableContainer component={Paper} sx={{ mt: 1 }}>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Site</TableCell>
-                  <TableCell align="center">Action</TableCell>
-                </TableRow>
-              </TableHead>
-
-              <TableBody>
-                {selectedSiteAccess.map((row, index) => (
-                  <TableRow key={index}>
-                    <TableCell>
-                      <FormControl size="small" fullWidth>
-                        <Select
-                          size="small"
-                          fullWidth
-                          value={row.site_id}
-                          onChange={(e) => {
-                            const siteId = e.target.value as string;
-
-                            setSelectedSiteAccess((prev) =>
-                              prev.map((r, i) => (i === index ? { ...r, site_id: siteId } : r)),
-                            );
-                          }}
-                        >
-                          {siteAccessData.map((site) => (
-                            <MenuItem key={site.id} value={site.id.toLowerCase()}>
-                              {site.name}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </TableCell>
-
-                    <TableCell align="center">
-                      <IconButton
-                        color="error"
-                        onClick={() => {
-                          setSelectedSiteAccess((prev) => {
-                            const removed = prev[index];
-
-                            if (removed?.id) {
-                              setDeletedAccessIds((ids) => [...ids, removed.id]);
-                            }
-
-                            return prev.filter((_, i) => i !== index);
-                          });
-                        }}
-                      >
-                        <IconTrash size={18} />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-
-                {selectedSiteAccess.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={6} align="center" sx={{ color: 'text.secondary' }}>
-                      No site access added yet
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-            <Box sx={{ p: 2 }}>
-              <Button variant="contained" onClick={handleAddSiteAccess}>
-                Add New
-              </Button>
-            </Box>
-          </TableContainer>
-        </DialogContent>
-
-        <DialogActions>
-          <Button onClick={() => setOpenSiteAccess(false)} color="secondary">
-            Cancel
-          </Button>
-
-          <Button variant="contained" onClick={handleSubmitSiteAccess}>
-            Submit
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Registered Site */}
-      <Dialog open={openRegisteredSite} onClose={handleCancelForm} fullWidth maxWidth="md">
-        <DialogTitle>
-          {edittingId ? 'Edit' : 'Add'} Registered Site
-          <IconButton
-            aria-label="close"
-            onClick={() => setOpenRegisteredSite(false)}
-            sx={{
-              position: 'absolute',
-              right: 10,
-              top: 10,
-              color: (theme) => theme.palette.grey[500],
-            }}
-          >
-            <IconX />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent dividers>
-          <FormSettingRegisteredSite
-            formData={formDataRegisteredSite}
-            setFormData={setFormDataRegisteredSite}
-            editingId={edittingId}
-            onSubmit={handleSubmitRegisteredSite}
-            onCancel={() => setOpenRegisteredSite(false)}
-          />
-        </DialogContent>
-      </Dialog>
     </PageContainer>
   );
 };

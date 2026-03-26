@@ -100,7 +100,7 @@ const FormDriver = ({
   );
   const [activeStep, setActiveStep] = useState(0);
   const [skipped, setSkipped] = useState(new Set<number>());
-  const { token } = useSession(); // Assuming you have a session context to get the token
+  const { token } = useSession();
   const [organization, setOrganization] = useState<any[]>([]);
   const [department, setDepartment] = useState<any[]>([]);
   const [district, setDistrict] = useState<any[]>([]);
@@ -113,12 +113,15 @@ const FormDriver = ({
   const webcamRef = useRef<Webcam>(null);
   const [removing, setRemoving] = useState(false);
   const [employeeAllRes, setEmployeeAllRes] = useState<Item[]>([]);
-
+  const [localForm, setLocalForm] = useState(formData);
+  useEffect(() => {
+    setLocalForm(formData);
+  }, [formData]);
   const clearLocal = () => {
     setSiteImageFile(null);
     setPreviewUrl(null);
     setScreenshot(null);
-    setFormData((prev) => ({ ...prev, faceimage: '' }));
+    setLocalForm((prev) => ({ ...prev, faceimage: '' }));
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -127,10 +130,10 @@ const FormDriver = ({
     if (removing) return;
 
     const serverPath =
-      formData.faceimage &&
-      !formData.faceimage.startsWith('data:') &&
-      !/^https?:\/\//i.test(formData.faceimage)
-        ? formData.faceimage
+      localForm.faceimage &&
+      !localForm.faceimage.startsWith('data:') &&
+      !/^https?:\/\//i.test(localForm.faceimage)
+        ? localForm.faceimage
         : null;
 
     try {
@@ -160,7 +163,7 @@ const FormDriver = ({
       if (imageSrc) {
         setScreenshot(imageSrc);
         setPreviewUrl(imageSrc);
-        setFormData((prev) => ({
+        setLocalForm((prev) => ({
           ...prev,
           faceimage: imageSrc,
         }));
@@ -185,7 +188,6 @@ const FormDriver = ({
       const employeeAll = await getAllDriver(token);
       setEmployeeAllRes(employeeAll.collection ?? []);
 
-      // ⛔ JANGAN load detail karyawan ketika batch edit
       if (edittingId && !isBatchEdit) {
         const employeeRes = await getDriverById(edittingId, token);
         const employee = employeeRes?.collection ?? null;
@@ -197,7 +199,7 @@ const FormDriver = ({
                 : 1
               : Number(employee.gender ?? 0);
 
-          setFormData((prev) => ({
+          setLocalForm((prev) => ({
             ...prev,
             ...employee,
             gender: normalizedGender,
@@ -212,7 +214,6 @@ const FormDriver = ({
     fetchData();
   }, [token, edittingId, isBatchEdit]);
 
-  // Ambil subset field dari formData
   const pick = (obj: Record<string, any>, keys: readonly string[]) => {
     const out: Record<string, any> = {};
     keys.forEach((k) => {
@@ -244,14 +245,14 @@ const FormDriver = ({
     if (!schema) return true; // step tanpa aturan
 
     const fields = stepFieldMap[step] ?? [];
-    let payload = pick(formData, fields as any);
+    let payload = pick(localForm, fields as any);
 
     // Mode Batch Edit
     if (isBatchEdit) {
       const enabledKeys = fields.filter((k) => (enabledFields as any)?.[k] === true);
       if (enabledKeys.length === 0) return true;
 
-      payload = pick(formData, enabledKeys as any);
+      payload = pick(localForm, enabledKeys as any);
 
       const baseSchema = unwrapZodObject(schema);
       if (baseSchema) {
@@ -304,7 +305,7 @@ const FormDriver = ({
   ) => {
     const { id, name, value } = e.target as any;
     const key = (name || id) as string;
-    setFormData((prev) => ({
+    setLocalForm((prev) => ({
       ...prev,
       [name || id]: value,
     }));
@@ -314,15 +315,14 @@ const FormDriver = ({
   useEffect(() => {
     if (!isBatchEdit) return;
 
-    setFormData((prev) => ({
+    setLocalForm((prev) => ({
       ...prev,
       organization_id: '',
       department_id: '',
       district_id: '',
-      gender: 0, // atau biarkan '' jika skema mengizinkan
+      gender: 0,
     }));
 
-    // (opsional) reset switches ke false di parent
     setEnabledFields?.({
       organization_id: false,
       department_id: false,
@@ -332,7 +332,7 @@ const FormDriver = ({
   }, [isBatchEdit]);
 
   const resetEnabledFields = () => {
-    setFormData((prev) => ({
+    setLocalForm((prev) => ({
       ...prev,
       gender: 0,
       department_id: '',
@@ -348,7 +348,6 @@ const FormDriver = ({
   };
 
   const handleNext = () => {
-    // ✅ Cek step aktif sebelum maju
     if (!validateStep(activeStep)) return;
 
     let newSkipped = skipped;
@@ -386,164 +385,6 @@ const FormDriver = ({
 
   const isDataUrl = (s?: string) => typeof s === 'string' && /^data:image\//i.test(s);
 
-  // const handleOnSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   setLoading(true);
-  //   setErrors({});
-
-  //   try {
-  //     // Save form data to localStorage for unsaved changes
-  //     if (!token) {
-  //       setAlertType('error');
-  //       setAlertMessage('Something went wrong. Please try again later.');
-  //       setTimeout(() => {
-  //         setAlertType('info');
-  //         setAlertMessage('Complete the following data properly and correctly');
-  //       }, 3000);
-  //       return;
-  //     }
-
-  //     if (isBatchEdit && selectedRows.length > 0) {
-  //       // ambil hanya keys yang aktif
-  //       const enabledKeys = Object.keys(enabledFields ?? {}).filter(
-  //         (k) => (enabledFields as any)[k] === true,
-  //       ) as (keyof CreateDriverRequest)[];
-
-  //       if (enabledKeys.length === 0) {
-  //         setAlertType('error');
-  //         setAlertMessage('Please enable at least one field to update.');
-  //         setTimeout(() => {
-  //           setAlertType('info');
-  //           setAlertMessage('Complete the following data properly and correctly');
-  //         }, 3000);
-  //         setLoading(false);
-  //         return;
-  //       }
-
-  //       // ambil payload hanya field ON
-  //       const payload = pick(formData, enabledKeys);
-
-  //       // bikin schema subset sesuai field ON
-  //       const shape: Record<string, true> = {};
-  //       enabledKeys.forEach((k) => (shape[k as string] = true));
-
-  //       const baseSchema = unwrapZodObject(CreateDriverSubmitSchema);
-  //       const partialSchema = baseSchema?.pick(shape);
-
-  //       // validasi
-  //       if (partialSchema) {
-  //         const res = partialSchema.safeParse(payload);
-  //         if (!res.success) {
-  //           const em = toErrorMap(res.error.issues);
-  //           setErrors((prev) => ({ ...prev, ...em }));
-  //           setAlertType('error');
-  //           setAlertMessage('Please complete the required fields.');
-  //           const firstKey = Object.keys(em)[0];
-  //           if (firstKey) scrollToField(firstKey);
-  //           setLoading(false);
-  //           return;
-  //         }
-  //       }
-
-  //       // kalau lolos validasi → build updatedFields
-  //       const updatedFields = enabledKeys.reduce((acc, k) => {
-  //         (acc as any)[k] = formData[k];
-  //         return acc;
-  //       }, {} as Partial<CreateDriverRequest>);
-
-  //       for (const row of selectedRows) {
-  //         const updatedData: any = {
-  //           ...row,
-  //           ...updatedFields,
-  //         };
-  //         await updateDriver(row.id, updatedData, token);
-  //       }
-
-  //       showSwal('success', 'Batch data driver update successfully!');
-  //       // showSuccessAlert('Batch update successfully!');
-  //       resetEnabledFields();
-  //       onSuccess?.();
-  //       return;
-  //     }
-  //     console.log('Form data:', formData);
-  //     // NORMAL MODE (add/edit biasa)
-  //     const mergedFormData = normalizeForSubmit({
-  //       ...formData,
-  //       faceimage: formData.faceimage,
-  //       gender:
-  //         typeof formData.gender === 'string'
-  //           ? formData.gender === 'Female'
-  //             ? 0
-  //             : 1
-  //           : Number(formData.gender ?? 0),
-  //     });
-
-  //     const result = CreateDriverSubmitSchema.safeParse(mergedFormData);
-  //     if (!result.success) {
-  //       const em = toErrorMap(result.error.issues);
-  //       setErrors(em);
-  //       setAlertType('error');
-  //       setAlertMessage('Please complete the following data properly and correctly.');
-  //       // opsional: scroll ke field pertama yang error
-  //       const firstKey = Object.keys(em)[0];
-  //       if (firstKey) {
-  //         const el = document.getElementById(firstKey);
-  //         el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  //       }
-  //       return;
-  //     }
-
-  //     const data = result.data; // sudah valid
-
-  //     console.log('test', data);
-  //     if (edittingId) {
-  //       const hasNewImage = Boolean(siteImageFile) || isDataUrl(formData.faceimage);
-
-  //       // Buang faceimage dari payload update
-  //       const { faceimage: _drop, ...withoutImage } = result.data;
-
-  //       const editData: UpdateDriverRequest = {
-  //         ...withoutImage,
-  //         qr_code: formData.card_number,
-  //         is_email_verify: false,
-  //       };
-
-  //       // 1) Update data NON-gambar dulu
-  //       await updateDriver(edittingId, editData, token);
-
-  //       // 2) Kalau ada gambar BARU, upload terpisah
-  //       if (hasNewImage) {
-  //         if (siteImageFile) {
-  //           await uploadImageDriver(edittingId, siteImageFile, token);
-  //         } else {
-  //           // dari kamera (dataURL)
-  //           const blob = await (await fetch(formData.faceimage)).blob();
-  //           const file = new File([blob], 'camera.jpg', { type: blob.type || 'image/jpeg' });
-  //           await uploadImageDriver(edittingId, file, token);
-  //         }
-  //       }
-  //       showSwal('success', 'Driver successfully updated!', 3000);
-  //     } else {
-  //       await createDriver(data, token);
-  //       handleFileUploads();
-  //       showSwal('success', 'Driver successfully created!', 3000);
-  //       setFormData(CreateDriverRequestSchema.parse({}));
-  //     }
-  //     setTimeout(() => {
-  //       onSuccess?.();
-  //     }, 600);
-  //   } catch (err: any) {
-  //     if (err?.errors) {
-  //       setErrors(err.errors);
-  //     }
-  //     showSwal('error', err?.message ?? 'Failed to submit. Please try again.', 2000);
-  //   } finally {
-  //     setTimeout(() => {
-  //       setLoading(false);
-  //     }, 650);
-  //   }
-  // };
-
   const handleOnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -572,7 +413,7 @@ const FormDriver = ({
           return;
         }
 
-        const payload = pick(formData, enabledKeys);
+        const payload = pick(localForm, enabledKeys);
         const baseSchema = unwrapZodObject(CreateDriverSubmitSchema);
         const partialSchema = baseSchema?.pick(
           Object.fromEntries(enabledKeys.map((k) => [k, true])),
@@ -610,13 +451,13 @@ const FormDriver = ({
 
       // Mode create / edit biasa
       const mergedFormData = normalizeForSubmit({
-        ...formData,
+        ...localForm,
         gender:
-          typeof formData.gender === 'string'
-            ? formData.gender === 'Female'
+          typeof localForm.gender === 'string'
+            ? localForm.gender === 'Female'
               ? 0
               : 1
-            : Number(formData.gender ?? 0),
+            : Number(localForm.gender ?? 0),
       });
 
       const result = CreateDriverSubmitSchema.safeParse(mergedFormData);
@@ -631,8 +472,8 @@ const FormDriver = ({
 
       const data = result.data;
       console.log(data);
-      // const hasNewImage = Boolean(siteImageFile) || isDataUrl(formData.faceimage);
-      const rawFaceImage = formData.faceimage;
+      // const hasNewImage = Boolean(siteImageFile) || isDataUrl(localForm.faceimage);
+      const rawFaceImage = localForm.faceimage;
       const rawFileImage = siteImageFile;
 
       const hasNewImage = Boolean(rawFileImage) || isDataUrl(rawFaceImage);
@@ -642,7 +483,7 @@ const FormDriver = ({
         const { faceimage: _drop, ...withoutImage } = data;
         const editData: UpdateDriverRequest = {
           ...withoutImage,
-          qr_code: formData.card_number,
+          qr_code: localForm.card_number,
           is_email_verify: false,
         };
 
@@ -668,7 +509,7 @@ const FormDriver = ({
         setTimeout(() => {
           showSwal('success', 'Driver successfully created!');
         }, 750);
-        setFormData(CreateDriverRequestSchema.parse({}));
+        setLocalForm(CreateDriverRequestSchema.parse({}));
         // localStorage.removeItem('unsavedDriverData');
       }
 
@@ -710,18 +551,13 @@ const FormDriver = ({
       setSiteImageFile(selectedFile);
       setPreviewUrl(URL.createObjectURL(selectedFile));
 
-      // ⬅️ update ke formData juga
-      // setFormData((prev) => ({
-      //   ...prev,
-      //   faceimage: selectedFile.name, // atau biar jelas: '' dulu, nanti diupload terpisah
-      // }));
     }
   };
 
   useEffect(() => {
     if (siteImageFile) return;
 
-    const v = formData.faceimage?.toString() ?? '';
+    const v = localForm.faceimage?.toString() ?? '';
     if (!v) {
       setPreviewUrl(null);
       return;
@@ -741,7 +577,7 @@ const FormDriver = ({
     console.log('Preview URL:', url);
 
     setPreviewUrl(url);
-  }, [formData.faceimage, siteImageFile]);
+  }, [localForm.faceimage, siteImageFile]);
 
   const StepContent = (step: number) => {
     switch (step) {
@@ -758,7 +594,7 @@ const FormDriver = ({
               </CustomFormLabel>
               <CustomTextField
                 id="name"
-                value={formData.name}
+                value={localForm.name}
                 onChange={handleChange}
                 fullWidth
                 required
@@ -775,7 +611,7 @@ const FormDriver = ({
               </CustomFormLabel>
               <CustomTextField
                 id="person_id"
-                value={formData.person_id}
+                value={localForm.person_id}
                 onChange={handleChange}
                 fullWidth
                 variant="outlined"
@@ -786,13 +622,13 @@ const FormDriver = ({
               />
             </Grid2>
             <Grid2 size={{ xs: 12, sm: 12 }}>
-              <CustomFormLabel sx={{ my: 1 }} htmlFor="employeeType">
+              <CustomFormLabel sx={{ my: 1 }} htmlFor="employeeType" required>
                 <Typography variant="caption">Identity Type</Typography>
               </CustomFormLabel>
               <CustomSelect
                 id="employeeType"
-                value={formData.identity_type}
-                onChange={(e: any) => setFormData({ ...formData, identity_type: e.target.value })}
+                value={localForm.identity_type}
+                onChange={(e: any) => setLocalForm({ ...localForm, identity_type: e.target.value })}
                 fullWidth
                 disabled={isBatchEdit}
               >
@@ -813,7 +649,7 @@ const FormDriver = ({
               </CustomFormLabel>
               <CustomTextField
                 id="identity_id"
-                value={formData.identity_id}
+                value={localForm.identity_id}
                 onChange={handleChange}
                 fullWidth
                 variant="outlined"
@@ -831,7 +667,7 @@ const FormDriver = ({
               </CustomFormLabel>
               <CustomTextField
                 id="email"
-                value={formData.email}
+                value={localForm.email}
                 onChange={handleChange}
                 fullWidth
                 variant="outlined"
@@ -880,9 +716,9 @@ const FormDriver = ({
                     label="Female"
                     control={
                       <CustomRadio
-                        checked={formData.gender === 0}
+                        checked={localForm.gender === 0}
                         onChange={() => {
-                          setFormData((prev) => ({ ...prev, gender: 0 }));
+                          setLocalForm((prev) => ({ ...prev, gender: 0 }));
                           if (errors.gender) setErrors((p) => ({ ...p, gender: '' }));
                         }}
                         disabled={isBatchEdit && !enabledFields?.gender}
@@ -894,9 +730,9 @@ const FormDriver = ({
                     label="Male"
                     control={
                       <CustomRadio
-                        checked={formData.gender === 1}
+                        checked={localForm.gender === 1}
                         onChange={() => {
-                          setFormData((prev) => ({ ...prev, gender: 1 }));
+                          setLocalForm((prev) => ({ ...prev, gender: 1 }));
                           if (errors.gender) setErrors((p) => ({ ...p, gender: '' }));
                         }}
                         disabled={isBatchEdit && !enabledFields?.gender}
@@ -925,7 +761,7 @@ const FormDriver = ({
               </CustomFormLabel>
               <CustomTextField
                 id="phone"
-                value={formData.phone}
+                value={localForm.phone}
                 onChange={handleChange}
                 fullWidth
                 variant="outlined"
@@ -938,8 +774,8 @@ const FormDriver = ({
               </CustomFormLabel>
               <CustomSelect
                 id="vehicle_type"
-                value={formData.vehicle_type}
-                onChange={(e: any) => setFormData({ ...formData, vehicle_type: e.target.value })}
+                value={localForm.vehicle_type}
+                onChange={(e: any) => setLocalForm({ ...localForm, vehicle_type: e.target.value })}
                 fullWidth
                 disabled={isBatchEdit}
               >
@@ -957,8 +793,10 @@ const FormDriver = ({
               </CustomFormLabel>
               <CustomTextField
                 id="vehiclePlateNumber"
-                value={formData.vehicle_plate_number}
-                onChange={(e) => setFormData({ ...formData, vehicle_plate_number: e.target.value })}
+                value={localForm.vehicle_plate_number}
+                onChange={(e) =>
+                  setLocalForm({ ...localForm, vehicle_plate_number: e.target.value })
+                }
                 fullWidth
                 variant="outlined"
                 disabled={isBatchEdit}
@@ -1002,7 +840,7 @@ const FormDriver = ({
                 disablePortal
                 options={district.map((d: any) => ({ id: String(d.id), label: d.name ?? '' }))}
                 value={(() => {
-                  const cur = String(formData.district_id ?? '');
+                  const cur = String(localForm.district_id ?? '');
                   return (
                     district
                       .map((d: any) => ({ id: String(d.id), label: d.name ?? '' }))
@@ -1010,12 +848,12 @@ const FormDriver = ({
                   );
                 })()}
                 onChange={(_, newVal) => {
-                  setFormData((prev) => ({
+                  setLocalForm((prev) => ({
                     ...prev,
                     district_id: newVal ? newVal.id : '',
                   }));
 
-                  // ⬅️ hapus error ketika user pilih value
+      
                   setErrors((prev) => ({ ...prev, district_id: '' }));
                 }}
                 isOptionEqualToValue={(opt, val) => opt.id === val.id}
@@ -1073,7 +911,7 @@ const FormDriver = ({
                   label: o.name ?? '',
                 }))}
                 value={(() => {
-                  const currentId = String(formData.organization_id ?? '');
+                  const currentId = String(localForm.organization_id ?? '');
                   return (
                     organization
                       .map((o: any) => ({ id: String(o.id), label: o.name ?? '' }))
@@ -1081,7 +919,7 @@ const FormDriver = ({
                   );
                 })()}
                 onChange={(_, newVal) => {
-                  setFormData((prev) => ({
+                  setLocalForm((prev) => ({
                     ...prev,
                     organization_id: newVal ? newVal.id : '',
                   }));
@@ -1139,7 +977,7 @@ const FormDriver = ({
                 disablePortal
                 options={department.map((d: any) => ({ id: String(d.id), label: d.name ?? '' }))}
                 value={(() => {
-                  const cur = String(formData.department_id ?? '');
+                  const cur = String(localForm.department_id ?? '');
                   return (
                     department
                       .map((d: any) => ({ id: String(d.id), label: d.name ?? '' }))
@@ -1147,7 +985,7 @@ const FormDriver = ({
                   );
                 })()}
                 onChange={(_, newVal) => {
-                  setFormData((prev) => ({
+                  setLocalForm((prev) => ({
                     ...prev,
                     department_id: newVal ? newVal.id : '',
                   }));
@@ -1179,9 +1017,9 @@ const FormDriver = ({
               <FormControlLabel
                 control={
                   <Checkbox
-                    checked={Boolean(formData.is_head)}
+                    checked={Boolean(localForm.is_head)}
                     onChange={(e) => {
-                      setFormData((prev) => ({ ...prev, is_head: e.target.checked }));
+                      setLocalForm((prev) => ({ ...prev, is_head: e.target.checked }));
                       setErrors((prev) => ({ ...prev, is_head: '' }));
                     }}
                   />
@@ -1203,12 +1041,12 @@ const FormDriver = ({
                 autoHighlight
                 // disablePortal
                 options={employeeAllRes}
-                filterOptions={(opts) => opts.filter((o) => o.id !== formData.head_employee_2)}
+                filterOptions={(opts) => opts.filter((o) => o.id !== localForm.head_employee_2)}
                 getOptionLabel={(opt) => opt?.name ?? ''}
-                value={employeeAllRes.find((e) => e.id === formData.head_employee_1) || null}
+                value={employeeAllRes.find((e) => e.id === localForm.head_employee_1) || null}
                 isOptionEqualToValue={(opt, val) => opt.id === val.id}
                 onChange={(_, newVal) => {
-                  setFormData((prev) => ({
+                  setLocalForm((prev) => ({
                     ...prev,
                     head_employee_1: newVal ? newVal.id : '',
                   }));
@@ -1247,12 +1085,12 @@ const FormDriver = ({
                 // disablePortal
                 options={employeeAllRes}
                 // cegah pilih orang yg sama dgn Head-1
-                filterOptions={(opts) => opts.filter((o) => o.id !== formData.head_employee_1)}
+                filterOptions={(opts) => opts.filter((o) => o.id !== localForm.head_employee_1)}
                 getOptionLabel={(opt) => opt?.name ?? ''}
-                value={employeeAllRes.find((e) => e.id === formData.head_employee_2) || null}
+                value={employeeAllRes.find((e) => e.id === localForm.head_employee_2) || null}
                 isOptionEqualToValue={(opt, val) => opt.id === val.id}
                 onChange={(_, newVal) => {
-                  setFormData((prev) => ({
+                  setLocalForm((prev) => ({
                     ...prev,
                     head_employee_2: newVal ? newVal.id : '',
                   }));
@@ -1286,9 +1124,9 @@ const FormDriver = ({
               </CustomFormLabel>
               <CustomTextField
                 id="card_number"
-                value={formData.card_number}
+                value={localForm.card_number}
                 onChange={(e: any) => {
-                  setFormData((prev) => ({ ...prev, qr_code: prev.card_number }));
+                  setLocalForm((prev) => ({ ...prev, qr_code: prev.card_number }));
                   handleChange(e);
                 }}
                 fullWidth
@@ -1302,7 +1140,7 @@ const FormDriver = ({
               </CustomFormLabel>
               <CustomTextField
                 id="ble_card_number"
-                value={formData.ble_card_number}
+                value={localForm.ble_card_number}
                 onChange={handleChange}
                 fullWidth
                 variant="outlined"
@@ -1322,7 +1160,7 @@ const FormDriver = ({
               <CustomTextField
                 id="birth_date"
                 type="date"
-                value={formData.birth_date}
+                value={localForm.birth_date}
                 onChange={handleChange}
                 fullWidth
                 variant="outlined"
@@ -1338,7 +1176,7 @@ const FormDriver = ({
               <CustomTextField
                 id="join_date"
                 type="date"
-                value={formData.join_date}
+                value={localForm.join_date}
                 onChange={handleChange}
                 fullWidth
                 variant="outlined"
@@ -1354,7 +1192,7 @@ const FormDriver = ({
               <CustomTextField
                 id="exit_date"
                 type="date"
-                value={formData.exit_date}
+                value={localForm.exit_date}
                 onChange={handleChange}
                 fullWidth
                 variant="outlined"
@@ -1369,7 +1207,7 @@ const FormDriver = ({
               </CustomFormLabel>
               <CustomTextField
                 id="address"
-                value={formData.address}
+                value={localForm.address}
                 onChange={handleChange}
                 multiline
                 rows={3}
@@ -1644,7 +1482,7 @@ const FormDriver = ({
             zIndex: 999999,
           }}
         >
-          <CircularProgress color="inherit" />
+          <CircularProgress color="primary" />
         </Backdrop>
       </Portal>
     </form>

@@ -81,6 +81,23 @@ const entityLabel = (e?: DialogEntity) =>
         : 'District'
     : '';
 
+const useAutoSave = (key: string, data: any, delay = 1000) => {
+  const prevRef = useRef('');
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      const json = JSON.stringify(data);
+
+      if (prevRef.current !== json) {
+        prevRef.current = json;
+        localStorage.setItem(key, json);
+      }
+    }, delay);
+
+    return () => clearTimeout(handler);
+  }, [data, key, delay]);
+};
+
 const Content = () => {
   const [totals, setTotals] = useState({ organization: 0, department: 0, district: 0 });
   const cards = [
@@ -194,7 +211,7 @@ const Content = () => {
               token,
               start,
               rowsPerPage,
-              sortColumn,
+              // sortColumn,
               sortDir,
               searchKeyword,
             );
@@ -205,7 +222,7 @@ const Content = () => {
               token,
               start,
               rowsPerPage,
-              sortColumn,
+              // sortColumn,
               sortDir,
               searchKeyword,
             );
@@ -216,7 +233,7 @@ const Content = () => {
               token,
               start,
               rowsPerPage,
-              sortColumn,
+              // sortColumn,
               sortDir,
               searchKeyword,
             );
@@ -254,7 +271,7 @@ const Content = () => {
     selectedType,
     page,
     rowsPerPage,
-    sortColumn,
+    // sortColumn,
     sortDir,
     searchKeyword,
     refreshTrigger,
@@ -270,6 +287,8 @@ const Content = () => {
     code: false,
     host: false,
   });
+
+  const [isDirty, setIsDirty] = useState(false);
 
   const [formDataAddDepartment, setFormDataAddDepartment] = useState<CreateDepartmentRequest>(
     () => {
@@ -296,44 +315,21 @@ const Content = () => {
       const saved = localStorage.getItem('unsavedOrganizationFormAdd');
       try {
         const parsed = saved ? JSON.parse(saved) : {};
-        return CreateOrganizationSchema.parse(parsed);
+        //
+        return {
+          name: parsed?.name ?? '',
+          code: parsed?.code ?? '',
+          host: parsed?.host ?? '',
+        };
       } catch {
         return CreateOrganizationSchema.parse({});
       }
     },
   );
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      const def = CreateDepartmentSchema.parse({});
-      if (JSON.stringify(formDataAddDepartment) !== JSON.stringify(def)) {
-        localStorage.setItem('unsavedDepartmentFormAdd', JSON.stringify(formDataAddDepartment));
-      }
-    }, 500);
 
-    return () => clearTimeout(handler);
-  }, [formDataAddDepartment]);
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      const def = CreateDistrictSchema.parse({});
-      if (JSON.stringify(formDataAddDistrict) !== JSON.stringify(def)) {
-        localStorage.setItem('unsavedDistrictFormAdd', JSON.stringify(formDataAddDistrict));
-      }
-    }, 500);
-
-    return () => clearTimeout(handler);
-  }, [formDataAddDistrict]);
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      const def = CreateOrganizationSchema.parse({});
-      if (JSON.stringify(formDataAddOrganization) !== JSON.stringify(def)) {
-        localStorage.setItem('unsavedOrganizationFormAdd', JSON.stringify(formDataAddOrganization));
-      }
-    }, 500);
-
-    return () => clearTimeout(handler);
-  }, [formDataAddOrganization]);
+  useAutoSave('unsavedDepartmentFormAdd', formDataAddDepartment, 1200);
+  useAutoSave('unsavedDistrictFormAdd', formDataAddDistrict, 1200);
+  useAutoSave('unsavedOrganizationFormAdd', formDataAddOrganization, 1500);
 
   // ======= Open/Close dialog helpers =======
   const mapSelectedToEntity = useMemo<DialogEntity>(() => {
@@ -375,24 +371,24 @@ const Content = () => {
 
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 
-  const currentAddChanged = useMemo(() => {
-    if (!dialog || dialog.mode !== 'add') return false;
-    if (dialog.entity === 'Organizations') {
-      return (
-        JSON.stringify(formDataAddOrganization) !==
-        JSON.stringify(CreateOrganizationSchema.parse({}))
-      );
-    }
-    if (dialog.entity === 'Departments') {
-      return (
-        JSON.stringify(formDataAddDepartment) !== JSON.stringify(CreateDepartmentSchema.parse({}))
-      );
-    }
-    return JSON.stringify(formDataAddDistrict) !== JSON.stringify(CreateDistrictSchema.parse({}));
-  }, [dialog, formDataAddOrganization, formDataAddDepartment, formDataAddDistrict]);
+  // const currentAddChanged = useMemo(() => {
+  //   if (!dialog || dialog.mode !== 'add') return false;
+  //   if (dialog.entity === 'Organizations') {
+  //     return (
+  //       JSON.stringify(formDataAddOrganization) !==
+  //       JSON.stringify(CreateOrganizationSchema.parse({}))
+  //     );
+  //   }
+  //   if (dialog.entity === 'Departments') {
+  //     return (
+  //       JSON.stringify(formDataAddDepartment) !== JSON.stringify(CreateDepartmentSchema.parse({}))
+  //     );
+  //   }
+  //   return JSON.stringify(formDataAddDistrict) !== JSON.stringify(CreateDistrictSchema.parse({}));
+  // }, [dialog, formDataAddOrganization, formDataAddDepartment, formDataAddDistrict]);
 
   const attemptCloseDialog = () => {
-    if (dialog?.mode === 'add' && currentAddChanged) {
+    if (dialog?.mode === 'add') {
       setConfirmDialogOpen(true);
     } else {
       closeDialog();
@@ -507,6 +503,12 @@ const Content = () => {
     }
     setRefreshTrigger((p) => p + 1);
   };
+
+  const setOrgFormSafe = (updater: any) => {
+    setIsDirty(true);
+    setFormDataAddOrganization(updater);
+  };
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -601,29 +603,24 @@ const Content = () => {
         <Divider />
         <DialogContent sx={{ paddingTop: 0 }}>
           <br />
-          {/* ADD forms */}
           {dialog?.mode === 'add' && dialog?.entity === 'Organizations' && (
             <FormAddOrganization
-              formData={formDataAddOrganization}
-              setFormData={setFormDataAddOrganization}
               onSuccess={() =>
                 handleSuccess({ entity: 'organization', action: 'create', keepOpen: false })
               }
             />
           )}
+
           {dialog?.mode === 'add' && dialog?.entity === 'Departments' && (
             <FormAddDepartment
-              formData={formDataAddDepartment}
-              setFormData={setFormDataAddDepartment}
               onSuccess={() =>
                 handleSuccess({ entity: 'department', action: 'create', keepOpen: false })
               }
             />
           )}
+
           {dialog?.mode === 'add' && dialog?.entity === 'Districts' && (
             <FormAddDistrict
-              formData={formDataAddDistrict}
-              setFormData={setFormDataAddDistrict}
               onSuccess={() =>
                 handleSuccess({ entity: 'district', action: 'create', keepOpen: false })
               }
@@ -634,7 +631,7 @@ const Content = () => {
           {dialog?.mode === 'edit' && dialog?.entity === 'Organizations' && (
             <FormUpdateOrganization
               data={editingRow}
-              setData={setEditingRow}
+              // setData={setEditingRow}
               isBatchEdit={isBatchEdit}
               selectedRows={selectedRows}
               enabledFields={enabledFields}

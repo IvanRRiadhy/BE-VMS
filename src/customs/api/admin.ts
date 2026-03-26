@@ -475,7 +475,7 @@ export const getUserGroupDt = async (
   start: number,
   length: number,
   keyword: string = '',
-  sort_dir ?: string,
+  sort_dir?: string,
   start_date?: string,
   end_date?: string,
 ): Promise<any> => {
@@ -484,7 +484,7 @@ export const getUserGroupDt = async (
     params: {
       start,
       length,
-      'sort_dir': sort_dir,
+      sort_dir: sort_dir,
       'search[value]': keyword,
       start_date,
       end_date,
@@ -984,15 +984,17 @@ export const getAllVisitorCardPagination = async (
   token: string,
   start: number,
   length: number,
-  sortColumn: string,
+  // sortColumn: string,
   keyword: string = '',
+  sort_dir?: string,
   type?: number | null,
   cardStatus?: number, // ← ubah nama jadi camelCase
 ): Promise<GetAllVisitorCardPaginationResponse> => {
   const params: Record<string, any> = {
     start,
     length,
-    sort_column: sortColumn,
+    // sort_column: sortColumn,
+    sort_dir,
     'search[value]': keyword,
   };
 
@@ -1154,7 +1156,7 @@ export const getAllVisitorPagination = async (
     'search[value]': keyword,
     'start-date': start_date,
     'end-date': end_date,
-    'status': visitor_status,
+    status: visitor_status,
     'date-filter-type': data_filter,
     site: site,
     'visitor-role': visitor_role,
@@ -1424,14 +1426,14 @@ export const getAllDistrictsPagination = async (
   token: string,
   start: number,
   length: number,
-  sortColumn: string,
+  // sortColumn: string,
   sortDir?: string,
   keyword: string = '',
 ): Promise<GetAllDistrictsPaginationResponse> => {
   const params: Record<string, any> = {
     start,
     length,
-    sort_column: sortColumn,
+    // sort_column: sortColumn,
     'search[value]': keyword, // tetap ada untuk search
   };
 
@@ -1517,14 +1519,14 @@ export const getAllDepartmentsPagination = async (
   token: string,
   start: number,
   length: number,
-  sortColumn: string,
+  // sortColumn: string,
   sortDir?: string,
   keyword: string = '',
 ): Promise<GetAllDepartmetsPaginationResponse> => {
   const params: Record<string, any> = {
     start,
     length,
-    sort_column: sortColumn,
+    // sort_column: sortColumn,
     'search[value]': keyword,
   };
 
@@ -1606,7 +1608,7 @@ export const getAllOrganizationPagination = async (
   token: string,
   start: number,
   length: number,
-  sortColumn: string,
+  // sortColumn: string,
   sortDir?: string,
   keyword: string = '',
 ): Promise<GetAllOrganizationPaginationResponse> => {
@@ -1614,7 +1616,7 @@ export const getAllOrganizationPagination = async (
   const params: Record<string, any> = {
     start,
     length,
-    sort_column: sortColumn,
+    // sort_column: sortColumn,
     'search[value]': keyword,
   };
 
@@ -2323,12 +2325,12 @@ export const getAllBrandPagination = async (
   token: string,
   start: number,
   length: number,
-  sortColumn: string,
+  // sortColumn: string,
   keyword: string = '',
 ): Promise<GetAllBrandPaginationResponse> => {
   try {
     const response = await axiosInstance.get(`/brand/dt`, {
-      params: { start, length, sort_column: sortColumn, 'search[value]': keyword },
+      params: { start, length, 'search[value]': keyword },
       headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
     });
     return response.data;
@@ -2462,7 +2464,7 @@ export const updateAccessControl = async (
 //#endregion
 
 //#region Custom Field API
-export const getAllCustomField = async (token: string): Promise<GetAllCustomFieldResponse> => {
+export const getAllCustomField = async (token: string): Promise<any> => {
   try {
     const response = await axiosInstance.get(`/custom-field`, {
       headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
@@ -2480,7 +2482,7 @@ export const getAllCustomFieldPagination = async (
   token: string,
   start: number,
   length: number,
-  sortColumn: string,
+  // sortColumn: string,
   sortDir: string,
   keyword?: string,
 ): Promise<GetAllCustomFieldPaginationResponse> => {
@@ -2489,7 +2491,7 @@ export const getAllCustomFieldPagination = async (
       params: {
         start,
         length,
-        sort_column: sortColumn,
+        // sort_column: sortColumn,
         'search[value]': keyword,
         sort_dir: sortDir,
       },

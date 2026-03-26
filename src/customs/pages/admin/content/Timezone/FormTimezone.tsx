@@ -230,7 +230,7 @@ const FormTimezone = ({ mode, initialData, onSuccess }: FormTimezoneProps) => {
           zIndex: 99999,
         }}
       >
-        <CircularProgress color="inherit" />
+        <CircularProgress color="primary" />
       </Backdrop>
     </form>
   );

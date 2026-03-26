@@ -205,12 +205,12 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
         icon: IconCalendarClock,
         href: '/admin/visitor/scheduler',
       },
-      {
-        id: uniqueId(),
-        title: 'Approval Workflow',
-        icon: IconCheck,
-        href: '/admin/approval-workflow',
-      },
+      // {
+      //   id: uniqueId(),
+      //   title: 'Approval Workflow',
+      //   icon: IconCheck,
+      //   href: '/admin/approval-workflow',
+      // },
     ],
   },
 
@@ -475,12 +475,12 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
         icon: IconCalendarClock,
         href: '/admin/visitor/scheduler',
       },
-      { 
-        id: uniqueId(),
-        title: 'Approval Workflow',
-        icon: IconCheck,
-        href: '/admin/approval-workflow',
-      },
+      // { 
+      //   id: uniqueId(),
+      //   title: 'Approval Workflow',
+      //   icon: IconCheck,
+      //   href: '/admin/approval-workflow',
+      // },
     ],
   },
 
@@ -740,12 +740,12 @@ export const OperatorAdminNavListingData: ItemDataCustomNavListing[] = [
         icon: IconCalendarClock,
         href: '/operator-admin/visitor/scheduler',
       },
-      {
-        id: uniqueId(),
-        title: 'Approval Workflow',
-        icon: IconCalendarClock,
-        href: '/operator-admin/approval-workflow',
-      },
+      // {
+      //   id: uniqueId(),
+      //   title: 'Approval Workflow',
+      //   icon: IconCalendarClock,
+      //   href: '/operator-admin/approval-workflow',
+      // },
     ],
   },
   {
@@ -975,12 +975,12 @@ export const OperatorAdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] =
         icon: IconCalendarClock,
         href: '/operator-admin/visitor/scheduler',
       },
-      {
-        id: uniqueId(),
-        title: 'Approval Workflow',
-        icon: IconCalendarClock,
-        href: '/operator-admin/approval-workflow',
-      },
+      // {
+      //   id: uniqueId(),
+      //   title: 'Approval Workflow',
+      //   icon: IconCalendarClock,
+      //   href: '/operator-admin/approval-workflow',
+      // },
     ],
   },
   {

@@ -1,8 +1,5 @@
 import {
   Button,
-  Grid2,
-  Alert,
-  Typography,
   CircularProgress,
   Autocomplete,
   Backdrop,
@@ -11,39 +8,46 @@ import {
   Radio,
 } from '@mui/material';
 import { Box } from '@mui/system';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import { createOrganization, getAllEmployee, getVisitorEmployee } from 'src/customs/api/admin';
-import { useSession } from 'src/customs/contexts/SessionContext';
+import { createOrganization, getVisitorEmployee } from 'src/customs/api/admin';
 import {
   CreateOrganizationRequest,
   CreateOrganizationSubmitSchema,
 } from 'src/customs/api/models/Admin/Organization';
-import { showSuccessAlert, showSwal } from 'src/customs/components/alerts/alerts';
+import { showSwal } from 'src/customs/components/alerts/alerts';
+import { useSession } from 'src/customs/contexts/SessionContext';
+
+// RHF
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 
 interface FormAddOrganizationProps {
-  formData: CreateOrganizationRequest;
-  setFormData: React.Dispatch<React.SetStateAction<CreateOrganizationRequest>>;
   onSuccess?: () => void;
 }
 
-const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({
-  formData,
-  setFormData,
-  onSuccess,
-}) => {
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [loading, setLoading] = useState(false);
-  const [alertType, setAlertType] = useState<'info' | 'success' | 'error'>('info');
-  const [alertMessage, setAlertMessage] = useState<string>(
-    'Complete the following data properly and correctly',
-  );
-
+const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({ onSuccess }) => {
   const { token } = useSession();
+  const [loading, setLoading] = useState(false);
+  const [allEmployes, setAllEmployees] = useState<any[]>([]);
 
-  const [allEmployes, setAllEmployees] = useState<any>([]);
+  // ✅ RHF setup
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<CreateOrganizationRequest>({
+    resolver: zodResolver(CreateOrganizationSubmitSchema),
+    defaultValues: {
+      name: '',
+      code: '',
+      host: '',
+    },
+  });
 
+  // fetch employees
   useEffect(() => {
     if (!token) return;
 
@@ -60,186 +64,116 @@ const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({
     fetchEmployees();
   }, [token]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const field = e.target.name || e.target.id;
-    const { value } = e.target;
+  const employeeOptions = useMemo(
+    () => allEmployes.map((emp: any) => ({ id: emp.id, label: emp.name })),
+    [allEmployes],
+  );
 
-    // update form
-    setFormData((prev) => ({ ...prev, [field]: value }));
-
-    // clear error for this field
-    setErrors((prev) => ({ ...prev, [field]: '' }));
-  };
-
-  const validateLocal = (data: any) => {
-    const r = CreateOrganizationSubmitSchema.safeParse(data);
-    if (!r.success) {
-      const fe = r.error.flatten().fieldErrors;
-      setErrors({
-        code: fe.code?.[0] ?? '',
-        name: fe.name?.[0] ?? '',
-        host: fe.host?.[0] ?? '',
-      });
-      return null;
-    }
-    setErrors({});
-    return r.data;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // ✅ submit clean
+  const onSubmit = async (data: CreateOrganizationRequest) => {
     setLoading(true);
-    setErrors({});
-
     try {
-      // if (!token) {
-      //   showSwal('error', 'Something went wrong. Please try again later.');
-      //   return;
-      // }
+      await createOrganization(data, token as string);
 
-      const parsed = validateLocal(formData);
-      if (!parsed) {
-        setAlertType('error');
-        setAlertMessage('Please complete the required fields correctly.');
-        setTimeout(() => {
-          setAlertType('info');
-          setAlertMessage('Complete the following data properly and correctly');
-        }, 3000);
-        return;
-      }
+      showSwal('success', 'Organization successfully created!');
+      reset();
 
-      await createOrganization(parsed, token as string);
-      localStorage.removeItem('unsavedOrganizationFormAdd');
-
-      // ✅ Tutup backdrop & dialog dulu sebelum swal
-      setLoading(false);
-      await new Promise<void>((resolve) => {
-        onSuccess?.();
-        setTimeout(resolve, 600);
-      });
-
-      showSwal('success', 'Organization successfully created!', 3000);
-    } catch (err: any) {
-      const be = err?.response?.data?.errors;
-      if (be && typeof be === 'object') {
-        setErrors({
-          code: be.Code?.[0] ?? '',
-          name: be.Name?.[0] ?? '',
-          host: be.Host?.[0] ?? '',
-        });
-      }
-
+      onSuccess?.();
+    } catch (err) {
       showSwal('error', 'Failed to create organization.', 3000);
     } finally {
-      setTimeout(() => setLoading(false), 600);
+      setLoading(false);
     }
   };
 
   return (
     <>
-      <form onSubmit={handleSubmit}>
-        {/* <Grid2 size={12}>
-          <Alert severity={alertType}>{alertMessage}</Alert>
-        </Grid2> */}
-
-        <CustomFormLabel htmlFor="name" sx={{ my: 1, fontWeight: 500 }} required>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        {/* NAME */}
+        <CustomFormLabel required sx={{ mt: 0 }}>
           Organization Name
         </CustomFormLabel>
-        <CustomTextField
-          id="name"
-          value={formData.name}
-          onChange={handleChange}
-          error={Boolean(errors.name)}
-          helperText={errors.name}
-          fullWidth
-          variant="outlined"
-        />
-
-        <CustomFormLabel htmlFor="code" sx={{ my: 1, fontWeight: 500 }} required>
-          Organization Code
-        </CustomFormLabel>
-        <CustomTextField
-          id="code"
-          value={formData.code}
-          onChange={handleChange}
-          error={Boolean(errors.code)}
-          helperText={errors.code}
-          fullWidth
-          variant="outlined"
-        />
-
-        <CustomFormLabel htmlFor="host" sx={{ my: 1, fontWeight: 500 }} required>
-          Head of Organization
-        </CustomFormLabel>
-        <Autocomplete
-          id="host"
-          autoHighlight
-          disablePortal={false}
-          options={allEmployes.map((emp: any) => ({ id: emp.id, label: emp.name }))}
-          getOptionLabel={(option) => (typeof option === 'string' ? option : option.label)}
-          value={
-            allEmployes
-              .map((emp: any) => ({ id: emp.id, label: emp.name }))
-              .find((emp: any) => emp.id === formData.host) ?? ''
-          }
-          onChange={(_, newValue) => {
-            setFormData((prev) => ({
-              ...prev,
-              host: typeof newValue === 'string' ? newValue : (newValue?.id ?? ''),
-            }));
-            // ⬅️ clear error
-            setErrors((prev) => ({ ...prev, host: '' }));
-          }}
-          onInputChange={(_, inputValue) => {
-            setFormData((prev) => ({ ...prev, host: inputValue }));
-            // ⬅️ clear error
-            setErrors((prev) => ({ ...prev, host: '' }));
-          }}
-          renderInput={(params) => (
+        <Controller
+          name="name"
+          control={control}
+          render={({ field }) => (
             <CustomTextField
-              {...params}
-              variant="outlined"
-              placeholder=""
-              error={Boolean(errors.host)}
-              helperText={errors.host}
+              {...field}
+              error={!!errors.name}
+              helperText={errors.name?.message}
               fullWidth
             />
           )}
         />
-        <RadioGroup
-          row
-          // value={formData.visitorType}
-          // onChange={(e) =>
-          //   setFormData((prev) => ({
-          //     ...prev,
-          //     visitorType: e.target.value,
-          //   }))
-          // }
-        >
-          <FormControlLabel value="internal" control={<Radio />} label="Internal" />
-          <FormControlLabel value="external" control={<Radio />} label="External" />
-        </RadioGroup>
+
+        {/* CODE */}
+        <CustomFormLabel required sx={{ mt: 2 }}>
+          Organization Code
+        </CustomFormLabel>
+        <Controller
+          name="code"
+          control={control}
+          render={({ field }) => (
+            <CustomTextField
+              {...field}
+              error={!!errors.code}
+              helperText={errors.code?.message}
+              fullWidth
+            />
+          )}
+        />
+
+        {/* HOST */}
+        <CustomFormLabel required sx={{ mt: 2 }}>
+          Head of Organization
+        </CustomFormLabel>
+        <Controller
+          name="host"
+          control={control}
+          render={({ field }) => (
+            <Autocomplete
+              options={employeeOptions}
+              value={employeeOptions.find((e) => e.id === field.value) ?? null}
+              onChange={(_, newValue) => {
+                field.onChange(newValue?.id ?? '');
+              }}
+              renderInput={(params) => (
+                <CustomTextField
+                  {...params}
+                  error={!!errors.host}
+                  helperText={errors.host?.message}
+                  fullWidth
+                />
+              )}
+            />
+          )}
+        />
+
+        {/* TYPE */}
+        {/* <CustomFormLabel sx={{ mt: 2 }}>Type (Optional)</CustomFormLabel>
+        <Controller
+          name="type"
+          control={control}
+          defaultValue=""
+          render={({ field }) => (
+            <RadioGroup row {...field}>
+              <FormControlLabel value="internal" control={<Radio />} label="Internal" />
+              <FormControlLabel value="external" control={<Radio />} label="External" />
+            </RadioGroup>
+          )}
+        /> */}
+
+        {/* SUBMIT */}
         <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button
-            sx={{ mt: 2 }}
-            color="primary"
-            variant="contained"
-            type="submit"
-            disabled={loading}
-          >
+          <Button sx={{ mt: 2 }} variant="contained" type="submit" disabled={loading}>
             Submit
           </Button>
         </Box>
       </form>
 
-      <Backdrop
-        open={loading}
-        sx={{
-          color: 'primary',
-          zIndex: (theme) => theme.zIndex.drawer + 1, // di atas drawer & dialog
-        }}
-      >
-        <CircularProgress color="inherit" />
+      {/* LOADING */}
+      <Backdrop open={loading} sx={{ zIndex: 999999 }}>
+        <CircularProgress />
       </Backdrop>
     </>
   );

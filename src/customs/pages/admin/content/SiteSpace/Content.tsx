@@ -31,7 +31,7 @@ import FormSite from './FormSite';
 import CloseIcon from '@mui/icons-material/Close';
 import { CreateSiteRequestSchema, Item } from 'src/customs/api/models/Admin/Sites';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { deleteSiteSpace, getAllSite, getAllSitePagination } from 'src/customs/api/admin';
+import { deleteSiteSpace, getAllEmployee, getAllSite, getAllSitePagination } from 'src/customs/api/admin';
 import { IconSitemap, IconX } from '@tabler/icons-react';
 import {
   showConfirmDelete,
@@ -392,12 +392,13 @@ const Content = () => {
       const parsedData = {
         ...CreateSiteRequestSchema.parse(found),
         id,
+        // type: found.type,
+        type: Number(found.type),
         access: [],
         parking: [],
         tracking: [],
         parent: '',
         is_child: false,
-        type: 0,
         // is_registered_point: false,
       };
       setEdittingId(id);
@@ -568,6 +569,21 @@ const Content = () => {
     setOpenDetailType(true);
   };
 
+  const [employee, setEmployee] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        const res = getAllEmployee(token!);
+        const data = (await res).collection || [];
+        setEmployee(data);
+      } catch (error) {
+        console.error('❌ Failed to fetch employees:', error);
+      }
+    };
+    fetchEmployees();
+  }, [token]);
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -684,6 +700,7 @@ const Content = () => {
             selectedRows={selectedRows}
             enabledFields={enabledFields}
             setEnabledFields={setEnabledFields}
+            employee={employee}
           />
         </DialogContent>
       </Dialog>

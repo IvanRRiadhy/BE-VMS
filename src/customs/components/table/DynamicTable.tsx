@@ -1413,7 +1413,7 @@ export function DynamicTable<
                       {loading ? (
                         <Skeleton variant="text" width="40%" height={18} animation="wave" />
                       ) : paginatedData.length > 0 ? (
-                        'Id'
+                        'No'
                       ) : (
                         ''
                       )}
@@ -1444,7 +1444,7 @@ export function DynamicTable<
                             background: 'white',
                             minWidth: DATA_COL_WIDTH,
                             maxWidth: DATA_COL_WIDTH,
-                            fontSize: '0.8rem !important',
+                            fontSize: '0.85rem !important',
                             // ...(isEarlyAccess && { textAlign: 'center' }),
                           }}
                         >
@@ -1472,7 +1472,7 @@ export function DynamicTable<
                           bgcolor: 'background.paper',
                           zIndex: 4,
                           textAlign: 'center',
-                          fontSize: '0.8rem !important',
+                          fontSize: '0.85rem !important',
                         }}
                       >
                         {loading ? (
@@ -1857,7 +1857,7 @@ export function DynamicTable<
                             background: 'white',
                             minWidth: INDEX_COL_WIDTH,
                             maxWidth: INDEX_COL_WIDTH,
-                            fontSize: '0.8rem !important',
+                            fontSize: '0.85rem !important',
                           }}
                         >
                           {index + 1 + page * rowsPerPage}
@@ -1878,7 +1878,7 @@ export function DynamicTable<
                                   minWidth: DATA_COL_WIDTH,
                                   maxWidth: DATA_COL_WIDTH,
                                 }),
-                                fontSize: '0.8rem !important',
+                                fontSize: '0.85rem !important',
                               }}
                             >
                               {isHaveVip && col === 'is_vip' ? (
@@ -2609,7 +2609,7 @@ export function DynamicTable<
                                   slotProps={{
                                     tooltip: {
                                       sx: {
-                                        fontSize: '0.8rem',
+                                        fontSize: '0.85rem',
                                         padding: '8px 14px',
                                       },
                                     },

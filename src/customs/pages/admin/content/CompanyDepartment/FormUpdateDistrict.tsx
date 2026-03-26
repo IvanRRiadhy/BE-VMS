@@ -1,27 +1,32 @@
 import {
   Button,
-  Grid2,
-  Alert,
-  Typography,
   CircularProgress,
-  Switch,
-  Autocomplete,
-  FormControlLabel,
   Backdrop,
-  RadioGroup,
-  Radio,
+  FormControlLabel,
+  Autocomplete,
+  Switch,
 } from '@mui/material';
 import { Box } from '@mui/system';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import { getAllEmployee, getVisitorEmployee, updateDistrict } from 'src/customs/api/admin';
+import { getVisitorEmployee, updateDistrict } from 'src/customs/api/admin';
 import { Item } from 'src/customs/api/models/Admin/Department';
 import { CreateDistrictSubmitSchema } from 'src/customs/api/models/Admin/District';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { useSession } from 'src/customs/contexts/SessionContext';
 
-interface FormUpdateDistrictProps {
+// RHF
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+
+type EnabledFields = {
+  name: boolean;
+  code: boolean;
+  host: boolean;
+};
+
+interface Props {
   data: Item | null;
   onSuccess?: () => void;
   isBatchEdit?: boolean;
@@ -30,13 +35,7 @@ interface FormUpdateDistrictProps {
   setEnabledFields: React.Dispatch<React.SetStateAction<EnabledFields>>;
 }
 
-type EnabledFields = {
-  name: boolean;
-  code: boolean;
-  host: boolean;
-};
-
-const FormUpdateDistrict: React.FC<FormUpdateDistrictProps> = ({
+const FormUpdateDistrict: React.FC<Props> = ({
   data,
   onSuccess,
   isBatchEdit,
@@ -45,360 +44,216 @@ const FormUpdateDistrict: React.FC<FormUpdateDistrictProps> = ({
   setEnabledFields,
 }) => {
   const { token } = useSession();
-
-  const [name, setName] = useState('');
-  const [host, setHost] = useState('');
-  const [code, setCode] = useState('');
-  const [hostLabel, setHostLabel] = useState('');
-
-  const [allEmployees, setAllEmployees] = useState<any[]>([]);
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
+  const [allEmployees, setAllEmployees] = useState<any[]>([]);
 
-  const [alertType, setAlertType] = useState<'info' | 'success' | 'error'>('info');
-  const [alertMessage, setAlertMessage] = useState<string>(
-    'Complete the following data properly and correctly',
-  );
-
-  const toEmpOption = (emp: any) => ({
-    id: String(emp?.id ?? emp?.person_id ?? emp?.identity_id ?? ''),
-    label: String(emp?.name ?? emp?.email ?? emp?.card_number ?? '-'),
+  const {
+    control,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+  } = useForm<any>({
+    resolver: zodResolver(CreateDistrictSubmitSchema),
+    defaultValues: {
+      name: '',
+      code: '',
+      host: '',
+    },
   });
-  const empOptions = allEmployees.map(toEmpOption);
+
+  // fetch employees
+  useEffect(() => {
+    if (!token) return;
+    (async () => {
+      const res = await getVisitorEmployee(token);
+      setAllEmployees(res?.collection ?? []);
+    })();
+  }, [token]);
+
+  const empOptions = useMemo(
+    () =>
+      allEmployees.map((emp: any) => ({
+        id: String(emp.id),
+        label: emp.name,
+      })),
+    [allEmployees],
+  );
 
   useEffect(() => {
     if (!isBatchEdit && data) {
-      setName(data.name || '');
-      setCode(data.code || '');
-
-      const h = (data as any).host;
-      if (h && typeof h === 'object') {
-        setHost(String(h.id || ''));
-        setHostLabel(h.name || '');
-      } else if (typeof h === 'string') {
-        setHost(h);
-        setHostLabel('');
+      setValue('name', data.name || '');
+      setValue('code', data.code || '');
+      const h: any | undefined = data.host;
+      if (typeof h === 'object') {
+        setValue('host', String(h?.id || ''));
       } else {
-        setHost('');
-        setHostLabel('');
+        setValue('host', String(h || ''));
       }
     }
   }, [data, isBatchEdit]);
 
-  useEffect(() => {
-    if (!token) return;
-    (async () => {
-      try {
-        const res = await getVisitorEmployee(token);
-        setAllEmployees(res?.collection ?? []);
-      } catch (err) {
-        console.error('Failed to fetch employees', err);
-      }
-    })();
-  }, [token]);
-
-  const buildPayload = (item: Item | any) => {
-    const _name = name.trim();
-    const _code = code.trim();
-    const _host = host?.toString().trim();
-
+  const buildPayload = (form: any, item: any) => {
     const itemHostId =
       typeof item.host === 'object' ? String(item.host?.id || '') : String(item.host || '');
 
     return {
       name: isBatchEdit
-        ? enabledFields?.name
-          ? _name || item.name
+        ? enabledFields.name
+          ? form.name || item.name
           : item.name
-        : _name || item.name,
+        : form.name || item.name,
       code: isBatchEdit
-        ? enabledFields?.code
-          ? _code || item.code
+        ? enabledFields.code
+          ? form.code || item.code
           : item.code
-        : _code || item.code,
+        : form.code || item.code,
       host: isBatchEdit
-        ? enabledFields?.host
-          ? _host || itemHostId || ''
+        ? enabledFields.host
+          ? form.host || itemHostId
           : itemHostId
-        : _host || itemHostId || '',
+        : form.host || itemHostId,
     };
   };
 
-  const validateMerged = (payload: any) => {
-    const r = CreateDistrictSubmitSchema.safeParse(payload);
-    if (!r.success) {
-      const fe = r.error.flatten().fieldErrors;
-      setErrors({
-        name: fe.name?.[0] ?? '',
-        code: fe.code?.[0] ?? '',
-        host: fe.host?.[0] ?? '',
-      });
-      return null;
-    }
-    setErrors({});
-    return r.data;
-  };
-
-  const validateSingle = () => {
-    const raw = {
-      name: name.trim(),
-      code: code.trim(),
-      host: host.trim(),
-    };
-    const r = CreateDistrictSubmitSchema.safeParse(raw);
-    if (!r.success) {
-      const fe = r.error.flatten().fieldErrors;
-      setErrors({
-        name: fe.name?.[0] ?? '',
-        code: fe.code?.[0] ?? '',
-        host: fe.host?.[0] ?? '',
-      });
-      return null;
-    }
-    return r.data;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (form: any) => {
     setLoading(true);
-    setErrors({});
-
     try {
-      if (!token) {
-        showSwal('error', 'Something went wrong. Please try again later.');
-        return;
-      }
+      if (!token) return;
 
-      // 🟡 Batch Edit Mode
+      // 🟡 Batch
       if (isBatchEdit && selectedRows.length > 0) {
         const results = await Promise.allSettled(
-          selectedRows
-            .filter((x) => x?.id)
-            .map(async (item) => {
-              const payload = buildPayload(item);
-              const parsed = validateMerged(payload);
-              if (!parsed) throw new Error('Validation failed');
-              await updateDistrict(item.id, parsed, token);
-            }),
+          selectedRows.map(async (item) => {
+            const payload = buildPayload(form, item);
+            await updateDistrict(item.id, payload, token);
+          }),
         );
 
         const failed = results.filter((r) => r.status === 'rejected');
 
-        // ✅ Swal langsung tampil
-        if (failed.length > 0) {
-          showSwal('error', 'Some districts failed to update.');
-        } else {
-          showSwal('success', 'All districts updated successfully.', 2000);
-        }
+        showSwal(
+          failed.length ? 'error' : 'success',
+          failed.length
+            ? 'Some districts failed to update.'
+            : 'All districts updated successfully.',
+        );
 
-        // ✅ Tutup dialog setelah swal muncul
         setTimeout(() => onSuccess?.(), 800);
         return;
       }
 
-      // 🟢 Single Edit Mode
       if (data) {
-        const payload = buildPayload(data);
-        const parsed = validateSingle();
-        if (!parsed) return;
+        const payload = buildPayload(form, data);
+        await updateDistrict(data.id, payload, token);
 
-        await updateDistrict(data.id, parsed, token);
-
-        // ✅ Swal tampil langsung
-        showSwal('success', 'District updated successfully.', 2000);
-
-        // ✅ Tutup dialog sedikit setelah swal
+        showSwal('success', 'District updated successfully.');
         setTimeout(() => onSuccess?.(), 800);
       }
-    } catch (err: any) {
-      const be = err?.response?.data?.errors;
-      if (be && typeof be === 'object') {
-        setErrors({
-          code: be.Code?.[0] ?? '',
-          name: be.Name?.[0] ?? '',
-          host: be.Host?.[0] ?? '',
-        });
-      }
-
-      // 🔥 Swal error langsung tampil
+    } catch {
       showSwal('error', 'Failed to update district.');
     } finally {
-      // 🕒 Pastikan backdrop dimatikan
-      setTimeout(() => setLoading(false), 500);
+      setLoading(false);
     }
   };
 
   return (
     <>
-      <form onSubmit={handleSubmit}>
-        <Box display="flex" alignItems="center" justifyContent="space-between">
-          <CustomFormLabel htmlFor="name" sx={{ marginY: 1, fontWeight: 500 }}>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        {/* NAME */}
+        <Box display="flex" justifyContent="space-between">
+          <CustomFormLabel required sx={{ mt: 0 }}>
             District Name
           </CustomFormLabel>
           {isBatchEdit && (
-            <FormControlLabel
-              control={
-                <Switch
-                  size="small"
-                  checked={enabledFields?.name || false}
-                  onChange={(e) =>
-                    setEnabledFields((prev) => ({
-                      ...prev,
-                      name: e.target.checked,
-                    }))
-                  }
-                />
-              }
-              label=""
-              labelPlacement="start"
-              sx={{ mt: 2 }}
+            <Switch
+              size="small"
+              checked={enabledFields.name}
+              onChange={(e) => setEnabledFields((p) => ({ ...p, name: e.target.checked }))}
             />
           )}
         </Box>
-        <CustomTextField
-          id="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          error={Boolean(errors.name)}
-          helperText={errors.name}
-          variant="outlined"
-          fullWidth
-          disabled={isBatchEdit && !enabledFields?.name}
-        />
 
-        {/* CODE */}
-        <Box display="flex" alignItems="center" justifyContent="space-between">
-          <CustomFormLabel htmlFor="code" sx={{ marginY: 1, fontWeight: 500 }}>
-            District Code
-          </CustomFormLabel>
-          {isBatchEdit && (
-            <FormControlLabel
-              control={
-                <Switch
-                  size="small"
-                  checked={enabledFields?.code || false}
-                  onChange={(e) =>
-                    setEnabledFields((prev) => ({
-                      ...prev,
-                      code: e.target.checked,
-                    }))
-                  }
-                />
-              }
-              label=""
-              labelPlacement="start"
-              sx={{ mt: 2 }}
-            />
-          )}
-        </Box>
-        <CustomTextField
-          id="code"
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-          error={Boolean(errors.code)}
-          helperText={errors.code}
-          variant="outlined"
-          fullWidth
-          disabled={isBatchEdit && !enabledFields?.code}
-        />
-
-        {/* HOST */}
-        <Box display="flex" alignItems="center" justifyContent="space-between">
-          <CustomFormLabel htmlFor="host" sx={{ marginY: 1, fontWeight: 500 }}>
-            Head of District
-          </CustomFormLabel>
-          {isBatchEdit && (
-            <FormControlLabel
-              control={
-                <Switch
-                  size="small"
-                  checked={enabledFields?.host || false}
-                  onChange={(e) =>
-                    setEnabledFields((prev) => ({
-                      ...prev,
-                      host: e.target.checked,
-                    }))
-                  }
-                />
-              }
-              label=""
-              labelPlacement="start"
-              sx={{ mt: 2 }}
-            />
-          )}
-        </Box>
-        <Autocomplete
-          autoHighlight
-          disablePortal={false}
-          options={empOptions}
-          filterOptions={(x) => x}
-          getOptionLabel={(option) => (typeof option === 'string' ? option : option.label)}
-          isOptionEqualToValue={(opt, val) =>
-            opt.id === (typeof val === 'string' ? val : (val as any)?.id)
-          }
-          value={empOptions.find((o: any) => o.id === host) || null}
-          onChange={(_, newValue) => {
-            if (typeof newValue === 'string') {
-              setHostLabel(newValue);
-            } else if (newValue) {
-              setHost(newValue.id);
-              setHostLabel(newValue.label);
-            } else {
-              setHost('');
-              setHostLabel('');
-            }
-          }}
-          onInputChange={(_, inputValue, reason) => {
-            if (reason === 'input') setHostLabel(inputValue || '');
-          }}
-          disabled={isBatchEdit && !enabledFields?.host}
-          noOptionsText="No employees found"
-          renderInput={(params) => (
+        <Controller
+          name="name"
+          control={control}
+          render={({ field }) => (
             <CustomTextField
-              {...params}
-              variant="outlined"
-              error={Boolean(errors.host)}
-              helperText={errors.host}
+              {...field}
+              disabled={isBatchEdit && !enabledFields.name}
+              error={!!errors.name}
+              helperText={errors.name?.message as string}
               fullWidth
             />
           )}
         />
 
-        <RadioGroup
-          row
-          // value={formData.visitorType}
-          // onChange={(e) =>
-          //   setFormData((prev) => ({
-          //     ...prev,
-          //     visitorType: e.target.value,
-          //   }))
-          // }
-        >
-          <FormControlLabel value="internal" control={<Radio />} label="Internal" />
-          <FormControlLabel value="external" control={<Radio />} label="External" />
-        </RadioGroup>
+        {/* CODE */}
+        <Box display="flex" justifyContent="space-between">
+          <CustomFormLabel required>District Code</CustomFormLabel>
+          {isBatchEdit && (
+            <Switch
+              size="small"
+              checked={enabledFields.code}
+              onChange={(e) => setEnabledFields((p) => ({ ...p, code: e.target.checked }))}
+            />
+          )}
+        </Box>
 
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button
-            sx={{ mt: 2 }}
-            color="primary"
-            variant="contained"
-            type="submit"
-            disabled={loading}
-          >
+        <Controller
+          name="code"
+          control={control}
+          render={({ field }) => (
+            <CustomTextField
+              {...field}
+              disabled={isBatchEdit && !enabledFields.code}
+              error={!!errors.code}
+              helperText={errors.code?.message as string}
+              fullWidth
+            />
+          )}
+        />
+
+        {/* HOST */}
+        <Box display="flex" justifyContent="space-between">
+          <CustomFormLabel required>Head of District</CustomFormLabel>
+          {isBatchEdit && (
+            <Switch
+              size="small"
+              checked={enabledFields.host}
+              onChange={(e) => setEnabledFields((p) => ({ ...p, host: e.target.checked }))}
+            />
+          )}
+        </Box>
+
+        <Controller
+          name="host"
+          control={control}
+          render={({ field }) => (
+            <Autocomplete
+              options={empOptions}
+              value={empOptions.find((e) => e.id === field.value) ?? null}
+              onChange={(_, val) => field.onChange(val?.id ?? '')}
+              disabled={isBatchEdit && !enabledFields.host}
+              renderInput={(params) => (
+                <CustomTextField
+                  {...params}
+                  error={!!errors.host}
+                  helperText={errors.host?.message as string}
+                />
+              )}
+            />
+          )}
+        />
+
+        <Box display="flex" justifyContent="flex-end">
+          <Button type="submit" variant="contained" disabled={loading} sx={{mt:1}}>
             Submit
           </Button>
         </Box>
       </form>
 
-      <Backdrop
-        open={loading}
-        sx={{
-          color: 'primary',
-          zIndex: (theme) => theme.zIndex.drawer + 1,
-        }}
-      >
-        <CircularProgress color="inherit" />
+      <Backdrop open={loading}>
+        <CircularProgress />
       </Backdrop>
     </>
   );

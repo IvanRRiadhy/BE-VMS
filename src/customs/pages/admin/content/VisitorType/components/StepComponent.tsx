@@ -112,8 +112,6 @@ const StepContentComponent: React.FC<StepContentProps> = ({
     { label: 'DC', value: 'DC' },
   ];
 
-  
-
   if (activeStep === 0) {
     return (
       <Grid container spacing={2} sx={{ mb: 2 }}>
@@ -128,7 +126,13 @@ const StepContentComponent: React.FC<StepContentProps> = ({
             <CustomTextField
               id="name"
               value={formData.name}
-              onChange={handleChange}
+              // onChange={handleChange}
+              onChange={(e) => {
+                setFormData((prev: any) => ({
+                  ...prev,
+                  name: e.target.value,
+                }));
+              }}
               error={Boolean(errors.name)}
               helperText={errors.name || ''}
               fullWidth
@@ -376,7 +380,12 @@ const StepContentComponent: React.FC<StepContentProps> = ({
             <CustomTextField
               id="description"
               value={formData.description}
-              onChange={handleChange}
+              onChange={(e:any) => {
+                setFormData((prev: any) => ({
+                  ...prev,
+                  description: e.target.value,
+                }));
+              }}
               error={Boolean(errors.description)}
               helperText={errors.description || ''}
               fullWidth

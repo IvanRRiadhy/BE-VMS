@@ -5,33 +5,19 @@ import {
   Alert,
   Typography,
   CircularProgress,
-  FormControl,
-  FormLabel,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
   Portal,
   Backdrop,
   TextField,
   MenuItem,
   Autocomplete,
-  Chip,
-  Checkbox,
   Switch,
-  Divider,
 } from '@mui/material';
 import { Box, useMediaQuery, useTheme } from '@mui/system';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { IconTrash } from '@tabler/icons-react';
 
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import axios from 'axios';
-import { createDocument, updateDocument } from 'src/customs/api/admin';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { CKEditor } from '@ckeditor/ckeditor5-react';
-import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
-import axiosInstance from 'src/customs/api/interceptor';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
 import {
@@ -63,6 +49,7 @@ const FormApprove: React.FC<FormApproveProps> = ({
     { label: 'Manager', value: 'Manager' },
     { label: 'PIC', value: 'PIC' },
   ];
+  const [expanded, setExpanded] = useState<string[]>([]);
 
   const buildRulesFromConditions = (conditions: any[], rootLogic: 'AND' | 'OR'): RuleNode[] => {
     const convert = (cond: any): RuleNode => {
@@ -100,7 +87,7 @@ const FormApprove: React.FC<FormApproveProps> = ({
 
     const loadData = async () => {
       try {
-        setLoading(true);
+        // setLoading(true);
 
         const res = await getApprovalWorkflowById(token as string, edittingId);
         const data = res.collection;
@@ -117,8 +104,6 @@ const FormApprove: React.FC<FormApproveProps> = ({
         setRules(parsedRules);
       } catch (err) {
         showSwal('error', 'Failed to load workflow');
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -139,7 +124,6 @@ const FormApprove: React.FC<FormApproveProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    step = 1;
     setLoading(true);
     setErrors({});
     try {
@@ -170,27 +154,29 @@ const FormApprove: React.FC<FormApproveProps> = ({
         await createApprovalWorkflow(token as string, payload);
       }
 
-      showSwal(
-        'success',
-        edittingId
-          ? 'Approval workflow updated successfully!'
-          : 'Approval workflow created successfully!',
-      );
-      setTimeout(() => {
-        onSuccess?.();
-      }, 600);
+      setLoading(false);
+
+      // await showSwal(
+      //   'success',
+      //   edittingId
+      //     ? 'Approval workflow updated successfully!'
+      //     : 'Approval workflow created successfully!',
+      // );
+      // setTimeout(() => {
+      onSuccess?.();
+      // }, 600);
     } catch (err: any) {
+      setLoading(false);
       if (err?.errors) setErrors(err.errors);
       showSwal('error', err?.message || 'Failed to create document.');
-    } finally {
-      setTimeout(() => {
-        setLoading(false);
-      }, 600);
     }
-  };
 
-  const theme = useTheme();
-  const lg = useMediaQuery(theme.breakpoints.down('lg'));
+    // finally {
+    //   setTimeout(() => {
+    //     setLoading(false);
+    //   }, 600);
+    // }
+  };
 
   type RuleNode = {
     id: string;
@@ -223,7 +209,9 @@ const FormApprove: React.FC<FormApproveProps> = ({
     PIC: 'PIC',
     // User: 'User',
   };
-  let step = 1;
+  // let step = 1;
+  const stepRef = useRef(1);
+  stepRef.current = 1;
   const rootLogic = rules[0]?.operator;
   const buildConditions = (nodes: RuleNode[], parentLogic?: 'AND' | 'OR'): any[] => {
     return nodes.flatMap((node) => {
@@ -235,7 +223,8 @@ const FormApprove: React.FC<FormApproveProps> = ({
           approver_type: roleMap?.[node.role as string] ?? null,
           entity_id: null,
           parent_id: null,
-          step_order: Number(formData.step_order) ? step++ : null,
+          // step_order: Number(formData.step_order) ? step++ : null,
+          step_order: Number(formData.step_order) ? stepRef.current++ : null,
           escalation_hours: formData.escalation_hours ?? 0,
           // escalation_status: null,
           delegate_user_id: null,
@@ -251,7 +240,8 @@ const FormApprove: React.FC<FormApproveProps> = ({
         approver_type: roleMap[node.role] ?? null,
         entity_id: uuid(),
         parent_id: null,
-        step_order: Number(formData.step_order) ? step++ : null,
+        // step_order: Number(formData.step_order) ? step++ : null,
+        step_order: Number(formData.step_order) ? stepRef.current++ : null,
         escalation_hours: formData.escalation_hours ?? null,
         // escalation_status: null,
         delegate_user_id: null,
@@ -284,12 +274,12 @@ const FormApprove: React.FC<FormApproveProps> = ({
       });
 
     setRules(update);
+    setExpanded((prev) => [...new Set([...prev, groupId])]);
   };
 
   const addGroup = (targetId: string, operator: 'AND' | 'OR') => {
     const update = (nodes: RuleNode[]): RuleNode[] =>
       nodes.flatMap((node) => {
-        // jika target adalah ROLE → insert group setelah role
         if (node.id === targetId && node.type === 'ROLE') {
           return [
             node,
@@ -302,7 +292,6 @@ const FormApprove: React.FC<FormApproveProps> = ({
           ];
         }
 
-        // jika target adalah GROUP → tambah child group
         if (node.id === targetId && node.type === 'GROUP') {
           return {
             ...node,
@@ -329,6 +318,7 @@ const FormApprove: React.FC<FormApproveProps> = ({
       });
 
     setRules(update);
+    setExpanded((prev) => [...new Set([...prev, targetId])]);
   };
   const renderNode = (node: RuleNode) => {
     if (node.type === 'ROLE') {
@@ -507,7 +497,7 @@ const FormApprove: React.FC<FormApproveProps> = ({
   return (
     <>
       <form onSubmit={handleSubmit}>
-        <Grid2 container spacing={2} sx={{ mb: 2 }}>
+        <Grid2 container spacing={2} sx={{ mb: 0 }}>
           <Grid2 size={{ xs: 12, lg: 12 }}>
             <CustomFormLabel htmlFor="description" sx={{ mt: 0 }} required>
               Name
@@ -521,7 +511,6 @@ const FormApprove: React.FC<FormApproveProps> = ({
               error={Boolean(errors.name)}
               helperText={errors.name ?? ''}
               fullWidth
-              disabled={loading}
             />
           </Grid2>
           <Grid2 size={{ xs: 12, lg: 12 }}>
@@ -537,7 +526,6 @@ const FormApprove: React.FC<FormApproveProps> = ({
               error={Boolean(errors.description)}
               helperText={errors.description ?? ''}
               fullWidth
-              disabled={loading}
             />
           </Grid2>
           <Grid2 size={{ xs: 12, lg: 12 }}>
@@ -554,7 +542,6 @@ const FormApprove: React.FC<FormApproveProps> = ({
               error={Boolean(errors.type)}
               helperText={errors.type ?? ''}
               fullWidth
-              disabled={loading}
             >
               <MenuItem value="Invitation">Invitation</MenuItem>
             </CustomTextField>
@@ -572,7 +559,6 @@ const FormApprove: React.FC<FormApproveProps> = ({
               error={Boolean(errors.escalation_hours)}
               helperText={errors.escalation_hours ?? ''}
               fullWidth
-              disabled={loading}
             />
           </Grid2>
           <Grid2 size={{ xs: 12, lg: 12 }}>
@@ -601,7 +587,12 @@ const FormApprove: React.FC<FormApproveProps> = ({
               </Button>
             </Box>
 
-            <SimpleTreeView>{rules.map((rule) => renderNode(rule))}</SimpleTreeView>
+            <SimpleTreeView
+              expandedItems={expanded}
+              onExpandedItemsChange={(event, itemIds) => setExpanded(itemIds)}
+            >
+              {rules.map((rule) => renderNode(rule))}
+            </SimpleTreeView>
           </Grid2>
           <hr
             style={{

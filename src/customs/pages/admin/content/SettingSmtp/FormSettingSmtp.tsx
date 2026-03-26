@@ -33,7 +33,6 @@ const FormSettingSmtp: React.FC<FormSettingSmtpProps> = ({
   onSubmit,
   onCancel,
 }) => {
-  const [tabIndex, setTabIndex] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -52,10 +51,9 @@ const FormSettingSmtp: React.FC<FormSettingSmtpProps> = ({
 
   return (
     <Paper sx={{ display: 'flex', minHeight: 400, marginTop: 2 }}>
-      {/* Form Content */}
       <form
         onSubmit={handleSubmit}
-        style={{ padding: 16 }}
+        style={{ paddingBottom: '16px', paddingLeft: '16px', paddingRight: '16px' }}
         onKeyDown={(e) => {
           if (e.key === 'Enter' && (e.target as HTMLElement).tagName !== 'TEXTAREA') {
             e.preventDefault();
@@ -216,7 +214,7 @@ const FormSettingSmtp: React.FC<FormSettingSmtpProps> = ({
               startIcon={<IconSend size={18} />}
               sx={{ ml: 1 }}
             >
-              {editingId ? 'Edit' : 'Submit'}
+              {editingId ? 'Submit' : 'Submit'}
             </Button>
           </Grid>
         </Grid>

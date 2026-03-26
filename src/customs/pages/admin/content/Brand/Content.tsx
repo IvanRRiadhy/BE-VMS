@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Box, Card, Skeleton, Grid2 as Grid } from '@mui/material';
+import { Box, Grid2 as Grid } from '@mui/material';
 import Container from 'src/components/container/PageContainer';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import {
@@ -11,36 +11,25 @@ import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { deleteBrand, getAllBrandPagination } from 'src/customs/api/admin';
-import { CreateBrandRequest, Item } from 'src/customs/api/models/Admin/Brand';
+import { Item } from 'src/customs/api/models/Admin/Brand';
 
 import { IconBrandMedium } from '@tabler/icons-react';
-import {
-  showConfirmDelete,
-  showErrorAlert,
-  showSuccessAlert,
-  showSwal,
-} from 'src/customs/components/alerts/alerts';
+import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 const Content = () => {
-  const [tableData, setTableData] = useState<Item[]>([]);
+  const [tableData, setTableData] = useState<any[]>([]);
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
-  const [isDataReady, setIsDataReady] = useState(false);
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
-  const [edittingId, setEdittingId] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [searchKeyword, setSearchKeyword] = useState('');
-  const [formDataAddBrand, setFormDataAddBrand] = useState<CreateBrandRequest>(() => {
-    const saved = localStorage.getItem('unsavedBrandData');
-    return saved ? JSON.parse(saved) : {};
-  });
   const cards = [
     {
       title: 'Total Brand',
-      subTitle: `${tableData.length}`,
+      subTitle: `${totalRecords}`,
       subTitleSetting: 10,
       icon: IconBrandMedium,
       color: 'none',
@@ -56,10 +45,10 @@ const Content = () => {
           token,
           start,
           rowsPerPage,
-          sortColumn,
+          // sortColumn,
           searchKeyword,
         );
-        setTableData(response.collection);
+        setTableData(response.collection.map(({ integration_list_id, ...rest }) => rest));
         setTotalRecords(response.collection.length);
         // setIsDataReady(true);
       } catch (error) {
@@ -71,23 +60,16 @@ const Content = () => {
     fetchData();
   }, [token, page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword]);
 
-  useEffect(() => {
-    localStorage.setItem('unsavedBrandData', JSON.stringify(formDataAddBrand));
-  }, [formDataAddBrand]);
-
   const handleBatchDelete = async (rows: Item[]) => {
     if (!token || rows.length === 0) return;
 
-    const confirmed = await showConfirmDelete(
-      `Are you sure to delete ${rows.length} brands?`,
-    );
+    const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} brands?`);
 
     if (confirmed) {
       setLoading(true);
       try {
         await Promise.all(rows.map((row) => deleteBrand(row.id, token)));
         setRefreshTrigger((prev) => prev + 1);
-        // showSuccessAlert('Deleted!', `${rows.length} items have been deleted.`);
         showSwal('success', `${rows.length} items have been deleted.`);
         setSelectedRows([]);
       } catch (error) {

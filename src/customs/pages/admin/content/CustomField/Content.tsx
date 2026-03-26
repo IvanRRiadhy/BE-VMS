@@ -7,9 +7,6 @@ import {
   DialogActions,
   Button,
   Divider,
-  CircularProgress,
-  Card,
-  Skeleton,
   Grid2 as Grid,
   IconButton,
   Portal,
@@ -34,20 +31,13 @@ import {
 import {
   CreateCustomFieldRequest,
   Item,
-  CreateCustomFieldResponse,
   multiOptField,
   FieldType,
   CreateCustomFieldRequestSchema,
 } from 'src/customs/api/models/Admin/CustomField';
-import FormCustomField from './FormCustomField';
-import Swal from 'sweetalert2';
+import FormCustomField from 'src/customs/pages/admin/content/CustomField/FormCustomField';
 import { IconSettings } from '@tabler/icons-react';
-import {
-  showConfirmDelete,
-  showErrorAlert,
-  showSuccessAlert,
-  showSwal,
-} from 'src/customs/components/alerts/alerts';
+import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 
 type CustomFieldTableRow = {
   id: string;
@@ -61,7 +51,6 @@ const Content = () => {
   const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const [tableData, setTableData] = useState<Item[]>([]);
   const [selectedRows, setSelectedRows] = useState<CustomFieldTableRow[]>([]);
-  const [isDataReady, setIsDataReady] = useState(false);
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
@@ -70,12 +59,13 @@ const Content = () => {
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [tableRowSite, setTableRowSite] = React.useState<CustomFieldTableRow[]>([]);
+  const [tableRowSite, setTableRowSite] = useState<CustomFieldTableRow[]>([]);
   const [edittingId, setEdittingId] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [initialFormSnapshot, setInitialFormSnapshot] = useState<string | null>(null);
   const [shouldTrackChanges, setShouldTrackChanges] = useState(false);
   const [sortDir, setSortDir] = useState('desc');
+
   useEffect(() => {
     if (!token) return;
     const fetchData = async () => {
@@ -83,21 +73,16 @@ const Content = () => {
       try {
         const start = page * rowsPerPage;
         const responseGet = await getAllCustomField(token);
-        const response = await getAllCustomFieldPagination(
-          token,
-          start,
-          rowsPerPage,
-          sortColumn,
-          sortDir,
-          searchKeyword,
-        );
-        const total = responseGet.collection?.length ?? 0;
-        // console.log('Total records:', total);
-        setTableData(responseGet.collection);
-        setTotalRecords(total);
+        // const response = await getAllCustomFieldPagination(
+        //   token,
+        //   start,
+        //   rowsPerPage,
+        //   sortColumn,
+        //   sortDir,
+        //   searchKeyword,
+        // );
 
-        console.log('Table data:', tableData);
-        const rows = response.collection.map((item: Item) => ({
+        const rows = responseGet.collection.map((item: Item) => ({
           id: item.id,
           name: item.short_name,
           display_text: item.long_display_text,
@@ -106,6 +91,7 @@ const Content = () => {
         }));
 
         setTableRowSite(rows);
+        setTotalRecords(responseGet.collection.length);
       } catch (error) {
         console.error('Fetch error:', error);
       } finally {
@@ -114,28 +100,25 @@ const Content = () => {
     };
     fetchData();
   }, [token, refreshTrigger, searchKeyword]);
+
   const [formDataAddCustomField, setFormDataAddCustomField] = useState<CreateCustomFieldRequest>(
     () => {
-      const saved = localStorage.getItem('unsavedCustomDataData');
+      const saved = localStorage.getItem('UNSAV');
       return saved ? JSON.parse(saved) : {};
     },
   );
   const defaultFormData = CreateCustomFieldRequestSchema.parse({});
   const isFormChanged = JSON.stringify(formDataAddCustomField) !== JSON.stringify(defaultFormData);
 
-  // useEffect(() => {
-  //   localStorage.setItem('unsavedCustomDataData', JSON.stringify(formDataAddCustomField));
-  // }, [formDataAddCustomField]);
-  const [isFormInitialized, setIsFormInitialized] = useState(false);
   useEffect(() => {
     if (!shouldTrackChanges || !initialFormSnapshot) return;
 
     const current = JSON.stringify(formDataAddCustomField);
 
     if (current !== initialFormSnapshot) {
-      localStorage.setItem('unsavedCustomDataData', current);
+      localStorage.setItem('UNSAV', current);
     } else {
-      localStorage.removeItem('unsavedCustomDataData');
+      localStorage.removeItem('UNSAV');
     }
   }, [formDataAddCustomField, shouldTrackChanges, initialFormSnapshot]);
 
@@ -169,7 +152,7 @@ const Content = () => {
       color: 'none',
     },
   ];
-  //Create Access Control Dialog
+
   const [openCreateCustomField, setOpenCreateCustomField] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
@@ -185,7 +168,7 @@ const Content = () => {
   };
 
   const handleAdd = () => {
-    const editing = localStorage.getItem('unsavedCustomDataData');
+    const editing = localStorage.getItem('UNSAV');
     const data = editing ? JSON.parse(editing) : CreateCustomFieldRequestSchema.parse({});
 
     setFormDataAddCustomField(data);
@@ -197,7 +180,7 @@ const Content = () => {
   };
 
   const handleEdit = (id: string) => {
-    const editing = localStorage.getItem('unsavedCustomDataData');
+    const editing = localStorage.getItem('UNSAV');
     if (editing) {
       const parsed = JSON.parse(editing);
       if (parsed.id === id) {
@@ -222,7 +205,7 @@ const Content = () => {
   };
   const handleConfirmEdit = () => {
     setConfirmDialogOpen(false);
-    localStorage.removeItem('unsavedCustomDataData');
+    localStorage.removeItem('UNSAV');
 
     if (pendingEditId) {
       const data = tableData.find((item) => item.id === pendingEditId);
@@ -234,7 +217,6 @@ const Content = () => {
     }
 
     setPendingEditId(null);
-    setIsFormInitialized(true);
     handleCloseDialog();
   };
 
@@ -267,7 +249,6 @@ const Content = () => {
         await deleteCustomField(id, token);
         showSwal('success', 'Custom Field has been deleted.');
         setRefreshTrigger((prev) => prev + 1);
-        // showSuccessAlert('Deleted!', 'Custom Field has been deleted.');
       } catch (error) {
         showSwal('error', 'Failed to delete custom field.');
         setTimeout(() => setLoading(false), 500);
@@ -291,10 +272,8 @@ const Content = () => {
         await Promise.all(rows.map((row) => deleteCustomField(row.id, token)));
         showSwal('success', `${rows.length} items have been deleted.`);
         setRefreshTrigger((prev) => prev + 1);
-        // showSuccessAlert('Deleted!', `${rows.length} items have been deleted.`);
       } catch (error) {
         console.error(error);
-        // showErrorAlert('Error!', 'Failed to delete some items.');
         showSwal('error', 'Failed to delete some items.');
       } finally {
         setLoading(false);
@@ -357,7 +336,7 @@ const Content = () => {
       </Container>
       <Dialog
         open={openCreateCustomField}
-        onClose={handleDialogClose} // sebelumnya: handleCloseDialog
+        onClose={handleDialogClose}
         fullWidth
         maxWidth={formDataAddCustomField.field_type >= 3 ? 'lg' : 'md'}
       >
@@ -389,15 +368,10 @@ const Content = () => {
             formData={formDataAddCustomField}
             setFormData={setFormDataAddCustomField}
             onSuccess={() => {
-              localStorage.removeItem('unsavedCustomDataData');
+              localStorage.removeItem('UNSAV');
               handleCloseDialog();
               setRefreshTrigger(refreshTrigger + 1);
               if (edittingId) {
-                // Swal.fire({
-                //   icon: 'success',
-                //   title: 'Success',
-                //   text: 'Custom Field successfully updated!',
-                // });
                 showSwal('success', 'Custom Field successfully updated!');
               } else {
                 showSwal('success', 'Custom Field successfully created!');

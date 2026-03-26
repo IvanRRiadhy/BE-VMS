@@ -194,7 +194,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   containerRef,
   fullscreenHandle,
   resetStep,
-  // wsPayload,
   ws,
   setWsPayload,
   registeredSite,
@@ -547,14 +546,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       };
     });
   };
-
-  // const isEmpty = (val: any) => {
-  //   if (val === null || val === undefined) return true;
-  //   if (typeof val === 'string') return val.trim() === '';
-  //   if (Array.isArray(val)) return val.length === 0;
-  //   if (typeof val === 'object') return Object.keys(val).length === 0;
-  //   return false;
-  // };
 
   const isEmpty = (value: any) => {
     if (value === null || value === undefined) return true;
@@ -4498,7 +4489,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           autoHideDuration={3000}
           onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
           anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-          sx={{ zIndex: 9999999 }}
+          sx={{ zIndex: 999999 }}
         >
           <Alert
             onClose={() => setSnackbar((s) => ({ ...s, open: false }))}

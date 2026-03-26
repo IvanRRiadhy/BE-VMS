@@ -30,14 +30,13 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import Swal from 'sweetalert2';
+
+import { v4 as uuidv4 } from 'uuid';
 import {
   CreateSiteRequest,
   CreateSiteRequestSchema,
-  generateKeyCode,
   Item,
   TypeApproval,
-  UpdateSiteRequest,
   Access,
   Parking,
   Tracking,
@@ -78,7 +77,6 @@ import {
   CreateSiteDocumentRequestSchema,
   Item as SiteDocumentItem,
 } from 'src/customs/api/models/Admin/SiteDocument';
-// import { axiosInstance2 } from 'src/customs/api/interceptor';
 import { Item as DocumentItem } from 'src/customs/api/models/Admin/Document';
 import { Item as AccessControlItem } from 'src/customs/api/models/Admin/AccessControl';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
@@ -86,6 +84,8 @@ import { BASE_URL } from 'src/customs/api/interceptor';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import RenderDragSite from './components/RenderDragSite';
 import { useLocation, useParams } from 'react-router';
+import { DndContext, closestCenter, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
+import { arrayMove } from '@dnd-kit/sortable';
 
 type EnabledFields = {
   type: boolean;
@@ -110,6 +110,7 @@ interface FormSiteProps {
   isBatchEdit?: boolean;
   enabledFields?: EnabledFields;
   setEnabledFields: React.Dispatch<React.SetStateAction<EnabledFields>>;
+  employee?: any;
 }
 
 const FormSite = ({
@@ -121,12 +122,13 @@ const FormSite = ({
   selectedRows = [],
   enabledFields,
   setEnabledFields,
+  employee,
 }: FormSiteProps) => {
   const { token } = useSession();
   const location = useLocation();
   const segments = location.pathname.split('/');
   const parentRouteId = segments[segments.length - 1] || null;
-
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
   const [alertType, setAlertType] = useState<'info' | 'success' | 'error'>('info');
@@ -171,21 +173,6 @@ const FormSite = ({
     site_id: '',
     retention_time: 0,
   });
-
-  const [employee, setEmployee] = useState<any[]>([]);
-
-  useEffect(() => {
-    const fetchEmployees = async () => {
-      try {
-        const res = getAllEmployee(token!);
-        const data = (await res).collection || [];
-        setEmployee(data);
-      } catch (error) {
-        console.error('❌ Failed to fetch employees:', error);
-      }
-    };
-    fetchEmployees();
-  }, [token]);
 
   useEffect(() => {
     if (!editingId || !token) return;
@@ -240,9 +227,11 @@ const FormSite = ({
           early_access: t.early_access ?? false,
         }));
 
-        setFormData((prev) => ({
+        setLocalForm((prev) => ({
           ...prev,
           ...site,
+          // type: Number(site.type),
+          type: site?.type !== undefined ? Number(site.type) : prev.type,
           access: site ?? [],
           parking: mappedParking,
           tracking: mappedTracking,
@@ -295,28 +284,24 @@ const FormSite = ({
     fetchData();
   }, [token, editingId]);
 
+  const [localForm, setLocalForm] = useState(formData);
+
+  useEffect(() => {
+    setLocalForm(formData);
+  }, [formData]);
+
   const handleChange = (
     e:
       | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
       | React.ChangeEvent<{ name?: string; value: unknown }>,
   ) => {
     const { id, name, value } = e.target as any;
-    setFormData((prev) => ({
+    setLocalForm((prev) => ({
       ...prev,
       [name || id]: value,
     }));
   };
 
-  const normalizeAccessPayloads = (items: any[], siteId: string) => {
-    return {
-      data: items.map((a, idx) => ({
-        site_id: siteId,
-        sort: idx + 1,
-        // access_control_id: a.access_control_id,
-        early_access: a.early_access ?? false,
-      })),
-    };
-  };
   const normalizeTrackingPayloads = (items: any[], siteId: string) => {
     return {
       data: items.map((t, idx) => ({
@@ -327,24 +312,6 @@ const FormSite = ({
         early_access: t.early_access ?? false,
       })),
     };
-  };
-
-  const normalizeTrackingPayload = (items: any[], siteId: string) => {
-    return items.map((t, idx) => ({
-      site_id: siteId,
-      sort: idx + 1,
-      trk_ble_card_access_id: t.trk_ble_card_access_id,
-      early_access: t.early_access ?? false,
-    }));
-  };
-
-  const normalizeParkingPayload = (items: any[], siteId: string) => {
-    return items.map((p, idx) => ({
-      site_id: siteId,
-      sort: idx + 1,
-      prk_area_parking_id: p.prk_area_parking_id,
-      early_access: p.early_access ?? false,
-    }));
   };
 
   const normalizeParkingPayloads = (items: any[], siteId: string) => {
@@ -375,7 +342,7 @@ const FormSite = ({
         const updatedFields: Partial<CreateSiteRequest> = {};
 
         Object.entries(enabledFields || {}).forEach(([key, isEnabled]) => {
-          if (isEnabled) (updatedFields as any)[key] = (formData as any)[key];
+          if (isEnabled) (updatedFields as any)[key] = (localForm as any)[key];
         });
 
         if (Object.keys(updatedFields).length === 0) {
@@ -395,13 +362,11 @@ const FormSite = ({
       }
 
       if (editingId) {
-        // console.log('Editing site with ID:', editingId);
-        // console.log('Form Data:', formData);
-        const updateData = UpdateSiteRequestSchema.parse(formData);
-        console.log('updateData main', updateData);
-        // const updateDataTracking = UpdateSiteTrackingSchema.parse(formData.tracking || []);
+        const updateData = UpdateSiteRequestSchema.parse(localForm);
+        // console.log('updateData main', updateData);
+        // const updateDataTracking = UpdateSiteTrackingSchema.parse(localForm.tracking || []);
         // console.log('updateData tracking', updateDataTracking);
-        // const updateDataParking = UpdateSiteParkingSchema.parse(formData.parking || []);
+        // const updateDataParking = UpdateSiteParkingSchema.parse(localForm.parking || []);
         // console.log('updateData parking', updateDataParking);
 
         // Bersihkan field kosong
@@ -413,47 +378,77 @@ const FormSite = ({
         const res = await updateSite(editingId, updateData, token);
         console.log('res', JSON.stringify(res, null, 2));
 
-        // const trackingPayload = normalizeTrackingPayload(formData.tracking ?? [], editingId);
+        // const trackingPayload = normalizeTrackingPayload(localForm.tracking ?? [], editingId);
         // console.log('trackingPayload', trackingPayload);
 
         // await updateSiteTracking(editingId, trackingPayload, token);
-        // const parkingPayload = normalizeTrackingPayload(formData.parking ?? [], editingId);
+        // const parkingPayload = normalizeTrackingPayload(localForm.parking ?? [], editingId);
         // console.log('parkingPayload', parkingPayload);
 
         // await updateSiteParking(editingId, parkingPayload, token);
 
-        for (const t of formData.tracking ?? []) {
-          const payload = {
-            site_id: editingId, // tetap pakai site ID
-            sort: t.sort,
-            trk_ble_card_access_id: t.trk_ble_card_access_id ?? t.id,
-            early_access: t.early_access ?? false,
-          };
+        // for (const t of localForm.tracking ?? []) {
+        //   const payload = {
+        //     site_id: editingId, 
+        //     sort: t.sort,
+        //     trk_ble_card_access_id: t.trk_ble_card_access_id ?? t.id,
+        //     early_access: t.early_access ?? false,
+        //   };
 
-          if (t.id) {
-            await updateSiteTracking(t.id, payload, token);
-          } else {
-            await createSiteTracking(payload, token);
-          }
-        }
+        //   if (t.id) {
+        //     await updateSiteTracking(t.id, payload, token);
+        //   } else {
+        //     await createSiteTracking(payload, token);
+        //   }
+        // }
+
+        await Promise.all(
+          (localForm.tracking ?? []).map((t) => {
+            const payload = {
+              site_id: editingId,
+              sort: t.sort,
+              trk_ble_card_access_id: t.trk_ble_card_access_id ?? t.id,
+              early_access: t.early_access ?? false,
+            };
+
+            return t.id
+              ? updateSiteTracking(t.id, payload, token)
+              : createSiteTracking(payload, token);
+          }),
+        );
+
+        await Promise.all(
+          (localForm.parking ?? []).map((p) => {
+            const payload = {
+              site_id: editingId,
+              sort: p.sort,
+              prk_area_parking_id: p.prk_area_parking_id ?? p.id,
+              early_access: p.early_access ?? false,
+            };
+
+            return p.id
+              ? updateSiteParking(p.id, payload, token)
+              : createSiteParking(payload, token);
+          }),
+        );
 
         // 🔹 Update Parking per item
-        for (const p of formData.parking ?? []) {
-          const payload = {
-            site_id: editingId,
-            sort: p.sort,
-            prk_area_parking_id: p.prk_area_parking_id ?? p.id,
-            early_access: p.early_access ?? false,
-          };
+        // for (const p of localForm.parking ?? []) {
+        //   const payload = {
+        //     site_id: editingId,
+        //     sort: p.sort,
+        //     prk_area_parking_id: p.prk_area_parking_id ?? p.id,
+        //     early_access: p.early_access ?? false,
+        //   };
 
-          if (p.id) {
-            await updateSiteParking(p.id, payload, token);
-          } else {
-            await createSiteParking(payload, token);
-          }
-        }
+        //   if (p.id) {
+        //     await updateSiteParking(p.id, payload, token);
+        //   } else {
+        //     await createSiteParking(payload, token);
+        //   }
+        // }
 
-        await handleFileUpload(editingId);
+         handleFileUpload(editingId);
 
         showSwal('success', 'Site successfully updated!');
       } else {
@@ -467,11 +462,11 @@ const FormSite = ({
 
         const parentId = isValidParent ? parentRouteId : null;
         let finalFormData = {
-          ...formData,
+          ...localForm,
           parent: parentId ?? null,
           is_child: Boolean(parentId),
           // is_child: !!parentId,
-          type: formData.type ?? 0,
+          type: localForm.type ?? 0,
         };
         console.log('finalFormData', finalFormData);
         const createData = CreateSiteRequestSchema.parse(finalFormData);
@@ -479,20 +474,20 @@ const FormSite = ({
         const res = await createSite(createData, token);
         const newSiteId = res.collection?.id as string;
 
-        const trackingPayload = normalizeTrackingPayloads(formData.tracking ?? [], newSiteId);
+        const trackingPayload = normalizeTrackingPayloads(localForm.tracking ?? [], newSiteId);
 
         if (trackingPayload.data.length > 0) {
           await createSiteTrackingBulk(trackingPayload, token);
         }
 
-        const parkingPayload = normalizeParkingPayloads(formData.parking ?? [], newSiteId);
+        const parkingPayload = normalizeParkingPayloads(localForm.parking ?? [], newSiteId);
 
         if (parkingPayload.data.length > 0) {
           await createSiteParkingBulk(parkingPayload, token);
         }
 
         await createSiteDocumentsForNewSite();
-        await handleFileUpload(newSiteId);
+         handleFileUpload(newSiteId);
 
         showSwal('success', 'Site successfully created!');
       }
@@ -502,7 +497,7 @@ const FormSite = ({
       if (err?.errors) setErrors(err.errors);
       showSwal('error', 'Failed. Please try again later.');
     } finally {
-      setTimeout(() => setLoading(false), 650);
+      setLoading(false)
     }
   };
 
@@ -542,7 +537,7 @@ const FormSite = ({
 
     const allSitesRes = await getAllSite(token);
     const newSite = allSitesRes.collection.find(
-      (site: any) => site.name === formData.name && site.description === formData.description,
+      (site: any) => site.name === localForm.name && site.description === localForm.description,
     );
 
     if (!newSite) {
@@ -568,7 +563,7 @@ const FormSite = ({
   }
 
   const resetEnabledFields = () => {
-    setFormData((prev) => ({
+    setLocalForm((prev) => ({
       ...prev,
       type: 0,
       type_approval: 0,
@@ -598,23 +593,23 @@ const FormSite = ({
   };
 
   useEffect(() => {
-    if (!siteImageFile && formData.image) {
+    if (!siteImageFile && localForm.image) {
       if (
-        formData.image.startsWith('data:image') ||
-        formData.image.startsWith('http') ||
-        formData.image.startsWith('https')
+        localForm.image.startsWith('data:image') ||
+        localForm.image.startsWith('http') ||
+        localForm.image.startsWith('https')
       ) {
-        setPreviewUrl(formData.image);
+        setPreviewUrl(localForm.image);
       } else {
-        setPreviewUrl(`${BASE_URL}/cdn${formData.image}`);
+        setPreviewUrl(`${BASE_URL}/cdn${localForm.image}`);
       }
     }
-  }, [formData.image, siteImageFile]);
+  }, [localForm.image, siteImageFile]);
 
   const handleDetailChange = (section: string, index: number, field: string, value: any) => {
-    setFormData((prev) => {
-      const arr = Array.isArray(prev[section as keyof typeof formData])
-        ? [...(prev[section as keyof typeof formData] as any[])]
+    setLocalForm((prev) => {
+      const arr = Array.isArray(prev[section as keyof typeof localForm])
+        ? [...(prev[section as keyof typeof localForm] as any[])]
         : [];
       if (index < 0 || index >= arr.length) return prev;
       arr[index] = { ...arr[index], [field]: value };
@@ -623,9 +618,9 @@ const FormSite = ({
   };
 
   const handleDetailDelete = (section: string, index: number) => {
-    setFormData((prev) => {
-      const arr = Array.isArray(prev[section as keyof typeof formData])
-        ? [...(prev[section as keyof typeof formData] as any[])]
+    setLocalForm((prev) => {
+      const arr = Array.isArray(prev[section as keyof typeof localForm])
+        ? [...(prev[section as keyof typeof localForm] as any[])]
         : [];
       if (index < 0 || index >= arr.length) return prev;
       arr.splice(index, 1);
@@ -633,24 +628,27 @@ const FormSite = ({
     });
   };
 
-  const handleDragEnd = (result: DropResult) => {
-    if (!result.destination) return;
+  const handleDragEnd = (section: 'access' | 'parking' | 'tracking') => (event: any) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
 
-    const fromIndex = result.source.index;
-    const toIndex = result.destination.index;
+    const items = localForm[section] || [];
 
-    if (fromIndex !== toIndex && handleMoveAccess) {
-      handleMoveAccess(fromIndex, toIndex);
-    }
-  };
+    const oldIndex = items.findIndex((item) => item.id === active.id);
+    const newIndex = items.findIndex((item) => item.id === over.id);
 
-  const handleMoveAccess = (from: number, to: number) => {
-    const updated = [...formData.access];
-    const [moved] = updated.splice(from, 1);
-    updated.splice(to, 0, moved);
-    setFormData((prev) => ({
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reordered = arrayMove(items as any, oldIndex, newIndex);
+
+    const updated = reordered.map((item, idx) => ({
+      ...(item as any),
+      sort: idx + 1,
+    }));
+
+    setLocalForm((prev) => ({
       ...prev,
-      access: updated,
+      [section]: updated,
     }));
   };
 
@@ -660,7 +658,8 @@ const FormSite = ({
     switch (section) {
       case 'parking':
         newItem = {
-          sort: formData.parking?.length ?? 0,
+          id: uuidv4(),
+          sort: localForm.parking?.length ?? 0,
           site_id: '',
           name: '',
           prk_area_parking_id: '',
@@ -670,7 +669,8 @@ const FormSite = ({
 
       case 'tracking':
         newItem = {
-          sort: formData.tracking?.length ?? 0,
+          id: uuidv4(),
+          sort: localForm.tracking?.length ?? 0,
           trk_ble_card_access_id: '',
           site_id: '',
           name: '',
@@ -681,7 +681,8 @@ const FormSite = ({
       case 'access':
       default:
         newItem = {
-          sort: formData.access?.length ?? 0,
+          id: uuidv4(),
+          sort: localForm.access?.length ?? 0,
           access_control_id: '',
           name: '',
           early_access: false,
@@ -689,13 +690,14 @@ const FormSite = ({
         break;
     }
 
-    setFormData((prev) => ({
+    setLocalForm((prev) => ({
       ...prev,
       [section]: [...(prev[section] || []), newItem],
     }));
   };
 
-  const typeLabel = siteTypes.find((i) => i.value === formData.type)?.label ?? '';
+  // const typeLabel = siteTypes.find((i) => i.value === localForm.type)?.label ?? '';
+  const typeLabel = siteTypes.find((i) => i.value === Number(localForm.type))?.label ?? '';
 
   return (
     <>
@@ -714,7 +716,7 @@ const FormSite = ({
                   </CustomFormLabel>
                   <CustomTextField
                     id="name"
-                    value={formData.name}
+                    value={localForm.name}
                     onChange={handleChange}
                     error={Boolean(errors.name)}
                     helperText={errors.name || ''}
@@ -728,7 +730,7 @@ const FormSite = ({
                   </CustomFormLabel>
                   <CustomTextField
                     id="description"
-                    value={formData.description}
+                    value={localForm.description}
                     onChange={handleChange}
                     error={Boolean(errors.description)}
                     helperText={errors.description || ''}
@@ -756,7 +758,7 @@ const FormSite = ({
                   <Box>
                     <CustomFormLabel
                       htmlFor="type_approval"
-                      required={formData.need_approval}
+                      required={localForm.need_approval}
                       sx={{ mt: 0.5 }}
                     >
                       Type Approval
@@ -764,21 +766,21 @@ const FormSite = ({
                     <CustomSelect
                       id="type_approval"
                       name="type_approval"
-                      value={formData.type_approval}
+                      value={localForm.type_approval}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         const value = Number(e.target.value);
-                        setFormData((prev) => ({
+                        setLocalForm((prev) => ({
                           ...prev,
                           type_approval: value,
                           need_approval: value !== 0 ? true : false,
                         }));
                       }}
                       fullWidth
-                      required={formData.need_approval}
+                      required={localForm.need_approval}
                       sx={{ mb: 2 }}
                       // SelectProps={{ native: true }}
                       // disabled={isBatchEdit && !enabledFields?.type_approval} // <- ini penting
-                      disabled={!formData.need_approval && isBatchEdit}
+                      disabled={!localForm.need_approval && isBatchEdit}
                     >
                       <MenuItem value="" disabled>
                         Select Type Approval
@@ -800,12 +802,12 @@ const FormSite = ({
                   <Autocomplete
                     id="employee"
                     options={employee}
-                    getOptionLabel={(option) => option.name || ''}
+                    getOptionLabel={(option: any) => option.name || ''}
                     // value={
-                    //   employee.find((emp) => emp.id === formData.employee_id) || null
+                    //   employee.find((emp) => emp.id === localForm.employee_id) || null
                     // }
                     onChange={(event, newValue) => {
-                      setFormData((prev) => ({
+                      setLocalForm((prev: any) => ({
                         ...prev,
                         employee_id: newValue ? newValue.id : '',
                       }));
@@ -856,9 +858,9 @@ const FormSite = ({
               <CustomSelect
                 id="timezone"
                 name="timezone"
-                value={formData.timezone}
+                value={localForm.timezone}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setFormData((prev) => ({ ...prev, timezone: e.target.value }))
+                  setLocalForm((prev) => ({ ...prev, timezone: e.target.value }))
                 }
                 fullWidth
                 sx={{ mb: 2 }}
@@ -905,7 +907,7 @@ const FormSite = ({
               <CustomTextField
                 id="signout_time"
                 type="time"
-                value={formData.signout_time}
+                value={localForm.signout_time}
                 onChange={handleChange}
                 fullWidth
                 sx={{ mb: 2 }}
@@ -927,9 +929,9 @@ const FormSite = ({
                     <FormControlLabel
                       control={
                         <Switch
-                          checked={formData.can_visited}
+                          checked={localForm.can_visited}
                           onChange={(_, checked) => {
-                            setFormData((prev) => ({ ...prev, can_visited: checked }));
+                            setLocalForm((prev) => ({ ...prev, can_visited: checked }));
 
                             if (isBatchEdit) {
                               setEnabledFields((prev) => ({ ...prev, can_visited: true }));
@@ -962,9 +964,9 @@ const FormSite = ({
                     <FormControlLabel
                       control={
                         <Switch
-                          checked={formData.need_approval}
+                          checked={localForm.need_approval}
                           onChange={(_, checked) => {
-                            setFormData((prev) => ({ ...prev, need_approval: checked }));
+                            setLocalForm((prev) => ({ ...prev, need_approval: checked }));
                             if (isBatchEdit) {
                               setEnabledFields((prev) => ({ ...prev, need_approval: true }));
                             }
@@ -992,9 +994,9 @@ const FormSite = ({
                     <FormControlLabel
                       control={
                         <Switch
-                          // checked={formData.need_invitation}
+                          // checked={localForm.need_invitation}
                           onChange={(_, checked) => {
-                            setFormData((prev) => ({ ...prev, need_invitation: checked }));
+                            setLocalForm((prev) => ({ ...prev, need_invitation: checked }));
                             if (isBatchEdit) {
                               setEnabledFields((prev) => ({ ...prev, need_invitation: true }));
                             }
@@ -1019,9 +1021,9 @@ const FormSite = ({
                     <FormControlLabel
                       control={
                         <Switch
-                          // checked={formData.need_invitation}
+                          // checked={localForm.need_invitation}
                           onChange={(_, checked) => {
-                            setFormData((prev) => ({ ...prev, need_invitation: checked }));
+                            setLocalForm((prev) => ({ ...prev, need_invitation: checked }));
                             if (isBatchEdit) {
                               setEnabledFields((prev) => ({ ...prev, need_invitation: true }));
                             }
@@ -1051,9 +1053,9 @@ const FormSite = ({
                     <FormControlLabel
                       control={
                         <Switch
-                          checked={formData.can_signout}
+                          checked={localForm.can_signout}
                           onChange={(_, checked) => {
-                            setFormData((prev) => ({ ...prev, can_signout: checked }));
+                            setLocalForm((prev) => ({ ...prev, can_signout: checked }));
                             if (isBatchEdit) {
                               setEnabledFields((prev) => ({ ...prev, can_signout: true }));
                             }
@@ -1078,9 +1080,9 @@ const FormSite = ({
                     <FormControlLabel
                       control={
                         <Switch
-                          checked={formData.auto_signout}
+                          checked={localForm.auto_signout}
                           onChange={(_, checked) => {
-                            setFormData((prev) => ({
+                            setLocalForm((prev) => ({
                               ...prev,
                               auto_signout: checked,
                               can_signout: checked ? true : prev.can_signout,
@@ -1112,9 +1114,9 @@ const FormSite = ({
                     <FormControlLabel
                       control={
                         <Switch
-                          checked={formData.can_contactless_login}
+                          checked={localForm.can_contactless_login}
                           onChange={(_, checked) => {
-                            setFormData((prev) => ({ ...prev, can_contactless_login: checked }));
+                            setLocalForm((prev) => ({ ...prev, can_contactless_login: checked }));
                             if (isBatchEdit) {
                               setEnabledFields((prev) => ({
                                 ...prev,
@@ -1142,9 +1144,9 @@ const FormSite = ({
                     <FormControlLabel
                       control={
                         <Switch
-                          checked={formData.need_document}
+                          checked={localForm.need_document}
                           onChange={(_, checked) => {
-                            setFormData((prev) => ({ ...prev, need_document: checked }));
+                            setLocalForm((prev) => ({ ...prev, need_document: checked }));
                             if (isBatchEdit) {
                               setEnabledFields((prev) => ({ ...prev, need_document: true }));
                             }
@@ -1172,9 +1174,9 @@ const FormSite = ({
                     <FormControlLabel
                       control={
                         <Switch
-                          checked={formData.is_registered_point}
+                          checked={localForm.is_registered_point}
                           onChange={(_, checked) => {
-                            setFormData((prev) => ({ ...prev, is_registered_point: checked }));
+                            setLocalForm((prev) => ({ ...prev, is_registered_point: checked }));
                             if (isBatchEdit) {
                               setEnabledFields((prev) => ({ ...prev, is_registered_point: true }));
                             }
@@ -1209,7 +1211,11 @@ const FormSite = ({
                   <Typography variant="h6" sx={{ borderLeft: '4px solid #673ab7', pl: 1 }}>
                     Access
                   </Typography>
-                  <DragDropContext onDragEnd={handleDragEnd}>
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd('access')}
+                  >
                     <TableContainer component={Paper} sx={{ mb: 1 }}>
                       <Table>
                         <TableHead>
@@ -1222,12 +1228,12 @@ const FormSite = ({
                         </TableHead>
                         <RenderDragSite
                           sectionKey="access"
-                          items={formData.access}
+                          items={localForm.access}
                           onChange={handleDetailChange}
                           onDelete={handleDetailDelete}
                           accessControlList={accessControl}
                           onReorder={(newItems) =>
-                            setFormData((prev) => ({
+                            setLocalForm((prev) => ({
                               ...prev,
                               access: newItems,
                             }))
@@ -1235,8 +1241,8 @@ const FormSite = ({
                         />
                       </Table>
                     </TableContainer>
-                  </DragDropContext>
-                  {formData.can_visited && (
+                  </DndContext>
+                  {localForm.can_visited && (
                     <MuiButton
                       size="small"
                       onClick={() => handleAddDetail('access')}
@@ -1256,7 +1262,11 @@ const FormSite = ({
                   <Typography variant="h6" sx={{ borderLeft: '4px solid #673ab7', pl: 1 }}>
                     Site Parking
                   </Typography>
-                  <DragDropContext onDragEnd={handleDragEnd}>
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd('parking')}
+                  >
                     <TableContainer component={Paper} sx={{ mb: 1 }}>
                       <Table>
                         <TableHead>
@@ -1267,35 +1277,14 @@ const FormSite = ({
                             <TableCell>Action</TableCell>
                           </TableRow>
                         </TableHead>
-
-                        {/* <Droppable
-                        droppableId="parking-droppable"
-                        isDropDisabled={false}
-                        isCombineEnabled={false}
-                        ignoreContainerClipping={true}
-                      >
-                        {(provided) => (
-                          <TableBody ref={provided.innerRef} {...provided.droppableProps}>
-                            {renderDetailRows(
-                              formData.parking || [],
-                              'parking',
-                              handleDetailChange,
-                              handleDetailDelete,
-                              undefined,
-                              siteParking,
-                            )}
-                            {provided.placeholder}
-                          </TableBody>
-                        )}
-                      </Droppable> */}
                         <RenderDragSite
                           sectionKey="parking"
-                          items={formData.parking}
+                          items={localForm.parking}
                           onChange={handleDetailChange}
                           onDelete={handleDetailDelete}
                           parkingList={siteParking}
                           onReorder={(newItems) =>
-                            setFormData((prev) => ({
+                            setLocalForm((prev) => ({
                               ...prev,
                               parking: newItems,
                             }))
@@ -1303,9 +1292,9 @@ const FormSite = ({
                         />
                       </Table>
                     </TableContainer>
-                  </DragDropContext>
-                  {(!formData.parking ||
-                    (formData.parking.length === 0 && formData.can_visited)) && (
+                  </DndContext>
+                  {(!localForm.parking ||
+                    (localForm.parking.length === 0 && localForm.can_visited)) && (
                     <MuiButton
                       size="small"
                       onClick={() => handleAddDetail('parking')}
@@ -1325,7 +1314,11 @@ const FormSite = ({
                   <Typography variant="h6" sx={{ borderLeft: '4px solid #673ab7', pl: 1 }}>
                     Site Tracking
                   </Typography>
-                  <DragDropContext onDragEnd={handleDragEnd}>
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd('tracking')}
+                  >
                     <TableContainer component={Paper} sx={{ mb: 1 }}>
                       <Table>
                         <TableHead>
@@ -1338,12 +1331,12 @@ const FormSite = ({
                         </TableHead>
                         <RenderDragSite
                           sectionKey="tracking"
-                          items={formData.tracking}
+                          items={localForm.tracking}
                           onChange={handleDetailChange}
                           onDelete={handleDetailDelete}
                           trackingList={siteTracking}
                           onReorder={(newItems) =>
-                            setFormData((prev) => ({
+                            setLocalForm((prev) => ({
                               ...prev,
                               tracking: newItems,
                             }))
@@ -1351,9 +1344,9 @@ const FormSite = ({
                         />
                       </Table>
                     </TableContainer>
-                  </DragDropContext>
-                  {(!formData.tracking ||
-                    (formData.tracking.length === 0 && formData.can_visited)) && (
+                  </DndContext>
+                  {(!localForm.tracking ||
+                    (localForm.tracking.length === 0 && localForm.can_visited)) && (
                     <MuiButton
                       size="small"
                       onClick={() => handleAddDetail('tracking')}
@@ -1368,7 +1361,7 @@ const FormSite = ({
             </Grid>
           </Grid>
 
-          {formData.need_document && (
+          {localForm.need_document && (
             <Grid size={{ xs: 12, md: 6 }}>
               <Paper sx={{ p: 3 }}>
                 <Box>
@@ -1638,11 +1631,11 @@ const FormSite = ({
                   />
                 </Box>
                 {/* Map Link Field */}
-                <Box sx={{ mt: 4, maxWidth: 600, margin: '0',marginTop: '16px' }}>
+                <Box sx={{ mt: 4, maxWidth: 600, margin: '0', marginTop: '16px' }}>
                   <CustomFormLabel htmlFor="map_link">Map Link (Google Maps)</CustomFormLabel>
                   <CustomTextField
                     id="map_link"
-                    value={formData.map_link}
+                    value={localForm.map_link}
                     onChange={handleChange}
                     placeholder="https://maps.google.com/..."
                     disabled={isBatchEdit}
@@ -1663,7 +1656,7 @@ const FormSite = ({
             disabled={loading}
             size="medium"
           >
-            {loading ? <CircularProgress size={20} /> : 'Submit'}
+            Submit
           </Button>
         </Box>
       </form>

@@ -72,32 +72,34 @@ const RenderDragSite: React.FC<Props> = ({
   };
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <SortableContext
-        items={items.map((_, i) => `${sectionKey}-${i}`)}
-        strategy={verticalListSortingStrategy}
-      >
-        <TableBody>
-          {items.map((item, index) => {
-            const id = `${sectionKey}-${index}`;
+    // <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+    <SortableContext
+      // items={items.map((_, i) => `${sectionKey}-${i}`)}
+      items={items.map((item) => item.id)}
+      strategy={verticalListSortingStrategy}
+    >
+      <TableBody>
+        {items.map((item, index) => {
+          // const id = `${sectionKey}-${index}`;
+          const id = item.id;
 
-            return (
-              <SortableRow
-                key={id}
-                id={id}
-                item={item}
-                index={index}
-                sectionKey={sectionKey}
-                onChange={onChange}
-                onDelete={onDelete}
-                selectList={getSelectList()}
-                fieldName={getFieldName()}
-              />
-            );
-          })}
-        </TableBody>
-      </SortableContext>
-    </DndContext>
+          return (
+            <SortableRow
+              key={id}
+              id={id}
+              item={item}
+              index={index}
+              sectionKey={sectionKey}
+              onChange={onChange}
+              onDelete={onDelete}
+              selectList={getSelectList()}
+              fieldName={getFieldName()}
+            />
+          );
+        })}
+      </TableBody>
+    </SortableContext>
+    //  </DndContext>
   );
 };
 

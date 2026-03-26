@@ -1,23 +1,17 @@
 import {
   Button,
-  Grid2,
-  Alert,
-  Typography,
   Autocomplete,
   CircularProgress,
   Backdrop,
-  Portal,
   FormControlLabel,
-  FormGroup,
-  Checkbox,
   RadioGroup,
   Radio,
 } from '@mui/material';
 import { Box } from '@mui/system';
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import { createDepartment, getAllEmployee, getVisitorEmployee } from 'src/customs/api/admin';
+import { createDepartment, getVisitorEmployee } from 'src/customs/api/admin';
 import {
   CreateDepartementSubmitSchema,
   CreateDepartmentRequest,
@@ -25,53 +19,35 @@ import {
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { useSession } from 'src/customs/contexts/SessionContext';
 
+// RHF
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+
 interface FormAddDepartmentProps {
-  formData: CreateDepartmentRequest;
-  setFormData: React.Dispatch<React.SetStateAction<CreateDepartmentRequest>>;
   onSuccess?: () => void;
 }
 
-const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
-  formData,
-  setFormData,
-  onSuccess,
-}) => {
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [loading, setLoading] = useState(false);
-  const [alertType, setAlertType] = useState<'info' | 'success' | 'error'>('info');
-  const [alertMessage, setAlertMessage] = useState<string>(
-    'Complete the following data properly and correctly',
-  );
+const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({ onSuccess }) => {
   const { token } = useSession();
+  const [loading, setLoading] = useState(false);
+  const [allEmployes, setAllEmployees] = useState<any[]>([]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const field = e.target.name || e.target.id;
-    const { value } = e.target;
+  // ✅ RHF setup
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<CreateDepartmentRequest>({
+    resolver: zodResolver(CreateDepartementSubmitSchema),
+    defaultValues: {
+      name: '',
+      code: '',
+      host: '',
+    },
+  });
 
-    // update form
-    setFormData((prev) => ({ ...prev, [field]: value }));
-
-    // clear error for this field
-    setErrors((prev) => ({ ...prev, [field]: '' }));
-  };
-
-  const validateLocal = (data: any) => {
-    const r = CreateDepartementSubmitSchema.safeParse(data);
-    if (!r.success) {
-      const fe = r.error.flatten().fieldErrors;
-      setErrors({
-        code: fe.code?.[0] ?? '',
-        name: fe.name?.[0] ?? '',
-        host: fe.host?.[0] ?? '',
-      });
-      return null;
-    }
-    setErrors({});
-    return r.data;
-  };
-
-  const [allEmployes, setAllEmployees] = useState<any>([]);
-
+  // fetch employee
   useEffect(() => {
     if (!token) return;
 
@@ -88,150 +64,116 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
     fetchEmployees();
   }, [token]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const employeeOptions = useMemo(
+    () => allEmployes.map((emp: any) => ({ id: emp.id, label: emp.name })),
+    [allEmployes],
+  );
+
+  // ✅ submit clean
+  const onSubmit = async (data: CreateDepartmentRequest) => {
     setLoading(true);
-    setErrors({});
-
     try {
-      const parsed = validateLocal(formData);
-      if (!parsed) {
-        setAlertType('error');
-        setAlertMessage('Please complete the required fields correctly.');
-        setTimeout(() => {
-          setAlertType('info');
-          setAlertMessage('Complete the following data properly and correctly');
-        }, 3000);
-        return;
-      }
-
-      await createDepartment(parsed, token as string);
-      localStorage.removeItem('unsavedDepartmentFormAdd');
-
-      setLoading(false);
-      await new Promise<void>((resolve) => {
-        onSuccess?.();
-        setTimeout(resolve, 600);
-      });
+      await createDepartment(data, token as string);
 
       showSwal('success', 'Department successfully created!');
-    } catch (err: any) {
-      const be = err?.response?.data?.errors;
-      if (be && typeof be === 'object') {
-        setErrors({
-          code: be.Code?.[0] ?? '',
-          name: be.Name?.[0] ?? '',
-          host: be.Host?.[0] ?? '',
-        });
-      }
+      reset();
 
+      onSuccess?.();
+    } catch (err) {
       showSwal('error', 'Failed to create department.', 3000);
     } finally {
-      setTimeout(() => setLoading(false), 600);
+      setLoading(false);
     }
   };
 
   return (
     <>
-      <form onSubmit={handleSubmit}>
-        <CustomFormLabel htmlFor="name" sx={{ my: 1, fontWeight: 500 }} required>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        {/* NAME */}
+        <CustomFormLabel required sx={{ mt: 0 }}>
           Department Name
         </CustomFormLabel>
-        <CustomTextField
-          id="name"
-          value={formData.name}
-          onChange={handleChange}
-          error={Boolean(errors.name)}
-          helperText={errors.name}
-          fullWidth
-          variant="outlined"
-        />
-        <CustomFormLabel htmlFor="code" sx={{ my: 1, fontWeight: 500 }} required>
-          Department Code
-        </CustomFormLabel>
-        <CustomTextField
-          id="code"
-          value={formData.code}
-          onChange={handleChange}
-          error={Boolean(errors.code)}
-          helperText={errors.code}
-          fullWidth
-          variant="outlined"
-        />
-        <CustomFormLabel htmlFor="host" sx={{ my: 1, fontWeight: 500 }} required>
-          Head of Department
-        </CustomFormLabel>
-        <Autocomplete
-          // freeSolo
-          id="host"
-          autoHighlight
-          disablePortal={false}
-          options={allEmployes.map((emp: any) => ({ id: emp.id, label: emp.name }))}
-          getOptionLabel={(option) => {
-            if (typeof option === 'string') return option;
-            return option.label;
-          }}
-          value={
-            // cari object di options yang id-nya sama dengan formData.host
-            allEmployes
-              .map((emp: any) => ({ id: emp.id, label: emp.name }))
-              .find((emp: any) => emp.id === formData.host) ?? ''
-          }
-          onChange={(_, newValue) => {
-            const newHost = typeof newValue === 'string' ? newValue : (newValue?.id ?? '');
-            setFormData((prev) => ({ ...prev, host: newHost }));
-            setErrors((prev) => ({ ...prev, host: '' }));
-          }}
-          onInputChange={(_, inputValue) => {
-            setFormData((prev) => ({ ...prev, host: inputValue }));
-            setErrors((prev) => ({ ...prev, host: '' }));
-          }}
-          renderInput={(params) => (
+        <Controller
+          name="name"
+          control={control}
+          render={({ field }) => (
             <CustomTextField
-              {...params}
-              variant="outlined"
-              placeholder=""
-              error={Boolean(errors.host)}
-              helperText={errors.host}
+              {...field}
+              error={!!errors.name}
+              helperText={errors.name?.message}
               fullWidth
             />
           )}
         />
-        
-        <RadioGroup
-          row
-          // value={formData.visitorType}
-          // onChange={(e) =>
-          //   setFormData((prev) => ({
-          //     ...prev,
-          //     visitorType: e.target.value,
-          //   }))
-          // }
-        >
-          <FormControlLabel value="internal" control={<Radio />} label="Internal" />
-          <FormControlLabel value="external" control={<Radio />} label="External" />  
-        </RadioGroup>
+
+        {/* CODE */}
+        <CustomFormLabel required sx={{ mt: 2 }}>
+          Department Code
+        </CustomFormLabel>
+        <Controller
+          name="code"
+          control={control}
+          render={({ field }) => (
+            <CustomTextField
+              {...field}
+              error={!!errors.code}
+              helperText={errors.code?.message}
+              fullWidth
+            />
+          )}
+        />
+
+        {/* HOST */}
+        <CustomFormLabel required sx={{ mt: 2 }}>
+          Head of Department
+        </CustomFormLabel>
+        <Controller
+          name="host"
+          control={control}
+          render={({ field }) => (
+            <Autocomplete
+              options={employeeOptions}
+              value={employeeOptions.find((e) => e.id === field.value) ?? null}
+              onChange={(_, newValue) => {
+                field.onChange(newValue?.id ?? '');
+              }}
+              renderInput={(params) => (
+                <CustomTextField
+                  {...params}
+                  error={!!errors.host}
+                  helperText={errors.host?.message}
+                  fullWidth
+                />
+              )}
+            />
+          )}
+        />
+
+        {/* TYPE */}
+        {/* <CustomFormLabel sx={{ mt: 2 }}>Type (Optional)</CustomFormLabel>
+        <Controller
+          name="type"
+          control={control}
+          defaultValue=""
+          render={({ field }) => (
+            <RadioGroup row {...field}>
+              <FormControlLabel value="internal" control={<Radio />} label="Internal" />
+              <FormControlLabel value="external" control={<Radio />} label="External" />
+            </RadioGroup>
+          )}
+        /> */}
+
+        {/* SUBMIT */}
         <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button
-            sx={{ mt: 2 }}
-            color="primary"
-            variant="contained"
-            type="submit"
-            disabled={loading}
-          >
+          <Button sx={{ mt: 2 }} variant="contained" type="submit" disabled={loading}>
             Submit
           </Button>
         </Box>
       </form>
 
-      <Backdrop
-        open={loading}
-        sx={{
-          color: '#fff',
-          zIndex: (theme) => theme.zIndex.drawer + 1,
-        }}
-      >
-        <CircularProgress color="inherit" />
+      {/* LOADING */}
+      <Backdrop open={loading} sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+        <CircularProgress />
       </Backdrop>
     </>
   );

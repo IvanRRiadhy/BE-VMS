@@ -116,6 +116,7 @@ const Content = () => {
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
   const [isBatchEdit, setIsBatchEdit] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [sortDir, setSortDir] = useState('desc');
   // Create Visitor card state management
   const [openFormCreateVisitorCard, setOpenFormCreateVisitorCard] = useState(false);
   const BASE_URL = axiosInstance.defaults.baseURL;
@@ -175,8 +176,9 @@ const Content = () => {
           token,
           start,
           rowsPerPage,
-          sortColumn,
+          // sortColumn,
           searchKeyword,
+          sortDir,
           filters.type === -1 ? undefined : filters.type,
           filters.card_status === -1 ? undefined : filters.card_status,
         );

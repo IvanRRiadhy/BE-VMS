@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Box,
   Button,
@@ -20,17 +20,10 @@ import {
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import CloseIcon from '@mui/icons-material/Close';
-import {
-  CreateDocumentRequest,
-  CreateDocumentRequestSchema,
-  Item,
-} from 'src/customs/api/models/Admin/Document';
+import { Item } from 'src/customs/api/models/Admin/Document';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { deleteDocument, getAllDocumentPagination } from 'src/customs/api/admin';
-// import FormAddDocument from './FormAddDocument';
 import { IconCheck, IconScript } from '@tabler/icons-react';
 import { showConfirmDelete, showErrorAlert, showSwal } from 'src/customs/components/alerts/alerts';
-import { axiosInstance2 } from 'src/customs/api/interceptor';
 import FormApprove from './FormApprove';
 import {
   deleteApprovalWorkflow,
@@ -41,10 +34,9 @@ import {
   CreateApprovalWorkflowRequest,
   CreateApprovalWorkflowSchema,
 } from 'src/customs/api/models/Admin/ApprovalWorfklow';
-import { set } from 'lodash';
 
-const Content = () => {
-  const [tableData, setTableData] = useState<Item[]>([]);
+const Content = ({ tableData, searchKeyword, setSearchKeyword, setRefreshTrigger, refreshTrigger }: any) => {
+  // const [tableData, setTableData] = useState<Item[]>([]);
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
@@ -53,7 +45,7 @@ const Content = () => {
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  // const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [sortDir, setSortDir] = useState('desc');
   const defaultApprovalWorkflow: CreateApprovalWorkflowRequest = {
     name: '',
@@ -69,7 +61,7 @@ const Content = () => {
     },
   );
 
-  const [searchKeyword, setSearchKeyword] = useState('');
+  // const [searchKeyword, setSearchKeyword] = useState('');
   const cards = [
     {
       title: 'Total Approval Workflow',
@@ -80,41 +72,41 @@ const Content = () => {
     },
   ];
 
-  useEffect(() => {
-    if (!token) return;
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const start = page * rowsPerPage;
-        const response = await getApprovalWorkflowByDt(
-          token,
-          start,
-          rowsPerPage,
-          sortDir,
-          searchKeyword,
-        );
-        setTableData(response.collection);
-        setTotalRecords(response.RecordsTotal);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-        setTableData([]);
-        setTotalRecords(0);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [token, page, rowsPerPage, sortColumn, sortDir, refreshTrigger, searchKeyword]);
+  // useEffect(() => {
+  //   if (!token) return;
+  //   const fetchData = async () => {
+  //     setLoading(true);
+  //     try {
+  //       const start = page * rowsPerPage;
+  //       const response = await getApprovalWorkflowByDt(
+  //         token,
+  //         start,
+  //         rowsPerPage,
+  //         sortDir,
+  //         searchKeyword,
+  //       );
+  //       setTableData(response.collection.map(({ conditions, ...rest }: any) => rest));
+  //       setTotalRecords(response.RecordsTotal);
+  //       onTotalChange(response.RecordsTotal);
+  //     } catch (error) {
+  //       console.error('Error fetching data:', error);
+  //       setTableData([]);
+  //       setTotalRecords(0);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+  //   fetchData();
+  // }, [token, page, rowsPerPage, sortColumn, sortDir, refreshTrigger, searchKeyword]);
 
   const [openFormAddDocument, setOpenFormAddDocument] = useState(false);
-  const [isDirty, setIsDirty] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
 
   const handleCloseDialog = () => {
     setOpenFormAddDocument(false);
-    localStorage.removeItem('unsavedApprovalWorkflow');
     setEdittingId('');
+    localStorage.removeItem('unsavedApprovalWorkflow');
   };
   const defaultDoc = defaultApprovalWorkflow;
 
@@ -133,7 +125,8 @@ const Content = () => {
 
     try {
       const parsed = JSON.parse(raw);
-      if (parsed?.id && parsed.id === edittingId) return false;
+
+      if (parsed?.id === edittingId) return false;
 
       return !isEmptyDoc(parsed);
     } catch {
@@ -164,12 +157,15 @@ const Content = () => {
       return;
     }
 
-    setEdittingId(id); // kirim id ke form
+    setEdittingId(id);
     setOpenFormAddDocument(true);
   };
 
   const handleConfirmEdit = () => {
     setConfirmDialogOpen(false);
+    localStorage.removeItem('unsavedApprovalWorkflow');
+
+    setEdittingId(pendingEditId || '');
 
     const item = tableData.find((item: any) => item.id === pendingEditId);
     if (item) {
@@ -177,6 +173,7 @@ const Content = () => {
     } else {
       setFormDataAddDocument(defaultApprovalWorkflow);
     }
+
     setOpenFormAddDocument(true);
     setPendingEditId(null);
   };
@@ -204,7 +201,7 @@ const Content = () => {
       setLoading(true);
       await deleteApprovalWorkflow(token, id);
       showSwal('success', 'Successfully deleted approval workflow!');
-      setRefreshTrigger((prev) => prev + 1);
+      setRefreshTrigger((prev: any) => prev + 1);
     } catch (error) {
       console.error(error);
       showSwal('error', 'Failed to delete approval workflow.');
@@ -222,7 +219,7 @@ const Content = () => {
       setLoading(true);
       try {
         await Promise.all(rows.map((row) => deleteApprovalWorkflow(row.id, token)));
-        setRefreshTrigger((prev) => prev + 1);
+        setRefreshTrigger((prev:any) => prev + 1);
         showSwal('success', `${rows.length} items have been deleted.`);
         setSelectedRows([]);
       } catch (error) {
@@ -235,52 +232,52 @@ const Content = () => {
   };
 
   return (
-    <PageContainer
-      itemDataCustomNavListing={AdminNavListingData}
-      itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
-    >
-      <Container title="Approval Workflow" description="Approval Workflow">
-        <Box>
-          <Grid container spacing={3}>
-            <Grid size={{ xs: 12, lg: 12 }}>
+    // <PageContainer
+    //   itemDataCustomNavListing={AdminNavListingData}
+    //   itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
+    // >
+    <Container title="Approval Workflow" description="Approval Workflow">
+      <Box>
+        <Grid container spacing={3}>
+          {/* <Grid size={{ xs: 12, lg: 12 }}>
               <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
-            </Grid>
-            <Grid size={{ xs: 12, lg: 12 }}>
-              <DynamicTable
-                loading={loading}
-                overflowX={'auto'}
-                data={tableData}
-                isHavePagination={true}
-                selectedRows={selectedRows}
-                defaultRowsPerPage={rowsPerPage}
-                rowsPerPageOptions={[10, 20, 50, 100]}
-                onPaginationChange={(page, rowsPerPage) => {
-                  setPage(page);
-                  setRowsPerPage(rowsPerPage);
-                }}
-                isHaveChecked={true}
-                isHaveAction={true}
-                isHaveSearch={true}
-                isHaveFilter={false}
-                isHaveExportPdf={false}
-                isHaveExportXlf={false}
-                isHaveFilterDuration={false}
-                isHaveAddData={true}
-                isHaveFilterMore={false}
-                isHaveHeader={false}
-                // onFileClick={(row) => handleFileClick(row)}
-                onCheckedChange={(selected) => setSelectedRows(selected)}
-                onEdit={(row) => handleEdit(row.id)}
-                onDelete={(row) => handleDelete(row.id)}
-                onBatchDelete={handleBatchDelete}
-                onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-                onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
-                onAddData={() => handleAdd()}
-              />
-            </Grid>
+            </Grid> */}
+          <Grid size={{ xs: 12, lg: 12 }}>
+            <DynamicTable
+              loading={loading}
+              overflowX={'auto'}
+              data={tableData}
+              isHavePagination={true}
+              selectedRows={selectedRows}
+              defaultRowsPerPage={rowsPerPage}
+              rowsPerPageOptions={[10, 20, 50, 100]}
+              onPaginationChange={(page, rowsPerPage) => {
+                setPage(page);
+                setRowsPerPage(rowsPerPage);
+              }}
+              isHaveChecked={true}
+              isHaveAction={true}
+              isHaveSearch={true}
+              isHaveFilter={false}
+              isHaveExportPdf={false}
+              isHaveExportXlf={false}
+              isHaveFilterDuration={false}
+              isHaveAddData={true}
+              isHaveFilterMore={false}
+              isHaveHeader={false}
+              // onFileClick={(row) => handleFileClick(row)}
+              onCheckedChange={(selected) => setSelectedRows(selected)}
+              onEdit={(row) => handleEdit(row.id)}
+              onDelete={(row) => handleDelete(row.id)}
+              onBatchDelete={handleBatchDelete}
+              onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+              onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
+              onAddData={() => handleAdd()}
+            />
           </Grid>
-        </Box>
-      </Container>
+        </Grid>
+      </Box>
+      {/* </Container> */}
       <Dialog open={openFormAddDocument} onClose={handleCloseDialog} fullWidth maxWidth="md">
         <DialogTitle sx={{ position: 'relative', padding: 3 }}>
           {edittingId ? 'Edit Approval Workflow' : 'Add Approval Workflow'}
@@ -304,11 +301,19 @@ const Content = () => {
             formData={formDataAddDocument}
             setFormData={setFormDataAddDocument}
             edittingId={edittingId}
-            onSuccess={() => {
+            onSuccess={async () => {
               localStorage.removeItem('unsavedApprovalWorkflow');
               handleCloseDialog();
               setRefreshTrigger(refreshTrigger + 1);
               setEdittingId('');
+              await new Promise((r) => setTimeout(r, 200));
+
+              await showSwal(
+                'success',
+                edittingId
+                  ? 'Approval workflow updated successfully!'
+                  : 'Approval workflow created successfully!',
+              );
             }}
           />
         </DialogContent>
@@ -328,7 +333,8 @@ const Content = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </PageContainer>
+    </Container>
+    // </PageContainer>
   );
 };
 

@@ -128,10 +128,10 @@ const FormWizardAddEmployee = ({
     if (removing) return;
 
     const serverPath =
-      formData.faceimage &&
-      !formData.faceimage.startsWith('data:') &&
-      !/^https?:\/\//i.test(formData.faceimage)
-        ? formData.faceimage
+      localForm.faceimage &&
+      !localForm.faceimage.startsWith('data:') &&
+      !/^https?:\/\//i.test(localForm.faceimage)
+        ? localForm.faceimage
         : null;
 
     try {
@@ -245,14 +245,14 @@ const FormWizardAddEmployee = ({
     if (!schema) return true; // step tanpa aturan
 
     const fields = stepFieldMap[step] ?? [];
-    let payload = pick(formData, fields as any);
+    let payload = pick(localForm, fields as any);
 
     // Mode Batch Edit
     if (isBatchEdit) {
       const enabledKeys = fields.filter((k) => (enabledFields as any)?.[k] === true);
       if (enabledKeys.length === 0) return true;
 
-      payload = pick(formData, enabledKeys as any);
+      payload = pick(localForm, enabledKeys as any);
 
       const baseSchema = unwrapZodObject(schema);
       if (baseSchema) {
@@ -303,7 +303,11 @@ const FormWizardAddEmployee = ({
   ) => {
     const { id, name, value } = e.target as any;
     const key = (name || id) as string;
-    setFormData((prev) => ({
+    // setFormData((prev) => ({
+    //   ...prev,
+    //   [name || id]: value,
+    // }));
+    setLocalForm((prev) => ({
       ...prev,
       [name || id]: value,
     }));
@@ -410,7 +414,7 @@ const FormWizardAddEmployee = ({
           return;
         }
 
-        const payload = pick(formData, enabledKeys);
+        const payload = pick(localForm, enabledKeys);
         const baseSchema = unwrapZodObject(CreateEmployeeSubmitSchema);
         const partialSchema = baseSchema?.pick(
           Object.fromEntries(enabledKeys.map((k) => [k, true])),
@@ -446,32 +450,24 @@ const FormWizardAddEmployee = ({
         return;
       }
 
-      /** 🧩 Normal Create / Update Mode */
       const mergedFormData = normalizeForSubmit({
-        ...formData,
+        ...localForm,
 
         type:
-          typeof formData.type === 'string'
-            ? formData.type === 'Permanent'
+          typeof localForm.type === 'string'
+            ? localForm.type === 'Permanent'
               ? 1
-              : formData.type === 'contract'
+              : localForm.type === 'contract'
                 ? 2
                 : 0
-            : Number(formData.type ?? 0),
-
-        // status_employee:
-        //   typeof formData.status_employee === 'string'
-        //     ? formData.status_employee === 'active'
-        //       ? 1
-        //       : 2
-        //     : Number(formData.status_employee ?? 0),
+            : Number(localForm.type ?? 0),
 
         gender:
-          typeof formData.gender === 'string'
-            ? formData.gender === 'Female'
+          typeof localForm.gender === 'string'
+            ? localForm.gender === 'Female'
               ? 0
               : 1
-            : Number(formData.gender ?? 0),
+            : Number(localForm.gender ?? 0),
       });
 
       console.log('Merged form data:', mergedFormData);
@@ -491,7 +487,7 @@ const FormWizardAddEmployee = ({
       }
 
       const data = result.data;
-      const rawFaceImage = formData.faceimage;
+      const rawFaceImage = localForm.faceimage;
       const rawFileImage = siteImageFile;
 
       const hasNewImage = Boolean(rawFileImage) || isDataUrl(rawFaceImage);
@@ -500,7 +496,7 @@ const FormWizardAddEmployee = ({
         const { faceimage: _drop, ...withoutImage } = data;
         const editData: UpdateEmployeeRequest = {
           ...withoutImage,
-          qr_code: formData.card_number,
+          qr_code: localForm.card_number,
           is_email_verify: false,
         };
 
@@ -593,11 +589,16 @@ const FormWizardAddEmployee = ({
       setPreviewUrl(URL.createObjectURL(selectedFile));
     }
   };
+    const [localForm, setLocalForm] = useState(formData);
+
+    useEffect(() => {
+      setLocalForm(formData);
+    }, [formData]);
 
   useEffect(() => {
     if (siteImageFile) return;
 
-    const v = formData.faceimage?.toString() ?? '';
+    const v = localForm.faceimage?.toString() ?? '';
     if (!v) {
       setPreviewUrl(null);
       return;
@@ -612,7 +613,9 @@ const FormWizardAddEmployee = ({
     const url = rel.startsWith('/cdn/') ? `${BASE_URL}${rel}` : `${BASE_URL}/cdn${rel}`;
 
     setPreviewUrl(url);
-  }, [formData.faceimage, siteImageFile]);
+  }, [localForm.faceimage, siteImageFile]);
+
+
 
   const StepContent = (step: number) => {
     switch (step) {
@@ -625,7 +628,7 @@ const FormWizardAddEmployee = ({
               </CustomFormLabel>
               <CustomTextField
                 id="name"
-                value={formData.name}
+                value={localForm.name}
                 onChange={handleChange}
                 fullWidth
                 required
@@ -642,7 +645,7 @@ const FormWizardAddEmployee = ({
               </CustomFormLabel>
               <CustomTextField
                 id="person_id"
-                value={formData.person_id}
+                value={localForm.person_id}
                 onChange={handleChange}
                 fullWidth
                 variant="outlined"
@@ -659,8 +662,8 @@ const FormWizardAddEmployee = ({
               </CustomFormLabel>
               <CustomSelect
                 id="employeeType"
-                value={formData.identity_type}
-                onChange={(e: any) => setFormData({ ...formData, identity_type: e.target.value })}
+                value={localForm.identity_type}
+                onChange={(e: any) => setFormData({ ...localForm, identity_type: e.target.value })}
                 fullWidth
                 disabled={isBatchEdit}
               >
@@ -681,7 +684,7 @@ const FormWizardAddEmployee = ({
               </CustomFormLabel>
               <CustomTextField
                 id="identity_id"
-                value={formData.identity_id}
+                value={localForm.identity_id}
                 onChange={handleChange}
                 fullWidth
                 variant="outlined"
@@ -699,7 +702,7 @@ const FormWizardAddEmployee = ({
               </CustomFormLabel>
               <CustomTextField
                 id="email"
-                value={formData.email}
+                value={localForm.email}
                 onChange={handleChange}
                 fullWidth
                 variant="outlined"
@@ -748,7 +751,7 @@ const FormWizardAddEmployee = ({
                     label="Female"
                     control={
                       <CustomRadio
-                        checked={formData.gender === 0}
+                        checked={localForm.gender === 0}
                         onChange={() => {
                           setFormData((prev) => ({ ...prev, gender: 0 }));
                           if (errors.gender) setErrors((p) => ({ ...p, gender: '' }));
@@ -762,7 +765,7 @@ const FormWizardAddEmployee = ({
                     label="Male"
                     control={
                       <CustomRadio
-                        checked={formData.gender === 1}
+                        checked={localForm.gender === 1}
                         onChange={() => {
                           setFormData((prev) => ({ ...prev, gender: 1 }));
                           if (errors.gender) setErrors((p) => ({ ...p, gender: '' }));
@@ -793,7 +796,7 @@ const FormWizardAddEmployee = ({
               </CustomFormLabel>
               <CustomTextField
                 id="phone"
-                value={formData.phone}
+                value={localForm.phone}
                 onChange={handleChange}
                 fullWidth
                 variant="outlined"
@@ -806,8 +809,8 @@ const FormWizardAddEmployee = ({
               </CustomFormLabel>
               <CustomSelect
                 id="vehicle_type"
-                value={formData.vehicle_type}
-                onChange={(e: any) => setFormData({ ...formData, vehicle_type: e.target.value })}
+                value={localForm.vehicle_type}
+                onChange={(e: any) => setLocalForm({ ...localForm, vehicle_type: e.target.value })}
                 fullWidth
                 disabled={isBatchEdit}
               >
@@ -825,9 +828,9 @@ const FormWizardAddEmployee = ({
               </CustomFormLabel>
               <CustomTextField
                 id="vehiclePlateNumber"
-                value={formData.vehicle_plate_number}
+                value={localForm.vehicle_plate_number}
                 onChange={(e: any) =>
-                  setFormData({ ...formData, vehicle_plate_number: e.target.value })
+                  setLocalForm({ ...localForm, vehicle_plate_number: e.target.value })
                 }
                 fullWidth
                 variant="outlined"
@@ -872,7 +875,7 @@ const FormWizardAddEmployee = ({
                 disablePortal
                 options={district.map((d: any) => ({ id: String(d.id), label: d.name ?? '' }))}
                 value={(() => {
-                  const cur = String(formData.district_id ?? '');
+                  const cur = String(localForm.district_id ?? '');
                   return (
                     district
                       .map((d: any) => ({ id: String(d.id), label: d.name ?? '' }))
@@ -943,7 +946,7 @@ const FormWizardAddEmployee = ({
                   label: o.name ?? '',
                 }))}
                 value={(() => {
-                  const currentId = String(formData.organization_id ?? '');
+                  const currentId = String(localForm.organization_id ?? '');
                   return (
                     organization
                       .map((o: any) => ({ id: String(o.id), label: o.name ?? '' }))
@@ -1009,7 +1012,7 @@ const FormWizardAddEmployee = ({
                 disablePortal
                 options={department.map((d: any) => ({ id: String(d.id), label: d.name ?? '' }))}
                 value={(() => {
-                  const cur = String(formData.department_id ?? '');
+                  const cur = String(localForm.department_id ?? '');
                   return (
                     department
                       .map((d: any) => ({ id: String(d.id), label: d.name ?? '' }))
@@ -1049,7 +1052,7 @@ const FormWizardAddEmployee = ({
               <FormControlLabel
                 control={
                   <Checkbox
-                    checked={Boolean(formData.is_head)}
+                    checked={Boolean(localForm.is_head)}
                     onChange={(e) => {
                       setFormData((prev) => ({ ...prev, is_head: e.target.checked }));
                       setErrors((prev) => ({ ...prev, is_head: '' }));
@@ -1064,7 +1067,7 @@ const FormWizardAddEmployee = ({
                 }}
               />
             </Grid2>
-            <Grid2 size={{ xs: 12, sm: 12 }}>
+            {/* <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1 }} htmlFor="head_employee_1">
                 <Typography variant="caption">Employee Head - 1</Typography>
               </CustomFormLabel>
@@ -1073,9 +1076,9 @@ const FormWizardAddEmployee = ({
                 autoHighlight
                 // disablePortal
                 options={employeeAllRes}
-                filterOptions={(opts) => opts.filter((o) => o.id !== formData.head_employee_2)}
+                filterOptions={(opts) => opts.filter((o) => o.id !== localForm.head_employee_2)}
                 getOptionLabel={(opt) => opt?.name ?? ''}
-                value={employeeAllRes.find((e) => e.id === formData.head_employee_1) || null}
+                value={employeeAllRes.find((e) => e.id === localForm.head_employee_1) || null}
                 isOptionEqualToValue={(opt, val) => opt.id === val.id}
                 onChange={(_, newVal) => {
                   setFormData((prev) => ({
@@ -1097,11 +1100,7 @@ const FormWizardAddEmployee = ({
                   <li {...props} key={option.id}>
                     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                       <Typography variant="body2">{option.name}</Typography>
-                      {/* {option.email && (
-                        <Typography variant="caption" color="text.secondary">
-                          {option.email}
-                        </Typography>
-                      )} */}
+  
                     </Box>
                   </li>
                 )}
@@ -1117,9 +1116,9 @@ const FormWizardAddEmployee = ({
                 // disablePortal
                 options={employeeAllRes}
                 // cegah pilih orang yg sama dgn Head-1
-                filterOptions={(opts) => opts.filter((o) => o.id !== formData.head_employee_1)}
+                filterOptions={(opts) => opts.filter((o) => o.id !== localForm.head_employee_1)}
                 getOptionLabel={(opt) => opt?.name ?? ''}
-                value={employeeAllRes.find((e) => e.id === formData.head_employee_2) || null}
+                value={employeeAllRes.find((e) => e.id === localForm.head_employee_2) || null}
                 isOptionEqualToValue={(opt, val) => opt.id === val.id}
                 onChange={(_, newVal) => {
                   setFormData((prev) => ({
@@ -1140,25 +1139,21 @@ const FormWizardAddEmployee = ({
                   <li {...props} key={option.id}>
                     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                       <Typography variant="body2">{option.name}</Typography>
-                      {/* {option.email && (
-                        <Typography variant="caption" color="text.secondary">
-                          {option.email}
-                        </Typography>
-                      )} */}
+                    
                     </Box>
                   </li>
                 )}
               />
-            </Grid2>
+            </Grid2> */}
             <Grid2 size={{ xs: 6, sm: 6 }}>
               <CustomFormLabel sx={{ marginY: 1 }} htmlFor="card_number">
                 <Typography variant="caption">Card Access</Typography>
               </CustomFormLabel>
               <CustomTextField
                 id="card_number"
-                value={formData.card_number}
+                value={localForm.card_number}
                 onChange={(e: any) => {
-                  setFormData((prev) => ({ ...prev, qr_code: prev.card_number }));
+                  setLocalForm((prev) => ({ ...prev, qr_code: prev.card_number }));
                   handleChange(e);
                 }}
                 fullWidth
@@ -1172,7 +1167,7 @@ const FormWizardAddEmployee = ({
               </CustomFormLabel>
               <CustomTextField
                 id="ble_card_number"
-                value={formData.ble_card_number}
+                value={localForm.ble_card_number}
                 onChange={handleChange}
                 fullWidth
                 variant="outlined"
@@ -1192,7 +1187,7 @@ const FormWizardAddEmployee = ({
               <CustomTextField
                 id="birth_date"
                 type="date"
-                value={formData.birth_date}
+                value={localForm.birth_date}
                 onChange={handleChange}
                 fullWidth
                 variant="outlined"
@@ -1208,7 +1203,7 @@ const FormWizardAddEmployee = ({
               <CustomTextField
                 id="join_date"
                 type="date"
-                value={formData.join_date}
+                value={localForm.join_date}
                 onChange={handleChange}
                 fullWidth
                 variant="outlined"
@@ -1224,7 +1219,7 @@ const FormWizardAddEmployee = ({
               <CustomTextField
                 id="exit_date"
                 type="date"
-                value={formData.exit_date}
+                value={localForm.exit_date}
                 onChange={handleChange}
                 fullWidth
                 variant="outlined"
@@ -1239,7 +1234,7 @@ const FormWizardAddEmployee = ({
               </CustomFormLabel>
               <CustomTextField
                 id="address"
-                value={formData.address}
+                value={localForm.address}
                 onChange={handleChange}
                 multiline
                 rows={3}

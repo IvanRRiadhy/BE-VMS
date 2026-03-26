@@ -1,21 +1,17 @@
 import {
   Button,
-  Grid2,
-  Alert,
-  Typography,
   CircularProgress,
   Autocomplete,
   Backdrop,
-  Portal,
   RadioGroup,
   FormControlLabel,
   Radio,
 } from '@mui/material';
 import { Box } from '@mui/system';
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import { createDistrict, getAllEmployee, getVisitorEmployee } from 'src/customs/api/admin';
+import { createDistrict, getVisitorEmployee } from 'src/customs/api/admin';
 import {
   CreateDistrictRequest,
   CreateDistrictSubmitSchema,
@@ -23,34 +19,32 @@ import {
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { useSession } from 'src/customs/contexts/SessionContext';
 
+// RHF
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+
 interface FormAddDistrictProps {
-  formData: CreateDistrictRequest;
-  setFormData: React.Dispatch<React.SetStateAction<CreateDistrictRequest>>;
   onSuccess?: () => void;
 }
 
-const FormAddDistrict: React.FC<FormAddDistrictProps> = ({ formData, setFormData, onSuccess }) => {
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [alertType, setAlertType] = useState<'info' | 'success' | 'error'>('info');
-  const [alertMessage, setAlertMessage] = useState<string>(
-    'Complete the following data properly and correctly',
-  );
-  const [loading, setLoading] = useState(false);
-
+const FormAddDistrict: React.FC<FormAddDistrictProps> = ({ onSuccess }) => {
   const { token } = useSession();
+  const [loading, setLoading] = useState(false);
+  const [allEmployes, setAllEmployees] = useState<any[]>([]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const field = e.target.name || e.target.id;
-    const { value } = e.target;
-
-    // update form
-    setFormData((prev) => ({ ...prev, [field]: value }));
-
-    // clear error for this field
-    setErrors((prev) => ({ ...prev, [field]: '' }));
-  };
-
-  const [allEmployes, setAllEmployees] = useState<any>([]);
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<CreateDistrictRequest>({
+    resolver: zodResolver(CreateDistrictSubmitSchema),
+    defaultValues: {
+      name: '',
+      code: '',
+      host: '',
+    },
+  });
 
   useEffect(() => {
     if (!token) return;
@@ -68,177 +62,115 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({ formData, setFormData
     fetchEmployees();
   }, [token]);
 
-  const validateLocal = (data: any) => {
-    const r = CreateDistrictSubmitSchema.safeParse(data);
-    if (!r.success) {
-      const fe = r.error.flatten().fieldErrors;
-      setErrors({
-        code: fe.code?.[0] ?? '',
-        name: fe.name?.[0] ?? '',
-        host: fe.host?.[0] ?? '',
-      });
-      return null;
-    }
-    setErrors({});
-    return r.data;
-  };
+  const employeeOptions = useMemo(
+    () => allEmployes.map((emp: any) => ({ id: emp.id, label: emp.name })),
+    [allEmployes],
+  );
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: CreateDistrictRequest) => {
     setLoading(true);
-    setErrors({});
-
     try {
-      // if (!token) {
-      //   showSwal('error', 'Something went wrong. Please try again later.');
-      //   return;
-      // }
-
-      const parsed = validateLocal(formData);
-      if (!parsed) {
-        setAlertType('error');
-        setAlertMessage('Please complete the required fields correctly.');
-        setTimeout(() => {
-          setAlertType('info');
-          setAlertMessage('Complete the following data properly and correctly');
-        }, 3000);
-        return;
-      }
-
-      await createDistrict(parsed, token as string);
-      localStorage.removeItem('unsavedDistrictFormAdd');
-
-      // ✅ Tutup backdrop & dialog dulu sebelum swal
-      setLoading(false);
-      await new Promise<void>((resolve) => {
-        onSuccess?.();
-        setTimeout(resolve, 600);
-      });
+      await createDistrict(data, token as string);
 
       showSwal('success', 'District successfully created!', 3000);
-    } catch (err: any) {
-      const be = err?.response?.data?.errors;
-      if (be && typeof be === 'object') {
-        setErrors({
-          code: be.Code?.[0] ?? '',
-          name: be.Name?.[0] ?? '',
-          host: be.Host?.[0] ?? '',
-        });
-      }
+      reset();
 
+      onSuccess?.();
+    } catch (err) {
       showSwal('error', 'Failed to create district.', 3000);
     } finally {
-      setTimeout(() => setLoading(false), 600);
+      setLoading(false);
     }
   };
 
   return (
     <>
-      <form onSubmit={handleSubmit}>
-        {/* <Grid2 size={{ xs: 12, sm: 12 }}>
-          <Alert severity={alertType}>{alertMessage}</Alert>
-        </Grid2> */}
-
-        {/* District Name */}
-        <CustomFormLabel sx={{ my: 1, fontWeight: 500 }} htmlFor="name" required>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        {/* NAME */}
+        <CustomFormLabel required sx={{ mt: 0 }}>
           District Name
         </CustomFormLabel>
-        <CustomTextField
-          id="name"
-          value={formData.name}
-          onChange={handleChange}
-          error={Boolean(errors.name)}
-          helperText={errors.name}
-          variant="outlined"
-          fullWidth
-        />
-
-        {/* District Code */}
-        <CustomFormLabel sx={{ my: 1, fontWeight: 500 }} htmlFor="code" required>
-          District Code
-        </CustomFormLabel>
-        <CustomTextField
-          id="code"
-          value={formData.code}
-          onChange={handleChange}
-          error={Boolean(errors.code)}
-          helperText={errors.code}
-          variant="outlined"
-          fullWidth
-        />
-
-        <CustomFormLabel htmlFor="host" sx={{ my: 1, fontWeight: 500 }} required>
-          Head of District
-        </CustomFormLabel>
-        <Autocomplete
-          id="host"
-          autoHighlight
-          disablePortal={false}
-          options={allEmployes.map((emp: any) => ({ id: emp.id, label: emp.name }))}
-          getOptionLabel={(option) => (typeof option === 'string' ? option : option.label)}
-          value={
-            allEmployes
-              .map((emp: any) => ({ id: emp.id, label: emp.name }))
-              .find((emp: any) => emp.id === formData.host) ?? ''
-          }
-          onChange={(_, newValue) => {
-            setFormData((prev) => ({
-              ...prev,
-              host: typeof newValue === 'string' ? newValue : (newValue?.id ?? ''),
-            }));
-            // ⬅️ clear validation error
-            setErrors((prev) => ({ ...prev, host: '' }));
-          }}
-          onInputChange={(_, inputValue) => {
-            setFormData((prev) => ({ ...prev, host: inputValue }));
-            // ⬅️ clear validation error
-            setErrors((prev) => ({ ...prev, host: '' }));
-          }}
-          renderInput={(params) => (
+        <Controller
+          name="name"
+          control={control}
+          render={({ field }) => (
             <CustomTextField
-              {...params}
-              variant="outlined"
-              placeholder=""
-              error={Boolean(errors.host)}
-              helperText={errors.host}
+              {...field}
+              error={!!errors.name}
+              helperText={errors.name?.message}
               fullWidth
             />
           )}
         />
-        <RadioGroup
-          row
-          // value={formData.visitorType}
-          // onChange={(e) =>
-          //   setFormData((prev) => ({
-          //     ...prev,
-          //     visitorType: e.target.value,
-          //   }))
-          // }
-        >
-          <FormControlLabel value="internal" control={<Radio />} label="Internal" />
-          <FormControlLabel value="external" control={<Radio />} label="External" />
-        </RadioGroup>
+
+        {/* CODE */}
+        <CustomFormLabel required sx={{ mt: 2 }}>
+          District Code
+        </CustomFormLabel>
+        <Controller
+          name="code"
+          control={control}
+          render={({ field }) => (
+            <CustomTextField
+              {...field}
+              error={!!errors.code}
+              helperText={errors.code?.message}
+              fullWidth
+            />
+          )}
+        />
+
+        {/* HOST */}
+        <CustomFormLabel required sx={{ mt: 2 }}>
+          Head of District
+        </CustomFormLabel>
+        <Controller
+          name="host"
+          control={control}
+          render={({ field }) => (
+            <Autocomplete
+              options={employeeOptions}
+              value={employeeOptions.find((e) => e.id === field.value) ?? null}
+              onChange={(_, newValue) => {
+                field.onChange(newValue?.id ?? '');
+              }}
+              renderInput={(params) => (
+                <CustomTextField
+                  {...params}
+                  error={!!errors.host}
+                  helperText={errors.host?.message}
+                  fullWidth
+                />
+              )}
+            />
+          )}
+        />
+
+        {/* TYPE */}
+        {/* <CustomFormLabel sx={{ mt: 2 }}>Type (Optional)</CustomFormLabel>
+        <Controller
+          name="type"
+          control={control}
+          defaultValue=""
+          render={({ field }) => (
+            <RadioGroup row {...field}>
+              <FormControlLabel value="internal" control={<Radio />} label="Internal" />
+              <FormControlLabel value="external" control={<Radio />} label="External" />
+            </RadioGroup>
+          )}
+        /> */}
+
+        {/* SUBMIT */}
         <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button
-            sx={{ mt: 2 }}
-            color="primary"
-            variant="contained"
-            type="submit"
-            disabled={loading}
-          >
+          <Button sx={{ mt: 2 }} variant="contained" type="submit" disabled={loading}>
             Submit
           </Button>
         </Box>
       </form>
 
-      <Backdrop
-        open={loading}
-        sx={{
-          color: 'primary',
-          zIndex: (theme) => theme.zIndex.drawer + 1, // di atas drawer & dialog
-        }}
-      >
-        <CircularProgress color="inherit" />
+      {/* LOADING */}
+      <Backdrop open={loading} sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+        <CircularProgress />
       </Backdrop>
     </>
   );

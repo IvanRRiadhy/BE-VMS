@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Button,
   Grid2,
@@ -32,8 +32,9 @@ import { showSwal } from 'src/customs/components/alerts/alerts';
 import MemoEditor from 'src/customs/components/CKEditor/MemoEditor';
 
 interface FormAddDocumentProps {
-  formData: CreateDocumentRequest;
-  setFormData: React.Dispatch<React.SetStateAction<CreateDocumentRequest>>;
+  // formData: CreateDocumentRequest;
+  initialData: CreateDocumentRequest;
+  // setFormData: React.Dispatch<React.SetStateAction<CreateDocumentRequest>>;
   edittingId: string;
   onSuccess?: () => void;
 }
@@ -41,8 +42,9 @@ interface FormAddDocumentProps {
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 const FormAddDocument: React.FC<FormAddDocumentProps> = ({
-  formData,
-  setFormData,
+  // formData,
+  initialData,
+  // setFormData,
   edittingId,
   onSuccess,
 }) => {
@@ -53,20 +55,15 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
     'Complete the following data properly and correctly',
   );
   const { token } = useSession();
-
+  const [localForm, setLocalForm] = useState(initialData);
   const [preview, setPreview] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   const { id, value } = e.target;
-  //   setFormData((prev) => ({ ...prev, [id]: value }));
-  // };
-
   const handleChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
 
-    setFormData((prev) => ({
+    setLocalForm((prev) => ({
       ...prev,
       [id]: value,
     }));
@@ -75,7 +72,7 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
   const resetFileState = () => {
     setFile(null);
     setPreview(null);
-    setFormData((prev: any) => ({ ...prev, file: '' }));
+    setLocalForm((prev: any) => ({ ...prev, file: '' }));
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -101,7 +98,7 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
       f.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
       /\.docx$/i.test(f.name);
 
-    if (formData.document_type === 1) {
+    if (initialData.document_type === 1) {
       if (!isPDF && !isDocx) {
         alert('Only PDF or DOCX are allowed for Document type.');
         resetFileState();
@@ -116,7 +113,7 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
     }
 
     setFile(f);
-    setFormData((prev: any) => ({ ...prev, file: f }));
+    setLocalForm((prev: any) => ({ ...prev, file: f }));
 
     if (isImage) {
       const url = URL.createObjectURL(f);
@@ -127,6 +124,9 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
   };
 
   const API_BASE = axiosInstance.defaults.baseURL || '';
+  useEffect(() => {
+    setLocalForm(initialData);
+  }, [initialData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -141,12 +141,12 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
       }
 
       const payload = {
-        name: formData.name,
-        document_text: formData.document_text,
-        document_type: formData.document_type,
-        can_signed: formData.can_signed ?? false,
-        can_upload: formData.can_upload ?? false,
-        can_declined: formData.can_declined ?? false,
+        name: localForm.name,
+        document_text: localForm.document_text,
+        document_type: localForm.document_type,
+        can_signed: localForm.can_signed ?? false,
+        can_upload: localForm.can_upload ?? false,
+        can_declined: localForm.can_declined ?? false,
         remarks: '',
       };
       console.log('payload : ', JSON.stringify(payload, null, 2));
@@ -170,8 +170,7 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
         console.log('Document ID:', docId);
       }
 
-      // --- UPLOAD FILE JIKA DOCUMENT TYPE 1 ---
-      if (formData.document_type === 1 && file) {
+      if (localForm.document_type === 1 && file) {
         await uploadDocumentFile({
           baseUrl: API_BASE,
           docId,
@@ -190,12 +189,6 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
     } catch (err: any) {
       if (err?.errors) setErrors(err.errors);
       showSwal('error', err?.message || 'Failed to create document.');
-      // setAlertType('error');
-      // setAlertMessage('Something went wrong. Please try again later.');
-      // setTimeout(() => {
-      //   setAlertType('info');
-      //   setAlertMessage('Complete the following data properly and correctly');
-      // }, 3000);
     } finally {
       setTimeout(() => {
         setLoading(false);
@@ -203,15 +196,10 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
     }
   };
 
-  // const acceptByType =
-  //   formData.document_type === 1
-  //     ? '.pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-  //     : 'image/png,image/jpeg,image/jpg,image/bmp,image/webp';
-
   const handleChangeDocumentType = (e: React.ChangeEvent<HTMLInputElement>) => {
     const nextType = Number(e.target.value);
 
-    setFormData((prev) => ({
+    setLocalForm((prev) => ({
       ...prev,
       document_type: nextType,
       document_text: '',
@@ -231,7 +219,7 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
             </CustomFormLabel>
             <TextField
               id="name"
-              value={formData.name}
+              value={localForm.name}
               onChange={handleChange}
               error={Boolean(errors.name)}
               helperText={errors.name ?? ''}
@@ -248,7 +236,7 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
               <RadioGroup
                 id="document_type"
                 row
-                value={formData.document_type}
+                value={localForm.document_type}
                 onChange={handleChangeDocumentType}
               >
                 <FormControlLabel value={0} control={<Radio />} label="ID Card" />
@@ -265,14 +253,14 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
                 name="can_declined"
                 row
                 value={
-                  formData.can_declined === true
+                  localForm.can_declined === true
                     ? 'true'
-                    : formData.can_declined === false
-                    ? 'false'
-                    : ''
+                    : localForm.can_declined === false
+                      ? 'false'
+                      : ''
                 }
                 onChange={(e) =>
-                  setFormData((prev) => ({
+                  setLocalForm((prev) => ({
                     ...prev,
                     can_declined: e.target.value === 'true',
                   }))
@@ -292,10 +280,14 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
               name="can_signed"
               row
               value={
-                formData.can_signed === true ? 'true' : formData.can_signed === false ? 'false' : ''
+                localForm.can_signed === true
+                  ? 'true'
+                  : localForm.can_signed === false
+                    ? 'false'
+                    : ''
               }
               onChange={(e) =>
-                setFormData((prev) => ({
+                setLocalForm((prev) => ({
                   ...prev,
                   can_signed: e.target.value === 'true',
                 }))
@@ -314,10 +306,14 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
               name="can_upload"
               row
               value={
-                formData.can_upload === true ? 'true' : formData.can_upload === false ? 'false' : ''
+                localForm.can_upload === true
+                  ? 'true'
+                  : localForm.can_upload === false
+                    ? 'false'
+                    : ''
               }
               onChange={(e) =>
-                setFormData((prev) => ({
+                setLocalForm((prev) => ({
                   ...prev,
                   can_upload: e.target.value === 'true',
                 }))
@@ -329,15 +325,15 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
           </Grid2>
 
           <Grid2 size={12}>
-            {formData.document_type === 1 && (
+            {localForm.document_type === 1 && (
               <Box>
                 <CustomFormLabel sx={{ mt: 0 }}>Document Content</CustomFormLabel>
                 <Grid2 container spacing={2} sx={{ mt: 1 }}>
                   <Grid2 size={{ xs: 12, lg: 12 }}>
                     <Box>
-                      {/* {formData.can_signed && ( */}
-                        <Box mb={2}>
-                          {/* <CKEditor
+                      {/* {localForm.can_signed && ( */}
+                      <Box mb={2}>
+                        {/* <CKEditor
                           editor={ClassicEditor}
                           data={formData.document_text || ''}
                           disabled={loading}
@@ -352,93 +348,93 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
                             setFormData((prev) => ({ ...prev, document_text: data }));
                           }}
                         /> */}
-                          <MemoEditor
-                            value={formData.document_text}
-                            disabled={loading}
-                            onChange={(data: string) =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                document_text: data,
-                              }))
-                            }
-                          />
-                        </Box>
+                        <MemoEditor
+                          value={localForm.document_text}
+                          disabled={loading}
+                          onChange={(data: string) =>
+                            setLocalForm((prev) => ({
+                              ...prev,
+                              document_text: data,
+                            }))
+                          }
+                        />
+                      </Box>
                       {/* )} */}
                       {/* {formData.can_upload && ( */}
-                        <Box
-                          sx={{
-                            border: '2px dashed #90caf9',
-                            borderRadius: 2,
-                            p: 4,
-                            textAlign: 'center',
-                            bgcolor: '#f5faff',
-                            cursor: loading ? 'not-allowed' : 'pointer',
-                            opacity: loading ? 0.6 : 1,
-                            pointerEvents: loading ? 'none' : 'auto',
-                          }}
-                          onClick={() => fileInputRef.current?.click()}
-                        >
-                          <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
-                          <Typography variant="subtitle1" sx={{ mt: 1 }}>
-                            Upload File
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            Supports: PDF, Up to 100 KB
-                          </Typography>
+                      <Box
+                        sx={{
+                          border: '2px dashed #90caf9',
+                          borderRadius: 2,
+                          p: 4,
+                          textAlign: 'center',
+                          bgcolor: '#f5faff',
+                          cursor: loading ? 'not-allowed' : 'pointer',
+                          opacity: loading ? 0.6 : 1,
+                          pointerEvents: loading ? 'none' : 'auto',
+                        }}
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
+                        <Typography variant="subtitle1" sx={{ mt: 1 }}>
+                          Upload File
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Supports: PDF, Up to 100 KB
+                        </Typography>
 
-                          {(preview || file) && (
-                            <Box
-                              mt={2}
-                              sx={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                              }}
+                        {(preview || file) && (
+                          <Box
+                            mt={2}
+                            sx={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                            }}
+                          >
+                            {preview ? (
+                              <>
+                                <img
+                                  src={preview}
+                                  alt="preview"
+                                  style={{
+                                    width: 200,
+                                    height: 200,
+                                    borderRadius: 12,
+                                    objectFit: 'cover',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
+                                  }}
+                                />
+                              </>
+                            ) : (
+                              <Typography variant="caption" noWrap>
+                                📄 {file?.name}
+                              </Typography>
+                            )}
+
+                            <Button
+                              color="error"
+                              size="small"
+                              variant="outlined"
+                              sx={{ mt: 2, minWidth: 120 }}
+                              onClick={resetFileState}
+                              startIcon={<IconTrash size={16} />}
+                              disabled={loading}
                             >
-                              {preview ? (
-                                <>
-                                  <img
-                                    src={preview}
-                                    alt="preview"
-                                    style={{
-                                      width: 200,
-                                      height: 200,
-                                      borderRadius: 12,
-                                      objectFit: 'cover',
-                                      boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
-                                    }}
-                                  />
-                                </>
-                              ) : (
-                                <Typography variant="caption" noWrap>
-                                  📄 {file?.name}
-                                </Typography>
-                              )}
+                              Remove
+                            </Button>
+                          </Box>
+                        )}
 
-                              <Button
-                                color="error"
-                                size="small"
-                                variant="outlined"
-                                sx={{ mt: 2, minWidth: 120 }}
-                                onClick={resetFileState}
-                                startIcon={<IconTrash size={16} />}
-                                disabled={loading}
-                              >
-                                Remove
-                              </Button>
-                            </Box>
-                          )}
-
-                          <input
-                            ref={fileInputRef}
-                            type="file"
-                            // accept={acceptByType}
-                            accept="*"
-                            hidden
-                            onChange={handleFileChange}
-                            disabled={loading}
-                          />
-                        </Box>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          // accept={acceptByType}
+                          accept="*"
+                          hidden
+                          onChange={handleFileChange}
+                          disabled={loading}
+                        />
+                      </Box>
                       {/* )} */}
                     </Box>
                   </Grid2>

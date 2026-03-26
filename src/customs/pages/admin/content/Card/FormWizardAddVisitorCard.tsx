@@ -83,15 +83,19 @@ const FormWizardAddVisitorCard = ({
   const [siteSpaceRes, setSiteSpaceRes] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-
+  const [localForm, setLocalForm] = useState(formData);
+  useEffect(() => {
+    setLocalForm(formData);
+  }, [formData]);
   const handleNext = () => {
     if (!validateStep(activeStep)) return;
     let newSkipped = skipped;
+
     if (isStepSkipped(activeStep)) {
       newSkipped = new Set(newSkipped.values());
       newSkipped.delete(activeStep);
     }
-
+    setFormData(localForm);
     setActiveStep((prev) => prev + 1);
     setSkipped(newSkipped);
   };
@@ -106,7 +110,7 @@ const FormWizardAddVisitorCard = ({
       | React.ChangeEvent<{ name?: string; value: unknown }>,
   ) => {
     const { id, name, value } = e.target as any;
-    setFormData((prev) => ({
+    setLocalForm((prev) => ({
       ...prev,
       [name || id]: value,
     }));
@@ -128,43 +132,28 @@ const FormWizardAddVisitorCard = ({
   }, [token]);
 
   useEffect(() => {
-    if (formData.is_multi_site) {
+    if (localForm.is_multi_site) {
       setErrors((prev) => {
         const { registered_site, ...rest } = prev;
         return rest;
       });
     }
-  }, [formData.is_multi_site]);
-
-  // useEffect(() => {
-  //   if (!formData.registered_site || siteSpaceRes.length === 0) return;
-
-  //   const foundSite = siteSpaceRes.find(
-  //     (s) => String(s.id).toLowerCase() === String(formData.registered_site).toLowerCase(),
-  //   );
-
-  //   if (foundSite) {
-  //     setSelectedSite(foundSite);
-  //   } else {
-  //     console.warn('⚠️ Tidak ditemukan site dengan id:', formData.registered_site);
-  //   }
-  // }, [formData.registered_site, siteSpaceRes]);
+  }, [localForm.is_multi_site]);
 
   useEffect(() => {
-    if (!formData.is_employee_used) {
+    if (!localForm.is_employee_used) {
       setErrors((prev) => {
         const { employee_id, ...rest } = prev;
         return rest;
       });
     }
-  }, [formData.is_employee_used]);
+  }, [localForm.is_employee_used]);
 
   const handleOnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setErrors({});
-
-    // Validasi sebelum submit
+    setFormData(localForm);
     if (!validateStep(activeStep)) {
       setLoading(false);
       return;
@@ -190,10 +179,6 @@ const FormWizardAddVisitorCard = ({
         return;
       }
       if (isBatchEdit && selectedRows.length > 0) {
-        console.log('🧪 BATCH EDIT SUBMIT');
-        console.log('enabledFields:', enabledFields);
-        console.log('formData:', formData);
-        console.log('selectedRows:', selectedRows);
         setLoading(true);
 
         try {
@@ -201,24 +186,22 @@ const FormWizardAddVisitorCard = ({
           console.log('enabledFields:', enabledFields);
 
           if (enabledFields?.is_employee_used)
-            updatedFields.is_employee_used = formData.is_employee_used as boolean;
+            updatedFields.is_employee_used = localForm.is_employee_used as boolean;
 
           if (enabledFields?.employee_id)
-            updatedFields.employee_id = formData.employee_id as string;
+            updatedFields.employee_id = localForm.employee_id as string;
 
           // 🔹 multi site
           if (enabledFields?.is_multi_site) {
-            updatedFields.is_multi_site = formData.is_multi_site;
+            updatedFields.is_multi_site = localForm.is_multi_site;
 
-            // kalau multi-site aktif → kosongkan site
-            if (formData.is_multi_site === true) {
+            if (localForm.is_multi_site === true) {
               updatedFields.registered_site = null;
             }
           }
 
-          // 🔹 registered site (HANYA kalau user enable)
-          if (enabledFields?.registered_site != null && formData.is_multi_site === false) {
-            updatedFields.registered_site = formData.registered_site;
+          if (enabledFields?.registered_site != null && localForm.is_multi_site === false) {
+            updatedFields.registered_site = localForm.registered_site;
           }
 
           if (Object.keys(updatedFields).length === 0) {
@@ -269,7 +252,7 @@ const FormWizardAddVisitorCard = ({
         return;
       }
 
-      const data: CreateVisitorCardRequest = CreateVisitorCardRequestSchema.parse(formData);
+      const data: CreateVisitorCardRequest = CreateVisitorCardRequestSchema.parse(localForm);
 
       if (edittingId) {
         const updatedData: UpdateVisitorCardRequest = {
@@ -287,8 +270,6 @@ const FormWizardAddVisitorCard = ({
           type: typeMap[String(data?.type ?? 0)] ?? 0,
         };
         await createVisitorCard(token as string, createdData);
-        // setAlertType('success');
-        // setAlertMessage('Card created successfully!');
         showSwal('success', 'Card created successfully');
       }
 
@@ -298,16 +279,12 @@ const FormWizardAddVisitorCard = ({
       }, 600);
     } catch (error: any) {
       setLoading(false);
-
-      // Coba ambil pesan error dari backend
       const messages: string[] =
         error?.response?.data?.collection?.map((err: any) => err.message) || [];
 
       if (messages.length > 0) {
-        // Kalau ada pesan error dari backend → tampilkan pakai Swal
         showSwal('error', messages.join('\n'));
       } else {
-        // Kalau tidak ada → fallback pesan umum
         showSwal('error', 'Failed to submit data.');
       }
     }
@@ -316,45 +293,41 @@ const FormWizardAddVisitorCard = ({
   const handleChanges = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     const numericFields = ['type', 'card_status'];
-    setFormData((prev) => ({
+    setLocalForm((prev) => ({
       ...prev,
       [name]: numericFields.includes(name) ? (value === '' ? null : Number(value)) : value,
     }));
   };
 
-  // ⬇️ Tambahkan di dalam komponen, dekat state errors / alert
   const validateStep = (step: number) => {
     const newErrors: Record<string, string> = {};
 
     if (step === 0) {
       if (isBatchEdit) {
-        // ✅ Batch Edit → hanya validasi field yg di-enable
         if (
           (enabledFields?.is_employee_used || enabledFields?.employee_id) &&
-          formData.is_employee_used &&
-          !formData.employee_id
+          localForm.is_employee_used &&
+          !localForm.employee_id
         ) {
           newErrors.employee_id = 'Employee is required';
         }
 
         if (
           enabledFields?.registered_site &&
-          !formData.is_multi_site &&
-          !formData.registered_site
+          !localForm.is_multi_site &&
+          !localForm.registered_site
         ) {
           newErrors.registered_site = 'Site is required';
         }
 
-        // ⚠️ name & remarks tidak ikut divalidasi di batch edit
       } else {
-        // ✅ Normal add/edit → selalu validasi
-        if (!formData.name?.trim()) newErrors.name = 'Name is required';
-        if (!formData.remarks?.trim()) newErrors.remarks = 'Remarks is required';
+        if (!localForm.name?.trim()) newErrors.name = 'Name is required';
+        if (!localForm.remarks?.trim()) newErrors.remarks = 'Remarks is required';
 
-        if (formData.is_employee_used && !formData.employee_id) {
+        if (localForm.is_employee_used && !localForm.employee_id) {
           newErrors.employee_id = 'Employee is required';
         }
-        if (!formData.is_multi_site && !formData.registered_site) {
+        if (!localForm.is_multi_site && !localForm.registered_site) {
           newErrors.registered_site = 'Site is required';
         }
       }
@@ -385,7 +358,7 @@ const FormWizardAddVisitorCard = ({
               </CustomFormLabel>
               <CustomTextField
                 id="name"
-                value={formData.name}
+                value={localForm.name}
                 onChange={handleChange}
                 required
                 variant="outlined"
@@ -404,7 +377,7 @@ const FormWizardAddVisitorCard = ({
               <CustomTextField
                 id="remarks"
                 name="remarks"
-                value={formData.remarks}
+                value={localForm.remarks}
                 onChange={handleChange}
                 required
                 variant="outlined"
@@ -429,15 +402,15 @@ const FormWizardAddVisitorCard = ({
                 <Typography variant="caption">Employee</Typography>
 
                 <FormControlLabel
-                  value={formData.is_employee_used}
+                  value={localForm.is_employee_used}
                   label=""
                   sx={{ marginRight: 0 }}
                   control={
                     <Switch
-                      checked={formData.is_employee_used || false}
+                      checked={localForm.is_employee_used || false}
                       onChange={(e) => {
                         const checked = e.target.checked;
-                        setFormData((prev) => ({
+                        setLocalForm((prev) => ({
                           ...prev,
                           is_employee_used: checked,
                         }));
@@ -456,9 +429,9 @@ const FormWizardAddVisitorCard = ({
                 id="employee_id"
                 options={employeeRes}
                 getOptionLabel={(option) => option.name ?? ''}
-                value={employeeRes.find((emp) => emp.id === formData.employee_id) || null}
+                value={employeeRes.find((emp) => emp.id === localForm.employee_id) || null}
                 onChange={(_, newValue) => {
-                  setFormData((prev) => ({
+                  setLocalForm((prev) => ({
                     ...prev,
                     employee_id: newValue ? newValue.id : '',
                   }));
@@ -490,16 +463,16 @@ const FormWizardAddVisitorCard = ({
               >
                 <Typography variant="caption">Registered Site</Typography>
                 <FormControlLabel
-                  value={formData.is_multi_site}
+                  value={localForm.is_multi_site}
                   label=""
                   sx={{ marginRight: 0 }}
                   control={
                     <Switch
-                      checked={formData.is_multi_site}
+                      checked={localForm.is_multi_site}
                       onChange={(e) => {
                         const checked = e.target.checked;
 
-                        setFormData((prev) => ({
+                        setLocalForm((prev) => ({
                           ...prev,
                           is_multi_site: checked,
                           registered_site: checked ? null : prev.registered_site,
@@ -522,17 +495,17 @@ const FormWizardAddVisitorCard = ({
                 options={siteSpaceRes}
                 getOptionLabel={(option) => option?.name || ''}
                 value={
-                  formData.is_multi_site
+                  localForm.is_multi_site
                     ? null
                     : siteSpaceRes.find(
                         (s) =>
                           String(s.id).toLowerCase() ===
-                          String(formData.registered_site ?? '').toLowerCase(),
+                          String(localForm.registered_site ?? '').toLowerCase(),
                       ) || null
                 }
                 isOptionEqualToValue={(option, value) => String(option.id) === String(value.id)}
                 onChange={(_, newValue) => {
-                  setFormData((prev) => ({
+                  setLocalForm((prev) => ({
                     ...prev,
                     registered_site: newValue ? newValue.id : null,
                   }));
@@ -544,7 +517,7 @@ const FormWizardAddVisitorCard = ({
                     helperText={errors?.registered_site}
                   />
                 )}
-                disabled={formData.is_multi_site}
+                disabled={localForm.is_multi_site}
               />
             </Grid2>
           </Grid2>
@@ -562,7 +535,7 @@ const FormWizardAddVisitorCard = ({
                 id="type"
                 name="type"
                 select
-                value={formData.type ?? ''}
+                value={localForm.type ?? ''}
                 onChange={handleChanges}
                 variant="outlined"
                 fullWidth
@@ -583,7 +556,7 @@ const FormWizardAddVisitorCard = ({
                 id="card_status"
                 name="card_status"
                 select
-                value={formData.card_status ?? ''}
+                value={localForm.card_status ?? ''}
                 onChange={handleChanges}
                 variant="outlined"
                 fullWidth
@@ -606,7 +579,7 @@ const FormWizardAddVisitorCard = ({
               <CustomTextField
                 id="card_number"
                 name="card_number"
-                value={formData.card_number}
+                value={localForm.card_number}
                 onChange={handleChange}
                 variant="outlined"
                 fullWidth
@@ -624,7 +597,7 @@ const FormWizardAddVisitorCard = ({
               <CustomTextField
                 id="card_barcode"
                 name="card_barcode"
-                value={formData.card_barcode}
+                value={localForm.card_barcode}
                 onChange={handleChange}
                 variant="outlined"
                 fullWidth
@@ -640,7 +613,7 @@ const FormWizardAddVisitorCard = ({
               <CustomTextField
                 id="mac-address"
                 name="card_mac"
-                value={formData.card_mac}
+                value={localForm.card_mac}
                 onChange={handleChange}
                 variant="outlined"
                 fullWidth
@@ -661,7 +634,7 @@ const FormWizardAddVisitorCard = ({
   };
 
   const resetEnabledFields = () => {
-    setFormData((prev) => ({
+    setLocalForm((prev) => ({
       ...prev,
       is_multi_site: false,
       registered_site: null,

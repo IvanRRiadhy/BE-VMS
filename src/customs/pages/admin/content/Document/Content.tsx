@@ -90,11 +90,13 @@ const Content = () => {
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
   const [openPdfDialog, setOpenPdfDialog] = useState(false);
   const [pdfUrl, setPdfUrl] = useState('');
+  const [localForm, setLocalForm] = useState(formDataAddDocument);
 
   const handleCloseDialog = () => {
+    localStorage.setItem('unsavedDocumentData', JSON.stringify(formDataAddDocument));
     setOpenFormAddDocument(false);
-    localStorage.removeItem('unsavedDocumentData');
   };
+
   const defaultDoc = CreateDocumentRequestSchema.parse({});
 
   const isEmptyDoc = (doc: any) => {
@@ -164,9 +166,19 @@ const Content = () => {
     setPendingEditId(null);
   };
 
+  // useEffect(() => {
+  //   if (!openFormAddDocument) return;
+  //   localStorage.setItem('unsavedDocumentData', JSON.stringify({ ...formDataAddDocument }));
+  // }, [formDataAddDocument, openFormAddDocument]);
+
   useEffect(() => {
     if (!openFormAddDocument) return;
-    localStorage.setItem('unsavedDocumentData', JSON.stringify({ ...formDataAddDocument }));
+
+    const timeout = setTimeout(() => {
+      localStorage.setItem('unsavedDocumentData', JSON.stringify(formDataAddDocument));
+    }, 500); // ⏳ delay 500ms
+
+    return () => clearTimeout(timeout);
   }, [formDataAddDocument, openFormAddDocument]);
 
   const handleDelete = async (id: string) => {
@@ -298,7 +310,7 @@ const Content = () => {
         <Divider />
         <DialogContent sx={{ paddingTop: 0 }}>
           <br />
-          <FormAddDocument
+          {/* <FormAddDocument
             formData={formDataAddDocument}
             setFormData={setFormDataAddDocument}
             edittingId={edittingId}
@@ -306,6 +318,16 @@ const Content = () => {
               localStorage.removeItem('unsavedDocumentData');
               handleCloseDialog();
               setRefreshTrigger(refreshTrigger + 1);
+              setEdittingId('');
+            }}
+          /> */}
+          <FormAddDocument
+            initialData={formDataAddDocument}
+            edittingId={edittingId}
+            onSuccess={() => {
+              localStorage.removeItem('unsavedDocumentData');
+              handleCloseDialog();
+              setRefreshTrigger((prev) => prev + 1); 
               setEdittingId('');
             }}
           />

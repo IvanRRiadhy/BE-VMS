@@ -192,7 +192,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
-    severity: AlertColor; 
+    severity: AlertColor;
   }>({ open: false, message: '', severity: 'info' });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -276,7 +276,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           const res = await getGrantAccess(token as string, siteAnswer);
 
           setAccessData(res.collection ?? []);
-          // setGroupAccessData(res.collection ?? []);
         }
 
         // setGrantAccessMap(map);
@@ -294,7 +293,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     dataVisitor: any[],
   ): string | null {
     if (isGroup) {
-      // ✅ Group → ambil dari dataVisitor
       for (const visitor of dataVisitor) {
         for (const page of visitor.question_page ?? []) {
           const found = page.form?.find((f: any) => f.remarks === 'site_place');
@@ -1058,6 +1056,36 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                     </Box>
 
                                     <AccordionDetails>
+                                      <Box sx={{ width: '100%', mb: 2 }}>
+                                        <CustomFormLabel sx={{ mt: 0 }}>
+                                          Type (Opsional)
+                                        </CustomFormLabel>
+
+                                        <CustomTextField
+                                          select
+                                          size="small"
+                                          fullWidth
+                                          // value={group.type || ''}
+                                          onChange={(e) => {
+                                            const value = e.target.value;
+
+                                            // setDataVisitor((prev) => {
+                                            //   const next = [...prev];
+                                            //   next[gIdx] = {
+                                            //     ...next[gIdx],
+                                            //     type: value,
+                                            //   };
+                                            //   return next;
+                                            // });
+                                          }}
+                                        >
+                                          <MenuItem value="leader">Leader</MenuItem>
+                                          <MenuItem value="driver">Driver</MenuItem>
+                                          <MenuItem value="staff">Staff</MenuItem>
+                                          <MenuItem value="visitor">Visitor</MenuItem>
+                                        </CustomTextField>
+                                      </Box>
+
                                       {page.form?.map((field: any, fIdx: any) => {
                                         const matchedKey = Object.keys(
                                           groupedPages.batch_page || {},
@@ -1130,6 +1158,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           >
                             <TableHead>
                               <TableRow>
+                                <TableCell>
+                                  <CustomFormLabel>Type (Opsional)</CustomFormLabel>
+                                </TableCell>
                                 {(dataVisitor[0]?.question_page[activeStep - 1]?.form || []).map(
                                   (f: any, i: any) => (
                                     <TableCell key={f.custom_field_id || i}>
@@ -1153,19 +1184,36 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   const page = group.question_page[activeStep - 1];
                                   if (!page?.form) return null;
 
-                                  const visibilityMap: any = getVisibilityMap(page.form);
-
-                                  // const visibleFields = page.form.filter((field: any) => {
-                                  //   const remark = (field.remarks || '').toLowerCase();
-                                  //   return visibilityMap.hasOwnProperty(remark)
-                                  //     ? visibilityMap[remark]
-                                  //     : true;
-                                  // });
-
                                   const fields = page.form;
 
                                   return (
                                     <TableRow key={gIdx}>
+                                      <TableCell>
+                                        <CustomTextField
+                                          select
+                                          size="small"
+                                          fullWidth
+                                          // value={group.type || ''}
+                                          sx={{ minWidth: 160 }}
+                                          onChange={(e) => {
+                                            const value = e.target.value;
+
+                                            // setDataVisitor((prev) => {
+                                            //   const next = [...prev];
+                                            //   next[gIdx] = {
+                                            //     ...next[gIdx],
+                                            //     type: value,
+                                            //   };
+                                            //   return next;
+                                            // });
+                                          }}
+                                        >
+                                          <MenuItem value="leader">Leader</MenuItem>
+                                          <MenuItem value="driver">Driver</MenuItem>
+                                          <MenuItem value="staff">Staff</MenuItem>
+                                          <MenuItem value="visitor">Visitor</MenuItem>
+                                        </CustomTextField>
+                                      </TableCell>
                                       {fields.map((field: any) => {
                                         const matchedKey = Object.keys(
                                           groupedPages.batch_page || {},
@@ -4246,7 +4294,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       }
       if (prev.length >= selectedInvitations.length) {
         toast('You have reached the maximum number of invitations.', 'warning');
-        return prev; 
+        return prev;
       }
       return [...prev, cardNumber];
     });
@@ -4285,8 +4333,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
   const [checkedGroupItems, setCheckedGroupItems] = useState<string[]>([]);
   const [checkedSelfItems, setCheckedSelfItems] = useState<string[]>([]);
-
-
 
   useEffect(() => {
     if (openChooseCardDialog) {
@@ -4533,7 +4579,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   variant="contained"
                   color="primary"
                   onClick={handleOnSubmit}
-                  disabled={loading || groupVisitors.length === 0}
+                  disabled={
+                    loading ||
+                    groupVisitors.length === 0 ||
+                    groupVisitors.every((g) => !g.data_visitor || g.data_visitor.length === 0)
+                  }
                 >
                   Submit All
                 </Button>
