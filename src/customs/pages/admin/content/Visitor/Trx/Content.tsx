@@ -112,7 +112,6 @@ const Content = () => {
   const { token } = useSession();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [sortColumn, setSortColumn] = useState<string>('id');
   const [sortDir, setSortDir] = useState<string>('desc');
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -157,7 +156,6 @@ const Content = () => {
   }, [formDataAddVisitor, isFormChanged]);
 
   const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
-  const [openDialog, setOpenDialog] = useState(false);
   const [openInvitationVisitor, setOpenInvitationVisitor] = useState(false);
   const [openPreRegistration, setOpenPreRegistration] = useState(false);
   const [flowTarget, setFlowTarget] = useState<'invitation' | 'preReg' | null>(null);
@@ -189,12 +187,9 @@ const Content = () => {
   const [wizardKey, setWizardKey] = useState(0);
   const [allVisitorEmployee, setAllVisitorEmployee] = useState<any[]>([]);
   const [sites, setSites] = useState<any[]>([]);
-  const [visitorPage, setVisitorPage] = useState(0);
-  const [visitorRowsPerPage, setVisitorRowsPerPage] = useState(10);
   const [employee, setEmployee] = useState<any[]>([]);
   const [vtLoading, setVTLoading] = useState(false);
   const [emailInput, setEmailInput] = useState('');
-  const [draw, setDraw] = useState(1);
   const [openDetailShareLink, setOpenDetailShareLink] = useState(false);
   const [openDetailLink, setOpenDetailLink] = useState(false);
   const [openCreateLink, setOpenCreateLink] = useState(false);
@@ -203,7 +198,6 @@ const Content = () => {
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [expiredAt, setExpiredAt] = useState<string | null>(null);
-  const [tabValue, setTabValue] = useState(0);
   const [emails, setEmails] = useState<string[]>([]);
   const [dateRange, setDateRange] = useState<{
     startDate: Date | null;
@@ -251,52 +245,32 @@ const Content = () => {
     },
   ];
 
-  const fetchVisitorType = async () => {
-    try {
-      setVTLoading(true);
-      const res = await getAllVisitorType(token as string);
-      setVisitorType(res?.collection || []);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setVTLoading(false);
-    }
-  };
-
-  const fetchAllSites = async () => {
-    try {
-      const res = await getAllSite(token as string);
-      setSites(res?.collection || []);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const fetchVisitorEmployee = async () => {
-    try {
-      const res = await getVisitorEmployee(token as string);
-      setAllVisitorEmployee(res?.collection || []);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const fetchEmployee = async () => {
-    try {
-      const res = await getAllEmployee(token as string);
-      setEmployee(res?.collection || []);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   useEffect(() => {
-    if (token) {
-      fetchVisitorType();
-      fetchAllSites();
-      fetchVisitorEmployee();
-      fetchEmployee();
-    }
+    if (!token) return;
+
+    const fetchAll = async () => {
+      try {
+        setLoading(true);
+
+        const [vtRes, siteRes, visitorEmpRes, empRes] = await Promise.all([
+          getAllVisitorType(token),
+          getAllSite(token),
+          getVisitorEmployee(token),
+          getAllEmployee(token),
+        ]);
+
+        setVisitorType(vtRes?.collection || []);
+        setSites(siteRes?.collection || []);
+        setAllVisitorEmployee(visitorEmpRes?.collection || []);
+        setEmployee(empRes?.collection || []);
+      } catch (err) {
+        console.error('FETCH INIT ERROR:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAll();
   }, [token]);
 
   const resetRegisteredFlow = () => {
@@ -337,16 +311,6 @@ const Content = () => {
     'All' | 'Preregis' | 'Checkin' | 'Checkout' | 'Denied' | 'Block' | 'Waiting' | 'Precheckin'
   >('All');
 
-  const statusMap: Record<string, string> = {
-    All: 'All',
-    Preregis: 'Preregis',
-    Checkin: 'Checkin',
-    Checkout: 'Checkout',
-    Denied: 'Denied',
-    Block: 'Block',
-    Waiting: 'Waiting',
-  };
-
   const [filters, setFilters] = useState<any>({
     status: undefined,
     visitor_type: '',
@@ -375,8 +339,6 @@ const Content = () => {
     end_date: '',
   });
 
-  const drawRef = useRef(0);
-
   useEffect(() => {
     if (!token) return;
     const fetchData = async () => {
@@ -396,8 +358,6 @@ const Content = () => {
         const isBlockParam =
           appliedFilters.is_block === '' ? undefined : appliedFilters.is_block === 'true';
 
-        // drawRef.current += 1;
-        // const draw = drawRef.current;
         const response = await getAllVisitorPagination(
           // draw,
           // draw,
@@ -443,6 +403,7 @@ const Content = () => {
         setTableCustomVisitor(rows);
       } catch (err) {
         setTableCustomVisitor([]);
+
         setTotalRecords(0);
         setTotalFilteredRecords(0);
       } finally {
@@ -472,7 +433,6 @@ const Content = () => {
 
   const handleCloseDialog = () => {
     setSelectedSite(null);
-    setOpenDialog(false);
     setOpenInvitationVisitor(false);
     setOpenPreRegistration(false);
     handleDialogClose();
@@ -496,7 +456,6 @@ const Content = () => {
     setFormDataAddVisitor(freshForm);
     setSelectedSite(null);
     setPendingEditId(null);
-    setOpenDialog(true);
   };
 
   const handleSuccess = () => {
@@ -529,7 +488,6 @@ const Content = () => {
   const confirmDiscardAndClose = () => {
     resetFormData();
     setWizardKey((k) => k + 1);
-    setOpenDialog(false);
     setOpenDialogIndex(null);
     setFormDataAddVisitor(defaultFormData);
     setConfirmDialogOpen(false);
@@ -678,20 +636,18 @@ const Content = () => {
     setSelectedShareLinkId(id);
     setGeneratedLink(link);
     setExpiredAt(expired_at);
-    setTabValue(0);
     setOpenInviteViaLinkEmail(true);
   };
 
   const handleCopyLink = (link: string) => {
     navigator.clipboard.writeText(link);
-
     showSwal('success', 'Link copied to clipboard.');
   };
 
   const handleDetailLink = (link: string) => {
     setOpenDetailLink(true);
   };
-
+  const [selectedShareLinkId, setSelectedShareLinkId] = useState<string | null>(null);
   const [pageShareLink, setPageShareLink] = useState(0);
   const [rowsPerPageShareLink, setRowsPerPageShareLink] = useState(10);
   const [shareLinkSearchKeyword, setShareLinkSearchKeyword] = useState('');
@@ -733,13 +689,25 @@ const Content = () => {
       max_usage: item.max_usage,
       visitor_period_start: formatDateTime(item.visitor_period_start),
       visitor_period_end: formatDateTime(item.visitor_period_end),
-      expired_at: new Date(item.expired_at + 'Z').toLocaleString(undefined, {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
+      expired_at: (() => {
+        const date = new Date(item.expired_at + 'Z');
+
+        const formattedDate = date
+          .toLocaleDateString('id-ID', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+          })
+          .replace(/\//g, '-');
+
+        const formattedTime = date.toLocaleTimeString('id-ID', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+        });
+
+        return `${formattedDate}, ${formattedTime}`;
+      })(),
 
       link_status: item.link_status,
     })) || [];
@@ -752,7 +720,6 @@ const Content = () => {
   const getExpireText = () => {
     if (!expiredAt) return '';
 
-    // bersihkan microseconds + paksa jadi UTC
     const cleanDate = expiredAt.replace(/\.\d+/, '') + 'Z';
     const expireDate = new Date(cleanDate);
 
@@ -773,8 +740,6 @@ const Content = () => {
 
     return `${hours} hour${hours !== 1 ? 's' : ''} left`;
   };
-
-  const [selectedShareLinkId, setSelectedShareLinkId] = useState<string | null>(null);
 
   const handleSendInvitation = async () => {
     let finalEmails = [...emails];
@@ -889,7 +854,7 @@ const Content = () => {
                 totalCount={totalFilteredRecords}
                 isNoActionTableHead={true}
                 selectedRows={selectedRows}
-                rowsPerPageOptions={[10, 25, 50, 100, 500]}
+                rowsPerPageOptions={[10, 50, 100, 500]}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);
@@ -1073,6 +1038,7 @@ const Content = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Detail Employee */}
       <EmployeeDetailDialog
         open={openEmployeeDialog}
         onClose={handleCloseEmployeeDialog}
@@ -1081,6 +1047,7 @@ const Content = () => {
         employeeError={employeeError}
       />
 
+      {/* Registered Site */}
       <RegisteredSiteDialog
         open={openDialogIndex === 2}
         siteData={siteData}

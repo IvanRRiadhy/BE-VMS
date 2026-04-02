@@ -47,9 +47,7 @@ import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import {
   createSite,
   uploadImageSite,
-  getAllSitePagination,
   getAllSite,
-  getAllDocumentPagination,
   createSiteDocument,
   updateSite,
   getAllSiteDocument,
@@ -63,9 +61,6 @@ import {
   updateSiteParking,
   getSitesParking,
   getSitesTracking,
-  createSiteAccess,
-  updateSiteAccess,
-  getSitesAccess,
   createSiteTrackingBulk,
   createSiteParkingBulk,
   getAllDocument,
@@ -74,22 +69,21 @@ import {
 } from 'src/customs/api/admin';
 import {
   CreateSiteDocumentRequest,
-  CreateSiteDocumentRequestSchema,
   Item as SiteDocumentItem,
 } from 'src/customs/api/models/Admin/SiteDocument';
 import { Item as DocumentItem } from 'src/customs/api/models/Admin/Document';
 import { Item as AccessControlItem } from 'src/customs/api/models/Admin/AccessControl';
-import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { BASE_URL } from 'src/customs/api/interceptor';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import RenderDragSite from './components/RenderDragSite';
-import { useLocation, useParams } from 'react-router';
+import { useLocation } from 'react-router';
 import { DndContext, closestCenter, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
+import { getAllApprovalWorkflow } from 'src/customs/api/Admin/ApprovalWorkflow';
 
 type EnabledFields = {
   type: boolean;
-  type_approval: boolean;
+  approval_workflow_id: boolean;
   timezone: boolean;
   signout_time: boolean;
   need_approval: boolean;
@@ -162,6 +156,10 @@ const FormSite = ({
     retentionTime: 0,
   });
   const [accessControl, setAccessControl] = useState<AccessControlItem[]>([]);
+
+  const [siteImageFile, setSiteImageFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [retentionInput, setRetentionInput] = useState('0');
   useEffect(() => {
@@ -336,8 +334,6 @@ const FormSite = ({
         showSwal('error', 'Session expired!');
         return;
       }
-
-      // 🧩 1️⃣ Batch Edit
       if (isBatchEdit && selectedRows.length > 0) {
         const updatedFields: Partial<CreateSiteRequest> = {};
 
@@ -363,7 +359,7 @@ const FormSite = ({
 
       if (editingId) {
         const updateData = UpdateSiteRequestSchema.parse(localForm);
-        // console.log('updateData main', updateData);
+        console.log('updateData main', updateData);
         // const updateDataTracking = UpdateSiteTrackingSchema.parse(localForm.tracking || []);
         // console.log('updateData tracking', updateDataTracking);
         // const updateDataParking = UpdateSiteParkingSchema.parse(localForm.parking || []);
@@ -389,7 +385,7 @@ const FormSite = ({
 
         // for (const t of localForm.tracking ?? []) {
         //   const payload = {
-        //     site_id: editingId, 
+        //     site_id: editingId,
         //     sort: t.sort,
         //     trk_ble_card_access_id: t.trk_ble_card_access_id ?? t.id,
         //     early_access: t.early_access ?? false,
@@ -448,7 +444,7 @@ const FormSite = ({
         //   }
         // }
 
-         handleFileUpload(editingId);
+        handleFileUpload(editingId);
 
         showSwal('success', 'Site successfully updated!');
       } else {
@@ -487,7 +483,7 @@ const FormSite = ({
         }
 
         await createSiteDocumentsForNewSite();
-         handleFileUpload(newSiteId);
+        handleFileUpload(newSiteId);
 
         showSwal('success', 'Site successfully created!');
       }
@@ -495,15 +491,11 @@ const FormSite = ({
       onSuccess?.();
     } catch (err: any) {
       if (err?.errors) setErrors(err.errors);
-      showSwal('error', 'Failed. Please try again later.');
+      showSwal('error', err?.message || 'Failed to submit form.');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   };
-
-  const [siteImageFile, setSiteImageFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -562,13 +554,15 @@ const FormSite = ({
     return label.replace(/([A-Z])/g, ' $1').trim();
   }
 
+  const selectedEmployee = employee.find((emp: any) => emp.id === localForm.host) || null;
+
   const resetEnabledFields = () => {
     setLocalForm((prev) => ({
       ...prev,
       type: 0,
-      type_approval: 0,
-      timezone: '',
-      signout_time: '',
+      approval_workflow_id: null,
+      timezone: null,
+      signout_time: null,
       need_approval: false,
       can_visited: false,
       can_signout: false,
@@ -579,7 +573,7 @@ const FormSite = ({
     }));
     setEnabledFields({
       type: false,
-      type_approval: false,
+      approval_workflow_id: false,
       timezone: false,
       signout_time: false,
       need_approval: false,
@@ -696,8 +690,26 @@ const FormSite = ({
     }));
   };
 
-  // const typeLabel = siteTypes.find((i) => i.value === localForm.type)?.label ?? '';
   const typeLabel = siteTypes.find((i) => i.value === Number(localForm.type))?.label ?? '';
+
+  const [approvalData, setApprovalData] = useState<{ label: string; value: number }[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await getAllApprovalWorkflow(token!);
+        const data = res.collection.map((item: any) => ({
+          label: item.name,
+          value: item.id,
+        }));
+        setApprovalData(data);
+      } catch (error) {
+        console.error('Error fetching access control data:', error);
+      }
+    };
+
+    fetchData();
+  }, [token]);
 
   return (
     <>
@@ -757,41 +769,44 @@ const FormSite = ({
                   />
                   <Box>
                     <CustomFormLabel
-                      htmlFor="type_approval"
+                      htmlFor="approval_workflow_id"
                       required={localForm.need_approval}
                       sx={{ mt: 0.5 }}
                     >
                       Type Approval
                     </CustomFormLabel>
                     <CustomSelect
-                      id="type_approval"
-                      name="type_approval"
-                      value={localForm.type_approval}
+                      id="approval_workflow_id"
+                      name="approval_workflow_id"
+                      value={localForm.approval_workflow_id}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        const value = Number(e.target.value);
+                        // const value = Number(e.target.value);
                         setLocalForm((prev) => ({
                           ...prev,
-                          type_approval: value,
-                          need_approval: value !== 0 ? true : false,
+                          approval_workflow_id: e.target.value,
+                          need_approval: e.target.value !== '0' ? true : false,
                         }));
                       }}
                       fullWidth
                       required={localForm.need_approval}
                       sx={{ mb: 2 }}
-                      // SelectProps={{ native: true }}
-                      // disabled={isBatchEdit && !enabledFields?.type_approval} // <- ini penting
-                      disabled={!localForm.need_approval && isBatchEdit}
+                      disabled={!localForm.need_approval || isBatchEdit}
                     >
                       <MenuItem value="" disabled>
                         Select Type Approval
                       </MenuItem>
-                      {Object.entries(TypeApproval)
+                      {/* {Object.entries(TypeApproval)
                         .filter(([key, value]) => !isNaN(Number(value)))
                         .map(([key, value]) => (
                           <MenuItem key={value} value={value}>
                             {formatEnumLabel(key)}
                           </MenuItem>
-                        ))}
+                        ))} */}
+                      {approvalData.map((item) => (
+                        <MenuItem key={item.value} value={item.value}>
+                          {item.label}
+                        </MenuItem>
+                      ))}
                     </CustomSelect>
                   </Box>
                 </Grid>
@@ -801,19 +816,22 @@ const FormSite = ({
                   </CustomFormLabel>
                   <Autocomplete
                     id="employee"
-                    options={employee}
+                    options={employee ?? []}
                     getOptionLabel={(option: any) => option.name || ''}
-                    // value={
-                    //   employee.find((emp) => emp.id === localForm.employee_id) || null
-                    // }
+                    // value={selectedEmployee}
+                    value={
+                      employee.find(
+                        (emp: any) => emp.id?.toLowerCase() === localForm.host?.toLowerCase(),
+                      ) || null
+                    }
                     onChange={(event, newValue) => {
                       setLocalForm((prev: any) => ({
                         ...prev,
-                        employee_id: newValue ? newValue.id : '',
+                        host: newValue ? newValue.id : '',
                       }));
                     }}
                     renderInput={(params) => (
-                      <TextField {...params} fullWidth disabled={isBatchEdit} />
+                      <CustomTextField {...params} fullWidth disabled={isBatchEdit} />
                     )}
                   />
                 </Grid>

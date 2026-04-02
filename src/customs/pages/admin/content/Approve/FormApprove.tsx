@@ -142,14 +142,13 @@ const FormApprove: React.FC<FormApproveProps> = ({
         conditions,
       };
 
-      console.log(payload);
+      console.log('payload', JSON.stringify(payload, null, 2));
 
       if (edittingId) {
-        // await updateApprovalWorkflow(token as string, edittingId, payload);
-        await deleteApprovalWorkflow(token as string, edittingId);
-
-        // buat ulang workflow baru
-        await createApprovalWorkflow(token as string, payload);
+        await updateApprovalWorkflow(token as string, edittingId, payload);
+        // await deleteApprovalWorkflow(token as string, edittingId);
+        // // buat ulang workflow baru
+        // await createApprovalWorkflow(token as string, payload);
       } else {
         await createApprovalWorkflow(token as string, payload);
       }
@@ -221,7 +220,7 @@ const FormApprove: React.FC<FormApproveProps> = ({
         return {
           logic: node.operator ?? 'NONE',
           approver_type: roleMap?.[node.role as string] ?? null,
-          entity_id: null,
+          entity_id: uuid(),
           parent_id: null,
           // step_order: Number(formData.step_order) ? step++ : null,
           step_order: Number(formData.step_order) ? stepRef.current++ : null,

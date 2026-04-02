@@ -12,20 +12,9 @@ import {
   Grid2 as Grid,
   IconButton,
   Portal,
-  Tab,
-  Tabs,
-  Typography,
 } from '@mui/material';
 import { Box } from '@mui/system';
-import {
-  IconClipboard,
-  IconDetails,
-  IconScript,
-  IconTrash,
-  IconX,
-  IconUsers,
-  IconLink,
-} from '@tabler/icons-react';
+import { IconClipboard, IconX, IconUsers, IconLink } from '@tabler/icons-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import React, { useEffect, useState } from 'react';
 import PageContainer from 'src/components/container/PageContainer';
@@ -52,10 +41,11 @@ import {
   CreateVisitorRequestSchema,
 } from 'src/customs/api/models/Admin/Visitor';
 import Swal from 'sweetalert2';
-import { getInvitationSite, getInvitationVisitorEmployee } from 'src/customs/api/Admin/InvitationData';
-import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import {
+  getInvitationSite,
+  getInvitationVisitorEmployee,
+} from 'src/customs/api/Admin/InvitationData';
 import InvitationShareDialog from '../../admin/content/Visitor/Trx/components/Dialog/InvitationShareDialog';
-import moment from 'moment';
 
 const Visitor = () => {
   const { token } = useSession();
@@ -77,7 +67,6 @@ const Visitor = () => {
   const [generatedLink, setGeneratedLink] = useState('');
   const [openInviteViaLinkEmail, setOpenInviteViaLinkEmail] = useState(false);
   const [openDetailShareLink, setOpenDetailShareLink] = useState(false);
-  const [openInvitationVisitor, setOpenInvitationVisitor] = useState(false);
   const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorRequest>(() => {
     const saved = localStorage.getItem('unsavedVisitorData');
     return saved ? JSON.parse(saved) : CreateVisitorRequestSchema.parse({});
@@ -89,7 +78,6 @@ const Visitor = () => {
   const [selectedShareLinkId, setSelectedShareLinkId] = useState<string | null>(null);
   const [visitorType, setVisitorType] = useState<any[]>([]);
   const [vtLoading, setVTLoading] = useState(false);
-
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ['share-links', page, rowsPerPage, searchKeyword, sortDir],
@@ -120,20 +108,37 @@ const Visitor = () => {
       max_usage: item.max_usage,
       visitor_period_start: formatDateTime(item.visitor_period_start),
       visitor_period_end: formatDateTime(item.visitor_period_end),
-      expired_at: new Date(item.expired_at + 'Z').toLocaleString(undefined, {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
+      // expired_at: new Date(item.expired_at + 'Z').toLocaleString(undefined, {
+      //   year: 'numeric',
+      //   month: '2-digit',
+      //   day: '2-digit',
+      //   hour: '2-digit',
+      //   minute: '2-digit',
+      // }),
+      expired_at: (() => {
+        const date = new Date(item.expired_at + 'Z');
+
+        const formattedDate = date
+          .toLocaleDateString('id-ID', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+          })
+          .replace(/\//g, '-');
+
+        const formattedTime = date.toLocaleTimeString('id-ID', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+        });
+
+        return `${formattedDate}, ${formattedTime}`;
+      })(),
       link_status: item.link_status,
     })) || [];
 
   const totalRecords = data?.RecordsTotal ?? 0;
   const totalFilteredRecords = data?.RecordsFiltered ?? 0;
-
-  const [draw, setDraw] = useState(1);
 
   const {
     data: dataPreRegistration,
@@ -208,15 +213,10 @@ const Visitor = () => {
     setOpenCreateLink(true);
   };
 
-  const handleChangeTab = (event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
-  };
-
   const handleCloseDialog = () => {
     localStorage.removeItem('unsavedVisitorData');
     setFormDataAddVisitor(CreateVisitorRequestSchema.parse({}));
     setResetStep((prev) => prev + 1);
-    setOpenInvitationVisitor(false);
     setOpenPreRegistration(false);
     setOpenDialogIndex(null);
     setWizardKey((k) => k + 1);
@@ -310,21 +310,26 @@ const Visitor = () => {
   const getExpireText = () => {
     if (!expiredAt) return '';
 
-    const now = new Date();
-    const expireDate = new Date(expiredAt);
+    // bersihkan microseconds + paksa jadi UTC
+    const cleanDate = expiredAt.replace(/\.\d+/, '') + 'Z';
+    const expireDate = new Date(cleanDate);
 
+    if (isNaN(expireDate.getTime())) return '';
+
+    const now = new Date();
     const diffMs = expireDate.getTime() - now.getTime();
 
-    if (diffMs <= 0) return '0';
+    if (diffMs <= 0) return 'Expired';
 
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const totalHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const days = Math.floor(totalHours / 24);
+    const hours = totalHours % 24;
 
-    if (diffDays > 0) {
-      return `${diffDays} day${diffDays > 1 ? 's' : ''}`;
+    if (days > 0) {
+      return `${days} day${days > 1 ? 's' : ''} ${hours} hour${hours !== 1 ? 's' : ''} left`;
     }
 
-    return `${diffHours} hour${diffHours > 1 ? 's' : ''}`;
+    return `${hours} hour${hours !== 1 ? 's' : ''} left`;
   };
 
   const handleSendInvitation = async () => {
@@ -465,6 +470,7 @@ const Visitor = () => {
             onClose={() => setOpenInviteViaLinkEmail(false)}
             generatedLink={generatedLink}
             getExpireText={getExpireText}
+            expiredAt={expiredAt}
             handleCopyLink={handleCopyLink}
             handleSendInvitation={handleSendInvitation}
           />
@@ -519,6 +525,13 @@ const Visitor = () => {
               <DynamicTable
                 data={shareLinkList}
                 isHaveHeaderTitle
+                isHavePagination={true}
+                totalCount={totalFilteredRecords}
+                onPaginationChange={(page, rowsPerPage) => {
+                  setPage(page);
+                  setRowsPerPage(rowsPerPage);
+                }}
+                rowsPerPageOptions={[10, 50, 100]}
                 isHaveChecked={true}
                 isNoActionTableHead={true}
                 titleHeader="Share Link"

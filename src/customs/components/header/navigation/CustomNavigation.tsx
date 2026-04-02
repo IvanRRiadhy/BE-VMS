@@ -26,14 +26,14 @@ const CustomNavigation: React.FC<CustomNavigationProps> = ({
 
   const [currentTime, setCurrentTime] = useState<string>();
 
-  if (lgUp) {
+  if (xl) {
     return (
       <Box
         sx={{
           // borderBottom: '1px solid rgba(0,0,0,0.05)',
           background: 'white',
           width: '100%',
-          px: 1.5,
+          px: xl ? '10px !important': '5px !important',
           py: 2,
           borderRadius: 0,
           // overflow: 'hidden',

@@ -6,8 +6,6 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Skeleton,
-  Card,
   CircularProgress,
   Divider,
   Grid2 as Grid,
@@ -78,9 +76,7 @@ const Content = () => {
   const [openFormCreateVisitorType, setOpenFormCreateVisitorType] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
-  const [openFormCreateSiteSpace, setOpenFormCreateSiteSpace] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
-  const [isDataReady, setIsDataReady] = useState(false);
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [documentIdentities, setDocumentIdentities] = useState<
@@ -152,17 +148,17 @@ const Content = () => {
         }));
         if (rows) {
           setTableRowVisitorType(rows);
-          // setIsDataReady(true);
         }
       } catch (error) {
         console.error('Error fetching data:', error);
+        setTableRowVisitorType([]);
       } finally {
         setTimeout(() => setLoading(false), 300);
       }
     };
 
     fetchData();
-  }, [token, page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword]);
+  }, [token, page, rowsPerPage, refreshTrigger, searchKeyword]);
 
   const handleOpenDialog = () => {
     setOpenFormCreateVisitorType(true);
@@ -391,7 +387,6 @@ const Content = () => {
 
     const result = await Swal.fire({
       title: `Are you sure to delete ${rows.length} items?`,
-      // text: "You won't be able to revert this!",
       icon: 'warning',
       showCancelButton: true,
       confirmButtonText: 'Yes',
@@ -473,7 +468,6 @@ const Content = () => {
       <Dialog open={openFormCreateVisitorType} onClose={handleDialogClose} maxWidth="xl" fullWidth>
         <DialogTitle
           sx={{
-            // padding: { xs: 2, md: 1 },
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',

@@ -191,7 +191,6 @@ const FormWizardAddVisitorCard = ({
           if (enabledFields?.employee_id)
             updatedFields.employee_id = localForm.employee_id as string;
 
-          // 🔹 multi site
           if (enabledFields?.is_multi_site) {
             updatedFields.is_multi_site = localForm.is_multi_site;
 
@@ -209,18 +208,12 @@ const FormWizardAddVisitorCard = ({
             return;
           }
 
-          // await Promise.all(
-          //   selectedRows.map((row) =>
-          //     updateVisitorCard(token as string, row.id, updatedFields as any),
-          //   ),
-          // );
           await Promise.all(
             selectedRows.map(async (row) => {
               const mergedPayload: any = {
                 ...row,
                 ...updatedFields,
 
-                // 🔹 safeguard relasi
                 is_employee_used:
                   updatedFields.is_employee_used ?? (row.is_employee_used as boolean),
 
@@ -649,7 +642,6 @@ const FormWizardAddVisitorCard = ({
     });
   };
 
-  // Get Data Employee & Site Space
   return (
     <form onSubmit={handleOnSubmit}>
       <PageContainer>
@@ -709,7 +701,7 @@ const FormWizardAddVisitorCard = ({
           zIndex: 999999,
         }}
       >
-        <CircularProgress color="inherit" />
+        <CircularProgress color="primary" />
       </Backdrop>
     </form>
   );

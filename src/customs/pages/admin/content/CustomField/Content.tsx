@@ -363,7 +363,6 @@ const Content = () => {
         </DialogTitle>
         <Divider />
         <DialogContent>
-          <br />
           <FormCustomField
             formData={formDataAddCustomField}
             setFormData={setFormDataAddCustomField}

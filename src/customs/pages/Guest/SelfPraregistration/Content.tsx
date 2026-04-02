@@ -26,8 +26,6 @@ export default function InvitationShare() {
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [invitation, setInvitation] = useState<any>(null);
   const [code, setCode] = useState<string>('');
-  const [d, setD] = useState<string>('');
-  const [sig, setSig] = useState<string>('');
   const [timestamp, setTimestamp] = useState<string>('');
   const { data: employee, isLoading: employeeLoading } = useQuery({
     queryKey: ['employee', code],
@@ -56,8 +54,8 @@ export default function InvitationShare() {
     const code = searchParams.get('code');
     const timestamp = searchParams.get('timestamp');
     const sig = searchParams.get('sig');
+    // console.log('Search Params:', { d, code, timestamp, sig });
 
-    // 🔥 VALIDASI WAJIB ADA
     if (!d || !code || !timestamp || !sig) {
       setError(true);
       return;
@@ -83,6 +81,7 @@ export default function InvitationShare() {
         payload.timestamp,
         payload.sig,
       );
+      // console.log('Invitation Link Response:', res);
 
       setInvitation(res.collection);
     } catch (err: any) {

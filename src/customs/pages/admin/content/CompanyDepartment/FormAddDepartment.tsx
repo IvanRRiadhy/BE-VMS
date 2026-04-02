@@ -6,12 +6,13 @@ import {
   FormControlLabel,
   RadioGroup,
   Radio,
+  Switch,
 } from '@mui/material';
 import { Box } from '@mui/system';
 import React, { useEffect, useMemo, useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import { createDepartment, getVisitorEmployee } from 'src/customs/api/admin';
+import { createDepartment, getVisitorEmployee, updateDepartment } from 'src/customs/api/admin';
 import {
   CreateDepartementSubmitSchema,
   CreateDepartmentRequest,
@@ -22,29 +23,59 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 // RHF
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useFormAutoSave } from 'src/hooks/useFormAutoSave';
+
+type Mode = 'create' | 'edit' | 'batch';
 
 interface FormAddDepartmentProps {
+  mode: Mode;
+  data?: any;
+  selectedRows?: any[];
+  enabledFields?: any;
+  setEnabledFields?: any;
   onSuccess?: () => void;
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
-const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({ onSuccess }) => {
+const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
+  mode,
+  data,
+  selectedRows = [],
+  enabledFields,
+  setEnabledFields,
+  onSuccess,
+  onDirtyChange,
+}) => {
   const { token } = useSession();
   const [loading, setLoading] = useState(false);
   const [allEmployes, setAllEmployees] = useState<any[]>([]);
+
+  const schema =
+    mode === 'batch' ? CreateDepartementSubmitSchema.partial() : CreateDepartementSubmitSchema;
 
   // ✅ RHF setup
   const {
     control,
     handleSubmit,
+    watch,
     formState: { errors },
     reset,
   } = useForm<CreateDepartmentRequest>({
-    resolver: zodResolver(CreateDepartementSubmitSchema),
+    resolver: zodResolver(schema as any),
+    shouldUnregister: true,
     defaultValues: {
       name: '',
       code: '',
       host: '',
+      // is_internal: undefined,
     },
+  });
+
+  useFormAutoSave({
+    watch,
+    reset,
+    storageKey: 'unsavedDepartmentFormAdd',
+    onDirtyChange,
   });
 
   // fetch employee
@@ -64,20 +95,69 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({ onSuccess }) => {
     fetchEmployees();
   }, [token]);
 
+  useEffect(() => {
+    if (mode === 'edit' && data) {
+      reset({
+        name: data.name || '',
+        code: data.code || '',
+        host: String(data.host || ''),
+        // is_internal: data.is_internal ?? undefined,
+      });
+    }
+
+    if (mode === 'create') {
+      reset({
+        name: '',
+        code: '',
+        host: '',
+        // is_internal: undefined,
+      });
+    }
+  }, [mode, data, reset]);
+
   const employeeOptions = useMemo(
     () => allEmployes.map((emp: any) => ({ id: emp.id, label: emp.name })),
     [allEmployes],
   );
 
-  // ✅ submit clean
-  const onSubmit = async (data: CreateDepartmentRequest) => {
+  const onSubmit = async (form: CreateDepartmentRequest) => {
     setLoading(true);
     try {
-      await createDepartment(data, token as string);
+      if (!token) return;
+      // ✅ CREATE
+      if (mode === 'create') {
+        await createDepartment(form, token);
+        showSwal('success', 'Department successfully created!');
+      }
 
-      showSwal('success', 'Department successfully created!');
+      // ✅ EDIT
+      if (mode === 'edit' && data) {
+        await updateDepartment(data.id, form, token);
+        showSwal('success', 'Department successfully updated!');
+      }
+
+      // ✅ BATCH
+      if (mode === 'batch' && selectedRows.length > 0) {
+        await Promise.all(
+          selectedRows.map((item) => {
+            const payload = {
+              name: form.name,
+              code: item.code,
+              host:
+                typeof item.host === 'object'
+                  ? String(item.host?.id || '')
+                  : String(item.host || ''),
+              // is_internal: item.is_internal,
+            };
+
+            return updateDepartment(item.id, payload, token);
+          }),
+        );
+
+        showSwal('success', 'Batch update successful!');
+      }
+
       reset();
-
       onSuccess?.();
     } catch (err) {
       showSwal('error', 'Failed to create department.', 3000);
@@ -90,9 +170,23 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({ onSuccess }) => {
     <>
       <form onSubmit={handleSubmit(onSubmit)}>
         {/* NAME */}
-        <CustomFormLabel required sx={{ mt: 0 }}>
-          Department Name
-        </CustomFormLabel>
+        <Box display="flex" justifyContent="space-between">
+          <CustomFormLabel required sx={{ mt: 0 }}>
+            Department Name
+          </CustomFormLabel>
+          {mode === 'batch' && (
+            <Switch
+              size="small"
+              checked={enabledFields?.name}
+              onChange={(e) =>
+                setEnabledFields((prev: any) => ({
+                  ...prev,
+                  name: e.target.checked,
+                }))
+              }
+            />
+          )}
+        </Box>
         <Controller
           name="name"
           control={control}
@@ -102,66 +196,101 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({ onSuccess }) => {
               error={!!errors.name}
               helperText={errors.name?.message}
               fullWidth
+              disabled={mode === 'batch' && !enabledFields?.name}
             />
           )}
         />
 
         {/* CODE */}
-        <CustomFormLabel required sx={{ mt: 2 }}>
-          Department Code
-        </CustomFormLabel>
-        <Controller
-          name="code"
-          control={control}
-          render={({ field }) => (
-            <CustomTextField
-              {...field}
-              error={!!errors.code}
-              helperText={errors.code?.message}
-              fullWidth
-            />
-          )}
-        />
-
-        {/* HOST */}
-        <CustomFormLabel required sx={{ mt: 2 }}>
-          Head of Department
-        </CustomFormLabel>
-        <Controller
-          name="host"
-          control={control}
-          render={({ field }) => (
-            <Autocomplete
-              options={employeeOptions}
-              value={employeeOptions.find((e) => e.id === field.value) ?? null}
-              onChange={(_, newValue) => {
-                field.onChange(newValue?.id ?? '');
-              }}
-              renderInput={(params) => (
+        {mode === 'batch' ? (
+          <>
+            <CustomFormLabel required sx={{ mt: 2 }}>
+              Department Code
+            </CustomFormLabel>
+            <CustomTextField value={''} disabled fullWidth />
+          </>
+        ) : (
+          <>
+            <CustomFormLabel required sx={{ mt: 2 }}>
+              Department Code
+            </CustomFormLabel>
+            <Controller
+              name="code"
+              control={control}
+              render={({ field }) => (
                 <CustomTextField
-                  {...params}
-                  error={!!errors.host}
-                  helperText={errors.host?.message}
+                  {...field}
+                  error={!!errors.code}
+                  helperText={errors.code?.message}
                   fullWidth
                 />
               )}
             />
-          )}
-        />
+          </>
+        )}
+
+        {/* HOST */}
+        {mode === 'batch' ? (
+          <>
+            <CustomFormLabel required sx={{ mt: 2 }}>
+              Head of Department
+            </CustomFormLabel>
+            <CustomTextField value="" disabled fullWidth />
+          </>
+        ) : (
+          <>
+            <CustomFormLabel required sx={{ mt: 2 }}>
+              Head of Department
+            </CustomFormLabel>
+            <Controller
+              name="host"
+              control={control}
+              render={({ field }) => (
+                <Autocomplete
+                  options={employeeOptions}
+                  value={employeeOptions.find((e) => e.id === field.value) ?? null}
+                  onChange={(_, newValue) => {
+                    field.onChange(newValue?.id ?? '');
+                  }}
+                  renderInput={(params) => (
+                    <CustomTextField
+                      {...params}
+                      error={!!errors.host}
+                      helperText={errors.host?.message}
+                      fullWidth
+                    />
+                  )}
+                />
+              )}
+            />
+          </>
+        )}
 
         {/* TYPE */}
-        {/* <CustomFormLabel sx={{ mt: 2 }}>Type (Optional)</CustomFormLabel>
-        <Controller
-          name="type"
-          control={control}
-          defaultValue=""
-          render={({ field }) => (
-            <RadioGroup row {...field}>
-              <FormControlLabel value="internal" control={<Radio />} label="Internal" />
-              <FormControlLabel value="external" control={<Radio />} label="External" />
-            </RadioGroup>
-          )}
-        /> */}
+        {/* {mode === 'batch' ? (
+          <>
+            <CustomFormLabel sx={{ mt: 2 }}>Type (Optional)</CustomFormLabel>
+            <CustomTextField value="" disabled fullWidth />
+          </>
+        ) : (
+          <>
+            <CustomFormLabel sx={{ mt: 2 }}>Type (Optional)</CustomFormLabel>
+            <Controller
+              name="is_internal"
+              control={control}
+              render={({ field }) => (
+                <RadioGroup
+                  row
+                  value={field.value === undefined ? '' : String(field.value)}
+                  onChange={(e) => field.onChange(e.target.value === 'true')}
+                >
+                  <FormControlLabel value="true" control={<Radio />} label="Internal" />
+                  <FormControlLabel value="false" control={<Radio />} label="External" />
+                </RadioGroup>
+              )}
+            />
+          </>
+        )} */}
 
         {/* SUBMIT */}
         <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>

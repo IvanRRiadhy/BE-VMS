@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   Box,
   Button,
@@ -31,8 +31,6 @@ import { IconUsers } from '@tabler/icons-react';
 
 import {
   showConfirmDelete,
-  showSuccessAlert,
-  showErrorAlert,
   showSwal,
 } from 'src/customs/components/alerts/alerts';
 import FilterMoreContent from 'src/customs/pages/admin/content/Delivery/Driver/FilterMoreContent';
@@ -57,7 +55,7 @@ type EnableField = {
 };
 
 interface OptionItem {
-  id: string; // atau 'number' jika ID dari API berupa angka
+  id: string;
   name: string;
 }
 
@@ -72,10 +70,8 @@ interface Filters {
 }
 
 const Content = () => {
-  // Pagination state.
   const [tableData, setTableData] = useState<Item[]>([]);
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
-  const [isDataReady, setIsDataReady] = useState(false);
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
   const [page, setPage] = useState(0);
@@ -147,7 +143,6 @@ const Content = () => {
     fetchDataDistrict();
   }, [token]);
 
-  // Fetch table data when pagination or Filter changes.
   useEffect(() => {
     if (!token) return;
     const fetchData = async () => {
@@ -178,10 +173,9 @@ const Content = () => {
             setTableRowEmployee([]);
             setTotalRecords(0);
             setTotalFilteredRecords(0);
-            setIsDataReady(true);
-            return; // (finally di luar tetap setLoading(false))
+            return; 
           }
-          throw err; // error lain biar ditangani catch luar
+          throw err; 
         }
 
         const safeCollection = Array.isArray(employeeRes?.collection) ? employeeRes.collection : [];
@@ -195,11 +189,9 @@ const Content = () => {
           setTableRowEmployee([]);
           setTotalRecords(0);
           setTotalFilteredRecords(0);
-          setIsDataReady(true);
           return;
         }
 
-        // Lanjut mapping seperti biasa
         setTableData(safeCollection);
         setTotalRecords(employeeRes?.RecordsTotal ?? safeCollection.length ?? 0);
         setTotalFilteredRecords(employeeRes?.RecordsFiltered ?? safeCollection.length ?? 0);
@@ -213,11 +205,10 @@ const Content = () => {
           // district: item.district?.name || '-',
         }));
         setTableRowEmployee(rows);
-        setIsDataReady(true);
       } catch (error: any) {
         console.error('Error fetching data:', error.message);
       } finally {
-        // setTimeout(() => setLoading(false), 300); // beri waktu render skeleton
+        // setTimeout(() => setLoading(false), 300); 
         setLoading(false);
       }
     };
@@ -312,7 +303,6 @@ const Content = () => {
       // pastikan tidak NaN:
       gender: toNum(s?.gender, { female: 0, male: 1, f: 0, m: 1, '0': 0, '1': 1 }, 0),
 
-      // kalau backend kirim string "Active"/"Non Active", amankan juga:
       status_employee: toNum(
         s?.status_employee,
         { active: 1, 'non active': 2, nonactive: 2, inactive: 2, '0': 0, '1': 1, '2': 2 },
@@ -367,7 +357,7 @@ const Content = () => {
         };
         setEdittingId(pendingEditId);
         setFormDataDriver(parsedData);
-        setInitialFormData(parsedData); // <--- set initial form juga
+        setInitialFormData(parsedData);
         localStorage.setItem('unsavedDriverData', JSON.stringify(parsedData));
         setPendingEditId(null);
         setOpenFormAddEmployee(true);
@@ -377,7 +367,7 @@ const Content = () => {
       setEdittingId('');
       const newForm = CreateDriverRequestSchema.parse({});
       setFormDataDriver(newForm);
-      setInitialFormData(newForm); // <--- set initial form juga
+      setInitialFormData(newForm);
       localStorage.setItem('unsavedDriverData', JSON.stringify(newForm));
       handleCloseDialog();
       setIsEditing(false);
@@ -578,7 +568,7 @@ const Content = () => {
         </DialogTitle>
         <Divider />
         <DialogContent>
-          <br />
+          {/* <br /> */}
           <FormDriver
             formData={formDataDriver}
             setFormData={setFormDataDriver}

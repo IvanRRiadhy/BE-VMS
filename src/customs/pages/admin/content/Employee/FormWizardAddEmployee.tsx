@@ -35,12 +35,8 @@ import { axiosInstance2 } from 'src/customs/api/interceptor';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   createEmployee,
-  getAllDepartmentsPagination,
-  getAllDistrictsPagination,
-  getAllOrganizationPagination,
   updateEmployee,
   getEmployeeById,
-  getAllEmployeePagination,
   getAllEmployee,
   uploadImageEmployee,
   getAllOrganizations,
@@ -55,17 +51,17 @@ import {
   UpdateEmployeeRequest,
 } from 'src/customs/api/models/Admin/Employee';
 import { Item } from 'src/customs/api/models/Admin/Employee';
-import { showSuccessAlert, showSwal } from 'src/customs/components/alerts/alerts';
+import { showSwal } from 'src/customs/components/alerts/alerts';
 const steps = ['Personal Info', 'Work Details', 'Access & Address', 'Other Details', 'Photo'];
-
 import { getStepSchema, stepFieldMap } from 'src/customs/api/validations/employeeSchemas';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
+import { MobileStepper, useTheme, useMediaQuery } from '@mui/material';
 
 type EnabledFields = {
   organization_id: boolean;
   department_id: boolean;
   district_id: boolean;
-  // access_area: boolean; // ⬅️ WAJIB ADA
+  // access_area: boolean;
   // access_area_special: boolean;
   gender: boolean;
 };
@@ -81,7 +77,7 @@ interface FormEmployeeProps {
   setEnabledFields: React.Dispatch<React.SetStateAction<EnabledFields>>;
 }
 
-const BASE_URL = axiosInstance2.defaults.baseURL; // tanpa trailing slash
+const BASE_URL = axiosInstance2.defaults.baseURL;
 
 const FormWizardAddEmployee = ({
   formData,
@@ -114,12 +110,14 @@ const FormWizardAddEmployee = ({
   const webcamRef = useRef<Webcam>(null);
   const [removing, setRemoving] = useState(false);
   const [employeeAllRes, setEmployeeAllRes] = useState<Item[]>([]);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const clearLocal = () => {
     setSiteImageFile(null);
     setPreviewUrl(null);
     setScreenshot(null);
-    setFormData((prev) => ({ ...prev, faceimage: '' }));
+    setLocalForm((prev) => ({ ...prev, faceimage: '' }));
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -183,10 +181,9 @@ const FormWizardAddEmployee = ({
       setDepartment(deptRes.collection ?? []);
       setDistrict(distRes.collection ?? []);
 
-      const employeeAll = await getAllEmployee(token);
-      setEmployeeAllRes(employeeAll.collection ?? []);
+      // const employeeAll = await getAllEmployee(token);
+      // setEmployeeAllRes(employeeAll.collection ?? []);
 
-      // ⛔ JANGAN load detail karyawan ketika batch edit
       if (edittingId && !isBatchEdit) {
         const employeeRes = await getEmployeeById(edittingId, token);
         const employee = employeeRes?.collection ?? null;
@@ -213,7 +210,6 @@ const FormWizardAddEmployee = ({
     fetchData();
   }, [token, edittingId, isBatchEdit]);
 
-  // Ambil subset field dari formData
   const pick = (obj: Record<string, any>, keys: readonly string[]) => {
     const out: Record<string, any> = {};
     keys.forEach((k) => {
@@ -242,12 +238,11 @@ const FormWizardAddEmployee = ({
 
   const validateStep = (step: number): boolean => {
     const schema = getStepSchema(step);
-    if (!schema) return true; // step tanpa aturan
+    if (!schema) return true; 
 
     const fields = stepFieldMap[step] ?? [];
     let payload = pick(localForm, fields as any);
 
-    // Mode Batch Edit
     if (isBatchEdit) {
       const enabledKeys = fields.filter((k) => (enabledFields as any)?.[k] === true);
       if (enabledKeys.length === 0) return true;
@@ -303,10 +298,6 @@ const FormWizardAddEmployee = ({
   ) => {
     const { id, name, value } = e.target as any;
     const key = (name || id) as string;
-    // setFormData((prev) => ({
-    //   ...prev,
-    //   [name || id]: value,
-    // }));
     setLocalForm((prev) => ({
       ...prev,
       [name || id]: value,
@@ -350,7 +341,6 @@ const FormWizardAddEmployee = ({
   };
 
   const handleNext = () => {
-    // ✅ Cek step aktif sebelum maju
     if (!validateStep(activeStep)) return;
 
     let newSkipped = skipped;
@@ -361,7 +351,6 @@ const FormWizardAddEmployee = ({
     setActiveStep((prev) => prev + 1);
     setSkipped(newSkipped);
 
-    // reset alert info
     setAlertType('info');
     setAlertMessage('Complete the following data properly and correctly');
   };
@@ -383,6 +372,7 @@ const FormWizardAddEmployee = ({
     organization_id: String(v.organization_id ?? ''),
     department_id: String(v.department_id ?? ''),
     district_id: String(v.district_id ?? ''),
+    type: String(v.type ?? 'Permanent'),
   });
 
   const isDataUrl = (s?: string) => typeof s === 'string' && /^data:image\//i.test(s);
@@ -401,8 +391,6 @@ const FormWizardAddEmployee = ({
         }, 3000);
         return;
       }
-
-      /** 🧩 Batch Edit Mode */
       if (isBatchEdit && selectedRows.length > 0) {
         const enabledKeys = Object.keys(enabledFields ?? {}).filter(
           (k) => (enabledFields as any)[k] === true,
@@ -453,14 +441,14 @@ const FormWizardAddEmployee = ({
       const mergedFormData = normalizeForSubmit({
         ...localForm,
 
-        type:
-          typeof localForm.type === 'string'
-            ? localForm.type === 'Permanent'
-              ? 1
-              : localForm.type === 'contract'
-                ? 2
-                : 0
-            : Number(localForm.type ?? 0),
+        type: String(localForm.type ?? 'Permanent'),
+        // typeof localForm.type === 'string'
+        //   ? localForm.type === 'Permanent'
+        //     ? 1
+        //     : localForm.type === 'contract'
+        //       ? 2
+        //       : 0
+        //   : Number(localForm.type ?? 0),
 
         gender:
           typeof localForm.gender === 'string'
@@ -470,10 +458,10 @@ const FormWizardAddEmployee = ({
             : Number(localForm.gender ?? 0),
       });
 
-      console.log('Merged form data:', mergedFormData);
+      // console.log('Merged form data:', mergedFormData);
 
       const result = CreateEmployeeSubmitSchema.safeParse(mergedFormData);
-      console.log(result);
+      // console.log(result);
       if (!result.success) {
         const em = toErrorMap(result.error.issues);
         setErrors(em);
@@ -496,68 +484,52 @@ const FormWizardAddEmployee = ({
         const { faceimage: _drop, ...withoutImage } = data;
         const editData: UpdateEmployeeRequest = {
           ...withoutImage,
+          type: String(data.type ?? ''),
           qr_code: localForm.card_number,
           is_email_verify: false,
         };
 
-        console.log('Updating employee with data:', editData);
+        // console.log('Updating employee with data:', editData);
 
         const res = await updateEmployee(edittingId, editData, token);
-        console.log('Update result:', res);
+        // console.log('Update result:', res);
         if (hasNewImage) {
           await handleFileUploads(edittingId, rawFileImage, rawFaceImage);
         }
-        console.log('hasNewImage', hasNewImage);
+        // console.log('hasNewImage', hasNewImage);
 
         showSwal('success', 'Employee successfully updated!');
       } else {
+        console.log('Creating employee with data:', data);
         const created = await createEmployee(data, token);
+        // console.log('Create result:', created);
         const employeeId = created?.collection.employee_id;
 
         if (hasNewImage) {
           await handleFileUploads(employeeId as string, rawFileImage, rawFaceImage);
         }
-        setTimeout(() => {
-          showSwal('success', 'Employee successfully created!');
-        }, 750);
+        // setTimeout(() => {
+        showSwal('success', 'Employee successfully created!');
+        // }, 750);
 
         setFormData(CreateEmployeeRequestSchema.parse({}));
       }
 
-      setTimeout(() => {
+      // setTimeout(() => {
         onSuccess?.();
-      }, 600);
+      // }, 600);
     } catch (err: any) {
       if (err?.errors) {
         setErrors(err.errors);
       }
       showSwal('error', err?.message ?? 'Failed to submit. Please try again.');
     } finally {
-      setTimeout(() => {
-        setLoading(false);
-      }, 650);
+      // setTimeout(() => {
+      setLoading(false);
+      // }, 650);
     }
   };
-  // const handleFileUploads = async (employeeId: any, fileFromInput: any, faceImage: any) => {
-  //   try {
-  //     //  console.log('UPLOAD START', { fileFromInput, faceImage });
-  //     if (fileFromInput) {
-  //       await uploadImageEmployee(employeeId, fileFromInput, token as string);
-  //       return;
-  //     }
 
-  //     if (faceImage) {
-  //       const blob = await fetch(faceImage).then((res) => res.blob());
-  //       const file = new File([blob], 'webcam.jpg', { type: 'image/jpeg' });
-  //       await uploadImageEmployee(employeeId, file, token as string);
-  //       return;
-  //     }
-
-  //     console.log('No image to upload');
-  //   } catch (error) {
-  //     console.error('Error uploading image:', error);
-  //   }
-  // };
 
   const handleFileUploads = async (
     employeeId: string,
@@ -581,7 +553,6 @@ const FormWizardAddEmployee = ({
     await Promise.all(tasks);
   };
 
-  // Handle Change Image
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
@@ -589,11 +560,11 @@ const FormWizardAddEmployee = ({
       setPreviewUrl(URL.createObjectURL(selectedFile));
     }
   };
-    const [localForm, setLocalForm] = useState(formData);
+  const [localForm, setLocalForm] = useState(formData);
 
-    useEffect(() => {
-      setLocalForm(formData);
-    }, [formData]);
+  useEffect(() => {
+    setLocalForm(formData);
+  }, [formData]);
 
   useEffect(() => {
     if (siteImageFile) return;
@@ -614,8 +585,6 @@ const FormWizardAddEmployee = ({
 
     setPreviewUrl(url);
   }, [localForm.faceimage, siteImageFile]);
-
-
 
   const StepContent = (step: number) => {
     switch (step) {
@@ -657,25 +626,35 @@ const FormWizardAddEmployee = ({
             </Grid2>
 
             <Grid2 size={{ xs: 12, sm: 12 }}>
-              <CustomFormLabel sx={{ my: 1 }} htmlFor="employeeType" required>
-                <Typography variant="caption">Identity Type</Typography>
-              </CustomFormLabel>
-              <CustomSelect
-                id="employeeType"
-                value={localForm.identity_type}
-                onChange={(e: any) => setFormData({ ...localForm, identity_type: e.target.value })}
-                fullWidth
-                disabled={isBatchEdit}
-              >
-                <MenuItem value={'NIK'}>NIK</MenuItem>
-                <MenuItem value={'KTP'}>KTP</MenuItem>
-                <MenuItem value={'Passport'}>Passport</MenuItem>
-                <MenuItem value={'DriverLicense'}>Driver License</MenuItem>
-                <MenuItem value={'CardAccess'}>Card Access</MenuItem>
-                <MenuItem value={'Face'}>Face</MenuItem>
-                <MenuItem value={'NDA'}>NDA</MenuItem>
-                <MenuItem value={'Other'}>Other</MenuItem>
-              </CustomSelect>
+              <FormControl fullWidth error={Boolean(errors.identity_type)}>
+                <CustomFormLabel sx={{ my: 1 }} htmlFor="identity_type" required>
+                  <Typography variant="caption">Identity Type</Typography>
+                </CustomFormLabel>
+
+                <CustomSelect
+                  id="identity_type"
+                  value={localForm.identity_type}
+                  onChange={(e: any) => {
+                    setFormData({ ...localForm, identity_type: e.target.value });
+                    if (errors.identity_type) setErrors((p) => ({ ...p, identity_type: '' }));
+                  }}
+                  fullWidth
+                  disabled={isBatchEdit}
+                >
+                  <MenuItem value={'NIK'}>NIK</MenuItem>
+                  <MenuItem value={'KTP'}>KTP</MenuItem>
+                  <MenuItem value={'Passport'}>Passport</MenuItem>
+                  <MenuItem value={'DriverLicense'}>Driver License</MenuItem>
+                  <MenuItem value={'CardAccess'}>Card Access</MenuItem>
+                  <MenuItem value={'Face'}>Face</MenuItem>
+                  <MenuItem value={'NDA'}>NDA</MenuItem>
+                  <MenuItem value={'Other'}>Other</MenuItem>
+                </CustomSelect>
+
+                <FormHelperText sx={{ marginLeft: '0 !important' }}>
+                  {errors.identity_type}
+                </FormHelperText>
+              </FormControl>
             </Grid2>
             {/* Identity ID */}
             <Grid2 size={{ xs: 12, sm: 12 }}>
@@ -696,7 +675,7 @@ const FormWizardAddEmployee = ({
             </Grid2>
 
             {/* Email */}
-            <Grid2 size={{ xs: 6, sm: 6 }}>
+            <Grid2 size={{ xs: 12, sm: 6 }}>
               <CustomFormLabel sx={{ marginY: 1 }} htmlFor="email" required>
                 <Typography variant="caption">Email</Typography>
               </CustomFormLabel>
@@ -714,7 +693,10 @@ const FormWizardAddEmployee = ({
             </Grid2>
 
             {/* Gender */}
-            <Grid2 sx={{ paddingLeft: '25px' }} size={{ xs: 6, sm: 6 }}>
+            <Grid2
+              sx={{ paddingLeft: isMobile ? '0px !important' : '25px' }}
+              size={{ xs: 12, sm: 6 }}
+            >
               <Box
                 display="flex"
                 alignItems="center"
@@ -753,7 +735,7 @@ const FormWizardAddEmployee = ({
                       <CustomRadio
                         checked={localForm.gender === 0}
                         onChange={() => {
-                          setFormData((prev) => ({ ...prev, gender: 0 }));
+                          setLocalForm((prev) => ({ ...prev, gender: 0 }));
                           if (errors.gender) setErrors((p) => ({ ...p, gender: '' }));
                         }}
                         disabled={isBatchEdit && !enabledFields?.gender}
@@ -767,7 +749,7 @@ const FormWizardAddEmployee = ({
                       <CustomRadio
                         checked={localForm.gender === 1}
                         onChange={() => {
-                          setFormData((prev) => ({ ...prev, gender: 1 }));
+                          setLocalForm((prev) => ({ ...prev, gender: 1 }));
                           if (errors.gender) setErrors((p) => ({ ...p, gender: '' }));
                         }}
                         disabled={isBatchEdit && !enabledFields?.gender}
@@ -775,8 +757,6 @@ const FormWizardAddEmployee = ({
                     }
                   />
                 </Box>
-
-                {/* Error message di bawah radio */}
                 {errors.gender && (
                   <FormHelperText error sx={{ mt: 0.5, marginLeft: '0' }}>
                     {errors.gender}
@@ -814,6 +794,7 @@ const FormWizardAddEmployee = ({
                 fullWidth
                 disabled={isBatchEdit}
               >
+                <MenuItem value="">Select Type</MenuItem>
                 <MenuItem value="Car">Car</MenuItem>
                 <MenuItem value="Bus">Bus</MenuItem>
                 <MenuItem value="Motor">Motor</MenuItem>
@@ -883,12 +864,10 @@ const FormWizardAddEmployee = ({
                   );
                 })()}
                 onChange={(_, newVal) => {
-                  setFormData((prev) => ({
+                  setLocalForm((prev) => ({
                     ...prev,
                     district_id: newVal ? newVal.id : '',
                   }));
-
-                  // ⬅️ hapus error ketika user pilih value
                   setErrors((prev) => ({ ...prev, district_id: '' }));
                 }}
                 isOptionEqualToValue={(opt, val) => opt.id === val.id}
@@ -954,7 +933,7 @@ const FormWizardAddEmployee = ({
                   );
                 })()}
                 onChange={(_, newVal) => {
-                  setFormData((prev) => ({
+                  setLocalForm((prev) => ({
                     ...prev,
                     organization_id: newVal ? newVal.id : '',
                   }));
@@ -1020,7 +999,7 @@ const FormWizardAddEmployee = ({
                   );
                 })()}
                 onChange={(_, newVal) => {
-                  setFormData((prev) => ({
+                  setLocalForm((prev) => ({
                     ...prev,
                     department_id: newVal ? newVal.id : '',
                   }));
@@ -1054,7 +1033,7 @@ const FormWizardAddEmployee = ({
                   <Checkbox
                     checked={Boolean(localForm.is_head)}
                     onChange={(e) => {
-                      setFormData((prev) => ({ ...prev, is_head: e.target.checked }));
+                      setLocalForm((prev) => ({ ...prev, is_head: e.target.checked }));
                       setErrors((prev) => ({ ...prev, is_head: '' }));
                     }}
                   />
@@ -1064,6 +1043,7 @@ const FormWizardAddEmployee = ({
                   '& .MuiFormControlLabel-label': {
                     fontSize: '0.75rem',
                   },
+                  marginTop: '10px',
                 }}
               />
             </Grid2>
@@ -1272,21 +1252,30 @@ const FormWizardAddEmployee = ({
                       Upload Employee Image
                     </Typography>
 
-                    <Typography variant="caption" color="textSecondary">
-                      Supports: JPG, JPEG, PNG, Max Size: 2MB
-                    </Typography>
-                    <Typography
-                      variant="subtitle1"
-                      component="span"
-                      color="primary"
-                      sx={{ fontWeight: 600, ml: 1, cursor: 'pointer' }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setOpenCamera(true);
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        mt: 0.5,
                       }}
                     >
-                      Camera
-                    </Typography>
+                      <Typography variant="body1" color="textSecondary">
+                        Supports: JPG, JPEG, PNG, Up to <strong>1 MB</strong>
+                      </Typography>
+                      <Typography
+                        variant="subtitle1"
+                        component="span"
+                        color="primary"
+                        sx={{ fontWeight: 600, ml: 1, cursor: 'pointer' }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenCamera(true);
+                        }}
+                      >
+                        Camera
+                      </Typography>
+                    </Box>
 
                     <Dialog
                       open={openCamera}
@@ -1351,8 +1340,8 @@ const FormWizardAddEmployee = ({
                           <Button
                             variant="contained"
                             onClick={(e) => {
-                              e.stopPropagation(); // ✅ cegah trigger upload
-                              handleCapture(); // 📸 ambil foto dari kamera
+                              e.stopPropagation(); 
+                              handleCapture(); 
                             }}
                           >
                             Take Foto
@@ -1384,21 +1373,6 @@ const FormWizardAddEmployee = ({
                         mt={2}
                         sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
                       >
-                        {/* <img
-                          src={previewUrl}
-                          alt="preview"
-                          style={{
-                            width: 300,
-                            height: 170,
-                            borderRadius: 12,
-                            objectFit: 'cover',
-                            objectPosition: 'center',
-                            cursor: 'pointer',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
-                          }}
-                          onClick={(e) => e.stopPropagation()}
-                        /> */}
-
                         <div
                           style={{
                             width: 300,
@@ -1429,8 +1403,8 @@ const FormWizardAddEmployee = ({
                           color="error"
                           disabled={removing || isBatchEdit}
                           onClick={(e) => {
-                            e.stopPropagation(); // cegah trigger klik container
-                            handleRemove(); // jalankan remove
+                            e.stopPropagation(); 
+                            handleRemove(); 
                           }}
                         >
                           {removing ? 'Removing…' : 'Remove'}
@@ -1452,16 +1426,36 @@ const FormWizardAddEmployee = ({
   return (
     <form onSubmit={handleOnSubmit}>
       <Box width="100%">
-        <Stepper activeStep={activeStep}>
-          {steps.map((label, index) => (
-            <Step key={label} completed={false}>
-              {/* centang hilang */}
-              <StepButton onClick={() => setActiveStep(index)}>{label}</StepButton>
-            </Step>
-          ))}
-        </Stepper>
+        {isMobile ? (
+          <>
+            <Box textAlign="center" mt={1}>
+              <Typography variant="h5">{steps[activeStep]}</Typography>
+            </Box>
 
-        {activeStep === steps.length ? (
+            <MobileStepper
+              variant="dots"
+              steps={steps.length}
+              position="static"
+              activeStep={activeStep}
+              nextButton={null}
+              backButton={null}
+              sx={{
+                justifyContent: 'center', 
+                mt: 1,
+              }}
+            />
+          </>
+        ) : (
+          <Stepper activeStep={activeStep}>
+            {steps.map((label, index) => (
+              <Step key={label} completed={false}>
+                <StepButton onClick={() => setActiveStep(index)}>{label}</StepButton>
+              </Step>
+            ))}
+          </Stepper>
+        )}
+
+        {/* {activeStep === steps.length ? (
           <Stack spacing={2} mt={3}>
             <Alert severity="success">All steps completed - you're finished</Alert>
             <Box textAlign="right">
@@ -1470,10 +1464,11 @@ const FormWizardAddEmployee = ({
               </Button>
             </Box>
           </Stack>
-        ) : (
+        ) : ( */}
           <>
-            <Box mt={3}>{StepContent(activeStep)}</Box>
-            <Box display="flex" flexDirection="row" mt={3}>
+            <Box mt={1}>{StepContent(activeStep)}</Box>
+            <Divider sx={{ mt: 2 }} />
+            <Box display="flex" flexDirection="row" mt={2}>
               <Button
                 // variant="outlined"
                 color="primary"
@@ -1500,7 +1495,7 @@ const FormWizardAddEmployee = ({
               )}
             </Box>
           </>
-        )}
+        {/* )} */}
       </Box>
       <Backdrop
         open={loading}

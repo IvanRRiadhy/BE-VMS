@@ -29,7 +29,6 @@ const Content = () => {
             <GraphDisplay />
           </Grid>
         </Grid>
-        {/* </Box> */}
       </Container>
     </PageContainer>
   );

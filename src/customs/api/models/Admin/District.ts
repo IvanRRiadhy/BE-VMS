@@ -64,6 +64,7 @@ export const CreateDistrictSchema = z.object({
   code: z.string().default(''),
   name: z.string().default(''),
   host: z.string().default(''),
+  // is_internal: z.boolean().optional(),
 });
 
 export type CreateDistrictRequest = z.infer<typeof CreateDistrictSchema>;
@@ -72,6 +73,7 @@ export const CreateDistrictSubmitSchema = CreateDistrictSchema.extend({
   code: z.string().trim().min(1, 'District code is required'),
   name: z.string().trim().min(1, 'District name is required'),
   host: z.string().trim().min(1, 'Head of district is required'),
+  // is_internal: z.boolean().optional(),
 });
 
 export type CreateDistrictSubmitRequest = z.infer<typeof CreateDistrictSubmitSchema>;

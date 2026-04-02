@@ -6,12 +6,13 @@ import {
   RadioGroup,
   FormControlLabel,
   Radio,
+  Switch,
 } from '@mui/material';
 import { Box } from '@mui/system';
 import React, { useEffect, useMemo, useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import { createOrganization, getVisitorEmployee } from 'src/customs/api/admin';
+import { createOrganization, getVisitorEmployee, updateOrganization } from 'src/customs/api/admin';
 import {
   CreateOrganizationRequest,
   CreateOrganizationSubmitSchema,
@@ -22,32 +23,81 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 // RHF
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useFormAutoSave } from 'src/hooks/useFormAutoSave';
 
-interface FormAddOrganizationProps {
+type Mode = 'create' | 'edit' | 'batch';
+
+interface FormOrganizationProps {
+  mode: Mode;
+  data?: any;
+  selectedRows?: any[];
+  enabledFields?: any;
+  setEnabledFields?: any;
   onSuccess?: () => void;
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
-const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({ onSuccess }) => {
+const FormAddOrganization: React.FC<FormOrganizationProps> = ({
+  mode,
+  data,
+  selectedRows = [],
+  enabledFields,
+  setEnabledFields,
+  onSuccess,
+  onDirtyChange,
+}) => {
   const { token } = useSession();
   const [loading, setLoading] = useState(false);
   const [allEmployes, setAllEmployees] = useState<any[]>([]);
+
+  const schema =
+    mode === 'batch' ? CreateOrganizationSubmitSchema.partial() : CreateOrganizationSubmitSchema;
 
   // ✅ RHF setup
   const {
     control,
     handleSubmit,
     formState: { errors },
+    watch,
     reset,
   } = useForm<CreateOrganizationRequest>({
-    resolver: zodResolver(CreateOrganizationSubmitSchema),
+    resolver: zodResolver(schema as any),
+    shouldUnregister: true,
     defaultValues: {
       name: '',
       code: '',
       host: '',
+      is_internal: undefined,
     },
   });
 
-  // fetch employees
+  useEffect(() => {
+    if (mode === 'edit' && data) {
+      reset({
+        name: data.name || '',
+        code: data.code || '',
+        host: String(data.host || ''),
+        is_internal: data.is_internal ?? undefined,
+      });
+    }
+
+    if (mode === 'create') {
+      reset({
+        name: '',
+        code: '',
+        host: '',
+        is_internal: undefined,
+      });
+    }
+  }, [mode, data, reset]);
+
+  useFormAutoSave({
+    watch,
+    reset,
+    storageKey: 'unsavedOrganizationFormAdd',
+    onDirtyChange,
+  });
+
   useEffect(() => {
     if (!token) return;
 
@@ -69,30 +119,71 @@ const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({ onSuccess }) 
     [allEmployes],
   );
 
-  // ✅ submit clean
-  const onSubmit = async (data: CreateOrganizationRequest) => {
+  const onSubmit = async (form: CreateOrganizationRequest) => {
     setLoading(true);
     try {
-      await createOrganization(data, token as string);
+      if (!token) return;
 
-      showSwal('success', 'Organization successfully created!');
+      // ✅ CREATE
+      if (mode === 'create') {
+        await createOrganization(form, token);
+        showSwal('success', 'Organization successfully created!');
+      }
+
+      // ✅ EDIT
+      if (mode === 'edit' && data) {
+        await updateOrganization(data.id, form, token);
+        showSwal('success', 'Organization successfully updated!');
+      }
+
+      // ✅ BATCH
+   if (mode === 'batch' && selectedRows.length > 0) {
+     await Promise.all(
+       selectedRows.map((item) => {
+         const payload = {
+           name: form.name, 
+           code: item.code,
+           host:
+             typeof item.host === 'object' ? String(item.host?.id || '') : String(item.host || ''),
+           is_internal: item.is_internal,
+         };
+
+         return updateOrganization(item.id, payload, token);
+       }),
+     );
+
+     showSwal('success', 'Batch update successful!');
+   }
+
       reset();
-
       onSuccess?.();
-    } catch (err) {
-      showSwal('error', 'Failed to create organization.', 3000);
+    } catch {
+      showSwal('error', 'Failed to process organization.');
     } finally {
       setLoading(false);
     }
   };
-
   return (
     <>
       <form onSubmit={handleSubmit(onSubmit)}>
         {/* NAME */}
-        <CustomFormLabel required sx={{ mt: 0 }}>
-          Organization Name
-        </CustomFormLabel>
+        <Box display="flex" justifyContent="space-between">
+          <CustomFormLabel required sx={{ mt: 0 }}>
+            Organization Name
+          </CustomFormLabel>
+          {mode === 'batch' && (
+            <Switch
+              size="small"
+              checked={enabledFields?.name}
+              onChange={(e) =>
+                setEnabledFields((prev: any) => ({
+                  ...prev,
+                  name: e.target.checked,
+                }))
+              }
+            />
+          )}
+        </Box>
         <Controller
           name="name"
           control={control}
@@ -102,66 +193,100 @@ const FormAddOrganization: React.FC<FormAddOrganizationProps> = ({ onSuccess }) 
               error={!!errors.name}
               helperText={errors.name?.message}
               fullWidth
+              disabled={mode === 'batch' && !enabledFields?.name}
             />
           )}
         />
 
         {/* CODE */}
-        <CustomFormLabel required sx={{ mt: 2 }}>
-          Organization Code
-        </CustomFormLabel>
-        <Controller
-          name="code"
-          control={control}
-          render={({ field }) => (
-            <CustomTextField
-              {...field}
-              error={!!errors.code}
-              helperText={errors.code?.message}
-              fullWidth
-            />
-          )}
-        />
-
-        {/* HOST */}
-        <CustomFormLabel required sx={{ mt: 2 }}>
-          Head of Organization
-        </CustomFormLabel>
-        <Controller
-          name="host"
-          control={control}
-          render={({ field }) => (
-            <Autocomplete
-              options={employeeOptions}
-              value={employeeOptions.find((e) => e.id === field.value) ?? null}
-              onChange={(_, newValue) => {
-                field.onChange(newValue?.id ?? '');
-              }}
-              renderInput={(params) => (
+        {mode === 'batch' ? (
+          <>
+            <CustomFormLabel required sx={{ mt: 2 }}>
+              Organization Code
+            </CustomFormLabel>
+            <CustomTextField value={''} disabled fullWidth />
+          </>
+        ) : (
+          <>
+            <CustomFormLabel required sx={{ mt: 2 }}>
+              Organization Code
+            </CustomFormLabel>
+            <Controller
+              name="code"
+              control={control}
+              render={({ field }) => (
                 <CustomTextField
-                  {...params}
-                  error={!!errors.host}
-                  helperText={errors.host?.message}
+                  {...field}
+                  error={!!errors.code}
+                  helperText={errors.code?.message}
                   fullWidth
                 />
               )}
             />
-          )}
-        />
+          </>
+        )}
+        {/* HOST */}
+        {mode === 'batch' ? (
+          <>
+            <CustomFormLabel required sx={{ mt: 2 }}>
+              Head of Organization
+            </CustomFormLabel>
+            <CustomTextField value="" disabled fullWidth />
+          </>
+        ) : (
+          <>
+            <CustomFormLabel required sx={{ mt: 2 }}>
+              Head of Organization
+            </CustomFormLabel>
+            <Controller
+              name="host"
+              control={control}
+              render={({ field }) => (
+                <Autocomplete
+                  options={employeeOptions}
+                  value={employeeOptions.find((e) => e.id === field.value) ?? null}
+                  onChange={(_, newValue) => {
+                    field.onChange(newValue?.id ?? '');
+                  }}
+                  renderInput={(params) => (
+                    <CustomTextField
+                      {...params}
+                      error={!!errors.host}
+                      helperText={errors.host?.message}
+                      fullWidth
+                    />
+                  )}
+                />
+              )}
+            />
+          </>
+        )}
 
         {/* TYPE */}
-        {/* <CustomFormLabel sx={{ mt: 2 }}>Type (Optional)</CustomFormLabel>
-        <Controller
-          name="type"
-          control={control}
-          defaultValue=""
-          render={({ field }) => (
-            <RadioGroup row {...field}>
-              <FormControlLabel value="internal" control={<Radio />} label="Internal" />
-              <FormControlLabel value="external" control={<Radio />} label="External" />
-            </RadioGroup>
-          )}
-        /> */}
+        {mode === 'batch' ? (
+          <>
+            <CustomFormLabel sx={{ mt: 2 }}>Type (Optional)</CustomFormLabel>
+            <CustomTextField value="" disabled fullWidth />
+          </>
+        ) : (
+          <>
+            <CustomFormLabel sx={{ mt: 2 }}>Type (Optional)</CustomFormLabel>
+            <Controller
+              name="is_internal"
+              control={control}
+              render={({ field }) => (
+                <RadioGroup
+                  row
+                  value={field.value === undefined ? '' : String(field.value)}
+                  onChange={(e) => field.onChange(e.target.value === 'true')}
+                >
+                  <FormControlLabel value="true" control={<Radio />} label="Internal" />
+                  <FormControlLabel value="false" control={<Radio />} label="External" />
+                </RadioGroup>
+              )}
+            />
+          </>
+        )}
 
         {/* SUBMIT */}
         <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>

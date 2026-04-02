@@ -166,17 +166,13 @@ const Content = () => {
     setPendingEditId(null);
   };
 
-  // useEffect(() => {
-  //   if (!openFormAddDocument) return;
-  //   localStorage.setItem('unsavedDocumentData', JSON.stringify({ ...formDataAddDocument }));
-  // }, [formDataAddDocument, openFormAddDocument]);
 
   useEffect(() => {
     if (!openFormAddDocument) return;
 
     const timeout = setTimeout(() => {
       localStorage.setItem('unsavedDocumentData', JSON.stringify(formDataAddDocument));
-    }, 500); // ⏳ delay 500ms
+    }, 500); 
 
     return () => clearTimeout(timeout);
   }, [formDataAddDocument, openFormAddDocument]);
@@ -205,8 +201,7 @@ const Content = () => {
     if (!token || rows.length === 0) return;
 
     const confirmed = await showConfirmDelete(
-      `Are you sure to delete ${rows.length} items?`,
-      "You won't be able to revert this!",
+      `Are you sure to delete ${rows.length} items?`
     );
 
     if (confirmed) {

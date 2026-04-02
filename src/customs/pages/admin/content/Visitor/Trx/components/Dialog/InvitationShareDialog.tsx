@@ -38,7 +38,6 @@ const InvitationShareDialog: React.FC<Props> = ({
   const [emails, setEmails] = useState<string[]>([]);
   const [emailInput, setEmailInput] = useState('');
 
-  const expireText = useMemo(() => getExpireText(), [getExpireText]);
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
@@ -64,7 +63,6 @@ const InvitationShareDialog: React.FC<Props> = ({
             <CustomTextField fullWidth value={generatedLink} InputProps={{ readOnly: true }} />
 
             <Typography sx={{ my: 1, color: 'text.secondary' }}>
-              {/* The invitation expires in <strong>{expireText}</strong> */}
             The invitation expires in <strong>{expiredAt}</strong>
             </Typography>
 
@@ -102,7 +100,6 @@ const InvitationShareDialog: React.FC<Props> = ({
             />
 
             <Typography sx={{ my: 1, color: 'text.secondary' }}>
-              {/* The invitation expires in <strong>{expireText}</strong> */}
               The invitation expires in <strong>{expiredAt}</strong>
             </Typography>
 

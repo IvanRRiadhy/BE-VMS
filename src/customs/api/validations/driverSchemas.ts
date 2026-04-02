@@ -7,6 +7,7 @@ export const Step0Schema = z.object({
   name: z.string().min(1, 'Driver name is required'),
   person_id: z.string().min(1, 'Person ID is required'),
   identity_id: z.string().min(1, 'Identity ID is required'),
+  identity_type: z.string().min(1, 'Identity Type is required'),
   email: z.string().email('Email is invalid'),
   gender: z.coerce
     .number({ required_error: 'Gender is required' })
@@ -32,17 +33,9 @@ export const Step3Schema = z.object({
   //   .optional()
   //   .transform((v) => (v === '' ? undefined : v)),
 });
-//   .refine(
-//     (v) => {
-//       if (!v.exit_date) return true;
-//       return new Date(v.exit_date) >= new Date(v.join_date);
-//     },
-//     { message: 'Exit date cannot be earlier than join date', path: ['exit_date'] },
-//   );
-
 // Field yang divalidasi per step
 export const stepFieldMap: Record<number, Array<keyof CreateEmployeeRequest>> = {
-  0: ['name', 'person_id', 'identity_id', 'email', 'gender'],
+  0: ['name', 'person_id', 'identity_id', 'email', 'gender', 'identity_type'],
   1: ['district_id', 'organization_id', 'department_id'],
   2: [],
   3: ['birth_date', 'join_date', 'exit_date'],

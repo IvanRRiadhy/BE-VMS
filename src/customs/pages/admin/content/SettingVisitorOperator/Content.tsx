@@ -8,25 +8,6 @@ import {
   CircularProgress,
   Backdrop,
   Portal,
-  Typography,
-  Button,
-  TextField,
-  Autocomplete,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  IconButton,
-  TableContainer,
-  TableHead,
-  Table,
-  TableRow,
-  TableCell,
-  FormControl,
-  Select,
-  Switch,
-  TableBody,
-  MenuItem,
   useTheme,
   useMediaQuery,
 } from '@mui/material';
@@ -178,23 +159,35 @@ const Content = () => {
     if (!token) return;
 
     setLoading(true);
+
     const fetchData = async () => {
       try {
-        const resSetting = await getSetting(token as string);
-        const resOrgs = await getAllOrganizations(token as string);
-        const orgs = resOrgs.collection ?? [];
+        const [settingRes, orgRes] = await Promise.allSettled([
+          getSetting(token as string),
+          getAllOrganizations(token as string),
+        ]);
 
-        let raw = resSetting.collection;
+        // ✅ HANDLE SETTING (WAJIB)
+        let raw: any = null;
+        if (settingRes.status === 'fulfilled') {
+          raw = settingRes.value.collection;
+        }
+
         let data: any[] = [];
-
         if (Array.isArray(raw)) {
           data = raw;
         } else if (raw) {
           data = [raw];
         }
 
+        let orgs: any[] = [];
+        if (orgRes.status === 'fulfilled') {
+          orgs = orgRes.value.collection ?? [];
+        }
+
         const enriched = data.map((item) => {
           const org = orgs.find((o: any) => o.id === item.organization_id);
+
           return {
             id: item.id,
             organization_id: item.organization_id,
@@ -204,6 +197,7 @@ const Content = () => {
 
         setSettingData(enriched);
       } catch (error) {
+        console.error('Unexpected error:', error);
       } finally {
         setLoading(false);
       }
@@ -270,7 +264,6 @@ const Content = () => {
 
   const [acessData, setAcessData] = useState<any[]>([]);
   const [siteAccessData, setSiteAccessData] = useState<any[]>([]);
-
 
   const [selectedAccess, setSelectedAccess] = useState<any[]>([]);
   const [selectedSiteAccess, setSelectedSiteAccess] = useState<any[]>([]);

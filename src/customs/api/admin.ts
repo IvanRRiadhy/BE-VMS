@@ -1082,21 +1082,20 @@ export const getListVisitorPagination = async (
   length: number,
   sortDir = '',
   keyword: string = '',
-  filters: Record<string, any> = {},
+  // filters: Record<string, any> = {},
 ): Promise<any> => {
-  // Convert filter keys to kebab-case & remove empty values
-  const cleanedFilters = Object.fromEntries(
-    Object.entries(filters)
-      .filter(([_, v]) => v !== '' && v !== null && v !== undefined)
-      .map(([k, v]) => [k.replace(/_/g, '-'), v]),
-  );
+  // const cleanedFilters = Object.fromEntries(
+  //   Object.entries(filters)
+  //     .filter(([_, v]) => v !== '' && v !== null && v !== undefined)
+  //     .map(([k, v]) => [k.replace(/_/g, '-'), v]),
+  // );
 
   const params: Record<string, any> = {
     start,
     length,
     sort_dir: sortDir,
     'search[value]': keyword,
-    ...cleanedFilters,
+    // ...cleanedFilters,
   };
 
   const response = await axiosInstance.get('/visitor/invitation/dt', {

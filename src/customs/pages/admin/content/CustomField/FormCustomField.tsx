@@ -78,10 +78,10 @@ const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCu
         ...formData,
         multiple_option_fields: multiOptionList,
       };
-      console.log('Data being sent to API:', data);
+      // console.log('Data being sent to API:', data);
       const parsedData = CreateCustomFieldRequestSchema.parse(data);
       // console.log(editingId);
-      console.log('Setting Data: ', parsedData);
+      // console.log('Setting Data: ', parsedData);
       if (editingId && editingId !== '') {
         await updateCustomField(token as string, parsedData, editingId);
       } else {
@@ -162,7 +162,7 @@ const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCu
               lg: formData.field_type <= 2 ? 6 : 8,
             }}
           >
-            <Paper sx={{ p: 2 }}>
+            <Paper sx={{ p: 0  }}>
               <Typography variant="h6" sx={{ my: 0, borderLeft: '4px solid #673ab7', pl: 1 }}>
                 Custom Field's Input
               </Typography>

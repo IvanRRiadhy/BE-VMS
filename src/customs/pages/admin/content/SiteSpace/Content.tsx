@@ -31,16 +31,19 @@ import FormSite from './FormSite';
 import CloseIcon from '@mui/icons-material/Close';
 import { CreateSiteRequestSchema, Item } from 'src/customs/api/models/Admin/Sites';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { deleteSiteSpace, getAllEmployee, getAllSite, getAllSitePagination } from 'src/customs/api/admin';
-import { IconSitemap, IconX } from '@tabler/icons-react';
 import {
-  showConfirmDelete,
-  showSuccessAlert,
-  showErrorAlert,
-  showSwal,
-} from 'src/customs/components/alerts/alerts';
+  deleteSiteSpace,
+  getAllEmployee,
+  getAllSite,
+  getAllSitePagination,
+  getSiteById,
+} from 'src/customs/api/admin';
+import { IconSitemap, IconX } from '@tabler/icons-react';
+import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import FilterMoreContent from './FilterMoreContent';
 import { useNavigate, useParams } from 'react-router';
+import { sign } from 'crypto';
+import { time } from 'console';
 
 type SiteTableRow = {
   id: string;
@@ -53,7 +56,7 @@ type SiteTableRow = {
 
 type EnableField = {
   type: boolean;
-  type_approval: boolean;
+  approval_workflow_id: boolean;
   timezone: boolean;
   signout_time: boolean;
   need_approval: boolean;
@@ -68,7 +71,7 @@ type EnableField = {
 const Content = () => {
   const [tableData, setTableData] = useState<Item[]>([]);
   const [allData, setAllData] = useState<any[]>([]);
-  const [selectedRows, setSelectedRows] = useState<Item[]>([]);
+  const [selectedRows, setSelectedRows] = useState<any[]>([]);
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
@@ -81,7 +84,6 @@ const Content = () => {
   const [edittingId, setEdittingId] = useState('');
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const [searchKeyword, setSearchKeyword] = useState('');
-  const [isEditing, setIsEditing] = useState(false);
   const [sortDir, setSortDir] = useState<string>('desc');
 
   const [openFormCreateSiteSpace, setOpenFormCreateSiteSpace] = useState(false);
@@ -118,10 +120,11 @@ const Content = () => {
     0: [1, 2, 3], // Site → Building, Floor, Room
     1: [2, 3], // Building → Floor, Room
     2: [3], // Floor → Room
-    3: [], // Room → nothing
+    3: [], // Room → 
   };
   useEffect(() => {
-    if (!allData) return;
+    // if (!allData) return;
+    if (!allData || allData.length === 0) return;
 
     const lastParentId = wildcard ? wildcard.split('/').slice(-1)[0] : id;
 
@@ -236,6 +239,7 @@ const Content = () => {
       is_child: true,
     };
   };
+  
   useEffect(() => {
     if (!token) return;
 
@@ -250,7 +254,6 @@ const Content = () => {
           token,
           start,
           rowsPerPage,
-          // sortColumn,
           sortDir,
           searchKeyword,
           appliedType !== -1 ? appliedType : undefined,
@@ -258,7 +261,22 @@ const Content = () => {
           is_child,
         );
         const res = await getAllSite(token);
-        setAllData(res.collection);
+        // setAllData(res.collection);
+        setAllData(
+          res.collection.map((item: any) => ({
+            ...item,
+            type:
+              item.type === 'Site'
+                ? 0
+                : item.type === 'Building'
+                  ? 1
+                  : item.type === 'Floor'
+                    ? 2
+                    : item.type === 'Room'
+                      ? 3
+                      : 0,
+          })),
+        );
         setTableData(response.collection);
         setTotalRecords(response.RecordsTotal);
         setTotalFilteredRecords(response.RecordsFiltered);
@@ -273,7 +291,6 @@ const Content = () => {
 
         setTableRowSite(tableRows);
       } catch (error) {
-        // console.error('Fetch error:', error);
         setTableRowSite([]);
         setTableData([]);
         setTotalRecords(0);
@@ -328,18 +345,15 @@ const Content = () => {
     localStorage.removeItem('unsavedSiteForm');
     setOpenFormCreateSiteSpace(false);
     setIsBatchEdit(false);
-    setIsEditing(false);
     setInitialFormSnapshot(null);
   };
 
-  // Handle Add
   const handleAdd = (type?: number) => {
     handleCloseDetailType();
     const editing = localStorage.getItem('unsavedSiteForm');
     if (editing) {
       const parsed = JSON.parse(editing);
       if (!parsed.id) {
-        // set type jika ada
         if (type !== undefined) parsed.type = type;
         setFormDataAddSite(parsed);
         setInitialFormSnapshot(parsed);
@@ -356,12 +370,16 @@ const Content = () => {
       ...CreateSiteRequestSchema.parse({}),
       id: '',
       access: [],
+      approval_workflow_id: null,
       parking: [],
       tracking: [],
       is_registered_point: false,
-      parent: '',
+      parent: null,
+      signout_time: null,
       is_child: false,
       type: type ?? 0,
+      host: null,
+      timezone: null,
     };
     setFormDataAddSite(empty);
     setInitialFormSnapshot(empty);
@@ -369,10 +387,12 @@ const Content = () => {
     setOpenFormCreateSiteSpace(true);
   };
 
-  const handleEdit = (id: string) => {
+  const handleEdit = async (id: string) => {
     const editing = localStorage.getItem('unsavedSiteForm');
+
     if (editing) {
       const parsed = JSON.parse(editing);
+
       if (parsed.id === id) {
         setInitialFormSnapshot(parsed);
         setOpenFormCreateSiteSpace(true);
@@ -384,30 +404,54 @@ const Content = () => {
       }
     }
 
-    const found = allData.find((item) => item.id === id);
+    if (!token) return;
 
-    if (!found) return;
+    const safeNumber = (val: any, fallback = 0) => {
+      const n = Number(val);
+      return Number.isFinite(n) ? n : fallback;
+    };
 
     try {
+      const res = await getSiteById(id, token);
+      const found = res?.collection ?? null;
+      console.log('Fetched site by ID:', found);
+
+      if (!found) return;
+
+      const normalized = {
+        ...found,
+        type: safeNumber(found.type),
+        // type_approval: safeNumber(found.type_approval),
+        approval_workflow_id:
+          found.approval_workflow_id !== null && found.approval_workflow_id !== undefined
+            ? String(found.approval_workflow_id)
+            : null,
+      };
+
+      const parsed = CreateSiteRequestSchema.parse(normalized);
+
       const parsedData = {
-        ...CreateSiteRequestSchema.parse(found),
+        ...parsed,
         id,
-        // type: found.type,
-        type: Number(found.type),
         access: [],
         parking: [],
         tracking: [],
-        parent: '',
-        is_child: false,
-        // is_registered_point: false,
+        parent: parsed.parent || null,
+        is_child: parsed.is_child || false,
+        host: parsed.host || null,
+        signout_time: parsed.signout_time || null,
+        approval_workflow_id: parsed.approval_workflow_id || null,
       };
+
       setEdittingId(id);
       setFormDataAddSite(parsedData);
       setInitialFormSnapshot(parsedData);
+
       localStorage.setItem('unsavedSiteForm', JSON.stringify(parsedData));
+
       setOpenFormCreateSiteSpace(true);
     } catch (error) {
-      console.error('Error parsing data:', error);
+      console.error('Error fetching/parsing data:', error);
     }
   };
 
@@ -422,13 +466,16 @@ const Content = () => {
         const parsedData = {
           ...CreateSiteRequestSchema.parse(found),
           id: pendingEditId,
+          approval_workflow_id: null,
           access: [],
           parking: [],
           tracking: [],
           is_registered_point: false,
-          parent: '',
+          parent: null,
           is_child: false,
           type: 0,
+          host: null,
+          signout_time: null,
         };
         setEdittingId(pendingEditId);
         setFormDataAddSite(parsedData);
@@ -436,7 +483,6 @@ const Content = () => {
         setShouldSaveToStorage(true);
         localStorage.setItem('unsavedSiteForm', JSON.stringify(parsedData));
         setOpenFormCreateSiteSpace(true);
-        setIsEditing(true);
       }
     } else {
       const empty = {
@@ -449,11 +495,13 @@ const Content = () => {
         parent: '',
         is_child: false,
         type: 0,
+        host: null,
+        approval_workflow_id: null,
+        signout_time: null,
       };
       setEdittingId('');
       setFormDataAddSite(empty);
       setInitialFormSnapshot(empty);
-      setIsEditing(false);
       handleCloseModalCreateSiteSpace();
     }
 
@@ -488,22 +536,22 @@ const Content = () => {
   };
 
   const handleBatchDelete = async (rows: SiteTableRow[]) => {
-    if (!token || rows.length === 0) return;
+    if (!token || rows.length === 0) return false;
 
     const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} items?`);
-    if (confirmed) {
-      setLoading(true);
-      try {
-        await Promise.all(rows.map((row) => deleteSiteSpace(row.id, token)));
-        setRefreshTrigger((prev) => prev + 1);
-        setSelectedRows([]);
-        showSwal('success', `${rows.length} site space have been deleted.`);
-        setSelectedRows([]);
-      } catch (error) {
-        showSwal('error', 'Failed to delete some items.');
-      } finally {
-        setLoading(false);
-      }
+    if (!confirmed) return false;
+    setLoading(true);
+    try {
+      await Promise.all(rows.map((row) => deleteSiteSpace(row.id, token)));
+      setRefreshTrigger((prev) => prev + 1);
+      setSelectedRows([]);
+      showSwal('success', `${rows.length} site space have been deleted.`);
+      return true;
+    } catch (error) {
+      showSwal('error', 'Failed to delete some items.');
+      return false;
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -540,7 +588,7 @@ const Content = () => {
 
   const [enabledFields, setEnabledFields] = useState<EnableField>({
     type: false,
-    type_approval: false,
+    approval_workflow_id: false,
     timezone: false,
     signout_time: false,
     need_approval: false,
@@ -578,7 +626,7 @@ const Content = () => {
         const data = (await res).collection || [];
         setEmployee(data);
       } catch (error) {
-        console.error('❌ Failed to fetch employees:', error);
+        console.error('Failed to fetch employees:', error);
       }
     };
     fetchEmployees();
@@ -602,7 +650,7 @@ const Content = () => {
                 totalCount={totalFilteredRecords}
                 defaultRowsPerPage={rowsPerPage}
                 isHaveImage={true}
-                rowsPerPageOptions={[10, 25, 50, 100, 250]}
+                rowsPerPageOptions={[10, 50, 100, 250]}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);
@@ -654,7 +702,6 @@ const Content = () => {
                 onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
                 onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
                 onAddData={() => {
-                  // handleAdd();
                   handleOpenType();
                 }}
                 sortColumns={['name']}

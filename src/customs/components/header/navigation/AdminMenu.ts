@@ -1296,7 +1296,7 @@ export const OperatorNavListingData: ItemDataCustomNavListing[] = [
   {
     id: uniqueId(),
     title: 'navigation.visitor',
-    icon: IconReport,
+    icon: IconUser,
     href: '/operator/visitor',
   },
 
@@ -1354,7 +1354,7 @@ export const OperatorCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
   {
     id: uniqueId(),
     title: 'navigation.visitor',
-    icon: IconReport,
+    icon: IconUser,
     href: '/operator/visitor',
   },
 ];

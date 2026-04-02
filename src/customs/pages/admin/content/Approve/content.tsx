@@ -11,42 +11,33 @@ import {
   IconButton,
 } from '@mui/material';
 import Container from 'src/components/container/PageContainer';
-import PageContainer from 'src/customs/components/container/PageContainer';
-import {
-  AdminCustomSidebarItemsData,
-  AdminNavListingData,
-} from 'src/customs/components/header/navigation/AdminMenu';
-
-import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import CloseIcon from '@mui/icons-material/Close';
 import { Item } from 'src/customs/api/models/Admin/Document';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { IconCheck, IconScript } from '@tabler/icons-react';
 import { showConfirmDelete, showErrorAlert, showSwal } from 'src/customs/components/alerts/alerts';
 import FormApprove from './FormApprove';
 import {
   deleteApprovalWorkflow,
-  getApprovalWorkflowByDt,
-  getApprovalWorkflowById,
 } from 'src/customs/api/Admin/ApprovalWorkflow';
 import {
   CreateApprovalWorkflowRequest,
   CreateApprovalWorkflowSchema,
 } from 'src/customs/api/models/Admin/ApprovalWorfklow';
 
-const Content = ({ tableData, searchKeyword, setSearchKeyword, setRefreshTrigger, refreshTrigger }: any) => {
-  // const [tableData, setTableData] = useState<Item[]>([]);
+const Content = ({
+  tableData,
+  searchKeyword,
+  setSearchKeyword,
+  setRefreshTrigger,
+  refreshTrigger,
+}: any) => {
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
   const { token } = useSession();
-  const [totalRecords, setTotalRecords] = useState(0);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
-  // const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [sortDir, setSortDir] = useState('desc');
   const defaultApprovalWorkflow: CreateApprovalWorkflowRequest = {
     name: '',
     description: '',
@@ -60,45 +51,6 @@ const Content = ({ tableData, searchKeyword, setSearchKeyword, setRefreshTrigger
       return saved ? JSON.parse(saved) : defaultApprovalWorkflow;
     },
   );
-
-  // const [searchKeyword, setSearchKeyword] = useState('');
-  const cards = [
-    {
-      title: 'Total Approval Workflow',
-      subTitle: `${totalRecords}`,
-      subTitleSetting: 10,
-      icon: IconCheck,
-      color: 'none',
-    },
-  ];
-
-  // useEffect(() => {
-  //   if (!token) return;
-  //   const fetchData = async () => {
-  //     setLoading(true);
-  //     try {
-  //       const start = page * rowsPerPage;
-  //       const response = await getApprovalWorkflowByDt(
-  //         token,
-  //         start,
-  //         rowsPerPage,
-  //         sortDir,
-  //         searchKeyword,
-  //       );
-  //       setTableData(response.collection.map(({ conditions, ...rest }: any) => rest));
-  //       setTotalRecords(response.RecordsTotal);
-  //       onTotalChange(response.RecordsTotal);
-  //     } catch (error) {
-  //       console.error('Error fetching data:', error);
-  //       setTableData([]);
-  //       setTotalRecords(0);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-  //   fetchData();
-  // }, [token, page, rowsPerPage, sortColumn, sortDir, refreshTrigger, searchKeyword]);
-
   const [openFormAddDocument, setOpenFormAddDocument] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
@@ -219,7 +171,7 @@ const Content = ({ tableData, searchKeyword, setSearchKeyword, setRefreshTrigger
       setLoading(true);
       try {
         await Promise.all(rows.map((row) => deleteApprovalWorkflow(row.id, token)));
-        setRefreshTrigger((prev:any) => prev + 1);
+        setRefreshTrigger((prev: any) => prev + 1);
         showSwal('success', `${rows.length} items have been deleted.`);
         setSelectedRows([]);
       } catch (error) {
@@ -231,17 +183,26 @@ const Content = ({ tableData, searchKeyword, setSearchKeyword, setRefreshTrigger
     }
   };
 
+  const handleSuccessApprovalWorkflow = async () => {
+    localStorage.removeItem('unsavedApprovalWorkflow');
+    handleCloseDialog();
+    setRefreshTrigger((prev: any) => prev + 1);
+    setEdittingId('');
+
+    await new Promise((r) => setTimeout(r, 200));
+
+    await showSwal(
+      'success',
+      edittingId
+        ? 'Approval workflow updated successfully!'
+        : 'Approval workflow created successfully!',
+    );
+  };
+
   return (
-    // <PageContainer
-    //   itemDataCustomNavListing={AdminNavListingData}
-    //   itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
-    // >
     <Container title="Approval Workflow" description="Approval Workflow">
       <Box>
         <Grid container spacing={3}>
-          {/* <Grid size={{ xs: 12, lg: 12 }}>
-              <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
-            </Grid> */}
           <Grid size={{ xs: 12, lg: 12 }}>
             <DynamicTable
               loading={loading}
@@ -250,7 +211,7 @@ const Content = ({ tableData, searchKeyword, setSearchKeyword, setRefreshTrigger
               isHavePagination={true}
               selectedRows={selectedRows}
               defaultRowsPerPage={rowsPerPage}
-              rowsPerPageOptions={[10, 20, 50, 100]}
+              rowsPerPageOptions={[10, 50, 100]}
               onPaginationChange={(page, rowsPerPage) => {
                 setPage(page);
                 setRowsPerPage(rowsPerPage);
@@ -265,7 +226,6 @@ const Content = ({ tableData, searchKeyword, setSearchKeyword, setRefreshTrigger
               isHaveAddData={true}
               isHaveFilterMore={false}
               isHaveHeader={false}
-              // onFileClick={(row) => handleFileClick(row)}
               onCheckedChange={(selected) => setSelectedRows(selected)}
               onEdit={(row) => handleEdit(row.id)}
               onDelete={(row) => handleDelete(row.id)}
@@ -277,7 +237,6 @@ const Content = ({ tableData, searchKeyword, setSearchKeyword, setRefreshTrigger
           </Grid>
         </Grid>
       </Box>
-      {/* </Container> */}
       <Dialog open={openFormAddDocument} onClose={handleCloseDialog} fullWidth maxWidth="md">
         <DialogTitle sx={{ position: 'relative', padding: 3 }}>
           {edittingId ? 'Edit Approval Workflow' : 'Add Approval Workflow'}
@@ -301,20 +260,7 @@ const Content = ({ tableData, searchKeyword, setSearchKeyword, setRefreshTrigger
             formData={formDataAddDocument}
             setFormData={setFormDataAddDocument}
             edittingId={edittingId}
-            onSuccess={async () => {
-              localStorage.removeItem('unsavedApprovalWorkflow');
-              handleCloseDialog();
-              setRefreshTrigger(refreshTrigger + 1);
-              setEdittingId('');
-              await new Promise((r) => setTimeout(r, 200));
-
-              await showSwal(
-                'success',
-                edittingId
-                  ? 'Approval workflow updated successfully!'
-                  : 'Approval workflow created successfully!',
-              );
-            }}
+            onSuccess={handleSuccessApprovalWorkflow}
           />
         </DialogContent>
       </Dialog>
@@ -334,7 +280,6 @@ const Content = ({ tableData, searchKeyword, setSearchKeyword, setRefreshTrigger
         </DialogActions>
       </Dialog>
     </Container>
-    // </PageContainer>
   );
 };
 

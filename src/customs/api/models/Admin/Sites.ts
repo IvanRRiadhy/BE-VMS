@@ -38,24 +38,26 @@ export type Tracking = {
 
 export type Item = {
   id: string;
-  type: number;
+  type: number | null;
   name: string;
   description: string | null;
   image: string | null;
   can_visited: boolean;
   need_approval: boolean;
   // need_invitation: boolean;
-  type_approval: number;
+  // type_approval: string;
+  approval_workflow_id: string | null;
   can_signout: boolean;
   auto_signout: boolean;
   signout_time: string | null;
   is_registered_point?: boolean;
-  timezone: string;
+  timezone?: string | null;
   map_link: string;
   can_contactless_login: boolean;
   need_document: boolean;
   parent: string | null;
   is_child: boolean;
+  host: string | null;
   access: Access[];
   parking: Parking[];
   tracking: Tracking[];
@@ -109,24 +111,26 @@ export type GetSiteByIdResponse = {
 
 //CREATE
 export const CreateSiteRequestSchema = z.object({
-  type: z.number().default(0).optional(),
+  type: z.coerce.number().default(0),
   name: z.string().default(''),
   description: z.string().nullable().optional().default(''),
   image: z.string().nullable().optional().default(''),
   can_visited: z.boolean().default(false),
   need_approval: z.boolean().default(false),
   // need_invitation: z.boolean().default(false),
-  type_approval: z.number().default(0),
+  // type_approval: z.string().default(''),
+  approval_workflow_id: z.string().nullable().optional(),
   can_signout: z.boolean().default(false),
   auto_signout: z.boolean().default(false),
-  signout_time: z.string().nullable().optional().default(''),
-  timezone: z.string().default(''),
+  signout_time: z.string().nullable().optional(),
+  timezone: z.string().nullable().optional(),
   map_link: z.string().default(''),
   can_contactless_login: z.boolean().default(false),
   need_document: z.boolean().default(false),
   is_registered_point: z.boolean().default(false),
   parent: z.string().nullable().optional(),
   is_child: z.boolean().default(false),
+  host: z.string().nullable().optional().default(''),
   access: z
     .array(
       z.object({
@@ -244,24 +248,26 @@ export interface UploadImageSiteResponse {
 
 //UPDATE
 export const UpdateSiteRequestSchema = z.object({
-  type: z.number().default(0),
+  type: z.coerce.number().default(0),
   name: z.string().default(''),
   description: z.string().nullable().optional().default(''),
   image: z.string().nullable().optional().default(''),
   can_visited: z.boolean().default(false),
   // need_invitation: z.boolean().default(false),
   need_approval: z.boolean().default(false),
-  type_approval: z.number().default(0),
+  // type_approval: z.number().default(0),
+  approval_workflow_id: z.string().nullable().optional(),
   can_signout: z.boolean().default(false),
   auto_signout: z.boolean().default(false),
-  signout_time: z.string().default(''),
-  timezone: z.string().default(''),
+  signout_time: z.string().nullable().optional(),
+  timezone: z.string().nullable().optional(),
   map_link: z.string().default(''),
   can_contactless_login: z.boolean().default(false),
   need_document: z.boolean().default(false),
   is_registered_point: z.boolean().default(false).optional().nullable(),
   parent: z.string().nullable().optional().default(''),
   is_child: z.boolean().default(false).optional().nullable(),
+  host: z.string().nullable().optional().default(''),
   access: z
     .array(
       z.object({
@@ -293,11 +299,12 @@ export interface UpdateSitestRequest {
   image?: string;
   can_visited?: boolean;
   need_approval?: boolean;
-  type_approval?: number;
+  // type_approval?: number;
+  approval_workflow_id?: string;
   can_signout?: boolean;
   auto_signout?: boolean;
   signout_time?: string;
-  timezone?: string;
+  timezone?: string | null;
   map_link?: string;
   can_contactless_login?: boolean;
   need_document?: boolean;

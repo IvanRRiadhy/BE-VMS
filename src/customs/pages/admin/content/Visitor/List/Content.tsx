@@ -16,11 +16,7 @@ import {
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import {
-  createBlacklist,
-  getListVisitorPagination,
-  getVisitorById,
-} from 'src/customs/api/admin';
+import { createBlacklist, getListVisitorPagination, getVisitorById } from 'src/customs/api/admin';
 
 import VisitorDetailDialog from '../Dialog/VisitorDetailDialog';
 import { IconUsers } from '@tabler/icons-react';
@@ -43,7 +39,7 @@ type VisitorTableRow = {
   visitor_period_start: string;
   visitor_period_end: string;
   host: string;
-  is_blacklist: string;
+  is_blacklist: boolean;
 };
 
 interface VisitorFilters {
@@ -53,7 +49,7 @@ interface VisitorFilters {
   is_employee: string;
   gender: string;
   is_email_verified: string;
-  is_blacklist: string;
+  is_blacklist: boolean | null;
 }
 
 const Content = () => {
@@ -91,6 +87,15 @@ const Content = () => {
   const [visitorLoading, setVisitorLoading] = useState(false);
   const [visitorError, setVisitorError] = useState<string | null>(null);
   const [visitorDetail, setVisitorDetail] = useState<any>(null);
+  const [filters, setFilters] = useState<VisitorFilters>({
+    organization_id: '',
+    department_id: '',
+    district_id: '',
+    is_employee: '',
+    gender: '',
+    is_email_verified: '',
+    is_blacklist: null,
+  });
 
   useEffect(() => {
     if (!token) return;
@@ -105,7 +110,7 @@ const Content = () => {
           rowsPerPage,
           sortDir,
           debouncedSearch,
-          filters,
+          // filters,
         );
         // const response = await getListVisitor(token);
 
@@ -122,9 +127,11 @@ const Content = () => {
             gender: item.gender || '-',
             phone: item.phone || '-',
             is_employee: item.is_employee || false,
-            is_blacklist: item.is_blacklist || false,
+            is_blacklist: item.is_blacklist,
           };
         });
+        // console.log('Fetched visitor data:', rows);
+        // console.log('table', tableCustomVisitor);
 
         // setTableRowVisitors(response.collection);
         setTotalRecords(response.RecordsTotal);
@@ -138,8 +145,7 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, sortDir, refreshTrigger, debouncedSearch]);
-
+  }, [token, page, rowsPerPage, refreshTrigger, debouncedSearch]);
 
   const handleView = async (id: string) => {
     if (!id || !token) return;
@@ -169,38 +175,29 @@ const Content = () => {
 
   const openConfirm = (type: VisitorAction) => setConfirm({ type, loading: false });
 
-  const [filters, setFilters] = useState<VisitorFilters>({
-    organization_id: '',
-    department_id: '',
-    district_id: '',
-    is_employee: '',
-    gender: '',
-    is_email_verified: '',
-    is_blacklist: '',
-  });
-
   const handleApplyFilter = () => {
     setPage(0);
     setRefreshTrigger((prev) => prev + 1);
   };
 
   const handleBlacklist = async (id: string, isBlacklist?: boolean) => {
+    console.log('PARAM isBlacklist:', isBlacklist, typeof isBlacklist);
     try {
-      const isWhitelist = isBlacklist === true;
+      const isBlacklistAction = !isBlacklist;
 
       const { value: inputReason } = await Swal.fire({
-        icon: isWhitelist ? 'question' : 'warning',
-        title: isWhitelist ? 'Whitelist Visitor' : 'Blacklist Visitor',
-        text: isWhitelist
-          ? 'Please provide a reason for whitelist this visitor'
-          : 'Please provide a reason for blacklist this visitor',
+        icon: isBlacklistAction ? 'warning' : 'question',
+        title: isBlacklistAction ? 'Blacklist Visitor' : 'Whitelist Visitor',
+        text: isBlacklistAction
+          ? 'Please provide a reason for blacklist this visitor'
+          : 'Please provide a reason for whitelist this visitor',
         input: 'text',
         inputPlaceholder: 'Enter reason...',
         inputAttributes: { maxlength: '200' },
         showCloseButton: true,
         showCancelButton: true,
         confirmButtonText: 'Yes',
-        confirmButtonColor: isWhitelist ? '#16a34a' : '#dc2626',
+        confirmButtonColor: isBlacklistAction ? '#dc2626' : '#16a34a',
         cancelButtonText: 'Cancel',
         reverseButtons: true,
         inputValidator: (value) => {
@@ -217,15 +214,16 @@ const Content = () => {
 
       const payload = {
         visitor_id: id,
-        action: isWhitelist ? 'whitelist' : 'blacklist',
+        action: isBlacklistAction ? 'blacklist' : 'whitelist',
         reason: inputReason.trim(),
       };
+      console.log('Blacklist payload:', payload);
 
       await createBlacklist(token as string, payload);
 
       showSwal(
         'success',
-        isWhitelist ? 'Successfully whitelisted visitor' : 'Successfully blacklisted visitor',
+        isBlacklistAction ? 'Successfully blacklisted visitor' : 'Successfully whitelisted visitor',
       );
 
       setRefreshTrigger((prev) => prev + 1);
@@ -245,7 +243,7 @@ const Content = () => {
       is_employee: '',
       gender: '',
       is_email_verified: '',
-      is_blacklist: '',
+      is_blacklist: null,
     };
 
     setFilters(empty);
@@ -275,7 +273,7 @@ const Content = () => {
                   data={tableCustomVisitor}
                   totalCount={totalFilteredRecords}
                   selectedRows={selectedRows}
-                  rowsPerPageOptions={[10, 20, 50, 100, 500, 999]}
+                  rowsPerPageOptions={[10, 50, 100, 500]}
                   onPaginationChange={(page, rowsPerPage) => {
                     setPage(page);
                     setRowsPerPage(rowsPerPage);
@@ -293,7 +291,8 @@ const Content = () => {
                   isHaveVisitor={true}
                   isBlacklistAction={true}
                   onBlacklist={(row) => {
-                    handleBlacklist(row.id, row.is_blacklist as any);
+                    handleBlacklist(row.id, Boolean(row.is_blacklist));
+                    console.log('CLICK VALUE:', row.is_blacklist, typeof row.is_blacklist);
                   }}
                   isActionVisitor={false}
                   onView={(row) => {

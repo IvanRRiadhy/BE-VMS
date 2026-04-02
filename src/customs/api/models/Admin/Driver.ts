@@ -6,9 +6,9 @@ export type Item = {
   identity_id: string;
   card_number: string;
   ble_card_number: string;
-  type: number;
-  vehicle_plate_number?: string;
-  vehicle_type?: string;
+  type: string;
+  vehicle_plate_number?: string | null;
+  vehicle_type?: string | null;
   name: string;
   phone: string;
   email: string;
@@ -66,9 +66,9 @@ export const CreateDriverRequestSchema = z.object({
   identity_id: z.string().default(''),
   card_number: z.string().default(''),
   ble_card_number: z.string().default(''),
-  type: z.number().default(0),
-  vehicle_plate_number: z.string().default(''),
-  vehicle_type: z.string().default(''),
+  type: z.string().nullable().optional(),
+  vehicle_plate_number: z.string().nullable().optional(),
+  vehicle_type: z.string().nullable().optional(),
   name: z.string().default(''),
   phone: z.string().default(''),
   email: z.string().default(''),
@@ -95,6 +95,7 @@ export type CreateDriverRequest = z.infer<typeof CreateDriverRequestSchema>;
 export const CreateDriverSubmitSchema = CreateDriverRequestSchema.extend({
   name: z.string().trim().min(1, 'Driver name is required'),
   identity_id: z.string().trim().min(1, 'Identity ID is required'),
+  identity_type: z.string().trim().min(1, 'Identity Type is required'),
   person_id: z.string().trim().min(1, 'Person ID is required'),
   email: z.string().trim().min(1, 'Email is required'),
   organization_id: z.string().trim().min(1, 'Organization is required'),
@@ -122,15 +123,15 @@ export interface UpdateDriverRequest {
   identity_id: string;
   card_number: string;
   ble_card_number: string;
-  type: number;
+  type: string;
   name: string;
   phone: string;
   email: string;
   gender: number;
   address: string;
   upload_fr: number;
-  vehicle_plate_number: string;
-  vehicle_type: string;
+  vehicle_plate_number?: string | null;
+  vehicle_type?: string | null;
   identity_type: string;
   // faceimage: string;
   qr_code: string;

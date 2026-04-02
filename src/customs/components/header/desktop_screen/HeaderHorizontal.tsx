@@ -14,7 +14,7 @@ import CustomNavigation from 'src/customs/components/header/navigation/CustomNav
 
 const HeaderHorizontal = ({ itemDataCustomNavListing, itemDataCustomSidebarItems }: any) => {
   const lgDown = useMediaQuery((theme: Theme) => theme.breakpoints.down('lg'));
-
+  const xl = useMediaQuery((theme: Theme) => theme.breakpoints.down('xl'));
   const customizer = useSelector((state: AppState) => state.customizer);
   const dispatch = useDispatch();
 
@@ -48,17 +48,17 @@ const HeaderHorizontal = ({ itemDataCustomNavListing, itemDataCustomSidebarItems
 
   return (
     <AppBarStyled position="static" color="default" elevation={8}>
-      <ToolbarStyled>
+      <ToolbarStyled >
         {/* Logo dan Sidebar Toggle */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {!isMobile && (
-              <Box sx={{ width: lgDown ? '0px' : 'none', overflow: 'hidden' }}>
+              <Box sx={{ width: xl ? '0px' : 'none', overflow: 'hidden' }}>
                 <img src={Logo} width={45} height={45} />
               </Box>
             )}
           </Box>
-          {lgDown && (
+          {xl && (
             <IconButton
               color="inherit"
               aria-label="menu"

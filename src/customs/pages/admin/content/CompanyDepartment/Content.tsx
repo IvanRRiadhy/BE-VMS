@@ -25,9 +25,6 @@ import CloseIcon from '@mui/icons-material/Close';
 import FormAddDepartment from './FormAddDepartment';
 import FormAddDistrict from './FormAddDistrict';
 import FormAddOrganization from './FormAddOrganization';
-import FormUpdateDistrict from './FormUpdateDistrict';
-import FormUpdateDepartment from './FormUpdateDepartment';
-import FormUpdateOrganization from './FormUpdateOrganization';
 import {
   getAllDepartmentsPagination,
   getAllDistrictsPagination,
@@ -81,23 +78,6 @@ const entityLabel = (e?: DialogEntity) =>
         : 'District'
     : '';
 
-const useAutoSave = (key: string, data: any, delay = 1000) => {
-  const prevRef = useRef('');
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      const json = JSON.stringify(data);
-
-      if (prevRef.current !== json) {
-        prevRef.current = json;
-        localStorage.setItem(key, json);
-      }
-    }, delay);
-
-    return () => clearTimeout(handler);
-  }, [data, key, delay]);
-};
-
 const Content = () => {
   const [totals, setTotals] = useState({ organization: 0, department: 0, district: 0 });
   const cards = [
@@ -131,12 +111,11 @@ const Content = () => {
   );
   const [tableData, setTableData] = useState<Item[]>([]);
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
-  const [isDataReady, setIsDataReady] = useState(false);
   const [totalRecords, setTotalRecords] = useState(0);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [sortColumn, setSortColumn] = useState<string>('id');
   const [sortDir, setSortDir] = useState<string>('desc');
+
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -211,7 +190,6 @@ const Content = () => {
               token,
               start,
               rowsPerPage,
-              // sortColumn,
               sortDir,
               searchKeyword,
             );
@@ -222,7 +200,6 @@ const Content = () => {
               token,
               start,
               rowsPerPage,
-              // sortColumn,
               sortDir,
               searchKeyword,
             );
@@ -233,7 +210,6 @@ const Content = () => {
               token,
               start,
               rowsPerPage,
-              // sortColumn,
               sortDir,
               searchKeyword,
             );
@@ -250,7 +226,7 @@ const Content = () => {
 
         setTableData(mapped);
         setTotalRecords(response?.RecordsTotal ?? 0);
-        setIsDataReady(true);
+
         setHasFetched(true);
       } catch (err: any) {
         if (!cancelled) {
@@ -266,17 +242,7 @@ const Content = () => {
     return () => {
       cancelled = true;
     };
-  }, [
-    token,
-    selectedType,
-    page,
-    rowsPerPage,
-    // sortColumn,
-    sortDir,
-    searchKeyword,
-    refreshTrigger,
-    employeeMap,
-  ]);
+  }, [token, selectedType, page, rowsPerPage, sortDir, searchKeyword, refreshTrigger, employeeMap]);
 
   const [dialog, setDialog] = useState<DialogState>(null);
   const editTokenRef = useRef(0);
@@ -287,7 +253,7 @@ const Content = () => {
     code: false,
     host: false,
   });
-
+  const [isAttemptingClose, setIsAttemptingClose] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
 
   const [formDataAddDepartment, setFormDataAddDepartment] = useState<CreateDepartmentRequest>(
@@ -327,11 +293,6 @@ const Content = () => {
     },
   );
 
-  useAutoSave('unsavedDepartmentFormAdd', formDataAddDepartment, 1200);
-  useAutoSave('unsavedDistrictFormAdd', formDataAddDistrict, 1200);
-  useAutoSave('unsavedOrganizationFormAdd', formDataAddOrganization, 1500);
-
-  // ======= Open/Close dialog helpers =======
   const mapSelectedToEntity = useMemo<DialogEntity>(() => {
     if (selectedType === 'organization') return 'Organizations';
     if (selectedType === 'department') return 'Departments';
@@ -339,6 +300,27 @@ const Content = () => {
   }, [selectedType]);
 
   const openAdd = (entity: DialogEntity) => {
+    const keyMap: Record<DialogEntity, string> = {
+      Organizations: 'unsavedOrganizationFormAdd',
+      Departments: 'unsavedDepartmentFormAdd',
+      Districts: 'unsavedDistrictFormAdd',
+    };
+
+    const saved = localStorage.getItem(keyMap[entity]);
+
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        const hasValue = parsed?.name || parsed?.code || parsed?.host;
+
+        if (hasValue) {
+          setPendingAdd(entity);
+          setConfirmDialogOpen(true);
+          return;
+        }
+      } catch {}
+    }
+
     setDialog({ mode: 'add', entity });
   };
 
@@ -367,55 +349,44 @@ const Content = () => {
     setDialog(null);
     setEditingRow(null);
     setIsBatchEdit(false);
+    setEnabledFields({ name: false, code: false, host: false });
   };
 
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 
-  // const currentAddChanged = useMemo(() => {
-  //   if (!dialog || dialog.mode !== 'add') return false;
-  //   if (dialog.entity === 'Organizations') {
-  //     return (
-  //       JSON.stringify(formDataAddOrganization) !==
-  //       JSON.stringify(CreateOrganizationSchema.parse({}))
-  //     );
-  //   }
-  //   if (dialog.entity === 'Departments') {
-  //     return (
-  //       JSON.stringify(formDataAddDepartment) !== JSON.stringify(CreateDepartmentSchema.parse({}))
-  //     );
-  //   }
-  //   return JSON.stringify(formDataAddDistrict) !== JSON.stringify(CreateDistrictSchema.parse({}));
-  // }, [dialog, formDataAddOrganization, formDataAddDepartment, formDataAddDistrict]);
-
   const attemptCloseDialog = () => {
-    if (dialog?.mode === 'add') {
-      setConfirmDialogOpen(true);
-    } else {
-      closeDialog();
-    }
-  };
+    if (dialog?.mode === 'add' || dialog?.mode === 'edit') {
+      const keyMap: Record<DialogEntity, string> = {
+        Organizations: 'unsavedOrganizationFormAdd',
+        Departments: 'unsavedDepartmentFormAdd',
+        Districts: 'unsavedDistrictFormAdd',
+      };
 
-  const confirmDiscard = () => {
-    // clear draft sesuai entity aktif
-    if (dialog?.entity === 'Organizations') {
-      setFormDataAddOrganization(CreateOrganizationSchema.parse({}));
-      localStorage.removeItem('unsavedOrganizationFormAdd');
-    } else if (dialog?.entity === 'Departments') {
-      setFormDataAddDepartment(CreateDepartmentSchema.parse({}));
-      localStorage.removeItem('unsavedDepartmentFormAdd');
-    } else if (dialog?.entity === 'Districts') {
-      setFormDataAddDistrict(CreateDistrictSchema.parse({}));
-      localStorage.removeItem('unsavedDistrictFormAdd');
+      const saved = localStorage.getItem(keyMap[dialog.entity]);
+      let hasValue = false;
+
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          hasValue = parsed?.name || parsed?.code || parsed?.host;
+        } catch {}
+      }
+
+      if (isDirty || hasValue) {
+        setIsAttemptingClose(true);
+        setConfirmDialogOpen(true);
+        return;
+      }
     }
-    setConfirmDialogOpen(false);
+
     closeDialog();
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (row: Item) => {
     if (!token) return;
 
     const confirmed = await showConfirmDelete(
-      `Are you sure you want to delete this ${selectedType}?`,
+      `Are you sure you want to delete ${selectedType} "${row.name}"?`,
     );
     if (!confirmed) return;
 
@@ -424,35 +395,32 @@ const Content = () => {
 
       switch (selectedType) {
         case 'department':
-          await deleteDepartment(id, token);
-          successText = 'Department has been successfully deleted.';
+          await deleteDepartment(row.id, token);
+          successText = `Department "${row.name}" has been successfully deleted.`;
           break;
 
         case 'district':
-          await deleteDistrict(id, token);
-          successText = 'District has been successfully deleted.';
+          await deleteDistrict(row.id, token);
+          successText = `District "${row.name}" has been successfully deleted.`;
           break;
 
         case 'organization':
         default:
-          await deleteOrganization(id, token);
-          successText = 'Organization has been successfully deleted.';
+          await deleteOrganization(row.id, token);
+          successText = `Organization "${row.name}" has been successfully deleted.`;
           break;
       }
 
       setRefreshTrigger((p) => p + 1);
       showSwal('success', successText);
     } catch (error) {
-      showSwal('error', `Failed to delete ${selectedType}.`);
+      showSwal('error', `Failed to delete ${selectedType} "${row.name}".`);
     }
   };
 
   const handleBatchDelete = async (rows: Item[]) => {
     if (!token || rows.length === 0) return;
-    const confirmed = await showConfirmDelete(
-      `Are you sure to delete ${rows.length} items?`,
-      "You won't be able to revert this!",
-    );
+    const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} items?`);
     if (!confirmed) return;
 
     try {
@@ -501,12 +469,48 @@ const Content = () => {
     if (!keepOpen) {
       closeDialog();
     }
+    setIsDirty(false);
     setRefreshTrigger((p) => p + 1);
   };
 
-  const setOrgFormSafe = (updater: any) => {
-    setIsDirty(true);
-    setFormDataAddOrganization(updater);
+  const [pendingAdd, setPendingAdd] = useState<DialogEntity | null>(null);
+  const [formKey, setFormKey] = useState(0);
+
+  const handleDiscard = () => {
+    const keyMap: Record<DialogEntity, string> = {
+      Organizations: 'unsavedOrganizationFormAdd',
+      Departments: 'unsavedDepartmentFormAdd',
+      Districts: 'unsavedDistrictFormAdd',
+    };
+
+    if (isAttemptingClose && dialog?.entity) {
+      localStorage.removeItem(keyMap[dialog.entity]);
+
+      setConfirmDialogOpen(false);
+      setIsAttemptingClose(false);
+
+      closeDialog();
+      return;
+    }
+
+    if (pendingAdd) {
+      localStorage.removeItem(keyMap[pendingAdd]);
+
+      setFormKey((k) => k + 1);
+      setDialog({ mode: 'add', entity: pendingAdd });
+    }
+
+    setConfirmDialogOpen(false);
+    setPendingAdd(null);
+  };
+
+  const handleContinueEditing = () => {
+    if (pendingAdd) {
+      setDialog({ mode: 'add', entity: pendingAdd });
+    }
+
+    setConfirmDialogOpen(false);
+    setPendingAdd(null);
   };
 
   return (
@@ -564,11 +568,11 @@ const Content = () => {
                   }}
                   onCheckedChange={(selected) => setSelectedRows(selected)}
                   onEdit={(row) => openEdit(mapSelectedToEntity, row)}
-                  onDelete={(row) => handleDelete(row.id)}
+                  onDelete={(row) => handleDelete(row)}
                   onBatchDelete={handleBatchDelete}
                   onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
                   onAddData={() => openAdd(mapSelectedToEntity)}
-                  onFilterByColumn={(column) => setSortColumn(column.column)}
+                  // onFilterByColumn={(column) => setSortColumn(column.column)}
                 />
               </Grid>
             </Grid>
@@ -578,7 +582,12 @@ const Content = () => {
 
       <Dialog
         open={!!dialog}
-        onClose={(_, __) => attemptCloseDialog()}
+        onClose={(_, reason) => {
+          if (reason === 'backdropClick' || reason === 'escapeKeyDown') {
+            attemptCloseDialog();
+          }
+        }}
+        disableEscapeKeyDown
         fullWidth
         maxWidth="md"
         transitionDuration={0}
@@ -603,32 +612,93 @@ const Content = () => {
         <Divider />
         <DialogContent sx={{ paddingTop: 0 }}>
           <br />
-          {dialog?.mode === 'add' && dialog?.entity === 'Organizations' && (
+          {dialog?.entity === 'Organizations' && (
             <FormAddOrganization
-              onSuccess={() =>
-                handleSuccess({ entity: 'organization', action: 'create', keepOpen: false })
-              }
+              mode={dialog.mode === 'add' ? 'create' : isBatchEdit ? 'batch' : 'edit'}
+              data={editingRow}
+              selectedRows={selectedRows}
+              enabledFields={enabledFields}
+              setEnabledFields={setEnabledFields}
+              onSuccess={() => {
+                handleSuccess({
+                  entity: 'organization',
+                  action: dialog.mode === 'add' ? 'create' : 'update',
+                  keepOpen: false,
+                });
+                selectedRows.length > 0 && setSelectedRows([]);
+              }}
+              onDirtyChange={setIsDirty}
             />
           )}
 
-          {dialog?.mode === 'add' && dialog?.entity === 'Departments' && (
+          {dialog?.entity === 'Departments' && (
+            <FormAddDepartment
+              mode={dialog.mode === 'add' ? 'create' : isBatchEdit ? 'batch' : 'edit'}
+              data={editingRow}
+              selectedRows={selectedRows}
+              enabledFields={enabledFields}
+              setEnabledFields={setEnabledFields}
+              onSuccess={() => {
+                handleSuccess({
+                  entity: 'department',
+                  action: dialog.mode === 'add' ? 'create' : 'update',
+                  keepOpen: false,
+                });
+                selectedRows.length > 0 && setSelectedRows([]);
+              }}
+              onDirtyChange={setIsDirty}
+            />
+          )}
+
+          {dialog?.entity === 'Districts' && (
+            <FormAddDistrict
+              mode={dialog.mode === 'add' ? 'create' : isBatchEdit ? 'batch' : 'edit'}
+              data={editingRow}
+              selectedRows={selectedRows}
+              enabledFields={enabledFields}
+              setEnabledFields={setEnabledFields}
+              onSuccess={() => {
+                handleSuccess({
+                  entity: 'district',
+                  action: dialog.mode === 'add' ? 'create' : 'update',
+                  keepOpen: false,
+                });
+                selectedRows.length > 0 && setSelectedRows([]);
+              }}
+              onDirtyChange={setIsDirty}
+            />
+          )}
+
+          {/* {dialog?.mode === 'add' && dialog?.entity === 'Organizations' && (
+            <FormAddOrganization
+              key={formKey}
+              onSuccess={() =>
+                handleSuccess({ entity: 'organization', action: 'create', keepOpen: false })
+              }
+              onDirtyChange={setIsDirty}
+            />
+          )} */}
+
+          {/* {dialog?.mode === 'add' && dialog?.entity === 'Departments' && (
             <FormAddDepartment
               onSuccess={() =>
                 handleSuccess({ entity: 'department', action: 'create', keepOpen: false })
               }
+              onDirtyChange={setIsDirty}
             />
-          )}
+          )} */}
 
-          {dialog?.mode === 'add' && dialog?.entity === 'Districts' && (
+          {/* {dialog?.mode === 'add' && dialog?.entity === 'Districts' && (
             <FormAddDistrict
               onSuccess={() =>
                 handleSuccess({ entity: 'district', action: 'create', keepOpen: false })
               }
+              onDirtyChange={setIsDirty}
             />
-          )}
+          )} */}
 
           {/* EDIT forms */}
-          {dialog?.mode === 'edit' && dialog?.entity === 'Organizations' && (
+          {/* {dialog?.mode === 'edit' && dialog?.entity === 'Organizations' && (
             <FormUpdateOrganization
               data={editingRow}
               // setData={setEditingRow}
@@ -639,9 +709,10 @@ const Content = () => {
               onSuccess={() =>
                 handleSuccess({ entity: 'organization', action: 'update', keepOpen: false })
               }
+              onDirtyChange={setIsDirty}
             />
-          )}
-          {dialog?.mode === 'edit' && dialog?.entity === 'Departments' && (
+          )} */}
+          {/* {dialog?.mode === 'edit' && dialog?.entity === 'Departments' && (
             <FormUpdateDepartment
               data={editingRow}
               isBatchEdit={isBatchEdit}
@@ -651,9 +722,10 @@ const Content = () => {
               onSuccess={() =>
                 handleSuccess({ entity: 'department', action: 'update', keepOpen: false })
               }
+              onDirtyChange={setIsDirty}
             />
-          )}
-          {dialog?.mode === 'edit' && dialog?.entity === 'Districts' && (
+          )} */}
+          {/* {dialog?.mode === 'edit' && dialog?.entity === 'Districts' && (
             <FormUpdateDistrict
               data={editingRow}
               isBatchEdit={isBatchEdit}
@@ -663,20 +735,25 @@ const Content = () => {
               onSuccess={() =>
                 handleSuccess({ entity: 'district', action: 'update', keepOpen: false })
               }
+              onDirtyChange={setIsDirty}
             />
-          )}
+          )} */}
         </DialogContent>
       </Dialog>
-
-      <Dialog open={confirmDialogOpen} onClose={() => setConfirmDialogOpen(false)}>
+      <Dialog
+        open={confirmDialogOpen}
+        onClose={() => setConfirmDialogOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
         <DialogTitle>Unsaved Changes</DialogTitle>
-        <DialogContent>
-          You have unsaved changes. Discard and close this {entityLabel(dialog?.entity)} form?
-        </DialogContent>
+        <DialogContent>You have unsaved changes. What do you want to do?</DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmDialogOpen(false)}>Cancel</Button>
-          <Button onClick={confirmDiscard} color="primary" variant="contained">
-            Yes, Discard Unsaved Changes
+          <Button onClick={handleDiscard} color="error" variant="contained">
+            Discard
+          </Button>
+          <Button onClick={handleContinueEditing} variant="contained">
+            Yes, Continue Editing
           </Button>
         </DialogActions>
       </Dialog>

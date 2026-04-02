@@ -21,11 +21,9 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 import { useQuery } from '@tanstack/react-query';
 import {
   deleteUser,
-  getAllAccessControl,
   getAllOrganizations,
   getAllSite,
   getAllUser,
-  getRegisteredSite,
   getUserById,
 } from 'src/customs/api/admin';
 import {
@@ -34,11 +32,12 @@ import {
 } from 'src/customs/components/header/navigation/AdminMenu';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import { CreateUserSchema, Item, UpdateUserSchema } from 'src/customs/api/models/Admin/User';
-import FormUser from './FormUser';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import { useNavigate } from 'react-router';
 import DialogFormUser from './components/DialogFormUser';
 import { GroupRoleId } from 'src/constant/GroupRoleId';
+import { useDebounce } from 'src/hooks/useDebounce';
+import { useQueryClient } from '@tanstack/react-query';
 
 const Content = () => {
   const { token } = useSession();
@@ -58,32 +57,36 @@ const Content = () => {
     setTabValue(newValue);
   };
 
-  const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['users', token, page, rowsPerPage, searchKeyword],
+  const debouncedSearch = useDebounce(searchKeyword, 500);
+
+  const queryClient = useQueryClient();
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['users', token],
     queryFn: async () => {
       const response = await getAllUser(token as string);
 
-      const filteredData = response.collection.map((item: any) => ({
-        id: item.id,
-        fullname: item.fullname,
-        username: item.username,
-        // user_group_id: item.user_group_id,
-        email: item.email,
-        group_name: item.group_name,
-        description: item.description || '',
-        // status: item.status,
-      }));
-      const dataForTable = filteredData.map(({ user_group_id, ...rest }: any) => rest);
-
       return {
-        collection: filteredData,
-        tableCollection: dataForTable,
-        totalRecords: response.recordsTotal,
-        totalFiltered: response.RecordsFiltered,
+        collection: response.collection,
       };
     },
     enabled: !!token,
   });
+
+  const filteredData = React.useMemo(() => {
+    if (!data?.collection) return [];
+
+    return data.collection
+      .map((item: any) => ({
+        id: item.id,
+        fullname: item.fullname,
+        username: item.username,
+        email: item.email,
+        group_name: item.group_name,
+        description: item.description || '',
+      }))
+      .filter((item: any) => item.fullname.toLowerCase().includes(debouncedSearch.toLowerCase()));
+  }, [data]);
 
   const collection = data?.collection || [];
   const totalRecords = data?.collection.length || 0;
@@ -138,8 +141,6 @@ const Content = () => {
     }
   };
 
-  const handleCloseDialog = () => setOpenFormAddDocument(false);
-
   const handleDelete = async (id: string) => {
     const confirmed = await showConfirmDelete(`Are you sure to delete this user?`);
     if (!confirmed) return;
@@ -147,7 +148,8 @@ const Content = () => {
     try {
       await deleteUser(token as string, id);
       showSwal('success', 'Successfully deleted user!');
-      refetch();
+
+      queryClient.invalidateQueries({ queryKey: ['users'] });
     } catch (error) {
       showSwal('error', 'Failed to delete user.');
     }
@@ -167,6 +169,10 @@ const Content = () => {
     fetchData();
   }, [token]);
 
+  const handleSearch = React.useCallback((keyword: string) => {
+    setSearchKeyword(keyword);
+  }, []);
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -183,11 +189,11 @@ const Content = () => {
               <DynamicTable
                 loading={isLoading}
                 overflowX="auto"
-                data={collection}
-                isHavePagination
+                data={filteredData}
+                isHavePagination={false}
                 selectedRows={selectedRows}
-                defaultRowsPerPage={rowsPerPage}
-                rowsPerPageOptions={[10, 20, 50, 100, 500]}
+                // defaultRowsPerPage={rowsPerPage}
+                // rowsPerPageOptions={[10, 20, 50, 100, 500]}
                 onPaginationChange={(newPage, newRowsPerPage) => {
                   setPage(newPage);
                   setRowsPerPage(newRowsPerPage);
@@ -219,46 +225,11 @@ const Content = () => {
         edittingId={edittingId}
         onSuccess={() => {
           setOpenFormAddDocument(false);
-          refetch();
+
+          queryClient.invalidateQueries({ queryKey: ['users'] });
         }}
         organizationRes={organizaitonRes}
       />
-
-      {/* Add / Edit Dialog */}
-      {/* <Dialog open={openFormAddDocument} onClose={handleCloseDialog} fullWidth maxWidth="md">
-        <DialogTitle sx={{ position: 'relative', padding: 3 }}>
-          {edittingId ? 'Edit' : 'Add'} User
-          <IconButton
-            aria-label="close"
-            onClick={handleCloseDialog}
-            sx={{
-              position: 'absolute',
-              right: 8,
-              top: 8,
-              color: (theme) => theme.palette.grey[500],
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <Divider />
-        <DialogContent sx={{ paddingTop: 0 }}>
-          <FormUser
-            formData={formAddUser}
-            setFormData={setFormAddUser}
-            edittingId={edittingId}
-            onSuccess={() => {
-              handleCloseDialog();
-              refetch();
-            }}
-            accessOptions={accessOptions}
-            organizationSiteOptions={organizationSiteOptions}
-            regsiteredSiteOptions={regsiteredSiteOptions}
-            siteOptions={siteOptions}
-            organizationRes={organizaitonRes}
-          />
-        </DialogContent>
-      </Dialog> */}
 
       {/* Dialog Setting Operator */}
       <Dialog

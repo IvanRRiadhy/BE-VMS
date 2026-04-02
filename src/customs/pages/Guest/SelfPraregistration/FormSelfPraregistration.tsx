@@ -99,7 +99,7 @@ const FormSelfPraregistration = ({
 }) => {
   const THEME = useTheme();
   const navigate = useNavigate();
-  const isMobile = useMediaQuery(THEME.breakpoints.down('sm'));
+  const isMobile = useMediaQuery(THEME.breakpoints.down('md'));
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [draggableSteps, setDraggableSteps] = useState<string[]>([]);
@@ -115,7 +115,6 @@ const FormSelfPraregistration = ({
   const [formData, setFormData] = useState<any>({});
   const [dynamicSteps, setDynamicSteps] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [openCamera, setOpenCamera] = useState(false);
   const [rawSections, setRawSections] = useState<any[]>([]);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewPayload, setPreviewPayload] = useState<any>(null);
@@ -285,7 +284,6 @@ const FormSelfPraregistration = ({
     setPreviews({});
     setUploadNames({});
     setScreenshot(null);
-    setOpenCamera(false);
 
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -343,8 +341,7 @@ const FormSelfPraregistration = ({
   const handleOnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     // setErrors({});
-    if (!token) return;
-
+    // if (!token) return;
     try {
       const tz =
         moment.tz?.guess?.() || Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Jakarta';
@@ -415,61 +412,6 @@ const FormSelfPraregistration = ({
 
       // let payload: CreateVisitorRequest | CreateGroupVisitorRequest;
       let payload;
-      // if (isGroup) {
-      //   const list_group = groupVisitors.map((g) => {
-      //     const built = buildFinalPayload(
-      //       rawSections,
-      //       groupedPages,
-      //       g.data_visitor.length ? g.data_visitor : dataVisitor,
-      //       {
-      //         visitor_type: formData.visitor_type ?? '',
-      //         is_group: true,
-      //         type_registered: TYPE_REGISTERED,
-      //         tz: tz,
-      //         registered_site: formData.registered_site ?? '',
-      //       },
-      //     );
-
-      //     const cleanDataVisitor = (built.data_visitor ?? []).map((dv: any) => ({
-      //       ...dv,
-      //       question_page: (dv.question_page ?? []).map((qp: any, sIdx: number) => ({
-      //         id: qp.id || qp.Id || rawSections?.[sIdx]?.Id || generateUUIDv4(),
-      //         sort: qp.sort ?? sIdx,
-      //         name: qp.name ?? `Section ${sIdx + 1}`,
-      //         status: qp.status ?? 0,
-      //         is_document: qp.is_document ?? false,
-      //         can_multiple_used: qp.can_multiple_used ?? false,
-      //         foreign_id: qp.foreign_id ?? '',
-      //         self_only: qp.self_only ?? false,
-      //         form: (qp.form ?? []).map(({ id, Id, ...rest }: any) => rest),
-      //       })),
-      //     }));
-
-      //     return {
-      //       group_name: g.group_name ?? '',
-      //       group_code: g.group_code ?? '',
-      //       is_group: true,
-      //       visitor_type: formData.visitor_type ?? '',
-      //       tz: tz,
-      //       // registered_site: formData.registered_site ?? '',
-      //       flow: 'InvitationShareLink',
-      //       type_registered: TYPE_REGISTERED,
-      //       data_visitor: cleanDataVisitor,
-      //     };
-      //   });
-
-      //   payload = { list_group };
-
-      //   const parsed = CreateGroupVisitorRequestSchema.parse(payload);
-      //   console.log('🚀 Final Payload (Group):', JSON.stringify(parsed, null, 2));
-
-      //   // const submitFn = await createSubmitGroupShareLink(token, code, timestamp, parsed);
-      //   // console.log('submitFn', submitFn);
-      //   // toast('Group visitor created successfully.', 'success');
-      //   showSwal('success', 'Group visitor created successfully.');
-      //   resetGroupFormState();
-      //   navigate('/invitation-share/success')
-      // }
 
       if (isGroup) {
         const totalVisitors = groupVisitors.reduce((sum, g) => {
@@ -542,9 +484,9 @@ const FormSelfPraregistration = ({
         // console.log('🚀 Final Payload (Group):', JSON.stringify(parsed, null, 2));
 
         // submit API
-        await createSubmitGroupShareLink(token, code, timestamp, parsed);
+        await createSubmitGroupShareLink(token as string, code, timestamp, parsed);
         setLoading(false);
-        showSwal('success', 'Group visitor created successfully.',1000);
+        showSwal('success', 'Group visitor created successfully.', 1000);
         resetGroupFormState();
         navigate('/invitation-share/success');
       } else {
@@ -569,10 +511,9 @@ const FormSelfPraregistration = ({
           ...baseMeta,
           data_visitor: [{ question_page }],
         };
-        console.log('🚀 Final Payload (Single):', JSON.stringify(payload, null, 2));
+        // console.log('🚀 Final Payload (Single):', JSON.stringify(payload, null, 2));
 
         const parsed = CreateVisitorRequestSchema.parse(payload);
-        // console.log('Final Payload (Single):', JSON.stringify(parsed, null, 2));
         setLoading(false);
         setPreviewPayload(parsed);
         setPreviewSections(parsed?.data_visitor?.[0]);
@@ -1192,11 +1133,11 @@ const FormSelfPraregistration = ({
                   }
 
                   onChange(index, 'answer_text', toCsv(updated));
-                  console.log('[TREE CHECK]', {
-                    clicked: node.id,
-                    isChecked,
-                    result: updated,
-                  });
+                  // console.log('[TREE CHECK]', {
+                  //   clicked: node.id,
+                  //   isChecked,
+                  //   result: updated,
+                  // });
 
                   return updated;
                 });
@@ -1967,7 +1908,7 @@ const FormSelfPraregistration = ({
     );
   };
 
-  const isLockedVisitorType = !!invitation?.visitor_type?.id;
+  const isLockedVisitorType = !!invitation?.visitor_type?.id || !!invitation?.visitor_type_id;
   const [visitorType, setVisitorType] = useState<any[]>([]);
 
   const injectInvitationData = (sections: any[], invitation: any) => {
@@ -2046,6 +1987,25 @@ const FormSelfPraregistration = ({
     setActiveStep(0);
   }, [isGroup, rawSections]);
 
+  // useEffect(() => {
+  //   if (isLockedVisitorType) {
+  //     setVisitorType([invitation.visitor_type]);
+  //     return;
+  //   }
+
+  //   const fetchVisitorTypes = async () => {
+  //     try {
+  //       setVtLoading(true);
+  //       const res = await getPublicVisitorType(token as string, code, 'InvitationLink');
+  //       setVisitorType(res.collection || []);
+  //     } finally {
+  //       setVtLoading(false);
+  //     }
+  //   };
+
+  //   fetchVisitorTypes();
+  // }, [invitation]);
+
   useEffect(() => {
     if (isLockedVisitorType) {
       setVisitorType([invitation.visitor_type]);
@@ -2055,15 +2015,18 @@ const FormSelfPraregistration = ({
     const fetchVisitorTypes = async () => {
       try {
         setVtLoading(true);
+
         const res = await getPublicVisitorType(token as string, code, 'InvitationLink');
-        setVisitorType(res.collection || []);
+        setVisitorType(res?.data || []);
+      } catch (err) {
+        console.error('VT ERROR:', err);
       } finally {
         setVtLoading(false);
       }
     };
 
     fetchVisitorTypes();
-  }, [invitation]);
+  }, [isLockedVisitorType]);
 
   const handleDeleteGroup = (id: string) => {
     setGroupVisitors((prev) => prev.filter((g) => g.id !== id));
@@ -2971,17 +2934,17 @@ const FormSelfPraregistration = ({
   const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
   const handleConfirmSubmit = async () => {
-    if (!token || !previewPayload) return;
+    if (!previewPayload) return;
 
     try {
       setLoading(true);
       await sleep(100);
 
       if (isGroup) {
-        await createSubmitGroupShareLink(token, code, timestamp, previewPayload);
+        await createSubmitGroupShareLink(token as string, code, timestamp, previewPayload);
         toast('Group visitor created successfully.', 'success');
       } else {
-        await createSubmitShareLink(token, code, timestamp, previewPayload);
+        await createSubmitShareLink(token as string, code, timestamp, previewPayload);
 
         const successMessage =
           TYPE_REGISTERED === 0
@@ -3003,8 +2966,14 @@ const FormSelfPraregistration = ({
   };
 
   return (
-    <div>
-      <form onSubmit={handleOnSubmit}>
+    <>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+
+          handleOnSubmit(e);
+        }}
+      >
         <Box width="100%">
           {!isMobile ? (
             <DragDropContext onDragEnd={() => {}}>
@@ -3225,15 +3194,16 @@ const FormSelfPraregistration = ({
               <Button
                 variant="contained"
                 color="primary"
+                type="submit"
                 disabled={
                   loading ||
                   !formData.visitor_type ||
                   formData.is_group === null ||
                   formData.is_group === undefined
                 }
-                onClick={handleOnSubmit}
+                // onClick={handleOnSubmit}
               >
-                {loading ? 'Submit' : 'Submit'}
+                Submit
               </Button>
             ) : (
               <Button
@@ -3287,30 +3257,8 @@ const FormSelfPraregistration = ({
           </Alert>
         </Snackbar>
       </Portal>
-    </div>
+    </>
   );
 };
 
 export default FormSelfPraregistration;
-
-const CustomStepIcon = (props: any) => {
-  const { active, completed, icon } = props;
-
-  return (
-    <Box
-      sx={{
-        width: 30,
-        height: 30,
-        borderRadius: '50%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontWeight: 'bold',
-        color: '#fff',
-        backgroundColor: active || completed ? 'primary.main' : '#9e9e9e',
-      }}
-    >
-      {icon}
-    </Box>
-  );
-};

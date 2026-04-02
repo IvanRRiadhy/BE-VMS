@@ -7,9 +7,9 @@ export type Item = {
   identity_id: string;
   card_number: string;
   ble_card_number: string;
-  type: number;
-  vehicle_plate_number?: string;
-  vehicle_type?: string;
+  type: string;
+  vehicle_plate_number?: string | null;
+  vehicle_type?: string | null;
   name: string;
   phone: string;
   email: string;
@@ -19,9 +19,7 @@ export type Item = {
   qr_code: string;
   faceimage: string;
   identity_type: string;
-  // access_area: string;
-  // access_area_special: string;
-  birth_date: string; // ISO date format, e.g. "2025-06-16"
+  birth_date: string; 
   join_date: string;
   exit_date: string;
   is_head: boolean;
@@ -69,9 +67,10 @@ export const CreateEmployeeRequestSchema = z.object({
   identity_id: z.string().default(''),
   card_number: z.string().default(''),
   ble_card_number: z.string().default(''),
-  type: z.coerce.number().default(0),
-  vehicle_plate_number: z.string().default(''),
-  vehicle_type: z.string().default(''),
+  // type: z.coerce.number().default(0),
+  type: z.string().nullable().optional(),
+  vehicle_plate_number: z.string().nullable().optional(),
+  vehicle_type: z.string().nullable().optional(),
   name: z.string().default(''),
   phone: z.string().default(''),
   email: z.string().default(''),
@@ -81,8 +80,6 @@ export const CreateEmployeeRequestSchema = z.object({
   qr_code: z.string().default(''),
   faceimage: z.string().default(''),
   identity_type: z.string().default(''),
-  // access_area: z.string().default(''),
-  // access_area_special: z.string().default(''),
   birth_date: z.string().default(''),
   join_date: z.string().default(''),
   exit_date: z.string().default(''),
@@ -99,6 +96,7 @@ export type CreateEmployeeRequest = z.infer<typeof CreateEmployeeRequestSchema>;
 
 export const CreateEmployeeSubmitSchema = CreateEmployeeRequestSchema.extend({
   name: z.string().trim().min(1, 'Employee name is required'),
+  identity_type: z.string().trim().min(1, 'Identity Type is required'),
   identity_id: z.string().trim().min(1, 'Identity ID is required'),
   person_id: z.string().trim().min(1, 'Person ID is required'),
   email: z.string().trim().min(1, 'Email is required'),
@@ -127,15 +125,15 @@ export interface UpdateEmployeeRequest {
   identity_id: string;
   card_number: string;
   ble_card_number: string;
-  type: number;
+  type: string;
   name: string;
   phone: string;
   email: string;
   gender: number;
   address: string;
   upload_fr: number;
-  vehicle_plate_number: string;
-  vehicle_type: string;
+  vehicle_plate_number?: string | null;
+  vehicle_type?: string | null;
   // faceimage: string;
   identity_type: string;
   qr_code: string;

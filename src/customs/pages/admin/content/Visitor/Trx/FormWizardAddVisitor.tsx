@@ -322,7 +322,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     }
   }
 
-  // filter cards berdasarkan search
   const filteredCards = availableCards.filter((card) =>
     [card.remarks, card.card_number, card.card_mac]
       .join(' ')
@@ -330,38 +329,13 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       .includes(searchTerm.toLowerCase()),
   );
 
-  // utils
+
   const flatDeep = (x: any): any[] => (Array.isArray(x) ? x.flat(Infinity) : [x]);
 
   const normalizeIdsDeep = (payload: any): string[] => {
     const flat = flatDeep(payload);
     const ids = flat.map((v) => (typeof v === 'object' && v !== null ? v.id : v)).filter((n) => n);
-    // dedupe
     return Array.from(new Set(ids));
-  };
-
-  const handleSelectInvitation = (payload: Row[]) => {
-    console.group('onCheckedChange');
-    console.log('raw payload (rows):', payload);
-    console.groupEnd();
-
-    setSelectedInvitations(payload);
-  };
-
-  const handleOpenChooseCard = () => {
-    if (!selectedInvitations?.length) {
-      toast('Please select at least one invitation first.');
-
-      return;
-    }
-    setSelectedCards([]);
-    setOpenChooseCardDialog(true);
-  };
-
-  const handleCloseGrantDialog = () => {
-    setNextDialogOpen(false);
-    setSelectedInvitations([]);
-    setSelectedCards([]);
   };
 
   useEffect(() => {
@@ -370,83 +344,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       setSelectedCards([]);
     }
   }, [nextDialogOpen]);
-
-  const handleAccessSubmit = async () => {
-    setLoading(true);
-
-    const data_access: any[] = [];
-
-    const visitorsWithCard = rows.filter((r) => r.trx_visitor_id && r.card?.card_number);
-
-    if (!visitorsWithCard.length) {
-      console.warn('No visitor with assigned card');
-      setLoading(false);
-      return;
-    }
-
-    for (const visitorRow of visitorsWithCard) {
-      const trxVisitorId = visitorRow.trx_visitor_id;
-      const cardNumber = visitorRow.card?.card_number;
-
-      if (!trxVisitorId || !cardNumber) continue;
-
-      // ✅ SINGLE MODE
-      if (!isGroup) {
-        for (const acId of checkedItems) {
-          data_access.push({
-            access_control_id: acId,
-            action: 1,
-            card_number: cardNumber,
-            trx_visitor_id: trxVisitorId,
-          });
-        }
-      }
-
-      // ✅ GROUP MODE
-      if (isGroup) {
-        for (const acId of checkedGroupItems) {
-          data_access.push({
-            access_control_id: acId,
-            action: 1,
-            card_number: cardNumber,
-            trx_visitor_id: trxVisitorId,
-          });
-        }
-
-        for (const fullId of checkedSelfItems) {
-          const parts = fullId.split(':');
-          const acId = parts.length > 1 ? parts[1] : parts[0];
-
-          data_access.push({
-            access_control_id: acId,
-            action: 1,
-            card_number: cardNumber,
-            trx_visitor_id: trxVisitorId,
-          });
-        }
-      }
-    }
-
-    if (!data_access.length) {
-      console.warn('No access selected');
-      setLoading(false);
-      return;
-    }
-
-    const payload = { data_access };
-    console.log('📤 Payload:', JSON.stringify(payload, null, 2));
-
-    try {
-      const res = await createCheckGiveAccess(token as string, payload);
-      toast('Grant access successful', 'success');
-      onSuccess?.();
-    } catch (err: any) {
-      console.error('❌ Failed grant access:', err);
-      showSwal('error', 'Failed to update access');
-    } finally {
-      setTimeout(() => setLoading(false), 500);
-    }
-  };
 
   const generateUUIDv4 = () => {
     const bytes = new Uint8Array(16);
@@ -546,6 +443,66 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     if (!section.is_document && section.can_multiple_used) return 'visitor_information_group';
   };
 
+  const handleSelectVisitor = (gIdx: number, v: any) => {
+    if (!v) {
+      const resetKeys = [
+        'name',
+        'email',
+        'phone',
+        'organization',
+        'indentity_id',
+        'gender',
+        'employee',
+      ];
+
+      setDataVisitor((prev) => {
+        const next = [...prev];
+        const page = next[gIdx]?.question_page?.[activeStep - 1];
+
+        if (!page?.form) return prev;
+
+        next[gIdx].question_page[activeStep - 1].form = page.form.map((item: any) =>
+          resetKeys.includes(item.remarks) ? { ...item, answer_text: '' } : item,
+        );
+
+        return next;
+      });
+
+      return;
+    }
+
+    let genderValue: string | undefined;
+
+    if (v.gender === 'Male') genderValue = '1';
+    else if (v.gender === 'Female') genderValue = '0';
+    else if (v.gender === 'Prefer not to say') genderValue = '2';
+
+    const mapping: Record<string, string | undefined> = {
+      name: v.name,
+      email: v.email,
+      phone: v.phone,
+      organization: typeof v.organization === 'object' ? v.organization.name : v.organization,
+      indentity_id: v.identity_id,
+      gender: genderValue,
+      employee: v.id,
+    };
+
+    setDataVisitor((prev) => {
+      const next = [...prev];
+      const page = next[gIdx]?.question_page?.[activeStep - 1];
+
+      if (!page?.form) return prev;
+
+      next[gIdx].question_page[activeStep - 1].form = page.form.map((item: any) =>
+        mapping[item.remarks] !== undefined
+          ? { ...item, answer_text: mapping[item.remarks]! }
+          : item,
+      );
+
+      return next;
+    });
+  };
+
   const handleVisitorTypeChange = useCallback((e: any) => {
     const newType = e.target.value;
 
@@ -587,7 +544,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             <Grid size={{ xs: 12, md: 6 }}>
               <CustomFormLabel
                 htmlFor="visitor-type"
-                sx={{ mb: 1, borderLeft: '4px solid #673ab7', pl: 1 }}
+                sx={{ mb: 1, borderLeft: '4px solid #673ab7', pl: 1}}
               >
                 Visitor Type
               </CustomFormLabel>
@@ -651,11 +608,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     <Box display="flex" alignItems="center" gap={1}>
                       <IconUsers size={18} />
                       Group
-                      {/* <Tooltip title="When activated, you can add more than one visitor">
-                          <IconButton size="small" sx={{ ml: 0.5 }}>
-                            <IconInfoCircle size={16} />
-                          </IconButton>
-                        </Tooltip> */}
                     </Box>
                   }
                 />
@@ -1026,11 +978,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                       <AccordionSummary
                                         expandIcon={<ExpandMoreIcon />}
                                         sx={{
-                                          p: 1,
-                                          // pr: 6,
+                                          padding: '10px !important',
                                         }}
                                       >
-                                        <Typography fontWeight="bold" mb={0}>
+                                        <Typography fontWeight="bold" mb={0} mx={1}>
                                           Visitor {gIdx + 1}
                                         </Typography>
                                       </AccordionSummary>
@@ -1057,10 +1008,13 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                                     <AccordionDetails>
                                       <Box sx={{ width: '100%', mb: 2 }}>
-                                        <CustomFormLabel sx={{ mt: 0 }}>
-                                          Type (Opsional)
-                                        </CustomFormLabel>
-
+                                        <CustomFormLabel sx={{ mt: 0 }}>Search</CustomFormLabel>
+                                        <VisitorSelect
+                                          token={token as string}
+                                          // isEmployee={isEmployee}
+                                          onSelect={(v) => handleSelectVisitor(gIdx, v)}
+                                        />
+                                        <CustomFormLabel >Type (Opsional)</CustomFormLabel>
                                         <CustomTextField
                                           select
                                           size="small"
@@ -1084,6 +1038,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                           <MenuItem value="staff">Staff</MenuItem>
                                           <MenuItem value="visitor">Visitor</MenuItem>
                                         </CustomTextField>
+
                                       </Box>
 
                                       {page.form?.map((field: any, fIdx: any) => {
@@ -1159,6 +1114,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             <TableHead>
                               <TableRow>
                                 <TableCell>
+                                  <CustomFormLabel>Search</CustomFormLabel>
+                                </TableCell>
+                                <TableCell>
                                   <CustomFormLabel>Type (Opsional)</CustomFormLabel>
                                 </TableCell>
                                 {(dataVisitor[0]?.question_page[activeStep - 1]?.form || []).map(
@@ -1188,6 +1146,13 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                                   return (
                                     <TableRow key={gIdx}>
+                                      <TableCell sx={{ minWidth: 250 }}>
+                                        <VisitorSelect
+                                          token={token as string}
+                                          // isEmployee={isEmployee}
+                                          onSelect={(v) => handleSelectVisitor(gIdx, v)}
+                                        />
+                                      </TableCell>
                                       <TableCell>
                                         <CustomTextField
                                           select
@@ -3489,7 +3454,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             pick =
               (r && sharedPVIdx.byRemarks.get(r)) || (cf && sharedPVIdx.byCF.get(cf)) || undefined;
           } else {
-            // normal section
             pick =
               (r && rowIdxMap.byRemarks.get(r)) ||
               (cf && rowIdxMap.byCF.get(cf)) ||
@@ -3666,7 +3630,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         payload = { list_group };
 
         const parsed = CreateGroupVisitorRequestSchema.parse(payload);
-        console.log('🚀 Final Payload (Group):', JSON.stringify(parsed, null, 2));
+        // console.log('Final Payload (Group):', JSON.stringify(parsed, null, 2));
 
         const submitFn = TYPE_REGISTERED === 0 ? createPraRegisterGroup : createVisitorsGroup;
         const backendResponse = await submitFn(token, parsed as any);
@@ -3700,11 +3664,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         };
 
         const parsed = CreateVisitorRequestSchema.parse(payload);
-        console.log('Final Payload (Single):', JSON.stringify(parsed, null, 2));
+        // console.log('Final Payload (Single):', JSON.stringify(parsed, null, 2));
 
         const submitFn = TYPE_REGISTERED === 0 ? createPraRegister : createVisitor;
         const backendResponse = await submitFn(token, parsed);
-        console.log('Visitor created:', backendResponse);
+        // console.log('Visitor created:', backendResponse);
         const successMessage =
           TYPE_REGISTERED === 0
             ? 'Pre-registration created successfully.'
@@ -3715,13 +3679,13 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         resetMediaState();
         clearAnswerFiles();
       }
-      setTimeout(() => {
+      // setTimeout(() => {
         setLoading(false);
         onSuccess?.();
         // if (TYPE_REGISTERED !== 0) {
         //   setNextDialogOpen(true);
         // }
-      }, 700);
+      // }, 700);
     } catch (err: any) {
       setTimeout(() => {
         setLoading(false);
@@ -4239,10 +4203,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
       console.log('Payload for granting access:', { data: payload });
 
-      // { data: []}
-
-      // createMultipleGrantAccess
-      // const res = await createGrandAccessOperator(token as string, payload);
       const res = await createMultipleGrantAccess(token as string, { data: payload });
 
       console.log('Grand access operator response:', res);
@@ -4282,23 +4242,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     return new Set(normalizeIdsDeep(selectedInvitations).map(String));
   }, [selectedInvitations]);
 
-  const handleToggleCard = (cardNumber: string) => {
-    const holderRowId = assignedByCard.get(String(cardNumber));
-    const isUsedByOther = !!holderRowId && !selectedIdSet.has(String(holderRowId));
-
-    if (isUsedByOther) return;
-
-    setSelectedCards((prev) => {
-      if (prev.includes(cardNumber)) {
-        return prev.filter((c) => c !== cardNumber);
-      }
-      if (prev.length >= selectedInvitations.length) {
-        toast('You have reached the maximum number of invitations.', 'warning');
-        return prev;
-      }
-      return [...prev, cardNumber];
-    });
-  };
+  
 
   const availableVisibleCards = useMemo(() => {
     return filteredCards.filter((c) => {
@@ -4309,30 +4253,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
   const availableCount = availableVisibleCards.length;
 
-  const handleSelectAll = () => {
-    const visible = availableVisibleCards.map((c) => c.card_number);
-    const capacity = selectedInvitations.length;
-    const cappedVisibleCount = Math.min(visible.length, capacity);
-    const visibleSelectedCount = visible.filter((n) => selectedCards.includes(n)).length;
 
-    const fullySelected = cappedVisibleCount > 0 && visibleSelectedCount === cappedVisibleCount;
-
-    if (fullySelected) {
-      setSelectedCards((prev) => prev.filter((n) => !visible.includes(n)));
-      toast('Visible cards cleared.', 'info');
-    } else {
-      if (capacity <= 0) return toast('Please select invitations first.', 'warning');
-      const toAdd = visible.slice(0, capacity);
-      setSelectedCards(toAdd);
-      toast(`Selected ${toAdd.length} available card(s).`, 'success');
-    }
-  };
-
-  const hasSelfOnly = (dataVisitor: any[]) =>
-    dataVisitor?.some((dv) => dv.question_page?.some((page: any) => page.self_only === true));
-
-  const [checkedGroupItems, setCheckedGroupItems] = useState<string[]>([]);
-  const [checkedSelfItems, setCheckedSelfItems] = useState<string[]>([]);
 
   useEffect(() => {
     if (openChooseCardDialog) {
@@ -4520,7 +4441,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             </DragDropContext>
           ) : (
             <>
-              <Typography fontWeight={600} color="black" textAlign="center" variant="h5">
+              <Typography fontWeight={600} color="black" textAlign="center" variant="h5" mt={2}>
                 {stepLabels[activeStep]}
               </Typography>
               <MobileStepper

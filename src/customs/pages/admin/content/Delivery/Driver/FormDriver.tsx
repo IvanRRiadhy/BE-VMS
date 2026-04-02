@@ -32,14 +32,7 @@ import CustomRadio from 'src/components/forms/theme-elements/CustomRadio';
 import Webcam from 'react-webcam';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import {
-  getAllDepartments,
-  getAllDepartmentsPagination,
-  getAllDistricts,
-  getAllDistrictsPagination,
-  getAllOrganizationPagination,
-  getAllOrganizations,
-} from 'src/customs/api/admin';
+import { getAllDepartments, getAllDistricts, getAllOrganizations } from 'src/customs/api/admin';
 
 import {
   CreateDriverRequest,
@@ -48,11 +41,12 @@ import {
   CreateDriverSubmitSchema,
   Item,
 } from 'src/customs/api/models/Admin/Driver';
-import { showSuccessAlert, showSwal } from 'src/customs/components/alerts/alerts';
+import { showSwal } from 'src/customs/components/alerts/alerts';
 const steps = ['Personal Info', 'Work Details', 'Access & Address', 'Other Details', 'Photo'];
 
 import { getStepSchema, stepFieldMap } from 'src/customs/api/validations/driverSchemas';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
+import { MobileStepper, useTheme, useMediaQuery } from '@mui/material';
 
 type EnabledFields = {
   organization_id: boolean;
@@ -67,7 +61,7 @@ interface FormEmployeeProps {
   edittingId?: string;
   onSuccess?: () => void;
   isBatchEdit?: boolean;
-  selectedRows?: Item[]; // For batch edit, this will be the selected employee rows
+  selectedRows?: Item[];
   enabledFields?: EnabledFields;
   setEnabledFields: React.Dispatch<React.SetStateAction<EnabledFields>>;
 }
@@ -76,7 +70,6 @@ import { BASE_URL } from 'src/customs/api/interceptor';
 import {
   createDriver,
   getAllDriver,
-  getAllDriverPagination,
   getDriverById,
   updateDriver,
   uploadImageDriver,
@@ -114,6 +107,8 @@ const FormDriver = ({
   const [removing, setRemoving] = useState(false);
   const [employeeAllRes, setEmployeeAllRes] = useState<Item[]>([]);
   const [localForm, setLocalForm] = useState(formData);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   useEffect(() => {
     setLocalForm(formData);
   }, [formData]);
@@ -242,7 +237,7 @@ const FormDriver = ({
 
   const validateStep = (step: number): boolean => {
     const schema = getStepSchema(step);
-    if (!schema) return true; // step tanpa aturan
+    if (!schema) return true;
 
     const fields = stepFieldMap[step] ?? [];
     let payload = pick(localForm, fields as any);
@@ -277,7 +272,6 @@ const FormDriver = ({
       return true;
     }
 
-    // Normal edit → validasi semua
     if (step === 1) {
       (payload as any).district_id = String((payload as any).district_id ?? '');
       (payload as any).organization_id = String((payload as any).organization_id ?? '');
@@ -358,7 +352,6 @@ const FormDriver = ({
     setActiveStep((prev) => prev + 1);
     setSkipped(newSkipped);
 
-    // reset alert info
     setAlertType('info');
     setAlertMessage('Complete the following data properly and correctly');
   };
@@ -374,8 +367,6 @@ const FormDriver = ({
     }
     return out;
   };
-
-  // opsional: normalisasi tipe agar sesuai schema (ID sebagai string)
   const normalizeForSubmit = (v: CreateDriverRequest) => ({
     ...v,
     organization_id: String(v.organization_id ?? ''),
@@ -401,7 +392,6 @@ const FormDriver = ({
         return;
       }
 
-      // Jika mode batch edit
       if (isBatchEdit && selectedRows.length > 0) {
         const enabledKeys = Object.keys(enabledFields ?? {}).filter(
           (k) => (enabledFields as any)[k] === true,
@@ -448,8 +438,6 @@ const FormDriver = ({
         onSuccess?.();
         return;
       }
-
-      // Mode create / edit biasa
       const mergedFormData = normalizeForSubmit({
         ...localForm,
         gender:
@@ -479,10 +467,10 @@ const FormDriver = ({
       const hasNewImage = Boolean(rawFileImage) || isDataUrl(rawFaceImage);
 
       if (edittingId) {
-        // UPDATE
         const { faceimage: _drop, ...withoutImage } = data;
         const editData: UpdateDriverRequest = {
           ...withoutImage,
+          type: String(data.type ?? ''),
           qr_code: localForm.card_number,
           is_email_verify: false,
         };
@@ -496,10 +484,7 @@ const FormDriver = ({
 
         showSwal('success', 'Driver successfully updated!');
       } else {
-        // CREATE
         const created = await createDriver(data, token);
-
-        // Ambil id dari response collection
         const newDriverId = created?.collection?.employee_id;
 
         if (newDriverId && hasNewImage) {
@@ -550,7 +535,6 @@ const FormDriver = ({
     if (selectedFile) {
       setSiteImageFile(selectedFile);
       setPreviewUrl(URL.createObjectURL(selectedFile));
-
     }
   };
 
@@ -563,16 +547,11 @@ const FormDriver = ({
       return;
     }
 
-    // Sudah berupa dataURL / blob / http(s)
     if (/^(data:image\/|blob:|https?:\/\/)/i.test(v)) {
       setPreviewUrl(v);
       return;
     }
-
-    // Relative path dari server
     const rel = v.startsWith('/') ? v : `/${v}`;
-
-    // ⬇️ KUNCI: jangan dobel /cdn
     const url = rel.startsWith('/cdn/') ? `${BASE_URL}${rel}` : `${BASE_URL}/cdn${rel}`;
     console.log('Preview URL:', url);
 
@@ -584,9 +563,7 @@ const FormDriver = ({
       case 0:
         return (
           <Grid2 container spacing={1}>
-            {/* <Grid2 size={{ xs: 12, sm: 12 }}>
-              <Alert severity="info">Complete the following data properly and correctly.</Alert>
-            </Grid2> */}
+           
             {/* Name */}
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1 }} htmlFor="name" required>
@@ -622,30 +599,46 @@ const FormDriver = ({
               />
             </Grid2>
             <Grid2 size={{ xs: 12, sm: 12 }}>
-              <CustomFormLabel sx={{ my: 1 }} htmlFor="employeeType" required>
-                <Typography variant="caption">Identity Type</Typography>
-              </CustomFormLabel>
-              <CustomSelect
-                id="employeeType"
-                value={localForm.identity_type}
-                onChange={(e: any) => setLocalForm({ ...localForm, identity_type: e.target.value })}
-                fullWidth
-                disabled={isBatchEdit}
-              >
-                <MenuItem value={'NIK'}>NIK</MenuItem>
-                <MenuItem value={'KTP'}>KTP</MenuItem>
-                <MenuItem value={'Passport'}>Passport</MenuItem>
-                <MenuItem value={'DriverLicense'}>Driver License</MenuItem>
-                <MenuItem value={'CardAccess'}>Card Access</MenuItem>
-                <MenuItem value={'Face'}>Face</MenuItem>
-                <MenuItem value={'NDA'}>NDA</MenuItem>
-                <MenuItem value={'Other'}>Other</MenuItem>
-              </CustomSelect>
+              <FormControl fullWidth error={Boolean(errors.identity_type)}>
+                <CustomFormLabel sx={{ my: 1 }} htmlFor="identity_type" required>
+                  <Typography variant="caption">Identity Type</Typography>
+                </CustomFormLabel>
+
+                <CustomSelect
+                  id="identity_type"
+                  value={localForm.identity_type}
+                  onChange={(e: any) => {
+                    setLocalForm((prev) => ({
+                      ...prev,
+                      identity_type: e.target.value,
+                    }));
+
+                    if (errors.identity_type) {
+                      setErrors((p) => ({ ...p, identity_type: '' }));
+                    }
+                  }}
+                  fullWidth
+                  disabled={isBatchEdit}
+                >
+                  <MenuItem value={'NIK'}>NIK</MenuItem>
+                  <MenuItem value={'KTP'}>KTP</MenuItem>
+                  <MenuItem value={'Passport'}>Passport</MenuItem>
+                  <MenuItem value={'DriverLicense'}>Driver License</MenuItem>
+                  <MenuItem value={'CardAccess'}>Card Access</MenuItem>
+                  <MenuItem value={'Face'}>Face</MenuItem>
+                  <MenuItem value={'NDA'}>NDA</MenuItem>
+                  <MenuItem value={'Other'}>Other</MenuItem>
+                </CustomSelect>
+
+                <FormHelperText sx={{ marginLeft: '0 !important' }}>
+                  {errors.identity_type}
+                </FormHelperText>
+              </FormControl>
             </Grid2>
             {/* Identity ID */}
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1 }} htmlFor="identity_id" required>
-                <Typography variant="caption">Identity ID (KTP/SIM/Paspor)</Typography>
+                <Typography variant="caption">Identity ID (KTP/SIM/Pasport)</Typography>
               </CustomFormLabel>
               <CustomTextField
                 id="identity_id"
@@ -661,7 +654,7 @@ const FormDriver = ({
             </Grid2>
 
             {/* Email */}
-            <Grid2 size={{ xs: 6, sm: 6 }}>
+            <Grid2 size={{ xs: 12, sm: 6 }}>
               <CustomFormLabel sx={{ marginY: 1 }} htmlFor="email" required>
                 <Typography variant="caption">Email</Typography>
               </CustomFormLabel>
@@ -679,14 +672,14 @@ const FormDriver = ({
             </Grid2>
 
             {/* Gender */}
-            <Grid2 sx={{ paddingLeft: '25px' }} size={{ xs: 6, sm: 6 }}>
+            <Grid2 sx={{ paddingLeft: '25px' }} size={{ xs: 12, sm: 6 }}>
               <Box
                 display="flex"
                 alignItems="center"
                 justifyContent="space-between"
                 sx={{ marginTop: '0px' }}
               >
-                <CustomFormLabel required sx={{ marginY: 1 }}>
+                <CustomFormLabel sx={{ marginY: 1 }}>
                   <Typography variant="caption" sx={{ marginLeft: '0px', marginTop: '0px' }}>
                     Gender
                   </Typography>
@@ -740,8 +733,6 @@ const FormDriver = ({
                     }
                   />
                 </Box>
-
-                {/* Error message di bawah radio */}
                 {errors.gender && (
                   <FormHelperText error sx={{ mt: 0.5, marginLeft: '0' }}>
                     {errors.gender}
@@ -853,7 +844,6 @@ const FormDriver = ({
                     district_id: newVal ? newVal.id : '',
                   }));
 
-      
                   setErrors((prev) => ({ ...prev, district_id: '' }));
                 }}
                 isOptionEqualToValue={(opt, val) => opt.id === val.id}
@@ -1032,7 +1022,7 @@ const FormDriver = ({
                 }}
               />
             </Grid2>
-            <Grid2 size={{ xs: 12, sm: 12 }}>
+            {/* <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1 }} htmlFor="head_employee_1">
                 <Typography variant="caption">Employee Head - 1</Typography>
               </CustomFormLabel>
@@ -1065,11 +1055,6 @@ const FormDriver = ({
                   <li {...props} key={option.id}>
                     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                       <Typography variant="body2">{option.name}</Typography>
-                      {/* {option.email && (
-                        <Typography variant="caption" color="text.secondary">
-                          {option.email}
-                        </Typography>
-                      )} */}
                     </Box>
                   </li>
                 )}
@@ -1108,16 +1093,12 @@ const FormDriver = ({
                   <li {...props} key={option.id}>
                     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                       <Typography variant="body2">{option.name}</Typography>
-                      {/* {option.email && (
-                        <Typography variant="caption" color="text.secondary">
-                          {option.email}
-                        </Typography>
-                      )} */}
+                      
                     </Box>
                   </li>
                 )}
               />
-            </Grid2>
+            </Grid2> */}
             <Grid2 size={{ xs: 6, sm: 6 }}>
               <CustomFormLabel sx={{ marginY: 1 }} htmlFor="card_number">
                 <Typography variant="caption">Card Access</Typography>
@@ -1324,8 +1305,8 @@ const FormDriver = ({
                           <Button
                             variant="contained"
                             onClick={(e) => {
-                              e.stopPropagation(); // ✅ cegah trigger upload
-                              handleCapture(); // 📸 ambil foto dari kamera
+                              e.stopPropagation(); 
+                              handleCapture(); 
                             }}
                           >
                             Take Foto
@@ -1356,20 +1337,6 @@ const FormDriver = ({
                         mt={2}
                         sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
                       >
-                        {/* <img
-                          src={previewUrl}
-                          alt="preview"
-                          style={{
-                            width: 300,
-                            height: 170,
-                            borderRadius: 12,
-                            objectFit: 'cover',
-                            objectPosition: 'center',
-                            cursor: 'pointer',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
-                          }}
-                          onClick={(e) => e.stopPropagation()}
-                        /> */}
 
                         <div
                           style={{
@@ -1401,8 +1368,8 @@ const FormDriver = ({
                           color="error"
                           disabled={removing || isBatchEdit}
                           onClick={(e) => {
-                            e.stopPropagation(); // cegah trigger klik container
-                            handleRemove(); // jalankan remove
+                            e.stopPropagation(); 
+                            handleRemove(); 
                           }}
                         >
                           {removing ? 'Removing…' : 'Remove'}
@@ -1424,15 +1391,35 @@ const FormDriver = ({
   return (
     <form onSubmit={handleOnSubmit}>
       <Box width="100%">
-        <Stepper activeStep={activeStep}>
-          {steps.map((label, index) => (
-            <Step key={label} completed={false}>
-              {/* centang hilang */}
-              <StepButton onClick={() => setActiveStep(index)}>{label}</StepButton>
-            </Step>
-          ))}
-        </Stepper>
+        {isMobile ? (
+          <>
+            <Box textAlign="center" mt={1}>
+              <Typography variant="h5">{steps[activeStep]}</Typography>
+            </Box>
 
+            <MobileStepper
+              variant="dots"
+              steps={steps.length}
+              position="static"
+              activeStep={activeStep}
+              nextButton={null}
+              backButton={null}
+              sx={{
+                justifyContent: 'center',
+                mt: 1,
+              }}
+            />
+          </>
+        ) : (
+          <Stepper activeStep={activeStep}>
+            {steps.map((label, index) => (
+              <Step key={label} completed={false}>
+                <StepButton onClick={() => setActiveStep(index)}>{label}</StepButton>
+              </Step>
+            ))}
+          </Stepper>
+        )}
+{/* 
         {activeStep === steps.length ? (
           <Stack spacing={2} mt={3}>
             <Alert severity="success">All steps completed - you're finished</Alert>
@@ -1442,7 +1429,7 @@ const FormDriver = ({
               </Button>
             </Box>
           </Stack>
-        ) : (
+        ) : ( */}
           <>
             <Box mt={3}>{StepContent(activeStep)}</Box>
             <Box display="flex" flexDirection="row" mt={3}>
@@ -1472,7 +1459,7 @@ const FormDriver = ({
               )}
             </Box>
           </>
-        )}
+        {/* )} */}
       </Box>
       <Portal>
         <Backdrop

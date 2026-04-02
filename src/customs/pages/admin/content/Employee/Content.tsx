@@ -38,10 +38,7 @@ import {
 import { IconUsers } from '@tabler/icons-react';
 
 // Alert
-import {
-  showConfirmDelete,
-  showSwal,
-} from 'src/customs/components/alerts/alerts';
+import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import FilterMoreContent from './FilterMoreContent';
 
 type EmployeesTableRow = {
@@ -78,7 +75,6 @@ interface Filters {
 const Content = () => {
   const [tableData, setTableData] = useState<Item[]>([]);
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
-  const [isDataReady, setIsDataReady] = useState(false);
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
   const [page, setPage] = useState(0);
@@ -196,7 +192,6 @@ const Content = () => {
           setTableRowEmployee([]);
           setTotalRecords(0);
           setTotalFilteredRecords(0);
-          setIsDataReady(true);
           return;
         }
 
@@ -212,7 +207,6 @@ const Content = () => {
           department: item.department?.name || '-',
         }));
         setTableRowEmployee(rows);
-        setIsDataReady(true);
       } catch (error: any) {
         console.error('Error fetching data:', error.message);
       } finally {
@@ -220,7 +214,7 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword]);
+  }, [token, page, rowsPerPage, refreshTrigger, searchKeyword]);
 
   const [initialFormData, setInitialFormData] = useState<CreateEmployeeRequest>(() => {
     const saved = localStorage.getItem('unsavedEmployeeData');
@@ -243,8 +237,6 @@ const Content = () => {
       return CreateEmployeeRequestSchema.parse({});
     }
   });
-
-  const [isEditing, setIsEditing] = useState(false);
 
   const isFormChanged = useMemo(() => {
     return JSON.stringify(formDataAddEmployee) !== JSON.stringify(initialFormData);
@@ -269,7 +261,7 @@ const Content = () => {
     localStorage.removeItem('unsavedEmployeeData');
     setOpenFormAddEmployee(false);
     setIsBatchEdit(false);
-    setIsEditing(false);
+    setEdittingId('');
   };
 
   const handleAdd = useCallback(() => {
@@ -283,7 +275,7 @@ const Content = () => {
 
   const handleEdit = (id: string) => {
     const existingData = tableData.find((item) => String(item.id) === String(id));
-    console.log('existingData', existingData);
+    // console.log('existingData', existingData);
     if (!existingData) return;
 
     const toNum = (
@@ -305,18 +297,18 @@ const Content = () => {
 
     const coerceEmployee = (s: any) => ({
       ...s,
-      type: toNum(
-        s?.type,
-        {
-          permanent: 1,
-          contract: 2,
-          internship: 3,
-          '0': 0,
-          '1': 1,
-          '2': 2,
-        },
-        0,
-      ),
+      // type: toNum(
+      //   s?.type,
+      //   {
+      //     permanent: 1,
+      //     contract: 2,
+      //     internship: 3,
+      //     '0': 0,
+      //     '1': 1,
+      //     '2': 2,
+      //   },
+      //   0,
+      // ),
       gender: toNum(s?.gender, { female: 0, male: 1, f: 0, m: 1, '0': 0, '1': 1 }, 0),
 
       status_employee: toNum(
@@ -325,7 +317,6 @@ const Content = () => {
         0,
       ),
 
-      // id relasi → string
       organization_id: String(s?.organization_id ?? ''),
       department_id: String(s?.department_id ?? ''),
       district_id: String(s?.district_id ?? ''),
@@ -360,24 +351,40 @@ const Content = () => {
     setConfirmDialogOpen(true);
   };
 
+  const normalizeGender = (val: any) => {
+    if (val === 'Female') return 0;
+    if (val === 'Male') return 1;
+    return Number(val ?? 0);
+  };
+
   const handleConfirmEdit = () => {
     setConfirmDialogOpen(false);
     localStorage.removeItem('unsavedEmployeeData');
 
     if (pendingEditId) {
       const existingData = tableData.find((item) => item.id === pendingEditId);
+
       if (existingData) {
-        const parsedData = {
-          ...CreateEmployeeRequestSchema.parse(existingData),
-          id: pendingEditId,
-        };
-        setEdittingId(pendingEditId);
-        setFormDataAddEmployee(parsedData);
-        setInitialFormData(parsedData);
-        localStorage.setItem('unsavedEmployeeData', JSON.stringify(parsedData));
-        setPendingEditId(null);
-        setOpenFormAddEmployee(true);
-        setIsEditing(true);
+        try {
+          const normalized = {
+            ...existingData,
+            gender: normalizeGender(existingData.gender),
+          };
+
+          const parsedData = {
+            ...CreateEmployeeRequestSchema.parse(normalized),
+            id: pendingEditId,
+          };
+
+          setEdittingId(pendingEditId);
+          setFormDataAddEmployee(parsedData);
+          setInitialFormData(parsedData);
+          localStorage.setItem('unsavedEmployeeData', JSON.stringify(parsedData));
+          setPendingEditId(null);
+          setOpenFormAddEmployee(true);
+        } catch (err) {
+          console.error('Parse error:', err);
+        }
       }
     } else {
       setEdittingId('');
@@ -386,7 +393,6 @@ const Content = () => {
       setInitialFormData(newForm);
       localStorage.setItem('unsavedEmployeeData', JSON.stringify(newForm));
       handleCloseDialog();
-      setIsEditing(false);
     }
   };
 
@@ -396,19 +402,23 @@ const Content = () => {
     setPendingEditId(null);
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (row: EmployeesTableRow) => {
     if (!token) return;
 
-    const confirmed = await showConfirmDelete('Are you sure delete this employee?');
+    const name = row.name || '-';
+
+    const confirmed = await showConfirmDelete(
+      `Are you sure you want to delete employee "${name}"?`,
+    );
 
     if (confirmed) {
       setLoading(true);
       try {
-        await deleteEmployee(id, token);
+        await deleteEmployee(row.id, token);
         setRefreshTrigger((prev) => prev + 1);
-        showSwal('success', 'Succesfully deleted employee.');
+        showSwal('success', `Successfully deleted employee "${name}".`);
       } catch (error) {
-        showSwal('error', 'Failed to delete employee.');
+        showSwal('error', `Failed to delete employee "${name}".`);
       } finally {
         setTimeout(() => setLoading(false), 500);
       }
@@ -420,19 +430,23 @@ const Content = () => {
 
     const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} employees?`);
 
-    if (confirmed) {
+    if (!confirmed) return false;
+
+    // if (confirmed) {
       setLoading(true);
       try {
         await Promise.all(rows.map((row) => deleteEmployee(row.id, token)));
         setRefreshTrigger((prev) => prev + 1);
         showSwal('success', `Succesfully deleted ${rows.length} employees.`);
         setSelectedRows([]);
+        return true;
       } catch (error) {
         showSwal('error', 'Failed to delete some employees.');
+        return false;
       } finally {
         setLoading(false);
       }
-    }
+    // }
   };
 
   const handleApplyFilter = () => {
@@ -461,7 +475,7 @@ const Content = () => {
 
     localStorage.removeItem('unsavedEmployeeData');
   };
-  // handle dialog close
+
   const handleDialogClose = (_event?: object, reason?: string) => {
     const isChanged = JSON.stringify(formDataAddEmployee) !== JSON.stringify(initialFormData);
 
@@ -535,7 +549,8 @@ const Content = () => {
                   setEdittingId(row.id);
                 }}
                 onBatchEdit={handleBatchEdit}
-                onDelete={(row) => handleDelete(row.id)}
+                // onDelete={(row) => handleDelete(row.id)}
+                onDelete={(row) => handleDelete(row)}
                 onBatchDelete={handleBatchDelete}
                 onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
                 onAddData={() => {
