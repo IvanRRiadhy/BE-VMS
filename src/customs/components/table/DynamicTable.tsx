@@ -34,43 +34,19 @@ import { Stack, useMediaQuery, useTheme } from '@mui/system';
 import {
   IconAlertSquare,
   IconArrowAutofitLeft,
-  IconCopy,
-  IconEye,
-  IconEyeOff,
   IconFileExport,
   IconFileSpreadsheet,
   IconFileText,
   IconFileTypePdf,
   IconPlus,
   IconPrinter,
-  IconRefresh,
-  IconSettings,
-  IconTrash,
-  IconUserCheck,
-  IconUserX,
-  IconXboxX,
 } from '@tabler/icons-react';
-import {
-  AddCircle,
-  CalendarMonth,
-  ChecklistOutlined,
-  ExpandLess,
-  ExpandMore,
-  Search,
-} from '@mui/icons-material';
+import { AddCircle, CalendarMonth, ChecklistOutlined, Search } from '@mui/icons-material';
 import EditIconOutline from '@mui/icons-material/Edit';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
-import RemoveRedEyeIcon from '@mui/icons-material/RemoveRedEye';
 import Calendar from '../calendar/Calendar';
-import {
-  IconAdjustmentsHorizontal,
-  IconUserFilled,
-  IconCheck,
-  IconX,
-  IconStarFilled,
-} from '@tabler/icons-react';
+import { IconAdjustmentsHorizontal } from '@tabler/icons-react';
 import { InsertDriveFile } from '@mui/icons-material';
-import { useDeferredValue } from 'react';
 import backgroundnodata from 'src/assets/images/backgrounds/bg_nodata.svg';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import moment from 'moment';
@@ -217,7 +193,7 @@ type DynamicTableProps<
   onBooleanSwitchChange?: (row: any, field: string, value: boolean) => void;
 };
 
-export function DynamicTable<
+function DynamicTableBase<
   T extends { id: string | number; status?: any; early_access?: any; visitor_give_access?: any },
 >({
   minWidth = 'auto',
@@ -225,7 +201,7 @@ export function DynamicTable<
   data,
   selectedRows,
   setSelectedRows,
-  // searchKeyword,
+  searchKeyword,
   isHaveChecked = false,
   isHaveAction = false,
   isHaveActionOnlyEdit = false,
@@ -240,7 +216,6 @@ export function DynamicTable<
   isHaveExportPdf = false,
   isHaveExportXlf = false,
   isHaveImportExcel = false,
-
   isHaveFilterDuration = false,
   isActionEmployee = false,
   isButtonSiteAccess = false,
@@ -342,7 +317,7 @@ export function DynamicTable<
   onBooleanSwitchChange,
 }: DynamicTableProps<T>) {
   const [checkedIds, setCheckedIds] = useState<Array<T['id']>>([]);
-  const [searchKeyword, setSearchKeyword] = useState('');
+  // const [searchKeyword, setSearchKeyword] = useState('');
   const [selectedColumn, setSelectedColumn] = useState<string>('');
   const [selectedHeaderItem, setSelectedHeaderItem] = useState<string | null>(
     defaultSelectedHeaderItem ?? null,
@@ -363,6 +338,7 @@ export function DynamicTable<
   const theme = useTheme();
   const lgUp = useMediaQuery(theme.breakpoints.up('lg'));
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+
   const hiddenColumns = [
     'id',
     'can_grant',
@@ -435,7 +411,8 @@ export function DynamicTable<
   };
 
   const handleSearch = () => {
-    onSearchKeywordChange?.(searchKeyword || '');
+    // onSearchKeywordChange?.(searchKeyword || '');
+    onSearch?.();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -473,6 +450,12 @@ export function DynamicTable<
     return data;
   }, [data]);
 
+  // const paginatedData = useMemo(() => {
+  //   const start = page * rowsPerPage;
+  //   const end = start + rowsPerPage;
+  //   return data.slice(start, end);
+  // }, [data, page, rowsPerPage]);
+
   const toTitleCase = (text: string) => {
     return text
       .replace(/_/g, ' ') // ganti underscore jadi spasi
@@ -481,58 +464,26 @@ export function DynamicTable<
 
   const imageFields = ['faceimage', 'photo', 'avatar', 'image'];
   const objectFields = ['multiple_option_fields'];
-
-  const GENDER_MAP: Record<string, string> = {
-    '0': 'Female',
-    '1': 'Male',
-    '2': 'Prefer not to say',
-  };
-
-  const SITE_MAP: Record<number, string> = {
-    0: 'Site',
-    1: 'Building',
-    2: 'Floor',
-    3: 'Room',
-  };
-
-  const CARD_STATUS: Record<number, string> = {
-    0: 'Not Found',
-    1: 'Active',
-    2: 'Lost',
-    3: 'Broken',
-    4: 'Not Return',
-  };
-
-  const DOCUMENT_TYPE: Record<number, string> = {
-    0: 'Card',
-    1: 'Document',
-    2: 'Face',
-  };
   const [openRow, setOpenRow] = useState<number | null>(null);
 
   const toggleRow = (id: number) => {
     setOpenRow((prev) => (prev === id ? null : id));
   };
 
-  // 1) Tetapkan lebar kolom yang konsisten
   const CHECKBOX_COL_WIDTH = 40;
-  const ACTION_COL_WIDTH = 105; // sesuaikan dgn 2 tombol icon + gap
-  const INDEX_COL_WIDTH = 56; // kolom nomor
+  const ACTION_COL_WIDTH = 105;
+  const INDEX_COL_WIDTH = 56;
   const DATA_COL_WIDTH = 180;
   const STICKY_DATA_COUNT = 2;
 
-  // 2) Helper: base offset kiri sebelum kolom data
   const getLeftBase = () =>
     (isHaveChecked ? CHECKBOX_COL_WIDTH : 0) +
     (isActionVisitor ? ACTION_COL_WIDTH : 0) +
     INDEX_COL_WIDTH;
 
-  // 3) Helper: posisi kiri untuk kolom data sticky ke-i
   const getStickyLeft = (i: number) => getLeftBase() + i * DATA_COL_WIDTH;
 
-  // 4) Helper: apakah kolom data (ke-i) harus sticky
   const isStickyVisitorCol = (i: number) => isHaveVisitor && i < STICKY_DATA_COUNT;
-  // end -----------
   const headerMap: Record<string, string> = {
     companies: 'Companies',
     badge_type: 'Badge Type',
@@ -622,18 +573,11 @@ export function DynamicTable<
     },
   };
 
-  const formatDate = (date?: string) => {
-    if (!date) return '-'; // fallback kalau kosong
-    return moment.utc(date).local().format('DD-MM-YYYY, HH:mm');
-  };
-
   const getAccessActions = (row: any) => {
     const { visitor_give_access, can_grant, can_revoke, can_block, early_access } = row;
 
     const allDisabled = !can_grant && !can_revoke && !can_block;
 
-    // 🟠 1️⃣ Jika early_access true → hanya bisa Revoke & Block
-    // 🟠 1️⃣ Kondisi khusus: early_access === true
     if (early_access === true) {
       switch (visitor_give_access) {
         case 0:
@@ -893,7 +837,7 @@ export function DynamicTable<
               width="100%"
             >
               {/* SEARCH MENU */}
-              <Stack direction="row" spacing={2} >
+              <Stack direction="row" spacing={2}>
                 {isHaveSearch && (
                   <Box
                     display="flex"
@@ -909,7 +853,8 @@ export function DynamicTable<
                       variant="outlined"
                       size="small"
                       value={searchKeyword}
-                      onChange={(e) => setSearchKeyword(e.target.value)}
+                      // onChange={(e) => setSearchKeyword(e.target.value)}
+                      onChange={(e) => onSearchKeywordChange?.(e.target.value)}
                       onKeyDown={handleKeyDown}
                       sx={{
                         flexGrow: 1,
@@ -1181,7 +1126,6 @@ export function DynamicTable<
                   </Tooltip>
                 )}
               </Stack>
-
             </Grid2>
             {checkedIds.length > 0 && (
               <Grid2
@@ -1672,7 +1616,10 @@ export function DynamicTable<
           </TableContainer>
           {isHavePagination && (
             <TablePagination
-              rowsPerPageOptions={rowsPerPageOptions}
+              // rowsPerPageOptions={rowsPerPageOptions}
+              rowsPerPageOptions={rowsPerPageOptions?.map((opt) =>
+                opt === -1 ? { label: 'All', value: -1 } : opt,
+              )}
               component="div"
               count={totalCount ?? data.length}
               rowsPerPage={rowsPerPage}
@@ -1704,3 +1651,5 @@ export function DynamicTable<
     </>
   );
 }
+
+export const DynamicTable = React.memo(DynamicTableBase) as typeof DynamicTableBase;

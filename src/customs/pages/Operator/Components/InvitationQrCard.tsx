@@ -22,14 +22,16 @@ const InvitationQrCard = ({
     <Card
       sx={{
         borderRadius: 2,
-        height: '100%',
+        // height: '100%',
         width: '100%',
-        maxHeight: isFullscreen ? '100%' : { xs: '100%', sm: '100%', xl: '400px' },
+        height: '100%',
+        // maxHeight: isFullscreen ? '100%' : { xs: '100%', sm: '100%', xl: '400px' },
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
         border: '1px solid #e0e0e0',
         p: 2,
+        mt: 0.5
       }}
     >
       <CardContent
@@ -39,6 +41,7 @@ const InvitationQrCard = ({
           flexDirection: 'column',
           justifyContent: 'center',
           pb: '0 !important',
+          pt: '10px !important'
         }}
       >
         {/* QR / Empty State */}
@@ -53,12 +56,12 @@ const InvitationQrCard = ({
         >
           {data?.visitor_number ? (
             <QRCode
-              size={170}
+              size={160}
               value={data.visitor_number}
               viewBox="0 0 256 256"
               style={{
                 boxShadow: '0 0 10px rgba(0, 0, 0, 0.2)',
-                padding: '10px',
+                padding: '8px',
                 borderRadius: '8px',
                 background: 'white',
               }}
@@ -99,7 +102,7 @@ const InvitationQrCard = ({
         <Divider sx={{ mt: 0.5 }} />
 
         {/* Status */}
-        <Box display="flex" justifyContent="space-between" alignItems="center" mt="auto" >
+        <Box display="flex" justifyContent="space-between" alignItems="center" mt={1}>
           <Typography variant="h6" fontWeight="bold">
             Status
           </Typography>

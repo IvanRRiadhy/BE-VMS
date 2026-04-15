@@ -7,12 +7,6 @@ import {
   Stack,
   Button,
   Typography,
-  CircularProgress,
-  Tabs,
-  Tab,
-  IconButton,
-  InputAdornment,
-  CardActions,
   Snackbar,
   Theme,
   Alert,
@@ -22,24 +16,19 @@ import {
 import { useSearchParams } from 'react-router-dom';
 
 import { useDispatch } from 'react-redux';
-import { setUser, clearUser } from '../../../store/apps/user/userSlice';
 
 import PageContainer from 'src/components/container/PageContainer';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { AuthVisitor, login } from 'src/customs/api/users';
-import { AxiosError } from 'axios';
 import { Link, Link as RouterLink, useNavigate } from 'react-router';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { useAuth } from 'src/customs/contexts/AuthProvider';
 import { IconArrowNarrowLeft, IconArrowsLeft, IconEye, IconEyeOff, IconUser, IconUserPlus } from '@tabler/icons-react';
-import { GroupRoleId } from 'src/constant/GroupRoleId';
 import Logo from 'src/assets/images/logos/bi_pic.png';
 import BannerBI from 'src/assets/images/backgrounds/Banner-Tupoksi.jpg';
-import { useMediaQuery } from '@mui/system';
 import Footer from '../components/Footer';
 import { KeyboardArrowUp } from '@mui/icons-material';
-import { IconArrowBack } from '@tabler/icons-react';
 // import Logo from 'src/assets/images/logos/bio-experience-1x1-logo.png';
 
 const ForgotPassword = () => {
@@ -48,7 +37,6 @@ const ForgotPassword = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const lgUp = useMediaQuery((theme: Theme) => theme.breakpoints.up('lg'));
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);

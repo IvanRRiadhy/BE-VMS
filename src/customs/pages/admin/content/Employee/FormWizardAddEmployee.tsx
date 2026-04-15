@@ -97,7 +97,7 @@ const FormWizardAddEmployee = ({
   );
   const [activeStep, setActiveStep] = useState(0);
   const [skipped, setSkipped] = useState(new Set<number>());
-  const { token } = useSession(); // Assuming you have a session context to get the token
+  const { token } = useSession();
   const [organization, setOrganization] = useState<any[]>([]);
   const [department, setDepartment] = useState<any[]>([]);
   const [district, setDistrict] = useState<any[]>([]);
@@ -238,7 +238,7 @@ const FormWizardAddEmployee = ({
 
   const validateStep = (step: number): boolean => {
     const schema = getStepSchema(step);
-    if (!schema) return true; 
+    if (!schema) return true;
 
     const fields = stepFieldMap[step] ?? [];
     let payload = pick(localForm, fields as any);
@@ -442,14 +442,6 @@ const FormWizardAddEmployee = ({
         ...localForm,
 
         type: String(localForm.type ?? 'Permanent'),
-        // typeof localForm.type === 'string'
-        //   ? localForm.type === 'Permanent'
-        //     ? 1
-        //     : localForm.type === 'contract'
-        //       ? 2
-        //       : 0
-        //   : Number(localForm.type ?? 0),
-
         gender:
           typeof localForm.gender === 'string'
             ? localForm.gender === 'Female'
@@ -458,10 +450,8 @@ const FormWizardAddEmployee = ({
             : Number(localForm.gender ?? 0),
       });
 
-      // console.log('Merged form data:', mergedFormData);
-
       const result = CreateEmployeeSubmitSchema.safeParse(mergedFormData);
-      // console.log(result);
+
       if (!result.success) {
         const em = toErrorMap(result.error.issues);
         setErrors(em);
@@ -489,47 +479,36 @@ const FormWizardAddEmployee = ({
           is_email_verify: false,
         };
 
-        // console.log('Updating employee with data:', editData);
-
         const res = await updateEmployee(edittingId, editData, token);
-        // console.log('Update result:', res);
         if (hasNewImage) {
           await handleFileUploads(edittingId, rawFileImage, rawFaceImage);
         }
-        // console.log('hasNewImage', hasNewImage);
-
         showSwal('success', 'Employee successfully updated!');
       } else {
         console.log('Creating employee with data:', data);
         const created = await createEmployee(data, token);
-        // console.log('Create result:', created);
+
         const employeeId = created?.collection.employee_id;
 
         if (hasNewImage) {
           await handleFileUploads(employeeId as string, rawFileImage, rawFaceImage);
         }
-        // setTimeout(() => {
+
         showSwal('success', 'Employee successfully created!');
-        // }, 750);
 
         setFormData(CreateEmployeeRequestSchema.parse({}));
       }
 
-      // setTimeout(() => {
-        onSuccess?.();
-      // }, 600);
+      onSuccess?.();
     } catch (err: any) {
       if (err?.errors) {
         setErrors(err.errors);
       }
       showSwal('error', err?.message ?? 'Failed to submit. Please try again.');
     } finally {
-      // setTimeout(() => {
       setLoading(false);
-      // }, 650);
     }
   };
-
 
   const handleFileUploads = async (
     employeeId: string,
@@ -1340,8 +1319,8 @@ const FormWizardAddEmployee = ({
                           <Button
                             variant="contained"
                             onClick={(e) => {
-                              e.stopPropagation(); 
-                              handleCapture(); 
+                              e.stopPropagation();
+                              handleCapture();
                             }}
                           >
                             Take Foto
@@ -1403,8 +1382,8 @@ const FormWizardAddEmployee = ({
                           color="error"
                           disabled={removing || isBatchEdit}
                           onClick={(e) => {
-                            e.stopPropagation(); 
-                            handleRemove(); 
+                            e.stopPropagation();
+                            handleRemove();
                           }}
                         >
                           {removing ? 'Removing…' : 'Remove'}
@@ -1440,7 +1419,7 @@ const FormWizardAddEmployee = ({
               nextButton={null}
               backButton={null}
               sx={{
-                justifyContent: 'center', 
+                justifyContent: 'center',
                 mt: 1,
               }}
             />
@@ -1465,36 +1444,36 @@ const FormWizardAddEmployee = ({
             </Box>
           </Stack>
         ) : ( */}
-          <>
-            <Box mt={1}>{StepContent(activeStep)}</Box>
-            <Divider sx={{ mt: 2 }} />
-            <Box display="flex" flexDirection="row" mt={2}>
-              <Button
-                // variant="outlined"
-                color="primary"
-                disabled={activeStep === 0 || loading}
-                onClick={handleBack}
-                sx={{ backgroundColor: '#edf3ff' }}
-              >
-                Back
+        <>
+          <Box mt={1}>{StepContent(activeStep)}</Box>
+          <Divider sx={{ mt: 2 }} />
+          <Box display="flex" flexDirection="row" mt={2}>
+            <Button
+              // variant="outlined"
+              color="primary"
+              disabled={activeStep === 0 || loading}
+              onClick={handleBack}
+              sx={{ backgroundColor: '#edf3ff' }}
+            >
+              Back
+            </Button>
+            <Box flex="1 1 auto" />
+            {activeStep !== steps.length - 1 ? (
+              <Button onClick={handleNext} variant="contained" color="primary">
+                Next
               </Button>
-              <Box flex="1 1 auto" />
-              {activeStep !== steps.length - 1 ? (
-                <Button onClick={handleNext} variant="contained" color="primary">
-                  Next
-                </Button>
-              ) : (
-                <Button
-                  color="primary"
-                  variant="contained"
-                  onClick={handleOnSubmit}
-                  disabled={loading || activeStep !== steps.length - 1}
-                >
-                  Submit
-                </Button>
-              )}
-            </Box>
-          </>
+            ) : (
+              <Button
+                color="primary"
+                variant="contained"
+                onClick={handleOnSubmit}
+                disabled={loading || activeStep !== steps.length - 1}
+              >
+                Submit
+              </Button>
+            )}
+          </Box>
+        </>
         {/* )} */}
       </Box>
       <Backdrop

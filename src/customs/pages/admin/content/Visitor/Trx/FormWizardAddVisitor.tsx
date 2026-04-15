@@ -9,7 +9,6 @@ import {
   TableHead,
   MenuItem,
   Grid2 as Grid,
-  FormLabel,
   Dialog,
   Checkbox,
   TableRow,
@@ -21,9 +20,6 @@ import {
   Button as MuiButton,
   CircularProgress,
   Autocomplete,
-  DialogTitle,
-  DialogContent,
-  Stack,
   Accordion,
   AccordionSummary,
   TableContainer,
@@ -34,16 +30,11 @@ import {
   Table,
   TableBody,
   FormControl,
-  Card,
-  Skeleton,
   RadioGroup,
   Divider,
-  Tooltip,
   Backdrop,
-  InputAdornment,
   Snackbar,
   Alert,
-  Chip,
   Portal,
   useTheme,
   useMediaQuery,
@@ -66,7 +57,6 @@ import Webcam from 'react-webcam';
 import 'react-image-crop/dist/ReactCrop.css';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import { IconSearch } from '@tabler/icons-react';
 import {
   CreateGroupVisitorRequest,
   CreateGroupVisitorRequestSchema,
@@ -84,8 +74,6 @@ import {
   getGrantAccess,
 } from 'src/customs/api/admin';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
-import CloseIcon from '@mui/icons-material/Close';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { SectionPageVisitorType } from 'src/customs/api/models/Admin/VisitorType';
 import { FormVisitor } from 'src/customs/api/models/Admin/Visitor';
@@ -220,21 +208,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     [FORM_KEY]: updater(formsOf(sec)),
   });
 
-  const [pvDlg, setPvDlg] = useState<{ open: boolean; rowIdx: number | null; forms: any[] }>({
-    open: false,
-    rowIdx: null,
-    forms: [],
-  });
-
   const [accessData, setAccessData] = useState<any[]>([]);
   const [checkedItems, setCheckedItems] = useState<number[]>([]);
   const [availableCards, setAvailableCards] = useState<any[]>([]);
 
-  const handleToggle = (id: number) => {
-    setCheckedItems((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
-    );
-  };
   const [groupVisitors, setGroupVisitors] = useState<GroupVisitor[]>([]);
 
   const handleAddGroup = () => {
@@ -263,72 +240,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     setGroupVisitors((prev) => prev.filter((g) => g.id !== id));
   };
 
-  useEffect(() => {
-    const fetchGrantAccess = async () => {
-      if (!dataVisitor?.length) return;
-
-      try {
-        // 1️⃣ Group access
-        const siteAnswer = getSiteFromForm(isGroup, sectionsData, dataVisitor);
-        console.log('🔎 siteAnswer dari getSiteFromForm:', siteAnswer);
-
-        if (siteAnswer) {
-          const res = await getGrantAccess(token as string, siteAnswer);
-
-          setAccessData(res.collection ?? []);
-        }
-
-        // setGrantAccessMap(map);
-      } catch (err) {
-        console.error('❌ Failed to fetch grant access:', err);
-      }
-    };
-
-    if (token && submitted) fetchGrantAccess();
-  }, [token, submitted, isGroup, dataVisitor, sectionsData]);
-
-  function getSiteFromForm(
-    isGroup: boolean,
-    sectionsData: any[],
-    dataVisitor: any[],
-  ): string | null {
-    if (isGroup) {
-      for (const visitor of dataVisitor) {
-        for (const page of visitor.question_page ?? []) {
-          const found = page.form?.find((f: any) => f.remarks === 'site_place');
-          if (found?.answer_text) {
-            return found.answer_text;
-          }
-        }
-      }
-      return null;
-    } else {
-      const purposeVisitPage = sectionsData.find((p: any) => p.name === 'Purpose Visit');
-      const siteFieldUI =
-        purposeVisitPage?.visit_form?.find((f: any) => f.remarks === 'site_place') ??
-        purposeVisitPage?.form?.find((f: any) => f.remarks === 'site_place');
-      if (siteFieldUI?.answer_text) {
-        return siteFieldUI.answer_text;
-      }
-
-      for (const page of dataVisitor[0]?.question_page ?? []) {
-        const found = page.form?.find((f: any) => f.remarks === 'site_place');
-        if (found?.answer_text) {
-          return found.answer_text;
-        }
-      }
-
-      return null;
-    }
-  }
-
   const filteredCards = availableCards.filter((card) =>
     [card.remarks, card.card_number, card.card_mac]
       .join(' ')
       .toLowerCase()
       .includes(searchTerm.toLowerCase()),
   );
-
 
   const flatDeep = (x: any): any[] => (Array.isArray(x) ? x.flat(Infinity) : [x]);
 
@@ -544,7 +461,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             <Grid size={{ xs: 12, md: 6 }}>
               <CustomFormLabel
                 htmlFor="visitor-type"
-                sx={{ mb: 1, borderLeft: '4px solid #673ab7', pl: 1}}
+                sx={{ mb: 1, borderLeft: '4px solid #673ab7', pl: 1 }}
               >
                 Visitor Type
               </CustomFormLabel>
@@ -1014,7 +931,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                           // isEmployee={isEmployee}
                                           onSelect={(v) => handleSelectVisitor(gIdx, v)}
                                         />
-                                        <CustomFormLabel >Type (Opsional)</CustomFormLabel>
+                                        <CustomFormLabel>Type (Opsional)</CustomFormLabel>
                                         <CustomTextField
                                           select
                                           size="small"
@@ -1038,7 +955,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                           <MenuItem value="staff">Staff</MenuItem>
                                           <MenuItem value="visitor">Visitor</MenuItem>
                                         </CustomTextField>
-
                                       </Box>
 
                                       {page.form?.map((field: any, fIdx: any) => {
@@ -1296,8 +1212,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       {renderDetailRows(mergedVisitForm, (idx, fieldKey, value) => {
                         setGroupedPages((prev) => {
                           const next = { ...prev, single_page: [...prev.single_page] };
-
-                          // 🔄 gunakan mergedVisitForm bukan formsOf(section)
                           const base = formsOf(section)[idx];
                           const found = next.single_page.findIndex((sf) => sameField(sf, base));
 
@@ -2220,14 +2134,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     if (!updated.includes(node.id)) {
                       updated.push(node.id);
                     }
-                    // if (isParentNode) {
-                    //   const childIds = collectAllChildIds(node);
-                    //   childIds.forEach((cid) => {
-                    //     if (!updated.includes(cid)) {
-                    //       updated.push(cid);
-                    //     }
-                    //   });
-                    // }
                     if (!isParentNode && node.parentId && !updated.includes(node.parentId)) {
                       updated.push(node.parentId);
                     }
@@ -2240,12 +2146,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   }
 
                   onChange(index, 'answer_text', toCsv(updated));
-                  console.log('[TREE CHECK]', {
-                    clicked: node.id,
-                    isChecked,
-                    result: updated,
-                  });
-
                   return updated;
                 });
               }}
@@ -2332,9 +2232,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           if (!item?.mandatory) return;
 
           const remark = (item.remarks || '').toLowerCase();
-          // console.log('[validateCurrentStep] remark:', remark);
           const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
-          // console.log('[validateCurrentStep] isVisible:', isVisible);
           if (!isVisible) return;
 
           const key = `${activeStep - 1}:${gIdx}:${item.custom_field_id}`;
@@ -3634,7 +3532,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
         const submitFn = TYPE_REGISTERED === 0 ? createPraRegisterGroup : createVisitorsGroup;
         const backendResponse = await submitFn(token, parsed as any);
-        toast('Group visitor created successfully.', 'success');
+        showSwal('success', 'Group visitor created successfully.');
         resetMediaState();
         clearAnswerFiles();
       }
@@ -3664,28 +3562,23 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         };
 
         const parsed = CreateVisitorRequestSchema.parse(payload);
-        // console.log('Final Payload (Single):', JSON.stringify(parsed, null, 2));
+        console.log('Final Payload (Single):', JSON.stringify(parsed, null, 2));
 
         const submitFn = TYPE_REGISTERED === 0 ? createPraRegister : createVisitor;
         const backendResponse = await submitFn(token, parsed);
-        // console.log('Visitor created:', backendResponse);
+
         const successMessage =
           TYPE_REGISTERED === 0
             ? 'Pre-registration created successfully.'
             : 'Invitation Visitor created successfully.';
 
-        showSwal('success', successMessage, 500);
-
+        showSwal('success', successMessage, 3000);
         resetMediaState();
         clearAnswerFiles();
       }
-      // setTimeout(() => {
-        setLoading(false);
-        onSuccess?.();
-        // if (TYPE_REGISTERED !== 0) {
-        //   setNextDialogOpen(true);
-        // }
-      // }, 700);
+      setLoading(false);
+      setActiveStep(0);
+      onSuccess?.();
     } catch (err: any) {
       setTimeout(() => {
         setLoading(false);
@@ -3693,7 +3586,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       }, 700);
 
       toast('Failed to create visitor.', 'error');
-      console.error(err);
 
       if (err?.name === 'ZodError') {
         const fieldErrors: Record<string, string> = {};
@@ -4062,7 +3954,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
     const fetchVisitorTypeDetails = async () => {
       const res = visitorType.find((vt: any) => vt.id === formData.visitor_type);
-
       let sections = res?.section_page_visitor_types ?? [];
 
       if (TYPE_REGISTERED === 0 || FORM_KEY === 'pra_form') {
@@ -4201,11 +4092,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         swap_type: 'Other',
       }));
 
-      console.log('Payload for granting access:', { data: payload });
+      // console.log('Payload for granting access:', { data: payload });
 
       const res = await createMultipleGrantAccess(token as string, { data: payload });
-
-      console.log('Grand access operator response:', res);
 
       toast(`Assigned ${N} card(s) to ${N} invitation(s).`, 'success');
 
@@ -4242,8 +4131,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     return new Set(normalizeIdsDeep(selectedInvitations).map(String));
   }, [selectedInvitations]);
 
-  
-
   const availableVisibleCards = useMemo(() => {
     return filteredCards.filter((c) => {
       const holder = assignedByCard.get(String(c.card_number));
@@ -4252,8 +4139,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   }, [filteredCards, assignedByCard, selectedIdSet]);
 
   const availableCount = availableVisibleCards.length;
-
-
 
   useEffect(() => {
     if (openChooseCardDialog) {
@@ -4291,12 +4176,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
     setActiveStep(targetStep);
   };
-
-  const tableData = filteredRows.map((row: Row) => ({
-    id: row.id,
-    visitor: row.visitor,
-    card: row.card ? `${row.card.remarks} - ${row.card.card_number}` : '-',
-  }));
 
   return (
     <PageContainer title="Visitor" description="this is Add Visitor page">
@@ -4501,9 +4380,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   color="primary"
                   onClick={handleOnSubmit}
                   disabled={
-                    loading ||
-                    groupVisitors.length === 0 ||
-                    groupVisitors.every((g) => !g.data_visitor || g.data_visitor.length === 0)
+                    loading
+                    // groupVisitors.length === 0 ||
+                    // groupVisitors.every((g) => !g.data_visitor || g.data_visitor.length === 0)
                   }
                 >
                   Submit All

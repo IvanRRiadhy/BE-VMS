@@ -1079,7 +1079,7 @@ export const getListVisitor = async (token: string): Promise<any> => {
 export const getListVisitorPagination = async (
   token: string,
   start: number,
-  length: number,
+  length: number | undefined,
   sortDir = '',
   keyword: string = '',
   // filters: Record<string, any> = {},
@@ -1135,7 +1135,7 @@ export const getAllVisitorPagination = async (
   start: number,
   length: number,
   // sortColumn: string,
-  sortDir = '',
+  // sortDir = '',
   keyword?: string,
   start_date?: string,
   end_date?: string,
@@ -1146,12 +1146,12 @@ export const getAllVisitorPagination = async (
   is_emergency?: boolean,
   is_block?: boolean,
   host?: string,
-): Promise<GetAllVisitorPaginationResponse> => {
+): Promise<any> => {
   const params: Record<string, any> = {
     // draw,
     start,
     length,
-    sort_dir: sortDir,
+    // sort_dir: sortDir,
     'search[value]': keyword,
     'start-date': start_date,
     'end-date': end_date,
@@ -1332,7 +1332,7 @@ export const getAllVisitorType = async (token: string): Promise<GetAllVisitorTyp
 export const getVisitorTypeById = async (
   token: string,
   id: string,
-): Promise<GetVisitorTypeByIdResponse> => {
+): Promise<any> => {
   const response = await axiosInstance.get(`/visitor-type/${id}`, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });

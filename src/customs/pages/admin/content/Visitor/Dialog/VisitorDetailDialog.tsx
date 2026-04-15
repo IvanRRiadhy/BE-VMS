@@ -41,6 +41,8 @@ import {
   IconX,
   IconForbid2,
   IconQrcodeOff,
+  IconCardboards,
+  IconId,
 } from '@tabler/icons-react';
 import moment from 'moment-timezone';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
@@ -73,7 +75,7 @@ const VisitorDetailDialog: React.FC<VisitorDetailDialogProps> = ({
       const localTz = moment.tz.guess();
       // Parse UTC dari backend → konversi ke lokal device
       const localTime = moment.utc(value).tz(localTz);
-      return localTime.isValid() ? localTime.format('ddd, DD MMM YYYY HH:mm') : '-';
+      return localTime.isValid() ? localTime.format(' DD MMM YYYY HH:mm') : '-';
     } catch {
       return '-';
     }
@@ -95,17 +97,14 @@ const VisitorDetailDialog: React.FC<VisitorDetailDialogProps> = ({
       <Divider />
 
       <DialogContent sx={{ pt: 2 }}>
-        {/* 🌀 Loading State */}
         {loading && (
           <Box display="flex" justifyContent="center" alignItems="center" py={6}>
             <CircularProgress />
           </Box>
         )}
 
-        {/* ❌ Error State */}
         {!loading && error && <Card sx={{ p: 2, color: 'error.main' }}>{error}</Card>}
 
-        {/* ✅ Detail */}
         {!loading && !error && detail && (
           <Box>
             <Box display="flex" flexDirection="column" alignItems="center" gap={1.5} mb={2}>
@@ -143,7 +142,12 @@ const VisitorDetailDialog: React.FC<VisitorDetailDialogProps> = ({
                     {
                       icon: <IconBuildingSkyscraper />,
                       label: 'Organization',
-                      value: detail.visitor?.organization,
+                      value: detail.visitor_organization_name,
+                    },
+                    {
+                      icon: <IconId />,
+                      label: 'Identity Id',  
+                      value: detail.visitor_identity_id,
                     },
                   ].map((item, idx) => (
                     <Grid item xs={12} md={6} key={idx}>

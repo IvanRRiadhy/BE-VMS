@@ -78,6 +78,7 @@ const ImageCard = ({
             display="flex"
             alignItems="center"
             justifyContent="center"
+            // height={'100%'}
             height={isFullscreen ? '100%' : { xs: '200px', md: '100%', xl: '190px' }}
             sx={{
               borderRadius: '8px',
@@ -125,7 +126,7 @@ const VisitorImage = ({ faceImage, identityImage, isFullscreen = false }: Visito
       container
       direction="column"
       spacing={1}
-      sx={{ height: '100%', flexGrow: 1, flexWrap: 'nowrap' }}
+      sx={{ height: '60%', flexGrow: 1, flexWrap: 'nowrap', marginTop: '10px' }}
     >
       <Grid sx={{ flex: 1, display: 'flex' }}>
         <ImageCard

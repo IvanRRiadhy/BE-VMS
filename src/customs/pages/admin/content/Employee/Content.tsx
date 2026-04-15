@@ -36,8 +36,6 @@ import {
 } from 'src/customs/api/admin';
 
 import { IconUsers } from '@tabler/icons-react';
-
-// Alert
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import FilterMoreContent from './FilterMoreContent';
 
@@ -84,6 +82,7 @@ const Content = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [edittingId, setEdittingId] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [tableRowEmployee, setTableRowEmployee] = useState<EmployeesTableRow[]>([]);
   const [sortDir, setSortDir] = useState<string>('desc');
@@ -233,7 +232,6 @@ const Content = () => {
       const parsed = saved ? JSON.parse(saved) : {};
       return CreateEmployeeRequestSchema.parse(parsed);
     } catch (e) {
-      console.error('Invalid saved data, fallback to default schema.');
       return CreateEmployeeRequestSchema.parse({});
     }
   });
@@ -275,7 +273,7 @@ const Content = () => {
 
   const handleEdit = (id: string) => {
     const existingData = tableData.find((item) => String(item.id) === String(id));
-    // console.log('existingData', existingData);
+
     if (!existingData) return;
 
     const toNum = (
@@ -432,20 +430,19 @@ const Content = () => {
 
     if (!confirmed) return false;
 
-    // if (confirmed) {
-      setLoading(true);
-      try {
-        await Promise.all(rows.map((row) => deleteEmployee(row.id, token)));
-        setRefreshTrigger((prev) => prev + 1);
-        showSwal('success', `Succesfully deleted ${rows.length} employees.`);
-        setSelectedRows([]);
-        return true;
-      } catch (error) {
-        showSwal('error', 'Failed to delete some employees.');
-        return false;
-      } finally {
-        setLoading(false);
-      }
+    setLoading(true);
+    try {
+      await Promise.all(rows.map((row) => deleteEmployee(row.id, token)));
+      setRefreshTrigger((prev) => prev + 1);
+      showSwal('success', `Succesfully deleted ${rows.length} employees.`);
+      setSelectedRows([]);
+      return true;
+    } catch (error) {
+      showSwal('error', 'Failed to delete some employees.');
+      return false;
+    } finally {
+      setLoading(false);
+    }
     // }
   };
 
@@ -492,6 +489,15 @@ const Content = () => {
     }
   };
 
+  const handleSearchKeywordChange = useCallback((keyword: string) => {
+    setSearchInput(keyword);
+  }, []);
+
+  const handleSearch = useCallback(() => {
+    setPage(0);
+    setSearchKeyword(searchInput);
+  }, [searchInput]);
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -518,7 +524,7 @@ const Content = () => {
                 isHaveExportPdf={false}
                 isHavePagination={true}
                 defaultRowsPerPage={rowsPerPage}
-                rowsPerPageOptions={[10, 20, 50, 100]}
+                rowsPerPageOptions={[10, 50, 100]}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);
@@ -549,10 +555,12 @@ const Content = () => {
                   setEdittingId(row.id);
                 }}
                 onBatchEdit={handleBatchEdit}
-                // onDelete={(row) => handleDelete(row.id)}
                 onDelete={(row) => handleDelete(row)}
                 onBatchDelete={handleBatchDelete}
-                onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                // onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                searchKeyword={searchInput}
+                onSearch={handleSearch}
+                onSearchKeywordChange={handleSearchKeywordChange}
                 onAddData={() => {
                   handleAdd();
                 }}

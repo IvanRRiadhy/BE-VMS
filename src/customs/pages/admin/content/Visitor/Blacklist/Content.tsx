@@ -27,16 +27,16 @@ const Content = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [sortDir, setSortDir] = useState('desc');
+  const [searchInput, setSearchInput] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [totalActive, setTotalActive] = useState(0);
   const [totalNonActive, setTotalNonActive] = useState(0);
   const [visitors, setVisitors] = useState<any[]>([]);
-  const [visitorSearch, setVisitorSearch] = useState('');
 
   const cards = [
     {
       title: 'Total Blacklist',
-      subTitle: `${totalRecords}`,
+      subTitle: `${totalFilteredRecords}`,
       subTitleSetting: 10,
       icon: IconForbid,
       color: 'none',
@@ -138,6 +138,15 @@ const Content = () => {
     setRefreshTrigger((prev) => prev + 1);
   };
 
+  const handleSearchKeywordChange = useCallback((keyword: string) => {
+    setSearchInput(keyword);
+  }, []);
+
+  const handleSearch = useCallback(() => {
+    setPage(0);
+    setSearchKeyword(searchInput);
+  }, [searchInput]);
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -157,7 +166,7 @@ const Content = () => {
                 isHavePagination={true}
                 selectedRows={selectedRows}
                 defaultRowsPerPage={rowsPerPage}
-                rowsPerPageOptions={[10, 20, 50, 100, 500]}
+                rowsPerPageOptions={[10, 50, 100]}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);
@@ -168,10 +177,14 @@ const Content = () => {
                 isHaveFilter={false}
                 isHaveFilterDuration={false}
                 isHaveAddData={false}
+                isNoActionTableHead={true}
                 isHaveFilterMore={true}
                 isHaveHeader={false}
                 onCheckedChange={(selected) => setSelectedRows(selected)}
-                onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                // onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                searchKeyword={searchInput}
+                onSearch={handleSearch}
+                onSearchKeywordChange={handleSearchKeywordChange}
                 filterMoreContent={
                   <FilterBlacklist
                     filters={filters}

@@ -60,7 +60,6 @@ const SchedulerForm: React.FC<SchedulerFormProps> = ({
     }
   }, [defaultValue]);
 
-  // console.log('site', siteDataQuery);
   const buildTreeOptions = (data: Site[]) => {
     const result: (Site & { level: number })[] = [];
     const validIds = new Set(data.map((x) => x.id));
@@ -82,9 +81,6 @@ const SchedulerForm: React.FC<SchedulerFormProps> = ({
     walk(null, 0);
     return result;
   };
-
-  const [selectedSites, setSelectedSites] = useState<Site[]>([]);
-  const [checkedSiteIds, setCheckedSiteIds] = useState<string[]>([]);
 
   const treeSiteOptions = useMemo(() => buildTreeOptions(siteDataQuery ?? []), [siteDataQuery]);
 
@@ -125,8 +121,6 @@ const SchedulerForm: React.FC<SchedulerFormProps> = ({
             (x.id ?? x.Id)?.toLowerCase() ===
             (defaultValue.host_id ?? defaultValue.HostId)?.toLowerCase(),
         ) ?? null;
-
-      console.log('✅ matchedSite', matchedSite);
 
       setForm({
         name: defaultValue.name ?? '',
@@ -177,30 +171,30 @@ const SchedulerForm: React.FC<SchedulerFormProps> = ({
         question_page: form.question_page ?? [],
       };
 
-      console.log('📦 Payload to submit:', payload);
+      console.log('Payload to submit:', payload);
       await onSubmit(payload);
 
-      if (mode === 'add') {
-        setForm({
-          name: '',
-          time_access: null,
-          visitor_type: null,
-          site: [] as Site[],
-          host: null,
-          question_page: [],
-        });
-        localStorage.removeItem('unsavedSchedulerData');
-      }
+      // if (mode === 'add') {
+      //   setForm({
+      //     name: '',
+      //     time_access: null,
+      //     visitor_type: null,
+      //     site: [] as Site[],
+      //     host: null,
+      //     question_page: [],
+      //   });
+      //   localStorage.removeItem('unsavedSchedulerData');
+      // }
     } catch (error: any) {
       const backendMessage = error.msg || error.collection;
 
-      showSwal('error', backendMessage);
+      showSwal('error', backendMessage || 'Failed to save schedule.');
     }
   };
 
-  useEffect(() => {
-    localStorage.setItem('unsavedSchedulerData', JSON.stringify(form));
-  }, [form]);
+  // useEffect(() => {
+  //   localStorage.setItem('unsavedSchedulerData', JSON.stringify(form));
+  // }, [form]);
 
   useEffect(() => {
     if (!form.visitor_type) return;
@@ -243,24 +237,6 @@ const SchedulerForm: React.FC<SchedulerFormProps> = ({
     }
   }, [form.visitor_type]);
 
-  const dummySites = [
-    { id: 'site-1', name: 'Gedung SINERGI' },
-    { id: 'site-2', name: 'Gedung Visitor' },
-    { id: 'site-3', name: 'Gedung B' },
-  ];
-
-  const [sites, setSites] = useState<{ site_id: string }[]>([]);
-  const handleAddSite = () => {
-    setSites((prev) => [...prev, { site_id: '' }]);
-  };
-
-  const handleRemoveSite = (index: number) => {
-    setSites((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const handleChangeSite = (index: number, value: string) => {
-    setSites((prev) => prev.map((row, i) => (i === index ? { site_id: value } : row)));
-  };
   const [inputValue, setInputValue] = useState('');
   const [selectedSiteParentIds, setSelectedSiteParentIds] = useState<string[]>([]);
   const [selectedSiteIds, setSelectedSiteIds] = useState<string[]>([]);
@@ -280,7 +256,11 @@ const SchedulerForm: React.FC<SchedulerFormProps> = ({
         label={
           <FormControlLabel
             control={
-              <Checkbox checked={checked} onChange={(e) => onChange(node, e.target.checked)} />
+              <Checkbox
+                size="small"
+                checked={checked}
+                onChange={(e) => onChange(node, e.target.checked)}
+              />
             }
             label={node.name}
           />
@@ -397,7 +377,7 @@ const SchedulerForm: React.FC<SchedulerFormProps> = ({
           <CustomFormLabel htmlFor="site">Site</CustomFormLabel>
           <Autocomplete
             multiple
-            size="small"
+            size="medium"
             options={siteParentOptions}
             getOptionLabel={(option) => option.name}
             inputValue={inputValue}
@@ -405,11 +385,20 @@ const SchedulerForm: React.FC<SchedulerFormProps> = ({
               if (reason !== 'input') return;
               setInputValue(newValue);
             }}
+            // filterOptions={(opts, state) => {
+            //   if (state.inputValue.length < 3) return [];
+            //   return opts.filter((opt) =>
+            //     opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
+            //   );
+            // }}
             filterOptions={(opts, state) => {
-              if (state.inputValue.length < 3) return [];
-              return opts.filter((opt) =>
-                opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
-              );
+              const input = state.inputValue.toLowerCase();
+
+              if (!input || input.length < 3) {
+                return opts.slice(0, 5);
+              }
+
+              return opts.filter((opt) => opt.name.toLowerCase().includes(input));
             }}
             noOptionsText={
               inputValue.length < 3 ? 'Enter at least 3 characters to search' : 'Not found'

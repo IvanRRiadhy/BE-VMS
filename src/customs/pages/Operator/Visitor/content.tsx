@@ -108,13 +108,6 @@ const Visitor = () => {
       max_usage: item.max_usage,
       visitor_period_start: formatDateTime(item.visitor_period_start),
       visitor_period_end: formatDateTime(item.visitor_period_end),
-      // expired_at: new Date(item.expired_at + 'Z').toLocaleString(undefined, {
-      //   year: 'numeric',
-      //   month: '2-digit',
-      //   day: '2-digit',
-      //   hour: '2-digit',
-      //   minute: '2-digit',
-      // }),
       expired_at: (() => {
         const date = new Date(item.expired_at + 'Z');
 
@@ -310,7 +303,6 @@ const Visitor = () => {
   const getExpireText = () => {
     if (!expiredAt) return '';
 
-    // bersihkan microseconds + paksa jadi UTC
     const cleanDate = expiredAt.replace(/\.\d+/, '') + 'Z';
     const expireDate = new Date(cleanDate);
 
@@ -348,15 +340,13 @@ const Visitor = () => {
       const payload = {
         emails: finalEmails,
       };
-
-      console.log('payload', payload);
+      // console.log('payload', payload);
       await createShareLinkByEmailById(token as string, payload, selectedShareLinkId);
       showSwal('success', 'Invitation sent successfully');
 
       setEmails([]);
       setEmailInput('');
     } catch (error) {
-      console.error(error);
       showSwal('error', 'Failed to send invitation');
     }
   };

@@ -40,7 +40,7 @@ import {
 import { useTheme } from '@mui/material/styles';
 import FormIntegration from './FormIntegration';
 import { IconWorldCog } from '@tabler/icons-react';
-import { useNavigate } from 'react-router-dom';
+
 import {
   showConfirmDelete,
   showErrorAlert,
@@ -76,12 +76,10 @@ const Content = () => {
   const [selectedRows, setSelectedRows] = useState<IntegrationTableRow[]>([]);
   const [tableData, setTableData] = useState<IntegrationTableRow[]>([]);
   const [availableIntegration, setAvailableIntegration] = useState<AvailableItem[]>([]);
-  const [isDataReady, setIsDataReady] = useState(false);
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -98,16 +96,13 @@ const Content = () => {
   }
 
   function normalizeBrandType(value: unknown): number {
-    // sudah number
     if (typeof value === 'number') return value;
 
-    // string enum → number enum
     if (typeof value === 'string' && value in BrandType) {
       return BrandType[value as keyof typeof BrandType];
     }
 
-    console.warn('Unknown brand_type:', value);
-    return 0; // fallback aman
+    return 0;
   }
 
   useEffect(() => {
@@ -122,7 +117,6 @@ const Content = () => {
           getAvailableIntegration(token),
         ]);
 
-        // Normalize to arrays
         const integrations: Item[] = Array.isArray(response?.collection) ? response.collection : [];
         const availables = (availableResponse.collection ?? []).map((item) => ({
           ...item,
@@ -148,16 +142,12 @@ const Content = () => {
         }));
 
         setTableData(rows);
-        setIsDataReady(true);
       } catch (error) {
-        console.error('Error fetching data:', error);
-        // Reset to safe defaults so the UI still renders
         if (!cancelled) {
           setIntegrationData([]);
           setAvailableIntegration([]);
           setTableData([]);
           setTotalRecords(0);
-          setIsDataReady(true);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -168,7 +158,7 @@ const Content = () => {
     return () => {
       cancelled = true;
     };
-  }, [token, page, rowsPerPage, sortColumn, refreshTrigger]);
+  }, [token, page, rowsPerPage, refreshTrigger]);
 
   const [formDataAddIntegration, setFormDataAddIntegration] = useState<any>(() => {
     const saved = localStorage.getItem('unsavedIntegrationData');
@@ -220,10 +210,7 @@ const Content = () => {
     return '';
   }
 
-  //Create Integration management
   const [openFormAddIntegration, setOpenFormAddIntegration] = useState(false);
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [pendingEditId, setPendingEditId] = useState<string | null>(null);
 
   const handleOpenDialog = () => {
     setOpenFormAddIntegration(true);
@@ -251,6 +238,7 @@ const Content = () => {
 
   const handleEdit = (id: string) => {
     const integration = integrationData.find((item) => item.id === id);
+    console.log(integration);
     if (!integration) return;
 
     const sanitized = sanitizeIntegrationForForm(integration);
@@ -286,10 +274,7 @@ const Content = () => {
   const handleBatchDelete = async (rows: any[]) => {
     if (!token || rows.length === 0) return;
 
-    const confirmed = await showConfirmDelete(
-      `Are you sure to delete ${rows.length} items?`,
-      "You won't be able to revert this!",
-    );
+    const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} items?`);
 
     if (confirmed) {
       setLoading(true);
@@ -297,7 +282,7 @@ const Content = () => {
         await Promise.all(rows.map((row) => deleteIntegration(row.id, token)));
         setRefreshTrigger((prev) => prev + 1);
         showSuccessAlert('Deleted!', `${rows.length} items have been deleted.`);
-        setSelectedRows([]); // reset selected rows
+        setSelectedRows([]);
       } catch (error) {
         console.error(error);
         showErrorAlert('Error!', 'Failed to delete some items.');
@@ -315,19 +300,16 @@ const Content = () => {
       <Container title="Integration" description="Integration page">
         <Box>
           <Grid container spacing={3}>
-            {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
               <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
             </Grid>
-            {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
-              {/* {isDataReady ? ( */}
               <DynamicTable
                 loading={loading}
                 isHavePagination={false}
                 totalCount={totalRecords}
                 defaultRowsPerPage={rowsPerPage}
-                rowsPerPageOptions={[10, 20, 50, 100]}
+                rowsPerPageOptions={[10, 50, 100]}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);
@@ -381,7 +363,7 @@ const Content = () => {
                       padding: 2,
                       marginBottom: 2,
                       // backgroundColor: brandTypeBgColorMap[integration.brand_type] || '#fff',
-                      backgroundColor: 'primary.light'
+                      backgroundColor: 'primary.light',
                     }}
                   >
                     <Box component="h3">{integration.name}</Box>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Backdrop, Box, CircularProgress, Grid2 as Grid } from '@mui/material';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -22,9 +22,10 @@ import VisitorDetailDialog from '../Dialog/VisitorDetailDialog';
 import { IconUsers } from '@tabler/icons-react';
 import Swal from 'sweetalert2';
 import { showSwal } from 'src/customs/components/alerts/alerts';
-import { useDebounce } from 'src/hooks/useDebounce';
 import { useNavigate } from 'react-router';
 import FilterVisitor from './FilterVisitor';
+import { useDebounce } from 'src/hooks/useDebounce';
+import { filter } from 'lodash';
 
 type VisitorTableRow = {
   id: string;
@@ -57,36 +58,38 @@ const Content = () => {
   const navigate = useNavigate();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [sortColumn, setSortColumn] = useState<string>('id');
   const [sortDir, setSortDir] = useState<string>('desc');
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [loadingData, setLoadingData] = useState(false);
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [totalRecords, setTotalRecords] = useState(0);
-  const [searchKeyword, setSearchKeyword] = useState('');
   const [tableCustomVisitor, setTableCustomVisitor] = useState<VisitorTableRow[]>([]);
   const [selectedRows, setSelectedRows] = useState<[]>([]);
-  const debouncedSearch = useDebounce(searchKeyword, 500);
 
-  const cards = [
-    {
-      title: 'Total Visitor',
-      icon: IconUsers,
-      subTitle: `${totalRecords}`,
-      subTitleSetting: 10,
-      color: 'none',
-    },
-  ];
+  const cards = useMemo(
+    () => [
+      {
+        title: 'Total Visitor',
+        icon: IconUsers,
+        subTitle: `${totalRecords}`,
+        subTitleSetting: 10,
+        color: 'none',
+      },
+    ],
+    [totalRecords],
+  );
 
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
-
   // Visitor Detail
   const [openVisitorDialog, setOpenVisitorDialog] = useState(false);
   const [visitorLoading, setVisitorLoading] = useState(false);
   const [visitorError, setVisitorError] = useState<string | null>(null);
   const [visitorDetail, setVisitorDetail] = useState<any>(null);
+  const [searchInput, setSearchInput] = useState('');
+  const [searchKeyword, setSearchKeyword] = useState('');
+  // const debouncedSearch = useDebounce(searchKeyword, 500);
   const [filters, setFilters] = useState<VisitorFilters>({
     organization_id: '',
     department_id: '',
@@ -103,17 +106,16 @@ const Content = () => {
       setLoading(true);
 
       try {
+        // const limit = rowsPerPage === -1 ? undefined : rowsPerPage;
         const start = page * rowsPerPage;
         const response = await getListVisitorPagination(
           token,
           start,
           rowsPerPage,
           sortDir,
-          debouncedSearch,
+          searchKeyword,
           // filters,
         );
-        // const response = await getListVisitor(token);
-
         let rows = response.collection.map((item: any) => {
           return {
             id: item.id,
@@ -130,22 +132,19 @@ const Content = () => {
             is_blacklist: item.is_blacklist,
           };
         });
-        // console.log('Fetched visitor data:', rows);
-        // console.log('table', tableCustomVisitor);
 
         // setTableRowVisitors(response.collection);
         setTotalRecords(response.RecordsTotal);
         setTotalFilteredRecords(response.RecordsFiltered);
         setTableCustomVisitor(rows);
       } catch (err) {
-        console.error('Failed to fetch visitor data:', err);
         setTableCustomVisitor([]);
       } finally {
         setLoading(false);
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, refreshTrigger, debouncedSearch]);
+  }, [token, page, rowsPerPage, refreshTrigger, searchKeyword]);
 
   const handleView = async (id: string) => {
     if (!id || !token) return;
@@ -165,7 +164,6 @@ const Content = () => {
     }
   };
 
-  // jenis aksi yang dikonfirmasi
   type VisitorAction = 'checkin' | 'checkout' | 'deny' | 'block';
 
   const [confirm, setConfirm] = useState<{
@@ -181,7 +179,6 @@ const Content = () => {
   };
 
   const handleBlacklist = async (id: string, isBlacklist?: boolean) => {
-    console.log('PARAM isBlacklist:', isBlacklist, typeof isBlacklist);
     try {
       const isBlacklistAction = !isBlacklist;
 
@@ -217,8 +214,6 @@ const Content = () => {
         action: isBlacklistAction ? 'blacklist' : 'whitelist',
         reason: inputReason.trim(),
       };
-      console.log('Blacklist payload:', payload);
-
       await createBlacklist(token as string, payload);
 
       showSwal(
@@ -228,7 +223,6 @@ const Content = () => {
 
       setRefreshTrigger((prev) => prev + 1);
     } catch (error: any) {
-      console.error(error);
       showSwal('error', error?.response?.data?.msg ?? 'Action failed');
     } finally {
       setLoadingData(false);
@@ -249,6 +243,40 @@ const Content = () => {
     setFilters(empty);
     setPage(0);
   };
+
+  const handlePaginationChange = useCallback((page: number, rowsPerPage: number) => {
+    setPage(page);
+    setRowsPerPage(rowsPerPage);
+  }, []);
+
+  const handleBlacklistMemo = useCallback((row: any) => {
+    handleBlacklist(row.id, Boolean(row.is_blacklist));
+  }, []);
+
+  const handleViewMemo = useCallback((row: any) => {
+    handleView(row.id);
+  }, []);
+
+  const handleSearchKeywordChange = useCallback((keyword: string) => {
+    setSearchInput(keyword);
+  }, []);
+
+  const handleSearch = useCallback(() => {
+    setPage(0);
+    setSearchKeyword(searchInput);
+  }, [searchInput]);
+
+  const filterContent = useMemo(
+    () => (
+      <FilterVisitor
+        filters={filters}
+        setFilters={setFilters}
+        onApplyFilter={handleApplyFilter}
+        onResetFilter={handleResetFilter}
+      />
+    ),
+    [filters],
+  );
 
   return (
     <>
@@ -273,11 +301,14 @@ const Content = () => {
                   data={tableCustomVisitor}
                   totalCount={totalFilteredRecords}
                   selectedRows={selectedRows}
-                  rowsPerPageOptions={[10, 50, 100, 500]}
-                  onPaginationChange={(page, rowsPerPage) => {
-                    setPage(page);
-                    setRowsPerPage(rowsPerPage);
-                  }}
+                  rowsPerPageOptions={[10, 50, 100]}
+                  onPaginationChange={handlePaginationChange}
+                  onBlacklist={handleBlacklistMemo}
+                  onView={handleViewMemo}
+                  // onSearchKeywordChange={handleSearchKeywordChange}
+                  searchKeyword={searchInput}
+                  onSearch={handleSearch}
+                  onSearchKeywordChange={handleSearchKeywordChange}
                   isHaveChecked={true}
                   isHaveVip={true}
                   isHaveSearch={true}
@@ -290,18 +321,17 @@ const Content = () => {
                   isHaveGender={true}
                   isHaveVisitor={true}
                   isBlacklistAction={true}
-                  onBlacklist={(row) => {
-                    handleBlacklist(row.id, Boolean(row.is_blacklist));
-                    console.log('CLICK VALUE:', row.is_blacklist, typeof row.is_blacklist);
-                  }}
+                  // onBlacklist={(row) => {
+                  //   handleBlacklist(row.id, Boolean(row.is_blacklist));
+                  // }}
                   isActionVisitor={false}
-                  onView={(row) => {
-                    handleView(row.id);
-                  }}
+                  // onView={(row) => {
+                  //   handleView(row.id);
+                  // }}
                   isHaveEmployee={true}
                   isHaveVerified={true}
                   onCheckedChange={(selected) => console.log('Checked table row:', selected)}
-                  onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                  // onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
                   onFilterCalenderChange={(ranges) => {
                     if (ranges.startDate && ranges.endDate) {
                       setStartDate(ranges.startDate.toISOString());
@@ -311,14 +341,7 @@ const Content = () => {
                     }
                   }}
                   isHaveFilterMore={true}
-                  filterMoreContent={
-                    <FilterVisitor
-                      filters={filters}
-                      setFilters={setFilters}
-                      onApplyFilter={handleApplyFilter}
-                      onResetFilter={handleResetFilter}
-                    />
-                  }
+                  filterMoreContent={filterContent}
                   isBlacklistPage={true}
                   onNavigatePage={() => {
                     navigate('/admin/visitor/blacklist-visitor');

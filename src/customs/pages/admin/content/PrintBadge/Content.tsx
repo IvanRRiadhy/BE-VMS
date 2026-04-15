@@ -10,6 +10,9 @@ import {
   Backdrop,
   Box,
   Button,
+  Card,
+  CardContent,
+  CardHeader,
   CircularProgress,
   Divider,
   Grid2 as Grid,
@@ -185,11 +188,11 @@ const Content = () => {
     >
       <Container title="Print Badge" description="Print Badge page">
         <Box>
-          <Grid container spacing={3} alignItems={'start'} justifyContent={'center'}>
+          <Grid container spacing={3} alignItems={'stretch'} justifyContent={'center'}>
             <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-              <Box sx={{ backgroundColor: 'white', p: 2, height: '100%' }}>
+              <Box sx={{ backgroundColor: 'white', p: 2, height: '100%', alignItems: 'stretch' }}>
                 <Typography variant="h5" gutterBottom mb={2}>
-                  Print Badge
+                  Print Badge Configuration
                 </Typography>
                 <Divider sx={{ mb: 2 }} />
                 <FormPrintBadge
@@ -201,8 +204,25 @@ const Content = () => {
                 />
               </Box>
             </Grid>
-            <Grid size={{ xs: 12, md: 6, lg: 3 }}>
-              <img src={printBadge} alt="printBadge" />
+            <Grid size={{ xs: 12, md: 6, lg: 4.5, xl: 3.8 }}>
+              <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                {/* <CardHeader title="Live Preview" /> */}
+                <Typography variant="h5" mb={1} fontWeight={'bold'}>
+                  Live Preview
+                </Typography>
+                <Divider sx={{ mb: 1 }} />
+                <CardContent
+                  sx={{
+                    backgroundColor: '#e1e6e8',
+                    borderRadius: 1,
+                    flexGrow: 1, // 👈 ini penting
+                  }}
+                >
+                  <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                    <img src={printBadge} alt="printBadge" />
+                  </Box>
+                </CardContent>
+              </Card>
             </Grid>
           </Grid>
         </Box>

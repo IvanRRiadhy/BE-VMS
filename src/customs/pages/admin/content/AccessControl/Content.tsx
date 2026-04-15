@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
   Box,
   Button,
@@ -6,12 +6,9 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Card,
-  Skeleton,
   Divider,
   Grid2 as Grid,
   IconButton,
-  useTheme,
 } from '@mui/material';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import Container from 'src/components/container/PageContainer';
@@ -65,6 +62,7 @@ const Content = () => {
   const [edittingId, setEdittingId] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const dialogRef = useRef<HTMLDivElement>(null);
   const [openCreateAccessControl, setOpenCreateAccessControl] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -74,7 +72,7 @@ const Content = () => {
     {
       title: 'Total Access Control',
       icon: IconAccessible,
-      subTitle: `${totalFilteredRecords}`,
+      subTitle: `${totalRecords}`,
       subTitleSetting: 10,
       color: 'none',
     },
@@ -314,6 +312,15 @@ const Content = () => {
     );
   };
 
+  const handleSearchKeywordChange = useCallback((keyword: string) => {
+    setSearchInput(keyword);
+  }, []);
+
+  const handleSearch = useCallback(() => {
+    setPage(0);
+    setSearchKeyword(searchInput);
+  }, [searchInput]);
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -333,7 +340,7 @@ const Content = () => {
                 selectedRows={selectedRows}
                 totalCount={totalFilteredRecords}
                 defaultRowsPerPage={rowsPerPage}
-                rowsPerPageOptions={[10, 25, 50, 100, 250]}
+                rowsPerPageOptions={[10, 50, 100]}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);
@@ -364,8 +371,9 @@ const Content = () => {
                 isDataVerified={true}
                 onDelete={(row) => handleDelete(row.id)}
                 onBatchDelete={handleBatchDelete}
-                onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-                // onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
+                searchKeyword={searchInput}
+                onSearch={handleSearch}
+                onSearchKeywordChange={handleSearchKeywordChange}
                 onAddData={() => {
                   handleAdd();
                 }}

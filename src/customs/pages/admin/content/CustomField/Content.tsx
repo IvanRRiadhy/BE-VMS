@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import {
   Box,
   Dialog,
@@ -48,7 +48,6 @@ type CustomFieldTableRow = {
 };
 
 const Content = () => {
-  const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const [tableData, setTableData] = useState<Item[]>([]);
   const [selectedRows, setSelectedRows] = useState<CustomFieldTableRow[]>([]);
   const { token } = useSession();
@@ -56,12 +55,12 @@ const Content = () => {
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(30);
-  const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [tableRowSite, setTableRowSite] = useState<CustomFieldTableRow[]>([]);
   const [edittingId, setEdittingId] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [initialFormSnapshot, setInitialFormSnapshot] = useState<string | null>(null);
   const [shouldTrackChanges, setShouldTrackChanges] = useState(false);
   const [sortDir, setSortDir] = useState('desc');
@@ -82,14 +81,33 @@ const Content = () => {
         //   searchKeyword,
         // );
 
-        const rows = responseGet.collection.map((item: Item) => ({
-          id: item.id,
-          name: item.short_name,
-          display_text: item.long_display_text,
-          field_type: FieldType[item.field_type],
-          multiple_option_fields: item.multiple_option_fields,
-        }));
+        // const rows = responseGet.collection.map((item: Item) => ({
+        //   id: item.id,
+        //   name: item.short_name,
+        //   display_text: item.long_display_text,
+        //   field_type: FieldType[item.field_type],
+        //   multiple_option_fields: item.multiple_option_fields,
+        // }));
 
+        const rows = responseGet.collection
+          .filter((item: Item) => {
+            if (!searchKeyword) return true;
+
+            const keyword = searchKeyword.toLowerCase();
+
+            return (
+              item.short_name?.toLowerCase().includes(keyword) ||
+              item.long_display_text?.toLowerCase().includes(keyword) ||
+              FieldType[item.field_type]?.toLowerCase().includes(keyword)
+            );
+          })
+          .map((item: Item) => ({
+            id: item.id,
+            name: item.short_name,
+            display_text: item.long_display_text,
+            field_type: FieldType[item.field_type],
+            multiple_option_fields: item.multiple_option_fields,
+          }));
         setTableRowSite(rows);
         setTotalRecords(responseGet.collection.length);
       } catch (error) {
@@ -103,7 +121,7 @@ const Content = () => {
 
   const [formDataAddCustomField, setFormDataAddCustomField] = useState<CreateCustomFieldRequest>(
     () => {
-      const saved = localStorage.getItem('UNSAV');
+      const saved = localStorage.getItem('unsavedCustomField');
       return saved ? JSON.parse(saved) : {};
     },
   );
@@ -116,9 +134,9 @@ const Content = () => {
     const current = JSON.stringify(formDataAddCustomField);
 
     if (current !== initialFormSnapshot) {
-      localStorage.setItem('UNSAV', current);
+      localStorage.setItem('unsavedCustomField', current);
     } else {
-      localStorage.removeItem('UNSAV');
+      localStorage.removeItem('unsavedCustomField');
     }
   }, [formDataAddCustomField, shouldTrackChanges, initialFormSnapshot]);
 
@@ -168,7 +186,7 @@ const Content = () => {
   };
 
   const handleAdd = () => {
-    const editing = localStorage.getItem('UNSAV');
+    const editing = localStorage.getItem('unsavedCustomField');
     const data = editing ? JSON.parse(editing) : CreateCustomFieldRequestSchema.parse({});
 
     setFormDataAddCustomField(data);
@@ -180,7 +198,7 @@ const Content = () => {
   };
 
   const handleEdit = (id: string) => {
-    const editing = localStorage.getItem('UNSAV');
+    const editing = localStorage.getItem('unsavedCustomField');
     if (editing) {
       const parsed = JSON.parse(editing);
       if (parsed.id === id) {
@@ -205,7 +223,7 @@ const Content = () => {
   };
   const handleConfirmEdit = () => {
     setConfirmDialogOpen(false);
-    localStorage.removeItem('UNSAV');
+    localStorage.removeItem('unsavedCustomField');
 
     if (pendingEditId) {
       const data = tableData.find((item) => item.id === pendingEditId);
@@ -238,10 +256,7 @@ const Content = () => {
   const handleDelete = async (id: string) => {
     if (!token) return;
 
-    const confirm = await showConfirmDelete(
-      'Are you sure you want to delete this? ',
-      "You won't be able to revert this!",
-    );
+    const confirm = await showConfirmDelete('Are you sure you want to delete this custom field? ');
 
     if (confirm) {
       setLoading(true);
@@ -261,10 +276,7 @@ const Content = () => {
   const handleBatchDelete = async (rows: CustomFieldTableRow[]) => {
     if (!token || rows.length === 0) return;
 
-    const confirmed = await showConfirmDelete(
-      `Are you sure to delete ${rows.length} items?`,
-      "You won't be able to revert this!",
-    );
+    const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} items?`);
 
     if (confirmed) {
       setLoading(true);
@@ -280,6 +292,26 @@ const Content = () => {
       }
     }
   };
+
+  const handleSuccess = () => {
+    localStorage.removeItem('unsavedCustomField');
+    handleCloseDialog();
+    setRefreshTrigger(refreshTrigger + 1);
+    if (edittingId) {
+      showSwal('success', 'Custom Field successfully updated!');
+    } else {
+      showSwal('success', 'Custom Field successfully created!');
+    }
+  };
+
+  const handleSearchKeywordChange = useCallback((keyword: string) => {
+    setSearchInput(keyword);
+  }, []);
+
+  const handleSearch = useCallback(() => {
+    setPage(0);
+    setSearchKeyword(searchInput);
+  }, [searchInput]);
 
   return (
     <PageContainer
@@ -301,7 +333,7 @@ const Content = () => {
                 selectedRows={selectedRows}
                 totalCount={totalFilteredRecords}
                 // defaultRowsPerPage={rowsPerPage}
-                // rowsPerPageOptions={[5, 10, 20, 50, 100]}
+                // rowsPerPageOptions={[ 10, 50, 100]}
                 // onPaginationChange={(page, rowsPerPage) => {
                 //   setPage(page);
                 //   setRowsPerPage(rowsPerPage);
@@ -324,7 +356,9 @@ const Content = () => {
                 }}
                 onDelete={(row) => handleDelete(row.id)}
                 onBatchDelete={handleBatchDelete}
-                onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                searchKeyword={searchInput}
+                onSearch={handleSearch}
+                onSearchKeywordChange={handleSearchKeywordChange}
                 onAddData={() => {
                   handleAdd();
                 }}
@@ -366,16 +400,7 @@ const Content = () => {
           <FormCustomField
             formData={formDataAddCustomField}
             setFormData={setFormDataAddCustomField}
-            onSuccess={() => {
-              localStorage.removeItem('UNSAV');
-              handleCloseDialog();
-              setRefreshTrigger(refreshTrigger + 1);
-              if (edittingId) {
-                showSwal('success', 'Custom Field successfully updated!');
-              } else {
-                showSwal('success', 'Custom Field successfully created!');
-              }
-            }}
+            onSuccess={handleSuccess}
             editingId={edittingId}
           />
         </DialogContent>
@@ -394,35 +419,6 @@ const Content = () => {
           </Button>
         </DialogActions>
       </Dialog>
-      {/* {loading && (
-        <Box
-          sx={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100vw',
-            height: '100vh',
-            bgcolor: '#fff',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 2000,
-          }}
-        >
-          <CircularProgress color="primary" />
-        </Box>
-      )} */}
-      {/* <Portal>
-        <Backdrop
-          open={loading}
-          sx={{
-            color: '#fff',
-            zIndex: 99999, // di atas drawer & dialog
-          }}
-        >
-          <CircularProgress color="primary" />
-        </Backdrop>
-      </Portal> */}
     </PageContainer>
   );
 };

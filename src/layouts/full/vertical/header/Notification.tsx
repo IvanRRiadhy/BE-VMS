@@ -1,6 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import React, { useState } from 'react';
+import { Tabs, Tab } from '@mui/material';
 import {
   IconButton,
   Box,
@@ -16,7 +17,7 @@ import {
 // import * as dropdownData from './data';
 import Scrollbar from 'src/components/custom-scroll/Scrollbar';
 
-import { IconBellRinging } from '@tabler/icons-react';
+import { IconBellRinging, IconCheck, IconX } from '@tabler/icons-react';
 import { Link } from 'react-router';
 
 const Notifications = () => {
@@ -28,6 +29,12 @@ const Notifications = () => {
 
   const handleClose2 = () => {
     setAnchorEl2(null);
+  };
+
+  const [tab, setTab] = useState(0);
+
+  const handleChangeTab = (_: any, newValue: number) => {
+    setTab(newValue);
   };
 
   return (
@@ -68,15 +75,31 @@ const Notifications = () => {
           <Typography variant="h6">Notifications</Typography>
           <Chip label="5 new" color="primary" size="small" />
         </Stack>
+
+        <Tabs
+          value={tab}
+          onChange={handleChangeTab}
+          variant="fullWidth"
+          sx={{
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+          }}
+        >
+          <Tab label="General" />
+          <Tab label="Approval" />
+          <Tab label="System" />
+        </Tabs>
         <Scrollbar sx={{ height: '385px' }}>
-          <></>
-          {/* {dropdownData.notifications.map((notification: any, index: any) => (
-            <Box key={index}>
-              <MenuItem sx={{ py: 2, px: 4 }}>
+          {/* {dropdownData.notifications.map((notification: any, index: any) => ( */}
+
+          {/* ))} */}
+          {tab === 0 && (
+            <Box>
+              <MenuItem sx={{ py: 2, px: 4, borderBottom: '1px solid', borderColor: 'divider' }}>
                 <Stack direction="row" spacing={2}>
                   <Avatar
-                    src={notification.avatar}
-                    alt={notification.avatar}
+                    // src={notification.avatar}
+                    // alt={notification.avatar}
                     sx={{
                       width: 48,
                       height: 48,
@@ -89,26 +112,128 @@ const Notifications = () => {
                       fontWeight={600}
                       noWrap
                       sx={{
-                        width: '240px',
+                        width: '200px',
                       }}
                     >
-                      {notification.title}
+                      {/* {notification.title} */}
+                      Title
                     </Typography>
                     <Typography
                       color="textSecondary"
                       variant="subtitle2"
                       sx={{
-                        width: '240px',
+                        width: '200px',
                       }}
                       noWrap
                     >
-                      {notification.subtitle}
+                      Description
+                      {/* {notification.subtitle} */}
                     </Typography>
                   </Box>
                 </Stack>
               </MenuItem>
+              <MenuItem sx={{ py: 2, px: 4, borderBottom: '1px solid', borderColor: 'divider' }}>
+                <Stack direction="row" spacing={2}>
+                  <Avatar
+                    // src={notification.avatar}
+                    // alt={notification.avatar}
+                    sx={{
+                      width: 48,
+                      height: 48,
+                    }}
+                  />
+                  <Box display={'flex'} justifyContent={'space-between'}>
+                    <Box>
+                      <Typography
+                        variant="subtitle2"
+                        color="textPrimary"
+                        fontWeight={600}
+                        noWrap
+                        sx={{
+                          width: '200px',
+                        }}
+                      >
+                        {/* {notification.title} */}
+                        Title
+                      </Typography>
+                      <Typography
+                        color="textSecondary"
+                        variant="subtitle2"
+                        sx={{
+                          width: '200px',
+                        }}
+                        noWrap
+                      >
+                        Description
+                        {/* {notification.subtitle} */}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Box sx={{ color: 'success.main' }}>
+                        <IconCheck />
+                      </Box>
+                      <Box sx={{ color: 'error.main' }}>
+                        <IconX />
+                      </Box>
+                    </Box>
+                  </Box>
+                </Stack>
+              </MenuItem>
+              <MenuItem sx={{ py: 2, px: 4, borderBottom: '1px solid', borderColor: 'divider' }}>
+                <Stack direction="row" spacing={2}>
+                  <Avatar
+                    // src={notification.avatar}
+                    // alt={notification.avatar}
+                    sx={{
+                      width: 48,
+                      height: 48,
+                    }}
+                  />
+                  <Box display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
+                    <Box>
+                      <Typography
+                        variant="subtitle2"
+                        color="textPrimary"
+                        fontWeight={600}
+                        noWrap
+                        sx={{
+                          width: '200px',
+                        }}
+                      >
+                        {/* {notification.title} */}
+                        Title
+                      </Typography>
+                      <Typography
+                        color="textSecondary"
+                        variant="subtitle2"
+                        sx={{
+                          width: '200px',
+                        }}
+                        noWrap
+                      >
+                        Description
+                        {/* {notification.subtitle} */}
+                      </Typography>
+                    </Box>
+                    <Box
+                      sx={{
+                        backgroundColor: '#13DEB9',
+                        color: '#fff',
+                        borderRadius: '10px',
+                        px: 1,
+                        py: 0.5,
+                      }}
+                    >
+                      <Typography variant='body1'>Read</Typography>
+                    </Box>
+                  </Box>
+                </Stack>
+              </MenuItem>
             </Box>
-          ))} */}
+          )}
+
+          {tab === 1 && <Box></Box>}
+          {tab === 2 && <Box></Box>}
         </Scrollbar>
         <Box p={3} pb={1}>
           <Button to="/apps/email" variant="outlined" component={Link} color="primary" fullWidth>

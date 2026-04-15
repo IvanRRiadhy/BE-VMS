@@ -26,19 +26,14 @@ type Props = {
   open: boolean;
   onClose: () => void;
   containerRef: any;
-
   fillFormData: any[];
   fillFormActiveStep: number;
   setFillFormActiveStep: React.Dispatch<any>;
-
   fillFormDataVisitor: any[];
   setFillFormDataVisitor: React.Dispatch<any>;
-
   loadingAccess: boolean;
   handleSubmitPramultiple: () => void;
-
   renderFieldInput: any;
-
   getSectionType: any;
   formsOf: any;
 };

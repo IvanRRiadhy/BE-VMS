@@ -38,7 +38,8 @@
     "settings": "Settings",
     "helps": "Helps",
     "zone": "Zone",
-    "transaction_log": "Transaction Log"
+    "transaction_log": "Transaction Log",
+    "notification": "Notification"
   },
   "print_badge": "Print Badge",
   "transction_visitor": "Transction Visitor",

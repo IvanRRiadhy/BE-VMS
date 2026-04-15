@@ -24,7 +24,8 @@ import { CSS } from '@dnd-kit/utilities';
 
 type SectionKey = 'access' | 'parking' | 'tracking' | 'visit_form' | string;
 
-const getRowId = (row: any) => String(row.dnd_id ?? row.id);
+// const getRowId = (row: any) => String(row.dnd_id ?? row.id);
+const getRowId = (row: any, index?: number) => String(row.dnd_id ?? row.id ?? `row-${index}`);
 
 function SortableRow({
   id,
@@ -58,8 +59,10 @@ function SortableRow({
 
   return (
     <TableRow ref={setNodeRef} style={style}>
-      <TableCell {...attributes} {...listeners} sx={{ textAlign: 'center', cursor: 'grab' }}>
-        ⇅
+      <TableCell sx={{ textAlign: 'center' }}>
+        <div {...attributes} {...listeners} style={{ cursor: 'grab' }}>
+          ⇅
+        </div>
       </TableCell>
 
       <TableCell
@@ -146,7 +149,7 @@ function SortableRow({
   );
 }
 
-export default function  RenderDetailRows({
+export default function RenderDetailRows({
   title,
   data = [],
   customField = [],
@@ -204,10 +207,8 @@ export default function  RenderDetailRows({
             <TableBody>
               {rows.map((item: any, index: number) => (
                 <SortableRow
-                  // key={item.id ?? index}
-                  // id={String(item.id ?? index)}
-                  key={getRowId(item)}
-                  id={getRowId(item)}
+                  key={getRowId(item, index)}
+                  id={getRowId(item, index)}
                   item={item}
                   index={index}
                   onChange={onChange}

@@ -155,6 +155,7 @@ const FormSite = ({
     documents: {} as DocumentItem,
     retentionTime: 0,
   });
+
   const [accessControl, setAccessControl] = useState<AccessControlItem[]>([]);
 
   const [siteImageFile, setSiteImageFile] = useState<File | null>(null);
@@ -235,7 +236,7 @@ const FormSite = ({
           tracking: mappedTracking,
         }));
       } catch (err) {
-        console.error('❌ Unexpected error:', err);
+        console.error('Unexpected error:', err);
       }
     })();
   }, [editingId, token]);
@@ -501,7 +502,7 @@ const FormSite = ({
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
       setSiteImageFile(selectedFile);
-      console.log('Slected file:', selectedFile);
+      // console.log('Slected file:', selectedFile);
       setPreviewUrl(URL.createObjectURL(selectedFile));
     }
   };
@@ -518,7 +519,7 @@ const FormSite = ({
 
     try {
       await uploadImageSite(siteId, siteImageFile, token);
-      console.log('Image upload success');
+      // console.log('Image upload success');
     } catch (err) {
       console.error('Image upload failed', err);
     }
@@ -792,16 +793,9 @@ const FormSite = ({
                       sx={{ mb: 2 }}
                       disabled={!localForm.need_approval || isBatchEdit}
                     >
-                      <MenuItem value="" disabled>
+                      <MenuItem value="" >
                         Select Type Approval
                       </MenuItem>
-                      {/* {Object.entries(TypeApproval)
-                        .filter(([key, value]) => !isNaN(Number(value)))
-                        .map(([key, value]) => (
-                          <MenuItem key={value} value={value}>
-                            {formatEnumLabel(key)}
-                          </MenuItem>
-                        ))} */}
                       {approvalData.map((item) => (
                         <MenuItem key={item.value} value={item.value}>
                           {item.label}

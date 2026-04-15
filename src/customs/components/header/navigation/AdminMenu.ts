@@ -28,6 +28,8 @@ import {
   IconPrinter,
   IconStars,
   IconRun,
+  IconNavigation,
+  IconBell,
 } from '@tabler/icons-react';
 import { uniqueId } from 'lodash';
 import { ItemDataCustomNavListing } from './CustomNavListing';
@@ -162,6 +164,13 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
         icon: IconSettingsFilled,
         chipColor: 'secondary',
         href: '/admin/settings',
+      },
+      {
+        id: uniqueId(),
+        title: 'navigation.notification',
+        icon: IconBell,
+        chipColor: 'secondary',
+        href: '/admin/notification',
       },
     ],
   },
@@ -432,6 +441,13 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
         chipColor: 'secondary',
         href: '/admin/settings',
       },
+      {
+        id: uniqueId(),
+        title: 'navigation.notification',
+        icon: IconBell,
+        chipColor: 'secondary',
+        href: '/admin/notification',
+      },
     ],
   },
 
@@ -475,7 +491,7 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
         icon: IconCalendarClock,
         href: '/admin/visitor/scheduler',
       },
-      // { 
+      // {
       //   id: uniqueId(),
       //   title: 'Approval Workflow',
       //   icon: IconCheck,
@@ -697,6 +713,13 @@ export const OperatorAdminNavListingData: ItemDataCustomNavListing[] = [
         icon: IconSettingsFilled,
         chipColor: 'secondary',
         href: '/operator-admin/settings',
+      },
+      {
+        id: uniqueId(),
+        title: 'navigation.notification',
+        icon: IconBell,
+        chipColor: 'secondary',
+        href: '/operator-admin/notification',
       },
     ],
   },
@@ -933,6 +956,13 @@ export const OperatorAdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] =
         chipColor: 'secondary',
         href: '/operator-admin/settings',
       },
+      {
+        id: uniqueId(),
+        title: 'navigation.notification',
+        icon: IconBell,
+        chipColor: 'secondary',
+        href: '/operator-admin/notification',
+      },
     ],
   },
   {
@@ -1041,6 +1071,57 @@ export const OperatorAdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] =
   },
 ];
 
+export const OperatorCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
+  {
+    id: uniqueId(),
+    title: 'Dashboard',
+    icon: IconHome,
+    href: '/operator/dashboard',
+  },
+  {
+    id: uniqueId(),
+    title: 'Operator View',
+    icon: IconEye,
+    href: '/operator/view',
+  },
+  {
+    id: uniqueId(),
+    title: 'View',
+    icon: IconEye,
+    href: '/operator/view-vms',
+  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Monitoring',
+  //   icon: IconDeviceCctv,
+  //   href: '/operator/monitoring',
+  // },
+  {
+    id: uniqueId(),
+    title: 'navigation.transaction_log',
+    icon: IconReport,
+    href: '/operator/transaction-log',
+  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Approval Workflow',
+  //   icon: IconReport,
+  //   href: '/operator/approval-workflow',
+  // },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Operator Activity Log',
+  //   icon: IconReport,
+  //   href: '/operator/operator-activity-log',
+  // },
+  {
+    id: uniqueId(),
+    title: 'navigation.visitor',
+    icon: IconUser,
+    href: '/operator/visitor',
+  },
+];
+
 export const EmployeeNavListingData: ItemDataCustomNavListing[] = [
   {
     id: uniqueId(),
@@ -1068,6 +1149,13 @@ export const EmployeeNavListingData: ItemDataCustomNavListing[] = [
     icon: IconHistory,
     chipColor: 'secondary',
     href: '/employee/history',
+  },
+  {
+    id: uniqueId(),
+    title: 'navigation.notification',
+    icon: IconBell,
+    chipColor: 'secondary',
+    href: '/employee/notification',
   },
   // {
   //   id: uniqueId(),
@@ -1119,6 +1207,13 @@ export const EmployeeCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
     chipColor: 'secondary',
     href: '/employee/history',
   },
+  {
+    id: uniqueId(),
+    title: 'navigation.notification',
+    icon: IconBell,
+    chipColor: 'secondary',
+    href: '/employee/notification',
+  },
   // {
   //   id: uniqueId(),
   //   title: 'Parking',
@@ -1149,6 +1244,13 @@ export const StaffNavListingData: ItemDataCustomNavListing[] = [
     icon: IconMail,
     chipColor: 'secondary',
     href: '/delivery-staff/schedule-invitation',
+  },
+  {
+    id: uniqueId(),
+    title: 'navigation.notification',
+    icon: IconBell,
+    chipColor: 'secondary',
+    href: '/delivery-staff/notification',
   },
   // {
   //   id: uniqueId(),
@@ -1193,6 +1295,13 @@ export const StaffCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
     chipColor: 'secondary',
     href: '/delivery-staff/schedule-invitation',
   },
+  {
+    id: uniqueId(),
+    title: 'navigation.notification',
+    icon: IconBell,
+    chipColor: 'secondary',
+    href: '/delivery-staff/notification',
+  },
   // {
   //   id: uniqueId(),
   //   title: 'Report',
@@ -1232,6 +1341,14 @@ export const ManagerNavListingData: ItemDataCustomNavListing[] = [
     href: '/manager/approval',
   },
 
+  {
+    id: uniqueId(),
+    title: 'navigation.notification',
+    icon: IconBell,
+    chipColor: 'secondary',
+    href: '/manager/notification',
+  },
+
   // {
   //   id: uniqueId(),
   //   title: 'Report',
@@ -1259,6 +1376,13 @@ export const ManagerCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
     chipColor: 'secondary',
     href: '/manager/approval',
   },
+  {
+    id: uniqueId(),
+    title: 'navigation.notification',
+    icon: IconBell,
+    chipColor: 'secondary',
+    href: '/manager/notification',
+  },
   // {
   //   id: uniqueId(),
   //   title: 'Report',
@@ -1283,6 +1407,12 @@ export const OperatorNavListingData: ItemDataCustomNavListing[] = [
   },
   // {
   //   id: uniqueId(),
+  //   title: 'View',
+  //   icon: IconEye,
+  //   href: '/operator/vms-view',
+  // },
+  // {
+  //   id: uniqueId(),
   //   title: 'Monitoring',
   //   icon: IconDeviceCctv,
   //   href: '/operator/monitoring',
@@ -1300,45 +1430,14 @@ export const OperatorNavListingData: ItemDataCustomNavListing[] = [
     href: '/operator/visitor',
   },
 
-  // {
-  //   id: uniqueId(),
-  //   title: 'Approval Workflow',
-  //   icon: IconReport,
-  //   href: '/operator/approval-workflow',
-  // },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Operator Activity Log',
-  //   icon: IconReport,
-  //   href: '/operator/operator-activity-log',
-  // },
-];
+  {
+    id: uniqueId(),
+    title: 'navigation.notification',
+    icon: IconBell,
+    chipColor: 'secondary',
+    href: '/operator/notification',
+  },
 
-export const OperatorCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
-  {
-    id: uniqueId(),
-    title: 'Dashboard',
-    icon: IconHome,
-    href: '/operator/dashboard',
-  },
-  {
-    id: uniqueId(),
-    title: 'Operator View',
-    icon: IconEye,
-    href: '/operator/view',
-  },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Monitoring',
-  //   icon: IconDeviceCctv,
-  //   href: '/operator/monitoring',
-  // },
-  {
-    id: uniqueId(),
-    title: 'navigation.transaction_log',
-    icon: IconReport,
-    href: '/operator/transaction-log',
-  },
   // {
   //   id: uniqueId(),
   //   title: 'Approval Workflow',
@@ -1351,10 +1450,4 @@ export const OperatorCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
   //   icon: IconReport,
   //   href: '/operator/operator-activity-log',
   // },
-  {
-    id: uniqueId(),
-    title: 'navigation.visitor',
-    icon: IconUser,
-    href: '/operator/visitor',
-  },
 ];

@@ -13,6 +13,7 @@ import ExpiredPage from 'src/views/authentication/auth2/ExpiredPage';
 import LimitedInvitation from 'src/views/authentication/auth2/LimitedInvitation';
 import { element } from 'prop-types';
 import SuccessPage from 'src/customs/pages/Guest/SelfPraregistration/components/SuccessPage';
+import View from 'src/customs/pages/Operator/View';
 // import ForgotPassword2 from 'src/views/authentication/auth2/ForgotPassword2';
 
 /* ***Layouts**** */
@@ -52,6 +53,9 @@ const Parking = Loadable(lazy(() => import('src/customs/pages/Guest/Parking/Park
 const AlarmPage = Loadable(lazy(() => import('src/customs/pages/Guest/Alarm/AlarmPage')));
 const Evacuate = Loadable(lazy(() => import('src/customs/pages/Guest/Evacuate/Evacuate')));
 const Visitor = Loadable(lazy(() => import('src/customs/pages/Guest/Visitor/Visitor')));
+const NotificationGuest = Loadable(
+  lazy(() => import('src/customs/pages/Guest/Notification/Content')),
+);
 
 /* Admin Pages */
 const Dashboard = Loadable(lazy(() => import('src/customs/pages/admin/content/Dashboard/Content')));
@@ -168,6 +172,11 @@ const ManageEvacuate = Loadable(
 const ManageAdminView = Loadable(
   lazy(() => import('src/customs/pages/admin/content/AdminView/Content')),
 );
+
+const ManageAdminNotification = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Notification/Content')),
+);
+
 /* ****EMPLOYEE PAGES**** */
 const DashboardEmployee = Loadable(
   lazy(() => import('src/customs/pages/Employee/Dashboard/Dashboard')),
@@ -182,7 +191,9 @@ const ParkingEmployee = Loadable(lazy(() => import('src/customs/pages/Employee/P
 const ReportEmployee = Loadable(lazy(() => import('src/customs/pages/Employee/Report')));
 const HistoryEmployee = Loadable(lazy(() => import('src/customs/pages/Employee/History')));
 const ProfileEmployee = Loadable(lazy(() => import('src/customs/pages/Employee/DetailProfile')));
-
+const NotificationEmployee = Loadable(
+  lazy(() => import('src/customs/pages/Employee/Notification/Content')),
+)
 /* Operator Pages* */
 const DashboardOperator = Loadable(lazy(() => import('src/customs/pages/Operator/Dashboard')));
 const OperatorView = Loadable(lazy(() => import('src/customs/pages/Operator/OperatorView')));
@@ -202,6 +213,10 @@ const MonitoringDashboard = Loadable(
   lazy(() => import('src/customs/pages/Operator/Monitoring/Content')),
 );
 
+const OperatorNotification = Loadable(
+  lazy(() => import('src/customs/pages/Operator/Notification/Content')),
+);
+
 /* Manager Pages*/
 const DashboardManager = Loadable(lazy(() => import('src/customs/pages/Manager/Dashboard')));
 const ApprovalManager = Loadable(lazy(() => import('src/customs/pages/Manager/Approval')));
@@ -209,6 +224,9 @@ const ParkingManager = Loadable(lazy(() => import('src/customs/pages/Manager/Par
 const VisitorManager = Loadable(lazy(() => import('src/customs/pages/Manager/Visitor')));
 const HistoryManager = Loadable(lazy(() => import('src/customs/pages/Manager/History')));
 const ReportManager = Loadable(lazy(() => import('src/customs/pages/Manager/Report')));
+const NotificationManager = Loadable(
+  lazy(() => import('src/customs/pages/Manager/Notification/Content')),
+);
 
 /* Delivery Staff Pages*/
 const DashboardStaff = Loadable(
@@ -228,6 +246,9 @@ const HistoryStaff = Loadable(
 );
 const ProfileStaff = Loadable(
   lazy(() => import('src/customs/pages/Employee/DeliveryStaff/Profile/Content')),
+);
+const NotificationStaff = Loadable(
+  lazy(() => import('src/customs/pages/Employee/DeliveryStaff/Notification/Content')),
 );
 
 const Router = [
@@ -334,6 +355,7 @@ const Router = [
           { path: '/profile', element: <DetailProfile /> },
           { path: '/operator-admin/print-badge', element: <ManagePrintBadge /> },
           { path: '/operator-admin/evacuate', element: <ManageEvacuate /> },
+          { path: '/operator-admin/notification', element: <ManageAdminNotification /> },
         ],
       },
 
@@ -357,6 +379,7 @@ const Router = [
               { path: 'evacuate', element: <Evacuate /> },
               { path: 'visitor', element: <Visitor /> },
               { path: 'profile', element: <DetailProfile /> },
+              { path: 'notification', element: <NotificationGuest /> },
             ],
           },
           {
@@ -417,6 +440,7 @@ const Router = [
           { path: '/admin/print-badge', element: <ManagePrintBadge /> },
           { path: '/admin/evacuate', element: <ManageEvacuate /> },
           { path: '/admin/view', element: <ManageAdminView /> },
+          { path: '/admin/notification', element: <ManageAdminNotification /> },
         ],
       },
 
@@ -436,6 +460,7 @@ const Router = [
               { path: 'report', element: <ReportEmployee /> },
               { path: 'history', element: <HistoryEmployee /> },
               { path: 'profile', element: <ProfileEmployee /> },
+              { path: 'notification', element: <NotificationEmployee /> },
             ],
           },
           {
@@ -449,6 +474,7 @@ const Router = [
               { path: 'report', element: <ReportStaff /> },
               { path: 'history', element: <HistoryStaff /> },
               { path: 'profile', element: <ProfileStaff /> },
+              { path: 'notification', element: <NotificationStaff /> },
             ],
           },
         ],
@@ -465,12 +491,14 @@ const Router = [
               { index: true, element: <DashboardOperator /> },
               { path: 'dashboard', element: <DashboardOperator /> },
               { path: 'view', element: <OperatorView /> },
+              { path: 'vms-view', element: <View /> },
               { path: 'visitor', element: <ManageVisitorOperator /> },
               { path: 'transaction-log', element: <TransactionOperatorLog /> },
               { path: 'approval-workflow', element: <ApprovalOperator /> },
               { path: 'operator-activity-log', element: <OperatorActivityLog /> },
               { path: 'monitoring', element: <MonitoringDashboard /> },
               { path: 'profile', element: <DetailProfile /> },
+              { path: 'notification', element: <OperatorNotification /> },
             ],
           },
         ],
@@ -492,6 +520,7 @@ const Router = [
               { path: 'history', element: <HistoryManager /> },
               { path: 'report', element: <ReportManager /> },
               { path: 'profile', element: <DetailProfile /> },
+              { path: 'notification', element: <NotificationManager /> },
             ],
           },
         ],

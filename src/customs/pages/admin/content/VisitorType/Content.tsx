@@ -11,7 +11,6 @@ import {
   Grid2 as Grid,
   IconButton,
   Backdrop,
-  Portal,
 } from '@mui/material';
 import {
   AdminCustomSidebarItemsData,
@@ -77,6 +76,7 @@ const Content = () => {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [documentIdentities, setDocumentIdentities] = useState<
@@ -87,7 +87,7 @@ const Content = () => {
   const cards = [
     {
       title: 'Total Visitor Type',
-      subTitle: `${totalFilteredRecords}`,
+      subTitle: `${totalRecords}`,
       icon: IconUsersGroup,
       subTitleSetting: 10,
       color: 'none',
@@ -408,6 +408,16 @@ const Content = () => {
     }
   };
 
+    const handleSearchKeywordChange = useCallback((keyword: string) => {
+      setSearchInput(keyword);
+    }, []);
+
+    const handleSearch = useCallback(() => {
+      setPage(0);
+      setSearchKeyword(searchInput);
+    }, [searchInput]);
+
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -431,7 +441,7 @@ const Content = () => {
                 isHaveSearch={true}
                 isHavePagination={true}
                 defaultRowsPerPage={rowsPerPage}
-                rowsPerPageOptions={[10, 25, 50, 100]}
+                rowsPerPageOptions={[10, 50, 100]}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);
@@ -452,7 +462,9 @@ const Content = () => {
                 }}
                 onDelete={(row) => handleDelete(row.id)}
                 onBatchDelete={handleBatchDelete}
-                onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                onSearchKeywordChange={handleSearchKeywordChange}
+                searchKeyword={searchInput}
+                onSearch={handleSearch}
                 onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
                 onAddData={() => {
                   handleAdd();

@@ -155,7 +155,7 @@ const GuestInformationStepper = () => {
           } else if (f.field_type === 10 || f.field_type === 11 || f.field_type === 12) {
             initial[f.remarks] = f.answer_file;
           } else {
-            initial[f.remarks] = f.answer_text || '';
+            initial[f.remarks] = f.answer_text || null;
           }
         });
       });

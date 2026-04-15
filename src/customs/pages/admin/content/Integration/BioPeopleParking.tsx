@@ -30,18 +30,12 @@ import PageContainer from 'src/components/container/PageContainer';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import TopCard from 'src/customs/components/cards/TopCard';
 import {
-  IconAccessible,
-  IconBrandMedium,
-  IconBuilding,
-  IconBuildingSkyscraper,
   IconCar,
   IconCards,
   IconDeviceCctv,
   IconDeviceIpad,
   IconForbid,
   IconMapPins,
-  IconMapSearch,
-  IconRectangle,
   IconRefresh,
   IconStairsUp,
   IconUserOff,
@@ -92,7 +86,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
     try {
       setSyncing(true);
       const res = await syncParkingIntegration(id as string, token as string);
-      setSyncing(false); // tutup spinner SEGERA
+      setSyncing(false);
 
       if (res.status !== 'success') {
         setSyncMsg({
@@ -102,7 +96,6 @@ const BioPeopleParking = ({ id }: { id: string }) => {
         });
 
         if (res.status_code === 404 && /not connected/i.test(res.msg || '')) {
-          // kasus khusus kalau mau di-handle
           setSyncMsg({
             open: true,
             text: 'Tidak terhubung ke server. Coba lagi nanti.',
@@ -110,7 +103,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
           });
         }
 
-        return; // jangan lanjut refresh list
+        return;
       }
 
       setSyncMsg({
@@ -151,7 +144,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
         color: 'none',
       },
       {
-        title: 'Block',
+        title: 'Blocks',
         subTitle: String(totals.block),
         subTitleSetting: 0,
         icon: IconForbid,
@@ -288,7 +281,15 @@ const BioPeopleParking = ({ id }: { id: string }) => {
     try {
       if (type === 'visitor_type') {
         const res = await getVisitorTypeParking(id as string, token);
-        setListData(res.collection ?? []);
+        setListData(
+          (res.collection ?? []).map((item: any) => ({
+            ...item,
+            visitor_types: item.visitor_types?.length
+              ? item.visitor_types.map((v: any) => v.visitor_type_name).join(', ')
+              : '-',
+            active: item.active,
+          })),
+        );
       } else if (type === 'area') {
         const res = await getAreaParking(id as string, token);
         setListData(res.collection ?? []);
@@ -300,7 +301,12 @@ const BioPeopleParking = ({ id }: { id: string }) => {
         setListData(res.collection ?? []);
       } else if (type === 'vehicle') {
         const res = await getVehicleParking(id as string, token);
-        setListData(res.collection ?? []);
+        setListData(
+          (res.collection ?? []).map((item: any) => ({
+            ...item,
+            vehicle_type: item.vehicle_type ?? '-', // cukup ini
+          })),
+        );
       } else {
         setListData([]);
       }
@@ -354,7 +360,13 @@ const BioPeopleParking = ({ id }: { id: string }) => {
     try {
       if (selectedType === 'visitor_type') {
         const res = await getVisitorTypeParkingById(id as string, String(row.id), token);
-        setDetailData(res.collection ?? row);
+
+        const data = res.collection ?? row;
+
+        setDetailData({
+          ...data,
+          visitor_type_id: data.visitor_types?.map((v: any) => v.visitor_type_id) ?? [],
+        });
       } else if (selectedType === 'slot') {
         const res = await getSlotParkingById(id as string, String(row.id), token);
         setDetailData(res.collection ?? row);
@@ -404,6 +416,12 @@ const BioPeopleParking = ({ id }: { id: string }) => {
     // setOpenFormType(null);
   };
 
+  const vehicleTypeMap: Record<number, string> = {
+    0: 'Car',
+    1: 'Motorcycle',
+    2: 'Bus',
+  };
+
   useEffect(() => {
     // Tutup dialog → kosongkan form
     if (!editDialogType) {
@@ -422,9 +440,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
     if (editDialogType == 'Visitor Type') {
       setOrganizationForm({
         visitor_type_id: detailData.visitor_type_id ?? '',
-        // createdAt: detailData.createdAt ?? '',
-        // updatedAt: detailData.updatedAt ?? '',
-        // deletedAt: detailData.deletedAt ?? '',
+        visitor_type_name: detailData.visitor_type_name ?? '',
         active: detailData.active ?? false,
         integration_id: detailData.integration_id ?? '',
         name: detailData.name ?? '',
@@ -546,7 +562,6 @@ const BioPeopleParking = ({ id }: { id: string }) => {
           return;
         }
 
-        // Kirim dua field (trim) — kosong tidak ikut dikirim agar tidak mengosongkan server
         const payload = omitEmpty({
           visitor_type_id: organizationForm?.visitor_type_id
             ? organizationForm?.visitor_type_id
@@ -556,9 +571,18 @@ const BioPeopleParking = ({ id }: { id: string }) => {
 
         await updateVisitorTypeParking(visitorTypeId, payload, token as string);
 
-        setListData((prev) =>
-          prev.map((it) => (String(it.id) === visitorTypeId ? { ...it, ...payload } : it)),
-        );
+        // 🔥 refresh dari API (bukan cuma local state)
+        await fetchListByType(selectedType);
+
+        // 🔥 refresh total (optional tapi bagus)
+        loadTotals();
+
+        // 🔥 close dialog
+        handleCloseDialog();
+
+        // setListData((prev) =>
+        //   prev.map((it) => (String(it.id) === visitorTypeId ? { ...it, ...payload } : it)),
+        // );
 
         setSyncMsg({ open: true, text: 'Visitor type updated successfullys', severity: 'success' });
         return;
@@ -616,16 +640,14 @@ const BioPeopleParking = ({ id }: { id: string }) => {
 
         await updateVehicleParking(vehicleId, payload, token as string);
 
-        // update list
-        setListData((prev) =>
-          prev.map((it) => (String(it.id) === vehicleId ? { ...it, ...payload } : it)),
-        );
+        // 🔥 refresh dari API (bukan cuma local state)
+        await fetchListByType(selectedType);
 
-        // update form agar sinkron
-        setCardForm((prev: any) => ({
-          ...prev,
-          ...payload,
-        }));
+        // 🔥 refresh total (optional tapi bagus)
+        loadTotals();
+
+        // 🔥 close dialog
+        handleCloseDialog();
 
         setSyncMsg({ open: true, text: 'Vehicle updated successfully', severity: 'success' });
         return;
@@ -675,16 +697,14 @@ const BioPeopleParking = ({ id }: { id: string }) => {
 
         await updateBlockParking(blockId, payload, token as string);
 
-        // update list
-        setListData((prev) =>
-          prev.map((it) => (String(it.id) === blockId ? { ...it, ...payload } : it)),
-        );
+        // 🔥 refresh dari API (bukan cuma local state)
+        await fetchListByType(selectedType);
 
-        // update form biar switch sinkron
-        setMemberForm((prev: any) => ({
-          ...prev,
-          ...payload,
-        }));
+        // 🔥 refresh total (optional tapi bagus)
+        loadTotals();
+
+        // 🔥 close dialog
+        handleCloseDialog();
 
         setSyncMsg({
           open: true,
@@ -729,7 +749,6 @@ const BioPeopleParking = ({ id }: { id: string }) => {
       setSaving(true);
 
       // === SINGLE EDIT ===
-      // === SINGLE EDIT ===
       if (!isBatchEdit) {
         const areaId = String(districtForm?.id ?? detailData?.id ?? '');
         if (!areaId) {
@@ -742,16 +761,14 @@ const BioPeopleParking = ({ id }: { id: string }) => {
 
         await updateAreaParking(areaId, payload, token as string);
 
-        // update list
-        setListData((prev) =>
-          prev.map((it) => (String(it.id) === areaId ? { ...it, ...payload } : it)),
-        );
+        // 🔥 refresh dari API (bukan cuma local state)
+        await fetchListByType(selectedType);
 
-        // update form agar switch sinkron
-        setDistrictForm((prev: any) => ({
-          ...prev,
-          ...payload,
-        }));
+        // 🔥 refresh total (optional tapi bagus)
+        loadTotals();
+
+        // 🔥 close dialog
+        handleCloseDialog();
 
         setSyncMsg({
           open: true,
@@ -794,7 +811,6 @@ const BioPeopleParking = ({ id }: { id: string }) => {
     try {
       setSaving(true);
 
-      // === SINGLE EDIT ===
       // === SINGLE EDIT ===
       if (!isBatchEdit) {
         const slotId = departmentForm?.id ?? detailData?.id ?? '';
@@ -865,13 +881,14 @@ const BioPeopleParking = ({ id }: { id: string }) => {
               <Grid size={{ xs: 12, lg: 12 }}>
                 <DynamicTable
                   isHavePagination
-                  rowsPerPageOptions={[5, 10, 25, 50]}
+                  rowsPerPageOptions={[10, 50]}
                   overflowX={'auto'}
                   data={listData}
                   selectedRows={selectedRows}
                   isHaveChecked={true}
                   isHaveAction={false}
                   isSelectedType={selectedType !== 'badge_status'}
+                  isDataVerified={true}
                   isHaveActionOnlyEdit={true}
                   isHaveSearch={true}
                   isHaveFilter={false}
@@ -958,19 +975,18 @@ const BioPeopleParking = ({ id }: { id: string }) => {
                 </Box>
 
                 <Autocomplete
+                  multiple
                   fullWidth
                   autoHighlight
                   disablePortal
                   options={orgOptions}
-                  value={
-                    orgOptions.find(
-                      (o) => o.id === String(organizationForm?.visitor_type_id ?? ''),
-                    ) || null
-                  }
+                  value={orgOptions.filter((o) =>
+                    (organizationForm?.visitor_type_id ?? []).includes(o.id),
+                  )}
                   onChange={(_, newVal) =>
                     setOrganizationForm((p: any) => ({
                       ...p,
-                      visitor_type_id: newVal ? newVal.id : '',
+                      visitor_type_id: newVal.map((v) => v.id),
                     }))
                   }
                   isOptionEqualToValue={(opt, val) => opt.id === val.id}
@@ -978,7 +994,6 @@ const BioPeopleParking = ({ id }: { id: string }) => {
                   renderInput={(params) => (
                     <CustomTextField
                       {...params}
-                      label=""
                       size="small"
                       disabled={isBatchEdit ? !enabled.visitor_type_id || saving : saving}
                     />
@@ -1332,17 +1347,18 @@ const BioPeopleParking = ({ id }: { id: string }) => {
                   onChange={(e: any) =>
                     setCardForm((prev: any) => ({
                       ...prev,
-                      vehicle_type: Number(e.target.value), // ⬅️ pastikan jadi number
+                      // vehicle_type: Number(e.target.value), // ⬅️ pastikan jadi number
+                      vehicle_type: e.target.value,
                     }))
                   }
                   disabled={isBatchEdit ? !enabled.vehicle_type || saving : saving}
                 >
-                  <MenuItem value={1}>Car</MenuItem>
-                  <MenuItem value={2}>Motorcycle</MenuItem>
-                  <MenuItem value={3}>Bus</MenuItem>
-                  <MenuItem value={4}>Truck</MenuItem>
-                  <MenuItem value={5}>Van</MenuItem>
-                  <MenuItem value={99}>Other</MenuItem>
+                  <MenuItem value="Car">Car</MenuItem>
+                  <MenuItem value="Motor">Motor</MenuItem>
+                  <MenuItem value="Bus">Bus</MenuItem>
+                  {/* <MenuItem value={3}>Truck</MenuItem>
+                  <MenuItem value={4}>Van</MenuItem> */}
+                  {/* <MenuItem value={99}>Other</MenuItem> */}
                 </CustomSelect>
               </Box>
 
@@ -1423,7 +1439,6 @@ const BioPeopleParking = ({ id }: { id: string }) => {
         </Snackbar>
       </Portal>
 
-      {/* OVERLAY SAVING: di atas modal, tapi DI BAWAH snackbar */}
       <Portal>
         <Backdrop
           open={saving}
@@ -1436,7 +1451,6 @@ const BioPeopleParking = ({ id }: { id: string }) => {
         </Backdrop>
       </Portal>
 
-      {/* OVERLAY SYNCING: sama aturan dengan saving */}
       <Portal>
         <Backdrop
           open={syncing}

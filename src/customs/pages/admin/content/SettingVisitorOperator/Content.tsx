@@ -60,6 +60,7 @@ const Content = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Form state
@@ -442,6 +443,8 @@ const Content = () => {
                       tableData={tableData}
                       searchKeyword={searchKeyword}
                       setSearchKeyword={setSearchKeyword}
+                      searchInput={searchInput}
+                      setSearchInput={setSearchInput}
                       refreshTrigger={refreshTrigger}
                       setRefreshTrigger={setRefreshTrigger}
                     />

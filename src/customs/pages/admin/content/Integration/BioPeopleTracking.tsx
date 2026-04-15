@@ -489,6 +489,7 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
                   isSelectedType={selectedType !== 'badge_status'}
                   isHaveActionOnlyEdit={true}
                   isHaveSearch={false}
+                  isDataVerified={true}
                   isHaveFilter={false}
                   isHaveExportPdf={false}
                   isHaveExportXlf={false}

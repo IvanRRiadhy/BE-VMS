@@ -7,11 +7,21 @@ import Logo from 'src/assets/images/logos/BI_Logo.png';
 import Footer from 'src/views/authentication/components/Footer';
 import { KeyboardArrowUp } from '@mui/icons-material';
 
-import { IconArrowLeft, IconArrowRight, IconCircleCheck, IconUsers } from '@tabler/icons-react';
+import { IconArrowLeft, IconArrowRight, IconCircleCheck } from '@tabler/icons-react';
 
 export default function SuccessPage() {
+  const navigate = useNavigate();
   const [showBackToTop, setShowBackToTop] = useState(false);
+  useEffect(() => {
+    const token = localStorage.getItem('token'); 
+    const timer = setTimeout(() => {
+      if (token) {
+        navigate('/guest/dashboard');
+      }
+    }, 3000); 
 
+    return () => clearTimeout(timer);
+  }, []);
   return (
     <PageContainer title="Invitation" description="this is self praregistration">
       <Box>
@@ -40,7 +50,6 @@ export default function SuccessPage() {
                 alignItems="center"
               >
                 {/* <img src={Logo} width={100} height={100} alt="Logo" /> */}
-
                 <Box
                   sx={(theme) => ({
                     backgroundColor: theme.palette.success.main,
@@ -49,11 +58,8 @@ export default function SuccessPage() {
                     alignItems: 'center',
                     justifyContent: 'center',
                     p: '8px',
-
                     boxShadow: `0 0 0 6px ${theme.palette.success.light}`,
-
                     animation: 'popIn 0.6s ease',
-
                     '@keyframes popIn': {
                       '0%': {
                         transform: 'scale(0.5)',

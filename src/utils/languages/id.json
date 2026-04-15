@@ -38,7 +38,8 @@
     "settings": "Pengaturan",
     "helps": "Bantuan",
     "zone": "Zona",
-    "transaction_log": "Riwayat Transaksi"
+    "transaction_log": "Riwayat Transaksi",
+    "notification": "Notifikasi"
   },
   "print_badge": "Cetak Badge",
   "transction_visitor": "Transaksi Pengunjung",

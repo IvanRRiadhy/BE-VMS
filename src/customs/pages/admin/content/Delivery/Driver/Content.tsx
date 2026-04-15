@@ -29,10 +29,7 @@ import {
 import { deleteDriver } from 'src/customs/api/Delivery/Driver';
 import { IconUsers } from '@tabler/icons-react';
 
-import {
-  showConfirmDelete,
-  showSwal,
-} from 'src/customs/components/alerts/alerts';
+import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import FilterMoreContent from 'src/customs/pages/admin/content/Delivery/Driver/FilterMoreContent';
 import { getAllDriverPaginationFilterMore } from 'src/customs/api/Delivery/Driver';
 import FormDriver from 'src/customs/pages/admin/content/Delivery/Driver/FormDriver';
@@ -81,6 +78,7 @@ const Content = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [edittingId, setEdittingId] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [tableRowEmployee, setTableRowEmployee] = useState<DriverTableRows[]>([]);
   const [sortDir, setSortDir] = useState<string>('desc');
@@ -173,9 +171,9 @@ const Content = () => {
             setTableRowEmployee([]);
             setTotalRecords(0);
             setTotalFilteredRecords(0);
-            return; 
+            return;
           }
-          throw err; 
+          throw err;
         }
 
         const safeCollection = Array.isArray(employeeRes?.collection) ? employeeRes.collection : [];
@@ -208,7 +206,7 @@ const Content = () => {
       } catch (error: any) {
         console.error('Error fetching data:', error.message);
       } finally {
-        // setTimeout(() => setLoading(false), 300); 
+        // setTimeout(() => setLoading(false), 300);
         setLoading(false);
       }
     };
@@ -300,7 +298,6 @@ const Content = () => {
 
     const coerceEmployee = (s: any) => ({
       ...s,
-      // pastikan tidak NaN:
       gender: toNum(s?.gender, { female: 0, male: 1, f: 0, m: 1, '0': 0, '1': 1 }, 0),
 
       status_employee: toNum(
@@ -309,7 +306,6 @@ const Content = () => {
         0,
       ),
 
-      // id relasi → string
       organization_id: String(s?.organization_id ?? ''),
       department_id: String(s?.department_id ?? ''),
       district_id: String(s?.district_id ?? ''),
@@ -416,7 +412,7 @@ const Content = () => {
         setRefreshTrigger((prev) => prev + 1);
 
         showSwal('success', `${rows.length} items have been deleted.`);
-        setSelectedRows([]); // reset selected rows
+        setSelectedRows([]);
       } catch (error) {
         console.error(error);
         showSwal('error', 'Failed to delete some items.');
@@ -446,16 +442,14 @@ const Content = () => {
   };
 
   const handleSuccess = () => {
-    // refresh table dsb
     setRefreshTrigger((prev) => prev + 1);
 
-    // <<— penting: set baseline = current form
     setInitialFormData((_) => formDataDriver);
     setOpenFormAddEmployee(false);
 
     localStorage.removeItem('unsavedDriverData');
   };
-  // handle dialog close
+
   const handleDialogClose = (_event?: object, reason?: string) => {
     const isChanged = JSON.stringify(formDataDriver) !== JSON.stringify(initialFormData);
 
@@ -471,6 +465,15 @@ const Content = () => {
       handleCloseDialog();
     }
   };
+
+  const handleSearchKeywordChange = useCallback((keyword: string) => {
+    setSearchInput(keyword);
+  }, []);
+
+  const handleSearch = useCallback(() => {
+    setPage(0);
+    setSearchKeyword(searchInput);
+  }, [searchInput]);
 
   return (
     <PageContainer
@@ -498,7 +501,7 @@ const Content = () => {
                 isHaveExportPdf={false}
                 isHavePagination={true}
                 defaultRowsPerPage={rowsPerPage}
-                rowsPerPageOptions={[5, 10, 20, 50, 100]}
+                rowsPerPageOptions={[10, 50, 100]}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);
@@ -531,7 +534,10 @@ const Content = () => {
                 onBatchEdit={handleBatchEdit}
                 onDelete={(row) => handleDelete(row.id)}
                 onBatchDelete={handleBatchDelete}
-                onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                // onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                searchKeyword={searchInput}
+                onSearch={handleSearch}
+                onSearchKeywordChange={handleSearchKeywordChange}
                 onAddData={() => {
                   handleAdd();
                 }}
@@ -568,7 +574,6 @@ const Content = () => {
         </DialogTitle>
         <Divider />
         <DialogContent>
-          {/* <br /> */}
           <FormDriver
             formData={formDataDriver}
             setFormData={setFormDataDriver}

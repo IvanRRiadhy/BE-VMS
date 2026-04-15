@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Box,
   Button,
@@ -29,7 +29,7 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 import { deleteDocument, getAllDocumentPagination } from 'src/customs/api/admin';
 import FormAddDocument from './FormAddDocument';
 import { IconScript } from '@tabler/icons-react';
-import { showConfirmDelete, showErrorAlert, showSwal } from 'src/customs/components/alerts/alerts';
+import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 
 const Content = () => {
@@ -49,10 +49,11 @@ const Content = () => {
     return saved ? JSON.parse(saved) : CreateDocumentRequestSchema.parse({});
   });
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const cards = [
     {
       title: 'Total Document',
-      subTitle: `${tableData.length}`,
+      subTitle: `${totalRecords}`,
       subTitleSetting: 10,
       icon: IconScript,
       color: 'none',
@@ -85,13 +86,10 @@ const Content = () => {
   }, [token, page, rowsPerPage, sortColumn, sortDir, refreshTrigger, searchKeyword]);
 
   const [openFormAddDocument, setOpenFormAddDocument] = useState(false);
-  const [isDirty, setIsDirty] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
   const [openPdfDialog, setOpenPdfDialog] = useState(false);
   const [pdfUrl, setPdfUrl] = useState('');
-  const [localForm, setLocalForm] = useState(formDataAddDocument);
-
   const handleCloseDialog = () => {
     localStorage.setItem('unsavedDocumentData', JSON.stringify(formDataAddDocument));
     setOpenFormAddDocument(false);
@@ -166,13 +164,12 @@ const Content = () => {
     setPendingEditId(null);
   };
 
-
   useEffect(() => {
     if (!openFormAddDocument) return;
 
     const timeout = setTimeout(() => {
       localStorage.setItem('unsavedDocumentData', JSON.stringify(formDataAddDocument));
-    }, 500); 
+    }, 500);
 
     return () => clearTimeout(timeout);
   }, [formDataAddDocument, openFormAddDocument]);
@@ -189,7 +186,6 @@ const Content = () => {
       showSwal('success', 'Successfully deleted document!');
       setRefreshTrigger((prev) => prev + 1);
     } catch (error) {
-      console.error(error);
       showSwal('error', 'Failed to delete document.');
     } finally {
       setLoading(false);
@@ -200,9 +196,7 @@ const Content = () => {
   const handleBatchDelete = async (rows: Item[]) => {
     if (!token || rows.length === 0) return;
 
-    const confirmed = await showConfirmDelete(
-      `Are you sure to delete ${rows.length} items?`
-    );
+    const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} items?`);
 
     if (confirmed) {
       setLoading(true);
@@ -210,7 +204,7 @@ const Content = () => {
         await Promise.all(rows.map((row) => deleteDocument(row.id, token)));
         setRefreshTrigger((prev) => prev + 1);
         showSwal('success', `${rows.length} items have been deleted.`);
-        setSelectedRows([]); // reset selected rows
+        setSelectedRows([]); 
       } catch (error) {
         console.error(error);
         showSwal('error', 'Failed to delete some items.');
@@ -223,7 +217,6 @@ const Content = () => {
   const handleFileClick = (row: Item) => {
     if (!row.file) return;
 
-    // pastikan file URL lengkap
     const fileUrl = row.file.startsWith('http')
       ? row.file
       : `${axiosInstance2.defaults.baseURL}/cdn/${row.file}`;
@@ -231,6 +224,22 @@ const Content = () => {
     setPdfUrl(fileUrl);
     setOpenPdfDialog(true);
   };
+
+  const handleSuccess = () => {
+    localStorage.removeItem('unsavedDocumentData');
+    handleCloseDialog();
+    setRefreshTrigger((prev) => prev + 1);
+    setEdittingId('');
+  };
+
+  const handleSearchKeywordChange = useCallback((keyword: string) => {
+    setSearchInput(keyword);
+  }, []);
+
+  const handleSearch = useCallback(() => {
+    setPage(0);
+    setSearchKeyword(searchInput);
+  }, [searchInput]);
 
   return (
     <PageContainer
@@ -251,7 +260,7 @@ const Content = () => {
                 isHavePagination={true}
                 selectedRows={selectedRows}
                 defaultRowsPerPage={rowsPerPage}
-                rowsPerPageOptions={[10, 20, 50, 100, 500]}
+                rowsPerPageOptions={[10, 50, 100]}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);
@@ -275,7 +284,9 @@ const Content = () => {
                 }}
                 onDelete={(row) => handleDelete(row.id)}
                 onBatchDelete={handleBatchDelete}
-                onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                searchKeyword={searchInput}
+                onSearch={handleSearch}
+                onSearchKeywordChange={handleSearchKeywordChange}
                 onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
                 onAddData={() => handleAdd()}
                 htmlFields={['document_text']}
@@ -305,26 +316,10 @@ const Content = () => {
         <Divider />
         <DialogContent sx={{ paddingTop: 0 }}>
           <br />
-          {/* <FormAddDocument
-            formData={formDataAddDocument}
-            setFormData={setFormDataAddDocument}
-            edittingId={edittingId}
-            onSuccess={() => {
-              localStorage.removeItem('unsavedDocumentData');
-              handleCloseDialog();
-              setRefreshTrigger(refreshTrigger + 1);
-              setEdittingId('');
-            }}
-          /> */}
           <FormAddDocument
             initialData={formDataAddDocument}
             edittingId={edittingId}
-            onSuccess={() => {
-              localStorage.removeItem('unsavedDocumentData');
-              handleCloseDialog();
-              setRefreshTrigger((prev) => prev + 1); 
-              setEdittingId('');
-            }}
+            onSuccess={handleSuccess}
           />
         </DialogContent>
       </Dialog>

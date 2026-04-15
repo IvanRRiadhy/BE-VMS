@@ -38,6 +38,7 @@ const IntegrationDetail = () => {
         // const json = await res.json();
 
         // ✅ ambil yang benar: collection
+        console.log('json', json);
         setIntegration(json.collection ?? null);
         console.log('Integration:', json.collection);
       } catch (e: any) {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   Box,
   Dialog,
@@ -16,12 +16,6 @@ import {
   Snackbar,
   Alert,
   Backdrop,
-  Tabs,
-  FormGroup,
-  FormControlLabel,
-  Tab,
-  TextareaAutosize,
-  Chip,
 } from '@mui/material';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -89,9 +83,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import CreateLinkDialog from 'src/customs/pages/Employee/Components/Dialog/CreateLinkDialog';
 import DetailLinkDialog from 'src/customs/pages/Employee/Components/Dialog/DetailLinkDialog';
 import SendEmailDialog from 'src/customs/pages/Employee/Components/Dialog/SendEmailDialog';
-import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import InvitationShareDialog from './components/Dialog/InvitationShareDialog';
-import moment from 'moment';
+import ShareLinkDialog from './components/ShareLinkDialog';
 
 type VisitorTableRow = {
   id: string;
@@ -116,9 +109,8 @@ const Content = () => {
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [edittingId, setEdittingId] = useState('');
-  const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
-  const [totalRecords, setTotalRecords] = useState(0);
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
   const [discardMode, setDiscardMode] = useState<'close-add' | 'edit' | null>(null);
@@ -207,6 +199,228 @@ const Content = () => {
     endDate: null,
   });
 
+  const resetRegisteredFlow = () => {
+    setSelectedSite(null);
+    setFormDataAddVisitor(defaultFormData);
+  };
+  const handleDialogClose = () => {
+    setOpenDialogIndex(null);
+    setOpenInvitationVisitor(false);
+    setOpenPreRegistration(false);
+    resetRegisteredFlow();
+  };
+  const handleEmployeeClick = async (employeeId: string) => {
+    if (!token) return;
+
+    setOpenEmployeeDialog(true);
+    setEmployeeLoading(true);
+    setEmployeeError(null);
+    setEmployeeDetail(null);
+
+    try {
+      const res = await getEmployeeById(employeeId, token);
+      setEmployeeDetail(res?.collection ?? null);
+    } catch (err: any) {
+      setEmployeeError(err?.message || 'Failed to fetch employee details.');
+    } finally {
+      setEmployeeLoading(false);
+    }
+  };
+
+  const handleCloseEmployeeDialog = () => {
+    setOpenEmployeeDialog(false);
+    setEmployeeDetail(null);
+    setEmployeeError(null);
+  };
+
+  const [selectedType, setSelectedType] = useState<
+    'All' | 'Preregis' | 'Checkin' | 'Checkout' | 'Denied' | 'Block' | 'Waiting'
+  >('All');
+
+  const [filters, setFilters] = useState<any>({
+    status: undefined,
+    visitor_type: '',
+    visitor_role: '',
+    host_id: '',
+    site_id: '',
+    is_employee: '',
+    is_block: '',
+    transaction_status: '',
+    emergency_situation: '',
+    start_date: '',
+    end_date: '',
+  });
+
+  const [appliedFilters, setAppliedFilters] = useState<any>({
+    status: undefined,
+    visitor_status: '',
+    visitor_type: '',
+    visitor_role: '',
+    host_id: '',
+    site_id: '',
+    is_block: '',
+    transaction_status: '',
+    emergency_situation: '',
+    start_date: '',
+    end_date: '',
+  });
+
+  const {
+    data: allVisitorData,
+    isLoading: isLoading,
+    isFetching: isFetching,
+  } = useQuery({
+    queryKey: ['visitors', searchKeyword, appliedFilters],
+    queryFn: async () => {
+      const statusParam =
+        appliedFilters.status && appliedFilters.status !== 'All'
+          ? appliedFilters.status
+          : undefined;
+
+      const isEmergencyParam =
+        appliedFilters.emergency_situation === ''
+          ? undefined
+          : appliedFilters.emergency_situation === 'true';
+
+      const isBlockParam =
+        appliedFilters.is_block === '' ? undefined : appliedFilters.is_block === 'true';
+
+      const res = await getAllVisitorPagination(
+        token as string,
+        0,
+        -1, // 🔥 ambil semua
+        searchKeyword || undefined,
+        appliedFilters.start_date
+          ? dayjs(appliedFilters.start_date).utc().toISOString()
+          : undefined,
+        appliedFilters.end_date ? dayjs(appliedFilters.end_date).utc().toISOString() : undefined,
+        statusParam,
+        appliedFilters.data_filter,
+        appliedFilters.site_id || undefined,
+        appliedFilters.visitor_role || undefined,
+        isEmergencyParam,
+        isBlockParam,
+        appliedFilters.host_id || undefined,
+      );
+
+      return res.collection;
+    },
+    enabled: !!token,
+    staleTime: 1000 * 60 * 1,
+  });
+
+  const processedData = useMemo(() => {
+    if (!allVisitorData) return [];
+
+    return allVisitorData
+      .map((item: any) => ({
+        id: item.id,
+        visitor_type: item.visitor_type_name || '-',
+        name: item.visitor_name || '-',
+        identity_id: item.visitor_identity_id || '-',
+        email: item.visitor_email || '-',
+        organization: item.visitor_organization_name || '-',
+        // gender: item.visitor_gender || '-',
+        invitation_code: item.invitation_code || '-',
+        phone: item.visitor_phone || '-',
+        visitor_period_start: item.visitor_period_start || '-',
+        visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
+        invitation_created_at: item.invitation_created_at,
+        host: item.host ?? '-',
+        visitor_status: item.visitor_status || '-',
+      }))
+      .sort(
+        (a: any, b: any) =>
+          dayjs(b.invitation_created_at).valueOf() - dayjs(a.invitation_created_at).valueOf(),
+      )
+      .map(({ invitation_created_at, ...rest }: any) => rest);
+  }, [allVisitorData]);
+
+  const paginatedData = useMemo(() => {
+    return processedData.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
+  }, [processedData, page, rowsPerPage]);
+
+  const visitorTableData = {
+    data: paginatedData,
+    RecordsFiltered: processedData.length,
+    RecordsTotal: processedData.length,
+  };
+
+  // const {
+  //   data: visitorTableData,
+  //   isLoading: isLoading,
+  //   isFetching: isFetching,
+  //   error,
+  // } = useQuery({
+  //   queryKey: ['visitors', page, rowsPerPage, sortDir, searchKeyword, appliedFilters],
+  //   queryFn: async () => {
+  //     // const limit = rowsPerPage === -1 ? undefined : rowsPerPage;
+  //     // const start = rowsPerPage === -1 ? 0 : page * rowsPerPage;
+  //     const start = page * rowsPerPage;
+  //     const statusParam =
+  //       appliedFilters.status && appliedFilters.status !== 'All'
+  //         ? appliedFilters.status
+  //         : undefined;
+  //     const isEmergencyParam =
+  //       appliedFilters.emergency_situation === ''
+  //         ? undefined
+  //         : appliedFilters.emergency_situation === 'true';
+
+  //     const isBlockParam =
+  //       appliedFilters.is_block === '' ? undefined : appliedFilters.is_block === 'true';
+  //     const res = await getAllVisitorPagination(
+  //       token as string,
+  //       start,
+  //       rowsPerPage,
+  //       // sortDir,
+  //       searchKeyword || undefined,
+  //       appliedFilters.start_date
+  //         ? dayjs(appliedFilters.start_date).utc().toISOString()
+  //         : undefined,
+  //       appliedFilters.end_date ? dayjs(appliedFilters.end_date).utc().toISOString() : undefined,
+  //       statusParam,
+  //       appliedFilters.data_filter,
+  //       appliedFilters.site_id || undefined,
+  //       appliedFilters.visitor_role || undefined,
+  //       isEmergencyParam,
+  //       isBlockParam,
+  //       appliedFilters.host_id || undefined,
+  //     );
+
+  //     return {
+  //       data: res.collection
+  //         .map((item: any) => ({
+  //           id: item.id,
+  //           visitor_type: item.visitor_type_name || '-',
+  //           name: item.visitor_name || '-',
+  //           identity_id: item.visitor_identity_id || '-',
+  //           email: item.visitor_email || '-',
+  //           organization: item.visitor_organization_name || '-',
+  //           gender: item.visitor_gender || '-',
+  //           phone: item.visitor_phone || '-',
+  //           visitor_period_start: item.visitor_period_start || '-',
+  //           visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
+  //           invitation_created_at: item.invitation_created_at,
+  //           host: item.host ?? '-',
+  //           visitor_status: item.visitor_status || '-',
+  //         }))
+  //         .sort((a: any, b: any) => {
+  //           return (
+  //             dayjs(b.invitation_created_at).valueOf() - dayjs(a.invitation_created_at).valueOf()
+  //           );
+  //         }),
+  //       RecordsFiltered: res.RecordsFiltered,
+  //       RecordsTotal: res.RecordsTotal,
+  //     };
+  //   },
+  //   enabled: !!token,
+  //   staleTime: 1000 * 60 * 1,
+  //   placeholderData: (prev) => prev,
+  // });
+
+  const totalFilteredRecords = visitorTableData?.RecordsFiltered ?? 0;
+  const totalRecords = visitorTableData?.RecordsTotal ?? 0;
+
   const cards = [
     {
       title: 'Total Visitor',
@@ -246,6 +460,14 @@ const Content = () => {
   ];
 
   useEffect(() => {
+    const fetchData = async () => {
+      const response = await getRegisteredSite(token as string);
+      setSiteData(response.collection);
+    };
+    fetchData();
+  }, [token]);
+
+  useEffect(() => {
     if (!token) return;
 
     const fetchAll = async () => {
@@ -264,171 +486,12 @@ const Content = () => {
         setAllVisitorEmployee(visitorEmpRes?.collection || []);
         setEmployee(empRes?.collection || []);
       } catch (err) {
-        console.error('FETCH INIT ERROR:', err);
       } finally {
         setLoading(false);
       }
     };
 
     fetchAll();
-  }, [token]);
-
-  const resetRegisteredFlow = () => {
-    setSelectedSite(null);
-    setFormDataAddVisitor(defaultFormData);
-  };
-  const handleDialogClose = () => {
-    setOpenDialogIndex(null);
-    setOpenInvitationVisitor(false);
-    setOpenPreRegistration(false);
-    resetRegisteredFlow();
-  };
-  const handleEmployeeClick = async (employeeId: string) => {
-    if (!token) return;
-
-    setOpenEmployeeDialog(true);
-    setEmployeeLoading(true);
-    setEmployeeError(null);
-    setEmployeeDetail(null);
-
-    try {
-      const res = await getEmployeeById(employeeId, token);
-      setEmployeeDetail(res?.collection ?? null);
-    } catch (err: any) {
-      setEmployeeError(err?.message || 'Failed to fetch employee details.');
-    } finally {
-      setEmployeeLoading(false);
-    }
-  };
-
-  const handleCloseEmployeeDialog = () => {
-    setOpenEmployeeDialog(false);
-    setEmployeeDetail(null);
-    setEmployeeError(null);
-  };
-
-  const [selectedType, setSelectedType] = useState<
-    'All' | 'Preregis' | 'Checkin' | 'Checkout' | 'Denied' | 'Block' | 'Waiting' | 'Precheckin'
-  >('All');
-
-  const [filters, setFilters] = useState<any>({
-    status: undefined,
-    visitor_type: '',
-    visitor_role: '',
-    host_id: '',
-    site_id: '',
-    is_employee: '',
-    is_block: '',
-    transaction_status: '',
-    emergency_situation: '',
-    start_date: '',
-    end_date: '',
-  });
-
-  const [appliedFilters, setAppliedFilters] = useState<any>({
-    status: undefined,
-    visitor_status: '',
-    visitor_type: '',
-    visitor_role: '',
-    host_id: '',
-    site_id: '',
-    is_block: '',
-    transaction_status: '',
-    emergency_situation: '',
-    start_date: '',
-    end_date: '',
-  });
-
-  useEffect(() => {
-    if (!token) return;
-    const fetchData = async () => {
-      setLoading(true);
-
-      try {
-        const start = page * rowsPerPage;
-        const statusParam =
-          appliedFilters.status && appliedFilters.status !== 'All'
-            ? appliedFilters.status
-            : undefined;
-        const isEmergencyParam =
-          appliedFilters.emergency_situation === ''
-            ? undefined
-            : appliedFilters.emergency_situation === 'true';
-
-        const isBlockParam =
-          appliedFilters.is_block === '' ? undefined : appliedFilters.is_block === 'true';
-
-        const response = await getAllVisitorPagination(
-          // draw,
-          // draw,
-          token,
-          start,
-          rowsPerPage,
-          sortDir,
-          searchKeyword || undefined,
-          appliedFilters.start_date
-            ? dayjs(appliedFilters.start_date).utc().toISOString()
-            : undefined,
-          appliedFilters.end_date ? dayjs(appliedFilters.end_date).utc().toISOString() : undefined,
-          // appliedFilters.visitor_status || undefined,
-          statusParam,
-          appliedFilters.data_filter,
-          appliedFilters.site_id || undefined,
-          appliedFilters.visitor_role || undefined,
-          isEmergencyParam,
-          isBlockParam,
-          appliedFilters.host_id || undefined,
-        );
-        let rows = response.collection.map((item: any) => {
-          return {
-            id: item.id,
-            visitor_type: item.visitor_type_name || '-',
-            name: item.visitor_name || '-',
-            invitation_code: item.invitation_code,
-            identity_id: item.visitor_identity_id || '-',
-            email: item.visitor_email || '-',
-            organization: item.visitor_organization_name || '-',
-            gender: item.visitor_gender || '-',
-            phone: item.visitor_phone || '-',
-            // is_vip: item.is_vip || '-',
-            visitor_period_start: item.visitor_period_start || '-',
-            visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
-            host: item.host ?? '-',
-            visitor_status: item.visitor_status || '-',
-          };
-        });
-
-        setTotalRecords(response.RecordsTotal);
-        setTotalFilteredRecords(response.RecordsFiltered);
-        setTableCustomVisitor(rows);
-      } catch (err) {
-        setTableCustomVisitor([]);
-
-        setTotalRecords(0);
-        setTotalFilteredRecords(0);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [
-    token,
-    page,
-    rowsPerPage,
-    sortDir,
-    refreshTrigger,
-    searchKeyword,
-    dateRange,
-    selectedType,
-    appliedFilters,
-  ]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const response = await getRegisteredSite(token as string);
-      setSiteData(response.collection);
-    };
-    fetchData();
   }, [token]);
 
   const handleCloseDialog = () => {
@@ -464,6 +527,8 @@ const Content = () => {
       ...prev,
       registered_site: '',
     }));
+    // localStorage.removeItem('unsavedVisitorData');
+    queryClient.invalidateQueries({ queryKey: ['visitors'] });
     setRefreshTrigger((prev) => prev + 1);
     handleCloseDialog();
   };
@@ -627,8 +692,7 @@ const Content = () => {
       });
       showSwal('success', 'Link deleted successfully.');
     } catch (error) {
-      console.error('Delete link error:', error);
-      showSwal('error', 'Something went wrong while deleting link.');
+      showSwal('error', 'Failed to delete link.');
     }
   };
 
@@ -648,71 +712,7 @@ const Content = () => {
     setOpenDetailLink(true);
   };
   const [selectedShareLinkId, setSelectedShareLinkId] = useState<string | null>(null);
-  const [pageShareLink, setPageShareLink] = useState(0);
-  const [rowsPerPageShareLink, setRowsPerPageShareLink] = useState(10);
-  const [shareLinkSearchKeyword, setShareLinkSearchKeyword] = useState('');
-  const [shareLinkSortDir, setShareLinkSortDir] = useState('desc');
 
-  const startPage = pageShareLink * rowsPerPageShareLink;
-  const { data, isLoading, isFetching } = useQuery({
-    queryKey: [
-      'share-links',
-      startPage,
-      rowsPerPageShareLink,
-      shareLinkSearchKeyword,
-      shareLinkSortDir,
-    ],
-    queryFn: async () => {
-      const res = await getShareLinkByDt(
-        token as string,
-        startPage,
-        rowsPerPageShareLink,
-        shareLinkSearchKeyword,
-        shareLinkSortDir,
-      );
-
-      return res;
-    },
-
-    staleTime: 1000 * 60 * 5,
-    enabled: !!token,
-    gcTime: 1000 * 60 * 2,
-    placeholderData: (previousData) => previousData,
-  });
-
-  const shareLinkList =
-    data?.collection?.map((item: any) => ({
-      id: item.id,
-      agenda: item.agenda,
-      url: item.url,
-      current_usage: item.current_usage,
-      max_usage: item.max_usage,
-      visitor_period_start: formatDateTime(item.visitor_period_start),
-      visitor_period_end: formatDateTime(item.visitor_period_end),
-      expired_at: (() => {
-        const date = new Date(item.expired_at + 'Z');
-
-        const formattedDate = date
-          .toLocaleDateString('id-ID', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-          })
-          .replace(/\//g, '-');
-
-        const formattedTime = date.toLocaleTimeString('id-ID', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false,
-        });
-
-        return `${formattedDate}, ${formattedTime}`;
-      })(),
-
-      link_status: item.link_status,
-    })) || [];
-
-  const totalFilterRecords = data?.RecordsFiltered || 0;
   const handleAddShareLink = () => {
     setOpenCreateLink(true);
   };
@@ -762,7 +762,6 @@ const Content = () => {
       setEmails([]);
       setEmailInput('');
     } catch (error) {
-      console.error(error);
       showSwal('error', 'Failed to send invitation');
     }
   };
@@ -814,6 +813,15 @@ const Content = () => {
     }
   };
 
+  const handleSearchKeywordChange = useCallback((keyword: string) => {
+    setSearchInput(keyword);
+  }, []);
+
+  const handleSearch = useCallback(() => {
+    setPage(0);
+    setSearchKeyword(searchInput);
+  }, [searchInput]);
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -845,16 +853,16 @@ const Content = () => {
 
             <Grid size={{ xs: 12, lg: 12 }}>
               <DynamicTable
-                loading={loading}
+                loading={isLoading || isFetching}
                 isHavePagination={true}
                 overflowX={'auto'}
                 minWidth={2400}
                 stickyHeader={true}
-                data={tableCustomVisitor}
+                data={visitorTableData?.data || []}
                 totalCount={totalFilteredRecords}
                 isNoActionTableHead={true}
                 selectedRows={selectedRows}
-                rowsPerPageOptions={[10, 50, 100, 500]}
+                rowsPerPageOptions={[10, 50, 100]}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);
@@ -881,7 +889,7 @@ const Content = () => {
                   navigate('/admin/visitor/blacklist-visitor');
                 }}
                 isHaveEmployee={true}
-                onEmployeeClick={(row) => {
+                onEmployeeClick={(row: any) => {
                   handleEmployeeClick(row.host as string);
                 }}
                 isHaveVerified={false}
@@ -921,7 +929,10 @@ const Content = () => {
                 onView={(row) => {
                   handleView(row.id);
                 }}
-                onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                // onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                searchKeyword={searchInput}
+                onSearch={handleSearch}
+                onSearchKeywordChange={handleSearchKeywordChange}
                 onFilterCalenderChange={(ranges) => {
                   if (ranges.startDate && ranges.endDate) {
                     setStartDate(ranges.startDate.toISOString());
@@ -934,7 +945,6 @@ const Content = () => {
                   handleAdd();
                 }}
                 isHaveFilterMore={true}
-                // isHaveFilter={true}
                 filterMoreContent={
                   <FilterMoreContent
                     filters={filters}
@@ -1145,52 +1155,15 @@ const Content = () => {
         </DialogActions>
       </Dialog>
 
-      {/* List Share  Link */}
-      <Dialog
+      <ShareLinkDialog
         open={openDetailShareLink}
         onClose={() => setOpenDetailShareLink(false)}
-        fullWidth
-        maxWidth="xl"
-      >
-        <DialogTitle>
-          List Share Link
-          <IconButton
-            aria-label="close"
-            onClick={() => {
-              setOpenDetailShareLink(false);
-            }}
-            sx={{
-              position: 'absolute',
-              top: 8,
-              right: 8,
-            }}
-          >
-            <IconX />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent dividers>
-          <DynamicTable
-            data={shareLinkList}
-            isHaveHeaderTitle
-            isHaveChecked={true}
-            isNoActionTableHead={true}
-            titleHeader="Share Link"
-            isCopyLink={true}
-            isHavePagination={true}
-            totalCount={totalFilterRecords}
-            rowsPerPageOptions={[10, 50, 100]}
-            onPaginationChange={(page, rowsPerPage) => {
-              setPage(page);
-              setRowsPerPage(rowsPerPage);
-            }}
-            onCopyLink={(row: any) => handleOpenInviteDialog(row.id, row.url, row.expired_at)}
-            onDetailLink={(row: any) => handleDetailLink(row)}
-            onDelete={(row: any) => handleDeleteLink(row.id)}
-            isHaveAddData={true}
-            onAddData={handleAddShareLink}
-          />
-        </DialogContent>
-      </Dialog>
+        token={token as string}
+        onCopyLink={(row) => handleOpenInviteDialog(row.id, row.url, row.expired_at)}
+        onDetailLink={handleDetailLink}
+        onDelete={handleDeleteLink}
+        onAddData={handleAddShareLink}
+      />
 
       {/* Dialog Invite via link & invite via email */}
       <InvitationShareDialog

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Autocomplete,
   Backdrop,
@@ -15,7 +15,7 @@ import {
 import Container from 'src/components/container/PageContainer';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { IconTrash, IconUsers } from '@tabler/icons-react';
+import { IconUsers } from '@tabler/icons-react';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -62,17 +62,19 @@ import {
   getAllPermissionAccessControl,
   getAllPermissionVisitorType,
 } from 'src/customs/api/UserGroup';
+import { searchVisitor } from 'src/customs/api/operator';
+import { de } from 'date-fns/locale';
 
 const Content = () => {
   const { token } = useSession();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [edittingId, setEdittingId] = useState('');
   const [openFormAddDocument, setOpenFormAddDocument] = useState(false);
   const [formAddUser, setFormAddUser] = useState<any>({});
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [pendingEditId, setPendingEditId] = useState<string | null>(null);
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -149,7 +151,6 @@ const Content = () => {
       setEdittingId(id);
       setOpenFormAddDocument(true);
     } catch (error) {
-      // setFormAddUser({});
       showSwal('error', 'Failed to load user group data');
     }
   };
@@ -683,7 +684,6 @@ const Content = () => {
 
       await createPermissionOrganization(token as string, payload, edittingId);
     } catch (error: any) {
-      console.error(error);
       showSwal('error', error.response?.data?.msg ?? 'Failed update organization');
     }
   };
@@ -817,6 +817,15 @@ const Content = () => {
     setPermissionSites({});
   };
 
+  const handleSearchKeywordChange = useCallback((keyword: string) => {
+    setSearchInput(keyword);
+  }, []);
+
+  const handleSearch = useCallback(() => {
+    setPage(0);
+    setSearchKeyword(searchInput);
+  }, [searchInput]);
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -838,7 +847,7 @@ const Content = () => {
                 selectedRows={selectedRows}
                 isNoActionTableHead={true}
                 defaultRowsPerPage={rowsPerPage}
-                rowsPerPageOptions={[10, 20, 50, 100, 500]}
+                rowsPerPageOptions={[10, 50, 100]}
                 onPaginationChange={(newPage, newRowsPerPage) => {
                   setPage(newPage);
                   setRowsPerPage(newRowsPerPage);
@@ -852,7 +861,9 @@ const Content = () => {
                 isHaveAddData={true}
                 isHaveSearch={true}
                 isHaveSettingOperator={true}
-                onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                searchKeyword={searchInput}
+                onSearch={handleSearch}
+                onSearchKeywordChange={handleSearchKeywordChange}
                 onCheckedChange={(selected) => setSelectedRows(selected)}
                 onEdit={(row) => handleEdit(row.id)}
                 onDelete={(row) => handleDelete(row.id)}

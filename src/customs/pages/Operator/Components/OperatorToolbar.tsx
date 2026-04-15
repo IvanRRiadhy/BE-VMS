@@ -67,28 +67,6 @@ const OperatorToolbar = ({
           Clear
         </Button>
       </Tooltip>
-      {/* 
-      <Tooltip title="List Visitor" {...tooltipProps}>
-        <Button
-          onClick={onOpenList}
-          startIcon={<IconUser size={18} />}
-          variant="contained"
-          // sx={{ backgroundColor: 'gray', '&:hover': { backgroundColor: 'gray' } }}
-        >
-          <IconUser size={25} style={{ color: '#fff' }} /> 
-          Visitor
-        </Button>
-      </Tooltip>
-
-      <Tooltip title="Blacklist Visitor" {...tooltipProps}>
-        <Button
-          onClick={onOpenBlacklist}
-          sx={{ backgroundColor: '#000', '&:hover': { backgroundColor: '#000' }, color: '#fff' }}
-          startIcon={<IconUser size={18} style={{ color: '#fff' }} />}
-        >
-          Blacklist
-        </Button>
-      </Tooltip> */}
 
       <Tooltip title="Visitor Menu" {...tooltipProps}>
         <Button
@@ -121,17 +99,6 @@ const OperatorToolbar = ({
           Blacklist Visitor
         </MenuItem>
       </Menu>
-      {/* <Tooltip title="Vehicle" {...tooltipProps}>
-        <Button
-          variant="contained"
-          color="secondary"
-          startIcon={<IconCar size={18} />}
-          onClick={onOpenVehicle}
-        >
-          Vehicle
-        </Button>
-      </Tooltip> */}
-
       <Tooltip title="Information Guide Operator" {...tooltipProps}>
         <Button variant="contained" onClick={onOpenInfo} sx={{ width: 36, height: 36, p: 0.7 }}>
           <IconInfoCircle size={25} />

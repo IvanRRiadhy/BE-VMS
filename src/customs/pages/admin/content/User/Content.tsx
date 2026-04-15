@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Box,
   Button,
@@ -43,6 +43,7 @@ const Content = () => {
   const { token } = useSession();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [searchInput, setSearchInput] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [edittingId, setEdittingId] = useState('');
   const [openFormAddDocument, setOpenFormAddDocument] = useState(false);
@@ -56,8 +57,6 @@ const Content = () => {
   const handleChangeTab = (event: any, newValue: any) => {
     setTabValue(newValue);
   };
-
-  const debouncedSearch = useDebounce(searchKeyword, 500);
 
   const queryClient = useQueryClient();
 
@@ -85,11 +84,10 @@ const Content = () => {
         group_name: item.group_name,
         description: item.description || '',
       }))
-      .filter((item: any) => item.fullname.toLowerCase().includes(debouncedSearch.toLowerCase()));
-  }, [data]);
+      .filter((item: any) => item.fullname.toLowerCase().includes(searchKeyword.toLowerCase()));
+  }, [data, searchKeyword]);
 
-  const collection = data?.collection || [];
-  const totalRecords = data?.collection.length || 0;
+  const totalRecords = data?.collection.length ?? 0;
 
   const cards = [
     {
@@ -136,7 +134,6 @@ const Content = () => {
       setOpenDialogSetting(true);
     } catch (error) {
       console.error('Failed to fetch user details:', error);
-      // showErrorAlert('Error!', 'Failed to load user data for editing.');
       showSwal('error', 'Failed to load user data for editing.');
     }
   };
@@ -169,9 +166,14 @@ const Content = () => {
     fetchData();
   }, [token]);
 
-  const handleSearch = React.useCallback((keyword: string) => {
-    setSearchKeyword(keyword);
+  const handleSearchKeywordChange = useCallback((keyword: string) => {
+    setSearchInput(keyword);
   }, []);
+
+  const handleSearch = useCallback(() => {
+    setPage(0);
+    setSearchKeyword(searchInput);
+  }, [searchInput]);
 
   return (
     <PageContainer
@@ -194,10 +196,10 @@ const Content = () => {
                 selectedRows={selectedRows}
                 // defaultRowsPerPage={rowsPerPage}
                 // rowsPerPageOptions={[10, 20, 50, 100, 500]}
-                onPaginationChange={(newPage, newRowsPerPage) => {
-                  setPage(newPage);
-                  setRowsPerPage(newRowsPerPage);
-                }}
+                // onPaginationChange={(newPage, newRowsPerPage) => {
+                //   setPage(newPage);
+                //   setRowsPerPage(newRowsPerPage);
+                // }}
                 isHaveChecked
                 isHaveAction={true}
                 isOperatorSetting={true}
@@ -208,7 +210,10 @@ const Content = () => {
                 isHaveSearch={true}
                 isHaveSettingOperator={true}
                 onSettingOperator={(row) => handleSetting(row.id)}
-                onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                // onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                searchKeyword={searchInput}
+                onSearch={handleSearch}
+                onSearchKeywordChange={handleSearchKeywordChange}
                 onCheckedChange={(selected) => setSelectedRows(selected)}
                 onEdit={(row) => handleEdit(row.id)}
                 onDelete={(row) => handleDelete(row.id)}

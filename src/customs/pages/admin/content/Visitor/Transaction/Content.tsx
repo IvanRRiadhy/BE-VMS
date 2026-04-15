@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Dialog,
@@ -13,7 +13,6 @@ import {
   Grid2 as Grid,
   IconButton,
   Button,
-  Avatar,
   Typography,
   Portal,
   Autocomplete,
@@ -49,8 +48,8 @@ import iconScanQR from 'src/assets/images/svgs/scan-qr.svg';
 import iconAdd from 'src/assets/images/svgs/add-circle.svg';
 import TopCard from 'src/customs/components/cards/TopCard';
 import CloseIcon from '@mui/icons-material/Close';
-import FormWizardAddInvitation from '../Trx/FormWizardAddInvitation';
-import FormWizardAddVisitor from '../Trx/FormWizardAddVisitor';
+import FormWizardAddInvitation from 'src/customs/pages/admin/content/Visitor/Trx/FormWizardAddInvitation';
+import FormWizardAddVisitor from 'src/customs/pages/admin/content/Visitor/Trx/FormWizardAddVisitor';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   CreateVisitorRequestSchema,
@@ -58,6 +57,7 @@ import {
   CreateVisitorRequest,
 } from 'src/customs/api/models/Admin/Visitor';
 import {
+  getAllEmployee,
   getAllSite,
   getAllVisitorType,
   getRegisteredSite,
@@ -82,38 +82,19 @@ import {
   IconUsers,
   IconX,
 } from '@tabler/icons-react';
-import EmployeeDetailDialog from '../Dialog/EmployeeDetailDialog';
-import VisitorDetailDialog from '../Dialog/VisitorDetailDialog';
+
 import { getInvitationCode } from 'src/customs/api/operator';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import DetailVisitorDialog from 'src/customs/pages/Operator/Dialog/DetailVisitorDialog';
-import {
-  FilterList,
-  KeyboardArrowDown,
-  KeyboardArrowDownOutlined,
-  KeyboardArrowUpOutlined,
-} from '@mui/icons-material';
+import { KeyboardArrowDownOutlined, KeyboardArrowUpOutlined } from '@mui/icons-material';
 import { useDebounce } from 'src/hooks/useDebounce';
 import VisitorRow from './VisitorRow';
 import FilterTransaction from './FilterMoreContent';
+import { useQuery } from '@tanstack/react-query';
+import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
-
-type VisitorTableRow = {
-  id: string;
-  identity_id: string;
-  name: string;
-  visitor_type: string;
-  email: string;
-  organization: string;
-  gender: string;
-  phone: string;
-  // is_vip: string;
-  visitor_period_start: string;
-  visitor_period_end: string;
-  host: string;
-};
 
 type Group = {
   id: string;
@@ -126,7 +107,6 @@ const Content = () => {
   const { token } = useSession();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(100);
-  const [sortColumn, setSortColumn] = useState<string>('id');
   const [sortDir, setSortDir] = useState<string>('desc');
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -140,7 +120,6 @@ const Content = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
-  // mode konfirmasi: "close-add" atau "edit"
   const [discardMode, setDiscardMode] = useState<'close-add' | 'edit' | null>(null);
   const [tableRowVisitors, setTableRowVisitors] = useState<any[]>([]);
   const [openDetail, setOpenDetail] = useState(false);
@@ -184,7 +163,7 @@ const Content = () => {
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
-    severity: AlertColor; 
+    severity: AlertColor;
   }>({ open: false, message: '', severity: 'info' });
 
   const toast = (message: string, severity: AlertColor = 'info') => {
@@ -208,7 +187,6 @@ const Content = () => {
   const [openInvitationVisitor, setOpenInvitationVisitor] = useState(false);
   const [openPreRegistration, setOpenPreRegistration] = useState(false);
   const [flowTarget, setFlowTarget] = useState<'invitation' | 'preReg' | null>(null);
-
   // Registered Site
   const [siteData, setSiteData] = useState<any[]>([]);
   const [selectedSite, setSelectedSite] = useState<any | null>(null);
@@ -226,15 +204,9 @@ const Content = () => {
   const [openGroup, setOpenGroup] = useState(true);
   const [showDrawerFilterMore, setShowDrawerFilterMore] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
-  const [groupDetail, setGroupDetail] = useState<any | null>(null);
   const [groupDetailLoading, setGroupDetailLoading] = useState(false);
   const [groupHeader, setGroupHeader] = useState<any | null>(null);
   const [groupVisitors, setGroupVisitors] = useState<any[]>([]);
-  const [visitorType, setVisitorType] = useState<any[]>([]);
-  const [sites, setSites] = useState<any[]>([]);
-  const [employee, setEmployee] = useState<any[]>([]);
-  const [vtLoading, setVTLoading] = useState(false);
-  const [allVisitorEmployee, setAllVisitorEmployee] = useState<any[]>([]);
 
   const resetRegisteredFlow = () => {
     setSelectedSite(null);
@@ -259,13 +231,6 @@ const Content = () => {
     Denied: 'Denied',
     Block: 'Block',
   };
-
-  const visitorRole: Record<string, string> = {
-    Visitor: 'Visitor',
-    Delivery: 'Delivery',
-    Vip: 'Vip',
-  };
-
 
   const [searchAgenda, setSearchAgenda] = useState('');
   const debouncedSearchAgenda = useDebounce(searchAgenda, 400);
@@ -337,13 +302,14 @@ const Content = () => {
           agenda: item.agenda || '-',
           visitor_type: item.visitor_type_name || '-',
           host_name: item.host_name || '-',
+          visitor_period_start: formatDateTime(item.visitor_period_start),
+          visitor_period_end: formatDateTime(item.visitor_period_end),
         })),
       );
 
       setTotalRecords(res.RecordsTotal);
       setTotalFilteredRecords(res.RecordsFiltered);
     } catch (err) {
-      console.error('fetchData error:', err);
       setTableRowVisitors([]);
     } finally {
       setLoading(false);
@@ -369,26 +335,6 @@ const Content = () => {
     setOpenInvitationVisitor(false);
     setOpenPreRegistration(false);
     handleDialogClose();
-  };
-  const handleAdd = () => {
-    const saved = localStorage.getItem('unsavedVisitorData');
-    let freshForm;
-
-    if (saved) {
-      try {
-        freshForm = JSON.parse(saved);
-      } catch {
-        freshForm = CreateVisitorRequestSchema.parse({});
-      }
-    } else {
-      freshForm = CreateVisitorRequestSchema.parse({});
-    }
-
-    setEdittingId('');
-    setFormDataAddVisitor(freshForm);
-    setSelectedSite(null);
-    setPendingEditId(null);
-    setOpenDialog(true);
   };
 
   const handleSuccess = () => {
@@ -460,7 +406,6 @@ const Content = () => {
         setGroupHeader(res.collection[0]);
         setGroupVisitors(res.collection);
       } catch (e) {
-        setGroupDetail(null);
         setGroupVisitors([]);
       } finally {
         setGroupDetailLoading(false);
@@ -507,43 +452,53 @@ const Content = () => {
     // setShowDrawerFilterMore(false);
   };
 
-  const fetchVisitorType = async () => {
-    try {
-      setVTLoading(true);
+  const { data: visitorType = [], isLoading: vtLoading } = useQuery({
+    queryKey: ['visitorType'],
+    queryFn: async () => {
       const res = await getAllVisitorType(token as string);
-      setVisitorType(res?.collection || []);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setVTLoading(false);
-    }
-  };
+      return res?.collection || [];
+    },
+    enabled: !!token,
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
+  });
 
-  useEffect(() => {
-    if (token) {
-      fetchVisitorType();
-    }
-  }, [token]);
-  useEffect(() => {
-    if (!token) return;
+  const { data: sites = [], isLoading: siteLoading } = useQuery({
+    queryKey: ['sites'],
+    queryFn: async () => {
+      const res = await getAllSite(token as string);
+      return res?.collection ?? [];
+    },
+    enabled: !!token,
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
+  });
 
-    const fetchData = async () => {
-      try {
-        const [siteRes, employeeRes] = await Promise.all([
-          getAllSite(token),
-          getVisitorEmployee(token),
-        ]);
+  const { data: employee = [], isLoading: employeeLoading } = useQuery({
+    queryKey: ['employee'],
+    queryFn: async () => {
+      const res = await getAllEmployee(token as string);
+      return res?.collection ?? [];
+    },
+    enabled: !!token,
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
+  });
 
-        setSites(siteRes?.collection ?? []);
-        setEmployee(employeeRes?.collection ?? []);
-        setAllVisitorEmployee(employeeRes?.collection ?? []);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    fetchData();
-  }, [token]);
+  const { data: allVisitorEmployee = [], isLoading: visitorEmployeeLoading } = useQuery({
+    queryKey: ['allVisitorEmployee'],
+    queryFn: async () => {
+      const res = await getVisitorEmployee(token as string);
+      return res?.collection ?? [];
+    },
+    enabled: !!token,
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
+  });
 
   return (
     <PageContainer
@@ -619,33 +574,50 @@ const Content = () => {
               />
               <Box>
                 <Box>
-                  {tableRowVisitors.map((group: any) => (
-                    <Box
-                      key={group.id}
-                      sx={{
-                        backgroundColor: selectedGroup?.id === group.id ? '#e3f2fd' : '#f5f5f5',
-                        borderRadius: '8px',
-                        padding: '10px',
-                        cursor: 'pointer',
-                        mb: 1,
-                        '&:hover': {
-                          backgroundColor: '#eee',
-                        },
-                      }}
-                      onClick={() => {
-                        setSelectedGroup(group);
-                        setSelectedGroupId(group.id);
-                      }}
-                    >
-                      <Typography variant="body1" fontWeight="bold">
-                        {group.agenda}
-                      </Typography>
-                      <Box display={'flex'} justifyContent={'space-between'}>
-                        <Typography>{group.visitor_type}</Typography>
-                        <Typography>{group.host_name}</Typography>
-                      </Box>
-                    </Box>
-                  ))}
+                  {loading
+                    ? Array.from({ length: 10 }).map((_, i) => (
+                        <Box
+                          key={i}
+                          sx={{
+                            backgroundColor: '#f5f5f5',
+                            borderRadius: '8px',
+                            padding: '10px',
+                            mb: 1,
+                          }}
+                        >
+                          <Skeleton variant="text" width="60%" height={24} />
+                          <Skeleton variant="text" width="40%" height={20} />
+                        </Box>
+                      ))
+                    : tableRowVisitors.map((group: any) => (
+                        <Box
+                          key={group.id}
+                          sx={{
+                            backgroundColor: selectedGroup?.id === group.id ? '#e3f2fd' : '#f5f5f5',
+                            borderRadius: '8px',
+                            padding: '10px',
+                            cursor: 'pointer',
+                            mb: 1,
+                            '&:hover': {
+                              backgroundColor: '#eee',
+                            },
+                          }}
+                          onClick={() => {
+                            setSelectedGroup(group);
+                            setSelectedGroupId(group.id);
+                          }}
+                        >
+                          <Typography variant="body1" fontWeight="bold">
+                            {group.agenda}
+                          </Typography>
+                          <Box display={'flex'} justifyContent={'space-between'}>
+                            <Typography>{group.visitor_type}</Typography>
+                            <Typography>{group.host_name}</Typography>
+                          </Box>
+                          <Typography>Start : {group.visitor_period_start}</Typography>
+                          <Typography>End : {group.visitor_period_end}</Typography>
+                        </Box>
+                      ))}
                 </Box>
               </Box>
             </Box>
@@ -1022,13 +994,8 @@ const Content = () => {
                 <Scanner
                   constraints={{ facingMode }}
                   onScan={async (result: any) => {
-                    // if (!result) return;
-                    // if (hasDecoded) return; // cegah spam callback
-                    // setHasDecoded(true);
-                    // setQrValue(typeof result === 'string' ? result : String(result));
                     if (!result || hasDecoded) return;
 
-                    console.log('📸 QR scan raw result:', result);
                     setHasDecoded(true);
 
                     let value = '';
@@ -1036,8 +1003,6 @@ const Content = () => {
                     else if (Array.isArray(result)) value = result[0]?.rawValue || '';
                     else if (typeof result === 'object')
                       value = result.rawValue || JSON.stringify(result);
-
-                    console.log('✅ Extracted QR value:', value);
                     setQrValue(value);
 
                     try {
@@ -1046,7 +1011,7 @@ const Content = () => {
                       // onClose();
                       handleDialogClose();
                     } catch (err) {
-                      console.error('❌ Error saat submit QR:', err);
+                      console.error('Error saat submit QR:', err);
                     } finally {
                       // setIsSubmitting(false);
                     }
@@ -1068,7 +1033,6 @@ const Content = () => {
                 <Box sx={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
                   <Box
                     sx={{
-                      // ukuran kotak scan (responsif)
                       '--scanSize': { xs: '70vw', sm: '380px' },
 
                       position: 'absolute',
@@ -1077,14 +1041,11 @@ const Content = () => {
                       width: 'var(--scanSize)',
                       height: 'var(--scanSize)',
                       transform: 'translate(-50%, -50%)',
-
-                      // ini yang bikin area luar gelap, tengah tetap terang
                       boxShadow: '0 0 0 9999px rgba(0,0,0,0.55)',
-                      borderRadius: 2, // 0 jika mau siku
+                      borderRadius: 2,
                       outline: '2px solid rgba(255,255,255,0.18)',
                     }}
                   >
-                    {/* 4 corner, ditempel di dalam kotak agar selalu pas */}
                     <Box
                       sx={{
                         position: 'absolute',

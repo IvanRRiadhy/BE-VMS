@@ -22,10 +22,11 @@ import { showSwal } from 'src/customs/components/alerts/alerts';
 import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
 import {
   createApprovalWorkflow,
-  deleteApprovalWorkflow,
   getApprovalWorkflowById,
   updateApprovalWorkflow,
 } from 'src/customs/api/Admin/ApprovalWorkflow';
+import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
+import { getAllUser, getAllEmployee } from 'src/customs/api/admin';
 
 interface FormApproveProps {
   formData: any;
@@ -33,6 +34,16 @@ interface FormApproveProps {
   edittingId: string;
   onSuccess?: () => void;
 }
+
+type RuleNode = {
+  id: string;
+  type: 'GROUP' | 'ROLE';
+  operator?: 'AND' | 'OR';
+  role?: string;
+  entity_id?: string;
+  step_order?: number;
+  children?: RuleNode[];
+};
 
 const FormApprove: React.FC<FormApproveProps> = ({
   formData,
@@ -43,6 +54,7 @@ const FormApprove: React.FC<FormApproveProps> = ({
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
   const { token } = useSession();
+  const [users, setUsers] = useState<any[]>([]);
   const roleOptions = [
     { label: 'Host', value: 'Host' },
     // { label: 'User', value: 'User' },
@@ -50,6 +62,10 @@ const FormApprove: React.FC<FormApproveProps> = ({
     { label: 'PIC', value: 'PIC' },
   ];
   const [expanded, setExpanded] = useState<string[]>([]);
+  const [employees, setEmployees] = useState<any[]>([]);
+
+  const createId = () => Math.random().toString(36).substring(2, 9);
+  const [rules, setRules] = useState<RuleNode[]>([]);
 
   const buildRulesFromConditions = (conditions: any[], rootLogic: 'AND' | 'OR'): RuleNode[] => {
     const convert = (cond: any): RuleNode => {
@@ -69,17 +85,11 @@ const FormApprove: React.FC<FormApproveProps> = ({
         id: createId(),
         type: 'ROLE',
         role: roleName,
+        entity_id: cond.entity_id,
       };
     };
 
-    return [
-      {
-        id: createId(),
-        type: 'GROUP',
-        operator: rootLogic,
-        children: conditions.map(convert),
-      },
-    ];
+    return conditions.map(convert);
   };
 
   useEffect(() => {
@@ -91,6 +101,8 @@ const FormApprove: React.FC<FormApproveProps> = ({
 
         const res = await getApprovalWorkflowById(token as string, edittingId);
         const data = res.collection;
+        // console.log('data', data);
+        
 
         setFormData({
           name: data.name,
@@ -126,13 +138,16 @@ const FormApprove: React.FC<FormApproveProps> = ({
     e.preventDefault();
     setLoading(true);
     setErrors({});
+    stepRef.current = 1;
     try {
-      const root = rules[0];
+      // const root = rules[0];
 
-      const conditions =
-        root?.type === 'GROUP'
-          ? buildConditions(root.children ?? [], root.operator)
-          : buildConditions(rules);
+      // const conditions =
+      //   root?.type === 'GROUP'
+      //     ? buildConditions(root.children ?? [], root.operator)
+      //     : buildConditions(rules);
+
+      const conditions = buildConditions(rules, undefined, undefined, true);
 
       const payload = {
         name: formData.name,
@@ -146,48 +161,18 @@ const FormApprove: React.FC<FormApproveProps> = ({
 
       if (edittingId) {
         await updateApprovalWorkflow(token as string, edittingId, payload);
-        // await deleteApprovalWorkflow(token as string, edittingId);
-        // // buat ulang workflow baru
-        // await createApprovalWorkflow(token as string, payload);
       } else {
         await createApprovalWorkflow(token as string, payload);
       }
 
       setLoading(false);
-
-      // await showSwal(
-      //   'success',
-      //   edittingId
-      //     ? 'Approval workflow updated successfully!'
-      //     : 'Approval workflow created successfully!',
-      // );
-      // setTimeout(() => {
       onSuccess?.();
-      // }, 600);
     } catch (err: any) {
       setLoading(false);
       if (err?.errors) setErrors(err.errors);
       showSwal('error', err?.message || 'Failed to create document.');
     }
-
-    // finally {
-    //   setTimeout(() => {
-    //     setLoading(false);
-    //   }, 600);
-    // }
   };
-
-  type RuleNode = {
-    id: string;
-    type: 'GROUP' | 'ROLE';
-    operator?: 'AND' | 'OR';
-    role?: string;
-    children?: RuleNode[];
-  };
-
-  const createId = () => Math.random().toString(36).substring(2, 9);
-
-  const [rules, setRules] = useState<RuleNode[]>([]);
 
   const addRootRule = (operator: 'AND' | 'OR') => {
     setRules((prev) => [
@@ -210,24 +195,33 @@ const FormApprove: React.FC<FormApproveProps> = ({
   };
   // let step = 1;
   const stepRef = useRef(1);
-  stepRef.current = 1;
+  // stepRef.current = 1;
   const rootLogic = rules[0]?.operator;
-  const buildConditions = (nodes: RuleNode[], parentLogic?: 'AND' | 'OR'): any[] => {
+  const buildConditions = (
+    nodes: RuleNode[],
+    parentLogic?: 'AND' | 'OR',
+    parentStep?: number,
+    isRootLevel: boolean = false,
+  ): any[] => {
     return nodes.flatMap((node) => {
       if (node.type === 'GROUP') {
         if (!node.children?.length) return [];
-
+        // const myStep = groupStep++;
+        // const myStep = node.step_order ?? 1;
+        const myStep = isRootLevel ? (node.step_order ?? 1) : parentStep;
         return {
           logic: node.operator ?? 'NONE',
           approver_type: roleMap?.[node.role as string] ?? null,
-          entity_id: uuid(),
+          entity_id: node.entity_id ?? null,
           parent_id: null,
           // step_order: Number(formData.step_order) ? step++ : null,
-          step_order: Number(formData.step_order) ? stepRef.current++ : null,
-          escalation_hours: formData.escalation_hours ?? 0,
+          // step_order: Number(formData.step_order) ? stepRef.current++ : null,
+          step_order: myStep,
+          escalation_hours: formData.escalation_hours ?? null,
           // escalation_status: null,
           delegate_user_id: null,
-          children: buildConditions(node.children),
+          // children: buildConditions(node.children),
+          children: buildConditions(node.children, node.operator, myStep, false),
         };
       }
 
@@ -237,10 +231,12 @@ const FormApprove: React.FC<FormApproveProps> = ({
         logic: parentLogic === rootLogic ? 'NONE' : (parentLogic ?? 'NONE'),
         // logic: parentLogic ?? 'NONE',
         approver_type: roleMap[node.role] ?? null,
-        entity_id: uuid(),
+        entity_id: node.entity_id ?? null,
         parent_id: null,
         // step_order: Number(formData.step_order) ? step++ : null,
-        step_order: Number(formData.step_order) ? stepRef.current++ : null,
+        // step_order: Number(formData.step_order) ? stepRef.current++ : null,
+        // step_order: stepRef.current++,
+        step_order: parentStep,
         escalation_hours: formData.escalation_hours ?? null,
         // escalation_status: null,
         delegate_user_id: null,
@@ -319,7 +315,62 @@ const FormApprove: React.FC<FormApproveProps> = ({
     setRules(update);
     setExpanded((prev) => [...new Set([...prev, targetId])]);
   };
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const res = await getAllUser(token as string);
+        setUsers(res.collection || []);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchUsers();
+  }, []);
+
+  const getOptionsByRole = (role?: string) => {
+     if (role === 'Manager') {
+       return users
+         .filter((u) => u.group_name === 'Manager')
+         .map((u) => ({
+           label: u.fullname,
+           value: u.id,
+         }));
+     }
+
+    if (role === 'PIC' ) {
+      return employees.map((e) => ({
+        label: e.name,
+        value: e.id,
+      }));
+    }
+
+    return [];
+  };
+
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        const res = await getAllEmployee(token as string);
+        setEmployees(res.collection || []);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchEmployees();
+  }, []);
+
+  const countRootGroups = (nodes: RuleNode[]): number => {
+    return nodes.filter((n) => n.type === 'GROUP').length;
+  };
+
+  const totalSteps = countRootGroups(rules);
+  const stepOptions = Array.from({ length: totalSteps }, (_, i) => i + 1);
+
   const renderNode = (node: RuleNode) => {
+    const options = getOptionsByRole(node.role);
     if (node.type === 'ROLE') {
       return (
         <TreeItem
@@ -344,7 +395,35 @@ const FormApprove: React.FC<FormApproveProps> = ({
               >
                 {node.role}
               </Typography>
+              <CustomSelect
+                size="small"
+                value={node.entity_id || ''}
+                sx={{ minWidth: 150 }}
+                onChange={(e: any) => {
+                  const value = e.target.value;
 
+                  const update = (nodes: any[]): any[] =>
+                    nodes.map((n) => {
+                      if (n.id === node.id) {
+                        return { ...n, entity_id: value };
+                      }
+                      if (n.children) {
+                        return { ...n, children: update(n.children) };
+                      }
+                      return n;
+                    });
+
+                  setRules(update);
+                }}
+              >
+                <MenuItem value="">Select User</MenuItem>
+
+                {options.map((opt) => (
+                  <MenuItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </MenuItem>
+                ))}
+              </CustomSelect>
               <Button
                 size="small"
                 variant="contained"
@@ -409,6 +488,33 @@ const FormApprove: React.FC<FormApproveProps> = ({
             >
               {node.operator}
             </Typography>
+            <CustomSelect
+              size="small"
+              value={node.step_order || 1}
+              sx={{ minWidth: 80 }}
+              onChange={(e: any) => {
+                const value = Number(e.target.value);
+
+                const updateNode = (nodes: RuleNode[]): RuleNode[] =>
+                  nodes.map((n) => {
+                    if (n.id === node.id) {
+                      return { ...n, step_order: value };
+                    }
+                    if (n.children) {
+                      return { ...n, children: updateNode(n.children) };
+                    }
+                    return n;
+                  });
+
+                setRules((prev) => updateNode(prev));
+              }}
+            >
+              {stepOptions.map((s) => (
+                <MenuItem key={s} value={s}>
+                  Step {s}
+                </MenuItem>
+              ))}
+            </CustomSelect>
 
             <Box
               sx={{
@@ -440,29 +546,6 @@ const FormApprove: React.FC<FormApproveProps> = ({
                 flexShrink: 0,
               }}
             >
-              {/* <Button
-                size="small"
-                variant="contained"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  addGroup(node.id, 'AND');
-                }}
-              >
-                + AND
-              </Button>
-
-              <Button
-                size="small"
-                variant="contained"
-                color="secondary"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  addGroup(node.id, 'OR');
-                }}
-              >
-                + OR
-              </Button> */}
-
               <IconTrash
                 size={24}
                 // color="error"
@@ -556,13 +639,13 @@ const FormApprove: React.FC<FormApproveProps> = ({
               value={formData.escalation_hours}
               onChange={handleChange}
               error={Boolean(errors.escalation_hours)}
-              helperText={errors.escalation_hours ?? ''}
+              helperText={errors.escalation_hours ?? null}
               fullWidth
             />
           </Grid2>
-          <Grid2 size={{ xs: 12, lg: 12 }}>
+          {/* <Grid2 size={{ xs: 12, lg: 12 }}>
             <Box>
-              {/* step_order */}
+       
               <CustomFormLabel htmlFor="step_order" sx={{ mt: 0 }}>
                 Step Order
               </CustomFormLabel>
@@ -573,7 +656,7 @@ const FormApprove: React.FC<FormApproveProps> = ({
                 onChange={(e) => setFormData({ ...formData, step_order: e.target.checked })}
               />
             </Box>
-          </Grid2>
+          </Grid2> */}
 
           <Grid2 size={{ xs: 12, lg: 12 }}>
             <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>

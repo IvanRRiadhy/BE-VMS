@@ -108,16 +108,17 @@ const Content = () => {
   const [checkedIds, setCheckedIds] = useState<string[]>([]);
   const [tableVisitorCard, setTableVisitorCard] = useState<Item[]>([]);
   const [edittingId, setEdittingId] = useState('');
-  const dialogRef = useRef<HTMLDivElement | null>(null);
+
   const [searchKeyword, setSearchKeyword] = useState('');
-  const debounceSearch = useDebounce(searchKeyword, 500);
+  const [searchInput, setSearchInput] = useState('');
+
   const [totalRecords, setTotalRecords] = useState(0);
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
   const [isBatchEdit, setIsBatchEdit] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [sortDir, setSortDir] = useState('desc');
-  // Create Visitor card state management
+
   const [openFormCreateVisitorCard, setOpenFormCreateVisitorCard] = useState(false);
   const BASE_URL = axiosInstance.defaults.baseURL;
   const [importErrorOpen, setImportErrorOpen] = useState(false);
@@ -146,7 +147,6 @@ const Content = () => {
       title: 'Total Unused Card',
       icon: IconUserOff,
       subTitle: `${unUsedCard}`,
-      // subTitleSetting: tableVisitorCard.filter((v) => v.is_used === false).length,
       color: 'none',
     },
     {
@@ -221,7 +221,6 @@ const Content = () => {
           setUnUsedCard(isUnusedCount);
         }
       } catch (error: any) {
-        // ✅ kalau 404 → kosongkan data
         if (error?.response?.status === 404) {
           setTableVisitorCard([]);
           setTotalRecords(0);
@@ -295,8 +294,8 @@ const Content = () => {
 
     const parsedData = {
       ...existingData,
-      registered_site: existingData.registered_site ?? '', 
-      type: typeMap[existingData.type] ?? 0, 
+      registered_site: existingData.registered_site ?? '',
+      type: typeMap[existingData.type] ?? 0,
     } as CreateVisitorCardRequest;
 
     setEdittingId(id);
@@ -419,7 +418,7 @@ const Content = () => {
         body: formData,
       });
 
-      const text = await resp.text(); 
+      const text = await resp.text();
       let json: any;
       try {
         json = JSON.parse(text);
@@ -458,7 +457,7 @@ const Content = () => {
       const parsed = CreateVisitorCardRequestSchema.parse(existingData ?? {});
       setEdittingId(pendingEditId);
       setFormAddVisitorCard(parsed);
-      +setInitialFormData(parsed); 
+      +setInitialFormData(parsed);
       setOpenFormCreateVisitorCard(true);
       setPendingEditId(null);
       return;
@@ -500,6 +499,15 @@ const Content = () => {
     setRefreshTrigger((prev) => prev + 1);
   };
 
+  const handleSearchKeywordChange = useCallback((keyword: string) => {
+    setSearchInput(keyword);
+  }, []);
+
+  const handleSearch = useCallback(() => {
+    setPage(0);
+    setSearchKeyword(searchInput);
+  }, [searchInput]);
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -514,7 +522,6 @@ const Content = () => {
             </Grid>
             {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
-              {/* {isDataReady ? ( */}
               <DynamicTable
                 loading={loading}
                 overflowX={'auto'}
@@ -524,7 +531,7 @@ const Content = () => {
                 isHavePagination={true}
                 totalCount={totalFilteredRecords}
                 defaultRowsPerPage={rowsPerPage}
-                rowsPerPageOptions={[10, 25, 50, 100]}
+                rowsPerPageOptions={[10, 50, 100]}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);
@@ -551,7 +558,10 @@ const Content = () => {
                 onBatchEdit={handleBatchEdit}
                 onDelete={(row) => handleDeleteVisitorCard(row.id)}
                 onBatchDelete={handleBatchDelete}
-                onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                // onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                searchKeyword={searchInput}
+                onSearch={handleSearch}
+                onSearchKeywordChange={handleSearchKeywordChange}
                 onAddData={() => {
                   handleAddVisitorCard();
                 }}
@@ -564,13 +574,6 @@ const Content = () => {
                   />
                 }
               />
-              {/* ) : (
-                <Card sx={{ width: '100%' }}>
-                  <Skeleton />
-                  <Skeleton animation="wave" />
-                  <Skeleton animation={false} />
-                </Card>
-              )} */}
             </Grid>
           </Grid>
         </Box>

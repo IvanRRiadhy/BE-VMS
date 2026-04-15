@@ -86,8 +86,6 @@ import {
   getVisitorTypeById,
 } from 'src/customs/api/admin';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
-import CloseIcon from '@mui/icons-material/Close';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { SectionPageVisitorType } from 'src/customs/api/models/Admin/VisitorType';
 import { FormVisitor } from 'src/customs/api/models/Admin/Visitor';
@@ -252,65 +250,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     setGroupVisitors((prev) => prev.filter((g) => g.id !== id));
   };
 
-  // useEffect(() => {
-  //   const fetchGrantAccess = async () => {
-  //     if (!dataVisitor?.length) return;
 
-  //     try {
-  //       // 1️⃣ Group access
-  //       const siteAnswer = getSiteFromForm(isGroup, sectionsData, dataVisitor);
-  //       console.log('🔎 siteAnswer dari getSiteFromForm:', siteAnswer);
-
-  //       if (siteAnswer) {
-  //         const res = await getGrantAccess(token as string, siteAnswer);
-
-  //         setAccessData(res.collection ?? []);
-  //         // setGroupAccessData(res.collection ?? []);
-  //       }
-
-  //       // setGrantAccessMap(map);
-  //     } catch (err) {
-  //       console.error('❌ Failed to fetch grant access:', err);
-  //     }
-  //   };
-
-  //   if (token && submitted) fetchGrantAccess();
-  // }, [token, submitted, isGroup, dataVisitor, sectionsData]);
-
-  function getSiteFromForm(
-    isGroup: boolean,
-    sectionsData: any[],
-    dataVisitor: any[],
-  ): string | null {
-    if (isGroup) {
-      for (const visitor of dataVisitor) {
-        for (const page of visitor.question_page ?? []) {
-          const found = page.form?.find((f: any) => f.remarks === 'site_place');
-          if (found?.answer_text) {
-            return found.answer_text;
-          }
-        }
-      }
-      return null;
-    } else {
-      const purposeVisitPage = sectionsData.find((p: any) => p.name === 'Purpose Visit');
-      const siteFieldUI =
-        purposeVisitPage?.visit_form?.find((f: any) => f.remarks === 'site_place') ??
-        purposeVisitPage?.form?.find((f: any) => f.remarks === 'site_place');
-      if (siteFieldUI?.answer_text) {
-        return siteFieldUI.answer_text;
-      }
-
-      for (const page of dataVisitor[0]?.question_page ?? []) {
-        const found = page.form?.find((f: any) => f.remarks === 'site_place');
-        if (found?.answer_text) {
-          return found.answer_text;
-        }
-      }
-
-      return null;
-    }
-  }
 
   useEffect(() => {
     if (!nextDialogOpen) {
@@ -522,11 +462,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                     <Box display="flex" alignItems="center" gap={1}>
                       <IconUsers size={18} />
                       Group
-                      {/* <Tooltip title="When activated, you can add more than one visitor">
-                                         <IconButton size="small" sx={{ ml: 0.5 }}>
-                                           <IconInfoCircle size={16} />
-                                         </IconButton>
-                                       </Tooltip> */}
                     </Box>
                   }
                 />
@@ -577,32 +512,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                 InputProps={{ readOnly: true }}
                               />
                             </TableCell>
-                            {/* <TableCell>
-                              <Button
-                                variant="outlined"
-                                color="primary"
-                                size="small"
-                                endIcon={<IconArrowRight size={20} />}
-                                onClick={() => {
-                                  // Simpan index group aktif
-                                  setActiveGroupIdx(index);
-
-                                  // Jika group sudah punya data_visitor sebelumnya → load ke form
-                                  if (g.data_visitor && g.data_visitor.length > 0) {
-                                    setDataVisitor(structuredClone(g.data_visitor));
-                                  } else {
-                                    // kalau belum pernah isi, buat dari sectionsData
-                                    const fresh = seedDataVisitorFromSections(sectionsData);
-                                    setDataVisitor(fresh);
-                                  }
-
-                                  // Pindah ke form step
-                                  setActiveStep(1);
-                                }}
-                              >
-                                Visitor Form
-                              </Button>
-                            </TableCell> */}
                             <TableCell>
                               <Button
                                 variant="outlined"
@@ -1064,16 +973,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                 dataVisitor.map((group, gIdx) => {
                                   const page = group.question_page[activeStep - 1];
                                   if (!page?.form) return null;
-
-                                  const visibilityMap: any = getVisibilityMap(page.form);
-
-                                  // const visibleFields = page.form.filter((field: any) => {
-                                  //   const remark = (field.remarks || '').toLowerCase();
-                                  //   return visibilityMap.hasOwnProperty(remark)
-                                  //     ? visibilityMap[remark]
-                                  //     : true;
-                                  // });
-
                                   const fields = page.form;
 
                                   return (
@@ -1198,7 +1097,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                         setGroupedPages((prev) => {
                           const next = { ...prev, single_page: [...prev.single_page] };
 
-                          // 🔄 gunakan mergedVisitForm bukan formsOf(section)
                           const base = formsOf(section)[idx];
                           const found = next.single_page.findIndex((sf) => sameField(sf, base));
 
@@ -1290,10 +1188,10 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
           axiosInstance2
             .delete(`/cdn${u}`)
             .then(() => {
-              console.log(`✅ Berhasil hapus file CDN: ${u}`);
+              console.log(`Berhasil hapus file CDN: ${u}`);
             })
             .catch((err) => {
-              console.warn(`⚠️ Gagal hapus file CDN ${u}:`, err);
+              console.warn(`Gagal hapus file CDN ${u}:`, err);
             }),
         ),
       );
@@ -1426,7 +1324,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
               onInputChange={(_, newInputValue) =>
                 setInputValues((prev) => ({ ...prev, [uniqueKey]: newInputValue }))
               }
-              // ✅ Filter: hanya aktif kalau >= 3 huruf
               filterOptions={(opts, state) => {
                 const term = (state.inputValue || '').toLowerCase();
                 if (term.length < 3) return [];
@@ -2019,7 +1916,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       setRemoving((s) => ({ ...s, [inputId]: true }));
       if (currentUrl) {
         await axiosInstance2.delete(`/cdn${currentUrl}`);
-        console.log('✅ Berhasil hapus file CDN:', currentUrl);
+        // console.log('✅ Berhasil hapus file CDN:', currentUrl);
       }
 
       setAnswerFile('');
@@ -2153,11 +2050,11 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                   }
 
                   onChange(index, 'answer_text', toCsv(updated));
-                  console.log('[TREE CHECK]', {
-                    clicked: node.id,
-                    isChecked,
-                    result: updated,
-                  });
+                  // console.log('[TREE CHECK]', {
+                  //   clicked: node.id,
+                  //   isChecked,
+                  //   result: updated,
+                  // });
 
                   return updated;
                 });
@@ -3424,7 +3321,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
           form,
         };
       });
-      console.log('question_page:', question_page);
+      // console.log('question_page:', question_page);
 
       return { question_page };
     });
@@ -4070,8 +3967,9 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
 
     const fetchVisitorTypeDetails = async () => {
       const res = visitorType.find((vt: any) => vt.id === formData.visitor_type);
+      const resVisitorType =  await getVisitorTypeById(token, formData.visitor_type as string);
 
-      let sections = res?.section_page_visitor_types ?? [];
+         let sections = resVisitorType?.collection?.section_page_visitor_types ?? [];
 
       if (TYPE_REGISTERED === 0 || FORM_KEY === 'pra_form') {
         sections = sections.filter((s: any) => (s.pra_form || []).length > 0);
@@ -4147,7 +4045,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     trx_visitor_id?: string | null;
   };
 
-  const [rows, setRows] = useState<Row[]>([]);
 
   const stepLabels = useMemo(() => ['User Type', ...draggableSteps], [draggableSteps]);
 
@@ -4376,7 +4273,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                   variant="contained"
                   color="primary"
                   onClick={handleOnSubmit}
-                  disabled={loading || groupVisitors.length === 0}
+                  disabled={loading}
                 >
                   Submit All
                 </Button>
@@ -4394,7 +4291,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                 variant="contained"
                 color="primary"
                 disabled={
-                  loading ||
+                  loading 
+                  ||
                   !formData.visitor_type ||
                   formData.is_group === null ||
                   formData.is_group === undefined

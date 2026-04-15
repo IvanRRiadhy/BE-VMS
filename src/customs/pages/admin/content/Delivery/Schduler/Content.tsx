@@ -18,9 +18,9 @@ import {
   TableHead,
   TableRow,
 } from '@mui/material';
-import { IconClock, IconX } from '@tabler/icons-react';
+import { IconCalendarFilled, IconClock, IconX } from '@tabler/icons-react';
 import Paper from '@mui/material/Paper';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import Container from 'src/components/container/PageContainer';
 import PageContainer from 'src/customs/components/container/PageContainer';
@@ -39,7 +39,7 @@ import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { useQuery } from '@tanstack/react-query';
-import { showConfirmDelete, showDialogError, showSwal } from 'src/customs/components/alerts/alerts';
+import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import {
   createSchedulerDelivery,
   deleteSchedulerDelivery,
@@ -73,6 +73,7 @@ const Content = () => {
   const [sortDir, setSortDir] = useState<string>('desc');
   const handleOpenDialog = () => setOpenDialogScheduler(true);
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [selectedScheduler, setSelectedScheduler] = useState<any>(null);
   const navigate = useNavigate();
   const [totalRecords, setTotalRecords] = useState(0);
@@ -85,7 +86,6 @@ const Content = () => {
       const parsed = saved ? JSON.parse(saved) : {};
       return CreateSchedulerRequestSchmea.parse(parsed);
     } catch (e) {
-      console.error('Invalid saved data, fallback to default schema.');
       return CreateSchedulerRequestSchmea.parse({});
     }
   });
@@ -109,15 +109,13 @@ const Content = () => {
     try {
       navigate(`/admin/visitor/scheduler/detail/${id}`);
     } catch (error) {
-      // navigate(`/admin/manage/delivery/scheduler/detail/${id}`);
-      console.log(error);
       showSwal('error', 'Failed to view scheduler.');
     }
   };
   const cards = [
     {
       title: 'Total Scheduler',
-      icon: IconClock,
+      icon: IconCalendarFilled,
       subTitle: `${totalRecords}`,
       subTitleSetting: 0,
       color: 'none',
@@ -130,7 +128,7 @@ const Content = () => {
       const res = await getAllTimezone(token as string);
       return res.collection;
     },
-    staleTime: 1000 * 60 * 5, // ✅ cache 5 menit
+    staleTime: 1000 * 60 * 5,
     enabled: !!token,
   });
 
@@ -198,7 +196,6 @@ const Content = () => {
           return;
         }
 
-        // ✅ Kalau ada data, mapping seperti biasa
         const rows = collection.map((item: any) => ({
           id: item.id,
           name: item.name,
@@ -213,9 +210,6 @@ const Content = () => {
         setTotalFilteredRecords(res.RecordsFiltered ?? collection.length);
         setTotalRecords(res.RecordsTotal ?? collection.length);
       } catch (error) {
-        console.error('❌ Failed to fetch scheduler data:', error);
-
-        // ❗Jika error (misal filter invalid), kosongkan tampilan
         setSchedulerData([]);
         setRawSchedulerData([]);
         setTotalFilteredRecords(0);
@@ -247,14 +241,17 @@ const Content = () => {
       setOpenDialogScheduler(false);
       setRefreshTrigger((prev) => prev + 1);
     } catch (error: any) {
-      if (error.collection && Array.isArray(error.collection)) {
-        const missing = error.collection.map((item: any) => item.short_name);
+      const errData = error?.response?.data;
 
-        showSwal('error', missing.join(', '));
-        return;
+      if (errData?.collection && Array.isArray(errData.collection)) {
+        showSwal('error', errData.collection.join(','));
+      } else if (errData?.message) {
+        showSwal('error', errData.message);
       } else {
-        showSwal('error', 'Failed to create schedule ');
+        showSwal('error', 'Failed to create schedule');
       }
+
+      throw error;
     } finally {
       setTimeout(() => setLoadingData(false), 500);
     }
@@ -293,6 +290,15 @@ const Content = () => {
     setRefreshTrigger((prev) => prev + 1);
   };
 
+  const handleSearchKeywordChange = useCallback((keyword: string) => {
+    setSearchInput(keyword);
+  }, []);
+
+  const handleSearch = useCallback(() => {
+    setPage(0);
+    setSearchKeyword(searchInput);
+  }, [searchInput]);
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -307,8 +313,9 @@ const Content = () => {
             <DynamicTable
               loading={loading}
               overflowX={'auto'}
-              data={schedulerData || []}
+              data={schedulerData ?? []}
               // selectedRows={selectedRows}
+              isNoActionTableHead={true}
               totalCount={totalFilteredRecords}
               isHaveChecked={true}
               isHaveAction={true}
@@ -318,7 +325,7 @@ const Content = () => {
               isHaveExportPdf={false}
               isHavePagination={true}
               defaultRowsPerPage={rowsPerPage}
-              rowsPerPageOptions={[10, 20, 50, 100]}
+              rowsPerPageOptions={[10, 50, 100]}
               onPaginationChange={(page, rowsPerPage) => {
                 setPage(page);
                 setRowsPerPage(rowsPerPage);
@@ -347,7 +354,9 @@ const Content = () => {
                 setEdittingId(row.id);
               }}
               onDelete={(row) => handleDeleteSchduler(row.id)}
-              onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+              searchKeyword={searchInput}
+              onSearch={handleSearch}
+              onSearchKeywordChange={handleSearchKeywordChange}
               onAddData={() => {
                 handleAdd();
               }}
@@ -362,19 +371,20 @@ const Content = () => {
         >
           <DialogTitle>
             {formMode === 'add' ? 'Add Delivery Scheduler' : 'Edit Delivery Scheduler'}
+            <IconButton
+              aria-label="close"
+              onClick={() => setOpenDialogScheduler(false)}
+              sx={{
+                position: 'absolute',
+                right: 8,
+                top: 8,
+                color: (theme) => theme.palette.grey[500],
+              }}
+            >
+              <IconX />
+            </IconButton>
           </DialogTitle>
-          <IconButton
-            aria-label="close"
-            onClick={() => setOpenDialogScheduler(false)}
-            sx={{
-              position: 'absolute',
-              right: 8,
-              top: 8,
-              color: (theme) => theme.palette.grey[500],
-            }}
-          >
-            <IconX />
-          </IconButton>
+
           <DialogContent dividers>
             <SchedulerForm
               timezoneData={timezoneData ?? []}

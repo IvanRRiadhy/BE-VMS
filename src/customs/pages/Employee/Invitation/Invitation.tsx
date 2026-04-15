@@ -6,10 +6,6 @@ import {
   DialogTitle,
   Divider,
   DialogActions,
-  CircularProgress,
-  TextField,
-  Card,
-  Skeleton,
   Grid2 as Grid,
   IconButton,
   Button,
@@ -19,16 +15,9 @@ import {
   Autocomplete,
   Snackbar,
   Alert,
-  Tabs,
-  Tab,
-  MenuItem,
-  Checkbox,
-  Chip,
 } from '@mui/material';
 import type { AlertColor } from '@mui/material/Alert';
 import PageContainer from 'src/components/container/PageContainer';
-import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
-import iconScanQR from '../../../../assets/images/svgs/scan-qr.svg';
 import iconAdd from '../../../..//assets/images/svgs/add-circle.svg';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
@@ -36,16 +25,10 @@ import CloseIcon from '@mui/icons-material/Close';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   CreateVisitorRequestSchema,
-  Item,
   CreateVisitorRequest,
 } from 'src/customs/api/models/Admin/Visitor';
 import {
   getAllCustomField,
-  getAllDepartments,
-  getAllDistricts,
-  getAllOrganizations,
-  getAllSite,
-  getAllVisitor,
   getAllVisitorPagination,
   getAllVisitorType,
   getEmployeeById,
@@ -81,7 +64,6 @@ import CreateLinkDialog from '../Components/Dialog/CreateLinkDialog';
 import DetailLinkDialog from '../Components/Dialog/DetailLinkDialog';
 import SendEmailDialog from '../Components/Dialog/SendEmailDialog';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
-import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import RelatedInvitationDialog from '../Components/Dialog/RelatedInvitationDialog';
 import InvitationShareDialog from '../../admin/content/Visitor/Trx/components/Dialog/InvitationShareDialog';
 
@@ -106,7 +88,6 @@ const Content = () => {
   const { token } = useSession();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [totalRecords, setTotalRecords] = useState(0);
@@ -115,7 +96,6 @@ const Content = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
-  // mode konfirmasi: "close-add" atau "edit"
   const [discardMode, setDiscardMode] = useState<'close-add' | 'edit' | null>(null);
   const [tableRowVisitors, setTableRowVisitors] = useState<any[]>([]);
   const [tableCustomVisitor, setTableCustomVisitor] = useState<VisitorTableRow[]>([]);
@@ -267,35 +247,44 @@ const Content = () => {
 
     const fetchData = async () => {
       setLoading(true);
-      const start_date = dayjs().subtract(7, 'day').format('YYYY-MM-DD');
-      const end_date = dayjs().format('YYYY-MM-DD');
+
+      const start = page * rowsPerPage;
 
       try {
         // const response = await getInvitations(token as string, start_date, end_date);
         const response = await getOngoingInvitation(token as string);
+        // const response = await getAllVisitorPagination(token as string, start, -1);
 
-        let mapped = response.collection.map((item: any) => {
-          // const isEmployeeHost = item.host === employeeId?.toUpperCase();
-          const isEmployeeHost = item.host === employeeId;
+        let mapped = response.collection
+          .map((item: any) => {
+            const isEmployeeHost = item.host?.toLowerCase() === employeeId?.toLowerCase();
 
-          return {
-            id: item.id,
-            visitor_type: item.visitor_type_name || '-',
-            name: item.visitor_name || '-',
-            identity_id: item.visitor_identity_id || '-',
-            email: item.visitor_email || '-',
-            organization: item.visitor_organization_name || '-',
-            gender: item.visitor_gender || '-',
-            // address: item.visitor_address || '-',
-            phone: item.visitor_phone || '-',
-            is_vip: item.visitor_is_vip || '-',
-            visitor_period_start: item.visitor_period_start || '-',
-            visitor_period_end: item.visitor_period_end || '-',
-            host: item.host ?? '-',
-            employee: isEmployeeHost ?? '-',
-            visitor_status: item.visitor_status || '-',
-          };
-        });
+            return {
+              id: item.id,
+              visitor_type: item.visitor_type_name || '-',
+              name: item.visitor_name || '-',
+              identity_id: item.visitor_identity_id || '-',
+              email: item.visitor_email || '-',
+              organization: item.visitor_organization_name || '-',
+              gender: item.visitor_gender || '-',
+              phone: item.visitor_phone || '-',
+              is_vip: item.visitor_is_vip || '-',
+              visitor_period_start: item.visitor_period_start || '-',
+              visitor_period_end:
+                formatDateTime(item.visitor_period_end, item.extend_visitor_period) || '-',
+              host: item.host ?? '-',
+              employee: isEmployeeHost ?? '-',
+              visitor_status: item.visitor_status || '-',
+
+              // 👇 hanya untuk sorting (sementara)
+              invitation_created_at: item.invitation_created_at,
+            };
+          })
+          .sort(
+            (a: any, b: any) =>
+              dayjs(b.invitation_created_at).valueOf() - dayjs(a.invitation_created_at).valueOf(),
+          )
+          .map(({ invitation_created_at, ...rest }: any) => rest); 
 
         if (selectedType !== 'All') {
           const apiStatus = statusMap[selectedType];
@@ -314,7 +303,7 @@ const Content = () => {
     };
 
     fetchData();
-  }, [token, refreshTrigger, startDate, endDate, selectedType]);
+  }, [token, refreshTrigger, selectedType]);
 
   useEffect(() => {
     if (!tableRowVisitors.length) return;
@@ -332,7 +321,6 @@ const Content = () => {
       );
     }
 
-    // 🔹 Filter status (tab)
     if (selectedType !== 'All') {
       const apiStatus = statusMap[selectedType];
       filtered = filtered.filter((r) => r.visitor_status === apiStatus);
@@ -349,14 +337,11 @@ const Content = () => {
   useEffect(() => {
     const fetchData = async () => {
       const response = await getRegisteredSite(token as string);
+
       setSiteData(response.collection);
     };
     fetchData();
   }, [token]);
-
-  const handleOpenDialog = () => {
-    setOpenDialog(true);
-  };
 
   const handleCloseDialog = () => {
     setSelectedSite(null);
@@ -365,6 +350,7 @@ const Content = () => {
     setOpenPreRegistration(false);
     handleDialogClose();
   };
+
   const handleAdd = () => {
     const saved = localStorage.getItem('unsavedVisitorData');
     let freshForm;
@@ -432,7 +418,6 @@ const Content = () => {
     try {
       const res = await getInvitationRelatedVisitor(id, token);
       setVisitorDetail(res?.collection ?? res ?? null);
-      console.log('Visitor Detail:', res);
     } catch (err: any) {
       setVisitorError(err?.message || 'Failed to fetch visitor detail.');
     } finally {
@@ -465,29 +450,25 @@ const Content = () => {
   const [sites, setSites] = useState<any[]>([]);
   const [employee, setEmployee] = useState<any[]>([]);
   const [allVisitorEmployee, setAllVisitorEmployee] = useState<any[]>([]);
-  const [customField, setCustomField] = useState<any[]>([]);
 
   useEffect(() => {
     if (!token) return;
 
     const fetchSecondaryData = async () => {
       try {
-        const [customFieldRes, employeeRes, allEmployeeRes, siteRes] = await Promise.all([
-          getAllCustomField(token),
+        const [employeeRes, allEmployeeRes, siteRes] = await Promise.all([
+          // getAllCustomField(token),
           getFormEmployee(token),
           getVisitorEmployee(token),
-          // getAllSite(token),
           getInvitationSite(token),
         ]);
 
-        // if (cancelled) return;
-
-        setCustomField(customFieldRes?.collection ?? []);
+        // setCustomField(customFieldRes?.collection ?? []);
         setEmployee(employeeRes?.collection ?? []);
         setAllVisitorEmployee(allEmployeeRes?.collection ?? []);
         setSites(siteRes?.collection ?? []);
       } catch (error) {
-        console.error('⚠️ Error fetching secondary data:', error);
+        console.error('Error fetching secondary data:', error);
       }
     };
 
@@ -498,6 +479,7 @@ const Content = () => {
     try {
       setVtLoading(true);
       const res = await getInvitationVisitorType(token as string);
+      // const res = await getAllVisitorType(token as string);
       setVisitorType(res?.collection || []);
     } catch (err) {
       console.error(err);
@@ -554,6 +536,7 @@ const Content = () => {
   const [sortDirSharelink, setSortDirSharelink] = useState('desc');
 
   const startShareLink = pageSharelink * rowsPerPageSharelink;
+
   const {
     data,
     isLoading: isLoadingSharelink,
@@ -592,17 +575,30 @@ const Content = () => {
       max_usage: item.max_usage,
       visitor_period_start: formatDateTime(item.visitor_period_start),
       visitor_period_end: formatDateTime(item.visitor_period_end),
-      expired: new Date(item.expired_at + 'Z').toLocaleString(undefined, {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
+      expired_at: (() => {
+        const date = new Date(item.expired_at + 'Z');
+
+        const formattedDate = date
+          .toLocaleDateString('id-ID', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+          })
+          .replace(/\//g, '-');
+
+        const formattedTime = date.toLocaleTimeString('id-ID', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+        });
+
+        return `${formattedDate}, ${formattedTime}`;
+      })(),
       link_status: item.link_status,
     })) || [];
 
   const totalFilterRecords = data?.RecordsFiltered || 0;
+
   const handleAddShareLink = () => {
     setOpenCreateLink(true);
   };
@@ -644,7 +640,7 @@ const Content = () => {
         emails: finalEmails,
       };
 
-      console.log('payload', payload);
+      // console.log('payload', payload);
       await createShareLinkByEmailById(token as string, payload, selectedShareLinkId);
       showSwal('success', 'Invitation sent successfully');
 
@@ -654,10 +650,6 @@ const Content = () => {
       console.error(error);
       showSwal('error', 'Failed to send invitation');
     }
-  };
-
-  const handleChangeTab = (event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
   };
 
   const handleOpenInviteDialog = (id: string, link: string, expired_at: string) => {
@@ -766,7 +758,7 @@ const Content = () => {
                 isHavePeriod={true}
                 // isVip={(row) => row.is_vip === true}
                 isHaveAddData={false}
-                isHaveHeader={false}
+                isHaveHeader={true}
                 isHaveGender={true}
                 isHaveVisitor={true}
                 isActionVisitor={true}
@@ -855,7 +847,7 @@ const Content = () => {
             sites={sites}
             employee={employee}
             allVisitorEmployee={allVisitorEmployee}
-            customField={customField}
+            // customField={customField}
             vtLoading={vtLoading}
           />
         </DialogContent>

@@ -4,20 +4,9 @@ import {
   Alert,
   Typography,
   CircularProgress,
-  FormControlLabel,
-  Switch,
-  Tooltip,
-  MenuItem,
   IconButton,
   Step,
   StepLabel,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
   Stepper,
   TextField,
   Dialog,
@@ -25,18 +14,9 @@ import {
   DialogContent,
   DialogActions,
   Backdrop,
-  FormControl,
-  Select,
-  Autocomplete,
   Box,
-  Divider,
-  Checkbox,
 } from '@mui/material';
-
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import React, { useEffect, useState } from 'react';
-import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
-import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   CreateVisitorTypeRequest,
@@ -44,7 +24,7 @@ import {
   FormVisitorTypes,
   SectionPageVisitorType,
 } from 'src/customs/api/models/Admin/VisitorType';
-import { IconArrowLeft, IconArrowRight, IconPencil, IconTrash } from '@tabler/icons-react';
+import { IconArrowLeft, IconArrowRight, IconPencil, IconTrash, IconX } from '@tabler/icons-react';
 import {
   createVisitorType,
   getAllAccessControl,
@@ -54,7 +34,6 @@ import {
   getCameraAnalytics,
   updateVisitorType,
 } from 'src/customs/api/admin';
-import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { showSwal } from 'src/customs/components/alerts/alerts';
@@ -92,16 +71,12 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
   const [alertType, setAlertType] = useState<'info' | 'success' | 'error'>('info');
-
   const { token } = useSession();
   const [deletedAccessIds, setDeletedAccessIds] = useState<string[]>([]);
   // Stepper
   const [activeStep, setActiveStep] = useState(0);
-  const [skipped, setSkipped] = useState(new Set<number>());
-  const isStepSkipped = (step: number) => skipped.has(step);
   const [documents, setDocument] = useState<any[]>([]);
   const [customField, setCustomField] = useState<any[]>([]);
-  const [openCustomFieldModal, setOpenCustomFieldModal] = useState(false);
   const [selectedAnalytics, setSelectedAnalytics] = useState<any | null>(null);
   const [selectedAccess, setSelectedAccess] = useState<
     {
@@ -112,7 +87,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     }[]
   >([]);
 
-  const [siteData, setSiteData] = useState<any[]>([]);
+  // const [siteData, setSiteData] = useState<any[]>([]);
   const [accessData, setAccessData] = useState<any[]>([]);
   const [analyticCctv, setAnalyticCctv] = useState<any[]>([]);
 
@@ -560,9 +535,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
       setNewSectionName('');
       setOpenModal(false);
 
-      setTimeout(() => {
-        setOpenCustomFieldModal(true);
-      }, 300);
     }
   };
 
@@ -589,20 +561,20 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     { document_id: string; identity_type: number }[]
   >([]);
 
-  useEffect(() => {
-    if (!token) return;
+  // useEffect(() => {
+  //   if (!token) return;
 
-    const fetchSite = async () => {
-      try {
-        const res = await getAllSite(token);
-        setSiteData(res.collection ?? []);
-      } catch (err) {
-        console.error('Failed to fetch site', err);
-      }
-    };
+  //   const fetchSite = async () => {
+  //     try {
+  //       const res = await getAllSite(token);
+  //       setSiteData(res.collection ?? []);
+  //     } catch (err) {
+  //       console.error('Failed to fetch site', err);
+  //     }
+  //   };
 
-    fetchSite();
-  }, [token]);
+  //   fetchSite();
+  // }, [token]);
 
   useEffect(() => {
     if (!token) return;
@@ -621,7 +593,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
 
   useEffect(() => {
     if (!token) return;
-    if (!formData.can_track_cctv) return;
+    // if (!formData.can_track_cctv) return;
 
     const fetchAnalytic = async () => {
       try {
@@ -633,17 +605,8 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     };
 
     fetchAnalytic();
-  }, [token, formData.can_track_cctv]);
+  }, [token]);
 
-  const identityOptions = [
-    { value: -1, label: '' },
-    { value: 0, label: 'NIK' },
-    { value: 1, label: 'KTP' },
-    { value: 2, label: 'Passport' },
-    { value: 3, label: 'Driver License' },
-    { value: 4, label: 'Card Access' },
-    { value: 5, label: 'Face' },
-  ];
 
   const handleAddDocument = () => {
     setDocumentIdentities((prev) => [...prev, { document_id: '', identity_type: -1 }]);
@@ -684,14 +647,16 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     { label: 'DC', value: 'DC' },
   ];
 
-  const handleReorder = (
-    sectionIndex: number,
-    sectionKey: 'visit_form' | 'pra_form' | 'checkout_form',
-    newData: any[],
-  ) => {
+
+  const handleReorder = (key: string, newData: any[]) => {
     setSectionsData((prev: any[]) =>
       prev.map((section, idx) =>
-        idx === sectionIndex ? { ...section, [sectionKey]: newData } : section,
+        idx === activeStep - 1
+          ? {
+              ...section,
+              [key]: newData,
+            }
+          : section,
       ),
     );
   };
@@ -703,7 +668,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     setDraggableSteps(sectionsData.map((s) => s.name));
   }, [sectionsData]);
 
-  // Get Document
   useEffect(() => {
     if (!token) return;
     const fetchData = async () => {
@@ -713,11 +677,9 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     fetchData();
   }, [token]);
 
-  // Get Custom Field
   useEffect(() => {
     if (!token) return;
     const fetchData = async () => {
-      // const customFieldRes = await getAllCustomFieldPagination(token, 0, 99999, 'id');
       const customFieldRes = await getAllCustomField(token);
       setCustomField(customFieldRes?.collection ?? []);
     };
@@ -743,15 +705,12 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
 
   useEffect(() => {
     if (formData.visitor_type_documents && documents.length > 0) {
-      // Ambil hanya document_id yang masih valid
       const validDocs = formData.visitor_type_documents
         .filter((d) => documents.some((doc) => doc.id === d.document_id))
         .map((d) => ({
           document_id: d.document_id,
           identity_type: d.identity_type ?? -1,
         }));
-
-      // console.log(validDocs);
 
       setFormData((prev) => ({
         ...prev,
@@ -1105,8 +1064,16 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
       </Backdrop>
 
       <Dialog open={openModal} onClose={() => setOpenModal(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>New Section Page</DialogTitle>
-        <DialogContent>
+        <DialogTitle>New Section Page
+          <IconButton
+            size="small"
+            sx={{ position: 'absolute', right: 8, top: 8, color: 'grey.500' }}
+            onClick={() => setOpenModal(false)}
+          >
+            <IconX />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers> 
           <TextField
             autoFocus
             margin="dense"

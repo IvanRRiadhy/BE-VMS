@@ -53,6 +53,13 @@ export const GuestNavListingData: ItemDataCustomNavListing[] = [
     chipColor: 'secondary',
     href: '/guest/report',
   },
+  {
+    id: uniqueId(),
+    title: 'Notification',
+    icon: IconBell,
+    chipColor: 'secondary',
+    href: '/guest/notification',
+  },
 ];
 
 export const GuestCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
@@ -95,5 +102,12 @@ export const GuestCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
     icon: IconReport,
     chipColor: 'secondary',
     href: '/guest/report',
+  },
+  {
+    id: uniqueId(),
+    title: 'Notification',
+    icon: IconBell,
+    chipColor: 'secondary',
+    href: '/guest/notification',
   },
 ];

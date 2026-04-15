@@ -1,4 +1,4 @@
-import React, { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {  useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Accordion,
   AccordionDetails,
@@ -11,7 +11,6 @@ import {
   CircularProgress,
   FormControl,
   FormControlLabel,
-  FormGroup,
   Grid2 as Grid,
   IconButton,
   MobileStepper,
@@ -30,7 +29,6 @@ import {
   TableHead,
   TableRow,
   TextField,
-  Tooltip,
   Typography,
   useTheme,
 } from '@mui/material';
@@ -38,8 +36,6 @@ import type { AlertColor } from '@mui/material/Alert';
 import {
   IconArrowLeft,
   IconArrowRight,
-  IconCamera,
-  IconDeviceFloppy,
   IconTrash,
   IconUser,
   IconUsers,
@@ -50,9 +46,7 @@ import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel
 import VisitorTypeList from '../../admin/content/AdminView/VisitorTypeList';
 import { Box, useMediaQuery } from '@mui/system';
 import {
-  CreateGroupVisitorRequest,
   CreateGroupVisitorRequestSchema,
-  CreateVisitorRequest,
   CreateVisitorRequestSchema,
   FormVisitor,
   SectionPageVisitor,
@@ -63,7 +57,7 @@ import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
 import { DateTimePicker, LocalizationProvider, renderTimeViewClock } from '@mui/x-date-pickers';
 import Webcam from 'react-webcam';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import dayjs, { Dayjs, tz } from 'dayjs';
+import dayjs from 'dayjs';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import moment from 'moment-timezone';
 import { useSession } from 'src/customs/contexts/SessionContext';
@@ -119,8 +113,7 @@ const FormSelfPraregistration = ({
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewPayload, setPreviewPayload] = useState<any>(null);
   const [previewSections, setPreviewSections] = useState<any>(null);
-  const [siteTree, setSiteTree] = useState<any[]>([]);
-  const [screenshot, setScreenshot] = useState<string | null>(null);
+  // const [siteTree, setSiteTree] = useState<any[]>([]);
   const [activeGroupIdx, setActiveGroupIdx] = useState(0);
   const [dataVisitor, setDataVisitor] = useState<{ question_page: SectionPageVisitor[] }[]>([]);
   const [uploadMethods, setUploadMethods] = useState<Record<string, 'file' | 'camera'>>({});
@@ -283,7 +276,6 @@ const FormSelfPraregistration = ({
   const resetMediaState = () => {
     setPreviews({});
     setUploadNames({});
-    setScreenshot(null);
 
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -304,7 +296,7 @@ const FormSelfPraregistration = ({
     setInputValues({});
     setSelectedSiteParentIds([]);
     setSelectedSiteIds([]);
-    setSiteTree([]);
+    // setSiteTree([]);
     setSectionsData(rawSections);
   };
 
@@ -340,7 +332,6 @@ const FormSelfPraregistration = ({
 
   const handleOnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // setErrors({});
     // if (!token) return;
     try {
       const tz =
@@ -696,9 +687,7 @@ const FormSelfPraregistration = ({
           if (!item?.mandatory) return;
 
           const remark = (item.remarks || '').toLowerCase();
-          // console.log('[validateCurrentStep] remark:', remark);
           const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
-          // console.log('[validateCurrentStep] isVisible:', isVisible);
           if (!isVisible) return;
 
           const key = `${activeStep - 1}:${gIdx}:${item.custom_field_id}`;
@@ -900,15 +889,7 @@ const FormSelfPraregistration = ({
     }
   };
 
-  const fileNameFromAnswer = (answerFile?: string) => {
-    if (!answerFile) return '';
-    try {
-      const url = new URL(makeCdnUrl(answerFile)!);
-      return url.pathname.split('/').pop() || '';
-    } catch {
-      return String(answerFile).split('/').pop() || '';
-    }
-  };
+
   const clearFieldError = (key: string) => {
     setFieldErrors((prev) => {
       if (!prev[key]) return prev;
@@ -985,17 +966,6 @@ const FormSelfPraregistration = ({
     e.target.value = '';
   };
 
-  const handlePDFUploadFor =
-    (idx: number, onChange: (index: number, fieldKey: keyof FormVisitor, value: any) => void) =>
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-
-      const path = await uploadFileToCDN(file);
-      if (path) onChange(idx, 'answer_file', path);
-
-      e.target.value = '';
-    };
 
   const handleUploadMethodChange = (ukey: string, v: string) => {
     setUploadMethods((prev) => ({ ...prev, [ukey]: v as 'file' | 'camera' }));
@@ -1031,10 +1001,10 @@ const FormSelfPraregistration = ({
           axiosInstance2
             .delete(`/cdn${u}`)
             .then(() => {
-              // console.log(`✅ Berhasil hapus file CDN: ${u}`);
+              // console.log(`Berhasil hapus file CDN: ${u}`);
             })
             .catch((err) => {
-              // console.warn(`⚠️ Gagal hapus file CDN ${u}:`, err);
+              // console.warn(`Gagal hapus file CDN ${u}:`, err);
             }),
         ),
       );
@@ -1047,7 +1017,7 @@ const FormSelfPraregistration = ({
         return prevIdx;
       });
     } catch (e) {
-      console.error('❌ Failed to delete row:', e);
+      console.error('Failed to delete row:', e);
     }
   };
 
@@ -1086,12 +1056,7 @@ const FormSelfPraregistration = ({
       }));
   };
 
-  const buildSiteTreeWithParent = (sites: any[], parentId: string) => {
-    const parent = sites.find((s) => s.id === parentId);
-    if (!parent) return [];
 
-    return [{ id: parent.id, name: parent.name, children: buildSiteTree(sites, parentId) }];
-  };
 
   const renderTree = (
     node: any,

@@ -17,11 +17,8 @@ import {
   Avatar,
   CardHeader,
   Checkbox,
-  CircularProgress,
   FormControlLabel,
-  Paper,
   MenuItem,
-  DialogActions,
   AlertColor,
   Autocomplete,
   FormControl,
@@ -33,26 +30,11 @@ import {
   Snackbar,
   Alert,
 } from '@mui/material';
-import { Box, Stack, useMediaQuery, useTheme } from '@mui/system';
+import { Box, useMediaQuery, useTheme } from '@mui/system';
 import moment from 'moment-timezone';
 import backgroundnodata from 'src/assets/images/backgrounds/bg_nodata.svg';
 import infoPic from 'src/assets/images/backgrounds/info_pic.png';
-import {
-  IconBan,
-  IconCards,
-  IconClock,
-  IconCreditCard,
-  IconForbid2,
-  IconKey,
-  IconKeyOff,
-  IconLogin,
-  IconLogout,
-  IconPrinter,
-  IconQrcode,
-  IconSearch,
-  IconSwipe,
-  IconX,
-} from '@tabler/icons-react';
+import { IconClock, IconCreditCard, IconPrinter, IconSearch, IconX } from '@tabler/icons-react';
 import PageContainer from 'src/components/container/PageContainer';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
@@ -71,9 +53,8 @@ import {
   getPermissionOperator,
   getTodayVisitingPurpose,
 } from 'src/customs/api/operator';
-import { BASE_URL, axiosInstance2 } from 'src/customs/api/interceptor';
+import {  axiosInstance2 } from 'src/customs/api/interceptor';
 import LprImage from 'src/assets/images/products/pic_lpr.png';
-import FRImage from 'src/assets/images/products/pic_fr.png';
 import SearchVisitorDialog from './Dialog/SearchVisitorDialog';
 import DetailVisitorDialog from './Dialog/DetailVisitorDialog';
 import Swal from 'sweetalert2';
@@ -85,32 +66,22 @@ import {
   FormVisitor,
 } from 'src/customs/api/models/Admin/Visitor';
 import { DateTimePicker, LocalizationProvider, renderTimeViewClock } from '@mui/x-date-pickers';
-import dayjs, { Dayjs, tz } from 'dayjs';
+import dayjs from 'dayjs';
 import weekday from 'dayjs/plugin/weekday';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import advancedFormat from 'dayjs/plugin/advancedFormat';
 import utc from 'dayjs/plugin/utc';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-
-import {
-  getAllSite,
-  getAllVisitorType,
-  getRegisteredSite,
-  getVisitorEmployee,
-} from 'src/customs/api/admin';
-import FormDialogPraregist from './Dialog/FormDialogPraregist';
 import CameraUpload from './Components/CameraUpload';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import FormWizardAddVisitor from './Invitation/FormWizardAddVisitor';
 import FormWizardAddInvitation from './Invitation/FormWizardAddInvitation';
 import ScanQrVisitorDialog from './Dialog/ScanQrVisitorDialog';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import VisitingPurposeDialog from './Dialog/VisitingPurposeDialog';
 import InfoDialog from './Dialog/InfoDialog';
 import ExtendVisitDialog from './Dialog/ExtendVisitDialog';
 import { useTranslation } from 'react-i18next';
-import VisitorDetailTabs from './Components/VisitorDetailTabs';
 import BlacklistVisitorDialog from './Dialog/BlacklistVisitorDialog';
 import ListVisitorDialog from './Dialog/ListVisitorDialog';
 import TriggeredAccessDialog from './Dialog/TriggeredAccessDialog';
@@ -121,30 +92,22 @@ import { useDebounce } from 'src/hooks/useDebounce';
 import PrintDialog from './Dialog/PrintDialog';
 import { getPrintBadgeConfig } from 'src/customs/api/Admin/PrintBadge';
 import PrintDialogBulk from './Dialog/PrintDialogBluk';
-import {
-  getRegisteredSiteOperator,
-  getSiteAccessOperator,
-  returnCard,
-  swapCard,
-} from 'src/customs/api/Admin/SwapCard';
+import { getRegisteredSiteOperator, returnCard, swapCard } from 'src/customs/api/Admin/SwapCard';
 import SwipeCardNoCodeDialog from './Dialog/SwipeCardNoCodeDialog';
 import InvitationQrCard from './Components/InvitationQrCard';
-import FRLPRCard from './Components/FRLPRCard';
 import VisitorSearchInput from './Components/VisitorSearchInput';
 import OperatorToolbar from './Components/OperatorToolbar';
 import VisitorImage from './Components/VisitorImage';
 import ReturnCardDialog from './Dialog/ReturnCardDialog';
 import GlobalBackdropLoading from './Components/GlobalBackdrop';
-import RegisteredSiteDialog from './Dialog/RegisteredSiteAccessDialog';
-import RegisteredSiteAccessDialog from './Dialog/RegisteredSiteAccessDialog';
 import AccessDialog from './Dialog/AccessDialog';
 import ParkingDialog from './Dialog/ParkingDialog';
 import ActionPanelCard from './Components/ActionPanelCard';
 import {
-  getInvitationAccessControl,
   getInvitationSite,
   getInvitationVisitorEmployee,
   getInvitationVisitorHost,
+  getInvitationVisitorType,
 } from 'src/customs/api/Admin/InvitationData';
 import FillPraregistrationGroup from './Invitation/components/FillPraregistrationGroup';
 import GrantAccessDialog from './Dialog/GrantAccessDialog';
@@ -152,17 +115,18 @@ import LprVisitorCard from './Components/LprVisitorCard';
 import ChooseCardDialog from './Dialog/ChooseCardDialog';
 import { getPermission } from 'src/customs/api/users';
 import { usePermission } from 'src/hooks/usePermission';
+import VisitorDetailCard from './Components/VisitorDetailCard';
+import FillPraregistrationSingle from './Invitation/components/FillPraregistrationSingle';
 
 dayjs.extend(utc);
 dayjs.extend(weekday);
 dayjs.extend(localizedFormat);
 dayjs.extend(customParseFormat);
 dayjs.extend(advancedFormat);
-// dayjs.locale('id');
+dayjs.locale('id');
 const OperatorView = () => {
   const theme = useTheme();
   const lgUp = useMediaQuery(theme.breakpoints.up('lg'));
-  const mdUp = useMediaQuery(theme.breakpoints.up('md'));
   const { token } = useSession();
   const { t } = useTranslation();
 
@@ -175,12 +139,8 @@ const OperatorView = () => {
   const [wizardKey, setWizardKey] = useState(0);
   const scanContainerRef = useRef<HTMLDivElement | null>(null);
   const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
-  // const [snackbarOpen, setSnackbarOpen] = useState(false);
-  // const [snackbarMsg, setSnackbarMsg] = useState('');
-  // const [snackbarType, setSnackbarType] = useState<'success' | 'error' | 'info'>('info');
   const [openInvitationVisitor, setOpenInvitationVisitor] = useState(false);
   const [permissionAccess, setPermissionAccess] = useState<any[]>([]);
-  const [search, setSearch] = useState('');
   const handleOpenScanQR = () => setOpenDialogIndex(1);
   const [visitorStatus, setVisitorStatus] = useState<string | null>(null);
   const [selectedCards, setSelectedCards] = useState<string[]>([]);
@@ -191,7 +151,6 @@ const OperatorView = () => {
   const [selectedVisitorNumber, setSelectedVisitorNumber] = useState<string | null>(null);
   const [scannedVisitorNumber, setScannedVisitorNumber] = useState<string | null>(null);
   const [selectMultiple, setSelectMultiple] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
   const [selectedVisitors, setSelectedVisitors] = useState<string[]>([]);
   const [selectedInvitationId, setSelectedInvitationId] = useState<string | null>(null);
   const [bulkAction, setBulkAction] = useState('');
@@ -208,35 +167,29 @@ const OperatorView = () => {
   const [openDetail, setOpenDetail] = useState(false);
   const [visitorData, setVisitorData] = useState<any[]>([]);
   const [openAccessData, setOpenAccessData] = useState(false);
-  const [openRegisteredSite, setOpenRegisteredSiteDialog] = useState(false);
   const [accessData, setAccessData] = useState<any[]>([]);
   const [selectedActionAccess, setSelectedActionAccess] = useState<string | null>(null);
   const [selectedMinutes, setSelectedMinutes] = useState<number | null>(null);
   const [openExtendVisit, setOpenExtendVisit] = useState(false);
   const durationOptions = [15, 30, 45, 60, 90, 120, 150, 180];
-  const [loading, setLoading] = useState(false);
   const [openFillForm, setOpenFillForm] = useState(false);
   const [fillFormData, setFillFormData] = useState<any[]>([]);
   const [fillFormActiveStep, setFillFormActiveStep] = useState(0);
   const [fillFormGroupedPages, setFillFormGroupedPages] = useState<any>({});
   const [fillFormDataVisitor, setFillFormDataVisitor] = useState<any[]>([]);
   const [selectedSite, setSelectedSite] = useState<any | null>(null);
-  const [siteData, setSiteData] = useState<any[]>([]);
   const [openDialogInfo, setOpenDialogInfo] = useState(false);
   const [openSwipeDialog, setOpenSwipeDialog] = useState(false);
   const [selectedInvitations, setSelectedInvitations] = useState<any[]>([]);
   const [openSwipeAccess, setOpenSwipeAccess] = useState(false);
   const handle = useFullScreenHandle();
-  const [visitorDocuments, setVisitorDocuments] = useState<any[]>([]);
   const [currentAction, setCurrentAction] = useState<'Checkin' | 'Checkout' | null>(null);
-  const [showExtendButton, setShowExtendButton] = useState(false);
   const [actionButton, setActionButton] = useState<any | null>(null);
   const [visitorCards, setVisitorCards] = useState<any[]>([]);
   const [returnCardNumber, setReturnCardNumber] = useState('');
   const [openListVisitor, setOpenListVisitor] = useState(false);
   const [openBlacklistVisitor, setOpenBlacklistVisitor] = useState(false);
   const [openTriggeredAccess, setOpenTriggeredAccess] = useState(false);
-  // const [registerSiteOperator, setRegisterSiteOperator] = useState<any>({});
   const [registerSiteOperator, setRegisterSiteOperator] = useState<string>('');
   const [openSwipeDialogNoInvitation, setOpenSwipeDialogNoInvitation] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -250,8 +203,9 @@ const OperatorView = () => {
   const [employee, setEmployee] = useState<any[]>([]);
   const [dialogContainer, setDialogContainer] = useState<HTMLElement | null>(null);
   const [hidePageContainer, setHidePageContainer] = useState(false);
-  // const [siteRegistered, setSiteRegistered] = useState<any[]>([]);
-
+  const [invitationDetail, setInvitationDetail] = useState<any>([]);
+  const [questionPageTemplate, setQuestionPageTemplate] = useState<any[]>([]);
+  const [applyToAll, setApplyToAll] = useState(false);
   const [openPreviewPrint, setOpenPreviewPrint] = useState(false);
   const [openBulkPrint, setOpenBulkPrint] = useState(false);
   const handleOpenBlacklistVisitor = () => setOpenBlacklistVisitor(true);
@@ -260,7 +214,6 @@ const OperatorView = () => {
   const handleOpenVehicle = () => setOpenVehicle(true);
   const handleCloseListVisitor = () => setOpenListVisitor(false);
   const handleCloseTriggeredAcceess = () => setOpenTriggeredAccess(false);
-
   const [wsPayload, setWsPayload] = useState<any>(null);
   const wsImageQueueRef = useRef<string[]>([]);
   const wsOcrQueueRef = useRef<string[]>([]);
@@ -270,6 +223,16 @@ const OperatorView = () => {
   const [printData, setPrintData] = useState<any>(null);
   const [resetStep, setResetStep] = useState(0);
   const [openRevokeDialog, setOpenRevokeDialog] = useState(false);
+  const [openReturnCard, setOpenReturnCard] = useState(false);
+  const [openParking, setOpenParking] = useState(false);
+  const [openVehicle, setOpenVehicle] = useState(false);
+
+  const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorRequest>(() => {
+    const saved = localStorage.getItem('unsavedVisitorData');
+    return saved ? JSON.parse(saved) : CreateVisitorRequestSchema.parse({});
+  });
+
+  const [swipePayload, setSwipePayload] = useState<any | null>(null);
 
   const [dataDummyAccess, setDataDummyAccess] = useState<any[]>([
     {
@@ -290,7 +253,6 @@ const OperatorView = () => {
     const fetchData = async () => {
       try {
         const res = await getInvitationSite(token as string);
-        // const res = await getAllSite(token as string);
         const filteredSites =
           res?.collection?.filter((site: any) => site.can_visited === true) ?? [];
         setSitesOperator(filteredSites);
@@ -346,13 +308,6 @@ const OperatorView = () => {
     fetchData();
   }, [token]);
 
-  const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorRequest>(() => {
-    const saved = localStorage.getItem('unsavedVisitorData');
-    return saved ? JSON.parse(saved) : CreateVisitorRequestSchema.parse({});
-  });
-
-  const [swipePayload, setSwipePayload] = useState<any | null>(null);
-
   const currentUsedCards = useMemo(() => {
     if (!Array.isArray(visitorCards)) return [];
 
@@ -400,10 +355,10 @@ const OperatorView = () => {
         is_swapcard: true,
       };
 
-      console.log('SWAP PAYLOAD', payload);
+      // console.log('SWAP PAYLOAD', payload);
 
       if (!hasSwappedCard) {
-        console.log('FIRST SWIPE', payload);
+        // console.log('FIRST SWIPE', payload);
         await createGrandAccessOperator(token as string, payload);
         showSwal('success', 'Card swaped successfully!');
         setOpenChooseCardDialog(false);
@@ -455,8 +410,6 @@ const OperatorView = () => {
         payload.swap_card_from_site_id = registerSiteOperator;
       }
 
-      console.log('SWAP PAYLOAD', payload);
-
       await createGrandAccessOperator(token as string, payload);
 
       showSwal(
@@ -471,7 +424,6 @@ const OperatorView = () => {
       setLoadingAccess(false);
     }
   };
-
   const [selectedPurpose, setSelectedPurpose] = useState<any>(null);
 
   const handleOpenSwipeDialog = () => {
@@ -506,7 +458,7 @@ const OperatorView = () => {
 
       try {
         const [vtRes, purposeRes, permissionRes] = await Promise.allSettled([
-          getAllVisitorType(token),
+          getInvitationVisitorType(token),
           getTodayVisitingPurpose(token),
           getPermission(token),
         ]);
@@ -514,13 +466,11 @@ const OperatorView = () => {
         if (vtRes.status === 'fulfilled') {
           setVisitorType(vtRes.value?.collection ?? []);
         } else {
-          console.error('VisitorType error:', vtRes.reason);
         }
 
         if (purposeRes.status === 'fulfilled') {
           setTodayVisitingPurpose(purposeRes.value?.collection ?? []);
         } else {
-          console.error('VisitingPurpose error:', purposeRes.reason);
         }
 
         if (permissionRes.status === 'fulfilled') {
@@ -609,10 +559,7 @@ const OperatorView = () => {
       setOpenExtendVisit(false);
       setSelectedMinutes(null);
     } catch (error: any) {
-      console.error('❌ Error extending visit:', error);
-
       let msg = 'Failed to extend visit.';
-      let status = null;
 
       if (error.response && error.response.data) {
         msg = error.response.data.msg || error.response.data.message || msg;
@@ -647,10 +594,8 @@ const OperatorView = () => {
     const fetchData = async () => {
       try {
         const [siteRes, employeeRes, allVisitorEmployee] = await Promise.all([
+          getInvitationSite(token),
           // getAllSite(token),
-          // getVisitorEmployee(token),
-          // getInvitationSite(token),
-          getAllSite(token),
           getInvitationVisitorHost(token),
           // getVisitorEmployee(token),
           getInvitationVisitorEmployee(token),
@@ -870,10 +815,6 @@ const OperatorView = () => {
     });
   };
 
-  const [openReturnCard, setOpenReturnCard] = useState(false);
-  const [openParking, setOpenParking] = useState(false);
-  const [openVehicle, setOpenVehicle] = useState(false);
-
   const handleEnableEditing = () => {
     const confirmed = Swal.fire({
       title: 'Enable Editing',
@@ -897,7 +838,7 @@ const OperatorView = () => {
       if (!hasInvitation) {
         setOpenSwipeDialogNoInvitation(true);
       } else {
-        // setOpenChooseCardDialog(true); // atau handleChooseCard()
+        // setOpenChooseCardDialog(true);
         handleChooseCard();
       }
       return;
@@ -962,7 +903,7 @@ const OperatorView = () => {
   };
 
   const [invitationId, setInvitationId] = useState<string | null>(null);
-  // const [activeVisitor, setActiveVisitor] = useState<any | null>(null);
+
   const handleSubmitQRCode = async (value: string) => {
     try {
       const res = await getInvitationCode(token as string, value);
@@ -985,9 +926,7 @@ const OperatorView = () => {
       setSelectedVisitors([]);
 
       await fetchRelatedVisitorsByInvitationId(invitationId);
-
       const freshVisitors = await getInvitationOperatorRelated(invitationId, token as string);
-      // console.log('freshVisitors', freshVisitors);
       const scannedNumber = data[0]?.visitor_number;
 
       const matchedIds = freshVisitors.collection
@@ -1013,7 +952,6 @@ const OperatorView = () => {
       const filteredAccess = accessList.filter((a: any) =>
         permissionAccess.some((p: any) => p.access_control_id === a.access_control_id),
       );
-      // console.log('filteredAccess', filteredAccess);
 
       const mergedAccess = filteredAccess.map((a: any) => {
         const perm = permissionAccess.find((p: any) => p.access_control_id === a.access_control_id);
@@ -1081,10 +1019,9 @@ const OperatorView = () => {
       }
       handleCloseScanQR();
 
-      showSwal('success', 'Code scanned successfully.');
-      setShowExtendButton(true);
+      showSwal('success', 'Code scanned successfully.', 3000);
     } catch (e) {
-      showSwal('error', 'Your code does not exist.');
+      showSwal('error', 'Your code does not exist.', 3000);
     }
   };
 
@@ -1114,11 +1051,18 @@ const OperatorView = () => {
       organization: v.visitor_organization_name ?? '-',
       extend_visitor_period: v.extend_visitor_period ?? 0,
       visitor_number: v.visitor_number ?? '-',
-      email: v.visitor?.email ?? '-',
-      phone: v.visitor?.phone ?? '-',
-      gender: v.visitor?.gender ?? '-',
-      address: v.visitor?.address ?? '-',
+      email: v.visitor_email ?? '-',
+      phone: v.visitor_phone ?? '-',
+      gender: v.visitor_gender ?? '-',
+      address: v.visitor_address ?? '-',
+      invitation_code: v.invitation_code ?? '-',
       visitor_status: v.visitor_status ?? '-',
+      visitor_identity_id: v.visitor_identity_id ?? '-',
+      visitor_code: v.visitor_code ?? '-',
+      vehicle_plate_number: v.vehicle_plate_number ?? '-',
+      vehicle_type: v.vehicle_type ?? '-',
+      group_code: v.visitor_group_code ?? '-',
+      group_name: v.group_name ?? '-',
       card: v.card ?? [],
       host_name: v.host_name ?? '-',
       site_place_name: v.site_place_name ?? '-',
@@ -1159,7 +1103,6 @@ const OperatorView = () => {
         early_access: !!a.early_access,
       })),
     );
-    // console.log('allAccess', allAccess);
 
     setAllAccessData(allAccess);
     // setAccessData(allAccess);
@@ -1170,7 +1113,6 @@ const OperatorView = () => {
 
     const baseTime = moment.utc(dateStr);
 
-    // Tambahkan menit hanya kalau ada extend
     if (extendMinutes && extendMinutes > 0) {
       baseTime.add(extendMinutes, 'minutes');
     }
@@ -1193,7 +1135,7 @@ const OperatorView = () => {
     const keyword = debouncedKeyword.toLowerCase();
 
     return relatedVisitors.filter((v) =>
-      [v.name].filter(Boolean).some((field) => field.includes(keyword)),
+      [v.name].filter(Boolean).some((field) => field.toLowerCase().includes(keyword)),
     );
   }, [relatedVisitors, debouncedKeyword]);
 
@@ -1228,7 +1170,6 @@ const OperatorView = () => {
     return new Set(normalizeIdsDeep(selectedInvitations).map(String));
   }, [selectedInvitations]);
 
-  // Function & Variable Card
   const capacity = selectMultiple ? selectedVisitors.length : invitationCode.length > 0 ? 1 : 0;
 
   const debouncedSearch = useDebounce(searchTerm, 300);
@@ -1303,9 +1244,6 @@ const OperatorView = () => {
   const handleConfirmChooseCards = async () => {
     try {
       if (!selectedCards.length) {
-        // setSnackbarMsg('Please choose at least one card.');
-        // setSnackbarType('info');
-        // setSnackbarOpen(true);
         toast('Please choose at least one card.', 'info');
         return;
       }
@@ -1337,7 +1275,7 @@ const OperatorView = () => {
           is_swapcard: false,
           swap_type: 'Other',
         }));
-        console.log('payloads', payloads);
+        // console.log('payloads', payloads);
 
         setSwipePayload(payloads);
         setCurrentAccessVisitor(visitor);
@@ -1383,7 +1321,7 @@ const OperatorView = () => {
         });
       } else {
         const { visitorName, ...payload } = payloads[0];
-        console.log('payload', payload);
+
         await createGrandAccessOperator(token as string, payload);
       }
 
@@ -1430,7 +1368,6 @@ const OperatorView = () => {
 
       handleCloseChooseCard();
     } catch (err: any) {
-      console.error('Assign card error:', err);
       showSwal('error', err?.response?.data?.msg || 'Failed to assign card(s).');
     } finally {
       setTimeout(() => setLoadingAccess(false), 600);
@@ -1438,7 +1375,6 @@ const OperatorView = () => {
   };
 
   const handleClearAll = () => {
-    setSearch('');
     setInvitationCode([]);
     setRelatedVisitors([]);
     setOpen(false);
@@ -1567,22 +1503,16 @@ const OperatorView = () => {
       }
 
       setLoadingAccess(true);
-      // const res = await createInvitationActionOperator(token as string, id!, {
-      //   action,
-      //   reason,
-      // });
 
       const payload: any = { action };
 
-      console.log('payload', payload);
+      // console.log('payload', payload);
 
       if (reason) {
         payload.reason = reason;
       }
 
-      const res = await createInvitationActionOperator(token as string, id!, payload);
-
-      console.log('✅ Action Response:', res);
+      await createInvitationActionOperator(token as string, id!, payload);
 
       setRelatedVisitors((prev) =>
         prev.map((v) =>
@@ -1643,14 +1573,13 @@ const OperatorView = () => {
 
       showSwal('error', message);
     } finally {
-      // setTimeout(() => {
       setLoadingAccess(false);
-      // }, 600);
     }
   };
 
   const formsOf = (section: any) =>
     Array.isArray(section?.['visit_form']) ? section['visit_form'] : [];
+
   const handleRemoveFileForField = async (
     currentUrl: string,
     setAnswerFile: (url: string) => void,
@@ -1697,7 +1626,6 @@ const OperatorView = () => {
     setSelectedVisitors([visitor.id]);
     setSelectedVisitorNumber(visitor.visitor_number);
     setSelectedVisitorId(visitor.id);
-
     setSelectedCards([]);
 
     setInvitationCode((prev) => {
@@ -1747,7 +1675,6 @@ const OperatorView = () => {
       }
 
       setLoadingAccess(true);
-
       handleOpenFillFormDialog(validToFill.map((v) => v.id));
 
       setTimeout(() => {
@@ -1907,8 +1834,6 @@ const OperatorView = () => {
         }, 500);
       }
     } catch (error: any) {
-      console.error('Multiple Action Failed:', error);
-      // toast('Failed to perform multiple action', 'error');
       showSwal('error', 'Failed to perform multiple action.');
     } finally {
       setTimeout(() => setLoadingAccess(false), 600);
@@ -1959,7 +1884,6 @@ const OperatorView = () => {
       actions.delete('block');
     }
   } else if (selectedData.length > 1) {
-    // // 🔸 Jika ada Preregis yang belum pra-register
     const baseStatusActions: Record<string, string[]> = {
       Checkin: ['checkout', 'block'],
       Checkout: ['block'],
@@ -2061,7 +1985,6 @@ const OperatorView = () => {
       };
 
       const purposeVisitSection = makeSection(purposeVisitSrc, 'Purpose Visit', false, false);
-
       return [visitorGroupSection, purposeVisitSection];
     }
 
@@ -2160,10 +2083,6 @@ const OperatorView = () => {
     };
   };
 
-  const [invitationDetail, setInvitationDetail] = useState<any>([]);
-  const [questionPageTemplate, setQuestionPageTemplate] = useState<any[]>([]);
-  const [applyToAll, setApplyToAll] = useState(false);
-
   const handleApplyToAllChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const checked = event.target.checked;
     setApplyToAll(checked);
@@ -2196,9 +2115,9 @@ const OperatorView = () => {
       );
 
       const firstResult = results[0];
-      console.log('firstResult', firstResult);
+      // console.log('firstResult', firstResult);
       const questionPagesTemplate = firstResult?.collection?.question_page ?? [];
-      console.log('questionPagesTemplate', questionPagesTemplate);
+      // console.log('questionPagesTemplate', questionPagesTemplate);
 
       setInvitationDetail(firstResult);
       setQuestionPageTemplate(questionPagesTemplate);
@@ -2799,11 +2718,6 @@ const OperatorView = () => {
           width: '100%',
         }}
       >
-        {/* {showLabel && (!isVehicleField || isDriving) && ( */}
-        {/* <CustomFormLabel sx={{ mb: 1 }} required={field.mandatory}>
-            {field.long_display_text}
-          </CustomFormLabel> */}
-        {/* )} */}
         {renderInput()}
       </Box>
     );
@@ -2885,8 +2799,6 @@ const OperatorView = () => {
     );
 
     const permissionActions = getAllowedActionsByPermission(accessId, permissionAccess);
-
-    console.log('commonActions', commonActions, 'permissionActions', permissionActions);
 
     return commonActions.filter((action) => permissionActions.includes(action));
   };
@@ -3047,7 +2959,7 @@ const OperatorView = () => {
       });
 
       const payload = { list_group: dataList };
-      console.log('✅ Final Payload (MULTI-VISITOR FIXED):', JSON.stringify(payload, null, 2));
+      console.log('Final Payload (MULTI-VISITOR FIXED):', JSON.stringify(payload, null, 2));
       const result = await createSubmitCompletePraMultiple(token as string, payload);
       showSwal('success', 'Successfully Pra Register!');
       setRelatedVisitors((prev) =>
@@ -3165,7 +3077,6 @@ const OperatorView = () => {
 
       const { visitor_give_access, access_control_name, early_access } = record;
 
-      // 🚫 Sudah revoke/block → skip
       if ((visitor_give_access === 2 || visitor_give_access === 3) && action !== 'unblock') {
         invalidVisitors.push({
           visitorId,
@@ -3176,7 +3087,6 @@ const OperatorView = () => {
         return;
       }
 
-      // 🚫 early_access → tidak bisa grant
       if (early_access && action === 'grant') {
         invalidVisitors.push({
           visitorId,
@@ -3235,7 +3145,6 @@ const OperatorView = () => {
     };
   };
 
-  // Access : Grant dll
   const handleAccessAction = async (
     row: any,
     action: 'no_action' | 'grant' | 'revoke' | 'block' | 'unblock',
@@ -3256,8 +3165,6 @@ const OperatorView = () => {
           )
           .map((a) => a.trx_visitor_id?.toLowerCase());
 
-        console.log(targetVisitors);
-
         const { validVisitors, invalidVisitors, message } = validateMultiVisitorAccess(
           accessControlId,
           targetVisitors,
@@ -3267,20 +3174,12 @@ const OperatorView = () => {
         );
 
         if (!validVisitors.length) {
-          // setSnackbarMsg(message || 'No valid visitors to process.');
-          // setSnackbarType('error');
-          // setSnackbarOpen(true);
           toast(message || 'No valid visitors to process.', 'error');
           resolve();
           return;
         }
 
         if (invalidVisitors.length) {
-          // setSnackbarMsg(
-          //   'Some visitors cannot perform this action:\n' + invalidVisitors.join('\n'),
-          // );
-          // setSnackbarType('info');
-          // setSnackbarOpen(true);
           toast('Some visitors cannot perform this action:\n' + invalidVisitors.join('\n'), 'info');
           resolve();
           return;
@@ -3294,7 +3193,7 @@ const OperatorView = () => {
           })),
         };
 
-        console.log('📦 Final Payload:', payload);
+        console.log('Final Payload:', payload);
 
         const res = await createGiveAccessOperator(token as string, payload);
         console.log('Access Action Response:', JSON.stringify(res, null, 2));
@@ -3339,16 +3238,23 @@ const OperatorView = () => {
     });
   };
 
+  // const activeVisitor = useMemo(() => {
+  //   if (selectedVisitorId) {
+  //     const visitor = relatedVisitors.find((v) => v.id === selectedVisitorId);
+  //     if (visitor) return visitor;
+  //   }
+
+  //   return relatedVisitors?.[0] ?? invitationCode?.[0] ?? null;
+  // }, [selectedVisitorId, relatedVisitors, invitationCode]);
+
   const activeVisitor = useMemo(() => {
     if (selectedVisitorId) {
-      const visitor = relatedVisitors.find((v) => v.id === selectedVisitorId);
-      if (visitor) return visitor;
+      return relatedVisitors.find((v) => v.id === selectedVisitorId);
     }
 
-    return relatedVisitors?.[0] ?? invitationCode?.[0] ?? null;
-  }, [selectedVisitorId, relatedVisitors, invitationCode]);
+    return relatedVisitors?.[0] ?? null;
+  }, [selectedVisitorId, relatedVisitors]);
 
-  // Faceimage && Upload Identity
   const getCdnUrl = (path?: string) => {
     if (!path || path === '-' || path.trim() === '') return null;
 
@@ -3365,6 +3271,7 @@ const OperatorView = () => {
   const [visitorType, setVisitorType] = useState<any[]>([]);
   const [openMore, setOpenMore] = useState(false);
   const handleOpenMore = () => setOpenMore(true);
+  const [vtLoading, setVTLoading] = useState(false);
 
   const fetchTodayVisitingPurpose = async () => {
     try {
@@ -3374,9 +3281,6 @@ const OperatorView = () => {
       console.error(err);
     }
   };
-
-  const [vtLoading, setVTLoading] = useState(false);
-  // const [permission, setPermission] = useState<any[]>([]);
 
   const handlePrint = () => {
     setOpenPreviewPrint(true);
@@ -3440,13 +3344,6 @@ const OperatorView = () => {
     setOpenSwipeAccess(false);
     setOpenChooseCardDialog(false);
     setSearchTerm('');
-    // if (currentVisitorIndex < filteredVisitors.length - 1) {
-    //   setCurrentVisitorIndex((prev) => prev + 1);
-    //   setOpenSwipeDialog(true);
-    // } else {
-    //   // showSwal('success', 'All visitors processed');
-    //   setCurrentVisitorIndex(0);
-    // }
   };
 
   const parkingData = [
@@ -3485,10 +3382,10 @@ const OperatorView = () => {
             }}
           >
             <Grid container spacing={1} mb={0}>
-              <Grid size={{ xs: 12, sm: 12, lg: 9 }}>
+              <Grid size={{ xs: 12, md: 7.5, lg: 8.2, xl: 9 }}>
                 <VisitorSearchInput onOpenSearch={() => setOpenSearch(true)} />
               </Grid>
-              <Grid size={{ xs: 12, sm: 12, lg: 3 }}>
+              <Grid size={{ xs: 12, md: 4.5, lg: 3.8, xl: 3 }}>
                 <OperatorToolbar
                   onClear={handleClearAll}
                   onOpenList={handleOpenListVisitor}
@@ -3515,7 +3412,7 @@ const OperatorView = () => {
                   flexWrap: 'wrap',
                 }}
               >
-                {/* 🧩 Card FR */}
+                {/* Card FR */}
                 <Grid
                   size={{ xs: 12, lg: 4.5 }}
                   sx={{ border: '1px solid #e0e0e0', borderRadius: '15px' }}
@@ -3551,7 +3448,14 @@ const OperatorView = () => {
                 />
 
                 {/* Side Right QR Code */}
-                <Grid size={{ xs: 12, lg: 3 }}>
+                <Grid
+                  size={{ xs: 12, lg: 3 }}
+                  // sx={{
+                  //   display: 'flex',
+                  //   flexDirection: 'column',
+                  //   height: '100%',
+                  // }}
+                >
                   <InvitationQrCard invitationCode={invitationCode} isFullscreen={isFullscreen} />
                 </Grid>
               </Grid>
@@ -3567,289 +3471,17 @@ const OperatorView = () => {
                 alignItems: 'stretch',
               }}
             >
-              <Grid
-                size={{ xs: 12, lg: 4.5 }}
-                sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  // height: '100%',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                  p: 1,
-                  borderRadius: 2,
-                  border: '1px solid #e0e0e0',
-                }}
-              >
-                <Card
-                  sx={{
-                    flex: 1,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    boxShadow: 'none',
-                    p: 1,
-                    minHeight: 450,
-                  }}
-                >
-                  <CardContent sx={{ boxShadow: 'none', p: 0 }}>
-                    <VisitorDetailTabs
-                      invitationCode={invitationCode}
-                      handleChooseCard={handleChooseCard}
-                    />
-                  </CardContent>
-                  {invitationCode.length > 0 && invitationCode[0]?.visitor_number && (
-                    <>
-                      <CardActions
-                        sx={{ justifyContent: 'center', mt: 2, flexWrap: 'wrap', gap: 1 }}
-                      >
-                        {(() => {
-                          const selectedVisitor =
-                            relatedVisitors.find(
-                              (v) => v.visitor_number === invitationCode[0]?.visitor_number,
-                            ) ||
-                            relatedVisitors.find((v) => v.visitor_number === selectedVisitorNumber);
-                          if (
-                            selectedVisitor &&
-                            (selectedVisitor.is_praregister_done == null ||
-                              selectedVisitor.is_praregister_done === false)
-                          ) {
-                            return (
-                              <Button
-                                variant="contained"
-                                color="primary"
-                                size="large"
-                                onClick={() => handleView(selectedVisitor.id)}
-                              >
-                                Fill Form
-                              </Button>
-                            );
-                          }
-
-                          const data = invitationCode[0];
-                          const status = data?.visitor_status;
-                          const isBlocked = !!data?.is_block;
-
-                          if (
-                            !selectedVisitor ||
-                            selectedVisitor.is_praregister_done == null ||
-                            selectedVisitor.is_praregister_done === false
-                          ) {
-                            return null;
-                          }
-                          if (!['Checkin', 'Checkout', 'Block', 'Unblock'].includes(status || '')) {
-                            return (
-                              <Box display="flex" gap={1}>
-                                {permissionHook.canCheckin && (
-                                  <Tooltip
-                                    title="Check In"
-                                    placement="top"
-                                    arrow
-                                    slotProps={{
-                                      tooltip: {
-                                        sx: {
-                                          fontSize: '1rem',
-                                          padding: '8px 14px',
-                                        },
-                                      },
-                                      popper: {
-                                        container: containerRef.current,
-                                      },
-                                    }}
-                                  >
-                                    <Button
-                                      variant="contained"
-                                      // color="#21c45d"
-                                      size="large"
-                                      onClick={() => handleConfirmStatus('Checkin')}
-                                      startIcon={<IconLogin />}
-                                      sx={{ backgroundColor: '#21c45d' }}
-                                    >
-                                      Check In
-                                    </Button>
-                                  </Tooltip>
-                                )}
-                                {permissionHook.canBlock && (
-                                  <Tooltip
-                                    title="Block"
-                                    placement="top"
-                                    arrow
-                                    slotProps={{
-                                      tooltip: {
-                                        sx: {
-                                          fontSize: '1rem',
-                                          padding: '8px 14px',
-                                        },
-                                      },
-                                      popper: {
-                                        container: containerRef.current,
-                                      },
-                                    }}
-                                  >
-                                    <Button
-                                      variant="contained"
-                                      size="large"
-                                      sx={{ backgroundColor: '#000' }}
-                                      onClick={() => handleConfirmStatus('Block')}
-                                      startIcon={<IconForbid2 />}
-                                    >
-                                      Block
-                                    </Button>
-                                  </Tooltip>
-                                )}
-                              </Box>
-                            );
-                          }
-
-                          if (status === 'Checkin' && !isBlocked) {
-                            return (
-                              <Box display="flex" gap={1}>
-                                {permissionHook.canCheckout && (
-                                  <Tooltip
-                                    title="Check Out"
-                                    placement="top"
-                                    arrow
-                                    slotProps={{
-                                      tooltip: {
-                                        sx: {
-                                          fontSize: '1rem',
-                                          padding: '8px 14px',
-                                        },
-                                      },
-                                      popper: {
-                                        container: containerRef.current,
-                                      },
-                                    }}
-                                  >
-                                    <Button
-                                      variant="contained"
-                                      color="error"
-                                      size="large"
-                                      onClick={() => handleConfirmStatus('Checkout')}
-                                      startIcon={<IconLogout />}
-                                    >
-                                      Check Out
-                                    </Button>
-                                  </Tooltip>
-                                )}
-                                {permissionHook.canBlock && (
-                                  <Tooltip
-                                    title="Block"
-                                    placement="top"
-                                    arrow
-                                    slotProps={{
-                                      tooltip: {
-                                        sx: {
-                                          fontSize: '1rem',
-                                          padding: '8px 14px',
-                                        },
-                                      },
-                                      popper: {
-                                        container: containerRef.current,
-                                      },
-                                    }}
-                                  >
-                                    <Button
-                                      variant="contained"
-                                      size="large"
-                                      sx={{ backgroundColor: '#000' }}
-                                      onClick={() => handleConfirmStatus('Block')}
-                                      startIcon={<IconForbid2 />}
-                                    >
-                                      Block
-                                    </Button>
-                                  </Tooltip>
-                                )}
-                              </Box>
-                            );
-                          }
-                          if (status === 'Checkout' && !isBlocked) {
-                            return (
-                              <Box display="flex" gap={1}>
-                                {permissionHook.canBlock && (
-                                  <Tooltip
-                                    title="Block Visitor"
-                                    placement="top"
-                                    arrow
-                                    slotProps={{
-                                      tooltip: {
-                                        sx: {
-                                          fontSize: '1rem',
-                                          padding: '8px 14px',
-                                        },
-                                      },
-                                      popper: {
-                                        container: containerRef.current,
-                                      },
-                                    }}
-                                  >
-                                    <Button
-                                      variant="contained"
-                                      size="large"
-                                      sx={{ backgroundColor: '#000' }}
-                                      onClick={() => handleConfirmStatus('Block')}
-                                      startIcon={<IconForbid2 />}
-                                    >
-                                      Block
-                                    </Button>
-                                  </Tooltip>
-                                )}
-                              </Box>
-                            );
-                          }
-
-                          if (isBlocked) {
-                            return (
-                              <>
-                                {permissionHook.canBlock && (
-                                  <Tooltip
-                                    title="Unblock"
-                                    placement="top"
-                                    arrow
-                                    slotProps={{
-                                      tooltip: {
-                                        sx: {
-                                          fontSize: '1rem',
-                                          padding: '8px 14px',
-                                        },
-                                      },
-                                      popper: {
-                                        container: containerRef.current,
-                                      },
-                                    }}
-                                  >
-                                    <Button
-                                      variant="contained"
-                                      size="large"
-                                      sx={{
-                                        backgroundColor: '#f44336',
-                                        '&:hover': { backgroundColor: '#d32f2f' },
-                                      }}
-                                      onClick={() => handleConfirmStatus('Unblock')}
-                                      startIcon={<IconBan />}
-                                    >
-                                      Unblock
-                                    </Button>
-                                  </Tooltip>
-                                )}
-                              </>
-                            );
-                          }
-
-                          return null;
-                        })()}
-                      </CardActions>
-                      {/* Barcode */}
-                      {/* <Box>
-                        {activeBarcode && (
-                          <img
-                            src={activeBarcode}
-                            alt="Barcode"
-                            style={{ width: '100%', height: '135px', objectFit: 'cover' }}
-                          />
-                        )}
-                      </Box> */}
-                    </>
-                  )}
-                </Card>
-              </Grid>
+              <VisitorDetailCard
+                invitationCode={invitationCode}
+                activeVisitor={activeVisitor}
+                relatedVisitors={relatedVisitors}
+                selectedVisitorNumber={selectedVisitorNumber}
+                permissionHook={permissionHook}
+                containerRef={containerRef}
+                handleChooseCard={handleChooseCard}
+                handleConfirmStatus={handleConfirmStatus}
+                handleView={handleView}
+              />
 
               {/* Related Visitor */}
               <Grid size={{ xs: 12, lg: 4.5 }} sx={{ display: 'flex', flexDirection: 'column' }}>
@@ -3865,7 +3497,7 @@ const OperatorView = () => {
                     border: '1px solid #e0e0e0',
                   }}
                 >
-                  <Box display="flex" justifyContent="space-between" flexWrap={'wrap'} gap={1}>
+                  <Box display="flex" justifyContent="space-between" flexWrap={'nowrap'} gap={1}>
                     <CardHeader title="Related Visitors" sx={{ p: 0 }} />
                     <Box display={'flex'} gap={1}>
                       <FormControl sx={{ width: '100%' }}>
@@ -3956,7 +3588,8 @@ const OperatorView = () => {
                           >
                             <Box display="flex" alignItems="center" gap={2}>
                               <Avatar
-                                src={activeSelfie || undefined}
+                                // src={activeSelfie || undefined}
+                                src={getCdnUrl(visitor.selfie_image) || undefined}
                                 alt={visitor.name}
                                 sx={{ width: 45, height: 45 }}
                               />
@@ -4138,7 +3771,7 @@ const OperatorView = () => {
                           disabled={!bulkAction || selectedVisitors.length === 0}
                           onClick={handleApplyBulkAction}
                         >
-                          {loadingAccess ? 'Apply' : 'Apply'}
+                          Apply
                         </Button>
                       </Box>
                       {invitationCode.length > 0 && (
@@ -4291,7 +3924,14 @@ const OperatorView = () => {
                 </Card>
               </Grid>
 
-              <Grid size={{ xs: 12, lg: 3 }}>
+              <Grid
+                size={{ xs: 12, lg: 3 }}
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  height: '100%',
+                }}
+              >
                 <VisitorImage
                   faceImage={activeSelfie}
                   identityImage={activeKTP}
@@ -4421,25 +4061,6 @@ const OperatorView = () => {
             formatDateTime={formatDateTime}
           />
 
-          {/* Dialog Choose registered Site Access Site */}
-          {/* <RegisteredSiteAccessDialog
-            open={openRegisteredSite}
-            onClose={() => {
-              setSelectedSite(null);
-              setOpenRegisteredSiteDialog(false);
-              setAction('');
-            }}
-            siteRegistered={siteRegistered}
-            selectedSite={selectedSite}
-            setSelectedSite={setSelectedSite}
-            action={action}
-            setAction={setAction}
-            containerRef={containerRef.current}
-            onSubmit={(action: 'grant' | 'revoke', site) => {
-              console.log(action, site);
-            }}
-          /> */}
-
           {/* Fill Form Pra regist Multiple*/}
           <FillPraregistrationGroup
             open={openFillForm}
@@ -4457,61 +4078,15 @@ const OperatorView = () => {
             formsOf={formsOf}
           />
           {/* Submit Praregister */}
-          <Dialog
+          <FillPraregistrationSingle
             open={openDialogInvitation}
             onClose={() => setOpenDialogInvitation(false)}
-            fullWidth
-            maxWidth="xl"
-            container={containerRef.current}
-          >
-            <DialogTitle>Fill Pra Registration Form</DialogTitle>
-            <IconButton
-              aria-label="close"
-              onClick={() => setOpenDialogInvitation(false)}
-              sx={{
-                position: 'absolute',
-                right: 8,
-                top: 8,
-                color: (theme) => theme.palette.grey[500],
-              }}
-            >
-              <IconX />
-            </IconButton>
-            {loading ? (
-              <DialogContent
-                dividers
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  minHeight: 400,
-                }}
-              >
-                <CircularProgress />
-              </DialogContent>
-            ) : (
-              <DialogContent dividers>
-                {selectedInvitationId ? (
-                  <FormDialogPraregist
-                    id={selectedInvitationId ?? invitationCode?.[0]?.id}
-                    onClose={() => setOpenDialogInvitation(false)}
-                    onSubmitted={async (formId?: string) => {
-                      setOpenDialogInvitation(false);
-                      const targetId = formId ?? selectedInvitationId ?? invitationCode?.[0]?.id;
-                      if (!targetId) return;
-                      await fetchRelatedVisitorsByInvitationId(targetId);
-                    }}
-                    onSubmitting={setSubmitting}
-                    containerRef={containerRef.current}
-                  />
-                ) : (
-                  <Typography variant="body2" textAlign="center" color="text.secondary">
-                    No invitation selected.
-                  </Typography>
-                )}
-              </DialogContent>
-            )}
-          </Dialog>
+            loadingAccess={loadingAccess}
+            selectedInvitationId={selectedInvitationId ?? invitationCode?.[0]?.id}
+            invitationCode={invitationCode}
+            containerRef={containerRef.current}
+            fetchRelatedVisitorsByInvitationId={fetchRelatedVisitorsByInvitationId}
+          />
           {/* Access Dialog */}
           <AccessDialog
             open={openAccessData}

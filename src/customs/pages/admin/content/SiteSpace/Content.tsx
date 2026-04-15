@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Box,
   Dialog,
@@ -84,6 +84,7 @@ const Content = () => {
   const [edittingId, setEdittingId] = useState('');
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [sortDir, setSortDir] = useState<string>('desc');
 
   const [openFormCreateSiteSpace, setOpenFormCreateSiteSpace] = useState(false);
@@ -632,6 +633,16 @@ const Content = () => {
     fetchEmployees();
   }, [token]);
 
+  
+  const handleSearchKeywordChange = useCallback((keyword: string) => {
+    setSearchInput(keyword);
+  }, []);
+
+  const handleSearch = useCallback(() => {
+    setPage(0);
+    setSearchKeyword(searchInput);
+  }, [searchInput]);
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -650,7 +661,7 @@ const Content = () => {
                 totalCount={totalFilteredRecords}
                 defaultRowsPerPage={rowsPerPage}
                 isHaveImage={true}
-                rowsPerPageOptions={[10, 50, 100, 250]}
+                rowsPerPageOptions={[10, 50, 100]}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);
@@ -699,7 +710,9 @@ const Content = () => {
                 onBatchEdit={handleBatchEdit}
                 onDelete={(row) => handleDelete(row.id)}
                 onBatchDelete={handleBatchDelete}
-                onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                onSearchKeywordChange={handleSearchKeywordChange}
+                searchKeyword={searchInput}
+                onSearch={handleSearch}
                 onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
                 onAddData={() => {
                   handleOpenType();

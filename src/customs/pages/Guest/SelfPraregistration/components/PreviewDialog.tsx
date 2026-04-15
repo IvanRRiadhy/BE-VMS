@@ -52,30 +52,24 @@ const PreviewDialog = ({
 
   const resolveValue = (f: any) => {
     const raw = f.answer_text ?? f.answer_datetime ?? f.answer_file ?? null;
-
     if (!raw) return null;
-
     // HOST
     if (f.remarks === 'host') {
       const host = invitation?.host || employee?.find((e: any) => e.id === raw);
 
       return host?.name || raw;
     }
-
     // SITE
     if (f.remarks === 'site_place') {
       const site = invitation?.site || sites?.find((s: any) => s.id === raw);
-
       return site?.name || raw;
     }
-
     // RADIO / DROPDOWN
     if (f.multiple_option_fields?.length) {
       const opt = f.multiple_option_fields.find((o: any) => String(o.value) === String(raw));
 
       return opt?.name || raw;
     }
-
     return raw;
   };
   return (
@@ -120,7 +114,7 @@ const PreviewDialog = ({
                   value = invitationData?.site_place_name || value;
                 }
                 if (['visitor_period_start', 'visitor_period_end'].includes(f.remarks)) {
-                  const utcValue = value ? value + 'Z' : value;
+                  // const utcValue = value ? value + 'Z' : value;
                   return (
                     <Grid item xs={12} sm={6} key={idx}>
                       <Typography variant="caption" color="text.secondary">

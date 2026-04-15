@@ -36,10 +36,6 @@ export const syncParkingIntegration = async (
   integrationId: string,
   token: string,
 ): Promise<ApiResponse> => {
-  console.log('🔄 [SYNC] Start syncing parking integration...');
-  console.log('➡️ Integration ID:', integrationId);
-  console.log('🔑 Token:', token ? '✅ ada token' : '❌ token kosong');
-  console.log('🌐 URL:', `/integration-parking/sync/${integrationId}`);
 
   try {
     const { data, status } = await axiosInstance.post(
@@ -47,25 +43,25 @@ export const syncParkingIntegration = async (
       {}, // body kosong
       {
         headers: { Authorization: `Bearer ${token}` },
-        // timeout: 60000, // optional: biar gak nunggu selamanya
+        // timeout: 60000, 
       },
     );
 
     console.log('✅ [SYNC] Success:', status, data);
     return data as ApiResponse;
   } catch (error: any) {
-    console.group('❌ [SYNC] Error detail');
-    console.error('Type:', error.constructor?.name);
-    console.error('Message:', error.message);
+    // console.group('❌ [SYNC] Error detail');
+    // console.error('Type:', error.constructor?.name);
+    // console.error('Message:', error.message);
 
-    if (axios.isAxiosError(error)) {
-      console.error('Config:', error.config?.url);
-      console.error('Status:', error.response?.status);
-      console.error('Headers:', error.response?.headers);
-      console.error('Response data:', error.response?.data);
-    }
+    // if (axios.isAxiosError(error)) {
+    //   console.error('Config:', error.config?.url);
+    //   console.error('Status:', error.response?.status);
+    //   console.error('Headers:', error.response?.headers);
+    //   console.error('Response data:', error.response?.data);
+    // }
 
-    console.groupEnd();
+    // console.groupEnd();
 
     if (axios.isAxiosError(error) && error.response) {
       const d = (error.response.data || {}) as Partial<ApiResponse>;

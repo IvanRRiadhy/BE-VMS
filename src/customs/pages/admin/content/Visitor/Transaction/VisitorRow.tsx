@@ -16,7 +16,7 @@ import { KeyboardArrowDownOutlined, KeyboardArrowUpOutlined } from '@mui/icons-m
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 
 function VisitorRow({ visitor, index }: { visitor: any; index: number }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   return (
     <>
       <TableRow
@@ -32,36 +32,36 @@ function VisitorRow({ visitor, index }: { visitor: any; index: number }) {
 
         <TableCell component="th" scope="row">
           <Box>
-            <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+            <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
               Agenda
             </Typography>
-            <Typography variant="body2">{visitor.agenda}</Typography>
+            <Typography variant="body1">{visitor.agenda}</Typography>
           </Box>
         </TableCell>
 
         <TableCell component="th" scope="row">
           <Box>
-            <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+            <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
               Visitor Type
             </Typography>
-            <Typography variant="body2">{visitor.visitor_type_name}</Typography>
+            <Typography variant="body1">{visitor.visitor_type_name}</Typography>
           </Box>
         </TableCell>
 
         <TableCell component="th" scope="row">
           <Box>
-            <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+            <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
               Visit Start
             </Typography>
-            <Typography variant="body2">{formatDateTime(visitor.visitor_period_start)}</Typography>
+            <Typography variant="body1">{formatDateTime(visitor.visitor_period_start)}</Typography>
           </Box>
         </TableCell>
         <TableCell component="th" scope="row">
           <Box>
-            <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+            <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
               Visit End
             </Typography>
-            <Typography variant="body2">{formatDateTime(visitor.visitor_period_end)}</Typography>
+            <Typography variant="body1">{formatDateTime(visitor.visitor_period_end)}</Typography>
           </Box>
         </TableCell>
       </TableRow>
@@ -75,29 +75,38 @@ function VisitorRow({ visitor, index }: { visitor: any; index: number }) {
                   <TableRow>
                     {/* <TableCell>No</TableCell> */}
                     {/* <TableCell>Gambar</TableCell> */}
-                    <TableCell>Visitor Name</TableCell>
-                    <TableCell>Email</TableCell>
-                    <TableCell>Phone</TableCell>
-                    <TableCell>Organization</TableCell>
-                    <TableCell>Host</TableCell>
-                    <TableCell>Site</TableCell>
+                    <TableCell sx={{ fontSize: '14px' }}>Visitor Name</TableCell>
+                    <TableCell sx={{ fontSize: '14px' }}>Email</TableCell>
+                    <TableCell sx={{ fontSize: '14px' }}>Phone</TableCell>
+                    <TableCell sx={{ fontSize: '14px' }}>Organization</TableCell>
+                    <TableCell sx={{ fontSize: '14px' }}>Host</TableCell>
+                    <TableCell sx={{ fontSize: '14px' }}>Site</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   <TableRow>
                     {/* <TableCell>{visitor.index +1}</TableCell> */}
 
-                    <TableCell sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
+                    <TableCell
+                      sx={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        fontSize: '13px',
+                      }}
+                    >
                       <Avatar
                         src={`${axiosInstance2.defaults.baseURL}/cdn${visitor.selfie_image}`}
                       />
                       {visitor.visitor_name}
                     </TableCell>
-                    <TableCell>{visitor.visitor_email}</TableCell>
-                    <TableCell>{visitor.visitor_phone}</TableCell>
-                    <TableCell>{visitor.visitor_organization_name}</TableCell>
-                    <TableCell>{visitor.host_name}</TableCell>
-                    <TableCell>{visitor.site_place_name}</TableCell>
+                    <TableCell sx={{ fontSize: '13px' }}>{visitor.visitor_email}</TableCell>
+                    <TableCell sx={{ fontSize: '13px' }}>{visitor.visitor_phone}</TableCell>
+                    <TableCell sx={{ fontSize: '13px' }}>
+                      {visitor.visitor_organization_name}
+                    </TableCell>
+                    <TableCell sx={{ fontSize: '13px' }}>{visitor.host_name}</TableCell>
+                    <TableCell sx={{ fontSize: '13px' }}>{visitor.site_place_name}</TableCell>
                   </TableRow>
                 </TableBody>
               </Table>

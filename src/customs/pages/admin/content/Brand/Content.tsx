@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Box, Grid2 as Grid } from '@mui/material';
 import Container from 'src/components/container/PageContainer';
 import PageContainer from 'src/customs/components/container/PageContainer';
@@ -26,6 +26,7 @@ const Content = () => {
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const cards = [
     {
       title: 'Total Brand',
@@ -41,16 +42,9 @@ const Content = () => {
       setLoading(true);
       try {
         const start = page * rowsPerPage;
-        const response = await getAllBrandPagination(
-          token,
-          start,
-          rowsPerPage,
-          // sortColumn,
-          searchKeyword,
-        );
+        const response = await getAllBrandPagination(token, start, rowsPerPage, searchKeyword);
         setTableData(response.collection.map(({ integration_list_id, ...rest }) => rest));
         setTotalRecords(response.collection.length);
-        // setIsDataReady(true);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -74,13 +68,21 @@ const Content = () => {
         setSelectedRows([]);
       } catch (error) {
         console.error(error);
-        // showErrorAlert('Error!', 'Failed to delete some items.');
         showSwal('error', 'Failed to delete some items.');
       } finally {
         setLoading(false);
       }
     }
   };
+
+  const handleSearchKeywordChange = useCallback((keyword: string) => {
+    setSearchInput(keyword);
+  }, []);
+
+  const handleSearch = useCallback(() => {
+    setPage(0);
+    setSearchKeyword(searchInput);
+  }, [searchInput]);
 
   return (
     <PageContainer
@@ -109,7 +111,9 @@ const Content = () => {
                 isHaveHeader={false}
                 onCheckedChange={(selected) => setSelectedRows(selected)}
                 onBatchDelete={handleBatchDelete}
-                onSearchKeywordChange={(searchKeyword) => setSearchKeyword(searchKeyword)}
+                searchKeyword={searchInput}
+                onSearch={handleSearch}
+                onSearchKeywordChange={handleSearchKeywordChange}
               />
             </Grid>
           </Grid>

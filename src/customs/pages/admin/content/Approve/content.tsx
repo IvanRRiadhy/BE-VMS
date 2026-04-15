@@ -15,11 +15,9 @@ import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import CloseIcon from '@mui/icons-material/Close';
 import { Item } from 'src/customs/api/models/Admin/Document';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { showConfirmDelete, showErrorAlert, showSwal } from 'src/customs/components/alerts/alerts';
+import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import FormApprove from './FormApprove';
-import {
-  deleteApprovalWorkflow,
-} from 'src/customs/api/Admin/ApprovalWorkflow';
+import { deleteApprovalWorkflow } from 'src/customs/api/Admin/ApprovalWorkflow';
 import {
   CreateApprovalWorkflowRequest,
   CreateApprovalWorkflowSchema,
@@ -29,6 +27,8 @@ const Content = ({
   tableData,
   searchKeyword,
   setSearchKeyword,
+  searchInput,
+  setSearchInput,
   setRefreshTrigger,
   refreshTrigger,
 }: any) => {
@@ -45,12 +45,14 @@ const Content = ({
     type: '',
     conditions: [],
   };
+
   const [formDataAddDocument, setFormDataAddDocument] = useState<CreateApprovalWorkflowRequest>(
     () => {
       const saved = localStorage.getItem('unsavedApprovalWorkflow');
       return saved ? JSON.parse(saved) : defaultApprovalWorkflow;
     },
   );
+
   const [openFormAddDocument, setOpenFormAddDocument] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
@@ -60,6 +62,8 @@ const Content = ({
     setEdittingId('');
     localStorage.removeItem('unsavedApprovalWorkflow');
   };
+
+
   const defaultDoc = defaultApprovalWorkflow;
 
   const isEmptyDoc = (doc: any) => {
@@ -95,15 +99,15 @@ const Content = ({
       setOpenFormAddDocument(true);
     }
   }, [hasUnsaved]);
+
   const handleEdit = (id: string) => {
     if (hasUnsaved()) {
       const parsed = JSON.parse(localStorage.getItem('unsavedApprovalWorkflow') as string);
-
+          console.log('parsed data', parsed);
       if (parsed?.id === id) {
         setOpenFormAddDocument(true);
         return;
       }
-
       setPendingEditId(id);
       setConfirmDialogOpen(true);
       return;
@@ -116,10 +120,10 @@ const Content = ({
   const handleConfirmEdit = () => {
     setConfirmDialogOpen(false);
     localStorage.removeItem('unsavedApprovalWorkflow');
-
     setEdittingId(pendingEditId || '');
 
     const item = tableData.find((item: any) => item.id === pendingEditId);
+
     if (item) {
       setFormDataAddDocument(CreateApprovalWorkflowSchema.parse(item));
     } else {
@@ -155,7 +159,6 @@ const Content = ({
       showSwal('success', 'Successfully deleted approval workflow!');
       setRefreshTrigger((prev: any) => prev + 1);
     } catch (error) {
-      console.error(error);
       showSwal('error', 'Failed to delete approval workflow.');
     } finally {
       setLoading(false);
@@ -175,7 +178,6 @@ const Content = ({
         showSwal('success', `${rows.length} items have been deleted.`);
         setSelectedRows([]);
       } catch (error) {
-        console.error(error);
         showSwal('error', 'Failed to delete some items.');
       } finally {
         setLoading(false);
@@ -198,6 +200,15 @@ const Content = ({
         : 'Approval workflow created successfully!',
     );
   };
+
+  const handleSearchKeywordChange = useCallback((keyword: string) => {
+    setSearchInput(keyword);
+  }, []);
+
+  const handleSearch = useCallback(() => {
+    setPage(0);
+    setSearchKeyword(searchInput);
+  }, [searchInput]);
 
   return (
     <Container title="Approval Workflow" description="Approval Workflow">
@@ -225,12 +236,15 @@ const Content = ({
               isHaveFilterDuration={false}
               isHaveAddData={true}
               isHaveFilterMore={false}
+              isNoActionTableHead={true}
               isHaveHeader={false}
               onCheckedChange={(selected) => setSelectedRows(selected)}
               onEdit={(row) => handleEdit(row.id)}
               onDelete={(row) => handleDelete(row.id)}
               onBatchDelete={handleBatchDelete}
-              onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+              searchKeyword={searchInput}
+              onSearch={handleSearch}
+              onSearchKeywordChange={handleSearchKeywordChange}
               onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
               onAddData={() => handleAdd()}
             />

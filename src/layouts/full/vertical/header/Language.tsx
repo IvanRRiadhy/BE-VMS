@@ -51,6 +51,22 @@ const Language = () => {
     }
   }, [customizer.isLanguage]);
 
+  useEffect(() => {
+    const savedLang = localStorage.getItem('lang');
+
+    if (savedLang) {
+      dispatch(setLanguage(savedLang));
+    } else {
+      const browserLang = navigator.language.split('-')[0]; 
+
+      const supportedLang = Languages.find((l) => l.value === browserLang);
+
+      if (supportedLang) {
+        dispatch(setLanguage(browserLang));
+      }
+    }
+  }, []);
+
   return (
     <>
       <IconButton
@@ -78,7 +94,10 @@ const Language = () => {
           <MenuItem
             key={index}
             sx={{ py: 2, px: 3 }}
-            onClick={() => dispatch(setLanguage(option.value))}
+            onClick={() => {
+              localStorage.setItem('lang', option.value);
+              dispatch(setLanguage(option.value));
+            }} 
           >
             <Stack direction="row" spacing={1} alignItems="center">
               <Avatar src={option.icon} alt={option.icon} sx={{ width: 20, height: 20 }} />

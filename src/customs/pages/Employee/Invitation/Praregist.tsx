@@ -2,7 +2,6 @@ import React from 'react';
 import { CreateVisitorRequest } from 'src/customs/api/models/Admin/Visitor';
 import FormInvitation from './FormAddInvitation.tsx';
 import FormAddInvitation from './FormAddInvitation.tsx';
-// import FormAddInvitation from './FormAddInvitation.tsx';
 
 type Props = {
   formData: CreateVisitorRequest;
@@ -13,7 +12,7 @@ type Props = {
   sites?: any;
   employee?: any;
   allVisitorEmployee?: any;
-  customField?: any;
+  // customField?: any;
   vtLoading?: boolean;
 };
 

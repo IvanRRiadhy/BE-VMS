@@ -38,6 +38,7 @@ import axios, { AxiosInstance } from 'axios';
 
 //   return config;
 // };
+
 import { getConfig } from 'src/config';
 
 export let BASE_URL = '';

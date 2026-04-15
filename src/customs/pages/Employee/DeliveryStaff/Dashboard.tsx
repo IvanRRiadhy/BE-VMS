@@ -69,8 +69,6 @@ const DashboardEmployee = () => {
   ];
 
   const { token } = useSession();
-
-  // ✅ state untuk buka tutup dialog QR
   const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
   const [openDetailQRCode, setOpenDetailQRCode] = useState(false);
   const [tabValue, setTabValue] = useState(0);

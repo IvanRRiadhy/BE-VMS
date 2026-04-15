@@ -26,7 +26,7 @@ const FormPrintBadge: React.FC<Props> = React.memo(
         <Grid container spacing={1}>
           {/* LOGO */}
           <Grid size={{ xs: 12 }}>
-            <CustomFormLabel sx={{ m: 0 }}>Logo (Max 144 x 144)</CustomFormLabel>
+            <CustomFormLabel sx={{ m: 0 }}>Logo Printer (Max 144 x 144)</CustomFormLabel>
 
             <CustomTextField
               type="file"
@@ -126,7 +126,7 @@ const FormPrintBadge: React.FC<Props> = React.memo(
 
         {/* SUBMIT */}
         <Grid size={{ xs: 12 }} mt={2}>
-          <Button variant="contained" color="primary" onClick={onSubmit} sx={{ minWidth: 150 }}>
+          <Button variant="contained" color="primary" onClick={onSubmit} sx={{ minWidth: 150 }} fullWidth>
             Submit
           </Button>
         </Grid>

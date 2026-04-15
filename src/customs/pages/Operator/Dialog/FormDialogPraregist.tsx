@@ -59,7 +59,6 @@ interface FormDialogPraregistProps {
   id: string;
   onClose?: () => void;
   onSubmitted?: (id?: string) => void;
-  onSubmitting?: (loading: boolean) => void;
   containerRef?: any;
 }
 
@@ -67,7 +66,6 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
   id,
   onClose,
   onSubmitted,
-  onSubmitting,
   containerRef,
 }) => {
   const [activeStep, setActiveStep] = useState(0);
@@ -366,7 +364,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
           </Typography>
 
           <Typography variant="caption" color="textSecondary">
-            Supports: PDF, DOCX, JPG, PNG, Up to 100KB
+            Supports: DOCX, JPG, PNG, Up to 100KB
           </Typography>
           <input
             id={`file-${key}`}
@@ -1035,6 +1033,11 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
     </Box>
   );
 
+  const normalizeValue = (val: any) => {
+    if (val === undefined || val === null || val === '') return null;
+    return val;
+  };
+
   const transformToSubmitPayload = (data: any) => ({
     // trx_visitor_id: id,
     visitor_type: data.visitor_type,
@@ -1057,7 +1060,9 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
           self_only: section.self_only ?? false,
           foreign_id: section.foreign_id ?? '',
           form: section.form?.map((f: any) => {
-            const value = formValues[f.remarks] ?? null;
+            const rawValue = formValues[f.remarks] ?? null;
+            const value = normalizeValue(rawValue);
+
             const base = {
               sort: f.sort,
               short_name: f.short_name,
@@ -1072,13 +1077,23 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
             };
 
             if ([10, 11, 12].includes(f.field_type)) {
-              return { ...base, answer_file: value };
-            } else if (f.field_type === 9) {
-              return { ...base, answer_datetime: value};
-            } else {
-              return { ...base, answer_text: value };
+              return {
+                ...base,
+                answer_file: value,
+              };
             }
-            // return base;
+
+            if (f.field_type === 9) {
+              return {
+                ...base,
+                answer_datetime: value,
+              };
+            }
+
+            return {
+              ...base,
+              answer_text: value,
+            };
           }),
         })),
       },

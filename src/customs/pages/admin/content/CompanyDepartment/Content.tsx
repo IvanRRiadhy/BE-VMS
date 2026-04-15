@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import {
   Box,
   Card,
@@ -104,7 +104,6 @@ const Content = () => {
     },
   ];
 
-  // ======= Table & fetch =======
   const { token } = useSession();
   const [selectedType, setSelectedType] = useState<'organization' | 'department' | 'district'>(
     'organization',
@@ -119,6 +118,7 @@ const Content = () => {
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [hasFetched, setHasFetched] = useState(false);
 
   const [employeeMap, setEmployeeMap] = useState<Record<string, string>>({});
@@ -143,34 +143,6 @@ const Content = () => {
 
     fetchEmployees();
   }, [token]);
-
-  useEffect(() => {
-    if (!token) return;
-
-    const fetchTotals = async () => {
-      try {
-        const results = await Promise.allSettled([
-          getAllOrganizationPagination(token, 0, 1, 'id'),
-          getAllDepartmentsPagination(token, 0, 1, 'id'),
-          getAllDistrictsPagination(token, 0, 1, 'id'),
-        ]);
-
-        const orgRes = results[0].status === 'fulfilled' ? results[0].value : null;
-        const depRes = results[1].status === 'fulfilled' ? results[1].value : null;
-        const distRes = results[2].status === 'fulfilled' ? results[2].value : null;
-
-        setTotals({
-          organization: orgRes?.RecordsTotal ?? 0,
-          department: depRes?.RecordsTotal ?? 0,
-          district: distRes?.RecordsTotal ?? 0,
-        });
-      } catch (err) {
-        console.error('Failed to fetch totals:', err);
-      }
-    };
-
-    fetchTotals();
-  }, [token, refreshTrigger]);
 
   useEffect(() => {
     if (!token) return;
@@ -243,6 +215,34 @@ const Content = () => {
       cancelled = true;
     };
   }, [token, selectedType, page, rowsPerPage, sortDir, searchKeyword, refreshTrigger, employeeMap]);
+
+  useEffect(() => {
+    if (!token) return;
+
+    const fetchTotals = async () => {
+      try {
+        const results = await Promise.allSettled([
+          getAllOrganizationPagination(token, 0, 1, sortDir),
+          getAllDepartmentsPagination(token, 0, 1, sortDir),
+          getAllDistrictsPagination(token, 0, 1, sortDir),
+        ]);
+
+        const orgRes = results[0].status === 'fulfilled' ? results[0].value : null;
+        const depRes = results[1].status === 'fulfilled' ? results[1].value : null;
+        const distRes = results[2].status === 'fulfilled' ? results[2].value : null;
+
+        setTotals({
+          organization: orgRes?.RecordsTotal ?? 0,
+          department: depRes?.RecordsTotal ?? 0,
+          district: distRes?.RecordsTotal ?? 0,
+        });
+      } catch (err) {
+        console.error('Failed to fetch totals:', err);
+      }
+    };
+
+    fetchTotals();
+  }, [token, refreshTrigger]);
 
   const [dialog, setDialog] = useState<DialogState>(null);
   const editTokenRef = useRef(0);
@@ -513,6 +513,15 @@ const Content = () => {
     setPendingAdd(null);
   };
 
+  const handleSearchKeywordChange = useCallback((keyword: string) => {
+    setSearchInput(keyword);
+  }, []);
+
+  const handleSearch = useCallback(() => {
+    setPage(0);
+    setSearchKeyword(searchInput);
+  }, [searchInput]);
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -532,7 +541,7 @@ const Content = () => {
                   isHavePagination
                   totalCount={totalRecords}
                   defaultRowsPerPage={rowsPerPage}
-                  rowsPerPageOptions={[10, 25, 50, 100]}
+                  rowsPerPageOptions={[10, 50, 100]}
                   onPaginationChange={(newPage, newRowsPerPage) => {
                     setPage(newPage);
                     setRowsPerPage(newRowsPerPage);
@@ -570,7 +579,10 @@ const Content = () => {
                   onEdit={(row) => openEdit(mapSelectedToEntity, row)}
                   onDelete={(row) => handleDelete(row)}
                   onBatchDelete={handleBatchDelete}
-                  onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                  // onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                  searchKeyword={searchInput}
+                  onSearch={handleSearch}
+                  onSearchKeywordChange={handleSearchKeywordChange}
                   onAddData={() => openAdd(mapSelectedToEntity)}
                   // onFilterByColumn={(column) => setSortColumn(column.column)}
                 />
@@ -668,76 +680,6 @@ const Content = () => {
               onDirtyChange={setIsDirty}
             />
           )}
-
-          {/* {dialog?.mode === 'add' && dialog?.entity === 'Organizations' && (
-            <FormAddOrganization
-              key={formKey}
-              onSuccess={() =>
-                handleSuccess({ entity: 'organization', action: 'create', keepOpen: false })
-              }
-              onDirtyChange={setIsDirty}
-            />
-          )} */}
-
-          {/* {dialog?.mode === 'add' && dialog?.entity === 'Departments' && (
-            <FormAddDepartment
-              onSuccess={() =>
-                handleSuccess({ entity: 'department', action: 'create', keepOpen: false })
-              }
-              onDirtyChange={setIsDirty}
-            />
-          )} */}
-
-          {/* {dialog?.mode === 'add' && dialog?.entity === 'Districts' && (
-            <FormAddDistrict
-              onSuccess={() =>
-                handleSuccess({ entity: 'district', action: 'create', keepOpen: false })
-              }
-              onDirtyChange={setIsDirty}
-            />
-          )} */}
-
-          {/* EDIT forms */}
-          {/* {dialog?.mode === 'edit' && dialog?.entity === 'Organizations' && (
-            <FormUpdateOrganization
-              data={editingRow}
-              // setData={setEditingRow}
-              isBatchEdit={isBatchEdit}
-              selectedRows={selectedRows}
-              enabledFields={enabledFields}
-              setEnabledFields={setEnabledFields}
-              onSuccess={() =>
-                handleSuccess({ entity: 'organization', action: 'update', keepOpen: false })
-              }
-              onDirtyChange={setIsDirty}
-            />
-          )} */}
-          {/* {dialog?.mode === 'edit' && dialog?.entity === 'Departments' && (
-            <FormUpdateDepartment
-              data={editingRow}
-              isBatchEdit={isBatchEdit}
-              selectedRows={selectedRows}
-              enabledFields={enabledFields}
-              setEnabledFields={setEnabledFields}
-              onSuccess={() =>
-                handleSuccess({ entity: 'department', action: 'update', keepOpen: false })
-              }
-              onDirtyChange={setIsDirty}
-            />
-          )} */}
-          {/* {dialog?.mode === 'edit' && dialog?.entity === 'Districts' && (
-            <FormUpdateDistrict
-              data={editingRow}
-              isBatchEdit={isBatchEdit}
-              selectedRows={selectedRows}
-              enabledFields={enabledFields}
-              setEnabledFields={setEnabledFields}
-              onSuccess={() =>
-                handleSuccess({ entity: 'district', action: 'update', keepOpen: false })
-              }
-              onDirtyChange={setIsDirty}
-            />
-          )} */}
         </DialogContent>
       </Dialog>
       <Dialog
