@@ -401,7 +401,7 @@ const Register = () => {
                           >
                             <ReCAPTCHA
                               ref={recaptchaRef}
-                              sitekey={'6Lew4dsrAAAAACvlJCqJjIfjmwzD0tTJxZVFIwWw'}
+                              sitekey={'6LfT8bksAAAAACtr_rkZLHSnxkiBaKm1UPW9-sAQ'}
                               //   onChange={onCaptchaChange}
                             />
                           </Box>
