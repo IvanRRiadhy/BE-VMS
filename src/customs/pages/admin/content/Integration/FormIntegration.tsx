@@ -36,37 +36,28 @@ interface FormIntegrationProps {
   editingId?: string;
 }
 
+
+
 const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIntegrationProps) => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
-  const [alertType, setAlertType] = useState<'info' | 'success' | 'error'>('info');
-  const [alertMessage, setAlertMessage] = useState<string>(
-    'Complete the following data properly and correctly',
-  );
   const { token } = useSession();
+  
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     setFormData((prev) => ({ ...prev, [id]: value }));
   };
 
   const handleOnSubmit = async (e: React.FormEvent) => {
-    console.log('Submitting form with data:', formData);
     e.preventDefault();
     setLoading(true);
     setErrors({});
     try {
       if (!token) {
-        setAlertType('error');
-        setAlertMessage('Something went wrong. Please try again later.');
-
-        setTimeout(() => {
-          setAlertType('info');
-          setAlertMessage('Complete the following data properly and correctly');
-        }, 3000);
         return;
       }
       const data: CreateIntegrationRequest = CreateIntegrationRequestSchema.parse(formData);
-      console.log('data', data);
+      // console.log('data', data);
       if (editingId && editingId !== '') {
         await updateIntegration(editingId, data, token);
       } else {
@@ -74,26 +65,31 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
       }
 
       localStorage.removeItem('unsavedIntegrationData');
-      // setAlertType('success');
-      // setAlertMessage('Site successfully created!');
+
       showSwal(
         'success',
         editingId ? 'Integration successfully updated!' : 'Integration successfully created!',
       );
-      setTimeout(() => {
-        onSuccess?.();
-      }, 600);
-    } catch (err: any) {
-      if (err?.errors) {
-        setErrors(err.errors);
+      onSuccess?.();
+    } catch (error: any) {
+      if (Array.isArray(error?.collection)) {
+        const messages = error.collection.map((e: any) => e.message).join('\n');
+        showSwal('error', messages);
+        return;
       }
-      showSwal('error', err.message || 'Something went wrong. Please try again later.');
+      if (Array.isArray(error?.response?.data?.collection)) {
+        const messages = error.response.data.collection.map((e: any) => e.message).join('\n');
+
+        showSwal('error', messages);
+        return;
+      }
+
+      showSwal('error', error?.msg || error?.message || 'Failed to submit data.');
     } finally {
-      setTimeout(() => {
-        setLoading(false);
-      }, 600);
+      setLoading(false);
     }
   };
+
   function formatEnumLabel(label: string) {
     return label
       .replace(/([A-Z])/g, ' $1')
@@ -105,9 +101,6 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
     <>
       <form onSubmit={handleOnSubmit}>
         <Grid container spacing={2} sx={{ mb: 2 }}>
-          {/* <Grid size={12}>
-            <Alert severity={alertType}>{alertMessage}</Alert>
-          </Grid> */}
           <Grid size={6}>
             <Typography variant="h6" sx={{ mb: 2, borderLeft: '4px solid #673ab7', pl: 1 }}>
               Integration Details
@@ -220,7 +213,7 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
             zIndex: (t) => (t.zIndex.snackbar ?? 1400) - 1,
           }}
         >
-          <CircularProgress />
+          <CircularProgress color="primary" />
         </Backdrop>
       </Portal>
     </>

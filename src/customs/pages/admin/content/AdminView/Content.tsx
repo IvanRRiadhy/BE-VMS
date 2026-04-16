@@ -1070,11 +1070,18 @@ const Content = () => {
       organization: v.visitor_organization_name ?? '-',
       extend_visitor_period: v.extend_visitor_period ?? 0,
       visitor_number: v.visitor_number ?? '-',
-      email: v.visitor?.email ?? '-',
-      phone: v.visitor?.phone ?? '-',
-      gender: v.visitor?.gender ?? '-',
-      address: v.visitor?.address ?? '-',
+      email: v.visitor_email ?? '-',
+      phone: v.visitor_phone ?? '-',
+      gender: v.visitor_gender ?? '-',
+      address: v.visitor_address ?? '-',
+      invitation_code: v.invitation_code ?? '-',
       visitor_status: v.visitor_status ?? '-',
+      visitor_identity_id: v.visitor_identity_id ?? '-',
+      visitor_code: v.visitor_code ?? '-',
+      vehicle_plate_number: v.vehicle_plate_number ?? '-',
+      vehicle_type: v.vehicle_type ?? '-',
+      group_code: v.visitor_group_code ?? '-',
+      group_name: v.group_name ?? '-',
       // card: (v.card ?? []).map((c: any) => c.card_number),
       card: v.card ?? [],
       host_name: v.host_name ?? '-',
@@ -2753,11 +2760,6 @@ const Content = () => {
           width: '100%',
         }}
       >
-        {/* {showLabel && (!isVehicleField || isDriving) && ( */}
-        {/* <CustomFormLabel sx={{ mb: 1 }} required={field.mandatory}>
-            {field.long_display_text}
-          </CustomFormLabel> */}
-        {/* )} */}
         {renderInput()}
       </Box>
     );
@@ -2998,7 +3000,7 @@ const Content = () => {
       });
 
       const payload = { list_group: dataList };
-      console.log('✅ Final Payload (MULTI-VISITOR FIXED):', JSON.stringify(payload, null, 2));
+      console.log('Final Payload (MULTI-VISITOR FIXED):', JSON.stringify(payload, null, 2));
       const result = await createSubmitCompletePraMultiple(token as string, payload);
       showSwal('success', 'Successfully Pra Register!');
       setRelatedVisitors((prev) =>
@@ -3023,8 +3025,6 @@ const Content = () => {
       // setSelectedVisitors([]);
       // setSelectMultiple(false);
     } catch (error) {
-      console.error('❌ Submit error:', error);
-      // toast('Submit gagal', 'error');
       showSwal('error', 'Failed Submit Pra Register!');
     } finally {
       setTimeout(() => {
@@ -3040,41 +3040,6 @@ const Content = () => {
     setOpenDialogInvitation(true);
   };
 
-  // cmd
-  // useEffect(() => {
-  //   if (!selectedVisitors.length) {
-  //     setAccessData([]);
-  //     return;
-  //   }
-
-  //   const filtered = allAccessData.filter((a) =>
-  //     selectedVisitors.some((id) => id.toLowerCase() === a.trx_visitor_id?.toLowerCase()),
-  //   );
-
-  //   const mergedAccess = Object.values(
-  //     filtered.reduce((acc: any, curr: any) => {
-  //       const key = curr.access_control_id;
-  //       if (!acc[key]) {
-  //         acc[key] = {
-  //           ...curr,
-  //           visitors: [curr.trx_visitor_id],
-  //         };
-  //       } else {
-  //         acc[key].visitors.push(curr.trx_visitor_id);
-
-  //         acc[key].visitor_give_access = Math.max(
-  //           acc[key].visitor_give_access ?? 0,
-  //           curr.visitor_give_access ?? 0,
-  //         );
-
-  //         acc[key].early_access = acc[key].early_access || curr.early_access;
-  //       }
-  //       return acc;
-  //     }, {}),
-  //   );
-
-  //   setAccessData(mergedAccess);
-  // }, [selectedVisitors]);
 
   const validateMultiVisitorAccess = (
     accessId: string,
@@ -3207,8 +3172,6 @@ const Content = () => {
           )
           .map((a) => a.trx_visitor_id?.toLowerCase());
 
-        console.log(targetVisitors);
-
         const { validVisitors, invalidVisitors, message } = validateMultiVisitorAccess(
           accessControlId,
           targetVisitors,
@@ -3275,8 +3238,7 @@ const Content = () => {
           err?.response?.data?.msg ||
           err?.response?.data?.message ||
           err?.response?.data?.error ||
-          err?.message ||
-          'Unknown error occurred.';
+          err?.message || 'Failed to execute action.';
 
         showSwal('error', backendMsg);
         resolve();
@@ -3357,7 +3319,6 @@ const Content = () => {
     }
   };
 
-  // Function Return Card
   const handleSubmitReturnCard = async () => {
     try {
       if (!returnCardNumber.trim()) {
@@ -3561,6 +3522,7 @@ const Content = () => {
                     <CardContent sx={{ boxShadow: 'none', p: 0 }}>
                       <VisitorDetailTabs
                         invitationCode={invitationCode}
+                        activeVisitor={activeVisitor}
                         handleChooseCard={handleChooseCard}
                       />
                     </CardContent>
@@ -3916,7 +3878,7 @@ const Content = () => {
                             >
                               <Box display="flex" alignItems="center" gap={2}>
                                 <Avatar
-                                  src={activeSelfie || undefined}
+                                  src={getCdnUrl(visitor.selfie_image) || undefined}
                                   alt={visitor.name}
                                   sx={{ width: 45, height: 45 }}
                                 />

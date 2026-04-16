@@ -36,9 +36,6 @@ const IntegrationDetail = () => {
         //   signal: ac.signal,
         // });
         // const json = await res.json();
-
-        // ✅ ambil yang benar: collection
-        console.log('json', json);
         setIntegration(json.collection ?? null);
         console.log('Integration:', json.collection);
       } catch (e: any) {
@@ -58,7 +55,7 @@ const IntegrationDetail = () => {
   const brand = String(integration.brand_name || '').toLowerCase();
   const brandType = String(integration.brand_type || '');
   const fullName = String(integration.name || '').toLowerCase();
-  const name = fullName.split(' - ')[0].trim(); // ambil sebelum " - "
+  const name = fullName.split(' - ')[0].trim(); 
 
   switch (true) {
     case brand === 'honeywell' && brandType === 'CameraAnalytics':
@@ -73,7 +70,7 @@ const IntegrationDetail = () => {
     case brand === 'bio experience' && name === 'bio parking system':
       return <BioPeopleParking id={integration.id} />;
     default:
-      return <div>Integration “{integration.brand_name}” belum didukung.</div>;
+      return <div></div>;
   }
 };
 

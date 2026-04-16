@@ -16,10 +16,6 @@ import {
   TableCell,
   Typography,
   TableContainer,
-  FormControl,
-  Paper,
-  FormControlLabel,
-  Card,
   Divider,
   Grid2 as Grid,
   IconButton,
@@ -43,7 +39,6 @@ import {
   Item,
 } from 'src/customs/api/models/Admin/VisitorCard';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { useRef } from 'react';
 import {
   getAllVisitorCardPagination,
   deleteVisitorCard,
@@ -65,7 +60,6 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import axiosInstance from 'src/customs/api/interceptor';
-import { useDebounce } from 'src/hooks/useDebounce';
 
 type EnableField = {
   employee_id: boolean;
@@ -338,7 +332,6 @@ const Content = () => {
 
     const confirmed = await showConfirmDelete(
       `Are you sure to delete ${rows.length} items?`,
-      "You won't be able to revert this!",
     );
 
     if (confirmed) {
@@ -346,7 +339,6 @@ const Content = () => {
       try {
         await Promise.all(rows.map((row) => deleteVisitorCard(token as string, row.id)));
 
-        // Kosongkan selected dan checkbox setelah delete berhasil
         setSelectedRows([]);
         setCheckedIds([]);
 
@@ -376,7 +368,6 @@ const Content = () => {
     setEdittingId(rows[0].id);
     setIsBatchEdit(true);
 
-    // 🔑 RESET enabledFields (INI KUNCI)
     setEnabledFields({
       employee_id: false,
       registered_site: false,
@@ -478,7 +469,6 @@ const Content = () => {
     _e?: object,
     reason?: 'backdropClick' | 'escapeKeyDown' | 'closeButton',
   ) => {
-    // Kalau user menutup via klik backdrop / ESC dan form sudah berubah → tampilkan konfirmasi
     if (
       isFormChanged &&
       (reason === 'backdropClick' || reason === 'escapeKeyDown' || reason === 'closeButton')
@@ -516,11 +506,9 @@ const Content = () => {
       <Container title="Card" description="this is Dashboard page">
         <Box>
           <Grid container spacing={3}>
-            {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
               <TopCard items={cards} size={{ xs: 12, lg: 2.4 }} />
             </Grid>
-            {/* column */}
             <Grid size={{ xs: 12, lg: 12 }}>
               <DynamicTable
                 loading={loading}

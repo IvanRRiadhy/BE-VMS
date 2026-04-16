@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Box,
   Button,
@@ -10,6 +10,7 @@ import {
   Skeleton,
   Grid2 as Grid,
   IconButton,
+  DialogActions,
 } from '@mui/material';
 import Container from 'src/components/container/PageContainer';
 import PageContainer from 'src/customs/components/container/PageContainer';
@@ -41,12 +42,7 @@ import { useTheme } from '@mui/material/styles';
 import FormIntegration from './FormIntegration';
 import { IconWorldCog } from '@tabler/icons-react';
 
-import {
-  showConfirmDelete,
-  showErrorAlert,
-  showSuccessAlert,
-  showSwal,
-} from 'src/customs/components/alerts/alerts';
+import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 
 type IntegrationTableRow = {
   id: string;
@@ -83,6 +79,9 @@ const Content = () => {
   const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const [searchInput, setSearchInput] = useState('');
+  const [searchKeyword, setSearchKeyword] = useState('');
 
   function formatEnumLabel(label: unknown) {
     if (label === null || label === undefined) return '';
@@ -121,6 +120,9 @@ const Content = () => {
         const availables = (availableResponse.collection ?? []).map((item) => ({
           ...item,
           brand_type: normalizeBrandType(item.brand_type),
+          // integration_type: normalizeBrandType(item.integration_type),
+          // integration_type: IntegrationTypeMap[item.integration_type],
+          api_type_auth: normalizeBrandType(item.api_type_auth),
         }));
 
         setAvailableIntegration(availables);
@@ -136,19 +138,15 @@ const Content = () => {
           name: item.name,
           brand_name: item.brand_name,
           brand_type: item.brand_type,
-          integration_type: formatEnumLabel(IntegrationType[item.integration_type]),
-          api_type_auth: formatEnumLabel(ApiTypeAuth[item.api_type_auth]),
+          // integration_type: formatEnumLabel(IntegrationType[item.integration_type]),
+          // api_type_auth: formatEnumLabel(ApiTypeAuth[item.api_type_auth]),
+          integration_type: item.integration_type,
+          api_type_auth: item.api_type_auth,
           api_url: item.api_url || '',
         }));
 
         setTableData(rows);
       } catch (error) {
-        if (!cancelled) {
-          setIntegrationData([]);
-          setAvailableIntegration([]);
-          setTableData([]);
-          setTotalRecords(0);
-        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -158,7 +156,27 @@ const Content = () => {
     return () => {
       cancelled = true;
     };
-  }, [token, page, rowsPerPage, refreshTrigger]);
+  }, [token, page, rowsPerPage, searchKeyword, refreshTrigger]);
+
+  const filteredData = useMemo(() => {
+    if (!searchKeyword) return tableData;
+
+    const keyword = searchKeyword.toLowerCase();
+
+    return tableData.filter((item) =>
+      [
+        item.name,
+        item.brand_name,
+        item.brand_type,
+        item.integration_type,
+        item.api_type_auth,
+        item.api_url,
+      ]
+        .join(' ')
+        .toLowerCase()
+        .includes(keyword),
+    );
+  }, [tableData, searchKeyword]);
 
   const [formDataAddIntegration, setFormDataAddIntegration] = useState<any>(() => {
     const saved = localStorage.getItem('unsavedIntegrationData');
@@ -176,7 +194,11 @@ const Content = () => {
   });
 
   useEffect(() => {
-    localStorage.setItem('unsavedIntegrationData', JSON.stringify(formDataAddIntegration));
+    const timeout = setTimeout(() => {
+      localStorage.setItem('unsavedIntegrationData', JSON.stringify(formDataAddIntegration));
+    }, 500);
+
+    return () => clearTimeout(timeout);
   }, [formDataAddIntegration]);
 
   const cards = [
@@ -211,6 +233,11 @@ const Content = () => {
   }
 
   const [openFormAddIntegration, setOpenFormAddIntegration] = useState(false);
+  const IntegrationTypeMap: Record<string, IntegrationType> = {
+    SDK: IntegrationType.SDK,
+    API: IntegrationType.API,
+    INTERNALMODULE: IntegrationType.InternalModule,
+  };
 
   const handleOpenDialog = () => {
     setOpenFormAddIntegration(true);
@@ -222,8 +249,11 @@ const Content = () => {
       name: chosenIntegration.name,
       brand_name: chosenIntegration.brand_name,
       brand_type: chosenIntegration.brand_type,
-      integration_type: chosenIntegration.integration_type,
-      api_type_auth: chosenIntegration.api_type_auth,
+      // integration_type: chosenIntegration.integration_type,
+      // api_type_auth: chosenIntegration.api_type_auth,
+      // integration_type: Number(chosenIntegration.integration_type),
+      integration_type: IntegrationTypeMap[chosenIntegration.integration_type],
+      api_type_auth: Number(chosenIntegration.api_type_auth),
       integration_list_id: chosenIntegration.id,
       api_url: '',
       api_auth_username: '',
@@ -281,16 +311,24 @@ const Content = () => {
       try {
         await Promise.all(rows.map((row) => deleteIntegration(row.id, token)));
         setRefreshTrigger((prev) => prev + 1);
-        showSuccessAlert('Deleted!', `${rows.length} items have been deleted.`);
+        showSwal('success', `${rows.length} items have been deleted.`);
         setSelectedRows([]);
       } catch (error) {
-        console.error(error);
-        showErrorAlert('Error!', 'Failed to delete some items.');
+        showSwal('error', 'Failed to delete some items.');
       } finally {
         setLoading(false);
       }
     }
   };
+
+  const handleSearchKeywordChange = useCallback((keyword: string) => {
+    setSearchInput(keyword);
+  }, []);
+
+  const handleSearch = useCallback(() => {
+    setPage(0);
+    setSearchKeyword(searchInput);
+  }, [searchInput]);
 
   return (
     <PageContainer
@@ -315,7 +353,7 @@ const Content = () => {
                   setRowsPerPage(rowsPerPage);
                 }}
                 overflowX={'auto'}
-                data={tableData}
+                data={filteredData}
                 selectedRows={selectedRows}
                 isHaveChecked={true}
                 isHaveAction={true}
@@ -346,8 +384,11 @@ const Content = () => {
                 onDelete={(row) => {
                   handleDelete(row.id);
                 }}
-                onSearchKeywordChange={(keyword) => console.log('Search keyword:', keyword)}
-                onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
+                searchKeyword={searchInput}
+                onSearch={handleSearch}
+                onSearchKeywordChange={handleSearchKeywordChange}
+                // onSearchKeywordChange={(keyword) => console.log('Search keyword:', keyword)}
+                // onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
                 // onAddData={() => {
                 //   handleAdd();
                 // }}
@@ -361,26 +402,39 @@ const Content = () => {
                       border: '1px solid #ccc',
                       borderRadius: 2,
                       padding: 2,
-                      marginBottom: 2,
+                      marginBottom: 0,
                       // backgroundColor: brandTypeBgColorMap[integration.brand_type] || '#fff',
                       backgroundColor: 'primary.light',
                     }}
                   >
                     <Box component="h3">{integration.name}</Box>
-                    <Box component="h5" sx={{ color: 'gray', mt: -1.5 }}>
+                    <Box component="h5" sx={{ color: 'gray', mt: 0, mb: 2 }}>
                       {integration.brand_name}
                     </Box>
                     <Divider />
-                    <Box sx={{ display: 'flex', gap: 4, flexWrap: 'wrap', mt: 1 }}>
-                      <Box fontSize={12} sx={{ mt: 1 }}>
+                    {/* <br /> */}
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        gap: 2,
+                        flexWrap: 'wrap',
+                        mt: 1,
+                        alignItems: 'center',
+                      }}
+                    >
+                      <Box fontSize={12} sx={{ mt: 0 }}>
                         <strong>Brand Type:</strong> {BrandType[integration.brand_type]}
                       </Box>
-                      <Box fontSize={12} sx={{ mt: -2 }}>
-                        <strong>Integration Type:</strong>{' '}
-                        {IntegrationType[integration.integration_type]}
+                      <Box fontSize={12} sx={{ mt: 0, textAlign: 'left' }}>
+                        <strong>Integration Type:</strong>
+                        {/* {IntegrationType[integration.integration_type]} */}
+
+                        {integration.integration_type}
                       </Box>
-                      <Box fontSize={12} sx={{ mt: -2 }}>
-                        <strong>API Auth Type:</strong> {ApiTypeAuth[integration.api_type_auth]}
+                      <Box fontSize={12} sx={{ mt: 0 }}>
+                        <strong>API Auth Type:</strong>
+                        {/* {ApiTypeAuth[integration.api_type_auth]} */}
+                        {integration.api_type_auth}
                       </Box>
                     </Box>
                     <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>

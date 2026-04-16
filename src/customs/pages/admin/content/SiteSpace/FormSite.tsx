@@ -653,7 +653,7 @@ const FormSite = ({
     switch (section) {
       case 'parking':
         newItem = {
-          id: uuidv4(),
+          id: '',
           sort: localForm.parking?.length ?? 0,
           site_id: '',
           name: '',
@@ -664,7 +664,7 @@ const FormSite = ({
 
       case 'tracking':
         newItem = {
-          id: uuidv4(),
+          id: '',
           sort: localForm.tracking?.length ?? 0,
           trk_ble_card_access_id: '',
           site_id: '',

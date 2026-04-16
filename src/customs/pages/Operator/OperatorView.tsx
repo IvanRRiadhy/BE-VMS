@@ -355,10 +355,10 @@ const OperatorView = () => {
         is_swapcard: true,
       };
 
-      // console.log('SWAP PAYLOAD', payload);
+      console.log('SWAP PAYLOAD', payload);
 
       if (!hasSwappedCard) {
-        // console.log('FIRST SWIPE', payload);
+        console.log('FIRST SWIPE', payload);
         await createGrandAccessOperator(token as string, payload);
         showSwal('success', 'Card swaped successfully!');
         setOpenChooseCardDialog(false);
@@ -2348,15 +2348,15 @@ const OperatorView = () => {
         case 5: // Radio
           if (field.remarks === 'gender') {
             const options = [
-              { value: '1', name: 'Male' },
               { value: '0', name: 'Female' },
+              { value: '1', name: 'Male' },
               { value: '2', name: 'Prefer not to say' },
             ];
 
             const value = field.answer_text != null ? String(field.answer_text) : '';
 
             return (
-              <TextField
+              <CustomTextField
                 select
                 size="small"
                 fullWidth
@@ -2379,7 +2379,7 @@ const OperatorView = () => {
                     {opt.name}
                   </MenuItem>
                 ))}
-              </TextField>
+              </CustomTextField>
             );
           }
           if (field.remarks === 'vehicle_type') {
@@ -2566,7 +2566,6 @@ const OperatorView = () => {
                 type="file"
                 accept="*"
                 hidden
-                // onChange={handlePDFUploadFor(index, onChange)
                 onChange={(e) =>
                   handleFileChangeForField(
                     e as React.ChangeEvent<HTMLInputElement>,
@@ -3227,8 +3226,7 @@ const OperatorView = () => {
           err?.response?.data?.msg ||
           err?.response?.data?.message ||
           err?.response?.data?.error ||
-          err?.message ||
-          'Unknown error occurred.';
+          err?.message || 'Failed to execute action.';
 
         showSwal('error', backendMsg);
         resolve();
@@ -3316,7 +3314,6 @@ const OperatorView = () => {
       setReturnCardNumber('');
       // await fetchAvailableCards?.();
     } catch (error: any) {
-      console.error(error);
       showSwal('error', error.message || 'Failed to return card');
     } finally {
       setLoadingAccess(false);
@@ -3369,7 +3366,6 @@ const OperatorView = () => {
             overflow: 'visible',
           }}
         >
-          {/* RIGHT CONTENT */}
           <Box
             flexGrow={1}
             sx={{

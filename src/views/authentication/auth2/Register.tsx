@@ -204,21 +204,19 @@ const Register = () => {
         <PageContainer title="Register | Bank Indonesia" description="this is Login page">
           <Box
             sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              minHeight: '100vh',
               position: 'relative',
-              '&:before': {
-                content: '""',
-                background: 'radial-gradient(#d2f1df, #d3d7fa, #bad8f4)',
-                backgroundSize: '400% 400%',
-                animation: 'gradient 15s ease infinite',
-                position: 'absolute',
-                height: '100%',
-                width: '100%',
-                opacity: '0.3',
-              },
             }}
           >
-            <Grid container spacing={1} justifyContent="center" sx={{ height: '100vh' }}>
-              {/* <Grid
+            <Box
+              sx={{
+                flexGrow: 1,
+              }}
+            >
+              <Grid container spacing={1} justifyContent="center">
+                {/* <Grid
                 size={{ xs: 12, sm: 12, lg: 6 }}
                 // display="flex"
                 // justifyContent="end"
@@ -264,170 +262,174 @@ const Register = () => {
                   </Typography>
                 </Card>
               </Grid> */}
-              <Grid
-                size={{ xs: 12, sm: 12 }}
-                sx={{
-                  display: { xs: 'flex', sm: 'flex', lg: 'flex' },
-                  justifyContent: { xs: 'center', sm: 'center', lg: 'center' },
-                  alignItems: 'center',
-                }}
-              >
-                <Card
-                  elevation={10}
+                <Grid
+                  size={{ xs: 12, sm: 12 }}
                   sx={{
-                    p: 4,
-                    zIndex: 1,
-                    width: '100%',
-                    // height: '70%',
-                    maxWidth: '700px',
-                    borderLeft: '0 !important',
-                    borderRadius: 2,
-                    // borderLeftRadius: 10,
-                    overflow: 'auto',
+                    display: { xs: 'flex', sm: 'flex', lg: 'flex' },
+                    justifyContent: { xs: 'center', sm: 'center', lg: 'center' },
+                    alignItems: 'center',
                   }}
                 >
-                  <Box
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
-                    mb={0}
-                    flexDirection={'column'}
+                  <Card
+                    elevation={10}
+                    sx={{
+                      p: 4,
+                      zIndex: 1,
+                      width: '100%',
+                      // height: '70%',
+                      height: '100%',
+                      maxWidth: '700px',
+                      borderLeft: '0 !important',
+                      borderRadius: 2,
+                      // borderLeftRadius: 10,
+                      overflow: 'auto',
+                    }}
                   >
-                    <img src={Logo} width={250} height={80} />
-                  </Box>
-                  <Divider sx={{ my: 1 }} />
-                  <Typography variant="h4" textAlign={'center'} mb={1}>
-                    Register
-                  </Typography>
-                  <Grid container spacing={2} mb={0}>
-                    <Grid size={{ xs: 12 }}>
-                      <CustomFormLabel sx={{ marginTop: 0 }} required>
-                        Fullname
-                      </CustomFormLabel>
-
-                      <CustomTextField
-                        id="guest-id"
-                        variant="outlined"
-                        fullWidth
-                        size="medium"
-                        sx={{ marginTop: '10px' }}
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12 }}>
-                      <CustomFormLabel sx={{ marginTop: 0 }} required>
-                        Email
-                      </CustomFormLabel>
-
-                      <CustomTextField
-                        id="email"
-                        type="email"
-                        variant="outlined"
-                        fullWidth
-                        size="medium"
-                        sx={{ marginTop: '10px' }}
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12 }}>
-                      <CustomFormLabel sx={{ marginTop: 0 }} required>
-                        Password
-                      </CustomFormLabel>
-
-                      <CustomTextField
-                        id="password"
-                        type={showPassword ? 'text' : 'password'}
-                        variant="outlined"
-                        fullWidth
-                        value={password}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          setPassword(e.target.value)
-                        }
-                        InputProps={{
-                          endAdornment: (
-                            <InputAdornment position="end">
-                              <IconButton
-                                onClick={() => setShowPassword((prev) => !prev)}
-                                edge="end"
-                              >
-                                {showPassword ? <IconEyeOff size={20} /> : <IconEye size={20} />}
-                              </IconButton>
-                            </InputAdornment>
-                          ),
-                        }}
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12 }}>
-                      <CustomFormLabel sx={{ marginTop: 0 }} required>
-                        Invitation Code
-                      </CustomFormLabel>
-
-                      <CustomTextField
-                        id="email"
-                        type="email"
-                        variant="outlined"
-                        fullWidth
-                        size="medium"
-                        sx={{ marginTop: '10px' }}
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12 }}>
-                      <CustomFormLabel sx={{ marginTop: 0 }}>Phone</CustomFormLabel>
-
-                      <CustomTextField
-                        id="guest-id"
-                        variant="outlined"
-                        fullWidth
-                        size="medium"
-                        sx={{ marginTop: '10px' }}
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12 }}>
-                      <CustomFormLabel sx={{ marginTop: 0 }}>Gender</CustomFormLabel>
-
-                      <RadioGroup row>
-                        <FormControlLabel value="female" control={<Radio />} label="Female" />
-
-                        <FormControlLabel value="male" control={<Radio />} label="Male" />
-                      </RadioGroup>
-                    </Grid>
-                    <Box sx={{ width: '100%' }}>
-                      {showCaptcha && (
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            justifyContent: 'center',
-                            mt: 1,
-                            alignItems: 'center',
-                            width: '100%',
-                          }}
-                        >
-                          <ReCAPTCHA
-                            ref={recaptchaRef}
-                            sitekey={'6Lew4dsrAAAAACvlJCqJjIfjmwzD0tTJxZVFIwWw'}
-                            //   onChange={onCaptchaChange}
-                          />
-                        </Box>
-                      )}
-                      {captchaError && (
-                        <Typography variant="body2" color="error" textAlign="center">
-                          Silakan centang captcha sebelum melanjutkan.
-                        </Typography>
-                      )}
-                    </Box>
-                    <Button
-                      variant="contained"
-                      fullWidth
-                      onClick={() => {
-                        navigate('/auth/login');
-                      }}
+                    <Box
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
+                      mb={0}
+                      flexDirection={'column'}
                     >
-                      Submit
-                    </Button>
-                  </Grid>
-                </Card>
+                      <img src={Logo} width={250} height={80} />
+                    </Box>
+                    <Divider sx={{ my: 1 }} />
+                    <Typography variant="h4" textAlign={'center'} mb={1}>
+                      Register
+                    </Typography>
+                    <Grid container spacing={2} mb={0}>
+                      <Grid size={{ xs: 12 }}>
+                        <CustomFormLabel sx={{ marginTop: 0 }} required>
+                          Fullname
+                        </CustomFormLabel>
+
+                        <CustomTextField
+                          id="guest-id"
+                          variant="outlined"
+                          fullWidth
+                          size="medium"
+                          sx={{ marginTop: '10px' }}
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12 }}>
+                        <CustomFormLabel sx={{ marginTop: 0 }} required>
+                          Email
+                        </CustomFormLabel>
+
+                        <CustomTextField
+                          id="email"
+                          type="email"
+                          variant="outlined"
+                          fullWidth
+                          size="medium"
+                          sx={{ marginTop: '10px' }}
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12 }}>
+                        <CustomFormLabel sx={{ marginTop: 0 }} required>
+                          Password
+                        </CustomFormLabel>
+
+                        <CustomTextField
+                          id="password"
+                          type={showPassword ? 'text' : 'password'}
+                          variant="outlined"
+                          fullWidth
+                          value={password}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            setPassword(e.target.value)
+                          }
+                          InputProps={{
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <IconButton
+                                  onClick={() => setShowPassword((prev) => !prev)}
+                                  edge="end"
+                                >
+                                  {showPassword ? <IconEyeOff size={20} /> : <IconEye size={20} />}
+                                </IconButton>
+                              </InputAdornment>
+                            ),
+                          }}
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12 }}>
+                        <CustomFormLabel sx={{ marginTop: 0 }} required>
+                          Invitation Code
+                        </CustomFormLabel>
+
+                        <CustomTextField
+                          id="email"
+                          type="email"
+                          variant="outlined"
+                          fullWidth
+                          size="medium"
+                          sx={{ marginTop: '10px' }}
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12 }}>
+                        <CustomFormLabel sx={{ marginTop: 0 }}>Phone</CustomFormLabel>
+
+                        <CustomTextField
+                          id="guest-id"
+                          variant="outlined"
+                          fullWidth
+                          size="medium"
+                          sx={{ marginTop: '10px' }}
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12 }}>
+                        <CustomFormLabel sx={{ marginTop: 0 }}>Gender</CustomFormLabel>
+
+                        <RadioGroup row>
+                          <FormControlLabel value="female" control={<Radio />} label="Female" />
+
+                          <FormControlLabel value="male" control={<Radio />} label="Male" />
+                        </RadioGroup>
+                      </Grid>
+                      <Box sx={{ width: '100%' }}>
+                        {showCaptcha && (
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              justifyContent: 'center',
+                              mt: 1,
+                              alignItems: 'center',
+                              width: '100%',
+                            }}
+                          >
+                            <ReCAPTCHA
+                              ref={recaptchaRef}
+                              sitekey={'6Lew4dsrAAAAACvlJCqJjIfjmwzD0tTJxZVFIwWw'}
+                              //   onChange={onCaptchaChange}
+                            />
+                          </Box>
+                        )}
+                        {captchaError && (
+                          <Typography variant="body2" color="error" textAlign="center">
+                            Silakan centang captcha sebelum melanjutkan.
+                          </Typography>
+                        )}
+                      </Box>
+                      <Button
+                        variant="contained"
+                        fullWidth
+                        onClick={() => {
+                          navigate('/auth/login');
+                        }}
+                      >
+                        Submit
+                      </Button>
+                    </Grid>
+                  </Card>
+                </Grid>
               </Grid>
-            </Grid>
+            </Box>
+            <Box sx={{ mt: '10px' }}>
+              <Footer />
+            </Box>
           </Box>
-          <Footer />
           <Snackbar
             open={snackbarOpen}
             autoHideDuration={3000}

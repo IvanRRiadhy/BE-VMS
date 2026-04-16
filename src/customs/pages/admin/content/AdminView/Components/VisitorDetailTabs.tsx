@@ -18,17 +18,24 @@ import {
   IconUserCheck,
   IconCalendarTime,
   IconMapPin,
+  IconIdBadge2,
 } from '@tabler/icons-react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import moment from 'moment-timezone';
 interface Props {
   invitationCode: any[];
   handleChooseCard: () => void;
+  activeVisitor: any;
 }
 
-const VisitorDetailTabs: React.FC<Props> = ({ invitationCode, handleChooseCard }) => {
+const VisitorDetailTabs: React.FC<Props> = ({
+  invitationCode,
+  handleChooseCard,
+  activeVisitor,
+}) => {
   const [tabValue, setTabValue] = useState(0);
-  const data = invitationCode?.[0];
+  // const data = invitationCode?.[0];
+  const data = activeVisitor;
 
   const formatDateTime = (dateStr?: string, extendMinutes?: number) => {
     if (!dateStr) return '-';
@@ -58,6 +65,7 @@ const VisitorDetailTabs: React.FC<Props> = ({ invitationCode, handleChooseCard }
     Approve: '#21c45d',
     Pracheckin: '#21c45d',
     Preregis: '#a5a5a5ff',
+    Waiting: '#4abfd4',
   };
 
   return (
@@ -86,7 +94,7 @@ const VisitorDetailTabs: React.FC<Props> = ({ invitationCode, handleChooseCard }
                       whiteSpace: 'normal',
                     }}
                   >
-                    {invitationCode[0]?.visitor?.email || '-'}
+                    {data?.email || '-'}
                   </Typography>
                 </Box>
               </Box>
@@ -98,7 +106,7 @@ const VisitorDetailTabs: React.FC<Props> = ({ invitationCode, handleChooseCard }
                 <IconPhone />
                 <Box>
                   <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Phone</CustomFormLabel>
-                  <Typography>{data?.visitor_phone || '-'}</Typography>
+                  <Typography>{data?.phone || '-'}</Typography>
                 </Box>
               </Box>
             </Grid>
@@ -119,7 +127,7 @@ const VisitorDetailTabs: React.FC<Props> = ({ invitationCode, handleChooseCard }
                 <IconGenderMale />
                 <Box>
                   <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Gender</CustomFormLabel>
-                  <Typography>{data?.visitor?.gender || '-'}</Typography>
+                  <Typography>{data?.gender || '-'}</Typography>
                 </Box>
               </Box>
             </Grid>
@@ -139,7 +147,7 @@ const VisitorDetailTabs: React.FC<Props> = ({ invitationCode, handleChooseCard }
                 <IconBuildingSkyscraper />
                 <Box>
                   <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Organization</CustomFormLabel>
-                  <Typography>{data?.visitor_organization_name || '-'}</Typography>
+                  <Typography>{data?.organization || '-'}</Typography>
                 </Box>
               </Box>
             </Grid>
@@ -188,15 +196,15 @@ const VisitorDetailTabs: React.FC<Props> = ({ invitationCode, handleChooseCard }
                               <Box>
                                 {!invitationCode || invitationCode.length === 0 ? (
                                   <></>
-                                ) : invitationCode[0]?.card && invitationCode[0].card.length > 0 ? (
-                                  invitationCode[0].card[0]?.card_number?.trim() ? (
+                                ) : data?.card && data.card.length > 0 ? (
+                                  data.card[0]?.card_number?.trim() ? (
                                     <Box>
                                       <Typography sx={{ fontWeight: 600 }}>
-                                        {invitationCode[0].card[0].card_number}
+                                        {data.card[0].card_number}
                                       </Typography> */}
 
-                  {/* {invitationCode[0]?.tracking_ble?.length > 0 &&
-                                      invitationCode[0].tracking_ble[0]?.visitor_give_access ===
+                  {/* {data?.tracking_ble?.length > 0 &&
+                                      data.tracking_ble[0]?.visitor_give_access ===
                                         0 && (
                                         <Button
                                           sx={{ mt: 1 }}
@@ -211,7 +219,7 @@ const VisitorDetailTabs: React.FC<Props> = ({ invitationCode, handleChooseCard }
                                   ) : (
                                     <></>
                                   )
-                                ) : invitationCode[0]?.visitor_status === 'Checkin' ? (
+                                ) : data?.visitor_status === 'Checkin' ? (
                                   <Button
                                     variant="contained"
                                     color="primary"
@@ -259,7 +267,7 @@ const VisitorDetailTabs: React.FC<Props> = ({ invitationCode, handleChooseCard }
             </Grid>
             <Grid size={{ xs: 6, md: 6 }}>
               <Box display="flex" gap={2}>
-                <IconUsersGroup />
+                <IconIdBadge2 />
                 <Box>
                   <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Identity ID</CustomFormLabel>
                   <Typography>{data?.visitor_identity_id || '-'}</Typography>

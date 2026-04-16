@@ -1,23 +1,16 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Button,
   Grid2 as Grid,
   Typography,
-  Card,
-  CardContent,
   Divider,
   TextField,
-  InputAdornment,
   IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
   Checkbox,
-  CircularProgress,
   FormControlLabel,
-  Paper,
   MenuItem,
-  DialogActions,
   AlertColor,
   Autocomplete,
   FormControl,
@@ -27,7 +20,7 @@ import {
   Snackbar,
   Alert,
 } from '@mui/material';
-import { Box, Stack, useMediaQuery, useTheme } from '@mui/system';
+import { Box, useTheme } from '@mui/system';
 import moment from 'moment-timezone';
 import infoPic from 'src/assets/images/backgrounds/info_pic.png';
 import { IconX } from '@tabler/icons-react';
@@ -61,7 +54,7 @@ import {
   FormVisitor,
 } from 'src/customs/api/models/Admin/Visitor';
 import { DateTimePicker, LocalizationProvider, renderTimeViewClock } from '@mui/x-date-pickers';
-import dayjs, { Dayjs, tz } from 'dayjs';
+import dayjs from 'dayjs';
 import weekday from 'dayjs/plugin/weekday';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
@@ -74,7 +67,6 @@ import FormWizardAddVisitor from './Invitation/FormWizardAddVisitor';
 import FormWizardAddInvitation from './Invitation/FormWizardAddInvitation';
 import ScanQrVisitorDialog from './Dialog/ScanQrVisitorDialog';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import VisitingPurposeDialog from './Dialog/VisitingPurposeDialog';
 import InfoDialog from './Dialog/InfoDialog';
 import ExtendVisitDialog from './Dialog/ExtendVisitDialog';
 import BlacklistVisitorDialog from './Dialog/BlacklistVisitorDialog';
