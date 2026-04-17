@@ -63,7 +63,7 @@ import jsPDF from 'jspdf';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import AccessPassDialog from '../Components/Dialog/AccessPassDialog';
+import AccessPassDialog from 'src/customs/pages/Guest/Components/Dialog/AccessPassDialog';
 
 const Dashboard = () => {
   const { token } = useSession();
