@@ -115,9 +115,9 @@ const Login = () => {
           navigate('/operator/view');
           break;
 
-        case 'Visitor':
-          navigate('/guest/dashboard');
-          break;
+        // case 'Visitor':
+        //   navigate('/guest/dashboard');
+        //   break;
 
         case 'OperatorAdmin':
           navigate('/operator-admin/dashboard');
@@ -134,6 +134,10 @@ const Login = () => {
         case 'Employee':
           if (type == 0) navigate('/delivery-staff/dashboard');
           else navigate('/employee/dashboard');
+          break;
+
+        default:
+          navigate('/guest/dashboard');
           break;
       }
 
@@ -193,10 +197,11 @@ const Login = () => {
       const code = searchParams.get('code') || guestCode;
 
       const res = await AuthVisitor({ code });
-      console.log('✅ AuthVisitor success:', JSON.stringify(res || {}, null, 2));
+      // console.log('✅ AuthVisitor success:', JSON.stringify(res || {}, null, 2));
 
       const status = res.status;
-      console.log('status', status);
+      const token = res.collection.token;
+      // console.log('status', status);
 
       localStorage.setItem('visitor_ref_code', guestCode);
       setLoading(false);
@@ -220,10 +225,11 @@ const Login = () => {
           },
         });
         return;
-      } else if (res.collection.token) {
-        saveToken(res.collection.token, GroupRoleId.Visitor.toLowerCase());
-        navigate('/guest/dashboard');
+      }
+      if (token) {
+        saveToken(token, GroupRoleId.Visitor.toLowerCase(), 'Visitor');
         localStorage.removeItem('visitor_ref_code');
+        navigate('/guest/dashboard');
         return;
       }
     } catch (err) {
@@ -540,7 +546,7 @@ const Login = () => {
                     {/* Guest Form */}
                     {tab === 1 && (
                       <form onSubmit={guestSubmit}>
-                        <Typography variant="h6" mb={1} textAlign="center">
+                        <Typography variant="h6" mb={1} textAlign="center" mt={1}>
                           Guest/Visitor Code
                         </Typography>
                         <Typography variant="body1" textAlign="center" color="text.secondary">

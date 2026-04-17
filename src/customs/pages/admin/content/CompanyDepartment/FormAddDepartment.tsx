@@ -124,19 +124,16 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
     setLoading(true);
     try {
       if (!token) return;
-      // ✅ CREATE
       if (mode === 'create') {
         await createDepartment(form, token);
         showSwal('success', 'Department successfully created!');
       }
 
-      // ✅ EDIT
       if (mode === 'edit' && data) {
         await updateDepartment(data.id, form, token);
         showSwal('success', 'Department successfully updated!');
       }
 
-      // ✅ BATCH
       if (mode === 'batch' && selectedRows.length > 0) {
         await Promise.all(
           selectedRows.map((item) => {

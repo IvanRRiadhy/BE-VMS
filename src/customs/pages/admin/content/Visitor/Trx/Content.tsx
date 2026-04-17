@@ -779,7 +779,6 @@ const Content = () => {
       setOpenCreateLink(false);
       showSwal('success', 'Share link created successfully');
     } catch (err) {
-      console.error(err);
       showSwal('error', 'Failed to create share link');
     } finally {
       setIsGenerating(false);
@@ -806,7 +805,6 @@ const Content = () => {
 
       showSwal('success', 'Share link sent successfully');
     } catch (err) {
-      console.error(err);
       showSwal('error', 'Failed to send share link');
     } finally {
       setIsGenerating(false);

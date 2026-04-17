@@ -85,6 +85,7 @@ const Content = () => {
   const [organizationData, setOrganizationData] = useState<OptionItem[]>([]);
   const [departmentData, setDepartmentData] = useState<OptionItem[]>([]);
   const [districtData, setDistrictData] = useState<OptionItem[]>([]);
+  const [unsavedDialogOpen, setUnsavedDialogOpen] = useState(false);
 
   const [filters, setFilters] = useState<Filters>({
     joinStart: '',
@@ -237,41 +238,47 @@ const Content = () => {
 
   const [isEditing, setIsEditing] = useState(false);
 
-  const isFormChanged = useMemo(() => {
-    return JSON.stringify(formDataDriver) !== JSON.stringify(initialFormData);
-  }, [formDataDriver]);
-
-  useEffect(() => {
-    // if (Object.keys(formDataDriver).length > 0 && !isEditing && isFormChanged) {
-    //   localStorage.setItem('unsavedDriverData', JSON.stringify(formDataDriver));
-    // }
-    const defaultFormData = CreateDriverRequestSchema.parse({});
-    const isChanged = JSON.stringify(formDataDriver) !== JSON.stringify(defaultFormData);
-
-    if (isChanged) {
-      localStorage.setItem('unsavedDriverData', JSON.stringify(formDataDriver));
-    }
-  }, [formDataDriver]);
-
   const [openFormAddEmployee, setOpenFormAddEmployee] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
   const [isBatchEdit, setIsBatchEdit] = useState(false);
 
   const handleOpenDialog = () => setOpenFormAddEmployee(true);
+
+  const [isFormChanged, setIsFormChanged] = useState(false);
+
+  useEffect(() => {
+    if (!isFormChanged) return;
+
+    const handler = setTimeout(() => {
+      localStorage.setItem('unsavedDriverData', JSON.stringify(formDataDriver));
+    }, 500);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [formDataDriver, isFormChanged]);
+
   const handleCloseDialog = () => {
     localStorage.removeItem('unsavedDriverData');
     setOpenFormAddEmployee(false);
     setIsBatchEdit(false);
     setIsEditing(false);
+    setIsFormChanged(false);
   };
 
   const handleAdd = useCallback(() => {
+    const saved = localStorage.getItem('unsavedDriverData');
+
+    if (saved) {
+      setUnsavedDialogOpen(true);
+      return;
+    }
+
     const freshForm = CreateDriverRequestSchema.parse({});
     setFormDataDriver(freshForm);
     setInitialFormData(freshForm);
-    localStorage.setItem('unsavedDriverData', JSON.stringify(freshForm));
-    setPendingEditId(null);
+    setIsFormChanged(false);
     handleOpenDialog();
   }, []);
 
@@ -400,10 +407,7 @@ const Content = () => {
   const handleBatchDelete = async (rows: DriverTableRows[]) => {
     if (!token || rows.length === 0) return;
 
-    const confirmed = await showConfirmDelete(
-      `Are you sure to delete ${rows.length} items?`,
-      "You won't be able to revert this!",
-    );
+    const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} items?`);
 
     if (confirmed) {
       setLoading(true);
@@ -560,7 +564,8 @@ const Content = () => {
             aria-label="close"
             onClick={() => {
               if (isFormChanged) {
-                setConfirmDialogOpen(true);
+                // setPendingAction('close');
+                setUnsavedDialogOpen(true);
               } else {
                 handleCloseDialog();
               }
@@ -583,19 +588,63 @@ const Content = () => {
             selectedRows={selectedRows}
             enabledFields={enabledFields}
             setEnabledFields={setEnabledFields}
+            setIsFormChanged={setIsFormChanged}
           />
         </DialogContent>
       </Dialog>
-      <Dialog open={confirmDialogOpen} onClose={handleCancelEdit}>
+      <Dialog
+        open={unsavedDialogOpen}
+        onClose={() => setUnsavedDialogOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
         <DialogTitle>Unsaved Changes</DialogTitle>
-        <DialogContent>
-          You have unsaved changes for another driver. Are you sure you want to discard them and
-          edit this driver?
-        </DialogContent>
+
+        <DialogContent>You have unsaved changes. What do you want to do?</DialogContent>
+
         <DialogActions>
-          <Button onClick={handleCancelEdit}>Cancel</Button>
-          <Button onClick={handleConfirmEdit} color="primary" variant="contained">
-            Yes, Discard and Continue
+          <Button
+            color="error"
+            variant="contained"
+            onClick={() => {
+              setUnsavedDialogOpen(false);
+
+              // 🔥 1. hapus dulu
+              localStorage.removeItem('unsavedDriverData');
+
+              // 🔥 2. reset state
+              const fresh = CreateDriverRequestSchema.parse({});
+              setFormDataDriver(fresh);
+              setInitialFormData(fresh);
+
+              // 🔥 3. reset dirty flag (INI PENTING BANGET)
+              setIsFormChanged(false);
+
+              // 🔥 4. close dialog utama
+              handleCloseDialog();
+            }}
+          >
+            Discard
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => {
+              setUnsavedDialogOpen(false);
+
+              const saved = localStorage.getItem('unsavedDriverData');
+
+              if (saved) {
+                const parsed = JSON.parse(saved);
+                const validated = CreateDriverRequestSchema.parse(parsed);
+
+                setFormDataDriver(validated);
+                setInitialFormData(validated);
+              }
+
+              handleOpenDialog();
+            }}
+          >
+            Yes, Continue Editing
           </Button>
         </DialogActions>
       </Dialog>

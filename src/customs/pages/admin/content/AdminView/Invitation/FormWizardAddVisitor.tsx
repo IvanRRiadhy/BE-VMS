@@ -183,7 +183,6 @@ import RenderFieldInput from '../Components/RenderFieldGroup';
 import RenderFieldGroup from '../Components/RenderFieldGroup';
 import GlobalBackdropLoading from '../Components/GlobalBackdrop';
 import VisitorSelectDialog from '../Components/VisitorSelectDialog';
-import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { IconUsers } from '@tabler/icons-react';
 
@@ -1541,6 +1540,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                                 opts={{
                                                   showLabel: false,
                                                   uniqueKey: `${activeStep - 1}:${gIdx}:${fIdx}`,
+                                                  details: page.form,
                                                 }}
                                                 employee={employee}
                                                 allVisitorEmployee={allVisitorEmployee}
@@ -2314,6 +2314,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     const handleSitePlaceChange = (idx: number, field: keyof FormVisitor, value: any) => {
       onChange(idx, field, value);
     };
+    const startField = details.find(
+      (f) => (f.remarks || '').toLowerCase() === 'visitor_period_start',
+    );
+
+    const startDate = startField?.answer_datetime ? dayjs(startField.answer_datetime) : null;
 
     return filteredDetails.map((item: any, index: any) => {
       // const key = `${activeStep - 1}:${index}`;
@@ -2695,6 +2700,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       <DateTimePicker
                         value={item.answer_datetime ? dayjs(item.answer_datetime) : null}
                         ampm={false}
+                        minDateTime={
+                          item.remarks === 'visitor_period_end' && startDate ? startDate : undefined
+                        }
                         onChange={(newValue) => {
                           if (newValue) {
                             const utc = newValue.utc().format();
@@ -4184,13 +4192,13 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     }
   };
 
-    const handleStepChange = (targetStep: number) => {
-      if (targetStep > activeStep) {
-        if (!validateCurrentStep()) return;
-      }
+  const handleStepChange = (targetStep: number) => {
+    if (targetStep > activeStep) {
+      if (!validateCurrentStep()) return;
+    }
 
-      setActiveStep(targetStep);
-    };
+    setActiveStep(targetStep);
+  };
 
   return (
     <PageContainer title="Operator View" description="this is operator view">
@@ -4376,7 +4384,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             >
               Back
             </MuiButton>
-
 
             {isGroup ? (
               isLastStep ? (

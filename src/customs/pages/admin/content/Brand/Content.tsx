@@ -22,7 +22,6 @@ const Content = () => {
   const [totalRecords, setTotalRecords] = useState(0);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -52,7 +51,7 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword]);
+  }, [token, page, rowsPerPage, refreshTrigger, searchKeyword]);
 
   const handleBatchDelete = async (rows: Item[]) => {
     if (!token || rows.length === 0) return;

@@ -21,9 +21,6 @@ import {
   Button as MuiButton,
   CircularProgress,
   Autocomplete,
-  DialogTitle,
-  DialogContent,
-  Stack,
   Accordion,
   AccordionSummary,
   TableContainer,
@@ -34,13 +31,10 @@ import {
   Table,
   TableBody,
   FormControl,
-  Card,
-  Skeleton,
   RadioGroup,
   Divider,
   Tooltip,
   Backdrop,
-  InputAdornment,
   Snackbar,
   Alert,
   Chip,
@@ -54,7 +48,6 @@ import 'select2/dist/css/select2.min.css';
 import {
   IconArrowLeft,
   IconCamera,
-  IconCircleCheck,
   IconDeviceFloppy,
   IconTrash,
   IconUser,
@@ -71,7 +64,6 @@ import {
   CreateGroupVisitorRequestSchema,
   CreateVisitorRequest,
   CreateVisitorRequestSchema,
-  Item,
   SectionPageVisitor,
 } from 'src/customs/api/models/Admin/Visitor';
 
@@ -167,12 +159,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
   const [loading, setLoading] = useState(false);
   const [alertType, setAlertType] = useState<'info' | 'success' | 'error'>('info');
   const { token } = useSession();
-  const [searchKeyword, setSearchKeyword] = useState('');
   const [activeStep, setActiveStep] = useState(0);
-  const [selfOnlyOverrides, setSelfOnlyOverrides] = useState<Record<string, any[]>>({});
-  // const visitor type by id
-  const [submitted, setSubmitted] = useState(false);
-  const [accessDialogOpen, setAccessDialogOpen] = useState(false);
   const [dynamicSteps, setDynamicSteps] = useState<string[]>([]);
   const [draggableSteps, setDraggableSteps] = useState<string[]>([]);
   const [sectionsData, setSectionsData] = useState<SectionPageVisitorType[]>([]);
@@ -219,9 +206,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     [FORM_KEY]: updater(formsOf(sec)),
   });
 
-  const [accessData, setAccessData] = useState<any[]>([]);
-  const [availableCards, setAvailableCards] = useState<any[]>([]);
-
   const [groupVisitors, setGroupVisitors] = useState<GroupVisitor[]>([]);
 
   const handleAddGroup = () => {
@@ -249,8 +233,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
   const handleDeleteGroup = (id: string) => {
     setGroupVisitors((prev) => prev.filter((g) => g.id !== id));
   };
-
-
 
   useEffect(() => {
     if (!nextDialogOpen) {
@@ -1222,6 +1204,11 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     let shouldDisable = false;
 
     const renderInput = () => {
+      const startField = opts?.details?.find(
+        (f: any) => (f.remarks || '').toLowerCase() === 'visitor_period_start',
+      );
+
+      const startDate = startField?.answer_datetime ? dayjs(startField.answer_datetime) : null;
       switch (field.field_type) {
         case 0: // Text
           return (
@@ -1359,7 +1346,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
 
         case 4: // Date
           return (
-            <TextField
+            <CustomTextField
               type="date"
               size="small"
               value={field.answer_datetime}
@@ -1517,7 +1504,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
 
         case 8:
           return (
-            <TextField
+            <CustomTextField
               type="time"
               size="small"
               value={field.answer_datetime}
@@ -1534,6 +1521,9 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
               <DateTimePicker
                 value={field.answer_datetime ? dayjs(field.answer_datetime) : null}
                 ampm={false}
+                minDateTime={
+                  field.remarks === 'visitor_period_end' && startDate ? startDate : undefined
+                }
                 onChange={(newValue) => {
                   if (newValue) {
                     const utc = newValue.utc().format();
@@ -1771,7 +1761,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         }
         default:
           return (
-            <TextField
+            <CustomTextField
               size="small"
               value={field.long_display_text}
               onChange={(e) => onChange(index, 'long_display_text', e.target.value)}
@@ -2230,6 +2220,12 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       return visible;
     });
 
+    const startField = details.find(
+      (f) => (f.remarks || '').toLowerCase() === 'visitor_period_start',
+    );
+
+    const startDate = startField?.answer_datetime ? dayjs(startField.answer_datetime) : null;
+
     return filteredDetails.map((item, index) => {
       // const key = `${activeStep - 1}:${index}`;
       const key = `${activeStep - 1}:${item.id}`;
@@ -2478,7 +2474,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                         value={startTime}
                         ampm={false}
                         onChange={setStartTime}
-                        format="ddd, DD - MMM - YYYY, HH:mm"
+                        format="dddd, DD  MMMMM YYYY, HH:mm"
                         viewRenderers={{
                           hours: renderTimeViewClock,
                           minutes: renderTimeViewClock,
@@ -2492,6 +2488,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                       />
                     </LocalizationProvider>
                   );
+
                 case 5: // Radio
                   return (
                     <>
@@ -2580,7 +2577,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
 
                 case 8: // TimePicker
                   return (
-                    <TextField
+                    <CustomTextField
                       type="time"
                       size="small"
                       value={item.answer_datetime}
@@ -2596,6 +2593,9 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                       <DateTimePicker
                         value={item.answer_datetime ? dayjs(item.answer_datetime) : null}
                         ampm={false}
+                        minDateTime={
+                          item.remarks === 'visitor_period_end' && startDate ? startDate : undefined
+                        }
                         onChange={(newValue) => {
                           if (newValue) {
                             const utc = newValue.utc().format();
@@ -2603,7 +2603,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                             clearFieldError(key);
                           }
                         }}
-                        format="dddd, DD - MMM - YYYY, HH:mm"
+                        format="dddd, DD MMMM YYYY, HH:mm"
                         viewRenderers={{
                           hours: renderTimeViewClock,
                           minutes: renderTimeViewClock,
@@ -2973,7 +2973,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                           sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                         >
                           <Typography variant="body1" color="textSecondary">
-                            Supports: PDF, JPG, PNG, JPEG Up to
+                            Supports:  JPG, PNG, JPEG Up to
                             <span style={{ fontWeight: '700' }}> 100KB</span>
                           </Typography>
 
@@ -3182,7 +3182,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                 }
                 default:
                   return (
-                    <TextField
+                    <CustomTextField
                       size="small"
                       value={item.long_display_text}
                       onChange={(e) => onChange(index, 'long_display_text', e.target.value)}
@@ -3264,7 +3264,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       group_code?: string;
       group_name?: string;
     },
-    selfOnlyOverrides: Record<string, any[]> = {},
   ) {
     const sharedPVIdx = indexBy(groupedPages.single_page || []);
     const batchIdx = indexBy(Object.values(groupedPages.batch_page || {}));
@@ -3279,8 +3278,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         const formsTpl = formsOf(section);
 
         const rowSelfOnly =
-          row?.question_page?.[sIdx]?.self_only === true ||
-          !!selfOnlyOverrides[`row${rowIdx}`]?.length;
+          row?.question_page?.[sIdx]?.self_only === true
 
         const form = formsTpl.map((tpl: any, fIdx: number) => {
           const r = sanitize(tpl?.remarks);
@@ -3289,15 +3287,15 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
           let pick: any;
 
           if (isPurposeVisit(section)) {
-            if (rowSelfOnly) {
-              pick = (selfOnlyOverrides[`row${rowIdx}`] || []).find((f) => sameField(f, tpl));
-            } else {
+          //   if (rowSelfOnly) {
+          //     pick = (selfOnlyOverrides[`row${rowIdx}`] || []).find((f) => sameField(f, tpl));
+          //   } else {
               pick =
                 (r && sharedPVIdx.byRemarks.get(r)) ||
                 (cf && sharedPVIdx.byCF.get(cf)) ||
                 undefined;
-            }
-          } else {
+          //   }
+         } else {
             // normal section
             pick =
               (r && rowIdxMap.byRemarks.get(r)) ||
@@ -3321,8 +3319,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
           form,
         };
       });
-      // console.log('question_page:', question_page);
-
       return { question_page };
     });
     const basePayload: any = {
@@ -3365,60 +3361,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
 
       const tz =
         moment.tz?.guess?.() || Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Jakarta';
-      // const mapField = (field: FormVisitor, sortIdx: number) => {
-      //   const base: any = {
-      //     sort: field.sort ?? sortIdx,
-      //     short_name: field.short_name ?? '',
-      //     long_display_text: field.long_display_text ?? '',
-      //     field_type: field.field_type ?? 0,
-      //     is_primary: field.is_primary ?? false,
-      //     is_enable: field.is_enable ?? false,
-      //     mandatory: field.mandatory ?? false,
-      //     remarks: field.remarks ?? '',
-      //     custom_field_id: field.custom_field_id ?? '',
-      //     multiple_option_fields: field.multiple_option_fields ?? [],
-      //     visitor_form_type: field.visitor_form_type ?? DEFAULT_VFT,
-      //   };
-      //   const safeTrim = (val: any): string => {
-      //     if (val === undefined || val === null) return '';
-      //     if (typeof val === 'string') return val.trim();
-      //     if (Array.isArray(val)) return val.map(String).join(',');
-      //     return String(val).trim();
-      //   };
-
-      //   switch (base.field_type) {
-      //     case 9: // Date/Datetime
-      //       if (typeof field.answer_datetime === 'string') {
-      //         base.answer_datetime = dayjs(field.answer_datetime).utc().toISOString();
-      //       }
-      //       break;
-
-      //     case 10:
-      //     case 11:
-      //     case 12: // File upload
-      //       base.answer_file = safeTrim(field.answer_file);
-      //       break;
-
-      //     case 5:
-      //     case 6:
-      //     case 7: // Radio, Checkbox, Dropdown
-      //       if (Array.isArray(field.answer_text)) {
-      //         base.answer_text = field.answer_text.map(String).join(',');
-      //       } else if (typeof field.answer_text === 'boolean') {
-      //         base.answer_text = field.answer_text ? 'true' : 'false';
-      //       } else {
-      //         base.answer_text = safeTrim(field.answer_text);
-      //       }
-      //       break;
-
-      //     default:
-      //       base.answer_text = safeTrim(field.answer_text);
-      //       break;
-      //   }
-
-      //   return base;
-      // };
-
       const mapField = (field: FormVisitor, sortIdx: number) => {
         const base: any = {
           sort: field.sort ?? sortIdx,
@@ -3497,7 +3439,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
               tz: tz,
               registered_site: formData.registered_site ?? '',
             },
-            selfOnlyOverrides,
           );
 
           const cleanDataVisitor = (built.data_visitor ?? []).map((dv: any) => ({
@@ -3564,9 +3505,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         };
 
         const parsed = CreateVisitorRequestSchema.parse(payload);
-        console.log('✅ Final Payload (Single):', JSON.stringify(parsed, null, 2));
+        console.log('Final Payload (Single):', JSON.stringify(parsed, null, 2));
 
-        // // Submit ke endpoint single
         const submitFn = TYPE_REGISTERED === 0 ? createPraRegister : createVisitor;
         const backendResponse = await submitFn(token, parsed);
         console.log('Visitor created:', backendResponse);
@@ -3575,18 +3515,18 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
             ? 'Pre-registration created successfully.'
             : 'Invitation Visitor created successfully.';
 
-        showSwal('success', successMessage, 500);
+        showSwal('success', successMessage, 3000);
 
         resetMediaState();
         clearAnswerFiles();
       }
-      setTimeout(() => {
+      // setTimeout(() => {
         setLoading(false);
         onSuccess?.();
         // if (TYPE_REGISTERED !== 0) {
         //   setNextDialogOpen(true);
         // }
-      }, 700);
+      // }, 700);
     } catch (err: any) {
       setTimeout(() => {
         setLoading(false);
@@ -3594,8 +3534,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       }, 700);
 
       toast('Failed to create visitor.', 'error');
-      console.error(err);
-
+  
       if (err?.name === 'ZodError') {
         const fieldErrors: Record<string, string> = {};
         err.errors.forEach((z: any) => (fieldErrors[z.path.join('.')] = z.message));
@@ -3967,9 +3906,9 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
 
     const fetchVisitorTypeDetails = async () => {
       const res = visitorType.find((vt: any) => vt.id === formData.visitor_type);
-      const resVisitorType =  await getVisitorTypeById(token, formData.visitor_type as string);
+      const resVisitorType = await getVisitorTypeById(token, formData.visitor_type as string);
 
-         let sections = resVisitorType?.collection?.section_page_visitor_types ?? [];
+      let sections = resVisitorType?.collection?.section_page_visitor_types ?? [];
 
       if (TYPE_REGISTERED === 0 || FORM_KEY === 'pra_form') {
         sections = sections.filter((s: any) => (s.pra_form || []).length > 0);
@@ -4044,7 +3983,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     card: CardInfo | null;
     trx_visitor_id?: string | null;
   };
-
 
   const stepLabels = useMemo(() => ['User Type', ...draggableSteps], [draggableSteps]);
 
@@ -4291,8 +4229,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                 variant="contained"
                 color="primary"
                 disabled={
-                  loading 
-                  ||
+                  loading ||
                   !formData.visitor_type ||
                   formData.is_group === null ||
                   formData.is_group === undefined

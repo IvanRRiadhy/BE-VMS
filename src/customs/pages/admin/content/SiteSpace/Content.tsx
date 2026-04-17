@@ -8,12 +8,7 @@ import {
   Button,
   Divider,
   Grid2 as Grid,
-  Skeleton,
-  Card,
   IconButton,
-  Portal,
-  Backdrop,
-  CircularProgress,
   Autocomplete,
   TextField,
 } from '@mui/material';
@@ -42,8 +37,6 @@ import { IconSitemap, IconX } from '@tabler/icons-react';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import FilterMoreContent from './FilterMoreContent';
 import { useNavigate, useParams } from 'react-router';
-import { sign } from 'crypto';
-import { time } from 'console';
 
 type SiteTableRow = {
   id: string;

@@ -192,7 +192,6 @@ const Content = () => {
     }
   };
 
-  // Handle Batch Delete
   const handleBatchDelete = async (rows: Item[]) => {
     if (!token || rows.length === 0) return;
 
@@ -204,7 +203,7 @@ const Content = () => {
         await Promise.all(rows.map((row) => deleteDocument(row.id, token)));
         setRefreshTrigger((prev) => prev + 1);
         showSwal('success', `${rows.length} items have been deleted.`);
-        setSelectedRows([]); 
+        setSelectedRows([]);
       } catch (error) {
         console.error(error);
         showSwal('error', 'Failed to delete some items.');

@@ -39,7 +39,10 @@
     "helps": "Helps",
     "zone": "Zone",
     "transaction_log": "Transaction Log",
-    "notification": "Notification"
+    "notification": "Notification",
+    "history": "History",
+    "invitation": "Invitation",
+    "approval": "Approval"
   },
   "print_badge": "Print Badge",
   "transction_visitor": "Transction Visitor",

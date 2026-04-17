@@ -10,7 +10,6 @@ import {
   Backdrop,
   Button,
   Card,
-  Checkbox,
   CircularProgress,
   Dialog,
   DialogActions,
@@ -67,7 +66,7 @@ const Content = () => {
   const [summary, setSummary] = useState<any[]>([]);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10); // 👈 default 10
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -207,31 +206,36 @@ const Content = () => {
   };
 
   const printReport = () => {
-    //   const printWindow = window.open('', '_blank');
-    //   const tableHtml = document.getElementById('print-report-area')?.innerHTML;
-    //   printWindow!.document.write(`
-    //   <html>
-    //     <head>
-    //       <title>Visitor Report</title>
-    //     </head>
-    //     <body>
-    //       ${tableHtml}
-    //     </body>
-    //   </html>
-    // `);
-    //   printWindow!.document.close();
-    //   printWindow!.focus();
-    //   printWindow!.print();
-    //   printWindow!.close();
+    const printWindow = window.open('', '_blank') as unknown as Window & { document: Document };
+
+    if (!printWindow) {
+      console.error('Failed to open print window');
+      return;
+    }
+
+    const tableHtml = document.getElementById('print-report-area')?.innerHTML;
+
+    printWindow.document.open();
+    printWindow.document.write(`
+    <html>
+      <head>
+        <title>Visitor Report</title>
+      </head>
+      <body>
+        ${tableHtml || ''}
+      </body>
+    </html>
+  `);
+    printWindow.document.close();
+
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
   };
 
   const handleConfirmSaveReport = async () => {
-    // if (!reportData || reportData.length === 0) {
-    //   showSnackbar('No report data to save. Please generate the report first.', 'info');
-    //   return;
-    // }
 
-    setLoading(true); // ⏳ mulai loading
+    setLoading(true); 
     try {
       const siteSelected = siteOptions.find((s: any) => s.id === formData.sites?.[0]);
       const siteName = siteSelected ? siteSelected.name : '';
@@ -285,7 +289,6 @@ const Content = () => {
         data: reportData,
       };
 
-      // simulasi delay biar loading kelihatan
       await new Promise((res) => setTimeout(res, 600));
 
       setSavedReports((prev: any) => [...prev, newReport]);
@@ -312,7 +315,6 @@ const Content = () => {
       previous: false,
     });
 
-    // kosongkan data hasil juga jika mau sekalian
     setReportData([]);
     setSummary([]);
     setSelectedReport(null);
@@ -425,9 +427,6 @@ const Content = () => {
                 renderInput={(params) => <TextField {...params} placeholder="Select Host" />}
               />
             </Grid>
-            {/* <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-              <Checkbox /> Visitor
-            </Grid> */}
           </Grid>
           <Grid size={{ xs: 12, md: 6 }} mt={2}>
             <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
@@ -728,7 +727,7 @@ const Content = () => {
                 )
               }
             >
-              {isSaving ? 'Saving...' : 'Save'}
+              Save
             </Button>
           </DialogActions>
         </Dialog>

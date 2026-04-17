@@ -1870,7 +1870,7 @@ const TableRowItem = React.memo(
           >
             <Box display="flex" alignItems="center" gap={0.3} justifyContent={'center'}>
               {/* Detail Visitor */}
-              <Tooltip title="Detail Visitor">
+              <Tooltip title="Detail Data">
                 <IconButton
                   onClick={() => onView?.(row)}
                   disableRipple
@@ -2517,7 +2517,7 @@ const TableRowItem = React.memo(
                     </IconButton>
                   </Tooltip>
 
-                  <Tooltip title="Edit Invitation">
+                  {/* <Tooltip title="Edit Invitation">
                     <IconButton
                       onClick={() => onEdit?.(row)}
                       disableRipple
@@ -2536,7 +2536,7 @@ const TableRowItem = React.memo(
                     >
                       <IconPencil width={18} height={18} />
                     </IconButton>
-                  </Tooltip>
+                  </Tooltip> */}
                 </>
               ) : isHavePermission ? (
                 <>

@@ -50,7 +50,7 @@ import {
   CreateOrganizationSchema,
 } from 'src/customs/api/models/Admin/Organization';
 
-import { IconBuilding, IconBuildingSkyscraper, IconMapPins } from '@tabler/icons-react';
+import { IconBuilding, IconBuildingSkyscraper, IconMapPins, IconX } from '@tabler/icons-react';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 
 type EnableField = {
@@ -688,7 +688,21 @@ const Content = () => {
         fullWidth
         maxWidth="sm"
       >
-        <DialogTitle>Unsaved Changes</DialogTitle>
+        <DialogTitle>
+          Unsaved Changes
+          <IconButton
+            aria-label="close"
+            onClick={() => setConfirmDialogOpen(false)}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
+              color: (theme) => theme.palette.grey[500],
+            }}
+          >
+            <IconX />
+          </IconButton>
+        </DialogTitle>
         <DialogContent>You have unsaved changes. What do you want to do?</DialogContent>
         <DialogActions>
           <Button onClick={handleDiscard} color="error" variant="contained">

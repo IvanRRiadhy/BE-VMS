@@ -40,7 +40,11 @@ import QRCode from 'react-qr-code';
 import VisitorStatusPieChart from 'src/customs/components/charts/VisitorStatusPieChart';
 import TopCard from './TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { getActiveInvitation, openParkingBlocker } from 'src/customs/api/visitor';
+import {
+  getActiveInvitation,
+  getInvitationById,
+  openParkingBlocker,
+} from 'src/customs/api/visitor';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import moment from 'moment-timezone';
 import dayjs, { Dayjs } from 'dayjs';
@@ -59,6 +63,7 @@ import jsPDF from 'jspdf';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import AccessPassDialog from '../Components/Dialog/AccessPassDialog';
 
 const Dashboard = () => {
   const { token } = useSession();
@@ -99,10 +104,10 @@ const Dashboard = () => {
           // visitor_type:  item.visitor_type_name,
           name: item.visitor.name,
           email: item.visitor.email,
-          organization: item.visitor.organization,
+          organization: item.visitor_organization_name,
           visitor_period_start: item.visitor_period_start,
           visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
-          host: item.host ?? '-',
+          host: item.host_name ?? '-',
           visitor_status: item.visitor_status,
         }));
         setActiveVisitData(response ?? []);
@@ -214,6 +219,28 @@ const Dashboard = () => {
     }
   };
 
+  const [visitorDetail, setVisitorDetail] = useState<any>(null);
+  const [visitorLoading, setVisitorLoading] = useState(false);
+  const [visitorError, setVisitorError] = useState<string | null>(null);
+  const [openVisitorDialog, setOpenVisitorDialog] = useState(false);
+  const handleView = async (id: string) => {
+    if (!token) return;
+
+    setOpenVisitorDialog(true);
+    setVisitorLoading(true);
+    setVisitorError(null);
+    setVisitorDetail(null);
+
+    try {
+      const res = await getInvitationById(id, token);
+      setVisitorDetail(res?.collection ?? res ?? null);
+    } catch (err: any) {
+      setVisitorError(err?.message || 'Failed to fetch visitor detail.');
+    } finally {
+      setVisitorLoading(false);
+    }
+  };
+
   return (
     <PageContainer title="Dashboard">
       <Grid container spacing={2} sx={{ mt: 0 }} alignItems={'stretch'}>
@@ -271,9 +298,10 @@ const Dashboard = () => {
             sx={{
               flex: 1,
               display: 'flex',
-              justifyContent: '',
+              justifyContent: 'center',
               alignItems: 'center',
               flexDirection: 'column',
+
               cursor: 'pointer',
               gap: 1,
             }}
@@ -295,10 +323,10 @@ const Dashboard = () => {
                 >
                   <QRCode
                     value={activeAccessPass.visitor_number || ''}
-                    size={40}
+                    size={50}
                     style={{
                       height: 'auto',
-                      width: '100px',
+                      width: '150px',
                     }}
                   />
                 </Box>
@@ -345,7 +373,7 @@ const Dashboard = () => {
             overflowX={'auto'}
             data={activeVisitData}
             isHaveChecked={false}
-            isHaveAction={false}
+            // isHaveAction={false}
             isHaveSearch={false}
             isHaveFilter={false}
             isHaveExportPdf={false}
@@ -353,8 +381,14 @@ const Dashboard = () => {
             isHaveHeaderTitle={true}
             isHavePeriod={true}
             titleHeader="Active Visit"
+            // isHaveAction={true}
+            // isActionEmployee={true}
+            // onView={(row) => {
+            //   handleView(row.id);
+            // }}
+            // isActionVisitor={true}
             // defaultRowsPerPage={rowsPerPage}
-            rowsPerPageOptions={[5, 10, 20, 50, 100]}
+            rowsPerPageOptions={[10, 50, 100]}
             // onPaginationChange={(page, rowsPerPage) => {
             //   setPage(page);
             //   setRowsPerPage(rowsPerPage);
@@ -370,258 +404,17 @@ const Dashboard = () => {
         </Grid>
       </Grid>
 
-      {activeAccessPass && (
-        <Dialog open={openAccess} onClose={handleCloseAccess} fullWidth maxWidth="sm">
-          <DialogTitle textAlign={'center'} sx={{ p: 2 }}>
-            Your Access Pass
-          </DialogTitle>
-          <IconButton
-            aria-label="close"
-            onClick={handleCloseAccess}
-            sx={{
-              position: 'absolute',
-              right: 10,
-              top: 8,
-              color: (theme) => theme.palette.grey[500],
-            }}
-          >
-            <IconX />
-          </IconButton>
-          <DialogContent
-            sx={{
-              paddingTop: 2,
-              position: 'relative',
-            }}
-            dividers
-            ref={printRef}
-          >
-            <img
-              src="src/assets/images/backgrounds/back-test.jpg"
-              alt="background"
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                zIndex: -1,
-              }}
-            />
-            <Box
-              display="flex"
-              justifyContent="center"
-              className="only-print"
-              sx={{
-                display: 'none',
-                '@media print': {
-                  display: 'flex',
-                },
-              }}
-            >
-              <img
-                src="/src/assets/images/logos/bio-experience-1x1-logo.png"
-                alt="logo"
-                width={100}
-                height={100}
-                style={{
-                  objectFit: 'contain',
-                  maxHeight: '100px',
-                }}
-              />
-            </Box>
-            <Box mt={1} zIndex={1} position={'relative'}>
-              <Grid container spacing={2} justifyContent="center">
-                <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
-                  <Typography variant="body1" color="textSecondary" fontWeight={500}>
-                    Invitation Code
-                  </Typography>
-                  <Typography variant="body1" fontWeight="bold">
-                    {activeAccessPass.invitation_code}
-                  </Typography>
-                </Grid>
-
-                <Grid size={{ xs: 12, sm: 6 }} textAlign="center" position={'relative'}>
-                  <Typography variant="body1" color="textSecondary" fontWeight={500}>
-                    Group Name
-                  </Typography>
-                  <Typography variant="body1" fontWeight="bold">
-                    {activeAccessPass.group_name || '-'}
-                  </Typography>
-                </Grid>
-                {!isGenerating && (
-                  <IconButton
-                    color="primary"
-                    className="no-print"
-                    sx={{
-                      backgroundColor: 'primary.main',
-                      color: 'white',
-                      position: 'absolute',
-                      right: 5,
-                      top: -10,
-                      '&:hover': { backgroundColor: 'primary.dark' },
-                      '@media print': {
-                        display: 'none !important', // pastikan override semua
-                      },
-                    }}
-                    onClick={handleDownloadPDF}
-                  >
-                    <Download />
-                  </IconButton>
-                )}
-
-                <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
-                  <Typography variant="body1" color="textSecondary" fontWeight={500}>
-                    Host
-                  </Typography>
-                  <Typography variant="body1" fontWeight="bold">
-                    {activeAccessPass.host || '-'}
-                  </Typography>
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
-                  <Typography variant="body1" color="textSecondary" fontWeight={500}>
-                    Group Code
-                  </Typography>
-                  <Typography variant="body1" fontWeight="bold">
-                    {activeAccessPass.group_code || '-'}
-                  </Typography>
-                </Grid>
-                <Grid size={{ xs: 12, sm: 12 }} textAlign="center">
-                  <Typography variant="body1" color="textSecondary" fontWeight={500}>
-                    Period Visit
-                  </Typography>
-                  <Typography variant="body1" fontWeight="bold">
-                    {formatVisitorPeriodLocal(
-                      activeAccessPass.visitor_period_start as string,
-                      activeAccessPass.visitor_period_end as string,
-                    )}
-                  </Typography>
-                </Grid>
-              </Grid>
-            </Box>
-
-            <Box mt={1}>
-              <Typography variant="h5" sx={{ fontWeight: 'bold' }} textAlign={'center'}>
-                {activeAccessPass.site_place_name}
-              </Typography>
-              <Box
-                display="flex"
-                justifyContent="center"
-                mt={0}
-                mb={1}
-                flexDirection={'column'}
-                alignItems={'center'}
-              >
-                <Box
-                  sx={{
-                    display: 'inline-block',
-                    p: 3,
-                    borderRadius: 2,
-                    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.2)',
-                    backgroundColor: 'white', // biar kontras
-                  }}
-                  my={2}
-                >
-                  <QRCode
-                    value={activeAccessPass.visitor_number || activeAccessPass.invitation_code}
-                    size={180}
-                    style={{
-                      height: 'auto',
-                      width: '180px',
-                      borderRadius: 8,
-                    }}
-                  />
-                </Box>
-                <Box display="flex" gap={3} mb={2}>
-                  <Typography color="error">Tracked</Typography>
-                  <Typography color="error">Low Battery</Typography>
-                </Box>
-                <Typography variant="body2" mb={1}>
-                  Show this while visiting
-                </Typography>
-                <Typography variant="h6">ID : {activeAccessPass.visitor_code}</Typography>
-                <Divider sx={{ width: '100%', my: 2, borderColor: 'grey' }} />
-                <Typography
-                  variant="h5"
-                  color="textSecondary"
-                  fontWeight={700}
-                  mb={1}
-                  textAlign={'start'}
-                >
-                  Parking
-                </Typography>
-                <Grid container spacing={2}>
-                  <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
-                    <Typography variant="body1" color="textSecondary" fontWeight={500}>
-                      Parking Area
-                    </Typography>
-                    <Typography variant="body1" fontWeight="bold">
-                      {activeAccessPass?.parking_area || '-'}
-                    </Typography>
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
-                    <Typography variant="body1" color="textSecondary" fontWeight={500}>
-                      Parking Slot
-                    </Typography>
-                    <Typography variant="body1" fontWeight="bold">
-                      {activeAccessPass?.parking_slot || '-'}
-                    </Typography>
-                  </Grid>
-
-                  <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
-                    <Typography variant="body1" color="textSecondary" fontWeight={500}>
-                      Vehicle Plate
-                    </Typography>
-                    <Typography variant="body1" fontWeight="bold">
-                      {activeAccessPass.vehicle_plate_number || '-'}
-                    </Typography>
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
-                    <Typography variant="body1" color="textSecondary" fontWeight={500}>
-                      Vehicle Type
-                    </Typography>
-                    <Typography
-                      variant="body1"
-                      fontWeight="bold"
-                      sx={{ textTransform: 'capitalize' }}
-                    >
-                      {activeAccessPass.vehicle_type || '-'}
-                    </Typography>
-                  </Grid>
-                </Grid>
-                {!isGenerating && (
-                  <Button
-                    size="small"
-                    variant="contained"
-                    className="no-print"
-                    onClick={handleOpenParkingBlocker}
-                    disabled={isParkingLoading || !activeAccessPass.is_driving}
-                    sx={{
-                      mt: 2,
-                      width: '100%',
-                      position: 'relative',
-                      '@media print': {
-                        display: 'none',
-                      },
-                    }}
-                  >
-                    {isParkingLoading ? (
-                      <CircularProgress
-                        size={22}
-                        sx={{
-                          color: 'white',
-                        }}
-                      />
-                    ) : (
-                      'Open Parking Blocker'
-                    )}
-                  </Button>
-                )}
-              </Box>
-            </Box>
-          </DialogContent>
-        </Dialog>
-      )}
+      <AccessPassDialog
+        open={openAccess}
+        onClose={handleCloseAccess}
+        data={activeAccessPass}
+        isGenerating={isGenerating}
+        isParkingLoading={isParkingLoading}
+        onDownload={handleDownloadPDF}
+        onOpenParking={handleOpenParkingBlocker}
+        formatVisitorPeriodLocal={formatVisitorPeriodLocal}
+        printRef={printRef}
+      />
 
       <Dialog
         open={openInputInvitationCode}

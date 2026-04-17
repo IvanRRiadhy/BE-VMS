@@ -38,6 +38,7 @@ import {
 import { IconUsers } from '@tabler/icons-react';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import FilterMoreContent from './FilterMoreContent';
+import { IconX } from '@tabler/icons-react';
 
 type EmployeesTableRow = {
   id: string;
@@ -89,6 +90,9 @@ const Content = () => {
   const [organizationData, setOrganizationData] = useState<OptionItem[]>([]);
   const [departmentData, setDepartmentData] = useState<OptionItem[]>([]);
   const [districtData, setDistrictData] = useState<OptionItem[]>([]);
+  const [unsavedDialogOpen, setUnsavedDialogOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<'close' | 'edit' | null>(null);
+  const [restoreDialogOpen, setRestoreDialogOpen] = useState(false);
 
   const [filters, setFilters] = useState<Filters>({
     joinStart: '',
@@ -236,18 +240,23 @@ const Content = () => {
     }
   });
 
-  const isFormChanged = useMemo(() => {
-    return JSON.stringify(formDataAddEmployee) !== JSON.stringify(initialFormData);
-  }, [formDataAddEmployee]);
+  // const isFormChanged = useMemo(() => {
+  //   return JSON.stringify(formDataAddEmployee) !== JSON.stringify(initialFormData);
+  // }, [formDataAddEmployee]);
+
+  const [isFormChanged, setIsFormChanged] = useState(false);
 
   useEffect(() => {
-    const defaultFormData = CreateEmployeeRequestSchema.parse({});
-    const isChanged = JSON.stringify(formDataAddEmployee) !== JSON.stringify(defaultFormData);
+    if (!isFormChanged) return;
 
-    if (isChanged) {
+    const handler = setTimeout(() => {
       localStorage.setItem('unsavedEmployeeData', JSON.stringify(formDataAddEmployee));
-    }
-  }, [formDataAddEmployee]);
+    }, 200);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [formDataAddEmployee, isFormChanged]);
 
   const [openFormAddEmployee, setOpenFormAddEmployee] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -260,14 +269,22 @@ const Content = () => {
     setOpenFormAddEmployee(false);
     setIsBatchEdit(false);
     setEdittingId('');
+    setIsFormChanged(false);
   };
 
   const handleAdd = useCallback(() => {
+    const saved = localStorage.getItem('unsavedEmployeeData');
+
+    if (saved) {
+      setPendingAction('close'); 
+      setUnsavedDialogOpen(true); 
+      return;
+    }
+
     const freshForm = CreateEmployeeRequestSchema.parse({});
     setFormDataAddEmployee(freshForm);
     setInitialFormData(freshForm);
-    localStorage.setItem('unsavedEmployeeData', JSON.stringify(freshForm));
-    setPendingEditId(null);
+    setIsFormChanged(false);
     handleOpenDialog();
   }, []);
 
@@ -295,18 +312,6 @@ const Content = () => {
 
     const coerceEmployee = (s: any) => ({
       ...s,
-      // type: toNum(
-      //   s?.type,
-      //   {
-      //     permanent: 1,
-      //     contract: 2,
-      //     internship: 3,
-      //     '0': 0,
-      //     '1': 1,
-      //     '2': 2,
-      //   },
-      //   0,
-      // ),
       gender: toNum(s?.gender, { female: 0, male: 1, f: 0, m: 1, '0': 0, '1': 1 }, 0),
 
       status_employee: toNum(
@@ -346,6 +351,7 @@ const Content = () => {
     }
 
     setPendingEditId(id);
+    setPendingAction('edit');
     setConfirmDialogOpen(true);
   };
 
@@ -473,20 +479,14 @@ const Content = () => {
     localStorage.removeItem('unsavedEmployeeData');
   };
 
-  const handleDialogClose = (_event?: object, reason?: string) => {
-    const isChanged = JSON.stringify(formDataAddEmployee) !== JSON.stringify(initialFormData);
-
-    if ((reason === 'backdropClick' || reason === 'closeButton') && isChanged) {
-      setConfirmDialogOpen(true);
+  const handleDialogClose = () => {
+    if (isFormChanged) {
+      setPendingAction('close');
+      setUnsavedDialogOpen(true);
       return;
     }
 
-    if (isChanged) {
-      setConfirmDialogOpen(true);
-    } else {
-      setConfirmDialogOpen(false);
-      handleCloseDialog();
-    }
+    handleCloseDialog();
   };
 
   const handleSearchKeywordChange = useCallback((keyword: string) => {
@@ -583,7 +583,8 @@ const Content = () => {
             aria-label="close"
             onClick={() => {
               if (isFormChanged) {
-                setConfirmDialogOpen(true);
+                setPendingAction('close');
+                setUnsavedDialogOpen(true);
               } else {
                 handleCloseDialog();
               }
@@ -606,19 +607,68 @@ const Content = () => {
             selectedRows={selectedRows}
             enabledFields={enabledFields}
             setEnabledFields={setEnabledFields}
+            setIsFormChanged={setIsFormChanged}
           />
         </DialogContent>
       </Dialog>
-      <Dialog open={confirmDialogOpen} onClose={handleCancelEdit}>
-        <DialogTitle>Unsaved Changes</DialogTitle>
-        <DialogContent>
-          You have unsaved changes for another Employee. Are you sure you want to discard them and
-          edit this Employee?
-        </DialogContent>
+      <Dialog
+        open={unsavedDialogOpen}
+        onClose={() => setUnsavedDialogOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>
+          Unsaved Changes
+          <IconButton
+            aria-label="close"
+            onClick={() => setUnsavedDialogOpen(false)}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
+              color: (theme) => theme.palette.grey[500],
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent>You have unsaved changes. What do you want to do?</DialogContent>
+
         <DialogActions>
-          <Button onClick={handleCancelEdit}>Cancel</Button>
-          <Button onClick={handleConfirmEdit} color="primary" variant="contained">
-            Yes, Discard and Continue
+          <Button
+            variant="contained"
+            color="error"
+            onClick={() => {
+              setUnsavedDialogOpen(false);
+              localStorage.removeItem('unsavedEmployeeData');
+              const fresh = CreateEmployeeRequestSchema.parse({});
+              setFormDataAddEmployee(fresh);
+              setInitialFormData(fresh);
+              setIsFormChanged(false);
+              handleCloseDialog();
+              setPendingAction(null);
+            }}
+          >
+            Discard
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => {
+              setUnsavedDialogOpen(false);
+              const saved = localStorage.getItem('unsavedEmployeeData');
+              if (saved) {
+                const parsed = JSON.parse(saved);
+                const validated = CreateEmployeeRequestSchema.parse(parsed);
+
+                setFormDataAddEmployee(validated);
+                setInitialFormData(validated);
+              }
+
+              handleOpenDialog();
+            }}
+          >
+            Yes, Continue Editing
           </Button>
         </DialogActions>
       </Dialog>

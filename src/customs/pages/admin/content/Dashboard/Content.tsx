@@ -22,8 +22,6 @@ import {
   IconCircleMinus,
   IconCircleX,
   IconDownload,
-  IconForbid,
-  IconForbid2,
   IconHourglass,
   IconLogin,
   IconLogout,
@@ -220,7 +218,7 @@ const Content = () => {
                     isHaveHeaderTitle={true}
                     titleHeader="Pre-Registration Visitor List"
                     defaultRowsPerPage={rowsPerPage}
-                    rowsPerPageOptions={[10, 20, 50, 100]}
+                    rowsPerPageOptions={[10, 50, 100]}
                     onPaginationChange={(page, rowsPerPage) => {
                       setPage(page);
                       setRowsPerPage(rowsPerPage);

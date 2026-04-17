@@ -2,13 +2,9 @@ import { useState, useEffect } from 'react';
 import {
   Box,
   Button,
-  Dialog,
-  DialogContent,
-  DialogTitle,
   Grid2 as Grid,
   IconButton,
   TextField,
-  DialogActions,
   Typography,
   useMediaQuery,
   Tooltip,
@@ -26,7 +22,6 @@ import { deleteTimezone, getAllTimezone, getTimezoneById } from 'src/customs/api
 import { IconTrash } from '@tabler/icons-react';
 import {
   showConfirmDelete,
-  showSuccessAlert,
   showSwal,
 } from 'src/customs/components/alerts/alerts';
 import FormTimezone from './FormTimezone';
@@ -86,10 +81,6 @@ const Content = () => {
   const lgUp = useMediaQuery(theme.breakpoints.up('lg'));
 
   const secdrawerWidth = 260;
-
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [isRightSidebarOpen, setRightSidebarOpen] = useState(false);
-  const [openForm, setOpenForm] = useState(false);
   const [search, setSearch] = useState('');
   const debounceSearch = useDebounce(search, 500);
   const [loading, setLoading] = useState(false);
@@ -150,7 +141,6 @@ const Content = () => {
       try {
         await deleteTimezone(token, id);
         setRefreshTrigger((prev) => prev + 1);
-        // showSuccessAlert('Deleted!', 'Time Access has been deleted.');
         showSwal('success', 'Time Access has been deleted.');
         setSelectedTimezone(null);
         localStorage.removeItem('selectedTimezone');
@@ -217,7 +207,7 @@ const Content = () => {
               </Tooltip>
             </Box>
 
-            {/* Search */}
+       
             <TextField
               fullWidth
               size="small"
@@ -255,12 +245,10 @@ const Content = () => {
                     >
                       <Box>
                         <Box display="flex" alignItems="center" gap={1}>
-                          {/* Icon di kiri */}
                           <Box display="flex" alignItems="center">
                             <IconClock size={20} color={isActive ? '#fff' : '#000'} />
                           </Box>
 
-                          {/* Teks */}
                           <Box>
                             <Typography variant="body1" fontWeight="600">
                               {v.name}
@@ -300,7 +288,6 @@ const Content = () => {
             </Box>
           </Box>
 
-          {/* RIGHT CONTENT (besar) */}
           <Box flexGrow={1} p={3} sx={{ overflow: 'hidden', height: { xs: 'auto', xl: '88vh' } }}>
             {selectedTimezone ? (
               <FormTimezone

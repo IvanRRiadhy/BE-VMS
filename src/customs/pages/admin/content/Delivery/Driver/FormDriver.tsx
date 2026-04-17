@@ -64,6 +64,7 @@ interface FormEmployeeProps {
   selectedRows?: Item[];
   enabledFields?: EnabledFields;
   setEnabledFields: React.Dispatch<React.SetStateAction<EnabledFields>>;
+  setIsFormChanged: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 import { BASE_URL } from 'src/customs/api/interceptor';
@@ -84,6 +85,7 @@ const FormDriver = ({
   selectedRows = [],
   enabledFields,
   setEnabledFields,
+  setIsFormChanged,
 }: FormEmployeeProps) => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
@@ -109,9 +111,9 @@ const FormDriver = ({
   const [localForm, setLocalForm] = useState(formData);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  useEffect(() => {
-    setLocalForm(formData);
-  }, [formData]);
+  // useEffect(() => {
+  //   setFormData(localForm);
+  // }, [localForm]);
   const clearLocal = () => {
     setSiteImageFile(null);
     setPreviewUrl(null);
@@ -292,6 +294,14 @@ const FormDriver = ({
     return false;
   };
 
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setFormData(localForm);
+    }, 300); // 🔥 debounce
+
+    return () => clearTimeout(handler);
+  }, [localForm]);
+
   const handleChange = (
     e:
       | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -299,10 +309,14 @@ const FormDriver = ({
   ) => {
     const { id, name, value } = e.target as any;
     const key = (name || id) as string;
-    setLocalForm((prev) => ({
-      ...prev,
+    const updated = {
+      ...localForm,
       [name || id]: value,
-    }));
+    };
+
+    setLocalForm(updated);
+
+    setIsFormChanged(true);
     if (errors[key]) setErrors((prev) => ({ ...prev, [key]: '' }));
   };
 
@@ -563,7 +577,6 @@ const FormDriver = ({
       case 0:
         return (
           <Grid2 container spacing={1}>
-           
             {/* Name */}
             <Grid2 size={{ xs: 12, sm: 12 }}>
               <CustomFormLabel sx={{ marginY: 1 }} htmlFor="name" required>
@@ -612,6 +625,8 @@ const FormDriver = ({
                       ...prev,
                       identity_type: e.target.value,
                     }));
+
+                    setIsFormChanged?.(true);
 
                     if (errors.identity_type) {
                       setErrors((p) => ({ ...p, identity_type: '' }));
@@ -1305,8 +1320,8 @@ const FormDriver = ({
                           <Button
                             variant="contained"
                             onClick={(e) => {
-                              e.stopPropagation(); 
-                              handleCapture(); 
+                              e.stopPropagation();
+                              handleCapture();
                             }}
                           >
                             Take Foto
@@ -1337,7 +1352,6 @@ const FormDriver = ({
                         mt={2}
                         sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
                       >
-
                         <div
                           style={{
                             width: 300,
@@ -1368,8 +1382,8 @@ const FormDriver = ({
                           color="error"
                           disabled={removing || isBatchEdit}
                           onClick={(e) => {
-                            e.stopPropagation(); 
-                            handleRemove(); 
+                            e.stopPropagation();
+                            handleRemove();
                           }}
                         >
                           {removing ? 'Removing…' : 'Remove'}
@@ -1419,7 +1433,7 @@ const FormDriver = ({
             ))}
           </Stepper>
         )}
-{/* 
+        {/* 
         {activeStep === steps.length ? (
           <Stack spacing={2} mt={3}>
             <Alert severity="success">All steps completed - you're finished</Alert>
@@ -1430,35 +1444,35 @@ const FormDriver = ({
             </Box>
           </Stack>
         ) : ( */}
-          <>
-            <Box mt={3}>{StepContent(activeStep)}</Box>
-            <Box display="flex" flexDirection="row" mt={3}>
-              <Button
-                // variant="outlined"
-                color="primary"
-                disabled={activeStep === 0 || loading}
-                onClick={handleBack}
-                sx={{ backgroundColor: '#edf3ff' }}
-              >
-                Back
+        <>
+          <Box mt={3}>{StepContent(activeStep)}</Box>
+          <Box display="flex" flexDirection="row" mt={3}>
+            <Button
+              // variant="outlined"
+              color="primary"
+              disabled={activeStep === 0 || loading}
+              onClick={handleBack}
+              sx={{ backgroundColor: '#edf3ff' }}
+            >
+              Back
+            </Button>
+            <Box flex="1 1 auto" />
+            {activeStep !== steps.length - 1 ? (
+              <Button onClick={handleNext} variant="contained" color="primary">
+                Next
               </Button>
-              <Box flex="1 1 auto" />
-              {activeStep !== steps.length - 1 ? (
-                <Button onClick={handleNext} variant="contained" color="primary">
-                  Next
-                </Button>
-              ) : (
-                <Button
-                  color="primary"
-                  variant="contained"
-                  onClick={handleOnSubmit}
-                  disabled={loading || activeStep !== steps.length - 1}
-                >
-                  Submit
-                </Button>
-              )}
-            </Box>
-          </>
+            ) : (
+              <Button
+                color="primary"
+                variant="contained"
+                onClick={handleOnSubmit}
+                disabled={loading || activeStep !== steps.length - 1}
+              >
+                Submit
+              </Button>
+            )}
+          </Box>
+        </>
         {/* )} */}
       </Box>
       <Portal>

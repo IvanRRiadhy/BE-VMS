@@ -109,6 +109,7 @@ const Content = () => {
             multiple_option_fields: item.multiple_option_fields,
           }));
         setTableRowSite(rows);
+        setTableData(rows);
         setTotalRecords(responseGet.collection.length);
       } catch (error) {
         console.error('Fetch error:', error);
@@ -285,7 +286,6 @@ const Content = () => {
         showSwal('success', `${rows.length} items have been deleted.`);
         setRefreshTrigger((prev) => prev + 1);
       } catch (error) {
-        console.error(error);
         showSwal('error', 'Failed to delete some items.');
       } finally {
         setLoading(false);

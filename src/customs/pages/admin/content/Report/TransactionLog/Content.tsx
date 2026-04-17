@@ -105,7 +105,6 @@ const Content = () => {
   const [debouncedKeyword, setDebouncedSearch] = useState('');
   const [loadingReports, setLoadingReports] = useState(false);
   const [searchVisitor, setSearchVisitor] = useState('');
-  // const [loadedReports, setLoadedReports] = useState<any[]>([]);
   const [reports, setReports] = useState<any[]>([]);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -293,7 +292,6 @@ const Content = () => {
 
       setReportData(rows);
     } catch (err) {
-      console.error('Error generating report:', err);
       setTimeout(() => {
         showSwal('error', 'Failed to generate report.');
       }, 400);
@@ -382,7 +380,6 @@ const Content = () => {
       headStyles: { fillColor: [22, 160, 133] },
     });
 
-    // Format tanggal d-m-y
     const now = new Date();
     const day = String(now.getDate()).padStart(2, '0');
     const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -393,22 +390,31 @@ const Content = () => {
   };
 
   const printReport = () => {
-    //   const printWindow = window.open('', '_blank');
-    //   const tableHtml = document.getElementById('print-report-area')?.innerHTML;
-    //   printWindow!.document.write(`
-    //   <html>
-    //     <head>
-    //       <title>Visitor Report</title>
-    //     </head>
-    //     <body>
-    //       ${tableHtml}
-    //     </body>
-    //   </html>
-    // `);
-    //   printWindow!.document.close();
-    //   printWindow!.focus();
-    //   printWindow!.print();
-    //   printWindow!.close();
+    const printWindow = window.open('', '_blank') as unknown as Window & { document: Document };
+
+    if (!printWindow) {
+      console.error('Failed to open print window');
+      return;
+    }
+
+    const tableHtml = document.getElementById('print-report-area')?.innerHTML;
+
+    printWindow.document.open();
+    printWindow.document.write(`
+    <html>
+      <head>
+        <title>Visitor Report</title>
+      </head>
+      <body>
+        ${tableHtml || ''}
+      </body>
+    </html>
+  `);
+    printWindow.document.close();
+
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
   };
 
   const handleConfirmSaveReport = async () => {
@@ -420,7 +426,6 @@ const Content = () => {
 
       showSnackbar('Report saved successfully!', 'success');
       handleResetForm();
-      setOpenSaveDialog(false);
     } catch (err) {
       showSwal('error', 'Failed to save report.');
     } finally {
@@ -449,8 +454,6 @@ const Content = () => {
     setSummary([]);
     setSelectedReport(null);
   };
-
-  const [openSaveDialog, setOpenSaveDialog] = useState(false);
 
   const handleEditReport = async (rep: any) => {
     if (!token) return;
@@ -502,7 +505,6 @@ const Content = () => {
         sites: d.sites,
         hosts: d.hosts,
       });
-      // console.log('Data', formData);
 
       setSelectedReport(rep);
       setEditingId(null);
@@ -525,8 +527,6 @@ const Content = () => {
         showSwal('success', 'Report updated successfully!');
       }, 600);
     } catch (err) {
-      console.error(err);
-      // showSnackbar('Failed to update report.', 'error');
       showSwal('error', 'Failed to update report.');
     } finally {
       setTimeout(() => setLoading(false), 500);
@@ -548,7 +548,6 @@ const Content = () => {
 
         showSwal('success', 'Report deleted successfully!');
       } catch (err) {
-        console.error(err);
         showSwal('error', 'Failed to delete report.');
       } finally {
         setTimeout(() => setLoading(false), 500);

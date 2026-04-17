@@ -1,17 +1,6 @@
 import { useEffect, useState } from 'react';
 import { flushSync } from 'react-dom';
-import {
-  Box,
-  Grid2 as Grid,
-  Paper,
-  Tab,
-  Tabs,
-  Card,
-  Skeleton,
-  CircularProgress,
-  Backdrop,
-  Portal,
-} from '@mui/material';
+import { Box, Grid2 as Grid, Paper, Tab, Tabs } from '@mui/material';
 import Container from 'src/components/container/PageContainer';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import {
@@ -35,12 +24,7 @@ import {
   getAllPaginationSettingSmtp,
   updateSmtp,
 } from 'src/customs/api/admin';
-import {
-  showConfirmDelete,
-  showErrorAlert,
-  showSuccessAlert,
-  showSwal,
-} from 'src/customs/components/alerts/alerts';
+import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import FormSettingSmtp from './FormSettingSmtp';
 import FormSendTestEmail from './FormSendTestEmail';
 
@@ -94,7 +78,6 @@ const Content = () => {
   const [formData, setFormData] = useState<Item>(() => initialFormData);
   const [formEmailData, setFormEmailData] = useState<ItemEmail>(initialFormEmailData);
   const [showForm, setShowForm] = useState(false);
-  const [busyId, setBusyId] = useState<string | number | null>(null);
   const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
   const [tabIndex, setTabIndex] = useState(0);
@@ -198,7 +181,6 @@ const Content = () => {
       setShowForm(false);
       setEdittingId('');
     } catch (error: any) {
-      console.error(error);
       showSwal('error', error.message || 'Failed to submit SMTP data.');
     }
   };
@@ -208,7 +190,7 @@ const Content = () => {
     if (!token) return;
 
     try {
-      setBusyId(id);
+      // setBusyId(id);
       setLoading(true);
 
       const row = smtpData.find((x) => String(x.id) === String(id));
@@ -262,7 +244,7 @@ const Content = () => {
       console.error(err);
       showSwal('error', err?.message ?? 'Failed to update selected email.');
     } finally {
-      setBusyId(null);
+      // setBusyId(null);
       setTimeout(() => setLoading(false), 400);
     }
   };
@@ -294,7 +276,6 @@ const Content = () => {
       setRefreshTrigger((p) => p + 1);
     } catch (error: any) {
       flushSync(() => setLoading(false));
-      // await showErrorAlert('Error!', error.message);
       showSwal('error', error.message || 'Failed to send test email.');
     } finally {
       setTimeout(() => setLoading(false), 500);
@@ -342,7 +323,7 @@ const Content = () => {
                       data={smtpData}
                       selectedRows={selectedRows}
                       defaultRowsPerPage={rowsPerPage}
-                      rowsPerPageOptions={[10, 25, 50, 100]}
+                      rowsPerPageOptions={[10, 50, 100]}
                       onPaginationChange={(page, rowsPerPage) => {
                         setPage(page);
                         setRowsPerPage(rowsPerPage);

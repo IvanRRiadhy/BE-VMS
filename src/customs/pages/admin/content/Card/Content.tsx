@@ -216,9 +216,9 @@ const Content = () => {
         }
       } catch (error: any) {
         if (error?.response?.status === 404) {
-          setTableVisitorCard([]);
-          setTotalRecords(0);
-          setTotalFilteredRecords(0);
+          // setTableVisitorCard([]);
+          // setTotalRecords(0);
+          // setTotalFilteredRecords(0);
         } else {
           console.error('Error fetching data:', error);
         }
@@ -254,9 +254,6 @@ const Content = () => {
     [formAddVisitorCard, initialFormData],
   );
 
-  // const defaultFormData = CreateVisitorCardRequestSchema.parse({});
-
-  // const isFormChanged = JSON.stringify(formAddVisitorCard) !== JSON.stringify(defaultFormData);
 
   useEffect(() => {
     if (Object.keys(formAddVisitorCard).length > 0) {
@@ -264,7 +261,7 @@ const Content = () => {
     }
   }, [formAddVisitorCard]);
 
-  // Handle Add Visitor Card
+
   const handleAddVisitorCard = useCallback(() => {
     let saved = localStorage.getItem('unsavedVisitorCardData');
     let freshForm;

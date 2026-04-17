@@ -1,29 +1,9 @@
 import React, { useState } from 'react';
-import {
-  Box,
-  Grid2 as Grid,
-  Skeleton,
-  Card,
-  CardContent,
-  Typography,
-  Stack,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  RadioGroup,
-  Autocomplete,
-  Divider,
-  IconButton,
-} from '@mui/material';
+import { Box, Grid2 as Grid } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { IconHistory, IconMail, IconX } from '@tabler/icons-react';
-import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
-import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import CustomRadio from 'src/components/forms/theme-elements/CustomRadio';
 // import FilterMoreContent from './FilterMoreContent';
 // import FilterMoreContent from './Invitation/FilterMoreContent';
 const Visitor = () => {
@@ -64,8 +44,6 @@ const Visitor = () => {
       color: 'none',
     },
   ];
-  const [tableData, setTableData] = useState<[]>([]);
-  const [agenda, setAgenda] = useState('');
 
   const tableDataVisitor = [
     {
@@ -108,14 +86,13 @@ const Visitor = () => {
               <TopCard items={cards} size={{ xs: 12, lg: 3 }} />
             </Grid>
             <Grid size={{ xs: 12, lg: 12 }}>
-              {/* {isDataReady ? ( */}
               <DynamicTable
                 overflowX={'auto'}
                 data={tableDataVisitor}
                 isHavePagination={true}
                 selectedRows={selectedRows}
                 // defaultRowsPerPage={rowsPerPage}
-                rowsPerPageOptions={[5, 10, 20]}
+                rowsPerPageOptions={[10, 50, 100]}
                 // onPaginationChange={(page, rowsPerPage) => {
                 //   setPage(page);
                 //   setRowsPerPage(rowsPerPage);
@@ -151,13 +128,6 @@ const Visitor = () => {
                 //   handleAdd();
                 // }}
               />
-              {/* // ) : (
-              //   <Card sx={{ width: '100%' }}>
-              //     <Skeleton />
-              //     <Skeleton animation="wave" />
-              //     <Skeleton animation={false} />
-              //   </Card>
-              // )} */}
             </Grid>
           </Grid>
         </Box>

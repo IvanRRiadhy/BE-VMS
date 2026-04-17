@@ -75,6 +75,7 @@ interface FormEmployeeProps {
   selectedRows?: Item[];
   enabledFields?: EnabledFields;
   setEnabledFields: React.Dispatch<React.SetStateAction<EnabledFields>>;
+  setIsFormChanged: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const BASE_URL = axiosInstance2.defaults.baseURL;
@@ -88,6 +89,7 @@ const FormWizardAddEmployee = ({
   selectedRows = [],
   enabledFields,
   setEnabledFields,
+  setIsFormChanged,
 }: FormEmployeeProps) => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
@@ -302,6 +304,7 @@ const FormWizardAddEmployee = ({
       ...prev,
       [name || id]: value,
     }));
+    setIsFormChanged?.(true);
     if (errors[key]) setErrors((prev) => ({ ...prev, [key]: '' }));
   };
 
@@ -385,10 +388,6 @@ const FormWizardAddEmployee = ({
     try {
       if (!token) {
         showSwal('error', 'Something went wrong. Please try again later.');
-        setTimeout(() => {
-          setAlertType('info');
-          setAlertMessage('Complete the following data properly and correctly');
-        }, 3000);
         return;
       }
       if (isBatchEdit && selectedRows.length > 0) {
@@ -542,8 +541,12 @@ const FormWizardAddEmployee = ({
   const [localForm, setLocalForm] = useState(formData);
 
   useEffect(() => {
-    setLocalForm(formData);
-  }, [formData]);
+    const handler = setTimeout(() => {
+      setFormData(localForm);
+    }, 200);
+
+    return () => clearTimeout(handler);
+  }, [localForm]);
 
   useEffect(() => {
     if (siteImageFile) return;
@@ -614,8 +617,16 @@ const FormWizardAddEmployee = ({
                   id="identity_type"
                   value={localForm.identity_type}
                   onChange={(e: any) => {
-                    setFormData({ ...localForm, identity_type: e.target.value });
-                    if (errors.identity_type) setErrors((p) => ({ ...p, identity_type: '' }));
+                   setLocalForm((prev) => ({
+                     ...prev,
+                     identity_type: e.target.value,
+                   }));
+
+                   setIsFormChanged?.(true);
+
+                   if (errors.identity_type) {
+                     setErrors((p) => ({ ...p, identity_type: '' }));
+                   }
                   }}
                   fullWidth
                   disabled={isBatchEdit}

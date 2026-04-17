@@ -39,7 +39,10 @@
     "helps": "Bantuan",
     "zone": "Zona",
     "transaction_log": "Riwayat Transaksi",
-    "notification": "Notifikasi"
+    "notification": "Notifikasi",
+    "history": "Riwayat",
+    "invitation": "Undangan",
+    "approval": "Persetujuan"
   },
   "print_badge": "Cetak Badge",
   "transction_visitor": "Transaksi Pengunjung",

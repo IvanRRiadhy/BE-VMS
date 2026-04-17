@@ -1132,21 +1132,21 @@ export const EmployeeNavListingData: ItemDataCustomNavListing[] = [
   },
   {
     id: uniqueId(),
-    title: 'Invitation',
+    title: 'navigation.invitation',
     icon: IconMail,
     chipColor: 'secondary',
     href: '/employee/invitation',
   },
   {
     id: uniqueId(),
-    title: 'Approval',
+    title: 'navigation.approval',
     icon: IconCheck,
     chipColor: 'secondary',
     href: '/employee/approval',
   },
   {
     id: uniqueId(),
-    title: 'History',
+    title: 'navigation.history',
     icon: IconHistory,
     chipColor: 'secondary',
     href: '/employee/history',
@@ -1189,21 +1189,21 @@ export const EmployeeCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
   },
   {
     id: uniqueId(),
-    title: 'Invitation',
+    title: 'navigation.invitation',
     icon: IconMail,
     chipColor: 'secondary',
     href: '/employee/invitation',
   },
   {
     id: uniqueId(),
-    title: 'Approval',
+    title: 'navigation.approval',
     icon: IconCheck,
     chipColor: 'secondary',
     href: '/employee/approval',
   },
   {
     id: uniqueId(),
-    title: 'History',
+    title: 'navigation.history',
     icon: IconHistory,
     chipColor: 'secondary',
     href: '/employee/history',
@@ -1232,7 +1232,6 @@ export const EmployeeCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
 ];
 
 export const StaffNavListingData: ItemDataCustomNavListing[] = [
-  // DASHBOARD.
   {
     id: uniqueId(),
     title: 'Dashboard',
@@ -1241,7 +1240,7 @@ export const StaffNavListingData: ItemDataCustomNavListing[] = [
   },
   {
     id: uniqueId(),
-    title: 'Invitation',
+    title: 'navigation.invitation',
     icon: IconMail,
     chipColor: 'secondary',
     href: '/delivery-staff/schedule-invitation',
@@ -1291,7 +1290,7 @@ export const StaffCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
   },
   {
     id: uniqueId(),
-    title: 'Invitation',
+    title: 'navigation.invitation',
     icon: IconMail,
     chipColor: 'secondary',
     href: '/delivery-staff/schedule-invitation',
@@ -1327,7 +1326,6 @@ export const StaffCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
 ];
 
 export const ManagerNavListingData: ItemDataCustomNavListing[] = [
-  // DASHBOARD.
   {
     id: uniqueId(),
     title: 'Dashboard',
@@ -1336,7 +1334,7 @@ export const ManagerNavListingData: ItemDataCustomNavListing[] = [
   },
   {
     id: uniqueId(),
-    title: 'Approval',
+    title: 'navigation.approval',
     icon: IconCheck,
     chipColor: 'secondary',
     href: '/manager/approval',
@@ -1372,7 +1370,7 @@ export const ManagerCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
   },
   {
     id: uniqueId(),
-    title: 'Approval',
+    title: 'navigation.approval',
     icon: IconCheck,
     chipColor: 'secondary',
     href: '/manager/approval',

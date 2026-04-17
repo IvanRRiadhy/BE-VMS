@@ -39,29 +39,29 @@ const PageContainer: React.FC<CustomPageContainerProps> = ({
   const customizer = useSelector((state: AppState) => state.customizer);
   const [hideChrome, setHideChrome] = React.useState(false);
   const theme = useTheme();
-  useEffect(() => {
-    const checkFullscreen = () => {
-      const isF11 = window.innerHeight === screen.height;
-      // const isF11 = document.fullscreenElement != null;
-      setHideChrome(isF11);
-    };
+  // useEffect(() => {
+  //   const checkFullscreen = () => {
+  //     const isF11 = window.innerHeight === screen.height;
+  //     // const isF11 = document.fullscreenElement != null;
+  //     setHideChrome(isF11);
+  //   };
 
     // listen F11 fullscreen changes
     // window.addEventListener('resize', checkFullscreen);
 
     // listen react-full-screen child events
-    const handler = (e: any) => {
-      setHideChrome(e.detail.isFullscreen);
-    };
-    window.addEventListener('operator-fullscreen-changed', handler);
+    // const handler = (e: any) => {
+    //   setHideChrome(e.detail.isFullscreen);
+    // };
+    // window.addEventListener('operator-fullscreen-changed', handler);
 
-    checkFullscreen(); // initial
+    // checkFullscreen(); // initial
 
-    return () => {
-      // window.removeEventListener('resize', checkFullscreen);
-      window.removeEventListener('operator-fullscreen-changed', handler);
-    };
-  }, []);
+    // return () => {
+    //   // window.removeEventListener('resize', checkFullscreen);
+    //   window.removeEventListener('operator-fullscreen-changed', handler);
+    // };
+  // }, []);
 
   return (
     <>

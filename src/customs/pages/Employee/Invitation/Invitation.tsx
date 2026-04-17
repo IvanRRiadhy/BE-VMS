@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect,  useMemo } from 'react';
 import {
   Box,
   Dialog,
@@ -9,10 +9,8 @@ import {
   Grid2 as Grid,
   IconButton,
   Button,
-  Avatar,
   Typography,
   Portal,
-  Autocomplete,
   Snackbar,
   Alert,
 } from '@mui/material';
@@ -28,9 +26,6 @@ import {
   CreateVisitorRequest,
 } from 'src/customs/api/models/Admin/Visitor';
 import {
-  getAllCustomField,
-  getAllVisitorPagination,
-  getAllVisitorType,
   getEmployeeById,
   getFormEmployee,
   getRegisteredSite,
@@ -155,9 +150,7 @@ const Content = () => {
   const [flowTarget, setFlowTarget] = useState<'invitation' | 'preReg' | null>(null);
   // Employee Detail
   const [openEmployeeDialog, setOpenEmployeeDialog] = useState(false);
-  // const [employeeLoading, setEmployeeLoading] = useState(false);
   const [employeeError, setEmployeeError] = useState<string | null>(null);
-  // const [employeeDetail, setEmployeeDetail] = useState<any>(null);
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
 

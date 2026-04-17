@@ -24,8 +24,6 @@ import Swal from 'sweetalert2';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { useNavigate } from 'react-router';
 import FilterVisitor from './FilterVisitor';
-import { useDebounce } from 'src/hooks/useDebounce';
-import { filter } from 'lodash';
 
 type VisitorTableRow = {
   id: string;

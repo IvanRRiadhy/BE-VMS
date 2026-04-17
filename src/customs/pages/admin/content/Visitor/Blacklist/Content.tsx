@@ -21,9 +21,7 @@ const Content = () => {
   const [totalRecords, setTotalRecords] = useState(0);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
-  const [edittingId, setEdittingId] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [sortDir, setSortDir] = useState('desc');
@@ -102,7 +100,7 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, sortColumn, sortDir, refreshTrigger, searchKeyword]);
+  }, [token, page, rowsPerPage, sortDir, refreshTrigger, searchKeyword]);
 
   useEffect(() => {
     const fetchData = async () => {

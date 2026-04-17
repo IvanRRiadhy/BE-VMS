@@ -57,7 +57,18 @@ import CustomTextField from 'src/components/forms/theme-elements/CustomTextField
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import CustomRadio from 'src/components/forms/theme-elements/CustomRadio';
 import FilterMoreContent from './FilterMoreContent';
-import dayjs from 'dayjs';
+import dayjs, { Dayjs, tz } from 'dayjs';
+import weekday from 'dayjs/plugin/weekday';
+import localizedFormat from 'dayjs/plugin/localizedFormat';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+import utc from 'dayjs/plugin/utc';
+import advancedFormat from 'dayjs/plugin/advancedFormat';
+dayjs.locale('id');
+dayjs.extend(utc);
+dayjs.extend(weekday);
+dayjs.extend(localizedFormat);
+dayjs.extend(customParseFormat);
+dayjs.extend(advancedFormat);
 import {
   createVisitorInvitation,
   getDetailInvitationForm,
@@ -171,7 +182,7 @@ const Invitation = () => {
             // organization: item.visitor.organization,
             invitation_code: item.invitation_code,
             // gender: item.visitor.gender,
-            phone: item.visitor.phone,
+            phone: item.visitor_phone,
             visitor_period_start: item.visitor_period_start,
             visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
             host: item.host_name ?? item.host ?? '-',
@@ -260,22 +271,6 @@ const Invitation = () => {
   const handleReset = () => {
     setActiveStep(0);
   };
-
-  // 🧾 Simulasi validasi sederhana per step
-  // const validateStep = (section: any) => {
-  //   if (!section) return true;
-
-  //   // contoh: pastikan semua mandatory field diisi
-  //   for (const s of section.sections || []) {
-  //     for (const f of s.form || []) {
-  //       if (f.mandatory && !f.answer_text && !f.answer_file) {
-  //         alert(`Field "${f.long_display_text}" masih kosong.`);
-  //         return false;
-  //       }
-  //     }
-  //   }
-  //   return true;
-  // };
 
   const getSectionType = (section: any) => {
     const f = section.form || [];
@@ -429,7 +424,7 @@ const Invitation = () => {
       switch (field.field_type) {
         case 0: // Text
           return (
-            <TextField
+            <CustomTextField
               size="small"
               value={field.answer_text}
               onChange={(e) => onChange(index, 'answer_text', e.target.value)}
@@ -441,7 +436,7 @@ const Invitation = () => {
 
         case 1: // Number
           return (
-            <TextField
+            <CustomTextField
               type="number"
               size="small"
               value={field.answer_text}
@@ -453,7 +448,7 @@ const Invitation = () => {
 
         case 2: // Email
           return (
-            <TextField
+            <CustomTextField
               type="email"
               size="small"
               value={field.answer_text}
@@ -466,6 +461,7 @@ const Invitation = () => {
 
         case 3: {
           let options: { value: string; name: string }[] = [];
+
           return (
             <Autocomplete
               size="small"
@@ -489,7 +485,12 @@ const Invitation = () => {
                 onChange(index, 'answer_text', newValue ? newValue.value : '')
               }
               renderInput={(params) => (
-                <TextField {...params} label="" placeholder="Ketik minimal 3 karakter" fullWidth />
+                <CustomTextField
+                  {...params}
+                  label=""
+                  placeholder="Enter at least 3 characters"
+                  fullWidth
+                />
               )}
             />
           );
@@ -497,7 +498,7 @@ const Invitation = () => {
 
         case 4: // Date
           return (
-            <TextField
+            <CustomTextField
               type="date"
               size="small"
               value={field.answer_datetime}
@@ -517,7 +518,7 @@ const Invitation = () => {
                 ];
 
             return (
-              <TextField
+              <CustomTextField
                 select
                 size="small"
                 value={field.answer_text || ''}
@@ -530,13 +531,12 @@ const Invitation = () => {
                     {opt.name}
                   </MenuItem>
                 ))}
-              </TextField>
+              </CustomTextField>
             );
           }
           if (field.remarks === 'vehicle_type') {
             let options = field.multiple_option_fields || [];
 
-            // ✅ Kalau options kosong tapi answer_text sudah ada, tambahkan minimal 1 opsi
             if (options.length === 0 && field.answer_text) {
               options = [{ id: 'default', value: field.answer_text, name: field.answer_text }];
             }
@@ -554,7 +554,7 @@ const Invitation = () => {
             }
 
             return (
-              <TextField
+              <CustomTextField
                 select
                 size="small"
                 fullWidth
@@ -568,7 +568,7 @@ const Invitation = () => {
                     {opt.name}
                   </MenuItem>
                 ))}
-              </TextField>
+              </CustomTextField>
             );
           }
 
@@ -579,7 +579,7 @@ const Invitation = () => {
                   row
                   value={field.answer_text || ''}
                   onChange={(e) => onChange(index, 'answer_text', e.target.value)}
-                  sx={{ flexDirection: 'row', flexWrap: 'wrap', gap: 1 }}
+                  sx={{ flexDirection: 'row', flexWrap: 'nowrap', gap: 1 }}
                 >
                   <FormControlLabel
                     value="true"
@@ -596,7 +596,7 @@ const Invitation = () => {
             );
           }
           return (
-            <TextField
+            <CustomTextField
               size="small"
               value={field.answer_text}
               onChange={(e) => onChange(index, 'answer_text', e.target.value)}
@@ -620,7 +620,7 @@ const Invitation = () => {
 
         case 8: // Time
           return (
-            <TextField
+            <CustomTextField
               type="time"
               size="small"
               value={field.answer_datetime}
@@ -641,7 +641,7 @@ const Invitation = () => {
                     onChange(index, 'answer_datetime', utc);
                   }
                 }}
-                format="dddd, DD MMMM YYYY, HH:mm"
+                format="DD MMMMM YYYY, HH:mm"
                 viewRenderers={{
                   hours: renderTimeViewClock,
                   minutes: renderTimeViewClock,
@@ -842,7 +842,7 @@ const Invitation = () => {
         }
         default:
           return (
-            <TextField
+            <CustomTextField
               size="small"
               value={field.long_display_text}
               onChange={(e) => onChange(index, 'long_display_text', e.target.value)}
@@ -913,12 +913,12 @@ const Invitation = () => {
 
     try {
       const id = source.id;
-      // console.log('id', id);
+
       const res = await createVisitorInvitation(token as string, id, payload);
-      console.log('✅ Success:', JSON.stringify(res, null, 2));
+      console.log('Success:', JSON.stringify(res, null, 2));
       showSwal('success', 'Visitor has been invited.');
     } catch (err) {
-      console.error('❌ Failed:', err);
+      console.error('Failed:', err);
     } finally {
       setTimeout(() => setLoadingAccess(false), 1000);
     }
@@ -1106,7 +1106,6 @@ const Invitation = () => {
                                             (q: any) =>
                                               q.form.some((f: any) => f.remarks === found.remarks),
                                           );
-                                          if (!targetPage) return prev;
                                           const formIdx = targetPage.form.findIndex(
                                             (f: any) => f.remarks === found.remarks,
                                           );
@@ -1182,7 +1181,7 @@ const Invitation = () => {
               displayValue = invitationData?.collection?.host_data?.name ?? f.answer_text ?? '-';
             } else if (f.remarks === 'site_place') {
               displayValue =
-                invitationData?.collection?.site_place_data?.name ?? f.answer_text ?? '-';
+                invitationData?.collection?.site_place_name ?? f.answer_text ?? '-';
             } else if (f.remarks === 'visitor_period_start' || f.remarks === 'visitor_period_end') {
               const dt = moment.utc(f.answer_datetime).local();
               const raw = f.answer_datetime;
@@ -1195,10 +1194,9 @@ const Invitation = () => {
             } else if (f.answer_datetime) {
               try {
                 const dt = moment.utc(f.answer_datetime).local();
-                console.log('Converted time:', dt.format());
 
                 displayValue = dt.isValid()
-                  ? dt.format('ddd, DD MMM YYYY, HH:mm')
+                  ? dt.format('dddd, DD MMMM YYYY, HH:mm')
                   : f.answer_datetime;
               } catch (err) {
                 console.error('Invalid datetime:', f.answer_datetime);
@@ -1303,7 +1301,7 @@ const Invitation = () => {
                 selectedRows={selectedRows}
                 defaultRowsPerPage={rowsPerPage}
                 isNoActionTableHead={true}
-                rowsPerPageOptions={[10, 20, 50, 100]}
+                rowsPerPageOptions={[10,  50, 100]}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);
@@ -1324,10 +1322,10 @@ const Invitation = () => {
                 onView={(row: { id: string }) => {
                   handleView(row.id);
                 }}
-                onEdit={(row) => {
-                  handleEdit(row.id);
-                  // setEdittingId(row.id);
-                }}
+                // onEdit={(row) => {
+                //   handleEdit(row.id);
+                //   // setEdittingId(row.id);
+                // }}
                 isHaveHeader={false}
                 isHavePdf={true}
                 filterMoreContent={
@@ -1357,13 +1355,13 @@ const Invitation = () => {
           open={invitatioOpenDetail}
           onClose={() => setInvitatioOpenDetail(false)}
           fullWidth
-          maxWidth="md"
-          // maxWidth={false}
-          // PaperProps={{
-          //   sx: {
-          //     width: '100vw',
-          //   },
-          // }}
+          // maxWidth="md"
+          maxWidth={false}
+          PaperProps={{
+            sx: {
+              width: '100vw',
+            },
+          }}
         >
           {/* <DialogTitle>Detail Invitation</DialogTitle> */}
           <DialogTitle>Edit Invitation</DialogTitle>
@@ -1380,8 +1378,8 @@ const Invitation = () => {
             <IconX />
           </IconButton>
           <Divider />
-          {/* <DialogContent dividers> */}
-          {/* <Grid container spacing={2}>
+          <DialogContent dividers>
+            <Grid container spacing={2}>
               <Grid size={{ xs: 12, md: 12 }}>
                 <Stepper activeStep={activeStep} alternativeLabel>
                   {groupedSections.map((s, idx) => (
@@ -1423,9 +1421,9 @@ const Invitation = () => {
                   </Box>
                 </>
               </Grid>
-            </Grid> */}
-          {/* </DialogContent> */}
-          <DialogContent dividers>
+            </Grid>
+          </DialogContent>
+          {/* <DialogContent dividers>
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, md: 12 }}>
                 <CustomFormLabel sx={{ mt: 0.5 }}>Visit Start</CustomFormLabel>
@@ -1436,8 +1434,8 @@ const Invitation = () => {
                 <CustomTextField type="datetime-local" fullWidth />
               </Grid>
             </Grid>
-          </DialogContent>
-          <DialogActions>
+          </DialogContent> */}
+          {/* <DialogActions>
             <Button
               onClick={() => setInvitatioOpenDetail(false)}
               fullWidth
@@ -1446,7 +1444,7 @@ const Invitation = () => {
             >
               Submit
             </Button>
-          </DialogActions>
+          </DialogActions> */}
         </Dialog>
 
         <InvitationDetailDialog

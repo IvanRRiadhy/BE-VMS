@@ -45,7 +45,6 @@ import 'select2/dist/css/select2.min.css';
 import {
   IconArrowLeft,
   IconCamera,
-  IconCircleCheck,
   IconDeviceFloppy,
   IconTrash,
   IconUser,
@@ -93,14 +92,12 @@ import { DateTimePicker, renderTimeViewClock, TimePicker } from '@mui/x-date-pic
 import { IconX } from '@tabler/icons-react';
 import { IconArrowRight } from '@tabler/icons-react';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { useQuery } from '@tanstack/react-query';
 import CameraUpload from 'src/customs/components/camera/CameraUpload';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { TreeItem, TreeView } from '@mui/x-tree-view';
 import { SimpleTreeView } from '@mui/x-tree-view';
 import VisitorTypeList from 'src/customs/pages/Operator/Invitation/components/VisitorTypeList';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import { createGrandAccessOperator, createMultipleGrantAccess } from 'src/customs/api/operator';
 
 interface FormVisitorTypeProps {
   formData: CreateVisitorRequest;
@@ -155,12 +152,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const FORM_KEY: 'visit_form' | 'pra_form' = formKey;
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
-  const [alertType, setAlertType] = useState<'info' | 'success' | 'error'>('info');
   const { token } = useSession();
   const [searchKeyword, setSearchKeyword] = useState('');
   const [activeStep, setActiveStep] = useState(0);
-  const [submitted, setSubmitted] = useState(false);
-  const [accessDialogOpen, setAccessDialogOpen] = useState(false);
   const [dynamicSteps, setDynamicSteps] = useState<string[]>([]);
   const [draggableSteps, setDraggableSteps] = useState<string[]>([]);
   const [sectionsData, setSectionsData] = useState<SectionPageVisitorType[]>([]);
@@ -176,7 +170,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const [rawSections, setRawSections] = useState<any[]>([]);
   const [selectedInvitations, setSelectedInvitations] = useState<any[]>([]);
   const formsOf = (section: any) => (Array.isArray(section?.[FORM_KEY]) ? section[FORM_KEY] : []);
-  const [accessAction, setAccessAction] = useState<'grant' | 'revoke' | 'block'>('grant');
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -1339,6 +1332,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     let shouldDisable = false;
 
     const renderInput = () => {
+      const startField = opts?.details?.find(
+        (f: any) => (f.remarks || '').toLowerCase() === 'visitor_period_start',
+      );
+
+      const startDate = startField?.answer_datetime ? dayjs(startField.answer_datetime) : null;
+
       switch (field.field_type) {
         case 0: // Text
           return (
@@ -1651,6 +1650,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
               <DateTimePicker
                 value={field.answer_datetime ? dayjs(field.answer_datetime) : null}
                 ampm={false}
+                minDateTime={
+                  field.remarks === 'visitor_period_end' && startDate ? startDate : undefined
+                }
                 onChange={(newValue) => {
                   if (newValue) {
                     const utc = newValue.utc().format();
@@ -1888,7 +1890,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         }
         default:
           return (
-            <TextField
+            <CustomTextField
               size="small"
               value={field.long_display_text}
               onChange={(e) => onChange(index, 'long_display_text', e.target.value)}
@@ -2303,6 +2305,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       return visible;
     });
 
+    const startField = details.find(
+      (f) => (f.remarks || '').toLowerCase() === 'visitor_period_start',
+    );
+
+    const startDate = startField?.answer_datetime ? dayjs(startField.answer_datetime) : null;
+
     return filteredDetails.map((item, index) => {
       // const key = `${activeStep - 1}:${index}`;
       const key = `${activeStep - 1}:${item.id}`;
@@ -2669,6 +2677,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       <DateTimePicker
                         value={item.answer_datetime ? dayjs(item.answer_datetime) : null}
                         ampm={false}
+                        minDateTime={
+                          item.remarks === 'visitor_period_end' && startDate ? startDate : undefined
+                        }
                         onChange={(newValue) => {
                           if (newValue) {
                             const utc = newValue.utc().format();
@@ -3562,7 +3573,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         };
 
         const parsed = CreateVisitorRequestSchema.parse(payload);
-        console.log('Final Payload (Single):', JSON.stringify(parsed, null, 2));
+        // console.log('Final Payload (Single):', JSON.stringify(parsed, null, 2));
 
         const submitFn = TYPE_REGISTERED === 0 ? createPraRegister : createVisitor;
         const backendResponse = await submitFn(token, parsed);
@@ -4019,15 +4030,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     if (!openChooseCardDialog) setSelectedCards([]);
   }, [openChooseCardDialog]);
 
-  const resetSelections = () => {
-    setSelectedInvitations([]);
-    setSelectedCards([]);
-  };
 
-  const handleCloseChooseCard = () => {
-    setOpenChooseCardDialog(false);
-    resetSelections();
-  };
 
   type CardInfo = {
     card_number: string;
@@ -4049,73 +4052,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     return m;
   }, [availableCards]);
 
-  const handleConfirmChooseCards = async () => {
-    try {
-      const ids = normalizeIdsDeep(selectedInvitations);
-
-      if (!ids.length || !selectedCards.length) {
-        handleCloseChooseCard();
-        return;
-      }
-
-      const N = Math.min(ids.length, selectedCards.length);
-
-      // pair: id ↔ (remarks, card_number)
-      const pairs = ids.slice(0, N).map((id, i) => {
-        const num = selectedCards[i];
-        const meta = cardIndex.get(num);
-        return { id, card_number: num, remarks: meta?.remarks ?? '-' };
-      });
-
-      setRows((prevRows: any) =>
-        prevRows.map((row: any) => {
-          const p = pairs.find((x) => x.id === String(row.id));
-          if (!p) return row;
-
-          return {
-            ...row,
-            card: {
-              card_number: p.card_number,
-              remarks: p.remarks,
-            },
-            assigned_card_number: p.card_number,
-            assigned_card_remarks: p.remarks,
-          };
-        }),
-      );
-
-      const payload = pairs.map((p) => ({
-        card_number: p.card_number,
-        trx_visitor_id: p.id,
-        description: `Give card number ${p.card_number}`,
-        is_swapcard: false,
-        swap_type: 'Other',
-      }));
-
-      // console.log('Payload for granting access:', { data: payload });
-
-      const res = await createMultipleGrantAccess(token as string, { data: payload });
-
-      toast(`Assigned ${N} card(s) to ${N} invitation(s).`, 'success');
-
-      // setSelectedInvitations([]);
-      handleCloseChooseCard();
-    } catch (error: any) {
-      console.error('Failed to assign cards:', error);
-
-      const message =
-        error?.response?.data?.message ||
-        error?.message ||
-        'Failed to assign cards. Please try again.';
-
-      toast(message, 'error');
-    }
-  };
-
-  const filteredRows = useMemo(() => {
-    if (!searchKeyword) return rows;
-    return rows.filter((r) => r.visitor?.toLowerCase().includes(searchKeyword.toLowerCase()));
-  }, [rows, searchKeyword]);
 
   const assignedByCard = useMemo(() => {
     const m = new Map<string, string | number>();
@@ -4131,14 +4067,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     return new Set(normalizeIdsDeep(selectedInvitations).map(String));
   }, [selectedInvitations]);
 
-  const availableVisibleCards = useMemo(() => {
-    return filteredCards.filter((c) => {
-      const holder = assignedByCard.get(String(c.card_number));
-      return !(holder && !selectedIdSet.has(String(holder)));
-    });
-  }, [filteredCards, assignedByCard, selectedIdSet]);
-
-  const availableCount = availableVisibleCards.length;
 
   useEffect(() => {
     if (openChooseCardDialog) {

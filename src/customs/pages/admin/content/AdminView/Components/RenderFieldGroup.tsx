@@ -38,7 +38,7 @@ type RenderFieldGroupProps = {
   index: number;
   groupIndex: any;
   onChange: (index: number, fieldKey: keyof FormVisitor, value: any) => void;
-  opts?: { showLabel?: boolean; uniqueKey?: string };
+  opts?: { showLabel?: boolean; uniqueKey?: string; details?: any[] };
 
   // 🔥 semua dependency lama DIKIRIM
   employee: any[];
@@ -108,6 +108,11 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
   };
 
   const renderInput = () => {
+    const startField = opts?.details?.find(
+      (f: any) => (f.remarks || '').toLowerCase() === 'visitor_period_start',
+    );
+
+    const startDate = startField?.answer_datetime ? dayjs(startField.answer_datetime) : null;
     switch (field.field_type) {
       case 0: // Text
         return (
@@ -482,6 +487,9 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
             <DateTimePicker
               value={field.answer_datetime ? dayjs(field.answer_datetime) : null}
               ampm={false}
+              minDateTime={
+                field.remarks === 'visitor_period_end' && startDate ? startDate : undefined
+              }
               onChange={(newValue) => {
                 if (newValue) {
                   const utc = newValue.utc().format();
@@ -704,7 +712,9 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
     <Box sx={{ overflow: 'auto', width: '100%' }}>
       {showLabel && (
         <>
-          <CustomFormLabel required={field.mandatory === true}>{field.long_display_text}</CustomFormLabel>
+          <CustomFormLabel required={field.mandatory === true}>
+            {field.long_display_text}
+          </CustomFormLabel>
         </>
       )}
 

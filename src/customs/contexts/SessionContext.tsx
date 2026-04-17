@@ -43,7 +43,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     }
     setToken(newToken);
     // setAuthType(type);
-    setGroupId(groupId ?? null);
+    // setGroupId(groupId ?? null);
   };
 
   const clearToken = () => {

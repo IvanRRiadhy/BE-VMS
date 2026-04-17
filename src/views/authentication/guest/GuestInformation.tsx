@@ -221,7 +221,7 @@ const GuestInformationStepper = () => {
     );
   }
 
-  const formSections = invitationData.question_page;
+  const formSections = invitationData.question_page || [];
 
   const steps = formSections.map((q: any) => q.name);
 
@@ -1080,15 +1080,26 @@ const GuestInformationStepper = () => {
                   visitor_form_type: 1,
                 };
 
-                if (!value) return base;
+            if (f.field_type === 9) {
+              return {
+                ...base,
+                answer_datetime: value ?? null,
+                answer_text: value ?? null,
+              };
+            }
 
-                if (f.field_type === 9) {
-                  return { ...base, answer_datetime: value, answer_text: value };
-                }
-                if (f.field_type === 10 || f.field_type === 11 || f.field_type === 12) {
-                  return { ...base, answer_file: value };
-                }
-                return { ...base, answer_text: value };
+            if (f.field_type === 10 || f.field_type === 11 || f.field_type === 12) {
+              return {
+                ...base,
+                answer_file: value ?? null, 
+              };
+            }
+
+            // default (text, number, dll)
+            return {
+              ...base,
+              answer_text: value ?? null,
+            };
               }),
             };
           }),
@@ -1138,9 +1149,9 @@ const GuestInformationStepper = () => {
         localStorage.removeItem('visitor_ref_code');
         return;
       }
-    } catch (error) {
+    } catch (error:any) {
       setSubmitting(false);
-      showSwal('error', 'Failed to submit guest information form.');
+      showSwal('error', error.msg || 'Failed to Pra Register Visitor');
     } finally {
       setSubmitting(false);
     }

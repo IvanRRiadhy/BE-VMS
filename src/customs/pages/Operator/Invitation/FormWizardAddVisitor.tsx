@@ -1552,8 +1552,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                                 onChange={handleChangeGroup}
                                                 opts={{
                                                   showLabel: false,
-                                                  // uniqueKey: `${activeStep - 1}:${gIdx}:${fIdx}`,
                                                   uniqueKey: `${activeStep - 1}:${gIdx}:${field.custom_field_id}`,
+                                                  details: page.form,
                                                 }}
                                                 employee={employee}
                                                 allVisitorEmployee={allVisitorEmployee}
@@ -2341,6 +2341,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       onChange(idx, field, value);
     };
 
+    const startField = details.find(
+      (f) => (f.remarks || '').toLowerCase() === 'visitor_period_start',
+    );
+
+    const startDate = startField?.answer_datetime ? dayjs(startField.answer_datetime) : null;
+
     return filteredDetails.map((item: any, index: any) => {
       // const key = `${activeStep - 1}:${index}`;
       const key = `${activeStep - 1}:${item.id}`;
@@ -2721,6 +2727,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       <DateTimePicker
                         value={item.answer_datetime ? dayjs(item.answer_datetime) : null}
                         ampm={false}
+                        minDateTime={
+                          item.remarks === 'visitor_period_end' && startDate ? startDate : undefined
+                        }
                         onChange={(newValue) => {
                           if (newValue) {
                             const utc = newValue.utc().format();
@@ -3561,7 +3570,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         return base;
       };
 
- 
       const baseMeta = {
         visitor_type: formData.visitor_type ?? '',
         type_registered: TYPE_REGISTERED,
@@ -4058,8 +4066,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     return activeVisitorType?.visitor_type_documents?.find((d: any) => d.document_name === docName)
       ?.document_id;
   };
-
-
 
   useEffect(() => {
     const fetchVisitorTypeDetails = async () => {
