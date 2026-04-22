@@ -48,9 +48,7 @@ import {
   IconLogin,
   IconLogout,
   IconPrinter,
-  IconQrcode,
   IconSearch,
-  IconSwipe,
   IconX,
 } from '@tabler/icons-react';
 import Container from 'src/components/container/PageContainer';
@@ -76,9 +74,8 @@ import {
   getPermissionOperator,
   getTodayVisitingPurpose,
 } from 'src/customs/api/operator';
-import { BASE_URL, axiosInstance2 } from 'src/customs/api/interceptor';
+import {axiosInstance2 } from 'src/customs/api/interceptor';
 import LprImage from 'src/assets/images/products/pic_lpr.png';
-import FRImage from 'src/assets/images/products/pic_fr.png';
 import SearchVisitorDialog from './Dialog/SearchVisitorDialog';
 import DetailVisitorDialog from './Dialog/DetailVisitorDialog';
 import Swal from 'sweetalert2';
@@ -140,8 +137,6 @@ import OperatorToolbar from './Components/OperatorToolbar';
 import VisitorImage from './Components/VisitorImage';
 import ReturnCardDialog from './Dialog/ReturnCardDialog';
 import GlobalBackdropLoading from './Components/GlobalBackdrop';
-import RegisteredSiteDialog from './Dialog/RegisteredSiteAccessDialog';
-import RegisteredSiteAccessDialog from './Dialog/RegisteredSiteAccessDialog';
 import AccessDialog from './Dialog/AccessDialog';
 import ParkingDialog from './Dialog/ParkingDialog';
 import ActionPanelCard from './Components/ActionPanelCard';
@@ -240,6 +235,7 @@ const Content = () => {
   const [openBlacklistVisitor, setOpenBlacklistVisitor] = useState(false);
   const [openTriggeredAccess, setOpenTriggeredAccess] = useState(false);
   const [registerSiteOperator, setRegisterSiteOperator] = useState<any>({});
+  const [registeredSite, setRegisteredSite] = useState<any[]>([]);
   const [openSwipeDialogNoInvitation, setOpenSwipeDialogNoInvitation] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
   const debouncedKeyword = useDebounce(searchKeyword, 300);
@@ -252,8 +248,6 @@ const Content = () => {
   const [employee, setEmployee] = useState<any[]>([]);
   const [dialogContainer, setDialogContainer] = useState<HTMLElement | null>(null);
   const [hidePageContainer, setHidePageContainer] = useState(false);
-  // const [siteRegistered, setSiteRegistered] = useState<any[]>([]);
-
   const [openPreviewPrint, setOpenPreviewPrint] = useState(false);
   const [openBulkPrint, setOpenBulkPrint] = useState(false);
   const handleOpenBlacklistVisitor = () => setOpenBlacklistVisitor(true);
@@ -308,6 +302,7 @@ const Content = () => {
         const res = await getRegisteredSiteOperator(token as string);
         const firstSite = res?.collection?.[0];
         setRegisterSiteOperator(firstSite?.id ?? '');
+        setRegisteredSite(res?.collection ?? []);
       } catch (error) {
         console.log(error);
       }
@@ -3040,7 +3035,6 @@ const Content = () => {
     setOpenDialogInvitation(true);
   };
 
-
   const validateMultiVisitorAccess = (
     accessId: string,
     visitorIds: string[],
@@ -3238,7 +3232,8 @@ const Content = () => {
           err?.response?.data?.msg ||
           err?.response?.data?.message ||
           err?.response?.data?.error ||
-          err?.message || 'Failed to execute action.';
+          err?.message ||
+          'Failed to execute action.';
 
         showSwal('error', backendMsg);
         resolve();
@@ -3416,10 +3411,17 @@ const Content = () => {
             >
               <Grid container spacing={1} mb={0}>
                 <Grid size={{ xs: 12, sm: 12, lg: 9 }}>
-                  <VisitorSearchInput onOpenSearch={() => setOpenSearch(true)} />
+                  <VisitorSearchInput
+                    onOpenSearch={() => setOpenSearch(true)}
+                    onClear={handleClearAll}
+                    containerRef={containerRef as any}
+                  />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 12, lg: 3 }}>
                   <OperatorToolbar
+                    registeredSite={registeredSite}
+                    selectedSite={registerSiteOperator}
+                    onChangeSite={setRegisterSiteOperator}
                     onClear={handleClearAll}
                     onOpenList={handleOpenListVisitor}
                     onOpenBlacklist={handleOpenBlacklistVisitor}
@@ -4284,309 +4286,6 @@ const Content = () => {
               setSnackbar={setSnackbar}
               onSubmit={handleSwipeCardSubmitNoCode}
             />
-            {/* Choose Card */}
-            {/* <Dialog
-            open={openChooseCardDialog}
-            onClose={() => setOpenChooseCardDialog(false)}
-            fullWidth
-            maxWidth="lg"
-            container={containerRef.current}
-          >
-            <DialogTitle>Choose Card</DialogTitle>
-
-            <IconButton
-              aria-label="close"
-              onClick={() => {
-                setOpenChooseCardDialog(false);
-                setActionButton('');
-              }}
-              sx={{
-                position: 'absolute',
-                right: 8,
-                top: 8,
-                color: (theme) => theme.palette.grey[500],
-              }}
-            >
-              <IconX />
-            </IconButton>
-            <DialogContent dividers>
-              <Box mb={2}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  placeholder="Search card"
-                  variant="outlined"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <IconSearch size={20} />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              </Box>
-
-              <Box mb={2} onClick={(e) => e.stopPropagation()}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={isChecked}
-                      indeterminate={isIndeterminate}
-                      onChange={handleSelectAll}
-                      disabled={capacity === 0}
-                    />
-                  }
-                  label="Select All"
-                />
-              </Box>
-
-              {currentUsedCard && (
-                <>
-                  <Grid container spacing={2} mb={2}>
-                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-                      <Paper
-                        sx={(theme) => ({
-                          p: 2,
-                          borderRadius: 2,
-                          position: 'relative',
-                          height: 280,
-                          display: 'flex',
-                          flexDirection: 'column',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          textAlign: 'center',
-                          border: '2px solid',
-                          borderColor: theme.palette.warning.main,
-                          backgroundColor: theme.palette.warning.light,
-                          boxShadow: theme.shadows[6],
-                        })}
-                      >
-                        <Box
-                          flexGrow={1}
-                          display="flex"
-                          flexDirection="column"
-                          justifyContent="center"
-                          alignItems="center"
-                        >
-                          <Typography variant="h1" color="text.secondary" mt={1}>
-                            {currentUsedCard.card_number}
-                          </Typography>
-
-                          <Box
-                            display="flex"
-                            justifyContent="space-between"
-                            width="100%"
-                            maxWidth={300}
-                            mt={1}
-                          >
-                            <Typography variant="body1" fontWeight={600}>
-                              Card
-                            </Typography>
-                            <Typography variant="body1">{currentUsedCard.card_number}</Typography>
-                          </Box>
-
-                          <Box
-                            display="flex"
-                            justifyContent="space-between"
-                            width="100%"
-                            maxWidth={300}
-                            flexWrap="wrap"
-                            gap={1}
-                          >
-                            <Typography variant="body1" fontWeight={600}>
-                              BLE
-                            </Typography>
-                            <Typography variant="body1">
-                              {currentUsedCard.card_mac || '-'}
-                            </Typography>
-                          </Box>
-                        </Box>
-
-                        <Typography variant="body1">{currentUsedCard.name}</Typography>
-
-                        <Typography variant="body2" color="warning.main" fontWeight={600}>
-                          (Last Used Card)
-                        </Typography>
-
-                        <FormControlLabel
-                          onClick={(e) => e.stopPropagation()}
-                          onMouseDown={(e) => e.stopPropagation()}
-                          control={
-                            <Checkbox
-                              checked={selectedCards.includes(currentUsedCard.card_number)}
-                              // disabled={!isChosen}
-                              onChange={() => handleToggleCard(currentUsedCard.card_number)}
-                            />
-                          }
-                          label=""
-                          sx={{ m: 0 }}
-                        />
-                      </Paper>
-                    </Grid>
-                  </Grid>
-                  <Divider sx={{ mb: 2 }} />
-                </>
-              )}
-
-              <Grid container spacing={2}>
-                {filteredCards.map((card) => {
-                  const isChosen = selectedCards.includes(card.card_number);
-                  const isLimitReached =
-                    selectedCards.length >= (selectedVisitors.length || 1) && !isChosen;
-                  return (
-                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={card.id}>
-                      <Paper
-                        onMouseDown={(e) => e.stopPropagation()}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleToggleCard(card.card_number);
-                        }}
-                        sx={(theme) => ({
-                          p: 2,
-                          borderRadius: 2,
-                          position: 'relative',
-                          height: 280,
-                          display: 'flex',
-                          flexDirection: 'column',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          textAlign: 'center',
-                          cursor: 'pointer',
-                          border: '1px solid',
-                          borderColor: isChosen ? theme.palette.primary.main : 'divider',
-                          boxShadow: isChosen ? theme.shadows[8] : theme.shadows[2],
-                          backgroundColor: isChosen
-                            ? theme.palette.primary.light
-                            : 'background.paper',
-                          transition: theme.transitions.create(
-                            ['transform', 'box-shadow', 'border-color', 'background-color'],
-                            {
-                              duration: theme.transitions.duration.shorter,
-                            },
-                          ),
-                          '&:hover': {
-                            transform: isLimitReached ? 'none' : 'translateY(-3px)',
-                            boxShadow: isLimitReached ? theme.shadows[1] : theme.shadows[6],
-                          },
-                        })}
-                      >
-                        <Box
-                          flexGrow={1}
-                          display="flex"
-                          flexDirection="column"
-                          justifyContent="center"
-                          alignItems="center"
-                        >
-                          <Typography variant="h1" color="text.secondary" mt={2}>
-                            {card.remarks || '-'}
-                          </Typography>
-
-                          <Box
-                            display="flex"
-                            justifyContent="space-between"
-                            width="100%"
-                            maxWidth={300}
-                            mt={1}
-                          >
-                            <Typography variant="body1" fontWeight={600}>
-                              Card
-                            </Typography>
-                            <Typography variant="body1" color="text.secondary">
-                              {card.card_number || '-'}
-                            </Typography>
-                          </Box>
-
-                          <Box
-                            display="flex"
-                            justifyContent="space-between"
-                            width="100%"
-                            maxWidth={300}
-                            flexWrap={'wrap'}
-                            gap={1}
-                          >
-                            <Typography variant="body1" fontWeight={600}>
-                              BLE
-                            </Typography>
-                            <Typography variant="body1" fontWeight={500}>
-                              {card.card_mac || '-'}
-                            </Typography>
-                          </Box>
-                        </Box>
-
-                        <Typography variant="body1">{card.name}</Typography>
-
-                        <FormControlLabel
-                          onClick={(e) => e.stopPropagation()}
-                          onMouseDown={(e) => e.stopPropagation()}
-                          control={
-                            <Checkbox
-                              checked={isChosen}
-                              // disabled={!isChosen}
-                              onChange={() => handleToggleCard(card.card_number)}
-                            />
-                          }
-                          label=""
-                          sx={{ m: 0 }}
-                        />
-                      </Paper>
-                    </Grid>
-                  );
-                })}
-              </Grid>
-
-              <Box mt={3} display="flex" justifyContent="space-between" alignItems="center">
-                <Box display="flex" flexDirection="row" gap={1}>
-                  <Typography variant="body1">
-                    Cards chosen: {selectedCards.length} / {availableCount} |
-                  </Typography>
-                  <Typography variant="body1">
-               
-                    Maximum cards allowed: <b>{selectedVisitors.length || 1}</b>
-                  </Typography>
-                </Box>
-              </Box>
-            </DialogContent>
-            <DialogActions>
-              <Button
-                fullWidth
-                variant="contained"
-                // disabled={selectedCards.length === 0}
-                onClick={handleOpenSwipeDialog}
-                color="warning"
-                sx={{ fontSize: '16px' }}
-                startIcon={<IconSwipe />}
-                disabled={!!currentUsedCard && selectedCards.includes(currentUsedCard.card_number)}
-              >
-                Swipe
-              </Button>
-              <Button
-                fullWidth
-                variant="contained"
-                // disabled={selectedCards.length === 0}
-                onClick={handleConfirmChooseCards}
-                color="primary"
-                sx={{ fontSize: '16px' }}
-                startIcon={<IconCards />}
-              >
-                Give
-              </Button>
-              <Button
-                fullWidth
-                variant="contained"
-                // disabled={selectedCards.length === 0}
-                // onClick={handleConfirmChooseCards}
-                onClick={() => setOpenRevokeDialog(true)}
-                color="error"
-                sx={{ fontSize: '16px' }}
-                startIcon={<IconKeyOff />}
-              >
-                Revoke
-              </Button>
-            </DialogActions>
-          </Dialog> */}
-
             <ChooseCardDialog
               open={openChooseCardDialog}
               onClose={() => {

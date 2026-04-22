@@ -152,6 +152,7 @@ export const CreateVisitorRequestSchema = z.object({
   registered_site: z.string().optional(),
   flow: z.string().optional(),
   visitor_role : z.string().optional(),
+  registered_site_id: z.string().optional(),
   data_visitor: z.array(visitorItemSchema).optional(),
 });
 

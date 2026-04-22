@@ -16,9 +16,6 @@ import React, { useEffect, useState, useRef } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { useSession } from 'src/customs/contexts/SessionContext';
-
-import { IconTrash } from '@tabler/icons-react';
-import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import {
   ApiTypeAuth,
   BrandType,
@@ -36,16 +33,21 @@ interface FormIntegrationProps {
   editingId?: string;
 }
 
-
-
 const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIntegrationProps) => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
   const { token } = useSession();
-  
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     setFormData((prev) => ({ ...prev, [id]: value }));
+  };
+
+  const ApiTypeAuthMap: Record<string, number> = {
+    Basic: 0,
+    Bearer: 1,
+    Apikey: 2,
+    Bacnet: 4,
   };
 
   const handleOnSubmit = async (e: React.FormEvent) => {
@@ -57,11 +59,15 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
         return;
       }
       const data: CreateIntegrationRequest = CreateIntegrationRequestSchema.parse(formData);
+      const payload: any = {
+        ...data,
+        api_type_auth: ApiTypeAuthMap[data.api_type_auth],
+      };
       // console.log('data', data);
       if (editingId && editingId !== '') {
-        await updateIntegration(editingId, data, token);
+        await updateIntegration(editingId, payload, token);
       } else {
-        await createIntegration(data, token);
+        await createIntegration(payload, token);
       }
 
       localStorage.removeItem('unsavedIntegrationData');
@@ -134,7 +140,8 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
           </Grid>
           <Grid size={6}>
             <Typography variant="h6" sx={{ mb: 2, borderLeft: '4px solid #673ab7', pl: 1 }}>
-              API Type : {formatEnumLabel(ApiTypeAuth[formData.api_type_auth])}
+              {/* API Type : {formatEnumLabel(ApiTypeAuth[formData.api_type_auth])} */}
+              API TYPE : {formData.api_type_auth}
             </Typography>
             <CustomFormLabel htmlFor="api_url">API URL</CustomFormLabel>
             <CustomTextField
@@ -145,7 +152,7 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
               helperText={errors.api_url || ''}
               fullWidth
             />
-            {formData.api_type_auth === 0 && (
+            {formData.api_type_auth === 'Basic' && (
               <>
                 <CustomFormLabel htmlFor="api_auth_username">API Auth Username</CustomFormLabel>
                 <CustomTextField
@@ -168,7 +175,7 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
                 />
               </>
             )}
-            {(formData.api_type_auth === 1 || formData.api_type_auth === 2) && (
+            {(formData.api_type_auth === 'Bearer' || formData.api_type_auth === 'Apikey') && (
               <>
                 <CustomFormLabel htmlFor="api_key_field">API Key Field</CustomFormLabel>
                 <CustomTextField

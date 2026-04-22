@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Button,
   Grid2,
@@ -12,10 +12,7 @@ import {
 import { Box } from '@mui/system';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import {
-  createUserGroup,
-  updateUserGroup,
-} from 'src/customs/api/admin';
+import { createUserGroup, updateUserGroup } from 'src/customs/api/admin';
 import { useSession } from 'src/customs/contexts/SessionContext';
 
 import { showSwal } from 'src/customs/components/alerts/alerts';
@@ -24,6 +21,7 @@ interface FormWizardUserGroupProps {
   setFormData: React.Dispatch<React.SetStateAction<any>>;
   edittingId?: string;
   onSuccess?: () => void;
+  onDirtyChange?: any;
 }
 
 const FormWizardUserGroup: React.FC<FormWizardUserGroupProps> = ({
@@ -31,6 +29,7 @@ const FormWizardUserGroup: React.FC<FormWizardUserGroupProps> = ({
   setFormData,
   edittingId,
   onSuccess,
+  onDirtyChange,
 }) => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
@@ -39,7 +38,7 @@ const FormWizardUserGroup: React.FC<FormWizardUserGroupProps> = ({
   const [snackbarType, setSnackbarType] = useState<'success' | 'error' | 'info'>('info');
   const [alertType, setAlertType] = useState<'info' | 'success' | 'error'>('info');
   // const [siteOptions, setSiteOptions] = useState<any[]>([]);
-  const [permissionSites, setPermissionSites] = useState<Record<string, string[]>>({});
+  // const [permissionSites, setPermissionSites] = useState<Record<string, string[]>>({});
   // const [regsiteredSiteOptions, setRegisteredSiteOptions] = useState<any[]>([]);
   // const [organizationSiteOptions, setOrganizationSiteOptions] = useState<any[]>([]);
   // const [accessOptions, setAccessOptions] = useState<any[]>([]);
@@ -61,11 +60,41 @@ const FormWizardUserGroup: React.FC<FormWizardUserGroupProps> = ({
   //   fetchData();
   // }, [token]);
 
+  const DRAFT_KEY = 'unsavedUserForm';
+  const initialRef = React.useRef(formData);
+
+  useEffect(() => {
+    if (!edittingId) {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(formData));
+    }
+  }, [formData]);
+
+  useEffect(() => {
+    if (edittingId) return;
+
+    const draft = localStorage.getItem(DRAFT_KEY);
+
+    if (draft) {
+      const parsed = JSON.parse(draft);
+
+      setFormData(parsed);
+
+      onDirtyChange?.(true);
+    }
+  }, [edittingId]);
+
+  const isDirty = useMemo(() => {
+    return JSON.stringify(initialRef.current) !== JSON.stringify(formData);
+  }, [formData]);
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     setFormData((prev: any) => ({ ...prev, [id]: value }));
   };
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,18 +105,15 @@ const FormWizardUserGroup: React.FC<FormWizardUserGroupProps> = ({
       if (!token) {
         return;
       }
-
       // console.log('payload submit', formData);
-
       const payload = {
         name: formData.name,
         description: formData.description,
         homepage: formData.homepage,
         role_access: formData.role_access,
-      }
+      };
 
       console.log('payload submit', payload);
-
 
       if (edittingId) {
         await updateUserGroup(token, edittingId, payload);
@@ -95,19 +121,18 @@ const FormWizardUserGroup: React.FC<FormWizardUserGroupProps> = ({
         await createUserGroup(token, payload);
       }
 
-
       showSwal('success', edittingId ? 'User successfully updated!' : 'User successfully created!');
+      localStorage.removeItem(DRAFT_KEY);
       setTimeout(() => {
         onSuccess?.();
       }, 600);
     } catch (err: any) {
       if (err?.errors) setErrors(err.errors);
-      showSwal('error', 'Something went wrong');
+      showSwal('error', 'Failed to create user group');
     } finally {
       setTimeout(() => setLoading(false), 500);
     }
   };
-
 
   const handleGroupChange = (value: string) => {
     setFormData((prev: any) => ({
@@ -116,9 +141,8 @@ const FormWizardUserGroup: React.FC<FormWizardUserGroupProps> = ({
       permissions: [],
     }));
 
-    setPermissionSites({});
+    // setPermissionSites({});
   };
-
 
   return (
     <>

@@ -60,6 +60,7 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import axiosInstance from 'src/customs/api/interceptor';
+import FilterMoreContent from './FilterMoreContent';
 
 type EnableField = {
   employee_id: boolean;
@@ -82,6 +83,11 @@ type ImportErrorRow = {
     [k: string]: any;
   };
 };
+
+interface Filters {
+  type: number;
+  card_status: number;
+}
 
 const typeMap: Record<string, number> = {
   'Non Access Card': 0,
@@ -254,13 +260,11 @@ const Content = () => {
     [formAddVisitorCard, initialFormData],
   );
 
-
   useEffect(() => {
     if (Object.keys(formAddVisitorCard).length > 0) {
       localStorage.setItem('unsavedVisitorCardData', JSON.stringify(formAddVisitorCard));
     }
   }, [formAddVisitorCard]);
-
 
   const handleAddVisitorCard = useCallback(() => {
     let saved = localStorage.getItem('unsavedVisitorCardData');
@@ -327,9 +331,7 @@ const Content = () => {
   const handleBatchDelete = async (rows: Item[]) => {
     if (rows.length === 0) return;
 
-    const confirmed = await showConfirmDelete(
-      `Are you sure to delete ${rows.length} items?`,
-    );
+    const confirmed = await showConfirmDelete(`Are you sure to delete ${rows.length} items?`);
 
     if (confirmed) {
       setLoading(true);
@@ -662,11 +664,24 @@ const Content = () => {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={confirmDialogOpen} onClose={handleCancelEditDiscard}>
-        <DialogTitle>Unsaved Changes</DialogTitle>
-        <DialogContent>
-          You have unsaved changes for another Employee. Are you sure you want to discard them and
-          edit this Employee?
+      <Dialog open={confirmDialogOpen} onClose={handleCancelEditDiscard} fullWidth maxWidth="sm">
+        <DialogTitle>
+          Unsaved Changes
+          <IconButton
+            aria-label="close"
+            onClick={handleCancelEditDiscard}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
+              color: (theme) => theme.palette.grey[500],
+            }}
+          >
+            <IconX />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          You have unsaved changes. Are you sure you want to discard them?
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCancelEditDiscard}>Cancel</Button>
@@ -680,120 +695,3 @@ const Content = () => {
 };
 
 export default Content;
-
-interface Filters {
-  type: number;
-  card_status: number;
-}
-
-type FilterMoreContentProps = {
-  filters: Filters;
-  setFilters: React.Dispatch<React.SetStateAction<Filters>>;
-  onApplyFilter: () => void;
-};
-const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
-  filters,
-  setFilters,
-  onApplyFilter,
-}) => {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { id, value, name } = e.target as any;
-    const key = (id || name) as keyof Filters;
-    setFilters((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') onApplyFilter();
-  };
-
-  const initialFilters: Filters = {
-    type: -1,
-    card_status: -1,
-  };
-
-  const typeOptions = [
-    { value: -1, label: 'All Types' },
-    { value: 0, label: 'Non Access Card' },
-    { value: 1, label: 'RFID' },
-    { value: 2, label: 'BLE' },
-  ];
-
-  const cardStatusOptions = [
-    { value: -1, label: 'All Status' },
-    { value: 0, label: 'Not Found' },
-    { value: 1, label: 'Active' },
-    { value: 2, label: 'Lost' },
-    { value: 3, label: 'Broken' },
-    { value: 4, label: 'Not Return' },
-  ];
-
-  const getOption = (options: { value: number; label: string }[], val: number) =>
-    options.find((o) => o.value === val) || options[0];
-
-  return (
-    <Box
-      sx={{ padding: { xs: 0, lg: 3 }, margin: 1.5, boxShadow: 0, borderRadius: 2 }}
-      onKeyDown={handleKeyDown}
-    >
-      <Typography variant="h5" gutterBottom>
-        Card Filter
-      </Typography>
-
-      <Grid container spacing={3}>
-        <Grid size={{ xs: 12 }}>
-          <CustomFormLabel sx={{ marginTop: '0px' }}>
-            <Typography variant="caption">Type</Typography>
-          </CustomFormLabel>
-          <Autocomplete
-            size="small"
-            disablePortal
-            options={typeOptions}
-            getOptionLabel={(opt) => opt.label}
-            value={getOption(typeOptions, filters.type)}
-            onChange={(_, newVal) =>
-              setFilters((prev) => ({ ...prev, type: newVal ? newVal.value : -1 }))
-            }
-            renderInput={(params) => <CustomTextField {...params} placeholder="Select type" />}
-          />
-        </Grid>
-
-        {/* Status Radio Buttons */}
-        <Grid size={{ xs: 12 }}>
-          <CustomFormLabel sx={{ marginTop: '0px' }}>
-            <Typography variant="caption">Status</Typography>
-          </CustomFormLabel>
-          <Autocomplete
-            size="small"
-            disablePortal
-            options={cardStatusOptions}
-            getOptionLabel={(opt) => opt.label}
-            value={getOption(cardStatusOptions, filters.card_status)}
-            onChange={(_, newVal) =>
-              setFilters((prev) => ({ ...prev, card_status: newVal ? newVal.value : -1 }))
-            }
-            renderInput={(params) => <CustomTextField {...params} placeholder="Select status" />}
-          />
-        </Grid>
-        {/* Actions */}
-        <Grid size={{ xs: 12 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              gap: 1,
-              justifyContent: 'flex-end',
-              mt: 1,
-              alignItems: 'center',
-            }}
-          >
-            <Button variant="outlined" onClick={() => setFilters(initialFilters)}>
-              Reset
-            </Button>
-            <Button variant="contained" onClick={onApplyFilter}>
-              Apply
-            </Button>
-          </Box>
-        </Grid>
-      </Grid>
-    </Box>
-  );
-};

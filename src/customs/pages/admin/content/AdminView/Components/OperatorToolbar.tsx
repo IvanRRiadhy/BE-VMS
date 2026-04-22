@@ -1,4 +1,4 @@
-import { Button, IconButton, Menu, MenuItem, Tooltip } from '@mui/material';
+import { Button, IconButton, Menu, MenuItem, Select, Tooltip } from '@mui/material';
 import { Box } from '@mui/system';
 import {
   IconArrowsMaximize,
@@ -19,6 +19,9 @@ interface OperatorToolbarProps {
   isFullscreen: boolean;
   onToggleFullscreen: () => void;
   containerRef?: React.RefObject<HTMLElement>;
+  registeredSite?: any[];
+  selectedSite?: any;
+  onChangeSite?: any;
 }
 
 const OperatorToolbar = ({
@@ -30,6 +33,9 @@ const OperatorToolbar = ({
   isFullscreen,
   onToggleFullscreen,
   containerRef,
+  registeredSite,
+  selectedSite,
+  onChangeSite,
 }: OperatorToolbarProps) => {
   const tooltipProps = {
     arrow: true,
@@ -62,33 +68,30 @@ const OperatorToolbar = ({
         px: '5px',
       }}
     >
-      <Tooltip title="Clear data information" {...tooltipProps}>
+      {/* <Tooltip title="Clear data information" {...tooltipProps}>
         <Button variant="outlined" color="error" startIcon={<IconX size={18} />} onClick={onClear}>
           Clear
         </Button>
-      </Tooltip>
-      {/* 
-      <Tooltip title="List Visitor" {...tooltipProps}>
-        <Button
-          onClick={onOpenList}
-          startIcon={<IconUser size={18} />}
-          variant="contained"
-          // sx={{ backgroundColor: 'gray', '&:hover': { backgroundColor: 'gray' } }}
-        >
-          <IconUser size={25} style={{ color: '#fff' }} /> 
-          Visitor
-        </Button>
-      </Tooltip>
-
-      <Tooltip title="Blacklist Visitor" {...tooltipProps}>
-        <Button
-          onClick={onOpenBlacklist}
-          sx={{ backgroundColor: '#000', '&:hover': { backgroundColor: '#000' }, color: '#fff' }}
-          startIcon={<IconUser size={18} style={{ color: '#fff' }} />}
-        >
-          Blacklist
-        </Button>
       </Tooltip> */}
+
+      <Select
+        value={selectedSite ?? ''}
+        onChange={(e) => onChangeSite?.(e.target.value)}
+        displayEmpty
+        size="medium"
+        // disabled={(registeredSite?.length ?? 0) === 1}
+        sx={{ width: '150px' }}
+      >
+        <MenuItem value="" disabled>
+          Select Site
+        </MenuItem>
+
+        {registeredSite?.map((item: any) => (
+          <MenuItem key={item.id} value={item.id}>
+            {item.name}
+          </MenuItem>
+        ))}
+      </Select>
 
       <Tooltip title="Visitor Menu" {...tooltipProps}>
         <Button

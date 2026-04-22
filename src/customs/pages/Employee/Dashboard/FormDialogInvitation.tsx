@@ -113,7 +113,7 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
     fetchData();
   }, [id, token]);
 
-  // ✅ Validasi field di step aktif
+
   // const validateStep = (section: any) => {
   //   const newErrors: Record<string, string> = {};
   //   section?.form?.forEach((f: any) => {
@@ -341,13 +341,13 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
   const handleRemoveFileForField = async (
     currentUrl: string,
     setAnswerFile: (url: string) => void,
-    inputId: string, // <- pakai key yg sama dengan id input
+    inputId: string,
   ) => {
     try {
       setRemoving((s) => ({ ...s, [inputId]: true }));
       if (currentUrl) {
         await axiosInstance2.delete(`/cdn${currentUrl}`);
-        console.log('✅ Berhasil hapus file CDN:', currentUrl);
+        // console.log('✅ Berhasil hapus file CDN:', currentUrl);
       }
 
       setAnswerFile('');
@@ -411,7 +411,7 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
           </Typography>
 
           <Typography variant="caption" color="textSecondary">
-            Supports: PDF, DOCX, JPG, PNG
+            Supports: DOCX, JPG, PNG, JPEG, Up to <b>100KB</b>
           </Typography>
 
           {/* Hidden input */}
@@ -441,7 +441,6 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
               }}
             >
               {previewSrc ? (
-                // 📄 PDF / DOC Preview
                 previewSrc.endsWith('.pdf') || previewSrc.endsWith('.docx') ? (
                   <Box
                     sx={{

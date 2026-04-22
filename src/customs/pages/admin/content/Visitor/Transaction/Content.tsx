@@ -874,7 +874,6 @@ const Content = () => {
         maxWidth="sm"
         open={openDialogIndex === 1}
         onClose={() => {
-          // matikan torch kalau menyala (best-effort)
           try {
             const video = scanContainerRef.current?.querySelector(
               'video',
@@ -928,7 +927,6 @@ const Content = () => {
         <Divider />
 
         <DialogContent>
-          {/* Toggle mode */}
           <Box display="flex" gap={1} mb={2}>
             <Button
               variant={qrMode === 'manual' ? 'contained' : 'outlined'}
@@ -972,7 +970,7 @@ const Content = () => {
                   }}
                   disabled={loading}
                 >
-                  {loading ? 'Submitting...' : 'Submit'}
+                  Submit
                 </Button>
               </Box>
             </>

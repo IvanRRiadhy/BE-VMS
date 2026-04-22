@@ -8,7 +8,7 @@ export const AvailableIntegrationItemSchema = z.object({
   brand_name: z.string(),
   brand_type: z.number(),
   integration_type: z.number(),
-  api_type_auth: z.number(),
+  api_type_auth: z.string(),
   id: z.string(),
 });
 
@@ -19,7 +19,7 @@ export const IntegrationItemScheme = z.object({
   brand_name: z.string(),
   brand_type: z.number(),
   integration_type: z.number(),
-  api_type_auth: z.number(),
+  api_type_auth: z.string(),
   api_url: z.string(),
   api_auth_username: z.string(),
   api_auth_passwd: z.string(),
@@ -36,7 +36,7 @@ export type Item = {
   brand_name: string;
   brand_type: number;
   integration_type: number;
-  api_type_auth: number;
+  api_type_auth: string;
   api_url: string;
   api_auth_username: string;
   api_auth_passwd: string;
@@ -114,7 +114,7 @@ export const CreateIntegrationRequestSchema = z.object({
   // brand_type: z.number().default(0),
   brand_type: numberWithDefault(0),
   integration_type: z.number().default(0),
-  api_type_auth: z.number().default(0),
+  api_type_auth: z.string().default(''),
   api_url: z.string().default(''),
   api_auth_username: z.string().default(''),
   api_auth_passwd: z.string().default(''),
@@ -148,7 +148,7 @@ export const UpdateIntegrationRequestSchema = z.object({
   brand_name: z.string().default(''),
   brand_type: z.number().default(0),
   integration_type: z.number().default(0),
-  api_type_auth: z.number().default(0),
+  api_type_auth: z.string().default(''),
   api_url: z.string().default(''),
   api_auth_username: z.string().default(''),
   api_auth_passwd: z.string().default(''),

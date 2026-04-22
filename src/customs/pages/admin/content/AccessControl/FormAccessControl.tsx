@@ -42,13 +42,16 @@ type FormType = z.infer<typeof CreateAccessControlRequestSchema>;
 interface Props {
   editingId?: string;
   onSuccess?: () => void;
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
-const FormAccessControl = ({ editingId, onSuccess }: Props) => {
+const FormAccessControl = ({ editingId, onSuccess, onDirtyChange }: Props) => {
   const { token } = useSession();
   const [loading, setLoading] = useState(false);
   const [brandList, setBrandList] = useState<any[]>([]);
   const [integrationList, setIntegrationList] = useState<any[]>([]);
+  const DRAFT_KEY = 'unsavedAccessControl';
+
   const typeMap: Record<string, number> = {
     Access: 0,
     Group: 1,
@@ -57,7 +60,8 @@ const FormAccessControl = ({ editingId, onSuccess }: Props) => {
     control,
     handleSubmit,
     reset,
-    formState: { errors },
+    formState: { errors, isDirty },
+    watch,
   } = useForm<FormType>({
     resolver: zodResolver(CreateAccessControlRequestSchema),
     defaultValues: {
@@ -74,7 +78,33 @@ const FormAccessControl = ({ editingId, onSuccess }: Props) => {
     },
   });
 
-  // fetch dropdown
+  const formValues = watch();
+  useEffect(() => {
+    if (!isDirty) return;
+
+    const timeout = setTimeout(() => {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(formValues));
+    }, 500);
+
+    return () => clearTimeout(timeout);
+  }, [formValues, isDirty]);
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty]);
+
+  useEffect(() => {
+    const draft = localStorage.getItem(DRAFT_KEY);
+
+    if (!draft) return;
+
+    if (!editingId) {
+      try {
+        reset(JSON.parse(draft));
+      } catch {}
+    }
+  }, [editingId]);
+
   useEffect(() => {
     if (!token) return;
 
@@ -88,7 +118,6 @@ const FormAccessControl = ({ editingId, onSuccess }: Props) => {
     })();
   }, [token]);
 
-  // load edit data
   useEffect(() => {
     if (!token || !editingId) return;
 

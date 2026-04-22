@@ -104,15 +104,13 @@ const FormWizardAddVisitorCard = ({
     setActiveStep((prev) => prev - 1);
   };
 
-  const handleChange = (
-    e:
-      | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-      | React.ChangeEvent<{ name?: string; value: unknown }>,
-  ) => {
-    const { id, name, value } = e.target as any;
+  const handleChange = (e: any) => {
+    const { id, name, value } = e.target;
+    const key = name || id;
+
     setLocalForm((prev) => ({
       ...prev,
-      [name || id]: value,
+      [key]: value,
     }));
   };
 
@@ -312,7 +310,6 @@ const FormWizardAddVisitorCard = ({
         ) {
           newErrors.registered_site = 'Site is required';
         }
-
       } else {
         if (!localForm.name?.trim()) newErrors.name = 'Name is required';
         if (!localForm.remarks?.trim()) newErrors.remarks = 'Remarks is required';
@@ -338,6 +335,14 @@ const FormWizardAddVisitorCard = ({
     setAlertMessage('Complete the following data properly and correctly');
     return true;
   };
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setFormData(localForm);
+    }, 500); // delay 500ms (bisa 300–800ms)
+
+    return () => clearTimeout(handler);
+  }, [localForm]);
 
   const handleSteps = (step: number) => {
     switch (step) {

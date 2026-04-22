@@ -314,7 +314,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const getSectionType = (section: any) => {
     const f = formsOf(section);
     if (
-      f.some((x: any) => x.remarks === 'vehicle_plate') &&
+      f.some((x: any) => x.remarks === 'vehicle_plate' || x.remarks === 'vehicle_type') &&
       !section.is_document &&
       !section.can_multiple_used
     )
@@ -3945,6 +3945,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     setDataVisitor(result);
     return result;
   };
+  
 
   useEffect(() => {
     if (!formData.visitor_type || !token) return;
@@ -3966,6 +3967,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     const fetchVisitorTypeDetails = async () => {
       const res = visitorType.find((vt: any) => vt.id === formData.visitor_type);
       let sections = res?.section_page_visitor_types ?? [];
+      // console.log(sections);
 
       if (TYPE_REGISTERED === 0 || FORM_KEY === 'pra_form') {
         sections = sections.filter((s: any) => (s.pra_form || []).length > 0);

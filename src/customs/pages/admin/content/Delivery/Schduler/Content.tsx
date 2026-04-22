@@ -79,6 +79,8 @@ const Content = () => {
   const [totalRecords, setTotalRecords] = useState(0);
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [loadingData, setLoadingData] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [formDataScheduler, setFormDataScheduler] = useState<CreateSchedulerRequest>(() => {
     const saved = localStorage.getItem('unsavedSchedulerData');
 
@@ -188,13 +190,13 @@ const Content = () => {
 
         const collection = res?.collection ?? [];
 
-        if (!collection.length) {
-          setSchedulerData([]);
-          setRawSchedulerData([]);
-          setTotalFilteredRecords(0);
-          setTotalRecords(0);
-          return;
-        }
+        // if (!collection.length) {
+        //   setSchedulerData([]);
+        //   setRawSchedulerData([]);
+        //   setTotalFilteredRecords(0);
+        //   setTotalRecords(0);
+        //   return;
+        // }
 
         const rows = collection.map((item: any) => ({
           id: item.id,
@@ -210,10 +212,10 @@ const Content = () => {
         setTotalFilteredRecords(res.RecordsFiltered ?? collection.length);
         setTotalRecords(res.RecordsTotal ?? collection.length);
       } catch (error) {
-        setSchedulerData([]);
-        setRawSchedulerData([]);
-        setTotalFilteredRecords(0);
-        setTotalRecords(0);
+        // setSchedulerData([]);
+        // setRawSchedulerData([]);
+        // setTotalFilteredRecords(0);
+        // setTotalRecords(0);
       } finally {
         setTimeout(() => setLoading(false), 500);
       }
@@ -268,7 +270,6 @@ const Content = () => {
         setRefreshTrigger((prev) => prev + 1);
         showSwal('success', 'Successfully deleted scheduler!');
       } catch (error) {
-        console.log(error);
         showSwal('error', 'Failed to delete scheduler.');
       } finally {
         // setTimeout(() => setLoading(false), 500);
@@ -298,6 +299,15 @@ const Content = () => {
     setPage(0);
     setSearchKeyword(searchInput);
   }, [searchInput]);
+
+  const handleCloseScheduler = (_: any, reason?: string) => {
+    if (isDirty) {
+      setConfirmDialogOpen(true);
+      return;
+    }
+
+    setOpenDialogScheduler(false);
+  };
 
   return (
     <PageContainer
@@ -351,7 +361,7 @@ const Content = () => {
               }
               onEdit={(row) => {
                 handleEdit(row.id);
-                setEdittingId(row.id);
+                // setEdittingId(row.id);
               }}
               onDelete={(row) => handleDeleteSchduler(row.id)}
               searchKeyword={searchInput}
@@ -363,17 +373,18 @@ const Content = () => {
             />
           </Grid>
         </Box>
-        <Dialog
-          open={openDialogScheduler}
-          onClose={() => setOpenDialogScheduler(false)}
-          fullWidth
-          maxWidth="md"
-        >
+        <Dialog open={openDialogScheduler} onClose={handleCloseScheduler} fullWidth maxWidth="md">
           <DialogTitle>
             {formMode === 'add' ? 'Add Delivery Scheduler' : 'Edit Delivery Scheduler'}
             <IconButton
               aria-label="close"
-              onClick={() => setOpenDialogScheduler(false)}
+              onClick={() => {
+                if (isDirty) {
+                  setConfirmDialogOpen(true);
+                } else {
+                  setOpenDialogScheduler(false);
+                }
+              }}
               sx={{
                 position: 'absolute',
                 right: 8,
@@ -394,6 +405,7 @@ const Content = () => {
               defaultValue={selectedScheduler}
               mode={formMode}
               onSubmit={handleSubmitScheduler}
+              onDirtyChange={(dirty) => setIsDirty(dirty)}
             />
           </DialogContent>
         </Dialog>
@@ -476,6 +488,46 @@ const Content = () => {
               </Table>
             </TableContainer>
           </DialogContent>
+        </Dialog>
+
+        <Dialog
+          open={confirmDialogOpen}
+          onClose={() => setConfirmDialogOpen(false)}
+          fullWidth
+          maxWidth="sm"
+        >
+          <DialogTitle>
+            Unsaved Changes
+            <IconButton
+              aria-label="close"
+              onClick={() => setConfirmDialogOpen(false)}
+              sx={{
+                position: 'absolute',
+                right: 8,
+                top: 8,
+                color: (theme) => theme.palette.grey[500],
+              }}
+            >
+              <IconX />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent dividers>
+            You have unsaved changes. Do you want to discard them?
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setConfirmDialogOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => {
+                localStorage.removeItem('unsavedSchedulerData');
+                setConfirmDialogOpen(false);
+                setOpenDialogScheduler(false);
+              }}
+              color="primary"
+              variant="contained"
+            >
+              Yes, Discard and Continue
+            </Button>
+          </DialogActions>
         </Dialog>
 
         <Portal>

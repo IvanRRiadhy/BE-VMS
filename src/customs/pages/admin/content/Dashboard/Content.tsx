@@ -38,41 +38,54 @@ const Content = () => {
   const dispatch = useDispatch();
   // const { startDate, endDate, isManual } = useSelector((state: RootState) => state.dateRange);
   const { startDate, endDate } = useSelector((state: any) => state.dateRange);
-  const { token } = useSession();
-
   const [dataPraregist, setDataPraregist] = useState<any[]>([]);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [page, setPage] = useState(0);
   const exportRef = useRef<HTMLDivElement>(null);
+  const [isExporting, setIsExporting] = useState(false);
+
   const handleExportPdf = async () => {
-    if (!exportRef.current) return;
+    if (!exportRef.current || isExporting) return;
 
-    const canvas = await html2canvas(exportRef.current, { scale: 2 });
-    const imgData = canvas.toDataURL('image/png');
+    try {
+      setIsExporting(true);
 
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
+      // 🔥 kasih kesempatan React render loading dulu
+      await new Promise((resolve) => setTimeout(resolve, 0));
 
-    const imgWidth = pdfWidth - 20; 
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const canvas = await html2canvas(exportRef.current, { scale: 2 });
+      const imgData = canvas.toDataURL('image/jpeg');
 
-    let heightLeft = imgHeight;
-    let position = 10; 
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
 
-    // Halaman pertama
-    pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-    heightLeft -= pdfHeight;
+      const imgWidth = pdfWidth - 20;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-    // Halaman berikutnya
-    while (heightLeft > 0) {
-      position = heightLeft - imgHeight + 10;
-      pdf.addPage();
+      let heightLeft = imgHeight;
+      let position = 10;
+
       pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
       heightLeft -= pdfHeight;
-    }
 
-    pdf.save('dashboard.pdf');
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight + 10;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
+      }
+
+      const formatDate = (date: Date) => date.toISOString().split('T')[0];
+      const start = formatDate(startDate);
+      const end = formatDate(endDate);
+
+      pdf.save(`Dashboard Report-${start}_to_${end}.pdf`);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   // useEffect(() => {
@@ -154,8 +167,9 @@ const Content = () => {
                 color="error"
                 startIcon={<IconDownload />}
                 onClick={handleExportPdf}
+                disabled={isExporting}
               >
-                Export
+                {isExporting ? 'Exporting...' : 'Export'}
               </Button>
 
               <Drawer open={open} anchor="right" onClose={handleClose}>
@@ -182,11 +196,9 @@ const Content = () => {
 
           <div ref={exportRef}>
             <Grid container spacing={2}>
-              {/* column */}
               <Grid size={{ xs: 12, lg: 12 }}>
                 <TopCards items={CardItems} size={{ xs: 12, sm: 6, md: 4, xl: 2 }} />
               </Grid>
-              {/* column */}
               <Grid container mt={1} size={{ xs: 12, lg: 12 }}>
                 <Grid size={{ xs: 12, md: 6, xl: 3 }}>
                   <VisitingTypeChart />
@@ -194,15 +206,12 @@ const Content = () => {
                 <Grid size={{ xs: 12, md: 6, xl: 4 }}>
                   <TopVisitingPurposeChart title="Top Visiting Purpose" />
                 </Grid>
-
                 <Grid size={{ xs: 12, md: 6, xl: 5 }}>
                   <TopVisitor />
                 </Grid>
-
                 <Grid size={{ xs: 12, md: 6, lg: 6 }}>
                   <AvarageDurationChart />
                 </Grid>
-
                 <Grid size={{ xs: 12, md: 6, lg: 6 }}>
                   <DynamicTable
                     height={420}

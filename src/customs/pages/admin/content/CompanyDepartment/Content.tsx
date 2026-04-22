@@ -703,13 +703,13 @@ const Content = () => {
             <IconX />
           </IconButton>
         </DialogTitle>
-        <DialogContent>You have unsaved changes. What do you want to do?</DialogContent>
+        <DialogContent dividers>
+          You have unsaved changes. Are you sure you want to discard them?
+        </DialogContent>
         <DialogActions>
-          <Button onClick={handleDiscard} color="error" variant="contained">
-            Discard
-          </Button>
-          <Button onClick={handleContinueEditing} variant="contained">
-            Yes, Continue Editing
+          <Button onClick={() => setConfirmDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleDiscard} variant="contained">
+            Yes, Discard and Continue
           </Button>
         </DialogActions>
       </Dialog>

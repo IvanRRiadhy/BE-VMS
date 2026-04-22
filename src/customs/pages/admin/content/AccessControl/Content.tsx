@@ -293,11 +293,13 @@ const Content = () => {
 
   const handleDialogClose = (_event: object, reason: string) => {
     if (reason === 'backdropClick') {
-      if (isFormChanged) {
+      if (hasUnsaved()) {
         setConfirmDialogOpen(true);
       } else {
         handleCloseDialog();
       }
+    } else {
+      handleCloseDialog();
     }
   };
 
@@ -320,6 +322,20 @@ const Content = () => {
     setPage(0);
     setSearchKeyword(searchInput);
   }, [searchInput]);
+
+  const hasUnsaved = () => {
+    const raw = localStorage.getItem('unsavedAccessControl');
+    if (!raw) return false;
+
+    try {
+      const parsed = JSON.parse(raw);
+      return Object.values(parsed).some(
+        (val) => val !== '' && val !== null && val !== undefined && val !== '{}',
+      );
+    } catch {
+      return false;
+    }
+  };
 
   return (
     <PageContainer
@@ -388,7 +404,7 @@ const Content = () => {
           <IconButton
             aria-label="close"
             onClick={() => {
-              if (isFormChanged) {
+              if (hasUnsaved()) {
                 setConfirmDialogOpen(true);
               } else {
                 handleCloseDialog();
@@ -415,11 +431,24 @@ const Content = () => {
         </DialogContent>
       </Dialog>
       {/* Dialog Confirm edit */}
-      <Dialog open={confirmDialogOpen} onClose={handleCancelEdit}>
-        <DialogTitle>Unsaved Changes</DialogTitle>
-        <DialogContent ref={dialogRef}>
-          You have unsaved changes for another Access Control. Are you sure you want to discard them
-          and edit this Access Control?
+      <Dialog open={confirmDialogOpen} onClose={handleCancelEdit} fullWidth maxWidth="sm">
+        <DialogTitle>
+          Unsaved Changes
+          <IconButton
+            aria-label="close"
+            onClick={handleCancelEdit}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
+              color: (theme) => theme.palette.grey[500],
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent ref={dialogRef} dividers>
+          You have unsaved changes. Are you sure you want to discard them and continue?
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCancelEdit}>Cancel</Button>

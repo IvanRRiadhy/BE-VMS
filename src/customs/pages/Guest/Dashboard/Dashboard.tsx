@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import GuestLayout from '../GuestLayout';
+import GuestLayout from '../layout/GuestLayout';
 import PageContainer from 'src/components/container/PageContainer';
 import { Box } from '@mui/system';
 import {
@@ -20,8 +20,6 @@ import {
   DialogActions,
 } from '@mui/material';
 
-import Divider from '@mui/material/Divider';
-import { Download } from '@mui/icons-material';
 import {
   IconBan,
   IconCalendar,
@@ -63,12 +61,10 @@ import jsPDF from 'jspdf';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import AccessPassDialog from 'src/customs/pages/Guest/Components/Dialog/AccessPassDialog';
+import AccessPassDialog from '../Components/Dialog/AccessPassDialog';
 
 const Dashboard = () => {
   const { token } = useSession();
-  const [loading, setLoading] = useState(false);
-
   const [activeVisitData, setActiveVisitData] = useState<any[]>([]);
   const [activeAccessPass, setActiveAccessPass] = useState<any>();
   const [openAccess, setOpenAccess] = useState(false);
@@ -153,10 +149,8 @@ const Dashboard = () => {
     setIsGenerating(true);
 
     try {
-      // Clone elemen untuk PDF (tidak mempengaruhi UI asli)
       const clone = printRef.current.cloneNode(true) as HTMLElement;
 
-      // Buat logo khusus untuk PDF
       const logoEl = document.createElement('img');
       logoEl.src = '/src/assets/images/logos/BI_Logo.png';
       logoEl.style.width = '100px';

@@ -95,6 +95,7 @@ const SwipeAccessDialog = ({
         ...p,
         swap_card_in: site.id,
         swap_card_in_name: site.name,
+        trx_visitor_id: visitor.id,
       })),
     };
     console.log('📤 GIVE ACCESS PAYLOAD', payloads);

@@ -33,7 +33,7 @@ import {
   getVisitorEmployee,
 } from 'src/customs/api/admin';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
-import { IconClipboard, IconLink, IconUsers, IconX } from '@tabler/icons-react';
+import { IconClipboard, IconLink, IconShare, IconUsers, IconX } from '@tabler/icons-react';
 import dayjs from 'dayjs';
 import Praregist from './Praregist';
 import {
@@ -134,7 +134,7 @@ const Content = () => {
     },
     {
       title: 'Share Link',
-      icon: IconLink,
+      icon: IconShare,
       subTitle: iconAdd,
       subTitleSetting: 'image',
       color: 'none',
@@ -574,7 +574,7 @@ const Content = () => {
         const formattedDate = date
           .toLocaleDateString('id-ID', {
             day: '2-digit',
-            month: '2-digit',
+            month: 'long',
             year: 'numeric',
           })
           .replace(/\//g, '-');

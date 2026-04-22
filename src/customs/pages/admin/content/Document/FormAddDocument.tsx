@@ -37,16 +37,18 @@ interface FormAddDocumentProps {
   // setFormData: React.Dispatch<React.SetStateAction<CreateDocumentRequest>>;
   edittingId: string;
   onSuccess?: () => void;
+  onDirty?: () => void;
 }
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 const FormAddDocument: React.FC<FormAddDocumentProps> = ({
   // formData,
-  initialData,
   // setFormData,
+  initialData,
   edittingId,
   onSuccess,
+  onDirty,
 }) => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
@@ -68,6 +70,14 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
       [id]: value,
     }));
   }, []);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      localStorage.setItem('unsavedDocumentData', JSON.stringify(localForm));
+    }, 400);
+
+    return () => clearTimeout(timeout);
+  }, [localForm]);
 
   const resetFileState = () => {
     setFile(null);
@@ -220,7 +230,14 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
             <TextField
               id="name"
               value={localForm.name}
-              onChange={handleChange}
+              onChange={(e) => {
+                setLocalForm((prev) => ({
+                  ...prev,
+                  name: e.target.value,
+                }));
+
+                onDirty?.();
+              }}
               error={Boolean(errors.name)}
               helperText={errors.name ?? ''}
               fullWidth
@@ -259,12 +276,14 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
                       ? 'false'
                       : ''
                 }
-                onChange={(e) =>
+                onChange={(e) => {
                   setLocalForm((prev) => ({
                     ...prev,
-                    can_declined: e.target.value === 'true',
-                  }))
-                }
+                    can_signed: e.target.value === 'true',
+                  }));
+
+                  onDirty?.();
+                }}
               >
                 <FormControlLabel value="true" control={<Radio />} label="Yes" />
                 <FormControlLabel value="false" control={<Radio />} label="No" />
@@ -312,12 +331,14 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
                     ? 'false'
                     : ''
               }
-              onChange={(e) =>
+              onChange={(e) => {
                 setLocalForm((prev) => ({
                   ...prev,
                   can_upload: e.target.value === 'true',
-                }))
-              }
+                }));
+
+                onDirty?.();
+              }}
             >
               <FormControlLabel value="true" control={<Radio />} label="Yes" />
               <FormControlLabel value="false" control={<Radio />} label="No" />
@@ -351,12 +372,14 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
                         <MemoEditor
                           value={localForm.document_text}
                           disabled={loading}
-                          onChange={(data: string) =>
+                          onChange={(data: string) => {
                             setLocalForm((prev) => ({
                               ...prev,
                               document_text: data,
-                            }))
-                          }
+                            }));
+
+                            onDirty?.();
+                          }}
                         />
                       </Box>
                       {/* )} */}

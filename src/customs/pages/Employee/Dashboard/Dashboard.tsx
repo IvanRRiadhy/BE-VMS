@@ -24,21 +24,17 @@ import {
   IconCards,
   IconCheck,
   IconCircleMinus,
-  IconCircleOff,
-  IconCircleX,
-  IconForbid2,
   IconLogin,
   IconLogout,
   IconX,
 } from '@tabler/icons-react';
-import { Scanner } from '@yudiel/react-qr-scanner';
 import React, { useEffect, useRef, useState } from 'react';
 import QRCode from 'react-qr-code';
 import PageContainer from 'src/components/container/PageContainer';
 import TopCards from './TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import Heatmap from '../Heatmap';
+import Heatmap from './Heatmap';
 import { createApproval, getApproval } from 'src/customs/api/employee';
 import dayjs from 'dayjs';
 import {
@@ -47,9 +43,8 @@ import {
   getOngoingInvitation,
   openParkingBlocker,
 } from 'src/customs/api/visitor';
-import FormDialogInvitation from '../FormDialogInvitation';
+import FormDialogInvitation from './FormDialogInvitation';
 import { getAccessPass } from 'src/customs/api/admin';
-import { Download } from '@mui/icons-material';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
@@ -68,7 +63,7 @@ import {
 } from 'src/customs/api/ShareLink';
 import AccessPassDialog from '../Components/Dialog/AccessPassDialog';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { set } from 'lodash';
+
 const DashboardEmployee = () => {
   const CardItems = [
     { title: 'checkin', key: 'Checkin', icon: <IconLogin size={25} /> },
@@ -162,13 +157,26 @@ const DashboardEmployee = () => {
       agenda: item.agenda,
       url: item.url,
       max_usage: item.max_usage,
-      expired: new Date(item.expired_at + 'Z').toLocaleString(undefined, {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
+      expired_at: (() => {
+        const date = new Date(item.expired_at + 'Z');
+
+        const formattedDate = date
+          .toLocaleDateString('id-ID', {
+            day: '2-digit',
+            // month: '2-digit',
+            month: 'long',
+            year: 'numeric',
+          })
+          .replace(/\//g, '-');
+
+        const formattedTime = date.toLocaleTimeString('id-ID', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+        });
+
+        return `${formattedDate}, ${formattedTime}`;
+      })(),
       link_status: item.link_status,
     })) || [];
 
@@ -244,7 +252,7 @@ const DashboardEmployee = () => {
 
         setApprovalData(mappedData);
       } catch (error) {
-        console.error('Error fetching data:', error);
+        // console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
       }
@@ -261,7 +269,6 @@ const DashboardEmployee = () => {
         const res = await getOngoingInvitation(token as string);
         const data = res?.collection ?? [];
 
-        // 🔍 Filter hanya yang belum pra-register
         const filtered = data.filter(
           (item: any) => item.is_praregister_done === false || item.is_praregister_done === null,
         );
@@ -341,7 +348,6 @@ const DashboardEmployee = () => {
       logoEl.style.margin = '0 auto';
       clone.prepend(logoEl);
 
-      // Sembunyikan semua elemen "no-print" di clone
       clone.querySelectorAll('.no-print').forEach((el) => {
         (el as HTMLElement).style.display = 'none';
       });
@@ -551,10 +557,9 @@ const DashboardEmployee = () => {
   };
 
   return (
-    <PageContainer title="Dashboard Employee" description="This is Employee Dashboard">
+    <PageContainer title="Dashboard" description="This is Employee Dashboard">
       <Grid container spacing={2} sx={{ mt: 0 }}>
         <Grid size={{ xs: 12, lg: 9 }}>
-          {/* <TopCard items={cards} size={{ xs: 12, lg: 6 }} /> */}
           <TopCards items={CardItems} size={{ xs: 12, lg: 6 }} />
         </Grid>
 
@@ -637,8 +642,6 @@ const DashboardEmployee = () => {
           </Button>
         </Grid>
 
-        {/* Tabel */}
-
         <Grid size={{ xs: 12, lg: 6 }}>
           <DynamicTable
             height={510}
@@ -656,19 +659,6 @@ const DashboardEmployee = () => {
             isHavePeriod={true}
           />
         </Grid>
-        {/* <Grid size={{ xs: 12, lg: 3 }}>
-          <DynamicTable
-            height={430}
-            isHavePagination={false}
-            overflowX="auto"
-            data={activeInvitation}
-            isHaveChecked={false}
-            isHavePeriod={true}
-            isHaveAction={false}
-            isHaveHeaderTitle
-            titleHeader="Active Visit"
-          />
-        </Grid> */}
 
         <Grid size={{ xs: 12, lg: 6 }}>
           <DynamicTable
@@ -679,7 +669,7 @@ const DashboardEmployee = () => {
             titleHeader="Link Share Visitor"
             isHaveHeaderTitle={true}
             isCopyLink={true}
-            isHavePagination={true}
+            isHavePagination={false}
             defaultRowsPerPage={rowsPerPage}
             rowsPerPageOptions={[5, 10]}
             onPaginationChange={(page, rowsPerPage) => {

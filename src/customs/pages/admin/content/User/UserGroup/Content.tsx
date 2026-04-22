@@ -10,6 +10,7 @@ import {
   DialogContent,
   DialogTitle,
   Grid2 as Grid,
+  IconButton,
   Portal,
 } from '@mui/material';
 import Container from 'src/components/container/PageContainer';
@@ -17,7 +18,7 @@ import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { IconUsers } from '@tabler/icons-react';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   createPermission,
   createPermissionManageVisitor,
@@ -64,6 +65,7 @@ import {
 } from 'src/customs/api/UserGroup';
 import { searchVisitor } from 'src/customs/api/operator';
 import { de } from 'date-fns/locale';
+import { IconX } from '@tabler/icons-react';
 
 const Content = () => {
   const { token } = useSession();
@@ -79,7 +81,7 @@ const Content = () => {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
-
+  const queryClient = useQueryClient();
   const [siteOptions, setSiteOptions] = useState<any[]>([]);
   const [permissionSites, setPermissionSites] = useState<Record<string, string[]>>({});
   const [regsiteredSiteOptions, setRegisteredSiteOptions] = useState<any[]>([]);
@@ -882,7 +884,7 @@ const Content = () => {
         edittingId={edittingId}
         onSuccess={() => {
           setOpenFormAddDocument(false);
-          refetch();
+          queryClient.invalidateQueries({ queryKey: ['users-group'] });
         }}
       />
 
@@ -907,9 +909,30 @@ const Content = () => {
         accessOptions={accessOptions}
       />
 
-      <Dialog open={confirmDialogOpen} onClose={() => setConfirmDialogOpen(false)}>
-        <DialogTitle>Unsaved Changes</DialogTitle>
-        <DialogContent>You have unsaved changes. Discard them and continue editing?</DialogContent>
+      <Dialog
+        open={confirmDialogOpen}
+        onClose={() => setConfirmDialogOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>
+          Unsaved Changes
+          <IconButton
+            aria-label="close"
+            onClick={() => setConfirmDialogOpen(false)}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
+              color: (theme) => theme.palette.grey[500],
+            }}
+          >
+            <IconX />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          You have unsaved changes. Do you want to discard them?
+        </DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmDialogOpen(false)}>Cancel</Button>
           <Button
@@ -920,7 +943,7 @@ const Content = () => {
             color="primary"
             variant="contained"
           >
-            Yes, Dicard Unsaved Changes
+            Yes, Dicard Changes and Continue
           </Button>
         </DialogActions>
       </Dialog>

@@ -3,9 +3,6 @@ import {
   Autocomplete,
   Grid2 as Grid,
   Button,
-  Portal,
-  Backdrop,
-  CircularProgress,
   Divider,
   Checkbox,
   FormControlLabel,
@@ -15,7 +12,6 @@ import CustomTextField from 'src/components/forms/theme-elements/CustomTextField
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { Box } from '@mui/system';
 import Swal from 'sweetalert2';
-import { IconX } from '@tabler/icons-react';
 import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
 interface Site {
   id: string;
@@ -32,6 +28,7 @@ interface SchedulerFormProps {
   onSubmit: (data: any) => Promise<void>;
   defaultValue?: any;
   mode?: 'add' | 'edit';
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
 const SchedulerForm: React.FC<SchedulerFormProps> = ({
@@ -42,15 +39,47 @@ const SchedulerForm: React.FC<SchedulerFormProps> = ({
   onSubmit,
   defaultValue,
   mode = 'add',
+  onDirtyChange,
 }) => {
-  const [form, setForm] = useState({
-    name: '',
-    time_access: null as any,
-    visitor_type: null as any,
-    // site: null as any,
-    site: [] as Site[],
-    host: null as any,
-    question_page: [] as any[],
+  // const [form, setForm] = useState({
+  //   name: '',
+  //   time_access: null as any,
+  //   visitor_type: null as any,
+  //   // site: null as any,
+  //   site: [] as Site[],
+  //   host: null as any,
+  //   question_page: [] as any[],
+  // });
+
+  const DRAFT_KEY = 'unsavedSchedulerData';
+
+  const getInitialForm = () => {
+    const saved = localStorage.getItem(DRAFT_KEY);
+
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return null;
+      }
+    }
+
+    return null;
+  };
+
+  const [form, setForm] = useState(() => {
+    const saved = getInitialForm();
+
+    return (
+      saved ?? {
+        name: '',
+        time_access: null,
+        visitor_type: null,
+        site: [],
+        host: null,
+        question_page: [],
+      }
+    );
   });
 
   const [originalVisitorTypeId, setOriginalVisitorTypeId] = useState<string | null>(null);
@@ -83,6 +112,13 @@ const SchedulerForm: React.FC<SchedulerFormProps> = ({
   };
 
   const treeSiteOptions = useMemo(() => buildTreeOptions(siteDataQuery ?? []), [siteDataQuery]);
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      localStorage.setItem('unsavedSchedulerData', JSON.stringify(form));
+    }, 500);
+
+    return () => clearTimeout(timeout);
+  }, [form]);
 
   useEffect(() => {
     if (defaultValue) {
@@ -106,14 +142,47 @@ const SchedulerForm: React.FC<SchedulerFormProps> = ({
       //       (x.id ?? x.Id)?.toLowerCase() ===
       //       (defaultValue.site_id ?? defaultValue.SiteId)?.toLowerCase(),
       //   ) ?? null;
-      const siteIds =
-        typeof defaultValue.site_id === 'string'
-          ? defaultValue.site_id.split(',').map((x: string) => x.trim())
-          : [];
+      // const siteIds =
+      //   typeof defaultValue.site_id === 'string'
+      //     ? defaultValue.site_id.split(',').map((x: string) => x.trim())
+      //     : [];
 
-      const matchedSites = treeSiteOptions.filter((x) => siteIds.includes(x.id));
+      // const matchedSites = treeSiteOptions.filter((x) => siteIds.includes(x.id));
 
-      const matchedSite = matchedSites.length > 0 ? matchedSites : null;
+      // const siteIds = (defaultValue.site_id ?? '')
+      //   .split(',')
+      //   .map((x: string) => x.trim().toLowerCase());
+
+      // const matchedSites = siteDataQuery.filter((x) => siteIds.includes(x.id?.toLowerCase()));
+      // setSelectedSiteIds(matchedSites.map((s) => s.id));
+      // console.log('matchedSites', matchedSites);
+
+      const siteIds = (defaultValue.site_id ?? '')
+        .split(',')
+        .map((x: string) => x.trim().toLowerCase());
+
+      const matchedSites = siteDataQuery.filter((x) => siteIds.includes(x.id?.toLowerCase()));
+
+      setForm((prev: any) => ({
+        ...prev,
+        site: matchedSites,
+      }));
+
+      setSelectedSiteIds(matchedSites.map((s) => s.id));
+
+      const parentIds = Array.from(
+        new Set(
+          matchedSites
+            .map((s) => s.parent ?? s.id)
+            .filter(Boolean)
+            .map((p) => p.toLowerCase()),
+        ),
+      );
+      setSelectedSiteParentIds(parentIds);
+
+      const trees = parentIds.flatMap((pid) => buildSiteTreeWithParent(siteDataQuery, pid));
+
+      setSiteTree(trees);
 
       const matchedHost =
         hostDataQuery.find(
@@ -122,22 +191,44 @@ const SchedulerForm: React.FC<SchedulerFormProps> = ({
             (defaultValue.host_id ?? defaultValue.HostId)?.toLowerCase(),
         ) ?? null;
 
-      setForm({
+      // setForm({
+      //   name: defaultValue.name ?? '',
+      //   time_access: matchedTimeAccess,
+      //   visitor_type: matchedVisitorType,
+      //   // site: matchedSite,
+      //   site: matchedSites,
+      //   host: matchedHost,
+      //   question_page: defaultValue.question_page ?? [],
+      // });
+      setForm((prev: any) => ({
+        ...prev,
         name: defaultValue.name ?? '',
         time_access: matchedTimeAccess,
         visitor_type: matchedVisitorType,
-        // site: matchedSite,
         site: matchedSites,
         host: matchedHost,
         question_page: defaultValue.question_page ?? [],
-      });
+      }));
     }
   }, [defaultValue, timezoneData, visitorTypeQuery, siteDataQuery, hostDataQuery, treeSiteOptions]);
+
+  // const handleChange = (field: string, value: any) => {
+  //   setForm((prev: any) => ({
+  //     ...prev,
+  //     [field]: value,
+  //   }));
+  // };
+
   const handleChange = (field: string, value: any) => {
-    setForm((prev) => ({
-      ...prev,
+    const updated = {
+      ...form,
       [field]: value,
-    }));
+    };
+
+    setForm(updated);
+
+    const isDifferent = JSON.stringify(updated) !== JSON.stringify(defaultValue ?? {});
+    onDirtyChange?.(isDifferent);
   };
 
   const handleSubmit = async () => {
@@ -166,7 +257,7 @@ const SchedulerForm: React.FC<SchedulerFormProps> = ({
         time_access_id: form.time_access?.id,
         visitor_type_id: form.visitor_type?.id,
         // site_id: form.site?.id,
-        site_id: form.site.map((s) => s.id).join(','),
+        site_id: form.site.map((s: any) => s.id).join(','),
         host_id: form.host?.id,
         question_page: form.question_page ?? [],
       };
@@ -185,16 +276,13 @@ const SchedulerForm: React.FC<SchedulerFormProps> = ({
       //   });
       //   localStorage.removeItem('unsavedSchedulerData');
       // }
+      localStorage.removeItem('unsavedSchedulerData');
     } catch (error: any) {
       const backendMessage = error.msg || error.collection;
 
       showSwal('error', backendMessage || 'Failed to save schedule.');
     }
   };
-
-  // useEffect(() => {
-  //   localStorage.setItem('unsavedSchedulerData', JSON.stringify(form));
-  // }, [form]);
 
   useEffect(() => {
     if (!form.visitor_type) return;
@@ -228,12 +316,12 @@ const SchedulerForm: React.FC<SchedulerFormProps> = ({
         })),
       }));
 
-      setForm((prev) => ({
+      setForm((prev: any) => ({
         ...prev,
         question_page: mappedQuestionPage,
       }));
     } else {
-      setForm((prev) => ({ ...prev, question_page: [] }));
+      setForm((prev: any) => ({ ...prev, question_page: [] }));
     }
   }, [form.visitor_type]);
 
@@ -243,7 +331,7 @@ const SchedulerForm: React.FC<SchedulerFormProps> = ({
   const [siteTree, setSiteTree] = useState<any[]>([]);
 
   const siteParentOptions = useMemo(() => {
-    return siteDataQuery.filter((s) => !s.parent || !siteDataQuery.some((x) => x.id === s.parent));
+    return siteDataQuery.filter((s) => !s.parent || s.parent === null);
   }, [siteDataQuery]);
 
   const renderTree = (node: any, onChange: any) => {
@@ -321,13 +409,13 @@ const SchedulerForm: React.FC<SchedulerFormProps> = ({
 
   useEffect(() => {
     if (selectedSiteIds.length === 0) {
-      setForm((prev) => ({ ...prev, site: [] }));
+      setForm((prev: any) => ({ ...prev, site: [] }));
       return;
     }
 
     const selectedSites = siteDataQuery.filter((s) => selectedSiteIds.includes(s.id));
 
-    setForm((prev) => ({
+    setForm((prev: any) => ({
       ...prev,
       site: selectedSites,
     }));
@@ -391,11 +479,29 @@ const SchedulerForm: React.FC<SchedulerFormProps> = ({
             //     opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
             //   );
             // }}
+            // filterOptions={(opts, state) => {
+            //   const input = state.inputValue.toLowerCase();
+
+            //   if (!input || input.length < 3) {
+            //     return opts.slice(0, 5);
+            //   }
+
+            //   return opts.filter((opt) => opt.name.toLowerCase().includes(input));
+            // }}
             filterOptions={(opts, state) => {
               const input = state.inputValue.toLowerCase();
 
-              if (!input || input.length < 3) {
+             if (selectedSiteParentIds.length > 0 || mode === 'edit') {
+               return opts;
+             }
+
+              // mode normal
+              if (!input) {
                 return opts.slice(0, 5);
+              }
+
+              if (input.length < 3) {
+                return [];
               }
 
               return opts.filter((opt) => opt.name.toLowerCase().includes(input));
@@ -403,14 +509,22 @@ const SchedulerForm: React.FC<SchedulerFormProps> = ({
             noOptionsText={
               inputValue.length < 3 ? 'Enter at least 3 characters to search' : 'Not found'
             }
-            value={siteParentOptions.filter((opt) => selectedSiteParentIds.includes(opt.id))}
+            // value={siteParentOptions.filter((opt) => selectedSiteParentIds.includes(opt.id))}
+            value={siteParentOptions.filter((opt) =>
+              selectedSiteParentIds.includes(opt.id?.toLowerCase()),
+            )}
             onChange={(_, newValues) => {
               const parentIds = newValues.map((v) => v.id);
 
               setSelectedSiteParentIds(parentIds);
               setInputValue('');
 
-              const trees = parentIds.flatMap((pid) => buildSiteTreeWithParent(siteDataQuery, pid));
+              // const trees = parentIds.flatMap((pid) => buildSiteTreeWithParent(siteDataQuery, pid));
+              const trees = parentIds.flatMap((pid) => {
+                const tree = buildSiteTreeWithParent(siteDataQuery, pid);
+                return tree.length > 0 ? tree : [];
+              });
+
               setSiteTree(trees);
               setSelectedSiteIds((prev) =>
                 prev.filter((id) =>
@@ -447,7 +561,6 @@ const SchedulerForm: React.FC<SchedulerFormProps> = ({
             renderInput={(params) => <CustomTextField {...params} />}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 12 }}></Grid>
       </Grid>
       <Divider sx={{ mt: 1 }} />
       <Box
@@ -464,7 +577,6 @@ const SchedulerForm: React.FC<SchedulerFormProps> = ({
           // disabled={loading}
           sx={{ px: 3, textTransform: 'none' }}
         >
-          {/* {loading ? <CircularProgress size={20} /> : 'Submit'} */}
           Submit
         </Button>
       </Box>

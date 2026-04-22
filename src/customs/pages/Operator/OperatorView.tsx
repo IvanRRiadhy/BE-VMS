@@ -53,7 +53,7 @@ import {
   getPermissionOperator,
   getTodayVisitingPurpose,
 } from 'src/customs/api/operator';
-import {  axiosInstance2 } from 'src/customs/api/interceptor';
+import { axiosInstance2 } from 'src/customs/api/interceptor';
 import LprImage from 'src/assets/images/products/pic_lpr.png';
 import SearchVisitorDialog from './Dialog/SearchVisitorDialog';
 import DetailVisitorDialog from './Dialog/DetailVisitorDialog';
@@ -191,6 +191,7 @@ const OperatorView = () => {
   const [openBlacklistVisitor, setOpenBlacklistVisitor] = useState(false);
   const [openTriggeredAccess, setOpenTriggeredAccess] = useState(false);
   const [registerSiteOperator, setRegisterSiteOperator] = useState<string>('');
+  const [registeredSite, setRegisteredSite] = useState<any[]>([]);
   const [openSwipeDialogNoInvitation, setOpenSwipeDialogNoInvitation] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
   const debouncedKeyword = useDebounce(searchKeyword, 300);
@@ -267,8 +268,11 @@ const OperatorView = () => {
     const fetchData = async () => {
       try {
         const res = await getRegisteredSiteOperator(token as string);
+
         const firstSite = res?.collection?.[0];
         setRegisterSiteOperator(firstSite?.id ?? '');
+        // console.log('res register site', firstSite.id);
+        setRegisteredSite(res?.collection ?? []);
       } catch (error) {
         console.log(error);
       }
@@ -353,6 +357,7 @@ const OperatorView = () => {
         swap_type: type,
         swap_card_from_site_id: registerSiteOperator,
         is_swapcard: true,
+        registerd_site_id: registerSiteOperator,
       };
 
       console.log('SWAP PAYLOAD', payload);
@@ -403,6 +408,7 @@ const OperatorView = () => {
         swap_card_from_site_id: registerSiteOperator,
         swap_type: isSwap ? 'CardAccess' : 'Other',
         is_swapcard: isSwap,
+        registered_site_id: registerSiteOperator,
       };
 
       if (isSwap) {
@@ -894,7 +900,7 @@ const OperatorView = () => {
     const id = selectedVisitorId ?? invitationCode?.[0]?.visitor_id;
 
     if (!id) {
-      toast('Please select visitor first.', 'warning');
+      // toast('Please select visitor first.', 'warning');
       setOpenDialogIndex(1);
       return;
     }
@@ -1274,6 +1280,7 @@ const OperatorView = () => {
           swap_card_from_site_id: registerSiteOperator,
           is_swapcard: false,
           swap_type: 'Other',
+          registered_site_id: registerSiteOperator,
         }));
         // console.log('payloads', payloads);
 
@@ -2875,7 +2882,7 @@ const OperatorView = () => {
           type_registered: 1,
           is_group: isGroup,
           tz: tzFromApi,
-          registered_site: '',
+          registered_site_id: registerSiteOperator,
           data_visitor: [
             {
               question_page: questionPageTemplate.map((templateSection: any) => ({
@@ -2983,7 +2990,7 @@ const OperatorView = () => {
       // setSelectedVisitors([]);
       // setSelectMultiple(false);
     } catch (error) {
-      console.error('❌ Submit error:', error);
+      // console.error('❌ Submit error:', error);
       // toast('Submit gagal', 'error');
       showSwal('error', 'Failed Submit Pra Register!');
     } finally {
@@ -3226,7 +3233,8 @@ const OperatorView = () => {
           err?.response?.data?.msg ||
           err?.response?.data?.message ||
           err?.response?.data?.error ||
-          err?.message || 'Failed to execute action.';
+          err?.message ||
+          'Failed to execute action.';
 
         showSwal('error', backendMsg);
         resolve();
@@ -3305,6 +3313,7 @@ const OperatorView = () => {
 
       const payload = {
         card_number: returnCardNumber.trim(),
+        registered_site_id: registerSiteOperator
       };
 
       console.log('return card payload', payload);
@@ -3377,12 +3386,19 @@ const OperatorView = () => {
               height: isFullscreen ? '100vh' : 'auto',
             }}
           >
-            <Grid container spacing={1} mb={0}>
+            <Grid container spacing={1} mb={0} alignItems="center">
               <Grid size={{ xs: 12, md: 7.5, lg: 8.2, xl: 9 }}>
-                <VisitorSearchInput onOpenSearch={() => setOpenSearch(true)} />
+                <VisitorSearchInput
+                  onOpenSearch={() => setOpenSearch(true)}
+                  onClear={handleClearAll}
+                  containerRef={containerRef as any}
+                />
               </Grid>
               <Grid size={{ xs: 12, md: 4.5, lg: 3.8, xl: 3 }}>
                 <OperatorToolbar
+                  registeredSite={registeredSite}
+                  selectedSite={registerSiteOperator}
+                  onChangeSite={setRegisterSiteOperator}
                   onClear={handleClearAll}
                   onOpenList={handleOpenListVisitor}
                   onOpenBlacklist={handleOpenBlacklistVisitor}
@@ -4082,6 +4098,7 @@ const OperatorView = () => {
             invitationCode={invitationCode}
             containerRef={containerRef.current}
             fetchRelatedVisitorsByInvitationId={fetchRelatedVisitorsByInvitationId}
+            registeredSite={registerSiteOperator}
           />
           {/* Access Dialog */}
           <AccessDialog
@@ -4203,6 +4220,7 @@ const OperatorView = () => {
                 containerRef={containerRef ?? null}
                 visitorType={visitorType}
                 sites={sites}
+                registeredSite={registerSiteOperator}
                 employee={employee}
                 allVisitorEmployee={allVisitorEmployee}
                 vtLoading={vtLoading}

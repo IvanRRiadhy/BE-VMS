@@ -40,7 +40,6 @@ import FormWizardAddVisitor from './FormWizardAddVisitor';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   CreateVisitorRequestSchema,
-  Item,
   CreateVisitorRequest,
 } from 'src/customs/api/models/Admin/Visitor';
 import {
@@ -56,8 +55,8 @@ import {
 import FilterMoreContent from './FilterMoreContent';
 import {
   IconClipboard,
-  IconLink,
   IconQrcode,
+  IconShare,
   IconUser,
   IconUsers,
   IconX,
@@ -114,7 +113,7 @@ const Content = () => {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
   const [discardMode, setDiscardMode] = useState<'close-add' | 'edit' | null>(null);
-  const [tableCustomVisitor, setTableCustomVisitor] = useState<VisitorTableRow[]>([]);
+  // const [tableCustomVisitor, setTableCustomVisitor] = useState<VisitorTableRow[]>([]);
   const [selectedRows, setSelectedRows] = useState<[]>([]);
   const [openDetail, setOpenDetail] = useState(false);
   const [openInviteViaLinkEmail, setOpenInviteViaLinkEmail] = useState(false);
@@ -187,7 +186,6 @@ const Content = () => {
   const [openCreateLink, setOpenCreateLink] = useState(false);
   const [pendingPayload, setPendingPayload] = useState<any>(null);
   const [openSendEmail, setOpenSendEmail] = useState(false);
-
   const [isGenerating, setIsGenerating] = useState(false);
   const [expiredAt, setExpiredAt] = useState<string | null>(null);
   const [emails, setEmails] = useState<string[]>([]);
@@ -203,12 +201,14 @@ const Content = () => {
     setSelectedSite(null);
     setFormDataAddVisitor(defaultFormData);
   };
+
   const handleDialogClose = () => {
     setOpenDialogIndex(null);
     setOpenInvitationVisitor(false);
     setOpenPreRegistration(false);
     resetRegisteredFlow();
   };
+  
   const handleEmployeeClick = async (employeeId: string) => {
     if (!token) return;
 
@@ -288,7 +288,7 @@ const Content = () => {
       const res = await getAllVisitorPagination(
         token as string,
         0,
-        -1, // 🔥 ambil semua
+        -1,
         searchKeyword || undefined,
         appliedFilters.start_date
           ? dayjs(appliedFilters.start_date).utc().toISOString()
@@ -452,7 +452,7 @@ const Content = () => {
     },
     {
       title: 'Share Link',
-      icon: IconLink,
+      icon: IconShare,
       subTitle: iconAdd,
       subTitleSetting: 'image',
       color: 'none',
@@ -851,7 +851,7 @@ const Content = () => {
 
             <Grid size={{ xs: 12, lg: 12 }}>
               <DynamicTable
-                loading={isLoading || isFetching}
+                loading={isLoading}
                 isHavePagination={true}
                 overflowX={'auto'}
                 minWidth={2400}
@@ -1198,9 +1198,22 @@ const Content = () => {
 
       {/* Unsaved Changes */}
       <Dialog open={confirmDialogOpen} onClose={handleCancelDiscard} fullWidth maxWidth="sm">
-        <DialogTitle>Unsaved Changes</DialogTitle>
+        <DialogTitle>Unsaved Changes
+          <IconButton
+            aria-label="close"
+            onClick={handleCancelDiscard}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
+              color: (theme) => theme.palette.grey[500],
+            }}
+          >
+            <IconX />
+          </IconButton>
+        </DialogTitle>
 
-        <DialogContent>
+        <DialogContent dividers>
           <Typography>Are you sure you want to discard your changes?</Typography>
         </DialogContent>
         <DialogActions>

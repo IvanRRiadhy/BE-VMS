@@ -53,7 +53,6 @@ const FormAddOrganization: React.FC<FormOrganizationProps> = ({
   const schema =
     mode === 'batch' ? CreateOrganizationSubmitSchema.partial() : CreateOrganizationSubmitSchema;
 
-  // ✅ RHF setup
   const {
     control,
     handleSubmit,
@@ -106,7 +105,6 @@ const FormAddOrganization: React.FC<FormOrganizationProps> = ({
         const res = await getVisitorEmployee(token);
         setAllEmployees(res?.collection ?? []);
       } catch (error) {
-        console.error('Failed to fetch employees:', error);
         setAllEmployees([]);
       }
     };

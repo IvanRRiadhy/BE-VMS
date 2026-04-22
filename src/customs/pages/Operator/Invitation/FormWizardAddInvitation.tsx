@@ -9,6 +9,7 @@ type Props = {
   onSuccess?: () => void;
   containerRef?: any | null;
   vtLoading?: any;
+  registeredSite?: string;
   visitorType?: any;
   sites?: any;
   employee?: any;

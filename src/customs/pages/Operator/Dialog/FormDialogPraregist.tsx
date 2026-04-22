@@ -60,6 +60,7 @@ interface FormDialogPraregistProps {
   onClose?: () => void;
   onSubmitted?: (id?: string) => void;
   containerRef?: any;
+  registeredSite?: string;
 }
 
 const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
@@ -67,6 +68,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
   onClose,
   onSubmitted,
   containerRef,
+  registeredSite,
 }) => {
   const [activeStep, setActiveStep] = useState(0);
   const { token } = useSession();
@@ -1043,10 +1045,11 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
     visitor_type: data.visitor_type,
     type_registered: 0,
     trx_visitor_id: id,
-    is_group: true, // tergantung kebutuhan
+    is_group: false, 
     group_name: data.group_name ?? '',
     tz: data.site_place_data?.timezone ?? 'Asia/Jakarta',
     // registered_site: data.site_place_data?.id ?? '',
+    registered_site_id: registeredSite,
     flow: 'SubmitPraregister',
     data_visitor: [
       {

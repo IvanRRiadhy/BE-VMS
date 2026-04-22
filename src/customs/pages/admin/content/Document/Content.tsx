@@ -91,7 +91,12 @@ const Content = () => {
   const [openPdfDialog, setOpenPdfDialog] = useState(false);
   const [pdfUrl, setPdfUrl] = useState('');
   const handleCloseDialog = () => {
-    localStorage.setItem('unsavedDocumentData', JSON.stringify(formDataAddDocument));
+    if (hasUnsaved()) {
+      setPendingEditId(null); 
+      setConfirmDialogOpen(true);
+      return;
+    }
+
     setOpenFormAddDocument(false);
   };
 
@@ -109,9 +114,11 @@ const Content = () => {
   const hasUnsaved = useCallback(() => {
     const raw = localStorage.getItem('unsavedDocumentData');
     if (!raw) return false;
+
     try {
       const parsed = JSON.parse(raw);
-      return !isEmptyDoc(parsed);
+
+      return Object.values(parsed).some((val) => val !== '' && val !== null && val !== undefined);
     } catch {
       return false;
     }
@@ -122,7 +129,9 @@ const Content = () => {
       setPendingEditId(null);
       setConfirmDialogOpen(true);
     } else {
-      setFormDataAddDocument(CreateDocumentRequestSchema.parse({}));
+      const empty = CreateDocumentRequestSchema.parse({});
+      setFormDataAddDocument(empty);
+      localStorage.removeItem('unsavedDocumentData');
       setOpenFormAddDocument(true);
     }
   }, [hasUnsaved]);
@@ -144,19 +153,22 @@ const Content = () => {
     }
   };
 
-  const handleConfirmEdit = () => {
-    setConfirmDialogOpen(false);
-    if (pendingEditId) {
-      setFormDataAddDocument(
-        tableData.find((item) => item.id === pendingEditId) ||
-          CreateDocumentRequestSchema.parse({}),
-      );
-    } else {
-      setFormDataAddDocument(CreateDocumentRequestSchema.parse({}));
-    }
-    setOpenFormAddDocument(true);
-    setPendingEditId(null);
-  };
+const handleConfirmEdit = () => {
+  localStorage.removeItem('unsavedDocumentData');
+
+  setConfirmDialogOpen(false);
+
+  if (pendingEditId) {
+    setFormDataAddDocument(
+      tableData.find((item) => item.id === pendingEditId) || CreateDocumentRequestSchema.parse({}),
+    );
+  } else {
+    setFormDataAddDocument(CreateDocumentRequestSchema.parse({}));
+  }
+
+  setOpenFormAddDocument(false);
+  setPendingEditId(null);
+};
 
   const handleCancelEdit = () => {
     setEdittingId('');
@@ -350,11 +362,24 @@ const Content = () => {
       </Dialog>
 
       {/* Dialog Confirm edit */}
-      <Dialog open={confirmDialogOpen} onClose={handleCancelEdit}>
-        <DialogTitle>Unsaved Changes</DialogTitle>
-        <DialogContent>
-          You have unsaved changes for another Document. Are you sure you want to discard them and
-          edit this Document?
+      <Dialog open={confirmDialogOpen} onClose={handleCancelEdit} fullWidth maxWidth="sm">
+        <DialogTitle>
+          Unsaved Changes
+          <IconButton
+            aria-label="close"
+            onClick={handleCancelEdit}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
+              color: (theme) => theme.palette.grey[500],
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          You have unsaved changes. Are you sure you want to discard them?
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCancelEdit}>Cancel</Button>

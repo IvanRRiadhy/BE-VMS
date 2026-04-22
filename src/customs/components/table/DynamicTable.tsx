@@ -356,7 +356,6 @@ function DynamicTableBase<
       return Object.keys(data[0]).filter((k) => !hiddenColumns.includes(k));
     }
 
-    // kolom dummy untuk skeleton
     const expectedColCount = 5;
     return Array.from({ length: expectedColCount }, (_, i) => ``);
   }, [data, hiddenColumns]);

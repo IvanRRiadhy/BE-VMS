@@ -75,7 +75,7 @@ interface FormEmployeeProps {
   selectedRows?: Item[];
   enabledFields?: EnabledFields;
   setEnabledFields: React.Dispatch<React.SetStateAction<EnabledFields>>;
-  setIsFormChanged: React.Dispatch<React.SetStateAction<boolean>>;
+  // setIsFormChanged: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const BASE_URL = axiosInstance2.defaults.baseURL;
@@ -89,7 +89,7 @@ const FormWizardAddEmployee = ({
   selectedRows = [],
   enabledFields,
   setEnabledFields,
-  setIsFormChanged,
+  // setIsFormChanged,
 }: FormEmployeeProps) => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
@@ -304,7 +304,7 @@ const FormWizardAddEmployee = ({
       ...prev,
       [name || id]: value,
     }));
-    setIsFormChanged?.(true);
+    // setIsFormChanged?.(true);
     if (errors[key]) setErrors((prev) => ({ ...prev, [key]: '' }));
   };
 
@@ -622,7 +622,7 @@ const FormWizardAddEmployee = ({
                      identity_type: e.target.value,
                    }));
 
-                   setIsFormChanged?.(true);
+                  //  setIsFormChanged?.(true);
 
                    if (errors.identity_type) {
                      setErrors((p) => ({ ...p, identity_type: '' }));

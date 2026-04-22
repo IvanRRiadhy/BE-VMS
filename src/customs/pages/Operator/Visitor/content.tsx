@@ -14,7 +14,7 @@ import {
   Portal,
 } from '@mui/material';
 import { Box } from '@mui/system';
-import { IconClipboard, IconX, IconUsers, IconLink } from '@tabler/icons-react';
+import { IconClipboard, IconX, IconUsers, IconLink, IconShare } from '@tabler/icons-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import React, { useEffect, useState } from 'react';
 import PageContainer from 'src/components/container/PageContainer';
@@ -114,7 +114,7 @@ const Visitor = () => {
         const formattedDate = date
           .toLocaleDateString('id-ID', {
             day: '2-digit',
-            month: '2-digit',
+            month: 'long',
             year: 'numeric',
           })
           .replace(/\//g, '-');
@@ -182,21 +182,17 @@ const Visitor = () => {
       subTitle: `0`,
       subTitleSetting: 10,
       icon: IconUsers,
-      color: 'none',
     },
     {
       title: 'Add Pra Registration',
       icon: IconClipboard,
       subTitle: iconAdd,
       subTitleSetting: 'image',
-      color: 'none',
     },
     {
       title: 'Share Link',
-      //   subTitle: `${totalRecords}`,
       subTitle: iconAdd,
-      icon: IconLink,
-      color: 'none',
+      icon: IconShare,
       //   onclick: handleOpenLink,
       subTitleSetting: 'image',
     },
@@ -245,21 +241,21 @@ const Visitor = () => {
     queryKey: ['sites'],
     queryFn: () => getInvitationSite(token as string),
     enabled: !!token,
-    staleTime: 1000 * 60 * 30,
+    staleTime: 1000 * 60 * 5,
   });
 
   const { data: employee = [] } = useQuery({
     queryKey: ['employee'],
     queryFn: () => getAllEmployee(token as string),
     enabled: !!token,
-    staleTime: 1000 * 60 * 10,
+    staleTime: 1000 * 60 * 5,
   });
 
   const { data: allVisitorEmployee = [] } = useQuery({
     queryKey: ['all-visitor-employee'],
     queryFn: () => getInvitationVisitorEmployee(token as string),
     enabled: !!token,
-    staleTime: 1000 * 60 * 10,
+    staleTime: 1000 * 60 * 5,
   });
 
   const handleDeleteLink = async (id: string) => {
@@ -340,7 +336,7 @@ const Visitor = () => {
       const payload = {
         emails: finalEmails,
       };
-      // console.log('payload', payload);
+      console.log('payload', payload);
       await createShareLinkByEmailById(token as string, payload, selectedShareLinkId);
       showSwal('success', 'Invitation sent successfully');
 
@@ -379,7 +375,6 @@ const Visitor = () => {
 
       showSwal('success', 'Share link sent successfully');
     } catch (err) {
-      console.error(err);
       showSwal('error', 'Failed to send share link');
     } finally {
       setIsGenerating(false);
@@ -399,7 +394,6 @@ const Visitor = () => {
       setOpenCreateLink(false);
       showSwal('success', 'Share link created successfully');
     } catch (err) {
-      console.error(err);
       showSwal('error', 'Failed to create share link');
     } finally {
       setIsGenerating(false);

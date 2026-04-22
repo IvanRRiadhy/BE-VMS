@@ -21,7 +21,7 @@ export const useFormAutoSave = ({ watch, reset, storageKey, onDirtyChange }: Pro
     return () => subscription.unsubscribe();
   }, [watch, onDirtyChange, storageKey]);
 
-  // detect existing draft
+
   useEffect(() => {
     const saved = localStorage.getItem(storageKey);
 

@@ -156,7 +156,6 @@ const TopVisitingPurposeChart = ({ title }: { title: string }) => {
         // const start = new Date(today);
         // start.setDate(today.getDate() - 7);
         // const start_date = start.toISOString().split('T')[0];
-
         const res = await getTopVisitingPurpose(token, start, end);
 
         const labels = res.collection.map((item: any) => item.name);
@@ -165,7 +164,7 @@ const TopVisitingPurposeChart = ({ title }: { title: string }) => {
 
         setChartData({ labels, values, colors });
       } catch (error) {
-        console.error('Error fetching visiting purpose:', error);
+        // console.error('Error fetching visiting purpose:', error);
       }
     };
 
@@ -205,6 +204,7 @@ const TopVisitingPurposeChart = ({ title }: { title: string }) => {
       categories: chartData.labels,
       labels: { style: { colors: '#6b7280', fontWeight: 400 } },
       max: Math.max(...chartData.values) + 2,
+      min: 0,
     },
     yaxis: {
       labels: {

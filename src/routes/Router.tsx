@@ -17,10 +17,14 @@ import View from 'src/customs/pages/Operator/View';
 // import ForgotPassword2 from 'src/views/authentication/auth2/ForgotPassword2';
 
 /* ***Layouts**** */
-const GuestLayout = Loadable(lazy(() => import('src/customs/pages/Guest/GuestLayout')));
-const EmployeeLayout = Loadable(lazy(() => import('src/customs/pages/Employee/EmployeeLayout')));
+const GuestLayout = Loadable(lazy(() => import('src/customs/pages/Guest/layout/GuestLayout')));
+const EmployeeLayout = Loadable(
+  lazy(() => import('src/customs/pages/Employee/layout/EmployeeLayout')),
+);
 const OperatorLayout = Loadable(lazy(() => import('src/customs/pages/Operator/OperatorLayout')));
-const ManagerLayout = Loadable(lazy(() => import('src/customs/pages/Manager/ManagerLayout')));
+const ManagerLayout = Loadable(
+  lazy(() => import('src/customs/pages/Manager/layout/ManagerLayout')),
+);
 const BlankLayout = Loadable(lazy(() => import('src/layouts/blank/BlankLayout')));
 
 /* Auth Pages */
@@ -187,13 +191,15 @@ const ApprovalEmployee = Loadable(
 const InvitationEmployee = Loadable(
   lazy(() => import('src/customs/pages/Employee/Invitation/Invitation')),
 );
-const ParkingEmployee = Loadable(lazy(() => import('src/customs/pages/Employee/Parking')));
-const ReportEmployee = Loadable(lazy(() => import('src/customs/pages/Employee/Report')));
-const HistoryEmployee = Loadable(lazy(() => import('src/customs/pages/Employee/History')));
-const ProfileEmployee = Loadable(lazy(() => import('src/customs/pages/Employee/DetailProfile')));
+const ParkingEmployee = Loadable(lazy(() => import('src/customs/pages/Employee/Parking/Parking')));
+const ReportEmployee = Loadable(lazy(() => import('src/customs/pages/Employee/Report/Report')));
+const HistoryEmployee = Loadable(lazy(() => import('src/customs/pages/Employee/History/History')));
+const ProfileEmployee = Loadable(
+  lazy(() => import('src/customs/pages/Employee/Profile/DetailProfile')),
+);
 const NotificationEmployee = Loadable(
   lazy(() => import('src/customs/pages/Employee/Notification/Content')),
-)
+);
 /* Operator Pages* */
 const DashboardOperator = Loadable(lazy(() => import('src/customs/pages/Operator/Dashboard')));
 const OperatorView = Loadable(lazy(() => import('src/customs/pages/Operator/OperatorView')));
@@ -218,12 +224,14 @@ const OperatorNotification = Loadable(
 );
 
 /* Manager Pages*/
-const DashboardManager = Loadable(lazy(() => import('src/customs/pages/Manager/Dashboard')));
-const ApprovalManager = Loadable(lazy(() => import('src/customs/pages/Manager/Approval')));
-const ParkingManager = Loadable(lazy(() => import('src/customs/pages/Manager/Parking')));
-const VisitorManager = Loadable(lazy(() => import('src/customs/pages/Manager/Visitor')));
-const HistoryManager = Loadable(lazy(() => import('src/customs/pages/Manager/History')));
-const ReportManager = Loadable(lazy(() => import('src/customs/pages/Manager/Report')));
+const DashboardManager = Loadable(
+  lazy(() => import('src/customs/pages/Manager/Dashboard/Dashboard')),
+);
+const ApprovalManager = Loadable(lazy(() => import('src/customs/pages/Manager/Approval/Approval')));
+const ParkingManager = Loadable(lazy(() => import('src/customs/pages/Manager/Parking/Parking')));
+const VisitorManager = Loadable(lazy(() => import('src/customs/pages/Manager/Visitor/Visitor')));
+const HistoryManager = Loadable(lazy(() => import('src/customs/pages/Manager/History/History')));
+const ReportManager = Loadable(lazy(() => import('src/customs/pages/Manager/Report/Report')));
 const NotificationManager = Loadable(
   lazy(() => import('src/customs/pages/Manager/Notification/Content')),
 );
@@ -302,7 +310,6 @@ const Router = [
         element: <ProtectedRoute allowedRoles={['OperatorAdmin']} />,
         children: [
           { path: '/operator-admin/dashboard', element: <Dashboard /> },
-          { path: '/operator-admin/visitor', element: <ManageVisitor /> },
           { path: '/operator-admin/visitor/list-visitor', element: <ManageListVisitor /> },
           { path: '/operator-admin/visitor/live-visitor', element: <ManageVisitor /> },
           {
@@ -394,9 +401,8 @@ const Router = [
         element: <ProtectedRoute allowedRoles={['Admin']} />,
         children: [
           { path: '/admin/dashboard', element: <Dashboard /> },
-          { path: '/admin/visitor', element: <ManageVisitor /> },
-          { path: '/admin/visitor/list-visitor', element: <ManageListVisitor /> },
           { path: '/admin/visitor/live-visitor', element: <ManageVisitor /> },
+          { path: '/admin/visitor/list-visitor', element: <ManageListVisitor /> },
           { path: '/admin/visitor/transaction-visitor', element: <ManageTransactionVisitor /> },
           { path: '/admin/visitor/blacklist-visitor', element: <ManageBlacklistVisitor /> },
           { path: '/admin/manage/companys-deparments', element: <ManageCompanyAndDepartment /> },

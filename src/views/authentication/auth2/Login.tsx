@@ -758,6 +758,7 @@ const Login = () => {
                       </form>
                     )}
 
+                    {/* <Divider /> */}
                     <Box display="flex" alignItems="center" justifyContent="center" marginTop={1}>
                       <Typography
                         variant="subtitle2"

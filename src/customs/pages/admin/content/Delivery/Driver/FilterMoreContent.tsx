@@ -8,6 +8,7 @@ import {
   FormControlLabel,
   RadioGroup,
   Autocomplete,
+  Divider,
 } from '@mui/material';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
@@ -73,12 +74,12 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
       <Typography variant="h5" gutterBottom>
         Staff Filter
       </Typography>
-
-      <Grid2 container spacing={3}>
+      <Divider sx={{ mb: 0 }} />
+      <Grid2 container spacing={2.5}>
         {/* Join Dates */}
         <Grid2 size={{ xs: 12, sm: 6 }}>
-          <CustomFormLabel htmlFor="joinStart">
-            <Typography variant="caption">Join Start</Typography>
+          <CustomFormLabel htmlFor="joinStart" sx={{ mt: { xs: 1, sm: 2 } }}>
+            <Typography variant="body1">Join Start</Typography>
           </CustomFormLabel>
           <CustomTextField
             id="joinStart"
@@ -92,8 +93,8 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
         </Grid2>
 
         <Grid2 size={{ xs: 12, sm: 6 }}>
-          <CustomFormLabel htmlFor="exitEnd">
-            <Typography variant="caption">Exit End</Typography>
+          <CustomFormLabel htmlFor="exitEnd" sx={{ mt: { xs: 1, sm: 2 } }}>
+            <Typography variant="body1">Exit End</Typography>
           </CustomFormLabel>
           <CustomTextField
             id="exitEnd"
@@ -109,7 +110,7 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
         {/* Organization */}
         <Grid2 size={{ xs: 12, sm: 4 }}>
           <CustomFormLabel htmlFor="organization" sx={{ mt: 0 }}>
-            <Typography variant="caption">Organization</Typography>
+            <Typography variant="body1">Organization</Typography>
           </CustomFormLabel>
           <Autocomplete
             id="organization"
@@ -119,7 +120,7 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
               setFilters((prev) => ({ ...prev, organization: val ? val.id : '' }))
             }
             isOptionEqualToValue={(opt, val) => opt.id === val.id}
-            getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt?.name ?? '')}
+            getOptionLabel={(opt) => (typeof opt === 'string' ? opt : (opt?.name ?? ''))}
             clearOnEscape
             renderInput={(params) => (
               <CustomTextField
@@ -135,7 +136,7 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
         {/* Department */}
         <Grid2 size={{ xs: 12, sm: 4 }}>
           <CustomFormLabel htmlFor="department" sx={{ mt: 0 }}>
-            <Typography variant="caption">Department</Typography>
+            <Typography variant="body1">Department</Typography>
           </CustomFormLabel>
           <Autocomplete
             id="department"
@@ -145,7 +146,7 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
               setFilters((prev) => ({ ...prev, department: val ? val.id : '' }))
             }
             isOptionEqualToValue={(opt, val) => opt.id === val.id}
-            getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt?.name ?? '')}
+            getOptionLabel={(opt) => (typeof opt === 'string' ? opt : (opt?.name ?? ''))}
             clearOnEscape
             renderInput={(params) => (
               <CustomTextField
@@ -161,7 +162,7 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
         {/* District */}
         <Grid2 size={{ xs: 12, sm: 4 }}>
           <CustomFormLabel htmlFor="district" sx={{ mt: 0 }}>
-            <Typography variant="caption">District</Typography>
+            <Typography variant="body1">District</Typography>
           </CustomFormLabel>
           <Autocomplete
             id="district"
@@ -169,7 +170,7 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
             value={districtData.find((o) => o.id === filters.district) || null}
             onChange={(_, val) => setFilters((prev) => ({ ...prev, district: val ? val.id : '' }))}
             isOptionEqualToValue={(opt, val) => opt.id === val.id}
-            getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt?.name ?? '')}
+            getOptionLabel={(opt) => (typeof opt === 'string' ? opt : (opt?.name ?? ''))}
             clearOnEscape
             renderInput={(params) => (
               <CustomTextField
@@ -184,8 +185,8 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
 
         {/* Gender */}
         <Grid2 size={{ xs: 12, sm: 6 }}>
-          <CustomFormLabel>
-            <Typography variant="caption">Gender</Typography>
+          <CustomFormLabel sx={{ mt: 0 }}>
+            <Typography variant="body1">Gender</Typography>
           </CustomFormLabel>
           <FormControl>
             <RadioGroup row name="gender" value={String(filters.gender)} onChange={handleChange}>
@@ -207,8 +208,8 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
 
         {/* Status Employee */}
         <Grid2 size={{ xs: 12, sm: 6 }}>
-          <CustomFormLabel>
-            <Typography variant="caption">Status Employee</Typography>
+          <CustomFormLabel sx={{ mt: 0 }}>
+            <Typography variant="body1">Status Employee</Typography>
           </CustomFormLabel>
           <FormControl>
             <RadioGroup

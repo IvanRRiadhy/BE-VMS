@@ -41,7 +41,7 @@ import PageContainer from 'src/components/container/PageContainer';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import Heatmap from '../Heatmap';
+import Heatmap from '../Dashboard/Heatmap';
 import PieCharts from '../PieCharts';
 import { getApproval } from 'src/customs/api/employee';
 import dayjs from 'dayjs';

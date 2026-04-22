@@ -63,12 +63,11 @@ import {
   CreateGroupVisitorRequestSchema,
   CreateVisitorRequest,
   CreateVisitorRequestSchema,
-  SectionPageVisitor,
 } from 'src/customs/api/models/Admin/Visitor';
 
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { SectionPageVisitorType } from 'src/customs/api/models/Admin/VisitorType';
 import { FormVisitor } from 'src/customs/api/models/Admin/Visitor';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
@@ -139,7 +138,7 @@ interface GroupVisitor {
   group_code: string;
   is_group?: boolean;
   tz?: string;
-  registered_site?: string;
+  registered_site_id: string;
   data_visitor: any[];
 }
 
@@ -212,9 +211,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const [loading, setLoading] = useState(false);
   const [alertType, setAlertType] = useState<'info' | 'success' | 'error'>('info');
   const { token } = useSession();
-  const [searchKeyword, setSearchKeyword] = useState('');
   const [activeStep, setActiveStep] = useState(0);
-  const [accessDialogOpen, setAccessDialogOpen] = useState(false);
   const [dynamicSteps, setDynamicSteps] = useState<string[]>([]);
   const [draggableSteps, setDraggableSteps] = useState<string[]>([]);
   const stepLabels = useMemo(() => ['User Type', ...draggableSteps], [draggableSteps]);
@@ -230,16 +227,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const [nextDialogOpen, setNextDialogOpen] = useState(false);
   const BASE_URL = axiosInstance2.defaults.baseURL;
   const [rawSections, setRawSections] = useState<any[]>([]);
-  // const [selectedInvitations, setSelectedInvitations] = useState<any[]>([]);
   const formsOf = (section: any) => (Array.isArray(section?.[FORM_KEY]) ? section[FORM_KEY] : []);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [openCamera, setOpenCamera] = useState(false);
   const [screenshot, setScreenshot] = useState<string | null>(null);
   const [openScan, setOpenScan] = useState(false);
   const [scanStep, setScanStep] = useState<'scanning' | 'done'>('scanning');
-  const [accessData, setAccessData] = useState<any[]>([]);
-  const [checkedItems, setCheckedItems] = useState<number[]>([]);
-  const [availableCards, setAvailableCards] = useState<any[]>([]);
   const [inputValues, setInputValues] = useState<{ [key: number]: string }>({});
   const webcamRef = useRef<Webcam>(null);
   const [documentType, setDocumentType] = useState<'ktp' | 'passport' | null>(null);
@@ -374,7 +367,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       is_group: formData.is_group || false,
       visitor_type: formData.visitor_type || '',
       tz: detectedTz,
-      registered_site: registeredSite || '',
+      registered_site_id: registeredSite || '',
       data_visitor: [],
     };
 
@@ -384,13 +377,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const handleDeleteGroup = (id: string) => {
     setGroupVisitors((prev) => prev.filter((g) => g.id !== id));
   };
-
-  // useEffect(() => {
-  //   if (!nextDialogOpen) {
-  //     setSelectedInvitations([]);
-  //     // setSelectedCards([]);
-  //   }
-  // }, [nextDialogOpen]);
 
   useEffect(() => {
     const queue = ws?.imageQueue?.current;
@@ -3389,7 +3375,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       is_group: boolean;
       type_registered: number;
       tz: string;
-      registered_site?: string;
+      registered_site_id?: string;
       group_code?: string;
       group_name?: string;
     },
@@ -3453,7 +3439,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     };
 
     if (meta.type_registered !== 0) {
-      basePayload.registered_site = meta.registered_site || '';
+      basePayload.registered_site_id = meta.registered_site_id || '';
     }
 
     if (meta.group_code) basePayload.group_code = meta.group_code;
@@ -3577,7 +3563,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         is_group: isGroup,
         flow: TYPE_REGISTERED === 0 ? 'Praregister' : 'Invitation',
         visitor_role: 'Visitor',
-        ...(TYPE_REGISTERED !== 0 && { registered_site: registeredSite ?? '' }),
+        // ...(TYPE_REGISTERED !== 0 && { registered_site_id: registeredSite ?? '' }),
+        registered_site_id: registeredSite ?? '',
       };
 
       let payload: CreateVisitorRequest | CreateGroupVisitorRequest;
@@ -3593,7 +3580,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
               is_group: true,
               type_registered: TYPE_REGISTERED,
               tz: tz,
-              registered_site: registeredSite ?? '',
+              registered_site_id: registeredSite ?? '',
             },
           );
 
@@ -3620,7 +3607,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             is_group: true,
             visitor_type: formData.visitor_type ?? '',
             tz: tz,
-            registered_site: registeredSite ?? '',
+            registered_site_id: registeredSite ?? '',
             type_registered: TYPE_REGISTERED,
             data_visitor: cleanDataVisitor,
           };
@@ -3665,10 +3652,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           ...baseMeta,
           data_visitor: [{ question_page }],
         };
-        console.log('payload', payload);
+        // console.log('payload', payload);
 
         const parsed = CreateVisitorRequestSchema.parse(payload);
-        console.log('Final Payload (Single):', JSON.stringify(parsed, null, 2));
+        // console.log('Final Payload (Single):', JSON.stringify(parsed, null, 2));
 
         const submitFn =
           TYPE_REGISTERED === 0 ? createSinglePraRegisterOperator : createSingleInvitationOperator;
@@ -4441,7 +4428,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 }
                 onClick={handleOnSubmit}
               >
-                {loading ? 'Submit' : 'Submit'}
+                Submit
               </Button>
             ) : (
               <Button

@@ -60,7 +60,8 @@ const ShareLinkDialog: React.FC<Props> = ({
         const formattedDate = date
           .toLocaleDateString('id-ID', {
             day: '2-digit',
-            month: '2-digit',
+            // month: '2-digit',
+            month: 'long',
             year: 'numeric',
           })
           .replace(/\//g, '-');

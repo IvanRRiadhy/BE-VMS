@@ -64,7 +64,7 @@ interface FormEmployeeProps {
   selectedRows?: Item[];
   enabledFields?: EnabledFields;
   setEnabledFields: React.Dispatch<React.SetStateAction<EnabledFields>>;
-  setIsFormChanged: React.Dispatch<React.SetStateAction<boolean>>;
+  // setIsFormChanged: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 import { BASE_URL } from 'src/customs/api/interceptor';
@@ -85,7 +85,7 @@ const FormDriver = ({
   selectedRows = [],
   enabledFields,
   setEnabledFields,
-  setIsFormChanged,
+  // setIsFormChanged,
 }: FormEmployeeProps) => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
@@ -316,7 +316,7 @@ const FormDriver = ({
 
     setLocalForm(updated);
 
-    setIsFormChanged(true);
+    // setIsFormChanged(true);
     if (errors[key]) setErrors((prev) => ({ ...prev, [key]: '' }));
   };
 
@@ -626,7 +626,7 @@ const FormDriver = ({
                       identity_type: e.target.value,
                     }));
 
-                    setIsFormChanged?.(true);
+                    // setIsFormChanged?.(true);
 
                     if (errors.identity_type) {
                       setErrors((p) => ({ ...p, identity_type: '' }));

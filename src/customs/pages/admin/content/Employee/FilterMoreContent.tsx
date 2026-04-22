@@ -76,10 +76,10 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
       </Typography>
 
       <Divider sx={{ mb: 0 }} />
-      <Grid2 container spacing={3}>
+      <Grid2 container spacing={2.5}>
         {/* Join Dates */}
         <Grid2 size={{ xs: 12, sm: 6 }}>
-          <CustomFormLabel htmlFor="joinStart" sx={{ mt: 2 }}>
+          <CustomFormLabel htmlFor="joinStart" sx={{ mt: { xs: 1, sm: 2 } }}>
             <Typography variant="body1">Join Start</Typography>
           </CustomFormLabel>
           <CustomTextField
@@ -94,7 +94,7 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
         </Grid2>
 
         <Grid2 size={{ xs: 12, sm: 6 }}>
-          <CustomFormLabel htmlFor="exitEnd" sx={{ mt: 2 }}>
+          <CustomFormLabel htmlFor="exitEnd" sx={{ mt: { xs: 1, sm: 2 } }}>
             <Typography variant="body1">Exit End</Typography>
           </CustomFormLabel>
           <CustomTextField
@@ -121,7 +121,7 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
               setFilters((prev) => ({ ...prev, organization: val ? val.id : '' }))
             }
             isOptionEqualToValue={(opt, val) => opt.id === val.id}
-            getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt?.name ?? '')}
+            getOptionLabel={(opt) => (typeof opt === 'string' ? opt : (opt?.name ?? ''))}
             clearOnEscape
             renderInput={(params) => (
               <CustomTextField
@@ -147,7 +147,7 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
               setFilters((prev) => ({ ...prev, department: val ? val.id : '' }))
             }
             isOptionEqualToValue={(opt, val) => opt.id === val.id}
-            getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt?.name ?? '')}
+            getOptionLabel={(opt) => (typeof opt === 'string' ? opt : (opt?.name ?? ''))}
             clearOnEscape
             renderInput={(params) => (
               <CustomTextField
@@ -171,7 +171,7 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
             value={districtData.find((o) => o.id === filters.district) || null}
             onChange={(_, val) => setFilters((prev) => ({ ...prev, district: val ? val.id : '' }))}
             isOptionEqualToValue={(opt, val) => opt.id === val.id}
-            getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt?.name ?? '')}
+            getOptionLabel={(opt) => (typeof opt === 'string' ? opt : (opt?.name ?? ''))}
             clearOnEscape
             renderInput={(params) => (
               <CustomTextField

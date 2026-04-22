@@ -20,11 +20,6 @@ import {
   Paper,
   Stepper,
   TextField,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Backdrop,
   FormControl,
   Select,
   Autocomplete,
@@ -267,29 +262,41 @@ const StepContentComponent: React.FC<StepContentProps> = ({
 
                       <TableCell>
                         <FormControl size="small" fullWidth>
-                          <Select
-                            value={row.access_control_id ?? ''}
-                            onChange={(e) => {
-                              const value = e.target.value as string;
-                              setSelectedAccess((prev: any) =>
-                                prev.map((r: any, i: any) =>
-                                  i === index ? { ...r, access_control_id: value } : r,
+                          <Autocomplete
+                            size="small"
+                            options={accessData}
+                            getOptionLabel={(option: any) => option.name ?? ''}
+                            value={accessData.find((a) => a.id === row.access_control_id) || null}
+                            onChange={(_, newValue) => {
+                              setSelectedAccess((prev: any[]) =>
+                                prev.map((r, i) =>
+                                  i === index ? { ...r, access_control_id: newValue?.id ?? '' } : r,
                                 ),
                               );
                             }}
-                          >
-                            {accessData.map((a) => (
-                              <MenuItem
-                                key={a.id}
-                                value={a.id}
-                                disabled={selectedAccess.some(
-                                  (x, i) => x.access_control_id === a.id && i !== index,
-                                )}
-                              >
-                                {a.name}
-                              </MenuItem>
-                            ))}
-                          </Select>
+                            isOptionEqualToValue={(option, value) => option.id === value.id}
+                            renderInput={(params) => (
+                              <TextField {...params} placeholder="Select access" />
+                            )}
+                            renderOption={(props, option) => {
+                              const isDisabled = selectedAccess.some(
+                                (x, i) => x.access_control_id === option.id && i !== index,
+                              );
+
+                              return (
+                                <li
+                                  // key={option.id}
+                                  {...props}
+                                  style={{
+                                    opacity: isDisabled ? 0.5 : 1,
+                                    pointerEvents: isDisabled ? 'none' : 'auto',
+                                  }}
+                                >
+                                  {option.name}
+                                </li>
+                              );
+                            }}
+                          />
                         </FormControl>
                       </TableCell>
 
@@ -337,7 +344,6 @@ const StepContentComponent: React.FC<StepContentProps> = ({
                 </TableBody>
               </Table>
 
-              {/* ADD NEW */}
               <Box sx={{ p: 2 }}>
                 <Button variant="contained" onClick={handleAddAccess}>
                   Add New
@@ -380,7 +386,7 @@ const StepContentComponent: React.FC<StepContentProps> = ({
             <CustomTextField
               id="description"
               value={formData.description}
-              onChange={(e:any) => {
+              onChange={(e: any) => {
                 setFormData((prev: any) => ({
                   ...prev,
                   description: e.target.value,

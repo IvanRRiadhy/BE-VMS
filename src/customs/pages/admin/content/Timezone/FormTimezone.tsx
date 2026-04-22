@@ -45,7 +45,6 @@ const FormTimezone = ({ mode, initialData, onSuccess }: FormTimezoneProps) => {
 
   const apiToDays = (api: any): any[] => {
     if (!api) return [];
-    // if api already has days array, assume it's the correct format
     if (Array.isArray(api.days) && api.days.length) return api.days;
 
     const res: any[] = [];
@@ -53,7 +52,6 @@ const FormTimezone = ({ mode, initialData, onSuccess }: FormTimezoneProps) => {
       const startRaw = api?.[d.key];
       const endRaw = api?.[`${d.key}_end`];
 
-      // normalize "HH:MM:SS" -> "HH:MM"
       const normalize = (s?: string) => {
         if (!s) return null;
         const parts = s.split(':');
@@ -98,7 +96,6 @@ const FormTimezone = ({ mode, initialData, onSuccess }: FormTimezoneProps) => {
       const start = dayObj.hours[0].startTime;
       const end = dayObj.hours[dayObj.hours.length - 1].endTime;
 
-      // ensure seconds :00 suffix (to match example payload)
       const ensureSeconds = (t: string) => {
         if (!t) return '';
         if (t.split(':').length === 2) return `${t}:00`;
@@ -129,53 +126,49 @@ const FormTimezone = ({ mode, initialData, onSuccess }: FormTimezoneProps) => {
         setDays([]);
         localStorage.removeItem(STORAGE_KEY);
 
-        setTimeout(() => {
-          showSwal('success', 'Time Access successfully created');
-          onSuccess?.();
-        }, 250);
+        showSwal('success', 'Time Access successfully created');
+        onSuccess?.();
       } else {
         // edit
         const id = initialData?.id;
         if (!id) throw new Error('Missing timezone id for update');
         await updateTimezone(token, id, payload);
 
-        setTimeout(() => {
-          showSwal('success', 'Time Access successfully updated');
-          onSuccess?.();
-        }, 250);
+        showSwal('success', 'Time Access successfully updated');
+        onSuccess?.();
       }
     } catch (err: any) {
       console.error(err);
       showErrorAlert('Error', 'Gagal menyimpan timezone');
     } finally {
-      setTimeout(() => setLoading(false), 250);
+      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (mode === 'create') {
-      const savedDraft = localStorage.getItem(STORAGE_KEY);
-      if (savedDraft) {
-        try {
-          const parsed = JSON.parse(savedDraft);
-          setName(parsed.name ?? '');
-          setDescription(parsed.description ?? '');
-          if (parsed.days && Array.isArray(parsed.days)) {
-            setDays(parsed.days);
-          }
-        } catch (err) {
-          console.error('Failed to parse draft:', err);
-        }
-      }
-    }
-  }, [mode]);
+  // useEffect(() => {
+  //   if (mode === 'create') {
+  //     const savedDraft = localStorage.getItem(STORAGE_KEY);
+  //     if (savedDraft) {
+  //       try {
+  //         const parsed = JSON.parse(savedDraft);
+  //         setName(parsed.name ?? '');
+  //         setDescription(parsed.description ?? '');
+  //         if (parsed.days && Array.isArray(parsed.days)) {
+  //           setDays(parsed.days);
+  //         }
+  //       } catch (err) {
+  //         console.error('Failed to parse draft:', err);
+  //       }
+  //     }
+  //   }
+  // }, [mode]);
 
-  useEffect(() => {
-    if (mode === 'create') {
-      const draft = { name, description, days };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
-    }
-  }, [name, description, days, mode]);
+  // useEffect(() => {
+  //   if (mode === 'create') {
+  //     const draft = { name, description, days };
+  //     localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
+  //   }
+  // }, [name, description, days, mode]);
 
   useEffect(() => {
     if (mode === 'edit' && initialData) {

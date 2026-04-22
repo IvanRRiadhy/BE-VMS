@@ -30,6 +30,7 @@ interface FormUserProps {
   accessOptions?: any;
   siteOptions?: any;
   organizationRes?: any;
+  onDirtyChange?: any;
 }
 
 const FormUser: React.FC<FormUserProps> = ({
@@ -38,6 +39,7 @@ const FormUser: React.FC<FormUserProps> = ({
   edittingId,
   onSuccess,
   organizationRes,
+  onDirtyChange,
 }) => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
@@ -53,6 +55,37 @@ const FormUser: React.FC<FormUserProps> = ({
   const handleTogglePassword = () => {
     setShowPassword((prev) => !prev);
   };
+
+  const DRAFT_KEY = 'unsavedUserForm';
+  const initialRef = React.useRef(formData);
+
+  useEffect(() => {
+    if (!edittingId) {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(formData));
+    }
+  }, [formData]);
+
+  useEffect(() => {
+    if (edittingId) return;
+
+    const draft = localStorage.getItem(DRAFT_KEY);
+
+    if (draft) {
+      const parsed = JSON.parse(draft);
+
+      setFormData(parsed);
+
+      onDirtyChange?.(true);
+    }
+  }, [edittingId]);
+
+  const isDirty = useMemo(() => {
+    return JSON.stringify(initialRef.current) !== JSON.stringify(formData);
+  }, [formData]);
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -82,6 +115,13 @@ const FormUser: React.FC<FormUserProps> = ({
     setFormData((prev: any) => ({ ...prev, [id]: value }));
   };
 
+  // const handleChange = (e) => {
+  //   setFormData((prev) => ({
+  //     ...prev,
+  //     [e.target.id]: e.target.value,
+  //   }));
+  // };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -101,12 +141,13 @@ const FormUser: React.FC<FormUserProps> = ({
       }
 
       showSwal('success', edittingId ? 'User successfully updated!' : 'User successfully created!');
+      localStorage.removeItem(DRAFT_KEY);
       setTimeout(() => {
         onSuccess?.();
       }, 600);
     } catch (err: any) {
       if (err?.errors) setErrors(err.errors);
-      showSwal('error', 'Something went wrong. Please try again later.');
+      showSwal('error', 'Failed to create user.');
     } finally {
       setTimeout(() => setLoading(false), 600);
     }
@@ -238,7 +279,9 @@ const FormUser: React.FC<FormUserProps> = ({
               fullWidth
               SelectProps={{ displayEmpty: true }}
             >
-              <MenuItem value="" disabled>Select Group</MenuItem>
+              <MenuItem value="" disabled>
+                Select Group
+              </MenuItem>
 
               {groupOptions.map((group) => (
                 <MenuItem key={group.id} value={group.id}>

@@ -2121,7 +2121,7 @@ const TableRowItem = React.memo(
                   }}
                 />
               ) : isHaveImage && imageFields.includes(col) ? (
-                <>-</>
+                <></>
               ) : (isDataVerified && col === 'secure') ||
               (isDataVerified && col === 'active') ||
                 col === 'can_upload' ||

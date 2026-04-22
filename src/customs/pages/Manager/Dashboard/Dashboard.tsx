@@ -1,8 +1,4 @@
-import {
-  Avatar,
-  Button,
-  Grid2 as Grid,
-} from '@mui/material';
+import { Avatar, Button, Grid2 as Grid } from '@mui/material';
 import { Box } from '@mui/system';
 import {
   IconBan,
@@ -18,7 +14,7 @@ import { Scanner } from '@yudiel/react-qr-scanner';
 import React, { useEffect, useRef, useState } from 'react';
 import QRCode from 'react-qr-code';
 import PageContainer from 'src/components/container/PageContainer';
-import TopCard from './Dashboard/TopCard';
+import TopCard from './TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import Heatmap from './Heatmap';

@@ -91,9 +91,11 @@ const TopVisitor = () => {
       },
     },
     yaxis: {
+      min: 0,
       max: Math.max(...values) + 1,
       labels: {
         style: { colors: '#6b7280', fontSize: '14px' },
+        formatter: (val) => Math.round(val).toString(),
       },
     },
     grid: {

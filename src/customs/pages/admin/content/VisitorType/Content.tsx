@@ -173,7 +173,7 @@ const Content = () => {
     let freshForm;
     if (saved) {
       freshForm = JSON.parse(saved);
-    } else { 
+    } else {
       freshForm = CreateVisitorTypeRequestSchema.parse({});
       localStorage.setItem('unsavedVisitorTypeData', JSON.stringify(freshForm));
     }
@@ -224,7 +224,7 @@ const Content = () => {
           identity_type:
             typeof doc.identity_type === 'string'
               ? identityValueMap[doc.identity_type]
-              : doc.identity_type ?? -1,
+              : (doc.identity_type ?? -1),
         }));
 
         setDocumentIdentities(mappedDocs);
@@ -408,15 +408,14 @@ const Content = () => {
     }
   };
 
-    const handleSearchKeywordChange = useCallback((keyword: string) => {
-      setSearchInput(keyword);
-    }, []);
+  const handleSearchKeywordChange = useCallback((keyword: string) => {
+    setSearchInput(keyword);
+  }, []);
 
-    const handleSearch = useCallback(() => {
-      setPage(0);
-      setSearchKeyword(searchInput);
-    }, [searchInput]);
-
+  const handleSearch = useCallback(() => {
+    setPage(0);
+    setSearchKeyword(searchInput);
+  }, [searchInput]);
 
   return (
     <PageContainer
@@ -518,11 +517,24 @@ const Content = () => {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={confirmDialogOpen} onClose={handleCancelEdit}>
-        <DialogTitle>Unsaved Changes</DialogTitle>
-        <DialogContent ref={dialogRef}>
-          You have unsaved changes for another site. Are you sure you want to discard them and edit
-          this site?
+      <Dialog open={confirmDialogOpen} onClose={handleCancelEdit} fullWidth maxWidth="sm">
+        <DialogTitle>
+          Unsaved Changes
+          <IconButton
+            aria-label="close"
+            onClick={handleCancelEdit}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
+              color: (theme) => theme.palette.grey[500],
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent ref={dialogRef} dividers>
+          You have unsaved changes. Are you sure you want to discard them?
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCancelEdit}>Cancel</Button>
@@ -531,17 +543,15 @@ const Content = () => {
           </Button>
         </DialogActions>
       </Dialog>
-      {/* <Portal> */}
-        <Backdrop
-          open={loadingData}
-          sx={{
-            color: '#fff',
-            zIndex: 999999,
-          }}
-        >
-          <CircularProgress color="primary" />
-        </Backdrop>
-      {/* </Portal> */}
+      <Backdrop
+        open={loadingData}
+        sx={{
+          color: '#fff',
+          zIndex: 999999,
+        }}
+      >
+        <CircularProgress color="primary" />
+      </Backdrop>
     </PageContainer>
   );
 };

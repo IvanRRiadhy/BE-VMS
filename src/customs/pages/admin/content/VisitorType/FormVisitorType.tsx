@@ -16,7 +16,7 @@ import {
   Backdrop,
   Box,
 } from '@mui/material';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   CreateVisitorTypeRequest,
@@ -321,16 +321,19 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         if (selectedAccess.length > 0) {
           const accessPayload = buildCreateAccessPayload(visitorTypeId as string);
           await createVisitorTypeAccessBulk(accessPayload, token);
+        }
+
+        if (formData.can_track_cctv && selectedAnalytics) {
           const accessPayloadAnalytics = buildCreateAnalyticsPayload(visitorTypeId as string);
           await createVisitorTypeAnalyticsBulk(accessPayloadAnalytics, token);
         }
         showSwal('success', 'Visitor type created successfully!');
       }
 
-      setTimeout(() => {
+      // setTimeout(() => {
         onSuccess?.();
         setLoading(false);
-      }, 600);
+      // }, 600);
     } catch (err: any) {
       if (err?.errors) {
         setErrors(err.errors);
@@ -512,7 +515,23 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
   const [dynamicSteps, setDynamicSteps] = useState<string[]>([]);
   const [draggableSteps, setDraggableSteps] = useState<string[]>([]);
   const [localForm, setLocalForm] = useState(formData);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
+  useEffect(() => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    debounceRef.current = setTimeout(() => {
+      setFormData(localForm);
+    }, 300);
+
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, [localForm]);
   const handleAddSection = () => {
     if (newSectionName.trim() !== '') {
       const newSection = {
@@ -534,7 +553,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
       setDynamicSteps((prev) => [...prev, newSectionName]);
       setNewSectionName('');
       setOpenModal(false);
-
     }
   };
 
@@ -607,7 +625,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     fetchAnalytic();
   }, [token]);
 
-
   const handleAddDocument = () => {
     setDocumentIdentities((prev) => [...prev, { document_id: '', identity_type: -1 }]);
   };
@@ -646,7 +663,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     { label: 'SPU', value: 'SPU' },
     { label: 'DC', value: 'DC' },
   ];
-
 
   const handleReorder = (key: string, newData: any[]) => {
     setSectionsData((prev: any[]) =>
@@ -759,6 +775,9 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     })),
   });
 
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editingName, setEditingName] = useState('');
+
   return (
     <>
       <form onSubmit={handleOnSubmit}>
@@ -852,9 +871,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
                     {draggableSteps.map((label, index) => (
                       <Draggable key={label} draggableId={label} index={index}>
                         {(provided, snapshot) => {
-                          const [editingIndex, setEditingIndex] = useState<number | null>(null);
-                          const [editingName, setEditingName] = useState(label);
-
                           const handleRename = (idx: number, newName: string) => {
                             setDraggableSteps((prev) =>
                               prev.map((l, i) => (i === idx ? newName : l)),
@@ -1064,7 +1080,8 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
       </Backdrop>
 
       <Dialog open={openModal} onClose={() => setOpenModal(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>New Section Page
+        <DialogTitle>
+          New Section Page
           <IconButton
             size="small"
             sx={{ position: 'absolute', right: 8, top: 8, color: 'grey.500' }}
@@ -1073,7 +1090,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
             <IconX />
           </IconButton>
         </DialogTitle>
-        <DialogContent dividers> 
+        <DialogContent dividers>
           <TextField
             autoFocus
             margin="dense"

@@ -114,7 +114,7 @@ const Content = () => {
     0: [1, 2, 3], // Site → Building, Floor, Room
     1: [2, 3], // Building → Floor, Room
     2: [3], // Floor → Room
-    3: [], // Room → 
+    3: [], // Room →
   };
   useEffect(() => {
     // if (!allData) return;
@@ -233,7 +233,7 @@ const Content = () => {
       is_child: true,
     };
   };
-  
+
   useEffect(() => {
     if (!token) return;
 
@@ -626,7 +626,6 @@ const Content = () => {
     fetchEmployees();
   }, [token]);
 
-  
   const handleSearchKeywordChange = useCallback((keyword: string) => {
     setSearchInput(keyword);
   }, []);
@@ -798,11 +797,24 @@ const Content = () => {
           </Button>
         </DialogActions>
       </Dialog>
-      <Dialog open={confirmDialogOpen} onClose={handleCancelEdit}>
-        <DialogTitle ref={dialogRef}>Unsaved Changes</DialogTitle>
-        <DialogContent>
-          You have unsaved changes for another site. Are you sure you want to discard them and edit
-          this site?
+      <Dialog open={confirmDialogOpen} onClose={handleCancelEdit} fullWidth maxWidth="sm">
+        <DialogTitle ref={dialogRef}>
+          Unsaved Changes
+          <IconButton
+            aria-label="close"
+            onClick={() => setConfirmDialogOpen(false)}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
+              color: (theme) => theme.palette.grey[500],
+            }}
+          >
+            <IconX />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          You have unsaved changes. Do you want to discard them?
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCancelEdit}>Cancel</Button>

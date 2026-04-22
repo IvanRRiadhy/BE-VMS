@@ -226,7 +226,10 @@ const Content = () => {
 
       <DialogFormUser
         open={openFormAddDocument}
-        onClose={() => setOpenFormAddDocument(false)}
+        onClose={() => {
+          setOpenFormAddDocument(false);
+          localStorage.removeItem('unsavedUserForm');
+        }}
         edittingId={edittingId}
         onSuccess={() => {
           setOpenFormAddDocument(false);
@@ -309,7 +312,9 @@ const Content = () => {
       </Dialog>
       <Dialog open={confirmDialogOpen} onClose={() => setConfirmDialogOpen(false)}>
         <DialogTitle>Unsaved Changes</DialogTitle>
-        <DialogContent>You have unsaved changes. Discard them and continue editing?</DialogContent>
+        <DialogContent dividers>
+          You have unsaved changes. Do you want to discard them?
+        </DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmDialogOpen(false)}>Cancel</Button>
           <Button
@@ -321,7 +326,7 @@ const Content = () => {
             color="primary"
             variant="contained"
           >
-            Yes, Continue
+            Yes, Discard Changes and Continue
           </Button>
         </DialogActions>
       </Dialog>

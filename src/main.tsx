@@ -26,22 +26,6 @@ const queryClient = new QueryClient({
   },
 });
 
-// ReactDOM.createRoot(document.getElementById('root')!).render(
-//   <Provider store={store}>
-//     <PersistGate loading={<Spinner />} persistor={persistor}>
-//       <SessionProvider>
-//         <AuthProvider>
-//           <QueryClientProvider client={queryClient}>
-//             <Suspense fallback={<Spinner />}>
-//               <App />
-//             </Suspense>
-//           </QueryClientProvider>
-//         </AuthProvider>
-//       </SessionProvider>
-//     </PersistGate>
-//   </Provider>,
-// );
-
 const root = ReactDOM.createRoot(document.getElementById('root')!);
 
 loadRuntimeConfig()

@@ -215,12 +215,6 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
         icon: IconCalendarClock,
         href: '/admin/visitor/scheduler',
       },
-      // {
-      //   id: uniqueId(),
-      //   title: 'Approval Workflow',
-      //   icon: IconCheck,
-      //   href: '/admin/approval-workflow',
-      // },
     ],
   },
 
@@ -1097,12 +1091,12 @@ export const OperatorCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
   //   icon: IconDeviceCctv,
   //   href: '/operator/monitoring',
   // },
-  {
-    id: uniqueId(),
-    title: 'navigation.transaction_log',
-    icon: IconReport,
-    href: '/operator/transaction-log',
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'navigation.transaction_log',
+  //   icon: IconReport,
+  //   href: '/operator/transaction-log',
+  // },
   // {
   //   id: uniqueId(),
   //   title: 'Approval Workflow',
@@ -1416,12 +1410,12 @@ export const OperatorNavListingData: ItemDataCustomNavListing[] = [
   //   icon: IconDeviceCctv,
   //   href: '/operator/monitoring',
   // },
-  {
-    id: uniqueId(),
-    title: 'navigation.transaction_log',
-    icon: IconReport,
-    href: '/operator/transaction-log',
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'navigation.transaction_log',
+  //   icon: IconReport,
+  //   href: '/operator/transaction-log',
+  // },
   {
     id: uniqueId(),
     title: 'navigation.visitor',

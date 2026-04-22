@@ -1707,7 +1707,7 @@ export const getAllDocumentPagination = async (
   sortColumn?: string,
   sortDir?: string,
   keyword?: string,
-): Promise<GetAllDocumentPaginationResponse> => {
+): Promise<any> => {
   try {
     const response = await axiosInstance.get(`/document/dt`, {
       params: {
@@ -2671,7 +2671,7 @@ export const getAllIntegration = async (token: string): Promise<GetAllIntegratio
 
 export const getAvailableIntegration = async (
   token: string,
-): Promise<GetAvailableIntegrationResponse> => {
+): Promise<any> => {
   try {
     const response = await axiosInstance.get(`/integration/available`, {
       headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
@@ -2780,7 +2780,6 @@ export const syncTrackingBleIntegration = async (
         collection: d.collection ?? null,
       };
     }
-    // jaringan / non-HTTP error — biarkan meledak supaya ketahuan
     throw error;
   }
 };
@@ -2789,8 +2788,6 @@ export const deleteIntegration = async (
   integrationId: string,
   token: string,
 ): Promise<DeleteIntegrationResponse> => {
-  console.log('Deleting integration with ID:', integrationId);
-  console.log('Using token:', token);
   try {
     const response = await axiosInstance.delete(`/integration/${integrationId}`, {
       headers: { Authorization: `Bearer ${token}` },

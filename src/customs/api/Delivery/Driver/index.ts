@@ -115,22 +115,24 @@ export const getAllDriverPaginationFilterMore = async (
     length,
     sort_column: sortColumn,
     sort_dir: sortDir,
-    'search[value]': keyword,
-    'join-start': joinStart,
-    'exit-end': exitEnd,
-    'status-employee': statusDriver,
-    organization,
-    district,
-    department,
+    // 'search[value]': keyword,
+    // 'join-start': joinStart,
+    // 'exit-end': exitEnd,
+    // 'status-employee': statusDriver,
+    // organization,
+    // district,
+    // department,
   };
-
-  if (gender !== undefined) params.gender = gender;
-  if (statusDriver !== undefined) params['status-employee'] = statusDriver;
-  if (organization && organization !== '0') params.organization = organization;
-  if (district && district !== '0') params.district = district;
-  if (department && department !== '0') params.department = department;
-  if (joinStart) params.join_start = joinStart;
-  if (exitEnd) params.exit_end = exitEnd;
+  if (keyword) params['search[value]'] = keyword;
+  if (gender !== undefined && gender !== -1) params.gender = gender;
+  if (joinStart) params['join-start'] = joinStart;
+  if (exitEnd) params['exit-end'] = exitEnd;
+  if (statusDriver !== undefined && statusDriver !== -1)
+    params['status-employee'] = statusDriver;
+  if (organization && organization !== '0' && organization !== '')
+    params.organization = organization;
+  if (district && district !== '0' && district !== '') params.district = district;
+  if (department && department !== '0' && department !== '') params.department = department;
 
   const response = await axiosInstance.get(`/deliverystaff/dt`, {
     params,

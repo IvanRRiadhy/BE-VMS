@@ -18,6 +18,7 @@ type Props = {
   invitationCode?: any[];
   containerRef?: any;
   fetchRelatedVisitorsByInvitationId: (id: string) => Promise<void>;
+  registeredSite?: string;
 };
 
 const FillPraregistrationSingle: React.FC<Props> = ({
@@ -28,6 +29,7 @@ const FillPraregistrationSingle: React.FC<Props> = ({
   invitationCode,
   containerRef,
   fetchRelatedVisitorsByInvitationId,
+  registeredSite,
 }) => {
   const getTargetId = () => selectedInvitationId ?? invitationCode?.[0]?.id;
 
@@ -76,6 +78,7 @@ const FillPraregistrationSingle: React.FC<Props> = ({
                 await fetchRelatedVisitorsByInvitationId(targetId);
               }}
               containerRef={containerRef}
+              registeredSite={registeredSite}
             />
           ) : (
             <Typography variant="body2" textAlign="center" color="text.secondary">

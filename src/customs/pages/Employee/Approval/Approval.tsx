@@ -26,7 +26,7 @@ import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import BI_LOGO from 'src/assets/images/logos/BI_Logo.png';
-import FilterMoreContent from '../FilterMoreContent';
+import FilterMoreContent from '../Dashboard/FilterMoreContent';
 import bg_nodata from 'src/assets/images/backgrounds/bg_nodata.svg';
 import Swal from 'sweetalert2';
 import { showSwal } from 'src/customs/components/alerts/alerts';
