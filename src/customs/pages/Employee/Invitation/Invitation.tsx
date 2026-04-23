@@ -1,4 +1,4 @@
-import React, { useState, useEffect,  useMemo } from 'react';
+import { useState, useEffect,  useMemo } from 'react';
 import {
   Box,
   Dialog,
@@ -259,7 +259,8 @@ const Content = () => {
               identity_id: item.visitor_identity_id || '-',
               email: item.visitor_email || '-',
               organization: item.visitor_organization_name || '-',
-              gender: item.visitor_gender || '-',
+              // gender: item.visitor_gender || '-',
+              invitation_code: item.invitation_code || '-',
               phone: item.visitor_phone || '-',
               is_vip: item.visitor_is_vip || '-',
               visitor_period_start: item.visitor_period_start || '-',
@@ -268,8 +269,6 @@ const Content = () => {
               host: item.host ?? '-',
               employee: isEmployeeHost ?? '-',
               visitor_status: item.visitor_status || '-',
-
-              // 👇 hanya untuk sorting (sementara)
               invitation_created_at: item.invitation_created_at,
             };
           })
@@ -944,6 +943,7 @@ const Content = () => {
         onClose={() => setOpenInviteViaLinkEmail(false)}
         generatedLink={generatedLink}
         getExpireText={getExpireText}
+        expiredAt={expiredAt}
         handleCopyLink={handleCopyLink}
         handleSendInvitation={handleSendInvitation}
       />

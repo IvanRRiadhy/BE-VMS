@@ -823,7 +823,7 @@ const View = () => {
       if (!hasInvitation) {
         setOpenSwipeDialogNoInvitation(true);
       } else {
-        // setOpenChooseCardDialog(true); 
+        // setOpenChooseCardDialog(true);
         handleChooseCard();
       }
       return;
@@ -3125,7 +3125,6 @@ const View = () => {
           )
           .map((a) => a.trx_visitor_id?.toLowerCase());
 
-
         const { validVisitors, invalidVisitors, message } = validateMultiVisitorAccess(
           accessControlId,
           targetVisitors,
@@ -3188,7 +3187,8 @@ const View = () => {
           err?.response?.data?.msg ||
           err?.response?.data?.message ||
           err?.response?.data?.error ||
-          err?.message || 'Failed to execute action.';
+          err?.message ||
+          'Failed to execute action.';
 
         showSwal('error', backendMsg);
         resolve();
@@ -3339,7 +3339,7 @@ const View = () => {
         <Box
           flexGrow={1}
           sx={{
-            overflow: isFullscreen ? 'auto' : 'hidden',
+            // overflow: isFullscreen ? 'auto' : 'hidden',
             display: 'flex',
             padding: '10px',
             flexDirection: 'column',
@@ -3356,7 +3356,7 @@ const View = () => {
               minHeight: 0,
             }}
           >
-            <Grid
+            {/* <Grid
               container
               spacing={2}
               size={{ xs: 12 }}
@@ -3367,76 +3367,84 @@ const View = () => {
                 height: '100%',
                 flexWrap: 'wrap',
               }}
-            >
-              {/* 🧩 Card FR */}
-              <Grid size={{ xs: 12, lg: 3 }}>
-                <VisitorListCard
-                  relatedVisitors={filteredVisitors}
-                  selectedVisitors={selectedVisitors}
-                  scannedVisitorNumber={scannedVisitorNumber}
-                  searchKeyword={searchKeyword}
-                  setSearchKeyword={setSearchKeyword}
-                  handleClearAll={handleClearAll}
-                  handleSelectRelatedVisitor={handleSelectRelatedVisitor}
-                  handleCheckboxChange={handleCheckboxChange}
-                  activeSelfie={activeSelfie as string}
-                  containerRef={containerRef}
-                  selectMultiple={selectMultiple}
-                  setSelectMultiple={setSelectMultiple}
-                  setSelectedVisitors={setSelectedVisitors}
-                  bulkAction={bulkAction}
-                  setBulkAction={setBulkAction}
-                  availableActions={availableActions}
-                  handleApplyBulkAction={handleApplyBulkAction}
-                  permissionHook={permissionHook}
-                  setOpenExtendVisit={setOpenExtendVisit}
-                  handleChooseCard={handleChooseCard}
-                  handlePrintClick={handlePrintClick}
-                  loadingAccess={loadingAccess}
-                />
-              </Grid>
-
-              {/* Visiting Purpose*/}
-              <ActionPanelView
-                permission={permissionHook}
-                isFullscreen={isFullscreen}
-                handleOpenScanQR={handleOpenScanQR}
-                handleActionClick={handleActionClick as any}
-                handleOpenAction={handleOpenAction}
-                handlePrint={handlePrint}
-                handleActionBlacklist={handleActionBlacklist as any}
-                setOpenPreRegistration={setOpenPreRegistration}
-                setOpenInvitationVisitor={setOpenInvitationVisitor}
-                setOpenReturnCard={setOpenReturnCard}
-                invitationCode={invitationCode}
-                visitor={activeVisitor}
-                handleChooseCard={handleChooseCard}
-                permissionHook={permissionHook}
-                relatedVisitors={relatedVisitors}
-                handleView={handleView}
+            > */}
+            {/* 🧩 Card FR */}
+            <Grid size={{ xs: 12, md: 12, lg: 3 }}>
+              <VisitorListCard
+                relatedVisitors={filteredVisitors}
+                selectedVisitors={selectedVisitors}
+                scannedVisitorNumber={scannedVisitorNumber}
+                searchKeyword={searchKeyword}
+                setSearchKeyword={setSearchKeyword}
+                handleClearAll={handleClearAll}
+                handleSelectRelatedVisitor={handleSelectRelatedVisitor}
+                handleCheckboxChange={handleCheckboxChange}
+                activeSelfie={activeSelfie as string}
                 containerRef={containerRef}
-                handleConfirmStatus={handleConfirmStatus}
-                selectedVisitorNumber={selectedVisitorNumber}
+                selectMultiple={selectMultiple}
+                setSelectMultiple={setSelectMultiple}
+                setSelectedVisitors={setSelectedVisitors}
+                bulkAction={bulkAction}
+                setBulkAction={setBulkAction}
+                availableActions={availableActions}
+                handleApplyBulkAction={handleApplyBulkAction}
+                permissionHook={permissionHook}
+                setOpenExtendVisit={setOpenExtendVisit}
+                handleChooseCard={handleChooseCard}
+                handlePrintClick={handlePrintClick}
+                loadingAccess={loadingAccess}
               />
+            </Grid>
 
-              {/* Side Right QR Code */}
-              <Grid
-                size={{ xs: 12, lg: 3 }}
-                sx={{
+            {/* Visiting Purpose*/}
+            <ActionPanelView
+              permission={permissionHook}
+              isFullscreen={isFullscreen}
+              handleOpenScanQR={handleOpenScanQR}
+              handleActionClick={handleActionClick as any}
+              handleOpenAction={handleOpenAction}
+              handlePrint={handlePrint}
+              handleActionBlacklist={handleActionBlacklist as any}
+              setOpenPreRegistration={setOpenPreRegistration}
+              setOpenInvitationVisitor={setOpenInvitationVisitor}
+              setOpenReturnCard={setOpenReturnCard}
+              invitationCode={invitationCode}
+              visitor={activeVisitor}
+              handleChooseCard={handleChooseCard}
+              permissionHook={permissionHook}
+              relatedVisitors={relatedVisitors}
+              handleView={handleView}
+              containerRef={containerRef}
+              handleConfirmStatus={handleConfirmStatus}
+              selectedVisitorNumber={selectedVisitorNumber}
+            />
+
+            {/* Side Right QR Code */}
+            <Grid
+              size={{ xs: 12, lg: 3 }}
+              sx={
+                {
                   display: 'flex',
                   flexDirection: 'column',
-                  height: '100%',
-                }}
-              >
-                <InvitationQrCard invitationCode={invitationCode} isFullscreen={isFullscreen} />
-                <VisitorImage
+                  // height: '100%',
+                }
+              }
+            >
+              {/* <InvitationQrCard invitationCode={invitationCode} isFullscreen={isFullscreen} /> */}
+              {/* <VisitorImage
+                  faceImage={activeSelfie}
+                  identityImage={activeKTP}
+                  isFullscreen={isFullscreen}
+                /> */}
+              <InvitationQrCard invitationCode={invitationCode} isFullscreen={isFullscreen} />
+              <VisitorImage
                   faceImage={activeSelfie}
                   identityImage={activeKTP}
                   isFullscreen={isFullscreen}
                 />
-              </Grid>
             </Grid>
           </Grid>
+          {/* </Grid> */}
         </Box>
 
         {/* Print */}

@@ -1342,13 +1342,13 @@ export const ManagerNavListingData: ItemDataCustomNavListing[] = [
     href: '/manager/notification',
   },
 
-  // {
-  //   id: uniqueId(),
-  //   title: 'Report',
-  //   icon: IconReport,
-  //   chipColor: 'secondary',
-  //   href: '/manager/report',
-  // },
+  {
+    id: uniqueId(),
+    title: 'Report',
+    icon: IconReport,
+    chipColor: 'secondary',
+    href: '/manager/report',
+  },
 ];
 
 export const ManagerCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
@@ -1369,6 +1369,7 @@ export const ManagerCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
     chipColor: 'secondary',
     href: '/manager/approval',
   },
+
   {
     id: uniqueId(),
     title: 'navigation.notification',
@@ -1376,13 +1377,13 @@ export const ManagerCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
     chipColor: 'secondary',
     href: '/manager/notification',
   },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Report',
-  //   icon: IconFile,
-  //   chipColor: 'secondary',
-  //   href: '/manager/report',
-  // },
+  {
+    id: uniqueId(),
+    title: 'Report',
+    icon: IconFile,
+    chipColor: 'secondary',
+    href: '/manager/report',
+  },
 ];
 
 export const OperatorNavListingData: ItemDataCustomNavListing[] = [

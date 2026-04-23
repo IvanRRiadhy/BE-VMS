@@ -6,7 +6,7 @@ import {
 import PageContainer from 'src/components/container/PageContainer';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { IconHistory, IconMail, IconX } from '@tabler/icons-react';
+import { IconHistory } from '@tabler/icons-react';
 const AlarmPage = () => {
   const [selectedRows, setSelectedRows] = useState([]);
   const [isDataReady, setIsDataReady] = useState(false);
@@ -45,8 +45,6 @@ const AlarmPage = () => {
     //   color: 'none',
     // },
   ];
-  const [tableData, setTableData] = useState<[]>([]);
-  const [agenda, setAgenda] = useState('');
 
   const tableDataVisitor = [
     {

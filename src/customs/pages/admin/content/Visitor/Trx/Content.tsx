@@ -208,7 +208,7 @@ const Content = () => {
     setOpenPreRegistration(false);
     resetRegisteredFlow();
   };
-  
+
   const handleEmployeeClick = async (employeeId: string) => {
     if (!token) return;
 
@@ -634,7 +634,7 @@ const Content = () => {
       setOpenDetail(true);
 
       if (data.length === 0) {
-        showSwal('error', 'Your code does not exist.');
+        showSwal('error', 'Your code does not exist.', 3000);
         return;
       }
     } catch (error) {
@@ -1198,7 +1198,8 @@ const Content = () => {
 
       {/* Unsaved Changes */}
       <Dialog open={confirmDialogOpen} onClose={handleCancelDiscard} fullWidth maxWidth="sm">
-        <DialogTitle>Unsaved Changes
+        <DialogTitle>
+          Unsaved Changes
           <IconButton
             aria-label="close"
             onClick={handleCancelDiscard}

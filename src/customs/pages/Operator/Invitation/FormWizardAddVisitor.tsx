@@ -3652,10 +3652,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           ...baseMeta,
           data_visitor: [{ question_page }],
         };
-        // console.log('payload', payload);
+        console.log('payload', payload);
 
         const parsed = CreateVisitorRequestSchema.parse(payload);
-        // console.log('Final Payload (Single):', JSON.stringify(parsed, null, 2));
+        console.log('Final Payload (Single):', JSON.stringify(parsed, null, 2));
 
         const submitFn =
           TYPE_REGISTERED === 0 ? createSinglePraRegisterOperator : createSingleInvitationOperator;
@@ -3674,7 +3674,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         resetMediaState();
         clearAnswerFiles();
 
-        // console.log('invitationCode', invitationCode);
+        console.log('invitationCode', invitationCode);
 
         if (invitationCode) {
           onInvitationCreated?.(invitationCode);

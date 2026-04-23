@@ -96,7 +96,7 @@ const ActionPanelCard: FC<Props> = ({
                 slotProps={{
                   tooltip: {
                     sx: {
-                      fontSize: '1rem',
+                      fontSize: '0.7rem',
                       padding: '8px 14px',
                     },
                   },

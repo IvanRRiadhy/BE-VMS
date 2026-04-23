@@ -43,8 +43,6 @@ type SettingSMTPRow = {
 
 const Content = () => {
   const { token } = useSession();
-
-  // Table states
   const [smtpData, setSmtpData] = useState<SettingSMTPRow[]>([]);
   const [selectedRows, setSelectedRows] = useState<SettingSMTPRow[]>([]);
   const [totalRecords, setTotalRecords] = useState(0);
@@ -244,7 +242,6 @@ const Content = () => {
       console.error(err);
       showSwal('error', err?.message ?? 'Failed to update selected email.');
     } finally {
-      // setBusyId(null);
       setTimeout(() => setLoading(false), 400);
     }
   };

@@ -26,6 +26,10 @@ import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import PieChartsEmployee from './PieChartsEmployee';
 import { getActiveInvitation } from 'src/customs/api/visitor';
 import moment from 'moment';
+import { useQuery } from '@tanstack/react-query';
+import { approveTicket, getApprovalTicket, rejectTicket } from 'src/customs/api/Admin/ApprovalWorkflow';
+import Swal from 'sweetalert2';
+import { showSwal } from 'src/customs/components/alerts/alerts';
 
 const DashboardEmployee = () => {
   // const cards = [
@@ -48,7 +52,7 @@ const DashboardEmployee = () => {
   ];
   const { token } = useSession();
   const [loading, setLoading] = useState(false);
-  const [approvalData, setApprovalData] = useState<any[]>([]);
+  // const [approvalData, setApprovalData] = useState<any[]>([]);
   const [activeInvitation, setActiveInvitation] = useState<any[]>([]);
   const navigate = useNavigate();
   const [page, setPage] = useState(0);
@@ -61,67 +65,45 @@ const DashboardEmployee = () => {
     return moment.utc(date).local().format('DD-MM-YYYY, HH:mm');
   };
 
-  useEffect(() => {
-    if (!token) return;
+  const start = page * rowsPerPage;
+  const {
+    data: approvalRes,
+    refetch: refetchApproval,
+    isFetching: loadingApproval,
+  } = useQuery({
+    queryKey: ['approval-ticket', page, rowsPerPage, searchKeyword, sortDir],
+    queryFn: async () => {
+      return await getApprovalTicket(token as string, start, rowsPerPage, sortDir, searchKeyword);
+    },
+    enabled: !!token,
+  });
 
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-
-        const startDate = dayjs().subtract(30, 'day').format('YYYY-MM-DD');
-        const endDate = dayjs().add(30, 'day').format('YYYY-MM-DD');
-        const start = page * rowsPerPage;
-        // 🚀 Ambil data approval tanpa pagination
-        // const response = await getApproval(
-        //   token as string,
-        //   startDate,
-        //   endDate,
-        //   false,
-        //   null as any,
-        //   null as any,
-        // );
-        // console.log(response.collection);
-        const response = await getAllApprovalDT(
-          token as string,
-          start,
-          rowsPerPage,
-          // sortColumn,
-          sortDir,
-          searchKeyword,
-          startDate,
-          endDate,
-          // filters.is_action ?? undefined,
-          // filters.site_approval ?? undefined,
-          // filters.approval_type || undefined,
-        );
-
-        // 🧩 Mapping data approval untuk tabel
-        const mappedData = response.collection.map((item: any) => {
-          const trx = item.trx_visitor || {};
-
-          return {
-            id: item.id,
-            visitor_name: item.visitor?.name || '-',
-            // site_place_name: trx.site_place_name || '-',
-            agenda: trx.agenda || '-',
-            visitor_period_start: trx.visitor_period_start || '-',
-            // visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
-            visitor_period_end: formatDate(trx.visitor_period_end),
-            action_by: item.action_by || '-',
-            status: item.action,
-          };
-        });
-
-        setApprovalData(mappedData);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [token]);
+  const approvalData =
+    approvalRes?.collection?.map(
+      ({
+        approval_ticket_id,
+        visitor_type_name,
+        agenda,
+        host_name,
+        approval_actor_status,
+        approval_workflow_type,
+        approval_status,
+        current_step,
+        visitor_period_start,
+        visitor_period_end,
+      }: any) => ({
+        id: approval_ticket_id,
+        visitor_type_name,
+        agenda,
+        host_name,
+        approval_actor_status,
+        approval_workflow_type,
+        approval_status,
+        current_step,
+        visitor_period_start: formatDateTime(visitor_period_start),
+        visitor_period_end: formatDateTime(visitor_period_end),
+      }),
+    ) || [];
 
   // useEffect(() => {
   //   const fetchDataActiveInvtiation = async () => {
@@ -155,6 +137,51 @@ const DashboardEmployee = () => {
 
   const moveReport = () => {
     navigate('/manager/report');
+  };
+
+  const handleActionApproval = async (id: string, action: 'Approve' | 'Reject') => {
+    if (!id || !token) return;
+
+    try {
+      const confirm = await Swal.fire({
+        title: `Do you want to ${action === 'Approve' ? 'Approve' : 'Reject'} this approval?`,
+        icon: 'question',
+        // imageUrl: BI_LOGO,
+        imageWidth: 100,
+        imageHeight: 100,
+        showCancelButton: true,
+        confirmButtonText: action === 'Approve' ? 'Yes' : 'No',
+        cancelButtonText: 'Cancel',
+        reverseButtons: true,
+        confirmButtonColor: action === 'Approve' ? '#4caf50' : '#f44336',
+        customClass: {
+          title: 'swal2-title-custom',
+          htmlContainer: 'swal2-text-custom',
+        },
+      });
+
+      if (!confirm.isConfirmed) return;
+
+      setTimeout(() => setLoading(true), 800);
+
+      // await createApproval(token, { action }, id);
+      if (action === 'Approve') await approveTicket(token, id);
+      if (action === 'Reject') await rejectTicket(token, id);
+      setTimeout(() => {
+        showSwal(
+          'success',
+          `Data Approval ${action === 'Approve' ? 'approved' : 'rejected'} successfully.`,
+        );
+      }, 850);
+
+      setTimeout(() => setLoading(false), 200);
+
+      // setRefreshTrigger((prev) => prev + 1);
+      await refetchApproval();
+    } catch (error) {
+      setTimeout(() => setLoading(false), 800);
+      showSwal('error', 'Something went wrong while processing approval.');
+    }
   };
 
   return (
@@ -202,20 +229,22 @@ const DashboardEmployee = () => {
         <Grid size={{ xs: 12, lg: 6 }}>
           <DynamicTable
             height={470}
-            isHavePagination={true}
+            isHavePagination={false}
             overflowX="auto"
             data={approvalData}
             isHaveChecked={false}
-            defaultRowsPerPage={rowsPerPage}
-            rowsPerPageOptions={[10, 20, 100]}
-            onPaginationChange={(page, rowsPerPage) => {
-              setPage(page);
-              setRowsPerPage(rowsPerPage);
-            }}
+            // defaultRowsPerPage={rowsPerPage}
+            // rowsPerPageOptions={[10, 20, 100]}
+            // onPaginationChange={(page, rowsPerPage) => {
+            //   setPage(page);
+            //   setRowsPerPage(rowsPerPage);
+            // }}
             isHaveAction={true}
             isHaveHeaderTitle
             titleHeader="Approval"
             isHaveApproval={true}
+            onAccept={(row: any) => handleActionApproval(row.id, 'Approve')}
+            onDenied={(row: any) => handleActionApproval(row.id, 'Reject')}
             isHavePeriod={true}
           />
         </Grid>

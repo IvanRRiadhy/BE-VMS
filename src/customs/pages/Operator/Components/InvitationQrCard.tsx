@@ -1,4 +1,4 @@
-import { Box, Card, CardContent, Divider, Typography } from '@mui/material';
+import { Box, Card, CardContent, Divider, Typography, useTheme } from '@mui/material';
 import QRCode from 'react-qr-code';
 import { IconCards } from '@tabler/icons-react';
 
@@ -18,20 +18,27 @@ const InvitationQrCard = ({
 }: InvitationQrCardProps) => {
   const data = invitationCode[0];
 
+  const theme = useTheme();
+  const lg = theme.breakpoints.up('lg');
+
   return (
     <Card
       sx={{
         borderRadius: 2,
-        // height: '100%',
-        width: '100%',
         height: '100%',
+        width: '100%',
+        // height: {
+        //   xs: '100%',
+        //   xl: data ? '400px' : '400px',
+        // },
+        // minHeight: 360,
         // maxHeight: isFullscreen ? '100%' : { xs: '100%', sm: '100%', xl: '400px' },
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
         border: '1px solid #e0e0e0',
         p: 2,
-        mt: 0.5
+        mt: 0.5,
       }}
     >
       <CardContent
@@ -41,7 +48,7 @@ const InvitationQrCard = ({
           flexDirection: 'column',
           justifyContent: 'center',
           pb: '0 !important',
-          pt: '10px !important'
+          pt: '10px !important',
         }}
       >
         {/* QR / Empty State */}

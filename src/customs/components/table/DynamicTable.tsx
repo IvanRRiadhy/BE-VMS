@@ -710,7 +710,7 @@ function DynamicTableBase<
                   justifyContent={{ xs: 'flex-start', sm: 'flex-start' }}
                 >
                   <Stack direction="column" sx={{ width: '100%' }}>
-                    <Typography sx={{ fontSize: '1rem' }} variant="subtitle1" fontWeight={600}>
+                    <Typography sx={{ fontSize: '1rem' }} variant="subtitle1" fontWeight={600} > 
                       {headerContent.title}
                     </Typography>
                     <Tabs
@@ -830,7 +830,7 @@ function DynamicTableBase<
               alignItems="center"
               flexWrap={'wrap'}
               sx={{
-                mb: 2,
+                mb: 1,
                 gap: { xs: 1.5, md: 0 },
               }}
               width="100%"

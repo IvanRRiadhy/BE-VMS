@@ -330,10 +330,10 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         showSwal('success', 'Visitor type created successfully!');
       }
 
-      // setTimeout(() => {
+      setTimeout(() => {
         onSuccess?.();
         setLoading(false);
-      // }, 600);
+      }, 600);
     } catch (err: any) {
       if (err?.errors) {
         setErrors(err.errors);

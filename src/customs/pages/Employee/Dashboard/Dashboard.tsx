@@ -63,6 +63,11 @@ import {
 } from 'src/customs/api/ShareLink';
 import AccessPassDialog from '../Components/Dialog/AccessPassDialog';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  approveTicket,
+  getApprovalTicket,
+  rejectTicket,
+} from 'src/customs/api/Admin/ApprovalWorkflow';
 
 const DashboardEmployee = () => {
   const CardItems = [
@@ -82,7 +87,7 @@ const DashboardEmployee = () => {
   const [loading, setLoading] = useState(false);
 
   const [openDialogInvitation, setOpenDialogInvitation] = useState(false);
-  const [approvalData, setApprovalData] = useState<any[]>([]);
+  // const [approvalData, setApprovalData] = useState<any[]>([]);
   const [invitationDetailVisitor, setInvitationDetailVisitor] = useState<any[]>([]);
   const [activeInvitation, setActiveInvitation] = useState<any[]>([]);
   const [invitationList, setInvitationList] = useState<any[]>([]);
@@ -145,9 +150,9 @@ const DashboardEmployee = () => {
       return res;
     },
 
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 1,
     enabled: !!token,
-    gcTime: 1000 * 60 * 2,
+    // gcTime: 1000 * 60 * 2,
     placeholderData: (previousData) => previousData,
   });
 
@@ -209,57 +214,45 @@ const DashboardEmployee = () => {
     fetchDataActiveInvtiation();
   }, [token]);
 
-  useEffect(() => {
-    if (!token) return;
+  const {
+    data: approvalRes,
+    refetch: refetchApproval,
+    isFetching: loadingApproval,
+  } = useQuery({
+    queryKey: ['approval-ticket', page, rowsPerPage, searchKeyword, sortDir],
+    queryFn: async () => {
+      return await getApprovalTicket(token as string, start, rowsPerPage, sortDir, searchKeyword);
+    },
+    enabled: !!token,
+  });
 
-    const fetchData = async () => {
-      try {
-        setLoading(true);
+  const approvalData =
+    approvalRes?.collection?.map(
+      ({
+        approval_ticket_id,
+        visitor_type_name,
+        agenda,
+        host_name,
+        approval_actor_status,
+        approval_workflow_type,
+        approval_status,
+        current_step,
+        visitor_period_start,
+        visitor_period_end,
+      }: any) => ({
+         id: approval_ticket_id,
+        visitor_type_name,
+        agenda,
+        host_name,
+        approval_actor_status,
+        approval_workflow_type,
+        approval_status,
+        current_step,
+        visitor_period_start: formatDateTime(visitor_period_start),
+        visitor_period_end: formatDateTime(visitor_period_end),
+      }),
+    ) || [];
 
-        const startDate = dayjs().subtract(30, 'day').format('YYYY-MM-DD');
-        const endDate = dayjs().add(31, 'day').format('YYYY-MM-DD');
-
-        const response = await getApproval(
-          token as string,
-          startDate,
-          endDate,
-          false,
-          null as any,
-          null as any,
-        );
-
-        const mappedData = response.collection.map((item: any) => {
-          const trx = item.trx_visitor || {};
-          let status = '';
-          if (item.action === 'Accept') status = 'Accept';
-          else if (item.action === 'Deny') status = 'Deny';
-          else status = '-';
-          return {
-            id: item.id,
-            visitor_name: item.visitor?.name || '-',
-            // site_place_name: trx.site_place_name || '-',
-            // visitor_type: trx.visitor_type_name || '-',
-            agenda: trx.agenda || '-',
-            // visitor_period_start: trx.visitor_period_start || '-',
-            // visitor_period_end: trx.visitor_period_end || '-',
-            // visitor_period_end: trx.visitor_period_end
-            //   ? formatDateTime(trx.visitor_period_end, trx.extend_visitor_period)
-            //   : trx.visitor_period_end || '-',
-            action_by: item.action_by || '-',
-            status: item.action,
-          };
-        });
-
-        setApprovalData(mappedData);
-      } catch (error) {
-        // console.error('Error fetching data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [token]);
 
   useEffect(() => {
     if (!token) return;
@@ -280,7 +273,7 @@ const DashboardEmployee = () => {
           email: item.visitor.email,
           organization: item.visitor.organization,
           visitor_period_start: item.visitor_period_start,
-          visitor_period_end: item.visitor_period_end,
+          visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
           host: item.host_name ?? '-',
           // visitor_status: item.visitor_status,
         }));
@@ -404,21 +397,21 @@ const DashboardEmployee = () => {
     }
   };
 
-  const handleActionApproval = async (id: string, action: 'Accept' | 'Deny') => {
+  const handleActionApproval = async (id: string, action: 'Approve' | 'Reject') => {
     if (!id || !token) return;
 
     try {
       const confirm = await Swal.fire({
-        title: `Do you want to ${action === 'Accept' ? 'Accept' : 'Deny'} this approval?`,
+        title: `Do you want to ${action === 'Approve' ? 'Approve' : 'Reject'} this approval?`,
         icon: 'question',
         // imageUrl: BI_LOGO,
         imageWidth: 100,
         imageHeight: 100,
         showCancelButton: true,
-        confirmButtonText: action === 'Accept' ? 'Yes' : 'No',
+        confirmButtonText: action === 'Approve' ? 'Yes' : 'No',
         cancelButtonText: 'Cancel',
         reverseButtons: true,
-        confirmButtonColor: action === 'Accept' ? '#4caf50' : '#f44336',
+        confirmButtonColor: action === 'Approve' ? '#4caf50' : '#f44336',
         customClass: {
           title: 'swal2-title-custom',
           htmlContainer: 'swal2-text-custom',
@@ -429,17 +422,20 @@ const DashboardEmployee = () => {
 
       setTimeout(() => setLoading(true), 800);
 
-      await createApproval(token, { action }, id);
+      // await createApproval(token, { action }, id);
+      if (action === 'Approve') await approveTicket(token, id);
+      if (action === 'Reject') await rejectTicket(token, id);
       setTimeout(() => {
         showSwal(
           'success',
-          `Data Approval ${action === 'Accept' ? 'approved' : 'denied'} successfully.`,
+          `Data Approval ${action === 'Approve' ? 'approved' : 'rejected'} successfully.`,
         );
       }, 850);
 
       setTimeout(() => setLoading(false), 200);
 
       // setRefreshTrigger((prev) => prev + 1);
+      await refetchApproval();
     } catch (error) {
       console.error('Approval action error:', error);
       setTimeout(() => setLoading(false), 800);
@@ -644,8 +640,11 @@ const DashboardEmployee = () => {
 
         <Grid size={{ xs: 12, lg: 6 }}>
           <DynamicTable
-            height={510}
-            isHavePagination={false}
+            loading={loadingApproval}
+            height={460}
+            // isHavePagination={true}
+            // defaultRowsPerPage={rowsPerPage}
+            // rowsPerPageOptions={[5, 10]}
             overflowX="auto"
             data={approvalData}
             isHaveChecked={false}
@@ -654,8 +653,8 @@ const DashboardEmployee = () => {
             isHaveHeaderTitle
             titleHeader="Approval"
             isHaveApproval={true}
-            onAccept={(row: { id: string }) => handleActionApproval(row.id, 'Accept')}
-            onDenied={(row: { id: string }) => handleActionApproval(row.id, 'Deny')}
+            onAccept={(row: any) => handleActionApproval(row.id, 'Approve')}
+            onDenied={(row: any) => handleActionApproval(row.id, 'Reject')}
             isHavePeriod={true}
           />
         </Grid>
@@ -663,15 +662,17 @@ const DashboardEmployee = () => {
         <Grid size={{ xs: 12, lg: 6 }}>
           <DynamicTable
             loading={isFetching}
-            height={510}
+            height={460}
             overflowX="auto"
             data={shareLinkList}
+            isHaveChecked={false}
             titleHeader="Link Share Visitor"
             isHaveHeaderTitle={true}
             isCopyLink={true}
-            isHavePagination={false}
-            defaultRowsPerPage={rowsPerPage}
-            rowsPerPageOptions={[5, 10]}
+            isNoActionTableHead={true}
+            // isHavePagination={false}
+            // defaultRowsPerPage={rowsPerPage}
+            // rowsPerPageOptions={[5, 10]}
             onPaginationChange={(page, rowsPerPage) => {
               setPage(page);
               setRowsPerPage(rowsPerPage);
@@ -679,7 +680,7 @@ const DashboardEmployee = () => {
             isDetailLink={true}
             onCopyLink={(row: any) => handleCopyLink(row.url)}
             onDetailLink={(row: any) => handleDetailLink(row)}
-            onDelete={(row: any) => handleDeleteLink(row)}
+            onDelete={(row: any) => handleDeleteLink(row.id)}
           />
         </Grid>
         <Grid size={{ xs: 12, lg: 6 }} sx={{ height: '100%' }}>

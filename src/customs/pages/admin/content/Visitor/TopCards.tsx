@@ -17,8 +17,6 @@ import icon7 from '../../../../../assets/images/svgs/all-visitors.svg';
 import icon10 from '../../../../../assets/images/svgs/scan-qr.svg';
 import icon11 from '../../../../../assets/images/svgs/add-btn.svg';
 import BlankCard from 'src/components/shared/BlankCard';
-import FormWizardAddVisitor from './Trx/FormWizardAddVisitor';
-import FormWizardAddInvitation from './Trx/FormWizardAddInvitation';
 
 interface CardItems {
   title: string;

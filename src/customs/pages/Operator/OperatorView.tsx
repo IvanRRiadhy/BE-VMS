@@ -190,7 +190,10 @@ const OperatorView = () => {
   const [openListVisitor, setOpenListVisitor] = useState(false);
   const [openBlacklistVisitor, setOpenBlacklistVisitor] = useState(false);
   const [openTriggeredAccess, setOpenTriggeredAccess] = useState(false);
-  const [registerSiteOperator, setRegisterSiteOperator] = useState<string>('');
+  // const [registerSiteOperator, setRegisterSiteOperator] = useState<string>('');
+  const [registerSiteOperator, setRegisterSiteOperator] = useState<string>(() => {
+    return localStorage.getItem('selectedSite') || '';
+  });
   const [registeredSite, setRegisteredSite] = useState<any[]>([]);
   const [openSwipeDialogNoInvitation, setOpenSwipeDialogNoInvitation] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -263,6 +266,14 @@ const OperatorView = () => {
     };
     fetchData();
   }, [token]);
+
+  useEffect(() => {
+    if (registerSiteOperator) {
+      localStorage.setItem('selectedSite', registerSiteOperator);
+    } else {
+      localStorage.removeItem('selectedSite');
+    }
+  }, [registerSiteOperator]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -1282,7 +1293,7 @@ const OperatorView = () => {
           swap_type: 'Other',
           registered_site_id: registerSiteOperator,
         }));
-        // console.log('payloads', payloads);
+        console.log('payloads', payloads);
 
         setSwipePayload(payloads);
         setCurrentAccessVisitor(visitor);
@@ -1314,6 +1325,7 @@ const OperatorView = () => {
             is_swapcard: false,
             swap_type: 'Other',
             visitorName: visitor.name || visitorId,
+            registered_site_id: registerSiteOperator,
           };
         })
         .filter(Boolean) as any[];
@@ -1326,9 +1338,11 @@ const OperatorView = () => {
         await createMultipleGrantAccess(token as string, {
           data: payloads.map(({ visitorName, ...p }) => p),
         });
+        console.log('payloads multiple', payloads);
       } else {
         const { visitorName, ...payload } = payloads[0];
 
+        console.log('payload', payload);
         await createGrandAccessOperator(token as string, payload);
       }
 
@@ -3313,7 +3327,7 @@ const OperatorView = () => {
 
       const payload = {
         card_number: returnCardNumber.trim(),
-        registered_site_id: registerSiteOperator
+        registered_site_id: registerSiteOperator,
       };
 
       console.log('return card payload', payload);
@@ -3369,7 +3383,7 @@ const OperatorView = () => {
             backgroundColor: '#fff',
             height: isFullscreen ? '100vh' : { lg: '100%', xs: '100%' },
             width: '100%',
-            padding: '0 !important',
+            padding: '5px !important',
 
             position: 'relative',
             overflow: 'visible',
@@ -3378,15 +3392,14 @@ const OperatorView = () => {
           <Box
             flexGrow={1}
             sx={{
-              overflow: isFullscreen ? 'auto' : 'hidden',
+              // overflow: isFullscreen ? 'auto' : 'hidden',
               display: 'flex',
-              padding: '10px',
+              padding: '0px !important',
               flexDirection: 'column',
-
               height: isFullscreen ? '100vh' : 'auto',
             }}
           >
-            <Grid container spacing={1} mb={0} alignItems="center">
+            <Grid container spacing={1} mb={0} alignItems={{ xs: 'start', xl: 'center' }}>
               <Grid size={{ xs: 12, md: 7.5, lg: 8.2, xl: 9 }}>
                 <VisitorSearchInput
                   onOpenSearch={() => setOpenSearch(true)}
@@ -3534,7 +3547,7 @@ const OperatorView = () => {
                         slotProps={{
                           tooltip: {
                             sx: {
-                              fontSize: '1rem',
+                              fontSize: '8.7remrem',
                               padding: '8px 14px',
                             },
                           },
@@ -3542,6 +3555,7 @@ const OperatorView = () => {
                             container: containerRef.current,
                           },
                         }}
+                        arrow
                       >
                         <FormControlLabel
                           value="end"
@@ -3941,7 +3955,7 @@ const OperatorView = () => {
                 sx={{
                   display: 'flex',
                   flexDirection: 'column',
-                  height: '100%',
+                  // height: '100%',
                 }}
               >
                 <VisitorImage

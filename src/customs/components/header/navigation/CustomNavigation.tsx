@@ -31,16 +31,20 @@ const CustomNavigation: React.FC<CustomNavigationProps> = ({
       <Box
         sx={{
           // borderBottom: '1px solid rgba(0,0,0,0.05)',
+          // position: 'sticky', // ✅ bikin nempel
+          // top: 0, // ✅ nempel di atas
+          // zIndex: 1100,
           background: 'white',
           width: '100%',
-          px: xl ? '10px !important': '5px !important',
+          px: xl ? '10px !important' : '5px !important',
           py: 2,
           borderRadius: 0,
           // overflow: 'hidden',
+          // position: 'fixed'
         }}
       >
         <Box
-          sx={{ px: 1, zIndex: 9999 }}
+          sx={{ px: 1, zIndex: 9999, position: 'sticky' }}
           display={'flex'}
           justifyContent={'space-between'}
           alignItems={'center'}
@@ -69,7 +73,7 @@ const CustomNavigation: React.FC<CustomNavigationProps> = ({
       {/* ------------------------------------------- */}
       {/* Logo */}
       {/* ------------------------------------------- */}
-      <Box px={1} py={1} display="flex" justifyContent="center" alignItems="center">
+      <Box px={1} py={1} display="flex" justifyContent="center" alignItems="center" >
         {/* <img
           src="https://upload.wikimedia.org/wikipedia/commons/3/39/BI_Logo.png"
           width={'180px'}

@@ -9,8 +9,6 @@ import {
   Divider,
   Grid2 as Grid,
   IconButton,
-  Portal,
-  Backdrop,
 } from '@mui/material';
 import Container from 'src/components/container/PageContainer';
 import PageContainer from 'src/customs/components/container/PageContainer';
@@ -105,6 +103,7 @@ const Content = () => {
             id: item.id,
             name: item.short_name,
             display_text: item.long_display_text,
+            remarks: item.remarks,
             field_type: FieldType[item.field_type],
             multiple_option_fields: item.multiple_option_fields,
           }));

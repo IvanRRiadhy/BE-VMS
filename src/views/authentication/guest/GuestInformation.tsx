@@ -140,6 +140,31 @@ const GuestInformationStepper = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     if (!code) return;
+
+  //     const res = await AuthVisitor({ code });
+  //     setInvitationData(res.collection);
+
+  //     const initial: Record<string, any> = {};
+  //     res.collection.question_page.forEach((section: any) => {
+  //       section.form.forEach((f: any) => {
+  //         if (f.field_type === 9) {
+  //           initial[f.remarks] = f.answer_datetime;
+  //         } else if (f.field_type === 10 || f.field_type === 11 || f.field_type === 12) {
+  //           initial[f.remarks] = f.answer_file;
+  //         } else {
+  //           initial[f.remarks] = f.answer_text || null;
+  //         }
+  //       });
+  //     });
+  //     setFormValues(initial);
+  //   };
+
+  //   fetchData();
+  // }, [code]);
+
   useEffect(() => {
     const fetchData = async () => {
       if (!code) return;
@@ -148,17 +173,25 @@ const GuestInformationStepper = () => {
       setInvitationData(res.collection);
 
       const initial: Record<string, any> = {};
-      res.collection.question_page.forEach((section: any) => {
-        section.form.forEach((f: any) => {
+
+      const pages = res?.collection?.question_page ?? [];
+
+      pages.forEach((section: any) => {
+        const forms = section?.form ?? [];
+
+        forms.forEach((f: any) => {
+          if (!f) return;
+
           if (f.field_type === 9) {
             initial[f.remarks] = f.answer_datetime;
-          } else if (f.field_type === 10 || f.field_type === 11 || f.field_type === 12) {
+          } else if ([10, 11, 12].includes(f.field_type)) {
             initial[f.remarks] = f.answer_file;
           } else {
-            initial[f.remarks] = f.answer_text || null;
+            initial[f.remarks] = f.answer_text ?? null;
           }
         });
       });
+
       setFormValues(initial);
     };
 
@@ -846,10 +879,8 @@ const GuestInformationStepper = () => {
             if (!isDriving && ['vehicle_type', 'vehicle_plate'].includes(f.remarks)) {
               return null;
             }
-
             const fieldKey = `${section.name}_${f.remarks}`;
             let displayValue = formValues[f.remarks] ?? '';
-
             const type = getFieldTypeByRemarks(f.remarks) ?? f.field_type;
 
             if (f.remarks === 'host') {
@@ -1080,26 +1111,26 @@ const GuestInformationStepper = () => {
                   visitor_form_type: 1,
                 };
 
-            if (f.field_type === 9) {
-              return {
-                ...base,
-                answer_datetime: value ?? null,
-                answer_text: value ?? null,
-              };
-            }
+                if (f.field_type === 9) {
+                  return {
+                    ...base,
+                    answer_datetime: value ?? null,
+                    answer_text: value ?? null,
+                  };
+                }
 
-            if (f.field_type === 10 || f.field_type === 11 || f.field_type === 12) {
-              return {
-                ...base,
-                answer_file: value ?? null, 
-              };
-            }
+                if (f.field_type === 10 || f.field_type === 11 || f.field_type === 12) {
+                  return {
+                    ...base,
+                    answer_file: value ?? null,
+                  };
+                }
 
-            // default (text, number, dll)
-            return {
-              ...base,
-              answer_text: value ?? null,
-            };
+                // default (text, number, dll)
+                return {
+                  ...base,
+                  answer_text: value ?? null,
+                };
               }),
             };
           }),
@@ -1149,7 +1180,7 @@ const GuestInformationStepper = () => {
         localStorage.removeItem('visitor_ref_code');
         return;
       }
-    } catch (error:any) {
+    } catch (error: any) {
       setSubmitting(false);
       showSwal('error', error.msg || 'Failed to Pra Register Visitor');
     } finally {

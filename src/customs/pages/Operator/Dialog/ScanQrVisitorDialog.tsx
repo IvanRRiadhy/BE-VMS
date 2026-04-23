@@ -14,7 +14,7 @@ import {
 import FlipCameraAndroidIcon from '@mui/icons-material/FlipCameraAndroid';
 import FlashOnIcon from '@mui/icons-material/FlashOn';
 import FlashOffIcon from '@mui/icons-material/FlashOff';
-import { IconCamera, IconUser, IconX } from '@tabler/icons-react';
+import { IconCamera, IconTextSize, IconUser, IconX } from '@tabler/icons-react';
 import { Scanner } from '@yudiel/react-qr-scanner';
 import { Html5QrScanner } from '../Components/Html5QrScanner';
 type Props = {
@@ -111,6 +111,7 @@ const ScanQrVisitorDialog: React.FC<Props> = ({
               variant={qrMode === 'manual' ? 'contained' : 'outlined'}
               onClick={() => setQrMode('manual')}
               size="small"
+              startIcon={<IconTextSize />}
             >
               Manual
             </Button>

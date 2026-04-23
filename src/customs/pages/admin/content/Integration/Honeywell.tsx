@@ -257,7 +257,18 @@ const Honeywell = ({ id }: { id: string }) => {
         setListData(res.collection ?? []);
       } else if (type === 'badge_type' || type === 'badge_types') {
         const res = await getBadgeType(id as string, token);
-        setListData(res.collection ?? []);
+        const rows = res?.collection?.map((item: any) => ({
+          id: String(item.id),
+          name: item.name ?? '',
+          description: item.description ?? '',
+          badge_type_id: item.badge_type_id ?? '',
+          visitor_type_id: item.visitor_type_id ?? '',
+          honeywell_id: item.honeywell_id ?? '',
+          visitor_type: item.visitor_type.name,
+          active: item.active ?? false,
+
+        }));
+        setListData(rows ?? []);
       } else if (type === 'clear_codes') {
         const res = await getClearcodes(id as string, token);
         setListData(res.collection ?? []);
@@ -663,8 +674,6 @@ const Honeywell = ({ id }: { id: string }) => {
         handleCloseDialog();
       }, 600);
     } catch (err) {
-      // console.error('Save badge type error:', err);
-      // setSyncMsg({ open: true, text: 'Failed to update badge type', severity: 'error' });
       showSwal('error', 'Failed to update badge type');
     } finally {
       setTimeout(() => {

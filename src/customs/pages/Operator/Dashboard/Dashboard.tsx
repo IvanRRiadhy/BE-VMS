@@ -21,18 +21,10 @@ import {
 import { Box } from '@mui/system';
 
 import {
-  IconArrowAutofitRight,
-  IconBan,
+  IconArrowAutofitRight, 
   IconCircleMinus,
-  IconCircleOff,
-  IconForbid2,
-  IconGenderMale,
-  IconHome,
-  IconLicense,
   IconLogin,
-  IconLogin2,
   IconLogout,
-  IconMinus,
   IconX,
 } from '@tabler/icons-react';
 import { Scanner } from '@yudiel/react-qr-scanner';
@@ -52,7 +44,7 @@ import {
   IconHourglass,
   IconUsersGroup,
 } from '@tabler/icons-react';
-import TopCards from './Dashboard/TopCard';
+import TopCards from './TopCard';
 
 const DashboardOperator = () => {
   // const cards = [

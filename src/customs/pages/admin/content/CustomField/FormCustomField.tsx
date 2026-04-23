@@ -118,7 +118,7 @@ const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCu
               lg: formData.field_type <= 2 ? 6 : 4,
             }}
           >
-            <Paper sx={{ p: 0 }}>
+            <Paper sx={{ p: 1 }}>
               <Typography variant="h6" sx={{ my: 0, borderLeft: '4px solid #673ab7', pl: 1 }}>
                 Custom Field Details
               </Typography>

@@ -47,7 +47,7 @@ const HeaderHorizontal = ({ itemDataCustomNavListing, itemDataCustomSidebarItems
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   return (
-    <AppBarStyled position="static" color="default" elevation={8}>
+    <AppBarStyled position="sticky" color="default" elevation={8} sx={{ borderBottom: '1px solid rgba(0,0,0,0.1)' }}>
       <ToolbarStyled >
         {/* Logo dan Sidebar Toggle */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

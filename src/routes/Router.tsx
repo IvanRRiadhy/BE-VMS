@@ -201,7 +201,9 @@ const NotificationEmployee = Loadable(
   lazy(() => import('src/customs/pages/Employee/Notification/Content')),
 );
 /* Operator Pages* */
-const DashboardOperator = Loadable(lazy(() => import('src/customs/pages/Operator/Dashboard')));
+const DashboardOperator = Loadable(
+  lazy(() => import('src/customs/pages/Operator/Dashboard/Dashboard')),
+);
 const OperatorView = Loadable(lazy(() => import('src/customs/pages/Operator/OperatorView')));
 const ManageVisitorOperator = Loadable(
   lazy(() => import('src/customs/pages/Operator/Visitor/content')),

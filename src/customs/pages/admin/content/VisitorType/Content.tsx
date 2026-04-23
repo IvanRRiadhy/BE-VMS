@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useLayoutEffect } from 'react';
+import { useEffect, useState, useCallback, useLayoutEffect } from 'react';
 import {
   Box,
   Button,
@@ -151,7 +151,7 @@ const Content = () => {
         }
       } catch (error) {
         console.error('Error fetching data:', error);
-        setTableRowVisitorType([]);
+        // setTableRowVisitorType([]);
       } finally {
         setTimeout(() => setLoading(false), 300);
       }

@@ -10,6 +10,7 @@ import {
   MenuItem,
   Switch,
   TextField,
+  Autocomplete,
 } from '@mui/material';
 import { IconTrash } from '@tabler/icons-react';
 
@@ -65,7 +66,7 @@ function SortableRow({
         </div>
       </TableCell>
 
-      <TableCell
+      {/* <TableCell
         sx={{
           width: { xs: '50%', sm: 'auto' },
           padding: { xs: 0, sm: 'auto' },
@@ -93,6 +94,7 @@ function SortableRow({
           }}
           placeholder="Select Field"
           fullWidth
+          
         >
           {(customField || []).filter(filterField).map((field: any) => {
             const alreadySelected = rows.some(
@@ -106,6 +108,35 @@ function SortableRow({
             );
           })}
         </TextField>
+      </TableCell> */}
+
+      <TableCell
+        sx={{
+          width: { xs: '50%', sm: 'auto' },
+          padding: { xs: 0, sm: 'auto' },
+        }}
+      >
+        <Autocomplete
+          size="small"
+          sx={{ width: { xs: '150px', sm: '100%' } }}
+          options={(customField || []).filter(filterField)}
+          getOptionLabel={(option: any) => option.short_name || ''}
+          value={(customField || []).find((f: any) => f.short_name === item.short_name) || null}
+          onChange={(_, newValue) => {
+            if (!newValue) return;
+
+            onChange(index, 'short_name', newValue.short_name);
+            onChange(index, 'custom_field_id', newValue.id);
+            onChange(index, 'remarks', newValue.remarks);
+            onChange(index, 'field_type', newValue.field_type);
+            onChange(index, 'multiple_option_fields', newValue.multiple_option_fields ?? []);
+          }}
+          isOptionEqualToValue={(option, value) => option.short_name === value.short_name}
+          getOptionDisabled={(option: any) =>
+            rows.some((r: any, i: number) => r.short_name === option.short_name && i !== index)
+          }
+          renderInput={(params) => <TextField {...params} placeholder="Select Field" fullWidth />}
+        />
       </TableCell>
 
       <TableCell

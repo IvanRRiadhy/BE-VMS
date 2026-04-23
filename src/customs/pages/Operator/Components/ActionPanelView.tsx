@@ -114,7 +114,7 @@ const ActionPanelView: FC<Props> = ({
         display: 'flex',
         justifyContent: isFullscreen ? 'center' : 'flex-start',
         alignItems: isFullscreen ? 'center' : 'stretch',
-        height: '100%', // 🔥 penting
+        // height: '100%', 
         width: '100%',
       }}
     >
