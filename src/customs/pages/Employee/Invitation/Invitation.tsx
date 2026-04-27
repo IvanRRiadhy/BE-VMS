@@ -1,4 +1,4 @@
-import { useState, useEffect,  useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Dialog,
@@ -276,7 +276,7 @@ const Content = () => {
             (a: any, b: any) =>
               dayjs(b.invitation_created_at).valueOf() - dayjs(a.invitation_created_at).valueOf(),
           )
-          .map(({ invitation_created_at, ...rest }: any) => rest); 
+          .map(({ invitation_created_at, ...rest }: any) => rest);
 
         if (selectedType !== 'All') {
           const apiStatus = statusMap[selectedType];
@@ -972,10 +972,23 @@ const Content = () => {
 
       {/* Unsaved Changes */}
       <Dialog open={confirmDialogOpen} onClose={handleCancelDiscard} fullWidth maxWidth="sm">
-        <DialogTitle>Unsaved Changes</DialogTitle>
+        <DialogTitle>
+          Unsaved Changes
+          <IconButton
+            aria-label="close"
+            onClick={handleCancelDiscard}
+            sx={{
+              position: 'absolute',
+              top: 8,
+              right: 8,
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
 
-        <DialogContent>
-          <Typography>Are you sure you want to discard your changes?</Typography>
+        <DialogContent dividers>
+          <Typography> You have unsaved changes. Are you sure you want to discard them?</Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCancelDiscard}>Cancel</Button>

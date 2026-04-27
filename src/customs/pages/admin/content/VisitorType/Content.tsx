@@ -116,9 +116,13 @@ const Content = () => {
   }, [openFormCreateVisitorType, isFormChanged]);
 
   useEffect(() => {
-    if (Object.keys(formDataAddVisitorType).length > 0) {
+    if (Object.keys(formDataAddVisitorType).length === 0) return;
+
+    const timer = setTimeout(() => {
       localStorage.setItem('unsavedVisitorTypeData', JSON.stringify(formDataAddVisitorType));
-    }
+    }, 500);
+
+    return () => clearTimeout(timer);
   }, [formDataAddVisitorType]);
 
   useLayoutEffect(() => {

@@ -371,6 +371,66 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     );
   };
 
+  const handleSelectVisitor = (gIdx: number, v: any) => {
+    if (!v) {
+      const resetKeys = [
+        'name',
+        'email',
+        'phone',
+        'organization',
+        'indentity_id',
+        'gender',
+        'employee',
+      ];
+
+      setDataVisitor((prev) => {
+        const next = [...prev];
+        const page = next[gIdx]?.question_page?.[activeStep - 1];
+
+        if (!page?.form) return prev;
+
+        next[gIdx].question_page[activeStep - 1].form = page.form.map((item: any) =>
+          resetKeys.includes(item.remarks) ? { ...item, answer_text: '' } : item,
+        );
+
+        return next;
+      });
+
+      return;
+    }
+
+    let genderValue: string | undefined;
+
+    if (v.gender === 'Male') genderValue = '1';
+    else if (v.gender === 'Female') genderValue = '0';
+    else if (v.gender === 'Prefer not to say') genderValue = '2';
+
+    const mapping: Record<string, string | undefined> = {
+      name: v.name,
+      email: v.email,
+      phone: v.phone,
+      organization: typeof v.organization === 'object' ? v.organization.name : v.organization,
+      indentity_id: v.identity_id,
+      gender: genderValue,
+      employee: v.id,
+    };
+
+    setDataVisitor((prev) => {
+      const next = [...prev];
+      const page = next[gIdx]?.question_page?.[activeStep - 1];
+
+      if (!page?.form) return prev;
+
+      next[gIdx].question_page[activeStep - 1].form = page.form.map((item: any) =>
+        mapping[item.remarks] !== undefined
+          ? { ...item, answer_text: mapping[item.remarks]! }
+          : item,
+      );
+
+      return next;
+    });
+  };
+
   const handleSteps = (step: number) => {
     const showVTListSkeleton = vtLoading;
     if (step == 0) {
@@ -839,6 +899,14 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                                     </AccordionSummary>
 
                                     <AccordionDetails>
+                                      <Box sx={{ width: '100%', mb: 2 }}>
+                                        <CustomFormLabel sx={{ mt: 0 }}>Search</CustomFormLabel>
+                                        <VisitorSelect
+                                          token={token as string}
+                                          // isEmployee={isEmployee}
+                                          onSelect={(v) => handleSelectVisitor(gIdx, v)}
+                                        />
+                                      </Box>
                                       {page.form?.map((field: any, fIdx: any) => {
                                         const matchedKey = Object.keys(
                                           groupedPages.batch_page || {},
@@ -911,6 +979,9 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                           >
                             <TableHead>
                               <TableRow>
+                                <TableCell>
+                                  <CustomFormLabel>Search</CustomFormLabel>
+                                </TableCell>
                                 {(dataVisitor[0]?.question_page[activeStep - 1]?.form || []).map(
                                   (f: any, i: any) => (
                                     <TableCell key={f.custom_field_id || i}>
@@ -959,6 +1030,39 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
 
                                   return (
                                     <TableRow key={gIdx}>
+                                      <TableCell sx={{ minWidth: 250 }}>
+                                        <VisitorSelect
+                                          token={token as string}
+                                          // isEmployee={isEmployee}
+                                          onSelect={(v) => handleSelectVisitor(gIdx, v)}
+                                        />
+                                      </TableCell>
+                                      {/* <TableCell>
+                                        <CustomTextField
+                                          select
+                                          size="small"
+                                          fullWidth
+                                          // value={group.type || ''}
+                                          sx={{ minWidth: 160 }}
+                                          onChange={(e) => {
+                                            const value = e.target.value;
+
+                                            // setDataVisitor((prev) => {
+                                            //   const next = [...prev];
+                                            //   next[gIdx] = {
+                                            //     ...next[gIdx],
+                                            //     type: value,
+                                            //   };
+                                            //   return next;
+                                            // });
+                                          }}
+                                        >
+                                          <MenuItem value="leader">Leader</MenuItem>
+                                          <MenuItem value="driver">Driver</MenuItem>
+                                          <MenuItem value="staff">Staff</MenuItem>
+                                          <MenuItem value="visitor">Visitor</MenuItem>
+                                        </CustomTextField>
+                                      </TableCell> */}
                                       {fields.map((field: any) => {
                                         const matchedKey = Object.keys(
                                           groupedPages.batch_page || {},
@@ -2973,7 +3077,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                           sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                         >
                           <Typography variant="body1" color="textSecondary">
-                            Supports:  JPG, PNG, JPEG Up to
+                            Supports: JPG, PNG, JPEG Up to
                             <span style={{ fontWeight: '700' }}> 100KB</span>
                           </Typography>
 
@@ -3277,8 +3381,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       const question_page = rawSections.map((section: any, sIdx: number) => {
         const formsTpl = formsOf(section);
 
-        const rowSelfOnly =
-          row?.question_page?.[sIdx]?.self_only === true
+        const rowSelfOnly = row?.question_page?.[sIdx]?.self_only === true;
 
         const form = formsTpl.map((tpl: any, fIdx: number) => {
           const r = sanitize(tpl?.remarks);
@@ -3287,15 +3390,13 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
           let pick: any;
 
           if (isPurposeVisit(section)) {
-          //   if (rowSelfOnly) {
-          //     pick = (selfOnlyOverrides[`row${rowIdx}`] || []).find((f) => sameField(f, tpl));
-          //   } else {
-              pick =
-                (r && sharedPVIdx.byRemarks.get(r)) ||
-                (cf && sharedPVIdx.byCF.get(cf)) ||
-                undefined;
-          //   }
-         } else {
+            //   if (rowSelfOnly) {
+            //     pick = (selfOnlyOverrides[`row${rowIdx}`] || []).find((f) => sameField(f, tpl));
+            //   } else {
+            pick =
+              (r && sharedPVIdx.byRemarks.get(r)) || (cf && sharedPVIdx.byCF.get(cf)) || undefined;
+            //   }
+          } else {
             // normal section
             pick =
               (r && rowIdxMap.byRemarks.get(r)) ||
@@ -3520,13 +3621,13 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         resetMediaState();
         clearAnswerFiles();
       }
-      // setTimeout(() => {
+      setTimeout(() => {
         setLoading(false);
         onSuccess?.();
         // if (TYPE_REGISTERED !== 0) {
         //   setNextDialogOpen(true);
         // }
-      // }, 700);
+      }, 700);
     } catch (err: any) {
       setTimeout(() => {
         setLoading(false);
@@ -3534,7 +3635,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       }, 700);
 
       toast('Failed to create visitor.', 'error');
-  
+
       if (err?.name === 'ZodError') {
         const fieldErrors: Record<string, string> = {};
         err.errors.forEach((z: any) => (fieldErrors[z.path.join('.')] = z.message));
@@ -3626,7 +3727,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     return v === 'indentity_id' ? 'identity_id' : v;
   };
 
-  // clone form + kosongkan jawaban
   const cloneFormWithEmptyAnswers = (f: any, idx: number) => ({
     ...f,
     sort: f.sort ?? idx,

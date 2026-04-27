@@ -90,19 +90,20 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
   // const [siteData, setSiteData] = useState<any[]>([]);
   const [accessData, setAccessData] = useState<any[]>([]);
   const [analyticCctv, setAnalyticCctv] = useState<any[]>([]);
+  // console.log('form data : ', formData);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
 
-    const numberOnlyFields = ['duration_visit', 'max_time_visit', 'grace_time', 'period'];
+    // const numberOnlyFields = ['duration_visit', 'max_time_visit', 'grace_time', 'period'];
 
-    if (numberOnlyFields.includes(id)) {
-      if (/^\d*$/.test(value)) {
-        setFormData((prev) => ({ ...prev, [id]: value }));
-      }
-    } else {
-      setFormData((prev) => ({ ...prev, [id]: value }));
-    }
+    // if (numberOnlyFields.includes(id)) {
+    //   if (/^\d*$/.test(value)) {
+    //     setFormData((prev) => ({ ...prev, [id]: value }));
+    //   }
+    // } else {
+    setFormData((prev) => ({ ...prev, [id]: value }));
+    // }
   };
 
   useEffect(() => {
@@ -262,7 +263,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         }),
       }));
 
-      const data: CreateVisitorTypeRequest = {
+      const data: any = {
         ...localForm,
         duration_visit: Number(localForm.duration_visit),
         max_time_visit: Number(localForm.max_time_visit),
@@ -613,16 +614,18 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     if (!token) return;
     // if (!formData.can_track_cctv) return;
 
-    const fetchAnalytic = async () => {
-      try {
-        const res = await getCameraAnalytics(token);
-        setAnalyticCctv(res.collection ?? []);
-      } catch (error) {
-        console.log(error);
-      }
-    };
+    if (formData.can_track_cctv) {
+      const fetchAnalytic = async () => {
+        try {
+          const res = await getCameraAnalytics(token);
+          setAnalyticCctv(res.collection ?? []);
+        } catch (error) {
+          console.log(error);
+        }
+      };
 
-    fetchAnalytic();
+      fetchAnalytic();
+    }
   }, [token]);
 
   const handleAddDocument = () => {

@@ -261,6 +261,9 @@ const NotificationStaff = Loadable(
   lazy(() => import('src/customs/pages/Employee/DeliveryStaff/Notification/Content')),
 );
 
+// Monitoring
+const Monitoring = Loadable(lazy(() => import('src/customs/pages/Monitoring/Content')));
+
 const Router = [
   {
     element: <AuthRedirector />,
@@ -301,6 +304,7 @@ const Router = [
               { path: '/invitation-share', element: <SelfPraregistration /> },
               { path: '/invitation-share/success', element: <SuccessPage /> },
               { path: '/portal/waiting', element: <WaitingPage /> },
+              { path: '/monitoring', element: <Monitoring /> },
               { path: '*', element: <NotFoundPage /> },
             ],
           },

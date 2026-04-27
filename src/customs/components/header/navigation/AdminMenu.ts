@@ -1399,12 +1399,12 @@ export const OperatorNavListingData: ItemDataCustomNavListing[] = [
     icon: IconEye,
     href: '/operator/view',
   },
-  {
-    id: uniqueId(),
-    title: 'View',
-    icon: IconEye,
-    href: '/operator/vms-view',
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'View',
+  //   icon: IconEye,
+  //   href: '/operator/vms-view',
+  // },
   // {
   //   id: uniqueId(),
   //   title: 'Monitoring',
@@ -1444,4 +1444,22 @@ export const OperatorNavListingData: ItemDataCustomNavListing[] = [
   //   icon: IconReport,
   //   href: '/operator/operator-activity-log',
   // },
+];
+
+export const MonitoringOperatorNavListingData: ItemDataCustomNavListing[] = [
+  {
+    id: uniqueId(),
+    title: 'Monitoring',
+    icon: IconHome,
+    href: '/monitoring',
+  },
+];
+
+export const MonitoringOperatorSidebarNavListingData: ItemDataCustomNavListing[] = [
+  {
+    id: uniqueId(),
+    title: 'Monitoring',
+    icon: IconHome,
+    href: '/monitoring',
+  },
 ];

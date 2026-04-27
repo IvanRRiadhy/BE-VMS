@@ -2897,6 +2897,7 @@ const OperatorView = () => {
           is_group: isGroup,
           tz: tzFromApi,
           registered_site_id: registerSiteOperator,
+          flow: 'SubmitPraRegister',
           data_visitor: [
             {
               question_page: questionPageTemplate.map((templateSection: any) => ({
@@ -2958,16 +2959,13 @@ const OperatorView = () => {
                     visitor_form_type: 1,
                   };
 
-                  if (answer_text !== null && answer_text !== '') {
-                    fieldPayload.answer_text = answer_text;
-                  }
-
-                  if (answer_datetime) {
-                    fieldPayload.answer_datetime = answer_datetime;
-                  }
-
-                  if (answer_file) {
-                    fieldPayload.answer_file = answer_file;
+                  // mapping berdasarkan field_type
+                  if ([10,11,12].includes(templateField.field_type)) {
+                    fieldPayload.answer_file = answer_file ?? null;
+                  } else if (templateField.field_type === 9) {
+                    fieldPayload.answer_datetime = answer_datetime ?? null;
+                  } else {
+                    fieldPayload.answer_text = answer_text !== '' ? (answer_text ?? null) : null;
                   }
 
                   return fieldPayload;

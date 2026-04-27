@@ -34,7 +34,7 @@ import CustomTextField from 'src/components/forms/theme-elements/CustomTextField
 import { IconTrash } from '@tabler/icons-react';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import RenderDetailRows from '../RenderDetailRows';
-import { memo } from 'react';
+import { memo, useEffect } from 'react';
 
 interface StepContentProps {
   activeStep: number;
@@ -412,16 +412,22 @@ const StepContentComponent: React.FC<StepContentProps> = ({
             </CustomFormLabel>
             <CustomTextField
               id="duration_visit"
-              value={formData.duration_visit}
-              onChange={handleChange}
+              value={formData.duration_visit ?? ''}
+              // onChange={handleChange}
+              onChange={(e: any) => {
+                setFormData((prev: any) => ({
+                  ...prev,
+                  duration_visit: e.target.value,
+                }));
+              }}
               error={Boolean(errors.duration_visit)}
               helperText={errors.duration_visit || ''}
               fullWidth
               type="text"
-              inputProps={{
-                inputMode: 'numeric',
-                pattern: '[0-9]*',
-              }}
+              // inputProps={{
+              //   inputMode: 'numeric',
+              //   pattern: '[0-9]*',
+              // }}
             />
           </Grid>
           <Grid size={12}>
@@ -438,16 +444,23 @@ const StepContentComponent: React.FC<StepContentProps> = ({
             </CustomFormLabel>
             <CustomTextField
               id="max_time_visit"
-              value={formData.max_time_visit}
-              onChange={handleChange}
+              // value={formData.max_time_visit}
+              value={formData.max_time_visit ?? ''}
+              // onChange={handleChange}
+              onChange={(e: any) => {
+                setFormData((prev: any) => ({
+                  ...prev,
+                  max_time_visit: e.target.value,
+                }));
+              }}
               error={Boolean(errors.max_time_visit)}
-              helperText={errors.max_time_visit || ''}
+              helperText={errors.max_time_visit ?? ''}
               fullWidth
               type="text"
-              inputProps={{
-                inputMode: 'numeric',
-                pattern: '[0-9]*',
-              }}
+              // inputProps={{
+              //   inputMode: 'numeric',
+              //   pattern: '[0-9]*',
+              // }}
             />
           </Grid>
           <Grid size={12}>
@@ -467,16 +480,22 @@ const StepContentComponent: React.FC<StepContentProps> = ({
             </CustomFormLabel>
             <CustomTextField
               id="period"
-              value={formData.period}
-              onChange={handleChange}
+              value={formData.period ?? ''}
+              // onChange={handleChange}
+              onChange={(e: any) => {
+                setFormData((prev: any) => ({
+                  ...prev,
+                  period: e.target.value,
+                }));
+              }}
               error={Boolean(errors.period)}
               helperText={errors.period || ''}
               fullWidth
               type="text"
-              inputProps={{
-                inputMode: 'numeric',
-                pattern: '[0-9]*',
-              }}
+              // inputProps={{
+              //   inputMode: 'numeric',
+              //   pattern: '[0-9]*',
+              // }}
             />
           </Grid>
           <Grid size={12}>
@@ -493,16 +512,22 @@ const StepContentComponent: React.FC<StepContentProps> = ({
             </CustomFormLabel>
             <CustomTextField
               id="grace_time"
-              value={formData.grace_time}
-              onChange={handleChange}
+              value={formData.grace_time ?? ''}
+              // onChange={handleChange}
+              onChange={(e: any) => {
+                setFormData((prev: any) => ({
+                  ...prev,
+                  grace_time: e.target.value,
+                }));
+              }}
               error={Boolean(errors.grace_time)}
               helperText={errors.grace_time || ''}
               fullWidth
               type="text"
-              inputProps={{
-                inputMode: 'numeric',
-                pattern: '[0-9]*',
-              }}
+              // inputProps={{
+              //   inputMode: 'numeric',
+              //   pattern: '[0-9]*',
+              // }}
             />
           </Grid>
         </Grid>

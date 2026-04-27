@@ -27,6 +27,7 @@ import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import BI_LOGO from 'src/assets/images/logos/BI_Logo.png';
 import FilterMoreContent from '../Dashboard/FilterMoreContent';
+import { Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import bg_nodata from 'src/assets/images/backgrounds/bg_nodata.svg';
 import Swal from 'sweetalert2';
 import { showSwal } from 'src/customs/components/alerts/alerts';
@@ -83,6 +84,7 @@ const Approval = () => {
   const [groupHeader, setGroupHeader] = useState<any | null>(null);
   const [groupVisitors, setGroupVisitors] = useState<any[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [openDialog, setOpenDialog] = useState(false);
   const getApprovalCounts = () => {
     const counts = {
       total: approvalData.length,
@@ -260,6 +262,19 @@ const Approval = () => {
     fetchDetail();
   }, [selectedGroupId, token]);
 
+  const visitorTableData = groupVisitors.map((item: any) => ({
+    id: item.id,
+    agenda: item.agenda,
+    site_name: item.site_place_name,
+    name: item.visitor_name,
+    organization_name: item.visitor_organization_name,
+    identity_id: item.visitor_identity_id,
+    visitor_phone: item.visitor_phone,
+    email: item.visitor_email,
+    visitor_period_start: formatDateTime(item.visitor_period_start),
+    visitor_period_end: formatDateTime(item.visitor_period_end),
+  }));
+
   return (
     <>
       <PageContainer title="Approval" description="Approval page">
@@ -395,7 +410,8 @@ const Approval = () => {
                                   setSelectedGroup(group);
                                   setSelectedGroupId(group.entity_id);
                                   setSelectedId(group.approval_ticket_id);
-                                  setOpenGroup(true);
+                                  // setOpenGroup(true);
+                                  setOpenDialog(true);
                                 }}
                               >
                                 <Box
@@ -431,12 +447,35 @@ const Approval = () => {
                                               color: '#fff',
                                             },
                                           }}
-                                          onClick={(e: any) => {
+                                          // onClick={(e: any) => {
+                                          //   e.stopPropagation();
+                                          //   handleActionApproval(
+                                          //     group.approval_ticket_id,
+                                          //     'Approve',
+                                          //   );
+                                          // }}
+                                          onClick={async (e: any) => {
                                             e.stopPropagation();
-                                            handleActionApproval(
-                                              group.approval_ticket_id,
-                                              'Approve',
-                                            );
+
+                                            setSelectedGroup(group);
+                                            setSelectedId(group.approval_ticket_id);
+                                            setGroupVisitors([]); // reset biar ga flicker
+                                            setGroupDetailLoading(true);
+                                            setOpenDialog(true);
+
+                                            try {
+                                              const res = await getVisitorTransactionByIds(
+                                                token as string,
+                                                group.entity_id,
+                                              );
+
+                                              setGroupHeader(res.collection[0]);
+                                              setGroupVisitors(res.collection);
+                                            } catch (err) {
+                                              setGroupVisitors([]);
+                                            } finally {
+                                              setGroupDetailLoading(false);
+                                            }
                                           }}
                                         >
                                           <IconCheck size={16} />
@@ -455,12 +494,35 @@ const Approval = () => {
                                               color: '#fff',
                                             },
                                           }}
-                                          onClick={(e: any) => {
+                                          // onClick={(e: any) => {
+                                          //   e.stopPropagation();
+                                          //   handleActionApproval(
+                                          //     group.approval_ticket_id,
+                                          //     'Reject',
+                                          //   );
+                                          // }}
+                                          onClick={async (e: any) => {
                                             e.stopPropagation();
-                                            handleActionApproval(
-                                              group.approval_ticket_id,
-                                              'Reject',
-                                            );
+
+                                            setSelectedGroup(group);
+                                            setSelectedId(group.approval_ticket_id);
+                                            setGroupVisitors([]); // reset biar ga flicker
+                                            setGroupDetailLoading(true);
+                                            setOpenDialog(true);
+
+                                            try {
+                                              const res = await getVisitorTransactionByIds(
+                                                token as string,
+                                                group.entity_id,
+                                              );
+
+                                              setGroupHeader(res.collection[0]);
+                                              setGroupVisitors(res.collection);
+                                            } catch (err) {
+                                              setGroupVisitors([]);
+                                            } finally {
+                                              setGroupDetailLoading(false);
+                                            }
                                           }}
                                         >
                                           <IconX size={16} />
@@ -593,6 +655,52 @@ const Approval = () => {
           </Grid>
         </Box>
       </PageContainer>
+      <Dialog
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+        fullWidth
+        maxWidth={false}
+        PaperProps={{
+          sx: {
+            width: '100vw',
+          },
+        }}
+      >
+        <DialogTitle>
+          {groupHeader?.group_name ?? 'Visitor Group'}
+          <IconButton
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
+              color: (theme) => theme.palette.grey[500],
+            }}
+            onClick={() => setOpenDialog(false)}
+          >
+            <IconX />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent dividers sx={{ padding: '0px !important' }}>
+          <DynamicTable
+            data={visitorTableData ?? []}
+            selectedRows={[]}
+            isHaveChecked={true}
+            titleHeader="Select visitors for approval or rejection"
+            isHaveHeaderTitle={true}
+            isNoActionTableHead={true}
+          />
+        </DialogContent>
+
+        <DialogActions>
+          <Button onClick={() => setOpenDialog(false)} fullWidth color="error" variant="contained">
+            Reject
+          </Button>
+          <Button onClick={() => setOpenDialog(false)} variant="contained" fullWidth>
+            Approve
+          </Button>
+        </DialogActions>
+      </Dialog>
       <Backdrop
         open={loadingAction}
         sx={{

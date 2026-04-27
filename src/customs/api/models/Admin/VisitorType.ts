@@ -163,7 +163,7 @@ export const CreateVisitorTypeRequestSchema = z.object({
   // site_visitor_types: z.string().nullable().optional(),
   // Nullable fields from your JSON
   visitor_type_documents: z
-    .array(z.object({ document_id: z.string(),identity_type: z.number() }))
+    .array(z.object({ document_id: z.string(), identity_type: z.number() }))
     .nullable()
     .optional(),
 
@@ -186,17 +186,17 @@ export const updateVisitorTypeSchmea = z.object({
   name: z.string().default(''),
   description: z.string().default(''),
   show_in_form: z.boolean().default(false),
-  duration_visit: z.number().default(0),
-  max_time_visit: z.number().default(0),
+  duration_visit: z.string().default(''),
+  max_time_visit: z.string().default(''),
   can_parking: z.boolean().default(false),
   can_track_ble: z.boolean().nullable().optional(),
   can_track_cctv: z.boolean().nullable().optional(),
   can_access: z.boolean().default(false),
   add_to_menu: z.boolean().default(false),
   need_document: z.boolean().default(false),
-  grace_time: z.number().default(0),
+  grace_time: z.string().default(''),
   direct_visit: z.boolean().optional(),
-  period: z.number().default(0),
+  period: z.string().default(''),
   can_notification_arrival: z.boolean().optional(),
   is_primary: z.boolean().optional(),
   is_enable: z.boolean().optional(),

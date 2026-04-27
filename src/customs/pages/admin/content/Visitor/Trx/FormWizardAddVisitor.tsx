@@ -39,9 +39,11 @@ import {
   useTheme,
   useMediaQuery,
   MobileStepper,
+  Tooltip,
 } from '@mui/material';
 import 'select2';
 import 'select2/dist/css/select2.min.css';
+import { IconInfoCircle } from '@tabler/icons-react';
 import {
   IconArrowLeft,
   IconCamera,
@@ -2320,14 +2322,62 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       return (
         <TableRow key={key}>
           <TableCell>
-            <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
-              {item.long_display_text}
-              {item.mandatory && (
-                <Typography component="span" color="error" sx={{ ml: 0.5, lineHeight: 1 }}>
-                  *
-                </Typography>
+            <Box display="flex" alignItems="center" gap={0.5} mb={1}>
+              <Typography variant="subtitle2" fontWeight={600}>
+                {item.long_display_text}
+                {item.mandatory && (
+                  <Typography component="span" color="error" sx={{ ml: 0.5 }}>
+                    *
+                  </Typography>
+                )}
+              </Typography>
+
+              {item.remarks === 'host' && (
+                <Tooltip
+                  title="The host is the person in charge responsible for this visitor"
+                  arrow
+                  placement="top"
+                >
+                  <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                </Tooltip>
               )}
-            </Typography>
+              {item.remarks === 'agenda' && (
+                <Tooltip
+                  title="The agenda is the purpose of the visitor's visit"
+                  arrow
+                  placement="top"
+                >
+                  <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                </Tooltip>
+              )}
+              {item.remarks === 'site_place' && (
+                <Tooltip
+                  title="The site place is the location where the visitor will be received"
+                  arrow
+                  placement="top"
+                >
+                  <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                </Tooltip>
+              )}
+              {item.remarks === 'visitor_period_start' && (
+                <Tooltip
+                  title="The visitor period start is the date when the visitor's visit begins"
+                  arrow
+                  placement="top"
+                >
+                  <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                </Tooltip>
+              )}
+              {item.remarks === 'visitor_period_end' && (
+                <Tooltip
+                  title="The visitor period end is the date when the visitor's visit ends"
+                  arrow
+                  placement="top"
+                >
+                  <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                </Tooltip>
+              )}
+            </Box>
             {(() => {
               switch (item.field_type) {
                 case 0: // Text
@@ -2531,6 +2581,27 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         onChange(index, 'answer_text', selectedValue);
                         if (selectedValue) clearFieldError(key);
                       }}
+                      // renderOption={(props, option) => (
+                      //   <li {...props} key={option.value}>
+                      //     <Box
+                      //       display="flex"
+                      //       alignItems="center"
+                      //       justifyContent="space-between"
+                      //       width="100%"
+                      //     >
+                      //       <Typography>{option.name}</Typography>
+
+                      //       {item.remarks === 'host' && (
+                      //         <Tooltip title="Host information">
+                      //           <IconInfoCircle
+                      //             size={16}
+                      //             style={{ marginLeft: 8, color: '#1976d2' }}
+                      //           />
+                      //         </Tooltip>
+                      //       )}
+                      //     </Box>
+                      //   </li>
+                      // )}
                       renderInput={(params) => (
                         <CustomTextField
                           {...params}
@@ -3533,13 +3604,14 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             registered_site: formData.registered_site ?? '',
             type_registered: TYPE_REGISTERED,
             data_visitor: cleanDataVisitor,
+            flow: TYPE_REGISTERED === 0 ? 'Praregister' : 'Invitation',
           };
         });
 
         payload = { list_group };
 
         const parsed = CreateGroupVisitorRequestSchema.parse(payload);
-        // console.log('Final Payload (Group):', JSON.stringify(parsed, null, 2));
+        console.log('Final Payload (Group):', JSON.stringify(parsed, null, 2));
 
         const submitFn = TYPE_REGISTERED === 0 ? createPraRegisterGroup : createVisitorsGroup;
         const backendResponse = await submitFn(token, parsed as any);
@@ -3572,8 +3644,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           data_visitor: [{ question_page }],
         };
 
+        console.log('Payload :', JSON.stringify(payload, null, 2));
+
         const parsed = CreateVisitorRequestSchema.parse(payload);
-        // console.log('Final Payload (Single):', JSON.stringify(parsed, null, 2));
+        console.log('Final Payload (Single):', JSON.stringify(parsed, null, 2));
 
         const submitFn = TYPE_REGISTERED === 0 ? createPraRegister : createVisitor;
         const backendResponse = await submitFn(token, parsed);
@@ -3945,7 +4019,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     setDataVisitor(result);
     return result;
   };
-  
 
   useEffect(() => {
     if (!formData.visitor_type || !token) return;
@@ -4032,8 +4105,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     if (!openChooseCardDialog) setSelectedCards([]);
   }, [openChooseCardDialog]);
 
-
-
   type CardInfo = {
     card_number: string;
     remarks: string;
@@ -4054,7 +4125,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     return m;
   }, [availableCards]);
 
-
   const assignedByCard = useMemo(() => {
     const m = new Map<string, string | number>();
     rows.forEach((r: any) => {
@@ -4068,7 +4138,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const selectedIdSet = useMemo(() => {
     return new Set(normalizeIdsDeep(selectedInvitations).map(String));
   }, [selectedInvitations]);
-
 
   useEffect(() => {
     if (openChooseCardDialog) {

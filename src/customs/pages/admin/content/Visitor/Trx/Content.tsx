@@ -1215,7 +1215,7 @@ const Content = () => {
         </DialogTitle>
 
         <DialogContent dividers>
-          <Typography>Are you sure you want to discard your changes?</Typography>
+          <Typography> You have unsaved changes. Are you sure you want to discard them?</Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCancelDiscard}>Cancel</Button>

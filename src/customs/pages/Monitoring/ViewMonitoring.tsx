@@ -1,12 +1,4 @@
-import {
-  Button,
-  Divider,
-  MenuItem,
-  Tooltip,
-  Typography,
-  Grid2 as Grid,
-  InputAdornment,
-} from '@mui/material';
+import { Button, Divider, MenuItem, Tooltip, Typography, Grid2 as Grid, InputAdornment } from '@mui/material';
 import { Box } from '@mui/system';
 import {
   IconAlertCircle,
@@ -36,7 +28,7 @@ type Layout = 1 | 2;
 
 const CARD_HEIGHT = 420;
 
-const MonitoringMain: React.FC<Props> = ({ loading, onOpenFilter, onRefresh }: any) => {
+const ViewMonitoring: React.FC<Props> = ({ loading, onOpenFilter, onRefresh }: any) => {
   const [mode, setMode] = useState<Mode>('viewer');
   const [layout, setLayout] = useState<Layout>(1);
   const loadings = loading;
@@ -198,8 +190,11 @@ const MonitoringMain: React.FC<Props> = ({ loading, onOpenFilter, onRefresh }: a
   );
 
   return (
-    <Box flexGrow={1} sx={{ p: 1, display: 'flex', flexDirection: 'column', pt: 0.5 }}>
-      <Box display="flex" gap={1} alignItems="center" flexWrap={'wrap'}>
+    <Box
+      flexGrow={1}
+      sx={{ p: 1, display: 'flex', flexDirection: 'column', pt: 0.5, backgroundColor: '#fff' }}
+    >
+      {/* <Box display="flex" gap={1} alignItems="center" flexWrap={'wrap'}>
         <Box display="flex" gap={1} alignItems="center">
           <Tooltip title="Viewer" arrow>
             <Button
@@ -274,12 +269,13 @@ const MonitoringMain: React.FC<Props> = ({ loading, onOpenFilter, onRefresh }: a
             </Box>
           </Button>
         </Tooltip>
-      </Box>
-      {/* <Box
+      </Box> */}
+      <Box
         sx={{
-          height: '35px',
+          height: '40px',
           display: 'flex',
           alignItems: 'center',
+          marginBottom: 1,
         }}
       >
         <CustomTextField
@@ -306,7 +302,7 @@ const MonitoringMain: React.FC<Props> = ({ loading, onOpenFilter, onRefresh }: a
             ),
           }}
         />
-      </Box> */}
+      </Box>
 
       {/* <Divider sx={{ my: 1 }} /> */}
       {mode === 'viewer' && (
@@ -419,4 +415,4 @@ const MonitoringMain: React.FC<Props> = ({ loading, onOpenFilter, onRefresh }: a
   );
 };
 
-export default MonitoringMain;
+export default ViewMonitoring;

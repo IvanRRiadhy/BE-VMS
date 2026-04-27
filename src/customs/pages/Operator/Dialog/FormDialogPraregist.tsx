@@ -104,7 +104,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
           section.form?.forEach((f: any) => {
             if (f.field_type === 9) initial[f.remarks] = f.answer_datetime;
             else if ([10, 11, 12].includes(f.field_type)) initial[f.remarks] = f.answer_file;
-            else initial[f.remarks] = f.answer_text || '';
+            else initial[f.remarks] = f.answer_text ?? null;
           });
         });
         setFormValues(initial);
