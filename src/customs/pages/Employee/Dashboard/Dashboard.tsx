@@ -104,6 +104,14 @@ const DashboardEmployee = () => {
   const [openCreateLink, setOpenCreateLink] = useState(false);
   const [openDetailLink, setOpenDetailLink] = useState(false);
   const [openSendEmail, setOpenSendEmail] = useState(false);
+  // const [shareLinkList, setShareLinkList] = useState<any[]>([]);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [pendingPayload, setPendingPayload] = useState<any>(null);
+  const [sortDir, setSortDir] = useState('desc');
+
+  const start = page * rowsPerPage;
   const navigate = useNavigate();
 
   const handleOpenInviteOrCreateLink = () => {
@@ -126,15 +134,6 @@ const DashboardEmployee = () => {
   const handleCloseAccess = () => {
     setOpenAccess(false);
   };
-
-  // const [shareLinkList, setShareLinkList] = useState<any[]>([]);
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [searchKeyword, setSearchKeyword] = useState('');
-
-  const [sortDir, setSortDir] = useState('desc');
-
-  const start = page * rowsPerPage;
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ['share-links', page, rowsPerPage, searchKeyword, sortDir],
@@ -185,15 +184,10 @@ const DashboardEmployee = () => {
       link_status: item.link_status,
     })) || [];
 
-  const totalRecords = data?.RecordsTotal ?? 0;
-  const totalFilteredRecords = data?.RecordsFiltered ?? 0;
-
   useEffect(() => {
     const fetchDataActiveInvtiation = async () => {
       try {
         const response = await getActiveInvitation(token as string);
-        // console.log(response);
-
         let rows = response.collection.map((item: any) => ({
           id: item.id,
           // visitor_type:  item.visitor_type_name,
@@ -240,7 +234,7 @@ const DashboardEmployee = () => {
         visitor_period_start,
         visitor_period_end,
       }: any) => ({
-         id: approval_ticket_id,
+        id: approval_ticket_id,
         visitor_type_name,
         agenda,
         host_name,
@@ -252,7 +246,6 @@ const DashboardEmployee = () => {
         visitor_period_end: formatDateTime(visitor_period_end),
       }),
     ) || [];
-
 
   useEffect(() => {
     if (!token) return;
@@ -474,8 +467,6 @@ const DashboardEmployee = () => {
     },
   ];
 
-  const [pendingPayload, setPendingPayload] = useState<any>(null);
-
   const handleDeleteLink = async (id: string) => {
     try {
       const confirm = await Swal.fire({
@@ -500,7 +491,6 @@ const DashboardEmployee = () => {
       });
       showSwal('success', 'Link deleted successfully.');
     } catch (error) {
-      console.error('Delete link error:', error);
       showSwal('error', 'Something went wrong while deleting link.');
     }
   };
@@ -518,7 +508,6 @@ const DashboardEmployee = () => {
       setOpenCreateLink(false);
       showSwal('success', 'Share link created successfully');
     } catch (err) {
-      console.error(err);
       showSwal('error', 'Failed to create share link');
     } finally {
       setIsGenerating(false);
@@ -545,7 +534,6 @@ const DashboardEmployee = () => {
 
       showSwal('success', 'Share link sent successfully');
     } catch (err) {
-      console.error(err);
       showSwal('error', 'Failed to send share link');
     } finally {
       setIsGenerating(false);
@@ -641,7 +629,7 @@ const DashboardEmployee = () => {
         <Grid size={{ xs: 12, lg: 6 }}>
           <DynamicTable
             loading={loadingApproval}
-            height={460}
+            height={480}
             // isHavePagination={true}
             // defaultRowsPerPage={rowsPerPage}
             // rowsPerPageOptions={[5, 10]}
@@ -662,7 +650,7 @@ const DashboardEmployee = () => {
         <Grid size={{ xs: 12, lg: 6 }}>
           <DynamicTable
             loading={isFetching}
-            height={460}
+            height={480}
             overflowX="auto"
             data={shareLinkList}
             isHaveChecked={false}
@@ -670,9 +658,6 @@ const DashboardEmployee = () => {
             isHaveHeaderTitle={true}
             isCopyLink={true}
             isNoActionTableHead={true}
-            // isHavePagination={false}
-            // defaultRowsPerPage={rowsPerPage}
-            // rowsPerPageOptions={[5, 10]}
             onPaginationChange={(page, rowsPerPage) => {
               setPage(page);
               setRowsPerPage(rowsPerPage);

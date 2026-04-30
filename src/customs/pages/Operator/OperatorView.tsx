@@ -230,7 +230,7 @@ const OperatorView = () => {
   const [openReturnCard, setOpenReturnCard] = useState(false);
   const [openParking, setOpenParking] = useState(false);
   const [openVehicle, setOpenVehicle] = useState(false);
-
+  const [totalCountVisitor, setTotalCountVisitor] = useState(0);
   const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorRequest>(() => {
     const saved = localStorage.getItem('unsavedVisitorData');
     return saved ? JSON.parse(saved) : CreateVisitorRequestSchema.parse({});
@@ -1055,6 +1055,9 @@ const OperatorView = () => {
   const fetchRelatedVisitorsByInvitationId = async (invitationId: string) => {
     const relatedRes = await getInvitationOperatorRelated(invitationId, token as string);
     const relatedData = relatedRes.collection ?? [];
+
+    const totalCountVisitor = relatedRes.length ?? relatedData.length ?? 0;
+    setTotalCountVisitor(totalCountVisitor);
 
     const mappedVisitors = relatedData.map((v: any) => ({
       id: v.id ?? '-',
@@ -2960,7 +2963,7 @@ const OperatorView = () => {
                   };
 
                   // mapping berdasarkan field_type
-                  if ([10,11,12].includes(templateField.field_type)) {
+                  if ([10, 11, 12].includes(templateField.field_type)) {
                     fieldPayload.answer_file = answer_file ?? null;
                   } else if (templateField.field_type === 9) {
                     fieldPayload.answer_datetime = answer_datetime ?? null;
@@ -3521,7 +3524,19 @@ const OperatorView = () => {
                   }}
                 >
                   <Box display="flex" justifyContent="space-between" flexWrap={'nowrap'} gap={1}>
-                    <CardHeader title="Related Visitors" sx={{ p: 0 }} />
+                    <Box
+                      display={'flex'}
+                      // justifyContent={'center'}
+                      alignItems={'center'}
+                      gap={0.5}
+                      flex={1}
+                    >
+                      <CardHeader title="Related Visitors" sx={{ p: 0 }} />
+                      <Typography variant="body1" sx={{ color: 'text.secondary' }} ml={1}>
+                        {totalCountVisitor > 0 && `(${totalCountVisitor})`  }
+                      </Typography>
+                    </Box>
+
                     <Box display={'flex'} gap={1}>
                       <FormControl sx={{ width: '100%' }}>
                         <CustomTextField
@@ -4006,7 +4021,10 @@ const OperatorView = () => {
             onClose={handleCloseScanQR}
             handleSubmitQRCode={handleSubmitQRCode}
             container={containerRef.current ?? undefined}
-            onOpenInvitation={() => setOpenDialogIndex(2)}
+            onOpenInvitation={() => {
+              handleCloseScanQR();
+              setOpenInvitationVisitor(true);
+            }}
           />
           <BlacklistVisitorDialog
             open={openBlacklistVisitor}

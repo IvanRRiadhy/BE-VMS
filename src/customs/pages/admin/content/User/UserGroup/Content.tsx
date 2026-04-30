@@ -435,8 +435,8 @@ const Content = () => {
       'InviteWithinOwnSite',
       'AllowMobileLogin',
       'AllowSSOActiveDirectory',
-      'External',
-      'ManageTeam',
+      // 'External',
+      // 'ManageTeam',
       'VisitorTypeAssignment',
       'OrganizationAssignment',
       'SiteAssignment',
@@ -564,7 +564,7 @@ const Content = () => {
         permission: perm,
       }));
 
-      console.log('payload', payload);
+      // console.log('payload', payload);
 
       await createPermission(token as string, payload, edittingId);
     } catch (error: any) {
@@ -733,10 +733,8 @@ const Content = () => {
     if (!token) return;
 
     try {
-      // 🔥 DELETE SEMUA ACCESS GROUP INI
       await deletePermissionAccessControl(token, edittingId);
 
-      // 🔥 INSERT ULANG DARI STATE TERBARU
       if (formData.accesses.length) {
         const payload = formData.accesses.map((access: any) => ({
           user_group_id: edittingId,
@@ -823,10 +821,12 @@ const Content = () => {
     setSearchInput(keyword);
   }, []);
 
-  const handleSearch = useCallback(() => {
-    setPage(0);
-    setSearchKeyword(searchInput);
-  }, [searchInput]);
+
+const handleSearch = useCallback((keyword: string) => {
+  setPage(0);
+  setSearchInput(keyword);
+  setSearchKeyword(keyword);
+}, []);
 
   return (
     <PageContainer

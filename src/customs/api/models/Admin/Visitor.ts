@@ -135,6 +135,7 @@ export const CreateSingleVisitorRequestSchema = z.object({
   tz: z.string(),
   registered_site: z.string().optional(),
   data_visitor: z.array(visitorItemSchema),
+  flow: z.string().optional(),
 });
 export type CreateSingleVisitorRequest = z.infer<typeof CreateSingleVisitorRequestSchema>;
 
@@ -168,6 +169,7 @@ export const CreateGroupVisitorRequestSchema = z.object({
       group_code: z.string().optional(),
       group_name: z.string().optional(),
       data_visitor: z.array(visitorItemSchema),
+      flow: z.string().optional(),
     })
   ),
 });

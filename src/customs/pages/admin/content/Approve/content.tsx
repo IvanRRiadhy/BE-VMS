@@ -205,10 +205,12 @@ const Content = ({
     setSearchInput(keyword);
   }, []);
 
-  const handleSearch = useCallback(() => {
-    setPage(0);
-    setSearchKeyword(searchInput);
-  }, [searchInput]);
+
+const handleSearch = useCallback((keyword: string) => {
+  setPage(0);
+  setSearchInput(keyword);
+  setSearchKeyword(keyword);
+}, []);
 
   return (
     <Container title="Approval Workflow" description="Approval Workflow">

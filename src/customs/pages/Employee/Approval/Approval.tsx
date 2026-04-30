@@ -237,10 +237,11 @@ const Approval = () => {
     setSearchInput(keyword);
   }, []);
 
-  const handleSearch = useCallback(() => {
+  const handleSearch = useCallback((keyword: string) => {
     setPage(0);
-    setSearchKeyword(searchInput);
-  }, [searchInput]);
+    setSearchInput(keyword);
+    setSearchKeyword(keyword);
+  }, []);
 
   useEffect(() => {
     if (!selectedGroupId || !token) return;
@@ -274,6 +275,12 @@ const Approval = () => {
     visitor_period_start: formatDateTime(item.visitor_period_start),
     visitor_period_end: formatDateTime(item.visitor_period_end),
   }));
+
+  // const handleApproveHost = async () => {
+  //   const payload = {
+  //     list_trx_visitor_id: '1',
+  //   };
+  // };
 
   return (
     <>
@@ -411,7 +418,7 @@ const Approval = () => {
                                   setSelectedGroupId(group.entity_id);
                                   setSelectedId(group.approval_ticket_id);
                                   // setOpenGroup(true);
-                                  setOpenDialog(true);
+                                  // setOpenDialog(true);
                                 }}
                               >
                                 <Box
@@ -459,7 +466,7 @@ const Approval = () => {
 
                                             setSelectedGroup(group);
                                             setSelectedId(group.approval_ticket_id);
-                                            setGroupVisitors([]); // reset biar ga flicker
+                                            setGroupVisitors([]);
                                             setGroupDetailLoading(true);
                                             setOpenDialog(true);
 
@@ -506,7 +513,7 @@ const Approval = () => {
 
                                             setSelectedGroup(group);
                                             setSelectedId(group.approval_ticket_id);
-                                            setGroupVisitors([]); // reset biar ga flicker
+                                            setGroupVisitors([]);
                                             setGroupDetailLoading(true);
                                             setOpenDialog(true);
 
@@ -696,7 +703,18 @@ const Approval = () => {
           <Button onClick={() => setOpenDialog(false)} fullWidth color="error" variant="contained">
             Reject
           </Button>
-          <Button onClick={() => setOpenDialog(false)} variant="contained" fullWidth>
+          <Button
+            onClick={(e: any) => {
+              e.stopPropagation();
+
+              if (!selectedId) return;
+
+              handleActionApproval(selectedId, 'Approve');
+              setOpenDialog(false);
+            }}
+            variant="contained"
+            fullWidth
+          >
             Approve
           </Button>
         </DialogActions>

@@ -11,6 +11,7 @@ interface CardItem {
   color?: string;
   icon?: React.FC<TablerIconsProps>;
   onIconClick?: (item: CardItem) => Promise<void> | void;
+  type?: 'info' | 'action' | string;
 }
 
 interface TopCardsProps {
@@ -24,15 +25,13 @@ interface TopCardsProps {
 const defaultColor = '#FFFFFF';
 
 const TopCard: React.FC<TopCardsProps> = ({ items, onImageClick, cardMarginBottom, size }) => {
-  const smSize = 12 / items.length;
-
   return (
     <Grid2 container spacing={3} sx={{ height: '100%', alignItems: 'stretch' }}>
       {items.map((card, index) => {
         const isImage = typeof card.subTitleSetting === 'string';
         const cardColor =
           !card.color || card.color.toLowerCase() === 'none' ? defaultColor : card.color;
-
+        const isAction = card.type === 'action';
         return (
           <Grid2
             // size={{ xs: 12, sm: 6, md: 4, lg: 2.4 }}
@@ -42,13 +41,27 @@ const TopCard: React.FC<TopCardsProps> = ({ items, onImageClick, cardMarginBotto
           >
             <BlankCard sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
               <CardContent
+                onClick={() => isAction && card.onIconClick?.(card)}
                 sx={{
                   backgroundColor: cardColor,
                   color: '#000',
-                  flex: 1, // agar CardContent mengisi tinggi maksimum dari BlankCard
+                  flex: 1,
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'center',
+                  cursor: isAction ? 'pointer' : 'default',
+                  transition: '0.2s',
+                  height: '100%',
+                  ...(isAction && {
+                    // border: '1px dashed #1976d2',
+                    backgroundColor: '#1976d2',
+                    color: 'white',
+                    '&:hover': {
+                      // backgroundColor: '#f5faff',
+                      // transform: 'translateY(-2px)',
+                    },
+                  }),
+
                   '&::after': {
                     content: '""',
                     position: 'absolute',
@@ -56,8 +69,9 @@ const TopCard: React.FC<TopCardsProps> = ({ items, onImageClick, cardMarginBotto
                     right: 0,
                     width: '120px',
                     height: '120px',
-                    background:
-                      'linear-gradient(135deg, transparent 40%, rgba(25,118,210,0.2) 100%)',
+                    background: isAction
+                      ? 'e8f6ff'
+                      : 'linear-gradient(135deg, transparent 40%, rgba(25,118,210,0.2) 100%)',
                     pointerEvents: 'none',
                   },
                 }}
@@ -98,9 +112,7 @@ const TopCard: React.FC<TopCardsProps> = ({ items, onImageClick, cardMarginBotto
                       )}
                       <Box>
                         <Typography variant="h5">{card.title}</Typography>
-                        {/* <Typography variant="h6" color="textSecondary" fontSize={'1.1rem'}>
-                          {card.subTitle}
-                        </Typography> */}
+
                         {typeof card.subTitleSetting === 'string' ? (
                           <Box
                             component="img"
@@ -119,14 +131,6 @@ const TopCard: React.FC<TopCardsProps> = ({ items, onImageClick, cardMarginBotto
                         )}
                       </Box>
                     </Stack>
-                    {/* <Box
-                      sx={{
-                        marginTop: 1,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                      }}
-                    ></Box> */}
                   </Box>
                 </Stack>
               </CardContent>

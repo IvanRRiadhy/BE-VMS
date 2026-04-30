@@ -31,13 +31,7 @@ export const GuestNavListingData: ItemDataCustomNavListing[] = [
     chipColor: 'secondary',
     href: '/guest/invitation',
   },
-  {
-    id: uniqueId(),
-    title: 'History',
-    icon: IconHistory,
-    chipColor: 'secondary',
-    href: '/guest/history',
-  },
+
   {
     id: uniqueId(),
     title: 'Parking',
@@ -53,6 +47,13 @@ export const GuestNavListingData: ItemDataCustomNavListing[] = [
     chipColor: 'secondary',
     href: '/guest/report',
   },
+  // {
+  //   id: uniqueId(),
+  //   title: 'History',
+  //   icon: IconHistory,
+  //   chipColor: 'secondary',
+  //   href: '/guest/history',
+  // },
   {
     id: uniqueId(),
     title: 'Notification',
@@ -81,13 +82,7 @@ export const GuestCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
     chipColor: 'secondary',
     href: '/guest/invitation',
   },
-  {
-    id: uniqueId(),
-    title: 'History',
-    icon: IconHistory,
-    chipColor: 'secondary',
-    href: '/guest/history',
-  },
+
   {
     id: uniqueId(),
     title: 'Parking',
@@ -103,6 +98,13 @@ export const GuestCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
     chipColor: 'secondary',
     href: '/guest/report',
   },
+  // {
+  //   id: uniqueId(),
+  //   title: 'History',
+  //   icon: IconHistory,
+  //   chipColor: 'secondary',
+  //   href: '/guest/history',
+  // },
   {
     id: uniqueId(),
     title: 'Notification',

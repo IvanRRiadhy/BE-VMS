@@ -7,7 +7,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TextField,
   Button,
   Box,
   Select,
@@ -24,24 +23,28 @@ import {
   Tab,
   Tabs,
   TablePagination,
-  IconButton,
-  Switch,
   Breadcrumbs,
 } from '@mui/material';
 import BlankCard from 'src/components/shared/BlankCard';
 import { RichHtmlCell } from './RichHtmlCell';
 import { Stack, useMediaQuery, useTheme } from '@mui/system';
 import {
-  IconAlertSquare,
   IconArrowAutofitLeft,
+  IconArrowLeft,
   IconFileExport,
   IconFileSpreadsheet,
-  IconFileText,
   IconFileTypePdf,
+  IconLink,
   IconPlus,
   IconPrinter,
 } from '@tabler/icons-react';
-import { AddCircle, CalendarMonth, ChecklistOutlined, Search } from '@mui/icons-material';
+import {
+  AddCircle,
+  ArrowLeft,
+  CalendarMonth,
+  ChecklistOutlined,
+  Search,
+} from '@mui/icons-material';
 import EditIconOutline from '@mui/icons-material/Edit';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import Calendar from '../calendar/Calendar';
@@ -49,13 +52,13 @@ import { IconAdjustmentsHorizontal } from '@tabler/icons-react';
 import { InsertDriveFile } from '@mui/icons-material';
 import backgroundnodata from 'src/assets/images/backgrounds/bg_nodata.svg';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
-import moment from 'moment';
 import { GroupRoleId } from 'src/constant/GroupRoleId';
 import { useTranslation } from 'react-i18next';
-import { Link, useNavigate } from 'react-router';
+import { Link, useNavigate, useSearchParams, useLocation } from 'react-router';
 import { debounce } from 'lodash';
 import { TableBodyContent } from './TableBody';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import SearchToolbar from './components/SearchToolbar';
 
 type HeaderItem = { name: string };
 
@@ -82,12 +85,16 @@ type DynamicTableProps<
   isHaveAccess?: boolean;
   isHaveActionOnlyEdit?: boolean;
   // isHaveExportPdf?: boolean;
+  isHaveBack?: boolean;
+  onBack?: any;
   isHaveExportCsv?: boolean;
   isHaveExportExcel?: boolean;
   isHavePrint?: boolean;
+  isHaveConnection?: boolean;
+  onCheckConnection?: any;
   onExportPdf?: () => void;
   onExportCsv?: () => void;
-  onActionRevoke?: (row: T) => void;
+  onActionAccess?: (row: T, action: 'grant' | 'revoke' | 'block') => void;
   onExportExcel?: () => void;
   onPrint?: () => void;
   onBlacklist?: (row: T) => void;
@@ -154,7 +161,7 @@ type DynamicTableProps<
   htmlMaxWidth?: number | string;
   onChooseCard?: (row?: T) => void;
   onNameClick?: (row: T) => void;
-  onSearch?: () => void;
+  onSearch?: any;
   isVip?: (row: T) => boolean;
   isHaveArrival?: boolean;
   isActionEmployee?: boolean;
@@ -202,6 +209,8 @@ function DynamicTableBase<
   selectedRows,
   setSelectedRows,
   searchKeyword,
+  isHaveBack,
+  onBack,
   isHaveChecked = false,
   isHaveAction = false,
   isHaveActionOnlyEdit = false,
@@ -209,6 +218,7 @@ function DynamicTableBase<
   isHaveVisitor = false,
   isActionVisitor = false,
   isHaveSearch = false,
+  isHaveConnection = false,
   isHaveFilter = false,
   isHaveExportCsv = false,
   isHaveExportExcel = false,
@@ -256,7 +266,7 @@ function DynamicTableBase<
   isSiteSpaceName,
   isNoActionTableHead = false,
   onDenied,
-  onActionRevoke,
+  onActionAccess,
   onBlacklist,
   isHaveApproval = false,
   defaultSelectedHeaderItem,
@@ -282,6 +292,7 @@ function DynamicTableBase<
   isTreeSiteType,
   filterMoreContent,
   sortColumns,
+  onCheckConnection,
   onPrint,
   onExportCsv,
   onExportExcel,
@@ -323,17 +334,40 @@ function DynamicTableBase<
     defaultSelectedHeaderItem ?? null,
   );
   const [showDrawer, setShowDrawer] = useState(false);
-
-  const navigate = useNavigate();
   const { t } = useTranslation();
-
-  const BASE_URL = axiosInstance2.defaults.baseURL + '/cdn';
-
   const [showDrawerFilterMore, setShowDrawerFilterMore] = useState(false);
 
   // Paginaton state.
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(defaultRowsPerPage || 10);
+  // const location = useLocation();
+  // const [searchParams, setSearchParams] = useSearchParams();
+
+  // const [page, setPage] = useState(Number(searchParams.get('page') || '0'));
+
+  // const [rowsPerPage, setRowsPerPage] = useState(
+  //   Number(searchParams.get('length') || defaultRowsPerPage || 10),
+  // );
+
+  // useEffect(() => {
+  //   setPage(Number(searchParams.get('page') || '0'));
+
+  //   setRowsPerPage(Number(searchParams.get('length') || defaultRowsPerPage || 10));
+  // }, [location.search]);
+
+  // const updateQuery = (payload: Record<string, any>) => {
+  //   const params = new URLSearchParams(searchParams);
+
+  //   Object.entries(payload).forEach(([key, value]) => {
+  //     if (value === '' || value === null || value === undefined) {
+  //       params.delete(key);
+  //     } else {
+  //       params.set(key, String(value));
+  //     }
+  //   });
+
+  //   setSearchParams(params);
+  // };
 
   const theme = useTheme();
   const lgUp = useMediaQuery(theme.breakpoints.up('lg'));
@@ -382,8 +416,6 @@ function DynamicTableBase<
       ? columns.filter((col) => sortColumns.includes(col))
       : columns;
 
-  // const columns = Object.keys(data[0]).filter((k) => k !== 'id') as Extract<keyof T, string>[];
-
   const handleCheckAll = (event: React.ChangeEvent<HTMLInputElement>) => {
     const currentPageIds = paginatedData.map((row) => row.id);
     let newCheckedSet = new Set(checkedIds);
@@ -411,6 +443,11 @@ function DynamicTableBase<
 
   const handleSearch = () => {
     // onSearchKeywordChange?.(searchKeyword || '');
+    // updateQuery({
+    //   page: 0,
+    //   search: searchKeyword,
+    // });
+
     onSearch?.();
   };
 
@@ -435,6 +472,12 @@ function DynamicTableBase<
 
   const handleChangePage = (_event: unknown, newPage: number) => {
     setPage(newPage);
+
+    // updateQuery({
+    //   page: newPage,
+    //   length: rowsPerPage,
+    // });
+
     onPaginationChange?.(newPage, rowsPerPage);
   };
 
@@ -442,6 +485,11 @@ function DynamicTableBase<
     const newRowsPerPage = parseInt(event.target.value, 10);
     setRowsPerPage(newRowsPerPage);
     setPage(0);
+    //  updateQuery({
+    //    page: 0,
+    //    length: newRowsPerPage,
+    //  });
+
     onPaginationChange?.(0, newRowsPerPage);
   };
 
@@ -511,9 +559,7 @@ function DynamicTableBase<
     tracking_transaction: 'Tracking Transaction',
   };
 
-  const [showPassword, setShowPassword] = useState(false);
   const [visiblePasswords, setVisiblePasswords] = useState<Record<string | number, boolean>>({});
-
   const togglePassword = (id: string | number) => {
     setVisiblePasswords((prev) => ({ ...prev, [id]: !prev[id] }));
   };
@@ -710,7 +756,7 @@ function DynamicTableBase<
                   justifyContent={{ xs: 'flex-start', sm: 'flex-start' }}
                 >
                   <Stack direction="column" sx={{ width: '100%' }}>
-                    <Typography sx={{ fontSize: '1rem' }} variant="subtitle1" fontWeight={600} > 
+                    <Typography sx={{ fontSize: '1rem' }} variant="subtitle1" fontWeight={600}>
                       {headerContent.title}
                     </Typography>
                     <Tabs
@@ -823,6 +869,17 @@ function DynamicTableBase<
                 </Breadcrumbs>
               </Grid2>
             )}
+            {isHaveBack && (
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<IconArrowLeft />}
+                onClick={() => onBack?.()}
+                sx={{ mb: 1 }}
+              >
+                Back
+              </Button>
+            )}
             <Grid2
               size={{ xs: 12 }}
               display="flex"
@@ -836,96 +893,103 @@ function DynamicTableBase<
               width="100%"
             >
               {/* SEARCH MENU */}
+
               <Stack direction="row" spacing={2}>
                 {isHaveSearch && (
-                  <Box
-                    display="flex"
-                    justifyContent="space-between"
-                    alignItems="center"
-                    gap={0.5}
-                    // width={ lgUp? '300px' : '100%' }
-                    // flexWrap={'wrap'}
-                  >
-                    {/* <Grid2 size={{ xs: 12, lg: 10 }}> */}
-                    <CustomTextField
-                      fullWidth
-                      variant="outlined"
-                      size="small"
-                      value={searchKeyword}
-                      // onChange={(e) => setSearchKeyword(e.target.value)}
-                      onChange={(e) => onSearchKeywordChange?.(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      sx={{
-                        flexGrow: 1,
-                        minWidth: 0,
-                        width: { xs: '100%', sm: '300px' },
-                      }}
-                      InputProps={{
-                        sx: {
-                          height: 36,
-                        },
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <Search fontSize="small" />
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-                    {/* </Grid2>
-                    <Grid2 size={{ xs: 6, lg: 3 }}> */}
-                    <Box display="flex" gap={0.5}>
-                      <Button
-                        variant="contained"
-                        fullWidth
-                        onClick={handleSearch}
-                        sx={{
-                          height: 36,
-                          width: '100%',
-                          fontSize: '0.7rem',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        <Typography fontSize={'0.7rem'} variant="caption" my={0.2}>
-                          {t('search')}
-                        </Typography>
-                      </Button>
-                      {isOperatorSetting && (
-                        <Button
-                          variant="contained"
-                          color="primary"
-                          onClick={onNavigatePage}
-                          startIcon={<IconArrowAutofitLeft width={18} />}
-                          sx={{
-                            height: 36,
-                            width: '100%',
-                            fontSize: '0.7rem',
-                            whiteSpace: 'nowrap',
-                          }}
-                          size="medium"
-                        >
-                          Operator
-                        </Button>
-                      )}
-                      {isBlacklistPage && (
-                        <Button
-                          variant="contained"
-                          color="primary"
-                          onClick={onNavigatePage}
-                          startIcon={<IconArrowAutofitLeft width={18} />}
-                          sx={{
-                            height: 36,
-                            width: '100%',
-                            fontSize: '0.7rem',
-                            whiteSpace: 'nowrap',
-                          }}
-                          size="medium"
-                        >
-                          Blacklist
-                        </Button>
-                      )}
-                    </Box>
-                    {/* </Grid2> */}
-                  </Box>
+                  // <Box
+                  //   display="flex"
+                  //   justifyContent="space-between"
+                  //   alignItems="center"
+                  //   gap={0.5}
+                  //   // width={ lgUp? '300px' : '100%' }
+                  //   // flexWrap={'wrap'}
+                  // >
+                  //   <CustomTextField
+                  //     fullWidth
+                  //     variant="outlined"
+                  //     size="small"
+                  //     value={searchKeyword}
+                  //     // onChange={(e) => setSearchKeyword(e.target.value)}
+                  //     onChange={(e) => onSearchKeywordChange?.(e.target.value)}
+                  //     onKeyDown={handleKeyDown}
+                  //     sx={{
+                  //       flexGrow: 1,
+                  //       minWidth: 0,
+                  //       width: { xs: '100%', sm: '300px' },
+                  //     }}
+                  //     InputProps={{
+                  //       sx: {
+                  //         height: 36,
+                  //       },
+                  //       startAdornment: (
+                  //         <InputAdornment position="start">
+                  //           <Search fontSize="small" />
+                  //         </InputAdornment>
+                  //       ),
+                  //     }}
+                  //   />
+                  //   <Box display="flex" gap={0.5}>
+                  //     <Button
+                  //       variant="contained"
+                  //       fullWidth
+                  //       onClick={handleSearch}
+                  //       sx={{
+                  //         height: 36,
+                  //         width: '100%',
+                  //         fontSize: '0.7rem',
+                  //         whiteSpace: 'nowrap',
+                  //       }}
+                  //     >
+                  //       <Typography fontSize={'0.7rem'} variant="caption" my={0.2}>
+                  //         {t('search')}
+                  //       </Typography>
+                  //     </Button>
+                  //     {isOperatorSetting && (
+                  //       <Button
+                  //         variant="contained"
+                  //         color="primary"
+                  //         onClick={onNavigatePage}
+                  //         startIcon={<IconArrowAutofitLeft width={18} />}
+                  //         sx={{
+                  //           height: 36,
+                  //           width: '100%',
+                  //           fontSize: '0.7rem',
+                  //           whiteSpace: 'nowrap',
+                  //         }}
+                  //         size="medium"
+                  //       >
+                  //         Operator
+                  //       </Button>
+                  //     )}
+                  //     {isBlacklistPage && (
+                  //       <Button
+                  //         variant="contained"
+                  //         color="primary"
+                  //         onClick={onNavigatePage}
+                  //         startIcon={<IconArrowAutofitLeft width={18} />}
+                  //         sx={{
+                  //           height: 36,
+                  //           width: '100%',
+                  //           fontSize: '0.7rem',
+                  //           whiteSpace: 'nowrap',
+                  //         }}
+                  //         size="medium"
+                  //       >
+                  //         Blacklist
+                  //       </Button>
+                  //     )}
+                  //   </Box>
+                  // </Box>
+
+                  <SearchToolbar
+                    value={searchKeyword}
+                    t={t}
+                    onSearch={onSearch}
+                    onKeyDown={handleKeyDown}
+                    onNavigatePage={onNavigatePage}
+                    isOperatorSetting={isOperatorSetting}
+                    isBlacklistPage={isBlacklistPage}
+                  />
                 )}
                 {isHaveHeaderTitle && (
                   <Typography
@@ -1112,6 +1176,18 @@ function DynamicTableBase<
                   </FormControl>
                 )}
 
+                {isHaveConnection && (
+                  <Tooltip title="Check Connection">
+                    <Button
+                      startIcon={<IconLink />}
+                      variant="contained"
+                      onClick={onCheckConnection}
+                    >
+                      Connection
+                    </Button>
+                  </Tooltip>
+                )}
+
                 {isHaveAddData && (
                   <Tooltip title="Add Data">
                     <Fab
@@ -1232,7 +1308,6 @@ function DynamicTableBase<
               >
                 <TableHead>
                   <TableRow>
-                    {/* ✅ Checkbox */}
                     {isHaveChecked && (
                       <TableCell
                         sx={{
@@ -1296,8 +1371,6 @@ function DynamicTableBase<
                         )}
                       </TableCell>
                     )}
-
-                    {/* ✅ Action left (Visitor mode) */}
                     {isHaveAction && isActionVisitor && (
                       <TableCell
                         sx={{
@@ -1341,8 +1414,6 @@ function DynamicTableBase<
                       )}
                     </TableCell>
                     {/* )} */}
-
-                    {/* ✅ Dynamic columns */}
                     {columns.map((colName, idx) => {
                       const makeSticky = isStickyVisitorCol(idx);
                       const isEarlyAccess = colName === 'early_access';
@@ -1385,7 +1456,6 @@ function DynamicTableBase<
                       );
                     })}
 
-                    {/* ✅ Action right */}
                     {isHaveAction && !isActionVisitor && (
                       <TableCell
                         sx={{
@@ -1411,7 +1481,6 @@ function DynamicTableBase<
                       </TableCell>
                     )}
 
-                    {/* ✅ Action-only edit */}
                     {isHaveActionOnlyEdit && (
                       <TableCell
                         sx={{
@@ -1502,7 +1571,6 @@ function DynamicTableBase<
                       </TableCell>
                     )}
 
-                    {/* ✅ Arrival button */}
                     {isHaveArrival && (
                       <TableCell
                         sx={{ position: 'sticky', right: 0, background: 'white', zIndex: 2 }}
@@ -1591,7 +1659,7 @@ function DynamicTableBase<
                   isHaveSettingOperator={isHaveSettingOperator}
                   onSettingOperator={onSettingOperator}
                   isHaveActionRevoke={isHaveActionRevoke}
-                  onActionRevoke={onActionRevoke}
+                  onActionAccess={onActionAccess}
                   isHaveActionOnlyEdit={isHaveActionOnlyEdit}
                   isSelectedType={isSelectedType}
                   isButtonGiveAccess={isButtonGiveAccess}

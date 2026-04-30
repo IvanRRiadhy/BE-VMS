@@ -183,7 +183,7 @@ const AccessPassDialog: React.FC<Props> = ({
         <Divider sx={{ my: 2 }} />
 
         {/* Parking */}
-        <Typography variant="h6" fontWeight="bold">
+        <Typography variant="h6" fontWeight="bold" textAlign={'center'}>
           Parking
         </Typography>
 
@@ -205,7 +205,7 @@ const AccessPassDialog: React.FC<Props> = ({
 
           <Grid size={{ xs: 6 }} textAlign="center">
             <Typography>Type</Typography>
-            <Typography fontWeight="bold">{data.vehicle_type || '-'}</Typography>
+            <Typography fontWeight="bold">{data.vehicle_type ?? '-'}</Typography>
           </Grid>
         </Grid>
 

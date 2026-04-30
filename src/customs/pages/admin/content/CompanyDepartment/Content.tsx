@@ -1,16 +1,12 @@
-import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
+import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import {
   Box,
-  Card,
   Dialog,
   DialogContent,
   DialogTitle,
   Divider,
-  DialogActions,
-  Button,
   Grid2 as Grid,
   IconButton,
-  Skeleton,
 } from '@mui/material';
 import Container from 'src/components/container/PageContainer';
 import {
@@ -52,6 +48,7 @@ import {
 
 import { IconBuilding, IconBuildingSkyscraper, IconMapPins, IconX } from '@tabler/icons-react';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
+import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
 
 type EnableField = {
   name: boolean;
@@ -504,23 +501,15 @@ const Content = () => {
     setPendingAdd(null);
   };
 
-  const handleContinueEditing = () => {
-    if (pendingAdd) {
-      setDialog({ mode: 'add', entity: pendingAdd });
-    }
-
-    setConfirmDialogOpen(false);
-    setPendingAdd(null);
-  };
-
   const handleSearchKeywordChange = useCallback((keyword: string) => {
     setSearchInput(keyword);
   }, []);
 
-  const handleSearch = useCallback(() => {
+  const handleSearch = useCallback((keyword: string) => {
     setPage(0);
-    setSearchKeyword(searchInput);
-  }, [searchInput]);
+    setSearchInput(keyword);
+    setSearchKeyword(keyword);
+  }, []);
 
   return (
     <PageContainer
@@ -682,37 +671,12 @@ const Content = () => {
           )}
         </DialogContent>
       </Dialog>
-      <Dialog
+
+      <ConfirmUnsavedDialog
         open={confirmDialogOpen}
         onClose={() => setConfirmDialogOpen(false)}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle>
-          Unsaved Changes
-          <IconButton
-            aria-label="close"
-            onClick={() => setConfirmDialogOpen(false)}
-            sx={{
-              position: 'absolute',
-              right: 8,
-              top: 8,
-              color: (theme) => theme.palette.grey[500],
-            }}
-          >
-            <IconX />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent dividers>
-          You have unsaved changes. Are you sure you want to discard them?
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setConfirmDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleDiscard} variant="contained">
-            Yes, Discard and Continue
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onDiscard={handleDiscard}
+      />
     </PageContainer>
   );
 };

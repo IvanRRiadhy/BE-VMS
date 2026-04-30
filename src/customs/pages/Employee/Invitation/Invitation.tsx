@@ -254,9 +254,11 @@ const Content = () => {
 
             return {
               id: item.id,
-              visitor_type: item.visitor_type_name || '-',
+              employee: isEmployeeHost ?? '-',
+
               name: item.visitor_name || '-',
               identity_id: item.visitor_identity_id || '-',
+              visitor_type: item.visitor_type_name || '-',
               email: item.visitor_email || '-',
               organization: item.visitor_organization_name || '-',
               // gender: item.visitor_gender || '-',
@@ -267,7 +269,7 @@ const Content = () => {
               visitor_period_end:
                 formatDateTime(item.visitor_period_end, item.extend_visitor_period) || '-',
               host: item.host ?? '-',
-              employee: isEmployeeHost ?? '-',
+
               visitor_status: item.visitor_status || '-',
               invitation_created_at: item.invitation_created_at,
             };
@@ -811,7 +813,17 @@ const Content = () => {
         </Box>
       </PageContainer>
       {/* Add Pre registration */}
-      <Dialog fullWidth maxWidth="xl" open={openPreRegistration} onClose={handleDialogClose}>
+      <Dialog
+        fullWidth
+        maxWidth={false}
+        PaperProps={{
+          sx: {
+            width: '100vw',
+          },
+        }}
+        open={openPreRegistration}
+        onClose={handleDialogClose}
+      >
         <DialogTitle display="flex" justifyContent={'space-between'} alignItems="center">
           Add Pra Registration
           <IconButton

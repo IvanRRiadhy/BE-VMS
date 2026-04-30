@@ -27,7 +27,11 @@ import PieChartsEmployee from './PieChartsEmployee';
 import { getActiveInvitation } from 'src/customs/api/visitor';
 import moment from 'moment';
 import { useQuery } from '@tanstack/react-query';
-import { approveTicket, getApprovalTicket, rejectTicket } from 'src/customs/api/Admin/ApprovalWorkflow';
+import {
+  approveTicket,
+  getApprovalTicket,
+  rejectTicket,
+} from 'src/customs/api/Admin/ApprovalWorkflow';
 import Swal from 'sweetalert2';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 
@@ -185,14 +189,25 @@ const DashboardEmployee = () => {
   };
 
   return (
-    <PageContainer title="Dashboard Manager" description="This is Manager Dashboard">
-      <Grid container spacing={2} sx={{ mt: 0 }}>
+    <PageContainer title="Dashboard" description="This is Manager Dashboard">
+      <Grid container spacing={2} sx={{ mt: 0 }} alignItems="stretch">
         <Grid size={{ xs: 12, lg: 9 }}>
           <TopCard items={CardItems} size={{ xs: 12, lg: 3 }} />
         </Grid>
-        <Grid size={{ xs: 12, lg: 3 }}>
-          <Box display={'flex'} flexDirection={'column'} width={'100%'} gap={1}>
-            <Button variant="contained" color="primary" onClick={moveApproval}>
+        <Grid size={{ xs: 12, lg: 3 }} sx={{ display: 'flex' }}>
+          <Box display={'flex'} flexDirection={'column'} width="100%" height="100%" gap={1}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={moveApproval}
+              sx={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 1,
+              }}
+            >
               <IconCheck size={30} />
               Approval
             </Button>
@@ -202,8 +217,16 @@ const DashboardEmployee = () => {
               // onClick={handleOpenScanQR}
               onClick={moveReport}
               sx={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 1,
                 backgroundColor: 'white',
-                ':hover': { backgroundColor: 'rgba(232, 232, 232, 0.8)', color: 'primary.main' },
+                ':hover': {
+                  backgroundColor: 'rgba(232, 232, 232, 0.8)',
+                  color: 'primary.main',
+                },
               }}
             >
               <IconReport size={30} />
@@ -215,7 +238,7 @@ const DashboardEmployee = () => {
         {/* Tabel */}
         <Grid size={{ xs: 12, lg: 6 }}>
           <DynamicTable
-            height={470}
+            height={510}
             isHavePagination={false}
             overflowX="auto"
             data={activeInvitation}
@@ -228,11 +251,11 @@ const DashboardEmployee = () => {
 
         <Grid size={{ xs: 12, lg: 6 }}>
           <DynamicTable
-            height={470}
+            height={510}
             isHavePagination={false}
             overflowX="auto"
             data={approvalData}
-            isHaveChecked={false}
+            isHaveChecked={true}
             // defaultRowsPerPage={rowsPerPage}
             // rowsPerPageOptions={[10, 20, 100]}
             // onPaginationChange={(page, rowsPerPage) => {

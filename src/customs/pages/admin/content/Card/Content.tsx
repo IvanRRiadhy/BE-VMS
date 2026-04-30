@@ -31,8 +31,6 @@ import CloseIcon from '@mui/icons-material/Close';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import FormWizardAddVisitorCard from './FormWizardAddVisitorCard';
-import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
-import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import {
   CreateVisitorCardRequest,
   CreateVisitorCardRequestSchema,
@@ -492,10 +490,11 @@ const Content = () => {
     setSearchInput(keyword);
   }, []);
 
-  const handleSearch = useCallback(() => {
+  const handleSearch = useCallback((keyword: string) => {
     setPage(0);
-    setSearchKeyword(searchInput);
-  }, [searchInput]);
+    setSearchInput(keyword);
+    setSearchKeyword(keyword);
+  }, []);
 
   return (
     <PageContainer

@@ -78,8 +78,6 @@ import {
   getOngoingInvitation,
 } from 'src/customs/api/visitor';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { Download } from '@mui/icons-material';
-import QRCode from 'react-qr-code';
 // import CameraUpload from 'src/customs/components/camera/CameraUpload';
 import { DateTimePicker, LocalizationProvider, renderTimeViewClock } from '@mui/x-date-pickers';
 import { FormVisitor } from 'src/customs/api/models/Admin/Visitor';
@@ -94,6 +92,7 @@ import { showSwal } from 'src/customs/components/alerts/alerts';
 import InvitationDetailDialog from './components/Dialog/InvitationDetailDialog';
 import ExtendVisitDialog from './components/Dialog/ExtendVisitDialog';
 import SelectAgendaInvitationDialog from './components/Dialog/SelectAgendaInvitationDialog';
+import InvitationDialog from './components/Dialog/InvitationDialog';
 
 const Invitation = () => {
   const { token } = useSession();
@@ -218,11 +217,11 @@ const Invitation = () => {
         const resAnotherVisitor = await getInvitationRelatedVisitor(id, token);
         setDetailVisitorInvitation(resAnotherVisitor?.collection ?? []);
       } catch (relatedErr) {
-        console.warn('No related visitor data found or request failed.');
-        setDetailVisitorInvitation([]);
+        // console.warn('No related visitor data found or request failed.');
+        // setDetailVisitorInvitation([]);
       }
 
-      console.log('Invitation Detail:', res?.collection);
+      // console.log('Invitation Detail:', res?.collection);
     } catch (err: any) {
       console.error(err?.message || 'Failed to fetch invitation detail.');
     }
@@ -235,7 +234,7 @@ const Invitation = () => {
         const res = await getOngoingInvitation(token as string);
         setInvitationDetailVisitor(res?.collection ?? []);
       } catch (error) {
-        console.error('Error fetching data:', error);
+        // console.error('Error fetching data:', error);
       }
     };
     fetchData();
@@ -244,7 +243,7 @@ const Invitation = () => {
   const handleSelectInvitation = async (_: any, selected: any) => {
     if (!selected || !selected.id) return;
 
-    console.log('Selected invitation:', selected);
+    // console.log('Selected invitation:', selected);
 
     try {
       const detail = await getDetailInvitationForm(token as string, selected.id);
@@ -283,12 +282,65 @@ const Invitation = () => {
     if (!section.is_document) return 'visitor_information';
     return 'unknown';
   };
+  const sanitizeQuestionPage = (qPages: any[]) => {
+    return qPages.map((page) => {
+      const type = getSectionType(page);
+
+      // ❗ skip purpose_visit
+      if (type === 'purpose_visit') {
+        return page;
+      }
+
+      return {
+        ...page,
+        form: (page.form || []).map((f: any) => {
+          let answerPayload: any = {};
+
+          if (f.field_type === 9) {
+            answerPayload = {
+              answer_datetime: null,
+            };
+          } else if ([10, 11, 12].includes(f.field_type)) {
+            answerPayload = {
+              answer_file: null,
+            };
+          } else {
+            answerPayload = {
+              answer_text: null,
+            };
+          }
+
+          return {
+            ...f,
+            ...answerPayload,
+          };
+        }),
+      };
+    });
+  };
+
+  useEffect(() => {
+    if (!invitationData?.collection?.question_page) return;
+
+    const raw = invitationData.collection.question_page;
+    const clean = sanitizeQuestionPage(raw);
+
+    setDataVisitor([
+      {
+        question_page: clean,
+      },
+    ]);
+
+    setActiveStep(0);
+  }, [invitationData]);
 
   const groupedSections = React.useMemo(() => {
     if (!invitationData?.collection?.question_page) return [];
 
     const qPages = invitationData.collection.question_page;
+
     const visitorGroup = qPages.filter((q: any) => !['purpose_visit'].includes(getSectionType(q)));
+
     const purposeVisit = qPages.find((q: any) => getSectionType(q) === 'purpose_visit');
 
     const result: { label: string; type: string; sections: any[] }[] = [];
@@ -312,12 +364,12 @@ const Invitation = () => {
 
   const steps = groupedSections.map((s) => s.label);
 
-  useEffect(() => {
-    if (!invitationData?.collection) return;
-    const qPages = invitationData.collection.question_page || [];
-    setDataVisitor([{ question_page: qPages }]);
-    setActiveStep(0);
-  }, [invitationData]);
+  // useEffect(() => {
+  //   if (!invitationData?.collection) return;
+  //   const qPages = invitationData.collection.question_page || [];
+  //   setDataVisitor([{ question_page: qPages }]);
+  //   setActiveStep(0);
+  // }, [invitationData]);
 
   const uploadFileToCDN = async (file: File | Blob): Promise<string | null> => {
     const formData = new FormData();
@@ -558,7 +610,7 @@ const Invitation = () => {
                 select
                 size="small"
                 fullWidth
-                value={field.answer_text || ''}
+                value={field.answer_text ?? null}
                 onChange={(e) => onChange(index, 'answer_text', e.target.value)}
                 sx={{ minWidth: 150 }}
                 SelectProps={{ displayEmpty: true }}
@@ -577,7 +629,7 @@ const Invitation = () => {
               <FormControl component="fieldset">
                 <RadioGroup
                   row
-                  value={field.answer_text || ''}
+                  value={field.answer_text ?? null}
                   onChange={(e) => onChange(index, 'answer_text', e.target.value)}
                   sx={{ flexDirection: 'row', flexWrap: 'nowrap', gap: 1 }}
                 >
@@ -874,11 +926,11 @@ const Invitation = () => {
     const payload = {
       visitor_type: source.visitor_type ?? source.visitor_type_data?.id ?? '',
       type_registered: 1,
-      // is_group: source.is_group ?? true,
       is_group: true,
       group_name: source.group_name ?? '',
       tz: source.tz ?? 'Asia/Jakarta',
-      registered_site: source.site_place_data?.id ?? '',
+      // registered_site: source.site_place_data?.id ?? '',
+      flow: 'Invitation',
       data_visitor: dataVisitor.map((visitor: any) => ({
         question_page: (visitor.question_page ?? []).map((page: any) => ({
           id: page.id,
@@ -889,27 +941,40 @@ const Invitation = () => {
           can_multiple_used: page.can_multiple_used ?? false,
           self_only: page.self_only ?? false,
           foreign_id: page.foreign_id ?? '',
-          form: (page.form ?? []).map((f: any) => ({
-            sort: f.sort ?? 0,
-            short_name: f.short_name,
-            long_display_text: f.long_display_text,
-            field_type: f.field_type,
-            is_primary: f.is_primary ?? false,
-            is_enable: f.is_enable ?? true,
-            mandatory: f.mandatory ?? false,
-            remarks: f.remarks,
-            custom_field_id: f.custom_field_id,
-            multiple_option_fields: f.multiple_option_fields ?? [],
-            visitor_form_type: 1,
-            answer_text: f.answer_text ?? null,
-            answer_datetime: f.answer_datetime ?? null,
-            answer_file: f.answer_file ?? null,
-          })),
+          form: (page.form ?? []).map((f: any) => {
+            let answerPayload = {};
+
+            const isDrivingField = page.form.find((x: any) => x.remarks === 'is_driving');
+            const isDriving = isDrivingField?.answer_text === 'true';
+
+            if (!isDriving && ['vehicle_plate_number', 'vehicle_type'].includes(f.remarks)) {
+              answerPayload = {
+                answer_text: null,
+              };
+            } else if (f.field_type === 9) {
+              answerPayload = {
+                answer_datetime: f.answer_datetime ?? null,
+              };
+            } else if ([10, 11, 12].includes(f.field_type)) {
+              answerPayload = {
+                answer_file: f.answer_file ?? null,
+              };
+            } else {
+              answerPayload = {
+                answer_text: f.answer_text === '' ? null : (f.answer_text ?? null),
+              };
+            }
+
+            return {
+              ...f,
+              ...answerPayload,
+            };
+          }),
         })),
       })),
     };
 
-    console.log('🚀 Payload ready:', JSON.stringify(payload, null, 2));
+    // console.log('🚀 Payload ready:', JSON.stringify(payload, null, 2));
 
     try {
       const id = source.id;
@@ -918,7 +983,7 @@ const Invitation = () => {
       console.log('Success:', JSON.stringify(res, null, 2));
       showSwal('success', 'Visitor has been invited.');
     } catch (err) {
-      console.error('Failed:', err);
+      showSwal('error', 'Failed to invite visitor.');
     } finally {
       setTimeout(() => setLoadingAccess(false), 1000);
     }
@@ -981,25 +1046,32 @@ const Invitation = () => {
                         <AccordionSummary
                           expandIcon={<ExpandMoreIcon />}
                           sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
                             p: 1,
                           }}
                         >
-                          <Typography fontWeight="bold">Visitor {gIdx + 1}</Typography>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                            }}
+                          >
+                            <Typography fontWeight="bold" mb={'0 !important'}>
+                              Visitor {gIdx + 1}
+                            </Typography>
 
-                          {dataVisitor.length > 1 && (
-                            <IconButton
-                              size="small"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setDataVisitor((prev) => prev.filter((_, i) => i !== gIdx));
-                              }}
-                            >
-                              <IconTrash />
-                            </IconButton>
-                          )}
+                            {dataVisitor.length > 1 && (
+                              <IconButton
+                                size="small"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDataVisitor((prev) => prev.filter((_, i) => i !== gIdx));
+                                }}
+                              >
+                                <IconTrash color="red" />
+                              </IconButton>
+                            )}
+                          </Box>
                         </AccordionSummary>
 
                         <AccordionDetails>
@@ -1071,14 +1143,14 @@ const Invitation = () => {
                     <TableRow>
                       {uniqueForms.map((f: any, i: any) => (
                         <TableCell key={f.custom_field_id || i}>
-                          <Typography variant="subtitle2" fontWeight={600}>
+                          <CustomFormLabel required={f.mandatory == true}>
                             {f.long_display_text}
-                          </Typography>
+                          </CustomFormLabel>
                         </TableCell>
                       ))}
                       <TableCell align="right">
                         <Typography variant="subtitle2" fontWeight={600}>
-                          Actions
+                          Action
                         </Typography>
                       </TableCell>
                     </TableRow>
@@ -1134,7 +1206,7 @@ const Invitation = () => {
                                 }
                                 size="small"
                               >
-                                <IconTrash />
+                                <IconTrash color="red" />
                               </IconButton>
                             )}
                           </TableCell>
@@ -1180,14 +1252,12 @@ const Invitation = () => {
             if (f.remarks === 'host') {
               displayValue = invitationData?.collection?.host_data?.name ?? f.answer_text ?? '-';
             } else if (f.remarks === 'site_place') {
-              displayValue =
-                invitationData?.collection?.site_place_name ?? f.answer_text ?? '-';
+              displayValue = invitationData?.collection?.site_place_name ?? f.answer_text ?? '-';
             } else if (f.remarks === 'visitor_period_start' || f.remarks === 'visitor_period_end') {
               const dt = moment.utc(f.answer_datetime).local();
-              const raw = f.answer_datetime;
 
               displayValue = dt.isValid()
-                ? dt.format('ddd, DD MMM YYYY, HH:mm')
+                ? dt.format('dddd, DD MMMM YYYY, HH:mm')
                 : f.answer_datetime;
             } else if (f.answer_text) {
               displayValue = f.answer_text;
@@ -1196,7 +1266,7 @@ const Invitation = () => {
                 const dt = moment.utc(f.answer_datetime).local();
 
                 displayValue = dt.isValid()
-                  ? dt.format('dddd, DD MMMM YYYY, HH:mm')
+                  ? dt.format('dddd, DD MMMMM YYYY, HH:mm')
                   : f.answer_datetime;
               } catch (err) {
                 console.error('Invalid datetime:', f.answer_datetime);
@@ -1280,9 +1350,6 @@ const Invitation = () => {
     setOpenExtendVisit(false);
   };
 
-  const handleEdit = (id: string) => {
-    setInvitatioOpenDetail(true);
-  };
 
   return (
     <>
@@ -1301,7 +1368,7 @@ const Invitation = () => {
                 selectedRows={selectedRows}
                 defaultRowsPerPage={rowsPerPage}
                 isNoActionTableHead={true}
-                rowsPerPageOptions={[10,  50, 100]}
+                rowsPerPageOptions={[10, 50, 100]}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);
@@ -1309,7 +1376,7 @@ const Invitation = () => {
                 isHaveChecked={true}
                 isHaveAction={true}
                 titleHeader="Invitation"
-                isHaveHeaderTitle={true}
+                isHaveHeaderTitle={false}
                 isHaveSearch={true}
                 isHavePeriod={true}
                 isHaveFilter={false}
@@ -1351,101 +1418,18 @@ const Invitation = () => {
           onNext={() => setInvitatioOpenDetail(true)}
         />
 
-        <Dialog
+        <InvitationDialog
           open={invitatioOpenDetail}
           onClose={() => setInvitatioOpenDetail(false)}
-          fullWidth
-          // maxWidth="md"
-          maxWidth={false}
-          PaperProps={{
-            sx: {
-              width: '100vw',
-            },
-          }}
-        >
-          {/* <DialogTitle>Detail Invitation</DialogTitle> */}
-          <DialogTitle>Edit Invitation</DialogTitle>
-          <IconButton
-            aria-label="close"
-            onClick={() => setInvitatioOpenDetail(false)}
-            sx={{
-              position: 'absolute',
-              right: 8,
-              top: 8,
-              color: (theme) => theme.palette.grey[500],
-            }}
-          >
-            <IconX />
-          </IconButton>
-          <Divider />
-          <DialogContent dividers>
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 12, md: 12 }}>
-                <Stepper activeStep={activeStep} alternativeLabel>
-                  {groupedSections.map((s, idx) => (
-                    <Step key={idx}>
-                      <StepLabel
-                        onClick={() => setActiveStep(idx)}
-                        sx={{ fontSize: '16px !important' }}
-                      >
-                        {s.label}
-                      </StepLabel>
-                    </Step>
-                  ))}
-                </Stepper>
-
-                <>
-                  <Box mt={4}>{renderStepContent(activeStep)}</Box>
-                  <Box display="flex" flexDirection="row" mt={4}>
-                    <Button
-                      disabled={activeStep === 0}
-                      onClick={handleBack}
-                      startIcon={<IconArrowLeft size={18} />}
-                    >
-                      Back
-                    </Button>
-                    <Box flex="1 1 auto" />
-                    {activeStep !== steps.length - 1 ? (
-                      <Button
-                        onClick={handleNext}
-                        variant="contained"
-                        endIcon={<IconArrowRight size={18} />}
-                      >
-                        Next
-                      </Button>
-                    ) : (
-                      <Button onClick={handleSubmit} variant="contained" color="primary">
-                        Submit
-                      </Button>
-                    )}
-                  </Box>
-                </>
-              </Grid>
-            </Grid>
-          </DialogContent>
-          {/* <DialogContent dividers>
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 12, md: 12 }}>
-                <CustomFormLabel sx={{ mt: 0.5 }}>Visit Start</CustomFormLabel>
-                <CustomTextField type="datetime-local" fullWidth />
-              </Grid>
-              <Grid size={{ xs: 12, md: 12 }}>
-                <CustomFormLabel sx={{ mt: 0.5 }}>Visit End</CustomFormLabel>
-                <CustomTextField type="datetime-local" fullWidth />
-              </Grid>
-            </Grid>
-          </DialogContent> */}
-          {/* <DialogActions>
-            <Button
-              onClick={() => setInvitatioOpenDetail(false)}
-              fullWidth
-              color="primary"
-              variant="contained"
-            >
-              Submit
-            </Button>
-          </DialogActions> */}
-        </Dialog>
+          activeStep={activeStep}
+          setActiveStep={setActiveStep}
+          groupedSections={groupedSections}
+          steps={steps}
+          handleNext={handleNext}
+          handleBack={handleBack}
+          handleSubmit={handleSubmit}
+          renderStepContent={renderStepContent}
+        />
 
         <InvitationDetailDialog
           open={openInvitationDialog}

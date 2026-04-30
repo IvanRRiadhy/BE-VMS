@@ -184,7 +184,7 @@ const FormPermission: React.FC<FormPermissionProps> = ({
       'InviteWithinAllowPreRegister',
       'ManageSchedule',
       'ManageApprove',
-      'External',
+      // 'External',
       'ManageTeam',
     ],
 

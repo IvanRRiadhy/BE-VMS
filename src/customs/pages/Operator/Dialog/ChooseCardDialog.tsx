@@ -17,6 +17,7 @@ import {
   InputAdornment,
 } from '@mui/material';
 import { IconX, IconSearch, IconSwipe, IconCards, IconKeyOff } from '@tabler/icons-react';
+import CardSearchInput from '../Components/CardSearchInput';
 
 const ChooseCardDialog = ({
   open,
@@ -62,20 +63,7 @@ const ChooseCardDialog = ({
 
       <DialogContent dividers>
         <Box mb={2}>
-          <TextField
-            fullWidth
-            size="small"
-            placeholder="Search card"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <IconSearch size={20} />
-                </InputAdornment>
-              ),
-            }}
-          />
+          <CardSearchInput value={searchTerm} onChange={setSearchTerm} />
         </Box>
         <Box mb={2}>
           <FormControlLabel

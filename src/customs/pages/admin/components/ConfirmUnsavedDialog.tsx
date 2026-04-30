@@ -13,7 +13,7 @@ type Props = {
   open: boolean;
   onClose: () => void;
   onDiscard: () => void;
-  onContinue: () => void;
+  // onContinue: () => void;
   title?: string;
   message?: string;
 };
@@ -22,15 +22,14 @@ const ConfirmUnsavedDialog: React.FC<Props> = ({
   open,
   onClose,
   onDiscard,
-  onContinue,
+  // onContinue,
   title = 'Unsaved Changes',
-  message = 'You have unsaved changes. Do you want to continue editing or discard them?',
+  message = 'You have unsaved changes. Are you sure you want to discard them and continue?',
 }) => {
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>
         {title}
-
         <IconButton
           aria-label="close"
           onClick={onClose}
@@ -45,14 +44,10 @@ const ConfirmUnsavedDialog: React.FC<Props> = ({
       </DialogTitle>
 
       <DialogContent dividers>{message}</DialogContent>
-
       <DialogActions>
-        <Button onClick={onDiscard} color="error" variant="contained">
-          Discard Changes
-        </Button>
-
-        <Button onClick={onContinue} variant="contained">
-          Yes, Continue Editing
+        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onDiscard} variant="contained" color="primary">
+          Yes, Discard and Continue
         </Button>
       </DialogActions>
     </Dialog>

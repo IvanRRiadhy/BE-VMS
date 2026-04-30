@@ -122,7 +122,7 @@ export const TableBodyContent = ({
   isHaveSettingOperator,
   onSettingOperator,
   isHaveActionRevoke,
-  onActionRevoke,
+  onActionAccess,
   isHaveActionOnlyEdit,
   isSelectedType,
   isButtonGiveAccess,
@@ -144,23 +144,7 @@ export const TableBodyContent = ({
   // INDEX_COL_WIDTH,
   onDelete,
 }: any) => {
-  const GENDER_MAP: Record<string, string> = {
-    '0': 'Female',
-    '1': 'Male',
-    '2': 'Prefer not to say',
-  };
 
-  const SITE_MAP: Record<number, string> = {
-    0: 'Site',
-    1: 'Building',
-    2: 'Floor',
-    3: 'Room',
-  };
-
-  const formatDate = (date?: string) => {
-    if (!date) return '-'; // fallback kalau kosong
-    return moment.utc(date).local().format('DD-MM-YYYY, HH:mm');
-  };
 
   const CARD_STATUS: Record<number, string> = {
     0: 'Not Found',
@@ -1668,7 +1652,7 @@ export const TableBodyContent = ({
                 isHaveSettingOperator,
                 onSettingOperator,
                 isHaveActionRevoke,
-                onActionRevoke,
+                onActionAccess,
                 isHaveActionOnlyEdit,
                 isSelectedType,
                 isButtonGiveAccess,
@@ -1753,7 +1737,7 @@ const TableRowItem = React.memo(
       isHaveSettingOperator,
       onSettingOperator,
       isHaveActionRevoke,
-      onActionRevoke,
+      onActionAccess,
       isHaveActionOnlyEdit,
       isSelectedType,
       isButtonGiveAccess,
@@ -1814,10 +1798,15 @@ const TableRowItem = React.memo(
       3: 'Room',
     };
 
-    const formatDate = (date?: string) => {
-      if (!date) return '-'; // fallback kalau kosong
-      return moment.utc(date).local().format('DD MMMM YYYY, HH:mm');
-    };
+   const formatDate = (date?: string) => {
+     if (!date || date === '-') return '-';
+
+     const m = moment.utc(date, moment.ISO_8601, true);
+
+     if (!m.isValid()) return '-';
+
+     return m.local().format('DD MMMM YYYY, HH:mm');
+   };
 
     const CARD_STATUS: Record<number, string> = {
       0: 'Not Found',
@@ -1844,7 +1833,9 @@ const TableRowItem = React.memo(
           >
             <Checkbox
               checked={checkedIds.includes(row.id)}
-              onChange={(e) => handleCheckRow(row.id as string, e.target.checked)}
+              onChange={(e) => {
+                handleCheckRow(row.id as string, e.target.checked)
+              }}
             />
           </TableCell>
         )}
@@ -2123,7 +2114,7 @@ const TableRowItem = React.memo(
               ) : isHaveImage && imageFields.includes(col) ? (
                 <></>
               ) : (isDataVerified && col === 'secure') ||
-              (isDataVerified && col === 'active') ||
+                (isDataVerified && col === 'active') ||
                 col === 'can_upload' ||
                 col === 'can_signed' ||
                 col === 'can_declined' ||
@@ -2474,9 +2465,7 @@ const TableRowItem = React.memo(
                       p: 0,
                       verticalAlign: 'middle',
                     }}
-                  >
-                    
-                  </Box>
+                  ></Box>
                 )
               ) : isHaveAccess ? (
                 <TableCell
@@ -2877,38 +2866,60 @@ const TableRowItem = React.memo(
         )}
 
         {isHaveActionRevoke && !isActionVisitor && (
-          <TableCell
-            sx={{
-              position: 'sticky',
-              right: 0,
-              background: 'white',
-              zIndex: 2,
-              display: 'flex',
-              gap: 1,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Tooltip title="Edit">
-              <Button
-                onClick={() => onActionRevoke?.(row)}
-                disableRipple
-                sx={{
-                  color: 'white',
-                  backgroundColor: '#000',
-
-                  // width: 28,
-                  // height: 28,
-                  // padding: 0.5,
-                  // borderRadius: '50%',
-                }}
-              >
-                {/* <IconKeyOff width={14} height={14} />
-                 */}
-                Revoke
-              </Button>
-            </Tooltip>
-          </TableCell>
+          <>
+            <TableCell
+              sx={{
+                position: 'sticky',
+                right: 0,
+                background: 'white',
+                zIndex: 2,
+                display: 'flex',
+                gap: 1,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Tooltip title="Grant" arrow>
+                <Button
+                  onClick={() => onActionAccess?.(row, 'grant')}
+                  disableRipple
+                  variant='contained'
+                  sx={{
+                    color: 'white',
+                    backgroundColor: '#4CAF50',
+                  }}
+                >
+                  Grant
+                </Button>
+              </Tooltip>
+              <Tooltip title="Revoke" arrow>
+                <Button
+                  onClick={() => onActionAccess?.(row, 'revoke')}
+                  disableRipple
+                  variant='contained'
+                  sx={{
+                    color: 'white',
+                    backgroundColor: '#f44336',
+                  }}
+                >
+                  Revoke
+                </Button>
+              </Tooltip>
+               <Tooltip title="Block" arrow>
+                <Button
+                  onClick={() => onActionAccess?.(row, 'block')}
+                  disableRipple
+                  variant='contained'
+                  sx={{
+                    color: 'white',
+                    backgroundColor: '#000',
+                  }}
+                >
+                  Block
+                </Button>
+              </Tooltip>
+            </TableCell>
+          </>
         )}
 
         {isHaveActionOnlyEdit && !isActionVisitor && isSelectedType && (

@@ -295,10 +295,12 @@ const Content = () => {
     setSearchInput(keyword);
   }, []);
 
-  const handleSearch = useCallback(() => {
-    setPage(0);
-    setSearchKeyword(searchInput);
-  }, [searchInput]);
+
+const handleSearch = useCallback((keyword: string) => {
+  setPage(0);
+  setSearchInput(keyword);
+  setSearchKeyword(keyword);
+}, []);
 
   const handleCloseScheduler = (_: any, reason?: string) => {
     if (isDirty) {

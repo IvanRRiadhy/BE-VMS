@@ -1,5 +1,5 @@
-import { useEffect, useState, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   Box,
@@ -12,14 +12,12 @@ import {
   Portal,
   Button,
   Grid2 as Grid,
-  TextField,
   Backdrop,
   CircularProgress,
   Snackbar,
   Alert,
   IconButton,
   Autocomplete,
-  Skeleton,
   Switch,
   FormControlLabel,
 } from '@mui/material';
@@ -42,6 +40,8 @@ import {
   updateBadgeType,
   updateClearcodes,
   syncHoneywellIntegration,
+  syncHoneywellBadge,
+  addBadgeEmployee,
 } from 'src/customs/api/admin';
 import {
   Item,
@@ -50,6 +50,7 @@ import {
 } from 'src/customs/api/models/Admin/Integration';
 import {
   IconAccessPoint,
+  IconArrowLeft,
   IconBuilding,
   IconCode,
   IconRefresh,
@@ -59,6 +60,10 @@ import CloseIcon from '@mui/icons-material/Close';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { showSwal } from 'src/customs/components/alerts/alerts';
+import AddBadgeDialog from './components/AddBadgeDialog';
+import { checkConnection } from 'src/customs/api/Admin/Integration';
+import { IconX } from '@tabler/icons-react';
+import SyncBadgeDialog from './components/SyncBadgeDialog';
 
 const Honeywell = ({ id }: { id: string }) => {
   // const { id } = useParams();
@@ -118,46 +123,69 @@ const Honeywell = ({ id }: { id: string }) => {
 
   const handleSyncIntegration = async () => {
     if (!id || !token) {
-      setSyncMsg({ open: true, text: 'Session habis / ID tidak valid.', severity: 'error' });
+      // setSyncMsg({ open: true, text: 'Session habis / ID tidak valid.', severity: 'error' });
+      // return;
+      showSwal('error', 'Session expired / Invalid ID.');
       return;
     }
 
     try {
       setSyncing(true);
       const res = await syncHoneywellIntegration(id as string, token as string);
-      setSyncing(false); // tutup spinner SEGERA
+      setSyncing(false);
 
       if (res.status !== 'success') {
-        setSyncMsg({
-          open: true,
-          text: res.msg || 'Sinkronisasi gagal.',
-          severity: 'error',
-        });
+        showSwal('error', res.msg || 'Synchronization failed.');
 
         if (res.status_code === 404 && /not connected/i.test(res.msg || '')) {
-          // kasus khusus kalau mau di-handle
+          showSwal('error', res.msg || 'Integration not connected. Please check your settings.');
         }
 
-        return; // jangan lanjut refresh list
+        return;
       }
 
-      setSyncMsg({
-        open: true,
-        text: res.msg || 'Sinkronisasi berhasil.',
-        severity: 'success',
-      });
-
-      // refresh data tanpa await
+      showSwal('success', res.msg || 'Synchronization successful.');
       loadTotals().catch((e) => console.error('loadTotals error:', e));
       fetchListByType(selectedType).catch((e) => console.error('fetchListByType error:', e));
     } catch (e: any) {
-      console.error('Sync error:', e);
       setSyncing(false);
-      setSyncMsg({
-        open: true,
-        text: e?.message || 'Sinkronisasi gagal. Coba lagi nanti.',
-        severity: 'error',
-      });
+      showSwal('error', e?.message || 'Synchronization failed. Please try again later.');
+    }
+  };
+
+  const [dataSyncBadge, setDataSyncBadge] = useState<any[]>([]);
+  const [openSyncDialog, setOpenSyncDialog] = useState(false);
+
+  const handleSyncBadge = async () => {
+    if (!id || !token) {
+      showSwal('error', 'Session expired / Invalid ID.');
+      return;
+    }
+
+    try {
+      setSyncing(true);
+
+      const res = await syncHoneywellBadge(id as string, token as string);
+
+      setSyncing(false);
+
+      if (res.status !== 'success') {
+        showSwal('error', res.msg || 'Synchronization failed.');
+        return;
+      }
+
+      const notExisted = res.collection?.data_notexisted || [];
+
+      if (notExisted.length === 0) {
+        showSwal('info', 'No new badge data to import.');
+        return;
+      }
+
+      setDataSyncBadge(notExisted);
+      setOpenSyncDialog(true);
+    } catch (e: any) {
+      setSyncing(false);
+      showSwal('error', e?.message || 'Synchronization failed.');
     }
   };
 
@@ -168,6 +196,7 @@ const Honeywell = ({ id }: { id: string }) => {
       subTitleSetting: totals.companies,
       icon: IconBuilding,
       color: 'none',
+      type: 'info',
     },
     {
       title: 'Badge Type',
@@ -175,6 +204,7 @@ const Honeywell = ({ id }: { id: string }) => {
       subTitleSetting: totals.badge_type,
       icon: IconUsersGroup,
       color: 'none',
+      type: 'info',
     },
     {
       title: 'Clearcodes',
@@ -182,6 +212,7 @@ const Honeywell = ({ id }: { id: string }) => {
       subTitleSetting: totals.clear_codes,
       icon: IconCode,
       color: 'none',
+      type: 'info',
     },
     {
       title: 'Badge Status',
@@ -189,36 +220,52 @@ const Honeywell = ({ id }: { id: string }) => {
       subTitleSetting: totals.badge_status,
       icon: IconAccessPoint,
       color: 'none',
+      type: 'info',
     },
+    // {
+    //   title: 'Sync Data',
+    //   subTitle: '',
+    //   subTitleSetting: 10,
+    //   icon: IconRefresh,
+    //   color: 'none',
+    //   onIconClick: handleSyncIntegration,
+    // },
+    // {
+    //   title: 'Import Badge',
+    //   subTitle: '',
+    //   subTitleSetting: 10,
+    //   icon: IconRefresh,
+    //   color: 'none',
+    //   onIconClick: handleSyncBadge,
+    // },
     {
       title: 'Sync Data',
-      subTitle: '',
-      subTitleSetting: 10,
       icon: IconRefresh,
-      color: 'none',
       onIconClick: handleSyncIntegration,
+      type: 'action',
+    },
+    {
+      title: 'Import Badge',
+      icon: IconRefresh,
+      onIconClick: handleSyncBadge,
+      type: 'action',
     },
   ];
 
-  // helper: aman ambil total dari response
   const getCount = (res: any) => {
     if (!res) return 0;
-    // variasi umum
     if (typeof res?.RecordsTotal === 'number') return res.RecordsTotal;
     if (Array.isArray(res?.collection)) return res.collection.length;
 
-    // beberapa API taruh di data/collection
     if (typeof res?.data?.RecordsTotal === 'number') return res.data.RecordsTotal;
     if (Array.isArray(res?.data?.collection)) return res.data.collection.length;
 
-    // fallback: kalau ada field 'total' atau 'count'
     if (typeof res?.total === 'number') return res.total;
     if (typeof res?.count === 'number') return res.count;
 
     return 0;
   };
 
-  // muat total untuk semua kategori
   const loadTotals = async () => {
     if (!token || !id) return;
 
@@ -235,15 +282,8 @@ const Honeywell = ({ id }: { id: string }) => {
       clear_codes: ccRes.status === 'fulfilled' ? getCount(ccRes.value) : 0,
       badge_status: bsRes.status === 'fulfilled' ? getCount(bsRes.value) : 0,
     });
-
-    // // (opsional) logging biar tau mana yang error
-    // if (cRes.status === 'rejected') console.warn('getCompanies failed:', cRes.reason);
-    // if (btRes.status === 'rejected') console.warn('getBadgeType failed:', btRes.reason);
-    // if (ccRes.status === 'rejected') console.warn('getClearcodes failed:', ccRes.reason);
-    // if (bsRes.status === 'rejected') console.warn('getBadgeStatus failed:', bsRes.reason);
   };
 
-  // panggil sekali saat token/id siap
   useEffect(() => {
     loadTotals();
   }, [id, token]);
@@ -264,9 +304,8 @@ const Honeywell = ({ id }: { id: string }) => {
           badge_type_id: item.badge_type_id ?? '',
           visitor_type_id: item.visitor_type_id ?? '',
           honeywell_id: item.honeywell_id ?? '',
-          visitor_type: item.visitor_type.name,
+          // visitor_type: item.visitor_type.name,
           active: item.active ?? false,
-
         }));
         setListData(rows ?? []);
       } else if (type === 'clear_codes') {
@@ -279,8 +318,6 @@ const Honeywell = ({ id }: { id: string }) => {
         setListData([]);
       }
     } catch (e) {
-      console.error('Fetch list error:', e);
-      setListData([]);
     } finally {
       setLoading(false);
     }
@@ -362,7 +399,6 @@ const Honeywell = ({ id }: { id: string }) => {
         const res = await getClearcodesById(id as string, String(row.id), token);
         setDetailData(res.collection ?? row);
       } else if (selectedType === 'badge_status') {
-        // belum ada API by id → pakai row dulu
         const res = await getBadgeStatusById(id as string, String(row.id), token);
         setDetailData(res.collection ?? row);
       } else {
@@ -524,7 +560,6 @@ const Honeywell = ({ id }: { id: string }) => {
     try {
       setSaving(true);
 
-      // === SINGLE EDIT ===
       if (!isBatchEdit) {
         const companyId = String(companyForm.id ?? detailData?.id ?? '');
         if (!companyId) {
@@ -654,11 +689,6 @@ const Honeywell = ({ id }: { id: string }) => {
       });
 
       if (!Object.keys(payload).length) {
-        setSyncMsg({
-          open: true,
-          text: 'Nyalakan minimal satu toggle (Name/Visitor Type) untuk disimpan.',
-          severity: 'error',
-        });
         return;
       }
 
@@ -669,7 +699,6 @@ const Honeywell = ({ id }: { id: string }) => {
       );
 
       showSwal('success', `Updated ${ids.length} badge types.`);
-      // setSyncMsg({ open: true, text: `Updated ${ids.length} badge types.`, severity: 'success' });
       setTimeout(() => {
         handleCloseDialog();
       }, 600);
@@ -712,10 +741,8 @@ const Honeywell = ({ id }: { id: string }) => {
           handleCloseDialog();
         }, 600);
         return;
-        return;
       }
 
-      // === BATCH EDIT ===
       const payload: UpdateClearcodesRequest = omitEmpty({
         ...(enabled.name ? { name: clearCodeForm.name?.trim() } : {}),
         ...(enabled.access_control_id
@@ -728,11 +755,6 @@ const Honeywell = ({ id }: { id: string }) => {
       });
 
       if (!Object.keys(payload).length) {
-        // setSyncMsg({
-        //   open: true,
-        //   text: 'Nyalakan minimal satu toggle (Name/Access Control) untuk disimpan.',
-        //   severity: 'error',
-        // });
         showSwal('error', 'Turn on at least one toggle (Name/Access Control) to save.');
         return;
       }
@@ -777,7 +799,6 @@ const Honeywell = ({ id }: { id: string }) => {
       else if (selectedType === 'clear_codes')
         await updateClearcodes(String(rowId), payload as any, token as string);
       else if (selectedType === 'badge_status') {
-        // setSyncMsg({ open: true, text: 'Update Badge Status belum didukung.', severity: 'error' });
         showSwal('error', 'Failed to update badge status');
         setListData(prev);
         return;
@@ -787,30 +808,22 @@ const Honeywell = ({ id }: { id: string }) => {
     } catch (e: any) {
       console.error(e);
       setListData(prev);
-      // setSyncMsg({
-      //   open: true,
-      //   text: e?.response?.data?.msg || 'Gagal mengubah status.',
-      //   severity: 'error',
-      // });
       showSwal('error', e?.response?.data?.msg || 'Failed to update status.');
     }
   };
 
-  const [edittingId, setEdittingId] = useState('');
   const [isBatchEdit, setIsBatchEdit] = useState(false);
   const handleEditBatch = () => {
     if (!selectedRows.length) {
-      // setSyncMsg({ open: true, text: 'Pilih minimal satu baris.', severity: 'error' });
       showSwal('error', 'Select at least one row.');
       return;
     }
 
     setIsBatchEdit(true);
-    setEditingRow(null); // jangan pakai detail satu item
-    setDetailData(null); // kosongkan detail agar effect tidak overwrite form
+    setEditingRow(null);
+    setDetailData(null);
     setEditDialogType(TYPE_MAP[selectedType] ?? null);
 
-    // Inisialisasi form kosong → hanya field yang diisi user yang akan dikirim
     if (selectedType === 'companies') {
       setCompanyForm({
         name: '',
@@ -847,69 +860,183 @@ const Honeywell = ({ id }: { id: string }) => {
     });
   }, [isBatchEdit, editDialogType]);
 
+  const [openAddBadge, setOpenAddBadge] = useState(false);
+
+  const handleConfirmImportBadge = async () => {
+    try {
+      const selectedData = dataSyncBadge.filter((badge) => selectedBadges.includes(badge.BadgeID));
+
+      if (selectedData.length === 0) {
+        showSwal('error', 'Please select at least one badge.');
+        return;
+      }
+
+      const payload = {
+        data: selectedData.map((badge) => ({
+          BadgeID: badge.BadgeID,
+          LastName: badge.LastName,
+          FirstName: badge.FirstName,
+          MiddleName: badge.MiddleName,
+          IssueDate: badge.IssueDate,
+          ExpireDate: badge.ExpireDate,
+          RowVersion: badge.RowVersion,
+          Email: badge.Email,
+          CellPhone: badge.CellPhone,
+          BadgeType: {
+            badgeTypeID: badge.BadgeType?.badgeTypeID,
+            description: badge.BadgeType?.description || '',
+          },
+        })),
+      };
+
+      await addBadgeEmployee(token as string, id as string, payload);
+
+      showSwal('success', 'Selected badges imported successfully');
+
+      setOpenSyncDialog(false);
+      setDataSyncBadge([]);
+      setSelectedBadges([]);
+
+      loadTotals();
+      fetchListByType(selectedType);
+    } catch (error) {
+      showSwal('error', 'Failed importing badges');
+    }
+  };
+
+  const [openConnection, setOpenConnection] = useState(false);
+
+  const handleCheckConnection = async () => {
+    if (!token) {
+      showSwal('error', 'Session expired.');
+      return;
+    }
+
+    try {
+      const res = await checkConnection(token as string, id);
+      console.log('id', id);
+
+      if (res.status === 'success') {
+        showSwal('success', res.msg || 'Connected');
+      } else {
+        showSwal('error', res.msg || 'Not connected');
+      }
+    } catch (e: any) {
+      showSwal('error', e?.response?.data?.msg || 'Failed to check connection');
+    }
+  };
+
+  const [selectedBadges, setSelectedBadges] = useState<string[]>([]);
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedBadges(dataSyncBadge.map((b) => b.BadgeID));
+    } else {
+      setSelectedBadges([]);
+    }
+  };
+
+  const handleSelectOne = (id: string) => {
+    setSelectedBadges((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
+
+  const [searchInput, setSearchInput] = useState('');
+
+  const handleSearchKeywordChange = useCallback((keyword: string) => {
+    setSearchInput(keyword);
+  }, []);
+
+  const handleSearch = useCallback((keyword: string) => {
+    // setPage(0);
+    setSearchInput(keyword);
+    setSearchKeyword(keyword);
+  }, []);
+
+  const filteredData = useMemo(() => {
+    if (!searchKeyword) return listData;
+
+    const keyword = searchKeyword.toLowerCase();
+
+    return listData.filter((item) => {
+      return Object.values(item).some((val) => String(val).toLowerCase().includes(keyword));
+    });
+  }, [listData, searchKeyword]);
+
+  const navigate = useNavigate();
+
+  const handleBack = () => {
+    navigate('/admin/manage/integration');
+  };
+
   return (
     <>
       <PageContainer title="Integration Detail" description="this is Dashboard page">
         <Box>
           <Grid container spacing={3} flexWrap={'wrap'}>
             <Grid size={{ xs: 12, lg: 12 }}>
-              <TopCard items={cards} size={{ xs: 12, lg: 2.4 }} />
+              <TopCard items={cards} size={{ xs: 12, lg: 2 }} />
             </Grid>
             <Grid container mt={1} size={{ xs: 12, lg: 12 }}>
               <Grid size={{ xs: 12, lg: 12 }}>
-                {isDataReady ? (
-                  <DynamicTable
-                    isHavePagination
-                    rowsPerPageOptions={[5, 10, 25, 50]}
-                    overflowX={'auto'}
-                    data={listData}
-                    selectedRows={selectedRows}
-                    isHaveChecked={true}
-                    isHaveAction={false}
-                    isHaveActionOnlyEdit={true}
-                    isSelectedType={selectedType !== 'badge_status'}
-                    isHaveSearch={true}
-                    isHaveFilter={false}
-                    isHaveExportPdf={false}
-                    isHaveExportXlf={false}
-                    isHaveFilterDuration={false}
-                    isHaveAddData={false}
-                    isHaveBooleanSwitch={true}
-                    onBatchEdit={handleEditBatch}
-                    onBooleanSwitchChange={handleBooleanSwitchChange}
-                    isHaveHeader={true}
-                    headerContent={{
-                      items: Object.keys(headerMap).map((key) => ({
-                        name: key,
-                        label: headerMap[key],
-                      })),
-                    }}
-                    defaultSelectedHeaderItem="companies"
-                    onHeaderItemClick={(item) => {
-                      setSelectedType(item.name);
-                    }}
-                    onCheckedChange={(selected) => {
-                      setSelectedRows(selected);
-                    }}
-                    onEdit={handleEditRow}
-                    onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-                    onFilterByColumn={(column) => {
-                      setSortColumn(column.column);
-                    }}
-                  />
-                ) : (
-                  <Card sx={{ width: '100%' }}>
-                    <Skeleton />
-                    <Skeleton animation="wave" />
-                    <Skeleton animation={false} />
-                  </Card>
-                )}
+                <DynamicTable
+                  loading={loading}
+                  isHavePagination={false}
+                  rowsPerPageOptions={[10, 50, 100]}
+                  overflowX={'auto'}
+                  data={filteredData}
+                  selectedRows={selectedRows}
+                  isHaveBack={true}
+                  onBack={handleBack}
+                  isHaveChecked={true}
+                  isHaveAction={false}
+                  isHaveActionOnlyEdit={true}
+                  isSelectedType={selectedType !== 'badge_status'}
+                  isHaveSearch={true}
+                  isHaveFilter={false}
+                  isHaveExportPdf={false}
+                  isHaveExportXlf={false}
+                  isHaveFilterDuration={false}
+                  // isHaveAddData={selectedType === 'badge_type' || selectedType === 'badge_types'}
+                  onAddData={() => setOpenAddBadge(true)}
+                  isHaveConnection={true}
+                  onCheckConnection={handleCheckConnection}
+                  isHaveBooleanSwitch={true}
+                  onBatchEdit={handleEditBatch}
+                  onBooleanSwitchChange={handleBooleanSwitchChange}
+                  isHaveHeader={true}
+                  headerContent={{
+                    items: Object.keys(headerMap).map((key) => ({
+                      name: key,
+                      label: headerMap[key],
+                    })),
+                  }}
+                  defaultSelectedHeaderItem="companies"
+                  onHeaderItemClick={(item) => {
+                    setSelectedType(item.name);
+                  }}
+                  onCheckedChange={(selected) => {
+                    setSelectedRows(selected);
+                  }}
+                  onEdit={handleEditRow}
+                  // onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                  onSearchKeywordChange={handleSearchKeywordChange}
+                  searchKeyword={searchInput}
+                  onSearch={handleSearch}
+                  onFilterByColumn={(column) => {
+                    setSortColumn(column.column);
+                  }}
+                />
               </Grid>
             </Grid>
           </Grid>
         </Box>
       </PageContainer>
 
+      <AddBadgeDialog
+        open={openAddBadge}
+        onClose={() => setOpenAddBadge(false)}
+        onSubmit={handleConfirmImportBadge}
+      />
       {/* Edit Companies */}
       <Dialog
         open={editDialogType === 'Companies'}
@@ -1390,13 +1517,23 @@ const Honeywell = ({ id }: { id: string }) => {
         </DialogActions>
       </Dialog>
 
+      <SyncBadgeDialog
+        open={openSyncDialog}
+        onClose={() => setOpenSyncDialog(false)}
+        data={dataSyncBadge}
+        selected={selectedBadges}
+        onSelectAll={handleSelectAll}
+        onSelectOne={handleSelectOne}
+        onConfirm={handleConfirmImportBadge}
+      />
+
       <Portal>
         <Snackbar
           open={syncMsg.open}
           autoHideDuration={3000}
           onClose={() => setSyncMsg((p) => ({ ...p, open: false }))}
           anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-          sx={{ zIndex: 99999 }} // ⬅️ di atas modal & backdrop apa pun
+          sx={{ zIndex: 99999 }}
         >
           <Alert
             onClose={() => setSyncMsg((p) => ({ ...p, open: false }))}
@@ -1408,21 +1545,17 @@ const Honeywell = ({ id }: { id: string }) => {
           </Alert>
         </Snackbar>
       </Portal>
-
-      {/* OVERLAY SAVING: di atas modal, tapi DI BAWAH snackbar */}
       <Portal>
         <Backdrop
           open={saving}
           sx={{
             color: '#fff',
-            zIndex: (t) => Math.min(99998, (t.zIndex.snackbar ?? 1400) - 1), // ⬅️ tepat di bawah snackbar
+            zIndex: (t) => Math.min(99998, (t.zIndex.snackbar ?? 1400) - 1),
           }}
         >
           <CircularProgress />
         </Backdrop>
       </Portal>
-
-      {/* OVERLAY SYNCING: sama aturan dengan saving */}
       <Portal>
         <Backdrop
           open={syncing}

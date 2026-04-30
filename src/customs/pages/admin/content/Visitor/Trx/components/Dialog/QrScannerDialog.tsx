@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -10,11 +10,13 @@ import {
   TextField,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import { IconCamera } from '@tabler/icons-react';
+import { IconCamera, IconTextSize } from '@tabler/icons-react';
 import FlipCameraAndroidIcon from '@mui/icons-material/FlipCameraAndroid';
 import FlashOnIcon from '@mui/icons-material/FlashOn';
 import FlashOffIcon from '@mui/icons-material/FlashOff';
 import { Scanner } from '@yudiel/react-qr-scanner';
+import { Html5QrScanner } from 'src/customs/pages/Operator/Components/Html5QrScanner';
+import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 
 type Props = {
   open: boolean;
@@ -34,7 +36,6 @@ type Props = {
   setHasDecoded: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-
 const QrScannerDialog: React.FC<Props> = ({
   open,
   onClose,
@@ -52,6 +53,8 @@ const QrScannerDialog: React.FC<Props> = ({
   hasDecoded,
   setHasDecoded,
 }) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleSafeClose = () => {
     try {
       const video = scanContainerRef.current?.querySelector('video') as HTMLVideoElement | null;
@@ -72,6 +75,17 @@ const QrScannerDialog: React.FC<Props> = ({
     onClose();
   };
 
+  const handleSubmitScan = async (value: string) => {
+    setIsSubmitting(true);
+    setQrValue(value);
+    try {
+      await onSubmit(value);
+      onClose();
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <Dialog fullWidth maxWidth="sm" open={open} onClose={handleSafeClose}>
       <DialogTitle display="flex">
@@ -89,6 +103,7 @@ const QrScannerDialog: React.FC<Props> = ({
             variant={qrMode === 'manual' ? 'contained' : 'outlined'}
             onClick={() => setQrMode('manual')}
             size="small"
+            startIcon={<IconTextSize />}
           >
             Manual
           </Button>
@@ -108,7 +123,7 @@ const QrScannerDialog: React.FC<Props> = ({
         {/* MANUAL MODE */}
         {qrMode === 'manual' && (
           <>
-            <TextField
+            <CustomTextField
               fullWidth
               placeholder="Input your invitation code"
               size="small"
@@ -132,10 +147,10 @@ const QrScannerDialog: React.FC<Props> = ({
               borderRadius: 2,
               overflow: 'hidden',
               bgcolor: 'black',
-              aspectRatio: '3 / 4',
+              aspectRatio: '3 / 2.5',
             }}
           >
-            <Scanner
+            {/* <Scanner
               constraints={{ facingMode }}
               onScan={async (result: any) => {
                 if (!result || hasDecoded) return;
@@ -161,7 +176,7 @@ const QrScannerDialog: React.FC<Props> = ({
               }}
             />
 
-            {/* Controls */}
+         
             <Box
               sx={{
                 position: 'absolute',
@@ -201,6 +216,143 @@ const QrScannerDialog: React.FC<Props> = ({
                     }
                   } catch {}
                 }}
+                startIcon={torchOn ? <FlashOnIcon /> : <FlashOffIcon />}
+              >
+                Torch
+              </Button>
+            </Box> */}
+
+            <Box
+              sx={{
+                position: 'absolute',
+                inset: 0,
+                zIndex: 1,
+              }}
+            >
+              <Html5QrScanner
+                active={open && qrMode === 'scan'}
+                facingMode={facingMode}
+                onScan={handleSubmitScan}
+                onError={(e) => console.error('QR error', e)}
+              />
+            </Box>
+
+            {/* OVERLAY */}
+            <Box
+              sx={{
+                position: 'absolute',
+                inset: 0,
+                zIndex: 2,
+                pointerEvents: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Box
+                sx={{
+                  width: { xs: 300, sm: 300 },
+                  height: { xs: 310, sm: 335 },
+                  position: 'relative',
+                  borderRadius: 2,
+                  boxShadow: '0 0 0 9999px rgba(0,0,0,0.55)',
+                  outline: '2px solid rgba(255,255,255,0.18)',
+                }}
+              >
+                {['tl', 'tr', 'bl', 'br'].map((c) => (
+                  <Box
+                    key={c}
+                    sx={{
+                      position: 'absolute',
+                      width: 40,
+                      height: 40,
+                      border: '3px solid #00e5ff',
+                      ...(c === 'tl' && {
+                        top: 0,
+                        left: 0,
+                        borderRight: 'none',
+                        borderBottom: 'none',
+                      }),
+                      ...(c === 'tr' && {
+                        top: 0,
+                        right: 0,
+                        borderLeft: 'none',
+                        borderBottom: 'none',
+                      }),
+                      ...(c === 'bl' && {
+                        bottom: 0,
+                        left: 0,
+                        borderRight: 'none',
+                        borderTop: 'none',
+                      }),
+                      ...(c === 'br' && {
+                        bottom: 0,
+                        right: 0,
+                        borderLeft: 'none',
+                        borderTop: 'none',
+                      }),
+                    }}
+                  />
+                ))}
+
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    left: 8,
+                    right: 8,
+                    height: 2,
+                    background: 'linear-gradient(90deg, transparent, #00e5ff, transparent)',
+                    animation: 'scanLine 2s linear infinite',
+                    '@keyframes scanLine': {
+                      '0%': { top: 0 },
+                      '100%': { top: 'calc(100% - 2px)' },
+                    },
+                  }}
+                />
+              </Box>
+            </Box>
+
+            {/* CONTROLS */}
+            <Box
+              sx={{
+                position: 'absolute',
+                bottom: 5,
+                left: 0,
+                right: 0,
+                zIndex: 3,
+                display: 'flex',
+                justifyContent: 'center',
+                gap: 1.5,
+              }}
+            >
+              <Button
+                onClick={() => setFacingMode((f) => (f === 'environment' ? 'user' : 'environment'))}
+                variant="contained"
+                size="small"
+                // sx={{ bgcolor: 'rgba(0,0,0,0.6)' }}
+                startIcon={<FlipCameraAndroidIcon fontSize="small" />}
+              >
+                Flip
+              </Button>
+
+              <Button
+                onClick={async () => {
+                  try {
+                    const video = scanContainerRef.current?.querySelector('video');
+                    const stream = video?.srcObject as MediaStream | null;
+                    const track = stream?.getVideoTracks()?.[0];
+                    const caps = track?.getCapabilities?.() as any;
+                    if (track && caps?.torch) {
+                      await track.applyConstraints({ advanced: [{ torch: !torchOn }] as any });
+                      setTorchOn((t) => !t);
+                    }
+                  } catch (e) {
+                    console.log('Torch toggle error:', e);
+                  }
+                }}
+                variant="contained"
+                size="small"
+                sx={{ bgcolor: 'rgba(0,0,0,0.6)' }}
                 startIcon={torchOn ? <FlashOnIcon /> : <FlashOffIcon />}
               >
                 Torch

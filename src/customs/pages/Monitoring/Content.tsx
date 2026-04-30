@@ -1,6 +1,22 @@
-import { AppBar, IconButton, Toolbar, Theme, Stack, Button, Typography } from '@mui/material';
+import {
+  AppBar,
+  IconButton,
+  Toolbar,
+  Theme,
+  Stack,
+  Button,
+  Typography,
+  Tooltip,
+} from '@mui/material';
 import { Box, styled, useMediaQuery, useTheme } from '@mui/system';
-import { IconCircle, IconCircleFilled, IconMenu2 } from '@tabler/icons-react';
+import {
+  IconCircle,
+  IconCircleFilled,
+  IconClock,
+  IconLogout,
+  IconMenu2,
+  IconTimeDuration0,
+} from '@tabler/icons-react';
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import Container from 'src/components/container/PageContainer';
@@ -127,22 +143,41 @@ const Content = () => {
                 {/* <Notifications />
                 <Language />
                 <Profile /> */}
-                <Typography variant="h6" color="textSecondary">
-                  Hi, Operator
+                <IconClock size={20} />
+                <Typography variant="body1" color="textSecondary">
+                  {/* Date */}
+                  {new Date().toLocaleDateString('en-GB', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                  })}
                 </Typography>
-                <Button color="error" variant="contained">
+                {/* <Button color="error" variant="contained">
                   Logout
-                </Button>
+                </Button> */}
+                <Tooltip arrow title="Logout" placement="bottom">
+                  <IconButton
+                    color="error"
+                    aria-label="logout"
+                    sx={{ backgroundColor: 'rgba(255, 17, 0, 0.1)' }}
+                  >
+                    <IconLogout size={20} />
+                  </IconButton>
+                </Tooltip>
               </Stack>
             </ToolbarStyled>
           </AppBarStyled>
-        
+
           <ViewMonitoring
             loading={loading}
             onOpenFilter={() => setOpenDialogFilter(true)}
             onRefresh={handleRefresh}
           />
-          <div
+          {/* <div
             style={{
               position: 'fixed',
               bottom: 0,
@@ -162,7 +197,7 @@ const Content = () => {
             <Typography variant="body1" color="textSecondary">
               Online
             </Typography>
-          </div>
+          </div> */}
         </Container>
       </PageWrapper>
     </MainWrapper>

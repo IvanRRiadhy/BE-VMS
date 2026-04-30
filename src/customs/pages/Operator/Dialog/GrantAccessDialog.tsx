@@ -13,7 +13,10 @@ import {
   Divider,
 } from '@mui/material';
 import { IconX } from '@tabler/icons-react';
+import { reverse } from 'lodash';
+import { showSwal } from 'src/customs/components/alerts/alerts';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
+import Swal from 'sweetalert2';
 
 type Props = {
   open: boolean;
@@ -35,6 +38,54 @@ export default function GrantAccessDialog({
   formatDateTime,
 }: Props) {
   const invitation = invitationCode?.[0];
+
+const handleAccessAction = async (row: any, type: 'grant' | 'revoke' | 'block') => {
+  const id = row?.id;
+
+  const actionLabel = {
+    grant: 'Grant',
+    revoke: 'Revoke',
+    block: 'Block',
+  }[type];
+
+  // 1. Confirm dulu
+  const result = await showSwal(
+    'confirm',
+    `Are you sure you want to ${actionLabel} this access?`,
+    undefined,
+    {
+      title: `Confirm ${actionLabel}`,
+      confirmButtonText: ` ${actionLabel}`,
+      cancelButtonText: 'Cancel',
+      reverseButtons: true,
+    },
+  );
+
+  if (!result.isConfirmed) return;
+
+  try {
+    console.log(`[${type.toUpperCase()}] ID:`, id);
+
+    // 2. Eksekusi action
+    switch (type) {
+      case 'grant':
+        console.log('Grant access', row);
+        break;
+      case 'revoke':
+        console.log('Revoke access', row);
+        break;
+      case 'block':
+        console.log('Block access', row);
+        break;
+    }
+
+    // 3. Success feedback
+    showSwal('success', `${actionLabel} success`, 1500);
+  } catch (err: any) {
+    // 4. Error feedback
+    showSwal('error', err?.message || `${actionLabel} failed`);
+  }
+};
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
@@ -206,8 +257,10 @@ export default function GrantAccessDialog({
               data={dataDummyAccess}
               isHaveChecked
               isHaveSearch
-              isHaveActionRevoke
-              onActionRevoke={() => {}}
+              isNoActionTableHead={true}
+              isHaveActionRevoke={true}
+              // selectedRows={selectedRows}
+              onActionAccess={handleAccessAction}
             />
           </Grid>
         </Grid>

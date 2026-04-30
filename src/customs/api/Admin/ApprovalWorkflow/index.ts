@@ -108,7 +108,7 @@ export const getApprovalTicket = async (
 export const approveTicket = async (token: string, id: string): Promise<any> => {
   const response = await axiosInstance.post(
     `/approval-ticket/${id}/approve`,
-    // {}, 
+    // {},
     null,
     {
       headers: { Authorization: `Bearer ${token}` },
@@ -121,6 +121,18 @@ export const approveTicket = async (token: string, id: string): Promise<any> => 
 export const rejectTicket = async (token: string, id: string): Promise<any> => {
   const response = await axiosInstance.post(
     `/approval-ticket/${id}/reject`,
+    {},
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    },
+  );
+  return response.data;
+};
+
+// Approve meeting host
+export const approveMeetingHost = async (token: string, id: string): Promise<any> => {
+  const response = await axiosInstance.post(
+    `/approval-ticket/${id}/approve-meetinghost`,
     {},
     {
       headers: { Authorization: `Bearer ${token}` },

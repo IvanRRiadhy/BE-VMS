@@ -1,35 +1,25 @@
 import {
   Backdrop,
-  Button,
   CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Grid2 as Grid,
-  IconButton,
-  Portal,
-  Typography,
 } from '@mui/material';
 import { Box } from '@mui/system';
 import BI_LOGO from 'src/assets/images/logos/BI_Logo.png';
 import { IconBan, IconCheck, IconScript, IconX } from '@tabler/icons-react';
 import { useCallback, useEffect, useState } from 'react';
 import PageContainer from 'src/components/container/PageContainer';
-import { createApproval, getAllApprovalDT, getApprovalById } from 'src/customs/api/employee';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import FilterMoreContent from '../Dashboard/FilterMoreContent';
 import Swal from 'sweetalert2';
 import { showSwal } from 'src/customs/components/alerts/alerts';
-import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
-import { get } from 'lodash';
 import {
   approveTicket,
   getApprovalTicket,
   rejectTicket,
 } from 'src/customs/api/Admin/ApprovalWorkflow';
+import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 
 interface Filters {
   is_action: boolean | null | undefined;
@@ -41,7 +31,6 @@ interface Filters {
 
 const Approval = () => {
   const [approvalData, setApprovalData] = useState<any[]>([]);
-  const [approvalDataDetail, setApprovalDataDetail] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const { token } = useSession();
   const [page, setPage] = useState(0);
@@ -81,7 +70,7 @@ const Approval = () => {
   const cards = [
     {
       title: 'Total Approval Ticket',
-      subTitle: `${totalRecords}`,
+      subTitle: `${totalFilteredRecords}`,
       subTitleSetting: 10,
       icon: IconScript,
       color: 'none',
@@ -125,11 +114,15 @@ const Approval = () => {
 
         const res = await getApprovalTicket(token, start, rowsPerPage, sortDir, searchKeyword);
         const rows = res.collection.map((item: any) => ({
-          approval_ticket_id: item.approval_ticket_id,
+          id: item.approval_ticket_id,
+          agenda: item.agenda,
+          host: item.host_name,
           approval_actor_status: item.approval_actor_status,
           approval_workflow_type: item.approval_workflow_type,
           approval_status: item.approval_status,
           current_step: item.current_step,
+          visitor_period_start: formatDateTime(item.visitor_period_start),
+          visitor_period_end: formatDateTime(item.visitor_period_end),
         }));
         setApprovalData(rows);
 
@@ -168,7 +161,7 @@ const Approval = () => {
 
       if (!confirm.isConfirmed) return;
 
-      setTimeout(() => setLoadingAction(true), 800);
+      setLoadingAction(true);
 
       // const res = await createApproval(token, { action }, id);
       if (action === 'Approve') await approveTicket(token, id);
@@ -197,10 +190,11 @@ const Approval = () => {
     setSearchInput(keyword);
   }, []);
 
-  const handleSearch = useCallback(() => {
+  const handleSearch = useCallback((keyword: string) => {
     setPage(0);
-    setSearchKeyword(searchInput);
-  }, [searchInput]);
+    setSearchInput(keyword);
+    setSearchKeyword(keyword);
+  }, []);
 
   return (
     <>
@@ -235,14 +229,11 @@ const Approval = () => {
                 isHaveAddData={false}
                 isHaveApproval={true}
                 // isHaveView={true}
-
-                onAccept={(row: { approval_ticket_id: string }) =>
-                  handleActionApproval(row.approval_ticket_id, 'Approve')
-                }
-                onDenied={(row: { approval_ticket_id: string }) =>
-                  handleActionApproval(row.approval_ticket_id, 'Reject')
-                }
-                isHaveHeader={true}
+                onAccept={(row: { id: string }) => {
+                  handleActionApproval(row.id, 'Approve');
+                }}
+                onDenied={(row: { id: string }) => handleActionApproval(row.id, 'Reject')}
+                isHaveHeader={false}
                 headerContent={{
                   title: '',
                   subTitle: 'Monitoring Data Visitor',
@@ -266,7 +257,6 @@ const Approval = () => {
                 }}
                 defaultSelectedHeaderItem="All"
                 isHaveFilterMore={false}
-                // onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
                 searchKeyword={searchInput}
                 onSearch={handleSearch}
                 onSearchKeywordChange={handleSearchKeywordChange}

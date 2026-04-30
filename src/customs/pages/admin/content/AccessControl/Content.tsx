@@ -1,9 +1,7 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import {
   Box,
-  Button,
   Dialog,
-  DialogActions,
   DialogContent,
   DialogTitle,
   Divider,
@@ -21,7 +19,6 @@ import {
   AdminNavListingData,
 } from 'src/customs/components/header/navigation/AdminMenu';
 import {
-  getAllAccessControl,
   getAllAccessControlPagination,
   deleteAccessControl,
 } from 'src/customs/api/admin';
@@ -48,6 +45,7 @@ interface Item {
 import { IconAccessible } from '@tabler/icons-react';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import { useSession } from 'src/customs/contexts/SessionContext';
+import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
 
 const Content = () => {
   const [tableData, setTableData] = useState<Item[]>([]);
@@ -318,10 +316,12 @@ const Content = () => {
     setSearchInput(keyword);
   }, []);
 
-  const handleSearch = useCallback(() => {
-    setPage(0);
-    setSearchKeyword(searchInput);
-  }, [searchInput]);
+
+const handleSearch = useCallback((keyword: string) => {
+  setPage(0);
+  setSearchInput(keyword);
+  setSearchKeyword(keyword);
+}, []);
 
   const hasUnsaved = () => {
     const raw = localStorage.getItem('unsavedAccessControl');
@@ -430,33 +430,12 @@ const Content = () => {
           />
         </DialogContent>
       </Dialog>
-      {/* Dialog Confirm edit */}
-      <Dialog open={confirmDialogOpen} onClose={handleCancelEdit} fullWidth maxWidth="sm">
-        <DialogTitle>
-          Unsaved Changes
-          <IconButton
-            aria-label="close"
-            onClick={handleCancelEdit}
-            sx={{
-              position: 'absolute',
-              right: 8,
-              top: 8,
-              color: (theme) => theme.palette.grey[500],
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent ref={dialogRef} dividers>
-          You have unsaved changes. Are you sure you want to discard them and continue?
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancelEdit}>Cancel</Button>
-          <Button onClick={handleConfirmEdit} color="primary" variant="contained">
-            Yes, Discard and Continue
-          </Button>
-        </DialogActions>
-      </Dialog>
+
+      <ConfirmUnsavedDialog
+        open={confirmDialogOpen}
+        onClose={handleCancelEdit}
+        onDiscard={handleConfirmEdit}
+      />
     </PageContainer>
   );
 };

@@ -374,10 +374,12 @@ const Content = () => {
     setSearchInput(keyword);
   }, []);
 
-  const handleSearch = useCallback(() => {
-    setPage(0);
-    setSearchKeyword(searchInput);
-  }, [searchInput]);
+
+const handleSearch = useCallback((keyword: string) => {
+  setPage(0);
+  setSearchInput(keyword);
+  setSearchKeyword(keyword);
+}, []);
 
   const [isDirty, setIsDirty] = useState(false);
 
@@ -581,43 +583,6 @@ const Content = () => {
           handleCloseDialog();
         }}
       />
-      {/* Dialog Confirm edit */}
-      {/* <Dialog
-        open={confirmDialogOpen}
-        onClose={() => setConfirmDialogOpen(false)}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle>
-          Unsaved Changes
-          <IconButton
-            aria-label="close"
-            onClick={() => setConfirmDialogOpen(false)}
-            sx={{
-              position: 'absolute',
-              right: 8,
-              top: 8,
-              color: (theme) => theme.palette.grey[500],
-            }}
-          >
-            <IconX />
-          </IconButton>
-        </DialogTitle>
-
-        <DialogContent>
-          You have unsaved changes. Do you want to continue editing or discard them?
-        </DialogContent>
-
-        <DialogActions>
-          <Button onClick={handleDiscard} color="error" variant="contained">
-            Discard Changes
-          </Button>
-
-          <Button onClick={handleContinueEditing} color="primary" variant="contained">
-            Yes, Continue Editing
-          </Button>
-        </DialogActions>
-      </Dialog> */}
     </PageContainer>
   );
 };

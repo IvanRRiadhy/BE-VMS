@@ -2,10 +2,9 @@ import { Avatar } from '@mui/material';
 import { debounce } from 'lodash';
 import React, { useMemo } from 'react';
 import AsyncSelect from 'react-select/async';
-import { getAllEmployee, getListVisitor, getVisitorInvitation } from 'src/customs/api/admin';
+import { getAllEmployee, getListVisitor, getVisitorEmployee, getVisitorInvitation } from 'src/customs/api/admin';
 import axiosInstance, { axiosInstance2 } from 'src/customs/api/interceptor';
 import { getInvitationVisitor } from 'src/customs/api/Admin/InvitationData';
-import { useDebounce } from 'src/hooks/useDebounce';
 
 type Visitor = {
   id: string;
@@ -14,7 +13,11 @@ type Visitor = {
   name: string;
   email: string;
   // organization: string;
-  organization: string | { id: string; name: string };
+  organization: any;
+  Organization?: {
+    name: string;
+    [key: string]: any;
+  };
   gender: string;
   identity_id: string;
   phone: string;
@@ -47,8 +50,8 @@ const VisitorSelect: React.FC<Props> = ({ onSelect, token, isEmployee }) => {
       let list: any[] = [];
 
       if (isEmployee) {
-        const res = await getAllEmployee(token);
-        console.log('res', res);
+        // const res = await getAllEmployee(token);
+        const res = await getVisitorEmployee(token);
         list = res?.collection ?? [];
       } else {
         const res = await getInvitationVisitor(token);

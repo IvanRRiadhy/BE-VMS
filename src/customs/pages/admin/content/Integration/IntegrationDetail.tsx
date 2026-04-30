@@ -27,17 +27,7 @@ const IntegrationDetail = () => {
         });
 
         const json = res.data;
-
-        // const res = await fetch(`http://192.168.1.116:8000/api/integration/${id}`, {
-        //   headers: {
-        //     Authorization: `Bearer ${token}`,
-        //     'Content-Type': 'application/json',
-        //   },
-        //   signal: ac.signal,
-        // });
-        // const json = await res.json();
         setIntegration(json.collection ?? null);
-        console.log('Integration:', json.collection);
       } catch (e: any) {
         if (e?.name !== 'AbortError') setErr(e?.message || 'Fetch error');
       } finally {

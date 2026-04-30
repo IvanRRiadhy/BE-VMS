@@ -135,7 +135,7 @@ const DetailVisitorDialog: React.FC<Props> = ({ open, onClose, visitorData, cont
                               whiteSpace: 'normal',
                             }}
                           >
-                            {visitorData[0]?.visitor?.email || '-'}
+                            {visitorData[0]?.visitor_phone || '-'}
                           </Typography>
                         </Box>
                       </Box>
@@ -154,7 +154,7 @@ const DetailVisitorDialog: React.FC<Props> = ({ open, onClose, visitorData, cont
                               whiteSpace: 'normal',
                             }}
                           >
-                            {visitorData[0]?.visitor?.phone || '-'}
+                            {visitorData[0]?.visitor_phone || '-'}
                           </Typography>
                         </Box>
                       </Box>
@@ -173,7 +173,7 @@ const DetailVisitorDialog: React.FC<Props> = ({ open, onClose, visitorData, cont
                               whiteSpace: 'normal',
                             }}
                           >
-                            {visitorData[0]?.visitor?.address || '-'}
+                            {visitorData[0]?.visitor_address || '-'}
                           </Typography>
                         </Box>
                       </Box>
@@ -185,7 +185,7 @@ const DetailVisitorDialog: React.FC<Props> = ({ open, onClose, visitorData, cont
                         <IconGenderMale />
                         <Box>
                           <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Gender</CustomFormLabel>
-                          <Typography>{visitorData[0]?.visitor?.gender || '-'}</Typography>
+                          <Typography>{visitorData[0]?.visitor_gender || '-'}</Typography>
                         </Box>
                       </Box>
                     </Grid>
@@ -203,7 +203,7 @@ const DetailVisitorDialog: React.FC<Props> = ({ open, onClose, visitorData, cont
                               whiteSpace: 'normal',
                             }}
                           >
-                            {visitorData[0]?.visitor?.organization || '-'}
+                            {visitorData[0]?.visitor_organization_name || '-'}
                           </Typography>
                         </Box>
                       </Box>
@@ -216,7 +216,7 @@ const DetailVisitorDialog: React.FC<Props> = ({ open, onClose, visitorData, cont
                         <Box>
                           <CustomFormLabel sx={{ mt: 0, mb: 0.5 }}>Card</CustomFormLabel>
 
-                          <Typography>{visitorData[0]?.card[0]?.card_number}</Typography>
+                          <Typography>{visitorData[0]?.card[0]?.card_number ?? '-'}</Typography>
                         </Box>
                       </Box>
                     </Grid>

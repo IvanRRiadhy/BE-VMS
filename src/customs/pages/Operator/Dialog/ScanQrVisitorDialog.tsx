@@ -22,7 +22,7 @@ type Props = {
   onClose: () => void;
   handleSubmitQRCode: (value: string) => Promise<void>;
   container?: HTMLElement;
-  onOpenInvitation?: () => void;
+  onOpenInvitation?: any;
 };
 
 const ScanQrVisitorDialog: React.FC<Props> = ({
@@ -98,7 +98,7 @@ const ScanQrVisitorDialog: React.FC<Props> = ({
             slotProps={{
               tooltip: {
                 sx: {
-                  fontSize: '1rem',
+                  fontSize: '0.7rem',
                   padding: '8px 14px',
                 },
               },
@@ -123,7 +123,7 @@ const ScanQrVisitorDialog: React.FC<Props> = ({
             slotProps={{
               tooltip: {
                 sx: {
-                  fontSize: '1rem',
+                  fontSize: '0.7rem',
                   padding: '8px 14px',
                 },
               },
@@ -178,24 +178,26 @@ const ScanQrVisitorDialog: React.FC<Props> = ({
                   },
                 }}
               >
-                <Button
-                  variant="contained"
-                  color="primary"
-                  startIcon={<IconUser size={18} />}
-                  onClick={onOpenInvitation}
-                  sx={{
-                    textTransform: 'none',
-                    fontWeight: 600,
-                    px: 2.5,
-                    // background: 'linear-gradient(135deg, #5D87FF 0%, #4169E1 100%)',
-                    boxShadow: '0 2px 6px rgba(93, 135, 255, 0.4)',
-                    '&:hover': {
-                      background: 'linear-gradient(135deg, #4169E1 0%, #3657D6 100%)',
-                    },
-                  }}
-                >
-                  New Invitation
-                </Button>
+                {onOpenInvitation && (
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    startIcon={<IconUser size={18} />}
+                    onClick={onOpenInvitation}
+                    sx={{
+                      textTransform: 'none',
+                      fontWeight: 600,
+                      px: 2.5,
+                      // background: 'linear-gradient(135deg, #5D87FF 0%, #4169E1 100%)',
+                      boxShadow: '0 2px 6px rgba(93, 135, 255, 0.4)',
+                      '&:hover': {
+                        background: 'linear-gradient(135deg, #4169E1 0%, #3657D6 100%)',
+                      },
+                    }}
+                  >
+                    New Invitation
+                  </Button>
+                )}
               </Tooltip>
               <Button
                 variant="contained"

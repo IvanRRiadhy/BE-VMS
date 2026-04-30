@@ -31,25 +31,42 @@ import FormAddDocument from './FormAddDocument';
 import { IconScript } from '@tabler/icons-react';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
+import { useSearchParams } from 'react-router';
 
 const Content = () => {
   const [tableData, setTableData] = useState<Item[]>([]);
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [sortColumn, setSortColumn] = useState<string>('id');
+  const [searchParams] = useSearchParams();
+
+  // const [page, setPage] = useState(0);
+  // const [rowsPerPage, setRowsPerPage] = useState(10);
+  // const [sortColumn, setSortColumn] = useState<string>('id');
+  // const [sortDir, setSortDir] = useState('desc');
+  // const [searchKeyword, setSearchKeyword] = useState('');
+  // const [searchInput, setSearchInput] = useState('');
+
+    const [page, setPage] = useState(Number(searchParams.get('page') || '0'));
+
+    const [rowsPerPage, setRowsPerPage] = useState(Number(searchParams.get('length') || '10'));
+
+    const [searchKeyword, setSearchKeyword] = useState(searchParams.get('search') || '');
+
+    const [searchInput, setSearchInput] = useState(searchParams.get('search') || '');
+
+    const [sortColumn] = useState('id');
+    const [sortDir] = useState('desc');
+
+
   const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [sortDir, setSortDir] = useState('desc');
   const [formDataAddDocument, setFormDataAddDocument] = useState<CreateDocumentRequest>(() => {
     const saved = localStorage.getItem('unsavedDocumentData');
     return saved ? JSON.parse(saved) : CreateDocumentRequestSchema.parse({});
   });
-  const [searchKeyword, setSearchKeyword] = useState('');
-  const [searchInput, setSearchInput] = useState('');
+
   const cards = [
     {
       title: 'Total Document',
@@ -59,6 +76,18 @@ const Content = () => {
       color: 'none',
     },
   ];
+
+    useEffect(() => {
+      setPage(Number(searchParams.get('page') || '0'));
+
+      setRowsPerPage(Number(searchParams.get('length') || '10'));
+
+      const keyword = searchParams.get('search') || '';
+
+      setSearchKeyword(keyword);
+      setSearchInput(keyword);
+    }, [searchParams]);
+
 
   useEffect(() => {
     if (!token) return;
@@ -92,7 +121,7 @@ const Content = () => {
   const [pdfUrl, setPdfUrl] = useState('');
   const handleCloseDialog = () => {
     if (hasUnsaved()) {
-      setPendingEditId(null); 
+      setPendingEditId(null);
       setConfirmDialogOpen(true);
       return;
     }
@@ -153,22 +182,23 @@ const Content = () => {
     }
   };
 
-const handleConfirmEdit = () => {
-  localStorage.removeItem('unsavedDocumentData');
+  const handleConfirmEdit = () => {
+    localStorage.removeItem('unsavedDocumentData');
 
-  setConfirmDialogOpen(false);
+    setConfirmDialogOpen(false);
 
-  if (pendingEditId) {
-    setFormDataAddDocument(
-      tableData.find((item) => item.id === pendingEditId) || CreateDocumentRequestSchema.parse({}),
-    );
-  } else {
-    setFormDataAddDocument(CreateDocumentRequestSchema.parse({}));
-  }
+    if (pendingEditId) {
+      setFormDataAddDocument(
+        tableData.find((item) => item.id === pendingEditId) ||
+          CreateDocumentRequestSchema.parse({}),
+      );
+    } else {
+      setFormDataAddDocument(CreateDocumentRequestSchema.parse({}));
+    }
 
-  setOpenFormAddDocument(false);
-  setPendingEditId(null);
-};
+    setOpenFormAddDocument(false);
+    setPendingEditId(null);
+  };
 
   const handleCancelEdit = () => {
     setEdittingId('');
@@ -248,7 +278,7 @@ const handleConfirmEdit = () => {
   }, []);
 
   const handleSearch = useCallback(() => {
-    setPage(0);
+    // setPage(0);
     setSearchKeyword(searchInput);
   }, [searchInput]);
 

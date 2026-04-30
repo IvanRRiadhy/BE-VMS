@@ -140,10 +140,11 @@ const Content = () => {
     setSearchInput(keyword);
   }, []);
 
-  const handleSearch = useCallback(() => {
+  const handleSearch = useCallback((keyword: string) => {
     setPage(0);
-    setSearchKeyword(searchInput);
-  }, [searchInput]);
+    setSearchInput(keyword);
+    setSearchKeyword(keyword);
+  }, []);
 
   return (
     <PageContainer

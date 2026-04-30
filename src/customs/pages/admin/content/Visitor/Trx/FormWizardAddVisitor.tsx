@@ -40,6 +40,8 @@ import {
   useMediaQuery,
   MobileStepper,
   Tooltip,
+  DialogTitle,
+  DialogContent,
 } from '@mui/material';
 import 'select2';
 import 'select2/dist/css/select2.min.css';
@@ -63,6 +65,7 @@ import {
   CreateGroupVisitorRequestSchema,
   CreateVisitorRequest,
   CreateVisitorRequestSchema,
+  FormField,
   SectionPageVisitor,
 } from 'src/customs/api/models/Admin/Visitor';
 
@@ -100,6 +103,9 @@ import { TreeItem, TreeView } from '@mui/x-tree-view';
 import { SimpleTreeView } from '@mui/x-tree-view';
 import VisitorTypeList from 'src/customs/pages/Operator/Invitation/components/VisitorTypeList';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import { IconCheck } from '@tabler/icons-react';
+import { IconPencil } from '@tabler/icons-react';
+import PurposeVisitDialog from './components/Dialog/PurposeVisitDialog';
 
 interface FormVisitorTypeProps {
   formData: CreateVisitorRequest;
@@ -124,6 +130,11 @@ dayjs.extend(advancedFormat);
 type GroupedPages = {
   single_page: any[];
   batch_page: Record<string, any>;
+};
+
+type VisitorItem = {
+  question_page: SectionPageVisitor[];
+  single_page: FormField[];
 };
 
 interface GroupVisitor {
@@ -155,12 +166,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
   const { token } = useSession();
-  const [searchKeyword, setSearchKeyword] = useState('');
   const [activeStep, setActiveStep] = useState(0);
   const [dynamicSteps, setDynamicSteps] = useState<string[]>([]);
   const [draggableSteps, setDraggableSteps] = useState<string[]>([]);
   const [sectionsData, setSectionsData] = useState<SectionPageVisitorType[]>([]);
-  const [dataVisitor, setDataVisitor] = useState<{ question_page: SectionPageVisitor[] }[]>([]);
+  const [dataVisitor, setDataVisitor] = useState<VisitorItem[]>([]);
   const totalSteps = 1 + draggableSteps.length;
   const isLastStep = activeStep === totalSteps - 1;
   const [isSingle, setIsSingle] = useState(false);
@@ -203,9 +213,114 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     [FORM_KEY]: updater(formsOf(sec)),
   });
 
-  const [accessData, setAccessData] = useState<any[]>([]);
-  const [checkedItems, setCheckedItems] = useState<number[]>([]);
   const [availableCards, setAvailableCards] = useState<any[]>([]);
+
+  // Self Only
+  const [selfOnlyOpen, setSelfOnlyOpen] = useState(false);
+  const [selfOnlyVisitorIdx, setSelfOnlyVisitorIdx] = useState<number>(0);
+  const [selfOnlySelectedSiteIdsMap, setSelfOnlySelectedSiteIdsMap] = useState<
+    Record<number, string[]>
+  >({});
+
+  const handleOpenSelfOnly = (visitorIdx: number) => {
+    setDataVisitor((prev) => {
+      const next = [...prev];
+
+      if (!next[visitorIdx]) {
+        next[visitorIdx] = {
+          question_page: [],
+          single_page: [],
+        };
+      }
+
+      if (!next[visitorIdx].single_page?.length) {
+        next[visitorIdx].single_page = formsOf(
+          sectionsData.find((x: any) => getSectionType(x) === 'purpose_visit'),
+        ).map((f: any) => ({
+          ...f,
+          answer_text: f.remarks === 'site_place' ? '' : f.answer_text || '',
+          answer_datetime: f.answer_datetime || null,
+          answer_file: f.answer_file || null,
+        }));
+      }
+
+      const purposeIdx = next[visitorIdx]?.question_page?.findIndex(
+        (p: any) => getSectionType(p) === 'purpose_visit',
+      );
+
+      if (purposeIdx >= 0) {
+        next[visitorIdx].question_page[purposeIdx] = {
+          ...next[visitorIdx].question_page[purposeIdx],
+          self_only: true,
+        };
+      }
+
+      // console.log('AFTER OPEN SELF ONLY', next[visitorIdx]);
+      const siteField = next[visitorIdx]?.single_page?.find((x: any) => x.remarks === 'site_place');
+
+      setSelfOnlySelectedSiteIdsMap((prev) => ({
+        ...prev,
+        [visitorIdx]: siteField?.answer_text
+          ? siteField.answer_text.split(',').filter(Boolean)
+          : [],
+      }));
+      return next;
+    });
+    setSelfOnlyVisitorIdx(visitorIdx);
+
+    setSelfOnlyOpen(true);
+  };
+
+  const handleSelfOnlyCheck = (
+    nodeId: string,
+    index: number,
+    onChange: (index: number, field: any, value: any) => void,
+  ) => {
+    const current = selfOnlySelectedSiteIdsMap[selfOnlyVisitorIdx] || [];
+
+    const updated = current.includes(nodeId)
+      ? current.filter((x) => x !== nodeId)
+      : [...current, nodeId];
+
+    setSelfOnlySelectedSiteIdsMap((prev) => ({
+      ...prev,
+      [selfOnlyVisitorIdx]: updated,
+    }));
+
+    onChange(index, 'answer_text', updated.join(','));
+  };
+
+  const handleSaveSelfOnly = () => {
+    setDataVisitor((prev) => {
+      const next = [...prev];
+
+      const idx = selfOnlyVisitorIdx!;
+
+      const purposeIdx = next[idx].question_page.findIndex(
+        (p: any) => getSectionType(p) === 'purpose_visit',
+      );
+
+      if (purposeIdx >= 0) {
+        next[idx].question_page[purposeIdx] = {
+          ...next[idx].question_page[purposeIdx],
+          self_only: true,
+          form: [...next[idx].single_page],
+        };
+      }
+
+      return next;
+    });
+
+    setSelfOnlyOpen(false);
+  };
+
+  const selfForms =
+    selfOnlyVisitorIdx !== null ? dataVisitor[selfOnlyVisitorIdx]?.single_page || [] : [];
+
+  const handleCloseSelfOnly = () => {
+    setSelfOnlyOpen(false);
+    setSelfOnlyVisitorIdx(0);
+  };
 
   const [groupVisitors, setGroupVisitors] = useState<GroupVisitor[]>([]);
 
@@ -234,13 +349,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const handleDeleteGroup = (id: string) => {
     setGroupVisitors((prev) => prev.filter((g) => g.id !== id));
   };
-
-  const filteredCards = availableCards.filter((card) =>
-    [card.remarks, card.card_number, card.card_mac]
-      .join(' ')
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase()),
-  );
 
   const flatDeep = (x: any): any[] => (Array.isArray(x) ? x.flat(Infinity) : [x]);
 
@@ -292,16 +400,32 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
       const cleanDataVisitor = deepClone(dataVisitor).map((dv: any) => ({
         ...dv,
-        question_page: (dv.question_page || []).map((qp: any) => ({
-          id: qp.id || generateUUIDv4(),
-          sort: qp.sort ?? 0,
-          name: qp.name ?? '',
-          is_document: qp.is_document ?? false,
-          can_multiple_used: qp.can_multiple_used ?? false,
-          foreign_id: qp.foreign_id ?? '',
-          self_only: qp.self_only ?? false,
-          form: (qp.form || []).map(({ id, Id, ...rest }: any) => deepClone(rest)),
-        })),
+        // question_page: (dv.question_page || []).map((qp: any) => ({
+        //   id: qp.id || generateUUIDv4(),
+        //   sort: qp.sort ?? 0,
+        //   name: qp.name ?? '',
+        //   is_document: qp.is_document ?? false,
+        //   can_multiple_used: qp.can_multiple_used ?? false,
+        //   foreign_id: qp.foreign_id ?? '',
+        //   self_only: qp.self_only ?? false,
+        //   form: (qp.form || []).map(({ id, Id, ...rest }: any) => deepClone(rest)),
+        // })),
+        question_page: (dv.question_page || []).map((qp: any) => {
+          const isPurposeVisit = getSectionType(qp) === 'purpose_visit';
+          const sourceForm = qp.self_only && isPurposeVisit ? dv.single_page || [] : qp.form || [];
+
+          return {
+            id: qp.id || generateUUIDv4(),
+            sort: qp.sort ?? 0,
+            name: qp.name ?? '',
+            is_document: qp.is_document ?? false,
+            can_multiple_used: qp.can_multiple_used ?? false,
+            foreign_id: qp.foreign_id ?? '',
+            self_only: qp.self_only ?? false,
+
+            form: sourceForm.map(({ id, Id, ...rest }: any) => deepClone(rest)),
+          };
+        }),
       }));
 
       next[activeGroupIdx] = {
@@ -429,6 +553,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     setGroupedPages({} as any);
     setDraggableSteps([]);
     setRawSections([]);
+    setInputValues({});
     setActiveStep(0);
   }, []);
 
@@ -660,6 +785,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 return (
                   <>
                     <VisitorSelect
+                      key={String(isEmployee)}
                       token={token as string}
                       isEmployee={isEmployee}
                       onSelect={(v) => {
@@ -705,10 +831,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           name: v.name,
                           email: v.email,
                           phone: v.phone,
-                          organization:
-                            typeof v.organization === 'object'
-                              ? v.organization.name
-                              : v.organization,
+                          organization: isEmployee
+                            ? v.Organization?.name || ''
+                            : v.organization || '',
                           indentity_id: v.identity_id,
                           gender: genderValue,
                           employee: v.id,
@@ -932,6 +1057,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                           size="small"
                                           fullWidth
                                           // value={group.type || ''}
+                                          value={''}
                                           onChange={(e) => {
                                             const value = e.target.value;
 
@@ -1039,7 +1165,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                     </TableCell>
                                   ),
                                 )}
-                                <TableCell align="right">
+                                <TableCell align="center">
                                   <Typography variant="subtitle2" fontWeight={600}>
                                     Action
                                   </Typography>
@@ -1054,6 +1180,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   if (!page?.form) return null;
 
                                   const fields = page.form;
+                                  const hasSelfOnly = dataVisitor[gIdx]?.single_page?.some(
+                                    (f: any) => f.answer_text || f.answer_datetime || f.answer_file,
+                                  );
 
                                   return (
                                     <TableRow key={gIdx}>
@@ -1069,7 +1198,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                           select
                                           size="small"
                                           fullWidth
-                                          // value={group.type || ''}
+                                          value={''}
                                           sx={{ minWidth: 160 }}
                                           onChange={(e) => {
                                             const value = e.target.value;
@@ -1142,14 +1271,27 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                                       <TableCell align="right">
                                         {dataVisitor.length > 1 && (
-                                          <IconButton
-                                            aria-label="delete-row"
-                                            onClick={() => handleDeleteGroupRow(gIdx)}
-                                            size="small"
-                                            color="error"
-                                          >
-                                            <IconTrash />
-                                          </IconButton>
+                                          <>
+                                            <IconButton
+                                              aria-label="delete-row"
+                                              onClick={() => handleDeleteGroupRow(gIdx)}
+                                              size="small"
+                                              color="error"
+                                            >
+                                              <IconTrash />
+                                            </IconButton>
+                                            <Button
+                                              variant="contained"
+                                              size="small"
+                                              color={hasSelfOnly ? 'success' : 'primary'}
+                                              startIcon={
+                                                hasSelfOnly ? <IconCheck /> : <IconPencil />
+                                              }
+                                              onClick={() => handleOpenSelfOnly(gIdx)}
+                                            >
+                                              {hasSelfOnly ? 'Filled' : 'Self Only'}
+                                            </Button>
+                                          </>
                                         )}
                                       </TableCell>
                                     </TableRow>
@@ -1922,6 +2064,15 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     setUploadNames({});
     setScreenshot(null);
     setOpenCamera(false);
+    setInputValues({});
+    setSelectedSiteParentIds([]);
+    setSelectedSiteIds([]);
+    setSiteTree([]);
+    setSelectedSiteParentIds([]);
+    setSelectedSiteIds([]);
+    setSiteTree([]);
+    setSelfOnlySelectedSiteIdsMap({});
+    setSelfOnlySelectedSiteParentIdsMap({});
 
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -2114,9 +2265,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     node: any,
     index: number,
     onChange: (index: number, field: keyof FormVisitor, value: any) => void,
+    isSelfOnly = false,
   ) => {
-    const checked = selectedSiteIds.includes(node.id);
-
+    // const checked = selectedSiteIds.includes(node.id);
     return (
       <TreeItem
         key={`${node.parentId ?? 'root'}-${node.id}`}
@@ -2125,24 +2276,38 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           <Box display="flex" alignItems="center" gap={1}>
             <Checkbox
               size="small"
-              checked={checked}
+              // checked={checked}
+              checked={
+                isSelfOnly
+                  ? (selfOnlySelectedSiteIdsMap[selfOnlyVisitorIdx] || []).includes(node.id)
+                  : selectedSiteIds.includes(node.id)
+              }
               onMouseDown={(e) => e.stopPropagation()}
               onClick={(e) => e.stopPropagation()}
               onChange={(e) => {
                 const isChecked = e.target.checked;
                 const isParentNode = !!node.children?.length;
-                setSelectedSiteIds((prev) => {
+
+                const setter = isSelfOnly
+                  ? (callback: any) =>
+                      setSelfOnlySelectedSiteIdsMap((prevMap) => ({
+                        ...prevMap,
+                        [selfOnlyVisitorIdx]: callback(prevMap[selfOnlyVisitorIdx] || []),
+                      }))
+                  : setSelectedSiteIds;
+
+                setter((prev: any) => {
                   let updated = [...prev];
 
                   if (isChecked) {
-                    if (!updated.includes(node.id)) {
-                      updated.push(node.id);
-                    }
+                    if (!updated.includes(node.id)) updated.push(node.id);
+
                     if (!isParentNode && node.parentId && !updated.includes(node.parentId)) {
                       updated.push(node.parentId);
                     }
                   } else {
                     updated = updated.filter((id) => id !== node.id);
+
                     if (isParentNode) {
                       const childIds = collectAllChildIds(node);
                       updated = updated.filter((id) => !childIds.includes(id));
@@ -2277,10 +2442,20 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       return copy;
     });
   };
+  const [selfOnlySelectedSiteParentIdsMap, setSelfOnlySelectedSiteParentIdsMap] = useState<
+    Record<number, string[]>
+  >({});
+
+  const [selfOnlySiteTreeMap, setSelfOnlySiteTreeMap] = useState<Record<number, any[]>>({});
+
+  const [selfOnlyInputValuesMap, setSelfOnlyInputValuesMap] = useState<
+    Record<number, Record<number, string>>
+  >({});
 
   const renderDetailRows = (
     details: FormVisitor[] | any,
     onChange: (index: number, field: keyof FormVisitor, value: any) => void,
+    isSelfOnly: boolean = false,
   ) => {
     if (!Array.isArray(details)) {
       console.error('Expected array for details, but got:', details);
@@ -2494,20 +2669,127 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   }
                   if (item.remarks === 'site_place') {
                     return (
+                      // <>
+                      //   <Autocomplete
+                      //     multiple
+                      //     size="small"
+                      //     options={options}
+                      //     getOptionLabel={(option) => option.name}
+                      //     inputValue={
+                      //       isSelfOnly ? selfOnlyInputValues[index] || '' : inputValues[index] || ''
+                      //     }
+                      //     onInputChange={(_, newInputValue, reason) => {
+                      //       if (reason !== 'input') return;
+
+                      //       if (isSelfOnly) {
+                      //         setSelfOnlyInputValues((prev: any) => ({
+                      //           ...prev,
+                      //           [index]: newInputValue,
+                      //         }));
+                      //       } else {
+                      //         setInputValues((prev: any) => ({
+                      //           ...prev,
+                      //           [index]: newInputValue,
+                      //         }));
+                      //       }
+                      //     }}
+                      //     filterOptions={(opts, state) => {
+                      //       if (state.inputValue.length < 3) return [];
+                      //       return opts.filter((opt) =>
+                      //         opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
+                      //       );
+                      //     }}
+                      //     noOptionsText={
+                      //       (inputValues[index] || '').length < 3
+                      //         ? 'Enter at least 3 characters to search'
+                      //         : 'Not found'
+                      //     }
+                      //     value={options.filter((opt) =>
+                      //       (isSelfOnly
+                      //         ? selfOnlySelectedSiteParentIds
+                      //         : selectedSiteParentIds
+                      //       ).includes(opt.value),
+                      //     )}
+                      //     onChange={(_, newValues) => {
+                      //       const parentIds = newValues.map((v) => v.value);
+
+                      //       if (isSelfOnly) {
+                      //         setSelfOnlySelectedSiteParentIds(parentIds);
+                      //         setSelfOnlyInputValues((prev: any) => ({
+                      //           ...prev,
+                      //           [index]: '',
+                      //         }));
+
+                      //         const trees = parentIds.flatMap((pid) =>
+                      //           buildSiteTreeWithParent(sites, pid),
+                      //         );
+
+                      //         setSelfOnlySiteTree(trees);
+                      //       } else {
+                      //         setSelectedSiteParentIds(parentIds);
+                      //         setInputValues((prev: any) => ({
+                      //           ...prev,
+                      //           [index]: '',
+                      //         }));
+
+                      //         const trees = parentIds.flatMap((pid) =>
+                      //           buildSiteTreeWithParent(sites, pid),
+                      //         );
+
+                      //         setSiteTree(trees);
+                      //       }
+                      //     }}
+                      //     renderInput={(params) => (
+                      //       <CustomTextField
+                      //         {...params}
+                      //         placeholder="Enter at least 3 characters to search"
+                      //         fullWidth
+                      //         error={!!errorMessage}
+                      //         helperText={errorMessage}
+                      //       />
+                      //     )}
+                      //   />
+                      //   {/* {item.remarks === 'site_place' && siteTree.length > 0 && (
+                      //     <SimpleTreeView>
+                      //       {siteTree.map((node) => renderTree(node, index, handleSitePlaceChange))}
+                      //     </SimpleTreeView>
+                      //   )} */}
+                      //   {(isSelfOnly ? selfOnlySiteTree : siteTree).length > 0 && (
+                      //     <SimpleTreeView>
+                      //       {(isSelfOnly ? selfOnlySiteTree : siteTree).map((node) =>
+                      //         renderTree(node, index, handleSitePlaceChange, isSelfOnly),
+                      //       )}
+                      //     </SimpleTreeView>
+                      //   )}
+                      // </>
                       <>
                         <Autocomplete
                           multiple
                           size="small"
                           options={options}
                           getOptionLabel={(option) => option.name}
-                          inputValue={inputValues[index] || ''}
+                          inputValue={
+                            isSelfOnly
+                              ? selfOnlyInputValuesMap[selfOnlyVisitorIdx]?.[index] || ''
+                              : inputValues[index] || ''
+                          }
                           onInputChange={(_, newInputValue, reason) => {
                             if (reason !== 'input') return;
 
-                            setInputValues((prev) => ({
-                              ...prev,
-                              [index]: newInputValue,
-                            }));
+                            if (isSelfOnly) {
+                              setSelfOnlyInputValuesMap((prev: any) => ({
+                                ...prev,
+                                [selfOnlyVisitorIdx]: {
+                                  ...(prev[selfOnlyVisitorIdx] || {}),
+                                  [index]: newInputValue,
+                                },
+                              }));
+                            } else {
+                              setInputValues((prev: any) => ({
+                                ...prev,
+                                [index]: newInputValue,
+                              }));
+                            }
                           }}
                           filterOptions={(opts, state) => {
                             if (state.inputValue.length < 3) return [];
@@ -2516,25 +2798,55 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             );
                           }}
                           noOptionsText={
-                            (inputValues[index] || '').length < 3
+                            (
+                              (isSelfOnly
+                                ? selfOnlyInputValuesMap[selfOnlyVisitorIdx]?.[index]
+                                : inputValues[index]) || ''
+                            ).length < 3
                               ? 'Enter at least 3 characters to search'
                               : 'Not found'
                           }
-                          value={options.filter((opt) => selectedSiteParentIds.includes(opt.value))}
+                          value={options.filter((opt) =>
+                            (isSelfOnly
+                              ? selfOnlySelectedSiteParentIdsMap[selfOnlyVisitorIdx] || []
+                              : selectedSiteParentIds
+                            ).includes(opt.value),
+                          )}
                           onChange={(_, newValues) => {
                             const parentIds = newValues.map((v) => v.value);
 
-                            setSelectedSiteParentIds(parentIds);
-
-                            setInputValues((prev) => ({
-                              ...prev,
-                              [index]: '',
-                            }));
                             const trees = parentIds.flatMap((pid) =>
                               buildSiteTreeWithParent(sites, pid),
                             );
 
-                            setSiteTree(trees);
+                            if (isSelfOnly) {
+                              setSelfOnlySelectedSiteParentIdsMap((prev: any) => ({
+                                ...prev,
+                                [selfOnlyVisitorIdx]: parentIds,
+                              }));
+
+                              setSelfOnlyInputValuesMap((prev: any) => ({
+                                ...prev,
+                                [selfOnlyVisitorIdx]: {
+                                  ...(prev[selfOnlyVisitorIdx] || {}),
+                                  [index]: '',
+                                },
+                              }));
+
+                              setSelfOnlySiteTreeMap((prev: any) => ({
+                                ...prev,
+                                [selfOnlyVisitorIdx]: trees,
+                              }));
+                            } else {
+                              setSelectedSiteParentIds(parentIds);
+
+                              setInputValues((prev: any) => ({
+                                ...prev,
+                                [index]: '',
+                              }));
+
+                              setSiteTree(trees);
+                            }
                           }}
                           renderInput={(params) => (
                             <CustomTextField
@@ -2546,9 +2858,16 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             />
                           )}
                         />
-                        {item.remarks === 'site_place' && siteTree.length > 0 && (
+
+                        {(isSelfOnly ? selfOnlySiteTreeMap[selfOnlyVisitorIdx] || [] : siteTree)
+                          .length > 0 && (
                           <SimpleTreeView>
-                            {siteTree.map((node) => renderTree(node, index, handleSitePlaceChange))}
+                            {(isSelfOnly
+                              ? selfOnlySiteTreeMap[selfOnlyVisitorIdx] || []
+                              : siteTree
+                            ).map((node) =>
+                              renderTree(node, index, handleSitePlaceChange, isSelfOnly),
+                            )}
                           </SimpleTreeView>
                         )}
                       </>
@@ -3496,7 +3815,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
     try {
       setLoading(true);
-
       const tz =
         moment.tz?.guess?.() || Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Jakarta';
       const mapField = (field: FormVisitor, sortIdx: number) => {
@@ -3570,7 +3888,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           const built = buildFinalPayload(
             rawSections,
             groupedPages,
-            g.data_visitor.length ? g.data_visitor : dataVisitor,
+            // g.data_visitor.length ? g.data_visitor : dataVisitor,
+            dataVisitor.length ? dataVisitor : g.data_visitor,
             {
               visitor_type: formData.visitor_type ?? '',
               is_group: true,
@@ -3580,20 +3899,53 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             },
           );
 
-          const cleanDataVisitor = (built.data_visitor ?? []).map((dv: any) => ({
-            ...dv,
-            question_page: (dv.question_page ?? []).map((qp: any, sIdx: number) => ({
-              id: qp.id || qp.Id || rawSections?.[sIdx]?.Id || generateUUIDv4(),
-              sort: qp.sort ?? sIdx,
-              name: qp.name ?? `Section ${sIdx + 1}`,
-              status: qp.status ?? 0,
-              is_document: qp.is_document ?? false,
-              can_multiple_used: qp.can_multiple_used ?? false,
-              foreign_id: qp.foreign_id ?? '',
-              self_only: qp.self_only ?? false,
-              form: (qp.form ?? []).map(({ id, Id, ...rest }: any) => rest),
-            })),
-          }));
+          // const cleanDataVisitor = (built.data_visitor ?? []).map((dv: any) => ({
+          //   ...dv,
+          //   question_page: (dv.question_page ?? []).map((qp: any, sIdx: number) => ({
+          //     id: qp.id || qp.Id || rawSections?.[sIdx]?.Id || generateUUIDv4(),
+          //     sort: qp.sort ?? sIdx,
+          //     name: qp.name ?? `Section ${sIdx + 1}`,
+          //     status: qp.status ?? 0,
+          //     is_document: qp.is_document ?? false,
+          //     can_multiple_used: qp.can_multiple_used ?? false,
+          //     foreign_id: qp.foreign_id ?? '',
+          //     self_only: qp.self_only ?? false,
+          //     form: (qp.form ?? []).map(({ id, Id, ...rest }: any) => rest),
+          //   })),
+          // }));
+          const cleanDataVisitor = (built.data_visitor ?? []).map((dv: any, idx: number) => {
+            const original = dataVisitor[idx]; // ambil state asli
+
+            const question_page = (dv.question_page ?? []).map((qp: any, sIdx: number) => {
+              const isPurposeVisit =
+                qp.name === 'Purpose Visit' || getSectionType(qp) === 'purpose_visit';
+
+              if (isPurposeVisit && original?.single_page?.length) {
+                return {
+                  ...qp,
+                  self_only: true,
+                  form: original.single_page.map((f: any, idx: number) => mapField(f, idx)),
+                };
+              }
+
+              return {
+                id: qp.id || qp.Id || rawSections?.[sIdx]?.Id || generateUUIDv4(),
+                sort: qp.sort ?? sIdx,
+                name: qp.name ?? `Section ${sIdx + 1}`,
+                status: qp.status ?? 0,
+                is_document: qp.is_document ?? false,
+                can_multiple_used: qp.can_multiple_used ?? false,
+                foreign_id: qp.foreign_id ?? '',
+                self_only: qp.self_only ?? false,
+                form: (qp.form ?? []).map(({ id, Id, ...rest }: any) => rest),
+              };
+            });
+
+            return {
+              ...dv,
+              question_page,
+            };
+          });
 
           return {
             group_name: g.group_name ?? '',
@@ -3609,6 +3961,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         });
 
         payload = { list_group };
+        console.log('Payload', JSON.stringify(payload, null, 2));
 
         const parsed = CreateGroupVisitorRequestSchema.parse(payload);
         console.log('Final Payload (Group):', JSON.stringify(parsed, null, 2));
@@ -3619,7 +3972,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         resetMediaState();
         clearAnswerFiles();
       }
-
       // 🟦 SINGLE MODE
       else {
         if (!sectionsData.length) {
@@ -3707,7 +4059,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           data_visitor: [{ question_page: sectionsData }],
           sections: sectionsData,
         };
-
+    setInputValues({});
     localStorage.setItem('unsavedVisitorData', JSON.stringify(draft));
   }, [formData.visitor_type, isGroup, dataVisitor, sectionsData, groupedPages]);
 
@@ -3717,7 +4069,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       return;
     }
 
-    setDataVisitor((prev) => {
+    setDataVisitor((prev: any) => {
       if (prev.length === 0) return prev;
 
       const clone = JSON.parse(JSON.stringify(prev[0])) as {
@@ -3991,7 +4343,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             },
           ]),
         };
-    return [vi, pv];
+    return [pv, vi];
   };
 
   const seedDataVisitorFromSections = (sections: any[]) => {
@@ -4016,13 +4368,16 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       },
     ];
 
-    setDataVisitor(result);
+    setDataVisitor(result as any);
     return result;
   };
 
   useEffect(() => {
     if (!formData.visitor_type || !token) return;
-
+    setInputValues({});
+    setSelectedSiteParentIds([]);
+    setSelectedSiteIds([]);
+    setSiteTree([]);
     const raw = localStorage.getItem('unsavedVisitorData');
     const saved = raw ? JSON.parse(raw) : null;
     const sameType = saved?.visitor_type === formData.visitor_type;
@@ -4061,13 +4416,16 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         setGroupedPages({} as any);
       }
     };
-
+    setInputValues({});
     fetchVisitorTypeDetails();
   }, [formData.visitor_type, visitorType]);
 
   useEffect(() => {
     if (!formData.visitor_type || !rawSections.length) return;
-
+    setInputValues({});
+    setSelectedSiteParentIds([]);
+    setSelectedSiteIds([]);
+    setSiteTree([]);
     if (isGroup) {
       const groupSections = buildGroupSections(rawSections);
       setSectionsData(groupSections);
@@ -4421,6 +4779,88 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           </Box>
         </Box>
       </form>
+
+      {/* <Dialog open={selfOnlyOpen} onClose={handleCloseSelfOnly} fullWidth maxWidth="md">
+        <DialogTitle>
+    
+          Purpose Visit - Visitor {Number(selfOnlyVisitorIdx) + 1}
+       
+          <IconButton
+            onClick={handleCloseSelfOnly}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
+              color: (theme) => theme.palette.grey[500],
+            }}
+          >
+            <IconX />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers sx={{ pt: '0 !important' }}>
+          <Grid mb={2} width={'100%'}>
+            <Table>
+              <TableBody>
+                {renderDetailRows(
+                  selfForms,
+                  (idx, fieldKey, value) => {
+                    setDataVisitor((prev) => {
+                      const next = [...prev];
+
+                      if (next[selfOnlyVisitorIdx] !== undefined) {
+                        next[selfOnlyVisitorIdx].single_page[idx] = {
+                          ...next[selfOnlyVisitorIdx].single_page[idx],
+                          [fieldKey]: value,
+                        };
+                      }
+
+                      return next;
+                    });
+                  },
+                  true,
+                )}
+              </TableBody>
+            </Table>
+          </Grid>
+          <Box textAlign="right" mt={2}>
+            <Button
+              variant="contained"
+              onClick={() => {
+                handleSaveSelfOnly();
+                toast('Purpose Visit saved', 'success');
+              }}
+            >
+              Save
+            </Button>
+          </Box>
+        </DialogContent>
+      </Dialog> */}
+
+      <PurposeVisitDialog
+        open={selfOnlyOpen}
+        onClose={handleCloseSelfOnly}
+        visitorIndex={selfOnlyVisitorIdx}
+        selfForms={selfForms}
+        renderDetailRows={renderDetailRows}
+        onChangeField={(idx: number, fieldKey: string, value: any) => {
+          setDataVisitor((prev) => {
+            const next = [...prev];
+
+            if (next[selfOnlyVisitorIdx] !== undefined) {
+              next[selfOnlyVisitorIdx].single_page[idx] = {
+                ...next[selfOnlyVisitorIdx].single_page[idx],
+                [fieldKey]: value,
+              };
+            }
+
+            return next;
+          });
+        }}
+        onSave={() => {
+          handleSaveSelfOnly();
+          toast('Purpose Visit saved', 'success');
+        }}
+      />
       <Portal>
         <Backdrop
           open={loading}

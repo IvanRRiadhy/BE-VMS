@@ -1329,10 +1329,7 @@ export const getAllVisitorType = async (token: string): Promise<GetAllVisitorTyp
 };
 
 // Get by id visitor type
-export const getVisitorTypeById = async (
-  token: string,
-  id: string,
-): Promise<any> => {
+export const getVisitorTypeById = async (token: string, id: string): Promise<any> => {
   const response = await axiosInstance.get(`/visitor-type/${id}`, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });
@@ -2669,9 +2666,7 @@ export const getAllIntegration = async (token: string): Promise<GetAllIntegratio
   }
 };
 
-export const getAvailableIntegration = async (
-  token: string,
-): Promise<any> => {
+export const getAvailableIntegration = async (token: string): Promise<any> => {
   try {
     const response = await axiosInstance.get(`/integration/available`, {
       headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
@@ -2743,7 +2738,6 @@ export const syncHoneywellIntegration = async (
   } catch (error: any) {
     if (axios.isAxiosError(error) && error.response) {
       const d = (error.response.data || {}) as Partial<ApiResponse>;
-      // Normalisasi agar caller selalu dapat objek seragam
       return {
         status: d.status ?? 'fail',
         status_code: d.status_code ?? error.response.status,
@@ -2752,7 +2746,47 @@ export const syncHoneywellIntegration = async (
         collection: d.collection ?? null,
       };
     }
-    // jaringan / non-HTTP error — biarkan meledak supaya ketahuan
+    throw error;
+  }
+};
+
+export const syncHoneywellBadge = async (
+  integrationId: string,
+  token: string,
+): Promise<ApiResponse> => {
+  try {
+    const { data } = await axiosInstance.post(
+      `/integration-honeywell/sync/${integrationId}/badges`,
+      {},
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    return data as ApiResponse;
+  } catch (error: any) {
+    if (axios.isAxiosError(error) && error.response) {
+      const d = (error.response.data || {}) as Partial<ApiResponse>;
+      return {
+        status: d.status ?? 'fail',
+        status_code: d.status_code ?? error.response.status,
+        title: d.title ?? 'fail',
+        msg: d.msg ?? 'Request failed',
+        collection: d.collection ?? null,
+      };
+    }
+    throw error;
+  }
+};
+
+// import badge
+export const addBadgeEmployee = async (token: string, id: string, data: any): Promise<any> => {
+  try {
+    const response = await axiosInstance.post(`/integration-honeywell/import/${id}/badges`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
     throw error;
   }
 };
