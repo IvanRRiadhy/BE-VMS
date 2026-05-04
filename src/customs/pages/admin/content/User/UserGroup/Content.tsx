@@ -63,8 +63,6 @@ import {
   getAllPermissionAccessControl,
   getAllPermissionVisitorType,
 } from 'src/customs/api/UserGroup';
-import { searchVisitor } from 'src/customs/api/operator';
-import { de } from 'date-fns/locale';
 import { IconX } from '@tabler/icons-react';
 
 const Content = () => {
@@ -296,7 +294,6 @@ const Content = () => {
       });
 
       permissionCollection.forEach((item: any) => {
-        // BASIC PERMISSION
         if (item.permission) {
           permissions.push(item.permission);
         }
@@ -354,7 +351,6 @@ const Content = () => {
 
       setOpenPermission(true);
     } catch (error) {
-      console.error(error);
       showSwal('error', 'Failed to load permission data.');
     }
   };
@@ -531,7 +527,6 @@ const Content = () => {
       if (formData.permissions.includes('VisitorTypeAssignment')) {
         await handleVisitorTypePermission('VisitorTypeAssignment');
       }
-      // 7️⃣ REGISTERED SITE
       if (
         formData.permissions.includes('OperatorRegisterSite') ||
         formData.registeredSite.length > 0
@@ -550,7 +545,6 @@ const Content = () => {
 
       setOpenPermission(false);
     } catch (error) {
-      console.error(error);
       showSwal('error', 'Failed updating permissions');
     } finally {
       setLoading(false);
@@ -563,12 +557,8 @@ const Content = () => {
         user_group_id: edittingId,
         permission: perm,
       }));
-
-      // console.log('payload', payload);
-
       await createPermission(token as string, payload, edittingId);
     } catch (error: any) {
-      console.error(error);
       showSwal('error', error.response?.data?.msg ?? 'Failed update permission');
     }
   };
@@ -704,7 +694,6 @@ const Content = () => {
 
       await createPermissionRegisterSite(token as string, payload, edittingId);
     } catch (error: any) {
-      console.error(error);
       throw error;
     }
   };
@@ -723,7 +712,6 @@ const Content = () => {
 
       await createPermissionVisitorType(token as string, payload, edittingId);
     } catch (error: any) {
-      console.error(error);
       showSwal('error', error.response?.data?.msg ?? 'Failed update visitor type');
     }
   };

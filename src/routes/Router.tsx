@@ -11,7 +11,6 @@ import Register from 'src/views/authentication/auth2/Register';
 import ForgotPassword from 'src/views/authentication/auth2/ForgotPassword';
 import ExpiredPage from 'src/views/authentication/auth2/ExpiredPage';
 import LimitedInvitation from 'src/views/authentication/auth2/LimitedInvitation';
-import { element } from 'prop-types';
 import SuccessPage from 'src/customs/pages/Guest/SelfPraregistration/components/SuccessPage';
 import View from 'src/customs/pages/Operator/View';
 // import ForgotPassword2 from 'src/views/authentication/auth2/ForgotPassword2';

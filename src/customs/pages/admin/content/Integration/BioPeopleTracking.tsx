@@ -130,11 +130,9 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
       },
       {
         title: 'Sync Data',
-        subTitle: '',
-        subTitleSetting: 10,
         icon: IconRefresh,
-        color: 'none',
         onIconClick: handleTrackingBleSyncIntegration,
+        type: 'action',
       },
     ],
     [totals],

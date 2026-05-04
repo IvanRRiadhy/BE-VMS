@@ -13,8 +13,9 @@ import Logo from 'src/assets/images/logos/BI_Logo.png';
 import CustomNavigation from 'src/customs/components/header/navigation/CustomNavigation';
 
 const HeaderHorizontal = ({ itemDataCustomNavListing, itemDataCustomSidebarItems }: any) => {
+  const lgUp = useMediaQuery((theme: Theme) => theme.breakpoints.up('xl'));
+  const xl = useMediaQuery((theme: Theme) => theme.breakpoints.down('lg'));
   const lgDown = useMediaQuery((theme: Theme) => theme.breakpoints.down('lg'));
-  const xl = useMediaQuery((theme: Theme) => theme.breakpoints.down('xl'));
   const customizer = useSelector((state: AppState) => state.customizer);
   const dispatch = useDispatch();
 
@@ -23,7 +24,7 @@ const HeaderHorizontal = ({ itemDataCustomNavListing, itemDataCustomSidebarItems
     justifyContent: 'center',
     backdropFilter: 'blur(4px)',
     boxShadow: 'none',
-    padding: '5px',
+    padding: '2.5px',
     width: '100%',
     zIndex: 1200,
     borderBottom: '1px solid rgba(0,0,0,0.05)',
@@ -33,7 +34,7 @@ const HeaderHorizontal = ({ itemDataCustomNavListing, itemDataCustomSidebarItems
   }));
 
   const ToolbarStyled = styled(Toolbar)(({ theme }) => ({
-    paddingLeft: theme.spacing(2),
+    paddingLeft:  lgUp ? '10px !important' : '10px !important',
     paddingRight: theme.spacing(2),
     width: '100%',
     color: `${theme.palette.text.secondary} !important`,
@@ -47,12 +48,22 @@ const HeaderHorizontal = ({ itemDataCustomNavListing, itemDataCustomSidebarItems
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   return (
-    <AppBarStyled position="sticky" color="default" elevation={8} sx={{ borderBottom: '1px solid rgba(0,0,0,0.1)' }}>
-      <ToolbarStyled >
+    <AppBarStyled
+      position="sticky"
+      color="default"
+      elevation={8}
+      sx={{ borderBottom: '1px solid rgba(0,0,0,0.1)' }}
+    >
+      <ToolbarStyled>
         {/* Logo dan Sidebar Toggle */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            {!isMobile && (
+            {/* {!isMobile && (
+              <Box sx={{ width: xl ? '0px' : 'none', overflow: 'hidden' }}>
+                <img src={Logo} width={45} height={45} />
+              </Box>
+            )} */}
+            {lgUp && (
               <Box sx={{ width: xl ? '0px' : 'none', overflow: 'hidden' }}>
                 <img src={Logo} width={45} height={45} />
               </Box>

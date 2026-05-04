@@ -1,11 +1,9 @@
 import {
   Button,
   Grid2 as Grid,
-  Alert,
   Typography,
   CircularProgress,
   FormControlLabel,
-  TextField,
   Switch,
   Paper,
   Button as MuiButton,
@@ -125,18 +123,13 @@ const FormSite = ({
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
-  const [alertType, setAlertType] = useState<'info' | 'success' | 'error'>('info');
 
-  const [siteTypes, setSiteTypes] = useState<{ label: string; value: number }[]>([
+  const [siteTypes] = useState<{ label: string; value: number }[]>([
     { label: 'Site', value: 0 },
     { label: 'Building', value: 1 },
     { label: 'Floor', value: 2 },
     { label: 'Room', value: 3 },
   ]);
-
-  const [alertMessage, setAlertMessage] = useState<string>(
-    'Complete the following data properly and correctly',
-  );
 
   const timezoneOptions = [
     { value: 'Asia/Jakarta', label: '(UTC+07:00) WIB (Waktu Indonesia Barat)' },
@@ -148,7 +141,7 @@ const FormSite = ({
   const [siteDocuments, setSiteDocuments] = useState<CreateSiteDocumentRequest[]>([]);
   const [siteParking, setSiteParking] = useState<Parking[]>([]);
   const [siteTracking, setSiteTracking] = useState<Tracking[]>([]);
-  const [newDocumentA, setNewDocumentA] = useState<SiteDocumentItem>({
+  const [newDocument, setNewDocument] = useState<SiteDocumentItem>({
     id: '',
     site_id: '',
     site_name: '',
@@ -161,17 +154,13 @@ const FormSite = ({
   const [siteImageFile, setSiteImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
+  const [localForm, setLocalForm] = useState(formData);
+  const lastSentRef = useRef<string>('');
   const [retentionInput, setRetentionInput] = useState('0');
-  useEffect(() => {
-    setRetentionInput(newDocumentA.retentionTime.toString());
-  }, [newDocumentA.retentionTime]);
 
-  const [newDocument, setNewDocument] = useState<CreateSiteDocumentRequest>({
-    document_id: '',
-    site_id: '',
-    retention_time: 0,
-  });
+  useEffect(() => {
+    setRetentionInput(newDocument.retentionTime.toString());
+  }, [newDocument.retentionTime]);
 
   useEffect(() => {
     if (!editingId || !token) return;
@@ -212,8 +201,8 @@ const FormSite = ({
           id: p.id,
           sort: idx,
           site_id: p.site_id,
-          prk_area_parking_id: p.prk_area_parking_id ?? p.id,
-          name: p.name ?? p.area_name ?? '',
+          prk_area_parking_id: p.prk_area_parking_id,
+          name: p.area_name ?? '',
           early_access: p.early_access ?? false,
         }));
 
@@ -221,8 +210,8 @@ const FormSite = ({
           id: t.id,
           sort: idx,
           site_id: t.site_id,
-          trk_ble_card_access_id: t.trk_ble_card_access_id ?? t.id,
-          name: t.name ?? t.name ?? '',
+          trk_ble_card_access_id: t.trk_ble_card_access_id,
+          name: t.masked_area_name ?? '',
           early_access: t.early_access ?? false,
         }));
 
@@ -236,23 +225,22 @@ const FormSite = ({
           tracking: mappedTracking,
         }));
       } catch (err) {
-        console.error('Unexpected error:', err);
+        // console.error('Unexpected error:', err);
       }
     })();
   }, [editingId, token]);
 
   useEffect(() => {
-    if (!token) return;
+    if (!token || editingId) return;
 
     const fetchData = async () => {
       try {
-        const [docRes, accessControlRes, siteParkingRes, siteTrackingRes, siteDocRes] =
+        const [docRes, accessControlRes, siteParkingRes, siteTrackingRes] =
           await Promise.allSettled([
             getAllDocument(token),
             getAllAccessControl(token),
             getSiteParking(token),
             getSiteTracking(token),
-            getAllSiteDocument(token),
           ]);
 
         if (docRes.status === 'fulfilled') setDocumentList(docRes.value.collection ?? []);
@@ -261,20 +249,6 @@ const FormSite = ({
         if (siteParkingRes.status === 'fulfilled') setSiteParking(siteParkingRes.value.collection);
         if (siteTrackingRes.status === 'fulfilled')
           setSiteTracking(siteTrackingRes.value.collection);
-
-        if (siteDocRes.status === 'fulfilled' && editingId) {
-          const filtered = siteDocRes.value.collection.filter(
-            (doc: SiteDocumentItem) => doc.site_id === editingId,
-          );
-          setFilteredSiteDocumentList(filtered);
-          setSiteDocuments(
-            filtered.map((item) => ({
-              site_id: item.site_id,
-              document_id: item.id,
-              retention_time: item.retentionTime,
-            })),
-          );
-        }
       } catch (error) {
         console.error('Unexpected error during data fetching:', error);
       }
@@ -283,11 +257,39 @@ const FormSite = ({
     fetchData();
   }, [token, editingId]);
 
-  const [localForm, setLocalForm] = useState(formData);
+  useEffect(() => {
+    if (!token || !editingId || !localForm.need_document) return;
+
+    const fetchDoc = async () => {
+      const res = await getAllSiteDocument(token);
+
+      const filtered = res.collection.filter((doc: SiteDocumentItem) => doc.site_id === editingId);
+
+      setFilteredSiteDocumentList(filtered);
+      setSiteDocuments(
+        filtered.map((item) => ({
+          site_id: item.site_id,
+          document_id: item.id,
+          retention_time: item.retentionTime,
+        })),
+      );
+    };
+
+    fetchDoc();
+  }, [token, editingId, localForm.need_document]);
 
   useEffect(() => {
-    setLocalForm(formData);
-  }, [formData]);
+    const timeout = setTimeout(() => {
+      const current = JSON.stringify(localForm);
+
+      if (current !== lastSentRef.current) {
+        lastSentRef.current = current;
+        setFormData(localForm);
+      }
+    }, 500);
+
+    return () => clearTimeout(timeout);
+  }, [localForm]);
 
   const handleChange = (
     e:
@@ -360,13 +362,7 @@ const FormSite = ({
 
       if (editingId) {
         const updateData = UpdateSiteRequestSchema.parse(localForm);
-        console.log('updateData main', updateData);
-        // const updateDataTracking = UpdateSiteTrackingSchema.parse(localForm.tracking || []);
-        // console.log('updateData tracking', updateDataTracking);
-        // const updateDataParking = UpdateSiteParkingSchema.parse(localForm.parking || []);
-        // console.log('updateData parking', updateDataParking);
 
-        // Bersihkan field kosong
         Object.keys(updateData).forEach((key) => {
           const val = (updateData as any)[key];
           if (val === '' || val === null || val === undefined) delete (updateData as any)[key];
@@ -374,30 +370,6 @@ const FormSite = ({
 
         const res = await updateSite(editingId, updateData, token);
         console.log('res', JSON.stringify(res, null, 2));
-
-        // const trackingPayload = normalizeTrackingPayload(localForm.tracking ?? [], editingId);
-        // console.log('trackingPayload', trackingPayload);
-
-        // await updateSiteTracking(editingId, trackingPayload, token);
-        // const parkingPayload = normalizeTrackingPayload(localForm.parking ?? [], editingId);
-        // console.log('parkingPayload', parkingPayload);
-
-        // await updateSiteParking(editingId, parkingPayload, token);
-
-        // for (const t of localForm.tracking ?? []) {
-        //   const payload = {
-        //     site_id: editingId,
-        //     sort: t.sort,
-        //     trk_ble_card_access_id: t.trk_ble_card_access_id ?? t.id,
-        //     early_access: t.early_access ?? false,
-        //   };
-
-        //   if (t.id) {
-        //     await updateSiteTracking(t.id, payload, token);
-        //   } else {
-        //     await createSiteTracking(payload, token);
-        //   }
-        // }
 
         await Promise.all(
           (localForm.tracking ?? []).map((t) => {
@@ -449,8 +421,6 @@ const FormSite = ({
 
         showSwal('success', 'Site successfully updated!');
       } else {
-        const rawId = parentRouteId;
-
         const isValidParent =
           typeof parentRouteId === 'string' &&
           parentRouteId.trim() !== '' &&
@@ -462,17 +432,13 @@ const FormSite = ({
           ...localForm,
           parent: parentId ?? null,
           is_child: Boolean(parentId),
-          // is_child: !!parentId,
           type: localForm.type ?? 0,
         };
-        console.log('finalFormData', finalFormData);
+
         const createData = CreateSiteRequestSchema.parse(finalFormData);
-        console.log('createData', createData);
         const res = await createSite(createData, token);
         const newSiteId = res.collection?.id as string;
-
         const trackingPayload = normalizeTrackingPayloads(localForm.tracking ?? [], newSiteId);
-
         if (trackingPayload.data.length > 0) {
           await createSiteTrackingBulk(trackingPayload, token);
         }
@@ -492,7 +458,10 @@ const FormSite = ({
       onSuccess?.();
     } catch (err: any) {
       if (err?.errors) setErrors(err.errors);
-      showSwal('error', err?.message || 'Failed to submit form.');
+      showSwal(
+        'error',
+        err?.response.data.message || err?.response.data.msg || 'Failed to submit form.',
+      );
     } finally {
       setLoading(false);
     }
@@ -502,7 +471,6 @@ const FormSite = ({
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
       setSiteImageFile(selectedFile);
-      // console.log('Slected file:', selectedFile);
       setPreviewUrl(URL.createObjectURL(selectedFile));
     }
   };
@@ -519,7 +487,6 @@ const FormSite = ({
 
     try {
       await uploadImageSite(siteId, siteImageFile, token);
-      // console.log('Image upload success');
     } catch (err) {
       console.error('Image upload failed', err);
     }
@@ -534,7 +501,6 @@ const FormSite = ({
     );
 
     if (!newSite) {
-      console.error('New site not found after creation');
       return;
     }
     for (const doc of siteDocuments) {
@@ -550,12 +516,6 @@ const FormSite = ({
       }
     }
   };
-
-  function formatEnumLabel(label: string) {
-    return label.replace(/([A-Z])/g, ' $1').trim();
-  }
-
-  const selectedEmployee = employee.find((emp: any) => emp.id === localForm.host) || null;
 
   const resetEnabledFields = () => {
     setLocalForm((prev) => ({
@@ -692,7 +652,6 @@ const FormSite = ({
   };
 
   const typeLabel = siteTypes.find((i) => i.value === Number(localForm.type))?.label ?? '';
-
   const [approvalData, setApprovalData] = useState<{ label: string; value: number }[]>([]);
 
   useEffect(() => {
@@ -779,7 +738,7 @@ const FormSite = ({
                     <CustomSelect
                       id="approval_workflow_id"
                       name="approval_workflow_id"
-                      value={localForm.approval_workflow_id}
+                      value={localForm.approval_workflow_id ?? ''}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         // const value = Number(e.target.value);
                         setLocalForm((prev) => ({
@@ -793,9 +752,7 @@ const FormSite = ({
                       sx={{ mb: 2 }}
                       disabled={!localForm.need_approval || isBatchEdit}
                     >
-                      <MenuItem value="" >
-                        Select Type Approval
-                      </MenuItem>
+                      <MenuItem value="">Select Type Approval</MenuItem>
                       {approvalData.map((item) => (
                         <MenuItem key={item.value} value={item.value}>
                           {item.label}
@@ -870,7 +827,7 @@ const FormSite = ({
               <CustomSelect
                 id="timezone"
                 name="timezone"
-                value={localForm.timezone}
+                value={localForm.timezone ?? ''}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setLocalForm((prev) => ({ ...prev, timezone: e.target.value }))
                 }
@@ -1456,7 +1413,7 @@ const FormSite = ({
                       <CustomSelect
                         id="document_id"
                         name="document_id"
-                        value={newDocumentA.documents?.id?.toString() || ''}
+                        value={newDocument.documents?.id?.toString() || ''}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                           const selectedId = e.target.value;
 
@@ -1465,7 +1422,7 @@ const FormSite = ({
                           );
 
                           if (selectedDoc) {
-                            setNewDocumentA((prev) => ({
+                            setNewDocument((prev) => ({
                               ...prev,
                               documents: selectedDoc,
                             }));
@@ -1501,7 +1458,7 @@ const FormSite = ({
                           if (/^\d*$/.test(value)) {
                             setRetentionInput(value);
 
-                            setNewDocumentA((prev) => ({
+                            setNewDocument((prev) => ({
                               ...prev,
                               retentionTime: value === '' ? 0 : Number(value),
                             }));
@@ -1521,7 +1478,7 @@ const FormSite = ({
                         fullWidth
                         sx={{ my: 3 }}
                         onClick={() => {
-                          const selectedDoc = newDocumentA.documents;
+                          const selectedDoc = newDocument.documents;
 
                           if (!selectedDoc || !selectedDoc.id || !selectedDoc.name) {
                             alert('Dokumen belum dipilih!');
@@ -1542,24 +1499,18 @@ const FormSite = ({
                             {
                               document_id: selectedDoc.id,
                               site_id: '',
-                              retention_time: newDocumentA.retentionTime,
+                              retention_time: newDocument.retentionTime,
                             },
                           ]);
 
-                          setFilteredSiteDocumentList((prev) => [...prev, newDocumentA]);
+                          setFilteredSiteDocumentList((prev) => [...prev, newDocument]);
 
-                          setNewDocumentA({
+                          setNewDocument({
                             id: '',
                             site_id: '',
                             site_name: '',
                             documents: {} as DocumentItem,
                             retentionTime: 0,
-                          });
-
-                          setNewDocument({
-                            document_id: '',
-                            site_id: '',
-                            retention_time: 0,
                           });
                         }}
                       >

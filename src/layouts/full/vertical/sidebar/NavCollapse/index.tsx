@@ -80,11 +80,25 @@ const NavCollapse = ({
     marginTop: '13px',
     paddingLeft: hideMenu ? '10px' : level > 2 ? `${level * 15}px` : '10px',
     borderRadius: `${customizer.borderRadius}px`,
-    backgroundColor: open ? theme.palette.primary.main : '',
-    color: open && level < 2 ? '#fff' : '',
+    // backgroundColor: open ? theme.palette.primary.main : '',
+    backgroundColor: 'transparent',
+    ...(open && {
+      backgroundColor: theme.palette.primary.main,
+      color: '#fff',
+    }),
+    // color: open && level < 2 ? '#fff' : '',
+    color: open ? '#fff' : theme.palette.text.primary,
     '&:hover': {
       backgroundColor: theme.palette.primary.main,
       color: '#fff',
+    },
+    '&.Mui-selected': {
+      backgroundColor: theme.palette.primary.main,
+      color: '#fff',
+    },
+
+    '&.Mui-selected:hover': {
+      backgroundColor: theme.palette.primary.dark,
     },
   }));
 

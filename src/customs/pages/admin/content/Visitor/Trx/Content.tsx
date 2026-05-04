@@ -12,7 +12,6 @@ import {
   Button,
   Typography,
   Portal,
-  Autocomplete,
   Snackbar,
   Alert,
   Backdrop,
@@ -48,7 +47,6 @@ import {
   getAllVisitorPagination,
   getAllVisitorType,
   getEmployeeById,
-  getRegisteredSite,
   getVisitorById,
   getVisitorEmployee,
 } from 'src/customs/api/admin';
@@ -58,8 +56,7 @@ import {
   IconQrcode,
   IconShare,
   IconUser,
-  IconUsers,
-  IconX,
+  IconUsers
 } from '@tabler/icons-react';
 import EmployeeDetailDialog from '../Dialog/EmployeeDetailDialog';
 import VisitorDetailDialog from '../Dialog/VisitorDetailDialog';
@@ -84,36 +81,19 @@ import DetailLinkDialog from 'src/customs/pages/Employee/Components/Dialog/Detai
 import SendEmailDialog from 'src/customs/pages/Employee/Components/Dialog/SendEmailDialog';
 import InvitationShareDialog from './components/Dialog/InvitationShareDialog';
 import ShareLinkDialog from './components/ShareLinkDialog';
-
-type VisitorTableRow = {
-  id: string;
-  identity_id: string;
-  name: string;
-  visitor_type: string;
-  email: string;
-  organization: string;
-  gender: string;
-  phone: string;
-  // is_vip: string;
-  visitor_period_start: string;
-  visitor_period_end: string;
-  host: string;
-};
+import { useRegisteredSite } from 'src/hooks/useRegisteredSite';
+import ConfirmUnsavedDialog from '../../../components/ConfirmUnsavedDialog';
 
 const Content = () => {
   const { token } = useSession();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [sortDir, setSortDir] = useState<string>('desc');
   const [loading, setLoading] = useState(false);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [edittingId, setEdittingId] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
-  const [discardMode, setDiscardMode] = useState<'close-add' | 'edit' | null>(null);
-  // const [tableCustomVisitor, setTableCustomVisitor] = useState<VisitorTableRow[]>([]);
   const [selectedRows, setSelectedRows] = useState<[]>([]);
   const [openDetail, setOpenDetail] = useState(false);
   const [openInviteViaLinkEmail, setOpenInviteViaLinkEmail] = useState(false);
@@ -150,7 +130,6 @@ const Content = () => {
   const [openInvitationVisitor, setOpenInvitationVisitor] = useState(false);
   const [openPreRegistration, setOpenPreRegistration] = useState(false);
   const [flowTarget, setFlowTarget] = useState<'invitation' | 'preReg' | null>(null);
-  // Employee Detail
   const [openEmployeeDialog, setOpenEmployeeDialog] = useState(false);
   const [employeeLoading, setEmployeeLoading] = useState(false);
   const [employeeError, setEmployeeError] = useState<string | null>(null);
@@ -158,14 +137,12 @@ const Content = () => {
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
   const [visitorType, setVisitorType] = useState<any[]>([]);
-  // Visitor Detail
   const [openVisitorDialog, setOpenVisitorDialog] = useState(false);
   const [visitorLoading, setVisitorLoading] = useState(false);
   const [visitorError, setVisitorError] = useState<string | null>(null);
   const [visitorDetail, setVisitorDetail] = useState<any>(null);
   const navigate = useNavigate();
-  // Registered Site
-  const [siteData, setSiteData] = useState<any[]>([]);
+  // const [siteData, setSiteData] = useState<any[]>([]);
   const [selectedSite, setSelectedSite] = useState<any | null>(null);
   const queryClient = useQueryClient();
   // Qr Scanner
@@ -189,13 +166,6 @@ const Content = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [expiredAt, setExpiredAt] = useState<string | null>(null);
   const [emails, setEmails] = useState<string[]>([]);
-  const [dateRange, setDateRange] = useState<{
-    startDate: Date | null;
-    endDate: Date | null;
-  }>({
-    startDate: null,
-    endDate: null,
-  });
 
   const resetRegisteredFlow = () => {
     setSelectedSite(null);
@@ -346,80 +316,7 @@ const Content = () => {
     RecordsTotal: processedData.length,
   };
 
-  // const {
-  //   data: visitorTableData,
-  //   isLoading: isLoading,
-  //   isFetching: isFetching,
-  //   error,
-  // } = useQuery({
-  //   queryKey: ['visitors', page, rowsPerPage, sortDir, searchKeyword, appliedFilters],
-  //   queryFn: async () => {
-  //     // const limit = rowsPerPage === -1 ? undefined : rowsPerPage;
-  //     // const start = rowsPerPage === -1 ? 0 : page * rowsPerPage;
-  //     const start = page * rowsPerPage;
-  //     const statusParam =
-  //       appliedFilters.status && appliedFilters.status !== 'All'
-  //         ? appliedFilters.status
-  //         : undefined;
-  //     const isEmergencyParam =
-  //       appliedFilters.emergency_situation === ''
-  //         ? undefined
-  //         : appliedFilters.emergency_situation === 'true';
-
-  //     const isBlockParam =
-  //       appliedFilters.is_block === '' ? undefined : appliedFilters.is_block === 'true';
-  //     const res = await getAllVisitorPagination(
-  //       token as string,
-  //       start,
-  //       rowsPerPage,
-  //       // sortDir,
-  //       searchKeyword || undefined,
-  //       appliedFilters.start_date
-  //         ? dayjs(appliedFilters.start_date).utc().toISOString()
-  //         : undefined,
-  //       appliedFilters.end_date ? dayjs(appliedFilters.end_date).utc().toISOString() : undefined,
-  //       statusParam,
-  //       appliedFilters.data_filter,
-  //       appliedFilters.site_id || undefined,
-  //       appliedFilters.visitor_role || undefined,
-  //       isEmergencyParam,
-  //       isBlockParam,
-  //       appliedFilters.host_id || undefined,
-  //     );
-
-  //     return {
-  //       data: res.collection
-  //         .map((item: any) => ({
-  //           id: item.id,
-  //           visitor_type: item.visitor_type_name || '-',
-  //           name: item.visitor_name || '-',
-  //           identity_id: item.visitor_identity_id || '-',
-  //           email: item.visitor_email || '-',
-  //           organization: item.visitor_organization_name || '-',
-  //           gender: item.visitor_gender || '-',
-  //           phone: item.visitor_phone || '-',
-  //           visitor_period_start: item.visitor_period_start || '-',
-  //           visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
-  //           invitation_created_at: item.invitation_created_at,
-  //           host: item.host ?? '-',
-  //           visitor_status: item.visitor_status || '-',
-  //         }))
-  //         .sort((a: any, b: any) => {
-  //           return (
-  //             dayjs(b.invitation_created_at).valueOf() - dayjs(a.invitation_created_at).valueOf()
-  //           );
-  //         }),
-  //       RecordsFiltered: res.RecordsFiltered,
-  //       RecordsTotal: res.RecordsTotal,
-  //     };
-  //   },
-  //   enabled: !!token,
-  //   staleTime: 1000 * 60 * 1,
-  //   placeholderData: (prev) => prev,
-  // });
-
   const totalFilteredRecords = visitorTableData?.RecordsFiltered ?? 0;
-  const totalRecords = visitorTableData?.RecordsTotal ?? 0;
 
   const cards = [
     {
@@ -459,14 +356,8 @@ const Content = () => {
     },
   ];
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const response = await getRegisteredSite(token as string);
-      setSiteData(response.collection);
-    };
-    fetchData();
-  }, [token]);
-
+  const { data: siteData = [], isLoading: isLoadingSite } = useRegisteredSite(token as string);
+  const [selectedShareLinkId, setSelectedShareLinkId] = useState<string | null>(null);
   useEffect(() => {
     if (!token) return;
 
@@ -527,20 +418,16 @@ const Content = () => {
       ...prev,
       registered_site: '',
     }));
-    // localStorage.removeItem('unsavedVisitorData');
     queryClient.invalidateQueries({ queryKey: ['visitors'] });
-    setRefreshTrigger((prev) => prev + 1);
     handleCloseDialog();
   };
 
   const openDiscardForCloseAdd = () => {
-    setDiscardMode('close-add');
     setConfirmDialogOpen(true);
   };
 
   const handleCancelDiscard = () => {
     setConfirmDialogOpen(false);
-    setDiscardMode(null);
     setPendingEditId(null);
   };
 
@@ -556,7 +443,6 @@ const Content = () => {
     setOpenDialogIndex(null);
     setFormDataAddVisitor(defaultFormData);
     setConfirmDialogOpen(false);
-    setDiscardMode(null);
     handleDialogClose();
   };
 
@@ -609,7 +495,7 @@ const Content = () => {
 
       setConfirm(null);
       setOpenVisitorDialog(false);
-      setRefreshTrigger((p) => p + 1);
+      // setRefreshTrigger((p) => p + 1);
     } catch (e) {
       setConfirm((c) => (c ? { ...c, loading: false } : c));
     }
@@ -711,7 +597,6 @@ const Content = () => {
   const handleDetailLink = (link: string) => {
     setOpenDetailLink(true);
   };
-  const [selectedShareLinkId, setSelectedShareLinkId] = useState<string | null>(null);
 
   const handleAddShareLink = () => {
     setOpenCreateLink(true);
@@ -928,7 +813,6 @@ const Content = () => {
                 onView={(row) => {
                   handleView(row.id);
                 }}
-                // onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
                 searchKeyword={searchInput}
                 onSearch={handleSearch}
                 onSearchKeywordChange={handleSearchKeywordChange}
@@ -937,7 +821,6 @@ const Content = () => {
                     setStartDate(ranges.startDate.toISOString());
                     setEndDate(ranges.endDate.toISOString());
                     setPage(0);
-                    setRefreshTrigger((prev) => prev + 1);
                   }
                 }}
                 onAddData={() => {
@@ -1164,7 +1047,6 @@ const Content = () => {
         onAddData={handleAddShareLink}
       />
 
-      {/* Dialog Invite via link & invite via email */}
       <InvitationShareDialog
         open={openInviteViaLinkEmail}
         onClose={() => setOpenInviteViaLinkEmail(false)}
@@ -1196,35 +1078,11 @@ const Content = () => {
         onClose={() => setOpenSendEmail(false)}
         onSend={handleSendEmail}
       />
-
-      {/* Unsaved Changes */}
-      <Dialog open={confirmDialogOpen} onClose={handleCancelDiscard} fullWidth maxWidth="sm">
-        <DialogTitle>
-          Unsaved Changes
-          <IconButton
-            aria-label="close"
-            onClick={handleCancelDiscard}
-            sx={{
-              position: 'absolute',
-              right: 8,
-              top: 8,
-              color: (theme) => theme.palette.grey[500],
-            }}
-          >
-            <IconX />
-          </IconButton>
-        </DialogTitle>
-
-        <DialogContent dividers>
-          <Typography> You have unsaved changes. Are you sure you want to discard them?</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancelDiscard}>Cancel</Button>
-          <Button onClick={confirmDiscardAndClose} color="primary" variant="contained">
-            Yes, Discard and Continue
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmUnsavedDialog
+        open={confirmDialogOpen}
+        onClose={handleCancelDiscard}
+        onDiscard={confirmDiscardAndClose}
+      />
       <Portal>
         <Snackbar
           open={snackbar.open}

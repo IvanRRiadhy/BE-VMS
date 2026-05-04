@@ -194,6 +194,7 @@ import CustomTextField from 'src/components/forms/theme-elements/CustomTextField
 import { IconUsers } from '@tabler/icons-react';
 import { getVisitorTypeById } from 'src/customs/api/admin';
 import PurposeVisitDialog from '../../admin/content/Visitor/Trx/components/Dialog/PurposeVisitDialog';
+import { IconInfoCircle } from '@tabler/icons-react';
 
 const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   formData,
@@ -1356,7 +1357,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           name: v.name,
                           email: v.email,
                           phone: v.phone,
-                          organization: isEmployee ? v?.organization?.name : v.organization,
+                          organization: isEmployee
+                            ? v.Organization?.name || ''
+                            : v.organization || '',
                           indentity_id: v.identity_id,
                           gender: genderValue,
                           employee: v.id,
@@ -2525,9 +2528,56 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       return (
         <TableRow key={key}>
           <TableCell>
-            <CustomFormLabel sx={{ mb: 1, mt: 0 }} required={item.mandatory === true}>
-              {item.long_display_text}
-            </CustomFormLabel>
+            <Box display="flex" alignItems="center" gap={0.5} mb={1}>
+              <CustomFormLabel sx={{ mb: 1, mt: 0 }} required={item.mandatory === true}>
+                {item.long_display_text}
+              </CustomFormLabel>
+              {item.remarks === 'host' && (
+                <Tooltip
+                  title="The host is the person in charge responsible for this visitor"
+                  arrow
+                  placement="top"
+                >
+                  <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                </Tooltip>
+              )}
+              {item.remarks === 'agenda' && (
+                <Tooltip
+                  title="The agenda is the purpose of the visitor's visit"
+                  arrow
+                  placement="top"
+                >
+                  <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                </Tooltip>
+              )}
+              {item.remarks === 'site_place' && (
+                <Tooltip
+                  title="The site place is the location where the visitor will be received"
+                  arrow
+                  placement="top"
+                >
+                  <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                </Tooltip>
+              )}
+              {item.remarks === 'visitor_period_start' && (
+                <Tooltip
+                  title="The visitor period start is the date when the visitor's visit begins"
+                  arrow
+                  placement="top"
+                >
+                  <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                </Tooltip>
+              )}
+              {item.remarks === 'visitor_period_end' && (
+                <Tooltip
+                  title="The visitor period end is the date when the visitor's visit ends"
+                  arrow
+                  placement="top"
+                >
+                  <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                </Tooltip>
+              )}
+            </Box>
             {(() => {
               switch (item.field_type) {
                 case 0: // Text
@@ -2635,6 +2685,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     }));
                   } else if (item.remarks === 'employee') {
                     options = allVisitorEmployee.map((emp: any) => ({
+                      ...emp,
                       value: emp.id,
                       name: emp.name,
                     }));
@@ -2760,6 +2811,89 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           </SimpleTreeView>
                         )}
                       </>
+                    );
+                  }
+
+                  if (item.remarks === 'employee') {
+                    return (
+                      <Autocomplete
+                        size="small"
+                        options={options}
+                        getOptionLabel={(option) => option.name}
+                        inputValue={inputValues[index] || ''}
+                        getOptionDisabled={(option) => option.disabled || false}
+                        onInputChange={(_, newInputValue) =>
+                          setInputValues((prev) => ({ ...prev, [index]: newInputValue }))
+                        }
+                        filterOptions={(opts, state) => {
+                          if (state.inputValue.length < 3) return [];
+                          return opts.filter((opt) =>
+                            opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
+                          );
+                        }}
+                        noOptionsText={
+                          (inputValues[index] || '').length < 3
+                            ? 'Enter at least 3 characters to search'
+                            : 'Not found'
+                        }
+                        value={options.find((opt) => opt.value === item.answer_text) || null}
+                        onChange={(_, newValue: any) => {
+                          if (!newValue) {
+                            onChange(index, 'answer_text', '');
+                            return;
+                          }
+                          const selected = newValue;
+                          onChange(index, 'answer_text', selected.value);
+                          setSectionsData((prev) =>
+                            prev.map((s, sIdx) =>
+                              sIdx !== activeStep - 1
+                                ? s
+                                : updateSectionForm(s, (arr) =>
+                                    arr.map((item) => {
+                                      switch (item.remarks) {
+                                        case 'name':
+                                          return { ...item, answer_text: selected.name || '' };
+
+                                        case 'email':
+                                          return { ...item, answer_text: selected?.email ?? '' };
+
+                                        case 'phone':
+                                          return { ...item, answer_text: selected?.phone || '' };
+
+                                        case 'organization':
+                                          return {
+                                            ...item,
+                                            answer_text:
+                                              selected.Organization?.name ||
+                                              selected.organization ||
+                                              '',
+                                          };
+
+                                        case 'identity_id':
+                                        case 'indentity_id':
+                                          return {
+                                            ...item,
+                                            answer_text: selected?.identity_id || '',
+                                          };
+
+                                        default:
+                                          return item;
+                                      }
+                                    }),
+                                  ),
+                            ),
+                          );
+                        }}
+                        renderInput={(params) => (
+                          <CustomTextField
+                            {...params}
+                            placeholder="Enter at least 3 characters to search"
+                            fullWidth
+                            error={!!errorMessage}
+                            helperText={errorMessage}
+                          />
+                        )}
+                      />
                     );
                   }
                   return (
@@ -4341,7 +4475,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     setSelectedSiteIds([]);
     setSiteTree([]);
     const fetchVisitorTypeDetails = async () => {
-      const res = visitorType.find((vt: any) => vt.id === formData.visitor_type);
+      // const res = visitorType.find((vt: any) => vt.id === formData.visitor_type);
       const resVisitorType = await getVisitorTypeById(
         token as string,
         formData.visitor_type as string,

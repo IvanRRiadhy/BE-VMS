@@ -92,6 +92,10 @@ import VisitorRow from './VisitorRow';
 import FilterTransaction from './FilterMoreContent';
 import { useQuery } from '@tanstack/react-query';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
+import ConfirmUnsavedDialog from '../../../components/ConfirmUnsavedDialog';
+import QrScannerDialog from '../Trx/components/Dialog/QrScannerDialog';
+import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import RegisteredSiteDialog from '../Trx/components/Dialog/RegisteredSiteDialog';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -109,10 +113,9 @@ const Content = () => {
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const [sortDir, setSortDir] = useState<string>('desc');
   const [loading, setLoading] = useState(false);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  // const [refreshTrigger, setRefreshTrigger] = useState(0);
   const theme = useTheme();
   const mdUp = useMediaQuery(theme.breakpoints.up('md'));
-  const lgUp = useMediaQuery(theme.breakpoints.up('lg'));
 
   const [edittingId, setEdittingId] = useState('');
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
@@ -310,7 +313,7 @@ const Content = () => {
       setTotalRecords(res.RecordsTotal);
       setTotalFilteredRecords(res.RecordsFiltered);
     } catch (err) {
-      setTableRowVisitors([]);
+      // setTableRowVisitors([]);
     } finally {
       setLoading(false);
     }
@@ -343,7 +346,7 @@ const Content = () => {
       ...prev,
       registered_site: '',
     }));
-    setRefreshTrigger((prev) => prev + 1);
+    // setRefreshTrigger((prev) => prev + 1);
     handleCloseDialog();
   };
 
@@ -406,7 +409,7 @@ const Content = () => {
         setGroupHeader(res.collection[0]);
         setGroupVisitors(res.collection);
       } catch (e) {
-        setGroupVisitors([]);
+        // setGroupVisitors([]);
       } finally {
         setGroupDetailLoading(false);
       }
@@ -555,7 +558,7 @@ const Content = () => {
               </Box>
 
               {/* Search */}
-              <TextField
+              <CustomTextField
                 fullWidth
                 size="small"
                 placeholder="Search Agenda"
@@ -799,392 +802,64 @@ const Content = () => {
       </Dialog>
 
       {/* Select Registered Site */}
-      <Dialog open={openDialogIndex === 2} onClose={handleDialogClose} fullWidth maxWidth="sm">
-        <DialogTitle
-          display="flex"
-          justifyContent={'space-between'}
-          alignItems="center"
-          // sx={{
-          //   background: 'linear-gradient(135deg, rgba(2,132,199,0.05), rgba(99,102,241,0.08))',
-          // }}
-        >
-          Select Registered Site
-          <IconButton
-            aria-label="close"
-            onClick={() => {
-              if (isFormChanged) {
-                openDiscardForCloseAdd();
-              } else {
-                handleCloseDialog();
-              }
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <Divider />
-        <DialogContent>
-          <CustomFormLabel sx={{ marginTop: 0 }}>Registered Site</CustomFormLabel>
-          <Autocomplete
-            fullWidth
-            options={siteData}
-            getOptionLabel={(o) => o.name || ''}
-            value={selectedSite}
-            onChange={(_, nv) => {
-              setSelectedSite(nv);
-              setFormDataAddVisitor((prev) => ({
-                ...prev,
-                registered_site: nv?.id || '',
-              }));
-            }}
-            isOptionEqualToValue={(option, value) => option.id === value?.id}
-            renderInput={(params) => <TextField {...params} label="" />}
-          />
-          <Box display="flex" justifyContent="flex-end" mt={2}>
-            <Button
-              variant="contained"
-              onClick={() => {
-                if (!selectedSite) {
-                  toast('Minimal pilih 1 Registered Site.', 'warning');
-                  return;
-                }
-                setFormDataAddVisitor((prev) => ({
-                  ...prev,
-                  registered_site: selectedSite.id,
-                }));
-                setOpenDialogIndex(null);
-                if (flowTarget === 'invitation') {
-                  setOpenInvitationVisitor(true);
-                } else if (flowTarget === 'preReg') {
-                  setOpenPreRegistration(true);
-                }
-              }}
-              color="primary"
-              endIcon={<IconArrowRight width={18} />}
-            >
-              Next
-            </Button>
-          </Box>
-        </DialogContent>
-      </Dialog>
+      <RegisteredSiteDialog
+        open={openDialogIndex === 2}
+        siteData={siteData}
+        selectedSite={selectedSite}
+        setSelectedSite={(nv) => {
+          setSelectedSite(nv);
+          setFormDataAddVisitor((prev) => ({
+            ...prev,
+            registered_site: nv?.id || '',
+          }));
+        }}
+        isFormChanged={isFormChanged}
+        onDiscard={openDiscardForCloseAdd}
+        onClose={handleCloseDialog}
+        toast={toast as any}
+        onSubmit={(site) => {
+          setFormDataAddVisitor((prev) => ({
+            ...prev,
+            registered_site: site.id,
+          }));
+          setOpenDialogIndex(null);
+          if (flowTarget === 'invitation') {
+            setOpenInvitationVisitor(true);
+          } else if (flowTarget === 'preReg') {
+            setOpenPreRegistration(true);
+          }
+        }}
+      />
 
       {/* QR Code */}
-      <Dialog
-        fullWidth
-        maxWidth="sm"
+      <QrScannerDialog
         open={openDialogIndex === 1}
-        onClose={() => {
-          try {
-            const video = scanContainerRef.current?.querySelector(
-              'video',
-            ) as HTMLVideoElement | null;
-            const stream = video?.srcObject as MediaStream | null;
-            const track = stream?.getVideoTracks()?.[0];
-            const caps = track?.getCapabilities?.() as any;
-            if (track && caps?.torch && torchOn) {
-              track.applyConstraints({ advanced: [{ facingMode: 'user' }] });
-            }
-          } catch {}
-
-          setTorchOn(false);
-          setFacingMode('environment');
-          setQrMode('manual');
-          setHasDecoded(false);
-          setQrValue('');
-          handleDialogClose();
-        }}
-      >
-        <DialogTitle display="flex">
-          Scan QR Visitor
-          <IconButton
-            aria-label="close"
-            sx={{ position: 'absolute', right: 8, top: 8 }}
-            onClick={() => {
-              // matikan torch kalau menyala (best-effort)
-              try {
-                const video = scanContainerRef.current?.querySelector(
-                  'video',
-                ) as HTMLVideoElement | null;
-                const stream = video?.srcObject as MediaStream | null;
-                const track = stream?.getVideoTracks()?.[0];
-                const caps = track?.getCapabilities?.() as any;
-                if (track && caps?.torch && torchOn) {
-                  track.applyConstraints({ advanced: [{ facingMode: 'user' }] });
-                }
-              } catch {}
-
-              setTorchOn(false);
-              setFacingMode('environment');
-              setQrMode('manual');
-              setHasDecoded(false);
-              setQrValue('');
-              handleDialogClose();
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <Divider />
-
-        <DialogContent>
-          <Box display="flex" gap={1} mb={2}>
-            <Button
-              variant={qrMode === 'manual' ? 'contained' : 'outlined'}
-              onClick={() => setQrMode('manual')}
-              size="small"
-            >
-              Manual
-            </Button>
-            <Button
-              variant={qrMode === 'scan' ? 'contained' : 'outlined'}
-              onClick={() => {
-                setHasDecoded(false);
-                setQrMode('scan');
-              }}
-              size="small"
-              startIcon={<IconCamera />}
-            >
-              Scan Camera
-            </Button>
-          </Box>
-
-          {/* MODE: MANUAL */}
-          {qrMode === 'manual' && (
-            <>
-              <TextField
-                fullWidth
-                label=""
-                variant="outlined"
-                placeholder="Input your invitation code"
-                size="small"
-                value={qrValue}
-                onChange={(e) => setQrValue(e.target.value)}
-              />
-              <Box mt={2} display="flex" justifyContent="flex-end">
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={(e) => {
-                    handleSubmitQRCode(qrValue);
-                    // setQrValue('');
-                  }}
-                  disabled={loading}
-                >
-                  Submit
-                </Button>
-              </Box>
-            </>
-          )}
-
-          {/* MODE: SCAN */}
-          {qrMode === 'scan' && (
-            <>
-              <Box
-                ref={scanContainerRef}
-                sx={{
-                  position: 'relative',
-                  borderRadius: 2,
-                  overflow: 'hidden',
-                  bgcolor: 'black',
-                  aspectRatio: '3 / 4',
-                }}
-              >
-                <Scanner
-                  constraints={{ facingMode }}
-                  onScan={async (result: any) => {
-                    if (!result || hasDecoded) return;
-
-                    setHasDecoded(true);
-
-                    let value = '';
-                    if (typeof result === 'string') value = result;
-                    else if (Array.isArray(result)) value = result[0]?.rawValue || '';
-                    else if (typeof result === 'object')
-                      value = result.rawValue || JSON.stringify(result);
-                    setQrValue(value);
-
-                    try {
-                      // setIsSubmitting(true);
-                      await handleSubmitQRCode(value);
-                      // onClose();
-                      handleDialogClose();
-                    } catch (err) {
-                      console.error('Error saat submit QR:', err);
-                    } finally {
-                      // setIsSubmitting(false);
-                    }
-                  }}
-                  onError={(error: any) => {
-                    console.log('QR error:', error?.message || error);
-                  }}
-                  styles={{
-                    container: { width: '100%', height: '100%' },
-                    video: {
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      border: 'none !important',
-                    },
-                  }}
-                />
-
-                <Box sx={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
-                  <Box
-                    sx={{
-                      '--scanSize': { xs: '70vw', sm: '380px' },
-
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      width: 'var(--scanSize)',
-                      height: 'var(--scanSize)',
-                      transform: 'translate(-50%, -50%)',
-                      boxShadow: '0 0 0 9999px rgba(0,0,0,0.55)',
-                      borderRadius: 2,
-                      outline: '2px solid rgba(255,255,255,0.18)',
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        inset: 0,
-                        '& .corner': {
-                          position: 'absolute',
-                          width: 24,
-                          height: 24,
-                          border: '3px solid #00e5ff',
-                        },
-                        '& .tl': { top: 0, left: 0, borderRight: 'none', borderBottom: 'none' },
-                        '& .tr': { top: 0, right: 0, borderLeft: 'none', borderBottom: 'none' },
-                        '& .bl': { bottom: 0, left: 0, borderRight: 'none', borderTop: 'none' },
-                        '& .br': { bottom: 0, right: 0, borderLeft: 'none', borderTop: 'none' },
-                      }}
-                    >
-                      <Box className="corner tl" />
-                      <Box className="corner tr" />
-                      <Box className="corner bl" />
-                      <Box className="corner br" />
-                    </Box>
-
-                    {/* Laser animasi (bergerak di dalam kotak) */}
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        left: 10,
-                        right: 10,
-                        height: 2,
-                        top: 0,
-                        background: 'linear-gradient(90deg, transparent, #00e5ff, transparent)',
-                        animation: 'scanLine 2s linear infinite',
-                        '@keyframes scanLine': {
-                          '0%': { transform: 'translateY(0)' },
-                          '100%': { transform: 'translateY(calc(var(--scanSize) - 2px))' },
-                        },
-                      }}
-                    />
-                  </Box>
-                </Box>
-                {/* Kontrol: Flip & Torch */}
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    left: 0,
-                    right: 0,
-                    bottom: 8,
-                    display: 'flex',
-                    justifyContent: 'center',
-                    gap: 1,
-                  }}
-                >
-                  <Button
-                    onClick={() =>
-                      setFacingMode((f) => (f === 'environment' ? 'user' : 'environment'))
-                    }
-                    variant="contained"
-                    size="small"
-                    sx={{ bgcolor: 'rgba(0,0,0,0.6)' }}
-                    startIcon={<FlipCameraAndroidIcon fontSize="small" />}
-                  >
-                    Flip
-                  </Button>
-
-                  <Button
-                    onClick={async () => {
-                      try {
-                        const video = scanContainerRef.current?.querySelector(
-                          'video',
-                        ) as HTMLVideoElement | null;
-                        const stream = video?.srcObject as MediaStream | null;
-                        const track = stream?.getVideoTracks()?.[0];
-                        const caps = track?.getCapabilities?.() as any;
-                        if (track && caps?.torch) {
-                          await track.applyConstraints({ advanced: [{ torch: !torchOn }] as any });
-                          setTorchOn((t) => !t);
-                        } else {
-                          console.log('Torch not supported on this device.');
-                        }
-                      } catch (e) {
-                        console.log('Torch toggle error:', e);
-                      }
-                    }}
-                    variant="contained"
-                    size="small"
-                    sx={{ bgcolor: 'rgba(0,0,0,0.6)' }}
-                    startIcon={
-                      torchOn ? <FlashOnIcon fontSize="small" /> : <FlashOffIcon fontSize="small" />
-                    }
-                  >
-                    Torch
-                  </Button>
-                </Box>
-              </Box>
-              {/* <Box mt={2} display="flex" gap={1} justifyContent="space-between">
-                <Button
-                  variant="outlined"
-                  onClick={() => {
-                    setHasDecoded(false);
-                    setQrValue('');
-                  }}
-                >
-                  Reset
-                </Button>
-                <Box>
-                  <Button
-                    variant="contained"
-                    onClick={(e) => {
-                      handleSubmitQRCode(qrValue);
-                    }}
-                    disabled={!qrValue}
-                  >
-                    Submit
-                  </Button>
-                </Box>
-              </Box> */}
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+        onClose={handleDialogClose}
+        qrMode={qrMode}
+        setQrMode={setQrMode}
+        qrValue={qrValue}
+        setQrValue={setQrValue}
+        loading={loading}
+        onSubmit={handleSubmitQRCode}
+        scanContainerRef={scanContainerRef as any}
+        facingMode={facingMode}
+        setFacingMode={setFacingMode}
+        torchOn={torchOn}
+        setTorchOn={setTorchOn}
+        hasDecoded={hasDecoded}
+        setHasDecoded={setHasDecoded}
+      />
 
       <DetailVisitorDialog
         open={openDetail}
         onClose={() => setOpenDetail(false)}
         visitorData={visitorData}
       />
-
-      {/* Unsaved Changes */}
-      <Dialog open={confirmDialogOpen} onClose={handleCancelDiscard} fullWidth maxWidth="sm">
-        <DialogTitle>Unsaved Changes</DialogTitle>
-
-        <DialogContent>
-          <Typography>Are you sure you want to discard your changes?</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancelDiscard}>Cancel</Button>
-          <Button onClick={confirmDiscardAndClose} color="primary" variant="contained">
-            Yes, Discard and Continue
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmUnsavedDialog
+        open={confirmDialogOpen}
+        onClose={handleCancelDiscard}
+        onDiscard={confirmDiscardAndClose}
+      />
       <Portal>
         <Snackbar
           open={snackbar.open}

@@ -14,10 +14,12 @@ import {
   Select,
   useTheme,
   useMediaQuery,
+  Tabs,
+  Tab,
 } from '@mui/material';
-import {  IconX } from '@tabler/icons-react';
+import { IconX } from '@tabler/icons-react';
 import { IconSearch } from '@tabler/icons-react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 
@@ -91,6 +93,9 @@ const VisitorListCard: React.FC<Props> = ({
 
     return `${axiosInstance2.defaults.baseURL}/cdn${cleanPath}`;
   };
+
+  const [tab, setTab] = useState(0);
+
   return (
     <Card
       sx={{
@@ -149,9 +154,62 @@ const VisitorListCard: React.FC<Props> = ({
           {/* <Button variant="contained" size="small" fullWidth>
             Live Visitors
           </Button>*/}
-          <Button variant="contained" size="small">
+          {/* <Button variant="contained" size="small">
             Related Visitors
-          </Button>
+          </Button> */}
+          <Tabs
+            value={tab}
+            onChange={(e, newVal) => setTab(newVal)}
+            TabIndicatorProps={{ style: { display: 'none' } }}
+            sx={{
+              minHeight: 40,
+              backgroundColor: '#f5f5f5',
+              borderRadius: '10px',
+              p: '4px',
+              width: '100%',
+            }}
+          >
+            <Tab
+              label="Live Visitors"
+              sx={{
+                flex: 1,
+                minHeight: 32,
+                textTransform: 'none',
+                borderRadius: '8px',
+                fontSize: '0.85rem',
+                color: 'text.secondary',
+                transition: 'all 0.2s ease',
+                '&.Mui-selected': {
+                  backgroundColor: 'primary.main',
+                  color: '#fff',
+                },
+              }}
+            />
+            <Tab
+              label="Related Visitors"
+              sx={{
+                flex: 1,
+                minHeight: 32,
+                textTransform: 'none',
+                borderRadius: '8px',
+                fontSize: '0.85rem',
+                color: 'text.secondary',
+                transition: 'all 0.2s ease',
+                '&.Mui-selected': {
+                  backgroundColor: 'primary.main',
+                  color: '#fff',
+                },
+              }}
+            />
+          </Tabs>
+
+          {/* Dummy Content */}
+          {/* <Box mt={2}>
+            {tab === 0 && <div>Live Visitors (Dummy)</div>}
+            {tab === 1 && <div>Related Visitors (Dummy)</div>}
+          </Box> */}
+        </Box>
+        <Box display="flex" justifyContent={'end'}>
           <Tooltip
             title="Click and Select more than 1 visitor"
             slotProps={{
@@ -180,7 +238,12 @@ const VisitorListCard: React.FC<Props> = ({
               }
               label="Select Multiple"
               labelPlacement="end"
-              sx={{ marginRight: 0, width: '150px', justifyContent: 'end' }}
+              sx={{
+                ml: 'auto', 
+                marginRight: 0,
+                width: '150px',
+                justifyContent: 'end',
+              }}
             />
           </Tooltip>
         </Box>

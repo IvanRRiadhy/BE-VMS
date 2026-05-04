@@ -29,6 +29,7 @@ import {
   Portal,
   Snackbar,
   Alert,
+  Menu,
 } from '@mui/material';
 import { Box, useMediaQuery, useTheme } from '@mui/system';
 import moment from 'moment-timezone';
@@ -117,6 +118,7 @@ import { getPermission } from 'src/customs/api/users';
 import { usePermission } from 'src/hooks/usePermission';
 import VisitorDetailCard from './Components/VisitorDetailCard';
 import FillPraregistrationSingle from './Invitation/components/FillPraregistrationSingle';
+import { IconChevronDown } from '@tabler/icons-react';
 
 dayjs.extend(utc);
 dayjs.extend(weekday);
@@ -134,6 +136,7 @@ const OperatorView = () => {
   const [invitationCode, setInvitationCode] = useState<any[]>([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [torchOn, setTorchOn] = useState(false);
   const [wizardKey, setWizardKey] = useState(0);
@@ -142,7 +145,6 @@ const OperatorView = () => {
   const [openInvitationVisitor, setOpenInvitationVisitor] = useState(false);
   const [permissionAccess, setPermissionAccess] = useState<any[]>([]);
   const handleOpenScanQR = () => setOpenDialogIndex(1);
-  const [visitorStatus, setVisitorStatus] = useState<string | null>(null);
   const [selectedCards, setSelectedCards] = useState<string[]>([]);
   const [openChooseCardDialog, setOpenChooseCardDialog] = useState(false);
   const [loadingAccess, setLoadingAccess] = useState(false);
@@ -175,7 +177,6 @@ const OperatorView = () => {
   const [openFillForm, setOpenFillForm] = useState(false);
   const [fillFormData, setFillFormData] = useState<any[]>([]);
   const [fillFormActiveStep, setFillFormActiveStep] = useState(0);
-  const [fillFormGroupedPages, setFillFormGroupedPages] = useState<any>({});
   const [fillFormDataVisitor, setFillFormDataVisitor] = useState<any[]>([]);
   const [selectedSite, setSelectedSite] = useState<any | null>(null);
   const [openDialogInfo, setOpenDialogInfo] = useState(false);
@@ -282,7 +283,6 @@ const OperatorView = () => {
 
         const firstSite = res?.collection?.[0];
         setRegisterSiteOperator(firstSite?.id ?? '');
-        // console.log('res register site', firstSite.id);
         setRegisteredSite(res?.collection ?? []);
       } catch (error) {
         console.log(error);
@@ -474,6 +474,7 @@ const OperatorView = () => {
       if (!token) return;
 
       try {
+        setLoading(true);
         const [vtRes, purposeRes, permissionRes] = await Promise.allSettled([
           getInvitationVisitorType(token),
           getTodayVisitingPurpose(token),
@@ -492,6 +493,7 @@ const OperatorView = () => {
 
         if (permissionRes.status === 'fulfilled') {
           setPermission(permissionRes.value?.collection ?? {});
+          setLoading(false);
         }
       } catch (err) {
         console.error(err);
@@ -936,7 +938,6 @@ const OperatorView = () => {
       const invitationId = invitation.id;
 
       setInvitationCode(data);
-      setVisitorStatus(data[0]?.visitor_status ?? null);
       setSelectedVisitorNumber(data[0]?.visitor_number ?? null);
       setScannedVisitorNumber(data[0]?.visitor_number ?? null);
 
@@ -1182,7 +1183,6 @@ const OperatorView = () => {
     const ids = flat
       .map((v) => (typeof v === 'object' && v !== null ? Number(v.id) : Number(v)))
       .filter((n) => Number.isFinite(n) && n > 0);
-    // dedupe
     return Array.from(new Set(ids));
   };
 
@@ -1574,8 +1574,6 @@ const OperatorView = () => {
         return prev;
       });
 
-      setVisitorStatus(action);
-
       const invitationId = invitationCode?.[0]?.id;
       if (invitationId) {
         const previousSelected = [...selectedVisitors];
@@ -1675,8 +1673,6 @@ const OperatorView = () => {
         },
       ];
     });
-
-    setVisitorStatus(visitor.visitor_status ?? '-');
   };
 
   const handleApplyBulkAction = async () => {
@@ -2149,7 +2145,6 @@ const OperatorView = () => {
       const baseSections = buildGroupSections(questionPagesTemplate);
       setFillFormData(baseSections);
       setFillFormActiveStep(0);
-      setFillFormGroupedPages(buildGroupedPages(baseSections));
 
       const visitorGroupList = results.map((res, idx) => {
         const v = visitorList[idx];
@@ -3372,6 +3367,9 @@ const OperatorView = () => {
     { id: 2, vehicle_type: 'Motorcycle', vehicle_plate_number: 'B 1512 AA' },
   ];
 
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [typeVisitor, setTypeVisitor] = useState('related');
+
   return (
     <PageContainer title={'Operator View'} description={'Operator View'}>
       <FullScreen handle={handle}>
@@ -3461,6 +3459,7 @@ const OperatorView = () => {
 
                 {/* Visiting Purpose*/}
                 <ActionPanelCard
+                  loading={loading}
                   permission={permissionHook}
                   isFullscreen={isFullscreen}
                   handleOpenScanQR={handleOpenScanQR}
@@ -3474,14 +3473,7 @@ const OperatorView = () => {
                 />
 
                 {/* Side Right QR Code */}
-                <Grid
-                  size={{ xs: 12, lg: 3 }}
-                  // sx={{
-                  //   display: 'flex',
-                  //   flexDirection: 'column',
-                  //   height: '100%',
-                  // }}
-                >
+                <Grid size={{ xs: 12, lg: 3 }}>
                   <InvitationQrCard invitationCode={invitationCode} isFullscreen={isFullscreen} />
                 </Grid>
               </Grid>
@@ -3524,17 +3516,55 @@ const OperatorView = () => {
                   }}
                 >
                   <Box display="flex" justifyContent="space-between" flexWrap={'nowrap'} gap={1}>
-                    <Box
-                      display={'flex'}
-                      // justifyContent={'center'}
-                      alignItems={'center'}
-                      gap={0.5}
-                      flex={1}
-                    >
-                      <CardHeader title="Related Visitors" sx={{ p: 0 }} />
-                      <Typography variant="body1" sx={{ color: 'text.secondary' }} ml={1}>
-                        {totalCountVisitor > 0 && `(${totalCountVisitor})`  }
-                      </Typography>
+                    <Box display="flex" alignItems="center" gap={0.5} flex={1}>
+                      <Box
+                        display="flex"
+                        alignItems="center"
+                        gap={0.5}
+                        flex={1}
+                        onClick={(e) => setAnchorEl(e.currentTarget)}
+                        sx={{
+                          cursor: 'pointer',
+                          width: 'fit-content',
+                        }}
+                      >
+                        <CardHeader
+                          title={typeVisitor === 'related' ? 'Related Visitors' : 'Live Visitors'}
+                          sx={{ p: 0, fontSize: '14px', fontWeight: 600 }}
+                        />
+
+                        <Typography variant="body1" sx={{ color: 'text.secondary' }} ml={1}>
+                          {typeVisitor === 'related' && totalCountVisitor > 0
+                            ? `(${totalCountVisitor})`
+                            : ''}
+                        </Typography>
+
+                        {/* ICON DROPDOWN */}
+                        <IconChevronDown size={18} />
+                      </Box>
+
+                      <Menu
+                        anchorEl={anchorEl}
+                        open={Boolean(anchorEl)}
+                        onClose={() => setAnchorEl(null)}
+                      >
+                        <MenuItem
+                          onClick={() => {
+                            setTypeVisitor('related');
+                            setAnchorEl(null);
+                          }}
+                        >
+                          Related Visitors
+                        </MenuItem>
+                        <MenuItem
+                          onClick={() => {
+                            setTypeVisitor('live');
+                            setAnchorEl(null);
+                          }}
+                        >
+                          Live Visitors
+                        </MenuItem>
+                      </Menu>
                     </Box>
 
                     <Box display={'flex'} gap={1}>

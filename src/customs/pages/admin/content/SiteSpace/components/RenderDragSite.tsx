@@ -18,9 +18,11 @@ import {
   MenuItem,
   Switch,
   IconButton,
+  Autocomplete,
 } from '@mui/material';
 
 import { IconTrash } from '@tabler/icons-react';
+import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 
 interface Props {
   sectionKey: 'parking' | 'tracking' | 'access';
@@ -135,28 +137,77 @@ const SortableRow = ({
       {/* Name / Dropdown */}
       <TableCell>
         {isDropdown ? (
-          <TextField
-            select
+          // <TextField
+          //   select
+          //   fullWidth
+          //   size="small"
+          //   value={item[fieldName] || ''}
+          //   onChange={(e) => {
+          //     const selectedId = e.target.value;
+          //     const selected = selectList.find((x: any) => x.id === selectedId);
+
+          //     onChange(sectionKey, index, fieldName, selectedId);
+          //     if (selected) onChange(sectionKey, index, 'name', selected.name);
+          //   }}
+          // >
+          //   <MenuItem value="" disabled>
+          //     Select {sectionKey}
+          //   </MenuItem>
+          //   {selectList.map((x: any) => (
+          //     <MenuItem key={x.id} value={x.id}>
+          //       {x.name}
+          //     </MenuItem>
+          //   ))}
+          // </TextField>
+
+          <Autocomplete
             fullWidth
             size="small"
-            value={item[fieldName] || ''}
-            onChange={(e) => {
-              const selectedId = e.target.value;
-              const selected = selectList.find((x: any) => x.id === selectedId);
+            options={selectList}
+            getOptionLabel={(option: any) =>
+              option.area_name || option.masked_area_name || option.name || ''
+            }
+            value={
+              selectList.find(
+                (x: any) =>
+                  String(x.id) === String(item[fieldName]) ||
+                  String(x.id) === String(item.trk_ble_card_access_id) ||
+                  String(x.id) === String(item.prk_area_parking_id),
+              ) ||
+              (item[fieldName]
+                ? {
+                    id: item[fieldName],
+                    masked_area_name: item.name,
+                    area_name: item.name,
+                  }
+                : null)
+            }
+            onChange={(_, newValue) => {
+              const selectedId =
+                newValue?.trk_ble_card_access_id ||
+                newValue?.prk_area_parking_id ||
+                newValue?.id ||
+                '';
 
               onChange(sectionKey, index, fieldName, selectedId);
-              if (selected) onChange(sectionKey, index, 'name', selected.name);
+
+              if (newValue) {
+                const label =
+                  newValue.area_name || newValue.masked_area_name || newValue.name || '';
+
+                onChange(sectionKey, index, 'name', label);
+              }
             }}
-          >
-            <MenuItem value="" disabled>
-              Select {sectionKey}
-            </MenuItem>
-            {selectList.map((x: any) => (
-              <MenuItem key={x.id} value={x.id}>
-                {x.name}
-              </MenuItem>
-            ))}
-          </TextField>
+            renderInput={(params) => (
+              <CustomTextField {...params} placeholder={`Select ${sectionKey}`} />
+            )}
+            ListboxProps={{
+              style: {
+                maxHeight: 250,
+                overflow: 'auto',
+              },
+            }}
+          />
         ) : (
           <TextField
             fullWidth

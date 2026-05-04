@@ -100,6 +100,7 @@ const VisitorSelect: React.FC<Props> = ({ onSelect, token, isEmployee }) => {
       ),
     [],
   );
+  
 
   const formatOptionLabel = ({ data }: OptionType) => {
     const imageUrl = data.faceimage || '';

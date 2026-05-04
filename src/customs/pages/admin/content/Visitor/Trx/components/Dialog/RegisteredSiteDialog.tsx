@@ -52,7 +52,7 @@ const RegisteredSiteDialog: React.FC<Props> = ({
 
   const handleNext = () => {
     if (!selectedSite) {
-      toast('Minimal pilih 1 Registered Site.', 'warning');
+      toast('Choose Registered Site', 'warning');
       return;
     }
 

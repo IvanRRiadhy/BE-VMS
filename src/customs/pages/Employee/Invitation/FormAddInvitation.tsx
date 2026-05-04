@@ -107,6 +107,7 @@ import { SimpleTreeView } from '@mui/x-tree-view';
 import VisitorTypeList from 'src/customs/pages/Operator/Invitation/components/VisitorTypeList';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import PurposeVisitDialog from '../../admin/content/Visitor/Trx/components/Dialog/PurposeVisitDialog';
+import { IconInfoCircle } from '@tabler/icons-react';
 
 interface FormVisitorTypeProps {
   formData: CreateVisitorRequest;
@@ -738,7 +739,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                 return (
                   <>
                     <VisitorSelect
-                         key={String(isEmployee)}
+                      key={String(isEmployee)}
                       token={token as string}
                       isEmployee={isEmployee}
                       onSelect={(v) => {
@@ -2503,14 +2504,61 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       return (
         <TableRow key={key}>
           <TableCell>
-            <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
-              {item.long_display_text}
-              {item.mandatory && (
-                <Typography component="span" color="error" sx={{ ml: 0.5, lineHeight: 1 }}>
-                  *
-                </Typography>
+            <Box display="flex" alignItems="center" gap={0.5} mb={1}>
+              <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
+                {item.long_display_text}
+                {item.mandatory && (
+                  <Typography component="span" color="error" sx={{ ml: 0.5, lineHeight: 1 }}>
+                    *
+                  </Typography>
+                )}
+              </Typography>
+              {item.remarks === 'host' && (
+                <Tooltip
+                  title="The host is the person in charge responsible for this visitor"
+                  arrow
+                  placement="top"
+                >
+                  <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                </Tooltip>
               )}
-            </Typography>
+              {item.remarks === 'agenda' && (
+                <Tooltip
+                  title="The agenda is the purpose of the visitor's visit"
+                  arrow
+                  placement="top"
+                >
+                  <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                </Tooltip>
+              )}
+              {item.remarks === 'site_place' && (
+                <Tooltip
+                  title="The site place is the location where the visitor will be received"
+                  arrow
+                  placement="top"
+                >
+                  <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                </Tooltip>
+              )}
+              {item.remarks === 'visitor_period_start' && (
+                <Tooltip
+                  title="The visitor period start is the date when the visitor's visit begins"
+                  arrow
+                  placement="top"
+                >
+                  <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                </Tooltip>
+              )}
+              {item.remarks === 'visitor_period_end' && (
+                <Tooltip
+                  title="The visitor period end is the date when the visitor's visit ends"
+                  arrow
+                  placement="top"
+                >
+                  <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                </Tooltip>
+              )}
+            </Box>
             {(() => {
               switch (item.field_type) {
                 case 0: // Text
@@ -2618,6 +2666,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                     }));
                   } else if (item.remarks === 'employee') {
                     options = allVisitorEmployee.map((emp: any) => ({
+                      ...emp,
                       value: emp.id,
                       name: emp.name,
                     }));
@@ -2632,73 +2681,151 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                       typeof opt === 'object' ? opt : { value: opt, name: opt },
                     );
                   }
-                   if (item.remarks === 'site_place') {
-                     return (
-                       <>
-                         <Autocomplete
-                           multiple
-                           size="small"
-                           options={options}
-                           getOptionLabel={(option) => option.name}
-                           inputValue={inputValues[index] || ''}
-                           onInputChange={(_, newInputValue, reason) => {
-                             if (reason !== 'input') return;
+                  if (item.remarks === 'site_place') {
+                    return (
+                      <>
+                        <Autocomplete
+                          multiple
+                          size="small"
+                          options={options}
+                          getOptionLabel={(option) => option.name}
+                          inputValue={inputValues[index] || ''}
+                          onInputChange={(_, newInputValue, reason) => {
+                            if (reason !== 'input') return;
 
-                             setInputValues((prev) => ({
-                               ...prev,
-                               [index]: newInputValue,
-                             }));
-                           }}
-                           filterOptions={(opts, state) => {
-                             if (state.inputValue.length < 3) return [];
-                             return opts.filter((opt) =>
-                               opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
-                             );
-                           }}
-                           noOptionsText={
-                             (inputValues[index] || '').length < 3
-                               ? 'Enter at least 3 characters to search'
-                               : 'Not found'
-                           }
-                           value={options.filter((opt) =>
-                             selectedSiteParentIds.includes(opt.value),
-                           )}
-                           onChange={(_, newValues) => {
-                             const parentIds = newValues.map((v) => v.value);
+                            setInputValues((prev) => ({
+                              ...prev,
+                              [index]: newInputValue,
+                            }));
+                          }}
+                          filterOptions={(opts, state) => {
+                            if (state.inputValue.length < 3) return [];
+                            return opts.filter((opt) =>
+                              opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
+                            );
+                          }}
+                          noOptionsText={
+                            (inputValues[index] || '').length < 3
+                              ? 'Enter at least 3 characters to search'
+                              : 'Not found'
+                          }
+                          value={options.filter((opt) => selectedSiteParentIds.includes(opt.value))}
+                          onChange={(_, newValues) => {
+                            const parentIds = newValues.map((v) => v.value);
 
-                             setSelectedSiteParentIds(parentIds);
+                            setSelectedSiteParentIds(parentIds);
 
-                             setInputValues((prev) => ({
-                               ...prev,
-                               [index]: '',
-                             }));
-                             const trees = parentIds.flatMap((pid) =>
-                               buildSiteTreeWithParent(sites, pid),
-                             );
+                            setInputValues((prev) => ({
+                              ...prev,
+                              [index]: '',
+                            }));
+                            const trees = parentIds.flatMap((pid) =>
+                              buildSiteTreeWithParent(sites, pid),
+                            );
 
-                             setSiteTree(trees);
+                            setSiteTree(trees);
+                          }}
+                          renderInput={(params) => (
+                            <CustomTextField
+                              {...params}
+                              placeholder="Enter at least 3 characters to search"
+                              fullWidth
+                              error={!!errorMessage}
+                              helperText={errorMessage}
+                            />
+                          )}
+                        />
+                        {item.remarks === 'site_place' && siteTree.length > 0 && (
+                          <SimpleTreeView>
+                            {siteTree.map((node) => renderTree(node, index, handleSitePlaceChange))}
+                          </SimpleTreeView>
+                        )}
+                      </>
+                    );
+                  }
 
-                           }}
-                           renderInput={(params) => (
-                             <CustomTextField
-                               {...params}
-                               placeholder="Enter at least 3 characters to search"
-                               fullWidth
-                               error={!!errorMessage}
-                               helperText={errorMessage}
-                             />
-                           )}
-                         />
-                         {item.remarks === 'site_place' && siteTree.length > 0 && (
-                           <SimpleTreeView>
-                             {siteTree.map((node) =>
-                               renderTree(node, index, handleSitePlaceChange),
-                             )}
-                           </SimpleTreeView>
-                         )}
-                       </>
-                     );
-                   }
+                  if (item.remarks === 'employee') {
+                    return (
+                      <Autocomplete
+                        size="small"
+                        options={options}
+                        getOptionLabel={(option) => option.name}
+                        inputValue={inputValues[index] || ''}
+                        getOptionDisabled={(option) => option.disabled || false}
+                        onInputChange={(_, newInputValue) =>
+                          setInputValues((prev) => ({ ...prev, [index]: newInputValue }))
+                        }
+                        filterOptions={(opts, state) => {
+                          if (state.inputValue.length < 3) return [];
+                          return opts.filter((opt) =>
+                            opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
+                          );
+                        }}
+                        noOptionsText={
+                          (inputValues[index] || '').length < 3
+                            ? 'Enter at least 3 characters to search'
+                            : 'Not found'
+                        }
+                        value={options.find((opt) => opt.value === item.answer_text) || null}
+                        onChange={(_, newValue: any) => {
+                          if (!newValue) {
+                            onChange(index, 'answer_text', '');
+                            return;
+                          }
+                          const selected = newValue;
+                          onChange(index, 'answer_text', selected.value);
+                          setSectionsData((prev) =>
+                            prev.map((s, sIdx) =>
+                              sIdx !== activeStep - 1
+                                ? s
+                                : updateSectionForm(s, (arr) =>
+                                    arr.map((item) => {
+                                      switch (item.remarks) {
+                                        case 'name':
+                                          return { ...item, answer_text: selected.name || '' };
+
+                                        case 'email':
+                                          return { ...item, answer_text: selected?.email ?? '' };
+
+                                        case 'phone':
+                                          return { ...item, answer_text: selected?.phone || '' };
+
+                                        case 'organization':
+                                          return {
+                                            ...item,
+                                            answer_text:
+                                              selected.Organization?.name ||
+                                              selected.organization ||
+                                              '',
+                                          };
+
+                                        case 'identity_id':
+                                        case 'indentity_id':
+                                          return {
+                                            ...item,
+                                            answer_text: selected?.identity_id || '',
+                                          };
+
+                                        default:
+                                          return item;
+                                      }
+                                    }),
+                                  ),
+                            ),
+                          );
+                        }}
+                        renderInput={(params) => (
+                          <CustomTextField
+                            {...params}
+                            placeholder="Enter at least 3 characters to search"
+                            fullWidth
+                            error={!!errorMessage}
+                            helperText={errorMessage}
+                          />
+                        )}
+                      />
+                    );
+                  }
                   return (
                     <Autocomplete
                       size="small"
@@ -3780,7 +3907,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         const submitFn = TYPE_REGISTERED === 0 ? createPraRegisterGroup : createVisitorsGroup;
         const backendResponse = await submitFn(token, parsed as any);
         // toast('Group visitor created successfully.', 'success');
-         showSwal('success', 'Group visitor created successfully.', 3000);
+        showSwal('success', 'Group visitor created successfully.', 3000);
         resetMediaState();
         clearAnswerFiles();
       }
@@ -3828,14 +3955,10 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       setTimeout(() => {
         setLoading(false);
         onSuccess?.();
-        // if (TYPE_REGISTERED !== 0) {
-        //   setNextDialogOpen(true);
-        // }
       }, 700);
     } catch (err: any) {
       setTimeout(() => {
         setLoading(false);
-        // setNextDialogOpen(false);
       }, 700);
 
       toast('Failed to create visitor.', 'error');

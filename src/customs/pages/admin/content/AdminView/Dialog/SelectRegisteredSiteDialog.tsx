@@ -46,7 +46,7 @@ const SelectRegisteredSiteDialog: React.FC<SelectRegisteredSiteDialogProps> = ({
 }) => {
   const handleNext = () => {
     if (!selectedSite) {
-      showSwal('error', 'Minimal pilih 1 Registered Site.');
+      showSwal('error', 'Choose Registered Site.');
       return;
     }
 

@@ -1,16 +1,12 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Box,
   Dialog,
   DialogContent,
   DialogTitle,
-  DialogActions,
-  Button,
   Divider,
   Grid2 as Grid,
   IconButton,
-  Autocomplete,
-  TextField,
 } from '@mui/material';
 import Container from 'src/components/container/PageContainer';
 import PageContainer from 'src/customs/components/container/PageContainer';
@@ -33,10 +29,13 @@ import {
   getAllSitePagination,
   getSiteById,
 } from 'src/customs/api/admin';
-import { IconSitemap, IconX } from '@tabler/icons-react';
+import { IconSitemap } from '@tabler/icons-react';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import FilterMoreContent from './FilterMoreContent';
 import { useNavigate, useParams } from 'react-router';
+import { useQueryClient } from '@tanstack/react-query';
+import SelectSiteTypeDialog from './components/Dialog/SelectSiteTypeDialog';
+import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
 
 type SiteTableRow = {
   id: string;
@@ -79,7 +78,7 @@ const Content = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [sortDir, setSortDir] = useState<string>('desc');
-
+  const queryClient = useQueryClient();
   const [openFormCreateSiteSpace, setOpenFormCreateSiteSpace] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
@@ -167,9 +166,6 @@ const Content = () => {
   }, [openFormCreateSiteSpace, formDataAddSite, initialFormSnapshot]);
 
   useEffect(() => {
-    if (!shouldSaveToStorage) return;
-    if (!openFormCreateSiteSpace || !initialFormSnapshot) return;
-
     if (isFormChanged) {
       localStorage.setItem('unsavedSiteForm', JSON.stringify(formDataAddSite));
     } else {
@@ -630,12 +626,21 @@ const Content = () => {
     setSearchInput(keyword);
   }, []);
 
+  const handleSearch = useCallback((keyword: string) => {
+    setPage(0);
+    setSearchInput(keyword);
+    setSearchKeyword(keyword);
+  }, []);
 
-const handleSearch = useCallback((keyword: string) => {
-  setPage(0);
-  setSearchInput(keyword);
-  setSearchKeyword(keyword);
-}, []);
+  const handleSuccess = () => {
+    localStorage.removeItem('unsavedSiteForm');
+    setSelectedRows([]);
+    setRefreshTrigger((prev) => prev + 1);
+    handleCloseModalCreateSiteSpace();
+    queryClient.invalidateQueries({
+      queryKey: ['registeredSites'],
+    });
+  };
 
   return (
     <PageContainer
@@ -743,12 +748,7 @@ const handleSearch = useCallback((keyword: string) => {
           <FormSite
             formData={formDataAddSite}
             setFormData={setFormDataAddSite}
-            onSuccess={() => {
-              localStorage.removeItem('unsavedSiteForm');
-              setSelectedRows([]);
-              setRefreshTrigger((prev) => prev + 1);
-              handleCloseModalCreateSiteSpace();
-            }}
+            onSuccess={handleSuccess}
             editingId={edittingId}
             isBatchEdit={isBatchEdit}
             selectedRows={selectedRows}
@@ -759,47 +759,17 @@ const handleSearch = useCallback((keyword: string) => {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={openDetailType} onClose={handleCloseDetailType} fullWidth maxWidth="sm">
-        <DialogTitle>
-          Select Type Site
-          <IconButton
-            onClick={handleCloseDetailType}
-            sx={{ position: 'absolute', right: 10, top: 10 }}
-          >
-            <IconX />
-          </IconButton>
-        </DialogTitle>
+      <SelectSiteTypeDialog
+        open={openDetailType}
+        onClose={handleCloseDetailType}
+        options={allowedTypes}
+        value={selectedType}
+        onChange={setSelectedType}
+        onNext={(val) => handleAdd(val)}
+        showError={showSwal}
+      />
 
-        <DialogContent dividers>
-          <Autocomplete
-            fullWidth
-            options={allowedTypes}
-            value={allowedTypes.find((o) => o.value === selectedType) || null}
-            onChange={(e, newValue) => {
-              setSelectedType(newValue?.value ?? null);
-            }}
-            renderInput={(params) => <TextField {...params} placeholder="Select site type..." />}
-          />
-        </DialogContent>
-
-        <DialogActions>
-          <Button onClick={handleCloseDetailType}>Cancel</Button>
-          <Button
-            onClick={() => {
-              if (selectedType === null) {
-                showSwal('error', 'Please select a type first');
-                return;
-              }
-              handleAdd(selectedType);
-            }}
-            variant="contained"
-            disabled={allowedTypes.length === 0}
-          >
-            Next
-          </Button>
-        </DialogActions>
-      </Dialog>
-      <Dialog open={confirmDialogOpen} onClose={handleCancelEdit} fullWidth maxWidth="sm">
+      {/* <Dialog open={confirmDialogOpen} onClose={handleCancelEdit} fullWidth maxWidth="sm">
         <DialogTitle ref={dialogRef}>
           Unsaved Changes
           <IconButton
@@ -825,6 +795,12 @@ const handleSearch = useCallback((keyword: string) => {
           </Button>
         </DialogActions>
       </Dialog>
+      */}
+      <ConfirmUnsavedDialog
+        open={confirmDialogOpen}
+        onClose={handleCancelEdit}
+        onDiscard={handleConfirmEdit}
+      />
     </PageContainer>
   );
 };

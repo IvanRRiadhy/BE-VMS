@@ -19,13 +19,10 @@ const CustomNavigation: React.FC<CustomNavigationProps> = ({
   itemDataCustomSidebarItems,
 }) => {
   const sm = useMediaQuery((theme: Theme) => theme.breakpoints.down('sm'));
-  const lgUp = useMediaQuery((theme: Theme) => theme.breakpoints.up('lg'));
-  const xl = useMediaQuery((theme: Theme) => theme.breakpoints.up('xl'));
+  const xlUp = useMediaQuery((theme: Theme) => theme.breakpoints.up('xl'));
+  const xl = useMediaQuery((theme: Theme) => theme.breakpoints.up('lg'));
   const customizer = useSelector((state: AppState) => state.customizer);
   const dispatch = useDispatch();
-
-  const [currentTime, setCurrentTime] = useState<string>();
-
   if (xl) {
     return (
       <Box
@@ -50,7 +47,7 @@ const CustomNavigation: React.FC<CustomNavigationProps> = ({
           alignItems={'center'}
         >
           <CustomNavListing itemData={itemDataCustomNavListing} />
-          {xl && <CurrentTime />}
+          {xlUp && <CurrentTime />}
         </Box>
       </Box>
     );
@@ -73,7 +70,7 @@ const CustomNavigation: React.FC<CustomNavigationProps> = ({
       {/* ------------------------------------------- */}
       {/* Logo */}
       {/* ------------------------------------------- */}
-      <Box px={1} py={1} display="flex" justifyContent="center" alignItems="center" >
+      <Box px={1} py={1} display="flex" justifyContent="center" alignItems="center">
         {/* <img
           src="https://upload.wikimedia.org/wikipedia/commons/3/39/BI_Logo.png"
           width={'180px'}
