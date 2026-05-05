@@ -140,12 +140,12 @@ const AccessPassDialog: React.FC<Props> = ({
 
             <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
               <Typography>Host</Typography>
-              <Typography fontWeight="bold">{data.host || '-'}</Typography>
+              <Typography fontWeight="bold">{data.host_name || '-'}</Typography>
             </Grid>
 
             <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
-              <Typography>Group Code</Typography>
-              <Typography fontWeight="bold">{data.group_code || '-'}</Typography>
+              <Typography>Status</Typography>
+              <Typography fontWeight="bold">{data.visitor_status || '-'}</Typography>
             </Grid>
 
             <Grid size={{ xs: 12 }} textAlign="center">
@@ -167,7 +167,7 @@ const AccessPassDialog: React.FC<Props> = ({
             sx={{
               p: 3,
               borderRadius: 2,
-              boxShadow: 2,
+              boxShadow: 3,
               backgroundColor: 'white',
               display: 'inline-block',
               mt: 2,
@@ -199,12 +199,12 @@ const AccessPassDialog: React.FC<Props> = ({
           </Grid>
 
           <Grid size={{ xs: 6 }} textAlign="center">
-            <Typography>Plate</Typography>
+            <Typography>Vehicle Plate</Typography>
             <Typography fontWeight="bold">{data.vehicle_plate_number || '-'}</Typography>
           </Grid>
 
           <Grid size={{ xs: 6 }} textAlign="center">
-            <Typography>Type</Typography>
+            <Typography>Vehicle Type</Typography>
             <Typography fontWeight="bold">{data.vehicle_type ?? '-'}</Typography>
           </Grid>
         </Grid>

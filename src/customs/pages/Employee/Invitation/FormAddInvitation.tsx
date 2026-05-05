@@ -9,7 +9,6 @@ import {
   TableHead,
   MenuItem,
   Grid2 as Grid,
-  FormLabel,
   Dialog,
   Checkbox,
   TableRow,
@@ -37,7 +36,6 @@ import {
   Backdrop,
   Snackbar,
   Alert,
-  Chip,
   Portal,
   useTheme,
   useMediaQuery,
@@ -167,13 +165,11 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
   const FORM_KEY: 'visit_form' | 'pra_form' = formKey;
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
-  const [alertType, setAlertType] = useState<'info' | 'success' | 'error'>('info');
   const { token } = useSession();
   const [activeStep, setActiveStep] = useState(0);
   const [dynamicSteps, setDynamicSteps] = useState<string[]>([]);
   const [draggableSteps, setDraggableSteps] = useState<string[]>([]);
   const [sectionsData, setSectionsData] = useState<SectionPageVisitorType[]>([]);
-  // const [dataVisitor, setDataVisitor] = useState<{ question_page: SectionPageVisitor[] }[]>([]);
   const [dataVisitor, setDataVisitor] = useState<VisitorItem[]>([]);
   const totalSteps = 1 + draggableSteps.length;
   const isLastStep = activeStep === totalSteps - 1;
@@ -181,11 +177,9 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
   const [isGroup, setIsGroup] = useState(false);
   const [activeGroupIdx, setActiveGroupIdx] = useState(0);
   const [removing, setRemoving] = useState<Record<string, boolean>>({});
-  const [nextDialogOpen, setNextDialogOpen] = useState(false);
   const BASE_URL = axiosInstance2.defaults.baseURL;
   const [uploadNames, setUploadNames] = useState<Record<string, string>>({});
   const [rawSections, setRawSections] = useState<any[]>([]);
-  const [selectedInvitations, setSelectedInvitations] = useState<any[]>([]);
   const formsOf = (section: any) => (Array.isArray(section?.[FORM_KEY]) ? section[FORM_KEY] : []);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
@@ -244,13 +238,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
   const handleDeleteGroup = (id: string) => {
     setGroupVisitors((prev) => prev.filter((g) => g.id !== id));
   };
-
-  useEffect(() => {
-    if (!nextDialogOpen) {
-      setSelectedInvitations([]);
-      setSelectedCards([]);
-    }
-  }, [nextDialogOpen]);
 
   const generateUUIDv4 = () => {
     const bytes = new Uint8Array(16);
@@ -405,8 +392,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
           self_only: true,
         };
       }
-
-      // console.log('AFTER OPEN SELF ONLY', next[visitorIdx]);
       const siteField = next[visitorIdx]?.single_page?.find((x: any) => x.remarks === 'site_place');
 
       setSelfOnlySelectedSiteIdsMap((prev) => ({
@@ -4393,24 +4378,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     return o;
   };
 
-  const [openChooseCardDialog, setOpenChooseCardDialog] = useState(false);
-  useEffect(() => {
-    if (!openChooseCardDialog) setSelectedCards([]);
-  }, [openChooseCardDialog]);
-  const [selectedCards, setSelectedCards] = useState<string[]>([]);
-
-  type CardInfo = {
-    card_number: string;
-    remarks: string;
-  };
-
-  type Row = {
-    id: number;
-    visitor?: string;
-    card: CardInfo | null;
-    trx_visitor_id?: string | null;
-  };
-
   const stepLabels = useMemo(() => ['User Type', ...draggableSteps], [draggableSteps]);
 
   const handleNext = (e: React.MouseEvent) => {
@@ -4435,6 +4402,38 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
 
     setActiveStep(targetStep);
   };
+
+      const isVisitorEmpty = (visitor: any) => {
+        return !visitor.question_page?.some((page: any) =>
+          page.form?.some((f: any) => f.answer_text || f.answer_datetime || f.answer_file),
+        );
+      };
+
+      const isVisitorValid = (visitor: any) => {
+        return visitor.question_page?.every((page: any) =>
+          page.form?.every((f: any) => {
+            if (!f.mandatory) return true;
+
+            return f.answer_text?.toString().trim() !== '' || f.answer_datetime || f.answer_file;
+          }),
+        );
+      };
+
+      const hasAnyFilled = groupVisitors.some((g) =>
+        g.data_visitor?.some((v) => !isVisitorEmpty(v)),
+      );
+
+      const isAllValid = groupVisitors.every((g) => {
+        const visitors = g.data_visitor || [];
+
+        const filledVisitors = visitors.filter((v) => !isVisitorEmpty(v));
+
+        if (filledVisitors.length === 0) return false;
+
+        return filledVisitors.every((v) => isVisitorValid(v));
+      });
+
+      const isSubmitDisabled = loading || !hasAnyFilled || !isAllValid;
 
   return (
     <PageContainer title="Visitor" description="this is Add Visitor page">
@@ -4486,7 +4485,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                         },
                       }}
                     >
-                      {/* Static Step Pertama */}
                       <Step
                         key="User Type"
                         completed={false}
@@ -4512,8 +4510,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                           User Type
                         </StepLabel>
                       </Step>
-
-                      {/* Dynamic Draggable Steps */}
                       {draggableSteps.map((label, index) => (
                         <Draggable key={label} draggableId={label} index={index} isDragDisabled>
                           {(provided, snapshot) => (
@@ -4638,7 +4634,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                   variant="contained"
                   color="primary"
                   onClick={handleOnSubmit}
-                  disabled={loading}
+                  disabled={loading || isSubmitDisabled}
                 >
                   Submit All
                 </Button>

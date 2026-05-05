@@ -469,6 +469,7 @@ const Content = () => {
       'AllowSSOActiveDirectory',
       'ManageUser',
     ],
+    visitor: ['AllowMobileLogin', 'OrganizationAssignment'],
   };
   const [formData, setFormData] = useState({
     group_id: '',
@@ -809,12 +810,11 @@ const Content = () => {
     setSearchInput(keyword);
   }, []);
 
-
-const handleSearch = useCallback((keyword: string) => {
-  setPage(0);
-  setSearchInput(keyword);
-  setSearchKeyword(keyword);
-}, []);
+  const handleSearch = useCallback((keyword: string) => {
+    setPage(0);
+    setSearchInput(keyword);
+    setSearchKeyword(keyword);
+  }, []);
 
   return (
     <PageContainer

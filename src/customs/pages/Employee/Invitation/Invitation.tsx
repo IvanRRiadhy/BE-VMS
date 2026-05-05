@@ -29,7 +29,6 @@ import {
   getEmployeeById,
   getFormEmployee,
   getRegisteredSite,
-  getVisitorById,
   getVisitorEmployee,
 } from 'src/customs/api/admin';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
@@ -38,7 +37,6 @@ import dayjs from 'dayjs';
 import Praregist from './Praregist';
 import {
   getInvitationRelatedVisitor,
-  getInvitations,
   getOngoingInvitation,
 } from 'src/customs/api/visitor';
 import { useSelector } from 'react-redux';
@@ -48,7 +46,6 @@ import SelectRegisteredSiteDialog from '../Components/Dialog/SelectRegisteredSit
 import { getInvitationSite, getInvitationVisitorType } from 'src/customs/api/Admin/InvitationData';
 import {
   createShareLink,
-  createShareLinkByEmail,
   createShareLinkByEmailById,
   deleteShareLink,
   getShareLinkByDt,

@@ -26,6 +26,7 @@ type Props = {
   handleToggleCard: (card: string) => void;
   dataDummyAccess: any[];
   formatDateTime: (date: string) => string;
+  accessData: any[];
 };
 
 export default function GrantAccessDialog({
@@ -36,6 +37,7 @@ export default function GrantAccessDialog({
   handleToggleCard,
   dataDummyAccess,
   formatDateTime,
+  accessData,
 }: Props) {
   const invitation = invitationCode?.[0];
 
@@ -254,7 +256,7 @@ const handleAccessAction = async (row: any, type: 'grant' | 'revoke' | 'block') 
               Access
             </Typography>
             <DynamicTable
-              data={dataDummyAccess}
+              data={accessData}
               isHaveChecked
               isHaveSearch
               isNoActionTableHead={true}

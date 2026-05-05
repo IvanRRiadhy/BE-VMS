@@ -220,7 +220,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const FORM_KEY: 'visit_form' | 'pra_form' = formKey;
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
-  const [alertType, setAlertType] = useState<'info' | 'success' | 'error'>('info');
   const { token } = useSession();
   const [activeStep, setActiveStep] = useState(0);
   const [dynamicSteps, setDynamicSteps] = useState<string[]>([]);
@@ -233,7 +232,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const [isSingle, setIsSingle] = useState(false);
   const [isGroup, setIsGroup] = useState(false);
   const [activeGroupIdx, setActiveGroupIdx] = useState(0);
-  const [groupForms, setGroupForms] = useState<Record<number, FormVisitor[][]>>({});
   const [removing, setRemoving] = useState<Record<string, boolean>>({});
   const [nextDialogOpen, setNextDialogOpen] = useState(false);
   const BASE_URL = axiosInstance2.defaults.baseURL;
@@ -255,7 +253,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const [openGroupPreview, setOpenGroupPreview] = useState(false);
   const [openVisitorDialog, setOpenVisitorDialog] = useState(false);
   const [isEmployeeMode, setIsEmployeeMode] = useState(false);
-
+  const [type, setType] = useState('');
   const [selfOnlyOpen, setSelfOnlyOpen] = useState(false);
   const [selfOnlyVisitorIdx, setSelfOnlyVisitorIdx] = useState<number>(0);
   const [selfOnlySelectedSiteIdsMap, setSelfOnlySelectedSiteIdsMap] = useState<
@@ -295,7 +293,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         };
       }
 
-      // console.log('AFTER OPEN SELF ONLY', next[visitorIdx]);
       const siteField = next[visitorIdx]?.single_page?.find((x: any) => x.remarks === 'site_place');
 
       setSelfOnlySelectedSiteIdsMap((prev) => ({
@@ -309,25 +306,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     setSelfOnlyVisitorIdx(visitorIdx);
 
     setSelfOnlyOpen(true);
-  };
-
-  const handleSelfOnlyCheck = (
-    nodeId: string,
-    index: number,
-    onChange: (index: number, field: any, value: any) => void,
-  ) => {
-    const current = selfOnlySelectedSiteIdsMap[selfOnlyVisitorIdx] || [];
-
-    const updated = current.includes(nodeId)
-      ? current.filter((x) => x !== nodeId)
-      : [...current, nodeId];
-
-    setSelfOnlySelectedSiteIdsMap((prev) => ({
-      ...prev,
-      [selfOnlyVisitorIdx]: updated,
-    }));
-
-    onChange(index, 'answer_text', updated.join(','));
   };
 
   const handleSaveSelfOnly = () => {
@@ -604,25 +582,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     applyScanToVisitorForm(activeGroupIdx!, groupScanPreviews);
   }, [groupScanPreviews]);
 
-  useEffect(() => {
-    if (!sectionsData?.length) return;
-
-    setGroupForms((prev) => {
-      const next = { ...prev };
-      sectionsData.forEach((section, secIdx) => {
-        if (section.can_multiple_used) {
-          const template = formsOf(section).map((f) => ({
-            ...f,
-            answer_text: '',
-            answer_datetime: '',
-            answer_file: '',
-          }));
-        }
-      });
-      return next;
-    });
-  }, [sectionsData]);
-
   const syncPurposeVisitToAllVisitors = (visitors: any[]) => {
     if (!visitors.length) return visitors;
 
@@ -837,7 +796,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
       return fileUrl.startsWith('//') ? `http:${fileUrl}` : fileUrl;
     } catch (err) {
-      console.error('Upload base64 failed', err);
       return null;
     }
   }
@@ -1518,7 +1476,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
               const sectionType = getSectionType(section);
               const firstPage = dataVisitor[0]?.question_page?.[activeStep - 1];
               const showEmployeeSearchHeader = isEmployeeSelected(firstPage?.form || []);
-
+              const isEmployee = isEmployeeSection(section);
               if (sectionType === 'visitor_information_group') {
                 return (
                   <Grid>
@@ -1560,7 +1518,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                             handleDeleteGroupRow(gIdx);
                                           }}
                                         >
-                                          <IconTrash color="white" />
+                                          <IconTrash color="error" />
                                         </IconButton>
                                       )}
                                     </Box>
@@ -1570,7 +1528,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                         <CustomFormLabel sx={{ mt: 0 }}>Search</CustomFormLabel>
                                         <VisitorSelect
                                           token={token as string}
-                                          // isEmployee={isEmployee}
+                                          isEmployee={isEmployee}
                                           onSelect={(v) => handleSelectVisitor(gIdx, v)}
                                         />
                                         <CustomFormLabel>Type (Opsional)</CustomFormLabel>
@@ -1579,19 +1537,23 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                           select
                                           size="small"
                                           fullWidth
-                                          value={''}
+                                          value={type}
                                           onChange={(e) => {
-                                            const value = e.target.value;
-
-                                            // setDataVisitor((prev) => {
-                                            //   const next = [...prev];
-                                            //   next[gIdx] = {
-                                            //     ...next[gIdx],
-                                            //     type: value,
-                                            //   };
-                                            //   return next;
-                                            // });
+                                            setType(e.target.value);
                                           }}
+                                          // value={''}
+                                          // onChange={(e) => {
+                                          //   const value = e.target.value;
+
+                                          //   // setDataVisitor((prev) => {
+                                          //   //   const next = [...prev];
+                                          //   //   next[gIdx] = {
+                                          //   //     ...next[gIdx],
+                                          //   //     type: value,
+                                          //   //   };
+                                          //   //   return next;
+                                          //   // });
+                                          // }}
                                         >
                                           <MenuItem value="leader">Leader</MenuItem>
                                           <MenuItem value="driver">Driver</MenuItem>
@@ -1752,8 +1714,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             <TableBody sx={{ overflow: 'auto' }}>
                               {dataVisitor.length > 0 ? (
                                 dataVisitor.map((group, gIdx) => {
-                                  // const page = group.question_page[activeStep - 1];
-                                  // if (!page) return null;
                                   const s = activeStep - 1;
                                   const page = group.question_page?.[s];
                                   if (!page || !Array.isArray(page.form)) return null;
@@ -1770,7 +1730,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                         <TableCell sx={{ minWidth: 250 }}>
                                           <VisitorSelect
                                             token={token as string}
-                                            // isEmployee={isEmployee}
+                                            isEmployee={isEmployee}
                                             onSelect={(v) => handleSelectVisitor(gIdx, v)}
                                           />
                                         </TableCell>
@@ -1779,19 +1739,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                             select
                                             size="small"
                                             fullWidth
-                                            value={''}
                                             sx={{ minWidth: 160 }}
+                                            value={type}
                                             onChange={(e) => {
-                                              const value = e.target.value;
-
-                                              // setDataVisitor((prev) => {
-                                              //   const next = [...prev];
-                                              //   next[gIdx] = {
-                                              //     ...next[gIdx],
-                                              //     type: value,
-                                              //   };
-                                              //   return next;
-                                              // });
+                                              setType(e.target.value);
                                             }}
                                           >
                                             <MenuItem value="leader">Leader</MenuItem>
@@ -1855,7 +1806,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                                     onChange={handleChangeGroup}
                                                     opts={{
                                                       showLabel: false,
-                                                      // uniqueKey: `${activeStep - 1}:${gIdx}:${fIdx}`,
                                                       uniqueKey: `${activeStep - 1}:${gIdx}:${field.custom_field_id}`,
                                                     }}
                                                     employee={employee}
@@ -2444,15 +2394,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
       details.forEach((item: any, index: number) => {
         if (!item?.mandatory) return;
-
         const remark = (item.remarks || '').toLowerCase();
         const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
 
         if (!isVisible) return;
-
-        // const key = `${activeStep - 1}:${index}`;
         const key = `${activeStep - 1}:${item.id}`;
-
         validateField(item, key, errors);
       });
     }
@@ -2487,7 +2433,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     isSelfOnly: boolean = false,
   ) => {
     if (!Array.isArray(details)) {
-      console.error('Expected array for details, but got:', details);
       return (
         <TableRow>
           <TableCell colSpan={5}>Invalid data format</TableCell>
@@ -2518,11 +2463,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     const startDate = startField?.answer_datetime ? dayjs(startField.answer_datetime) : null;
 
     return filteredDetails.map((item: any, index: any) => {
-      // const key = `${activeStep - 1}:${index}`;
       const key = `${activeStep - 1}:${item.id}`;
       const previewSrc = getPreviewSrc(key, (item as any).answer_file);
       const shownName = uploadNames[key] || fileNameFromAnswer((item as any).answer_file);
-      const siteKey = `${activeStep - 1}:${groupIdx}:${index}`;
       const errorMessage = fieldErrors[key];
 
       return (
@@ -2924,7 +2867,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         if (selectedValue) clearFieldError(key);
                       }}
                       renderInput={(params) => (
-                        <TextField
+                        <CustomTextField
                           {...params}
                           placeholder="Enter at least 3 characters to search"
                           fullWidth
@@ -3682,7 +3625,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       form_visitor_type_id: '',
     };
 
-    // ambil nilai jawaban (kalau ada)
     const ans = pickAns(src ?? {});
 
     if (tpl.field_type === 9 && ans?.answer_datetime) {
@@ -3752,7 +3694,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           let pick: any;
 
           if (isPurposeVisit(section)) {
-            pick = (r && rowIdxMap.byRemarks.get(r)) || (cf && rowIdxMap.byCF.get(cf)) || undefined;
+            pick =
+              (r && sharedPVIdx.byRemarks.get(r)) || (cf && sharedPVIdx.byCF.get(cf)) || undefined;
           } else {
             // normal section
             pick =
@@ -3778,7 +3721,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           form,
         };
       });
-      // console.log('question_page:', question_page);
 
       return { question_page };
     });
@@ -3822,7 +3764,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     setSelectedSiteParentIds([]);
     setSelectedSiteIds([]);
     setSiteTree([]);
-    setSelectedSiteParentIds([]);
     setSelectedSiteIds([]);
     setSiteTree([]);
     setSelfOnlySelectedSiteIdsMap({});
@@ -3874,7 +3815,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           if (Array.isArray(val)) return val.map(String).join(',');
           return String(val).trim();
         };
-
         const normalizeFileValue = (val: any): string | null => {
           if (val === undefined || val === null) return null;
           if (typeof val === 'string') {
@@ -3936,7 +3876,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           const built = buildFinalPayload(
             rawSections,
             groupedPages,
-            g.data_visitor.length ? g.data_visitor : dataVisitor,
+            // g.data_visitor.length ? g.data_visitor : dataVisitor,
+            dataVisitor.length ? dataVisitor : g.data_visitor,
             {
               visitor_type: formData.visitor_type ?? '',
               is_group: true,
@@ -3964,7 +3905,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           // }));
 
           const cleanDataVisitor = (built.data_visitor ?? []).map((dv: any, idx: number) => {
-            const original = dataVisitor[idx]; // ambil state asli
+            const original = dataVisitor[idx];
 
             const question_page = (dv.question_page ?? []).map((qp: any, sIdx: number) => {
               const isPurposeVisit =
@@ -4011,22 +3952,17 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         });
 
         payload = { list_group };
+        // console.log('🚀 Final Payload (Group):', JSON.stringify(payload, null, 2));
 
         const parsed = CreateGroupVisitorRequestSchema.parse(payload);
         // console.log('🚀 Final Payload (Group):', JSON.stringify(parsed, null, 2));
-
-        // // Submit ke endpoint group
         const submitFn =
           TYPE_REGISTERED === 0 ? createPraRegisterGroupOperator : createVisitorsGroupOperator;
         const backendResponse = await submitFn(token, parsed as any);
-        // console.log('Payload', backendResponse);
-        // toast('Group visitor created successfully.', 'success');
         showSwal('success', 'Group visitor created successfully.', 3000);
         resetMediaState();
         clearAnswerFiles();
       }
-
-      //  SINGLE MODE
       else {
         if (!sectionsData.length) {
           toast('Minimal isi 1 data visitor.', 'warning');
@@ -4474,6 +4410,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     setSelectedSiteParentIds([]);
     setSelectedSiteIds([]);
     setSiteTree([]);
+    if (!formData.visitor_type) return;
     const fetchVisitorTypeDetails = async () => {
       // const res = visitorType.find((vt: any) => vt.id === formData.visitor_type);
       const resVisitorType = await getVisitorTypeById(
@@ -4502,7 +4439,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         setGroupedPages({} as any);
       }
     };
-
+    setInputValues({});
     fetchVisitorTypeDetails();
   }, [formData.visitor_type, visitorType]);
 
@@ -4620,6 +4557,36 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     setActiveStep(targetStep);
   };
 
+  const isVisitorEmpty = (visitor: any) => {
+    return !visitor.question_page?.some((page: any) =>
+      page.form?.some((f: any) => f.answer_text || f.answer_datetime || f.answer_file),
+    );
+  };
+
+  const isVisitorValid = (visitor: any) => {
+    return visitor.question_page?.every((page: any) =>
+      page.form?.every((f: any) => {
+        if (!f.mandatory) return true;
+
+        return f.answer_text?.toString().trim() !== '' || f.answer_datetime || f.answer_file;
+      }),
+    );
+  };
+
+  const hasAnyFilled = groupVisitors.some((g) => g.data_visitor?.some((v) => !isVisitorEmpty(v)));
+
+  const isAllValid = groupVisitors.every((g) => {
+    const visitors = g.data_visitor || [];
+
+    const filledVisitors = visitors.filter((v) => !isVisitorEmpty(v));
+
+    if (filledVisitors.length === 0) return false;
+
+    return filledVisitors.every((v) => isVisitorValid(v));
+  });
+
+  const isSubmitDisabled = loading || !hasAnyFilled || !isAllValid;
+
   return (
     <PageContainer title="Operator View" description="this is operator view">
       <form onSubmit={handleOnSubmit}>
@@ -4679,7 +4646,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         }}
                       >
                         <StepLabel
-                          // onClick={() => setActiveStep(0)}
                           onClick={() => handleStepChange(0)}
                           StepIconProps={{ sx: { width: 30, height: 30 } }}
                           sx={{
@@ -4820,12 +4786,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   variant="contained"
                   color="primary"
                   onClick={handleOnSubmit}
-                  disabled={
-                    loading
-                    // ||
-                    // groupVisitors.length === 0 ||
-                    // groupVisitors.every((g) => !g.data_visitor || g.data_visitor.length === 0)
-                  }
+                  disabled={loading}
                 >
                   Submit All
                 </Button>
@@ -4904,7 +4865,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       {/* Scanning Dialog */}
       <Dialog open={isGroupScanning} fullWidth maxWidth="sm">
         <DialogTitle>Scanning Document</DialogTitle>
-        <DialogContent>
+        <DialogContent dividers>
           <ScanContainer>
             <ScanIcon size={48} />
             <Typography variant="h6">Scanning document...</Typography>

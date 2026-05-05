@@ -118,13 +118,13 @@ const Content = () => {
   const defaultFormData = CreateVisitorRequestSchema.parse({});
   const isFormChanged = JSON.stringify(formDataAddVisitor) !== JSON.stringify(defaultFormData);
 
-  useEffect(() => {
-    if (isFormChanged) {
-      localStorage.setItem('unsavedVisitorData', JSON.stringify(formDataAddVisitor));
-    } else {
-      localStorage.removeItem('unsavedVisitorData');
-    }
-  }, [formDataAddVisitor, isFormChanged]);
+  // useEffect(() => {
+  //   if (isFormChanged) {
+  //     localStorage.setItem('unsavedVisitorData', JSON.stringify(formDataAddVisitor));
+  //   } else {
+  //     localStorage.removeItem('unsavedVisitorData');
+  //   }
+  // }, [formDataAddVisitor, isFormChanged]);
 
   const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
   const [openInvitationVisitor, setOpenInvitationVisitor] = useState(false);
@@ -365,17 +365,21 @@ const Content = () => {
       try {
         setLoading(true);
 
-        const [vtRes, siteRes, visitorEmpRes, empRes] = await Promise.all([
+        const [vtRes, siteRes, visitorEmpRes, empRes] = await Promise.allSettled([
           getAllVisitorType(token),
           getAllSite(token),
           getVisitorEmployee(token),
           getAllEmployee(token),
         ]);
 
-        setVisitorType(vtRes?.collection || []);
-        setSites(siteRes?.collection || []);
-        setAllVisitorEmployee(visitorEmpRes?.collection || []);
-        setEmployee(empRes?.collection || []);
+        // setVisitorType(vtRes?.collection || []);
+        // setSites(siteRes?.collection || []);
+        // setAllVisitorEmployee(visitorEmpRes?.collection || []);
+        // setEmployee(empRes?.collection || []);
+        if(vtRes?.status === 'fulfilled') setVisitorType(vtRes?.value?.collection || []);
+        if(siteRes?.status === 'fulfilled') setSites(siteRes?.value?.collection || []);
+        if(visitorEmpRes?.status === 'fulfilled') setAllVisitorEmployee(visitorEmpRes?.value?.collection || []);
+        if(empRes?.status === 'fulfilled') setEmployee(empRes?.value?.collection || []);
       } catch (err) {
       } finally {
         setLoading(false);

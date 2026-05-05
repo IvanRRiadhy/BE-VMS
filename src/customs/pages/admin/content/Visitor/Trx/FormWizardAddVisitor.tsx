@@ -96,7 +96,7 @@ import { IconArrowRight } from '@tabler/icons-react';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CameraUpload from 'src/customs/components/camera/CameraUpload';
 import { showSwal } from 'src/customs/components/alerts/alerts';
-import { TreeItem, TreeView } from '@mui/x-tree-view';
+import { TreeItem } from '@mui/x-tree-view';
 import { SimpleTreeView } from '@mui/x-tree-view';
 import VisitorTypeList from 'src/customs/pages/Operator/Invitation/components/VisitorTypeList';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
@@ -176,6 +176,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const [removing, setRemoving] = useState<Record<string, boolean>>({});
   const [nextDialogOpen, setNextDialogOpen] = useState(false);
   const BASE_URL = axiosInstance2.defaults.baseURL;
+  const [type, setType] = useState('');
   const [rawSections, setRawSections] = useState<any[]>([]);
   const [selectedInvitations, setSelectedInvitations] = useState<any[]>([]);
   const formsOf = (section: any) => (Array.isArray(section?.[FORM_KEY]) ? section[FORM_KEY] : []);
@@ -195,8 +196,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     setSnackbar((s) => ({ ...s, open: false }));
     setTimeout(() => setSnackbar({ open: true, message, severity }), 0);
   };
-
-  const [searchTerm, setSearchTerm] = useState('');
   const [groupedPages, setGroupedPages] = useState<GroupedPages>({
     single_page: [],
     batch_page: {},
@@ -249,7 +248,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         };
       }
 
-      // console.log('AFTER OPEN SELF ONLY', next[visitorIdx]);
       const siteField = next[visitorIdx]?.single_page?.find((x: any) => x.remarks === 'site_place');
 
       setSelfOnlySelectedSiteIdsMap((prev) => ({
@@ -263,25 +261,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     setSelfOnlyVisitorIdx(visitorIdx);
 
     setSelfOnlyOpen(true);
-  };
-
-  const handleSelfOnlyCheck = (
-    nodeId: string,
-    index: number,
-    onChange: (index: number, field: any, value: any) => void,
-  ) => {
-    const current = selfOnlySelectedSiteIdsMap[selfOnlyVisitorIdx] || [];
-
-    const updated = current.includes(nodeId)
-      ? current.filter((x) => x !== nodeId)
-      : [...current, nodeId];
-
-    setSelfOnlySelectedSiteIdsMap((prev) => ({
-      ...prev,
-      [selfOnlyVisitorIdx]: updated,
-    }));
-
-    onChange(index, 'answer_text', updated.join(','));
   };
 
   const handleSaveSelfOnly = () => {
@@ -319,9 +298,22 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const [groupVisitors, setGroupVisitors] = useState<GroupVisitor[]>([]);
 
   const handleAddGroup = () => {
+    const newGroupIndex = groupVisitors.length;
     const randomCode = Array.from({ length: 6 }, () =>
       Math.random().toString(36).charAt(2).toUpperCase(),
     ).join('');
+
+    //  setSelectedSiteParentIdsGroup((prev) => ({
+    //    ...prev,
+    //    [`group-${newGroupIndex}`]: [],
+    //  }));
+
+    //  setSiteTreeGroup((prev) => ({
+    //    ...prev,
+    //    [`group-${newGroupIndex}`]: [],
+    //  }));
+
+    setInputValues({});
 
     const detectedTz =
       moment.tz?.guess?.() || Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Jakarta';
@@ -344,18 +336,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     setGroupVisitors((prev) => prev.filter((g) => g.id !== id));
   };
 
-  const flatDeep = (x: any): any[] => (Array.isArray(x) ? x.flat(Infinity) : [x]);
-
-  const normalizeIdsDeep = (payload: any): string[] => {
-    const flat = flatDeep(payload);
-    const ids = flat.map((v) => (typeof v === 'object' && v !== null ? v.id : v)).filter((n) => n);
-    return Array.from(new Set(ids));
-  };
-
   useEffect(() => {
     if (!nextDialogOpen) {
       setSelectedInvitations([]);
-      // setSelectedCards([]);
     }
   }, [nextDialogOpen]);
 
@@ -609,6 +592,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           ...prev,
                           is_group: false,
                         }));
+
+                        localStorage.removeItem('unsavedVisitorData');
                       }}
                     />
                   }
@@ -626,12 +611,17 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       checked={formData.is_group === true}
                       value={formData.is_group}
                       onChange={() => {
+                        const value = true;
+
                         setIsSingle(false);
-                        setIsGroup(true);
+                        setIsGroup(value);
+
                         setFormData((prev: any) => ({
                           ...prev,
-                          is_group: true,
+                          is_group: value,
                         }));
+
+                        localStorage.removeItem('unsavedVisitorData');
                       }}
                     />
                   }
@@ -1051,18 +1041,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                           size="small"
                                           fullWidth
                                           // value={group.type || ''}
-                                          value={''}
+                                          value={type}
                                           onChange={(e) => {
-                                            const value = e.target.value;
-
-                                            // setDataVisitor((prev) => {
-                                            //   const next = [...prev];
-                                            //   next[gIdx] = {
-                                            //     ...next[gIdx],
-                                            //     type: value,
-                                            //   };
-                                            //   return next;
-                                            // });
+                                            setType(e.target.value);
                                           }}
                                         >
                                           <MenuItem value="leader">Leader</MenuItem>
@@ -1192,19 +1173,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                           select
                                           size="small"
                                           fullWidth
-                                          value={''}
                                           sx={{ minWidth: 160 }}
+                                          value={type}
                                           onChange={(e) => {
-                                            const value = e.target.value;
-
-                                            // setDataVisitor((prev) => {
-                                            //   const next = [...prev];
-                                            //   next[gIdx] = {
-                                            //     ...next[gIdx],
-                                            //     type: value,
-                                            //   };
-                                            //   return next;
-                                            // });
+                                            setType(e.target.value);
                                           }}
                                         >
                                           <MenuItem value="leader">Leader</MenuItem>
@@ -1319,6 +1291,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   </Grid>
                 );
               } else if (sectionType === 'purpose_visit') {
+                const visitor = dataVisitor[0];
+                if (!visitor) return null;
+                const pIdx = visitor.question_page.findIndex((p) =>
+                  p.name.toLowerCase().includes('purpose visit'),
+                );
+                if (pIdx < 0) return null;
                 const pickAns = (f: any) => {
                   const out: any = {};
                   if (f?.answer_text != null) out.answer_text = f.answer_text;
@@ -1469,6 +1447,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
     let shouldDisable = false;
 
+    const handleSitePlaceChange = (idx: number, fieldKey: keyof FormVisitor, value: any) => {
+      onChange(idx, fieldKey, value);
+    };
+
     const renderInput = () => {
       const startField = opts?.details?.find(
         (f: any) => (f.remarks || '').toLowerCase() === 'visitor_period_start',
@@ -1531,7 +1513,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           );
 
         case 3: {
-          let options: { value: string; name: string }[] = [];
+          let options: { value: string; name: string; disabled?: boolean | undefined }[] = [];
 
           switch (field.remarks) {
             case 'host':
@@ -1566,7 +1548,78 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
           const uniqueKey = opts?.uniqueKey ?? `${activeStep}:${index}`;
           const inputVal = inputValues[uniqueKey as any] || '';
+          const siteKey = `group-${uniqueKey}`;
+          const parents: any = selectedSiteParentIds[siteKey as any] || [];
+          if (field.remarks === 'site_place') {
+            return (
+              <>
+                <Autocomplete
+                  key={siteKey}
+                  multiple
+                  size="small"
+                  options={options}
+                  getOptionLabel={(option) => option.name}
+                  inputValue={inputValues[siteKey as any] || ''}
+                  onInputChange={(_, newInputValue, reason) => {
+                    if (reason !== 'input') return;
 
+                    setInputValues((prev: any) => ({
+                      ...prev,
+                      [siteKey]: newInputValue,
+                    }));
+                  }}
+                  filterOptions={(opts, state) => {
+                    if (state.inputValue.length < 3) return [];
+                    return opts.filter((opt) =>
+                      opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
+                    );
+                  }}
+                  noOptionsText={
+                    (inputValues[index] || '').length < 3
+                      ? 'Enter at least 3 characters to search'
+                      : 'Not found'
+                  }
+                  value={options.filter((opt) => parents.includes(opt.value))}
+                  onChange={(_, newValues) => {
+                    const parentIds = newValues.map((v) => v.value);
+
+                    setSelectedSiteParentIds((prev: any) => ({
+                      ...prev,
+                      [siteKey]: parentIds,
+                    }));
+
+                    setSiteTree((prev: any) => ({
+                      ...prev,
+                      [siteKey]: parentIds.flatMap((pid) => buildSiteTreeWithParent(sites, pid)),
+                    }));
+                    onChange(index, 'answer_text', parentIds.join(','));
+                  }}
+                  renderInput={(params) => (
+                    <CustomTextField
+                      {...params}
+                      placeholder="Enter at least 3 characters to search"
+                      fullWidth
+                      error={!!errorMessage}
+                      helperText={errorMessage}
+                    />
+                  )}
+                />
+
+                {/* {field.remarks === 'site_place' && siteTree.length > 0 && (
+                <SimpleTreeView>
+                  {siteTree.map((node) => renderTree(node, index, handleSitePlaceChange))}
+                </SimpleTreeView>
+              )} */}
+                {siteTree[siteKey as any]?.length > 0 && (
+                  <SimpleTreeView>
+                    {siteTree[siteKey as any].map((node: any) =>
+                      renderTree(node, index, handleSitePlaceChange),
+                    )}
+                  </SimpleTreeView>
+                )}
+              </>
+            );
+          }
           return (
             <Autocomplete
               size="small"
@@ -2449,10 +2502,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const renderDetailRows = (
     details: FormVisitor[] | any,
     onChange: (index: number, field: keyof FormVisitor, value: any) => void,
+    groupIdx?: string | undefined,
     isSelfOnly: boolean = false,
   ) => {
     if (!Array.isArray(details)) {
-      console.error('Expected array for details, but got:', details);
       return (
         <TableRow>
           <TableCell colSpan={5}>Invalid data format</TableCell>
@@ -3650,7 +3703,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   };
 
   const sanitize = (v?: string | null) => (v ?? '').trim().toLowerCase();
-
   const DEFAULT_VFT = FORM_KEY === 'pra_form' ? 0 : 1;
 
   const mapFieldOut = (tpl: any, sortIdx: number, src?: any) => {
@@ -3732,10 +3784,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           const cf = tpl?.custom_field_id;
 
           let pick: any;
-
+          pick =
+            (r && sharedPVIdx.byRemarks.get(r)) || (cf && sharedPVIdx.byCF.get(cf)) || undefined;
           if (isPurposeVisit(section)) {
-            pick =
-              (r && sharedPVIdx.byRemarks.get(r)) || (cf && sharedPVIdx.byCF.get(cf)) || undefined;
           } else {
             pick =
               (r && rowIdxMap.byRemarks.get(r)) ||
@@ -4022,28 +4073,30 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     setDraggableSteps([...dynamicSteps]);
   }, [dynamicSteps]);
 
-  useEffect(() => {
-    if (!formData.visitor_type) return;
+  // useEffect(() => {
+  //   if (!formData.visitor_type) return;
 
-    const draft = isGroup
-      ? {
-          visitor_type: formData.visitor_type,
-          is_group: true,
-          type_registered: 1,
-          grouped_pages: groupedPages,
-          data_visitor: dataVisitor,
-          sections: sectionsData,
-        }
-      : {
-          visitor_type: formData.visitor_type,
-          is_group: false,
-          type_registered: 1,
-          data_visitor: [{ question_page: sectionsData }],
-          sections: sectionsData,
-        };
-    setInputValues({});
-    localStorage.setItem('unsavedVisitorData', JSON.stringify(draft));
-  }, [formData.visitor_type, isGroup, dataVisitor, sectionsData, groupedPages]);
+  //   const draft = isGroup
+  //     ? {
+  //         visitor_type: formData.visitor_type,
+  //         is_group: formData.is_group,
+  //         type_registered: 1,
+  //         grouped_pages: groupedPages,
+  //         data_visitor: dataVisitor,
+  //         sections: sectionsData,
+  //         groupVisitors,
+  //       }
+  //     : {
+  //         visitor_type: formData.visitor_type,
+  //         is_group: formData.is_group,
+  //         type_registered: 1,
+  //         data_visitor: [{ question_page: sectionsData }],
+  //         sections: sectionsData,
+  //         groupVisitors,
+  //       };
+  //   setInputValues({});
+  //   localStorage.setItem('unsavedVisitorData', JSON.stringify(draft));
+  // }, [formData.visitor_type, isGroup, dataVisitor, sectionsData, groupedPages]);
 
   const handleAddDetails = () => {
     if (!isGroup) {
@@ -4202,7 +4255,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     const viSrc = pickVisitorInfoSingle(list);
     const pvSrc = pickPurposeVisit(list);
 
-    // Kumpulkan form dokumen dan clone
     const docForms = cloneForms(collectDocForms(list));
     const otherSingles = list
       .filter(
@@ -4215,7 +4267,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       )
       .flatMap((s) => formsOf(s));
 
-    // Siapkan Visitor Information (Group)
     const vi = viSrc
       ? {
           ...viSrc,
@@ -4255,7 +4306,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
               field_type: 0,
               remarks: 'organization',
             },
-            // minimal kolom dokumen
             {
               short_name: 'Selfie Image',
               long_display_text: 'Selfie Image',
@@ -4354,32 +4404,35 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     return result;
   };
 
+  const [isRestoredFromDraft, setIsRestoredFromDraft] = useState(false);
+
   useEffect(() => {
-    if (!formData.visitor_type || !token) return;
+    // if (!formData.visitor_type || !token) return;
     setInputValues({});
     setSelectedSiteParentIds([]);
     setSelectedSiteIds([]);
     setSiteTree([]);
-    const raw = localStorage.getItem('unsavedVisitorData');
-    const saved = raw ? JSON.parse(raw) : null;
-    const sameType = saved?.visitor_type === formData.visitor_type;
-    const sameMode = saved?.is_group === isGroup;
+    // const raw = localStorage.getItem('unsavedVisitorData');
+    // const saved = raw ? JSON.parse(raw) : null;
+    // const sameType = saved?.visitor_type === formData.visitor_type;
+    // const sameMode = saved?.is_group === isGroup;
 
-    if (sameType && sameMode && saved.sections?.length) {
-      setSectionsData(saved.sections);
-      setDataVisitor(saved.data_visitor ?? []);
-      setGroupedPages(saved.grouped_pages ?? {});
-      setDraggableSteps(saved.sections.map((s: any) => s.name));
-      setRawSections(saved.sections);
-      return;
-    }
-
+    // if (sameType && sameMode && saved.sections?.length) {
+    //   setSectionsData(saved.sections);
+    //   setDataVisitor(saved.data_visitor ?? []);
+    //   setGroupedPages(saved.grouped_pages ?? {});
+    //   setGroupVisitors(saved.groupVisitors ?? []);
+    //   // setDraggableSteps(saved.sections.map((s: any) => s.name));
+    //   setRawSections(saved.sections);
+    //   setIsGroup(saved.is_group);
+    //   setIsRestoredFromDraft(true);
+    //   return;
+    // }
+    // if (isRestoredFromDraft) return;
+    if (!formData.visitor_type) return;
     const fetchVisitorTypeDetails = async () => {
       // const res = visitorType.find((vt: any) => vt.id === formData.visitor_type);
-      const res = await getVisitorTypeById(
-        token as string,
-        formData.visitor_type as string,
-      );
+      const res = await getVisitorTypeById(token as string, formData.visitor_type as string);
 
       let sections = res?.collection?.section_page_visitor_types ?? [];
 
@@ -4404,10 +4457,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     };
     setInputValues({});
     fetchVisitorTypeDetails();
-  }, [formData.visitor_type, visitorType]);
+  }, [formData.visitor_type, visitorType, token]);
 
   useEffect(() => {
     if (!formData.visitor_type || !rawSections.length) return;
+
+    // if (isRestoredFromDraft) return;
     setInputValues({});
     setSelectedSiteParentIds([]);
     setSelectedSiteIds([]);
@@ -4442,11 +4497,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     return o;
   };
 
-  type CardInfo = {
-    card_number: string;
-    remarks: string;
-  };
-
   const stepLabels = useMemo(() => ['User Type', ...draggableSteps], [draggableSteps]);
 
   const handleNext = (e: React.MouseEvent) => {
@@ -4471,6 +4521,36 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
     setActiveStep(targetStep);
   };
+
+  const isVisitorEmpty = (visitor: any) => {
+    return !visitor.question_page?.some((page: any) =>
+      page.form?.some((f: any) => f.answer_text || f.answer_datetime || f.answer_file),
+    );
+  };
+
+  const isVisitorValid = (visitor: any) => {
+    return visitor.question_page?.every((page: any) =>
+      page.form?.every((f: any) => {
+        if (!f.mandatory) return true;
+
+        return f.answer_text?.toString().trim() !== '' || f.answer_datetime || f.answer_file;
+      }),
+    );
+  };
+
+  const hasAnyFilled = groupVisitors.some((g) => g.data_visitor?.some((v) => !isVisitorEmpty(v)));
+
+  const isAllValid = groupVisitors.every((g) => {
+    const visitors = g.data_visitor || [];
+
+    const filledVisitors = visitors.filter((v) => !isVisitorEmpty(v));
+
+    if (filledVisitors.length === 0) return false;
+
+    return filledVisitors.every((v) => isVisitorValid(v));
+  });
+
+  const isSubmitDisabled = loading || !hasAnyFilled || !isAllValid;
 
   return (
     <PageContainer title="Visitor" description="this is Add Visitor page">

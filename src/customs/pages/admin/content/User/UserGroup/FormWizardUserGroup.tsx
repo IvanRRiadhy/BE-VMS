@@ -37,11 +37,6 @@ const FormWizardUserGroup: React.FC<FormWizardUserGroupProps> = ({
   const [snackbarMsg, setSnackbarMsg] = useState('');
   const [snackbarType, setSnackbarType] = useState<'success' | 'error' | 'info'>('info');
   const [alertType, setAlertType] = useState<'info' | 'success' | 'error'>('info');
-  // const [siteOptions, setSiteOptions] = useState<any[]>([]);
-  // const [permissionSites, setPermissionSites] = useState<Record<string, string[]>>({});
-  // const [regsiteredSiteOptions, setRegisteredSiteOptions] = useState<any[]>([]);
-  // const [organizationSiteOptions, setOrganizationSiteOptions] = useState<any[]>([]);
-  // const [accessOptions, setAccessOptions] = useState<any[]>([]);
   const { token } = useSession();
 
   const RoleAccess = ['Admin', 'OperatorAdmin', 'OperatorVMS', 'Employee', 'Manager', 'Visitor'];

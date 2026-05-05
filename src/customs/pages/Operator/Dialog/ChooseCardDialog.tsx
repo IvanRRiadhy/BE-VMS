@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -26,6 +26,7 @@ const ChooseCardDialog = ({
   searchTerm,
   setSearchTerm,
   isChecked,
+  cards,
   isIndeterminate,
   handleSelectAll,
   capacity,
@@ -46,6 +47,11 @@ const ChooseCardDialog = ({
 
       return card?.current_used === true && card?.is_swapcard === true;
     });
+
+  const isChosen = selectedCards.includes(cards.card_number);
+
+  const isLimitReached = selectedCards.length >= (selectedVisitors.length || 1) && !isChosen;
+
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg" container={containerRef?.current}>
       <DialogTitle>Choose Card</DialogTitle>
@@ -186,12 +192,15 @@ const ChooseCardDialog = ({
             const isChosen = selectedCards.includes(card.card_number);
             const isLimitReached =
               selectedCards.length >= (selectedVisitors.length || 1) && !isChosen;
+            const isUsed = card.is_used;
+            const isDisabled = isLimitReached || isUsed;
             return (
               <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={card.id}>
                 <Paper
                   onMouseDown={(e) => e.stopPropagation()}
                   onClick={(e) => {
                     e.stopPropagation();
+                    if (isDisabled) return;
                     handleToggleCard(card.card_number);
                   }}
                   sx={(theme) => ({
@@ -204,20 +213,38 @@ const ChooseCardDialog = ({
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     textAlign: 'center',
-                    cursor: 'pointer',
+                    cursor: isDisabled ? 'not-allowed' : 'pointer',
                     border: '1px solid',
                     borderColor: isChosen ? theme.palette.primary.main : 'divider',
                     boxShadow: isChosen ? theme.shadows[8] : theme.shadows[2],
-                    backgroundColor: isChosen ? theme.palette.primary.light : 'background.paper',
+                    // backgroundColor: isChosen ? theme.palette.primary.light : 'background.paper',
+                    backgroundColor: isUsed
+                      ? theme.palette.action.disabledBackground
+                      : isChosen
+                        ? theme.palette.primary.light
+                        : 'background.paper',
+
+                    opacity: isUsed ? 0.6 : 1,
+                    // transition: theme.transitions.create(
+                    //   ['transform', 'box-shadow', 'border-color', 'background-color'],
+                    //   {
+                    //     duration: theme.transitions.duration.shorter,
+                    //   },
+                    // ),
+                    // '&:hover': {
+                    //   transform: isLimitReached ? 'none' : 'translateY(-3px)',
+                    //   boxShadow: isLimitReached ? theme.shadows[1] : theme.shadows[6],
+                    // },
                     transition: theme.transitions.create(
                       ['transform', 'box-shadow', 'border-color', 'background-color'],
                       {
                         duration: theme.transitions.duration.shorter,
                       },
                     ),
+
                     '&:hover': {
-                      transform: isLimitReached ? 'none' : 'translateY(-3px)',
-                      boxShadow: isLimitReached ? theme.shadows[1] : theme.shadows[6],
+                      transform: isDisabled ? 'none' : 'translateY(-3px)',
+                      boxShadow: isDisabled ? theme.shadows[1] : theme.shadows[6],
                     },
                   })}
                 >
@@ -228,6 +255,25 @@ const ChooseCardDialog = ({
                     justifyContent="center"
                     alignItems="center"
                   >
+                    {isUsed && (
+                      <Box
+                        sx={(theme) => ({
+                          position: 'absolute',
+                          top: 8,
+                          left: 8,
+                          backgroundColor: theme.palette.primary.main,
+                          color: '#fff',
+                          px: 1,
+                          py: '2px',
+                          borderRadius: 1,
+                          fontSize: '0.7rem',
+                          fontWeight: 700,
+                          zIndex: 1,
+                        })}
+                      >
+                        Used
+                      </Box>
+                    )}
                     <Typography variant="h1" color="text.secondary" mt={2}>
                       {card.remarks || '-'}
                     </Typography>
@@ -274,6 +320,7 @@ const ChooseCardDialog = ({
                         checked={isChosen}
                         // disabled={!isChosen}
                         onChange={() => {
+                          if (isDisabled) return;
                           handleToggleCard(card.card_number);
                         }}
                       />
@@ -334,4 +381,4 @@ const ChooseCardDialog = ({
   );
 };
 
-export default React.memo(ChooseCardDialog);
+export default memo(ChooseCardDialog);

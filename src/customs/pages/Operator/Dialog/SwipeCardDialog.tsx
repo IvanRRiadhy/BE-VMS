@@ -11,6 +11,7 @@ import {
   Typography,
   MenuItem,
   TextField,
+  Select,
 } from '@mui/material';
 import { IconX, IconScan, IconSquareCheck, IconCircleCheck } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
@@ -38,6 +39,11 @@ interface SwipeCardDialogProps {
   setCurrentVisitorIndex: (v: any) => void;
 }
 
+type FormValue = {
+  value: string;
+  type: string;
+};
+
 const SwipeCardDialog = ({
   open,
   onClose,
@@ -49,78 +55,79 @@ const SwipeCardDialog = ({
   setCurrentVisitorIndex,
 }: SwipeCardDialogProps) => {
   const [qrMode, setQrMode] = useState<QrMode>('manual');
-  const [qrValue, setQrValue] = useState('');
-  const [qrType, setQrType] = useState('nik');
+  // const [qrValue, setQrValue] = useState('');
+  // const [qrType, setQrType] = useState('nik');
+  const [formValues, setFormValues] = useState<FormValue[]>([]);
+  const currentForm = formValues[currentVisitorIndex] || {
+    value: '',
+    type: '',
+  };
   const [hasDecoded, setHasDecoded] = useState(false);
-  const [visitorDocuments, setVisitorDocuments] = useState<any[]>([]);
-  const { token } = useSession();
-  // const [currentVisitorIndex, setCurrentVisitorIndex] = useState(0);
 
   const currentVisitor = visitors[currentVisitorIndex];
 
   useEffect(() => {
     if (!open) {
       // setCurrentVisitorIndex(0);
-      setQrValue('');
-      setQrType('');
+      // setQrValue('');
+      // setQrType('');
+
+      // setFormValues(
+      //   visitors.map(() => ({
+      //     value: '',
+      //     type: '',
+      //   })),
+      // );
       setQrMode('manual');
       setHasDecoded(false);
     }
   }, [open]);
 
-  // useEffect(() => {
-  //   if (!invitationId) return;
+  useEffect(() => {
+    if (!visitors?.length) return;
 
-  //   const fetchData = async () => {
-  //     const res = await getVisitorDocuments(token as string, invitationId);
-  //     setVisitorDocuments(res?.collection ?? []);
-  //   };
-
-  //   fetchData();
-  // }, [invitationId]);
-
-  // const handleSubmit = () => {
-  //   loading(true);
-  //   try {
-  //     if (!qrValue) {
-  //       showSwal('error', 'Please input value number');
-  //       return;
-  //     }
-
-  //     if (!qrType) {
-  //       showSwal('error', 'Please select type');
-  //       return;
-  //     }
-
-  //     onSubmit?.(qrValue, qrType);
-  //     setQrValue('');
-  //     setHasDecoded(false);
-  //     onClose();
-  //   } catch (error) {
-  //     console.error(error);
-  //     showSwal('error', 'Failed to swipe card');
-  //   } finally {
-  //     setTimeout(() => loading(false), 500);
-  //   }
-  // };
+    setFormValues(
+      visitors.map(() => ({
+        value: '',
+        type: '',
+      })),
+    );
+  }, [visitors]);
 
   const handleSubmit = () => {
     loading(true);
 
     try {
-      if (!qrValue) {
-        showSwal('error', 'Please input value number');
-        return;
-      }
+      // if (!qrValue) {
+      //   showSwal('error', 'Please input value number');
+      //   return;
+      // }
 
-      if (!qrType) {
-        showSwal('error', 'Please select type');
-        return;
-      }
-      const isLastVisitor = currentVisitorIndex === visitors.length - 1;
-      onSubmit?.(qrValue, qrType, currentVisitor, isLastVisitor, currentVisitorIndex);
+      // if (!qrType) {
+      //   showSwal('error', 'Please select type');
+      //   return;
+      // }
+      // const isLastVisitor = currentVisitorIndex === visitors.length - 1;
+      // onSubmit?.(qrValue, qrType, currentVisitor, isLastVisitor, currentVisitorIndex);
 
-      onClose();
+      // onClose();
+      const isLastVisitor = currentVisitorIndex === (visitors?.length || 1) - 1;
+
+      const visitor = visitors[currentVisitorIndex];
+
+      // onSubmit?.(qrValue, qrType, visitor, isLastVisitor, currentVisitorIndex);
+
+      const { value, type } = formValues[currentVisitorIndex];
+
+      onSubmit?.(value, type, visitor, isLastVisitor, currentVisitorIndex);
+
+      if (!isLastVisitor) {
+        // ✅ lanjut ke visitor berikutnya
+        setCurrentVisitorIndex((prev: any) => prev + 1);
+      } else {
+        // ✅ baru close kalau terakhir
+        onClose();
+      }
     } catch (error) {
       console.error(error);
       showSwal('error', 'Failed to swipe card');
@@ -151,6 +158,22 @@ const SwipeCardDialog = ({
     { value: 'Other', label: 'Other' },
   ];
 
+  const handleChange = (index: number, field: keyof FormValue, val: string) => {
+    setFormValues((prev) => {
+      const updated = [...prev];
+
+      if (!updated[index]) {
+        updated[index] = { value: '', type: '' };
+      }
+
+      updated[index] = {
+        ...updated[index],
+        [field]: val,
+      };
+
+      return updated;
+    });
+  };
   return (
     <>
       <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
@@ -196,8 +219,6 @@ const SwipeCardDialog = ({
             </Tooltip>
           </Box>
 
-          {/* ================= FORM ================= */}
-
           {qrMode === 'manual' && (
             <DialogContent sx={{ p: '0 !important' }}>
               {/* TYPE */}
@@ -205,10 +226,14 @@ const SwipeCardDialog = ({
                 Type
               </Typography>
 
-              <CustomSelect
+              <Select
                 fullWidth
-                value={qrType}
-                onChange={(e: any) => setQrType(e.target.value)}
+                // value={qrType}
+                // onChange={(e: any) => setQrType(e.target.value)}
+                value={currentForm.type}
+                onChange={(e: any) =>
+                  handleChange(currentVisitorIndex, 'type', e.target.value as string)
+                }
                 sx={{ mb: 2 }}
                 disabled={typeDocument.length === 0}
               >
@@ -223,18 +248,21 @@ const SwipeCardDialog = ({
                     </MenuItem>
                   ))
                 )}
-              </CustomSelect>
+              </Select>
 
               {/* VALUE */}
               <Typography fontWeight={500} mb={0.5}>
-                {qrTypeLabelMap[qrType] ?? 'Value'}
+                {/* {qrTypeLabelMap[qrType] ?? 'Value'} */}
+                {qrTypeLabelMap[currentForm.type] ?? 'Value'}
               </Typography>
 
               <TextField
                 fullWidth
                 size="small"
-                value={qrValue}
-                onChange={(e) => setQrValue(e.target.value)}
+                // value={qrValue}
+                // onChange={(e) => setQrValue(e.target.value)}
+                value={currentForm.value}
+                onChange={(e) => handleChange(currentVisitorIndex, 'value', e.target.value)}
               />
             </DialogContent>
           )}

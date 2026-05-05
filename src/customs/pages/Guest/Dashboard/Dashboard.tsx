@@ -21,14 +21,10 @@ import {
 } from '@mui/material';
 
 import {
-  IconBan,
   IconCalendar,
   IconCards,
   IconCircleMinus,
-  IconCircleOff,
-  IconCircleX,
   IconDownload,
-  IconForbid2,
   IconLogin,
   IconLogout,
   IconX,
@@ -97,9 +93,8 @@ const Dashboard = () => {
 
         const response = res.collection?.map((item: any) => ({
           id: item.id,
-          // visitor_type:  item.visitor_type_name,
-          name: item.visitor.name,
-          email: item.visitor.email,
+          name: item.visitor_name,
+          email: item.visitor_email,
           organization: item.visitor_organization_name,
           visitor_period_start: item.visitor_period_start,
           visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
@@ -108,7 +103,6 @@ const Dashboard = () => {
         }));
         setActiveVisitData(response ?? []);
         const resAccess = await getAccessPass(token as string);
-        // console.log(resAccess);
         setActiveAccessPass(resAccess);
       } catch (e) {
         console.error(e);

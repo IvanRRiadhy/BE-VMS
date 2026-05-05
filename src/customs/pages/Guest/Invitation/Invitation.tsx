@@ -167,17 +167,15 @@ const Invitation = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // hitung tanggal
         const start_date = dayjs().subtract(7, 'day').format('YYYY-MM-DD');
         const end_date = dayjs().add(0, 'day').format('YYYY-MM-DD');
 
-        // if (isDataReady) {
         const res = await getInvitation(token as string, start_date, end_date);
         const rows = res.collection.map((item: any) => {
           return {
             id: item.id,
-            name: item.visitor.name,
-            email: item.visitor.email,
+            name: item.visitor_name,
+            email: item.visitor_email,
             // organization: item.visitor.organization,
             invitation_code: item.invitation_code,
             // gender: item.visitor.gender,
@@ -217,11 +215,7 @@ const Invitation = () => {
         const resAnotherVisitor = await getInvitationRelatedVisitor(id, token);
         setDetailVisitorInvitation(resAnotherVisitor?.collection ?? []);
       } catch (relatedErr) {
-        // console.warn('No related visitor data found or request failed.');
-        // setDetailVisitorInvitation([]);
       }
-
-      // console.log('Invitation Detail:', res?.collection);
     } catch (err: any) {
       console.error(err?.message || 'Failed to fetch invitation detail.');
     }
@@ -265,10 +259,6 @@ const Invitation = () => {
 
   const handleBack = () => {
     setActiveStep((prev) => (prev > 0 ? prev - 1 : prev));
-  };
-
-  const handleReset = () => {
-    setActiveStep(0);
   };
 
   const getSectionType = (section: any) => {
@@ -364,12 +354,6 @@ const Invitation = () => {
 
   const steps = groupedSections.map((s) => s.label);
 
-  // useEffect(() => {
-  //   if (!invitationData?.collection) return;
-  //   const qPages = invitationData.collection.question_page || [];
-  //   setDataVisitor([{ question_page: qPages }]);
-  //   setActiveStep(0);
-  // }, [invitationData]);
 
   const uploadFileToCDN = async (file: File | Blob): Promise<string | null> => {
     const formData = new FormData();

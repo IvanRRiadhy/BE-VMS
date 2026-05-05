@@ -40,9 +40,7 @@ type RenderFieldGroupProps = {
   index: number;
   groupIndex: any;
   onChange: (index: number, fieldKey: keyof FormVisitor, value: any) => void;
-  opts?: { showLabel?: boolean; uniqueKey?: string, details?: any[] };
-
-  // 🔥 semua dependency lama DIKIRIM
+  opts?: { showLabel?: boolean; uniqueKey?: string; details?: any[] };
   employee: any[];
   allVisitorEmployee: any[];
   sites: any[];
@@ -225,6 +223,91 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
 
         if (field.remarks === 'site_place') {
           return (
+            // <>
+            //   <Autocomplete
+            //     key={siteKey}
+            //     multiple
+            //     size="small"
+            //     options={options}
+            //     getOptionLabel={(option) => option.name}
+            //     inputValue={inputValues[siteKey] || ''}
+            //     onInputChange={(_, newInputValue, reason) => {
+            //       if (reason !== 'input') return;
+
+            //       setInputValues((prev: any) => ({
+            //         ...prev,
+            //         [siteKey]: newInputValue,
+            //       }));
+            //     }}
+            //     filterOptions={(opts, state) => {
+            //       if (state.inputValue.length < 3) return [];
+            //       return opts.filter((opt) =>
+            //         opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
+            //       );
+            //     }}
+            //     noOptionsText={
+            //       (inputValues[index] || '').length < 3
+            //         ? 'Enter at least 3 characters to search'
+            //         : 'Not found'
+            //     }
+            //     value={options.filter((opt) => parents.includes(opt.value))}
+            //     //   onChange={(_, newValues) => {
+            //     //     const parentIds = newValues.map((v) => v.value);
+
+            //     //     setSelectedSiteParentIds((prev: any) => ({
+            //     //       ...prev,
+            //     //       [siteKey]: parentIds,
+            //     //     }));
+
+            //     //     setSiteTree((prev: any) => ({
+            //     //       ...prev,
+            //     //       [siteKey]: parentIds.flatMap((pid) => buildSiteTreeWithParent(sites, pid)),
+            //     //     }));
+            //     //   }}
+            //     //   renderInput={(params) => (
+            //     //     <TextField
+            //     //       {...params}
+            //     //       placeholder="Enter at least 3 characters to search"
+            //     //       fullWidth
+            //     //     />
+            //     //   )}
+            //     // />
+            //     onChange={(_, newValues) => {
+            //       const parentIds = newValues.map((v) => v.value);
+
+            //       setSelectedSiteParentIds((prev: any) => ({
+            //         ...prev,
+            //         [siteKey]: parentIds,
+            //       }));
+
+            //       setSiteTree((prev: any) => ({
+            //         ...prev,
+            //         [siteKey]: parentIds.flatMap((pid) => buildSiteTreeWithParent(sites, pid)),
+            //       }));
+            //       onChange(index, 'answer_text', parentIds.join(','));
+            //     }}
+            //     renderInput={(params) => (
+            //       <CustomTextField
+            //         {...params}
+            //         placeholder="Enter at least 3 characters to search"
+            //         fullWidth
+            //         error={!!errorMessage}
+            //         helperText={errorMessage}
+            //       />
+            //     )}
+            //   />
+
+            //   {/* {field.remarks === 'site_place' && siteTree.length > 0 && (
+            //     <SimpleTreeView>
+            //       {siteTree.map((node) => renderTree(node, index, handleSitePlaceChange))}
+            //     </SimpleTreeView>
+            //   )} */}
+            //   {siteTree[siteKey]?.length > 0 && (
+            //     <SimpleTreeView>
+            //       {siteTree[siteKey].map((node) => renderTree(node, index, handleSitePlaceChange))}
+            //     </SimpleTreeView>
+            //   )}
+            // </>
             <>
               <Autocomplete
                 key={siteKey}
@@ -232,7 +315,7 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
                 size="small"
                 options={options}
                 getOptionLabel={(option) => option.name}
-                inputValue={inputValues[siteKey] || ''}
+                inputValue={inputValues[siteKey as any] || ''}
                 onInputChange={(_, newInputValue, reason) => {
                   if (reason !== 'input') return;
 
@@ -253,27 +336,6 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
                     : 'Not found'
                 }
                 value={options.filter((opt) => parents.includes(opt.value))}
-                //   onChange={(_, newValues) => {
-                //     const parentIds = newValues.map((v) => v.value);
-
-                //     setSelectedSiteParentIds((prev: any) => ({
-                //       ...prev,
-                //       [siteKey]: parentIds,
-                //     }));
-
-                //     setSiteTree((prev: any) => ({
-                //       ...prev,
-                //       [siteKey]: parentIds.flatMap((pid) => buildSiteTreeWithParent(sites, pid)),
-                //     }));
-                //   }}
-                //   renderInput={(params) => (
-                //     <TextField
-                //       {...params}
-                //       placeholder="Enter at least 3 characters to search"
-                //       fullWidth
-                //     />
-                //   )}
-                // />
                 onChange={(_, newValues) => {
                   const parentIds = newValues.map((v) => v.value);
 
@@ -286,8 +348,6 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
                     ...prev,
                     [siteKey]: parentIds.flatMap((pid) => buildSiteTreeWithParent(sites, pid)),
                   }));
-
-                  // 🔥 simpan ke FORM (group share)
                   onChange(index, 'answer_text', parentIds.join(','));
                 }}
                 renderInput={(params) => (
@@ -302,13 +362,15 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
               />
 
               {/* {field.remarks === 'site_place' && siteTree.length > 0 && (
+                            <SimpleTreeView>
+                              {siteTree.map((node) => renderTree(node, index, handleSitePlaceChange))}
+                            </SimpleTreeView>
+                          )} */}
+              {siteTree[siteKey as any]?.length > 0 && (
                 <SimpleTreeView>
-                  {siteTree.map((node) => renderTree(node, index, handleSitePlaceChange))}
-                </SimpleTreeView>
-              )} */}
-              {siteTree[siteKey]?.length > 0 && (
-                <SimpleTreeView>
-                  {siteTree[siteKey].map((node) => renderTree(node, index, handleSitePlaceChange))}
+                  {siteTree[siteKey as any].map((node: any) =>
+                    renderTree(node, index, handleSitePlaceChange),
+                  )}
                 </SimpleTreeView>
               )}
             </>

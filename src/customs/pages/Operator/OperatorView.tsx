@@ -35,7 +35,14 @@ import { Box, useMediaQuery, useTheme } from '@mui/system';
 import moment from 'moment-timezone';
 import backgroundnodata from 'src/assets/images/backgrounds/bg_nodata.svg';
 import infoPic from 'src/assets/images/backgrounds/info_pic.png';
-import { IconClock, IconCreditCard, IconPrinter, IconSearch, IconX } from '@tabler/icons-react';
+import {
+  IconClock,
+  IconCreditCard,
+  IconKey,
+  IconPrinter,
+  IconSearch,
+  IconX,
+} from '@tabler/icons-react';
 import PageContainer from 'src/components/container/PageContainer';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
@@ -237,7 +244,8 @@ const OperatorView = () => {
     return saved ? JSON.parse(saved) : CreateVisitorRequestSchema.parse({});
   });
 
-  const [swipePayload, setSwipePayload] = useState<any | null>(null);
+  // const [swipePayload, setSwipePayload] = useState<any | null>(null);
+  const [swipePayload, setSwipePayload] = useState<any[]>([]);
 
   const [dataDummyAccess, setDataDummyAccess] = useState<any[]>([
     {
@@ -340,6 +348,29 @@ const OperatorView = () => {
     setSelectedCards([]);
   }, [selectedVisitorId]);
 
+  const handleSubmitBatchSwipe = async (payloads: any[]) => {
+    try {
+      if (!payloads.length) return;
+
+      await createMultipleGrantAccess(token as string, {
+        data: payloads,
+      });
+
+      console.log('payloads', payloads);
+
+      showSwal('success', 'All cards swapped successfully!');
+
+      setSwipePayload([]);
+      setOpenSwipeDialog(false);
+      setOpenChooseCardDialog(false);
+      setSearchTerm('');
+
+      await fetchRelatedVisitorsByInvitationId(invitationId as string);
+    } catch (err: any) {
+      showSwal('error', err?.response?.data?.msg || 'Failed to swap cards');
+    }
+  };
+
   const handleSwipeCardSubmit = async (
     value: string,
     type: string,
@@ -350,7 +381,8 @@ const OperatorView = () => {
     setLoadingAccess(true);
     try {
       // const selectedCardNumber = selectedCards[visitorIndex];
-      const selectedCardNumber = selectedCards[0];
+      // const selectedCardNumber = selectedCards[0];
+      const selectedCardNumber = selectedCards[visitorIndex];
       const selectedCard = filteredCards.find((c) => c.card_number === selectedCardNumber);
 
       if (!selectedCard) {
@@ -373,13 +405,26 @@ const OperatorView = () => {
 
       console.log('SWAP PAYLOAD', payload);
 
+      setSwipePayload((prev) => [...prev, payload]);
+
       if (!hasSwappedCard) {
-        console.log('FIRST SWIPE', payload);
-        await createGrandAccessOperator(token as string, payload);
-        showSwal('success', 'Card swaped successfully!');
-        setOpenChooseCardDialog(false);
-        setSearchTerm('');
-        await fetchRelatedVisitorsByInvitationId(invitationId as string);
+        // console.log('FIRST SWIPE', payload);
+        // // await createGrandAccessOperator(token as string, payload);
+        // showSwal('success', 'Card swaped successfully!');
+        // setOpenChooseCardDialog(false);
+        // setSearchTerm('');
+        // await fetchRelatedVisitorsByInvitationId(invitationId as string);
+        const newPayload = [...swipePayload, payload];
+        setSwipePayload(newPayload);
+
+        // ✅ kalau BELUM terakhir → lanjut saja (JANGAN CLOSE)
+        if (!isLastVisitor) {
+          return; // lanjut ke visitor berikutnya
+        }
+
+        // ✅ kalau terakhir → baru submit
+        await handleSubmitBatchSwipe(newPayload);
+        return;
       } else {
         // setSwipePayload(payload);
         setSwipePayload([payload]);
@@ -965,7 +1010,6 @@ const OperatorView = () => {
       );
 
       const accessList = Array.isArray(invitation.access) ? invitation.access : [invitation.access];
-      // console.log('accessList', accessList);
 
       const filteredAccess = accessList.filter((a: any) =>
         permissionAccess.some((p: any) => p.access_control_id === a.access_control_id),
@@ -983,7 +1027,7 @@ const OperatorView = () => {
           can_grant: perm?.can_grant ?? false,
           can_revoke: perm?.can_revoke ?? false,
           can_block: perm?.can_block ?? false,
-          disabled: !perm,
+          // disabled: !perm,
         };
       });
       // console.log('mergedAccess', mergedAccess);
@@ -1405,6 +1449,7 @@ const OperatorView = () => {
     setOpenDialogIndex(null);
     setTorchOn(false);
     setActionButton('');
+    setTotalCountVisitor(0);
   };
 
   const handleBlacklistStatus = async (id: string) => {
@@ -1529,8 +1574,6 @@ const OperatorView = () => {
       setLoadingAccess(true);
 
       const payload: any = { action };
-
-      // console.log('payload', payload);
 
       if (reason) {
         payload.reason = reason;
@@ -3533,13 +3576,22 @@ const OperatorView = () => {
                           sx={{ p: 0, fontSize: '14px', fontWeight: 600 }}
                         />
 
-                        <Typography variant="body1" sx={{ color: 'text.secondary' }} ml={1}>
-                          {typeVisitor === 'related' && totalCountVisitor > 0
-                            ? `(${totalCountVisitor})`
-                            : ''}
-                        </Typography>
+                        <Tooltip
+                          arrow
+                          title={
+                            typeVisitor === 'related' && totalCountVisitor > 0
+                              ? `Total visitor: ${totalCountVisitor}`
+                              : ''
+                          }
+                          placement="top"
+                        >
+                          <Typography variant="body1" sx={{ color: 'text.secondary' }} ml={1}>
+                            {typeVisitor === 'related' && totalCountVisitor > 0
+                              ? `(${totalCountVisitor})`
+                              : ''}
+                          </Typography>
+                        </Tooltip>
 
-                        {/* ICON DROPDOWN */}
                         <IconChevronDown size={18} />
                       </Box>
 
@@ -3938,8 +3990,8 @@ const OperatorView = () => {
                               </Button>
                             </Tooltip>
                           )}
-                          {/* 
-                          <Tooltip
+
+                          {/* <Tooltip
                             title="Access Control"
                             placement="top"
                             arrow
@@ -4081,6 +4133,7 @@ const OperatorView = () => {
               setOpenChooseCardDialog(false);
               setSearchTerm('');
             }}
+            cards={availableCards}
             containerRef={containerRef}
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
@@ -4131,6 +4184,7 @@ const OperatorView = () => {
             handleToggleCard={handleToggleCard}
             dataDummyAccess={dataDummyAccess}
             formatDateTime={formatDateTime}
+            accessData={accessData}
           />
 
           {/* Fill Form Pra regist Multiple*/}
