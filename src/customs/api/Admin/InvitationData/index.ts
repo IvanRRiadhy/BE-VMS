@@ -7,9 +7,9 @@ export const getInvitationSite = async (token: string): Promise<any> => {
     });
     return response.data;
   } catch (error: any) {
-    if (error.response?.status === 404) {
-      return { collection: [] };
-    }
+    // if (error.response?.status === 404) {
+    //   return { collection: [] };
+    // }
     throw error;
   }
 };
@@ -21,9 +21,9 @@ export const getInvitationAccessControl = async (token: string): Promise<any> =>
     });
     return response.data;
   } catch (error: any) {
-    if (error.response?.status === 404) {
-      return { collection: [] };
-    }
+    // if (error.response?.status === 404) {
+    //   return { collection: [] };
+    // }
     throw error;
   }
 };
@@ -35,9 +35,9 @@ export const getInvitationVisitorType = async (token: string): Promise<any> => {
     });
     return response.data;
   } catch (error: any) {
-    if (error.response?.status === 404) {
-      return { collection: [] };
-    }
+    // if (error.response?.status === 404) {
+    //   return { collection: [] };
+    // }
     throw error;
   }
 };
@@ -49,9 +49,9 @@ export const getInvitationVisitor = async (token: string): Promise<any> => {
     });
     return response.data;
   } catch (error: any) {
-    if (error.response?.status === 404) {
-      return { collection: [] };
-    }
+    // if (error.response?.status === 404) {
+    //   return { collection: [] };
+    // }
     throw error;
   }
 };
@@ -63,9 +63,9 @@ export const getInvitationVisitorEmployee = async (token: string): Promise<any> 
     });
     return response.data;
   } catch (error: any) {
-    if (error.response?.status === 404) {
-      return { collection: [] };
-    }
+    // if (error.response?.status === 404) {
+    //   return { collection: [] };
+    // }
     throw error;
   }
 };
@@ -77,9 +77,9 @@ export const getInvitationVisitorHost = async (token: string): Promise<any> => {
     });
     return response.data;
   } catch (error: any) {
-    if (error.response?.status === 404) {
-      return { collection: [] };
-    }
+    // if (error.response?.status === 404) {
+    //   return { collection: [] };
+    // }
     throw error;
   }
 };

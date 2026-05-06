@@ -3,7 +3,7 @@ import { debounce } from 'lodash';
 import React, { useMemo } from 'react';
 import AsyncSelect from 'react-select/async';
 import { getAllEmployee, getListVisitor, getVisitorEmployee, getVisitorInvitation } from 'src/customs/api/admin';
-import axiosInstance, { axiosInstance2 } from 'src/customs/api/interceptor';
+import  { axiosInstance2 } from 'src/customs/api/interceptor';
 import { getInvitationVisitor } from 'src/customs/api/Admin/InvitationData';
 
 type Visitor = {
@@ -55,6 +55,7 @@ const VisitorSelect: React.FC<Props> = ({ onSelect, token, isEmployee }) => {
         list = res?.collection ?? [];
       } else {
         const res = await getInvitationVisitor(token);
+        // const res = await getListVisitor(token);
         list = res?.collection ?? [];
       }
 
@@ -85,7 +86,6 @@ const VisitorSelect: React.FC<Props> = ({ onSelect, token, isEmployee }) => {
         };
       });
     } catch (err) {
-      console.error('❌ loadOptions error', err);
       return [];
     }
   };
@@ -96,7 +96,7 @@ const VisitorSelect: React.FC<Props> = ({ onSelect, token, isEmployee }) => {
         (inputValue: string, callback: (options: OptionType[]) => void) => {
           loadOptions(inputValue).then(callback);
         },
-        500, // delay 500ms
+        500, 
       ),
     [],
   );

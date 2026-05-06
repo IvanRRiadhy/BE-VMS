@@ -657,7 +657,7 @@ const OperatorView = () => {
 
     const fetchData = async () => {
       try {
-        const [siteRes, employeeRes, allVisitorEmployee] = await Promise.all([
+        const [siteRes, employeeRes, allVisitorEmployee] = await Promise.allSettled([
           getInvitationSite(token),
           // getAllSite(token),
           getInvitationVisitorHost(token),
@@ -665,9 +665,21 @@ const OperatorView = () => {
           getInvitationVisitorEmployee(token),
         ]);
 
-        setSites(siteRes?.collection ?? []);
-        setEmployee(employeeRes?.collection ?? []);
-        setAllVisitorEmployee(allVisitorEmployee?.collection ?? []);
+        // setSites(siteRes?.collection ?? []);
+        // setEmployee(employeeRes?.collection ?? []);
+        // setAllVisitorEmployee(allVisitorEmployee?.collection ?? []);
+
+        if (siteRes.status === 'fulfilled') {
+          setSites(siteRes.value?.collection ?? []);
+        } 
+
+        if (employeeRes.status === 'fulfilled') {
+          setEmployee(employeeRes.value?.collection ?? []);
+        }
+
+        if(allVisitorEmployee.status === 'fulfilled') {
+          setAllVisitorEmployee(allVisitorEmployee.value?.collection ?? []);
+        }
       } catch (err) {
         console.error(err);
       }

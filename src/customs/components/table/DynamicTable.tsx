@@ -1183,7 +1183,7 @@ function DynamicTableBase<
                       variant="contained"
                       onClick={onCheckConnection}
                     >
-                      Connection
+                     Check Connection
                     </Button>
                   </Tooltip>
                 )}
