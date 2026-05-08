@@ -598,9 +598,9 @@ const Content = () => {
       const res = await getShareLinkByDt(
         token as string,
         start,
-        rowsPerPage,
-        searchKeyword,
-        sortDir,
+        rowsPerPageSharelink,
+        searchKeywordSharelink,
+        sortDirSharelink,
       );
 
       const mapped =
@@ -641,7 +641,7 @@ const Content = () => {
     } finally {
       setLoading(false);
     }
-  }, [token, start, rowsPerPage, searchKeyword, sortDir]);
+  }, [token, start, searchKeyword, rowsPerPageSharelink, searchKeywordSharelink, sortDirSharelink]);
 
   useEffect(() => {
     if (token) {
@@ -993,9 +993,10 @@ const Content = () => {
             isHavePagination={true}
             totalCount={totalFilterRecords}
             rowsPerPageOptions={[10, 50, 100]}
+            defaultRowsPerPage={rowsPerPageSharelink}
             onPaginationChange={(page, rowsPerPage) => {
-              setPage(page);
-              setRowsPerPage(rowsPerPage);
+              setPageSharelink(page);
+              setRowsPerPageSharelink(rowsPerPage);
             }}
             onCopyLink={(row: any) => handleOpenInviteDialog(row.id, row.url, row.expired_at)}
             onDetailLink={(row: any) => handleDetailLink(row)}

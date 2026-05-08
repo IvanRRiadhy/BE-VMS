@@ -1,6 +1,5 @@
 import { Dialog, DialogContent, DialogTitle, IconButton } from '@mui/material';
 import { IconX } from '@tabler/icons-react';
-import React from 'react';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 
 const DetailVisitingPurpose = ({ open, onClose, data, purposeName }: any) => {
