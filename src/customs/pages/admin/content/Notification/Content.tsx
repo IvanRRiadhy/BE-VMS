@@ -1,18 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Box, Grid2 as Grid, IconButton } from '@mui/material';
+import { Box, Grid2 as Grid } from '@mui/material';
 import Container from 'src/components/container/PageContainer';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import {
   AdminCustomSidebarItemsData,
   AdminNavListingData,
 } from 'src/customs/components/header/navigation/AdminMenu';
-
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { deleteDocument, getAllDocumentPagination } from 'src/customs/api/admin';
-
-import { IconBell, IconScript } from '@tabler/icons-react';
+import { IconBell } from '@tabler/icons-react';
 
 const Content = () => {
   const [tableData, setTableData] = useState<any[]>([]);
@@ -44,16 +41,16 @@ const Content = () => {
       setLoading(true);
       try {
         const start = page * rowsPerPage;
-        const response = await getAllDocumentPagination(
-          token,
-          start,
-          rowsPerPage,
-          sortColumn,
-          sortDir,
-          searchKeyword,
-        );
+        // const response = await getAllDocumentPagination(
+        //   token,
+        //   start,
+        //   rowsPerPage,
+        //   sortColumn,
+        //   sortDir,
+        //   searchKeyword,
+        // );
         setTableData([]);
-        setTotalRecords(response.RecordsTotal);
+        // setTotalRecords(response.RecordsTotal);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {

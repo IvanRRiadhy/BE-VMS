@@ -1,9 +1,8 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   Box,
-  Card,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -50,7 +49,6 @@ import {
 } from 'src/customs/api/models/Admin/Integration';
 import {
   IconAccessPoint,
-  IconArrowLeft,
   IconBuilding,
   IconCode,
   IconRefresh,
@@ -62,33 +60,28 @@ import CustomTextField from 'src/components/forms/theme-elements/CustomTextField
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import AddBadgeDialog from './components/AddBadgeDialog';
 import { checkConnection } from 'src/customs/api/Admin/Integration';
-import { IconX } from '@tabler/icons-react';
 import SyncBadgeDialog from './components/SyncBadgeDialog';
 
 const Honeywell = ({ id }: { id: string }) => {
-  // const { id } = useParams();
   const { token } = useSession();
-  const [tableData, setTableData] = useState<Item[]>([]);
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
-  const [isDataReady, setIsDataReady] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const [selectedType, setSelectedType] = useState('companies');
   const [openFormType, setOpenFormType] = useState<
     'Companies' | 'Badge Type' | 'Clearcodes' | 'Badge Status' | null
   >(null);
-
   const [editingRow, setEditingRow] = useState<Item | null>(null);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [searchKeyword, setSearchKeyword] = useState('');
-
-  // Data for type
   const [listData, setListData] = useState<any[]>([]);
   const [detailData, setDetailData] = useState<any | null>(null);
   const [orgOptions, setOrgOptions] = useState<Array<{ id: string; label: string }>>([]);
   const [companyForm, setCompanyForm] = useState<any>(null);
   const [saving, setSaving] = useState(false);
   const [badgeTypeForm, setBadgeTypeForm] = useState<any>(null);
+  const [dataSyncBadge, setDataSyncBadge] = useState<any[]>([]);
+  const [openSyncDialog, setOpenSyncDialog] = useState(false);
   const [visitorTypeOptions, setVisitorTypeOptions] = useState<
     Array<{ id: string; label: string }>
   >([]);
@@ -123,8 +116,6 @@ const Honeywell = ({ id }: { id: string }) => {
 
   const handleSyncIntegration = async () => {
     if (!id || !token) {
-      // setSyncMsg({ open: true, text: 'Session habis / ID tidak valid.', severity: 'error' });
-      // return;
       showSwal('error', 'Session expired / Invalid ID.');
       return;
     }
@@ -138,7 +129,7 @@ const Honeywell = ({ id }: { id: string }) => {
         showSwal('error', res.msg || 'Synchronization failed.');
 
         if (res.status_code === 404 && /not connected/i.test(res.msg || '')) {
-          showSwal('error', res.msg || 'Integration not connected. Please check your settings.');
+          showSwal('error', 'Unable to connect to the device. Please try again later.');
         }
 
         return;
@@ -152,9 +143,6 @@ const Honeywell = ({ id }: { id: string }) => {
       showSwal('error', e?.message || 'Synchronization failed. Please try again later.');
     }
   };
-
-  const [dataSyncBadge, setDataSyncBadge] = useState<any[]>([]);
-  const [openSyncDialog, setOpenSyncDialog] = useState(false);
 
   const handleSyncBadge = async () => {
     if (!id || !token) {
@@ -183,6 +171,7 @@ const Honeywell = ({ id }: { id: string }) => {
 
       setDataSyncBadge(notExisted);
       setOpenSyncDialog(true);
+      showSwal('success', res.msg || 'Synchronization successful.', 1000);
     } catch (e: any) {
       setSyncing(false);
       showSwal('error', e?.message || 'Synchronization failed.');
@@ -222,22 +211,6 @@ const Honeywell = ({ id }: { id: string }) => {
       color: 'none',
       type: 'info',
     },
-    // {
-    //   title: 'Sync Data',
-    //   subTitle: '',
-    //   subTitleSetting: 10,
-    //   icon: IconRefresh,
-    //   color: 'none',
-    //   onIconClick: handleSyncIntegration,
-    // },
-    // {
-    //   title: 'Import Badge',
-    //   subTitle: '',
-    //   subTitleSetting: 10,
-    //   icon: IconRefresh,
-    //   color: 'none',
-    //   onIconClick: handleSyncBadge,
-    // },
     {
       title: 'Sync Data',
       icon: IconRefresh,
@@ -325,7 +298,6 @@ const Honeywell = ({ id }: { id: string }) => {
 
   useEffect(() => {
     fetchListByType(selectedType);
-    setIsDataReady(true);
   }, [selectedType, token, id]);
 
   const [editDialogType, setEditDialogType] = useState<
@@ -333,7 +305,7 @@ const Honeywell = ({ id }: { id: string }) => {
   >(null);
 
   useEffect(() => {
-    if (!editingRow) return; // jangan set kalau belum pilih row untuk edit
+    if (!editingRow) return; 
 
     let type: typeof editDialogType = null;
     if (selectedType === 'companies') type = 'Companies';

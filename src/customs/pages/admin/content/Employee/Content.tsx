@@ -112,37 +112,36 @@ const Content = () => {
     },
   ];
 
-  const fetchDataOrganization = async () => {
-    try {
-      const res = await getAllOrganizations(token as string);
-      setOrganizationData(res?.collection ?? []);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const fetchDataDepartment = async () => {
-    try {
-      const res = await getAllDepartments(token as string);
-      setDepartmentData(res?.collection ?? []);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const fetchDataDistrict = async () => {
-    try {
-      const res = await getAllDistricts(token as string);
-      setDistrictData(res?.collection ?? []);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
   useEffect(() => {
-    fetchDataOrganization();
-    fetchDataDepartment();
-    fetchDataDistrict();
+    if (!token) return;
+
+    const fetchAll = async () => {
+      const [orgRes, deptRes, distRes] = await Promise.allSettled([
+        getAllOrganizations(token as string),
+        getAllDepartments(token as string),
+        getAllDistricts(token as string),
+      ]);
+
+      if (orgRes.status === 'fulfilled') {
+        setOrganizationData(orgRes.value?.collection ?? []);
+      } else {
+        console.error('Organization error:', orgRes.reason);
+      }
+
+      if (deptRes.status === 'fulfilled') {
+        setDepartmentData(deptRes.value?.collection ?? []);
+      } else {
+        console.error('Department error:', deptRes.reason);
+      }
+
+      if (distRes.status === 'fulfilled') {
+        setDistrictData(distRes.value?.collection ?? []);
+      } else {
+        console.error('District error:', distRes.reason);
+      }
+    };
+
+    fetchAll();
   }, [token]);
 
   useEffect(() => {

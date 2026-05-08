@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Dialog, DialogTitle, DialogContent, IconButton } from '@mui/material';
 import { IconX } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
@@ -6,8 +6,8 @@ import { getShareLinkByDt } from 'src/customs/api/ShareLink';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 
-
 type Props = {
+  refreshKey: any;
   open: boolean;
   onClose: () => void;
   token: string;
@@ -18,6 +18,7 @@ type Props = {
 };
 
 const ShareLinkDialog: React.FC<Props> = ({
+  refreshKey,
   open,
   onClose,
   token,
@@ -33,51 +34,107 @@ const ShareLinkDialog: React.FC<Props> = ({
 
   const startPage = page * rowsPerPage;
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['share-links', startPage, rowsPerPage, searchKeyword, sortDir],
-    queryFn: async () => {
+  // const { data, isLoading } = useQuery({
+  //   queryKey: ['share-links', startPage, rowsPerPage, searchKeyword, sortDir],
+  //   queryFn: async () => {
+  //     const res = await getShareLinkByDt(token, startPage, rowsPerPage, searchKeyword, sortDir);
+  //     return res;
+  //   },
+  //   enabled: !!token && open,
+  //   // staleTime: 1000 * 60 * 5,
+  //   // gcTime: 1000 * 60 * 2,
+  //   // placeholderData: (prev) => prev,
+  // });
+
+  // const shareLinkList =
+  //   data?.collection?.map((item: any) => ({
+  //     id: item.id,
+  //     agenda: item.agenda,
+  //     url: item.url,
+  //     current_usage: item.current_usage,
+  //     max_usage: item.max_usage,
+  //     visitor_period_start: formatDateTime(item.visitor_period_start),
+  //     visitor_period_end: formatDateTime(item.visitor_period_end),
+  //     expired_at: (() => {
+  //       const date = new Date(item.expired_at + 'Z');
+
+  //       const formattedDate = date
+  //         .toLocaleDateString('id-ID', {
+  //           day: '2-digit',
+  //           // month: '2-digit',
+  //           month: 'long',
+  //           year: 'numeric',
+  //         })
+  //         .replace(/\//g, '-');
+
+  //       const formattedTime = date.toLocaleTimeString('id-ID', {
+  //         hour: '2-digit',
+  //         minute: '2-digit',
+  //         hour12: false,
+  //       });
+
+  //       return `${formattedDate}, ${formattedTime}`;
+  //     })(),
+  //     link_status: item.link_status,
+  //   })) || [];
+
+  // const totalFilterRecords = data?.RecordsFiltered || 0;
+
+  const [shareLinkList, setShareLinkList] = useState([]);
+  const [totalFilterRecords, setTotalFilterRecords] = useState(0);
+  const [loading, setLoading] = useState(false);
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+
       const res = await getShareLinkByDt(token, startPage, rowsPerPage, searchKeyword, sortDir);
-      return res;
-    },
-    enabled: !!token && open,
-    staleTime: 1000 * 60 * 5,
-    gcTime: 1000 * 60 * 2,
-    placeholderData: (prev) => prev,
-  });
 
-  const shareLinkList =
-    data?.collection?.map((item: any) => ({
-      id: item.id,
-      agenda: item.agenda,
-      url: item.url,
-      current_usage: item.current_usage,
-      max_usage: item.max_usage,
-      visitor_period_start: formatDateTime(item.visitor_period_start),
-      visitor_period_end: formatDateTime(item.visitor_period_end),
-      expired_at: (() => {
-        const date = new Date(item.expired_at + 'Z');
+      const mapped =
+        res?.collection?.map((item: any) => ({
+          id: item.id,
+          agenda: item.agenda,
+          url: item.url,
+          current_usage: item.current_usage,
+          max_usage: item.max_usage,
+          visitor_period_start: formatDateTime(item.visitor_period_start),
+          visitor_period_end: formatDateTime(item.visitor_period_end),
 
-        const formattedDate = date
-          .toLocaleDateString('id-ID', {
-            day: '2-digit',
-            // month: '2-digit',
-            month: 'long',
-            year: 'numeric',
-          })
-          .replace(/\//g, '-');
+          expired_at: (() => {
+            const date = new Date(item.expired_at + 'Z');
 
-        const formattedTime = date.toLocaleTimeString('id-ID', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false,
-        });
+            const formattedDate = date.toLocaleDateString('id-ID', {
+              day: '2-digit',
+              month: 'long',
+              year: 'numeric',
+            });
 
-        return `${formattedDate}, ${formattedTime}`;
-      })(),
-      link_status: item.link_status,
-    })) || [];
+            const formattedTime = date.toLocaleTimeString('id-ID', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: false,
+            });
 
-  const totalFilterRecords = data?.RecordsFiltered || 0;
+            return `${formattedDate}, ${formattedTime}`;
+          })(),
+
+          link_status: item.link_status,
+        })) || [];
+
+      setShareLinkList(mapped);
+      setTotalFilterRecords(res?.RecordsFiltered || 0);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [token, startPage, rowsPerPage, searchKeyword, sortDir]);
+
+  useEffect(() => {
+    if (open && token) {
+      fetchData();
+    }
+  }, [fetchData, open, token, refreshKey]);
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xl">
@@ -99,7 +156,7 @@ const ShareLinkDialog: React.FC<Props> = ({
       <DialogContent dividers>
         <DynamicTable
           data={shareLinkList}
-          loading={isLoading}
+          loading={loading}
           isHaveHeaderTitle
           isHaveChecked={true}
           isNoActionTableHead={true}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 
 import {
   SortableContext,
@@ -15,7 +15,6 @@ import {
   TableRow,
   TableCell,
   TextField,
-  MenuItem,
   Switch,
   IconButton,
   Autocomplete,
@@ -46,18 +45,7 @@ const RenderDragSite: React.FC<Props> = ({
   trackingList,
   onReorder,
 }) => {
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
-  const handleDragEnd = (event: any) => {
-    const { active, over } = event;
-    if (!active || !over || active.id === over.id) return;
-
-    const oldIndex = items.findIndex((_, idx) => `${sectionKey}-${idx}` === active.id);
-    const newIndex = items.findIndex((_, idx) => `${sectionKey}-${idx}` === over.id);
-
-    const reordered = arrayMove(items, oldIndex, newIndex);
-    onReorder(reordered);
-  };
 
   const getSelectList = () => {
     if (sectionKey === 'access') return accessControlList ?? [];
@@ -182,6 +170,15 @@ const SortableRow = ({
                   }
                 : null)
             }
+            // value={
+            //   selectList.find(
+            //     (x: any) =>
+            //       String(x.id).toLowerCase() ===
+            //       String(
+            //         item[fieldName] || item.trk_ble_card_access_id || item.prk_area_parking_id,
+            //       ).toLowerCase(),
+            //   ) || null
+            // }
             onChange={(_, newValue) => {
               const selectedId =
                 newValue?.trk_ble_card_access_id ||

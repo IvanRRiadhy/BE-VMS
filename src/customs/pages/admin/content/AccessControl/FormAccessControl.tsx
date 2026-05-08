@@ -65,8 +65,8 @@ const FormAccessControl = ({ editingId, onSuccess, onDirtyChange }: Props) => {
   } = useForm<FormType>({
     resolver: zodResolver(CreateAccessControlRequestSchema),
     defaultValues: {
-      brand_id: '',
-      brand_name: '',
+      // brand_id: '',
+      // brand_name: '',
       type: 0,
       name: '',
       description: '',
@@ -109,12 +109,14 @@ const FormAccessControl = ({ editingId, onSuccess, onDirtyChange }: Props) => {
     if (!token) return;
 
     (async () => {
-      const [brandRes, integrationRes] = await Promise.all([
-        getAllBrand(token),
+      const [integrationRes] = await Promise.allSettled([
+        // getAllBrand(token),
         getAllIntegration(token),
       ]);
-      setBrandList(brandRes?.collection ?? []);
-      setIntegrationList(integrationRes?.collection ?? []);
+
+      // if (brandRes.status === 'fulfilled') setBrandList(brandRes.value?.collection ?? []);
+      if (integrationRes.status === 'fulfilled')
+        setIntegrationList(integrationRes.value?.collection ?? []);
     })();
   }, [token]);
 
@@ -127,7 +129,7 @@ const FormAccessControl = ({ editingId, onSuccess, onDirtyChange }: Props) => {
 
       if (d) {
         reset({
-          brand_id: d.brand_id ?? '',
+          // brand_id: d.brand_id ?? '',
           integration_id: d.integration_id ?? '',
           type: typeMap[d.type] ?? 0,
           name: d.name,
@@ -136,7 +138,7 @@ const FormAccessControl = ({ editingId, onSuccess, onDirtyChange }: Props) => {
           door_id: d.door_id,
           raw: d.raw,
           integration_name: d.integration_name,
-          brand_name: d.brand_name,
+          // brand_name: d.brand_name,
         });
       }
     })();
@@ -148,10 +150,20 @@ const FormAccessControl = ({ editingId, onSuccess, onDirtyChange }: Props) => {
       if (!token) return;
 
       if (editingId) {
-        const payload = UpdateAccessControlRequestSchema.parse(data);
+        const payload = UpdateAccessControlRequestSchema.parse({
+          ...data,
+          brand_id: null,
+          brand_name: null,
+        });
+
         await updateAccessControl(editingId, payload, token);
       } else {
-        await createAccessControl(data, token);
+        const payload = CreateAccessControlRequestSchema.parse({
+          ...data,
+          brand_id: null,
+          brand_name: null,
+        });
+        await createAccessControl(payload, token);
       }
 
       showSwal(
@@ -237,7 +249,7 @@ const FormAccessControl = ({ editingId, onSuccess, onDirtyChange }: Props) => {
             <Typography variant="h6" sx={{ my: 2, borderLeft: '4px solid #673ab7', pl: 1 }}>
               Access Control Settings
             </Typography>
-            <CustomFormLabel>Brand</CustomFormLabel>
+            {/* <CustomFormLabel>Brand</CustomFormLabel>
             <Controller
               name="brand_id"
               control={control}
@@ -251,7 +263,7 @@ const FormAccessControl = ({ editingId, onSuccess, onDirtyChange }: Props) => {
                   ))}
                 </CustomSelect>
               )}
-            />
+            /> */}
 
             {/* INTEGRATION */}
             <CustomFormLabel required>Integration</CustomFormLabel>

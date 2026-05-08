@@ -168,64 +168,104 @@ const FormSite = ({
     (async () => {
       try {
         const results = await Promise.allSettled([
-          // getSiteById(editingId, token),
           getSitesAccessById(token, editingId),
+
+          // MASTER
+          getSiteParking(token),
+          getSiteTracking(token),
+
+          // RELATION
           getSitesParking(token),
           getSitesTracking(token),
         ]);
 
-        const [siteRes, parkingRes, trackingRes] = results;
+        const [
+          siteRes,
+          parkingMasterRes,
+          trackingMasterRes,
+          parkingRelationRes,
+          trackingRelationRes,
+        ] = results;
 
-        // const site = siteRes.status === 'fulfilled' ? siteRes.value.collection?.access : [];
-        const site = siteRes.status === 'fulfilled' ? siteRes.value.collection : [];
+        const site = siteRes.status === 'fulfilled' ? siteRes.value.collection : {};
 
-        const parkingList =
-          parkingRes.status === 'fulfilled' ? (parkingRes.value.collection ?? []) : [];
+        // MASTER DROPDOWN
+        const parkingMaster =
+          parkingMasterRes.status === 'fulfilled' ? (parkingMasterRes.value.collection ?? []) : [];
 
-        const trackingList =
-          trackingRes.status === 'fulfilled' ? (trackingRes.value.collection ?? []) : [];
-        setSiteParking(parkingList);
-        setSiteTracking(trackingList);
+        const trackingMaster =
+          trackingMasterRes.status === 'fulfilled'
+            ? (trackingMasterRes.value.collection ?? [])
+            : [];
+
+        // RELATION
+        const parkingRelation =
+          parkingRelationRes.status === 'fulfilled'
+            ? (parkingRelationRes.value.collection ?? [])
+            : [];
+
+        const trackingRelation =
+          trackingRelationRes.status === 'fulfilled'
+            ? (trackingRelationRes.value.collection ?? [])
+            : [];
+
+        // dropdown options
+        setSiteParking(parkingMaster);
+        setSiteTracking(trackingMaster);
 
         const normalizedId = editingId.toLowerCase();
 
-        const filteredParking = parkingList.filter(
-          (p: any) => (p.site_id || p.siteId)?.toLowerCase() === normalizedId,
+        // selected relation
+        const filteredParking = parkingRelation.filter(
+          (p: any) => String(p.site_id).toLowerCase() === normalizedId,
         );
 
-        const filteredTracking = trackingList.filter(
-          (t: any) => (t.site_id || t.siteId)?.toLowerCase() === normalizedId,
+        const filteredTracking = trackingRelation.filter(
+          (t: any) => String(t.site_id).toLowerCase() === normalizedId,
         );
 
-        const mappedParking = filteredParking.map((p: any, idx: any) => ({
-          id: p.id,
-          sort: idx,
-          site_id: p.site_id,
-          prk_area_parking_id: p.prk_area_parking_id,
-          name: p.area_name ?? '',
-          early_access: p.early_access ?? false,
-        }));
+        // map relation -> master
+        const mappedParking = filteredParking.map((p: any, idx: number) => {
+          const master = parkingMaster.find(
+            (x: any) => String(x.id).toLowerCase() === String(p.prk_area_parking_id).toLowerCase(),
+          );
 
-        const mappedTracking = filteredTracking.map((t: any, idx: any) => ({
-          id: t.id,
-          sort: idx,
-          site_id: t.site_id,
-          trk_ble_card_access_id: t.trk_ble_card_access_id,
-          name: t.masked_area_name ?? '',
-          early_access: t.early_access ?? false,
-        }));
+          return {
+            id: p.id,
+            sort: idx,
+            site_id: p.site_id,
+            prk_area_parking_id: p.prk_area_parking_id,
+            name: master?.name ?? '',
+            early_access: p.early_access ?? false,
+          };
+        });
+
+        const mappedTracking = filteredTracking.map((t: any, idx: number) => {
+          const master = trackingMaster.find(
+            (x: any) =>
+              String(x.id).toLowerCase() === String(t.trk_ble_card_access_id).toLowerCase(),
+          );
+
+          return {
+            id: t.id,
+            sort: idx,
+            site_id: t.site_id,
+            trk_ble_card_access_id: t.trk_ble_card_access_id,
+            name: master?.masked_area_name ?? master?.name ?? '',
+            early_access: t.early_access ?? false,
+          };
+        });
 
         setLocalForm((prev) => ({
           ...prev,
           ...site,
-          // type: Number(site.type),
           type: site?.type !== undefined ? Number(site.type) : prev.type,
-          access: site ?? [],
+
           parking: mappedParking,
           tracking: mappedTracking,
         }));
       } catch (err) {
-        // console.error('Unexpected error:', err);
+        console.error(err);
       }
     })();
   }, [editingId, token]);
@@ -369,7 +409,7 @@ const FormSite = ({
         });
 
         const res = await updateSite(editingId, updateData, token);
-        console.log('res', JSON.stringify(res, null, 2));
+        // console.log('res', JSON.stringify(res, null, 2));
 
         await Promise.all(
           (localForm.tracking ?? []).map((t) => {

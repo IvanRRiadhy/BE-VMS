@@ -81,7 +81,6 @@ import { getPrintBadgeConfig } from 'src/customs/api/Admin/PrintBadge';
 import PrintDialogBulk from './Dialog/PrintDialogBluk';
 import {
   getRegisteredSiteOperator,
-  getSiteAccessOperator,
   returnCard,
   swapCard,
 } from 'src/customs/api/Admin/SwapCard';
@@ -94,7 +93,6 @@ import AccessDialog from './Dialog/AccessDialog';
 import ParkingDialog from './Dialog/ParkingDialog';
 
 import {
-  getInvitationAccessControl,
   getInvitationSite,
   getInvitationVisitorEmployee,
   getInvitationVisitorHost,
@@ -116,9 +114,7 @@ dayjs.extend(customParseFormat);
 dayjs.extend(advancedFormat);
 dayjs.locale('id');
 const View = () => {
-  const theme = useTheme();
   const { token } = useSession();
-
   const dataImage = [infoPic];
   const [invitationCode, setInvitationCode] = useState<any[]>([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -164,7 +160,6 @@ const View = () => {
   const [openFillForm, setOpenFillForm] = useState(false);
   const [fillFormData, setFillFormData] = useState<any[]>([]);
   const [fillFormActiveStep, setFillFormActiveStep] = useState(0);
-  const [fillFormGroupedPages, setFillFormGroupedPages] = useState<any>({});
   const [fillFormDataVisitor, setFillFormDataVisitor] = useState<any[]>([]);
   const [selectedSite, setSelectedSite] = useState<any | null>(null);
   const [openDialogInfo, setOpenDialogInfo] = useState(false);
@@ -904,7 +899,6 @@ const View = () => {
       const invitationId = invitation.id;
 
       setInvitationCode(data);
-      setVisitorStatus(data[0]?.visitor_status ?? null);
       setSelectedVisitorNumber(data[0]?.visitor_number ?? null);
       setScannedVisitorNumber(data[0]?.visitor_number ?? null);
 
@@ -1539,7 +1533,6 @@ const View = () => {
         return prev;
       });
 
-      setVisitorStatus(action);
 
       const invitationId = invitationCode?.[0]?.id;
       if (invitationId) {
@@ -1640,8 +1633,6 @@ const View = () => {
         },
       ];
     });
-
-    setVisitorStatus(visitor.visitor_status ?? '-');
   };
 
   const handleApplyBulkAction = async () => {
@@ -2027,47 +2018,6 @@ const View = () => {
       : [],
   });
 
-  const buildGroupedPages = (sections: any[] = []) => {
-    const single_page: any[] = [];
-    const batch_page: Record<string, any> = {};
-
-    sections.forEach((section) => {
-      const forms = formsOf(section);
-
-      if (isPurposeVisit(section)) {
-        if (!section?.self_only) {
-          // hanya Purpose Visit global (shared)
-          forms.forEach((f: any, idx: number) => {
-            const existing = (section.form_answers || []).find((ans: any) => sameField(ans, f));
-            single_page.push(existing ? { ...f, ...existing } : cloneFormWithEmptyAnswers(f, idx));
-          });
-        }
-        return;
-      }
-
-      if (!section?.is_document) {
-        forms.forEach((f: any, idx: number) => {
-          const secId = (section as any)?.id ?? (section as any)?.Id ?? null;
-          const formId = (f as any)?.id ?? (f as any)?.Id ?? idx;
-          const secForeign = (section as any)?.foreign_id ?? (section as any)?.foreignId ?? null;
-          const formForeign = (f as any)?.foreign_id ?? (f as any)?.foreignId ?? null;
-          const formCustom = (f as any)?.custom_field_id ?? (f as any)?.customFieldId ?? null;
-
-          const resolvedForeign = formForeign ?? secForeign ?? formCustom ?? formId ?? null;
-
-          batch_page[idx] = {
-            ...cloneFormWithEmptyAnswers(f, idx),
-            foreign_id: asStr(resolvedForeign),
-          };
-        });
-      }
-    });
-
-    return {
-      single_page,
-      batch_page,
-    };
-  };
 
   const handleApplyToAllChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const checked = event.target.checked;
@@ -2101,9 +2051,7 @@ const View = () => {
       );
 
       const firstResult = results[0];
-      // console.log('firstResult', firstResult);
       const questionPagesTemplate = firstResult?.collection?.question_page ?? [];
-      // console.log('questionPagesTemplate', questionPagesTemplate);
 
       setInvitationDetail(firstResult);
       setQuestionPageTemplate(questionPagesTemplate);
@@ -2111,7 +2059,6 @@ const View = () => {
       const baseSections = buildGroupSections(questionPagesTemplate);
       setFillFormData(baseSections);
       setFillFormActiveStep(0);
-      setFillFormGroupedPages(buildGroupedPages(baseSections));
 
       const visitorGroupList = results.map((res, idx) => {
         const v = visitorList[idx];
@@ -2979,7 +2926,6 @@ const View = () => {
       // setSelectedVisitors([]);
       // setSelectMultiple(false);
     } catch (error) {
-      // toast('Submit gagal', 'error');
       showSwal('error', 'Failed Submit Pra Register!');
     } finally {
       setTimeout(() => {
@@ -3045,7 +2991,6 @@ const View = () => {
         return;
       }
 
-      // 🚫 early_access → tidak bisa grant
       if (early_access && action === 'grant') {
         invalidVisitors.push({
           visitorId,
@@ -3104,7 +3049,6 @@ const View = () => {
     };
   };
 
-  // Access : Grant dll
   const handleAccessAction = async (
     row: any,
     action: 'no_action' | 'grant' | 'revoke' | 'block' | 'unblock',
@@ -3153,10 +3097,10 @@ const View = () => {
           })),
         };
 
-        console.log('📦 Final Payload:', payload);
+        // console.log('📦 Final Payload:', payload);
 
         const res = await createGiveAccessOperator(token as string, payload);
-        console.log('Access Action Response:', JSON.stringify(res, null, 2));
+        // console.log('Access Action Response:', JSON.stringify(res, null, 2));
 
         const backendMsg =
           res?.collection?.[0] || res?.msg || res?.message || 'Action executed successfully.';
@@ -3221,7 +3165,7 @@ const View = () => {
 
   const [todayVisitingPurpose, setTodayVisitingPurpose] = useState<any[]>([]);
   const [visitorType, setVisitorType] = useState<any[]>([]);
-
+  const [loading, setLoading] = useState(true);
   const [vtLoading, setVTLoading] = useState(false);
 
   const fetchTodayVisitingPurpose = async () => {
@@ -3398,6 +3342,7 @@ const View = () => {
 
             {/* Visiting Purpose*/}
             <ActionPanelView
+              loading={loading}
               permission={permissionHook}
               isFullscreen={isFullscreen}
               handleOpenScanQR={handleOpenScanQR}
@@ -3422,26 +3367,18 @@ const View = () => {
             {/* Side Right QR Code */}
             <Grid
               size={{ xs: 12, lg: 3 }}
-              sx={
-                {
-                  display: 'flex',
-                  flexDirection: 'column',
-                  // height: '100%',
-                }
-              }
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                // height: '100%',
+              }}
             >
-              {/* <InvitationQrCard invitationCode={invitationCode} isFullscreen={isFullscreen} /> */}
-              {/* <VisitorImage
-                  faceImage={activeSelfie}
-                  identityImage={activeKTP}
-                  isFullscreen={isFullscreen}
-                /> */}
               <InvitationQrCard invitationCode={invitationCode} isFullscreen={isFullscreen} />
               <VisitorImage
-                  faceImage={activeSelfie}
-                  identityImage={activeKTP}
-                  isFullscreen={isFullscreen}
-                />
+                faceImage={activeSelfie}
+                identityImage={activeKTP}
+                isFullscreen={isFullscreen}
+              />
             </Grid>
           </Grid>
           {/* </Grid> */}
@@ -3513,6 +3450,7 @@ const View = () => {
             setOpenChooseCardDialog(false);
             setSearchTerm('');
           }}
+          cards={availableCards}
           containerRef={containerRef}
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
@@ -3558,6 +3496,7 @@ const View = () => {
           open={openRevokeDialog}
           onClose={() => setOpenRevokeDialog(false)}
           invitationCode={invitationCode}
+          accessData={accessData}
           selectedCards={selectedCards}
           handleToggleCard={handleToggleCard}
           dataDummyAccess={dataDummyAccess}

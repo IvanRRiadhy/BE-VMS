@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import  { useEffect, useState } from 'react';
 import Container from 'src/components/container/PageContainer';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import {
@@ -6,23 +6,19 @@ import {
   AdminNavListingData,
 } from 'src/customs/components/header/navigation/AdminMenu';
 import {
-  Avatar,
   Backdrop,
   Box,
-  Button,
   Card,
   CardContent,
-  CardHeader,
   CircularProgress,
   Divider,
   Grid2 as Grid,
   Typography,
 } from '@mui/material';
-import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import printBadge from 'src/assets/images/print_badge.jpeg';
 import { PrintBadgeSchema } from 'src/customs/api/validations/PrintBadgeSchema';
 import { showSwal } from 'src/customs/components/alerts/alerts';
-import axiosInstance, { axiosInstance2, BASE_URL } from 'src/customs/api/interceptor';
+import  { axiosInstance2 } from 'src/customs/api/interceptor';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { getPrintBadgeConfig, updatePrintBadgeConfig } from 'src/customs/api/Admin/PrintBadge';
 import FormPrintBadge from './FormPrintBadge';
@@ -50,10 +46,7 @@ const Content = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleChange = (field: keyof PrintBadgeForm, value: any) => {
-    // console.log('typing:', field);
     setFormData((prev) => ({ ...prev, [field]: value }));
-
-    // // clear error on change
     setErrors((prev) => ({ ...prev, [field]: '' }));
   };
 
@@ -87,7 +80,6 @@ const Content = () => {
     setLoading(true);
     setErrors({});
 
-    // 1️⃣ VALIDASI
     const result = await PrintBadgeSchema.safeParseAsync({
       ...formData,
       printer_paper_size: formData.printer_paper_size
@@ -109,7 +101,6 @@ const Content = () => {
     try {
       let logoUrl: string | null = printBadgeConfig.logo ?? null;
 
-      // 2️⃣ UPLOAD FILE JIKA ADA FILE BARU
       if (formData.logo instanceof File) {
         const uploadedUrl = await uploadFileToCDN(
           formData.logo,
@@ -125,13 +116,12 @@ const Content = () => {
         logoUrl = uploadedUrl;
       }
 
-      // 3️⃣ SAFETY CHECK (opsional tapi bagus)
       if (!logoUrl) {
         setErrors({ logo: 'Logo is required' });
         return;
       }
 
-      // 4️⃣ BUILD PAYLOAD
+    
       const payload = {
         logo: logoUrl,
         name: result.data.name,
@@ -140,14 +130,13 @@ const Content = () => {
         printer_paper_size: result.data.printer_paper_size,
       };
 
-      console.log('payload', payload);
+      // console.log('payload', payload);
 
-      // 5️⃣ UPDATE CONFIG
+  
       await updatePrintBadgeConfig(printBadgeConfig.id, payload, token as string);
 
       showSwal('success', 'Print Badge updated.');
     } catch (error) {
-      console.error(error);
       showSwal('error', 'Failed to update print badge.');
     } finally {
       setLoading(false);
@@ -179,7 +168,7 @@ const Content = () => {
     };
 
     fetchData();
-  }, []);
+  }, [token]);
 
   return (
     <PageContainer
@@ -215,7 +204,7 @@ const Content = () => {
                   sx={{
                     backgroundColor: '#e1e6e8',
                     borderRadius: 1,
-                    flexGrow: 1, // 👈 ini penting
+                    flexGrow: 1, 
                   }}
                 >
                   <Box sx={{ display: 'flex', justifyContent: 'center' }}>

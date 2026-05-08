@@ -106,7 +106,7 @@ export const CreateDriverSubmitSchema = CreateDriverRequestSchema.extend({
   district_id: z.string().trim().min(1, 'District is required'),
   birth_date: z.string().trim().min(1, 'Birth date is required'),
   join_date: z.string().trim().min(1, 'Join date is required'),
-  exit_date: z.string().trim().min(1, 'Exit date is required'),
+  // exit_date: z.string().trim().min(1, 'Exit date is required'),
 });
 
 export interface CreateDriverResponse {

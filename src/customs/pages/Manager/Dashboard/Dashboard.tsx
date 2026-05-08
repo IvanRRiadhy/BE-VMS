@@ -1,31 +1,29 @@
-import { Avatar, Button, Grid2 as Grid } from '@mui/material';
+import { Button, Drawer, Grid2 as Grid, Typography } from '@mui/material';
 import { Box } from '@mui/system';
 import {
-  IconBan,
+  IconCalendar,
   IconCheck,
   IconCircleX,
+  IconDownload,
   IconForbid2,
   IconLogin,
-  IconLogin2,
   IconLogout,
   IconReport,
 } from '@tabler/icons-react';
-import { Scanner } from '@yudiel/react-qr-scanner';
 import React, { useEffect, useRef, useState } from 'react';
-import QRCode from 'react-qr-code';
 import PageContainer from 'src/components/container/PageContainer';
 import TopCard from './TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import Heatmap from './Heatmap';
 import PieCharts from './PieCharts';
-import { getAllApprovalDT, getApproval } from 'src/customs/api/employee';
-import dayjs from 'dayjs';
 import { useNavigate } from 'react-router';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import PieChartsEmployee from './PieChartsEmployee';
 import { getActiveInvitation } from 'src/customs/api/visitor';
 import moment from 'moment';
+import { setDateRange } from 'src/store/apps/Daterange/dateRangeSlice';
+import Calendar from 'src/customs/components/calendar/Calendar';
 import { useQuery } from '@tanstack/react-query';
 import {
   approveTicket,
@@ -34,15 +32,12 @@ import {
 } from 'src/customs/api/Admin/ApprovalWorkflow';
 import Swal from 'sweetalert2';
 import { showSwal } from 'src/customs/components/alerts/alerts';
+import { useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 const DashboardEmployee = () => {
-  // const cards = [
-  //   { title: 'Check In', icon: IconLogin, subTitle: `0`, subTitleSetting: 10, color: 'none' },
-  //   { title: 'Check Out', icon: IconLogout, subTitle: `0`, subTitleSetting: 10, color: 'none' },
-  //   { title: 'Denied', icon: IconCircleOff, subTitle: `0`, subTitleSetting: 10, color: 'none' },
-  //   { title: 'Block', icon: IconBan, subTitle: `0`, subTitleSetting: 10, color: 'none' },
-  // ];
-
   const CardItems = [
     { title: 'checkin', key: 'Checkin', icon: <IconLogin size={25} /> },
     { title: 'checkout', key: 'Checkout', icon: <IconLogout size={25} /> },
@@ -56,7 +51,6 @@ const DashboardEmployee = () => {
   ];
   const { token } = useSession();
   const [loading, setLoading] = useState(false);
-  // const [approvalData, setApprovalData] = useState<any[]>([]);
   const [activeInvitation, setActiveInvitation] = useState<any[]>([]);
   const navigate = useNavigate();
   const [page, setPage] = useState(0);
@@ -64,10 +58,7 @@ const DashboardEmployee = () => {
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
-  const formatDate = (date?: string) => {
-    if (!date) return '-'; // fallback kalau kosong
-    return moment.utc(date).local().format('DD-MM-YYYY, HH:mm');
-  };
+
 
   const start = page * rowsPerPage;
   const {
@@ -92,7 +83,7 @@ const DashboardEmployee = () => {
         approval_actor_status,
         approval_workflow_type,
         approval_status,
-        current_step,
+        // current_step,
         visitor_period_start,
         visitor_period_end,
       }: any) => ({
@@ -103,8 +94,8 @@ const DashboardEmployee = () => {
         approval_actor_status,
         approval_workflow_type,
         approval_status,
-        current_step,
-        visitor_period_start: formatDateTime(visitor_period_start),
+        // current_step,
+        visitor_period_start,
         visitor_period_end: formatDateTime(visitor_period_end),
       }),
     ) || [];
@@ -182,14 +173,123 @@ const DashboardEmployee = () => {
 
       // setRefreshTrigger((prev) => prev + 1);
       await refetchApproval();
-    } catch (error) {
+    } catch (error:any) {
       setTimeout(() => setLoading(false), 800);
-      showSwal('error', 'Something went wrong while processing approval.');
+      showSwal('error', error.message ?? 'Failed to action approval.');
+    }
+  };
+
+  const dispatch = useDispatch();
+
+  const { startDate, endDate } = useSelector((state: any) => state.dateRange);
+  const handleClick = (event: React.MouseEvent<HTMLElement>) => setAnchorEl(event.currentTarget);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
+  const handleClose = () => setAnchorEl(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const exportRef = useRef<HTMLDivElement>(null);
+
+  const handleExportPdf = async () => {
+    if (!exportRef.current || isExporting) return;
+
+    try {
+      setIsExporting(true);
+
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      const canvas = await html2canvas(exportRef.current, { scale: 2 });
+      const imgData = canvas.toDataURL('image/jpeg');
+
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+
+      const imgWidth = pdfWidth - 20;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = 10;
+
+      pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+      heightLeft -= pdfHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight + 10;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
+      }
+
+      const formatDate = (date: Date) => date.toISOString().split('T')[0];
+      const start = formatDate(startDate);
+      const end = formatDate(endDate);
+
+      pdf.save(`Dashboard Report-${start}_to_${end}.pdf`);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsExporting(false);
     }
   };
 
   return (
     <PageContainer title="Dashboard" description="This is Manager Dashboard">
+      <Grid container spacing={3} alignItems="center" justifyContent="space-between" mb={1}>
+        <Grid
+          size={{ xs: 12, lg: 12 }}
+          display="flex"
+          justifyContent="flex-end"
+          alignItems="center"
+          gap={2}
+          sx={{ mt: 0.5 }}
+        >
+          <Button
+            size="small"
+            sx={{
+              backgroundColor: 'white',
+              color: 'black',
+              border: '1px solid #d1d1d1',
+              ':hover': { backgroundColor: '#d1d1d1', color: 'black' },
+            }}
+            startIcon={<IconCalendar size={18} />}
+            onClick={handleClick}
+          >
+            {`${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`}
+          </Button>
+
+          <Button
+            size="small"
+            variant="contained"
+            color="error"
+            startIcon={<IconDownload />}
+            onClick={handleExportPdf}
+            disabled={isExporting}
+          >
+            {isExporting ? 'Exporting...' : 'Export'}
+          </Button>
+
+          <Drawer open={open} anchor="right" onClose={handleClose}>
+            <Box sx={{ p: 2 }}>
+              <Typography variant="h6" mb={1}>
+                Select Date Range
+              </Typography>
+              <Calendar
+                value={{ startDate, endDate }}
+                onChange={(selection: any) => {
+                  dispatch(
+                    setDateRange({
+                      startDate: selection.startDate,
+                      endDate: selection.endDate,
+                    }),
+                  );
+                  handleClose();
+                }}
+              />
+            </Box>
+          </Drawer>
+        </Grid>
+      </Grid>
+
       <Grid container spacing={2} sx={{ mt: 0 }} alignItems="stretch">
         <Grid size={{ xs: 12, lg: 9 }}>
           <TopCard items={CardItems} size={{ xs: 12, lg: 3 }} />
@@ -229,7 +329,7 @@ const DashboardEmployee = () => {
                 },
               }}
             >
-              <IconReport size={30} />
+              <IconReport  size={30} />
               Report
             </Button>
           </Box>
@@ -238,7 +338,7 @@ const DashboardEmployee = () => {
         {/* Tabel */}
         <Grid size={{ xs: 12, lg: 6 }}>
           <DynamicTable
-            height={510}
+            height={490}
             isHavePagination={false}
             overflowX="auto"
             data={activeInvitation}
@@ -251,7 +351,7 @@ const DashboardEmployee = () => {
 
         <Grid size={{ xs: 12, lg: 6 }}>
           <DynamicTable
-            height={510}
+            height={490}
             isHavePagination={false}
             overflowX="auto"
             data={approvalData}
@@ -271,12 +371,12 @@ const DashboardEmployee = () => {
             isHavePeriod={true}
           />
         </Grid>
-        <Grid size={{ xs: 12, lg: 3 }}>
+        <Grid size={{ xs: 12, lg: 6 }}>
           <PieCharts />
         </Grid>
-        <Grid size={{ xs: 12, lg: 3 }} sx={{ height: '100%' }}>
+        {/* <Grid size={{ xs: 12, lg: 3 }} sx={{ height: '100%' }}>
           <PieChartsEmployee />
-        </Grid>
+        </Grid> */}
         <Grid size={{ xs: 12, lg: 6 }} sx={{ height: '100%' }}>
           <Heatmap />
         </Grid>

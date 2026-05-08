@@ -19,7 +19,7 @@ export type Item = {
   qr_code: string;
   faceimage: string;
   identity_type: string;
-  birth_date: string; 
+  birth_date: string;
   join_date: string;
   exit_date: string;
   is_head: boolean;
@@ -82,7 +82,7 @@ export const CreateEmployeeRequestSchema = z.object({
   identity_type: z.string().default(''),
   birth_date: z.string().default(''),
   join_date: z.string().default(''),
-  exit_date: z.string().default(''),
+  exit_date: z.string().nullable().optional(),
   is_head: z.boolean().default(false),
   head_employee_1: z.string().default(''),
   head_employee_2: z.string().default(''),
@@ -108,7 +108,7 @@ export const CreateEmployeeSubmitSchema = CreateEmployeeRequestSchema.extend({
   district_id: z.string().trim().min(1, 'District is required'),
   birth_date: z.string().trim().min(1, 'Birth date is required'),
   join_date: z.string().trim().min(1, 'Join date is required'),
-  exit_date: z.string().trim().min(1, 'Exit date is required'),
+  // exit_date: z.string().trim().min(1, 'Exit date is required'),
 });
 
 export interface CreateEmployeeResponse {

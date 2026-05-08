@@ -5,50 +5,91 @@ import HC_heatmap from 'highcharts/modules/heatmap';
 import { Typography } from '@mui/material';
 import { Box } from '@mui/system';
 import { t } from 'i18next';
+import { useSession } from 'src/customs/contexts/SessionContext';
+import { useSelector } from 'react-redux';
+import { getHeatmaps } from 'src/customs/api/admin';
 
-// ✅ aktifkan modul heatmap
 HC_heatmap(Highcharts);
 
 const Heatmap = () => {
   const [heatmapData, setHeatmapData] = useState<any[]>([]);
   const [hours, setHours] = useState<string[]>([]);
+  const { token } = useSession();
+  const { startDate, endDate } = useSelector((state: any) => state.dateRange);
 
-  const generateHourLabels = () =>
-    Array.from({ length: 24 }, (_, i) => {
-      const start = String(i).padStart(2, '0') + ':01';
-      const end = String(i + 1).padStart(2, '0') + ':00';
-      return `${start} - ${end}`;
-    });
+  const start = startDate?.toISOString().split('T')[0];
+  const end = endDate?.toISOString().split('T')[0];
 
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const convertUtcHoursToLocal = (hours: any[], offset: number) => {
+    const localHours = Array.from({ length: 24 }, (_, i) => ({
+      hour: `${i.toString().padStart(2, '0')}:00-${((i + 1) % 24).toString().padStart(2, '0')}:00`,
+      count: 0,
+    }));
 
-  // ✅ Dummy data (x = jam, y = hari, value = jumlah pengunjung)
+    hours.forEach((h) => {
+      const utcHour = parseInt(h.hour.split(':')[0], 10);
+
+      const localHour = (utcHour + offset + 24) % 24;
+
+      localHours[localHour].count = h.count;
+    });
+
+    return localHours;
+  };
+
   useEffect(() => {
-    setHours(generateHourLabels());
+    const fetchHeatmap = async () => {
+      try {
 
-    const dummy: any[] = [];
-    for (let day = 0; day < 7; day++) {
-      for (let hour = 0; hour < 24; hour++) {
-        const value = 0; // acak 0–30 pengunjung
-        dummy.push([hour, day, value]);
-      }
-    }
+        const res = await getHeatmaps(
+          token!,
+          // startDate.toLocaleDateString('en-CA'),
+          // endDate.toLocaleDateString('en-CA'),
+          start,
+          end,
+        );
 
-    setHeatmapData(dummy);
-  }, []);
+        const collection = res.collection ?? [];
+        if (collection.length > 0) {
+          // const hourLabels = collection[0].hours.map((h: any) => h.hour);
+          // const hourLabels = collection[0].hours.map((h: any) => shiftHourRange(h.hour, 7));
+          const transformedCollection = collection.map((d: any) => ({
+            ...d,
+            hours: convertUtcHoursToLocal(d.hours, 7),
+          }));
+
+          const hourLabels = transformedCollection[0].hours.map((h: any) => h.hour);
+          setHours(hourLabels);
+
+          const data = transformedCollection.flatMap((d: any) =>
+            d.hours.map((h: any, idx: number) => ({
+              x: idx,
+              y: d.day_of_week,
+              value: h.count,
+              color: h.count === 0 ? '#e5e7eb' : undefined,
+            })),
+          );
+          setHeatmapData(data);
+        }
+      } catch (err) {}
+    };
+
+    if (token) fetchHeatmap();
+  }, [token, start, end]);
 
   const options: Highcharts.Options = {
     chart: {
       type: 'heatmap',
-      // marginTop: 40,
-      // marginBottom: 50,
+      marginTop: 20,
+      marginBottom: 80,
       plotBorderWidth: 1,
       style: {
-        height: 420,
+        height: 400,
       },
     },
 
-    title: { text: 'Heatmap', align: 'center' },
+    title: { text: '', align: 'center' },
 
     xAxis: {
       categories: hours,
@@ -107,18 +148,19 @@ const Heatmap = () => {
     <>
       <Box
         sx={{
-          borderRadius: 3,
+          borderRadius: 1,
           overflow: 'hidden',
           // boxShadow: 3,
           // border: '1px solid #d6d3d3ff',
-          height: '100%',
+          // height: '100%',
+          height: 430,
+          backgroundColor: '#fff',
         }}
       >
-        <HighchartsReact
-          highcharts={Highcharts}
-          options={options}
-          // containerProps={{ style: { width: '100%', height: '100%' } }}
-        />
+        <Typography variant="h5" sx={{ mb: 0, fontWeight: 600, pt: 2, pl: 2 }}>
+          {t('heatmap_visitor')}
+        </Typography>
+        <HighchartsReact highcharts={Highcharts} options={options} />
       </Box>
     </>
   );

@@ -39,25 +39,13 @@ const Content = () => {
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
   const [searchParams] = useSearchParams();
+  const [page, setPage] = useState(Number(searchParams.get('page') || '0'));
+  const [rowsPerPage, setRowsPerPage] = useState(Number(searchParams.get('length') || '10'));
+  const [searchKeyword, setSearchKeyword] = useState(searchParams.get('search') || '');
+  const [searchInput, setSearchInput] = useState(searchParams.get('search') || '');
 
-  // const [page, setPage] = useState(0);
-  // const [rowsPerPage, setRowsPerPage] = useState(10);
-  // const [sortColumn, setSortColumn] = useState<string>('id');
-  // const [sortDir, setSortDir] = useState('desc');
-  // const [searchKeyword, setSearchKeyword] = useState('');
-  // const [searchInput, setSearchInput] = useState('');
-
-    const [page, setPage] = useState(Number(searchParams.get('page') || '0'));
-
-    const [rowsPerPage, setRowsPerPage] = useState(Number(searchParams.get('length') || '10'));
-
-    const [searchKeyword, setSearchKeyword] = useState(searchParams.get('search') || '');
-
-    const [searchInput, setSearchInput] = useState(searchParams.get('search') || '');
-
-    const [sortColumn] = useState('id');
-    const [sortDir] = useState('desc');
-
+  const [sortColumn] = useState('id');
+  const [sortDir] = useState('desc');
 
   const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
@@ -77,17 +65,16 @@ const Content = () => {
     },
   ];
 
-    useEffect(() => {
-      setPage(Number(searchParams.get('page') || '0'));
+  useEffect(() => {
+    setPage(Number(searchParams.get('page') || '0'));
 
-      setRowsPerPage(Number(searchParams.get('length') || '10'));
+    setRowsPerPage(Number(searchParams.get('length') || '10'));
 
-      const keyword = searchParams.get('search') || '';
+    const keyword = searchParams.get('search') || '';
 
-      setSearchKeyword(keyword);
-      setSearchInput(keyword);
-    }, [searchParams]);
-
+    setSearchKeyword(keyword);
+    setSearchInput(keyword);
+  }, [searchParams]);
 
   useEffect(() => {
     if (!token) return;
@@ -106,7 +93,6 @@ const Content = () => {
         setTableData(response.collection);
         setTotalRecords(response.RecordsTotal);
       } catch (error) {
-        console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
       }
@@ -130,15 +116,6 @@ const Content = () => {
   };
 
   const defaultDoc = CreateDocumentRequestSchema.parse({});
-
-  const isEmptyDoc = (doc: any) => {
-    if (!doc || typeof doc !== 'object') return true;
-    try {
-      return JSON.stringify(doc) === JSON.stringify(defaultDoc);
-    } catch {
-      return false;
-    }
-  };
 
   const hasUnsaved = useCallback(() => {
     const raw = localStorage.getItem('unsavedDocumentData');
@@ -184,7 +161,6 @@ const Content = () => {
 
   const handleConfirmEdit = () => {
     localStorage.removeItem('unsavedDocumentData');
-
     setConfirmDialogOpen(false);
 
     if (pendingEditId) {

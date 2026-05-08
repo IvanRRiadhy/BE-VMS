@@ -3,14 +3,17 @@ import { IconX } from '@tabler/icons-react';
 import React from 'react';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 
-const DetailVisitingPurpose = ({ open, onClose, data }: any) => {
-
-  
+const DetailVisitingPurpose = ({ open, onClose, data, purposeName }: any) => {
   return (
     <div>
-      <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
-        <DialogTitle>{data?.name}</DialogTitle>
-        {/* close button */}
+      <Dialog open={open} onClose={onClose} fullWidth   maxWidth={false}
+            PaperProps={{
+              sx: {
+                width: '100vw',
+              },
+            }}>
+        <DialogTitle>{purposeName?.name}</DialogTitle>
+
         <IconButton
           aria-label="close"
           onClick={onClose}
@@ -24,7 +27,7 @@ const DetailVisitingPurpose = ({ open, onClose, data }: any) => {
           <IconX />
         </IconButton>
         <DialogContent dividers>
-          <DynamicTable data={[]} />
+          <DynamicTable data={data} isHaveChecked isNoActionTableHead  isHaveSearch/>
         </DialogContent>
       </Dialog>
     </div>

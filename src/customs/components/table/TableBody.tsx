@@ -249,8 +249,6 @@ export const TableBodyContent = ({
               >
                 <Skeleton variant="text" width="30%" height={18} animation="wave" />
               </TableCell>
-
-              {/* ✅ Main data columns */}
               {columns.map((col: any, i: any) => (
                 <TableCell key={i}>
                   <Box display="flex" alignItems="center" gap={1}>

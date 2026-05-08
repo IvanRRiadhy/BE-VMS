@@ -57,7 +57,6 @@ import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useSearchParams, useLocation } from 'react-router';
 import { debounce } from 'lodash';
 import { TableBodyContent } from './TableBody';
-import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import SearchToolbar from './components/SearchToolbar';
 
 type HeaderItem = { name: string };
@@ -84,6 +83,7 @@ type DynamicTableProps<
   isHaveAction?: boolean;
   isHaveAccess?: boolean;
   isHaveActionOnlyEdit?: boolean;
+  borderRadius?: any;
   // isHaveExportPdf?: boolean;
   isHaveBack?: boolean;
   onBack?: any;
@@ -215,6 +215,7 @@ function DynamicTableBase<
   isHaveAction = false,
   isHaveActionOnlyEdit = false,
   isSelectedType = false,
+  borderRadius,
   isHaveVisitor = false,
   isActionVisitor = false,
   isHaveSearch = false,
@@ -829,7 +830,7 @@ function DynamicTableBase<
       )}
 
       {/*  TABLE */}
-      <BlankCard sx={{ height: { height } }}>
+      <BlankCard sx={{ height: { height } }} borderRadius={borderRadius}>
         <CardContent sx={{ height: { height } }}>
           <Grid2 container sx={{ marginBottom: 0.1 }}>
             {isSiteSpaceName && (
@@ -1183,7 +1184,7 @@ function DynamicTableBase<
                       variant="contained"
                       onClick={onCheckConnection}
                     >
-                     Check Connection
+                      Check Connection
                     </Button>
                   </Tooltip>
                 )}
@@ -1298,6 +1299,7 @@ function DynamicTableBase<
                 sx={{
                   width: '100%',
                   // overflowX: 'auto',
+                 
                 }}
                 stickyHeader={stickyHeader}
                 // sx={{

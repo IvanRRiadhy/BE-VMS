@@ -24,13 +24,20 @@ const TopCards = ({ items = [], size }: any) => {
   const { t } = useTranslation();
   const { token } = useSession();
   const { startDate, endDate } = useSelector((state: any) => state.dateRange);
+  const formatLocalDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
 
-  const start = startDate?.toISOString().split('T')[0];
-  const end = endDate?.toISOString().split('T')[0];
+    return `${year}-${month}-${day}`;
+  };
+  // const start = startDate?.toISOString().split('T')[0];
+  // const end = endDate?.toISOString().split('T')[0];
+  const start = formatLocalDate(startDate);
+  const end = formatLocalDate(endDate);
 
   const [statsToday, setStatsToday] = useState<Record<string, number>>({});
   const [statsYesterday, setStatsYesterday] = useState<Record<string, number>>({});
-  // const [isChartReady, setIsChartReady] = useState(false);
 
   const [normalizedData, setNormalizedData] = useState<
     { Date: string; StatusMap: Record<string, number> }[]
@@ -51,28 +58,41 @@ const TopCards = ({ items = [], size }: any) => {
     });
   };
 
-  const fetched = useRef(false);
-
   useEffect(() => {
-    if (!token || fetched.current) return;
-
-    fetched.current = true;
+    if (!token) return;
 
     const fetchData = async () => {
       try {
         const res = await getVisitorChart(token as any, start, end);
+
         const collection: ApiDateGroup[] = res.collection ?? [];
 
-        const today = new Date();
+        // const today = new Date();
 
-        const currentStart = new Date();
-        currentStart.setDate(today.getDate() - 6);
+        // const currentStart = new Date();
+        // currentStart.setDate(today.getDate() - 6);
 
-        const previousStart = new Date();
-        previousStart.setDate(today.getDate() - 13);
+        // const previousStart = new Date();
+        // previousStart.setDate(today.getDate() - 13);
 
-        const previousEnd = new Date();
-        previousEnd.setDate(today.getDate() - 7);
+        // const previousEnd = new Date();
+        // previousEnd.setDate(today.getDate() - 7);
+
+        // const currentTotals: Record<string, number> = {};
+        // const previousTotals: Record<string, number> = {};
+
+        const currentStart = new Date(startDate);
+        const currentEnd = new Date(endDate);
+
+        // hitung jumlah hari yang dipilih
+        const diffDays =
+          Math.ceil((currentEnd.getTime() - currentStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+        const previousStart = new Date(currentStart);
+        previousStart.setDate(previousStart.getDate() - diffDays);
+
+        const previousEnd = new Date(currentEnd);
+        previousEnd.setDate(previousEnd.getDate() - diffDays);
 
         const currentTotals: Record<string, number> = {};
         const previousTotals: Record<string, number> = {};
@@ -84,12 +104,11 @@ const TopCards = ({ items = [], size }: any) => {
           (day.Status || []).forEach((item) => {
             const key = item.visitor_status.trim();
 
-            // 7 hari terakhir
-            if (dayDate >= currentStart && dayDate <= today) {
+
+            if (dayDate >= currentStart && dayDate <= currentEnd) {
               currentTotals[key] = (currentTotals[key] || 0) + item.Count;
             }
 
-            // 7 hari sebelumnya
             if (dayDate >= previousStart && dayDate <= previousEnd) {
               previousTotals[key] = (previousTotals[key] || 0) + item.Count;
             }
@@ -102,15 +121,8 @@ const TopCards = ({ items = [], size }: any) => {
 
         setStatsToday(currentTotals);
         setStatsYesterday(previousTotals);
-        // setIsChartReady(true);
-
-        // console.log('isChartReady', isChartReady);
       } catch (err) {
         console.error('Failed to fetch visitor count:', err);
-        setStatsToday({});
-        setStatsYesterday({});
-        setNormalizedData([]);
-        // setIsChartReady(false);
       }
     };
 

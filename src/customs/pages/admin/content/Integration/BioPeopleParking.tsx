@@ -1,9 +1,7 @@
 import { useEffect, useState, useRef, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   Box,
-  Card,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -14,16 +12,13 @@ import {
   Portal,
   Button,
   Grid2 as Grid,
-  TextField,
   Backdrop,
   CircularProgress,
   Snackbar,
   Alert,
   IconButton,
   Autocomplete,
-  Skeleton,
   MenuItem,
-  Menu,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import PageContainer from 'src/components/container/PageContainer';
@@ -31,22 +26,13 @@ import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import TopCard from 'src/customs/components/cards/TopCard';
 import {
   IconCar,
-  IconCards,
-  IconDeviceCctv,
-  IconDeviceIpad,
   IconForbid,
   IconMapPins,
   IconRefresh,
-  IconStairsUp,
-  IconUserOff,
   IconUsers,
   IconUsersGroup,
 } from '@tabler/icons-react';
-import {
-  Item,
-  UpdateDepartmentTrackingRequest,
-  UpdateOrganizationTrackingRequest,
-} from 'src/customs/api/models/Admin/Integration';
+import { Item } from 'src/customs/api/models/Admin/Integration';
 import { getAllVisitorType } from 'src/customs/api/admin';
 import {
   getAreaParking,
@@ -73,58 +59,10 @@ import {
   UpdateVisitorTypeParkingRequest,
 } from 'src/customs/api/models/Integration/Parking';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
+import { showSwal } from 'src/customs/components/alerts/alerts';
 
 const BioPeopleParking = ({ id }: { id: string }) => {
   const { token } = useSession();
-
-  const handleParkingSyncIntegration = async () => {
-    if (!id || !token) {
-      setSyncMsg({ open: true, text: 'Session habis / ID tidak valid.', severity: 'error' });
-      return;
-    }
-
-    try {
-      setSyncing(true);
-      const res = await syncParkingIntegration(id as string, token as string);
-      setSyncing(false);
-
-      if (res.status !== 'success') {
-        setSyncMsg({
-          open: true,
-          text: res.msg || 'Sinkronisasi gagal.',
-          severity: 'error',
-        });
-
-        if (res.status_code === 404 && /not connected/i.test(res.msg || '')) {
-          setSyncMsg({
-            open: true,
-            text: 'Tidak terhubung ke server. Coba lagi nanti.',
-            severity: 'error',
-          });
-        }
-
-        return;
-      }
-
-      setSyncMsg({
-        open: true,
-        text: res.msg || 'Sinkronisasi berhasil.',
-        severity: 'success',
-      });
-
-      // refresh data tanpa await
-      loadTotals();
-      fetchListByType(selectedType);
-    } catch (e: any) {
-      console.error('Sync error:', e);
-      setSyncing(false);
-      setSyncMsg({
-        open: true,
-        text: e?.message || 'Sinkronisasi gagal. Coba lagi nanti.',
-        severity: 'error',
-      });
-    }
-  };
 
   const [totals, setTotals] = useState<{ [key: string]: number }>({
     visitor_type: 0,
@@ -185,7 +123,6 @@ const BioPeopleParking = ({ id }: { id: string }) => {
 
   const [searchKeyword, setSearchKeyword] = useState('');
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
-  const [isDataReady, setIsDataReady] = useState(false);
   const [loading, setLoading] = useState(false);
   const [listData, setListData] = useState<any[]>([]);
   const [detailData, setDetailData] = useState<any | null>(null);
@@ -231,15 +168,12 @@ const BioPeopleParking = ({ id }: { id: string }) => {
 
   const getCount = (res: any) => {
     if (!res) return 0;
-    // variasi umum
     if (typeof res?.RecordsTotal === 'number') return res.RecordsTotal;
     if (Array.isArray(res?.collection)) return res.collection.length;
 
-    // beberapa API taruh di data/collection
     if (typeof res?.data?.RecordsTotal === 'number') return res.data.RecordsTotal;
     if (Array.isArray(res?.data?.collection)) return res.data.collection.length;
 
-    // fallback: kalau ada field 'total' atau 'count'
     if (typeof res?.total === 'number') return res.total;
     if (typeof res?.count === 'number') return res.count;
 
@@ -275,6 +209,35 @@ const BioPeopleParking = ({ id }: { id: string }) => {
     loadTotals();
   }, [id, token]);
 
+  const handleParkingSyncIntegration = async () => {
+    if (!id || !token) {
+      setSyncMsg({ open: true, text: 'Session habis / ID tidak valid.', severity: 'error' });
+      return;
+    }
+
+    try {
+      setSyncing(true);
+      const res = await syncParkingIntegration(id as string, token as string);
+      setSyncing(false);
+
+      if (res.status !== 'success') {
+        showSwal('error', res.msg || 'Sinkronisasi gagal.');
+
+        if (res.status_code === 404 && /not connected/i.test(res.msg || '')) {
+          showSwal('error', 'Unable to connect to the device. Please try again later.');
+        }
+
+        return;
+      }
+      showSwal('success', res.msg || 'Successfully synchronized.');
+      loadTotals();
+      fetchListByType(selectedType);
+    } catch (e: any) {
+      setSyncing(false);
+      showSwal('error', e?.message || 'Failed to synchronize. Please try again later.');
+    }
+  };
+
   const fetchListByType = async (type: string) => {
     if (!token || !id) return;
     setLoading(true);
@@ -304,15 +267,14 @@ const BioPeopleParking = ({ id }: { id: string }) => {
         setListData(
           (res.collection ?? []).map((item: any) => ({
             ...item,
-            vehicle_type: item.vehicle_type ?? '-', // cukup ini
+            vehicle_type: item.vehicle_type ?? '-',
           })),
         );
       } else {
         setListData([]);
       }
     } catch (e) {
-      console.error('Fetch list error:', e);
-      setListData([]);
+      // setListData([]);
     } finally {
       setLoading(false);
     }
@@ -320,7 +282,6 @@ const BioPeopleParking = ({ id }: { id: string }) => {
 
   useEffect(() => {
     fetchListByType(selectedType);
-    setIsDataReady(true);
   }, [selectedType, token, id]);
 
   useEffect(() => {
@@ -331,12 +292,12 @@ const BioPeopleParking = ({ id }: { id: string }) => {
   const [isBatchEdit, setIsBatchEdit] = useState(false);
   const handleEditBatch = () => {
     if (!selectedRows.length) {
-      setSyncMsg({ open: true, text: 'Pilih minimal satu baris.', severity: 'error' });
+      showSwal('error', 'Please select at least one row.');
       return;
     }
     setIsBatchEdit(true);
-    setEditingRow(null); // jangan pakai detail satu item
-    setDetailData(null); // kosongkan detail agar effect tidak overwrite form
+    setEditingRow(null);
+    setDetailData(null);
   };
 
   const [enabled, setEnabled] = useState({
@@ -384,15 +345,12 @@ const BioPeopleParking = ({ id }: { id: string }) => {
         setDetailData(row);
       }
     } catch (e) {
-      console.error('Fetch detail error:', e);
       setDetailData(row);
     }
   };
 
-  const [openFormType, setOpenFormType] = useState<'Organization' | null>(null);
-
   useEffect(() => {
-    if (!editingRow) return; // jangan set kalau belum pilih row untuk edit
+    if (!editingRow) return;
 
     let type: typeof editDialogType = null;
     if (selectedType === 'visitor_type') type = 'Visitor Type';
@@ -416,14 +374,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
     // setOpenFormType(null);
   };
 
-  const vehicleTypeMap: Record<number, string> = {
-    0: 'Car',
-    1: 'Motorcycle',
-    2: 'Bus',
-  };
-
   useEffect(() => {
-    // Tutup dialog → kosongkan form
     if (!editDialogType) {
       setOrganizationForm(null);
       setDepartmentForm(null);
@@ -433,10 +384,8 @@ const BioPeopleParking = ({ id }: { id: string }) => {
       return;
     }
 
-    //   // Tunggu data detail
     if (!detailData) return;
 
-    // Hanya handle form Organization di sini
     if (editDialogType == 'Visitor Type') {
       setOrganizationForm({
         visitor_type_id: detailData.visitor_type_id ?? '',
@@ -511,7 +460,6 @@ const BioPeopleParking = ({ id }: { id: string }) => {
     const loadOptions = async () => {
       try {
         if (editDialogType === 'Visitor Type') {
-          // Load organizations
           const res = await getAllVisitorType(token);
           if (cancelled) return;
 
@@ -522,13 +470,10 @@ const BioPeopleParking = ({ id }: { id: string }) => {
             })) || [];
 
           setOrgOptions(items);
-          // reset yang lain agar nggak nyangkut
         } else {
-          // Dialog lain (atau ditutup)
-          setOrgOptions([]);
+          // setOrgOptions([]);
         }
       } catch (e) {
-        console.error('Load options error:', e);
         if (editDialogType === 'Visitor Type') {
           setOrgOptions([]);
         } else {
@@ -547,7 +492,6 @@ const BioPeopleParking = ({ id }: { id: string }) => {
       Object.entries(obj).filter(([, v]) => v !== '' && v !== null && v !== undefined),
     );
 
-  // Visitor Type
   const handleSaveVisitorType = async () => {
     if (!token || !id) return;
 
@@ -558,7 +502,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
       if (!isBatchEdit) {
         const visitorTypeId = String(organizationForm?.id ?? detailData?.id ?? '');
         if (!visitorTypeId) {
-          setSyncMsg({ open: true, text: 'ID tidak ditemukan.', severity: 'error' });
+          showSwal('error', 'ID Not Found.');
           return;
         }
 
@@ -570,21 +514,15 @@ const BioPeopleParking = ({ id }: { id: string }) => {
         });
 
         await updateVisitorTypeParking(visitorTypeId, payload, token as string);
-
-        // 🔥 refresh dari API (bukan cuma local state)
         await fetchListByType(selectedType);
-
-        // 🔥 refresh total (optional tapi bagus)
         loadTotals();
 
-        // 🔥 close dialog
         handleCloseDialog();
 
         // setListData((prev) =>
         //   prev.map((it) => (String(it.id) === visitorTypeId ? { ...it, ...payload } : it)),
         // );
-
-        setSyncMsg({ open: true, text: 'Visitor type updated successfullys', severity: 'success' });
+        showSwal('success', 'Visitor type updated successfully');
         return;
       }
 
@@ -602,13 +540,10 @@ const BioPeopleParking = ({ id }: { id: string }) => {
         prev.map((it) => (ids.includes(String(it.id)) ? { ...it, ...payload } : it)),
       );
 
-      setSyncMsg({ open: true, text: 'Visitor type updated successfully', severity: 'success' });
+      // setSyncMsg({ open: true, text: 'Visitor type updated successfully', severity: 'success' });
+      showSwal('success', 'Visitor type updated successfully');
     } catch (err: any) {
-      setSyncMsg({
-        open: true,
-        text: err?.response?.data?.msg || 'Failed to update visitor type',
-        severity: 'error',
-      });
+      showSwal('error', err?.response?.data?.msg || 'Failed to update visitor type');
     } finally {
       setTimeout(() => {
         setSaving(false);
@@ -630,7 +565,6 @@ const BioPeopleParking = ({ id }: { id: string }) => {
           return;
         }
 
-        // kirim field apa adanya, jangan di-omit
         const payload = {
           vehicle_type: cardForm?.vehicle_type || '',
           active: cardForm?.active ?? false,
@@ -639,17 +573,12 @@ const BioPeopleParking = ({ id }: { id: string }) => {
         console.log('Payload:', payload);
 
         await updateVehicleParking(vehicleId, payload, token as string);
-
-        // 🔥 refresh dari API (bukan cuma local state)
         await fetchListByType(selectedType);
 
-        // 🔥 refresh total (optional tapi bagus)
         loadTotals();
 
-        // 🔥 close dialog
         handleCloseDialog();
-
-        setSyncMsg({ open: true, text: 'Vehicle updated successfully', severity: 'success' });
+        showSwal('success', 'Vehicle updated successfully');
         return;
       }
 
@@ -667,11 +596,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
 
       setSyncMsg({ open: true, text: 'Vehicle updated successfully', severity: 'success' });
     } catch (err: any) {
-      setSyncMsg({
-        open: true,
-        text: err?.response?.data?.msg || 'Failed to update vehicle',
-        severity: 'error',
-      });
+      showSwal('error', err?.response?.data?.msg || 'Failed to update vehicle');
     } finally {
       setTimeout(() => setSaving(false), 600);
     }
@@ -688,29 +613,18 @@ const BioPeopleParking = ({ id }: { id: string }) => {
       if (!isBatchEdit) {
         const blockId = String(memberForm?.id ?? detailData?.id ?? '');
         if (!blockId) {
-          setSyncMsg({ open: true, text: 'ID tidak ditemukan.', severity: 'error' });
+          showSwal('error', 'ID Not Found.');
           return;
         }
 
-        // kirim boolean apa adanya, jangan di-omit
         const payload = { active: memberForm?.active };
-
         await updateBlockParking(blockId, payload, token as string);
 
-        // 🔥 refresh dari API (bukan cuma local state)
         await fetchListByType(selectedType);
-
-        // 🔥 refresh total (optional tapi bagus)
         loadTotals();
 
-        // 🔥 close dialog
         handleCloseDialog();
-
-        setSyncMsg({
-          open: true,
-          text: 'Block updated successfully',
-          severity: 'success',
-        });
+        showSwal('success', 'Block updated successfully');
         return;
       }
 
@@ -727,13 +641,10 @@ const BioPeopleParking = ({ id }: { id: string }) => {
         prev.map((it) => (ids.includes(String(it.id)) ? { ...it, ...payload } : it)),
       );
 
-      setSyncMsg({ open: true, text: 'Block updated successfully', severity: 'success' });
+      // setSyncMsg({ open: true, text: 'Block updated successfully', severity: 'success' });
+      showSwal('success', 'Block updated successfully');
     } catch (err: any) {
-      setSyncMsg({
-        open: true,
-        text: err?.response?.data?.msg || 'Failed to update block',
-        severity: 'error',
-      });
+      showSwal('error', err?.response?.data?.msg || 'Failed to update block');
     } finally {
       setTimeout(() => {
         setSaving(false);
@@ -752,29 +663,27 @@ const BioPeopleParking = ({ id }: { id: string }) => {
       if (!isBatchEdit) {
         const areaId = String(districtForm?.id ?? detailData?.id ?? '');
         if (!areaId) {
-          setSyncMsg({ open: true, text: 'ID tidak ditemukan.', severity: 'error' });
+          // setSyncMsg({ open: true, text: 'ID tidak ditemukan.', severity: 'error' });
+          showSwal('error', 'ID Not Found.');
           return;
         }
 
-        // kirim apa adanya, termasuk false
         const payload = { active: districtForm?.active };
 
         await updateAreaParking(areaId, payload, token as string);
 
-        // 🔥 refresh dari API (bukan cuma local state)
         await fetchListByType(selectedType);
 
-        // 🔥 refresh total (optional tapi bagus)
         loadTotals();
 
-        // 🔥 close dialog
         handleCloseDialog();
 
-        setSyncMsg({
-          open: true,
-          text: 'Area updated successfully',
-          severity: 'success',
-        });
+        // setSyncMsg({
+        //   open: true,
+        //   text: 'Area updated successfully',
+        //   severity: 'success',
+        // });
+        showSwal('success', 'Area updated successfully');
         return;
       }
 
@@ -790,13 +699,10 @@ const BioPeopleParking = ({ id }: { id: string }) => {
         prev.map((it) => (ids.includes(String(it.id)) ? { ...it, ...payload } : it)),
       );
 
-      setSyncMsg({ open: true, text: 'Area updated successfully', severity: 'success' });
+      // setSyncMsg({ open: true, text: 'Area updated successfully', severity: 'success' });
+      showSwal('success', 'Area updated successfully');
     } catch (err: any) {
-      setSyncMsg({
-        open: true,
-        text: err?.response?.data?.msg || 'Failed to update area',
-        severity: 'error',
-      });
+      showSwal('error', err?.response?.data?.msg || 'Failed to update area');
     } finally {
       setTimeout(() => {
         setSaving(false);
@@ -819,23 +725,21 @@ const BioPeopleParking = ({ id }: { id: string }) => {
           return;
         }
 
-        // kirim apa adanya, termasuk false
         const payload = { active: departmentForm?.active };
 
         await updateSlotParking(slotId, payload, token as string);
 
-        // update list
         setListData((prev) =>
           prev.map((it) => (String(it.id) === slotId ? { ...it, ...payload } : it)),
         );
 
-        // update form agar switch ikut berubah
         setDepartmentForm((prev: any) => ({
           ...prev,
           ...payload,
         }));
 
-        setSyncMsg({ open: true, text: 'Slot updated successfully', severity: 'success' });
+        // setSyncMsg({ open: true, text: 'Slot updated successfully', severity: 'success' });
+        showSwal('success', 'Slot updated successfully');
         return;
       }
 
@@ -851,13 +755,10 @@ const BioPeopleParking = ({ id }: { id: string }) => {
         prev.map((it) => (ids.includes(String(it.id)) ? { ...it, ...payload } : it)),
       );
 
-      setSyncMsg({ open: true, text: 'Slot updated successfully', severity: 'success' });
+      // setSyncMsg({ open: true, text: 'Slot updated successfully', severity: 'success' });
+      showSwal('success', 'Slot updated successfully');
     } catch (err: any) {
-      setSyncMsg({
-        open: true,
-        text: err?.response?.data?.msg || 'Failed to update slot',
-        severity: 'error',
-      });
+      showSwal('error', err?.response?.data?.msg || 'Failed to update slot');
     } finally {
       setTimeout(() => {
         setSaving(false);
@@ -914,9 +815,6 @@ const BioPeopleParking = ({ id }: { id: string }) => {
                   }}
                   onEdit={handleEditRow}
                   onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-                  // onFilterByColumn={(column) => {
-                  //   setSortColumn(column.column);
-                  // }}
                 />
               </Grid>
             </Grid>
@@ -1426,7 +1324,7 @@ const BioPeopleParking = ({ id }: { id: string }) => {
           autoHideDuration={3000}
           onClose={() => setSyncMsg((p) => ({ ...p, open: false }))}
           anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-          sx={{ zIndex: 99999 }} // ⬅️ di atas modal & backdrop apa pun
+          sx={{ zIndex: 99999 }}
         >
           <Alert
             onClose={() => setSyncMsg((p) => ({ ...p, open: false }))}

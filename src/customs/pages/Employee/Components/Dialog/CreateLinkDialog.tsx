@@ -21,6 +21,7 @@ import { useMemo, useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import { showSwal } from 'src/customs/components/alerts/alerts';
 import { useHost } from 'src/hooks/useHost';
 import { useSites } from 'src/hooks/useSites';
 import { useVisitorType } from 'src/hooks/useVisitorType';
@@ -114,16 +115,20 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
   };
 
   const handleCreateLink = (sendEmail: boolean) => {
-    const payload = buildPayload();
+    try {
+      const payload = buildPayload();
 
-    if (sendEmail) {
-      onSendEmail(payload);
-    } else {
-      onCreateLink(payload);
+      if (sendEmail) {
+        onSendEmail(payload);
+      } else {
+        onCreateLink(payload);
+      }
+
+      resetState();
+      onClose();
+    } catch (error) {
+      showSwal('error', 'Failed to create link');
     }
-
-    resetState();
-    onClose();
   };
 
   const [selectedSiteParentIds, setSelectedSiteParentIds] = useState<string[]>([]);
@@ -250,7 +255,6 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
               />
             </Stack>
 
-            {/* PARENT SELECTOR */}
             <Autocomplete
               // multiple
               size="small"
@@ -317,7 +321,9 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
           {/* AGENDA */}
           <Grid size={{ xs: 12, md: 6 }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between">
-              <CustomFormLabel sx={{ marginTop: 0 }}>Agenda</CustomFormLabel>
+              <CustomFormLabel sx={{ marginTop: 0 }} required>
+                Agenda
+              </CustomFormLabel>
               <Switch
                 size="small"
                 checked={enabled.agenda}

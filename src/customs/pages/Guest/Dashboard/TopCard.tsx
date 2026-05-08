@@ -16,7 +16,7 @@ import {
   IconTrendingDown,
   IconMinus,
 } from '@tabler/icons-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getVisitorChart } from 'src/customs/api/admin';
 import { useSelector } from 'react-redux';
 import { useSession } from 'src/customs/contexts/SessionContext';
@@ -38,92 +38,89 @@ const TopCard = ({ items = [], size }: any) => {
   const { startDate, endDate } = useSelector((state: any) => state.dateRange);
 
   const [stats, setStats] = useState<Record<string, number>>({});
+  const formatLocalDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
 
-  const start = startDate?.toISOString().split('T')[0];
-  const end = endDate?.toISOString().split('T')[0];
-
+    return `${year}-${month}-${day}`;
+  };
+  const start = formatLocalDate(startDate);
+  const end = formatLocalDate(endDate);
   const [statsToday, setStatsToday] = useState<Record<string, number>>({});
   const [statsYesterday, setStatsYesterday] = useState<Record<string, number>>({});
+  const [normalizedData, setNormalizedData] = useState<
+    { Date: string; StatusMap: Record<string, number> }[]
+  >([]);
 
-  //   useEffect(() => {
-  //     if (!token) return;
+  const normalizeCollection = (collection: ApiDateGroup[]) => {
+    return collection.map((day) => {
+      const grouped: Record<string, number> = {};
 
-  //     // const fetchData = async () => {
-  //     //   try {
-  //     //     const res = await getVisitorChart(
-  //     //       token,
-  //     //       // startDate.toISOString().split('T')[0],
-  //     //       // endDate.toISOString().split('T')[0],
-  //     //       start,
-  //     //       end,
-  //     //     );
+      (day.Status || []).forEach((item) => {
+        const key = item.visitor_status.trim();
+        grouped[key] = (grouped[key] || 0) + Number(item.Count || 0);
+      });
 
-  //     //     const collection: ApiDateGroup[] = res.collection ?? [];
+      return {
+        Date: day.Date.split('T')[0],
+        StatusMap: grouped,
+      };
+    });
+  };
 
-  //     //     // 🔧 Gabungkan total count per visitor_status dari semua tanggal
-  //     //     const totals: Record<string, number> = {};
+  useEffect(() => {
+    if (!token) return;
 
-  //     //     collection.forEach((day) => {
-  //     //       day.Status.forEach((item) => {
-  //     //         const key = item.visitor_status.trim();
-  //     //         totals[key] = (totals[key] || 0) + item.Count;
-  //     //       });
-  //     //     });
+    const fetchData = async () => {
+      try {
+        const res = await getVisitorChart(token as any, start, end);
+        const collection: ApiDateGroup[] = res.collection ?? [];
 
-  //     //     setStats(totals);
-  //     //   } catch (err) {
-  //     //     console.error('Failed to fetch visitor count:', err);
-  //     //   }
-  //     // };
+        const currentStart = new Date(startDate);
+        const currentEnd = new Date(endDate);
 
-  //     const fetchData = async () => {
-  //       try {
-  //         const res = await getVisitorChart(token as any, start, end);
-  //         const collection: ApiDateGroup[] = res.collection ?? [];
+        const diffDays =
+          Math.ceil((currentEnd.getTime() - currentStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
-  //         const today = new Date();
+        const previousStart = new Date(currentStart);
+        previousStart.setDate(previousStart.getDate() - diffDays);
 
-  //         const currentStart = new Date();
-  //         currentStart.setDate(today.getDate() - 6);
+        const previousEnd = new Date(currentEnd);
+        previousEnd.setDate(previousEnd.getDate() - diffDays);
 
-  //         const previousStart = new Date();
-  //         previousStart.setDate(today.getDate() - 13);
+        const currentTotals: Record<string, number> = {};
+        const previousTotals: Record<string, number> = {};
 
-  //         const previousEnd = new Date();
-  //         previousEnd.setDate(today.getDate() - 7);
+        collection.forEach((day) => {
+          const dayDate = new Date(day.Date);
 
-  //         const currentTotals: Record<string, number> = {};
-  //         const previousTotals: Record<string, number> = {};
+          (day.Status || []).forEach((item) => {
+            const key = item.visitor_status.trim();
 
-  //         collection.forEach((day) => {
-  //           const dayDate = new Date(day.Date);
+            if (dayDate >= currentStart && dayDate <= currentEnd) {
+              currentTotals[key] = (currentTotals[key] || 0) + item.Count;
+            }
 
-  //           day.Status.forEach((item) => {
-  //             const key = item.visitor_status.trim();
+            if (dayDate >= previousStart && dayDate <= previousEnd) {
+              previousTotals[key] = (previousTotals[key] || 0) + item.Count;
+            }
+          });
+        });
 
-  //             // 7 hari terakhir
-  //             if (dayDate >= currentStart && dayDate <= today) {
-  //               currentTotals[key] = (currentTotals[key] || 0) + item.Count;
-  //             }
+        // setRawCollection(collection);
+        const normalized = normalizeCollection(collection);
+        setNormalizedData(normalized);
 
-  //             // 7 hari sebelumnya
-  //             if (dayDate >= previousStart && dayDate <= previousEnd) {
-  //               previousTotals[key] = (previousTotals[key] || 0) + item.Count;
-  //             }
-  //           });
-  //         });
+        setStatsToday(currentTotals);
+        setStatsYesterday(previousTotals);
+      } catch (err) {
+        console.error('Failed to fetch visitor count:', err);
+      }
+    };
 
-  //         setRawCollection(collection);
-
-  //         setStatsToday(currentTotals);
-  //         setStatsYesterday(previousTotals);
-  //       } catch (err) {
-  //         console.error('Failed to fetch visitor count:', err);
-  //       }
-  //     };
-
-  //     if (token) fetchData();
-  //   }, [token, startDate, endDate]);
+    if (token) fetchData();
+  }, [token, startDate, endDate]);
 
   const getPercentageChange = (key: string) => {
     const current = statsToday[key] ?? 0;

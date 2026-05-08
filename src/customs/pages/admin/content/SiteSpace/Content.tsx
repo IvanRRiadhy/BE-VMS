@@ -35,7 +35,7 @@ import FilterMoreContent from './FilterMoreContent';
 import { useNavigate, useParams } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import SelectSiteTypeDialog from './components/Dialog/SelectSiteTypeDialog';
-import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
+import ConfirmUnsavedDialog from 'src/customs/pages/admin/components/ConfirmUnsavedDialog';
 
 type SiteTableRow = {
   id: string;
@@ -404,7 +404,6 @@ const Content = () => {
     try {
       const res = await getSiteById(id, token);
       const found = res?.collection ?? null;
-      console.log('Fetched site by ID:', found);
 
       if (!found) return;
 

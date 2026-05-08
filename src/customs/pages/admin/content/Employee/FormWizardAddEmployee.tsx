@@ -5,10 +5,7 @@ import {
   Box,
   Stepper,
   Step,
-  StepLabel,
   Button,
-  Alert,
-  Stack,
   MenuItem,
   FormHelperText,
   FormControl,
@@ -111,7 +108,6 @@ const FormWizardAddEmployee = ({
   const [screenshot, setScreenshot] = useState<string | null>(null);
   const webcamRef = useRef<Webcam>(null);
   const [removing, setRemoving] = useState(false);
-  const [employeeAllRes, setEmployeeAllRes] = useState<Item[]>([]);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -386,10 +382,6 @@ const FormWizardAddEmployee = ({
     setErrors({});
 
     try {
-      if (!token) {
-        showSwal('error', 'Something went wrong. Please try again later.');
-        return;
-      }
       if (isBatchEdit && selectedRows.length > 0) {
         const enabledKeys = Object.keys(enabledFields ?? {}).filter(
           (k) => (enabledFields as any)[k] === true,
@@ -427,7 +419,7 @@ const FormWizardAddEmployee = ({
               vehicle_plate_number: payload.vehicle_plate_number,
               vehicle_type: payload.vehicle_type,
             },
-            token,
+            token as string,
           );
         }
 
@@ -439,7 +431,7 @@ const FormWizardAddEmployee = ({
 
       const mergedFormData = normalizeForSubmit({
         ...localForm,
-
+        exit_date: localForm.exit_date || null,
         type: String(localForm.type ?? 'Permanent'),
         gender:
           typeof localForm.gender === 'string'
@@ -471,30 +463,26 @@ const FormWizardAddEmployee = ({
 
       if (edittingId) {
         const { faceimage: _drop, ...withoutImage } = data;
-        const editData: UpdateEmployeeRequest = {
+        const editData: any = {
           ...withoutImage,
           type: String(data.type ?? ''),
           qr_code: localForm.card_number,
           is_email_verify: false,
+          exit_date: data.exit_date || null,
         };
 
-        const res = await updateEmployee(edittingId, editData, token);
+        await updateEmployee(edittingId, editData, token as string);
         if (hasNewImage) {
           await handleFileUploads(edittingId, rawFileImage, rawFaceImage);
         }
         showSwal('success', 'Employee successfully updated!');
       } else {
-        console.log('Creating employee with data:', data);
-        const created = await createEmployee(data, token);
-
+        const created = await createEmployee(data, token as string);
         const employeeId = created?.collection.employee_id;
-
         if (hasNewImage) {
           await handleFileUploads(employeeId as string, rawFileImage, rawFaceImage);
         }
-
         showSwal('success', 'Employee successfully created!');
-
         setFormData(CreateEmployeeRequestSchema.parse({}));
       }
 
@@ -503,7 +491,13 @@ const FormWizardAddEmployee = ({
       if (err?.errors) {
         setErrors(err.errors);
       }
-      showSwal('error', err?.message ?? 'Failed to submit. Please try again.');
+      showSwal(
+        'error',
+        err?.response.data?.msg ??
+          err?.response.data?.message ??
+          err?.message ??
+          'Failed to submit. Please try again.',
+      );
     } finally {
       setLoading(false);
     }
@@ -617,16 +611,16 @@ const FormWizardAddEmployee = ({
                   id="identity_type"
                   value={localForm.identity_type}
                   onChange={(e: any) => {
-                   setLocalForm((prev) => ({
-                     ...prev,
-                     identity_type: e.target.value,
-                   }));
+                    setLocalForm((prev) => ({
+                      ...prev,
+                      identity_type: e.target.value,
+                    }));
 
-                  //  setIsFormChanged?.(true);
+                    //  setIsFormChanged?.(true);
 
-                   if (errors.identity_type) {
-                     setErrors((p) => ({ ...p, identity_type: '' }));
-                   }
+                    if (errors.identity_type) {
+                      setErrors((p) => ({ ...p, identity_type: '' }));
+                    }
                   }}
                   fullWidth
                   disabled={isBatchEdit}
@@ -1183,7 +1177,7 @@ const FormWizardAddEmployee = ({
               />
             </Grid2>
             <Grid2 size={{ xs: 12, sm: 12 }}>
-              <CustomFormLabel sx={{ marginY: 1 }} htmlFor="join" required>
+              <CustomFormLabel sx={{ marginY: 1 }} htmlFor="join">
                 <Typography variant="caption">Exit Date</Typography>
               </CustomFormLabel>
               <CustomTextField

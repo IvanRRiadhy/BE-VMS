@@ -331,8 +331,6 @@ export const getTodayVisitingPurpose = async (token: string): Promise<any> => {
   return response.data;
 };
 
-// Blacklist
-
 export const getOperatorBlacklist = async (
   token: string,
   start: number,
@@ -370,7 +368,6 @@ export const getOperatorBlacklist = async (
   return response.data;
 };
 
-// get by id blacklist
 export const getOperatorBlacklistById = async (token: string, id: string): Promise<any> => {
   const response = await axiosInstance.get('/operator-invitation/blacklist/' + id, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
@@ -378,10 +375,63 @@ export const getOperatorBlacklistById = async (token: string, id: string): Promi
   return response.data;
 };
 
-// create blacklist
 export const createOperatorBlacklist = async (token: string, data: any): Promise<any> => {
   const response = await axiosInstance.post('/operator-invitation/blacklist', data, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });
-  return response.data;   
+  return response.data;
+};
+
+export const getUpComingVisitors = async (
+  token: string,
+  params?: {
+    today?: string;
+    start_date?: string;
+    end_date?: string;
+    visitor_type?: string;
+    all_visitor_type?: string;
+  },
+): Promise<any> => {
+  const response = await axiosInstance.get('/operator-invitation/upcoming-visitor', {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+    },
+    params: {
+      today: params?.today,
+      'start-date': params?.start_date,
+      'end-date': params?.end_date,
+      'visitor-type': params?.visitor_type,
+      'all-visitor-type': params?.all_visitor_type,
+    },
+  });
+
+  return response.data;
+};
+
+export const getUpComingPurpose = async (
+  token: string,
+  params?: {
+    today?: string;
+    start_date?: string;
+    end_date?: string;
+    visitor_type?: string;
+    all_visitor_type?: string;
+  },
+): Promise<any> => {
+  const response = await axiosInstance.get('/operator-invitation/upcoming-purpose', {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+    },
+    params: {
+      today: params?.today,
+      'start-date': params?.start_date,
+      'end-date': params?.end_date,
+      'visitor-type': params?.visitor_type,
+      'all-visitor-type': params?.all_visitor_type,
+    },
+  });
+
+  return response.data;
 };

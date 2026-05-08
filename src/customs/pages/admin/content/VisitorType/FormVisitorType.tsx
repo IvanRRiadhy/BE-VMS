@@ -1,8 +1,6 @@
 import {
   Button,
   Grid2 as Grid,
-  Alert,
-  Typography,
   CircularProgress,
   IconButton,
   Step,
@@ -70,10 +68,8 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
 }) => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
-  const [alertType, setAlertType] = useState<'info' | 'success' | 'error'>('info');
   const { token } = useSession();
   const [deletedAccessIds, setDeletedAccessIds] = useState<string[]>([]);
-  // Stepper
   const [activeStep, setActiveStep] = useState(0);
   const [documents, setDocument] = useState<any[]>([]);
   const [customField, setCustomField] = useState<any[]>([]);
@@ -87,10 +83,8 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     }[]
   >([]);
 
-  // const [siteData, setSiteData] = useState<any[]>([]);
   const [accessData, setAccessData] = useState<any[]>([]);
   const [analyticCctv, setAnalyticCctv] = useState<any[]>([]);
-  // console.log('form data : ', formData);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -160,7 +154,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
           name: existing.integration_name,
         });
       } catch (error) {
-        console.error('Failed fetch visitor type analytics:', error);
         setSelectedAnalytics(null);
       }
     };
@@ -283,12 +276,10 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
       if (edittingId) {
         await updateVisitorType(token, edittingId, parseData);
 
-        // 1️⃣ Delete removed access
         if (deletedAccessIds.length > 0) {
           await Promise.all(deletedAccessIds.map((id) => deleteVisitorTypeAccess(id, token)));
         }
 
-        // 2️⃣ Update / Create remaining
         const accessPayloads = buildUpdateAccessPayload(edittingId);
 
         for (const payload of accessPayloads) {

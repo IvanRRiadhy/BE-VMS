@@ -54,7 +54,6 @@ export default function InvitationShare() {
     const code = searchParams.get('code');
     const timestamp = searchParams.get('timestamp');
     const sig = searchParams.get('sig');
-    // console.log('Search Params:', { d, code, timestamp, sig });
 
     if (!d || !code || !timestamp || !sig) {
       setError(true);
@@ -81,7 +80,6 @@ export default function InvitationShare() {
         payload.timestamp,
         payload.sig,
       );
-      // console.log('Invitation Link Response:', res);
 
       setInvitation(res.collection);
     } catch (err: any) {

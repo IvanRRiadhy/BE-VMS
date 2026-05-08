@@ -7,6 +7,7 @@ import {
   Typography,
   Avatar,
   CardActions,
+  Skeleton,
 } from '@mui/material';
 import { Box, useMediaQuery } from '@mui/system';
 import {
@@ -35,6 +36,7 @@ import VisitorInformationDetail from './VisitorInformationDetail';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 
 interface Props {
+  loading: boolean;
   permission: any;
   isFullscreen: boolean;
   handleOpenScanQR: () => void;
@@ -56,7 +58,12 @@ interface Props {
   selectedVisitorNumber: any;
 }
 
+const ButtonSkeleton = () => (
+  <Skeleton variant="rounded" width="100%" height={35} sx={{ borderRadius: '8px' }} />
+);
+
 const ActionPanelView: FC<Props> = ({
+  loading,
   permission,
   isFullscreen,
   handleOpenScanQR,
@@ -88,8 +95,6 @@ const ActionPanelView: FC<Props> = ({
     canExtend,
   } = permission;
 
-  const lgUp = useMediaQuery((theme: any) => theme.breakpoints.up('lg'));
-  // const data = invitationCode[0];
   const data = visitor;
   const statusBgMap: Record<string, string> = {
     Checkin: '#21c45d',
@@ -114,7 +119,7 @@ const ActionPanelView: FC<Props> = ({
         display: 'flex',
         justifyContent: isFullscreen ? 'center' : 'flex-start',
         alignItems: isFullscreen ? 'center' : 'stretch',
-        // height: '100%', 
+        // height: '100%',
         width: '100%',
       }}
     >
@@ -123,7 +128,7 @@ const ActionPanelView: FC<Props> = ({
         flexDirection={'column'}
         gap={1}
         sx={{
-          height: '100%', 
+          height: '100%',
           width: '100%',
         }}
       >

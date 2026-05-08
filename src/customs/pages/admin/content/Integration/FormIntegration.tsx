@@ -1,18 +1,14 @@
 import {
-  Button,
+  // Button,
   Grid2 as Grid,
-  Alert,
   Typography,
   CircularProgress,
-  FormControlLabel,
-  Switch,
-  Paper,
-  Button as MuiButton,
+  Button,
   Backdrop,
   Portal,
 } from '@mui/material';
 import { Box } from '@mui/system';
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { useSession } from 'src/customs/contexts/SessionContext';
@@ -63,7 +59,7 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
         ...data,
         api_type_auth: ApiTypeAuthMap[data.api_type_auth],
       };
-      // console.log('data', data);
+
       if (editingId && editingId !== '') {
         await updateIntegration(editingId, payload, token);
       } else {
@@ -208,7 +204,7 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
             disabled={loading}
             size="medium"
           >
-            {loading ? <CircularProgress size={20} /> : 'Submit'}
+            Submit
           </Button>
         </Box>
       </form>
@@ -217,7 +213,7 @@ const FormIntegration = ({ formData, setFormData, onSuccess, editingId }: FormIn
           open={loading}
           sx={{
             color: 'primary.main',
-            zIndex: (t) => (t.zIndex.snackbar ?? 1400) - 1,
+            zIndex: 999999,
           }}
         >
           <CircularProgress color="primary" />

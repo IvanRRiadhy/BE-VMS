@@ -52,7 +52,6 @@ const Content = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  // Form state
   const initialFormData: Item = {
     id: '',
     name: '',
@@ -90,7 +89,6 @@ const Content = () => {
     },
   ];
 
-  // Fetch data
   useEffect(() => {
     if (!token) return;
 
@@ -239,7 +237,6 @@ const Content = () => {
         showSwal('success', 'Selected email updated.');
       }, 800);
     } catch (err: any) {
-      console.error(err);
       showSwal('error', err?.message ?? 'Failed to update selected email.');
     } finally {
       setTimeout(() => setLoading(false), 400);

@@ -61,7 +61,6 @@ const Content = () => {
   const [searchInput, setSearchInput] = useState('');
   const [initialFormSnapshot, setInitialFormSnapshot] = useState<string | null>(null);
   const [shouldTrackChanges, setShouldTrackChanges] = useState(false);
-  const [sortDir, setSortDir] = useState('desc');
 
   useEffect(() => {
     if (!token) return;

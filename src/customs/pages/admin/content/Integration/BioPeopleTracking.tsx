@@ -14,14 +14,12 @@ import {
   Portal,
   Button,
   Grid2 as Grid,
-  TextField,
   Backdrop,
   CircularProgress,
   Snackbar,
   Alert,
   IconButton,
   Autocomplete,
-  Skeleton,
   MenuItem,
 } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
@@ -49,14 +47,13 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
 
   const handleTrackingBleSyncIntegration = async () => {
     if (!id || !token) {
-      setSyncMsg({ open: true, text: 'Session habis / ID tidak valid.', severity: 'error' });
       return;
     }
 
     try {
       setSyncing(true);
 
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      // await new Promise((resolve) => setTimeout(resolve, 300));
 
       const res = await syncTrackingBleIntegration(id as string, token as string);
 
@@ -64,17 +61,9 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
         setSyncing(false);
 
         if (res.status_code === 404 && /not connected/i.test(res.msg || '')) {
-          setSyncMsg({
-            open: true,
-            text: 'Tidak terhubung ke server. Coba lagi nanti.',
-            severity: 'error',
-          });
+          showSwal('error', 'Unable to connect to the device. Please try again later.');
         } else {
-          setSyncMsg({
-            open: true,
-            text: res.msg || 'Sinkronisasi gagal.',
-            severity: 'error',
-          });
+          showSwal('error', res.msg || 'Failed to synchronize. Please try again later.');
         }
         return;
       }
@@ -86,11 +75,10 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
 
       setSyncing(false);
 
-      showSwal('success', res.msg || 'Sinkronisasi berhasil.');
+      showSwal('success', res.msg || 'Successfully synchronized.');
     } catch (e: any) {
-      console.error('Sync error:', e);
       setSyncing(false);
-      showSwal('error', e?.msg || e?.message || 'Sinkronisasi gagal. Coba lagi nanti.');
+      showSwal('error', e?.msg || e?.message || 'Failed to synchronize. Please try again later.');
     }
   };
 
@@ -140,7 +128,6 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
 
   const [searchKeyword, setSearchKeyword] = useState('');
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
-  const [isDataReady, setIsDataReady] = useState(false);
   const [loading, setLoading] = useState(false);
   const [listData, setListData] = useState<any[]>([]);
   const [detailData, setDetailData] = useState<any | null>(null);
@@ -197,15 +184,13 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
 
   const getCount = (res: any) => {
     if (!res) return 0;
-    // variasi umum
+
     if (typeof res?.RecordsTotal === 'number') return res.RecordsTotal;
     if (Array.isArray(res?.collection)) return res.collection.length;
 
-    // beberapa API taruh di data/collection
     if (typeof res?.data?.RecordsTotal === 'number') return res.data.RecordsTotal;
     if (Array.isArray(res?.data?.collection)) return res.data.collection.length;
 
-    // fallback: kalau ada field 'total' atau 'count'
     if (typeof res?.total === 'number') return res.total;
     if (typeof res?.count === 'number') return res.count;
 
@@ -254,8 +239,6 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
         setListData(rows ?? []);
       }
     } catch (e) {
-      console.error('Fetch list error:', e);
-      setListData([]);
     } finally {
       setLoading(false);
     }
@@ -263,7 +246,6 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
 
   useEffect(() => {
     fetchListByType(selectedType);
-    setIsDataReady(true);
   }, [selectedType, token, id]);
 
   const [isBatchEdit, setIsBatchEdit] = useState(false);
@@ -304,7 +286,6 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
         setDetailData(row);
       }
     } catch (e) {
-      console.error('Fetch detail error:', e);
       setDetailData(row);
     }
   };
@@ -331,7 +312,6 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
   };
 
   useEffect(() => {
-    // Tutup dialog → kosongkan form
     if (!editDialogType) {
       setCardAccessForm(null);
       return;
@@ -364,7 +344,6 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
     const loadOptions = async () => {
       try {
         if (editDialogType === 'Card Access') {
-          // Dialog lain (atau ditutup)
           const res = await getAllSite(token);
           const resVisitorType = await getAllVisitorType(token);
           if (cancelled) return;
@@ -383,11 +362,9 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
           setOrgOptions(items);
           setVisitorTypeOptions(itemsVisitorType);
         } else {
-          setOrgOptions([]);
         }
       } catch (e) {
         console.error('Load options error:', e);
-        setOrgOptions([]);
       }
     };
 
@@ -413,11 +390,7 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
         const areaId = String(cardAccessForm?.id ?? detailData?.id ?? '');
 
         if (!areaId) {
-          setSyncMsg({
-            open: true,
-            text: 'ID Floor Plan Masked Area tidak ditemukan.',
-            severity: 'error',
-          });
+          showSwal('error', 'ID Floor Plan Masked Area not found.');
           return;
         }
 
@@ -705,7 +678,6 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
           </Button>
         </DialogActions>
       </Dialog>
-
       <Portal>
         <Snackbar
           open={syncMsg.open}
@@ -724,8 +696,6 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
           </Alert>
         </Snackbar>
       </Portal>
-
-      {/* OVERLAY SAVING: di atas modal, tapi DI BAWAH snackbar */}
       <Portal>
         <Backdrop
           open={saving}
@@ -737,14 +707,12 @@ const BioPeopleTracking = ({ id }: { id: string }) => {
           <CircularProgress />
         </Backdrop>
       </Portal>
-
-      {/* OVERLAY SYNCING: sama aturan dengan saving */}
       <Portal>
         <Backdrop
           open={syncing}
           sx={{
             color: '#fff',
-            zIndex: (t) => 99999999,
+            zIndex: (t) => 999999,
           }}
         >
           <CircularProgress />

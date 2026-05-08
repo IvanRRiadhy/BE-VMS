@@ -20,7 +20,6 @@ import AvarageDurationChart from 'src/customs/components/charts/AverageDurationC
 import {
   IconCalendar,
   IconCircleMinus,
-  IconCircleX,
   IconDownload,
   IconHourglass,
   IconLogin,
@@ -31,8 +30,10 @@ import {
 import Calendar from 'src/customs/components/calendar/Calendar';
 import { useDispatch, useSelector } from 'react-redux';
 import { setDateRange } from 'src/store/apps/Daterange/dateRangeSlice';
-import { getTodayPraregister } from 'src/customs/api/admin';
 import { useSession } from 'src/customs/contexts/SessionContext';
+import { getTodayPraregister } from 'src/customs/api/admin';
+import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
+import { showSwal } from 'src/customs/components/alerts/alerts';
 
 const Content = () => {
   const dispatch = useDispatch();
@@ -43,14 +44,13 @@ const Content = () => {
   const [page, setPage] = useState(0);
   const exportRef = useRef<HTMLDivElement>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const { token } = useSession();
 
   const handleExportPdf = async () => {
     if (!exportRef.current || isExporting) return;
 
     try {
       setIsExporting(true);
-
-      // 🔥 kasih kesempatan React render loading dulu
       await new Promise((resolve) => setTimeout(resolve, 0));
 
       const canvas = await html2canvas(exportRef.current, { scale: 2 });
@@ -82,41 +82,40 @@ const Content = () => {
 
       pdf.save(`Dashboard Report-${start}_to_${end}.pdf`);
     } catch (err) {
-      console.error(err);
+      showSwal('error', 'Failed to export PDF');
     } finally {
       setIsExporting(false);
     }
   };
 
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     try {
-  //       const response = await getTodayPraregister(
-  //         token as any,
-  //         new Date().toISOString().split('T')[0],
-  //         new Date().toISOString().split('T')[0],
-  //       );
-  //       setDataPraregist(response.data || []);
-  //     } catch (error) {
-  //       console.error('Error fetching data:', error);
-  //     }
-  //   };
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await getTodayPraregister(
+          token as any,
+          new Date().toISOString().split('T')[0],
+          new Date().toISOString().split('T')[0],
+        );
+        const rows = response.collection.slice(0, 5).map((item: any) => ({
+          id: item.id,
+          name: item.visitor_name,
+          host: item.host_name,
+          visit_start: formatDateTime(item.visitor_period_start),
+          visit_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
+        }));
+        setDataPraregist(rows || []);
+      } catch (error) {
+      }
+    };
 
-  //   fetchData();
-  // }, [token]);
+    fetchData();
+  }, [token]);
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const handleClick = (event: React.MouseEvent<HTMLElement>) => setAnchorEl(event.currentTarget);
   const handleClose = () => setAnchorEl(null);
   const open = Boolean(anchorEl);
 
-  // const [dateRange, setDateRange] = useState([
-  //   {
-  //     startDate: new Date(), // hari ini
-  //     endDate: addDays(new Date(), 7), // 7 hari ke depan
-  //     key: 'selection',
-  //   },
-  // ]);
 
   const CardItems = [
     { title: 'checkin', key: 'Checkin', icon: <IconLogin size={25} /> },
@@ -215,7 +214,7 @@ const Content = () => {
                 <Grid size={{ xs: 12, md: 6, lg: 6 }}>
                   <DynamicTable
                     height={420}
-                    isHavePagination
+                    isHavePagination={false}
                     overflowX={'auto'}
                     data={dataPraregist}
                     isHaveChecked={false}
@@ -226,12 +225,12 @@ const Content = () => {
                     isHaveExportXlf={false}
                     isHaveHeaderTitle={true}
                     titleHeader="Pre-Registration Visitor List"
-                    defaultRowsPerPage={rowsPerPage}
-                    rowsPerPageOptions={[10, 50, 100]}
-                    onPaginationChange={(page, rowsPerPage) => {
-                      setPage(page);
-                      setRowsPerPage(rowsPerPage);
-                    }}
+                    // defaultRowsPerPage={rowsPerPage}
+                    // rowsPerPageOptions={[10, 50, 100]}
+                    // onPaginationChange={(page, rowsPerPage) => {
+                    //   setPage(page);
+                    //   setRowsPerPage(rowsPerPage);
+                    // }}
                     isHaveFilterDuration={false}
                     isHaveAddData={false}
                     isHaveHeader={false}

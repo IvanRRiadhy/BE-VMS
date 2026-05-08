@@ -1,4 +1,4 @@
-import * as React from 'react';
+
 import { PieChart } from '@mui/x-charts/PieChart';
 import { Card, CardContent, Typography, Box, CardHeader } from '@mui/material';
 
@@ -25,12 +25,10 @@ export default function OperatorPieChart() {
             ]}
             height={264}
             margin={{ top: 10, bottom: 20, left: 30, right: 30 }}
-            // 🚫 matikan legend default
             slotProps={{ legend: { hidden: true } }}
           />
         </Box>
 
-        {/* 🔥 Custom Legend */}
         <Box
           sx={{
             display: 'flex',

@@ -1,11 +1,4 @@
 import {
-  Avatar,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Divider,
   Grid2 as Grid,
   IconButton,
   Tab,
@@ -17,18 +10,20 @@ import {
   Portal,
   CircularProgress,
   Backdrop,
+  TableContainer,
+  TableHead,
+  TableBody,
+  TableCell,
 } from '@mui/material';
 import { Box } from '@mui/system';
 
 import {
-  IconArrowAutofitRight, 
+  IconArrowAutofitRight,
   IconCircleMinus,
   IconLogin,
   IconLogout,
   IconX,
 } from '@tabler/icons-react';
-import { Scanner } from '@yudiel/react-qr-scanner';
-import moment from 'moment-timezone';
 import LprImage from 'src/assets/images/products/pic_lpr.png';
 import FRImage from 'src/assets/images/products/pic_fr.png';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -37,23 +32,17 @@ import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { useNavigate } from 'react-router-dom';
-import {
-  IconCalendar,
-  IconCircleX,
-  IconDownload,
-  IconHourglass,
-  IconUsersGroup,
-} from '@tabler/icons-react';
+import { IconUsersGroup } from '@tabler/icons-react';
 import TopCards from './TopCard';
+import PieChartsEmployee from '../../Manager/Dashboard/PieChartsEmployee';
+import VisitorStatistics from './components/VisitorStatics';
+import JustCheckInCard from './components/JustCheckInCard';
+import ExpectedVisitorsCard from './components/ExpectedVisitorCard';
+import PendingVisitsCard from './components/PendingVisitCard';
+import LastVisitsCard from './components/LastVisitData';
+import TopCardsUI from './components/TopCardsUi';
 
 const DashboardOperator = () => {
-  // const cards = [
-  //   { title: 'Check In', icon: IconLogin, subTitle: `0`, subTitleSetting: 10, color: 'none' },
-  //   { title: 'Check Out', icon: IconLogout, subTitle: `0`, subTitleSetting: 10, color: 'none' },
-  //   { title: 'Block', icon: IconCircleOff, subTitle: `0`, subTitleSetting: 10, color: 'none' },
-  //   { title: 'Denied', icon: IconBan, subTitle: `0`, subTitleSetting: 10, color: 'none' },
-  // ];
-
   const CardItems = [
     { title: 'checkin', key: 'Checkin', icon: <IconLogin size={25} /> },
     { title: 'checkout', key: 'Checkout', icon: <IconLogout size={25} /> },
@@ -67,58 +56,55 @@ const DashboardOperator = () => {
     },
   ];
 
-  const navigate = useNavigate();
-
-  const [permissionAccess, setPermissionAccess] = useState<any[]>([]);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMsg, setSnackbarMsg] = useState('');
   const [snackbarType, setSnackbarType] = useState<'success' | 'error' | 'info'>('info');
-  const [openCheckin, setOpenCheckin] = useState(false);
-  const [openRelated, setOpenRelated] = useState(false);
-  const { token } = useSession();
-  const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
-  const [openDetailQRCode, setOpenDetailQRCode] = useState(false);
-  const [tabValue, setTabValue] = useState(0);
   const [loadingAccess, setLoadingAccess] = useState(false);
+
+  const dataVisitors = [
+    {
+      id: 1,
+      name: 'John Doe',
+      // company: 'ABC Company',
+      purpose: 'Meeting',
+      date: '2023-06-01',
+      // time: '10:00 AM',
+    },
+  ];
 
   return (
     <Container title="Dashboard">
       <Grid container spacing={2} sx={{ mt: 0 }}>
         <Grid size={{ xs: 12, lg: 12 }}>
-          {/* <TopCard items={cards} size={{ xs: 12, lg: 3 }} /> */}
-          <TopCards items={CardItems} size={{ xs: 12, sm: 6, md: 4, xl: 2.4 }} />
+          {/* <TopCards items={CardItems} size={{ xs: 12, sm: 6, md: 4, xl: 2.4 }} /> */}
+          <TopCardsUI />
         </Grid>
         <Grid size={{ xs: 12, lg: 12 }}>
           <Grid container spacing={2}>
-            {/* Kolom kiri (dua tabel vertikal) */}
-            <Grid size={{ xs: 12, lg: 8 }}>
-              <Box display="flex" flexDirection="column" gap={2}>
-                <DynamicTable
-                  height={420}
-                  isHavePagination
-                  overflowX="auto"
-                  data={[]}
-                  isHaveChecked={false}
-                  isHaveAction={false}
-                  isHaveHeaderTitle
-                  titleHeader="Visitor Arrival"
-                />
+            <Grid size={{ xs: 12, lg: 4 }}>
+              <JustCheckInCard />
+            </Grid>
+            <Grid size={{ xs: 12, lg: 4 }}>
+              <ExpectedVisitorsCard />
+            </Grid>
+            <Grid size={{ xs: 12, lg: 4 }}>
+              <PendingVisitsCard />
+            </Grid>
 
-                <DynamicTable
-                  height={420}
-                  isHavePagination
-                  overflowX="auto"
-                  data={[]}
-                  isHaveChecked={false}
-                  isHaveAction={false}
-                  isHaveHeaderTitle
-                  titleHeader="Extended Request"
-                />
-              </Box>
+            <Grid size={{ xs: 12, lg: 8 }}>
+              <VisitorStatistics />
+            </Grid>
+
+            <Grid size={{ xs: 12, lg: 4 }}>
+              <PieChartsEmployee title="Visitor" />
+            </Grid>
+
+            <Grid size={{ xs: 12, lg: 12 }}>
+              <LastVisitsCard />
             </Grid>
 
             {/* Kolom kanan (panel panjang ke bawah) */}
-            <Grid size={{ xs: 12, lg: 4 }}>
+            {/* <Grid size={{ xs: 12, lg: 4 }}>
               <Box
                 sx={{
                   height: '100%',
@@ -142,7 +128,7 @@ const DashboardOperator = () => {
                     overflow: 'hidden',
                   }}
                 >
-                  {/* Kolom LPR */}
+     
                   <Grid
                     size={{ xs: 12, lg: 6 }}
                     sx={{
@@ -160,7 +146,6 @@ const DashboardOperator = () => {
                       LPR
                     </Typography>
 
-                    {/* Frame Gambar */}
                     <Box
                       sx={{
                         width: '100%',
@@ -189,7 +174,7 @@ const DashboardOperator = () => {
                     </Box>
                   </Grid>
 
-                  {/* Kolom Faceimage */}
+          
                   <Grid
                     size={{ xs: 12, lg: 6 }}
                     sx={{
@@ -269,7 +254,7 @@ const DashboardOperator = () => {
                   titleHeader="Data Arrival"
                 />
               </Box>
-            </Grid>
+            </Grid> */}
           </Grid>
         </Grid>
       </Grid>

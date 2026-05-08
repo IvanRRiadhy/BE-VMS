@@ -35,14 +35,7 @@ import { Box, useMediaQuery, useTheme } from '@mui/system';
 import moment from 'moment-timezone';
 import backgroundnodata from 'src/assets/images/backgrounds/bg_nodata.svg';
 import infoPic from 'src/assets/images/backgrounds/info_pic.png';
-import {
-  IconClock,
-  IconCreditCard,
-  IconKey,
-  IconPrinter,
-  IconSearch,
-  IconX,
-} from '@tabler/icons-react';
+import { IconClock, IconCreditCard, IconPrinter, IconSearch, IconX } from '@tabler/icons-react';
 import PageContainer from 'src/components/container/PageContainer';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
@@ -60,6 +53,8 @@ import {
   getInvitationOperatorRelated,
   getPermissionOperator,
   getTodayVisitingPurpose,
+  getUpComingPurpose,
+  getUpComingVisitors,
 } from 'src/customs/api/operator';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import LprImage from 'src/assets/images/products/pic_lpr.png';
@@ -100,7 +95,7 @@ import { useDebounce } from 'src/hooks/useDebounce';
 import PrintDialog from './Dialog/PrintDialog';
 import { getPrintBadgeConfig } from 'src/customs/api/Admin/PrintBadge';
 import PrintDialogBulk from './Dialog/PrintDialogBluk';
-import { getRegisteredSiteOperator, returnCard, swapCard } from 'src/customs/api/Admin/SwapCard';
+import { getRegisteredSiteOperator, returnCard } from 'src/customs/api/Admin/SwapCard';
 import SwipeCardNoCodeDialog from './Dialog/SwipeCardNoCodeDialog';
 import InvitationQrCard from './Components/InvitationQrCard';
 import VisitorSearchInput from './Components/VisitorSearchInput';
@@ -185,7 +180,7 @@ const OperatorView = () => {
   const [fillFormData, setFillFormData] = useState<any[]>([]);
   const [fillFormActiveStep, setFillFormActiveStep] = useState(0);
   const [fillFormDataVisitor, setFillFormDataVisitor] = useState<any[]>([]);
-  const [selectedSite, setSelectedSite] = useState<any | null>(null);
+  // const [selectedSite, setSelectedSite] = useState<any | null>(null);
   const [openDialogInfo, setOpenDialogInfo] = useState(false);
   const [openSwipeDialog, setOpenSwipeDialog] = useState(false);
   const [selectedInvitations, setSelectedInvitations] = useState<any[]>([]);
@@ -356,7 +351,7 @@ const OperatorView = () => {
         data: payloads,
       });
 
-      console.log('payloads', payloads);
+      // console.log('payloads', payloads);
 
       showSwal('success', 'All cards swapped successfully!');
 
@@ -403,7 +398,7 @@ const OperatorView = () => {
         registerd_site_id: registerSiteOperator,
       };
 
-      console.log('SWAP PAYLOAD', payload);
+      // console.log('SWAP PAYLOAD', payload);
 
       setSwipePayload((prev) => [...prev, payload]);
 
@@ -417,12 +412,9 @@ const OperatorView = () => {
         const newPayload = [...swipePayload, payload];
         setSwipePayload(newPayload);
 
-        // ✅ kalau BELUM terakhir → lanjut saja (JANGAN CLOSE)
         if (!isLastVisitor) {
-          return; // lanjut ke visitor berikutnya
+          return;
         }
-
-        // ✅ kalau terakhir → baru submit
         await handleSubmitBatchSwipe(newPayload);
         return;
       } else {
@@ -486,7 +478,11 @@ const OperatorView = () => {
       setLoadingAccess(false);
     }
   };
-  const [selectedPurpose, setSelectedPurpose] = useState<any>(null);
+  const [selectedPurpose, setSelectedPurpose] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [permission, setPermission] = useState<any>({});
 
   const handleOpenSwipeDialog = () => {
     const hasSwappedBefore = visitorCards.some((c) => c.is_swapcard === true);
@@ -508,11 +504,12 @@ const OperatorView = () => {
   };
 
   const handleOpenDetailVistingPurpose = (item: any) => {
-    setSelectedPurpose(item);
+    setSelectedPurpose({
+      id: item.id,
+      name: item.name,
+    });
     setOpenDetailVistingPurpose(true);
   };
-
-  const [permission, setPermission] = useState<any>({});
 
   useEffect(() => {
     const fetchData = async () => {
@@ -636,12 +633,10 @@ const OperatorView = () => {
   };
 
   const handleSuccess = async () => {
-    setSelectedSite(null);
     setFormDataAddVisitor((prev: any) => ({
       ...prev,
       registered_site: '',
     }));
-    // setRefreshTrigger((prev) => prev + 1);
     handleCloseDialog();
     await fetchTodayVisitingPurpose();
   };
@@ -659,25 +654,18 @@ const OperatorView = () => {
       try {
         const [siteRes, employeeRes, allVisitorEmployee] = await Promise.allSettled([
           getInvitationSite(token),
-          // getAllSite(token),
           getInvitationVisitorHost(token),
-          // getVisitorEmployee(token),
           getInvitationVisitorEmployee(token),
         ]);
-
-        // setSites(siteRes?.collection ?? []);
-        // setEmployee(employeeRes?.collection ?? []);
-        // setAllVisitorEmployee(allVisitorEmployee?.collection ?? []);
-
         if (siteRes.status === 'fulfilled') {
           setSites(siteRes.value?.collection ?? []);
-        } 
+        }
 
         if (employeeRes.status === 'fulfilled') {
           setEmployee(employeeRes.value?.collection ?? []);
         }
 
-        if(allVisitorEmployee.status === 'fulfilled') {
+        if (allVisitorEmployee.status === 'fulfilled') {
           setAllVisitorEmployee(allVisitorEmployee.value?.collection ?? []);
         }
       } catch (err) {
@@ -721,7 +709,7 @@ const OperatorView = () => {
     const formData = new FormData();
 
     const filename = file instanceof File && file.name ? file.name : 'selfie.png';
-    console.log('filename', filename);
+    // console.log('filename', filename);
     formData.append('file_name', filename);
     formData.append('file', file, filename);
     formData.append('path', 'visitor');
@@ -754,7 +742,7 @@ const OperatorView = () => {
 
     if (trackKey) {
       setUploadNames((prev) => ({ ...prev, [trackKey]: file.name }));
-      setPreviews((prev) => ({ ...prev, [trackKey]: URL.createObjectURL(file) }));
+      // setPreviews((prev) => ({ ...prev, [trackKey]: URL.createObjectURL(file) }));
     }
 
     const path = await uploadFileToCDN(file);
@@ -765,7 +753,7 @@ const OperatorView = () => {
 
   const handleCloseDialog = () => {
     localStorage.removeItem('unsavedVisitorData');
-    setSelectedSite(null);
+    // setSelectedSite(null);
     setFormDataAddVisitor(CreateVisitorRequestSchema.parse({}));
     setResetStep((prev) => prev + 1);
     setOpenInvitationVisitor(false);
@@ -1669,7 +1657,7 @@ const OperatorView = () => {
       }
 
       setAnswerFile('');
-      setPreviews((p) => ({ ...p, [inputId]: null }));
+      // setPreviews((p) => ({ ...p, [inputId]: null }));
       setUploadNames((n) => {
         const { [inputId]: _, ...rest } = n;
         return rest;
@@ -2125,7 +2113,6 @@ const OperatorView = () => {
 
       if (isPurposeVisit(section)) {
         if (!section?.self_only) {
-          // hanya Purpose Visit global (shared)
           forms.forEach((f: any, idx: number) => {
             const existing = (section.form_answers || []).find((ans: any) => sameField(ans, f));
             single_page.push(existing ? { ...f, ...existing } : cloneFormWithEmptyAnswers(f, idx));
@@ -2188,11 +2175,8 @@ const OperatorView = () => {
       const results = await Promise.all(
         visitorList.map((v) => getDetailInvitationForm(token as string, v.id)),
       );
-
       const firstResult = results[0];
-      // console.log('firstResult', firstResult);
       const questionPagesTemplate = firstResult?.collection?.question_page ?? [];
-      // console.log('questionPagesTemplate', questionPagesTemplate);
 
       setInvitationDetail(firstResult);
       setQuestionPageTemplate(questionPagesTemplate);
@@ -2397,7 +2381,7 @@ const OperatorView = () => {
                 onChange(index, 'answer_text', newValue instanceof Object ? newValue.value : '')
               }
               renderInput={(params) => (
-                <TextField
+                <CustomTextField
                   {...params}
                   placeholder="Enter at least 3 characters to search"
                   fullWidth
@@ -2470,7 +2454,7 @@ const OperatorView = () => {
             const currentValue = field.answer_text ?? '';
 
             return (
-              <TextField
+              <CustomTextField
                 select
                 size="small"
                 fullWidth
@@ -2486,7 +2470,7 @@ const OperatorView = () => {
                     {opt.label}
                   </MenuItem>
                 ))}
-              </TextField>
+              </CustomTextField>
             );
           }
 
@@ -2554,7 +2538,7 @@ const OperatorView = () => {
           );
         case 8: // Time
           return (
-            <TextField
+            <CustomTextField
               type="time"
               size="small"
               value={field.answer_datetime}
@@ -2830,7 +2814,7 @@ const OperatorView = () => {
     const perm = permissionAccess.find(
       (p) => p.access_control_id?.toLowerCase() === accessId.toLowerCase(),
     );
-    console.log('perm', perm);
+    // console.log('perm', perm);
 
     if (!perm) return [];
 
@@ -3047,7 +3031,7 @@ const OperatorView = () => {
 
       const invitationId = invitationCode?.[0]?.id;
       if (invitationId) {
-        console.log('🔄 Refetching visitors for invitation:', invitationId);
+        // console.log('🔄 Refetching visitors for invitation:', invitationId);
         await fetchRelatedVisitorsByInvitationId(invitationId);
       }
 
@@ -3055,8 +3039,6 @@ const OperatorView = () => {
       // setSelectedVisitors([]);
       // setSelectMultiple(false);
     } catch (error) {
-      // console.error('❌ Submit error:', error);
-      // toast('Submit gagal', 'error');
       showSwal('error', 'Failed Submit Pra Register!');
     } finally {
       setTimeout(() => {
@@ -3264,7 +3246,7 @@ const OperatorView = () => {
           })),
         };
 
-        console.log('Final Payload:', payload);
+        // console.log('Final Payload:', payload);
 
         const res = await createGiveAccessOperator(token as string, payload);
         console.log('Access Action Response:', JSON.stringify(res, null, 2));
@@ -3292,7 +3274,6 @@ const OperatorView = () => {
 
         resolve();
       } catch (err: any) {
-        console.error('❌ Access Action Error:', err);
         const backendMsg =
           err?.response?.data?.collection?.[0] ||
           err?.response?.data?.msg ||
@@ -3308,15 +3289,6 @@ const OperatorView = () => {
       }
     });
   };
-
-  // const activeVisitor = useMemo(() => {
-  //   if (selectedVisitorId) {
-  //     const visitor = relatedVisitors.find((v) => v.id === selectedVisitorId);
-  //     if (visitor) return visitor;
-  //   }
-
-  //   return relatedVisitors?.[0] ?? invitationCode?.[0] ?? null;
-  // }, [selectedVisitorId, relatedVisitors, invitationCode]);
 
   const activeVisitor = useMemo(() => {
     if (selectedVisitorId) {
@@ -3367,7 +3339,6 @@ const OperatorView = () => {
     }
   };
 
-  // Function Return Card
   const handleSubmitReturnCard = async () => {
     try {
       if (!returnCardNumber.trim()) {
@@ -3381,7 +3352,6 @@ const OperatorView = () => {
         registered_site_id: registerSiteOperator,
       };
 
-      console.log('return card payload', payload);
       await returnCard(token as string, payload);
       showSwal('success', 'Succesfully returned card');
       setOpenReturnCard(false);
@@ -3421,9 +3391,46 @@ const OperatorView = () => {
     { id: 1, vehicle_type: 'Car', vehicle_plate_number: 'BG 817 AS' },
     { id: 2, vehicle_type: 'Motorcycle', vehicle_plate_number: 'B 1512 AA' },
   ];
-
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [typeVisitor, setTypeVisitor] = useState('related');
+  const [upcomingPurpose, setUpcomingPurpose] = useState<any[]>([]);
+  const [upcomingVisitors, setUpcomingVisitors] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const res = await getUpComingPurpose(token as string, {
+        today: 'true',
+        all_visitor_type: 'true',
+      });
+      setUpcomingPurpose(res?.collection ?? []);
+    };
+    fetchData();
+  }, [token]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const res = await getUpComingVisitors(token as string, {
+        today: 'true',
+        all_visitor_type: 'true',
+        visitor_type: typeof selectedPurpose?.id === 'string' ? selectedPurpose?.id : undefined,
+      });
+      
+      const rows = res.collection.map((items: any) => ({
+          id: items.id,
+          name: items.visitor_name,
+          host: items.host_name,
+          organization: items.visitor_organization_name,
+          agenda: items.agenda,
+          visitor_period_start: formatDateTime(items.visitor_period_start),
+          visitor_period_end: formatDateTime(items.visitor_period_end, items.extend_visitor_period),
+          visitor_status: items.visitor_status,
+          vehicle_type: items.vehicle_type,
+          vehicle_plate_number: items.vehicle_plate_number,
+      }))
+      setUpcomingVisitors(rows ?? []);
+    };
+    fetchData();
+  }, [token, selectedPurpose]);
 
   return (
     <PageContainer title={'Operator View'} description={'Operator View'}>
@@ -3491,14 +3498,13 @@ const OperatorView = () => {
                   flexWrap: 'wrap',
                 }}
               >
-                {/* Card FR */}
                 <Grid
                   size={{ xs: 12, lg: 4.5 }}
                   sx={{ border: '1px solid #e0e0e0', borderRadius: '15px' }}
                 >
                   <LprVisitorCard
                     LprImage={LprImage}
-                    todayVisitingPurpose={todayVisitingPurpose}
+                    todayVisitingPurpose={upcomingPurpose}
                     invitationCode={invitationCode}
                     isFullscreen={isFullscreen}
                     lgUp={lgUp}
@@ -3512,7 +3518,6 @@ const OperatorView = () => {
                   />
                 </Grid>
 
-                {/* Visiting Purpose*/}
                 <ActionPanelCard
                   loading={loading}
                   permission={permissionHook}
@@ -4090,7 +4095,8 @@ const OperatorView = () => {
           <DetailVisitingPurpose
             open={openDetailVisitingPurpose}
             onClose={() => setOpenDetailVistingPurpose(false)}
-            data={selectedPurpose}
+            data={upcomingVisitors}
+            purposeName={selectedPurpose}
           />
           {/* Search Visitor */}
           <SearchVisitorDialog
@@ -4138,7 +4144,6 @@ const OperatorView = () => {
             onSubmit={handleSwipeCardSubmitNoCode}
           />
 
-          {/* Choose Card */}
           <ChooseCardDialog
             open={openChooseCardDialog}
             onClose={() => {
@@ -4259,7 +4264,6 @@ const OperatorView = () => {
           {/* Create Invitation */}
           <Dialog
             fullWidth
-            // maxWidth="xl"
             maxWidth={false}
             PaperProps={{
               sx: {
@@ -4268,7 +4272,6 @@ const OperatorView = () => {
             }}
             open={openInvitationVisitor}
             onClose={handleCloseDialog}
-            // keepMounted
             container={containerRef.current ?? undefined}
           >
             <DialogTitle display="flex" justifyContent={'space-between'} alignItems="center">
@@ -4354,7 +4357,6 @@ const OperatorView = () => {
             </DialogContent>
           </Dialog>
 
-          {/* Parking /Vehicle Dialog */}
           <ParkingDialog
             open={openParking}
             onClose={() => {
@@ -4385,7 +4387,7 @@ const OperatorView = () => {
               autoHideDuration={3000}
               onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
               anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-              sx={{ zIndex: 9999999 }}
+              sx={{ zIndex: 999999 }}
             >
               <Alert
                 onClose={() => setSnackbar((s) => ({ ...s, open: false }))}

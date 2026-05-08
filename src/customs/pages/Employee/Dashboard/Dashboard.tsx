@@ -1,28 +1,24 @@
 import {
   Alert,
-  Autocomplete,
-  Avatar,
   Backdrop,
   Button,
   Card,
   CircularProgress,
   Dialog,
-  DialogActions,
   DialogContent,
   DialogTitle,
+  Drawer,
   Grid2 as Grid,
   IconButton,
   Portal,
   Snackbar,
   Typography,
+  Box,
 } from '@mui/material';
-import { Box, Stack } from '@mui/system';
 import moment from 'moment-timezone';
 import {
-  IconBan,
   IconBellRingingFilled,
   IconCards,
-  IconCheck,
   IconCircleMinus,
   IconLogin,
   IconLogout,
@@ -35,11 +31,8 @@ import TopCards from './TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import Heatmap from './Heatmap';
-import { createApproval, getApproval } from 'src/customs/api/employee';
-import dayjs from 'dayjs';
 import {
   getActiveInvitation,
-  getInvitation,
   getOngoingInvitation,
   openParkingBlocker,
 } from 'src/customs/api/visitor';
@@ -50,17 +43,12 @@ import jsPDF from 'jspdf';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import Swal from 'sweetalert2';
 import { showSwal } from 'src/customs/components/alerts/alerts';
-
+import { setDateRange } from 'src/store/apps/Daterange/dateRangeSlice';
 import CreateLinkDialog from '../Components/Dialog/CreateLinkDialog';
 import DetailLinkDialog from '../Components/Dialog/DetailLinkDialog';
 import SendEmailDialog from '../Components/Dialog/SendEmailDialog';
 import { useNavigate } from 'react-router';
-import {
-  createShareLink,
-  deleteShareLink,
-  getShareLink,
-  getShareLinkByDt,
-} from 'src/customs/api/ShareLink';
+import { createShareLink, deleteShareLink, getShareLinkByDt } from 'src/customs/api/ShareLink';
 import AccessPassDialog from '../Components/Dialog/AccessPassDialog';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -68,6 +56,11 @@ import {
   getApprovalTicket,
   rejectTicket,
 } from 'src/customs/api/Admin/ApprovalWorkflow';
+import { IconCalendar } from '@tabler/icons-react';
+import { useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
+import Calendar from 'src/customs/components/calendar/Calendar';
+import { IconDownload } from '@tabler/icons-react';
 
 const DashboardEmployee = () => {
   const CardItems = [
@@ -85,15 +78,11 @@ const DashboardEmployee = () => {
   const { token } = useSession();
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
-
   const [openDialogInvitation, setOpenDialogInvitation] = useState(false);
-  // const [approvalData, setApprovalData] = useState<any[]>([]);
   const [invitationDetailVisitor, setInvitationDetailVisitor] = useState<any[]>([]);
   const [activeInvitation, setActiveInvitation] = useState<any[]>([]);
-  const [invitationList, setInvitationList] = useState<any[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [selectedInvitationId, setSelectedInvitationId] = useState<string | null>(null);
-
   const [openAlertInvitation, setOpenAlertInvitation] = useState(false);
   const [pendingInvitationCount, setPendingInvitationCount] = useState(0);
   const [openAccess, setOpenAccess] = useState(false);
@@ -104,12 +93,19 @@ const DashboardEmployee = () => {
   const [openCreateLink, setOpenCreateLink] = useState(false);
   const [openDetailLink, setOpenDetailLink] = useState(false);
   const [openSendEmail, setOpenSendEmail] = useState(false);
-  // const [shareLinkList, setShareLinkList] = useState<any[]>([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [pendingPayload, setPendingPayload] = useState<any>(null);
   const [sortDir, setSortDir] = useState('desc');
+  const dispatch = useDispatch();
+  const { startDate, endDate } = useSelector((state: any) => state.dateRange);
+  const handleClick = (event: React.MouseEvent<HTMLElement>) => setAnchorEl(event.currentTarget);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
+  const handleClose = () => setAnchorEl(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const exportRef = useRef<HTMLDivElement>(null);
 
   const start = page * rowsPerPage;
   const navigate = useNavigate();
@@ -151,7 +147,6 @@ const DashboardEmployee = () => {
 
     staleTime: 1000 * 60 * 1,
     enabled: !!token,
-    // gcTime: 1000 * 60 * 2,
     placeholderData: (previousData) => previousData,
   });
 
@@ -190,7 +185,6 @@ const DashboardEmployee = () => {
         const response = await getActiveInvitation(token as string);
         let rows = response.collection.map((item: any) => ({
           id: item.id,
-          // visitor_type:  item.visitor_type_name,
           name: item.visitor.name,
           email: item.visitor.email,
           organization: item.visitor.organization,
@@ -201,7 +195,6 @@ const DashboardEmployee = () => {
         }));
         setActiveInvitation(rows || []);
       } catch (error) {
-        console.error('Error fetching data:', error);
       }
     };
 
@@ -255,19 +248,21 @@ const DashboardEmployee = () => {
         const res = await getOngoingInvitation(token as string);
         const data = res?.collection ?? [];
 
-        const filtered = data.filter(
-          (item: any) => item.is_praregister_done === false || item.is_praregister_done === null,
-        );
+        const filtered = data
+          .filter(
+            (item: any) => item.is_praregister_done === false || item.is_praregister_done === null,
+          )
+          .slice(0, 5);
 
         const mapped = filtered.map((item: any) => ({
           id: item.id,
-          // visitor_type: visitorTypes[item.visitor_type] || item.visitor_type,
-          name: item.visitor.name,
-          email: item.visitor.email,
-          organization: item.visitor.organization,
+          name: item.visitor_name,
+          email: item.visitor_email,
+          organization: item.visitor_organization_name,
           visitor_period_start: item.visitor_period_start,
           visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
           host: item.host_name ?? '-',
+          site: item.site_place_name
           // visitor_status: item.visitor_status,
         }));
 
@@ -281,10 +276,8 @@ const DashboardEmployee = () => {
           setPendingInvitationCount(notDoneInvitations.length);
           setOpenAlertInvitation(true);
         }
-
-        // setInvitationDetailVisitor(filtered);
       } catch (error) {
-        console.error('Error fetching data:', error);
+        // console.error('Error fetching data:', error);
       }
     };
 
@@ -306,7 +299,6 @@ const DashboardEmployee = () => {
   }, [token]);
 
   const handleView = (row: any) => {
-    // misalnya row.id berisi ID invitation
     setSelectedInvitationId(row.id);
     setOpenDialogInvitation(true);
   };
@@ -322,10 +314,8 @@ const DashboardEmployee = () => {
     setIsGenerating(true);
 
     try {
-      // Clone elemen untuk PDF (tidak mempengaruhi UI asli)
       const clone = printRef.current.cloneNode(true) as HTMLElement;
 
-      // Buat logo khusus untuk PDF
       const logoEl = document.createElement('img');
       logoEl.src = '/src/assets/images/logos/bio-experience-1x1-logo.png';
       logoEl.style.width = '100px';
@@ -338,12 +328,10 @@ const DashboardEmployee = () => {
         (el as HTMLElement).style.display = 'none';
       });
 
-      // Tambahkan clone ke DOM tapi tersembunyi
       clone.style.position = 'fixed';
       clone.style.left = '-9999px';
       document.body.appendChild(clone);
 
-      // Ambil canvas dari clone
       const canvas = await html2canvas(clone, { scale: 3, useCORS: true });
       const imgData = canvas.toDataURL('image/png');
 
@@ -380,11 +368,7 @@ const DashboardEmployee = () => {
         severity: 'success',
       });
     } catch (error: any) {
-      setSnackbar({
-        open: true,
-        message: error?.message || 'Failed to open parking blocker.',
-        severity: 'error',
-      });
+      showSwal('error', error?.message || 'Failed to open parking blocker.');
     } finally {
       setTimeout(() => setIsParkingLoading(false), 600);
     }
@@ -540,9 +524,107 @@ const DashboardEmployee = () => {
     }
   };
 
+  const handleExportPdf = async () => {
+    if (!exportRef.current || isExporting) return;
+
+    try {
+      setIsExporting(true);
+
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      const canvas = await html2canvas(exportRef.current, { scale: 2 });
+      const imgData = canvas.toDataURL('image/jpeg');
+
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+
+      const imgWidth = pdfWidth - 20;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = 10;
+
+      pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+      heightLeft -= pdfHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight + 10;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
+      }
+
+      const formatDate = (date: Date) => date.toISOString().split('T')[0];
+      const start = formatDate(startDate);
+      const end = formatDate(endDate);
+
+      pdf.save(`Dashboard Report-${start}_to_${end}.pdf`);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <PageContainer title="Dashboard" description="This is Employee Dashboard">
-      <Grid container spacing={2} sx={{ mt: 0 }}>
+      <Grid container spacing={3} alignItems="center" justifyContent="space-between" mb={1}>
+        <Grid
+          size={{ xs: 12, lg: 12 }}
+          display="flex"
+          justifyContent="flex-end"
+          alignItems="center"
+          gap={2}
+          sx={{ mt: 0.5 }}
+        >
+          <Button
+            size="small"
+            sx={{
+              backgroundColor: 'white',
+              color: 'black',
+              border: '1px solid #d1d1d1',
+              ':hover': { backgroundColor: '#d1d1d1', color: 'black' },
+            }}
+            startIcon={<IconCalendar size={18} />}
+            onClick={handleClick}
+          >
+            {`${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`}
+          </Button>
+
+          <Button
+            size="small"
+            variant="contained"
+            color="error"
+            startIcon={<IconDownload />}
+            onClick={handleExportPdf}
+            disabled={isExporting}
+          >
+            {isExporting ? 'Exporting...' : 'Export '}
+          </Button>
+
+          <Drawer open={open} anchor="right" onClose={handleClose}>
+            <Box sx={{ p: 2 }}>
+              <Typography variant="h6" mb={1}>
+                Select Date Range
+              </Typography>
+              <Calendar
+                value={{ startDate, endDate }}
+                onChange={(selection: any) => {
+                  dispatch(
+                    setDateRange({
+                      startDate: selection.startDate,
+                      endDate: selection.endDate,
+                    }),
+                  );
+                  handleClose();
+                }}
+              />
+            </Box>
+          </Drawer>
+        </Grid>
+      </Grid>
+      <Grid container spacing={2} sx={{ mt: 0 }} ref={exportRef}>
         <Grid size={{ xs: 12, lg: 9 }}>
           <TopCards items={CardItems} size={{ xs: 12, lg: 6 }} />
         </Grid>
@@ -558,7 +640,7 @@ const DashboardEmployee = () => {
             sx={{
               flex: 1,
               display: 'flex',
-              justifyContent: '',
+              justifyContent: 'center',
               alignItems: 'center',
               flexDirection: 'column',
               cursor: 'pointer',
@@ -582,10 +664,10 @@ const DashboardEmployee = () => {
                 >
                   <QRCode
                     value={activeAccessPass.visitor_number || ''}
-                    size={40}
+                    size={50}
                     style={{
                       height: 'auto',
-                      width: '100px',
+                      width: '160px',
                     }}
                   />
                 </Box>
@@ -629,13 +711,10 @@ const DashboardEmployee = () => {
         <Grid size={{ xs: 12, lg: 6 }}>
           <DynamicTable
             loading={loadingApproval}
-            height={480}
-            // isHavePagination={true}
-            // defaultRowsPerPage={rowsPerPage}
-            // rowsPerPageOptions={[5, 10]}
+            height={490}
             overflowX="auto"
             data={approvalData}
-            isHaveChecked={false}
+            isHaveChecked={true}
             isHaveAction={true}
             isActionVisitor={false}
             isHaveHeaderTitle
@@ -650,10 +729,10 @@ const DashboardEmployee = () => {
         <Grid size={{ xs: 12, lg: 6 }}>
           <DynamicTable
             loading={isFetching}
-            height={480}
+            height={490}
             overflowX="auto"
             data={shareLinkList}
-            isHaveChecked={false}
+            isHaveChecked={true}
             titleHeader="Link Share Visitor"
             isHaveHeaderTitle={true}
             isCopyLink={true}
@@ -671,7 +750,7 @@ const DashboardEmployee = () => {
         <Grid size={{ xs: 12, lg: 6 }} sx={{ height: '100%' }}>
           <DynamicTable
             data={invitationDetailVisitor}
-            height={420}
+            height={430}
             isHavePagination={false}
             overflowX="auto"
             isHaveChecked={false}
@@ -684,7 +763,7 @@ const DashboardEmployee = () => {
           />
         </Grid>
         <Grid size={{ xs: 12, lg: 6 }} sx={{ height: '100%' }}>
-          <Heatmap />
+          <Heatmap />  
         </Grid>
       </Grid>
 

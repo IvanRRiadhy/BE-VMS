@@ -49,8 +49,8 @@ export type GetAccessControlByIdResponse = {
 };
 //CREATE
 export const CreateAccessControlRequestSchema = z.object({
-  brand_id: z.string(),
-  brand_name: z.string(),
+  brand_id: z.string().nullable().optional(),
+  brand_name: z.string().nullable().optional(),
   // type: z.number().default(-1),
   type: z.coerce.number(),
   name: z.string().min(1, 'Name is required'),
@@ -82,8 +82,8 @@ export type DeleteAccessControlResponse<T = any> = {
 };
 
 export const UpdateAccessControlRequestSchema = z.object({
-  brand_id: z.string(),
-  brand_name: z.string().optional(),
+  brand_id: z.string().nullable().optional(),
+  brand_name: z.string().nullable().optional(),
   type: z.coerce.number(),
   name: z.string(),
   description: z.string().optional(),

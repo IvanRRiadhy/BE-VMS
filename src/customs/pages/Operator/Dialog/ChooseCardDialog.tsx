@@ -10,13 +10,11 @@ import {
   Box,
   Grid2 as Grid,
   Paper,
-  TextField,
   Checkbox,
   Divider,
   FormControlLabel,
-  InputAdornment,
 } from '@mui/material';
-import { IconX, IconSearch, IconSwipe, IconCards, IconKeyOff } from '@tabler/icons-react';
+import { IconX, IconSearch, IconSwipe, IconCards } from '@tabler/icons-react';
 import CardSearchInput from '../Components/CardSearchInput';
 
 const ChooseCardDialog = ({
@@ -366,7 +364,7 @@ const ChooseCardDialog = ({
         >
           Give
         </Button>
-
+{/* 
         <Button
           fullWidth
           variant="contained"
@@ -375,7 +373,7 @@ const ChooseCardDialog = ({
           onClick={() => setOpenRevokeDialog(true)}
         >
           Revoke
-        </Button>
+        </Button> */}
       </DialogActions>
     </Dialog>
   );

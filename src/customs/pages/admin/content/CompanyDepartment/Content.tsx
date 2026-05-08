@@ -46,7 +46,7 @@ import {
   CreateOrganizationSchema,
 } from 'src/customs/api/models/Admin/Organization';
 
-import { IconBuilding, IconBuildingSkyscraper, IconMapPins, IconX } from '@tabler/icons-react';
+import { IconBuilding, IconBuildingSkyscraper, IconMapPins } from '@tabler/icons-react';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
 

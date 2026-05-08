@@ -51,13 +51,7 @@ import {
   getVisitorEmployee,
 } from 'src/customs/api/admin';
 import FilterMoreContent from './FilterMoreContent';
-import {
-  IconClipboard,
-  IconQrcode,
-  IconShare,
-  IconUser,
-  IconUsers
-} from '@tabler/icons-react';
+import { IconClipboard, IconQrcode, IconShare, IconUser, IconUsers } from '@tabler/icons-react';
 import EmployeeDetailDialog from '../Dialog/EmployeeDetailDialog';
 import VisitorDetailDialog from '../Dialog/VisitorDetailDialog';
 import { getInvitationCode } from 'src/customs/api/operator';
@@ -70,7 +64,6 @@ import QrScannerDialog from './components/Dialog/QrScannerDialog';
 import Swal from 'sweetalert2';
 import {
   createShareLink,
-  createShareLinkByEmail,
   createShareLinkByEmailById,
   deleteShareLink,
   getShareLinkByDt,
@@ -376,10 +369,11 @@ const Content = () => {
         // setSites(siteRes?.collection || []);
         // setAllVisitorEmployee(visitorEmpRes?.collection || []);
         // setEmployee(empRes?.collection || []);
-        if(vtRes?.status === 'fulfilled') setVisitorType(vtRes?.value?.collection || []);
-        if(siteRes?.status === 'fulfilled') setSites(siteRes?.value?.collection || []);
-        if(visitorEmpRes?.status === 'fulfilled') setAllVisitorEmployee(visitorEmpRes?.value?.collection || []);
-        if(empRes?.status === 'fulfilled') setEmployee(empRes?.value?.collection || []);
+        if (vtRes?.status === 'fulfilled') setVisitorType(vtRes?.value?.collection || []);
+        if (siteRes?.status === 'fulfilled') setSites(siteRes?.value?.collection || []);
+        if (visitorEmpRes?.status === 'fulfilled')
+          setAllVisitorEmployee(visitorEmpRes?.value?.collection || []);
+        if (empRes?.status === 'fulfilled') setEmployee(empRes?.value?.collection || []);
       } catch (err) {
       } finally {
         setLoading(false);
@@ -577,9 +571,10 @@ const Content = () => {
       if (!confirm.isConfirmed) return;
 
       await deleteShareLink(token as string, id);
-      await queryClient.invalidateQueries({
-        queryKey: ['share-links'],
-      });
+      // await queryClient.invalidateQueries({
+      //   queryKey: ['share-links'],
+      // });
+      setRefreshKey((prev) => prev + 1);
       showSwal('success', 'Link deleted successfully.');
     } catch (error) {
       showSwal('error', 'Failed to delete link.');
@@ -654,21 +649,28 @@ const Content = () => {
       showSwal('error', 'Failed to send invitation');
     }
   };
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const handleCreateLink = async (payload: any) => {
     try {
       setIsGenerating(true);
 
+      console.log('payload', payload);
       await createShareLink(token as string, payload);
 
-      await queryClient.invalidateQueries({
-        queryKey: ['share-links'],
-      });
+      // await queryClient.invalidateQueries({
+      //   queryKey: ['share-links'],
+      // });
+
+      // await queryClient.refetchQueries({
+      //   queryKey: ['share-links'],
+      // });
 
       setOpenCreateLink(false);
       showSwal('success', 'Share link created successfully');
-    } catch (err) {
-      showSwal('error', 'Failed to create share link');
+      setRefreshKey((prev) => prev + 1);
+    } catch (err:any) {
+      showSwal('error', err?.response.data.message || 'Failed to create share link');
     } finally {
       setIsGenerating(false);
     }
@@ -1042,6 +1044,7 @@ const Content = () => {
       </Dialog>
 
       <ShareLinkDialog
+        refreshKey={refreshKey}
         open={openDetailShareLink}
         onClose={() => setOpenDetailShareLink(false)}
         token={token as string}

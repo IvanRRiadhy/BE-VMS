@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import GuestLayout from '../layout/GuestLayout';
 import PageContainer from 'src/components/container/PageContainer';
 import { Box } from '@mui/system';
 import {
@@ -30,8 +29,6 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import QRCode from 'react-qr-code';
-// import VisitorStatusPieChart from 'src/customs/pages/Guest/Components/charts/VisitorStatusPieChart';
-import VisitorStatusPieChart from 'src/customs/components/charts/VisitorStatusPieChart';
 import TopCard from './TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import {
@@ -41,10 +38,10 @@ import {
 } from 'src/customs/api/visitor';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import moment from 'moment-timezone';
-import dayjs, { Dayjs } from 'dayjs';
-import { subDays } from 'date-fns';
+import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import { setDateRange } from 'src/store/apps/Daterange/dateRangeSlice';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -57,7 +54,11 @@ import jsPDF from 'jspdf';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import AccessPassDialog from '../Components/Dialog/AccessPassDialog';
+import AccessPassDialog from '../components/Dialog/AccessPassDialog';
+import { dispatch } from 'src/store/Store';
+import { useSelector } from 'react-redux';
+import Heatmap from './Heatmap';
+import { showSwal } from 'src/customs/components/alerts/alerts';
 
 const Dashboard = () => {
   const { token } = useSession();
@@ -112,14 +113,6 @@ const Dashboard = () => {
     fetchData();
   }, [token]);
 
-  const [dateRange, setDateRange] = useState([
-    {
-      startDate: subDays(new Date(), 7),
-      endDate: new Date(),
-      key: 'selection',
-    },
-  ]);
-
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const handleClick = (event: React.MouseEvent<HTMLElement>) => setAnchorEl(event.currentTarget);
   const handleClose = () => setAnchorEl(null);
@@ -135,7 +128,6 @@ const Dashboard = () => {
   }
 
   const printRef = useRef<HTMLDivElement>(null);
-
   const [isGenerating, setIsGenerating] = useState(false);
 
   const handleDownloadPDF = async () => {
@@ -190,12 +182,13 @@ const Dashboard = () => {
     setIsParkingLoading(true);
     try {
       const res = await openParkingBlocker(token, { trx_visitor_id: activeAccessPass.id });
-      console.log('res', JSON.stringify(res, null, 2));
-      setSnackbar({
-        open: true,
-        message: 'Parking blocker opened successfully.',
-        severity: 'success',
-      });
+      // console.log('res', JSON.stringify(res, null, 2));
+      // setSnackbar({
+      //   open: true,
+      //   message: 'Parking blocker opened successfully.',
+      //   severity: 'success',
+      // });
+      showSwal('success', 'Parking blocker opened successfully.');
     } catch (error: any) {
       setSnackbar({
         open: true,
@@ -206,28 +199,7 @@ const Dashboard = () => {
       setTimeout(() => setIsParkingLoading(false), 600);
     }
   };
-
-  const [visitorDetail, setVisitorDetail] = useState<any>(null);
-  const [visitorLoading, setVisitorLoading] = useState(false);
-  const [visitorError, setVisitorError] = useState<string | null>(null);
-  const [openVisitorDialog, setOpenVisitorDialog] = useState(false);
-  const handleView = async (id: string) => {
-    if (!token) return;
-
-    setOpenVisitorDialog(true);
-    setVisitorLoading(true);
-    setVisitorError(null);
-    setVisitorDetail(null);
-
-    try {
-      const res = await getInvitationById(id, token);
-      setVisitorDetail(res?.collection ?? res ?? null);
-    } catch (err: any) {
-      setVisitorError(err?.message || 'Failed to fetch visitor detail.');
-    } finally {
-      setVisitorLoading(false);
-    }
-  };
+  const { startDate, endDate } = useSelector((state: any) => state.dateRange);
 
   return (
     <PageContainer title="Dashboard">
@@ -251,25 +223,30 @@ const Dashboard = () => {
             startIcon={<IconCalendar size={18} />}
             onClick={handleClick}
           >
-            {`${dateRange[0].startDate.toLocaleDateString()} - ${dateRange[0].endDate.toLocaleDateString()}`}
+            {`${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`}
           </Button>
 
           <Button size="small" variant="contained" color="error" startIcon={<IconDownload />}>
             Export
           </Button>
-
           <Drawer open={open} anchor="right" onClose={handleClose}>
-            <Calendar
-              onChange={(selection: any) => {
-                setDateRange([
-                  {
-                    startDate: selection.startDate,
-                    endDate: selection.endDate,
-                    key: 'selection',
-                  },
-                ]);
-              }}
-            />
+            <Box sx={{ p: 2 }}>
+              <Typography variant="h6" mb={1}>
+                Select Date Range
+              </Typography>
+              <Calendar
+                value={{ startDate, endDate }}
+                onChange={(selection: any) => {
+                  dispatch(
+                    setDateRange({
+                      startDate: selection.startDate,
+                      endDate: selection.endDate,
+                    }),
+                  );
+                  handleClose();
+                }}
+              />
+            </Box>
           </Drawer>
         </Grid>
         <Grid size={{ xs: 12, xl: 9 }}>
@@ -354,10 +331,10 @@ const Dashboard = () => {
           </Button>
         </Grid>
 
-        <Grid size={{ xs: 12, lg: 9 }}>
+        <Grid size={{ xs: 12, lg: 6 }}>
           <DynamicTable
-            height={420}
-            isHavePagination
+            height={470}
+            isHavePagination={false}
             overflowX={'auto'}
             data={activeVisitData}
             isHaveChecked={false}
@@ -376,7 +353,7 @@ const Dashboard = () => {
             // }}
             // isActionVisitor={true}
             // defaultRowsPerPage={rowsPerPage}
-            rowsPerPageOptions={[10, 50, 100]}
+            // rowsPerPageOptions={[10, 50, 100]}
             // onPaginationChange={(page, rowsPerPage) => {
             //   setPage(page);
             //   setRowsPerPage(rowsPerPage);
@@ -387,8 +364,9 @@ const Dashboard = () => {
             isHaveFilterMore={false}
           />
         </Grid>
-        <Grid size={{ xs: 12, lg: 3 }}>
-          <VisitorStatusPieChart />
+        <Grid size={{ xs: 12, lg: 6 }}>
+          {/* <VisitorStatusPieChart /> */}
+          <Heatmap />
         </Grid>
       </Grid>
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Box,
   Dialog,
@@ -35,10 +35,7 @@ import { axiosInstance2 } from 'src/customs/api/interceptor';
 import { IconClipboard, IconLink, IconShare, IconUsers, IconX } from '@tabler/icons-react';
 import dayjs from 'dayjs';
 import Praregist from './Praregist';
-import {
-  getInvitationRelatedVisitor,
-  getOngoingInvitation,
-} from 'src/customs/api/visitor';
+import { getInvitationRelatedVisitor, getOngoingInvitation } from 'src/customs/api/visitor';
 import { useSelector } from 'react-redux';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import EmployeeDetailDialog from '../Components/Dialog/EmployeeDetailDialog';
@@ -502,12 +499,12 @@ const Content = () => {
       if (!confirm.isConfirmed) return;
 
       await deleteShareLink(token as string, id);
-      await queryClient.invalidateQueries({
-        queryKey: ['share-links'],
-      });
+      // await queryClient.invalidateQueries({
+      //   queryKey: ['share-links'],
+      // });
       showSwal('success', 'Link deleted successfully.');
+      setRefreshKey((prev) => prev + 1);
     } catch (error) {
-      console.error('Delete link error:', error);
       showSwal('error', 'Something went wrong while deleting link.');
     }
   };
@@ -528,67 +525,129 @@ const Content = () => {
 
   const startShareLink = pageSharelink * rowsPerPageSharelink;
 
-  const {
-    data,
-    isLoading: isLoadingSharelink,
-    isFetching,
-  } = useQuery({
-    queryKey: [
-      'share-links',
-      pageSharelink,
-      rowsPerPageSharelink,
-      searchKeywordSharelink,
-      sortDirSharelink,
-    ],
-    queryFn: async () => {
+  // const {
+  //   data,
+  //   isLoading: isLoadingSharelink,
+  //   isFetching,
+  // } = useQuery({
+  //   queryKey: [
+  //     'share-links',
+  //     pageSharelink,
+  //     rowsPerPageSharelink,
+  //     searchKeywordSharelink,
+  //     sortDirSharelink,
+  //   ],
+  //   queryFn: async () => {
+  //     const res = await getShareLinkByDt(
+  //       token as string,
+  //       startShareLink,
+  //       rowsPerPageSharelink,
+  //       searchKeywordSharelink,
+  //       sortDirSharelink,
+  //     );
+
+  //     return res;
+  //   },
+
+  //   staleTime: 1000 * 60 * 1,
+  //   enabled: !!token,
+  //   placeholderData: (previousData) => previousData,
+  // });
+
+  // const shareLinkList =
+  //   data?.collection?.map((item: any) => ({
+  //     id: item.id,
+  //     agenda: item.agenda,
+  //     url: item.url,
+  //     max_usage: item.max_usage,
+  //     visitor_period_start: formatDateTime(item.visitor_period_start),
+  //     visitor_period_end: formatDateTime(item.visitor_period_end),
+  //     expired_at: (() => {
+  //       const date = new Date(item.expired_at + 'Z');
+
+  //       const formattedDate = date
+  //         .toLocaleDateString('id-ID', {
+  //           day: '2-digit',
+  //           month: 'long',
+  //           year: 'numeric',
+  //         })
+  //         .replace(/\//g, '-');
+
+  //       const formattedTime = date.toLocaleTimeString('id-ID', {
+  //         hour: '2-digit',
+  //         minute: '2-digit',
+  //         hour12: false,
+  //       });
+
+  //       return `${formattedDate}, ${formattedTime}`;
+  //     })(),
+  //     link_status: item.link_status,
+  //   })) || [];
+
+  // const totalFilterRecords = data?.RecordsFiltered || 0;
+
+  const [shareLinkList, setShareLinkList] = useState([]);
+  const [totalFilterRecords, setTotalFilterRecords] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
+  // const [loading, setLoading] = useState(false);
+  const start = pageSharelink * rowsPerPageSharelink;
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+
       const res = await getShareLinkByDt(
         token as string,
-        startShareLink,
-        rowsPerPageSharelink,
-        searchKeywordSharelink,
-        sortDirSharelink,
+        start,
+        rowsPerPage,
+        searchKeyword,
+        sortDir,
       );
 
-      return res;
-    },
+      const mapped =
+        res?.collection?.map((item: any) => ({
+          id: item.id,
+          agenda: item.agenda,
+          url: item.url,
+          current_usage: item.current_usage,
+          max_usage: item.max_usage,
+          visitor_period_start: formatDateTime(item.visitor_period_start),
+          visitor_period_end: formatDateTime(item.visitor_period_end),
 
-    staleTime: 1000 * 60 * 5,
-    enabled: !!token,
-    gcTime: 1000 * 60 * 2,
-    placeholderData: (previousData) => previousData,
-  });
+          expired_at: (() => {
+            const date = new Date(item.expired_at + 'Z');
 
-  const shareLinkList =
-    data?.collection?.map((item: any) => ({
-      id: item.id,
-      agenda: item.agenda,
-      url: item.url,
-      max_usage: item.max_usage,
-      visitor_period_start: formatDateTime(item.visitor_period_start),
-      visitor_period_end: formatDateTime(item.visitor_period_end),
-      expired_at: (() => {
-        const date = new Date(item.expired_at + 'Z');
+            const formattedDate = date.toLocaleDateString('id-ID', {
+              day: '2-digit',
+              month: 'long',
+              year: 'numeric',
+            });
 
-        const formattedDate = date
-          .toLocaleDateString('id-ID', {
-            day: '2-digit',
-            month: 'long',
-            year: 'numeric',
-          })
-          .replace(/\//g, '-');
+            const formattedTime = date.toLocaleTimeString('id-ID', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: false,
+            });
 
-        const formattedTime = date.toLocaleTimeString('id-ID', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false,
-        });
+            return `${formattedDate}, ${formattedTime}`;
+          })(),
 
-        return `${formattedDate}, ${formattedTime}`;
-      })(),
-      link_status: item.link_status,
-    })) || [];
+          link_status: item.link_status,
+        })) || [];
 
-  const totalFilterRecords = data?.RecordsFiltered || 0;
+      setShareLinkList(mapped);
+      setTotalFilterRecords(res?.RecordsFiltered || 0);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [token, start, rowsPerPage, searchKeyword, sortDir]);
+
+  useEffect(() => {
+    if (token) {
+      fetchData();
+    }
+  }, [fetchData, token, refreshKey]);
 
   const handleAddShareLink = () => {
     setOpenCreateLink(true);
@@ -662,16 +721,16 @@ const Content = () => {
 
       await createShareLink(token as string, finalPayload);
 
-      await queryClient.invalidateQueries({
-        queryKey: ['share-links'],
-      });
+      // await queryClient.invalidateQueries({
+      //   queryKey: ['share-links'],
+      // });
 
       setOpenSendEmail(false);
       setOpenCreateLink(false);
 
       showSwal('success', 'Share link sent successfully');
+      setRefreshKey((prev) => prev + 1);
     } catch (err) {
-      console.error(err);
       showSwal('error', 'Failed to send share link');
     } finally {
       setIsGenerating(false);
@@ -684,12 +743,13 @@ const Content = () => {
 
       await createShareLink(token as string, payload);
 
-      await queryClient.invalidateQueries({
-        queryKey: ['share-links'],
-      });
+      // await queryClient.invalidateQueries({
+      //   queryKey: ['share-links'],
+      // });
 
       setOpenCreateLink(false);
       showSwal('success', 'Share link created successfully');
+      setRefreshKey((prev) => prev + 1);
     } catch (err) {
       console.error(err);
       showSwal('error', 'Failed to create share link');
@@ -923,7 +983,7 @@ const Content = () => {
         </DialogTitle>
         <DialogContent dividers>
           <DynamicTable
-            loading={isLoadingSharelink}
+            loading={loading}
             data={shareLinkList}
             isHaveHeaderTitle
             isHaveChecked={true}

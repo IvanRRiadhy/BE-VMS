@@ -3,33 +3,70 @@ import { PieChart } from '@mui/x-charts/PieChart';
 import { Card, CardContent, Typography, Box, CardHeader } from '@mui/material';
 
 const visitorStatusData = [
-  { id: 0, value: 10, label: 'Checked In', color: '#4caf50' },
-  { id: 1, value: 5, label: 'Checked Out', color: '#2196f3' },
-  { id: 2, value: 2, label: 'Denied', color: '#f44336' },
+  { id: 0, value: 25, label: 'Visitor', color: '#4caf50' },
+  { id: 1, value: 25, label: 'Employee', color: '#2196f3' },
+  { id: 2, value: 25, label: 'Staff', color: '#f44336' },
 ];
 
-export default function PieChartsEmployee() {
+export default function PieChartsEmployee({ title }: any) {
+  const totalVisits = visitorStatusData.reduce((sum, item) => sum + item.value, 0);
+
   return (
     <Card sx={{ borderRadius: 2, boxShadow: 3 }}>
-      <CardHeader title="Employee Status" />
-      <CardContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <Box sx={{ width: 350 }}>
+      <CardHeader title={title} />
+
+      <CardContent
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+        }}
+      >
+        {/* Wrapper Chart */}
+        <Box
+          sx={{
+            width: 350,
+            height: 250,
+            position: 'relative',
+          }}
+        >
           <PieChart
             series={[
               {
                 data: visitorStatusData,
-                innerRadius: 50,
+                innerRadius: 70,
                 outerRadius: 100,
               },
             ]}
             height={250}
             margin={{ top: 10, bottom: 20, left: 30, right: 30 }}
-            // 🚫 matikan legend default
             slotProps={{ legend: { hidden: true } }}
           />
+
+          {/* Text Tengah */}
+          <Box
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              pointerEvents: 'none',
+            }}
+          >
+            <Typography variant="h4" fontWeight={700} lineHeight={1}>
+              {totalVisits}
+            </Typography>
+
+            <Typography variant="body2" color="text.secondary">
+              Visits
+            </Typography>
+          </Box>
         </Box>
 
-        {/* 🔥 Custom Legend */}
+        {/* Custom Legend */}
         <Box
           sx={{
             display: 'flex',
@@ -40,7 +77,14 @@ export default function PieChartsEmployee() {
           }}
         >
           {visitorStatusData.map((item) => (
-            <Box key={item.label} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box
+              key={item.label}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+              }}
+            >
               <Box
                 sx={{
                   width: 18,
@@ -51,6 +95,7 @@ export default function PieChartsEmployee() {
                   boxShadow: 1,
                 }}
               />
+
               <Typography variant="body2">{item.label}</Typography>
             </Box>
           ))}

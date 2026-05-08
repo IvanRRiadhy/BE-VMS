@@ -10,13 +10,11 @@ import {
   IconScript,
   IconWorldCog,
   IconAccessible,
-  IconBrandMedium,
   IconMailFilled,
   IconCalendarCheck,
   IconSettingsFilled,
   IconCheck,
   IconMail,
-  IconCar,
   IconHistory,
   IconFile,
   IconReport,
@@ -26,11 +24,8 @@ import {
   IconUser,
   IconEye,
   IconPrinter,
-  IconStars,
   IconRun,
-  IconNavigation,
   IconBell,
-  IconDeviceCctv,
 } from '@tabler/icons-react';
 import { uniqueId } from 'lodash';
 import { ItemDataCustomNavListing } from './CustomNavListing';
@@ -121,12 +116,12 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
         icon: IconScript,
         href: '/admin/manage/document',
       },
-      {
-        id: uniqueId(),
-        title: 'navigation.brand',
-        icon: IconBrandMedium,
-        href: '/admin/manage/brand',
-      },
+      // {
+      //   id: uniqueId(),
+      //   title: 'navigation.brand',
+      //   icon: IconBrandMedium,
+      //   href: '/admin/manage/brand',
+      // },
       {
         id: uniqueId(),
         title: 'navigation.integration',
@@ -393,12 +388,12 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
         icon: IconScript,
         href: '/admin/manage/document',
       },
-      {
-        id: uniqueId(),
-        title: 'navigation.brand',
-        icon: IconBrandMedium,
-        href: '/admin/manage/brand',
-      },
+      // {
+      //   id: uniqueId(),
+      //   title: 'navigation.brand',
+      //   icon: IconBrandMedium,
+      //   href: '/admin/manage/brand',
+      // },
       {
         id: uniqueId(),
         title: 'navigation.integration',
@@ -666,12 +661,12 @@ export const OperatorAdminNavListingData: ItemDataCustomNavListing[] = [
         icon: IconScript,
         href: '/operator-admin/manage/document',
       },
-      {
-        id: uniqueId(),
-        title: 'navigation.brand',
-        icon: IconBrandMedium,
-        href: '/operator-admin/manage/brand',
-      },
+      // {
+      //   id: uniqueId(),
+      //   title: 'navigation.brand',
+      //   icon: IconBrandMedium,
+      //   href: '/operator-admin/manage/brand',
+      // },
       {
         id: uniqueId(),
         title: 'navigation.integration',
@@ -908,12 +903,12 @@ export const OperatorAdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] =
         icon: IconScript,
         href: '/operator-admin/manage/document',
       },
-      {
-        id: uniqueId(),
-        title: 'navigation.brand',
-        icon: IconBrandMedium,
-        href: '/operator-admin/manage/brand',
-      },
+      // {
+      //   id: uniqueId(),
+      //   title: 'navigation.brand',
+      //   icon: IconBrandMedium,
+      //   href: '/operator-admin/manage/brand',
+      // },
       {
         id: uniqueId(),
         title: 'navigation.integration',
@@ -1417,12 +1412,12 @@ export const OperatorNavListingData: ItemDataCustomNavListing[] = [
   //   icon: IconReport,
   //   href: '/operator/transaction-log',
   // },
-  {
-    id: uniqueId(),
-    title: 'navigation.visitor',
-    icon: IconUser,
-    href: '/operator/visitor',
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'navigation.visitor',
+  //   icon: IconUser,
+  //   href: '/operator/visitor',
+  // },
 
   {
     id: uniqueId(),

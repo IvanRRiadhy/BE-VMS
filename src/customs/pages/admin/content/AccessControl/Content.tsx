@@ -94,16 +94,16 @@ const Content = () => {
         setTotalFilteredRecords(response.RecordsFiltered);
 
         const rows: any[] = response.collection.map((item: any) => ({
-          brand_name: item.brand_name,
-          type: item.type,
+          // brand_name: item.brand_name,
+          id: item.id,
           name: item.name,
+          type: item.type,
           description: item.description,
           channel: item.channel,
           door_id: item.door_id,
-          raw: item.raw,
+          // raw: item.raw,
           integration_name: item.integration_name,
           // integration_id: item.integration_id,
-          id: item.id,
         }));
         if (response) {
           setTableData(rows);
@@ -118,7 +118,7 @@ const Content = () => {
   }, [token, page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword]);
 
   const defaultFormData: CreateAccessControlRequest = {
-    brand_id: '',
+    brand_id: null,
     brand_name: '',
     integration_id: '',
     integration_name: '',
