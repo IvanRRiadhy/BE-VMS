@@ -12,16 +12,15 @@ import {
   MenuItem,
   Typography,
   Autocomplete,
-  Checkbox,
 } from '@mui/material';
-import { Box } from '@mui/system';
-import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
 import { IconX } from '@tabler/icons-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import { getInvitationSite } from 'src/customs/api/Admin/InvitationData';
 import { showSwal } from 'src/customs/components/alerts/alerts';
+import { useSession } from 'src/customs/contexts/SessionContext';
 import { useHost } from 'src/hooks/useHost';
 import { useSites } from 'src/hooks/useSites';
 import { useVisitorType } from 'src/hooks/useVisitorType';
@@ -44,9 +43,18 @@ type FieldKey =
   | 'host';
 
 const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) => {
+  const { token } = useSession();
   const { data: host = [] } = useHost();
-  const { data: sites = [] } = useSites();
   const { data: visitorType = [] } = useVisitorType();
+
+  const [sites, setSites] = useState<any[]>([]);
+  useEffect(() => {
+    const fetchData = async () => {
+      const res = await getInvitationSite(token as string);
+      setSites(res?.collection ?? []);
+    };
+    fetchData();
+  }, [token]);
 
   const initialEnabledState = {
     visitorType: false,
@@ -159,61 +167,7 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
         children: buildSiteTree(sites, s.id),
       }));
   };
-  const rootTree = useMemo(() => buildSiteTree(sites, null), [sites]);
 
-  const buildSiteTreeWithParent = (sites: any[], parentId: string) => {
-    const parent = sites.find((s) => s.id === parentId);
-    if (!parent) return [];
-
-    return [{ id: parent.id, name: parent.name, children: buildSiteTree(sites, parentId) }];
-  };
-
-  // const renderTreeSite = (node: any) => {
-  //   const checked = selectedSiteIds.includes(node.id);
-
-  //   return (
-  //     <TreeItem
-  //       key={node.id}
-  //       itemId={node.id}
-  //       label={
-  //         <Box display="flex" alignItems="center" gap={1}>
-  //           <Checkbox
-  //             size="small"
-  //             checked={checked}
-  //             onMouseDown={(e) => e.stopPropagation()}
-  //             onClick={(e) => e.stopPropagation()}
-  //             onChange={(e) => {
-  //               const isChecked = e.target.checked;
-
-  //               setSelectedSiteIds((prev) => {
-  //                 let updated = [...prev];
-
-  //                 if (isChecked) {
-  //                   if (!updated.includes(node.id)) {
-  //                     updated.push(node.id);
-  //                   }
-  //                 } else {
-  //                   updated = updated.filter((id) => id !== node.id);
-  //                 }
-
-  //                 // simpan ke form sebagai CSV
-  //                 setForm((prevForm) => ({
-  //                   ...prevForm,
-  //                   site_id: updated.join(','),
-  //                 }));
-
-  //                 return updated;
-  //               });
-  //             }}
-  //           />
-  //           <Typography variant="body2">{node.name}</Typography>
-  //         </Box>
-  //       }
-  //     >
-  //       {node.children?.map((child: any) => renderTreeSite(child))}
-  //     </TreeItem>
-  //   );
-  // };
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle>Create Link Invitation</DialogTitle>
@@ -224,7 +178,6 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
 
       <DialogContent dividers>
         <Grid container spacing={2}>
-          {/* HOST */}
           <Grid size={{ xs: 12, md: 6 }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between">
               <CustomFormLabel sx={{ marginTop: 0 }}>Host</CustomFormLabel>
@@ -244,7 +197,6 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
             />
           </Grid>
 
-          {/* SITE */}
           <Grid size={{ xs: 12, md: 6 }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between">
               <CustomFormLabel sx={{ marginTop: 0 }}>Site</CustomFormLabel>
@@ -318,7 +270,6 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
             />
           </Grid>
 
-          {/* AGENDA */}
           <Grid size={{ xs: 12, md: 6 }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between">
               <CustomFormLabel sx={{ marginTop: 0 }} required>
@@ -346,7 +297,6 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
             />
           </Grid>
 
-          {/* VISIT START */}
           <Grid size={{ xs: 12, md: 6 }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between">
               <CustomFormLabel sx={{ marginTop: 0 }}>Visit Start</CustomFormLabel>
@@ -373,7 +323,6 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
             />
           </Grid>
 
-          {/* VISIT END */}
           <Grid size={{ xs: 12, md: 6 }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between">
               <CustomFormLabel sx={{ marginTop: 0 }}>Visit End</CustomFormLabel>
@@ -400,7 +349,6 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
             />
           </Grid>
 
-          {/* EXPIRED */}
           <Grid size={{ xs: 12, md: 6 }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between">
               <CustomFormLabel sx={{ marginTop: 0 }}>Expired Link</CustomFormLabel>
@@ -441,7 +389,6 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
             </CustomSelect>
           </Grid>
 
-          {/* QUOTA */}
           <Grid size={{ xs: 12, md: 6 }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between">
               <CustomFormLabel sx={{ marginTop: 0 }}>Visitor Quota Limit</CustomFormLabel>
@@ -455,7 +402,8 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
             <CustomTextField
               type="text"
               fullWidth
-              disabled={!enabled.visitorQuota}
+              // disabled={!enabled.visitorQuota}
+              disabled={!enabled.visitorQuota || form.is_single_use}
               sx={{
                 mt: 1,
                 '&.Mui-disabled': {
@@ -476,14 +424,32 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
             </Typography>
           </Grid>
         </Grid>
-        {/* is single of use */}
         <Grid size={{ xs: 12, md: 6 }}>
           <FormControlLabel
             control={
+              // <Switch
+              //   size="small"
+              //   checked={form.is_single_use}
+              //   onChange={(e) => setForm((prev) => ({ ...prev, is_single_use: e.target.checked }))}
+              // />
               <Switch
                 size="small"
                 checked={form.is_single_use}
-                onChange={(e) => setForm((prev) => ({ ...prev, is_single_use: e.target.checked }))}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+
+                  setForm((prev) => ({
+                    ...prev,
+                    is_single_use: checked,
+                    max_usage: checked ? 1 : 0,
+                  }));
+
+                  // optional: aktif/nonaktif otomatis toggle quota
+                  setEnabled((prev) => ({
+                    ...prev,
+                    visitorQuota: checked ? true : false,
+                  }));
+                }}
               />
             }
             label="Single Use Link"

@@ -121,6 +121,7 @@ export const usePermission = (data: any) => {
     canAsHead: hasPermission('AsHead'),
     canAllowMobileLogin: hasPermission('AllowMobileLogin'),
     canManageSiteScope: hasPermission('ManageSiteScope'),
+    canAccess: hasPermission('ManageAccessScope'),
 
     // Employee
     canManageVisitorType: hasPermission('ManageVisitorType'),

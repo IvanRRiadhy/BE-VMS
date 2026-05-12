@@ -69,7 +69,7 @@ const Approval = () => {
   const { total, approve, reject, pending } = getApprovalCounts();
   const cards = [
     {
-      title: 'Total Approval Ticket',
+      title: 'Total Approval',
       subTitle: `${totalFilteredRecords}`,
       subTitleSetting: 10,
       icon: IconScript,

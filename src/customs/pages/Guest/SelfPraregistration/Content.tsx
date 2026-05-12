@@ -14,7 +14,6 @@ import {
   getPublicVisitorEmployee,
   getPublicVisitorHost,
 } from 'src/customs/api/Public';
-import { useQuery } from '@tanstack/react-query';
 import { IconUsers } from '@tabler/icons-react';
 
 export default function InvitationShare() {
@@ -27,27 +26,6 @@ export default function InvitationShare() {
   const [invitation, setInvitation] = useState<any>(null);
   const [code, setCode] = useState<string>('');
   const [timestamp, setTimestamp] = useState<string>('');
-  const { data: employee, isLoading: employeeLoading } = useQuery({
-    queryKey: ['employee', code],
-    queryFn: () => getPublicVisitorHost(token as string, code, 'InvitationLink'),
-    enabled: !!token && !!code,
-  });
-
-  const { data: sites, isLoading: siteLoading } = useQuery({
-    queryKey: ['sites', code],
-    queryFn: () => getPublicSite(token as string, code, 'InvitationLink'),
-    enabled: !!token && !!code,
-  });
-
-  const { data: allVisitorEmployee, isLoading: visitorEmployeeLoading } = useQuery({
-    queryKey: ['all-visitor-employee', code],
-    queryFn: () => getPublicVisitorEmployee(token as string, code, 'InvitationLink'),
-    enabled: !!token && !!code,
-  });
-
-  const employeeList = employee?.collection ?? [];
-  const siteList = sites?.collection ?? [];
-  const visitorEmployeeList = allVisitorEmployee?.collection ?? [];
 
   useEffect(() => {
     const d = searchParams.get('d');
@@ -91,23 +69,70 @@ export default function InvitationShare() {
     }
   };
 
-  if (error)
-    return (
-      <div>
-        <Box
-          sx={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-        >
-          <CircularProgress />
-        </Box>
-      </div>
-    );
+  const [sites, setSites] = useState<any[]>([]);
+  const [allVisitorEmployee, setAllVisitorEmployee] = useState<any[]>([]);
+  const [employee, setEmployee] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+
+        const results = await Promise.allSettled([
+          getPublicSite(token as string, code, 'InvitationLink'),
+          getPublicVisitorEmployee(token as string, code, 'InvitationLink'),
+          getPublicVisitorHost(token as string, code, 'InvitationLink'),
+        ]);
+
+        const [sitesRes, visitorEmployeeRes, employeeRes] = results;
+
+        if (sitesRes.status === 'fulfilled') {
+          setSites(sitesRes.value.collection ?? []);
+        } else {
+          console.error('Error fetching sites:', sitesRes.reason);
+        }
+
+        if (visitorEmployeeRes.status === 'fulfilled') {
+          setAllVisitorEmployee(visitorEmployeeRes.value.collection);
+        } else {
+          console.error('Error fetching visitor employee:', visitorEmployeeRes.reason);
+        }
+
+        if (employeeRes.status === 'fulfilled') {
+          setEmployee(employeeRes.value.collection);
+        } else {
+          console.error('Error fetching employee:', employeeRes.reason);
+        }
+      } catch (error) {
+        console.error('Unexpected error:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (token && code) {
+      fetchData();
+    }
+  }, [token, code]);
+
+  // if (error)
+  //   return (
+  //     <div>
+  //       <Box
+  //         sx={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+  //       >
+  //         <CircularProgress color='primary' />
+  //       </Box>
+  //     </div>
+  //   );
 
   if (!invitation)
     return (
       <Box
         sx={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
       >
-        <CircularProgress />
+        <CircularProgress color="primary" />
       </Box>
     );
 
@@ -175,9 +200,9 @@ export default function InvitationShare() {
                 invitation={invitation}
                 code={code}
                 timestamp={timestamp}
-                sites={siteList}
-                employee={employeeList}
-                allVisitorEmployee={visitorEmployeeList}
+                sites={sites}
+                employee={employee}
+                allVisitorEmployee={allVisitorEmployee}
               />
             </Box>
           </Grid>

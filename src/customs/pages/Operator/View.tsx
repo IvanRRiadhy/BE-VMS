@@ -41,6 +41,7 @@ import {
   getInvitationOperatorRelated,
   getPermissionOperator,
   getTodayVisitingPurpose,
+  getUpComingVisitors,
 } from 'src/customs/api/operator';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import SearchVisitorDialog from './Dialog/SearchVisitorDialog';
@@ -79,11 +80,7 @@ import { useDebounce } from 'src/hooks/useDebounce';
 import PrintDialog from './Dialog/PrintDialog';
 import { getPrintBadgeConfig } from 'src/customs/api/Admin/PrintBadge';
 import PrintDialogBulk from './Dialog/PrintDialogBluk';
-import {
-  getRegisteredSiteOperator,
-  returnCard,
-  swapCard,
-} from 'src/customs/api/Admin/SwapCard';
+import { getRegisteredSiteOperator, returnCard, swapCard } from 'src/customs/api/Admin/SwapCard';
 import SwipeCardNoCodeDialog from './Dialog/SwipeCardNoCodeDialog';
 import InvitationQrCard from './Components/InvitationQrCard';
 import VisitorImage from './Components/VisitorImage';
@@ -393,7 +390,7 @@ const View = () => {
         payload.swap_card_from_site_id = registerSiteOperator;
       }
 
-      console.log('SWAP PAYLOAD', payload);
+      // console.log('SWAP PAYLOAD', payload);
 
       await createGrandAccessOperator(token as string, payload);
 
@@ -1533,7 +1530,6 @@ const View = () => {
         return prev;
       });
 
-
       const invitationId = invitationCode?.[0]?.id;
       if (invitationId) {
         const previousSelected = [...selectedVisitors];
@@ -2017,7 +2013,6 @@ const View = () => {
       ? f.multiple_option_fields.map((opt: any) => (typeof opt === 'object' ? { ...opt } : opt))
       : [],
   });
-
 
   const handleApplyToAllChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const checked = event.target.checked;
@@ -3263,6 +3258,20 @@ const View = () => {
     });
   };
 
+  const [dataUpcomingVisitors, setDataUpcomingVisitors] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const res = await getUpComingVisitors(token as string, {
+        today: 'true',
+        all_visitor_type: 'true',
+      });
+      setDataUpcomingVisitors(res?.collection || []);
+    };
+
+    fetchData();
+  }, [token]);
+
   return (
     <PageContainer title={'View'} description={'View'}>
       {/* <FullScreen handle={handle}> */}
@@ -3300,21 +3309,10 @@ const View = () => {
               minHeight: 0,
             }}
           >
-            {/* <Grid
-              container
-              spacing={2}
-              size={{ xs: 12 }}
-              sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'stretch',
-                height: '100%',
-                flexWrap: 'wrap',
-              }}
-            > */}
             {/* 🧩 Card FR */}
             <Grid size={{ xs: 12, md: 12, lg: 3 }}>
               <VisitorListCard
+                upComingVisitors={dataUpcomingVisitors}
                 relatedVisitors={filteredVisitors}
                 selectedVisitors={selectedVisitors}
                 scannedVisitorNumber={scannedVisitorNumber}

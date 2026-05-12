@@ -57,6 +57,7 @@ import timezone from 'dayjs/plugin/timezone';
 dayjs.extend(utc);
 dayjs.extend(timezone);
 import 'dayjs/locale/id';
+import { IconInfoCircle } from '@tabler/icons-react';
 
 const RenderDetailRows = ({
   details,
@@ -403,14 +404,62 @@ const RenderDetailRows = ({
         return (
           <TableRow key={key}>
             <TableCell>
-              <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
-                {item.long_display_text}
-                {item.mandatory && (
-                  <Typography component="span" color="error" sx={{ ml: 0.5 }}>
-                    *
-                  </Typography>
+              <Box display="flex" alignItems="center" gap={0.5} mb={1}>
+                <Typography variant="subtitle2" fontWeight={600}>
+                  {item.long_display_text}
+                  {item.mandatory && (
+                    <Typography component="span" color="error" sx={{ ml: 0.5 }}>
+                      *
+                    </Typography>
+                  )}
+                </Typography>
+
+                {item.remarks === 'host' && (
+                  <Tooltip
+                    title="The host is the person in charge responsible for this visitor"
+                    arrow
+                    placement="top"
+                  >
+                    <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                  </Tooltip>
                 )}
-              </Typography>
+                {item.remarks === 'agenda' && (
+                  <Tooltip
+                    title="The agenda is the purpose of the visitor's visit"
+                    arrow
+                    placement="top"
+                  >
+                    <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                  </Tooltip>
+                )}
+                {item.remarks === 'site_place' && (
+                  <Tooltip
+                    title="The site place is the location where the visitor will be received"
+                    arrow
+                    placement="top"
+                  >
+                    <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                  </Tooltip>
+                )}
+                {item.remarks === 'visitor_period_start' && (
+                  <Tooltip
+                    title="The visitor period start is the date when the visitor's visit begins"
+                    arrow
+                    placement="top"
+                  >
+                    <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                  </Tooltip>
+                )}
+                {item.remarks === 'visitor_period_end' && (
+                  <Tooltip
+                    title="The visitor period end is the date when the visitor's visit ends"
+                    arrow
+                    placement="top"
+                  >
+                    <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                  </Tooltip>
+                )}
+              </Box>
 
               {(() => {
                 switch (item.field_type) {
@@ -512,23 +561,26 @@ const RenderDetailRows = ({
 
                     const isLockedByInvitation =
                       (item.remarks === 'host' && !!invitation?.host) ||
-                      (item.remarks === 'employee' && !!invitation?.host) ||
                       (item.remarks === 'site_place' && !!invitation?.site);
 
                     if (item.remarks === 'host') {
                       options = invitation?.host
                         ? [{ value: invitation.host.id, name: invitation.host.name }]
-                        : employee.map((emp: any) => ({
-                            value: emp.id,
-                            name: emp.name,
-                          }));
+                        : Array.isArray(employee)
+                          ? employee.map((emp: any) => ({
+                              value: emp.id,
+                              name: emp.name,
+                            }))
+                          : [];
                     } else if (item.remarks === 'employee') {
                       options = invitation?.host
                         ? [{ value: invitation.host.id, name: invitation.host.name }]
-                        : allVisitorEmployee.map((emp: any) => ({
-                            value: emp.id,
-                            name: emp.name,
-                          }));
+                        : Array.isArray(allVisitorEmployee)
+                          ? allVisitorEmployee.map((emp: any) => ({
+                              value: emp.id,
+                              name: emp.name,
+                            }))
+                          : [];
                     } else if (item.remarks === 'site_place') {
                       options = invitation?.site
                         ? [{ value: invitation.site.id, name: invitation.site.name }]
@@ -542,61 +594,70 @@ const RenderDetailRows = ({
                         typeof opt === 'object' ? opt : { value: opt, name: opt },
                       );
                     }
-                    // if (item.remarks === 'site_place') {
-                    //   return (
-                    //     <>
-                    //       <Autocomplete
-                    //         multiple
-                    //         size="small"
-                    //         disabled={isLockedByInvitation}
-                    //         options={options}
-                    //         getOptionLabel={(option) => option.name}
-                    //         value={options.filter((opt) =>
-                    //           selectedSiteParentIds.includes(opt.value),
-                    //         )}
-                    //         filterOptions={(opts, state) => {
-                    //           if (!state.inputValue || state.inputValue.length < 3) return [];
-                    //           return opts.filter((opt) =>
-                    //             opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
-                    //           );
-                    //         }}
-                    //         noOptionsText="Enter at least 3 characters to search"
-                    //         onChange={(_, newValues) => {
-                    //           const parentIds = newValues.map((v) => v.value);
-                    //           setSelectedSiteParentIds(parentIds);
+                    if (item.remarks === 'site_place') {
+                      return (
+                        <>
+                          <Autocomplete
+                            multiple
+                            size="small"
+                            options={options}
+                            getOptionLabel={(option) => option.name}
+                            inputValue={inputValues[index] || ''}
+                            onInputChange={(_, newInputValue, reason) => {
+                              if (reason !== 'input') return;
 
-                    //           const trees = parentIds.flatMap((pid) =>
-                    //             buildSiteTreeWithParent(sites, pid),
-                    //           );
+                              setInputValues((prev: any) => ({
+                                ...prev,
+                                [index]: newInputValue,
+                              }));
+                            }}
+                            filterOptions={(opts, state) => {
+                              if (state.inputValue.length < 3) return [];
+                              return opts.filter((opt) =>
+                                opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
+                              );
+                            }}
+                            noOptionsText={
+                              (inputValues[index] || '').length < 3
+                                ? 'Enter at least 3 characters to search'
+                                : 'Not found'
+                            }
+                            value={options.filter((opt) =>
+                              selectedSiteParentIds.includes(opt.value),
+                            )}
+                            onChange={(_, newValues) => {
+                              const parentIds = newValues.map((v) => v.value);
 
-                    //           setSiteTree(trees);
-                    //         }}
-                    //         renderInput={(params) => (
-                    //           <CustomTextField
-                    //             {...params}
-                    //             placeholder={
-                    //               selectedSiteParentIds.length === 0
-                    //                 ? 'Enter at least 3 characters to search'
-                    //                 : ''
-                    //             }
-                    //             fullWidth
-                    //             error={!!errorMessage}
-                    //             helperText={errorMessage}
-                    //           />
-                    //         )}
-                    //       />
+                              const trees = parentIds.flatMap((pid) =>
+                                buildSiteTreeWithParent(sites, pid),
+                              );
 
-                    //       {siteTree.length > 0 && (
-                    //         <SimpleTreeView>
-                    //           {siteTree.map((node) =>
-                    //             renderTree(node, index, handleSitePlaceChange),
-                    //           )}
-                    //         </SimpleTreeView>
-                    //       )}
-                    //     </>
-                    //   );
-                    // }
+                              setSelectedSiteParentIds(parentIds);
 
+                              setInputValues((prev: any) => ({
+                                ...prev,
+                                [index]: '',
+                              }));
+
+                              setSiteTree(trees);
+                            }}
+                            renderInput={(params) => (
+                              <CustomTextField
+                                {...params}
+                                placeholder="Enter at least 3 characters to search"
+                                fullWidth
+                                error={!!errorMessage}
+                                helperText={errorMessage}
+                              />
+                            )}
+                          />
+
+                          <SimpleTreeView>
+                            {siteTree.map((node) => renderTree(node, index, handleSitePlaceChange))}
+                          </SimpleTreeView>
+                        </>
+                      );
+                    }
                     return (
                       <Autocomplete
                         size="small"
@@ -779,7 +840,7 @@ const RenderDetailRows = ({
                               helperText: errorMessage,
                               sx: {
                                 '& .MuiInputBase-root.Mui-disabled': {
-                                  backgroundColor: '#f3f4f6', 
+                                  backgroundColor: '#f3f4f6',
                                 },
                                 '& .MuiInputBase-input.Mui-disabled': {
                                   WebkitTextFillColor: '#909294ff',

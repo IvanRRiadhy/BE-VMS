@@ -167,6 +167,7 @@ type DynamicTableProps<
   isActionEmployee?: boolean;
   totalCount?: number;
   isHaveFilterMore?: boolean;
+  isCurrentUsed?: boolean;
   filterMoreContent?: React.ReactNode;
   sortColumns?: string[];
   isOperatorSetting?: boolean;
@@ -250,6 +251,7 @@ function DynamicTableBase<
   isHaveAccess = false,
   isCopyLink = false,
   isDetailLink = false,
+  isCurrentUsed = false,
   isButtonDisabled = false,
   isButtonEnabled = false,
   isHaveEmployee = false,
@@ -1650,6 +1652,7 @@ function DynamicTableBase<
                   isHaveAccess={isHaveAccess}
                   getAccessActions={getAccessActions}
                   isHaveView={isHaveView}
+                  isCurrentUsed={isCurrentUsed}
                   onView={onView}
                   onEdit={onEdit}
                   isHavePermission={isHavePermission}

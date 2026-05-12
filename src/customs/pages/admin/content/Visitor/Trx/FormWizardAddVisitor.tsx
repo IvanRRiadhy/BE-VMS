@@ -4055,7 +4055,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         setNextDialogOpen(false);
       }, 700);
 
-      toast('Failed to create visitor.', 'error');
+      showSwal(
+        'error',
+        err.response?.data?.collection?.map((item: any) => item.message).join('\n') ||
+          err.response?.data?.message ||
+          'Failed to create visitor.',
+      );
 
       if (err?.name === 'ZodError') {
         const fieldErrors: Record<string, string> = {};
@@ -4528,29 +4533,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     );
   };
 
-  const isVisitorValid = (visitor: any) => {
-    return visitor.question_page?.every((page: any) =>
-      page.form?.every((f: any) => {
-        if (!f.mandatory) return true;
-
-        return f.answer_text?.toString().trim() !== '' || f.answer_datetime || f.answer_file;
-      }),
-    );
-  };
-
   const hasAnyFilled = groupVisitors.some((g) => g.data_visitor?.some((v) => !isVisitorEmpty(v)));
-
-  const isAllValid = groupVisitors.every((g) => {
-    const visitors = g.data_visitor || [];
-
-    const filledVisitors = visitors.filter((v) => !isVisitorEmpty(v));
-
-    if (filledVisitors.length === 0) return false;
-
-    return filledVisitors.every((v) => isVisitorValid(v));
-  });
-
-  const isSubmitDisabled = loading || !hasAnyFilled || !isAllValid;
 
   return (
     <PageContainer title="Visitor" description="this is Add Visitor page">
@@ -4753,11 +4736,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   variant="contained"
                   color="primary"
                   onClick={handleOnSubmit}
-                  disabled={
-                    loading
-                    // groupVisitors.length === 0 ||
-                    // groupVisitors.every((g) => !g.data_visitor || g.data_visitor.length === 0)
-                  }
+                  disabled={loading || !hasAnyFilled || !formData.visitor_type}
                 >
                   Submit All
                 </Button>

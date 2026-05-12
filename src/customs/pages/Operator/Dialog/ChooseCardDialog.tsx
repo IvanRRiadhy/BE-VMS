@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -16,6 +16,13 @@ import {
 } from '@mui/material';
 import { IconX, IconSearch, IconSwipe, IconCards } from '@tabler/icons-react';
 import CardSearchInput from '../Components/CardSearchInput';
+
+type DocumentType = 'CardAccess' | 'Other';
+
+interface SwipeCardDialogInitialValues {
+  documentType: DocumentType;
+  value: string;
+}
 
 const ChooseCardDialog = ({
   open,
@@ -37,6 +44,7 @@ const ChooseCardDialog = ({
   handleOpenSwipeDialog,
   handleConfirmChooseCards,
   setOpenRevokeDialog,
+  initialValues,
 }: any) => {
   const isSwipeDisabled =
     //  currentUsedCards.length === 0 ||
@@ -49,6 +57,11 @@ const ChooseCardDialog = ({
   const isChosen = selectedCards.includes(cards.card_number);
 
   const isLimitReached = selectedCards.length >= (selectedVisitors.length || 1) && !isChosen;
+
+  const [selectedCurrentCard, setSelectedCurrentCard] = useState<any>(null);
+  const [selectedNewCard, setSelectedNewCard] = useState<any>(null);
+
+  
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg" container={containerRef?.current}>
@@ -107,7 +120,7 @@ const ChooseCardDialog = ({
                         backgroundColor: theme.palette.warning.light,
                         boxShadow: theme.shadows[6],
                         opacity: isSelectable ? 1 : 0.5,
-                        cursor: isSelectable ? 'pointer' : 'not-allowed',
+                        // cursor: isSelectable ? 'pointer' : 'not-allowed',
                       })}
                       onClick={(e) => {
                         if (!isSelectable) return;
@@ -167,7 +180,7 @@ const ChooseCardDialog = ({
                         control={
                           <Checkbox
                             checked={selectedCards.includes(card.card_number)}
-                            disabled={!isSelectable}
+                            // disabled={!isSelectable}
                             onChange={() => handleToggleCard(card.card_number)}
                           />
                         }
@@ -211,7 +224,7 @@ const ChooseCardDialog = ({
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     textAlign: 'center',
-                    cursor: isDisabled ? 'not-allowed' : 'pointer',
+                    // cursor: isDisabled ? 'not-allowed' : 'pointer',
                     border: '1px solid',
                     borderColor: isChosen ? theme.palette.primary.main : 'divider',
                     boxShadow: isChosen ? theme.shadows[8] : theme.shadows[2],
@@ -318,7 +331,7 @@ const ChooseCardDialog = ({
                         checked={isChosen}
                         // disabled={!isChosen}
                         onChange={() => {
-                          if (isDisabled) return;
+                          // if (isDisabled) return;
                           handleToggleCard(card.card_number);
                         }}
                       />
@@ -350,7 +363,7 @@ const ChooseCardDialog = ({
           color="warning"
           startIcon={<IconSwipe />}
           onClick={handleOpenSwipeDialog}
-          disabled={isSwipeDisabled}
+          // disabled={isSwipeDisabled}
         >
           Swipe
         </Button>
@@ -364,7 +377,7 @@ const ChooseCardDialog = ({
         >
           Give
         </Button>
-{/* 
+        {/* 
         <Button
           fullWidth
           variant="contained"

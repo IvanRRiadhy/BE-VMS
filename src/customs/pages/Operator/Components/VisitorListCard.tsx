@@ -17,13 +17,14 @@ import {
   Tabs,
   Tab,
 } from '@mui/material';
-import { IconX } from '@tabler/icons-react';
+import { IconAdjustments, IconFilter, IconSettings, IconX } from '@tabler/icons-react';
 import { IconSearch } from '@tabler/icons-react';
 import { useMemo, useState } from 'react';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 
 interface Props {
+  upComingVisitors: any[];
   relatedVisitors: any[];
   selectedVisitors: string[];
   scannedVisitorNumber: string | null;
@@ -49,6 +50,7 @@ interface Props {
 }
 
 const VisitorListCard: React.FC<Props> = ({
+  upComingVisitors,
   relatedVisitors,
   selectedVisitors,
   scannedVisitorNumber,
@@ -72,8 +74,10 @@ const VisitorListCard: React.FC<Props> = ({
   handlePrintClick,
   loadingAccess,
 }) => {
+  const [tab, setTab] = useState(0);
+  const displayedVisitors = tab === 0 ? upComingVisitors : relatedVisitors;
   const totalVehicle = useMemo(() => {
-    return relatedVisitors.filter((v) => {
+    return displayedVisitors.filter((v) => {
       const plate = v.vehicle_plate_number?.trim();
       const type = v.vehicle_type?.trim();
 
@@ -82,10 +86,9 @@ const VisitorListCard: React.FC<Props> = ({
 
       return isPlateValid || isTypeValid;
     }).length;
-  }, [relatedVisitors]);
+  }, [displayedVisitors]);
 
   const theme = useTheme();
-  const lgUp = useMediaQuery(theme.breakpoints.up('lg'));
   const getCdnUrl = (path?: string) => {
     if (!path || path === '-' || path.trim() === '') return null;
 
@@ -93,8 +96,6 @@ const VisitorListCard: React.FC<Props> = ({
 
     return `${axiosInstance2.defaults.baseURL}/cdn${cleanPath}`;
   };
-
-  const [tab, setTab] = useState(0);
 
   return (
     <Card
@@ -151,12 +152,6 @@ const VisitorListCard: React.FC<Props> = ({
 
         {/* Tabs */}
         <Box mt={1} display="flex" gap={1} justifyContent={'space-between'} width={'100%'}>
-          {/* <Button variant="contained" size="small" fullWidth>
-            Live Visitors
-          </Button>*/}
-          {/* <Button variant="contained" size="small">
-            Related Visitors
-          </Button> */}
           <Tabs
             value={tab}
             onChange={(e, newVal) => setTab(newVal)}
@@ -209,7 +204,7 @@ const VisitorListCard: React.FC<Props> = ({
             {tab === 1 && <div>Related Visitors (Dummy)</div>}
           </Box> */}
         </Box>
-        <Box display="flex" justifyContent={'end'}>
+        <Box display="flex" justifyContent={'flex-end'} alignItems={'center'} gap={1} mt={0.5}>
           <Tooltip
             title="Click and Select more than 1 visitor"
             slotProps={{
@@ -239,13 +234,18 @@ const VisitorListCard: React.FC<Props> = ({
               label="Select Multiple"
               labelPlacement="end"
               sx={{
-                ml: 'auto', 
+                // ml: 'auto',
                 marginRight: 0,
                 width: '150px',
                 justifyContent: 'end',
               }}
             />
           </Tooltip>
+          <Box sx={{ backgroundColor: '#f5f5f5', p: '10px', borderRadius: 1, cursor: 'pointer' }}>
+            <Tooltip title="Filter" arrow placement="top">
+              <IconAdjustments size={22} />
+            </Tooltip>
+          </Box>
         </Box>
       </Box>
 
@@ -254,18 +254,18 @@ const VisitorListCard: React.FC<Props> = ({
           // flex: 1,
           overflowY: 'auto',
           p: 1,
-          ...(relatedVisitors.length == 0 && {
+          ...(displayedVisitors.length == 0 && {
             height: 'calc(100vh - 300px)',
           }),
-          ...(relatedVisitors.length < 5 && {
+          ...(displayedVisitors.length < 5 && {
             flex: 1,
           }),
-          ...(relatedVisitors.length >= 5 && {
+          ...(displayedVisitors.length >= 5 && {
             height: 'calc(100vh - 330px)',
           }),
         }}
       >
-        {relatedVisitors.map((item) => {
+        {displayedVisitors.map((item) => {
           const isActive = selectedVisitors.includes(item.id);
           const isDriving = item.is_driving === true;
           const isScanned =
@@ -294,12 +294,14 @@ const VisitorListCard: React.FC<Props> = ({
                   />
 
                   <Box>
-                    <Typography fontWeight="600">{item.name}</Typography>
+                    <Typography fontWeight="600">
+                      {tab === 0 ? item.visitor_name : item.name}
+                    </Typography>
+
                     <Typography variant="body2" color="text.secondary">
-                      {item.organization}
+                      {tab === 0 ? item.visitor_organization_name : item.organization}
                     </Typography>
                   </Box>
-
                   {/* BADGES */}
                   <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
                     {isDriving && (
@@ -430,7 +432,7 @@ const VisitorListCard: React.FC<Props> = ({
           backgroundColor: '#f5f5f5',
         }}
       >
-        <Typography>Total: {relatedVisitors.length}</Typography>
+        <Typography>Total: {displayedVisitors.length}</Typography>
         <Typography>Vehicle: {totalVehicle}</Typography>
       </Box>
     </Card>

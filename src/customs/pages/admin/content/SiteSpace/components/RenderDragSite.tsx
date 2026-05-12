@@ -78,6 +78,7 @@ const RenderDragSite: React.FC<Props> = ({
               key={id}
               id={id}
               item={item}
+              items={items}
               index={index}
               sectionKey={sectionKey}
               onChange={onChange}
@@ -96,6 +97,7 @@ const RenderDragSite: React.FC<Props> = ({
 const SortableRow = ({
   id,
   item,
+  items,
   index,
   sectionKey,
   onChange,
@@ -125,35 +127,25 @@ const SortableRow = ({
       {/* Name / Dropdown */}
       <TableCell>
         {isDropdown ? (
-          // <TextField
-          //   select
-          //   fullWidth
-          //   size="small"
-          //   value={item[fieldName] || ''}
-          //   onChange={(e) => {
-          //     const selectedId = e.target.value;
-          //     const selected = selectList.find((x: any) => x.id === selectedId);
-
-          //     onChange(sectionKey, index, fieldName, selectedId);
-          //     if (selected) onChange(sectionKey, index, 'name', selected.name);
-          //   }}
-          // >
-          //   <MenuItem value="" disabled>
-          //     Select {sectionKey}
-          //   </MenuItem>
-          //   {selectList.map((x: any) => (
-          //     <MenuItem key={x.id} value={x.id}>
-          //       {x.name}
-          //     </MenuItem>
-          //   ))}
-          // </TextField>
-
           <Autocomplete
             fullWidth
             size="small"
             options={selectList}
             getOptionLabel={(option: any) =>
               option.area_name || option.masked_area_name || option.name || ''
+            }
+            getOptionDisabled={(option: any) =>
+              items.some(
+                (selected: any, selectedIndex: number) =>
+                  // abaikan row yang sedang diedit
+                  selectedIndex !== index &&
+                  String(
+                    selected[fieldName] ||
+                      selected.trk_ble_card_access_id ||
+                      selected.prk_area_parking_id ||
+                      selected.access_control_id,
+                  ).toLowerCase() === String(option.id).toLowerCase(),
+              )
             }
             value={
               selectList.find(
@@ -170,15 +162,6 @@ const SortableRow = ({
                   }
                 : null)
             }
-            // value={
-            //   selectList.find(
-            //     (x: any) =>
-            //       String(x.id).toLowerCase() ===
-            //       String(
-            //         item[fieldName] || item.trk_ble_card_access_id || item.prk_area_parking_id,
-            //       ).toLowerCase(),
-            //   ) || null
-            // }
             onChange={(_, newValue) => {
               const selectedId =
                 newValue?.trk_ble_card_access_id ||

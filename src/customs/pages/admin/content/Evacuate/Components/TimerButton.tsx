@@ -23,10 +23,12 @@ import {
   DialogContent,
   DialogActions,
   useTheme,
+  IconButton,
 } from '@mui/material';
 import { AppDispatch, useDispatch } from 'src/store/Store';
 import { setEvacuationState } from 'src/store/customizer/CustomizerSlice';
 import { useMediaQuery } from '@mui/system';
+import { IconX } from '@tabler/icons-react';
 
 const STORAGE_KEY = 'evac-timer-state';
 
@@ -347,9 +349,22 @@ const TimerButton: React.FC = () => {
           </Stack>
         </CardContent>
         {/* Warning Dialog */}
-        <Dialog open={openConfirm} onClose={handleCancelEvacuate}>
-          <DialogTitle>Start Evacuation?</DialogTitle>
-          <DialogContent>
+        <Dialog open={openConfirm} onClose={handleCancelEvacuate} fullWidth maxWidth="sm">
+          <DialogTitle>Start Evacuation?
+            <IconButton
+              aria-label="close"
+              onClick={handleCancelEvacuate}
+              sx={{
+                position: 'absolute',
+                right: 8,
+                top: 8,
+                color: (theme) => theme.palette.grey[500],
+              }}
+            >
+              <IconX/>
+            </IconButton>
+          </DialogTitle>
+          <DialogContent dividers>
             <Typography>
               Are you sure to set <b>Evacuation</b> Alarm on?
             </Typography>

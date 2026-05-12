@@ -42,6 +42,7 @@ import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alert
 import FormSetting from './FormSetting';
 import FormSettingRegisteredSite from './FormSettingRegisteredSite';
 import { getApprovalWorkflowByDt } from 'src/customs/api/Admin/ApprovalWorkflow';
+import VisitorCardSetting from './VisitorCardSetting';
 
 type SettingSMTPRow = {
   id: number;
@@ -107,6 +108,13 @@ const Content = () => {
       icon: IconSettingsFilled,
       color: 'none',
     },
+    {
+      title: 'Total Visitor Card Setting',
+      subTitle: `${0}`,
+      subTitleSetting: 10,
+      icon: IconSettingsFilled,
+      color: 'none',
+    },
   ];
 
   const handleSubmit = async () => {
@@ -167,8 +175,6 @@ const Content = () => {
           getSetting(token as string),
           getAllOrganizations(token as string),
         ]);
-
-        // ✅ HANDLE SETTING (WAJIB)
         let raw: any = null;
         if (settingRes.status === 'fulfilled') {
           raw = settingRes.value.collection;
@@ -260,36 +266,8 @@ const Content = () => {
     setOpenRegisteredSite(true);
   };
 
-  const [openGiveAccess, setOpenGiveAccess] = useState(false);
-  const [openSiteAccess, setOpenSiteAccess] = useState(false);
-
-  const [acessData, setAcessData] = useState<any[]>([]);
-  const [siteAccessData, setSiteAccessData] = useState<any[]>([]);
-
   const [selectedAccess, setSelectedAccess] = useState<any[]>([]);
   const [selectedSiteAccess, setSelectedSiteAccess] = useState<any[]>([]);
-  const [deletedAccessIds, setDeletedAccessIds] = useState<string[]>([]);
-
-  const handleAddNewAccess = () => {
-    setSelectedAccess((prev) => [
-      ...prev,
-      {
-        access_control_id: '',
-        can_grant: true,
-        can_revoke: true,
-        can_block: true,
-      },
-    ]);
-  };
-
-  const handleAddSiteAccess = () => {
-    setSelectedSiteAccess((prev) => [
-      ...prev,
-      {
-        site_id: '',
-      },
-    ]);
-  };
 
   const [openRegisteredSite, setOpenRegisteredSite] = useState(false);
   const theme = useTheme();
@@ -359,6 +337,7 @@ const Content = () => {
               <Tab label="Visitor Setting" />
               {/* <Tab label="Operator Setting" /> */}
               <Tab label="Approval Workflow" />
+              <Tab label="Visitor Card Setting" />
             </Tabs>
 
             <Box
@@ -448,6 +427,22 @@ const Content = () => {
                       refreshTrigger={refreshTrigger}
                       setRefreshTrigger={setRefreshTrigger}
                     />
+                  ) : null}
+                </Box>
+              ) : null}
+
+              {tabIndex === 2 ? (
+                <Box sx={{ overflowX: 'auto', p: { xs: 0, md: 2 }, height: '100%' }}>
+                  {!showForm ? (
+                    // <VisitorCardSetting
+                    //   tableData={tableData}
+                    //   searchKeyword={searchKeyword}
+                    //   setSearchKeyword={setSearchKeyword}
+                    //   searchInput={searchInput}
+                    //   setSearchInput={setSearchInput}
+                    //   refreshTrigger={refreshTrigger}
+                    //   setRefreshTrigger={setRefreshTrigger}
+                    <VisitorCardSetting />
                   ) : null}
                 </Box>
               ) : null}

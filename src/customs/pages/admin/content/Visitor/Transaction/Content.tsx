@@ -43,7 +43,6 @@ import {
   AdminCustomSidebarItemsData,
   AdminNavListingData,
 } from 'src/customs/components/header/navigation/AdminMenu';
-import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import iconScanQR from 'src/assets/images/svgs/scan-qr.svg';
 import iconAdd from 'src/assets/images/svgs/add-circle.svg';
 import TopCard from 'src/customs/components/cards/TopCard';
@@ -66,13 +65,7 @@ import {
   getVisitorTransactionByIds,
   getVisitorTransactionPagination,
 } from 'src/customs/api/admin';
-import { Scanner } from '@yudiel/react-qr-scanner';
-import FlipCameraAndroidIcon from '@mui/icons-material/FlipCameraAndroid';
-import FlashOnIcon from '@mui/icons-material/FlashOn';
-import FlashOffIcon from '@mui/icons-material/FlashOff';
 import {
-  IconArrowRight,
-  IconCamera,
   IconClipboard,
   IconFileSpreadsheet,
   IconFilterFilled,
@@ -80,7 +73,6 @@ import {
   IconQrcode,
   IconUser,
   IconUsers,
-  IconX,
 } from '@tabler/icons-react';
 
 import { getInvitationCode } from 'src/customs/api/operator';
@@ -108,7 +100,8 @@ type Group = {
 };
 
 const Content = () => {
-  const { token } = useSession();
+  const { token, roleAccess } = useSession();
+  const isOperatorAdmin = roleAccess === 'OperatorAdmin';
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const [sortDir, setSortDir] = useState<string>('desc');
@@ -147,20 +140,24 @@ const Content = () => {
       subTitleSetting: 'image',
       color: 'none',
     },
-    {
-      title: 'Add Invitation',
-      icon: IconUser,
-      subTitle: iconAdd,
-      subTitleSetting: 'image',
-      color: 'none',
-    },
-    {
-      title: 'Add Pre Registration',
-      icon: IconClipboard,
-      subTitle: iconAdd,
-      subTitleSetting: 'image',
-      color: 'none',
-    },
+    ...(!isOperatorAdmin
+      ? [
+          {
+            title: 'Add Invitation',
+            icon: IconUser,
+            subTitle: iconAdd,
+            subTitleSetting: 'image',
+            color: 'none',
+          },
+          {
+            title: 'Add Pre Registration',
+            icon: IconClipboard,
+            subTitle: iconAdd,
+            subTitleSetting: 'image',
+            color: 'none',
+          },
+        ]
+      : []),
   ];
 
   const [snackbar, setSnackbar] = useState<{

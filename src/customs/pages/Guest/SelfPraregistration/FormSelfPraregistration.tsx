@@ -1,4 +1,4 @@
-import React, {  useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Accordion,
   AccordionDetails,
@@ -474,7 +474,6 @@ const FormSelfPraregistration = ({
         const parsed = CreateGroupVisitorRequestSchema.parse(payload);
         // console.log('🚀 Final Payload (Group):', JSON.stringify(parsed, null, 2));
 
-        // submit API
         await createSubmitGroupShareLink(token as string, code, timestamp, parsed);
         setLoading(false);
         showSwal('success', 'Group visitor created successfully.', 1000);
@@ -510,24 +509,14 @@ const FormSelfPraregistration = ({
         setPreviewSections(parsed?.data_visitor?.[0]);
         setPreviewOpen(true);
         return;
-
-        // // // Submit ke endpoint single
-        // const submitFn = await createSubmitShareLink(token, code, timestamp, parsed);
-        // // const backendResponse = await submitFn(token, parsed);
-        // console.log('Visitor created:', submitFn);
-        // const successMessage =
-        //   TYPE_REGISTERED === 0
-        //     ? 'Pre-registration created successfully.'
-        //     : 'Invitation Visitor created successfully.';
-
-        // showSwal('success', successMessage);
-
-        // resetMediaState();
-        // clearAnswerFiles();
       }
     } catch (err: any) {
-      showSwal('error', 'Failed to create visitor.');
-      console.error(err);
+      showSwal(
+        'error',
+        err.response?.data?.collection?.map((item: any) => item.message).join('\n') ||
+          err.response?.data?.message ||
+          'Failed to create visitor.',
+      );
 
       if (err?.name === 'ZodError') {
         const fieldErrors: Record<string, string> = {};
@@ -889,7 +878,6 @@ const FormSelfPraregistration = ({
     }
   };
 
-
   const clearFieldError = (key: string) => {
     setFieldErrors((prev) => {
       if (!prev[key]) return prev;
@@ -966,7 +954,6 @@ const FormSelfPraregistration = ({
     e.target.value = '';
   };
 
-
   const handleUploadMethodChange = (ukey: string, v: string) => {
     setUploadMethods((prev) => ({ ...prev, [ukey]: v as 'file' | 'camera' }));
   };
@@ -1000,12 +987,8 @@ const FormSelfPraregistration = ({
         urls.map((u) =>
           axiosInstance2
             .delete(`/cdn${u}`)
-            .then(() => {
-              // console.log(`Berhasil hapus file CDN: ${u}`);
-            })
-            .catch((err) => {
-              // console.warn(`Gagal hapus file CDN ${u}:`, err);
-            }),
+            .then(() => {})
+            .catch((err) => {}),
         ),
       );
 
@@ -1056,8 +1039,6 @@ const FormSelfPraregistration = ({
       }));
   };
 
-
-
   const renderTree = (
     node: any,
     index: number,
@@ -1098,12 +1079,6 @@ const FormSelfPraregistration = ({
                   }
 
                   onChange(index, 'answer_text', toCsv(updated));
-                  // console.log('[TREE CHECK]', {
-                  //   clicked: node.id,
-                  //   isChecked,
-                  //   result: updated,
-                  // });
-
                   return updated;
                 });
               }}
@@ -1982,7 +1957,7 @@ const FormSelfPraregistration = ({
         setVtLoading(true);
 
         const res = await getPublicVisitorType(token as string, code, 'InvitationLink');
-        setVisitorType(res?.data || []);
+        setVisitorType(res?.collection || []);
       } catch (err) {
         console.error('VT ERROR:', err);
       } finally {
@@ -2261,9 +2236,6 @@ const FormSelfPraregistration = ({
                 return (
                   <>
                     <Accordion key={activeStep} expanded sx={{ mt: 2 }}>
-                      {/* <AccordionSummary onClick={(e) => e.stopPropagation()}>
-                        <Typography fontWeight={600}>{section.name}</Typography>
-                      </AccordionSummary> */}
                       <AccordionDetails sx={{ paddingTop: 0 }}>{renderTable()}</AccordionDetails>
                     </Accordion>
                   </>
@@ -2863,7 +2835,6 @@ const FormSelfPraregistration = ({
     sections.forEach((section) => {
       const forms = formsOf(section);
 
-      // Purpose Visit → single_page
       if (isPurposeVisit(section)) {
         if (!section?.self_only) {
           forms.forEach((f: any, idx: number) => {
@@ -2910,7 +2881,6 @@ const FormSelfPraregistration = ({
         toast('Group visitor created successfully.', 'success');
       } else {
         await createSubmitShareLink(token as string, code, timestamp, previewPayload);
-
         const successMessage =
           TYPE_REGISTERED === 0
             ? 'Pre-registration created successfully.'
@@ -2922,13 +2892,21 @@ const FormSelfPraregistration = ({
 
       setPreviewOpen(false);
       resetSingleFormState();
-      navigate('/invitation-share/success');
+      navigate('/invitation-share/success', { replace: true });
     } catch (err) {
-      console.error(err);
       setLoading(false);
-      await showSwal('error', 'Failed to create visitor.');
     }
   };
+
+  const isVisitorEmpty = (visitor: any) => {
+    return !visitor.question_page?.some((page: any) =>
+      page.form?.some((f: any) => f.answer_text || f.answer_datetime || f.answer_file),
+    );
+  };
+
+  const hasAnyFilled = groupVisitors.some((g) =>
+    g.data_visitor?.some((v: any) => !isVisitorEmpty(v)),
+  );
 
   return (
     <>
@@ -3142,7 +3120,7 @@ const FormSelfPraregistration = ({
                   variant="contained"
                   color="primary"
                   onClick={handleOnSubmit}
-                  disabled={loading || groupVisitors.length === 0}
+                  disabled={loading || !hasAnyFilled || !formData.visitor_type}
                 >
                   Submit All
                 </Button>

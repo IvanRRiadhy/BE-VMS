@@ -78,6 +78,7 @@ const Visitor = () => {
   const [selectedShareLinkId, setSelectedShareLinkId] = useState<string | null>(null);
   const [visitorType, setVisitorType] = useState<any[]>([]);
   const [vtLoading, setVTLoading] = useState(false);
+  const [selectedShareLink, setSelectedShareLink] = useState<any>(null);
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ['share-links', page, rowsPerPage, searchKeyword, sortDir],
@@ -93,9 +94,8 @@ const Visitor = () => {
       return res;
     },
 
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 1,
     enabled: !!token,
-    gcTime: 1000 * 60 * 2,
     placeholderData: (previousData) => previousData,
   });
 
@@ -241,21 +241,21 @@ const Visitor = () => {
     queryKey: ['sites'],
     queryFn: () => getInvitationSite(token as string),
     enabled: !!token,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 1,
   });
 
   const { data: employee = [] } = useQuery({
     queryKey: ['employee'],
     queryFn: () => getAllEmployee(token as string),
     enabled: !!token,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 1,
   });
 
   const { data: allVisitorEmployee = [] } = useQuery({
     queryKey: ['all-visitor-employee'],
     queryFn: () => getInvitationVisitorEmployee(token as string),
     enabled: !!token,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 1,
   });
 
   const handleDeleteLink = async (id: string) => {
@@ -347,10 +347,21 @@ const Visitor = () => {
     }
   };
 
-  const handleOpenInviteDialog = (id: string, link: string, expired_at: string) => {
-    setSelectedShareLinkId(id);
-    setGeneratedLink(link);
-    setExpiredAt(expired_at);
+  // const handleOpenInviteDialog = (id: string, link: string, expired_at: string) => {
+  //   setSelectedShareLinkId(id);
+  //   setGeneratedLink(link);
+  //   setExpiredAt(expired_at);
+  //   setTabValue(0);
+  //   setOpenInviteViaLinkEmail(true);
+  // };
+
+  const handleOpenInviteDialog = (row: any) => {
+    setSelectedShareLink(row);
+
+    setSelectedShareLinkId(row.id);
+    setGeneratedLink(row.url);
+    setExpiredAt(row.expired_at);
+
     setTabValue(0);
     setOpenInviteViaLinkEmail(true);
   };
@@ -399,6 +410,7 @@ const Visitor = () => {
       setIsGenerating(false);
     }
   };
+  
 
   return (
     <PageContainer title="Visitor" description="Visitor page">
@@ -457,6 +469,8 @@ const Visitor = () => {
             expiredAt={expiredAt}
             handleCopyLink={handleCopyLink}
             handleSendInvitation={handleSendInvitation}
+            // shareLinkList={shareLinkList}
+            shareLinkData={selectedShareLink}
           />
 
           {/* Share Link */}
@@ -520,7 +534,7 @@ const Visitor = () => {
                 isNoActionTableHead={true}
                 titleHeader="Share Link"
                 isCopyLink={true}
-                onCopyLink={(row: any) => handleOpenInviteDialog(row.id, row.url, row.expired_at)}
+                onCopyLink={(row: any) => handleOpenInviteDialog(row)}
                 onDetailLink={(row: any) => handleDetailLink(row)}
                 onDelete={(row: any) => handleDeleteLink(row.id)}
                 isHaveAddData={true}

@@ -12,7 +12,7 @@ import {
   Autocomplete,
   Chip,
 } from '@mui/material';
-import { IconX } from '@tabler/icons-react';
+import { IconLink, IconX } from '@tabler/icons-react';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 
 type Props = {
@@ -23,6 +23,8 @@ type Props = {
   handleCopyLink: (link: string) => void;
   handleSendInvitation: (emails: string[]) => void;
   expiredAt?: string | null;
+  // shareLinkList?: any;
+  shareLinkData?: any;
 };
 
 const InvitationShareDialog: React.FC<Props> = ({
@@ -33,16 +35,18 @@ const InvitationShareDialog: React.FC<Props> = ({
   handleCopyLink,
   handleSendInvitation,
   expiredAt,
+  shareLinkData,
 }) => {
   const [tabValue, setTabValue] = useState(0);
   const [emails, setEmails] = useState<string[]>([]);
   const [emailInput, setEmailInput] = useState('');
 
+  // console.log('shareLinkData', shareLinkData);
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle sx={{ position: 'relative' }}>
-        <Typography variant="h5">Invite Share Link</Typography>
+        Invite Share Link
         <IconButton onClick={onClose} sx={{ position: 'absolute', top: 8, right: 8 }}>
           <IconX />
         </IconButton>
@@ -63,17 +67,43 @@ const InvitationShareDialog: React.FC<Props> = ({
             <CustomTextField fullWidth value={generatedLink} InputProps={{ readOnly: true }} />
 
             <Typography sx={{ my: 1, color: 'text.secondary' }}>
-            The invitation expires in <strong>{expiredAt}</strong>
+              The invitation expires in <strong>{expiredAt}</strong>
             </Typography>
 
-            <Button
-              variant="contained"
-              sx={{ mt: 2 }}
-              fullWidth
-              onClick={() => handleCopyLink(generatedLink)}
-            >
-              Copy Link
-            </Button>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1 }}>
+              <Button
+                variant="contained"
+                sx={{ mt: 2 }}
+                fullWidth
+                startIcon={<IconLink />}
+                onClick={() => {
+                  const shareText = `
+Invitation Visit
+
+Agenda : ${shareLinkData?.agenda ?? '-'}
+Start  : ${shareLinkData?.visitor_period_start ?? '-'}  to ${shareLinkData?.visitor_period_end ?? '-'}
+Site  : ${shareLinkData?.site_name ?? '-'}
+Host: ${shareLinkData?.host_name ?? '-'}
+
+Link:
+${generatedLink}
+`;
+
+                  handleCopyLink(shareText);
+                }}
+              >
+                Copy Invitation
+              </Button>
+              <Button
+                variant="outlined"
+                fullWidth
+                sx={{ mt: 2 }}
+                startIcon={<IconLink />}
+                onClick={() => handleCopyLink(generatedLink)}
+              >
+                Copy Link Only
+              </Button>
+            </Box>
           </Box>
         )}
 

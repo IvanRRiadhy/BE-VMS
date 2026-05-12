@@ -21,7 +21,12 @@ import { showSwal } from 'src/customs/components/alerts/alerts';
 import { useSession } from 'src/customs/contexts/SessionContext';
 
 type QrMode = 'manual' | 'scan';
+type DocumentType = 'CardAccess' | 'Other';
 
+interface SwipeCardDialogInitialValues {
+  documentType: DocumentType;
+  value: string;
+}
 interface SwipeCardDialogProps {
   open: boolean;
   onClose: () => void;
@@ -37,6 +42,7 @@ interface SwipeCardDialogProps {
   visitors?: any;
   currentVisitorIndex: number;
   setCurrentVisitorIndex: (v: any) => void;
+  initialValues: any;
 }
 
 type FormValue = {
@@ -53,7 +59,10 @@ const SwipeCardDialog = ({
   visitors,
   currentVisitorIndex,
   setCurrentVisitorIndex,
+  initialValues,
 }: SwipeCardDialogProps) => {
+  const [documentType, setDocumentType] = useState<DocumentType>('Other');
+  const [value, setValue] = useState('');
   const [qrMode, setQrMode] = useState<QrMode>('manual');
   // const [qrValue, setQrValue] = useState('');
   // const [qrType, setQrType] = useState('nik');
@@ -125,7 +134,6 @@ const SwipeCardDialog = ({
         // ✅ lanjut ke visitor berikutnya
         setCurrentVisitorIndex((prev: any) => prev + 1);
       } else {
-        // ✅ baru close kalau terakhir
         onClose();
       }
     } catch (error) {
@@ -174,6 +182,22 @@ const SwipeCardDialog = ({
       return updated;
     });
   };
+
+useEffect(() => {
+  if (!open) return;
+  if (!initialValues?.documentType) return;
+
+  // Set type (CardAccess) untuk visitor yang sedang aktif
+  handleChange(currentVisitorIndex, 'type', initialValues.documentType);
+
+  // Set value (card_number dari current_used)
+  handleChange(currentVisitorIndex, 'value', initialValues.value ?? '');
+}, [open, initialValues, currentVisitorIndex]);
+
+// Optional:
+// Jika dipaksa CardAccess, dropdown tidak boleh diubah.
+const isDocumentTypeLocked = initialValues?.isDocumentTypeLocked === true;
+
   return (
     <>
       <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
@@ -225,17 +249,14 @@ const SwipeCardDialog = ({
               <Typography fontWeight={500} mb={0.5}>
                 Type
               </Typography>
-
               <Select
                 fullWidth
-                // value={qrType}
-                // onChange={(e: any) => setQrType(e.target.value)}
                 value={currentForm.type}
                 onChange={(e: any) =>
                   handleChange(currentVisitorIndex, 'type', e.target.value as string)
                 }
                 sx={{ mb: 2 }}
-                disabled={typeDocument.length === 0}
+                disabled={typeDocument.length === 0 || isDocumentTypeLocked}
               >
                 {typeDocument.length === 0 ? (
                   <MenuItem value="" disabled>
@@ -249,7 +270,6 @@ const SwipeCardDialog = ({
                   ))
                 )}
               </Select>
-
               {/* VALUE */}
               <Typography fontWeight={500} mb={0.5}>
                 {/* {qrTypeLabelMap[qrType] ?? 'Value'} */}

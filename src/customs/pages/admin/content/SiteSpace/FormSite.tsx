@@ -169,18 +169,16 @@ const FormSite = ({
       try {
         const results = await Promise.allSettled([
           getSitesAccessById(token, editingId),
-
-          // MASTER
+          getAllAccessControl(token),
           getSiteParking(token),
           getSiteTracking(token),
-
-          // RELATION
           getSitesParking(token),
           getSitesTracking(token),
         ]);
 
         const [
           siteRes,
+          accessControlRes,
           parkingMasterRes,
           trackingMasterRes,
           parkingRelationRes,
@@ -188,6 +186,12 @@ const FormSite = ({
         ] = results;
 
         const site = siteRes.status === 'fulfilled' ? siteRes.value.collection : {};
+        console.log('site', site);
+        const accessControlList =
+          accessControlRes.status === 'fulfilled' ? (accessControlRes.value.collection ?? []) : [];
+
+        // console.log('accessControlList', accessControlList);
+        setAccessControl(accessControlList);
 
         // MASTER DROPDOWN
         const parkingMaster =
@@ -240,6 +244,34 @@ const FormSite = ({
           };
         });
 
+       const mappedAccess = Array.isArray(site)
+         ? site.map((a: any, idx: number) => {
+             const master = accessControlList.find(
+               (x: any) => String(x.id).toLowerCase() === String(a.access_control_id).toLowerCase(),
+             );
+
+             return {
+               id: a.id,
+               sort: idx,
+               access_control_id: a.access_control_id,
+               name: master?.name ?? a.name ?? '',
+               early_access: a.early_access ?? false,
+             };
+           })
+         : site?.access_control_id
+           ? [
+               {
+                 id: site.id,
+                 sort: site.sort ?? 0,
+                 access_control_id: site.access_control_id,
+                 name: site.name ?? '',
+                 early_access: site.early_access ?? false,
+               },
+             ]
+           : [];
+
+        console.log('mappedAccess', mappedAccess);
+
         const mappedTracking = filteredTracking.map((t: any, idx: number) => {
           const master = trackingMaster.find(
             (x: any) =>
@@ -260,7 +292,7 @@ const FormSite = ({
           ...prev,
           ...site,
           type: site?.type !== undefined ? Number(site.type) : prev.type,
-
+          access: mappedAccess,
           parking: mappedParking,
           tracking: mappedTracking,
         }));
@@ -803,7 +835,7 @@ const FormSite = ({
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <CustomFormLabel sx={{ mt: 0.5 }} required>
-                    Employee
+                    Site Host
                   </CustomFormLabel>
                   <Autocomplete
                     id="employee"

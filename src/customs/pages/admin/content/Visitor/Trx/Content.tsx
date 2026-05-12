@@ -75,7 +75,7 @@ import SendEmailDialog from 'src/customs/pages/Employee/Components/Dialog/SendEm
 import InvitationShareDialog from './components/Dialog/InvitationShareDialog';
 import ShareLinkDialog from './components/ShareLinkDialog';
 import { useRegisteredSite } from 'src/hooks/useRegisteredSite';
-import ConfirmUnsavedDialog from '../../../components/ConfirmUnsavedDialog';
+import ConfirmUnsavedDialog from 'src/customs/pages/admin/components/ConfirmUnsavedDialog';
 
 const Content = () => {
   const { token } = useSession();
@@ -96,6 +96,10 @@ const Content = () => {
     const saved = localStorage.getItem('unsavedVisitorData');
     return saved ? JSON.parse(saved) : CreateVisitorRequestSchema.parse({});
   });
+
+  const { roleAccess } = useSession();
+
+  const isOperatorAdmin = roleAccess === 'OperatorAdmin';
 
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
@@ -138,7 +142,6 @@ const Content = () => {
   // const [siteData, setSiteData] = useState<any[]>([]);
   const [selectedSite, setSelectedSite] = useState<any | null>(null);
   const queryClient = useQueryClient();
-  // Qr Scanner
   const [qrValue, setQrValue] = useState('');
   const [qrMode, setQrMode] = useState<'manual' | 'scan'>('manual');
   const [hasDecoded, setHasDecoded] = useState(false);
@@ -326,27 +329,31 @@ const Content = () => {
       subTitleSetting: 'image',
       color: 'none',
     },
-    {
-      title: 'Add Invitation',
-      icon: IconUser,
-      subTitle: iconAdd,
-      subTitleSetting: 'image',
-      color: 'none',
-    },
-    {
-      title: 'Add Pre Registration',
-      icon: IconClipboard,
-      subTitle: iconAdd,
-      subTitleSetting: 'image',
-      color: 'none',
-    },
-    {
-      title: 'Share Link',
-      icon: IconShare,
-      subTitle: iconAdd,
-      subTitleSetting: 'image',
-      color: 'none',
-    },
+    ...(!isOperatorAdmin
+      ? [
+          {
+            title: 'Add Invitation',
+            icon: IconUser,
+            subTitle: iconAdd,
+            subTitleSetting: 'image',
+            color: 'none',
+          },
+          {
+            title: 'Add Pre Registration',
+            icon: IconClipboard,
+            subTitle: iconAdd,
+            subTitleSetting: 'image',
+            color: 'none',
+          },
+          {
+            title: 'Share Link',
+            icon: IconShare,
+            subTitle: iconAdd,
+            subTitleSetting: 'image',
+            color: 'none',
+          },
+        ]
+      : []),
   ];
 
   const { data: siteData = [], isLoading: isLoadingSite } = useRegisteredSite(token as string);
@@ -364,11 +371,6 @@ const Content = () => {
           getVisitorEmployee(token),
           getAllEmployee(token),
         ]);
-
-        // setVisitorType(vtRes?.collection || []);
-        // setSites(siteRes?.collection || []);
-        // setAllVisitorEmployee(visitorEmpRes?.collection || []);
-        // setEmployee(empRes?.collection || []);
         if (vtRes?.status === 'fulfilled') setVisitorType(vtRes?.value?.collection || []);
         if (siteRes?.status === 'fulfilled') setSites(siteRes?.value?.collection || []);
         if (visitorEmpRes?.status === 'fulfilled')
@@ -581,10 +583,23 @@ const Content = () => {
     }
   };
 
-  const handleOpenInviteDialog = (id: string, link: string, expired_at: string) => {
-    setSelectedShareLinkId(id);
-    setGeneratedLink(link);
-    setExpiredAt(expired_at);
+  // const handleOpenInviteDialog = (id: string, link: string, expired_at: string) => {
+  //   setSelectedShareLinkId(id);
+  //   setGeneratedLink(link);
+  //   setExpiredAt(expired_at);
+  //   setOpenInviteViaLinkEmail(true);
+  // };
+
+  const [selectedShareLink, setSelectedShareLink] = useState(null);
+
+  const handleOpenInviteDialog = (row: any) => {
+    setSelectedShareLink(row);
+
+    setSelectedShareLinkId(row.id);
+    setGeneratedLink(row.url);
+    setExpiredAt(row.expired_at);
+
+    // setTabValue(0);
     setOpenInviteViaLinkEmail(true);
   };
 
@@ -645,6 +660,7 @@ const Content = () => {
       showSwal('success', 'Invitation sent successfully');
       setEmails([]);
       setEmailInput('');
+      setRefreshKey((prev) => prev + 1);
     } catch (error) {
       showSwal('error', 'Failed to send invitation');
     }
@@ -655,7 +671,7 @@ const Content = () => {
     try {
       setIsGenerating(true);
 
-      console.log('payload', payload);
+      // console.log('payload', payload);
       await createShareLink(token as string, payload);
 
       // await queryClient.invalidateQueries({
@@ -669,7 +685,7 @@ const Content = () => {
       setOpenCreateLink(false);
       showSwal('success', 'Share link created successfully');
       setRefreshKey((prev) => prev + 1);
-    } catch (err:any) {
+    } catch (err: any) {
       showSwal('error', err?.response.data.message || 'Failed to create share link');
     } finally {
       setIsGenerating(false);
@@ -687,14 +703,15 @@ const Content = () => {
 
       await createShareLink(token as string, finalPayload);
 
-      await queryClient.invalidateQueries({
-        queryKey: ['share-links'],
-      });
+      // await queryClient.invalidateQueries({
+      //   queryKey: ['share-links'],
+      // });
 
       setOpenSendEmail(false);
       setOpenCreateLink(false);
 
       showSwal('success', 'Share link sent successfully');
+      setRefreshKey((prev) => prev + 1);
     } catch (err) {
       showSwal('error', 'Failed to send share link');
     } finally {
@@ -711,6 +728,21 @@ const Content = () => {
     setSearchInput(keyword);
     setSearchKeyword(keyword);
   }, []);
+
+  const handleSelectSite = (site: any) => {
+    setFormDataAddVisitor((prev) => ({
+      ...prev,
+      registered_site: site.id,
+    }));
+
+    setOpenDialogIndex(null);
+
+    if (flowTarget === 'invitation') {
+      setOpenInvitationVisitor(true);
+    } else if (flowTarget === 'preReg') {
+      setOpenPreRegistration(true);
+    }
+  };
 
   return (
     <PageContainer
@@ -815,7 +847,7 @@ const Content = () => {
                   }
                 }}
                 defaultSelectedHeaderItem="All"
-                onCheckedChange={(selected) => console.log('Checked table row:', selected)}
+                // onCheckedChange={(selected) => console.log('Checked table row:', selected)}
                 onView={(row) => {
                   handleView(row.id);
                 }}
@@ -961,18 +993,7 @@ const Content = () => {
         onDiscard={openDiscardForCloseAdd}
         onClose={handleCloseDialog}
         toast={toast as any}
-        onSubmit={(site) => {
-          setFormDataAddVisitor((prev) => ({
-            ...prev,
-            registered_site: site.id,
-          }));
-          setOpenDialogIndex(null);
-          if (flowTarget === 'invitation') {
-            setOpenInvitationVisitor(true);
-          } else if (flowTarget === 'preReg') {
-            setOpenPreRegistration(true);
-          }
-        }}
+        onSubmit={handleSelectSite}
       />
 
       {/* QR Code */}
@@ -1048,7 +1069,7 @@ const Content = () => {
         open={openDetailShareLink}
         onClose={() => setOpenDetailShareLink(false)}
         token={token as string}
-        onCopyLink={(row) => handleOpenInviteDialog(row.id, row.url, row.expired_at)}
+        onCopyLink={(row) => handleOpenInviteDialog(row)}
         onDetailLink={handleDetailLink}
         onDelete={handleDeleteLink}
         onAddData={handleAddShareLink}
@@ -1062,6 +1083,7 @@ const Content = () => {
         expiredAt={expiredAt}
         handleCopyLink={handleCopyLink}
         handleSendInvitation={handleSendInvitation}
+        shareLinkData={selectedShareLink}
       />
 
       <CreateLinkDialog

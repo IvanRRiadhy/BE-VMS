@@ -1156,7 +1156,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   onClick={() => handleDeleteGroup(g.id || '')}
                                   size="small"
                                 >
-                                  <IconX />
+                                  <IconTrash />
                                 </IconButton>
                               </Tooltip>
                             </TableCell>
@@ -3962,8 +3962,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         showSwal('success', 'Group visitor created successfully.', 3000);
         resetMediaState();
         clearAnswerFiles();
-      }
-      else {
+      } else {
         if (!sectionsData.length) {
           toast('Minimal isi 1 data visitor.', 'warning');
           return;
@@ -4563,29 +4562,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     );
   };
 
-  const isVisitorValid = (visitor: any) => {
-    return visitor.question_page?.every((page: any) =>
-      page.form?.every((f: any) => {
-        if (!f.mandatory) return true;
-
-        return f.answer_text?.toString().trim() !== '' || f.answer_datetime || f.answer_file;
-      }),
-    );
-  };
-
   const hasAnyFilled = groupVisitors.some((g) => g.data_visitor?.some((v) => !isVisitorEmpty(v)));
-
-  const isAllValid = groupVisitors.every((g) => {
-    const visitors = g.data_visitor || [];
-
-    const filledVisitors = visitors.filter((v) => !isVisitorEmpty(v));
-
-    if (filledVisitors.length === 0) return false;
-
-    return filledVisitors.every((v) => isVisitorValid(v));
-  });
-
-  const isSubmitDisabled = loading || !hasAnyFilled || !isAllValid;
 
   return (
     <PageContainer title="Operator View" description="this is operator view">
@@ -4658,8 +4635,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           User Type
                         </StepLabel>
                       </Step>
-
-                      {/* Dynamic Draggable Steps */}
                       {draggableSteps.map((label, index) => (
                         <Draggable key={label} draggableId={label} index={index} isDragDisabled>
                           {(provided, snapshot) => (
@@ -4786,7 +4761,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   variant="contained"
                   color="primary"
                   onClick={handleOnSubmit}
-                  disabled={loading}
+                  disabled={loading || !hasAnyFilled || !formData.visitor_type}
                 >
                   Submit All
                 </Button>

@@ -5,7 +5,6 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
-  DialogActions,
   Grid2 as Grid,
   IconButton,
   Button,
@@ -32,7 +31,7 @@ import {
   getVisitorEmployee,
 } from 'src/customs/api/admin';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
-import { IconClipboard, IconLink, IconShare, IconUsers, IconX } from '@tabler/icons-react';
+import { IconClipboard, IconLink, IconShare, IconUsers } from '@tabler/icons-react';
 import dayjs from 'dayjs';
 import Praregist from './Praregist';
 import { getInvitationRelatedVisitor, getOngoingInvitation } from 'src/customs/api/visitor';
@@ -55,6 +54,8 @@ import SendEmailDialog from '../Components/Dialog/SendEmailDialog';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import RelatedInvitationDialog from '../Components/Dialog/RelatedInvitationDialog';
 import InvitationShareDialog from '../../admin/content/Visitor/Trx/components/Dialog/InvitationShareDialog';
+import ShareLinkDialog from '../../admin/content/Visitor/Trx/components/ShareLinkDialog';
+import ConfirmUnsavedDialog from '../../admin/components/ConfirmUnsavedDialog';
 
 type VisitorTableRow = {
   id: string;
@@ -93,6 +94,7 @@ const Content = () => {
     const saved = localStorage.getItem('unsavedVisitorData');
     return saved ? JSON.parse(saved) : CreateVisitorRequestSchema.parse({});
   });
+  const [selectedShareLink, setSelectedShareLink] = useState<any>(null);
 
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
@@ -147,7 +149,6 @@ const Content = () => {
   const [employeeError, setEmployeeError] = useState<string | null>(null);
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
-
   // Visitor Detail
   const [openVisitorDialog, setOpenVisitorDialog] = useState(false);
   const [visitorLoading, setVisitorLoading] = useState(false);
@@ -161,15 +162,12 @@ const Content = () => {
   const [wizardKey, setWizardKey] = useState(0);
   const [generatedLink, setGeneratedLink] = useState('');
   const [openInviteViaLinkEmail, setOpenInviteViaLinkEmail] = useState(false);
-  const [tabValue, setTabValue] = useState(0);
   const [openDetailShareLink, setOpenDetailShareLink] = useState(false);
   const [openDetailLink, setOpenDetailLink] = useState(false);
   const [openCreateLink, setOpenCreateLink] = useState(false);
   const [pendingPayload, setPendingPayload] = useState<any>(null);
   const [openSendEmail, setOpenSendEmail] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [sortDir, setSortDir] = useState<string>('desc');
-  const queryClient = useQueryClient();
   const [expiredAt, setExpiredAt] = useState<string | null>(null);
 
   const resetRegisteredFlow = () => {
@@ -183,7 +181,6 @@ const Content = () => {
     resetRegisteredFlow();
   };
 
-  // const [openEmployeeDialog, setOpenEmployeeDialog] = useState(false);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [emailInput, setEmailInput] = useState('');
   const [selectedShareLinkId, setSelectedShareLinkId] = useState<string | null>(null);
@@ -205,7 +202,7 @@ const Content = () => {
       return res.collection ?? [];
     },
     enabled: !!selectedEmployeeId && !!token,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 1 * 60 * 1000,
     retry: 1,
   });
 
@@ -364,7 +361,7 @@ const Content = () => {
     setSelectedSite(null);
     setFormDataAddVisitor((prev: any) => ({
       ...prev,
-      registered_site: '', // reset registered site
+      registered_site: '',
     }));
     setRefreshTrigger((prev) => prev + 1);
     handleCloseDialog();
@@ -523,69 +520,6 @@ const Content = () => {
   const [searchKeywordSharelink, setSearchKeywordSharelink] = useState('');
   const [sortDirSharelink, setSortDirSharelink] = useState('desc');
 
-  const startShareLink = pageSharelink * rowsPerPageSharelink;
-
-  // const {
-  //   data,
-  //   isLoading: isLoadingSharelink,
-  //   isFetching,
-  // } = useQuery({
-  //   queryKey: [
-  //     'share-links',
-  //     pageSharelink,
-  //     rowsPerPageSharelink,
-  //     searchKeywordSharelink,
-  //     sortDirSharelink,
-  //   ],
-  //   queryFn: async () => {
-  //     const res = await getShareLinkByDt(
-  //       token as string,
-  //       startShareLink,
-  //       rowsPerPageSharelink,
-  //       searchKeywordSharelink,
-  //       sortDirSharelink,
-  //     );
-
-  //     return res;
-  //   },
-
-  //   staleTime: 1000 * 60 * 1,
-  //   enabled: !!token,
-  //   placeholderData: (previousData) => previousData,
-  // });
-
-  // const shareLinkList =
-  //   data?.collection?.map((item: any) => ({
-  //     id: item.id,
-  //     agenda: item.agenda,
-  //     url: item.url,
-  //     max_usage: item.max_usage,
-  //     visitor_period_start: formatDateTime(item.visitor_period_start),
-  //     visitor_period_end: formatDateTime(item.visitor_period_end),
-  //     expired_at: (() => {
-  //       const date = new Date(item.expired_at + 'Z');
-
-  //       const formattedDate = date
-  //         .toLocaleDateString('id-ID', {
-  //           day: '2-digit',
-  //           month: 'long',
-  //           year: 'numeric',
-  //         })
-  //         .replace(/\//g, '-');
-
-  //       const formattedTime = date.toLocaleTimeString('id-ID', {
-  //         hour: '2-digit',
-  //         minute: '2-digit',
-  //         hour12: false,
-  //       });
-
-  //       return `${formattedDate}, ${formattedTime}`;
-  //     })(),
-  //     link_status: item.link_status,
-  //   })) || [];
-
-  // const totalFilterRecords = data?.RecordsFiltered || 0;
-
   const [shareLinkList, setShareLinkList] = useState([]);
   const [totalFilterRecords, setTotalFilterRecords] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -689,24 +623,34 @@ const Content = () => {
       const payload = {
         emails: finalEmails,
       };
-
-      // console.log('payload', payload);
       await createShareLinkByEmailById(token as string, payload, selectedShareLinkId);
       showSwal('success', 'Invitation sent successfully');
 
       setEmails([]);
       setEmailInput('');
+      setRefreshKey((prev) => prev + 1);
     } catch (error) {
       console.error(error);
       showSwal('error', 'Failed to send invitation');
     }
   };
 
-  const handleOpenInviteDialog = (id: string, link: string, expired_at: string) => {
-    setSelectedShareLinkId(id);
-    setGeneratedLink(link);
-    setExpiredAt(expired_at);
-    setTabValue(0);
+  // const handleOpenInviteDialog = (id: string, link: string, expired_at: string) => {
+  //   setSelectedShareLinkId(id);
+  //   setGeneratedLink(link);
+  //   setExpiredAt(expired_at);
+  //   setTabValue(0);
+  //   setOpenInviteViaLinkEmail(true);
+  // };
+
+  const handleOpenInviteDialog = (row: any) => {
+    setSelectedShareLink(row);
+
+    setSelectedShareLinkId(row.id);
+    setGeneratedLink(row.url);
+    setExpiredAt(row.expired_at);
+
+    // setTabValue(0);
     setOpenInviteViaLinkEmail(true);
   };
 
@@ -751,7 +695,6 @@ const Content = () => {
       showSwal('success', 'Share link created successfully');
       setRefreshKey((prev) => prev + 1);
     } catch (err) {
-      console.error(err);
       showSwal('error', 'Failed to create share link');
     } finally {
       setIsGenerating(false);
@@ -959,53 +902,16 @@ const Content = () => {
       />
 
       {/* Share Link */}
-      <Dialog
+      <ShareLinkDialog
+        refreshKey={refreshKey}
         open={openDetailShareLink}
         onClose={() => setOpenDetailShareLink(false)}
-        fullWidth
-        maxWidth="xl"
-      >
-        <DialogTitle>
-          List Share Link
-          <IconButton
-            aria-label="close"
-            onClick={() => {
-              setOpenDetailShareLink(false);
-            }}
-            sx={{
-              position: 'absolute',
-              top: 8,
-              right: 8,
-            }}
-          >
-            <IconX />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent dividers>
-          <DynamicTable
-            loading={loading}
-            data={shareLinkList}
-            isHaveHeaderTitle
-            isHaveChecked={true}
-            isNoActionTableHead={true}
-            titleHeader="Share Link"
-            isCopyLink={true}
-            isHavePagination={true}
-            totalCount={totalFilterRecords}
-            rowsPerPageOptions={[10, 50, 100]}
-            defaultRowsPerPage={rowsPerPageSharelink}
-            onPaginationChange={(page, rowsPerPage) => {
-              setPageSharelink(page);
-              setRowsPerPageSharelink(rowsPerPage);
-            }}
-            onCopyLink={(row: any) => handleOpenInviteDialog(row.id, row.url, row.expired_at)}
-            onDetailLink={(row: any) => handleDetailLink(row)}
-            onDelete={(row: any) => handleDeleteLink(row.id)}
-            isHaveAddData={true}
-            onAddData={handleAddShareLink}
-          />
-        </DialogContent>
-      </Dialog>
+        token={token as string}
+        onCopyLink={(row) => handleOpenInviteDialog(row)}
+        onDetailLink={handleDetailLink}
+        onDelete={handleDeleteLink}
+        onAddData={handleAddShareLink}
+      />
 
       {/* Dialog Invite via link & invite via email */}
       <InvitationShareDialog
@@ -1016,6 +922,7 @@ const Content = () => {
         expiredAt={expiredAt}
         handleCopyLink={handleCopyLink}
         handleSendInvitation={handleSendInvitation}
+        shareLinkData={selectedShareLink}
       />
 
       <CreateLinkDialog
@@ -1040,33 +947,12 @@ const Content = () => {
         onSend={handleSendEmail}
       />
 
-      {/* Unsaved Changes */}
-      <Dialog open={confirmDialogOpen} onClose={handleCancelDiscard} fullWidth maxWidth="sm">
-        <DialogTitle>
-          Unsaved Changes
-          <IconButton
-            aria-label="close"
-            onClick={handleCancelDiscard}
-            sx={{
-              position: 'absolute',
-              top: 8,
-              right: 8,
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
+      <ConfirmUnsavedDialog
+        open={confirmDialogOpen}
+        onClose={handleCancelDiscard}
+        onDiscard={confirmDiscardAndClose}
+      />
 
-        <DialogContent dividers>
-          <Typography> You have unsaved changes. Are you sure you want to discard them?</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancelDiscard}>Cancel</Button>
-          <Button onClick={confirmDiscardAndClose} color="primary" variant="contained">
-            Yes, Discard and Continue
-          </Button>
-        </DialogActions>
-      </Dialog>
       <Portal>
         <Snackbar
           open={snackbar.open}

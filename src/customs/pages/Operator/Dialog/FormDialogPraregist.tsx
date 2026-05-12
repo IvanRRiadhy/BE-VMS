@@ -1115,7 +1115,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
       setSubmitting(true);
 
       const payload = transformToSubmitPayload(invitationData);
-      console.log('Payload response:', JSON.stringify(payload, null, 2));
+      // console.log('Payload response:', JSON.stringify(payload, null, 2));
       const res = await createSubmitCompletePra(token as string, payload);
 
       const ok =

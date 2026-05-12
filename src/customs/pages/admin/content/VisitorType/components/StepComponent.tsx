@@ -31,10 +31,10 @@ import {
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import { IconTrash } from '@tabler/icons-react';
+import { IconInfoCircle, IconTrash } from '@tabler/icons-react';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import RenderDetailRows from '../RenderDetailRows';
-import { memo, useEffect } from 'react';
+import { memo, useEffect, useState } from 'react';
 
 interface StepContentProps {
   activeStep: number;
@@ -103,9 +103,13 @@ const StepContentComponent: React.FC<StepContentProps> = ({
   ];
 
   const options = [
-    { label: 'SPU', value: 'SPU' },
-    { label: 'DC', value: 'DC' },
+    { id: 1, label: 'Visitor', value: 'Visitor' },
+    { id: 2, label: 'Driver', value: 'Driver' },
+    { id: 3, label: 'Leader', value: 'Leader' },
+    { id: 4, label: 'Staff', value: 'Staff' },
   ];
+
+  const [value, setValue] = useState<any[]>([]);
 
   if (activeStep === 0) {
     return (
@@ -135,10 +139,13 @@ const StepContentComponent: React.FC<StepContentProps> = ({
             />
           </Grid>
           <Grid size={12}>
-            <Box display="flex" alignItems="center" gap={2}>
-              <CustomFormLabel htmlFor="org" sx={{ mt: 1 }}>
+            <Box display="flex" alignItems="center" gap={2} mt={1}>
+              <Typography
+                variant="body1"
+                sx={{ mt: 0, fontWeight: 600, borderLeft: '4px solid #673ab7', pl: 1 }}
+              >
                 Document
-              </CustomFormLabel>
+              </Typography>
               <FormControlLabel
                 control={
                   <Switch
@@ -241,9 +248,19 @@ const StepContentComponent: React.FC<StepContentProps> = ({
             )}
           </Grid>
           <Grid size={12}>
-            <Typography variant="h6" sx={{ mb: 2 }}>
-              Access
-            </Typography>
+            <Box display="flex" alignItems="center">
+              <Typography
+                variant="body1"
+                sx={{ mb: 0, fontWeight: 600, borderLeft: '4px solid #673ab7', pl: 1 }}
+              >
+                Access
+              </Typography>
+              <Tooltip title="Access Control" arrow>
+                <IconButton size="small">
+                  <InfoOutlinedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Box>
             <TableContainer component={Paper} sx={{ mt: 1 }}>
               <Table size="small">
                 <TableHead>
@@ -932,15 +949,19 @@ const StepContentComponent: React.FC<StepContentProps> = ({
                 variant="h6"
                 sx={{ mb: 1, borderLeft: '4px solid #673ab7', pl: 1, mt: 2 }}
               >
-                Special Visitor
+                Visitor Role
               </Typography>
+
               <Autocomplete
+                multiple
                 options={options}
-                // value={value}
-                // onChange={(event, newValue) => {
-                //   setValue(newValue); // hanya 1 yang bisa dipilih
-                // }}
-                disableCloseOnSelect={false}
+                value={value}
+                onChange={(event, newValue) => {
+                  setValue(newValue);
+                }}
+                disableCloseOnSelect
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                getOptionLabel={(option) => option.label}
                 renderOption={(props, option, { selected }) => (
                   <li {...props}>
                     <Checkbox checked={selected} sx={{ mr: 0.5 }} />
@@ -948,12 +969,7 @@ const StepContentComponent: React.FC<StepContentProps> = ({
                   </li>
                 )}
                 renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label=""
-                    placeholder="Select special visitor"
-                    sx={{ mt: 1 }}
-                  />
+                  <TextField {...params} placeholder="Select Visitor Role" sx={{ mt: 1 }} />
                 )}
               />
             </Box>
@@ -1085,7 +1101,7 @@ const StepContentComponent: React.FC<StepContentProps> = ({
             </Grid>
 
             {/* Checkout Form */}
-            <Grid size={12}>
+            {/* <Grid size={12}>
               <Box mt={3}>
                 <Typography variant="subtitle1" fontWeight={600}>
                   Checkout Form
@@ -1114,7 +1130,7 @@ const StepContentComponent: React.FC<StepContentProps> = ({
                   Add New
                 </Button>
               </Box>
-            </Grid>
+            </Grid> */}
           </>
         )}
 
@@ -1181,37 +1197,12 @@ const StepContentComponent: React.FC<StepContentProps> = ({
               </Box>
             </Grid>
             {/*Checkout Form */}
-            <Grid size={12}>
+            {/* <Grid size={12}>
               <Box mt={3}>
                 <Typography variant="subtitle1" fontWeight={600}>
                   Checkout Form
                 </Typography>
-                {/* <TableContainer component={Paper} sx={{ mb: 1 }}>
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow>
-  
-                            <TableCell>Field Name</TableCell>
-                            <TableCell>Display</TableCell>
-                            <TableCell>Enabled</TableCell>
-  
-                            <TableCell>Mandatory</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {renderDetailRows(
-                            currentSection.checkout_form || [],
-                            (key, field, value) =>
-                              handleDetailChange('checkout_form', key, field, value),
-                            (key) => handleDeleteDetail('checkout_form', key),
-                            true,
-                            false,
-                            true,
-                            'checkout_form',
-                          )}
-                        </TableBody>
-                      </Table>
-                    </TableContainer> */}
+            
                 <RenderDetailRows
                   title="checkout_form"
                   data={currentSection.checkout_form || []}
@@ -1235,7 +1226,7 @@ const StepContentComponent: React.FC<StepContentProps> = ({
                   Add New
                 </Button>
               </Box>
-            </Grid>
+            </Grid> */}
           </>
         )}
 

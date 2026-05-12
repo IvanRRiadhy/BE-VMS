@@ -132,11 +132,10 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
   }, [edittingId, token, accessData]);
 
   useEffect(() => {
-    if (!edittingId) {
+    if (!edittingId || !formData.can_track_cctv) {
       setSelectedAnalytics(null);
       return;
     }
-
     const fetchVisitorTypeAnalytics = async () => {
       try {
         const res = await getVisitorTypeAnalyticsByVisitorId(edittingId, token as string);
@@ -154,12 +153,12 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
           name: existing.integration_name,
         });
       } catch (error) {
-        setSelectedAnalytics(null);
+        // setSelectedAnalytics(null);
       }
     };
 
     fetchVisitorTypeAnalytics();
-  }, [edittingId, token]);
+  }, [edittingId, token, formData.can_track_cctv]);
 
   const buildUpdateAccessPayload = (visitorTypeId: string) =>
     selectedAccess.map((a, index) => ({
@@ -269,7 +268,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         })),
       };
 
-      console.log('Submit data : ', JSON.stringify(data, null, 2));
+      // console.log('Submit data : ', JSON.stringify(data, null, 2));
 
       const parseData: CreateVisitorTypeRequest = CreateVisitorTypeRequestSchema.parse(data);
 
@@ -330,7 +329,10 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
       if (err?.errors) {
         setErrors(err.errors);
       }
-      showSwal('error', err.message ?? 'Failed to create visitor type!');
+      showSwal(
+        'error',
+        err.response.data.msg ?? err.response.data.message ?? 'Failed to create visitor type!',
+      );
       setLoading(false);
     }
   };
@@ -418,6 +420,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
   };
 
   type SectionKey = 'visit_form' | 'pra_form' | 'checkout_form';
+  // type SectionKey = 'visit_form' | 'pra_form';
 
   const handleAddDetail = (sectionKey: SectionKey) => {
     setSectionsData((prev) =>
