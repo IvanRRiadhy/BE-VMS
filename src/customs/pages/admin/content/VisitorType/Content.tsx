@@ -44,6 +44,7 @@ import { useRef } from 'react';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
+import { getVisitorTypeAccessByVisitorId } from 'src/customs/api/VisitorType/Access';
 
 type VisitorTypeTableRow = {
   id: string;
@@ -70,6 +71,7 @@ const Content = () => {
       return saved ? JSON.parse(saved) : CreateVisitorTypeRequestSchema.parse({});
     },
   );
+  const [isDuplicateMode, setIsDuplicateMode] = useState(false);
   const [edittingId, setEdittingId] = useState('');
   const defaultFormData = CreateVisitorTypeRequestSchema.parse({});
   const isFormChanged = JSON.stringify(formDataAddVisitorType) !== JSON.stringify(defaultFormData);
@@ -84,7 +86,7 @@ const Content = () => {
     { document_id: string; identity_type: number }[]
   >([]);
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
-
+  const [duplicatedAccess, setDuplicatedAccess] = useState<any[]>([]);
   const cards = [
     {
       title: 'Total Visitor Type',
@@ -168,10 +170,12 @@ const Content = () => {
   };
   const handleCloseDialog = () => {
     setOpenFormCreateVisitorType(false);
+    setIsDuplicateMode(false);
     localStorage.removeItem('unsavedVisitorTypeData');
   };
 
   const handleAdd = useCallback(() => {
+    setIsDuplicateMode(false);
     const saved = localStorage.getItem('unsavedVisitorTypeData');
     let freshForm;
     if (saved) {
@@ -211,8 +215,8 @@ const Content = () => {
 
   const handleEdit = async (id: string) => {
     try {
-      setLoading(true);
-
+      setLoadingData(true);
+      setIsDuplicateMode(false);
       const resp = await getVisitorTypeById(token as string, id);
       const raw = resp?.collection;
 
@@ -248,7 +252,7 @@ const Content = () => {
     } catch (err) {
       console.error('Error fetching visitor type detail:', err);
     } finally {
-      setLoading(false);
+      setLoadingData(false);
     }
   };
 
@@ -425,6 +429,77 @@ const Content = () => {
     setRefreshTrigger((prev) => prev + 1);
   };
 
+  const handleDuplicate = async (id: string) => {
+    try {
+      setLoadingData(true);
+      setIsDuplicateMode(true);
+
+      // 1. Ambil detail visitor type
+      const resp = await getVisitorTypeById(token as string, id);
+      const raw = resp?.collection;
+
+      // 2. Normalisasi data
+      const hydrated = normalizeDetail(raw);
+
+      // 3. Mapping documents
+      if (Array.isArray(raw?.visitor_type_documents)) {
+        const mappedDocs = raw.visitor_type_documents.map((doc: any) => ({
+          document_id: doc.document_id,
+          identity_type:
+            typeof doc.identity_type === 'string'
+              ? identityValueMap[doc.identity_type]
+              : (doc.identity_type ?? -1),
+        }));
+
+        setDocumentIdentities(mappedDocs);
+      } else {
+        setDocumentIdentities([]);
+      }
+
+      // 4. Ambil ACCESS dari API khusus visitor type
+      let mappedAccess: any[] = [];
+
+      try {
+        const accessRes = await getVisitorTypeAccessByVisitorId(id, token as string);
+        console.log('accessRes', accessRes.collection);
+        mappedAccess = (accessRes?.collection ?? []).map((a: any, index: number) => ({
+          access_control_id: a.access_control_id ?? '',
+          early_access: a.early_access ?? false,
+          sort: a.sort ?? index,
+        }));
+      } catch (error) {
+        mappedAccess = [];
+      }
+
+      // 5. Simpan ke state yang dikirim ke child sebagai initialAccess
+      setDuplicatedAccess(mappedAccess);
+
+      // 6. Buat data duplikasi
+      const duplicatedData = {
+        ...hydrated,
+        name: `${hydrated.name} Copy`,
+      };
+
+      // Pastikan id lama tidak ikut
+      delete duplicatedData.id;
+
+      // 7. Kosongkan editingId agar submit masuk mode CREATE
+      setEdittingId('');
+
+      // 8. Set form data
+      setFormDataAddVisitorType(duplicatedData);
+
+      // 9. Reset pending edit
+      setPendingEditId(null);
+
+      // 10. Buka dialog
+      handleOpenDialog();
+    } catch (err) {
+      showSwal('error', 'Failed to duplicate visitor type.');
+    } finally {
+      setLoadingData(false);
+    }
+  };
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -445,6 +520,7 @@ const Content = () => {
                 totalCount={totalFilteredRecords}
                 isHaveChecked={true}
                 isHaveAction={true}
+                isHaveDuplicate={true}
                 isHaveSearch={true}
                 isHavePagination={true}
                 defaultRowsPerPage={rowsPerPage}
@@ -467,12 +543,12 @@ const Content = () => {
                   handleEdit(row.id);
                   setEdittingId(row.id);
                 }}
+                onDuplicate={(row) => handleDuplicate(row.id)}
                 onDelete={(row) => handleDelete(row.id)}
                 onBatchDelete={handleBatchDelete}
                 onSearchKeywordChange={handleSearchKeywordChange}
                 searchKeyword={searchInput}
                 onSearch={handleSearch}
-                onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
                 onAddData={() => {
                   handleAdd();
                 }}
@@ -517,6 +593,7 @@ const Content = () => {
             onSuccess={handleSuccess}
             edittingId={edittingId}
             initialDocuments={documentIdentities}
+            initialAccess={duplicatedAccess}
           />
         </DialogContent>
       </Dialog>

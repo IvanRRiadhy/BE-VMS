@@ -159,6 +159,16 @@ export const CreateVisitorTypeRequestSchema = z.object({
   vip: z.boolean().default(false),
   simple_visitor: z.boolean().default(false),
   simple_period: z.boolean().default(false),
+  visitor_type_accesses: z
+    .array(
+      z.object({
+        id: z.string().optional(), // optional agar duplicate tidak perlu membawa id lama
+        access_control_id: z.string().default(''),
+        early_access: z.boolean().default(false),
+        sort: z.number().default(0),
+      }),
+    )
+    .default([]),
 
   // site_visitor_types: z.string().nullable().optional(),
   // Nullable fields from your JSON

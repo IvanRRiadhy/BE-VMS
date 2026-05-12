@@ -26,7 +26,6 @@ import {
   Breadcrumbs,
 } from '@mui/material';
 import BlankCard from 'src/components/shared/BlankCard';
-import { RichHtmlCell } from './RichHtmlCell';
 import { Stack, useMediaQuery, useTheme } from '@mui/system';
 import {
   IconArrowAutofitLeft,
@@ -51,8 +50,6 @@ import Calendar from '../calendar/Calendar';
 import { IconAdjustmentsHorizontal } from '@tabler/icons-react';
 import { InsertDriveFile } from '@mui/icons-material';
 import backgroundnodata from 'src/assets/images/backgrounds/bg_nodata.svg';
-import { axiosInstance2 } from 'src/customs/api/interceptor';
-import { GroupRoleId } from 'src/constant/GroupRoleId';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useSearchParams, useLocation } from 'react-router';
 import { debounce } from 'lodash';
@@ -110,6 +107,7 @@ type DynamicTableProps<
   isSiteSpaceName?: boolean;
   isHaveFilter?: boolean;
   isHaveExportPdf?: boolean;
+  isHaveDuplicate?: boolean;
   isAccessControlType?: boolean;
   isHaveView?: boolean;
   isHaveExportXlf?: boolean;
@@ -173,6 +171,7 @@ type DynamicTableProps<
   isOperatorSetting?: boolean;
   isBlacklistPage?: boolean;
   onNavigatePage?: any;
+  onDuplicate?: (row: T) => void;
   onCopyLink?: (row: T) => void;
   onDetailLink?: (row: T) => void;
   onSettingOperator?: (row: T) => void;
@@ -218,6 +217,7 @@ function DynamicTableBase<
   isSelectedType = false,
   borderRadius,
   isHaveVisitor = false,
+  isHaveDuplicate = false,
   isActionVisitor = false,
   isHaveSearch = false,
   isHaveConnection = false,
@@ -322,6 +322,7 @@ function DynamicTableBase<
   onPermission,
   setCurrentId,
   onDelete,
+  onDuplicate,
   onBatchDelete,
   onSearchKeywordChange,
   onFilterByColumn,
@@ -372,10 +373,6 @@ function DynamicTableBase<
   //   setSearchParams(params);
   // };
 
-  const theme = useTheme();
-  const lgUp = useMediaQuery(theme.breakpoints.up('lg'));
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
-
   const hiddenColumns = [
     'id',
     'can_grant',
@@ -397,7 +394,7 @@ function DynamicTableBase<
     return Array.from({ length: expectedColCount }, (_, i) => ``);
   }, [data, hiddenColumns]);
 
-  // gunakan fallback kalau data kosong / sedang loading
+
   const columns =
     loading || data.length === 0
       ? fallbackColumns
@@ -405,14 +402,6 @@ function DynamicTableBase<
           keyof T,
           string
         >[]);
-
-  // const columns =
-  //   data.length > 0
-  //     ? (Object.keys(data[0]).filter((k) => !hiddenColumns.includes(k)) as Extract<
-  //         keyof T,
-  //         string
-  //       >[])
-  //     : [];
 
   const columnss =
     sortColumns && sortColumns.length > 0
@@ -499,12 +488,6 @@ function DynamicTableBase<
   const paginatedData = useMemo(() => {
     return data;
   }, [data]);
-
-  // const paginatedData = useMemo(() => {
-  //   const start = page * rowsPerPage;
-  //   const end = start + rowsPerPage;
-  //   return data.slice(start, end);
-  // }, [data, page, rowsPerPage]);
 
   const toTitleCase = (text: string) => {
     return text
@@ -1301,7 +1284,6 @@ function DynamicTableBase<
                 sx={{
                   width: '100%',
                   // overflowX: 'auto',
-                 
                 }}
                 stickyHeader={stickyHeader}
                 // sx={{
@@ -1682,6 +1664,8 @@ function DynamicTableBase<
                   onIsButtonDisabled={onIsButtonDisabled}
                   isHaveVisitor={isHaveVisitor}
                   onDelete={onDelete}
+                  isHaveDuplicate={isHaveDuplicate}
+                  onDuplicate={onDuplicate}
                 />
               </Table>
             )}

@@ -2499,6 +2499,25 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     Record<number, Record<number, string>>
   >({});
 
+  const dedupeTree = (nodes: any[]) => {
+    const visited = new Set();
+
+    const processNode = (node: any): any => {
+      if (visited.has(node.id)) {
+        return null;
+      }
+
+      visited.add(node.id);
+
+      return {
+        ...node,
+        children: (node.children || []).map(processNode).filter(Boolean),
+      };
+    };
+
+    return nodes.map(processNode).filter(Boolean);
+  };
+
   const renderDetailRows = (
     details: FormVisitor[] | any,
     onChange: (index: number, field: keyof FormVisitor, value: any) => void,
@@ -2536,7 +2555,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     const startDate = startField?.answer_datetime ? dayjs(startField.answer_datetime) : null;
 
     return filteredDetails.map((item, index) => {
-      // const key = `${activeStep - 1}:${index}`;
       const key = `${activeStep - 1}:${item.id}`;
       const previewSrc = getPreviewSrc(key, (item as any).answer_file);
       const shownName = uploadNames[key] || fileNameFromAnswer((item as any).answer_file);
@@ -2770,9 +2788,14 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           onChange={(_, newValues) => {
                             const parentIds = newValues.map((v) => v.value);
 
-                            const trees = parentIds.flatMap((pid) =>
+                            // const trees = parentIds.flatMap((pid) =>
+                            //   buildSiteTreeWithParent(sites, pid),
+                            // );
+                            const rawTrees = parentIds.flatMap((pid) =>
                               buildSiteTreeWithParent(sites, pid),
                             );
+
+                            const uniqueTrees = dedupeTree(rawTrees);
 
                             if (isSelfOnly) {
                               setSelfOnlySelectedSiteParentIdsMap((prev: any) => ({
@@ -2790,7 +2813,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                               setSelfOnlySiteTreeMap((prev: any) => ({
                                 ...prev,
-                                [selfOnlyVisitorIdx]: trees,
+                                [selfOnlyVisitorIdx]: uniqueTrees,
                               }));
                             } else {
                               setSelectedSiteParentIds(parentIds);
@@ -2800,7 +2823,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 [index]: '',
                               }));
 
-                              setSiteTree(trees);
+                              setSiteTree(uniqueTrees);
                             }
                           }}
                           renderInput={(params) => (
@@ -2826,6 +2849,115 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           </SimpleTreeView>
                         )}
                       </>
+                    );
+                  }
+                  if (item.remarks === 'host') {
+                    const selectedSiteIds =
+                      details.find((d: any) => d.remarks === 'site_place')?.answer_text || [];
+
+                    // ambil semua host dari selected sites
+                    const siteHostIds = [
+                      ...new Set(
+                        sites
+                          .filter((site: any) => selectedSiteIds.includes(site.id))
+                          .map((site: any) => site.host)
+                          .filter(Boolean),
+                      ),
+                    ];
+
+                    // host yang sesuai site
+                    const matchedHosts = employee
+                      .filter((emp: any) => siteHostIds.includes(emp.id))
+                      .map((emp: any) => ({
+                        value: emp.id,
+                        name: emp.name,
+                        group: 'Host Based on Destination',
+                      }));
+
+                    // semua host lainnya
+                    const otherHosts = employee
+                      .filter((emp: any) => !siteHostIds.includes(emp.id))
+                      .map((emp: any) => ({
+                        value: emp.id,
+                        name: emp.name,
+                        group: 'All Host',
+                      }));
+
+                    const finalOptions = [...matchedHosts, ...otherHosts];
+
+                    return (
+                      <Autocomplete
+                        size="small"
+                        options={finalOptions}
+                        groupBy={(option) => option.group}
+                        getOptionLabel={(option) => option.name}
+                        isOptionEqualToValue={(option, value) => option.value === value.value}
+                        inputValue={inputValues[index] || ''}
+                        onInputChange={(_, newInputValue) => {
+                          setInputValues((prev: any) => ({
+                            ...prev,
+                            [index]: newInputValue,
+                          }));
+                        }}
+                        filterOptions={(opts, state) => {
+                          if (!state.inputValue) {
+                            return opts;
+                          }
+
+                          return opts.filter((opt) =>
+                            opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
+                          );
+                        }}
+                        value={finalOptions.find((opt) => opt.value === item.answer_text) || null}
+                        onChange={(_, newValue: any) => {
+                          const selectedValue = newValue?.value || '';
+
+                          onChange(index, 'answer_text', selectedValue);
+
+                          if (selectedValue) {
+                            clearFieldError(key);
+                          }
+                        }}
+                        renderGroup={(params) => (
+                          <Box key={params.key}>
+                            <Box
+                              sx={{
+                                px: 2,
+                                py: 1,
+                                bgcolor:
+                                  // params.group === 'Host Based on Destination'
+                                  //   ? '#E3F2FD'
+                                    '#F5F5F5',
+                                borderTop:
+                                  params.group !== 'Host Based on Destination'
+                                    ? '1px solid #E0E0E0'
+                                    : 'none',
+                                borderBottom: '1px solid #E0E0E0',
+                              }}
+                            >
+                              <Typography
+                                variant="body1"
+                                fontWeight={700}
+                                color="text.secondary"
+                                textTransform="capitalize"
+                              >
+                                {params.group}
+                              </Typography>
+                            </Box>
+
+                            {params.children}
+                          </Box>
+                        )}
+                        renderInput={(params) => (
+                          <CustomTextField
+                            {...params}
+                            placeholder="Choose PIC Host"
+                            fullWidth
+                            error={!!errorMessage}
+                            helperText={errorMessage}
+                          />
+                        )}
+                      />
                     );
                   }
                   if (item.remarks === 'employee') {
@@ -2937,27 +3069,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         onChange(index, 'answer_text', selectedValue);
                         if (selectedValue) clearFieldError(key);
                       }}
-                      // renderOption={(props, option) => (
-                      //   <li {...props} key={option.value}>
-                      //     <Box
-                      //       display="flex"
-                      //       alignItems="center"
-                      //       justifyContent="space-between"
-                      //       width="100%"
-                      //     >
-                      //       <Typography>{option.name}</Typography>
-
-                      //       {item.remarks === 'host' && (
-                      //         <Tooltip title="Host information">
-                      //           <IconInfoCircle
-                      //             size={16}
-                      //             style={{ marginLeft: 8, color: '#1976d2' }}
-                      //           />
-                      //         </Tooltip>
-                      //       )}
-                      //     </Box>
-                      //   </li>
-                      // )}
                       renderInput={(params) => (
                         <CustomTextField
                           {...params}
@@ -3949,7 +4060,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           //   })),
           // }));
           const cleanDataVisitor = (built.data_visitor ?? []).map((dv: any, idx: number) => {
-            const original = dataVisitor[idx]; 
+            const original = dataVisitor[idx];
 
             const question_page = (dv.question_page ?? []).map((qp: any, sIdx: number) => {
               const isPurposeVisit =
@@ -4032,7 +4143,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         // console.log('Payload :', JSON.stringify(payload, null, 2));
 
         const parsed = CreateVisitorRequestSchema.parse(payload);
-        console.log('Final Payload (Single):', JSON.stringify(parsed, null, 2));
+        // console.log('Final Payload (Single):', JSON.stringify(parsed, null, 2));
 
         const submitFn = TYPE_REGISTERED === 0 ? createPraRegister : createVisitor;
         const backendResponse = await submitFn(token, parsed);
@@ -4071,7 +4182,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       }
     } finally {
       setLoading(false);
-    } 
+    }
   };
 
   useEffect(() => {
@@ -4175,7 +4286,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     sections.forEach((section) => {
       const forms = formsOf(section);
 
-      // Purpose Visit → single_page
       if (isPurposeVisit(section)) {
         if (!section?.self_only) {
           forms.forEach((f: any, idx: number) => {
@@ -4384,8 +4494,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     return result;
   };
 
-  const [isRestoredFromDraft, setIsRestoredFromDraft] = useState(false);
-
   useEffect(() => {
     // if (!formData.visitor_type || !token) return;
     setInputValues({});
@@ -4442,7 +4550,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   useEffect(() => {
     if (!formData.visitor_type || !rawSections.length) return;
 
-    // if (isRestoredFromDraft) return;
     setInputValues({});
     setSelectedSiteParentIds([]);
     setSelectedSiteIds([]);

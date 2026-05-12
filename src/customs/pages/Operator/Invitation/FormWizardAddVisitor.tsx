@@ -2756,6 +2756,115 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       </>
                     );
                   }
+                  if (item.remarks === 'host') {
+                    const selectedSiteIds =
+                      details.find((d: any) => d.remarks === 'site_place')?.answer_text || [];
+
+                    // ambil semua host dari selected sites
+                    const siteHostIds = [
+                      ...new Set(
+                        sites
+                          .filter((site: any) => selectedSiteIds.includes(site.id))
+                          .map((site: any) => site.host)
+                          .filter(Boolean),
+                      ),
+                    ];
+
+                    // host yang sesuai site
+                    const matchedHosts = employee
+                      .filter((emp: any) => siteHostIds.includes(emp.id))
+                      .map((emp: any) => ({
+                        value: emp.id,
+                        name: emp.name,
+                        group: 'Host Based on Destination',
+                      }));
+
+                    // semua host lainnya
+                    const otherHosts = employee
+                      .filter((emp: any) => !siteHostIds.includes(emp.id))
+                      .map((emp: any) => ({
+                        value: emp.id,
+                        name: emp.name,
+                        group: 'All Host',
+                      }));
+
+                    const finalOptions = [...matchedHosts, ...otherHosts];
+
+                    return (
+                      <Autocomplete
+                        size="small"
+                        options={finalOptions}
+                        groupBy={(option) => option.group}
+                        getOptionLabel={(option) => option.name}
+                        isOptionEqualToValue={(option, value) => option.value === value.value}
+                        inputValue={inputValues[index] || ''}
+                        onInputChange={(_, newInputValue) => {
+                          setInputValues((prev: any) => ({
+                            ...prev,
+                            [index]: newInputValue,
+                          }));
+                        }}
+                        filterOptions={(opts, state) => {
+                          if (!state.inputValue) {
+                            return opts;
+                          }
+
+                          return opts.filter((opt) =>
+                            opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
+                          );
+                        }}
+                        value={finalOptions.find((opt) => opt.value === item.answer_text) || null}
+                        onChange={(_, newValue: any) => {
+                          const selectedValue = newValue?.value || '';
+
+                          onChange(index, 'answer_text', selectedValue);
+
+                          if (selectedValue) {
+                            clearFieldError(key);
+                          }
+                        }}
+                        renderGroup={(params) => (
+                          <Box key={params.key}>
+                            <Box
+                              sx={{
+                                px: 2,
+                                py: 1,
+                                bgcolor:
+                                  // params.group === 'Host Based on Destination'
+                                  //   ? '#E3F2FD'
+                                  '#F5F5F5',
+                                borderTop:
+                                  params.group !== 'Host Based on Destination'
+                                    ? '1px solid #E0E0E0'
+                                    : 'none',
+                                borderBottom: '1px solid #E0E0E0',
+                              }}
+                            >
+                              <Typography
+                                variant="body1"
+                                fontWeight={700}
+                                color="text.secondary"
+                                textTransform="capitalize"
+                              >
+                                {params.group}
+                              </Typography>
+                            </Box>
+
+                            {params.children}
+                          </Box>
+                        )}
+                        renderInput={(params) => (
+                          <CustomTextField
+                            {...params}
+                            placeholder="Choose PIC Host"
+                            fullWidth
+                            error={!!errorMessage}
+                            helperText={errorMessage}
+                          />
+                        )}
+                      />
+                    );
+                  }
 
                   if (item.remarks === 'employee') {
                     return (

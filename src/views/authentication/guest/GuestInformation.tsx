@@ -1155,7 +1155,7 @@ const GuestInformationStepper = () => {
       }
 
       const res = await SubmitPraForm(payload);
-      console.log('✅ SubmitPraForm success:', JSON.stringify(res || {}, null, 2));
+      // console.log('✅ SubmitPraForm success:', JSON.stringify(res || {}, null, 2));
 
       // await new Promise((r) => setTimeout(r, 500));
 
@@ -1190,152 +1190,162 @@ const GuestInformationStepper = () => {
 
   return (
     <PageContainer title="Guest Information" description="Guest Information">
-      <Box>
-        <Grid
-          container
-          justifyContent="center"
-          alignItems="center"
-          sx={{ height: { xs: '100vh', lg: '90vh' }, backgroundColor: '#f4f6f8' }}
-        >
-          <Grid size={{ xs: 12, sm: 11, xl: 8 }} sx={{ p: { xs: 2 } }}>
-            <Card elevation={10} sx={{ p: 3, borderRadius: 3, bgcolor: 'white', boxShadow: 3 }}>
-              <Box
-                textAlign="center"
-                mb={3}
-                display="flex"
-                flexDirection="column"
-                alignItems="center"
-              >
-                <img src={Logo} width={100} height={100} alt="Logo" />
-                {code && (
-                  <Typography variant="h6" fontWeight={600} mt={2}>
-                    Invitation Code: {code}
-                  </Typography>
-                )}
-              </Box>
-
-              {!isMobile && (
-                <>
-                  <Stepper activeStep={activeStep} alternativeLabel>
-                    {steps.map((label: any, idx: number) => (
-                      <Step key={idx}>
-                        <StepLabel
-                          StepIconComponent={CustomStepIcon}
-                          onClick={() => setActiveStep(idx)}
-                          sx={{
-                            cursor: 'pointer',
-                            '& .MuiStepLabel-label': {
-                              typography: 'body1',
-                              fontWeight: activeStep === idx ? 600 : 400,
-                            },
-                          }}
-                        >
-                          {label}
-                        </StepLabel>
-                      </Step>
-                    ))}
-                  </Stepper>
-                </>
-              )}
-
-              {isMobile && (
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          backgroundColor: '#f4f6f8',
+        }}
+      >
+        <Box sx={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+          <Grid
+            container
+            justifyContent="center"
+            alignItems="center"
+            sx={{ width: '100%' }}
+            // sx={{ height: { xs: '100vh', lg: '100vh' }, backgroundColor: '#f4f6f8' }}
+          >
+            <Grid size={{ xs: 12, sm: 11, xl: 8 }} sx={{ p: { xs: 2 } }}>
+              <Card elevation={10} sx={{ p: 3, borderRadius: 3, bgcolor: 'white', boxShadow: 3 }}>
                 <Box
-                  sx={{
-                    mt: 1,
-                    mb: 1,
-                    px: 2,
-                    py: 1,
-                    width: 'fit-content',
-                    mx: 'auto',
-                    // bgcolor: 'primary.main',
-                    borderRadius: 2,
-                    color: 'primary',
-                    textAlign: 'center',
-                  }}
+                  textAlign="center"
+                  mb={3}
+                  display="flex"
+                  flexDirection="column"
+                  alignItems="center"
                 >
-                  <Typography variant="h5" fontWeight={600}>
-                    {steps[activeStep]}
-                  </Typography>
+                  <img src={Logo} width={100} height={100} alt="Logo" />
+                  {code && (
+                    <Typography variant="h6" fontWeight={600} mt={2}>
+                      Invitation Code: {code}
+                    </Typography>
+                  )}
                 </Box>
-              )}
 
-              <Box mt={2}>{StepContent(formSections[activeStep])}</Box>
+                {!isMobile && (
+                  <>
+                    <Stepper activeStep={activeStep} alternativeLabel>
+                      {steps.map((label: any, idx: number) => (
+                        <Step key={idx}>
+                          <StepLabel
+                            StepIconComponent={CustomStepIcon}
+                            onClick={() => setActiveStep(idx)}
+                            sx={{
+                              cursor: 'pointer',
+                              '& .MuiStepLabel-label': {
+                                typography: 'body1',
+                                fontWeight: activeStep === idx ? 600 : 400,
+                              },
+                            }}
+                          >
+                            {label}
+                          </StepLabel>
+                        </Step>
+                      ))}
+                    </Stepper>
+                  </>
+                )}
 
-              {isMobile && (
-                <Box sx={{ mt: 2 }}>
-                  <MobileStepper
-                    variant="dots"
-                    steps={steps.length}
-                    position="static"
-                    activeStep={activeStep}
-                    nextButton={
-                      activeStep === steps.length - 1 ? (
+                {isMobile && (
+                  <Box
+                    sx={{
+                      mt: 1,
+                      mb: 1,
+                      px: 2,
+                      py: 1,
+                      width: 'fit-content',
+                      mx: 'auto',
+                      // bgcolor: 'primary.main',
+                      borderRadius: 2,
+                      color: 'primary',
+                      textAlign: 'center',
+                    }}
+                  >
+                    <Typography variant="h5" fontWeight={600}>
+                      {steps[activeStep]}
+                    </Typography>
+                  </Box>
+                )}
+
+                <Box mt={2}>{StepContent(formSections[activeStep])}</Box>
+
+                {isMobile && (
+                  <Box sx={{ mt: 2 }}>
+                    <MobileStepper
+                      variant="dots"
+                      steps={steps.length}
+                      position="static"
+                      activeStep={activeStep}
+                      nextButton={
+                        activeStep === steps.length - 1 ? (
+                          <Button
+                            size="medium"
+                            variant="contained"
+                            color="primary"
+                            // onClick={handleSubmit}
+                            onClick={() => setOpenPreview(true)}
+                          >
+                            Submit
+                          </Button>
+                        ) : (
+                          <Button
+                            size="medium"
+                            variant="contained"
+                            color="primary"
+                            onClick={handleNext}
+                          >
+                            Next
+                            <KeyboardArrowRight />
+                          </Button>
+                        )
+                      }
+                      backButton={
+                        <Button size="medium" onClick={handleBack} disabled={activeStep === 0}>
+                          <KeyboardArrowLeft />
+                          Back
+                        </Button>
+                      }
+                    />
+                  </Box>
+                )}
+
+                <>
+                  {!isMobile && (
+                    <Box display="flex" flexDirection="row" mt={4}>
+                      <Button
+                        disabled={activeStep === 0}
+                        onClick={handleBack}
+                        startIcon={<KeyboardArrowLeft />}
+                      >
+                        Back
+                      </Button>
+                      <Box flex="1 1 auto" />
+                      {activeStep !== steps.length - 1 ? (
                         <Button
-                          size="medium"
+                          onClick={handleNext}
                           variant="contained"
-                          color="primary"
-                          // onClick={handleSubmit}
-                          onClick={() => setOpenPreview(true)}
+                          endIcon={<KeyboardArrowRight />}
                         >
-                          Submit
+                          Next
                         </Button>
                       ) : (
                         <Button
-                          size="medium"
+                          // onClick={handleSubmit}
+                          onClick={() => setOpenPreview(true)}
                           variant="contained"
                           color="primary"
-                          onClick={handleNext}
                         >
-                          Next
-                          <KeyboardArrowRight />
+                          Submit
                         </Button>
-                      )
-                    }
-                    backButton={
-                      <Button size="medium" onClick={handleBack} disabled={activeStep === 0}>
-                        <KeyboardArrowLeft />
-                        Back
-                      </Button>
-                    }
-                  />
-                </Box>
-              )}
-
-              <>
-                {!isMobile && (
-                  <Box display="flex" flexDirection="row" mt={4}>
-                    <Button
-                      disabled={activeStep === 0}
-                      onClick={handleBack}
-                      startIcon={<KeyboardArrowLeft />}
-                    >
-                      Back
-                    </Button>
-                    <Box flex="1 1 auto" />
-                    {activeStep !== steps.length - 1 ? (
-                      <Button
-                        onClick={handleNext}
-                        variant="contained"
-                        endIcon={<KeyboardArrowRight />}
-                      >
-                        Next
-                      </Button>
-                    ) : (
-                      <Button
-                        // onClick={handleSubmit}
-                        onClick={() => setOpenPreview(true)}
-                        variant="contained"
-                        color="primary"
-                      >
-                        Submit
-                      </Button>
-                    )}
-                  </Box>
-                )}
-              </>
-            </Card>
+                      )}
+                    </Box>
+                  )}
+                </>
+              </Card>
+            </Grid>
           </Grid>
-        </Grid>
+        </Box>
         <Footer />
       </Box>
 

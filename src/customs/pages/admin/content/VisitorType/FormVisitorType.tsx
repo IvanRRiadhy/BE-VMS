@@ -35,7 +35,6 @@ import {
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { showSwal } from 'src/customs/components/alerts/alerts';
-import RenderDetailRows from './RenderDetailRows';
 import {
   createVisitorTypeAccess,
   createVisitorTypeAccessBulk,
@@ -57,6 +56,7 @@ interface FormVisitorTypeProps {
   edittingId?: string;
   onSuccess?: () => void;
   initialDocuments?: any[];
+  initialAccess?: any[];
 }
 
 const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
@@ -65,6 +65,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
   edittingId,
   onSuccess,
   initialDocuments = [],
+  initialAccess = [],
 }) => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
@@ -101,10 +102,20 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
   };
 
   useEffect(() => {
-    if (edittingId && initialDocuments.length > 0) {
+    if (initialDocuments.length > 0) {
       setDocumentIdentities(initialDocuments);
+    } else {
+      setDocumentIdentities([]);
     }
-  }, [edittingId, initialDocuments]);
+  }, [initialDocuments]);
+
+  useEffect(() => {
+    if (initialAccess.length > 0) {
+      setSelectedAccess(initialAccess);
+    } else if (!edittingId) {
+      setSelectedAccess([]);
+    }
+  }, [initialAccess, edittingId]);
 
   useEffect(() => {
     if (!edittingId || !token || accessData.length === 0) return;

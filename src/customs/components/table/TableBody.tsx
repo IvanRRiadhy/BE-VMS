@@ -36,6 +36,7 @@ import {
   IconArrowAutofitLeft,
   IconCheck,
   IconCopy,
+  IconCopyPlus,
   IconEye,
   IconEyeOff,
   IconFileExport,
@@ -105,6 +106,8 @@ export const TableBodyContent = ({
   isHaveObjectData,
   objectFields,
   isHaveIntegration,
+  isHaveDuplicate,
+  onDuplicate,
   onNameClick,
   isHaveApproval,
   onAccept,
@@ -145,8 +148,6 @@ export const TableBodyContent = ({
   // INDEX_COL_WIDTH,
   onDelete,
 }: any) => {
-
-
   const CARD_STATUS: Record<number, string> = {
     0: 'Not Found',
     1: 'Active',
@@ -302,7 +303,6 @@ export const TableBodyContent = ({
           <></>
         ) : (
           paginatedData.map((row: any, index: any) => (
-
             <TableRowItem
               key={row.id}
               row={row}
@@ -331,6 +331,8 @@ export const TableBodyContent = ({
                 isHaveEmployee,
                 isHaveGender,
                 isSiteSpaceType,
+                isHaveDuplicate,
+                onDuplicate,
                 isHaveImage,
                 imageFields,
                 isDataVerified,
@@ -423,6 +425,8 @@ const TableRowItem = React.memo(
       isHavePdf,
       onFileClick,
       isHaveVerified,
+      isHaveDuplicate,
+      onDuplicate,
       visiblePasswords,
       togglePassword,
       isHavePassword,
@@ -512,15 +516,15 @@ const TableRowItem = React.memo(
       3: 'Room',
     };
 
-   const formatDate = (date?: string) => {
-     if (!date || date === '-') return '-';
+    const formatDate = (date?: string) => {
+      if (!date || date === '-') return '-';
 
-     const m = moment.utc(date, moment.ISO_8601, true);
+      const m = moment.utc(date, moment.ISO_8601, true);
 
-     if (!m.isValid()) return '-';
+      if (!m.isValid()) return '-';
 
-     return m.local().format('DD MMMM YYYY, HH:mm');
-   };
+      return m.local().format('DD MMMM YYYY, HH:mm');
+    };
 
     const CARD_STATUS: Record<number, string> = {
       0: 'Not Found',
@@ -548,12 +552,11 @@ const TableRowItem = React.memo(
             <Checkbox
               checked={checkedIds.includes(row.id)}
               onChange={(e) => {
-                handleCheckRow(row.id as string, e.target.checked)
+                handleCheckRow(row.id as string, e.target.checked);
               }}
             />
           </TableCell>
         )}
-
         {isTreeSiteType && (
           <TableCell width={50}>
             <IconButton size="small" onClick={() => toggleRow(row.id)}>
@@ -561,7 +564,6 @@ const TableRowItem = React.memo(
             </IconButton>
           </TableCell>
         )}
-
         {isHaveAction && isActionVisitor && (
           <TableCell
             sx={{
@@ -644,7 +646,6 @@ const TableRowItem = React.memo(
             </Box>
           </TableCell>
         )}
-
         <TableCell
           sx={{
             position: { xs: 'static', lg: 'sticky' },
@@ -659,7 +660,6 @@ const TableRowItem = React.memo(
         >
           {index + 1 + page * rowsPerPage}
         </TableCell>
-
         {columns.map((col: any, idx: any) => {
           const makeSticky = isStickyVisitorCol(idx);
 
@@ -1226,6 +1226,71 @@ const TableRowItem = React.memo(
                 >
                   {getAccessActions(row)}
                 </TableCell>
+              ) : isHaveDuplicate ? (
+                <TableCell sx={{ display: 'flex', gap: '2px', borderBottom: 'none !important', padding: '0px !important' }}>
+                  <Tooltip title="Duplicate Visitor Type" arrow>
+                    <IconButton
+                      onClick={() => onDuplicate?.(row)}
+                      disableRipple
+                      sx={{
+                        bgcolor: 'success.lighter',
+                        color: 'success.main',
+                        borderRadius: '50%',
+                        border: '1px solid',
+                        borderColor: 'success.main',
+                        width: 31,
+                        height: 31,
+                        transition: 'all .2s ease',
+                        '&:hover': {
+                          bgcolor: 'success.main',
+                          color: 'white',
+                          transform: 'scale(1.05)',
+                        },
+                      }}
+                    >
+                      <IconCopyPlus width={18} height={18} />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Edit" arrow>
+                    <IconButton
+                      onClick={() => onEdit?.(row)}
+                      disableRipple
+                      sx={{
+                        color: 'white',
+                        backgroundColor: '#FA896B',
+                        width: 28,
+                        height: 28,
+                        p: 0.5,
+                        borderRadius: '50%',
+                        '&:hover': { backgroundColor: '#e06f52', color: 'white' },
+                      }}
+                    >
+                      <IconPencil width={14} height={14} />
+                    </IconButton>
+                  </Tooltip>
+
+                  {/* 🗑 Delete */}
+                  <Tooltip title="Delete" arrow>
+                    <IconButton
+                      onClick={() => onDelete?.(row)}
+                      disableRipple
+                      sx={{
+                        color: 'white',
+                        backgroundColor: 'error.main',
+                        width: 28,
+                        height: 28,
+                        p: 0.5,
+                        borderRadius: '50%',
+                        '&:hover': {
+                          backgroundColor: 'rgba(255, 0, 0, 0.7)',
+                          color: 'white',
+                        },
+                      }}
+                    >
+                      <IconTrash width={14} height={14} />
+                    </IconButton>
+                  </Tooltip>
+                </TableCell>
               ) : isHaveView ? (
                 <>
                   <Tooltip title="View Invitation">
@@ -1248,27 +1313,6 @@ const TableRowItem = React.memo(
                       <RemoveRedEyeIcon width={18} height={18} />
                     </IconButton>
                   </Tooltip>
-
-                  {/* <Tooltip title="Edit Invitation">
-                    <IconButton
-                      onClick={() => onEdit?.(row)}
-                      disableRipple
-                      sx={{
-                        color: 'white',
-                        backgroundColor: '#FA896B',
-                        width: 28,
-                        height: 28,
-                        padding: 0.5,
-                        borderRadius: '50%',
-                        '&:hover': {
-                          backgroundColor: '#FA896B',
-                          color: 'white',
-                        },
-                      }}
-                    >
-                      <IconPencil width={18} height={18} />
-                    </IconButton>
-                  </Tooltip> */}
                 </>
               ) : isHavePermission ? (
                 <>
@@ -1443,37 +1487,6 @@ const TableRowItem = React.memo(
                 </Tooltip>
               ) : isActionListVisitor ? (
                 <>
-                  {/* <Tooltip
-                                    title="Block Visitor"
-                                    arrow
-                                    placement="top"
-                                    slotProps={{
-                                      tooltip: {
-                                        sx: {
-                                          fontSize: '0.8rem',
-                                          padding: '8px 14px',
-                                        },
-                                      },
-                                    }}
-                                  >
-                                    <Button
-                                      // variant="contained"
-                                      // color="error"
-                                      size="small"
-                                      startIcon={<IconForbid2 />}
-                                      // onClick={() => onBlock?.(row)} // optional trigger
-                                      sx={{
-                                        textTransform: 'none',
-                                        borderRadius: 1,
-                                        fontWeight: 500,
-                                        backgroundColor: '#000',
-                                        color: 'white',
-                                        '&:hover': { backgroundColor: '#000 ', opacity: 0.8 },
-                                      }}
-                                    >
-                                      Block
-                                    </Button>
-                                  </Tooltip> */}
                   <Tooltip
                     title="Blacklist Visitor"
                     arrow
@@ -1492,7 +1505,7 @@ const TableRowItem = React.memo(
                       // color="error"
                       size="small"
                       startIcon={<IconXboxX />}
-                      // onClick={() => onBlock?.(row)} // optional trigger
+                      // onClick={() => onBlock?.(row)}
                       sx={{
                         textTransform: 'none',
                         borderRadius: 1,
@@ -1563,6 +1576,7 @@ const TableRowItem = React.memo(
                         </IconButton>
                       </Tooltip>
                     )}
+
                   <Tooltip title="Edit">
                     <IconButton
                       onClick={() => onEdit?.(row)}
@@ -1607,7 +1621,6 @@ const TableRowItem = React.memo(
             </Box>
           </TableCell>
         )}
-
         {isHaveActionRevoke && !isActionVisitor && (
           <>
             <TableCell
@@ -1626,7 +1639,7 @@ const TableRowItem = React.memo(
                 <Button
                   onClick={() => onActionAccess?.(row, 'grant')}
                   disableRipple
-                  variant='contained'
+                  variant="contained"
                   sx={{
                     color: 'white',
                     backgroundColor: '#4CAF50',
@@ -1639,7 +1652,7 @@ const TableRowItem = React.memo(
                 <Button
                   onClick={() => onActionAccess?.(row, 'revoke')}
                   disableRipple
-                  variant='contained'
+                  variant="contained"
                   sx={{
                     color: 'white',
                     backgroundColor: '#f44336',
@@ -1648,11 +1661,11 @@ const TableRowItem = React.memo(
                   Revoke
                 </Button>
               </Tooltip>
-               <Tooltip title="Block" arrow>
+              <Tooltip title="Block" arrow>
                 <Button
                   onClick={() => onActionAccess?.(row, 'block')}
                   disableRipple
-                  variant='contained'
+                  variant="contained"
                   sx={{
                     color: 'white',
                     backgroundColor: '#000',
@@ -1664,7 +1677,6 @@ const TableRowItem = React.memo(
             </TableCell>
           </>
         )}
-
         {isHaveActionOnlyEdit && !isActionVisitor && isSelectedType && (
           <TableCell
             sx={{
@@ -1700,7 +1712,6 @@ const TableRowItem = React.memo(
             </Box>
           </TableCell>
         )}
-
         {isButtonGiveAccess && isButtonRegisteredSite && isButtonSiteAccess && (
           <TableCell
             sx={{
@@ -1749,7 +1760,6 @@ const TableRowItem = React.memo(
             </Box>
           </TableCell>
         )}
-
         {isCopyLink && (
           <TableCell
             sx={{
@@ -1831,7 +1841,6 @@ const TableRowItem = React.memo(
             </Box>
           </TableCell>
         )}
-
         {isButtonEnabled && isButtonDisabled && (
           <TableCell
             sx={{
