@@ -3946,8 +3946,13 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         setLoading(false);
       }, 700);
 
-      toast('Failed to create visitor.', 'error');
-
+      // toast('Failed to create visitor.', 'error');
+      showSwal(
+        'error',
+        err.response?.data?.collection?.map((item: any) => item.message).join('\n') ||
+          err.response?.data?.message ||
+          'Failed to create visitor.',
+      );
       if (err?.name === 'ZodError') {
         const fieldErrors: Record<string, string> = {};
         err.errors.forEach((z: any) => (fieldErrors[z.path.join('.')] = z.message));
@@ -4300,25 +4305,32 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
   };
 
   useEffect(() => {
-    if (!formData.visitor_type || !token) return;
+    setInputValues({});
+    setSelectedSiteParentIds([]);
+    setSelectedSiteIds([]);
+    setSiteTree([]);
+    if (!formData.visitor_type) return;
 
-    const raw = localStorage.getItem('unsavedVisitorData');
-    const saved = raw ? JSON.parse(raw) : null;
-    const sameType = saved?.visitor_type === formData.visitor_type;
-    const sameMode = saved?.is_group === isGroup;
+    // const raw = localStorage.getItem('unsavedVisitorData');
+    // const saved = raw ? JSON.parse(raw) : null;
+    // const sameType = saved?.visitor_type === formData.visitor_type;
+    // const sameMode = saved?.is_group === isGroup;
 
-    if (sameType && sameMode && saved.sections?.length) {
-      setSectionsData(saved.sections);
-      setDataVisitor(saved.data_visitor ?? []);
-      setGroupedPages(saved.grouped_pages ?? {});
-      setDraggableSteps(saved.sections.map((s: any) => s.name));
-      setRawSections(saved.sections);
-      return;
-    }
+    // if (sameType && sameMode && saved.sections?.length) {
+    //   setSectionsData(saved.sections);
+    //   setDataVisitor(saved.data_visitor ?? []);
+    //   setGroupedPages(saved.grouped_pages ?? {});
+    //   setDraggableSteps(saved.sections.map((s: any) => s.name));
+    //   setRawSections(saved.sections);
+    //   return;
+    // }
 
     const fetchVisitorTypeDetails = async () => {
       const res = visitorType.find((vt: any) => vt.id === formData.visitor_type);
-      const resVisitorType = await getVisitorTypeById(token, formData.visitor_type as string);
+      const resVisitorType = await getVisitorTypeById(
+        token as string,
+        formData.visitor_type as string,
+      );
 
       let sections = resVisitorType?.collection?.section_page_visitor_types ?? [];
 
@@ -4341,7 +4353,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         setGroupedPages({} as any);
       }
     };
-
+    setInputValues({});
     fetchVisitorTypeDetails();
   }, [formData.visitor_type, visitorType]);
 

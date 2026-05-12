@@ -43,6 +43,7 @@ import { IconUsersGroup } from '@tabler/icons-react';
 import { useRef } from 'react';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
+import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
 
 type VisitorTypeTableRow = {
   id: string;
@@ -154,8 +155,6 @@ const Content = () => {
           setTableRowVisitorType(rows);
         }
       } catch (error) {
-        console.error('Error fetching data:', error);
-        // setTableRowVisitorType([]);
       } finally {
         setTimeout(() => setLoading(false), 300);
       }
@@ -367,7 +366,6 @@ const Content = () => {
   const handleDelete = async (id: string) => {
     if (!token) return;
 
-    // setLoading(true);
     const confirmed = await showConfirmDelete('Are you sure to delete this visitor type?');
     if (!confirmed) return;
     try {
@@ -377,7 +375,6 @@ const Content = () => {
       setRefreshTrigger((prev) => prev + 1);
       showSwal('success', 'Successfully deleted visitor type!');
     } catch (error) {
-      console.error(error);
       showSwal('error', 'Failed to delete visitor type.');
     } finally {
       setTimeout(() => {
@@ -416,12 +413,17 @@ const Content = () => {
     setSearchInput(keyword);
   }, []);
 
+  const handleSearch = useCallback((keyword: string) => {
+    setPage(0);
+    setSearchInput(keyword);
+    setSearchKeyword(keyword);
+  }, []);
 
-const handleSearch = useCallback((keyword: string) => {
-  setPage(0);
-  setSearchInput(keyword);
-  setSearchKeyword(keyword);
-}, []);
+  const handleSuccess = () => {
+    localStorage.removeItem('unsavedVisitorTypeData');
+    handleCloseDialog();
+    setRefreshTrigger((prev) => prev + 1);
+  };
 
   return (
     <PageContainer
@@ -512,43 +514,18 @@ const handleSearch = useCallback((keyword: string) => {
           <FormVisitorType
             formData={formDataAddVisitorType}
             setFormData={setFormDataAddVisitorType}
-            onSuccess={() => {
-              localStorage.removeItem('unsavedVisitorTypeData');
-              handleCloseDialog();
-              setRefreshTrigger((prev) => prev + 1);
-            }}
+            onSuccess={handleSuccess}
             edittingId={edittingId}
             initialDocuments={documentIdentities}
           />
         </DialogContent>
       </Dialog>
 
-      <Dialog open={confirmDialogOpen} onClose={handleCancelEdit} fullWidth maxWidth="sm">
-        <DialogTitle>
-          Unsaved Changes
-          <IconButton
-            aria-label="close"
-            onClick={handleCancelEdit}
-            sx={{
-              position: 'absolute',
-              right: 8,
-              top: 8,
-              color: (theme) => theme.palette.grey[500],
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent ref={dialogRef} dividers>
-          You have unsaved changes. Are you sure you want to discard them?
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancelEdit}>Cancel</Button>
-          <Button onClick={handleConfirmEdit} color="primary" variant="contained">
-            Yes, Discard and Continue
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmUnsavedDialog
+        open={confirmDialogOpen}
+        onClose={handleCancelEdit}
+        onDiscard={handleConfirmEdit}
+      />
       <Backdrop
         open={loadingData}
         sx={{

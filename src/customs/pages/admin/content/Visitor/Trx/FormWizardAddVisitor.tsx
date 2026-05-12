@@ -3949,7 +3949,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           //   })),
           // }));
           const cleanDataVisitor = (built.data_visitor ?? []).map((dv: any, idx: number) => {
-            const original = dataVisitor[idx]; // ambil state asli
+            const original = dataVisitor[idx]; 
 
             const question_page = (dv.question_page ?? []).map((qp: any, sIdx: number) => {
               const isPurposeVisit =
@@ -3996,10 +3996,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         });
 
         payload = { list_group };
-        console.log('Payload', JSON.stringify(payload, null, 2));
+        // console.log('Payload', JSON.stringify(payload, null, 2));
 
         const parsed = CreateGroupVisitorRequestSchema.parse(payload);
-        console.log('Final Payload (Group):', JSON.stringify(parsed, null, 2));
+        // console.log('Final Payload (Group):', JSON.stringify(parsed, null, 2));
 
         const submitFn = TYPE_REGISTERED === 0 ? createPraRegisterGroup : createVisitorsGroup;
         const backendResponse = await submitFn(token, parsed as any);
@@ -4029,7 +4029,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           data_visitor: [{ question_page }],
         };
 
-        console.log('Payload :', JSON.stringify(payload, null, 2));
+        // console.log('Payload :', JSON.stringify(payload, null, 2));
 
         const parsed = CreateVisitorRequestSchema.parse(payload);
         console.log('Final Payload (Single):', JSON.stringify(parsed, null, 2));
@@ -4071,37 +4071,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       }
     } finally {
       setLoading(false);
-    }
+    } 
   };
 
   useEffect(() => {
     setDraggableSteps([...dynamicSteps]);
   }, [dynamicSteps]);
-
-  // useEffect(() => {
-  //   if (!formData.visitor_type) return;
-
-  //   const draft = isGroup
-  //     ? {
-  //         visitor_type: formData.visitor_type,
-  //         is_group: formData.is_group,
-  //         type_registered: 1,
-  //         grouped_pages: groupedPages,
-  //         data_visitor: dataVisitor,
-  //         sections: sectionsData,
-  //         groupVisitors,
-  //       }
-  //     : {
-  //         visitor_type: formData.visitor_type,
-  //         is_group: formData.is_group,
-  //         type_registered: 1,
-  //         data_visitor: [{ question_page: sectionsData }],
-  //         sections: sectionsData,
-  //         groupVisitors,
-  //       };
-  //   setInputValues({});
-  //   localStorage.setItem('unsavedVisitorData', JSON.stringify(draft));
-  // }, [formData.visitor_type, isGroup, dataVisitor, sectionsData, groupedPages]);
 
   const handleAddDetails = () => {
     if (!isGroup) {
