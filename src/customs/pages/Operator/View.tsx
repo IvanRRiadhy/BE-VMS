@@ -41,6 +41,7 @@ import {
   getInvitationOperatorRelated,
   getPermissionOperator,
   getTodayVisitingPurpose,
+  getUpComingPurpose,
   getUpComingVisitors,
 } from 'src/customs/api/operator';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
@@ -110,6 +111,8 @@ dayjs.extend(localizedFormat);
 dayjs.extend(customParseFormat);
 dayjs.extend(advancedFormat);
 dayjs.locale('id');
+
+type DocumentType = 'CardAccess' | 'Other';
 const View = () => {
   const { token } = useSession();
   const dataImage = [infoPic];
@@ -124,7 +127,6 @@ const View = () => {
   const [openInvitationVisitor, setOpenInvitationVisitor] = useState(false);
   const [permissionAccess, setPermissionAccess] = useState<any[]>([]);
   const handleOpenScanQR = () => setOpenDialogIndex(1);
-  const [visitorStatus, setVisitorStatus] = useState<string | null>(null);
   const [selectedCards, setSelectedCards] = useState<string[]>([]);
   const [openChooseCardDialog, setOpenChooseCardDialog] = useState(false);
   const [loadingAccess, setLoadingAccess] = useState(false);
@@ -205,6 +207,21 @@ const View = () => {
   const [printData, setPrintData] = useState<any>(null);
   const [resetStep, setResetStep] = useState(0);
   const [openRevokeDialog, setOpenRevokeDialog] = useState(false);
+  const [upcomingPurpose, setUpcomingPurpose] = useState<any[]>([]);
+  const [openAccessIssuance, setAccessIssuance] = useState(false);
+  const fetchUpcomingPurpose = async () => {
+    const res = await getUpComingPurpose(token as string, {
+      today: 'true',
+      all_visitor_type: 'true',
+    });
+
+    setUpcomingPurpose(res?.collection ?? []);
+  };
+
+  useEffect(() => {
+    if (!token) return;
+    fetchUpcomingPurpose();
+  }, [token]);
 
   const [dataDummyAccess, setDataDummyAccess] = useState<any[]>([
     {
@@ -225,7 +242,6 @@ const View = () => {
     const fetchData = async () => {
       try {
         const res = await getInvitationSite(token as string);
-        // const res = await getAllSite(token as string);
         const filteredSites =
           res?.collection?.filter((site: any) => site.can_visited === true) ?? [];
         setSitesOperator(filteredSites);
@@ -301,9 +317,33 @@ const View = () => {
       .sort((a, b) => Number(a.current_used) - Number(b.current_used));
   }, [visitorCards]);
 
-  useEffect(() => {
-    setSelectedCards([]);
-  }, [selectedVisitorId]);
+  const handleSubmitBatchSwipe = async (payloads: any[]) => {
+    try {
+      if (!payloads.length) return;
+
+      await createMultipleGrantAccess(token as string, {
+        data: payloads,
+      });
+
+      console.log('payloads', payloads);
+
+      showSwal('success', 'All cards swapped successfully!');
+
+      setSwipePayload([]);
+      setOpenSwipeDialog(false);
+      setOpenChooseCardDialog(false);
+      setSearchTerm('');
+
+      await fetchRelatedVisitorsByInvitationId(invitationId as string);
+    } catch (err: any) {
+      showSwal(
+        'error',
+        Array.isArray(err?.response?.data?.collection)
+          ? err.response.data.collection.join('\n')
+          : err?.response?.data?.collection || 'Failed to swap cards',
+      );
+    }
+  };
 
   const handleSwipeCardSubmit = async (
     value: string,
@@ -315,8 +355,26 @@ const View = () => {
     setLoadingAccess(true);
     try {
       // const selectedCardNumber = selectedCards[visitorIndex];
-      const selectedCardNumber = selectedCards[0];
-      const selectedCard = filteredCards.find((c) => c.card_number === selectedCardNumber);
+      // const selectedCard = filteredCards.find((c) => c.card_number === selectedCardNumber);
+
+      const visitorSelectedCards = Array.isArray(selectedCards[visitorIndex])
+        ? selectedCards[visitorIndex]
+        : selectedCards;
+
+      const currentUsedCardNumber = String(value).trim();
+
+      const newCardNumber = visitorSelectedCards.find(
+        (cardNumber: string) => String(cardNumber).trim() !== currentUsedCardNumber,
+      );
+
+      if (!newCardNumber) {
+        showSwal('error', 'New card not found');
+        return;
+      }
+
+      const selectedCard = filteredCards.find(
+        (c) => String(c.card_number).trim() === String(newCardNumber).trim(),
+      );
 
       if (!selectedCard) {
         showSwal('error', 'Card not found');
@@ -333,19 +391,20 @@ const View = () => {
         swap_type: type,
         swap_card_from_site_id: registerSiteOperator,
         is_swapcard: true,
+        registered_site_id: registerSiteOperator,
       };
 
-      console.log('SWAP PAYLOAD', payload);
-
       if (!hasSwappedCard) {
-        console.log('FIRST SWIPE', payload);
-        await createGrandAccessOperator(token as string, payload);
-        showSwal('success', 'Card swaped successfully!');
-        setOpenChooseCardDialog(false);
-        setSearchTerm('');
-        await fetchRelatedVisitorsByInvitationId(invitationId as string);
+        const newPayload = [...swipePayload, payload];
+        setSwipePayload(newPayload);
+
+        if (!isLastVisitor) {
+          return;
+        }
+        await handleSubmitBatchSwipe(newPayload);
+        setSwipePayload([]);
+        return;
       } else {
-        // setSwipePayload(payload);
         setSwipePayload([payload]);
         setCurrentAccessVisitor(visitor);
         setOpenSwipeAccess(true);
@@ -353,7 +412,7 @@ const View = () => {
 
       setOpenSwipeDialog(false);
     } catch (err: any) {
-      showSwal('error', err?.response?.data?.msg || 'Failed to swipe card');
+      showSwal('error', err?.response?.data?.collection || 'Failed to swipe card');
     } finally {
       setLoadingAccess(false);
     }
@@ -390,8 +449,6 @@ const View = () => {
         payload.swap_card_from_site_id = registerSiteOperator;
       }
 
-      // console.log('SWAP PAYLOAD', payload);
-
       await createGrandAccessOperator(token as string, payload);
 
       showSwal(
@@ -400,7 +457,7 @@ const View = () => {
       );
       setOpenSwipeDialogNoInvitation(false);
     } catch (err: any) {
-      const backendMsg = err?.response?.data?.msg;
+      const backendMsg = err?.response?.data?.msg || err?.response?.data?.message;
       showSwal('error', backendMsg || 'Failed to swipe card');
     } finally {
       setLoadingAccess(false);
@@ -440,9 +497,8 @@ const View = () => {
       if (!token) return;
 
       try {
-        const [vtRes, purposeRes, permissionRes] = await Promise.allSettled([
+        const [vtRes, permissionRes] = await Promise.allSettled([
           getInvitationVisitorType(token),
-          getTodayVisitingPurpose(token),
           getPermission(token),
         ]);
 
@@ -450,12 +506,6 @@ const View = () => {
           setVisitorType(vtRes.value?.collection ?? []);
         } else {
           console.error('VisitorType error:', vtRes.reason);
-        }
-
-        if (purposeRes.status === 'fulfilled') {
-          setTodayVisitingPurpose(purposeRes.value?.collection ?? []);
-        } else {
-          console.error('VisitingPurpose error:', purposeRes.reason);
         }
 
         if (permissionRes.status === 'fulfilled') {
@@ -552,7 +602,7 @@ const View = () => {
     }));
     // setRefreshTrigger((prev) => prev + 1);
     handleCloseDialog();
-    await fetchTodayVisitingPurpose();
+    // await fetchTodayVisitingPurpose();
   };
 
   useEffect(() => {
@@ -928,7 +978,6 @@ const View = () => {
       const filteredAccess = accessList.filter((a: any) =>
         permissionAccess.some((p: any) => p.access_control_id === a.access_control_id),
       );
-      // console.log('filteredAccess', filteredAccess);
 
       const mergedAccess = filteredAccess.map((a: any) => {
         const perm = permissionAccess.find((p: any) => p.access_control_id === a.access_control_id);
@@ -945,7 +994,6 @@ const View = () => {
           disabled: !perm,
         };
       });
-      // console.log('mergedAccess', mergedAccess);
 
       // setAccessData([...mergedAccess]);
       setAccessData(mergedAccess);
@@ -983,7 +1031,8 @@ const View = () => {
         return;
       } else if (actionButton == 'access') {
         setSelectedVisitors([invitationId]);
-        setOpenAccessData(true);
+        // setOpenAccessData(true);
+        setAccessIssuance(true);
         setActionButton(null);
         handleCloseScanQR();
         return;
@@ -3158,19 +3207,9 @@ const View = () => {
   const activeKTP = getCdnUrl(activeVisitor?.identity_image);
   const activeBarcode = getCdnUrl(activeVisitor?.nda);
 
-  const [todayVisitingPurpose, setTodayVisitingPurpose] = useState<any[]>([]);
   const [visitorType, setVisitorType] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [vtLoading, setVTLoading] = useState(false);
-
-  const fetchTodayVisitingPurpose = async () => {
-    try {
-      const res = await getTodayVisitingPurpose(token as string);
-      setTodayVisitingPurpose(res?.collection || []);
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
   const handlePrint = () => {
     setOpenPreviewPrint(true);
@@ -3205,7 +3244,7 @@ const View = () => {
       setReturnCardNumber('');
       // await fetchAvailableCards?.();
     } catch (error: any) {
-      showSwal('error', error.message || 'Failed to return card');
+      showSwal('error', error.response.data.msg || 'Failed to return card');
     } finally {
       setLoadingAccess(false);
     }
@@ -3271,6 +3310,32 @@ const View = () => {
 
     fetchData();
   }, [token]);
+
+  const currentUsedCard = useMemo(() => {
+    if (!Array.isArray(visitorCards)) return null;
+
+    return (
+      visitorCards.find((card) => card.card_type !== 'Barcode' && card.current_used === true) ??
+      null
+    );
+  }, [visitorCards]);
+
+  const swipeDialogInitialValues = useMemo(() => {
+    if (currentUsedCard) {
+      return {
+        documentType: 'CardAccess' as DocumentType,
+        value: currentUsedCard.card_number ?? '',
+        isDocumentTypeLocked: true,
+      };
+    }
+
+    // Jika tidak ada kartu aktif, dialog tetap normal
+    return {
+      documentType: undefined,
+      value: '',
+      isDocumentTypeLocked: false,
+    };
+  }, [currentUsedCard]);
 
   return (
     <PageContainer title={'View'} description={'View'}>
@@ -3476,6 +3541,7 @@ const View = () => {
           loading={setLoadingAccess}
           currentVisitorIndex={currentVisitorIndex}
           setCurrentVisitorIndex={setCurrentVisitorIndex}
+          initialValues={swipeDialogInitialValues}
         />
         {/* Dialog Swipe Access */}
         <SwipeAccessDialog
@@ -3526,6 +3592,8 @@ const View = () => {
           invitationCode={invitationCode}
           containerRef={containerRef.current}
           fetchRelatedVisitorsByInvitationId={fetchRelatedVisitorsByInvitationId}
+          fetchUpcomingPurpose={fetchUpcomingPurpose}
+          registeredSite={registerSiteOperator}
         />
         {/* Access Dialog */}
         <AccessDialog

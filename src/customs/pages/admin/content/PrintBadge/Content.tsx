@@ -1,4 +1,4 @@
-import  { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Container from 'src/components/container/PageContainer';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import {
@@ -13,12 +13,13 @@ import {
   CircularProgress,
   Divider,
   Grid2 as Grid,
+  Portal,
   Typography,
 } from '@mui/material';
 import printBadge from 'src/assets/images/print_badge.jpeg';
 import { PrintBadgeSchema } from 'src/customs/api/validations/PrintBadgeSchema';
 import { showSwal } from 'src/customs/components/alerts/alerts';
-import  { axiosInstance2 } from 'src/customs/api/interceptor';
+import { axiosInstance2 } from 'src/customs/api/interceptor';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { getPrintBadgeConfig, updatePrintBadgeConfig } from 'src/customs/api/Admin/PrintBadge';
 import FormPrintBadge from './FormPrintBadge';
@@ -44,7 +45,7 @@ const Content = () => {
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-
+  const [printBadgeConfig, setPrintBadgeConfig] = useState<any | null>(null);
   const handleChange = (field: keyof PrintBadgeForm, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: '' }));
@@ -62,7 +63,6 @@ const Content = () => {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log('response', response);
 
       const fileUrl = response.data?.collection?.file_url;
       if (!fileUrl) return null;
@@ -121,7 +121,6 @@ const Content = () => {
         return;
       }
 
-    
       const payload = {
         logo: logoUrl,
         name: result.data.name,
@@ -129,28 +128,21 @@ const Content = () => {
         printer_name: result.data.printer_name,
         printer_paper_size: result.data.printer_paper_size,
       };
-
-      // console.log('payload', payload);
-
-  
       await updatePrintBadgeConfig(printBadgeConfig.id, payload, token as string);
 
-      showSwal('success', 'Print Badge updated.');
-    } catch (error) {
-      showSwal('error', 'Failed to update print badge.');
+      showSwal('success', 'Successfully updated print badge.');
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.msg || 'Failed to update print badge.');
     } finally {
       setLoading(false);
     }
   };
-
-  const [printBadgeConfig, setPrintBadgeConfig] = useState<any | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const res = await getPrintBadgeConfig(token as string);
         const config = res?.collection;
-        console.log('config', config);
 
         setPrintBadgeConfig(config);
 
@@ -195,7 +187,6 @@ const Content = () => {
             </Grid>
             <Grid size={{ xs: 12, md: 6, lg: 4.5, xl: 3.8 }}>
               <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                {/* <CardHeader title="Live Preview" /> */}
                 <Typography variant="h5" mb={1} fontWeight={'bold'}>
                   Live Preview
                 </Typography>
@@ -204,7 +195,7 @@ const Content = () => {
                   sx={{
                     backgroundColor: '#e1e6e8',
                     borderRadius: 1,
-                    flexGrow: 1, 
+                    flexGrow: 1,
                   }}
                 >
                   <Box sx={{ display: 'flex', justifyContent: 'center' }}>
@@ -216,10 +207,11 @@ const Content = () => {
           </Grid>
         </Box>
       </Container>
-
-      <Backdrop sx={{ color: '#fff', zIndex: 99999 }} open={loading}>
-        <CircularProgress color="primary" size={50} />
-      </Backdrop>
+      <Portal>
+        <Backdrop sx={{ color: '#fff', zIndex: 99999 }} open={loading}>
+          <CircularProgress color="primary" />
+        </Backdrop>
+      </Portal>
     </PageContainer>
   );
 };

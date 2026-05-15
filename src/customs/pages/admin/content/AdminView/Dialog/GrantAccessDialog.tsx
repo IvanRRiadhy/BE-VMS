@@ -11,9 +11,15 @@ import {
   Checkbox,
   FormControlLabel,
   Divider,
+  Button,
+  MenuItem,
 } from '@mui/material';
 import { IconX } from '@tabler/icons-react';
+import { reverse } from 'lodash';
+import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
+import { showSwal } from 'src/customs/components/alerts/alerts';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
+import Swal from 'sweetalert2';
 
 type Props = {
   open: boolean;
@@ -23,6 +29,7 @@ type Props = {
   handleToggleCard: (card: string) => void;
   dataDummyAccess: any[];
   formatDateTime: (date: string) => string;
+  accessData: any[];
 };
 
 export default function GrantAccessDialog({
@@ -33,22 +40,71 @@ export default function GrantAccessDialog({
   handleToggleCard,
   dataDummyAccess,
   formatDateTime,
+  accessData,
 }: Props) {
   const invitation = invitationCode?.[0];
 
+  const handleAccessAction = async (row: any, type: 'grant' | 'revoke' | 'block') => {
+    const id = row?.id;
+
+    const actionLabel = {
+      grant: 'Grant',
+      revoke: 'Revoke',
+      block: 'Block',
+    }[type];
+
+    // 1. Confirm dulu
+    const result = await showSwal(
+      'confirm',
+      `Are you sure you want to ${actionLabel} this access?`,
+      undefined,
+      {
+        title: `Confirm ${actionLabel}`,
+        confirmButtonText: ` ${actionLabel}`,
+        cancelButtonText: 'Cancel',
+        reverseButtons: true,
+      },
+    );
+
+    if (!result.isConfirmed) return;
+
+    try {
+      console.log(`[${type.toUpperCase()}] ID:`, id);
+
+      // 2. Eksekusi action
+      switch (type) {
+        case 'grant':
+          console.log('Grant access', row);
+          break;
+        case 'revoke':
+          console.log('Revoke access', row);
+          break;
+        case 'block':
+          console.log('Block access', row);
+          break;
+      }
+
+      // 3. Success feedback
+      showSwal('success', `${actionLabel} success`, 1500);
+    } catch (err: any) {
+      // 4. Error feedback
+      showSwal('error', err?.message || `${actionLabel} failed`);
+    }
+  };
+
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xl">
       <DialogTitle>
-        Grant Access Issuance
+        Access Issuance
         <IconButton onClick={onClose} sx={{ position: 'absolute', right: 8, top: 8 }}>
           <IconX />
         </IconButton>
       </DialogTitle>
 
       <DialogContent dividers>
-        <Grid container spacing={2} p={2}>
+        <Grid container spacing={2} p={2} flexDirection={'row'}>
           {/* Visitor Info */}
-          <Grid container spacing={2} width="100%">
+          {/* <Grid container spacing={2} width="100%">
             <Grid item xs={12} sm={3}>
               <Avatar sx={{ width: 150, height: 150, margin: '0 auto' }} />
             </Grid>
@@ -76,23 +132,23 @@ export default function GrantAccessDialog({
                 <Info label="Visit End" value={formatDateTime(invitation?.visitor_period_end)} />
               </Grid>
             </Grid>
-          </Grid>
+          </Grid> */}
 
-          <Divider sx={{ my: 2, width: '100%' }} />
+          {/* <Divider sx={{ my: 2, width: '100%' }} /> */}
 
           {/* Card History */}
-          <Grid item xs={12}>
-            <Typography fontWeight={600} variant="h6" mb={2}>
-              History Cards
+          <Grid item xs={12} md={6}>
+            <Typography fontWeight={600} variant="h5" mb={2}>
+              List Card
             </Typography>
 
-            <Grid container spacing={2}>
-              {invitation?.card?.map((card: any) => {
+            <Grid container spacing={2} flexDirection={'column'}>
+              {/* {invitation?.card?.map((card: any) => {
                 const isChosen = selectedCards.includes(card.card_number);
                 const isCurrentUsed = card.current_used;
 
                 return (
-                  <Grid item xs={12} sm={6} md={4} lg={3} key={card.id}>
+                  <Grid item xs={12} sm={6} md={4} lg={6} key={card.id}>
                     <Paper
                       onClick={() => handleToggleCard(card.card_number)}
                       sx={(theme) => ({
@@ -191,34 +247,65 @@ export default function GrantAccessDialog({
                     </Paper>
                   </Grid>
                 );
-              })}
+              })} */}
+
+              <DynamicTable
+                data={
+                  invitation?.card?.map((card: any) => ({
+                    id: card.id,
+                    card_number: card.card_number,
+                    current_used: Boolean(card.current_used),
+                  })) ?? []
+                }
+                isHaveChecked
+                isCurrentUsed={true}
+              />
             </Grid>
           </Grid>
 
-          <Divider sx={{ my: 2, width: '100%' }} />
-
           {/* Table */}
-          <Grid item xs={12}>
+          <Grid item xs={12} md={6} flexDirection={'column'}>
+            <Typography fontWeight={600} variant="h5" mb={2}>
+              Access
+            </Typography>
             <DynamicTable
-              data={dataDummyAccess}
+              data={accessData}
               isHaveChecked
               isHaveSearch
-              isHaveActionRevoke
-              onActionRevoke={() => {}}
+              isNoActionTableHead={true}
+              // isHaveActionRevoke={true}
+              // selectedRows={selectedRows}
+              // onActionAccess={handleAccessAction}
             />
+            <Box mt={2} sx={{ backgroundColor: '#fff' }}>
+              <CustomSelect
+                // fullWidth
+                placeholder="Select Action"
+                sx={{ minWidth: 200, backgroundColor: '#fff !important' }}
+                defaultValue=""
+                onChange={(e: any) => {
+                  const action = e.target.value;
+
+                  if (action === 'grant') {
+                    console.log('Grant');
+                  }
+
+                  if (action === 'revoke') {
+                    console.log('Revoke');
+                  }
+                }}
+              >
+                <MenuItem value="" disabled>
+                  Select Action
+                </MenuItem>
+
+                <MenuItem value="grant">Grant</MenuItem>
+                <MenuItem value="revoke">Revoke</MenuItem>
+              </CustomSelect>
+            </Box>
           </Grid>
         </Grid>
       </DialogContent>
     </Dialog>
-  );
-}
-
-/* Sub Component supaya lebih clean */
-function Info({ label, value }: any) {
-  return (
-    <Grid item xs={12} sm={6} lg={4}>
-      <Typography variant="h6">{label}</Typography>
-      <Typography>{value || '-'}</Typography>
-    </Grid>
   );
 }

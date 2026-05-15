@@ -36,7 +36,6 @@ const ChooseCardDialog = ({
   availableCount,
   handleOpenSwipeDialog,
   handleConfirmChooseCards,
-  setOpenRevokeDialog,
 }: any) => {
  const isSwipeDisabled =
   //  currentUsedCards.length === 0 ||
@@ -331,16 +330,6 @@ const ChooseCardDialog = ({
           onClick={handleConfirmChooseCards}
         >
           Give
-        </Button>
-
-        <Button
-          fullWidth
-          variant="contained"
-          color="error"
-          startIcon={<IconKeyOff />}
-          onClick={() => setOpenRevokeDialog(true)}
-        >
-          Revoke
         </Button>
       </DialogActions>
     </Dialog>

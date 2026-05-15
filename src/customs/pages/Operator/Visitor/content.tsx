@@ -1,5 +1,4 @@
 import {
-  Autocomplete,
   Backdrop,
   Button,
   Chip,
@@ -24,6 +23,7 @@ import {
   createShareLinkByEmailById,
   deleteShareLink,
   getShareLinkByDt,
+  getShareLinkById,
 } from 'src/customs/api/ShareLink';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
@@ -111,22 +111,23 @@ const Visitor = () => {
       expired_at: (() => {
         const date = new Date(item.expired_at + 'Z');
 
-        const formattedDate = date
-          .toLocaleDateString('id-ID', {
-            day: '2-digit',
-            month: 'long',
-            year: 'numeric',
-          })
-          .replace(/\//g, '-');
-
-        const formattedTime = date.toLocaleTimeString('id-ID', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false,
+        const formattedDate = date.toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: 'long',
+          year: 'numeric',
         });
+
+        const formattedTime = date
+          .toLocaleTimeString('id-ID', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+          })
+          .replace(':', '.');
 
         return `${formattedDate}, ${formattedTime}`;
       })(),
+
       link_status: item.link_status,
     })) || [];
 
@@ -347,16 +348,11 @@ const Visitor = () => {
     }
   };
 
-  // const handleOpenInviteDialog = (id: string, link: string, expired_at: string) => {
-  //   setSelectedShareLinkId(id);
-  //   setGeneratedLink(link);
-  //   setExpiredAt(expired_at);
-  //   setTabValue(0);
-  //   setOpenInviteViaLinkEmail(true);
-  // };
+  const handleOpenInviteDialog =  async (row: any) => {
+    // setSelectedShareLink(row);
 
-  const handleOpenInviteDialog = (row: any) => {
-    setSelectedShareLink(row);
+    const res = await getShareLinkById(row.id, token as string);
+    setSelectedShareLink(res.collection);
 
     setSelectedShareLinkId(row.id);
     setGeneratedLink(row.url);
@@ -410,7 +406,6 @@ const Visitor = () => {
       setIsGenerating(false);
     }
   };
-  
 
   return (
     <PageContainer title="Visitor" description="Visitor page">

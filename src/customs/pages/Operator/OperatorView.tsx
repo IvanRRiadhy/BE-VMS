@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Button,
   Grid2 as Grid,
   Typography,
   Divider,
@@ -20,7 +19,6 @@ import {
   Portal,
   Snackbar,
   Alert,
-  Menu,
 } from '@mui/material';
 import { Box, useMediaQuery, useTheme } from '@mui/system';
 import moment from 'moment-timezone';
@@ -43,7 +41,6 @@ import {
   getInvitationCode,
   getInvitationOperatorRelated,
   getPermissionOperator,
-  getTodayVisitingPurpose,
   getUpComingPurpose,
   getUpComingVisitors,
 } from 'src/customs/api/operator';
@@ -111,6 +108,7 @@ import { usePermission } from 'src/hooks/usePermission';
 import VisitorDetailCard from './Components/VisitorDetailCard';
 import FillPraregistrationSingle from './Invitation/components/FillPraregistrationSingle';
 import VisitorListCard from './Dialog/VisitorListCard';
+import { useSelector } from 'react-redux';
 
 type DocumentType = 'CardAccess' | 'Other';
 dayjs.extend(utc);
@@ -154,14 +152,12 @@ const OperatorView = () => {
   const [inputValues, setInputValues] = useState<{ [key: number]: string }>({});
   const [uploadNames, setUploadNames] = useState<Record<string, string>>({});
   const [activeStep, setActiveStep] = useState(0);
-  const [previews, setPreviews] = useState<Record<string, string | null>>({});
   const [uploadMethods, setUploadMethods] = useState<Record<string, 'file' | 'camera'>>({});
   const [allVisitorEmployee, setAllVisitorEmployee] = useState<any[]>([]);
   const [openSearch, setOpenSearch] = useState(false);
   const [openDetailVisitingPurpose, setOpenDetailVistingPurpose] = useState(false);
   const [openDetail, setOpenDetail] = useState(false);
   const [visitorData, setVisitorData] = useState<any[]>([]);
-  const [openAccessData, setOpenAccessData] = useState(false);
   const [accessData, setAccessData] = useState<any[]>([]);
   const [selectedMinutes, setSelectedMinutes] = useState<number | null>(null);
   const [openExtendVisit, setOpenExtendVisit] = useState(false);
@@ -170,7 +166,6 @@ const OperatorView = () => {
   const [fillFormData, setFillFormData] = useState<any[]>([]);
   const [fillFormActiveStep, setFillFormActiveStep] = useState(0);
   const [fillFormDataVisitor, setFillFormDataVisitor] = useState<any[]>([]);
-  // const [selectedSite, setSelectedSite] = useState<any | null>(null);
   const [openDialogInfo, setOpenDialogInfo] = useState(false);
   const [openSwipeDialog, setOpenSwipeDialog] = useState(false);
   const [selectedInvitations, setSelectedInvitations] = useState<any[]>([]);
@@ -183,7 +178,6 @@ const OperatorView = () => {
   const [openListVisitor, setOpenListVisitor] = useState(false);
   const [openBlacklistVisitor, setOpenBlacklistVisitor] = useState(false);
   const [openTriggeredAccess, setOpenTriggeredAccess] = useState(false);
-  // const [registerSiteOperator, setRegisterSiteOperator] = useState<string>('');
   const [registerSiteOperator, setRegisterSiteOperator] = useState<string>(() => {
     return localStorage.getItem('selectedSite') || '';
   });
@@ -229,6 +223,14 @@ const OperatorView = () => {
     return saved ? JSON.parse(saved) : CreateVisitorRequestSchema.parse({});
   });
   const [swipePayload, setSwipePayload] = useState<any[]>([]);
+  const parkingData = [
+    { id: 1, vehicle_type: 'Car', vehicle_plate_number: 'BG 817 AS' },
+    { id: 2, vehicle_type: 'Motorcycle', vehicle_plate_number: 'B 1512 AA' },
+  ];
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [typeVisitor, setTypeVisitor] = useState('related');
+  const [upcomingPurpose, setUpcomingPurpose] = useState<any[]>([]);
+  const [upcomingVisitors, setUpcomingVisitors] = useState<any[]>([]);
 
   const [dataDummyAccess, setDataDummyAccess] = useState<any[]>([
     {
@@ -327,10 +329,6 @@ const OperatorView = () => {
       .sort((a, b) => Number(a.current_used) - Number(b.current_used));
   }, [visitorCards]);
 
-  // useEffect(() => {
-  //   setSelectedCards([]);
-  // }, [selectedVisitorId]);
-
   const handleSubmitBatchSwipe = async (payloads: any[]) => {
     try {
       if (!payloads.length) return;
@@ -375,16 +373,8 @@ const OperatorView = () => {
         ? selectedCards[visitorIndex]
         : selectedCards;
 
-      /**
-       * value = card_number dari current_used
-       * (misalnya "4121")
-       */
       const currentUsedCardNumber = String(value).trim();
 
-      /**
-       * Cari kartu baru yang berbeda dari current_used.
-       * Tidak bergantung pada urutan klik.
-       */
       const newCardNumber = visitorSelectedCards.find(
         (cardNumber: string) => String(cardNumber).trim() !== currentUsedCardNumber,
       );
@@ -415,8 +405,6 @@ const OperatorView = () => {
         is_swapcard: true,
         registered_site_id: registerSiteOperator,
       };
-
-      // console.log('SWAP PAYLOAD', payload);
 
       // setSwipePayload((prev) => [...prev, payload]);
 
@@ -2213,7 +2201,32 @@ const OperatorView = () => {
       });
 
       setFillFormDataVisitor(visitorGroupList);
-      setOpenFillForm(true);
+      Swal.fire({
+        title: 'Confirmation',
+        text: 'Are you filling out this form for yourself?',
+        icon: 'question',
+        showCancelButton: true,
+        // showCloseButton: true,
+        confirmButtonText: 'Yes',
+        cancelButtonText: 'No',
+        reverseButtons: true,
+        confirmButtonColor: '#16a34a',
+        cancelButtonColor: '#9e9e9e',
+      }).then((result) => {
+        if (result.isConfirmed) {
+          setSelfRegisterData({
+            is_self_registered: true,
+            filled_by_relationship: 'Self',
+          });
+        } else {
+          setSelfRegisterData({
+            is_self_registered: false,
+            filled_by_relationship: '',
+          });
+        }
+
+        setOpenFillForm(true);
+      });
     } catch (e: any) {
       const message =
         e?.response?.data?.msg ??
@@ -2913,6 +2926,8 @@ const OperatorView = () => {
     );
   }, [selectedAccessIds, selectedVisitors, accessData, permissionAccess]);
 
+  const user = useSelector((state: any) => state.userReducer.data);
+
   // Multiple
   const handleSubmitPramultiple = async () => {
     try {
@@ -2945,6 +2960,16 @@ const OperatorView = () => {
           tz: tzFromApi,
           registered_site_id: registerSiteOperator,
           flow: 'SubmitPraRegister',
+
+          is_self_registered: selfRegisterData?.is_self_registered ?? false,
+
+          filled_by_name: user?.fullname ?? null,
+          filled_by_email: user?.email ?? null,
+          filled_by_phone: user?.phone ?? null,
+
+          ...(selfRegisterData?.is_self_registered && {
+            filled_by_relationship: selfRegisterData?.filled_by_relationship ?? 'Self',
+          }),
           data_visitor: [
             {
               question_page: questionPageTemplate.map((templateSection: any) => ({
@@ -3047,8 +3072,11 @@ const OperatorView = () => {
       }
 
       await fetchUpcomingPurpose();
-    } catch (error) {
-      showSwal('error', 'Failed Submit Pra Register!');
+    } catch (error: any) {
+      showSwal(
+        'error',
+        error.response.data.collection || error.response.data.message || 'Failed to Pra Register!',
+      );
     } finally {
       setTimeout(() => {
         setLoadingAccess(false);
@@ -3057,10 +3085,48 @@ const OperatorView = () => {
   };
 
   const [openDialogInvitation, setOpenDialogInvitation] = useState(false);
+  const [selfRegisterData, setSelfRegisterData] = useState({
+    is_self_registered: false,
+    filled_by_relationship: '',
+  });
+  // const handleView = async (id: string) => {
+  //   setSelectedInvitationId(id);
+  //   setOpenDialogInvitation(true);
+  // };
 
   const handleView = async (id: string) => {
     setSelectedInvitationId(id);
-    setOpenDialogInvitation(true);
+
+    Swal.fire({
+      title: 'Confirmation',
+      text: 'Are you filling out this form for yourself?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Yes',
+      cancelButtonText: 'No',
+      reverseButtons: true,
+      confirmButtonColor: '#16a34a',
+      // showCloseButton: true,
+      // customClass: {
+      //   title: 'swal2-title-custom',
+      //   popup: 'swal-popup-custom',
+      //   closeButton: 'swal-close-red',
+      // },
+    }).then((result) => {
+      if (result.isConfirmed) {
+        setSelfRegisterData({
+          is_self_registered: true,
+          filled_by_relationship: 'Self',
+        });
+      } else {
+        setSelfRegisterData({
+          is_self_registered: false,
+          filled_by_relationship: '',
+        });
+      }
+
+      setOpenDialogInvitation(true);
+    });
   };
 
   const validateMultiVisitorAccess = (
@@ -3251,8 +3317,6 @@ const OperatorView = () => {
           err?.response?.data?.collection?.[0] ||
           err?.response?.data?.msg ||
           err?.response?.data?.message ||
-          err?.response?.data?.error ||
-          err?.message ||
           'Failed to execute action.';
 
         showSwal('error', backendMsg);
@@ -3349,15 +3413,6 @@ const OperatorView = () => {
     setSearchTerm('');
   };
 
-  const parkingData = [
-    { id: 1, vehicle_type: 'Car', vehicle_plate_number: 'BG 817 AS' },
-    { id: 2, vehicle_type: 'Motorcycle', vehicle_plate_number: 'B 1512 AA' },
-  ];
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [typeVisitor, setTypeVisitor] = useState('related');
-  const [upcomingPurpose, setUpcomingPurpose] = useState<any[]>([]);
-  const [upcomingVisitors, setUpcomingVisitors] = useState<any[]>([]);
-
   const fetchUpcomingPurpose = async () => {
     const res = await getUpComingPurpose(token as string, {
       today: 'true',
@@ -3420,51 +3475,6 @@ const OperatorView = () => {
 
   const totalVisitors = typeVisitor === 'related' ? totalCountVisitor : upcomingVisitors.length;
 
-  // const swipeDialogInitialValues = useMemo(
-  //   () => ({
-  //     documentType: activeCard ? ('CardAccess' as const) : ('Other' as const),
-  //     value: activeCard?.card_number ?? '',
-  //   }),
-  //   [activeCard],
-  // );
-  // const activePhysicalCards = useMemo(() => {
-  //   if (!Array.isArray(visitorCards)) return [];
-
-  //   return visitorCards.filter((card) => card.card_type !== 'Barcode');
-  // }, [visitorCards]);
-
-  // // Kartu yang sedang aktif digunakan
-  // const currentUsedCard = useMemo(() => {
-  //   return activePhysicalCards.find((card) => card.current_used === true) ?? null;
-  // }, [activePhysicalCards]);
-
-  // // Initial values untuk SwipeCardDialog
-  // const swipeDialogInitialValues = useMemo(() => {
-  //   // Jika jumlah kartu fisik lebih dari 1,
-  //   // berarti visitor pernah/sedang menggunakan lebih dari satu kartu,
-  //   // sehingga harus otomatis CardAccess.
-  //   const shouldForceCardAccess = activePhysicalCards.length > 1;
-
-  //   // Mode normal:
-  //   // - hanya ada 0 atau 1 kartu fisik
-  //   // - user bebas memilih NIK / Passport / dll
-  //   if (!shouldForceCardAccess) {
-  //     return {
-  //       documentType: undefined,
-  //       value: '',
-  //       isDocumentTypeLocked: false,
-  //     };
-  //   }
-
-  //   // Mode swap:
-  //   // - otomatis gunakan kartu current_used
-  //   return {
-  //     documentType: 'CardAccess' as DocumentType,
-  //     value: currentUsedCard?.card_number ?? '',
-  //     isDocumentTypeLocked: true,
-  //   };
-  // }, [activePhysicalCards, currentUsedCard]);
-
   const currentUsedCard = useMemo(() => {
     if (!Array.isArray(visitorCards)) return null;
 
@@ -3482,8 +3492,6 @@ const OperatorView = () => {
         isDocumentTypeLocked: true,
       };
     }
-
-    // Jika tidak ada kartu aktif, dialog tetap normal
     return {
       documentType: undefined,
       value: '',
@@ -3830,7 +3838,9 @@ const OperatorView = () => {
             fetchRelatedVisitorsByInvitationId={fetchRelatedVisitorsByInvitationId}
             fetchUpcomingPurpose={fetchUpcomingPurpose}
             registeredSite={registerSiteOperator}
+            selfRegisterData={selfRegisterData}
           />
+
           {/* Access Dialog */}
           {/* <AccessDialog
             open={openAccessData}

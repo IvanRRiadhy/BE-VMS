@@ -556,37 +556,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     return null;
   };
 
-  // const getAnswerValue = (f: any) => {
-  //   if (f.answer_file) {
-  //     return Array.isArray(f.answer_file) ? f.answer_file.length : f.answer_file;
-  //   }
-
-  //   if (typeof f.answer_text === 'string') {
-  //     return f.answer_text.trim();
-  //   }
-
-  //   return f.answer_text ?? f.answer_datetime ?? null;
-  // };
-
-  const validateStep = (section: any) => {
-    const newErrors: Record<string, string> = {};
-
-    section?.form?.forEach((f: any) => {
-      const isMandatory =
-        f.mandatory === true || f.mandatory === 1 || f.mandatory === '1' || f.mandatory === 'true';
-
-      if (!isMandatory) return;
-      const value = getAnswerValue(f);
-
-      if (isEmpty(value)) {
-        newErrors[f.remarks] = `${f.long_display_text} is required`;
-      }
-    });
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
   const handleSaveGroupVisitor = () => {
     if (activeGroupIdx === null) return;
     console.log('📥 dataVisitor BEFORE save:', JSON.parse(JSON.stringify(dataVisitor)));
@@ -602,7 +571,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     setGroupVisitors((prev) => {
       const next = [...prev];
       if (!next[activeGroupIdx]) {
-        console.warn('⚠️ activeGroupIdx invalid, skip save');
         return prev;
       }
 
@@ -628,8 +596,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         ...next[activeGroupIdx],
         data_visitor: cleanDataVisitor,
       };
-
-      console.log('📦 groupVisitors AFTER save:', JSON.parse(JSON.stringify(next[activeGroupIdx])));
 
       return next;
     });
@@ -2504,59 +2470,70 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       const shownName = uploadNames[key] || fileNameFromAnswer((item as any).answer_file);
       const errorMessage = fieldErrors[key];
 
+      const remark = (item.remarks || '').toLowerCase();
+      if (remark === 'visitor_period_end') {
+        return null;
+      }
+      const isVisitorPeriodPair =
+        remark === 'visitor_period_start' &&
+        filteredDetails[index + 1] &&
+        (filteredDetails[index + 1].remarks || '').toLowerCase() === 'visitor_period_end';
+
       return (
         <TableRow key={key}>
           <TableCell>
-            <Box display="flex" alignItems="center" gap={0.5} mb={1}>
-              <CustomFormLabel sx={{ mb: 1, mt: 0 }} required={item.mandatory === true}>
-                {item.long_display_text}
-              </CustomFormLabel>
-              {item.remarks === 'host' && (
-                <Tooltip
-                  title="The host is the person in charge responsible for this visitor"
-                  arrow
-                  placement="top"
-                >
-                  <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
-                </Tooltip>
-              )}
-              {item.remarks === 'agenda' && (
-                <Tooltip
-                  title="The agenda is the purpose of the visitor's visit"
-                  arrow
-                  placement="top"
-                >
-                  <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
-                </Tooltip>
-              )}
-              {item.remarks === 'site_place' && (
-                <Tooltip
-                  title="The site place is the location where the visitor will be received"
-                  arrow
-                  placement="top"
-                >
-                  <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
-                </Tooltip>
-              )}
-              {item.remarks === 'visitor_period_start' && (
-                <Tooltip
-                  title="The visitor period start is the date when the visitor's visit begins"
-                  arrow
-                  placement="top"
-                >
-                  <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
-                </Tooltip>
-              )}
-              {item.remarks === 'visitor_period_end' && (
-                <Tooltip
-                  title="The visitor period end is the date when the visitor's visit ends"
-                  arrow
-                  placement="top"
-                >
-                  <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
-                </Tooltip>
-              )}
-            </Box>
+            {!isVisitorPeriodPair && (
+              <Box display="flex" alignItems="center" gap={0.5} mb={1}>
+                <CustomFormLabel sx={{ mb: 1, mt: 0 }} required={item.mandatory === true}>
+                  {item.long_display_text}
+                </CustomFormLabel>
+                {item.remarks === 'host' && (
+                  <Tooltip
+                    title="The host is the person in charge responsible for this visitor"
+                    arrow
+                    placement="top"
+                  >
+                    <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                  </Tooltip>
+                )}
+                {item.remarks === 'agenda' && (
+                  <Tooltip
+                    title="The agenda is the purpose of the visitor's visit"
+                    arrow
+                    placement="top"
+                  >
+                    <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                  </Tooltip>
+                )}
+                {item.remarks === 'site_place' && (
+                  <Tooltip
+                    title="The site place is the location where the visitor will be received"
+                    arrow
+                    placement="top"
+                  >
+                    <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                  </Tooltip>
+                )}
+                {item.remarks === 'visitor_period_start' && (
+                  <Tooltip
+                    title="The visitor period start is the date when the visitor's visit begins"
+                    arrow
+                    placement="top"
+                  >
+                    <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                  </Tooltip>
+                )}
+                {item.remarks === 'visitor_period_end' && (
+                  <Tooltip
+                    title="The visitor period end is the date when the visitor's visit ends"
+                    arrow
+                    placement="top"
+                  >
+                    <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                  </Tooltip>
+                )}
+              </Box>
+            )}
             {(() => {
               switch (item.field_type) {
                 case 0: // Text
@@ -2790,6 +2767,112 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           </SimpleTreeView>
                         )}
                       </>
+                    );
+                  }
+                  if (item.remarks === 'host') {
+                    const selectedSiteIds =
+                      details.find((d: any) => d.remarks === 'site_place')?.answer_text || [];
+                    const siteHostIds = [
+                      ...new Set(
+                        sites
+                          .filter((site: any) => selectedSiteIds.includes(site.id))
+                          .map((site: any) => site.host)
+                          .filter(Boolean),
+                      ),
+                    ];
+
+                    // host yang sesuai site
+                    const matchedHosts = employee
+                      .filter((emp: any) => siteHostIds.includes(emp.id))
+                      .map((emp: any) => ({
+                        value: emp.id,
+                        name: emp.name,
+                        group: 'Host Based on Destination',
+                      }));
+
+                    const otherHosts = employee
+                      .filter((emp: any) => !siteHostIds.includes(emp.id))
+                      .map((emp: any) => ({
+                        value: emp.id,
+                        name: emp.name,
+                        group: 'All Host',
+                      }));
+
+                    const finalOptions = [...matchedHosts, ...otherHosts];
+
+                    return (
+                      <Autocomplete
+                        size="small"
+                        options={finalOptions}
+                        groupBy={(option) => option.group}
+                        getOptionLabel={(option) => option.name}
+                        isOptionEqualToValue={(option, value) => option.value === value.value}
+                        inputValue={inputValues[index] || ''}
+                        onInputChange={(_, newInputValue) => {
+                          setInputValues((prev: any) => ({
+                            ...prev,
+                            [index]: newInputValue,
+                          }));
+                        }}
+                        filterOptions={(opts, state) => {
+                          if (!state.inputValue) {
+                            return opts;
+                          }
+
+                          return opts.filter((opt) =>
+                            opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
+                          );
+                        }}
+                        value={finalOptions.find((opt) => opt.value === item.answer_text) || null}
+                        onChange={(_, newValue: any) => {
+                          const selectedValue = newValue?.value || '';
+
+                          onChange(index, 'answer_text', selectedValue);
+
+                          if (selectedValue) {
+                            clearFieldError(key);
+                          }
+                        }}
+                        renderGroup={(params) => (
+                          <Box key={params.key}>
+                            <Box
+                              sx={{
+                                px: 2,
+                                py: 1,
+                                bgcolor:
+                                  // params.group === 'Host Based on Destination'
+                                  //   ? '#E3F2FD'
+                                  '#F5F5F5',
+                                borderTop:
+                                  params.group !== 'Host Based on Destination'
+                                    ? '1px solid #E0E0E0'
+                                    : 'none',
+                                borderBottom: '1px solid #E0E0E0',
+                              }}
+                            >
+                              <Typography
+                                variant="body1"
+                                fontWeight={700}
+                                color="text.secondary"
+                                textTransform="capitalize"
+                              >
+                                {params.group}
+                              </Typography>
+                            </Box>
+
+                            {params.children}
+                          </Box>
+                        )}
+                        renderInput={(params) => (
+                          <CustomTextField
+                            {...params}
+                            placeholder="Choose PIC Host"
+                            fullWidth
+                            error={!!errorMessage}
+                            helperText={errorMessage}
+                          />
+                        )}
+                      />
                     );
                   }
                   if (item.remarks === 'employee') {
@@ -3038,7 +3121,159 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       />
                     </LocalizationProvider>
                   );
-                case 9:
+                case 9: {
+                  const remark = (item.remarks || '').toLowerCase();
+                  if (
+                    remark === 'visitor_period_start' &&
+                    filteredDetails[index + 1] &&
+                    (filteredDetails[index + 1].remarks || '').toLowerCase() ===
+                      'visitor_period_end'
+                  ) {
+                    const startItem = item;
+                    const endItem = filteredDetails[index + 1];
+
+                    const startIndex = details.findIndex((d) => d.id === startItem.id);
+                    const endIndex = details.findIndex((d) => d.id === endItem.id);
+
+                    const startKey = `${activeStep - 1}:${startItem.id}`;
+                    const endKey = `${activeStep - 1}:${endItem.id}`;
+
+                    const startError = fieldErrors[startKey];
+                    const endError = fieldErrors[endKey];
+
+                    return (
+                      <Box sx={{ width: '100%' }}>
+                        <Grid container spacing={2}>
+                          {/* Kiri: Visitor Period Start */}
+                          <Grid size={{ xs: 12, md: 6 }}>
+                            <Box display="flex" alignItems="center" gap={0.5} mb={1}>
+                              <Typography variant="subtitle2" fontWeight={600}>
+                                {startItem.long_display_text}
+                                {startItem.mandatory && (
+                                  <Typography component="span" color="error" sx={{ ml: 0.5 }}>
+                                    *
+                                  </Typography>
+                                )}
+                              </Typography>
+
+                              <Tooltip
+                                title="The visitor period start is the date when the visitor's visit begins"
+                                arrow
+                                placement="top"
+                              >
+                                <IconInfoCircle
+                                  size={20}
+                                  style={{ color: '#1976d2', cursor: 'pointer' }}
+                                />
+                              </Tooltip>
+                            </Box>
+
+                            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
+                              <DateTimePicker
+                                value={
+                                  startItem.answer_datetime
+                                    ? dayjs(startItem.answer_datetime)
+                                    : null
+                                }
+                                ampm={false}
+                                onChange={(newValue) => {
+                                  if (newValue) {
+                                    const utc = newValue.utc().format();
+                                    onChange(startIndex, 'answer_datetime', utc);
+                                    clearFieldError(startKey);
+
+                                    // Reset end jika end < start
+                                    if (
+                                      endItem.answer_datetime &&
+                                      dayjs(endItem.answer_datetime).isBefore(newValue)
+                                    ) {
+                                      onChange(endIndex, 'answer_datetime', '');
+                                    }
+                                  }
+                                }}
+                                format="dddd, DD MMMM YYYY, HH:mm"
+                                viewRenderers={{
+                                  hours: renderTimeViewClock,
+                                  minutes: renderTimeViewClock,
+                                  seconds: renderTimeViewClock,
+                                }}
+                                slotProps={{
+                                  textField: {
+                                    fullWidth: true,
+                                    error: !!startError,
+                                    helperText: startError,
+                                  },
+                                }}
+                              />
+                            </LocalizationProvider>
+                          </Grid>
+
+                          {/* Kanan: Visitor Period End */}
+                          <Grid size={{ xs: 12, md: 6 }}>
+                            <Box display="flex" alignItems="center" gap={0.5} mb={1}>
+                              <Typography variant="subtitle2" fontWeight={600}>
+                                {endItem.long_display_text}
+                                {endItem.mandatory && (
+                                  <Typography component="span" color="error" sx={{ ml: 0.5 }}>
+                                    *
+                                  </Typography>
+                                )}
+                              </Typography>
+
+                              <Tooltip
+                                title="The visitor period end is the date when the visitor's visit ends"
+                                arrow
+                                placement="top"
+                              >
+                                <IconInfoCircle
+                                  size={20}
+                                  style={{ color: '#1976d2', cursor: 'pointer' }}
+                                />
+                              </Tooltip>
+                            </Box>
+
+                            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
+                              <DateTimePicker
+                                value={
+                                  endItem.answer_datetime ? dayjs(endItem.answer_datetime) : null
+                                }
+                                ampm={false}
+                                minDateTime={
+                                  startItem.answer_datetime
+                                    ? dayjs(startItem.answer_datetime)
+                                    : undefined
+                                }
+                                onChange={(newValue) => {
+                                  if (newValue) {
+                                    const utc = newValue.utc().format();
+                                    onChange(endIndex, 'answer_datetime', utc);
+                                    clearFieldError(endKey);
+                                  }
+                                }}
+                                format="dddd, DD MMMM YYYY, HH:mm"
+                                viewRenderers={{
+                                  hours: renderTimeViewClock,
+                                  minutes: renderTimeViewClock,
+                                  seconds: renderTimeViewClock,
+                                }}
+                                slotProps={{
+                                  textField: {
+                                    fullWidth: true,
+                                    error: !!endError,
+                                    helperText: endError,
+                                  },
+                                }}
+                              />
+                            </LocalizationProvider>
+                          </Grid>
+                        </Grid>
+                      </Box>
+                    );
+                  }
+                  if (remark === 'visitor_period_end') {
+                    return null;
+                  }
+
                   return (
                     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
                       <DateTimePicker
@@ -3051,6 +3286,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           if (newValue) {
                             const utc = newValue.utc().format();
                             onChange(index, 'answer_datetime', utc);
+                            clearFieldError(key);
                           }
                         }}
                         format="dddd, DD MMMM YYYY, HH:mm"
@@ -3065,13 +3301,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             error: !!errorMessage,
                             helperText: errorMessage,
                           },
-                          popper: {
-                            container: containerRef.current,
-                          },
                         }}
                       />
                     </LocalizationProvider>
                   );
+                }
 
                 case 10:
                   return (

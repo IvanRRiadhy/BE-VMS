@@ -14,6 +14,7 @@ import {
 } from '@mui/material';
 import { IconLink, IconX } from '@tabler/icons-react';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 
 type Props = {
   open: boolean;
@@ -40,8 +41,6 @@ const InvitationShareDialog: React.FC<Props> = ({
   const [tabValue, setTabValue] = useState(0);
   const [emails, setEmails] = useState<string[]>([]);
   const [emailInput, setEmailInput] = useState('');
-
-  // console.log('shareLinkData', shareLinkData);
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
@@ -81,11 +80,13 @@ const InvitationShareDialog: React.FC<Props> = ({
 Invitation Visit
 
 Agenda : ${shareLinkData?.agenda ?? '-'}
-Start  : ${shareLinkData?.visitor_period_start ?? '-'}  to ${shareLinkData?.visitor_period_end ?? '-'}
+Visitor Type: ${shareLinkData?.visitor_type_name ?? '-'}
+Start  : ${formatDateTime(shareLinkData?.visitor_period_start) ?? '-'}  - ${formatDateTime(shareLinkData?.visitor_period_end) ?? '-'}
 Site  : ${shareLinkData?.site_name ?? '-'}
 Host: ${shareLinkData?.host_name ?? '-'}
+Link Expired : ${expiredAt ?? '-'}
 
-Link:
+Untuk bergabung ke undangan klik link di bawah ini::
 ${generatedLink}
 `;
 

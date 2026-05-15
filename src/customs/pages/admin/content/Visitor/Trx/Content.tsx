@@ -67,6 +67,7 @@ import {
   createShareLinkByEmailById,
   deleteShareLink,
   getShareLinkByDt,
+  getShareLinkById,
 } from 'src/customs/api/ShareLink';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import CreateLinkDialog from 'src/customs/pages/Employee/Components/Dialog/CreateLinkDialog';
@@ -583,23 +584,15 @@ const Content = () => {
     }
   };
 
-  // const handleOpenInviteDialog = (id: string, link: string, expired_at: string) => {
-  //   setSelectedShareLinkId(id);
-  //   setGeneratedLink(link);
-  //   setExpiredAt(expired_at);
-  //   setOpenInviteViaLinkEmail(true);
-  // };
-
   const [selectedShareLink, setSelectedShareLink] = useState(null);
 
-  const handleOpenInviteDialog = (row: any) => {
-    setSelectedShareLink(row);
+  const handleOpenInviteDialog = async (row: any) => {
 
+    const res = await getShareLinkById(row.id, token as string);
+    setSelectedShareLink(res.collection);
     setSelectedShareLinkId(row.id);
     setGeneratedLink(row.url);
     setExpiredAt(row.expired_at);
-
-    // setTabValue(0);
     setOpenInviteViaLinkEmail(true);
   };
 

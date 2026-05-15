@@ -115,8 +115,6 @@ const Content = () => {
     setOpenFormAddDocument(false);
   };
 
-  const defaultDoc = CreateDocumentRequestSchema.parse({});
-
   const hasUnsaved = useCallback(() => {
     const raw = localStorage.getItem('unsavedDocumentData');
     if (!raw) return false;

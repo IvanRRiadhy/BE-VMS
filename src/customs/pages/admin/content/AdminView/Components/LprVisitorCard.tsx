@@ -27,7 +27,6 @@ const LprVisitorCard = ({
           flexDirection: { xs: 'column', md: 'row', lg: 'row', xl: 'row' },
         }}
       >
-        {/* LPR IMAGE */}
         <Card
           sx={{
             flex: 1,
@@ -87,8 +86,6 @@ const LprVisitorCard = ({
             </Box>
           </CardContent>
         </Card>
-
-        {/* VISITING PURPOSE */}
         {todayVisitingPurpose.length === 0 ? (
           <Card
             sx={{

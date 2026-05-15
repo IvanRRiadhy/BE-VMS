@@ -155,24 +155,24 @@ const DashboardEmployee = () => {
       id: item.id,
       agenda: item.agenda,
       url: item.url,
+      current_usage: item.current_usage,
       max_usage: item.max_usage,
       expired_at: (() => {
         const date = new Date(item.expired_at + 'Z');
 
-        const formattedDate = date
-          .toLocaleDateString('id-ID', {
-            day: '2-digit',
-            // month: '2-digit',
-            month: 'long',
-            year: 'numeric',
-          })
-          .replace(/\//g, '-');
-
-        const formattedTime = date.toLocaleTimeString('id-ID', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false,
+        const formattedDate = date.toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: 'long',
+          year: 'numeric',
         });
+
+        const formattedTime = date
+          .toLocaleTimeString('id-ID', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+          })
+          .replace(':', '.');
 
         return `${formattedDate}, ${formattedTime}`;
       })(),
@@ -194,8 +194,7 @@ const DashboardEmployee = () => {
           // visitor_status: item.visitor_status,
         }));
         setActiveInvitation(rows || []);
-      } catch (error) {
-      }
+      } catch (error) {}
     };
 
     fetchDataActiveInvtiation();
@@ -262,7 +261,7 @@ const DashboardEmployee = () => {
           visitor_period_start: item.visitor_period_start,
           visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
           host: item.host_name ?? '-',
-          site: item.site_place_name
+          site: item.site_place_name,
           // visitor_status: item.visitor_status,
         }));
 
@@ -763,7 +762,7 @@ const DashboardEmployee = () => {
           />
         </Grid>
         <Grid size={{ xs: 12, lg: 6 }} sx={{ height: '100%' }}>
-          <Heatmap />  
+          <Heatmap />
         </Grid>
       </Grid>
 

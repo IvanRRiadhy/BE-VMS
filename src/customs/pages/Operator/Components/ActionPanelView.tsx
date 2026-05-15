@@ -34,6 +34,7 @@ import { FC } from 'react';
 import VisitorDetailTabs from './VisitorDetailTabs';
 import VisitorInformationDetail from './VisitorInformationDetail';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
+import { IconLockAccess } from '@tabler/icons-react';
 
 interface Props {
   loading: boolean;
@@ -310,6 +311,8 @@ const ActionPanelView: FC<Props> = ({
             sx={{
               flex: 1,
               p: 2,
+              paddingTop: '0px !important',
+              paddingBottom: '0px !important',
               px: '5px !important',
               overflow: 'auto',
             }}
@@ -522,6 +525,34 @@ const ActionPanelView: FC<Props> = ({
                       </Button>
                     </Grid>
                   )}
+                  <Grid size={{ xs: 6, lg: 6 }}>
+                    <Button
+                      variant="contained"
+                      startIcon={<IconLockAccess size={25} />}
+                      onClick={() => handleOpenAction('access')}
+                      // onClick={() => setAccessIssuance(true)}
+
+                      size="large"
+                      sx={{
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        px: 2.5,
+                        background: 'linear-gradient(135deg, #FF9800 0%, #F57C00 100%)',
+                        boxShadow: '0 2px 6px rgba(255, 152, 0, 0.4)',
+                        '&:hover': {
+                          background: 'linear-gradient(135deg, #FB8C00 0%, #E65100 100%)',
+                        },
+                        zIndex: 999,
+                        width: '100%',
+                        height: '50px',
+                        p: 0,
+                      }}
+                    >
+                      <Typography variant="h6" color="white">
+                        Access Issuance
+                      </Typography>
+                    </Button>
+                  </Grid>
                 </Grid>
               </Grid>
               <Grid size={{ xs: 12, xl: 5 }}>

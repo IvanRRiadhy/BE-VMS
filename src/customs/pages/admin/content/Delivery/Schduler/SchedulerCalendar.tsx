@@ -71,6 +71,7 @@ import { getAllSite, getVisitorEmployee } from 'src/customs/api/admin';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import CameraUpload from 'src/customs/components/camera/CameraUpload';
 import InvitationScheduleDetailDialog from './Dialog/InvitationScheduleDetailDialog';
+import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 
 export interface CalendarEvent {
   id: number;
@@ -289,8 +290,6 @@ export default function DnDOutsideCourier({
 
     try {
       setRescheduleVisitorId(event.id);
-
-      // ambil data lama dari server
       const res = await getDeliveryScheduleInvitationById(token as string, event.id);
 
       const oldStart = res.collection.visitor_period_start;
@@ -323,17 +322,14 @@ export default function DnDOutsideCourier({
 
       const payload = {
         // trx_visitor_id: rescheduleVisitorId,
-        flow: "UpdateInvitation",
+        flow: 'UpdateInvitation',
         initial_trx_code: initialTrxCodeData,
         visitor_period_end: dayjs(rescheduleData.newEnd).utc().format(),
         visitor_period_start: dayjs(rescheduleData.newStart).utc().format(),
       };
 
-      // console.log('RESCHEDULE PAYLOAD =>', payload);
-
       await updateReschduleInvitation(token as string, payload);
 
-      // Delay lagi sebelum reload biar smooth
       await new Promise((res) => setTimeout(res, 600));
 
       setEvents((prev) =>
@@ -836,7 +832,6 @@ export default function DnDOutsideCourier({
     const path = await uploadFileToCDN(file);
     if (path) setAnswerFile(path);
 
-    // ❗ Ini yang benar untuk reset input
     e.target.value = '';
   };
   const fileNameFromAnswer = (answerFile?: string) => {
@@ -863,13 +858,13 @@ export default function DnDOutsideCourier({
   const handleRemoveFileForField = async (
     currentUrl: string,
     setAnswerFile: (url: string) => void,
-    inputId: string, // <- pakai key yg sama dengan id input
+    inputId: string,
   ) => {
     try {
       setRemoving((s) => ({ ...s, [inputId]: true }));
       if (currentUrl) {
         await axiosInstance2.delete(`/cdn${currentUrl}`);
-        console.log('✅ Berhasil hapus file CDN:', currentUrl);
+        // console.log('✅ Berhasil hapus file CDN:', currentUrl);
       }
 
       setAnswerFile('');
@@ -1035,7 +1030,7 @@ export default function DnDOutsideCourier({
                           ? dayjs.utc(startItem.answer_datetime).local()
                           : undefined
                       }
-                      format="ddd, DD - MMM - YYYY, HH:mm"
+                      format="dddd, DD MMMM YYYY, HH:mm"
                       shouldDisableTime={(value) => {
                         if (!value || !timeAccess) return false;
 
@@ -1098,7 +1093,7 @@ export default function DnDOutsideCourier({
               switch (item.field_type) {
                 case 0: // Text
                   return (
-                    <TextField
+                    <CustomTextField
                       size="small"
                       value={item.answer_text || ''}
                       onChange={(e) => onChange('answer_text', e.target.value, index)}
@@ -1118,7 +1113,7 @@ export default function DnDOutsideCourier({
                   );
                 case 1: // Number
                   return (
-                    <TextField
+                    <CustomTextField
                       type="number"
                       size="small"
                       value={item.answer_text}
@@ -1129,7 +1124,7 @@ export default function DnDOutsideCourier({
                   );
                 case 2: // Email
                   return (
-                    <TextField
+                    <CustomTextField
                       type="email"
                       size="small"
                       value={item.answer_text}
@@ -1188,7 +1183,7 @@ export default function DnDOutsideCourier({
                         onChange('answer_text', newValue ? newValue.value : '', index)
                       }
                       renderInput={(params) => (
-                        <TextField
+                        <CustomTextField
                           {...params}
                           label=""
                           placeholder="Enter at least 3 characters to search"
@@ -1205,7 +1200,7 @@ export default function DnDOutsideCourier({
                         value={startTime}
                         ampm={false}
                         onChange={setStartTime}
-                        format="ddd, DD - MMM - YYYY, HH:mm"
+                        format="dddd, DD MMMM YYYYY, HH:mm"
                         viewRenderers={{
                           hours: renderTimeViewClock,
                           minutes: renderTimeViewClock,
@@ -1248,7 +1243,7 @@ export default function DnDOutsideCourier({
                   return (
                     <FormControl component="fieldset">
                       <RadioGroup
-                        value={String(item.answer_text)} // ✅ pastikan string
+                        value={String(item.answer_text)}
                         onChange={(e) => onChange('answer_text', e.target.value, index)}
                         sx={{ flexDirection: 'row', flexWrap: 'wrap', gap: 1 }}
                       >
@@ -1257,7 +1252,7 @@ export default function DnDOutsideCourier({
                           .map((opt: any, idx: number) => (
                             <FormControlLabel
                               key={idx}
-                              value={String(opt.value)} // ✅ samain jadi string
+                              value={String(opt.value)}
                               control={<Radio />}
                               label={opt.name}
                             />
@@ -1301,7 +1296,7 @@ export default function DnDOutsideCourier({
 
                 case 8: // TimePicker
                   return (
-                    <TextField
+                    <CustomTextField
                       type="time"
                       size="small"
                       value={item.answer_datetime}
@@ -1321,7 +1316,7 @@ export default function DnDOutsideCourier({
                             onChange('answer_datetime', utc, index);
                           }
                         }}
-                        format="ddd, DD - MMM - YYYY, HH:mm"
+                        format="dddd, DD MMMM YYYY, HH:mm"
                         viewRenderers={{
                           hours: renderTimeViewClock,
                           minutes: renderTimeViewClock,
@@ -1362,9 +1357,8 @@ export default function DnDOutsideCourier({
                             cursor: 'pointer',
                             p: 2,
                           }}
-                          onClick={() => setOpenCamera(true)} // Bisa langsung dibuka saat klik semua bagian
+                          onClick={() => setOpenCamera(true)}
                         >
-                          {/* <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} /> */}
                           <PhotoCameraIcon sx={{ fontSize: 48, color: '#42a5f5', mr: 0.5 }} />
                           <Box
                             sx={{
@@ -1397,7 +1391,6 @@ export default function DnDOutsideCourier({
                             )
                           }
                         />
-                        {/* PREVIEW / INFO */}
                         {(previewSrc || shownName) && (
                           <Box
                             mt={1}
@@ -1848,7 +1841,7 @@ export default function DnDOutsideCourier({
                 }
                 default:
                   return (
-                    <TextField
+                    <CustomTextField
                       size="small"
                       value={item.long_display_text}
                       onChange={(e) => onChange('long_display_text', e.target.value, index)}
@@ -1880,103 +1873,6 @@ export default function DnDOutsideCourier({
       endLocal: endUtc ? dayjs(endUtc).local().toDate() : null,
     };
   };
-
-  const getMemberStartEnd = (visitor: any) => {
-    let start = null;
-    let end = null;
-
-    visitor.question_page.forEach((page: any) => {
-      page.form.forEach((field: any) => {
-        if (field.remarks === 'visitor_period_start') {
-          start = new Date(field.answer_datetime);
-        }
-        if (field.remarks === 'visitor_period_end') {
-          end = new Date(field.answer_datetime);
-        }
-      });
-    });
-
-    return { start, end };
-  };
-
-  // const handleSubmit = async () => {
-  //   if (!selectedEvent) return;
-
-  //   setLoading(true);
-  //   try {
-  //     const payload = buildSubmitPayload();
-  //     console.log('payload', JSON.stringify(payload, null, 2));
-
-  //     // ambil dari payload (not from drag)
-  //     const { startLocal, endLocal } = extractStartEndFromPayload();
-
-  //     let finalEvent;
-
-  //     if (payload?.is_group) {
-  //       // =========================
-  //       //   GROUP EVENT
-  //       // =========================
-
-  //       // Ambil semua start & end dari payload.data_visitor
-  //       const allStart = payload.data_visitor.flatMap((v: any) =>
-  //         v.question_page.flatMap((p: any) =>
-  //           p.form
-  //             .filter((f: any) => f.remarks === 'visitor_period_start')
-  //             .map((f: any) => new Date(f.answer_datetime)),
-  //         ),
-  //       );
-
-  //       const allEnd = payload.data_visitor.flatMap((v: any) =>
-  //         v.question_page.flatMap((p: any) =>
-  //           p.form
-  //             .filter((f: any) => f.remarks === 'visitor_period_end')
-  //             .map((f: any) => new Date (f.answer_datetime)),
-  //         ),
-  //       );
-
-  //       // Start = paling kecil
-  //       const groupStart = new Date(Math.min(...allStart.map((d: any) => d.getTime())));
-  //       // End = paling besar
-  //       const groupEnd = new Date(Math.max(...allEnd.map((d: any) => d.getTime())));
-
-  //       finalEvent = {
-  //         ...selectedEvent,
-  //         isGroup: true,
-  //         members: payload.data_visitor.length,
-  //         start: groupStart,
-  //         end: groupEnd,
-  //         colour: selectedEvent.colour ?? '#673ab7', // warna group tetap
-  //         title: payload.group_name, // judul event untuk group
-  //       };
-  //     } else {
-  //       // =========================
-  //       //   SINGLE EVENT
-  //       // =========================
-  //       finalEvent = {
-  //         ...selectedEvent,
-  //         isGroup: false,
-  //         start: startLocal ?? selectedEvent.start,
-  //         end: endLocal ?? selectedEvent.end,
-  //         colour: getColour(selectedEvent),
-  //       };
-  //     }
-
-  //     // await createPrainvitationDelivery(token as string, payload);
-  //     setEvents((prev) => [...prev, finalEvent]);
-
-  //     reloadCalendar();
-  //     showSwal('success', 'Praregister Successfully');
-  //     setOpenDeliverySchedule(false);
-  //     setSelectedEvent(null);
-  //   } catch (error) {
-  //     console.log(error);
-  //     showSwal('error', 'Failed to create schedule.');
-  //   } finally {
-  //     setTimeout(() => {
-  //       setLoading(false);
-  //     }, 600);
-  //   }
-  // };
 
   const handleSubmit = async () => {
     if (!selectedEvent) return;
@@ -2164,7 +2060,7 @@ export default function DnDOutsideCourier({
       switch (field.field_type) {
         case 0: // Text
           return (
-            <TextField
+            <CustomTextField
               size="small"
               value={field.answer_text}
               onChange={(e) => onChange(index, 'answer_text', e.target.value)}
@@ -2176,7 +2072,7 @@ export default function DnDOutsideCourier({
 
         case 1: // Number
           return (
-            <TextField
+            <CustomTextField
               type="number"
               size="small"
               value={field.answer_text}
@@ -2188,7 +2084,7 @@ export default function DnDOutsideCourier({
 
         case 2: // Email
           return (
-            <TextField
+            <CustomTextField
               type="email"
               size="small"
               value={field.answer_text}
@@ -2201,8 +2097,6 @@ export default function DnDOutsideCourier({
 
         case 3: {
           let options: { value: string; name: string }[] = [];
-
-          // 🔹 Build option list berdasarkan remarks
           switch (field.remarks) {
             case 'host':
               options = employee.map((emp: any) => ({
@@ -2233,15 +2127,13 @@ export default function DnDOutsideCourier({
               );
               break;
           }
-
-          // 🔹 Gunakan uniqueKey biar gak tabrakan antar visitor group
           const uniqueKey = opts?.uniqueKey ?? `${index}`;
           const inputVal = inputValues[uniqueKey as any] || '';
 
           return (
             <Autocomplete
               size="small"
-              freeSolo // ✅ Biar tetap bisa diketik dari awal
+              freeSolo
               options={options}
               getOptionLabel={(option) => (typeof option === 'string' ? option : option.name)}
               inputValue={inputVal}
@@ -2266,9 +2158,9 @@ export default function DnDOutsideCourier({
                 onChange(index, 'answer_text', newValue instanceof Object ? newValue.value : '')
               }
               renderInput={(params) => (
-                <TextField
+                <CustomTextField
                   {...params}
-                  placeholder="Ketik minimal 3 karakter"
+                  placeholder="Enter at least 3 characters to search."
                   fullWidth
                   sx={{ minWidth: 160 }}
                 />
@@ -2279,7 +2171,7 @@ export default function DnDOutsideCourier({
 
         case 4: // Date
           return (
-            <TextField
+            <CustomTextField
               type="date"
               size="small"
               value={field.answer_datetime}
@@ -2291,7 +2183,7 @@ export default function DnDOutsideCourier({
         case 5: // Radio
           if (field.remarks === 'gender') {
             return (
-              <TextField
+              <CustomTextField
                 select
                 size="small"
                 value={field.answer_text || ''}
@@ -2304,13 +2196,13 @@ export default function DnDOutsideCourier({
                     {opt.name}
                   </MenuItem>
                 ))}
-              </TextField>
+              </CustomTextField>
             );
           }
 
           if (field.remarks === 'vehicle_type') {
             return (
-              <TextField
+              <CustomTextField
                 select
                 size="small"
                 value={field.answer_text || ''}
@@ -2322,7 +2214,7 @@ export default function DnDOutsideCourier({
                     {opt.name}
                   </MenuItem>
                 ))}
-              </TextField>
+              </CustomTextField>
             );
           }
 
@@ -2356,13 +2248,36 @@ export default function DnDOutsideCourier({
             );
           }
           return (
-            <TextField
-              size="small"
-              value={field.answer_text}
-              onChange={(e) => onChange(index, 'answer_text', e.target.value)}
-              placeholder="Enter text"
-              fullWidth
-            />
+            // <CustomTextField
+            //   size="small"
+            //   value={field.answer_text}
+            //   onChange={(e) => onChange(index, 'answer_text', e.target.value)}
+            //   placeholder="Enter text"
+            //   fullWidth
+            // />
+            <FormControl>
+              <RadioGroup
+                row
+                value={field.answer_text || ''}
+                onChange={(e) => {
+                  onChange(index, 'answer_text', e.target.value);
+                  // if (e.target.value) clearFieldError(errorKey);
+                }}
+                sx={{
+                  justifyContent: 'center',
+                  flexDirection: 'row',
+                }}
+              >
+                {field.multiple_option_fields?.map((opt: any) => (
+                  <FormControlLabel
+                    key={opt.id}
+                    value={opt.value}
+                    control={<Radio size="small" />}
+                    label={opt.name}
+                  />
+                ))}
+              </RadioGroup>
+            </FormControl>
           );
 
         case 6:
@@ -2377,12 +2292,9 @@ export default function DnDOutsideCourier({
               label=""
             />
           );
-
-        // fallback default checkbox single
-
         case 8: // Time
           return (
-            <TextField
+            <CustomTextField
               type="time"
               size="small"
               value={field.answer_datetime}
@@ -2401,7 +2313,7 @@ export default function DnDOutsideCourier({
               <DateTimePicker
                 ampm={false}
                 value={localValue}
-                format="ddd, DD - MMM - YYYY, HH:mm"
+                format="dddd, DD MMMM YYYY, HH:mm"
                 shouldDisableTime={(value) => {
                   if (!value || !timeAccess) return false;
 
@@ -2454,7 +2366,6 @@ export default function DnDOutsideCourier({
 
         case 11: {
           // File upload (PDF / NDA)
-          // const inputId = `pdf-${opts?.uniqueKey ?? index}`;
           const key = opts?.uniqueKey ?? String(index);
           const fileUrl = (field as any).answer_file as string | undefined;
           return (
@@ -2506,7 +2417,7 @@ export default function DnDOutsideCourier({
                     onClick={() =>
                       handleRemoveFileForField(
                         (field as any).answer_file,
-                        (url) => onChange(index, 'answer_file', url), // kosongkan state
+                        (url) => onChange(index, 'answer_file', url), 
                         key, // reset <input id=key>
                       )
                     }
@@ -2530,19 +2441,19 @@ export default function DnDOutsideCourier({
               width="100%"
               sx={{ maxWidth: 400 }}
             >
-              <TextField
+              <CustomTextField
                 select
                 size="small"
                 value={uploadMethods[key] || 'file'}
                 onChange={(e) => handleUploadMethodChange(key, e.target.value)}
                 fullWidth
                 sx={{
-                  width: { xs: '100%', md: '200px' }, // full on mobile
+                  width: { xs: '100%', md: '200px' },
                 }}
               >
                 <MenuItem value="file">Choose File</MenuItem>
                 <MenuItem value="camera">Take Photo</MenuItem>
-              </TextField>
+              </CustomTextField>
 
               {(uploadMethods[key] || 'file') === 'camera' ? (
                 <CameraUpload
@@ -2629,7 +2540,7 @@ export default function DnDOutsideCourier({
         }
         default:
           return (
-            <TextField
+            <CustomTextField
               size="small"
               value={field.long_display_text}
               onChange={(e) => onChange(index, 'long_display_text', e.target.value)}
@@ -2791,33 +2702,6 @@ export default function DnDOutsideCourier({
         <DialogContent dividers>
           {selectedEvent && (
             <Box mt={0}>
-              {/* {selectedEvent?.fromSlot && (
-                <Box mb={0} mx={2}>
-                  <Typography fontWeight={600} mb={1}>
-                    Delivery Staff
-                  </Typography>
-
-                  <Autocomplete
-                    options={drivers}
-                    getOptionLabel={(opt) => opt.name}
-                    value={drivers.find((d) => d.id === selectedEvent.driver_id) || null}
-                    onChange={(_, value) => {
-                      const courier = couriers.find((c) => c.employee.id === value?.id);
-
-                      setSelectedEvent((prev: any) => ({
-                        ...prev,
-                        driver_id: value?.id ?? null,
-                        title: value?.name ?? '',
-                        colour: courier?.colour ?? prev.colour,
-                      }));
-                    }}
-                    renderInput={(params) => (
-                      <TextField {...params} placeholder="Select Delivery Staff" fullWidth />
-                    )}
-                  />
-                </Box>
-              )} */}
-
               {selectedEvent?.isGroup ? (
                 <Table size="small">
                   <TableHead>

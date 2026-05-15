@@ -5,21 +5,13 @@ import {
   IconButton,
   Grid,
   Typography,
-  Avatar,
-  Paper,
   Box,
-  Checkbox,
-  FormControlLabel,
-  Divider,
-  Button,
   MenuItem,
 } from '@mui/material';
 import { IconX } from '@tabler/icons-react';
-import { reverse } from 'lodash';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import Swal from 'sweetalert2';
 
 type Props = {
   open: boolean;
@@ -307,15 +299,5 @@ export default function GrantAccessDialog({
         </Grid>
       </DialogContent>
     </Dialog>
-  );
-}
-
-/* Sub Component supaya lebih clean */
-function Info({ label, value }: any) {
-  return (
-    <Grid item xs={12} sm={6} lg={4}>
-      <Typography variant="h6">{label}</Typography>
-      <Typography>{value || '-'}</Typography>
-    </Grid>
   );
 }

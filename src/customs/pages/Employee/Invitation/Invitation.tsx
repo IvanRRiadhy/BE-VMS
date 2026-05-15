@@ -45,6 +45,7 @@ import {
   createShareLinkByEmailById,
   deleteShareLink,
   getShareLinkByDt,
+  getShareLinkById,
 } from 'src/customs/api/ShareLink';
 import Swal from 'sweetalert2';
 import { showSwal } from 'src/customs/components/alerts/alerts';
@@ -546,21 +547,22 @@ const Content = () => {
           max_usage: item.max_usage,
           visitor_period_start: formatDateTime(item.visitor_period_start),
           visitor_period_end: formatDateTime(item.visitor_period_end),
-
           expired_at: (() => {
             const date = new Date(item.expired_at + 'Z');
 
-            const formattedDate = date.toLocaleDateString('id-ID', {
+            const formattedDate = date.toLocaleDateString('en-GB', {
               day: '2-digit',
               month: 'long',
               year: 'numeric',
             });
 
-            const formattedTime = date.toLocaleTimeString('id-ID', {
-              hour: '2-digit',
-              minute: '2-digit',
-              hour12: false,
-            });
+            const formattedTime = date
+              .toLocaleTimeString('id-ID', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false,
+              })
+              .replace(':', '.');
 
             return `${formattedDate}, ${formattedTime}`;
           })(),
@@ -635,16 +637,11 @@ const Content = () => {
     }
   };
 
-  // const handleOpenInviteDialog = (id: string, link: string, expired_at: string) => {
-  //   setSelectedShareLinkId(id);
-  //   setGeneratedLink(link);
-  //   setExpiredAt(expired_at);
-  //   setTabValue(0);
-  //   setOpenInviteViaLinkEmail(true);
-  // };
+  const handleOpenInviteDialog = async (row: any) => {
+    // setSelectedShareLink(row);
 
-  const handleOpenInviteDialog = (row: any) => {
-    setSelectedShareLink(row);
+    const res = await getShareLinkById(row.id, token as string);
+    setSelectedShareLink(res.collection);
 
     setSelectedShareLinkId(row.id);
     setGeneratedLink(row.url);

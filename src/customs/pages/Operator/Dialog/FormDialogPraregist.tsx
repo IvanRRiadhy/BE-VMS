@@ -49,6 +49,7 @@ import { getVisitorEmployee } from 'src/customs/api/admin';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { createSubmitCompletePra } from 'src/customs/api/operator';
 import { KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
+import { useSelector } from 'src/store/Store';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -61,6 +62,7 @@ interface FormDialogPraregistProps {
   onSubmitted?: (id?: string) => void;
   containerRef?: any;
   registeredSite?: string;
+  selfRegisterData?: any;
 }
 
 const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
@@ -69,6 +71,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
   onSubmitted,
   containerRef,
   registeredSite,
+  selfRegisterData,
 }) => {
   const [activeStep, setActiveStep] = useState(0);
   const { token } = useSession();
@@ -96,6 +99,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
       setLoading(true);
       try {
         const res = await getDetailInvitationForm(token, id);
+        console.log('res', res);
         const data = res.collection;
         setInvitationData(data);
 
@@ -1040,17 +1044,24 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
     return val;
   };
 
+  const user = useSelector((state: any) => state.userReducer.data);
+
   const transformToSubmitPayload = (data: any) => ({
-    // trx_visitor_id: id,
     visitor_type: data.visitor_type,
     type_registered: 0,
     trx_visitor_id: id,
-    is_group: false, 
+    is_group: false,
     group_name: data.group_name ?? '',
     tz: data.site_place_data?.timezone ?? 'Asia/Jakarta',
-    // registered_site: data.site_place_data?.id ?? '',
     registered_site_id: registeredSite,
     flow: 'SubmitPraregister',
+    is_self_registered: selfRegisterData?.is_self_registered ?? false,
+    filled_by_name: user?.fullname ?? null,
+    filled_by_email: user?.email ?? null,
+    filled_by_phone: user?.phone ?? null,
+    // ...(selfRegisterData?.is_self_registered && {
+      filled_by_relationship: selfRegisterData?.filled_by_relationship ?? 'Self',
+    // }),
     data_visitor: [
       {
         question_page: data.question_page?.map((section: any) => ({
@@ -1115,7 +1126,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
       setSubmitting(true);
 
       const payload = transformToSubmitPayload(invitationData);
-      // console.log('Payload response:', JSON.stringify(payload, null, 2));
+      console.log('Payload response:', JSON.stringify(payload, null, 2));
       const res = await createSubmitCompletePra(token as string, payload);
 
       const ok =
@@ -1123,7 +1134,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
         (res.status === 'success' || res.status_code === 200 || res.title === 'success' || res.msg);
 
       if (ok) {
-        showSwal('success', 'Successfully Pra Register!');
+      showSwal('success', 'Successfully Submit Pra Register!');
         onSubmitted?.(invitationData.id);
       } else {
         await new Promise((r) => setTimeout(r, 600));
@@ -1132,7 +1143,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
     } catch (err) {
       const errMsg =
         (err as any)?.response?.collection?.message ??
-        (err as any)?.message ??
+        (err as any)?.reponse.data.msg ??
         'Failed Praregister';
 
       await new Promise((r) => setTimeout(r, 600));

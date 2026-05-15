@@ -44,7 +44,6 @@ const ShareLinkDialog: React.FC<Props> = ({
       setLoading(true);
 
       const res = await getShareLinkByDt(token, startPage, rowsPerPage, searchKeyword, sortDir);
-
       const mapped =
         res?.collection?.map((item: any) => ({
           id: item.id,
@@ -54,21 +53,22 @@ const ShareLinkDialog: React.FC<Props> = ({
           max_usage: item.max_usage,
           visitor_period_start: formatDateTime(item.visitor_period_start),
           visitor_period_end: formatDateTime(item.visitor_period_end),
-
           expired_at: (() => {
             const date = new Date(item.expired_at + 'Z');
 
-            const formattedDate = date.toLocaleDateString('id-ID', {
+            const formattedDate = date.toLocaleDateString('en-GB', {
               day: '2-digit',
               month: 'long',
               year: 'numeric',
             });
 
-            const formattedTime = date.toLocaleTimeString('id-ID', {
-              hour: '2-digit',
-              minute: '2-digit',
-              hour12: false,
-            });
+            const formattedTime = date
+              .toLocaleTimeString('id-ID', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false,
+              })
+              .replace(':', '.');
 
             return `${formattedDate}, ${formattedTime}`;
           })(),

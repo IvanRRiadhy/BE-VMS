@@ -12,9 +12,9 @@ import axiosInstance from './interceptor';
 import { GetProfileResponse } from './models/profile';
 import { AnyAaaaRecord } from 'dns';
 
-export const login = async (body: LoginRequest): Promise<LoginResponse> => {
+export const login = async (body: LoginRequest): Promise<any> => {
   try {
-    const response = await axiosInstance.post<LoginResponse>(`/_Auth/RequestToken`, body, {
+    const response = await axiosInstance.post<any>(`/_Auth/RequestToken`, body, {
       headers: { 'Content-Type': 'application/json' },
     });
     return response.data;

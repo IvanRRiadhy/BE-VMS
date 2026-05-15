@@ -50,6 +50,8 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 import { getVisitorEmployee } from 'src/customs/api/admin';
 import { showErrorAlert, showSuccessAlert, showSwal } from 'src/customs/components/alerts/alerts';
 import { IconArrowRight } from '@tabler/icons-react';
+import { useSelector } from 'src/store/Store';
+import moment from 'moment';
 dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.locale('id');
@@ -82,8 +84,23 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
   const [searchParams] = useSearchParams();
   const code = searchParams.get('code') || '';
 
-  const formatDateTime = (value: string | null) =>
-    !value ? '-' : dayjs(value).tz(dayjs.tz.guess()).format('dddd, DD MMMM YYYY, HH:mm');
+  // const formatDateTime = (value: string | null) =>
+  //   !value ? '-' : dayjs(value).tz(dayjs.tz.guess()).format('dddd, DD MMMM YYYY, HH:mm');
+
+  const formatDateTime = (dateStr?: string, extendMinutes = 0) => {
+    if (!dateStr) return '-';
+
+    const base = moment.utc(dateStr);
+
+    if (extendMinutes !== 0) {
+      base.add(extendMinutes, 'minutes');
+    }
+
+    return base
+      .local()
+      .utcOffset(7 * 60)
+      .format('dddd, DD MMMM YYYY, HH:mm');
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -112,7 +129,6 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
     };
     fetchData();
   }, [id, token]);
-
 
   // const validateStep = (section: any) => {
   //   const newErrors: Record<string, string> = {};
@@ -997,15 +1013,22 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
     </Box>
   );
 
+  const user = useSelector((state: any) => state.userReducer.data);
+
   const transformToSubmitPayload = (data: any) => ({
     trx_visitor_id: data.trx_visitor_id,
     visitor_type: data.visitor_type,
     type_registered: 1,
-    is_group: true, // tergantung kebutuhan
+    is_group: false,
     group_name: data.group_name ?? '',
     // group_code: data.group_code ?? '',
     tz: data.site_place_data?.timezone ?? 'Asia/Jakarta',
     flow: 'SubmitPraregister',
+    is_self_registered: true,
+    filled_by_name: user?.fullname ?? null,
+    filled_by_email: user?.email ?? null,
+    filled_by_phone: user?.phone ?? null,
+    filled_by_relationship: 'Self',
     data_visitor: [
       {
         question_page: data.question_page?.map((section: any) => ({
@@ -1058,9 +1081,8 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
       setSubmitting(true);
 
       const payload = transformToSubmitPayload(invitationData);
+      console.log('payload:', JSON.stringify(payload, null, 2));
       const res = await submitPraFormEmployee(token as string, payload);
-
-      // console.log('submitPraFormEmployee response:', res);
 
       const ok =
         res &&

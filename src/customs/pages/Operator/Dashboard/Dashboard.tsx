@@ -1,39 +1,14 @@
 import {
   Grid2 as Grid,
-  IconButton,
-  Tab,
-  Snackbar,
-  Alert,
-  Tabs,
-  TextField,
-  Typography,
   Portal,
   CircularProgress,
   Backdrop,
-  TableContainer,
-  TableHead,
-  TableBody,
-  TableCell,
 } from '@mui/material';
-import { Box } from '@mui/system';
 
-import {
-  IconArrowAutofitRight,
-  IconCircleMinus,
-  IconLogin,
-  IconLogout,
-  IconX,
-} from '@tabler/icons-react';
-import LprImage from 'src/assets/images/products/pic_lpr.png';
-import FRImage from 'src/assets/images/products/pic_fr.png';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { IconCircleMinus, IconLogin, IconLogout, IconX } from '@tabler/icons-react';
+import { useState } from 'react';
 import Container from 'src/components/container/PageContainer';
-import TopCard from 'src/customs/components/cards/TopCard';
-import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import { useSession } from 'src/customs/contexts/SessionContext';
-import { useNavigate } from 'react-router-dom';
 import { IconUsersGroup } from '@tabler/icons-react';
-import TopCards from './TopCard';
 import PieChartsEmployee from '../../Manager/Dashboard/PieChartsEmployee';
 import VisitorStatistics from './components/VisitorStatics';
 import JustCheckInCard from './components/JustCheckInCard';
@@ -55,22 +30,7 @@ const DashboardOperator = () => {
       icon: <IconUsersGroup size={22} />,
     },
   ];
-
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMsg, setSnackbarMsg] = useState('');
-  const [snackbarType, setSnackbarType] = useState<'success' | 'error' | 'info'>('info');
   const [loadingAccess, setLoadingAccess] = useState(false);
-
-  const dataVisitors = [
-    {
-      id: 1,
-      name: 'John Doe',
-      // company: 'ABC Company',
-      purpose: 'Meeting',
-      date: '2023-06-01',
-      // time: '10:00 AM',
-    },
-  ];
 
   return (
     <Container title="Dashboard">
@@ -260,32 +220,6 @@ const DashboardOperator = () => {
       </Grid>
 
       <Portal>
-        <Snackbar
-          open={snackbarOpen}
-          autoHideDuration={3000}
-          onClose={() => setSnackbarOpen(false)}
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-          sx={{
-            zIndex: 99999,
-            position: 'fixed',
-            top: 20,
-            left: 0,
-            right: 0,
-            margin: '0 auto',
-            maxWidth: 500,
-          }}
-        >
-          <Alert
-            onClose={() => setSnackbarOpen(false)}
-            severity={snackbarType}
-            variant="filled"
-            sx={{ width: '100%' }}
-          >
-            {snackbarMsg}
-          </Alert>
-        </Snackbar>
-      </Portal>
-      <Portal>
         <Backdrop
           sx={{
             zIndex: 99999,
@@ -295,7 +229,7 @@ const DashboardOperator = () => {
           }}
           open={loadingAccess}
         >
-          <CircularProgress color="inherit" />
+          <CircularProgress color="primary" />
         </Backdrop>
       </Portal>
     </Container>

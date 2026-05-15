@@ -19,9 +19,7 @@ import {
   Checkbox,
   CircularProgress,
   FormControlLabel,
-  Paper,
   MenuItem,
-  DialogActions,
   AlertColor,
   Autocomplete,
   FormControl,
@@ -32,8 +30,10 @@ import {
   Portal,
   Snackbar,
   Alert,
+  Box,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
-import { Box, Stack, useMediaQuery, useTheme } from '@mui/system';
 import moment from 'moment-timezone';
 import backgroundnodata from 'src/assets/images/backgrounds/bg_nodata.svg';
 import infoPic from 'src/assets/images/backgrounds/info_pic.png';
@@ -73,8 +73,10 @@ import {
   getInvitationOperatorRelated,
   getPermissionOperator,
   getTodayVisitingPurpose,
+  getUpComingPurpose,
+  getUpComingVisitors,
 } from 'src/customs/api/operator';
-import {axiosInstance2 } from 'src/customs/api/interceptor';
+import { axiosInstance2 } from 'src/customs/api/interceptor';
 import LprImage from 'src/assets/images/products/pic_lpr.png';
 import SearchVisitorDialog from './Dialog/SearchVisitorDialog';
 import DetailVisitorDialog from './Dialog/DetailVisitorDialog';
@@ -95,12 +97,7 @@ import advancedFormat from 'dayjs/plugin/advancedFormat';
 import utc from 'dayjs/plugin/utc';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 
-import {
-  getAllSite,
-  getAllVisitorType,
-  getRegisteredSite,
-  getVisitorEmployee,
-} from 'src/customs/api/admin';
+import { getAllSite, getAllVisitorType } from 'src/customs/api/admin';
 import FormDialogPraregist from './Dialog/FormDialogPraregist';
 import CameraUpload from './Components/CameraUpload';
 import { showSwal } from 'src/customs/components/alerts/alerts';
@@ -131,7 +128,6 @@ import {
 } from 'src/customs/api/Admin/SwapCard';
 import SwipeCardNoCodeDialog from './Dialog/SwipeCardNoCodeDialog';
 import InvitationQrCard from './Components/InvitationQrCard';
-import FRLPRCard from './Components/FRLPRCard';
 import VisitorSearchInput from './Components/VisitorSearchInput';
 import OperatorToolbar from './Components/OperatorToolbar';
 import VisitorImage from './Components/VisitorImage';
@@ -150,7 +146,12 @@ import FillPraregistrationGroup from './Invitation/components/FillPraregistratio
 import GrantAccessDialog from './Dialog/GrantAccessDialog';
 import LprVisitorCard from './Components/LprVisitorCard';
 import ChooseCardDialog from './Dialog/ChooseCardDialog';
-
+import FillPraregistrationSingle from 'src/customs/pages/Operator/Invitation/components/FillPraregistrationSingle';
+import { usePermission } from 'src/hooks/usePermission';
+import VisitorDetailCard from 'src/customs/pages/Operator/Components/VisitorDetailCard';
+import { getPermission } from 'src/customs/api/users';
+import VisitorListCard from 'src/customs/pages/Operator/Dialog/VisitorListCard';
+type DocumentType = 'CardAccess' | 'Other';
 dayjs.extend(utc);
 dayjs.extend(weekday);
 dayjs.extend(localizedFormat);
@@ -206,7 +207,7 @@ const Content = () => {
   const [openDetail, setOpenDetail] = useState(false);
   const [visitorData, setVisitorData] = useState<any[]>([]);
   const [openAccessData, setOpenAccessData] = useState(false);
-  const [openRegisteredSite, setOpenRegisteredSiteDialog] = useState(false);
+  const [typeVisitor, setTypeVisitor] = useState('related');
   const [accessData, setAccessData] = useState<any[]>([]);
   const [selectedActionAccess, setSelectedActionAccess] = useState<string | null>(null);
   const [selectedMinutes, setSelectedMinutes] = useState<number | null>(null);
@@ -216,16 +217,13 @@ const Content = () => {
   const [openFillForm, setOpenFillForm] = useState(false);
   const [fillFormData, setFillFormData] = useState<any[]>([]);
   const [fillFormActiveStep, setFillFormActiveStep] = useState(0);
-  const [fillFormGroupedPages, setFillFormGroupedPages] = useState<any>({});
   const [fillFormDataVisitor, setFillFormDataVisitor] = useState<any[]>([]);
   const [selectedSite, setSelectedSite] = useState<any | null>(null);
-  const [siteData, setSiteData] = useState<any[]>([]);
   const [openDialogInfo, setOpenDialogInfo] = useState(false);
   const [openSwipeDialog, setOpenSwipeDialog] = useState(false);
   const [selectedInvitations, setSelectedInvitations] = useState<any[]>([]);
   const [openSwipeAccess, setOpenSwipeAccess] = useState(false);
   const handle = useFullScreenHandle();
-  const [visitorDocuments, setVisitorDocuments] = useState<any[]>([]);
   const [currentAction, setCurrentAction] = useState<'Checkin' | 'Checkout' | null>(null);
   const [showExtendButton, setShowExtendButton] = useState(false);
   const [actionButton, setActionButton] = useState<any | null>(null);
@@ -256,13 +254,16 @@ const Content = () => {
   const handleOpenVehicle = () => setOpenVehicle(true);
   const handleCloseListVisitor = () => setOpenListVisitor(false);
   const handleCloseTriggeredAcceess = () => setOpenTriggeredAccess(false);
-
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [wsPayload, setWsPayload] = useState<any>(null);
   const wsImageQueueRef = useRef<string[]>([]);
   const wsOcrQueueRef = useRef<string[]>([]);
   const [tick, forceTick] = useState(0);
   const socketRef = useRef<WebSocket | null>(null);
   const [sitesOperator, setSitesOperator] = useState<any[]>([]);
+  const [permission, setPermission] = useState<any>({});
+  const permissionHook = usePermission(permission);
+  const [openAccessIssuance, setAccessIssuance] = useState(false);
   const [dataDummyAccess, setDataDummyAccess] = useState<any[]>([
     {
       id: '1',
@@ -1146,15 +1147,76 @@ const Content = () => {
     assigned_card_remarks?: string | null;
   };
 
+  // const filteredVisitors = useMemo(() => {
+  //   if (!debouncedKeyword.trim()) return relatedVisitors;
+
+  //   const keyword = debouncedKeyword.toLowerCase();
+
+  //   return relatedVisitors.filter((v) =>
+  //     [v.name].filter(Boolean).some((field) => field.includes(keyword)),
+  //   );
+  // }, [relatedVisitors, debouncedKeyword]);
+  const [totalCountVisitor, setTotalCountVisitor] = useState(0);
+  const [upcomingVisitors, setUpcomingVisitors] = useState<any[]>([]);
+  const fetchUpcomingPurpose = async () => {
+    const res = await getUpComingPurpose(token as string, {
+      today: 'true',
+      all_visitor_type: 'true',
+    });
+
+    setUpcomingPurpose(res?.collection ?? []);
+  };
+
+  useEffect(() => {
+    if (!token) return;
+    fetchUpcomingPurpose();
+  }, [token]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const res = await getUpComingVisitors(token as string, {
+        today: 'true',
+        all_visitor_type: 'true',
+        visitor_type: typeof selectedPurpose?.id === 'string' ? selectedPurpose?.id : undefined,
+      });
+
+      const rows = res.collection.map((items: any) => ({
+        id: items.id,
+        name: items.visitor_name,
+        host: items.host_name,
+        invitation_code: items.invitation_code,
+        organization: items.visitor_organization_name,
+        agenda: items.agenda,
+        visitor_period_start: formatDateTime(items.visitor_period_start),
+        visitor_period_end: formatDateTime(items.visitor_period_end, items.extend_visitor_period),
+        visitor_status: items.visitor_status,
+        vehicle_type: items.vehicle_type,
+        vehicle_plate_number: items.vehicle_plate_number,
+      }));
+      setUpcomingVisitors(rows ?? []);
+    };
+    fetchData();
+  }, [token, selectedPurpose]);
+  const visitorsSource = typeVisitor === 'related' ? relatedVisitors : upcomingVisitors;
   const filteredVisitors = useMemo(() => {
-    if (!debouncedKeyword.trim()) return relatedVisitors;
+    const keyword = debouncedKeyword.toLowerCase().trim();
 
-    const keyword = debouncedKeyword.toLowerCase();
+    if (!keyword) return visitorsSource;
 
-    return relatedVisitors.filter((v) =>
-      [v.name].filter(Boolean).some((field) => field.includes(keyword)),
-    );
-  }, [relatedVisitors, debouncedKeyword]);
+    return visitorsSource.filter((v: any) => {
+      if (typeVisitor === 'related') {
+        return [v.name, v.organization]
+          .filter(Boolean)
+          .some((field) => field.toLowerCase().includes(keyword));
+      }
+
+      return [v.visitor_name, v.visitor_organization_name]
+        .filter(Boolean)
+        .some((field) => field.toLowerCase().includes(keyword));
+    });
+  }, [visitorsSource, debouncedKeyword, typeVisitor]);
+
+  const totalVisitors = typeVisitor === 'related' ? totalCountVisitor : upcomingVisitors.length;
 
   const visitorsForSwipe = useMemo(() => {
     return relatedVisitors.filter((v) => selectedVisitors.includes(v.id));
@@ -1537,8 +1599,6 @@ const Content = () => {
       }
 
       const res = await createInvitationActionOperator(token as string, id!, payload);
-
-      console.log('✅ Action Response:', res);
 
       setRelatedVisitors((prev) =>
         prev.map((v) =>
@@ -2162,7 +2222,6 @@ const Content = () => {
       const baseSections = buildGroupSections(questionPagesTemplate);
       setFillFormData(baseSections);
       setFillFormActiveStep(0);
-      setFillFormGroupedPages(buildGroupedPages(baseSections));
 
       const visitorGroupList = results.map((res, idx) => {
         const v = visitorList[idx];
@@ -3281,23 +3340,32 @@ const Content = () => {
 
   const [vtLoading, setVTLoading] = useState(false);
 
-  const fetchVisitorType = async () => {
-    try {
-      setVTLoading(true);
-      const res = await getAllVisitorType(token as string);
-      setVisitorType(res?.collection || []);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setVTLoading(false);
-    }
-  };
-
   useEffect(() => {
-    if (token) {
-      fetchVisitorType();
-      fetchTodayVisitingPurpose();
-    }
+    const fetchData = async () => {
+      if (!token) return;
+
+      try {
+        setLoading(true);
+        const [vtRes, permissionRes] = await Promise.allSettled([
+          getAllVisitorType(token),
+          getPermission(token),
+        ]);
+
+        if (vtRes.status === 'fulfilled') {
+          setVisitorType(vtRes.value?.collection ?? []);
+        } else {
+        }
+
+        if (permissionRes.status === 'fulfilled') {
+          setPermission(permissionRes.value?.collection ?? {});
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchData();
   }, [token]);
 
   const handlePrint = () => {
@@ -3326,15 +3394,14 @@ const Content = () => {
         card_number: returnCardNumber.trim(),
       };
 
-      console.log('return card payload', payload);
+      // console.log('return card payload', payload);
       await returnCard(token as string, payload);
       showSwal('success', 'Succesfully returned card');
       setOpenReturnCard(false);
       setReturnCardNumber('');
       // await fetchAvailableCards?.();
     } catch (error: any) {
-      console.error(error);
-      showSwal('error', error.message || 'Failed to return card');
+      showSwal('error', error.response.data.msg || 'Failed to return card');
     } finally {
       setLoadingAccess(false);
     }
@@ -3374,6 +3441,34 @@ const Content = () => {
     { id: 1, vehicle_type: 'Car', vehicle_plate_number: 'BG 817 AS' },
     { id: 2, vehicle_type: 'Motorcycle', vehicle_plate_number: 'B 1512 AA' },
   ];
+
+  const currentUsedCard = useMemo(() => {
+    if (!Array.isArray(visitorCards)) return null;
+
+    return (
+      visitorCards.find((card) => card.card_type !== 'Barcode' && card.current_used === true) ??
+      null
+    );
+  }, [visitorCards]);
+
+  const swipeDialogInitialValues = useMemo(() => {
+    if (currentUsedCard) {
+      return {
+        documentType: 'CardAccess' as DocumentType,
+        value: currentUsedCard.card_number ?? '',
+        isDocumentTypeLocked: true,
+      };
+    }
+
+    // Jika tidak ada kartu aktif, dialog tetap normal
+    return {
+      documentType: undefined,
+      value: '',
+      isDocumentTypeLocked: false,
+    };
+  }, [currentUsedCard]);
+
+  const [upcomingPurpose, setUpcomingPurpose] = useState<any[]>([]);
 
   return (
     <PageContainer
@@ -3454,7 +3549,7 @@ const Content = () => {
                   >
                     <LprVisitorCard
                       LprImage={LprImage}
-                      todayVisitingPurpose={todayVisitingPurpose}
+                      todayVisitingPurpose={upcomingPurpose}
                       invitationCode={invitationCode}
                       isFullscreen={isFullscreen}
                       lgUp={lgUp}
@@ -3470,7 +3565,8 @@ const Content = () => {
 
                   {/* Visiting Purpose*/}
                   <ActionPanelCard
-                    permission={null}
+                    loading={loading}
+                    permission={permissionHook}
                     isFullscreen={isFullscreen}
                     handleOpenScanQR={handleOpenScanQR}
                     handleActionClick={handleActionClick as any}
@@ -3480,6 +3576,7 @@ const Content = () => {
                     setOpenPreRegistration={setOpenPreRegistration}
                     setOpenInvitationVisitor={setOpenInvitationVisitor}
                     setOpenReturnCard={setOpenReturnCard}
+                    setAccessIssuance={setAccessIssuance}
                   />
 
                   {/* Side Right QR Code */}
@@ -3499,718 +3596,55 @@ const Content = () => {
                   alignItems: 'stretch',
                 }}
               >
-                <Grid
-                  size={{ xs: 12, lg: 4.5 }}
-                  sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    // height: '100%',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                    p: 1,
-                    borderRadius: 2,
-                    border: '1px solid #e0e0e0',
-                  }}
-                >
-                  <Card
-                    sx={{
-                      flex: 1,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      boxShadow: 'none',
-                      p: 1,
-                      minHeight: 450,
-                    }}
-                  >
-                    <CardContent sx={{ boxShadow: 'none', p: 0 }}>
-                      <VisitorDetailTabs
-                        invitationCode={invitationCode}
-                        activeVisitor={activeVisitor}
-                        handleChooseCard={handleChooseCard}
-                      />
-                    </CardContent>
-                    {invitationCode.length > 0 && invitationCode[0]?.visitor_number && (
-                      <>
-                        <CardActions
-                          sx={{ justifyContent: 'center', mt: 2, flexWrap: 'wrap', gap: 1 }}
-                        >
-                          {(() => {
-                            const selectedVisitor =
-                              relatedVisitors.find(
-                                (v) => v.visitor_number === invitationCode[0]?.visitor_number,
-                              ) ||
-                              relatedVisitors.find(
-                                (v) => v.visitor_number === selectedVisitorNumber,
-                              );
-                            if (
-                              selectedVisitor &&
-                              (selectedVisitor.is_praregister_done == null ||
-                                selectedVisitor.is_praregister_done === false)
-                            ) {
-                              return (
-                                <Button
-                                  variant="contained"
-                                  color="primary"
-                                  size="large"
-                                  onClick={() => handleView(selectedVisitor.id)}
-                                >
-                                  Fill Form
-                                </Button>
-                              );
-                            }
-
-                            const data = invitationCode[0];
-                            const status = data?.visitor_status;
-                            const isBlocked = !!data?.is_block;
-
-                            if (
-                              !selectedVisitor ||
-                              selectedVisitor.is_praregister_done == null ||
-                              selectedVisitor.is_praregister_done === false
-                            ) {
-                              return null;
-                            }
-                            if (
-                              !['Checkin', 'Checkout', 'Block', 'Unblock'].includes(status || '')
-                            ) {
-                              return (
-                                <Box display="flex" gap={1}>
-                                  <Tooltip
-                                    title="Check In"
-                                    placement="top"
-                                    arrow
-                                    slotProps={{
-                                      tooltip: {
-                                        sx: {
-                                          fontSize: '1rem',
-                                          padding: '8px 14px',
-                                        },
-                                      },
-                                      popper: {
-                                        container: containerRef.current,
-                                      },
-                                    }}
-                                  >
-                                    <Button
-                                      variant="contained"
-                                      // color="#21c45d"
-                                      size="large"
-                                      onClick={() => handleConfirmStatus('Checkin')}
-                                      startIcon={<IconLogin />}
-                                      sx={{ backgroundColor: '#21c45d' }}
-                                    >
-                                      Check In
-                                    </Button>
-                                  </Tooltip>
-                                  <Tooltip
-                                    title="Block"
-                                    placement="top"
-                                    arrow
-                                    slotProps={{
-                                      tooltip: {
-                                        sx: {
-                                          fontSize: '1rem',
-                                          padding: '8px 14px',
-                                        },
-                                      },
-                                      popper: {
-                                        container: containerRef.current,
-                                      },
-                                    }}
-                                  >
-                                    <Button
-                                      variant="contained"
-                                      size="large"
-                                      sx={{ backgroundColor: '#000' }}
-                                      onClick={() => handleConfirmStatus('Block')}
-                                      startIcon={<IconForbid2 />}
-                                    >
-                                      Block
-                                    </Button>
-                                  </Tooltip>
-                                </Box>
-                              );
-                            }
-
-                            if (status === 'Checkin' && !isBlocked) {
-                              return (
-                                <Box display="flex" gap={1}>
-                                  <Tooltip
-                                    title="Check Out"
-                                    placement="top"
-                                    arrow
-                                    slotProps={{
-                                      tooltip: {
-                                        sx: {
-                                          fontSize: '1rem',
-                                          padding: '8px 14px',
-                                        },
-                                      },
-                                      popper: {
-                                        container: containerRef.current,
-                                      },
-                                    }}
-                                  >
-                                    <Button
-                                      variant="contained"
-                                      color="error"
-                                      size="large"
-                                      onClick={() => handleConfirmStatus('Checkout')}
-                                      startIcon={<IconLogout />}
-                                    >
-                                      Check Out
-                                    </Button>
-                                  </Tooltip>
-                                  <Tooltip
-                                    title="Block"
-                                    placement="top"
-                                    arrow
-                                    slotProps={{
-                                      tooltip: {
-                                        sx: {
-                                          fontSize: '1rem',
-                                          padding: '8px 14px',
-                                        },
-                                      },
-                                      popper: {
-                                        container: containerRef.current,
-                                      },
-                                    }}
-                                  >
-                                    <Button
-                                      variant="contained"
-                                      size="large"
-                                      sx={{ backgroundColor: '#000' }}
-                                      onClick={() => handleConfirmStatus('Block')}
-                                      startIcon={<IconForbid2 />}
-                                    >
-                                      Block
-                                    </Button>
-                                  </Tooltip>
-                                </Box>
-                              );
-                            }
-                            if (status === 'Checkout' && !isBlocked) {
-                              return (
-                                <Box display="flex" gap={1}>
-                                  <Tooltip
-                                    title="Block Visitor"
-                                    placement="top"
-                                    arrow
-                                    slotProps={{
-                                      tooltip: {
-                                        sx: {
-                                          fontSize: '1rem',
-                                          padding: '8px 14px',
-                                        },
-                                      },
-                                      popper: {
-                                        container: containerRef.current,
-                                      },
-                                    }}
-                                  >
-                                    <Button
-                                      variant="contained"
-                                      size="large"
-                                      sx={{ backgroundColor: '#000' }}
-                                      onClick={() => handleConfirmStatus('Block')}
-                                      startIcon={<IconForbid2 />}
-                                    >
-                                      Block
-                                    </Button>
-                                  </Tooltip>
-                                </Box>
-                              );
-                            }
-
-                            if (isBlocked) {
-                              return (
-                                <Tooltip
-                                  title="Unblock"
-                                  placement="top"
-                                  arrow
-                                  slotProps={{
-                                    tooltip: {
-                                      sx: {
-                                        fontSize: '1rem',
-                                        padding: '8px 14px',
-                                      },
-                                    },
-                                    popper: {
-                                      container: containerRef.current,
-                                    },
-                                  }}
-                                >
-                                  <Button
-                                    variant="contained"
-                                    size="large"
-                                    sx={{
-                                      backgroundColor: '#f44336',
-                                      '&:hover': { backgroundColor: '#d32f2f' },
-                                    }}
-                                    onClick={() => handleConfirmStatus('Unblock')}
-                                    startIcon={<IconBan />}
-                                  >
-                                    Unblock
-                                  </Button>
-                                </Tooltip>
-                              );
-                            }
-
-                            return null;
-                          })()}
-                        </CardActions>
-                        {/* Barcode */}
-                        {/* <Box>
-                        {activeBarcode && (
-                          <img
-                            src={activeBarcode}
-                            alt="Barcode"
-                            style={{ width: '100%', height: '135px', objectFit: 'cover' }}
-                          />
-                        )}
-                      </Box> */}
-                      </>
-                    )}
-                  </Card>
-                </Grid>
+                <VisitorDetailCard
+                  invitationCode={invitationCode}
+                  activeVisitor={activeVisitor}
+                  relatedVisitors={relatedVisitors}
+                  selectedVisitorNumber={selectedVisitorNumber}
+                  permissionHook={permissionHook}
+                  containerRef={containerRef}
+                  handleChooseCard={handleChooseCard}
+                  handleConfirmStatus={handleConfirmStatus}
+                  handleView={handleView}
+                />
 
                 {/* Related Visitor */}
                 <Grid size={{ xs: 12, lg: 4.5 }} sx={{ display: 'flex', flexDirection: 'column' }}>
-                  <Card
-                    sx={{
-                      flex: 1,
-                      height: '100%',
-                      maxHeight: isFullscreen ? '100%' : '530px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                      overflow: 'auto',
-                      border: '1px solid #e0e0e0',
-                    }}
-                  >
-                    <Box display="flex" justifyContent="space-between">
-                      <CardHeader title="Related Visitors" sx={{ p: 0 }} />
-                      <Box display={'flex'} gap={1}>
-                        <FormControl sx={{ width: '100%' }}>
-                          <CustomTextField
-                            fullWidth
-                            size="medium"
-                            value={searchKeyword}
-                            onChange={(e) => setSearchKeyword(e.target.value)}
-                            placeholder="Search Visitor"
-                            sx={{ mb: 0, width: '100%', p: 0 }}
-                            InputProps={{
-                              startAdornment: (
-                                <InputAdornment position="start">
-                                  <IconSearch fontSize="small" />
-                                </InputAdornment>
-                              ),
-                            }}
-                          />
-                        </FormControl>
-                        <Tooltip
-                          title="Click and Select more than 1 visitor"
-                          slotProps={{
-                            tooltip: {
-                              sx: {
-                                fontSize: '1rem',
-                                padding: '8px 14px',
-                              },
-                            },
-                            popper: {
-                              container: containerRef.current,
-                            },
-                          }}
-                        >
-                          <FormControlLabel
-                            value="end"
-                            control={
-                              <Checkbox
-                                checked={selectMultiple}
-                                onChange={(e) => {
-                                  setSelectMultiple(e.target.checked);
-                                  setSelectedVisitors([]);
-                                }}
-                              />
-                            }
-                            label="Select Multiple"
-                            labelPlacement="end"
-                            sx={{ marginRight: 0, width: '250px' }}
-                          />
-                        </Tooltip>
-                      </Box>
-                    </Box>
-                    <Divider sx={{ mt: 1 }} />
-                    <CardContent
-                      sx={{
-                        flex: 1,
-                        overflowY: 'auto',
-                        p: 0,
-                        pb: '0 !important',
-                        display: 'flex',
-                        flexDirection: 'column',
-                      }}
-                    >
-                      {filteredVisitors.map((visitor, index) => {
-                        const isDriving = visitor.is_driving === true;
-                        const isScanned =
-                          visitor.visitor_number &&
-                          scannedVisitorNumber &&
-                          visitor.visitor_number === scannedVisitorNumber;
-
-                        return (
-                          <React.Fragment key={visitor.id || index}>
-                            <ListItem
-                              sx={{
-                                px: 1,
-                                py: 1.5,
-                                borderBottom:
-                                  index !== relatedVisitors.length - 1 ? 'none' : 'none',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                cursor: 'pointer',
-                                transition: 'background 0.2s ease',
-
-                                '&:hover': {
-                                  backgroundColor: 'rgba(93,135,255,0.08)',
-                                },
-                              }}
-                              onClick={() => handleSelectRelatedVisitor(visitor)}
-                            >
-                              <Box display="flex" alignItems="center" gap={2}>
-                                <Avatar
-                                  src={getCdnUrl(visitor.selfie_image) || undefined}
-                                  alt={visitor.name}
-                                  sx={{ width: 45, height: 45 }}
-                                />
-                                <Box>
-                                  <Typography variant="h6" fontWeight="bold">
-                                    {visitor.name || '-'}
-                                  </Typography>
-                                  <Typography variant="body1" color="text.secondary">
-                                    {visitor.organization || '-'}
-                                  </Typography>
-                                </Box>
-                              </Box>
-                              <Box display="flex" flexDirection="row" alignItems="center" gap={1}>
-                                <Box display="flex" gap={1} flexDirection={'column'}>
-                                  {isDriving && (
-                                    <Tooltip
-                                      title="Parking"
-                                      arrow
-                                      slotProps={{
-                                        tooltip: {
-                                          sx: {
-                                            fontSize: '1rem',
-                                            padding: '8px 14px',
-                                          },
-                                        },
-                                        popper: {
-                                          container: containerRef.current,
-                                        },
-                                      }}
-                                    >
-                                      <Box
-                                        sx={{
-                                          backgroundColor: '#4CAF50',
-                                          color: 'white',
-                                          fontWeight: 600,
-                                          borderRadius: '6px',
-                                          px: 1,
-                                          py: 0.25,
-                                          fontSize: '0.75rem',
-                                          textAlign: 'center',
-                                          cursor: 'default',
-                                        }}
-                                      >
-                                        P
-                                      </Box>
-                                    </Tooltip>
-                                  )}
-
-                                  {isScanned && (
-                                    <Tooltip
-                                      title="Scanned"
-                                      arrow
-                                      slotProps={{
-                                        tooltip: {
-                                          sx: {
-                                            fontSize: '1rem',
-                                            padding: '8px 14px',
-                                          },
-                                        },
-                                        popper: {
-                                          container: containerRef.current,
-                                        },
-                                      }}
-                                    >
-                                      <Box
-                                        sx={{
-                                          backgroundColor: '#1976D2',
-                                          color: 'white',
-                                          fontWeight: 600,
-                                          borderRadius: '6px',
-                                          px: 1,
-                                          py: 0.25,
-                                          fontSize: '0.75rem',
-                                          textAlign: 'center',
-                                          cursor: 'default',
-                                        }}
-                                      >
-                                        S
-                                      </Box>
-                                    </Tooltip>
-                                  )}
-                                </Box>
-                                <Checkbox
-                                  checked={selectedVisitors.includes(visitor.id)}
-                                  onChange={(e) => {
-                                    const isChecked = e.target.checked;
-
-                                    setSelectedVisitors((prev) => {
-                                      if (selectMultiple) {
-                                        if (isChecked) {
-                                          const updated = Array.from(
-                                            new Set([...prev, visitor.id]),
-                                          );
-                                          return updated;
-                                        } else {
-                                          const updated = prev.filter((id) => id !== visitor.id);
-                                          return updated;
-                                        }
-                                      } else {
-                                        if (isChecked) {
-                                          handleSelectRelatedVisitor(visitor);
-                                          return [visitor.id];
-                                        } else {
-                                          return [];
-                                        }
-                                      }
-                                    });
-                                  }}
-                                />
-                              </Box>
-                            </ListItem>
-
-                            <Box
-                              sx={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'flex-start',
-                                mt: 1,
-                                px: 1,
-                                gap: 0.5,
-                              }}
-                            >
-                              <Typography
-                                variant="body1"
-                                fontWeight="medium"
-                                sx={{ lineHeight: 1.3 }}
-                              >
-                                {visitor.agenda || '-'}
-                              </Typography>
-                              <Typography
-                                variant="body2"
-                                color="text.secondary"
-                                sx={{ lineHeight: 1.2 }}
-                              >
-                                {`${formatDateTime(visitor.visitor_period_start)} - ${formatDateTime(
-                                  visitor.visitor_period_end,
-                                  visitor.extend_visitor_period,
-                                )}`}
-                              </Typography>
-                            </Box>
-                            <Divider sx={{ my: 1 }} />
-                          </React.Fragment>
-                        );
-                      })}
-                    </CardContent>
-                    <CardActions sx={{ overflow: 'visible', p: '0' }}>
-                      <Divider />
-                      <Box
-                        display={'flex'}
-                        gap={1}
-                        width={'100%'}
-                        sx={{ mt: 2, justifyContent: 'space-between', marginLeft: '0 !important' }}
-                        flexWrap={theme.breakpoints.down('lg') ? 'nowrap' : 'wrap'}
-                      >
-                        <Box
-                          display="flex"
-                          gap={1}
-                          ref={containerRef}
-                          sx={{ marginLeft: '0 !important' }}
-                        >
-                          <Select
-                            sx={{ width: '130px', height: '40px' }}
-                            value={bulkAction}
-                            onChange={(e: any) => setBulkAction(e.target.value)}
-                            MenuProps={{
-                              disablePortal: true,
-                              container: containerRef.current,
-                            }}
-                          >
-                            {availableActions.map((action) => (
-                              <MenuItem key={action.value} value={action.value}>
-                                {action.label}
-                              </MenuItem>
-                            ))}
-                          </Select>
-
-                          <Button
-                            variant="contained"
-                            color="primary"
-                            sx={{ width: '80px', height: '40px' }}
-                            disabled={!bulkAction || selectedVisitors.length === 0}
-                            onClick={handleApplyBulkAction}
-                          >
-                            {loadingAccess ? 'Apply' : 'Apply'}
-                          </Button>
-                        </Box>
-                        {invitationCode.length > 0 && (
-                          <Box
-                            display={'flex'}
-                            gap={0.5}
-                            alignItems={'center'}
-                            justifyContent={lgUp ? 'flex-end' : 'start'}
-                            flexWrap={lgUp ? 'nowrap' : 'wrap'}
-                            // sx={{ px: 1}}
-                          >
-                            <Tooltip
-                              title="Extend Time"
-                              placement="top"
-                              arrow
-                              slotProps={{
-                                tooltip: {
-                                  sx: {
-                                    fontSize: '1rem',
-                                    padding: '8px 14px',
-                                  },
-                                },
-                                popper: {
-                                  container: containerRef.current,
-                                },
-                              }}
-                            >
-                              <Button
-                                variant="contained"
-                                onClick={() => setOpenExtendVisit(true)}
-                                startIcon={<IconClock size={18} />}
-                                sx={{
-                                  color: '#fff',
-
-                                  background: !relatedVisitors.some(
-                                    (v) =>
-                                      selectedVisitors.includes(v.id) &&
-                                      v.visitor_status === 'Checkin',
-                                  )
-                                    ? undefined
-                                    : 'linear-gradient(135deg, #FFE082 0%, #FFCA28 100%)',
-
-                                  '&.Mui-disabled': {
-                                    background: '#BDBDBD !important',
-                                    color: '#FFFFFF !important',
-                                    opacity: 0.8,
-                                  },
-                                }}
-                                disabled={
-                                  !(
-                                    // invitationCode?.[0]?.visitor_status === 'Checkin' ||
-                                    relatedVisitors.some(
-                                      (v) =>
-                                        selectedVisitors.includes(v.id) &&
-                                        v.visitor_status === 'Checkin',
-                                    )
-                                  )
-                                }
-                              >
-                                Extend
-                              </Button>
-                            </Tooltip>
-                            <Tooltip
-                              title="Card"
-                              placement="top"
-                              arrow
-                              slotProps={{
-                                tooltip: {
-                                  sx: {
-                                    fontSize: '1rem',
-                                    padding: '8px 14px',
-                                  },
-                                },
-                                popper: {
-                                  container: containerRef.current,
-                                },
-                              }}
-                            >
-                              <Button
-                                sx={{
-                                  background: 'linear-gradient(135deg, #AB47BC 0%, #6A1B9A 100%)',
-                                  color: '#fff',
-                                  textWrap: 'wrap',
-                                  whiteSpace: 'normal',
-                                  lineHeight: 1.2,
-                                  textAlign: 'center',
-                                }}
-                                onClick={handleChooseCard}
-                                startIcon={<IconCreditCard size={18} />}
-                              >
-                                Card Issuance
-                              </Button>
-                            </Tooltip>
-
-                            <Tooltip
-                              title="Access Control"
-                              placement="top"
-                              arrow
-                              slotProps={{
-                                tooltip: { sx: { fontSize: '1rem', padding: '8px 14px' } },
-                                popper: {
-                                  container: containerRef.current,
-                                },
-                              }}
-                            >
-                              <Button
-                                sx={{
-                                  background: 'linear-gradient(135deg, #FF9800 0%, #F57C00 100%)',
-                                  color: '#fff',
-                                }}
-                                onClick={() => setOpenAccessData(true)}
-                                startIcon={<IconKey size={18} />}
-                              >
-                                Access
-                              </Button>
-                            </Tooltip>
-                            <Tooltip
-                              title="Print Badge"
-                              placement="top"
-                              arrow
-                              slotProps={{
-                                tooltip: { sx: { fontSize: '1rem', padding: '8px 14px' } },
-                                popper: {
-                                  container: containerRef.current,
-                                },
-                              }}
-                            >
-                              <Button
-                                sx={{
-                                  backgroundColor: '#5f5f5f',
-                                  color: '#fff',
-                                  '&:hover': {
-                                    backgroundColor: '#5f5f5f',
-                                  },
-                                }}
-                                onClick={handlePrintClick}
-                                startIcon={<IconPrinter size={18} />}
-                              >
-                                Print
-                              </Button>
-                            </Tooltip>
-                          </Box>
-                        )}
-                      </Box>
-                    </CardActions>
-                  </Card>
+                  <VisitorListCard
+                    isFullscreen={isFullscreen}
+                    typeVisitor={typeVisitor}
+                    anchorEl={anchorEl}
+                    searchKeyword={searchKeyword}
+                    selectMultiple={selectMultiple}
+                    bulkAction={bulkAction}
+                    selectedVisitors={selectedVisitors}
+                    scannedVisitorNumber={scannedVisitorNumber}
+                    totalVisitors={totalVisitors}
+                    filteredVisitors={filteredVisitors}
+                    relatedVisitors={relatedVisitors}
+                    invitationCode={invitationCode}
+                    availableActions={availableActions}
+                    lgUp={lgUp}
+                    theme={theme}
+                    permissionHook={permissionHook}
+                    containerRef={containerRef}
+                    CustomTextField={CustomTextField}
+                    getCdnUrl={getCdnUrl as (path?: string) => string}
+                    formatDateTime={formatDateTime}
+                    setAnchorEl={setAnchorEl}
+                    setTypeVisitor={
+                      setTypeVisitor as React.Dispatch<React.SetStateAction<'related' | 'live'>>
+                    }
+                    setSearchKeyword={setSearchKeyword}
+                    setSelectMultiple={setSelectMultiple}
+                    setSelectedVisitors={setSelectedVisitors}
+                    setBulkAction={setBulkAction}
+                    setOpenExtendVisit={setOpenExtendVisit}
+                    handleSelectRelatedVisitor={handleSelectRelatedVisitor}
+                    handleApplyBulkAction={handleApplyBulkAction}
+                    handleChooseCard={handleChooseCard}
+                    handlePrintClick={handlePrintClick}
+                  />
                 </Grid>
 
                 <Grid size={{ xs: 12, lg: 3 }}>
@@ -4307,7 +3741,6 @@ const Content = () => {
               availableCount={availableCount}
               handleOpenSwipeDialog={handleOpenSwipeDialog}
               handleConfirmChooseCards={handleConfirmChooseCards}
-              setOpenRevokeDialog={setOpenRevokeDialog}
             />
             {/* Dialog Swipe Card */}
             <SwipeCardDialog
@@ -4319,6 +3752,7 @@ const Content = () => {
               loading={setLoadingAccess}
               currentVisitorIndex={currentVisitorIndex}
               setCurrentVisitorIndex={setCurrentVisitorIndex}
+              initialValues={swipeDialogInitialValues}
             />
 
             {/* Dialog Swipe Access */}
@@ -4335,33 +3769,15 @@ const Content = () => {
 
             {/* Dialog QR Access Issuance */}
             <GrantAccessDialog
-              open={openRevokeDialog}
-              onClose={() => setOpenRevokeDialog(false)}
+              open={openAccessIssuance}
+              onClose={() => setAccessIssuance(false)}
               invitationCode={invitationCode}
               selectedCards={selectedCards}
               handleToggleCard={handleToggleCard}
               dataDummyAccess={dataDummyAccess}
               formatDateTime={formatDateTime}
+              accessData={accessData}
             />
-
-            {/* Dialog Choose registered Site Access Site */}
-            {/* <RegisteredSiteAccessDialog
-            open={openRegisteredSite}
-            onClose={() => {
-              setSelectedSite(null);
-              setOpenRegisteredSiteDialog(false);
-              setAction('');
-            }}
-            siteRegistered={siteRegistered}
-            selectedSite={selectedSite}
-            setSelectedSite={setSelectedSite}
-            action={action}
-            setAction={setAction}
-            containerRef={containerRef.current}
-            onSubmit={(action: 'grant' | 'revoke', site) => {
-              console.log(action, site);
-            }}
-          /> */}
 
             {/* Fill Form Pra regist Multiple*/}
             <FillPraregistrationGroup
@@ -4380,61 +3796,17 @@ const Content = () => {
               formsOf={formsOf}
             />
             {/* Submit Praregister */}
-            <Dialog
+            <FillPraregistrationSingle
               open={openDialogInvitation}
               onClose={() => setOpenDialogInvitation(false)}
-              fullWidth
-              maxWidth="xl"
-              container={containerRef.current}
-            >
-              <DialogTitle>Fill Pra Registration Form</DialogTitle>
-              <IconButton
-                aria-label="close"
-                onClick={() => setOpenDialogInvitation(false)}
-                sx={{
-                  position: 'absolute',
-                  right: 8,
-                  top: 8,
-                  color: (theme) => theme.palette.grey[500],
-                }}
-              >
-                <IconX />
-              </IconButton>
-              {loading ? (
-                <DialogContent
-                  dividers
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    minHeight: 400,
-                  }}
-                >
-                  <CircularProgress />
-                </DialogContent>
-              ) : (
-                <DialogContent dividers>
-                  {selectedInvitationId ? (
-                    <FormDialogPraregist
-                      id={selectedInvitationId ?? invitationCode?.[0]?.id}
-                      onClose={() => setOpenDialogInvitation(false)}
-                      onSubmitted={async (formId?: string) => {
-                        setOpenDialogInvitation(false);
-                        const targetId = formId ?? selectedInvitationId ?? invitationCode?.[0]?.id;
-                        if (!targetId) return;
-                        await fetchRelatedVisitorsByInvitationId(targetId);
-                      }}
-                      onSubmitting={setSubmitting}
-                      containerRef={containerRef.current}
-                    />
-                  ) : (
-                    <Typography variant="body2" textAlign="center" color="text.secondary">
-                      No invitation selected.
-                    </Typography>
-                  )}
-                </DialogContent>
-              )}
-            </Dialog>
+              loadingAccess={loadingAccess}
+              selectedInvitationId={selectedInvitationId ?? invitationCode?.[0]?.id}
+              invitationCode={invitationCode}
+              containerRef={containerRef.current}
+              fetchRelatedVisitorsByInvitationId={fetchRelatedVisitorsByInvitationId}
+              fetchUpcomingPurpose={fetchUpcomingPurpose}
+              registeredSite={registerSiteOperator}
+            />
             {/* Access Dialog */}
             <AccessDialog
               open={openAccessData}

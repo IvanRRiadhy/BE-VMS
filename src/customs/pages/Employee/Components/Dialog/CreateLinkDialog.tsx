@@ -18,7 +18,7 @@ import { useEffect, useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import { getInvitationSite } from 'src/customs/api/Admin/InvitationData';
+import { getInvitationSite, getInvitationVisitorType } from 'src/customs/api/Admin/InvitationData';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { useHost } from 'src/hooks/useHost';
@@ -45,14 +45,37 @@ type FieldKey =
 const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) => {
   const { token } = useSession();
   const { data: host = [] } = useHost();
-  const { data: visitorType = [] } = useVisitorType();
-
+  // const { data: visitorType = [] } = useVisitorType();
+  const [visitorType, setVisitorType] = useState<any[]>([]);
   const [sites, setSites] = useState<any[]>([]);
   useEffect(() => {
+    if (!token) return;
+
     const fetchData = async () => {
-      const res = await getInvitationSite(token as string);
-      setSites(res?.collection ?? []);
+      try {
+        const [siteRes, visitorTypeRes] = await Promise.allSettled([
+          getInvitationSite(token as string),
+          getInvitationVisitorType(token as string),
+        ]);
+
+        if (siteRes.status === 'fulfilled') {
+          setSites(siteRes.value?.collection ?? []);
+        } else {
+          console.error('Failed getInvitationSite:', siteRes.reason);
+          setSites([]);
+        }
+
+        if (visitorTypeRes.status === 'fulfilled') {
+          setVisitorType(visitorTypeRes.value?.collection ?? []);
+        } else {
+          console.error('Failed getVisitorType:', visitorTypeRes.reason);
+          setVisitorType([]);
+        }
+      } catch (error) {
+        console.error('Error fetchData:', error);
+      }
     };
+
     fetchData();
   }, [token]);
 
@@ -168,14 +191,19 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
       }));
   };
 
-  return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-      <DialogTitle>Create Link Invitation</DialogTitle>
+  const handleClose = () => {
+    resetState();
+    onClose();
+  };
 
-      <IconButton onClick={onClose} sx={{ position: 'absolute', right: 8, top: 8 }}>
-        <IconX />
-      </IconButton>
-
+  lalu: return (
+    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
+      <DialogTitle>
+        Create Link Invitation
+        <IconButton onClick={handleClose} sx={{ position: 'absolute', right: 8, top: 8 }}>
+          <IconX />
+        </IconButton>
+      </DialogTitle>
       <DialogContent dividers>
         <Grid container spacing={2}>
           <Grid size={{ xs: 12, md: 6 }}>

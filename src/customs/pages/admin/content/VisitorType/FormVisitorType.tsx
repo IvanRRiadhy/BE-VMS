@@ -601,11 +601,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     ]);
   };
 
-  const options = [
-    { label: 'SPU', value: 'SPU' },
-    { label: 'DC', value: 'DC' },
-  ];
-
   const handleReorder = (key: string, newData: any[]) => {
     setSectionsData((prev: any[]) =>
       prev.map((section, idx) =>

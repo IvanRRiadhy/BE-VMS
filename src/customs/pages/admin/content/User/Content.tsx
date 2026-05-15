@@ -1,28 +1,15 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Divider,
-  IconButton,
-  Tab,
-  Tabs,
-} from '@mui/material';
+import { Box } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import Container from 'src/components/container/PageContainer';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import CloseIcon from '@mui/icons-material/Close';
-import { IconScript, IconUsers } from '@tabler/icons-react';
+import { IconUsers } from '@tabler/icons-react';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { useQuery } from '@tanstack/react-query';
 import {
   deleteUser,
   getAllOrganizations,
-  getAllSite,
   getAllUser,
   getUserById,
 } from 'src/customs/api/admin';
@@ -31,18 +18,16 @@ import {
   AdminNavListingData,
 } from 'src/customs/components/header/navigation/AdminMenu';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
-import { CreateUserSchema, Item, UpdateUserSchema } from 'src/customs/api/models/Admin/User';
+import { CreateUserSchema, Item } from 'src/customs/api/models/Admin/User';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import { useNavigate } from 'react-router';
 import DialogFormUser from './components/DialogFormUser';
 import { GroupRoleId } from 'src/constant/GroupRoleId';
-import { useDebounce } from 'src/hooks/useDebounce';
 import { useQueryClient } from '@tanstack/react-query';
+import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
 
 const Content = () => {
   const { token } = useSession();
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchInput, setSearchInput] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [edittingId, setEdittingId] = useState('');
@@ -51,12 +36,8 @@ const Content = () => {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
-  const [tabValue, setTabValue] = useState(0);
-  const [openDialogSetting, setOpenDialogSetting] = useState(false);
-
-  const handleChangeTab = (event: any, newValue: any) => {
-    setTabValue(newValue);
-  };
+  const navigate = useNavigate();
+  const [organizaitonRes, setOrganizaitonRes] = useState<any[]>([]);
 
   const queryClient = useQueryClient();
 
@@ -64,7 +45,6 @@ const Content = () => {
     queryKey: ['users', token],
     queryFn: async () => {
       const response = await getAllUser(token as string);
-
       return {
         collection: response.collection,
       };
@@ -108,14 +88,11 @@ const Content = () => {
   const handleEdit = async (id: string) => {
     try {
       const response = await getUserById(id, token as string);
-
       const rawGroup = response?.collection?.user_group_id;
 
       const matched = Object.values(GroupRoleId).find(
         (value) => value.toLowerCase() === rawGroup?.toLowerCase(),
       );
-
-      console.log('matched', matched);
 
       setFormAddUser({
         ...response.collection,
@@ -129,15 +106,6 @@ const Content = () => {
     }
   };
 
-  const handleSetting = async (id: string) => {
-    try {
-      setOpenDialogSetting(true);
-    } catch (error) {
-      console.error('Failed to fetch user details:', error);
-      showSwal('error', 'Failed to load user data for editing.');
-    }
-  };
-
   const handleDelete = async (id: string) => {
     const confirmed = await showConfirmDelete(`Are you sure to delete this user?`);
     if (!confirmed) return;
@@ -147,22 +115,17 @@ const Content = () => {
       showSwal('success', 'Successfully deleted user!');
 
       queryClient.invalidateQueries({ queryKey: ['users'] });
-    } catch (error) {
-      showSwal('error', 'Failed to delete user.');
+    } catch (error: any) {
+      showSwal('error', error.response.data.msg || 'Failed to delete user.');
     }
   };
 
-  const navigate = useNavigate();
-
-  const [organizaitonRes, setOrganizaitonRes] = useState<any[]>([]);
   useEffect(() => {
     const fetchData = async () => {
       if (!token) return;
-
       const orgRes = await getAllOrganizations(token);
       setOrganizaitonRes(orgRes.collection ?? []);
     };
-
     fetchData();
   }, [token]);
 
@@ -170,12 +133,16 @@ const Content = () => {
     setSearchInput(keyword);
   }, []);
 
+  const handleSearch = useCallback((keyword: string) => {
+    setSearchInput(keyword);
+    setSearchKeyword(keyword);
+  }, []);
 
-const handleSearch = useCallback((keyword: string) => {
-  setPage(0);
-  setSearchInput(keyword);
-  setSearchKeyword(keyword);
-}, []);
+  const handleDiscard = () => {
+    setConfirmDialogOpen(false);
+    if (pendingEditId) handleEdit(pendingEditId);
+    setPendingEditId(null);
+  };
 
   return (
     <PageContainer
@@ -196,12 +163,6 @@ const handleSearch = useCallback((keyword: string) => {
                 data={filteredData}
                 isHavePagination={false}
                 selectedRows={selectedRows}
-                // defaultRowsPerPage={rowsPerPage}
-                // rowsPerPageOptions={[10, 20, 50, 100, 500]}
-                // onPaginationChange={(newPage, newRowsPerPage) => {
-                //   setPage(newPage);
-                //   setRowsPerPage(newRowsPerPage);
-                // }}
                 isHaveChecked
                 isHaveAction={true}
                 isOperatorSetting={true}
@@ -211,7 +172,7 @@ const handleSearch = useCallback((keyword: string) => {
                 isHaveAddData={true}
                 isHaveSearch={true}
                 isHaveSettingOperator={true}
-                onSettingOperator={(row) => handleSetting(row.id)}
+                // onSettingOperator={(row) => handleSetting(row.id)}
                 // onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
                 searchKeyword={searchInput}
                 onSearch={handleSearch}
@@ -235,103 +196,15 @@ const handleSearch = useCallback((keyword: string) => {
         edittingId={edittingId}
         onSuccess={() => {
           setOpenFormAddDocument(false);
-
           queryClient.invalidateQueries({ queryKey: ['users'] });
         }}
         organizationRes={organizaitonRes}
       />
-
-      {/* Dialog Setting Operator */}
-      <Dialog
-        open={openDialogSetting}
-        onClose={() => setOpenDialogSetting(false)}
-        fullWidth
-        maxWidth="md"
-      >
-        <DialogTitle>Setting Operator</DialogTitle>
-        <IconButton
-          aria-label="close"
-          onClick={() => {
-            setOpenDialogSetting(false);
-          }}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            color: (theme) => theme.palette.grey[500],
-          }}
-        >
-          <CloseIcon />
-        </IconButton>
-        <DialogContent dividers>
-          <Grid container spacing={2}>
-            {/* Bagian kiri: Tabs vertikal */}
-            <Grid size={{ xs: 12, md: 2 }}>
-              <Tabs
-                orientation="vertical"
-                variant="scrollable"
-                value={tabValue}
-                onChange={handleChangeTab}
-                sx={{
-                  borderRight: 1,
-                  borderColor: 'divider',
-                  minHeight: '300px',
-                }}
-              >
-                <Tab label="Registered Site" />
-                <Tab label="Give Access" />
-                <Tab label="Sites" />
-              </Tabs>
-            </Grid>
-
-            {/* Bagian kanan: Konten tab */}
-            <Grid size={{ xs: 12, md: 10 }}>
-              {tabValue === 0 && (
-                <Box>
-                  {/* <Typography variant="h6" gutterBottom>
-                    Register Site
-                  </Typography>
-                  <Typography variant="body2">
-                    Ini adalah konten untuk tab <strong>Register Site</strong>.
-                  </Typography> */}
-                  <DynamicTable data={[]} isHaveHeaderTitle={true} titleHeader="Registered Site" />
-                </Box>
-              )}
-
-              {tabValue === 1 && (
-                <Box>
-                  <DynamicTable data={[]} isHaveHeaderTitle={true} titleHeader="Give Access" />
-                </Box>
-              )}
-              {tabValue === 2 && (
-                <Box>
-                  <DynamicTable data={[]} isHaveHeaderTitle={true} titleHeader="Sites" />
-                </Box>
-              )}
-            </Grid>
-          </Grid>
-        </DialogContent>
-      </Dialog>
-      <Dialog open={confirmDialogOpen} onClose={() => setConfirmDialogOpen(false)}>
-        <DialogTitle>Unsaved Changes</DialogTitle>
-        <DialogContent dividers>
-          You have unsaved changes. Do you want to discard them?
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setConfirmDialogOpen(false)}>Cancel</Button>
-          <Button
-            onClick={() => {
-              setConfirmDialogOpen(false);
-              if (pendingEditId) handleEdit(pendingEditId);
-              setPendingEditId(null);
-            }}
-            color="primary"
-            variant="contained"
-          >
-            Yes, Discard Changes and Continue
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmUnsavedDialog
+        open={confirmDialogOpen}
+        onClose={() => setConfirmDialogOpen(false)}
+        onDiscard={handleDiscard}
+      />
     </PageContainer>
   );
 };

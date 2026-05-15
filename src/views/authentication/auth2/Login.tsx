@@ -101,12 +101,16 @@ const Login = () => {
     try {
       const response = await login(body);
       // const { token, group_id } = response.collection;
-      const { token, user_group_id, employee_id, type, role_access } = response.collection;
+      const { token, user_group_id, employee_id, fullname, email, phone, type, role_access } =
+        response.collection;
       saveToken(token, user_group_id, role_access);
 
       dispatch(
         setUser({
+          fullname,
+          email,
           employee_id,
+          phone,
         }),
       );
 
@@ -289,7 +293,11 @@ const Login = () => {
                 spacing={0}
                 justifyContent="center"
                 alignItems={'stretch'}
-                sx={{ height: { xs: '100vh', lg: '95vh' } }}
+                // height={'100%'}
+                // sx={{ height: { xs: '100vh', lg: '95vh' } }}
+                sx={{
+                  minHeight: '100vh',
+                }}
               >
                 <Grid
                   size={{ xs: 12, sm: 12, lg: 6 }}

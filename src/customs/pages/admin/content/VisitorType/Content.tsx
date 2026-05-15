@@ -1,9 +1,7 @@
 import { useEffect, useState, useCallback, useLayoutEffect } from 'react';
 import {
   Box,
-  Button,
   Dialog,
-  DialogActions,
   DialogContent,
   DialogTitle,
   CircularProgress,
@@ -215,7 +213,7 @@ const Content = () => {
 
   const handleEdit = async (id: string) => {
     try {
-      setLoadingData(true);
+      // setLoading(true);
       setIsDuplicateMode(false);
       const resp = await getVisitorTypeById(token as string, id);
       const raw = resp?.collection;
@@ -252,7 +250,7 @@ const Content = () => {
     } catch (err) {
       console.error('Error fetching visitor type detail:', err);
     } finally {
-      setLoadingData(false);
+      // setLoading(false);
     }
   };
 
@@ -378,8 +376,8 @@ const Content = () => {
 
       setRefreshTrigger((prev) => prev + 1);
       showSwal('success', 'Successfully deleted visitor type!');
-    } catch (error) {
-      showSwal('error', 'Failed to delete visitor type.');
+    } catch (error:any) {
+      showSwal('error', error.response.data.msg || 'Failed to delete visitor type.');
     } finally {
       setTimeout(() => {
         setLoadingData(false);

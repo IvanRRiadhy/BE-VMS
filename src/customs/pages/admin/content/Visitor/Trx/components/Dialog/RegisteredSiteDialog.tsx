@@ -9,6 +9,7 @@ import {
   Button,
   TextField,
   Autocomplete,
+  DialogActions,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { IconArrowRight } from '@tabler/icons-react';
@@ -68,9 +69,7 @@ const RegisteredSiteDialog: React.FC<Props> = ({
         </IconButton>
       </DialogTitle>
 
-      <Divider />
-
-      <DialogContent>
+      <DialogContent dividers>
         <CustomFormLabel sx={{ marginTop: 0 }}>Registered Site</CustomFormLabel>
         <Autocomplete
           fullWidth
@@ -82,11 +81,11 @@ const RegisteredSiteDialog: React.FC<Props> = ({
           renderInput={(params) => <TextField {...params} label="" />}
         />
 
-        <Box display="flex" justifyContent="flex-end" mt={3}>
+        <DialogActions>
           <Button variant="contained" onClick={handleNext} endIcon={<IconArrowRight width={18} />}>
             Next
           </Button>
-        </Box>
+        </DialogActions>
       </DialogContent>
     </Dialog>
   );

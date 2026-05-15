@@ -7,7 +7,6 @@ import { store, persistor } from './store/Store';
 import './utils/i18n';
 import { SessionProvider } from './customs/contexts/SessionContext';
 import { PersistGate } from 'redux-persist/integration/react';
-import { BrowserRouter, createBrowserRouter } from 'react-router';
 import { AuthProvider } from './customs/contexts/AuthProvider';
 import App from './App';
 import './App.css';
@@ -19,8 +18,8 @@ import { initializeAxiosBaseURL } from './customs/api/interceptor';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 30,
-      gcTime: 1000 * 60 * 5,
+      staleTime: 1000 * 60 * 1,
+      gcTime: 1000 * 60 * 1,
       refetchOnWindowFocus: false,
     },
   },

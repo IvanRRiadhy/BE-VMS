@@ -2467,60 +2467,69 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       const previewSrc = getPreviewSrc(key, (item as any).answer_file);
       const shownName = uploadNames[key] || fileNameFromAnswer((item as any).answer_file);
       const errorMessage = fieldErrors[key];
-
+      const remark = (item.remarks || '').toLowerCase();
+      if (remark === 'visitor_period_end') {
+        return null;
+      }
+      const isVisitorPeriodPair =
+        remark === 'visitor_period_start' &&
+        filteredDetails[index + 1] &&
+        (filteredDetails[index + 1].remarks || '').toLowerCase() === 'visitor_period_end';
       return (
         <TableRow key={key}>
           <TableCell>
-            <Box display="flex" alignItems="center" gap={0.5} mb={1}>
-              <CustomFormLabel sx={{ mb: 1, mt: 0 }} required={item.mandatory === true}>
-                {item.long_display_text}
-              </CustomFormLabel>
-              {item.remarks === 'host' && (
-                <Tooltip
-                  title="The host is the person in charge responsible for this visitor"
-                  arrow
-                  placement="top"
-                >
-                  <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
-                </Tooltip>
-              )}
-              {item.remarks === 'agenda' && (
-                <Tooltip
-                  title="The agenda is the purpose of the visitor's visit"
-                  arrow
-                  placement="top"
-                >
-                  <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
-                </Tooltip>
-              )}
-              {item.remarks === 'site_place' && (
-                <Tooltip
-                  title="The site place is the location where the visitor will be received"
-                  arrow
-                  placement="top"
-                >
-                  <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
-                </Tooltip>
-              )}
-              {item.remarks === 'visitor_period_start' && (
-                <Tooltip
-                  title="The visitor period start is the date when the visitor's visit begins"
-                  arrow
-                  placement="top"
-                >
-                  <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
-                </Tooltip>
-              )}
-              {item.remarks === 'visitor_period_end' && (
-                <Tooltip
-                  title="The visitor period end is the date when the visitor's visit ends"
-                  arrow
-                  placement="top"
-                >
-                  <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
-                </Tooltip>
-              )}
-            </Box>
+            {!isVisitorPeriodPair && (
+              <Box display="flex" alignItems="center" gap={0.5} mb={1}>
+                <CustomFormLabel sx={{ mb: 1, mt: 0 }} required={item.mandatory === true}>
+                  {item.long_display_text}
+                </CustomFormLabel>
+                {item.remarks === 'host' && (
+                  <Tooltip
+                    title="The host is the person in charge responsible for this visitor"
+                    arrow
+                    placement="top"
+                  >
+                    <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                  </Tooltip>
+                )}
+                {item.remarks === 'agenda' && (
+                  <Tooltip
+                    title="The agenda is the purpose of the visitor's visit"
+                    arrow
+                    placement="top"
+                  >
+                    <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                  </Tooltip>
+                )}
+                {item.remarks === 'site_place' && (
+                  <Tooltip
+                    title="The site place is the location where the visitor will be received"
+                    arrow
+                    placement="top"
+                  >
+                    <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                  </Tooltip>
+                )}
+                {item.remarks === 'visitor_period_start' && (
+                  <Tooltip
+                    title="The visitor period start is the date when the visitor's visit begins"
+                    arrow
+                    placement="top"
+                  >
+                    <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                  </Tooltip>
+                )}
+                {item.remarks === 'visitor_period_end' && (
+                  <Tooltip
+                    title="The visitor period end is the date when the visitor's visit ends"
+                    arrow
+                    placement="top"
+                  >
+                    <IconInfoCircle size={20} style={{ color: '#1976d2', cursor: 'pointer' }} />
+                  </Tooltip>
+                )}
+              </Box>
+            )}
             {(() => {
               switch (item.field_type) {
                 case 0: // Text
@@ -3112,7 +3121,158 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       />
                     </LocalizationProvider>
                   );
-                case 9:
+
+                case 9: {
+                  const remark = (item.remarks || '').toLowerCase();
+                  if (
+                    remark === 'visitor_period_start' &&
+                    filteredDetails[index + 1] &&
+                    (filteredDetails[index + 1].remarks || '').toLowerCase() ===
+                      'visitor_period_end'
+                  ) {
+                    const startItem = item;
+                    const endItem = filteredDetails[index + 1];
+
+                    const startIndex = details.findIndex((d) => d.id === startItem.id);
+                    const endIndex = details.findIndex((d) => d.id === endItem.id);
+
+                    const startKey = `${activeStep - 1}:${startItem.id}`;
+                    const endKey = `${activeStep - 1}:${endItem.id}`;
+
+                    const startError = fieldErrors[startKey];
+                    const endError = fieldErrors[endKey];
+
+                    return (
+                      <Box sx={{ width: '100%' }}>
+                        <Grid container spacing={2}>
+                          {/* Kiri: Visitor Period Start */}
+                          <Grid size={{ xs: 12, md: 6 }}>
+                            <Box display="flex" alignItems="center" gap={0.5} mb={1}>
+                              <Typography variant="subtitle2" fontWeight={600}>
+                                {startItem.long_display_text}
+                                {startItem.mandatory && (
+                                  <Typography component="span" color="error" sx={{ ml: 0.5 }}>
+                                    *
+                                  </Typography>
+                                )}
+                              </Typography>
+
+                              <Tooltip
+                                title="The visitor period start is the date when the visitor's visit begins"
+                                arrow
+                                placement="top"
+                              >
+                                <IconInfoCircle
+                                  size={20}
+                                  style={{ color: '#1976d2', cursor: 'pointer' }}
+                                />
+                              </Tooltip>
+                            </Box>
+
+                            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
+                              <DateTimePicker
+                                value={
+                                  startItem.answer_datetime
+                                    ? dayjs(startItem.answer_datetime)
+                                    : null
+                                }
+                                ampm={false}
+                                onChange={(newValue) => {
+                                  if (newValue) {
+                                    const utc = newValue.utc().format();
+                                    onChange(startIndex, 'answer_datetime', utc);
+                                    clearFieldError(startKey);
+                                    if (
+                                      endItem.answer_datetime &&
+                                      dayjs(endItem.answer_datetime).isBefore(newValue)
+                                    ) {
+                                      onChange(endIndex, 'answer_datetime', '');
+                                    }
+                                  }
+                                }}
+                                format="dddd, DD MMMM YYYY, HH:mm"
+                                viewRenderers={{
+                                  hours: renderTimeViewClock,
+                                  minutes: renderTimeViewClock,
+                                  seconds: renderTimeViewClock,
+                                }}
+                                slotProps={{
+                                  textField: {
+                                    fullWidth: true,
+                                    error: !!startError,
+                                    helperText: startError,
+                                  },
+                                }}
+                              />
+                            </LocalizationProvider>
+                          </Grid>
+
+                          {/* Kanan: Visitor Period End */}
+                          <Grid size={{ xs: 12, md: 6 }}>
+                            <Box display="flex" alignItems="center" gap={0.5} mb={1}>
+                              <Typography variant="subtitle2" fontWeight={600}>
+                                {endItem.long_display_text}
+                                {endItem.mandatory && (
+                                  <Typography component="span" color="error" sx={{ ml: 0.5 }}>
+                                    *
+                                  </Typography>
+                                )}
+                              </Typography>
+
+                              <Tooltip
+                                title="The visitor period end is the date when the visitor's visit ends"
+                                arrow
+                                placement="top"
+                              >
+                                <IconInfoCircle
+                                  size={20}
+                                  style={{ color: '#1976d2', cursor: 'pointer' }}
+                                />
+                              </Tooltip>
+                            </Box>
+
+                            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
+                              <DateTimePicker
+                                value={
+                                  endItem.answer_datetime ? dayjs(endItem.answer_datetime) : null
+                                }
+                                ampm={false}
+                                minDateTime={
+                                  startItem.answer_datetime
+                                    ? dayjs(startItem.answer_datetime)
+                                    : undefined
+                                }
+                                onChange={(newValue) => {
+                                  if (newValue) {
+                                    const utc = newValue.utc().format();
+                                    onChange(endIndex, 'answer_datetime', utc);
+                                    clearFieldError(endKey);
+                                  }
+                                }}
+                                format="dddd, DD MMMM YYYY, HH:mm"
+                                viewRenderers={{
+                                  hours: renderTimeViewClock,
+                                  minutes: renderTimeViewClock,
+                                  seconds: renderTimeViewClock,
+                                }}
+                                slotProps={{
+                                  textField: {
+                                    fullWidth: true,
+                                    error: !!endError,
+                                    helperText: endError,
+                                  },
+                                }}
+                              />
+                            </LocalizationProvider>
+                          </Grid>
+                        </Grid>
+                      </Box>
+                    );
+                  }
+                  if (remark === 'visitor_period_end') {
+                    return null;
+                  }
+
                   return (
                     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
                       <DateTimePicker
@@ -3125,6 +3285,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           if (newValue) {
                             const utc = newValue.utc().format();
                             onChange(index, 'answer_datetime', utc);
+                            clearFieldError(key);
                           }
                         }}
                         format="dddd, DD MMMM YYYY, HH:mm"
@@ -3139,14 +3300,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             error: !!errorMessage,
                             helperText: errorMessage,
                           },
-                          // popper: {
-                          //   container: containerRef.current,
-                          // },
                         }}
                       />
                     </LocalizationProvider>
                   );
-
+                }
                 case 10:
                   return (
                     <Box>
@@ -4132,7 +4290,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         setNextDialogOpen(false);
       }, 700);
 
-      toast('Failed to create visitor.', 'error');
+      showSwal('error', err?.response.data.msg?? err.response.data.message ?? 'Failed to create visitor.');
+      // toast('Failed to create visitor.', 'error');
 
       if (err?.name === 'ZodError') {
         const fieldErrors: Record<string, string> = {};
@@ -4666,13 +4825,21 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   };
 
   const isVisitorEmpty = (visitor: any) => {
-    return !visitor.question_page?.some((page: any) =>
-      page.form?.some((f: any) => f.answer_text || f.answer_datetime || f.answer_file),
+    if (!visitor?.question_page?.length) return true;
+
+    return !visitor.question_page.some((page: any) =>
+      page?.form?.some((f: any) => f?.answer_text || f?.answer_datetime || f?.answer_file),
     );
   };
 
-  const hasAnyFilled = groupVisitors.some((g) => g.data_visitor?.some((v) => !isVisitorEmpty(v)));
+  const hasSavedGroupData = groupVisitors.some(
+    (g) => Array.isArray(g?.data_visitor) && g.data_visitor.some((v: any) => !isVisitorEmpty(v)),
+  );
 
+  const hasCurrentEditingData =
+    Array.isArray(dataVisitor) && dataVisitor.some((v: any) => !isVisitorEmpty(v));
+
+  const hasAnyFilled = hasSavedGroupData || hasCurrentEditingData;
   return (
     <PageContainer title="Operator View" description="this is operator view">
       <form onSubmit={handleOnSubmit}>

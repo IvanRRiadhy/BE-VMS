@@ -1,10 +1,9 @@
 import {
-  Button,
   Grid2 as Grid,
   Typography,
   CircularProgress,
   Paper,
-  Button as MuiButton,
+  Button,
   MenuItem,
   Divider,
   TableContainer,
@@ -13,10 +12,9 @@ import {
   TableRow,
   TableCell,
   TableBody,
-  Backdrop,
 } from '@mui/material';
 import { Box } from '@mui/system';
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { useSession } from 'src/customs/contexts/SessionContext';
@@ -40,10 +38,6 @@ interface FormCustomFieldProps {
 const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCustomFieldProps) => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
-  const [alertType, setAlertType] = useState<'info' | 'success' | 'error'>('info');
-  const [alertMessage, setAlertMessage] = useState<string>(
-    'Complete the following data properly and correctly',
-  );
   const { token } = useSession();
 
   const [multiOptionList, setMultiOptionList] = useState<multiOptField[]>(
@@ -78,10 +72,8 @@ const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCu
         ...formData,
         multiple_option_fields: multiOptionList,
       };
-      // console.log('Data being sent to API:', data);
       const parsedData = CreateCustomFieldRequestSchema.parse(data);
-      // console.log(editingId);
-      // console.log('Setting Data: ', parsedData);
+
       if (editingId && editingId !== '') {
         await updateCustomField(token as string, parsedData, editingId);
       } else {
@@ -99,7 +91,7 @@ const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCu
       if (err?.errors) {
         setErrors(err.errors);
       }
-      showSwal('error', 'Something went wrong. Please try again later.');
+      showSwal('error', err.response.data.msg ?? 'Failed to create custom field.');
     } finally {
       setTimeout(() => {
         setLoading(false);
@@ -162,7 +154,7 @@ const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCu
               lg: formData.field_type <= 2 ? 6 : 8,
             }}
           >
-            <Paper sx={{ p: 0  }}>
+            <Paper sx={{ p: 0 }}>
               <Typography variant="h6" sx={{ my: 0, borderLeft: '4px solid #673ab7', pl: 1 }}>
                 Custom Field's Input
               </Typography>
@@ -186,7 +178,7 @@ const FormCustomField = ({ formData, setFormData, editingId, onSuccess }: FormCu
                     required
                   >
                     {Object.entries(FieldType)
-                      .filter(([k, v]) => isNaN(Number(k)))
+                      .filter(([k]) => isNaN(Number(k)))
                       .map(([key, value]) => (
                         <MenuItem key={value} value={value}>
                           {formatEnumLabel(key)}

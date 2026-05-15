@@ -24,7 +24,14 @@ import { AuthVisitor, login } from 'src/customs/api/users';
 import { Link, Link as RouterLink, useNavigate } from 'react-router';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { useAuth } from 'src/customs/contexts/AuthProvider';
-import { IconArrowNarrowLeft, IconArrowsLeft, IconEye, IconEyeOff, IconUser, IconUserPlus } from '@tabler/icons-react';
+import {
+  IconArrowNarrowLeft,
+  IconArrowsLeft,
+  IconEye,
+  IconEyeOff,
+  IconUser,
+  IconUserPlus,
+} from '@tabler/icons-react';
 import Logo from 'src/assets/images/logos/bi_pic.png';
 import BannerBI from 'src/assets/images/backgrounds/Banner-Tupoksi.jpg';
 import Footer from '../components/Footer';
@@ -36,7 +43,6 @@ const ForgotPassword = () => {
   const { saveToken } = useSession();
   const dispatch = useDispatch();
   const navigate = useNavigate();
-
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
@@ -75,23 +81,24 @@ const ForgotPassword = () => {
           <Box
             sx={{
               position: 'relative',
-              '&:before': {
-                content: '""',
-                background: 'radial-gradient(#d2f1df, #d3d7fa, #bad8f4)',
-                backgroundSize: '400% 400%',
-                animation: 'gradient 15s ease infinite',
-                position: 'absolute',
-                height: '100%',
-                width: '100%',
-                opacity: '0.3',
-              },
+              // '&:before': {
+              //   content: '""',
+              //   background: 'radial-gradient(#d2f1df, #d3d7fa, #bad8f4)',
+              //   backgroundSize: '400% 400%',
+              //   animation: 'gradient 15s ease infinite',
+              //   position: 'absolute',
+              //   height: '100%',
+              //   width: '100%',
+              //   opacity: '0.3',
+              // },
             }}
           >
             <Grid
               container
               spacing={0}
+              alignItems="center"
               justifyContent="center"
-              sx={{ height: { xs: '100vh', lg: '80vh' } }}
+              sx={{ minHeight: '100vh' }}
             >
               <Grid
                 size={{ xs: 12, sm: 12, lg: 6 }}
@@ -108,7 +115,8 @@ const ForgotPassword = () => {
                     zIndex: 1,
                     width: '100%',
                     maxWidth: '550px',
-                    height: { xs: '65%', lg: '80%' },
+                    minHeight: '600px',
+                    // height: { xs: '65%', lg: '80%' },
                     borderTopLeftRadius: '20px',
                     borderBottomLeftRadius: '20px',
                     backgroundColor: 'primary.main',
@@ -147,7 +155,8 @@ const ForgotPassword = () => {
                     p: 4,
                     zIndex: 1,
                     width: '100%',
-                    height: { md: '65%', lg: '80%' },
+                    // height: { md: '65%', lg: '80%' },
+                    minHeight: '600px',
                     maxWidth: '550px',
                     borderLeft: '0 !important',
                     borderRadius: 2,

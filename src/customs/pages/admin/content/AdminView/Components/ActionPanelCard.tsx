@@ -6,6 +6,7 @@ import {
   IconClock,
   IconDoor,
   IconKey,
+  IconLockAccess,
   IconLogin,
   IconLogout,
   IconMapPinCheck,
@@ -16,10 +17,11 @@ import {
   IconUser,
 } from '@tabler/icons-react';
 import { FC } from 'react';
-import { usePermission } from 'src/hooks/usePermission';
+import { Skeleton } from '@mui/material';
 
 interface Props {
   permission: any;
+  loading: boolean;
   isFullscreen: boolean;
   handleOpenScanQR: () => void;
   handleActionClick: (type: string) => void;
@@ -29,10 +31,16 @@ interface Props {
   setOpenPreRegistration: (value: boolean) => void;
   setOpenInvitationVisitor: (value: boolean) => void;
   setOpenReturnCard: (value: boolean) => void;
+  setAccessIssuance: (value: boolean) => void;
 }
+
+const ButtonSkeleton = () => (
+  <Skeleton variant="rounded" width="100%" height={35} sx={{ borderRadius: '8px' }} />
+);
 
 const ActionPanelCard: FC<Props> = ({
   permission,
+  loading,
   isFullscreen,
   handleOpenScanQR,
   handleActionClick,
@@ -42,17 +50,8 @@ const ActionPanelCard: FC<Props> = ({
   setOpenPreRegistration,
   setOpenInvitationVisitor,
   setOpenReturnCard,
+  setAccessIssuance,
 }) => {
-  // const {
-  //   canCheckin,
-  //   canCheckout,
-  //   canManageInvite,
-  //   canBlacklist,
-  //   canCardIssuance,
-  //   canVisitorTriggerOpen,
-  //   canParking,
-  //   canExtend,
-  // } = permission;
   return (
     <Grid
       size={{ xs: 12, lg: 4.5 }}
@@ -96,7 +95,7 @@ const ActionPanelCard: FC<Props> = ({
                 slotProps={{
                   tooltip: {
                     sx: {
-                      fontSize: '1rem',
+                      fontSize: '0.7rem',
                       padding: '8px 14px',
                     },
                   },
@@ -126,7 +125,6 @@ const ActionPanelCard: FC<Props> = ({
                   </Typography>
                 </Button>
               </Tooltip>
-
               <Box display={'flex'} mt={0.5} gap={1}>
                 <Button
                   variant="contained"
@@ -283,39 +281,37 @@ const ActionPanelCard: FC<Props> = ({
                   </Button>
                 </Grid>
               </Grid>
+              <Grid size={{ xs: 6, lg: 6 }}>
+                <Button
+                  variant="contained"
+                  startIcon={<IconLockAccess size={25} />}
+                  onClick={() => handleOpenAction('access')}
+                  // onClick={() => setAccessIssuance(true)}
+
+                  size="large"
+                  sx={{
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    px: 2.5,
+                    background: 'linear-gradient(135deg, #FF9800 0%, #F57C00 100%)',
+                    boxShadow: '0 2px 6px rgba(255, 152, 0, 0.4)',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #FB8C00 0%, #E65100 100%)',
+                    },
+                    zIndex: 999,
+                    width: '100%',
+                    height: '50px',
+                    p: 0,
+                  }}
+                >
+                  <Typography variant="h6" color="white">
+                    Access Issuance
+                  </Typography>
+                </Button>
+              </Grid>
             </Grid>
             <Grid size={{ xs: 12, xl: 5 }}>
               <Grid container spacing={isFullscreen ? 1.5 : 1.5}>
-                {/* Access */}
-                {/* <Grid size={{ xs: 6, lg: 6 }}>
-                  <Button
-                    variant="contained"
-                    startIcon={<IconKey size={25} />}
-                    onClick={() => handleOpenAction('access')}
-                    size="large"
-                    sx={{
-                      textTransform: 'none',
-                      fontWeight: 600,
-                      px: 2.5,
-                      background: 'linear-gradient(135deg, #FF9800 0%, #F57C00 100%)',
-                      boxShadow: '0 2px 6px rgba(255, 152, 0, 0.4)',
-                      '&:hover': {
-                        background: 'linear-gradient(135deg, #FB8C00 0%, #E65100 100%)',
-                      },
-                      zIndex: 999,
-                      width: '100%',
-                      height: '50px',
-                      p: 0,
-                    }}
-                  >
-                    <Typography variant="h6" color="white">
-                      Access
-                    </Typography>
-                  </Button>
-                </Grid> */}
-
-                {/* Parking */}
-
                 <Grid size={{ xs: 6, lg: 6 }}>
                   <Button
                     variant="contained"
@@ -436,7 +432,6 @@ const ActionPanelCard: FC<Props> = ({
                     Print
                   </Button>
                 </Grid>
-
                 <Grid size={{ xs: 6, lg: 6 }}>
                   <Button
                     variant="contained"
@@ -468,6 +463,7 @@ const ActionPanelCard: FC<Props> = ({
                     startIcon={<IconPencil size={25} />}
                     // onClick={handleOpenScanQR}
                     // onClick={() => handleActionBlacklist('blacklist')}
+                    onClick={() => handleOpenAction('enable')}
                     size="large"
                     sx={{
                       // background: '#5f5f5f',
@@ -490,8 +486,7 @@ const ActionPanelCard: FC<Props> = ({
                   <Button
                     variant="contained"
                     startIcon={<IconPencil size={25} />}
-                    // onClick={handleOpenScanQR}
-                    // onClick={() => handleActionBlacklist('blacklist')}
+                    onClick={() => handleOpenAction('edit')}
                     size="large"
                     sx={{
                       // background: '#5f5f5f',
