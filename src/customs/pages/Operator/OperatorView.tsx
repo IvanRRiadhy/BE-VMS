@@ -164,7 +164,7 @@ const OperatorView = () => {
   const durationOptions = [15, 30, 45, 60, 90, 120, 150, 180];
   const [openFillForm, setOpenFillForm] = useState(false);
   const [fillFormData, setFillFormData] = useState<any[]>([]);
-  const [fillFormActiveStep, setFillFormActiveStep] = useState(0);
+  const [fillFormActiveStep, setFillFormActiveStep] = useState(-1);
   const [fillFormDataVisitor, setFillFormDataVisitor] = useState<any[]>([]);
   const [openDialogInfo, setOpenDialogInfo] = useState(false);
   const [openSwipeDialog, setOpenSwipeDialog] = useState(false);
@@ -208,6 +208,7 @@ const OperatorView = () => {
   const [wsPayload, setWsPayload] = useState<any>(null);
   const wsImageQueueRef = useRef<string[]>([]);
   const wsOcrQueueRef = useRef<string[]>([]);
+  const [isSelfGroup, setIsSelfGroup] = useState<boolean | null>(null);
   const [tick, forceTick] = useState(0);
   const socketRef = useRef<WebSocket | null>(null);
   const [sitesOperator, setSitesOperator] = useState<any[]>([]);
@@ -2181,7 +2182,7 @@ const OperatorView = () => {
 
       const baseSections = buildGroupSections(questionPagesTemplate);
       setFillFormData(baseSections);
-      setFillFormActiveStep(0);
+      setFillFormActiveStep(-1);
 
       const visitorGroupList = results.map((res, idx) => {
         const v = visitorList[idx];
@@ -2199,34 +2200,9 @@ const OperatorView = () => {
           question_page: structuredClone(wrappedSections),
         };
       });
-
       setFillFormDataVisitor(visitorGroupList);
-      Swal.fire({
-        title: 'Confirmation',
-        text: 'Are you filling out this form for yourself?',
-        icon: 'question',
-        showCancelButton: true,
-        // showCloseButton: true,
-        confirmButtonText: 'Yes',
-        cancelButtonText: 'No',
-        reverseButtons: true,
-        confirmButtonColor: '#16a34a',
-        cancelButtonColor: '#9e9e9e',
-      }).then((result) => {
-        if (result.isConfirmed) {
-          setSelfRegisterData({
-            is_self_registered: true,
-            filled_by_relationship: 'Self',
-          });
-        } else {
-          setSelfRegisterData({
-            is_self_registered: false,
-            filled_by_relationship: '',
-          });
-        }
 
-        setOpenFillForm(true);
-      });
+      setOpenFillForm(true);
     } catch (e: any) {
       const message =
         e?.response?.data?.msg ??
@@ -2346,10 +2322,6 @@ const OperatorView = () => {
                 name: emp.name,
               }));
               break;
-
-            // case 'site_place':
-            //   options = [{ value: sitePlaceId, name: sitePlaceName }];
-            //   break;
 
             case 'site_place':
               options = sitePlaceName
@@ -2837,7 +2809,6 @@ const OperatorView = () => {
     const perm = permissionAccess.find(
       (p) => p.access_control_id?.toLowerCase() === accessId.toLowerCase(),
     );
-    // console.log('perm', perm);
 
     if (!perm) return [];
 
@@ -2926,8 +2897,6 @@ const OperatorView = () => {
     );
   }, [selectedAccessIds, selectedVisitors, accessData, permissionAccess]);
 
-  const user = useSelector((state: any) => state.userReducer.data);
-
   // Multiple
   const handleSubmitPramultiple = async () => {
     try {
@@ -2960,16 +2929,8 @@ const OperatorView = () => {
           tz: tzFromApi,
           registered_site_id: registerSiteOperator,
           flow: 'SubmitPraRegister',
-
-          is_self_registered: selfRegisterData?.is_self_registered ?? false,
-
-          filled_by_name: user?.fullname ?? null,
-          filled_by_email: user?.email ?? null,
-          filled_by_phone: user?.phone ?? null,
-
-          ...(selfRegisterData?.is_self_registered && {
-            filled_by_relationship: selfRegisterData?.filled_by_relationship ?? 'Self',
-          }),
+          is_self_registered: isSelfGroup === true,
+          filled_by_relationship: 'Operator',
           data_visitor: [
             {
               question_page: questionPageTemplate.map((templateSection: any) => ({
@@ -3049,7 +3010,7 @@ const OperatorView = () => {
       });
 
       const payload = { list_group: dataList };
-      // console.log('Final Payload (MULTI-VISITOR FIXED):', JSON.stringify(payload, null, 2));
+      console.log('Final Payload (MULTI-VISITOR FIXED):', JSON.stringify(payload, null, 2));
       await createSubmitCompletePraMultiple(token as string, payload);
       showSwal('success', 'Successfully Pra Register!');
       setRelatedVisitors((prev) =>
@@ -3085,48 +3046,9 @@ const OperatorView = () => {
   };
 
   const [openDialogInvitation, setOpenDialogInvitation] = useState(false);
-  const [selfRegisterData, setSelfRegisterData] = useState({
-    is_self_registered: false,
-    filled_by_relationship: '',
-  });
-  // const handleView = async (id: string) => {
-  //   setSelectedInvitationId(id);
-  //   setOpenDialogInvitation(true);
-  // };
-
   const handleView = async (id: string) => {
     setSelectedInvitationId(id);
-
-    Swal.fire({
-      title: 'Confirmation',
-      text: 'Are you filling out this form for yourself?',
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonText: 'Yes',
-      cancelButtonText: 'No',
-      reverseButtons: true,
-      confirmButtonColor: '#16a34a',
-      // showCloseButton: true,
-      // customClass: {
-      //   title: 'swal2-title-custom',
-      //   popup: 'swal-popup-custom',
-      //   closeButton: 'swal-close-red',
-      // },
-    }).then((result) => {
-      if (result.isConfirmed) {
-        setSelfRegisterData({
-          is_self_registered: true,
-          filled_by_relationship: 'Self',
-        });
-      } else {
-        setSelfRegisterData({
-          is_self_registered: false,
-          filled_by_relationship: '',
-        });
-      }
-
-      setOpenDialogInvitation(true);
-    });
+    setOpenDialogInvitation(true);
   };
 
   const validateMultiVisitorAccess = (
@@ -3826,7 +3748,10 @@ const OperatorView = () => {
             renderFieldInput={renderFieldInput}
             getSectionType={getSectionType}
             formsOf={formsOf}
+            isSelfGroup={isSelfGroup}
+            setIsSelfGroup={setIsSelfGroup}
           />
+
           {/* Submit Praregister */}
           <FillPraregistrationSingle
             open={openDialogInvitation}
@@ -3838,7 +3763,6 @@ const OperatorView = () => {
             fetchRelatedVisitorsByInvitationId={fetchRelatedVisitorsByInvitationId}
             fetchUpcomingPurpose={fetchUpcomingPurpose}
             registeredSite={registerSiteOperator}
-            selfRegisterData={selfRegisterData}
           />
 
           {/* Access Dialog */}
@@ -3920,6 +3844,7 @@ const OperatorView = () => {
                 employee={employee}
                 allVisitorEmployee={allVisitorEmployee}
                 vtLoading={vtLoading}
+                enableInvitationTypeStep={true}
               />
             </DialogContent>
           </Dialog>
@@ -3963,6 +3888,7 @@ const OperatorView = () => {
                 employee={employee}
                 allVisitorEmployee={allVisitorEmployee}
                 vtLoading={vtLoading}
+                enableInvitationTypeStep={false}
               />
             </DialogContent>
           </Dialog>

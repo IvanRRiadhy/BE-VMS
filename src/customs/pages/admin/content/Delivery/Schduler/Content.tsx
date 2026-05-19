@@ -52,6 +52,8 @@ import {
 } from 'src/customs/api/models/Admin/Scheduler';
 import SchedulerForm from './SchedulerForm';
 import FilterMoreContent from './FilterMoreContent';
+import ConfirmUnsavedDialog from '../../../components/ConfirmUnsavedDialog';
+import SchedulerErrorDialog from './Dialog/SchedulerErrorDialog';
 
 interface Filters {
   visitor_type_id: string | null;
@@ -130,7 +132,7 @@ const Content = () => {
       const res = await getAllTimezone(token as string);
       return res.collection;
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 1,
     enabled: !!token,
   });
 
@@ -140,7 +142,7 @@ const Content = () => {
       const res = await getVisitorEmployee(token as string);
       return res.collection;
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 1,
     enabled: !!token,
   });
 
@@ -150,7 +152,7 @@ const Content = () => {
       const res = await getAllSite(token as string);
       return res.collection;
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 1,
     enabled: !!token,
   });
 
@@ -160,7 +162,7 @@ const Content = () => {
       const res = await getAllVisitorType(token as string);
       return res.collection;
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 1,
     enabled: !!token,
   });
 
@@ -212,10 +214,6 @@ const Content = () => {
         setTotalFilteredRecords(res.RecordsFiltered ?? collection.length);
         setTotalRecords(res.RecordsTotal ?? collection.length);
       } catch (error) {
-        // setSchedulerData([]);
-        // setRawSchedulerData([]);
-        // setTotalFilteredRecords(0);
-        // setTotalRecords(0);
       } finally {
         setTimeout(() => setLoading(false), 500);
       }
@@ -295,12 +293,11 @@ const Content = () => {
     setSearchInput(keyword);
   }, []);
 
-
-const handleSearch = useCallback((keyword: string) => {
-  setPage(0);
-  setSearchInput(keyword);
-  setSearchKeyword(keyword);
-}, []);
+  const handleSearch = useCallback((keyword: string) => {
+    setPage(0);
+    setSearchInput(keyword);
+    setSearchKeyword(keyword);
+  }, []);
 
   const handleCloseScheduler = (_: any, reason?: string) => {
     if (isDirty) {
@@ -308,6 +305,12 @@ const handleSearch = useCallback((keyword: string) => {
       return;
     }
 
+    setOpenDialogScheduler(false);
+  };
+
+  const handleDiscard = () => {
+    localStorage.removeItem('unsavedSchedulerData');
+    setConfirmDialogOpen(false);
     setOpenDialogScheduler(false);
   };
 
@@ -369,9 +372,7 @@ const handleSearch = useCallback((keyword: string) => {
               searchKeyword={searchInput}
               onSearch={handleSearch}
               onSearchKeywordChange={handleSearchKeywordChange}
-              onAddData={() => {
-                handleAdd();
-              }}
+              onAddData={handleAdd}
             />
           </Grid>
         </Box>
@@ -412,125 +413,17 @@ const handleSearch = useCallback((keyword: string) => {
           </DialogContent>
         </Dialog>
 
-        <Dialog
+        <SchedulerErrorDialog
           open={errorDialogOpen}
           onClose={() => setErrorDialogOpen(false)}
-          maxWidth="xl"
-          fullWidth
-        >
-          <DialogTitle>This Required Fields on visitor type</DialogTitle>
-          <IconButton
-            aria-label="close"
-            onClick={() => setErrorDialogOpen(false)}
-            sx={{
-              position: 'absolute',
-              right: 8,
-              top: 8,
-              color: (theme) => theme.palette.grey[500],
-            }}
-          >
-            <IconX />
-          </IconButton>
+          rows={errorDialogRows}
+        />
 
-          <DialogContent dividers>
-            <TableContainer component={Paper} elevation={3} sx={{ borderRadius: 2 }}>
-              <Table size="small" sx={{ minWidth: 650 }}>
-                {/* TABLE HEAD */}
-                <TableHead>
-                  <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                    <TableCell
-                      colSpan={errorDialogRows.length}
-                      sx={{
-                        fontWeight: 'bold',
-                        fontSize: '1rem',
-                        textAlign: 'start',
-                      }}
-                    >
-                      Missing Field
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-
-                <TableBody>
-                  {errorDialogRows.length > 0 ? (
-                    <TableRow
-                      sx={{
-                        '&:nth-of-type(odd)': { backgroundColor: '#fafafa' },
-                        '& td': { paddingY: 1.5 },
-                      }}
-                    >
-                      {errorDialogRows.map((item, index) => (
-                        <TableCell
-                          key={index}
-                          align="center"
-                          sx={{
-                            borderLeft: '1px solid #eee',
-                            borderRight:
-                              index === errorDialogRows.length - 1 ? 'none' : '1px solid #eee',
-                            paddingX: 2,
-                            fontSize: '0.95rem',
-                          }}
-                        >
-                          {item.short_name}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ) : (
-                    <TableRow>
-                      <TableCell
-                        colSpan={errorDialogRows.length + 1}
-                        align="center"
-                        sx={{ padding: 3, fontStyle: 'italic', color: 'text.secondary' }}
-                      >
-                        No missing field details.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog
+        <ConfirmUnsavedDialog
           open={confirmDialogOpen}
           onClose={() => setConfirmDialogOpen(false)}
-          fullWidth
-          maxWidth="sm"
-        >
-          <DialogTitle>
-            Unsaved Changes
-            <IconButton
-              aria-label="close"
-              onClick={() => setConfirmDialogOpen(false)}
-              sx={{
-                position: 'absolute',
-                right: 8,
-                top: 8,
-                color: (theme) => theme.palette.grey[500],
-              }}
-            >
-              <IconX />
-            </IconButton>
-          </DialogTitle>
-          <DialogContent dividers>
-            You have unsaved changes. Do you want to discard them?
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setConfirmDialogOpen(false)}>Cancel</Button>
-            <Button
-              onClick={() => {
-                localStorage.removeItem('unsavedSchedulerData');
-                setConfirmDialogOpen(false);
-                setOpenDialogScheduler(false);
-              }}
-              color="primary"
-              variant="contained"
-            >
-              Yes, Discard and Continue
-            </Button>
-          </DialogActions>
-        </Dialog>
+          onDiscard={handleDiscard}
+        />
 
         <Portal>
           <Backdrop

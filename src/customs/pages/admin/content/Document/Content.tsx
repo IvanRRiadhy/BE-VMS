@@ -221,7 +221,6 @@ const Content = () => {
         showSwal('success', `${rows.length} items have been deleted.`);
         setSelectedRows([]);
       } catch (error) {
-        console.error(error);
         showSwal('error', 'Failed to delete some items.');
       } finally {
         setLoading(false);
@@ -303,7 +302,7 @@ const Content = () => {
                 onSearch={handleSearch}
                 onSearchKeywordChange={handleSearchKeywordChange}
                 onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
-                onAddData={() => handleAdd()}
+                onAddData={handleAdd}
                 htmlFields={['document_text']}
                 htmlClampLines={4}
                 htmlMaxWidth={500}

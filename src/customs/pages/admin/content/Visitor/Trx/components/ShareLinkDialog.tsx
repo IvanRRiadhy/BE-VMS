@@ -50,6 +50,7 @@ const ShareLinkDialog: React.FC<Props> = ({
           agenda: item.agenda,
           url: item.url,
           current_usage: item.current_usage,
+          shorten_url: item.shorten_url,
           max_usage: item.max_usage,
           visitor_period_start: formatDateTime(item.visitor_period_start),
           visitor_period_end: formatDateTime(item.visitor_period_end),

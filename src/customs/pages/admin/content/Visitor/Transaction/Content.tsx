@@ -5,23 +5,18 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
-  DialogActions,
   CircularProgress,
-  TextField,
-  Card,
   Skeleton,
   Grid2 as Grid,
   IconButton,
   Button,
   Typography,
   Portal,
-  Autocomplete,
   Snackbar,
   Alert,
   TableRow,
   TableCell,
   TableHead,
-  Collapse,
   Table,
   TableBody,
   TableContainer,
@@ -88,6 +83,12 @@ import ConfirmUnsavedDialog from '../../../components/ConfirmUnsavedDialog';
 import QrScannerDialog from '../Trx/components/Dialog/QrScannerDialog';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import RegisteredSiteDialog from '../Trx/components/Dialog/RegisteredSiteDialog';
+import { useVisitorType } from 'src/hooks/useVisitorType';
+import { useSites } from 'src/hooks/useSites';
+import { useEmployees } from 'src/hooks/useEmployees';
+import { useVisitorEmployees } from 'src/hooks/useVisitorEmployees';
+import InvitationVisitorDialog from '../Trx/components/InvitationVisitorDialog';
+import PreRegistrationDialog from '../Trx/components/PreRegistrationDialog';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -106,7 +107,6 @@ const Content = () => {
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const [sortDir, setSortDir] = useState<string>('desc');
   const [loading, setLoading] = useState(false);
-  // const [refreshTrigger, setRefreshTrigger] = useState(0);
   const theme = useTheme();
   const mdUp = useMediaQuery(theme.breakpoints.up('md'));
 
@@ -310,7 +310,6 @@ const Content = () => {
       setTotalRecords(res.RecordsTotal);
       setTotalFilteredRecords(res.RecordsFiltered);
     } catch (err) {
-      // setTableRowVisitors([]);
     } finally {
       setLoading(false);
     }
@@ -452,53 +451,73 @@ const Content = () => {
     // setShowDrawerFilterMore(false);
   };
 
-  const { data: visitorType = [], isLoading: vtLoading } = useQuery({
-    queryKey: ['visitorType'],
-    queryFn: async () => {
-      const res = await getAllVisitorType(token as string);
-      return res?.collection || [];
-    },
-    enabled: !!token,
-    staleTime: 0,
-    refetchOnMount: true,
-    refetchOnWindowFocus: false,
-  });
+  // const { data: visitorType = [], isLoading: vtLoading } = useQuery({
+  //   queryKey: ['visitorType'],
+  //   queryFn: async () => {
+  //     const res = await getAllVisitorType(token as string);
+  //     return res?.collection || [];
+  //   },
+  //   enabled: !!token,
+  //   staleTime: 0,
+  //   refetchOnMount: true,
+  //   refetchOnWindowFocus: false,
+  // });
+  // const { data: sites = [], isLoading: siteLoading } = useQuery({
+  //   queryKey: ['sites'],
+  //   queryFn: async () => {
+  //     const res = await getAllSite(token as string);
+  //     return res?.collection ?? [];
+  //   },
+  //   enabled: !!token,
+  //   staleTime: 0,
+  //   refetchOnMount: true,
+  //   refetchOnWindowFocus: false,
+  // });
 
-  const { data: sites = [], isLoading: siteLoading } = useQuery({
-    queryKey: ['sites'],
-    queryFn: async () => {
-      const res = await getAllSite(token as string);
-      return res?.collection ?? [];
-    },
-    enabled: !!token,
-    staleTime: 0,
-    refetchOnMount: true,
-    refetchOnWindowFocus: false,
-  });
+  // const { data: employee = [], isLoading: employeeLoading } = useQuery({
+  //   queryKey: ['employee'],
+  //   queryFn: async () => {
+  //     const res = await getAllEmployee(token as string);
+  //     return res?.collection ?? [];
+  //   },
+  //   enabled: !!token,
+  //   staleTime: 0,
+  //   refetchOnMount: true,
+  //   refetchOnWindowFocus: false,
+  // });
 
-  const { data: employee = [], isLoading: employeeLoading } = useQuery({
-    queryKey: ['employee'],
-    queryFn: async () => {
-      const res = await getAllEmployee(token as string);
-      return res?.collection ?? [];
-    },
-    enabled: !!token,
-    staleTime: 0,
-    refetchOnMount: true,
-    refetchOnWindowFocus: false,
-  });
+  // const { data: allVisitorEmployee = [], isLoading: visitorEmployeeLoading } = useQuery({
+  //   queryKey: ['allVisitorEmployee'],
+  //   queryFn: async () => {
+  //     const res = await getVisitorEmployee(token as string);
+  //     return res?.collection ?? [];
+  //   },
+  //   enabled: !!token,
+  //   staleTime: 0,
+  //   refetchOnMount: true,
+  //   refetchOnWindowFocus: false,
+  // });
 
-  const { data: allVisitorEmployee = [], isLoading: visitorEmployeeLoading } = useQuery({
-    queryKey: ['allVisitorEmployee'],
-    queryFn: async () => {
-      const res = await getVisitorEmployee(token as string);
-      return res?.collection ?? [];
-    },
-    enabled: !!token,
-    staleTime: 0,
-    refetchOnMount: true,
-    refetchOnWindowFocus: false,
-  });
+  const { visitorType } = useVisitorType(token as string);
+  const { sites } = useSites(token as string);
+  const { employee } = useEmployees(token as string);
+  const { allVisitorEmployee } = useVisitorEmployees(token as string);
+  const [vtLoading, setVtLoading] = useState(false);
+
+  const handleSelectSite = (site: any) => {
+    setFormDataAddVisitor((prev) => ({
+      ...prev,
+      registered_site: site.id,
+    }));
+
+    setOpenDialogIndex(null);
+
+    if (flowTarget === 'invitation') {
+      setOpenInvitationVisitor(true);
+    } else if (flowTarget === 'preReg') {
+      setOpenPreRegistration(true);
+    }
+  };
 
   return (
     <PageContainer
@@ -700,103 +719,43 @@ const Content = () => {
           </Box>
         </Box>
       </Container>
-      {/* Add New Invitation Visitor */}
-      <Dialog
-        fullWidth
-        // maxWidth="xl"
+
+      <InvitationVisitorDialog
         open={openInvitationVisitor}
         onClose={handleDialogClose}
-        keepMounted
-        maxWidth={false}
-        PaperProps={{
-          sx: {
-            width: '100vw',
-          },
-        }}
-      >
-        <DialogTitle
-          display="flex"
-          justifyContent={'space-between'}
-          alignItems="center"
-          // sx={{
-          //   background: 'linear-gradient(135deg, rgba(2,132,199,0.05), rgba(99,102,241,0.08))',
-          // }}
-        >
-          Add Invitation Visitor
-          <IconButton
-            aria-label="close"
-            onClick={() => {
-              if (isFormChanged) {
-                openDiscardForCloseAdd();
-              } else {
-                handleCloseDialog();
-              }
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <Divider />
-        <DialogContent>
-          <FormWizardAddVisitor
-            key={wizardKey}
-            formData={formDataAddVisitor}
-            setFormData={setFormDataAddVisitor}
-            edittingId={edittingId}
-            onSuccess={handleSuccess}
-            visitorType={visitorType}
-            sites={sites}
-            employee={employee}
-            allVisitorEmployee={allVisitorEmployee}
-            vtLoading={vtLoading}
-          />
-        </DialogContent>
-      </Dialog>
-      {/* Add Pre registration */}
-      <Dialog
-        fullWidth
-        // maxWidth="xl"
-        maxWidth={false}
-        PaperProps={{
-          sx: {
-            width: '100vw',
-          },
-        }}
+        handleDialogClose={handleDialogClose}
+        handleCloseDialog={handleCloseDialog}
+        openDiscardForCloseAdd={openDiscardForCloseAdd}
+        isFormChanged={isFormChanged}
+        wizardKey={wizardKey}
+        formDataAddVisitor={formDataAddVisitor}
+        setFormDataAddVisitor={setFormDataAddVisitor}
+        edittingId={edittingId}
+        handleSuccess={handleSuccess}
+        visitorType={visitorType}
+        sites={sites}
+        employee={employee}
+        allVisitorEmployee={allVisitorEmployee}
+        vtLoading={vtLoading}
+      />
+
+      <PreRegistrationDialog
         open={openPreRegistration}
-        onClose={handleDialogClose}
-      >
-        <DialogTitle display="flex" justifyContent={'space-between'} alignItems="center">
-          Add Pra Registration
-          <IconButton
-            aria-label="close"
-            onClick={() => {
-              if (isFormChanged) {
-                openDiscardForCloseAdd();
-              } else {
-                handleCloseDialog();
-              }
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <Divider />
-        <DialogContent sx={{ paddingTop: '0px' }}>
-          <br />
-          <FormWizardAddInvitation
-            key={wizardKey}
-            formData={formDataAddVisitor}
-            setFormData={setFormDataAddVisitor}
-            edittingId={edittingId}
-            onSuccess={handleSuccess}
-            visitorType={visitorType}
-            sites={sites}
-            employee={employee}
-            allVisitorEmployee={allVisitorEmployee}
-            vtLoading={vtLoading}
-          />
-        </DialogContent>
-      </Dialog>
+        handleDialogClose={handleDialogClose}
+        handleCloseDialog={handleCloseDialog}
+        openDiscardForCloseAdd={openDiscardForCloseAdd}
+        isFormChanged={isFormChanged}
+        wizardKey={wizardKey}
+        formDataAddVisitor={formDataAddVisitor}
+        setFormDataAddVisitor={setFormDataAddVisitor}
+        edittingId={edittingId}
+        handleSuccess={handleSuccess}
+        visitorType={visitorType}
+        sites={sites}
+        employee={employee}
+        allVisitorEmployee={allVisitorEmployee}
+        vtLoading={vtLoading}
+      />
 
       {/* Select Registered Site */}
       <RegisteredSiteDialog
@@ -814,18 +773,7 @@ const Content = () => {
         onDiscard={openDiscardForCloseAdd}
         onClose={handleCloseDialog}
         toast={toast as any}
-        onSubmit={(site) => {
-          setFormDataAddVisitor((prev) => ({
-            ...prev,
-            registered_site: site.id,
-          }));
-          setOpenDialogIndex(null);
-          if (flowTarget === 'invitation') {
-            setOpenInvitationVisitor(true);
-          } else if (flowTarget === 'preReg') {
-            setOpenPreRegistration(true);
-          }
-        }}
+        onSubmit={handleSelectSite}
       />
 
       {/* QR Code */}

@@ -414,7 +414,6 @@ const Content = () => {
         showSwal('success', `${rows.length} items have been deleted.`);
         setSelectedRows([]);
       } catch (error) {
-        console.error(error);
         showSwal('error', 'Failed to delete some items.');
       } finally {
         setLoading(false);
@@ -540,9 +539,7 @@ const handleSearch = useCallback((keyword: string) => {
                 searchKeyword={searchInput}
                 onSearch={handleSearch}
                 onSearchKeywordChange={handleSearchKeywordChange}
-                onAddData={() => {
-                  handleAdd();
-                }}
+                onAddData={handleAdd}
               />
             </Grid>
           </Grid>

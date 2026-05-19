@@ -42,7 +42,8 @@
     "notification": "Notification",
     "history": "History",
     "invitation": "Invitation",
-    "approval": "Approval"
+    "approval": "Approval",
+    "visitor_role": "Visitor Role"
   },
   "print_badge": "Print Badge",
   "transction_visitor": "Transction Visitor",

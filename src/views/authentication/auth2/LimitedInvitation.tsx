@@ -8,7 +8,7 @@ import PageContainer from 'src/components/container/PageContainer';
 
 const LimitedInvitation = () => {
   return (
-    <PageContainer title="Limited Invitation Page" description="this is Login page">
+    <PageContainer title="Limited Invitation" description="this is Login page">
       <div
         style={{
           minHeight: '100vh',

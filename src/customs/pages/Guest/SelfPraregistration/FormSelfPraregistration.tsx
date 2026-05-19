@@ -7,6 +7,7 @@ import {
   Autocomplete,
   Backdrop,
   Button,
+  Card,
   Checkbox,
   CircularProgress,
   FormControl,
@@ -29,6 +30,7 @@ import {
   TableHead,
   TableRow,
   TextField,
+  Tooltip,
   Typography,
   useTheme,
 } from '@mui/material';
@@ -36,6 +38,8 @@ import type { AlertColor } from '@mui/material/Alert';
 import {
   IconArrowLeft,
   IconArrowRight,
+  IconInfoCircle,
+  IconPlus,
   IconTrash,
   IconUser,
   IconUsers,
@@ -48,6 +52,7 @@ import { Box, useMediaQuery } from '@mui/system';
 import {
   CreateGroupVisitorRequestSchema,
   CreateVisitorRequestSchema,
+  FormField,
   FormVisitor,
   SectionPageVisitor,
 } from 'src/customs/api/models/Admin/Visitor';
@@ -75,6 +80,11 @@ import {
 import PreviewDialog from './components/PreviewDialog';
 import { useNavigate } from 'react-router';
 import Swal from 'sweetalert2';
+type VisitorItem = {
+  question_page: SectionPageVisitor[];
+  single_page: FormField[];
+  type?: string;
+};
 
 const FormSelfPraregistration = ({
   invitation = {},
@@ -113,10 +123,16 @@ const FormSelfPraregistration = ({
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewPayload, setPreviewPayload] = useState<any>(null);
   const [previewSections, setPreviewSections] = useState<any>(null);
+  const [type, setType] = useState('');
   // const [siteTree, setSiteTree] = useState<any[]>([]);
   const [activeGroupIdx, setActiveGroupIdx] = useState(0);
-  const [dataVisitor, setDataVisitor] = useState<{ question_page: SectionPageVisitor[] }[]>([]);
+  const [dataVisitor, setDataVisitor] = useState<VisitorItem[]>([]);
   const [uploadMethods, setUploadMethods] = useState<Record<string, 'file' | 'camera'>>({});
+  const [otherForm, setOtherForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+  });
   const [groupedPages, setGroupedPages] = useState<any>({
     single_page: [],
     batch_page: {},
@@ -130,6 +146,15 @@ const FormSelfPraregistration = ({
   const [selectedSiteParentIds, setSelectedSiteParentIds] = useState<string[]>([]);
   const [selectedSiteIds, setSelectedSiteIds] = useState<string[]>([]);
   const webcamRef = useRef<Webcam>(null);
+  const validateOtherForm = () => {
+    if (!otherForm.name || !otherForm.email || !otherForm.phone) {
+      showSwal('info', 'Please complete name, email, and phone information');
+      return false;
+    }
+
+    return true;
+  };
+
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -171,7 +196,6 @@ const FormSelfPraregistration = ({
     return out;
   };
 
-  // helpers
   const sanitize = (v?: string | null) => (v ?? '').trim().toLowerCase();
 
   const indexBy = (arr: any[]) => {
@@ -291,8 +315,6 @@ const FormSelfPraregistration = ({
     setPreviewPayload(null);
     setPreviewSections(null);
     setPreviewOpen(false);
-
-    // reset state UI
     setInputValues({});
     setSelectedSiteParentIds([]);
     setSelectedSiteIds([]);
@@ -332,10 +354,11 @@ const FormSelfPraregistration = ({
 
   const handleOnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // if (!token) return;
+    if (!validateOtherForm()) return;
     try {
       const tz =
         moment.tz?.guess?.() || Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Jakarta';
+
       const mapField = (field: FormVisitor, sortIdx: number) => {
         const base: any = {
           sort: field.sort ?? sortIdx,
@@ -397,8 +420,11 @@ const FormSelfPraregistration = ({
         tz: tz,
         is_group: isGroup,
         flow: 'InvitationShareLink',
-        // visitor_role: 'Visitor',
-        // ...(TYPE_REGISTERED !== 0 && { registered_site: formData.registered_site ?? '' }),
+        is_self_registered: false,
+        filled_by_name: otherForm.name,
+        filled_by_email: otherForm.email,
+        filled_by_phone: otherForm.phone,
+        filled_by_relationship: 'Other',
       };
 
       // let payload: CreateVisitorRequest | CreateGroupVisitorRequest;
@@ -465,6 +491,11 @@ const FormSelfPraregistration = ({
             tz: tz,
             flow: 'InvitationShareLink',
             type_registered: TYPE_REGISTERED,
+            is_self_registered: false,
+            filled_by_name: otherForm.name,
+            filled_by_email: otherForm.email,
+            filled_by_phone: otherForm.phone,
+            filled_by_relationship: 'Other',
             data_visitor: cleanDataVisitor,
           };
         });
@@ -472,7 +503,7 @@ const FormSelfPraregistration = ({
         payload = { list_group };
 
         const parsed = CreateGroupVisitorRequestSchema.parse(payload);
-        // console.log('🚀 Final Payload (Group):', JSON.stringify(parsed, null, 2));
+        console.log('🚀 Final Payload (Group):', JSON.stringify(parsed, null, 2));
 
         await createSubmitGroupShareLink(token as string, code, timestamp, parsed);
         setLoading(false);
@@ -501,7 +532,7 @@ const FormSelfPraregistration = ({
           ...baseMeta,
           data_visitor: [{ question_page }],
         };
-        // console.log('🚀 Final Payload (Single):', JSON.stringify(payload, null, 2));
+        console.log('🚀 Final Payload (Single):', JSON.stringify(payload, null, 2));
 
         const parsed = CreateVisitorRequestSchema.parse(payload);
         setLoading(false);
@@ -756,7 +787,7 @@ const FormSelfPraregistration = ({
       },
     ];
 
-    setDataVisitor(result);
+    setDataVisitor(result as any);
     return result;
   };
 
@@ -1131,11 +1162,12 @@ const FormSelfPraregistration = ({
       return;
     }
 
-    setDataVisitor((prev) => {
+    setDataVisitor((prev: any) => {
       if (prev.length === 0) return prev;
 
       const clone = JSON.parse(JSON.stringify(prev[0])) as {
         question_page: SectionPageVisitor[];
+        type: string;
       };
       clone.question_page.forEach((page) => {
         (page.form ?? []).forEach((f) => {
@@ -1144,6 +1176,8 @@ const FormSelfPraregistration = ({
           f.answer_file = '';
         });
       });
+
+      clone.type = '';
 
       const next = [...prev, clone];
       setActiveGroupIdx(next.length - 1);
@@ -1403,7 +1437,7 @@ const FormSelfPraregistration = ({
 
         case 4: // Date
           return (
-            <TextField
+            <CustomTextField
               type="date"
               size="small"
               value={field.answer_datetime}
@@ -1891,6 +1925,8 @@ const FormSelfPraregistration = ({
     }));
   };
 
+  const [visitorRoles, setVisitorRoles] = useState<any[]>([]);
+
   useEffect(() => {
     if (!formData.visitor_type) return;
 
@@ -1902,6 +1938,9 @@ const FormSelfPraregistration = ({
         formData.visitor_type,
       );
       const sections = res?.collection?.section_page_visitor_types ?? [];
+      const roles = res?.collection?.visitor_roles ?? [];
+
+      setVisitorRoles(roles);
       const injected = injectInvitationData(sections, invitation);
       setRawSections(injected);
     };
@@ -2039,6 +2078,11 @@ const FormSelfPraregistration = ({
                     <Box display="flex" alignItems="center" gap={1}>
                       <IconUser size={18} />
                       Single
+                      <Tooltip title="Only one visitor can be added" arrow>
+                        <IconButton size="small" sx={{ ml: 0 }}>
+                          <IconInfoCircle size={22} />
+                        </IconButton>
+                      </Tooltip>
                     </Box>
                   }
                 />
@@ -2063,11 +2107,11 @@ const FormSelfPraregistration = ({
                     <Box display="flex" alignItems="center" gap={1}>
                       <IconUsers size={18} />
                       Group
-                      {/* <Tooltip title="When activated, you can add more than one visitor">
-                        <IconButton size="small" sx={{ ml: 0.5 }}>
-                          <IconInfoCircle size={16} />
+                      <Tooltip title="Multiple visitors can be added" arrow>
+                        <IconButton size="small" sx={{ ml: 0 }}>
+                          <IconInfoCircle size={22} />
                         </IconButton>
-                      </Tooltip> */}
+                      </Tooltip>
                     </Box>
                   }
                 />
@@ -2177,8 +2221,9 @@ const FormSelfPraregistration = ({
                       size="small"
                       onClick={handleAddGroup}
                       sx={{ mb: 1, mt: 1 }}
+                      startIcon={<IconPlus />}
                     >
-                      + Add Group
+                   Add Group
                     </Button>
                   )}
                 </Box>
@@ -2305,6 +2350,37 @@ const FormSelfPraregistration = ({
                                     </AccordionSummary>
 
                                     <AccordionDetails>
+                                      <Box sx={{ width: '100%', mb: 2 }}>
+                                        <CustomFormLabel>Role (Opsional)</CustomFormLabel>
+
+                                        <CustomTextField
+                                          select
+                                          size="small"
+                                          fullWidth
+                                          value={dataVisitor[gIdx]?.type || ''}
+                                          onChange={(e) => {
+                                            const selectedRole = e.target.value;
+
+                                            setDataVisitor((prev: any[]) => {
+                                              const updated = [...prev];
+                                              updated[gIdx] = {
+                                                ...updated[gIdx],
+                                                type: selectedRole,
+                                              };
+
+                                              return updated;
+                                            });
+                                          }}
+                                        >
+                                          <MenuItem value="">Select Role</MenuItem>
+
+                                          {visitorRoles.map((role: any) => (
+                                            <MenuItem key={role.id} value={role.role}>
+                                              {role.role}
+                                            </MenuItem>
+                                          ))}
+                                        </CustomTextField>
+                                      </Box>
                                       {page.form?.map((field: any, fIdx: any) => {
                                         const matchedKey = Object.keys(
                                           groupedPages.batch_page || {},
@@ -2362,6 +2438,7 @@ const FormSelfPraregistration = ({
                               sx={{ my: 2 }}
                               variant="contained"
                               fullWidth
+                              startIcon={<IconPlus />}
                             >
                               Add New
                             </Button>
@@ -2377,6 +2454,9 @@ const FormSelfPraregistration = ({
                           >
                             <TableHead>
                               <TableRow>
+                                <TableCell>
+                                  <CustomFormLabel>Role (Opsional)</CustomFormLabel>
+                                </TableCell>
                                 {(dataVisitor[0]?.question_page[activeStep - 1]?.form || []).map(
                                   (f: any, i: any) => (
                                     <TableCell key={f.custom_field_id || i}>
@@ -2404,6 +2484,35 @@ const FormSelfPraregistration = ({
 
                                   return (
                                     <TableRow key={gIdx}>
+                                      <TableCell sx={{ minWidth: 200 }}>
+                                        <CustomTextField
+                                          select
+                                          size="small"
+                                          fullWidth
+                                          value={dataVisitor[gIdx]?.type || ''}
+                                          onChange={(e) => {
+                                            const selectedRole = e.target.value;
+
+                                            setDataVisitor((prev: any[]) => {
+                                              const updated = [...prev];
+                                              updated[gIdx] = {
+                                                ...updated[gIdx],
+                                                type: selectedRole,
+                                              };
+
+                                              return updated;
+                                            });
+                                          }}
+                                        >
+                                          <MenuItem value="">Select Role</MenuItem>
+
+                                          {visitorRoles.map((role: any) => (
+                                            <MenuItem key={role.id} value={role.role}>
+                                              {role.role}
+                                            </MenuItem>
+                                          ))}
+                                        </CustomTextField>
+                                      </TableCell>
                                       {fields.map((field: any) => {
                                         const matchedKey = Object.keys(
                                           groupedPages.batch_page || {},
@@ -2484,6 +2593,7 @@ const FormSelfPraregistration = ({
                                     onClick={handleAddDetails}
                                     sx={{ mx: 1, my: 1 }}
                                     variant="contained"
+                                    startIcon={<IconPlus />}
                                   >
                                     Add New
                                   </Button>
@@ -2878,9 +2988,11 @@ const FormSelfPraregistration = ({
 
       if (isGroup) {
         await createSubmitGroupShareLink(token as string, code, timestamp, previewPayload);
-        toast('Group visitor created successfully.', 'success');
+        // toast('Group visitor created successfully.', 'success');
+        showSwal('success', 'Group visitor created successfully.');
       } else {
-        await createSubmitShareLink(token as string, code, timestamp, previewPayload);
+        // await createSubmitShareLink(token as string, code, timestamp, previewPayload);
+        console.log('preview payload', previewPayload);
         const successMessage =
           TYPE_REGISTERED === 0
             ? 'Pre-registration created successfully.'
@@ -2908,6 +3020,8 @@ const FormSelfPraregistration = ({
     g.data_visitor?.some((v: any) => !isVisitorEmpty(v)),
   );
 
+  const [picCompleted, setPicCompleted] = useState(false);
+
   return (
     <>
       <form
@@ -2918,247 +3032,466 @@ const FormSelfPraregistration = ({
         }}
       >
         <Box width="100%">
-          {!isMobile ? (
-            <DragDropContext onDragEnd={() => {}}>
-              <Droppable
-                droppableId="stepper"
-                direction="horizontal"
-                isDropDisabled={true}
-                isCombineEnabled={false}
-                ignoreContainerClipping={false}
-              >
-                {(provided) => (
-                  <div
-                    ref={provided.innerRef}
-                    {...provided.droppableProps}
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'center',
-                      padding: '0 0',
-                      //   marginTop: '10px',
-                    }}
-                  >
-                    <Stepper
-                      activeStep={activeStep}
-                      // onClick={() => handleStepChange(0)}
-                      // connector={<CustomConnector />}
-                      alternativeLabel
-                      sx={{
-                        width: '100%',
-                        mb: 1,
-                        flexWrap: 'nowrap',
-                        justifyContent: 'flex-start',
-                        // columnGap: 6,
-                        '& .MuiStep-root': {
-                          flex: '1 1 0',
-                          // px: 1.5,
-                        },
-                        '& .MuiStepLabel-label': {
-                          fontSize: '0.875rem',
-                          whiteSpace: 'nowrap',
-                          maxWidth: 200,
-                          overflow: 'hidden',
-                          textWrap: 'wrap',
-                          // textOverflow: 'ellipsis',
-                          textAlign: 'center',
-                        },
-                        '& .MuiStepIcon-root': {
-                          width: 30,
-                          height: 30,
-                        },
+          {/* {!picCompleted ? (
+            <Card
+              elevation={0}
+              sx={{
+                mb: 3,
+                borderRadius: 3,
+                border: '1px solid',
+                borderColor: 'divider',
+                background:
+                  'linear-gradient(135deg, rgba(25,118,210,0.04) 0%, rgba(25,118,210,0.01) 100%)',
+              }}
+            >
+              <Box p={3} pb={1}>
+                <Box mb={3}>
+                  <Typography variant="h5" fontWeight={700}>
+                    Person Filling This Form
+                  </Typography>
+
+                  <Typography variant="body2" color="text.secondary" mt={0.5}>
+                    Please fill in the data of the person registering this visitor.
+                  </Typography>
+                </Box>
+
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <CustomFormLabel required sx={{ mt: 0 }}>
+                      Name
+                    </CustomFormLabel>
+
+                    <CustomTextField
+                      fullWidth
+                      placeholder="Input Your Name"
+                      value={otherForm.name}
+                      onChange={(e: any) =>
+                        setOtherForm((prev) => ({
+                          ...prev,
+                          name: e.target.value,
+                        }))
+                      }
+                    />
+                  </Grid>
+
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <CustomFormLabel required sx={{ mt: 0 }}>
+                      Email
+                    </CustomFormLabel>
+
+                    <CustomTextField
+                      fullWidth
+                      type="email"
+                      placeholder="Input Your Email"
+                      value={otherForm.email}
+                      onChange={(e: any) =>
+                        setOtherForm((prev) => ({
+                          ...prev,
+                          email: e.target.value,
+                        }))
+                      }
+                    />
+                  </Grid>
+
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <CustomFormLabel required sx={{ mt: 0 }}>
+                      Phone Number
+                    </CustomFormLabel>
+
+                    <CustomTextField
+                      fullWidth
+                      placeholder="Input Your Phone Number"
+                      value={otherForm.phone}
+                      onChange={(e: any) =>
+                        setOtherForm((prev) => ({
+                          ...prev,
+                          phone: e.target.value,
+                        }))
+                      }
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 12 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                      <Button
+                        variant="contained"
+                        onClick={() => {
+                          if (!otherForm.name || !otherForm.email || !otherForm.phone) {
+                            // showSwal('warning', 'Please complete PIC information');
+                            showSwal('info', 'Please complete name, email, and phone information');
+                            return;
+                          }
+
+                          setPicCompleted(true);
+                        }}
+                        endIcon={<IconArrowRight />}
+                      >
+                        Next
+                      </Button>
+                    </Box>
+                  </Grid>
+                </Grid>
+              </Box>
+            </Card>
+          ) : ( */}
+          <>
+            {!isMobile ? (
+              <DragDropContext onDragEnd={() => {}}>
+                <Droppable
+                  droppableId="stepper"
+                  direction="horizontal"
+                  isDropDisabled={true}
+                  isCombineEnabled={false}
+                  ignoreContainerClipping={false}
+                >
+                  {(provided) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        padding: '0 0',
+                        //   marginTop: '10px',
                       }}
                     >
-                      {/* Static Step Pertama */}
-                      <Step
-                        key="User Type"
-                        completed={false}
+                      <Stepper
+                        activeStep={activeStep}
+                        // onClick={() => handleStepChange(0)}
+                        // connector={<CustomConnector />}
+                        alternativeLabel
                         sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          cursor: 'pointer',
-                          m: 0,
+                          width: '100%',
+                          mb: 1,
+                          flexWrap: 'nowrap',
+                          justifyContent: 'flex-start',
+                          // columnGap: 6,
+                          '& .MuiStep-root': {
+                            flex: '1 1 0',
+                            // px: 1.5,
+                          },
+                          '& .MuiStepLabel-label': {
+                            fontSize: '0.875rem',
+                            whiteSpace: 'nowrap',
+                            maxWidth: 200,
+                            overflow: 'hidden',
+                            textWrap: 'wrap',
+                            // textOverflow: 'ellipsis',
+                            textAlign: 'center',
+                          },
+                          '& .MuiStepIcon-root': {
+                            width: 30,
+                            height: 30,
+                          },
                         }}
                       >
-                        <StepLabel
-                          // onClick={() => setActiveStep(0)}
-                          onClick={() => handleStepChange(0)}
-                          StepIconProps={{ sx: { width: 30, height: 30 } }}
+                        {/* Static Step Pertama */}
+                        <Step
+                          key="User Type"
+                          completed={false}
                           sx={{
-                            '& .MuiStepLabel-label': {
-                              fontWeight: activeStep === 0 ? 600 : 400,
-                              color: activeStep === 0 ? 'primary.main' : 'text.secondary',
-                            },
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            m: 0,
                           }}
                         >
-                          User Type
-                        </StepLabel>
-                      </Step>
+                          <StepLabel
+                            // onClick={() => setActiveStep(0)}
+                            onClick={() => handleStepChange(0)}
+                            StepIconProps={{ sx: { width: 30, height: 30 } }}
+                            sx={{
+                              '& .MuiStepLabel-label': {
+                                fontWeight: activeStep === 0 ? 600 : 400,
+                                color: activeStep === 0 ? 'primary.main' : 'text.secondary',
+                              },
+                            }}
+                          >
+                            User Type
+                          </StepLabel>
+                        </Step>
 
-                      {/* Dynamic Draggable Steps */}
-                      {draggableSteps.map((label, index) => (
-                        <Draggable key={label} draggableId={label} index={index} isDragDisabled>
-                          {(provided, snapshot) => (
-                            <Step
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              sx={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                mx: 1,
-                                cursor: 'pointer',
-                              }}
-                              // onClick={() => setActiveStep(index + 1)}
-                              onClick={() => handleStepChange(index + 1)}
-                            >
-                              <Box
+                        {/* Dynamic Draggable Steps */}
+                        {draggableSteps.map((label, index) => (
+                          <Draggable key={label} draggableId={label} index={index} isDragDisabled>
+                            {(provided, snapshot) => (
+                              <Step
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
                                 sx={{
-                                  backgroundColor: snapshot.isDragging
-                                    ? '#1976d2'
-                                    : activeStep === index + 1
-                                      ? 'primary.main'
-                                      : '#9e9e9e',
-                                  color:
-                                    snapshot.isDragging || activeStep === index + 1
-                                      ? '#fff'
-                                      : '#fff',
-                                  width: 30,
-                                  height: 30,
-                                  borderRadius: '50%',
                                   display: 'flex',
+                                  flexDirection: 'column',
                                   alignItems: 'center',
-                                  justifyContent: 'center',
-                                  mb: 0.5,
-                                  fontWeight: 'bold',
-                                  transition: 'all 0.2s ease',
-                                  marginRight: -2,
+                                  mx: 1,
+                                  cursor: 'pointer',
                                 }}
+                                // onClick={() => setActiveStep(index + 1)}
+                                onClick={() => handleStepChange(index + 1)}
                               >
-                                {index + 2}
-                              </Box>
-                              <StepLabel
-                                sx={{
-                                  '& .MuiStepLabel-label': {
-                                    fontWeight: activeStep === index + 1 ? 600 : 400,
+                                <Box
+                                  sx={{
+                                    backgroundColor: snapshot.isDragging
+                                      ? '#1976d2'
+                                      : activeStep === index + 1
+                                        ? 'primary.main'
+                                        : '#9e9e9e',
                                     color:
-                                      activeStep === index + 1 ? 'primary.main' : 'text.secondary',
-                                  },
-                                }}
-                              >
-                                {label}
-                              </StepLabel>
-                            </Step>
-                          )}
-                        </Draggable>
-                      ))}
-                    </Stepper>
-                    {provided.placeholder}
-                  </div>
-                )}
-              </Droppable>
-            </DragDropContext>
-          ) : (
-            <>
-              <Typography fontWeight={600} color="black" textAlign="center" variant="h5">
-                {stepLabels[activeStep]}
-              </Typography>
-              <MobileStepper
-                variant="dots"
-                steps={draggableSteps.length + 1}
-                position="static"
-                activeStep={activeStep}
-                sx={{
-                  background: 'transparent',
-                  justifyContent: 'center',
-                  mb: 0,
-                }}
-                nextButton={null}
-                backButton={null}
-              />
-            </>
-          )}
-
-          <Box mt={3}>{handleSteps(activeStep)}</Box>
-
-          <Box
-            mt={3}
-            display="flex"
-            justifyContent="space-between"
-            sx={{
-              position: 'sticky',
-              bottom: -20,
-              backgroundColor: 'white',
-              padding: 2,
-              zIndex: 10,
-              borderTop: '1px solid #ddd',
-            }}
-          >
-            <Button
-              disabled={activeStep === 0}
-              onClick={() => {
-                setActiveStep((prev) => prev - 1);
+                                      snapshot.isDragging || activeStep === index + 1
+                                        ? '#fff'
+                                        : '#fff',
+                                    width: 30,
+                                    height: 30,
+                                    borderRadius: '50%',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    mb: 0.5,
+                                    fontWeight: 'bold',
+                                    transition: 'all 0.2s ease',
+                                    marginRight: -2,
+                                  }}
+                                >
+                                  {index + 2}
+                                </Box>
+                                <StepLabel
+                                  sx={{
+                                    '& .MuiStepLabel-label': {
+                                      fontWeight: activeStep === index + 1 ? 600 : 400,
+                                      color:
+                                        activeStep === index + 1
+                                          ? 'primary.main'
+                                          : 'text.secondary',
+                                    },
+                                  }}
+                                >
+                                  {label}
+                                </StepLabel>
+                              </Step>
+                            )}
+                          </Draggable>
+                        ))}
+                      </Stepper>
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+              </DragDropContext>
+            ) : (
+              <>
+                <Typography fontWeight={600} color="black" textAlign="center" variant="h5">
+                  {stepLabels[activeStep]}
+                </Typography>
+                <MobileStepper
+                  variant="dots"
+                  steps={draggableSteps.length + 1}
+                  position="static"
+                  activeStep={activeStep}
+                  sx={{
+                    background: 'transparent',
+                    justifyContent: 'center',
+                    mb: 0,
+                  }}
+                  nextButton={null}
+                  backButton={null}
+                />
+              </>
+            )}
+            <Card
+              elevation={0}
+              sx={{
+                // mb: 2,
+                mt: 3,
+                borderRadius: 3,
+                border: '1px solid',
+                borderColor: 'divider',
+                background:
+                  'linear-gradient(135deg, rgba(25,118,210,0.04) 0%, rgba(25,118,210,0.01) 100%)',
               }}
-              startIcon={<IconArrowLeft width={18} />}
             >
-              Back
-            </Button>
+              <Box p={3} pb={3}>
+                <Box mb={3}>
+                  <Typography variant="h5" fontWeight={700}>
+                    Person Filling This Form
+                  </Typography>
 
-            {isGroup ? (
-              isLastStep ? (
+                  <Typography variant="body2" color="text.secondary" mt={0.5}>
+                    Please fill in the data of the person registering this visitor.
+                  </Typography>
+                </Box>
+
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <CustomFormLabel required sx={{ mt: 0 }}>
+                      Name
+                    </CustomFormLabel>
+
+                    <CustomTextField
+                      fullWidth
+                      placeholder="Input Your Name"
+                      value={otherForm.name}
+                      onChange={(e: any) =>
+                        setOtherForm((prev) => ({
+                          ...prev,
+                          name: e.target.value,
+                        }))
+                      }
+                    />
+                  </Grid>
+
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <CustomFormLabel required sx={{ mt: 0 }}>
+                      Email
+                    </CustomFormLabel>
+
+                    <CustomTextField
+                      fullWidth
+                      type="email"
+                      placeholder="Input Your Email"
+                      value={otherForm.email}
+                      onChange={(e: any) =>
+                        setOtherForm((prev) => ({
+                          ...prev,
+                          email: e.target.value,
+                        }))
+                      }
+                    />
+                  </Grid>
+
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <CustomFormLabel required sx={{ mt: 0 }}>
+                      Phone Number
+                    </CustomFormLabel>
+
+                    <CustomTextField
+                      fullWidth
+                      placeholder="Input Your Phone Number"
+                      value={otherForm.phone}
+                      onChange={(e: any) =>
+                        setOtherForm((prev) => ({
+                          ...prev,
+                          phone: e.target.value,
+                        }))
+                      }
+                    />
+                  </Grid>
+                  {/* <Grid size={{ xs: 12, md: 12 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                      <Button
+                        variant="contained"
+                        onClick={() => {
+                          if (!otherForm.name || !otherForm.email || !otherForm.phone) {
+                            // showSwal('warning', 'Please complete PIC information');
+                            showSwal('info', 'Please complete name, email, and phone information');
+                            return;
+                          }
+
+                          setPicCompleted(true);
+                        }}
+                        endIcon={<IconArrowRight />}
+                      >
+                        Next
+                      </Button>
+                    </Box>
+                  </Grid> */}
+                </Grid>
+              </Box>
+            </Card>
+            <Box mt={0}>{handleSteps(activeStep)}</Box>
+
+            <Box
+              mt={3}
+              display="flex"
+              justifyContent="space-between"
+              sx={{
+                position: 'sticky',
+                bottom: -20,
+                backgroundColor: 'white',
+                padding: 2,
+                zIndex: 10,
+                borderTop: '1px solid #ddd',
+              }}
+            >
+              <Button
+                // onClick={() => {
+                //   if (activeStep === 0) {
+                //     setPicCompleted(false);
+
+                //     window.scrollTo({
+                //       top: 0,
+                //       behavior: 'smooth',
+                //     });
+
+                //     return;
+                //   }
+
+                //   setActiveStep((prev) => prev - 1);
+                // }}
+                disabled={activeStep === 0}
+                onClick={() => {
+                  setActiveStep((prev) => prev - 1);
+                }}
+                startIcon={<IconArrowLeft width={18} />}
+              >
+                Back
+              </Button>
+
+              {isGroup ? (
+                isLastStep ? (
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    disabled={loading}
+                    onClick={handleSaveGroup}
+                  >
+                    {loading ? 'Saving...' : 'Save Group'}
+                  </Button>
+                ) : activeStep === 0 ? (
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={handleOnSubmit}
+                    disabled={loading || !hasAnyFilled || !formData.visitor_type}
+                  >
+                    Submit All
+                  </Button>
+                ) : (
+                  <Button
+                    variant="contained"
+                    onClick={handleNext}
+                    endIcon={<IconArrowRight width={18} />}
+                  >
+                    Next
+                  </Button>
+                )
+              ) : isLastStep ? (
                 <Button
                   variant="contained"
                   color="primary"
-                  disabled={loading}
-                  onClick={handleSaveGroup}
+                  type="submit"
+                  disabled={
+                    loading ||
+                    !formData.visitor_type ||
+                    formData.is_group === null ||
+                    formData.is_group === undefined
+                  }
+                  // onClick={handleOnSubmit}
                 >
-                  {loading ? 'Saving...' : 'Save Group'}
-                </Button>
-              ) : activeStep === 0 ? (
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={handleOnSubmit}
-                  disabled={loading || !hasAnyFilled || !formData.visitor_type}
-                >
-                  Submit All
+                  Submit
                 </Button>
               ) : (
                 <Button
                   variant="contained"
                   onClick={handleNext}
                   endIcon={<IconArrowRight width={18} />}
+                  disabled={!isSingle && !isGroup}
                 >
                   Next
                 </Button>
-              )
-            ) : isLastStep ? (
-              <Button
-                variant="contained"
-                color="primary"
-                type="submit"
-                disabled={
-                  loading ||
-                  !formData.visitor_type ||
-                  formData.is_group === null ||
-                  formData.is_group === undefined
-                }
-                // onClick={handleOnSubmit}
-              >
-                Submit
-              </Button>
-            ) : (
-              <Button
-                variant="contained"
-                onClick={handleNext}
-                endIcon={<IconArrowRight width={18} />}
-                disabled={!isSingle && !isGroup}
-              >
-                Next
-              </Button>
-            )}
-          </Box>
+              )}
+            </Box>
+          </>
+          {/* )} */}
         </Box>
       </form>
       <PreviewDialog

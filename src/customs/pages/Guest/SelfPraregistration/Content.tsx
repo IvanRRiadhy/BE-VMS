@@ -7,7 +7,7 @@ import Logo from 'src/assets/images/logos/BI_Logo.png';
 import Footer from 'src/views/authentication/components/Footer';
 import { KeyboardArrowUp } from '@mui/icons-material';
 import FormSelfPraregistration from './FormSelfPraregistration';
-import { getInvitationLink, invitationLink } from 'src/customs/api/users';
+import { getInvitationLink } from 'src/customs/api/users';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   getPublicSite,
@@ -61,10 +61,21 @@ export default function InvitationShare() {
 
       setInvitation(res.collection);
     } catch (err: any) {
+      const msg = err?.response?.data?.msg;
+
+      if (
+        msg ===
+        'Failed Message: This invitation link quota exceeded. Invitation link has reached its maximum number of registrations.'
+      ) {
+        navigate('/auth/limited');
+        return;
+      }
+
       if (err?.response?.status === 403) {
         navigate('/auth/expired');
         return;
       }
+
       setError(true);
     }
   };
@@ -150,10 +161,10 @@ export default function InvitationShare() {
               elevation={10}
               sx={{
                 p: 3,
-                borderTopRightRadius: '5px !important',
-                borderTopLeftRadius: '5px !important',
-                borderBottomLeftRadius: '0 !important',
-                borderBottomRightRadius: '0 !important',
+                borderTopRightRadius: '10px !important',
+                borderTopLeftRadius: '10px !important',
+                borderBottomLeftRadius: '0px !important',
+                borderBottomRightRadius: '0px !important',
                 bgcolor: 'white',
                 pb: '0 !important',
               }}
@@ -192,8 +203,8 @@ export default function InvitationShare() {
                 p: 3,
                 borderTopRightRadius: '0px !important',
                 borderTopLeftRadius: '0px !important',
-                borderBottomRightRadius: 5,
-                borderBottomLeftRadius: 5,
+                borderBottomRightRadius: 6,
+                borderBottomLeftRadius: 6,
               }}
             >
               <FormSelfPraregistration

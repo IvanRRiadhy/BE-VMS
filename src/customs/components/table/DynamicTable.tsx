@@ -88,6 +88,8 @@ type DynamicTableProps<
   isHaveExportExcel?: boolean;
   isHavePrint?: boolean;
   isHaveConnection?: boolean;
+  isHaveActive?: boolean;
+  onActiveToggle?: any;
   onCheckConnection?: any;
   onExportPdf?: () => void;
   onExportCsv?: () => void;
@@ -223,6 +225,8 @@ function DynamicTableBase<
   isHaveConnection = false,
   isHaveFilter = false,
   isHaveExportCsv = false,
+  isHaveActive,
+  onActiveToggle,
   isHaveExportExcel = false,
   isHavePrint = false,
   isHaveExportPdf = false,
@@ -383,6 +387,7 @@ function DynamicTableBase<
     'registered_site',
     'is_email_verified',
     'url',
+    'shorten_url',
   ];
 
   const fallbackColumns = React.useMemo(() => {
@@ -393,7 +398,6 @@ function DynamicTableBase<
     const expectedColCount = 5;
     return Array.from({ length: expectedColCount }, (_, i) => ``);
   }, [data, hiddenColumns]);
-
 
   const columns =
     loading || data.length === 0
@@ -1617,6 +1621,8 @@ function DynamicTableBase<
                   tooltipLabels={tooltipLabels}
                   isHavePdf={isHavePdf}
                   onFileClick={onFileClick}
+                  isHaveActive={isHaveActive}
+                  onActiveToggle={onActiveToggle}
                   isHaveVerified={isHaveVerified}
                   visiblePasswords={visiblePasswords}
                   togglePassword={togglePassword}
@@ -1687,7 +1693,6 @@ function DynamicTableBase<
           )}
         </CardContent>
       </BlankCard>
-      {/* DRAWER CALENDER RANGE FILTER */}
       <Drawer anchor="right" open={showDrawer} onClose={() => setShowDrawer(false)}>
         <Calendar onChange={onApplyFilterCalender} />
       </Drawer>

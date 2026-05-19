@@ -7,10 +7,6 @@ import {
   StepLabel,
   Stepper,
   TextField,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Backdrop,
   Box,
 } from '@mui/material';
@@ -22,16 +18,8 @@ import {
   FormVisitorTypes,
   SectionPageVisitorType,
 } from 'src/customs/api/models/Admin/VisitorType';
-import { IconArrowLeft, IconArrowRight, IconPencil, IconTrash, IconX } from '@tabler/icons-react';
-import {
-  createVisitorType,
-  getAllAccessControl,
-  getAllCustomField,
-  getAllDocument,
-  getAllSite,
-  getCameraAnalytics,
-  updateVisitorType,
-} from 'src/customs/api/admin';
+import { IconArrowLeft, IconArrowRight, IconPencil, IconTrash } from '@tabler/icons-react';
+import { createVisitorType, updateVisitorType } from 'src/customs/api/admin';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { showSwal } from 'src/customs/components/alerts/alerts';
@@ -49,6 +37,12 @@ import {
   updateVisitorTypeAnalytics,
 } from 'src/customs/api/VisitorType/Analytics';
 import StepComponent from './components/StepComponent';
+import { useVisitorRoles } from 'src/hooks/useVisitorRole';
+import { useAccessControl } from 'src/hooks/useAccessControl';
+import { useDocument } from 'src/hooks/useDocument';
+import { useCustomField } from 'src/hooks/useCustomField';
+import NewSectionDialog from './components/NewSectionDialog';
+import { useCameraAnalytics } from 'src/hooks/useCameraAnalaytics';
 
 interface FormVisitorTypeProps {
   formData: CreateVisitorTypeRequest;
@@ -72,9 +66,19 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
   const { token } = useSession();
   const [deletedAccessIds, setDeletedAccessIds] = useState<string[]>([]);
   const [activeStep, setActiveStep] = useState(0);
-  const [documents, setDocument] = useState<any[]>([]);
-  const [customField, setCustomField] = useState<any[]>([]);
   const [selectedAnalytics, setSelectedAnalytics] = useState<any | null>(null);
+  const [newSectionName, setNewSectionName] = useState('');
+  const [sectionsData, setSectionsData] = useState<SectionPageVisitorType[]>([]);
+  const [openModal, setOpenModal] = useState(false);
+  const [dynamicSteps, setDynamicSteps] = useState<string[]>([]);
+  const [draggableSteps, setDraggableSteps] = useState<string[]>([]);
+  const [localForm, setLocalForm] = useState(formData);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editingName, setEditingName] = useState('');
+  const [documentIdentities, setDocumentIdentities] = useState<
+    { document_id: string; identity_type: number }[]
+  >([]);
   const [selectedAccess, setSelectedAccess] = useState<
     {
       access_control_id: string;
@@ -84,8 +88,13 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     }[]
   >([]);
 
-  const [accessData, setAccessData] = useState<any[]>([]);
-  const [analyticCctv, setAnalyticCctv] = useState<any[]>([]);
+  const { visitorRole } = useVisitorRoles(token as string);
+  const { accessData } = useAccessControl(token as string);
+  const { documents } = useDocument(token as string);
+  const { customField } = useCustomField(token as string);
+  const { analyticCctv } = useCameraAnalytics(
+    formData.can_track_cctv ? (token as string) : undefined,
+  );
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -273,6 +282,14 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         grace_time: Number(localForm.grace_time),
         period: Number(localForm.period),
         section_page_visitor_types: transformedSections,
+        visitor_roles:
+          localForm.visitor_roles?.map((item) => ({
+            role: item.role,
+            visitor_roles_id: item.visitor_roles_id,
+            active: item.active ?? true,
+            is_default: item.is_default ?? false,
+            // visitor_type_id: generatedVisitorTypeId,
+          })) ?? [],
         visitor_type_documents: documentIdentities.map((doc) => ({
           document_id: doc.document_id,
           identity_type: doc.identity_type ?? null,
@@ -449,14 +466,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     );
   };
 
-  const [newSectionName, setNewSectionName] = useState('');
-  const [sectionsData, setSectionsData] = useState<SectionPageVisitorType[]>([]);
-  const [openModal, setOpenModal] = useState(false);
-  const [dynamicSteps, setDynamicSteps] = useState<string[]>([]);
-  const [draggableSteps, setDraggableSteps] = useState<string[]>([]);
-  const [localForm, setLocalForm] = useState(formData);
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
-
   useEffect(() => {
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
@@ -515,58 +524,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     setSectionsData(reorderedSections);
   };
 
-  const [documentIdentities, setDocumentIdentities] = useState<
-    { document_id: string; identity_type: number }[]
-  >([]);
-
-  // useEffect(() => {
-  //   if (!token) return;
-
-  //   const fetchSite = async () => {
-  //     try {
-  //       const res = await getAllSite(token);
-  //       setSiteData(res.collection ?? []);
-  //     } catch (err) {
-  //       console.error('Failed to fetch site', err);
-  //     }
-  //   };
-
-  //   fetchSite();
-  // }, [token]);
-
-  useEffect(() => {
-    if (!token) return;
-
-    const fetchAccessControl = async () => {
-      try {
-        const res = await getAllAccessControl(token);
-        setAccessData(res.collection ?? []);
-      } catch (err) {
-        console.error('Failed to fetch access control', err);
-      }
-    };
-
-    fetchAccessControl();
-  }, [token]);
-
-  useEffect(() => {
-    if (!token) return;
-    // if (!formData.can_track_cctv) return;
-
-    if (formData.can_track_cctv) {
-      const fetchAnalytic = async () => {
-        try {
-          const res = await getCameraAnalytics(token);
-          setAnalyticCctv(res.collection ?? []);
-        } catch (error) {
-          console.log(error);
-        }
-      };
-
-      fetchAnalytic();
-    }
-  }, [token]);
-
   const handleAddDocument = () => {
     setDocumentIdentities((prev) => [...prev, { document_id: '', identity_type: -1 }]);
   };
@@ -620,24 +577,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
   useEffect(() => {
     setDraggableSteps(sectionsData.map((s) => s.name));
   }, [sectionsData]);
-
-  useEffect(() => {
-    if (!token) return;
-    const fetchData = async () => {
-      const documentRes = await getAllDocument(token);
-      setDocument(documentRes?.collection ?? []);
-    };
-    fetchData();
-  }, [token]);
-
-  useEffect(() => {
-    if (!token) return;
-    const fetchData = async () => {
-      const customFieldRes = await getAllCustomField(token);
-      setCustomField(customFieldRes?.collection ?? []);
-    };
-    fetchData();
-  }, [token]);
 
   useEffect(() => {
     const stored = localStorage.getItem('unsavedVisitorTypeData');
@@ -695,6 +634,8 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
     }
   }, [formData?.section_page_visitor_types]);
 
+
+
   const buildCreateAccessPayload = (visitorTypeId: string) => ({
     data: selectedAccess.map((a, index) => ({
       access_control_id: a.access_control_id,
@@ -711,9 +652,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
       sort: index,
     })),
   });
-
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
-  const [editingName, setEditingName] = useState('');
 
   return (
     <>
@@ -953,6 +891,7 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
               setSectionsData={setSectionsData}
               customField={customField}
               selectedAccess={selectedAccess}
+              visitorRole={visitorRole}
               selectedAnalytics={selectedAnalytics}
               accessData={accessData}
               documents={documents}
@@ -984,7 +923,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
               Back
             </Button>
 
-            {/* Tombol Next / Submit */}
             {isLastStep ? (
               <Button
                 color="primary"
@@ -1006,6 +944,13 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
           </Box>
         </Box>
       </form>
+      <NewSectionDialog
+        open={openModal}
+        value={newSectionName}
+        onClose={() => setOpenModal(false)}
+        onChange={setNewSectionName}
+        onSubmit={handleAddSection}
+      />
       <Backdrop
         open={loading}
         sx={{
@@ -1015,37 +960,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
       >
         <CircularProgress color="primary" />
       </Backdrop>
-
-      <Dialog open={openModal} onClose={() => setOpenModal(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          New Section Page
-          <IconButton
-            size="small"
-            sx={{ position: 'absolute', right: 8, top: 8, color: 'grey.500' }}
-            onClick={() => setOpenModal(false)}
-          >
-            <IconX />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent dividers>
-          <TextField
-            autoFocus
-            margin="dense"
-            label=""
-            placeholder="Enter Section Name"
-            type="text"
-            fullWidth
-            value={newSectionName}
-            onChange={(e) => setNewSectionName(e.target.value)}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenModal(false)}>Cancel</Button>
-          <Button onClick={handleAddSection} color="primary" variant="contained">
-            Add
-          </Button>
-        </DialogActions>
-      </Dialog>
     </>
   );
 };

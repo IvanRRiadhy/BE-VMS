@@ -409,11 +409,12 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
               <MenuItem value={60}>1 Hour</MenuItem>
               <MenuItem value={300}>5 Hour</MenuItem>
               <MenuItem value={1440}>1 Day</MenuItem>
+              <MenuItem value={4320}>3 Days</MenuItem>
               <MenuItem value={10080}>7 Days</MenuItem>
-              <MenuItem value={43200}>30 Days</MenuItem>
+              {/*  <MenuItem value={43200}>30 Days</MenuItem>
               <MenuItem value={129600}>3 Month</MenuItem>
               <MenuItem value={259200}>6 Month</MenuItem>
-              <MenuItem value={525600}>1 Year</MenuItem>
+              <MenuItem value={525600}>1 Year</MenuItem> */}
             </CustomSelect>
           </Grid>
 

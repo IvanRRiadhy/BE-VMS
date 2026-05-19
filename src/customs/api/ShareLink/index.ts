@@ -37,7 +37,8 @@ export const getShareLinkByDt = async (
     params: {
       start,
       length,
-      'search[value]': keyword,
+      // 'search[value]': keyword,
+      ...(keyword && { 'search[value]': keyword }),
       sort_dir: sortDir,
       // 'start-date': startDate,
       // 'end-date': endDate,

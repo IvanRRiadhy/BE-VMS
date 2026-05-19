@@ -1,9 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Box,
-  Tabs,
-  Tab,
-  TextField,
   Switch,
   FormControlLabel,
   Typography,

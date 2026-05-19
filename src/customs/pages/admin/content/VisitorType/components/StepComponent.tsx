@@ -50,7 +50,7 @@ interface StepContentProps {
   documentIdentities: any[];
   analyticCctv: any[];
   setDeletedAccessIds: any;
-
+  visitorRole: any[];
   handleChange: any;
   handleAddDetail: any;
   handleDetailChange: any;
@@ -91,6 +91,7 @@ const StepContentComponent: React.FC<StepContentProps> = ({
   setFormData,
   setSelectedAccess,
   setSelectedAnalytics,
+  visitorRole,
 }) => {
   const identityOptions = [
     { value: -1, label: '' },
@@ -102,12 +103,51 @@ const StepContentComponent: React.FC<StepContentProps> = ({
     { value: 5, label: 'Face' },
   ];
 
-  const options = [
-    { id: 1, label: 'Visitor', value: 'Visitor' },
-    { id: 2, label: 'Driver', value: 'Driver' },
-    { id: 3, label: 'Leader', value: 'Leader' },
-    { id: 4, label: 'Staff', value: 'Staff' },
-  ];
+  // const options = [
+  //   { id: 1, label: 'Visitor', value: 'Visitor' },
+  //   { id: 2, label: 'Delivery', value: 'Delivery' },
+  //   { id: 3, label: 'Simple Visitor', value: 'SimpleVisitor' },
+  //   { id: 4, label: 'VIP', value: 'Vip' },
+  //   { id: 5, label: 'Vendor', value: 'Vendor' },
+  //   { id: 6, label: 'Driver', value: 'Driver' },
+  //   { id: 7, label: 'Guard', value: 'Guard' },
+  //   { id: 8, label: 'Custodian', value: 'Custodian' },
+  //   { id: 9, label: 'Employee', value: 'Employee' },
+  //   { id: 10, label: 'CIT Vendor', value: 'CITVendor' },
+  // ];
+
+  useEffect(() => {
+    if (!formData?.visitor_roles || visitorRole.length === 0) {
+      setValue([]);
+      return;
+    }
+
+    const mappedRoles = formData.visitor_roles
+      .map((item: any) => {
+        // cari role master berdasarkan visitor_roles_id
+        const role = visitorRole.find((r: any) => r.id === item.visitor_roles_id);
+
+        if (!role) return null;
+
+        return {
+          ...role,
+          // simpan id relasi agar tetap tersedia saat update
+          id_rel: item.id,
+          active: item.active,
+          is_default: item.is_default,
+        };
+      })
+      .filter(Boolean);
+
+    // urutkan default di posisi pertama
+    mappedRoles.sort((a: any, b: any) => {
+      if (a.is_default) return -1;
+      if (b.is_default) return 1;
+      return 0;
+    });
+
+    setValue(mappedRoles);
+  }, [formData?.visitor_roles, visitorRole]);
 
   const [value, setValue] = useState<any[]>([]);
 
@@ -421,7 +461,7 @@ const StepContentComponent: React.FC<StepContentProps> = ({
               sx={{ mt: 1, display: 'flex', alignItems: 'center' }}
             >
               Minimal Time Visit
-              <Tooltip title="The minimum time of the visit in hours.">
+              <Tooltip title="The minimum time of the visit in hours." arrow>
                 <IconButton size="small">
                   <InfoOutlinedIcon fontSize="small" />
                 </IconButton>
@@ -453,7 +493,7 @@ const StepContentComponent: React.FC<StepContentProps> = ({
               sx={{ mt: 1, display: 'flex', alignItems: 'center' }}
             >
               Maximal Time Visit
-              <Tooltip title="The maximum time of the visit in hours.">
+              <Tooltip title="The maximum time of the visit in hours." arrow>
                 <IconButton size="small">
                   <InfoOutlinedIcon fontSize="small" />
                 </IconButton>
@@ -489,6 +529,7 @@ const StepContentComponent: React.FC<StepContentProps> = ({
                     ? 'The visit duration will be short and counted in minutes.'
                     : 'If set to 1 day, access will expire at the end of the next day.'
                 }
+                arrow
               >
                 <IconButton size="small">
                   <InfoOutlinedIcon fontSize="small" />
@@ -521,7 +562,10 @@ const StepContentComponent: React.FC<StepContentProps> = ({
               sx={{ mt: 1, display: 'flex', alignItems: 'center' }}
             >
               Grace Time
-              <Tooltip title="The allowed time for the visitor to leave the premises after the visit duration ends.">
+              <Tooltip
+                title="The allowed time for the visitor to leave the premises after the visit duration ends."
+                arrow
+              >
                 <IconButton size="small">
                   <InfoOutlinedIcon fontSize="small" />
                 </IconButton>
@@ -658,7 +702,10 @@ const StepContentComponent: React.FC<StepContentProps> = ({
                 label={
                   <Box display="flex" alignItems="center">
                     Show In Form
-                    <Tooltip title="When turned on, this type will show up and be available for selection in the portal form.">
+                    <Tooltip
+                      title="When turned on, this type will show up and be available for selection in the portal form."
+                      arrow
+                    >
                       <IconButton size="small">
                         <InfoOutlinedIcon fontSize="small" />
                       </IconButton>
@@ -685,7 +732,10 @@ const StepContentComponent: React.FC<StepContentProps> = ({
                 label={
                   <Box display="flex" alignItems="center">
                     Can Access
-                    <Tooltip title="When turned on, the visitor will get access using a card, QR code, or BLE.">
+                    <Tooltip
+                      title="When turned on, the visitor will get access using a card, QR code, or BLE."
+                      arrow
+                    >
                       <IconButton size="small">
                         <InfoOutlinedIcon fontSize="small" />
                       </IconButton>
@@ -712,7 +762,10 @@ const StepContentComponent: React.FC<StepContentProps> = ({
                 label={
                   <Box display="flex" alignItems="center">
                     Add To Menu
-                    <Tooltip title="When turned on, this visitor type will be shown in the menu page.">
+                    <Tooltip
+                      title="When turned on, this visitor type will be shown in the menu page."
+                      arrow
+                    >
                       <IconButton size="small">
                         <InfoOutlinedIcon fontSize="small" />
                       </IconButton>
@@ -739,7 +792,7 @@ const StepContentComponent: React.FC<StepContentProps> = ({
                 label={
                   <Box display="flex" alignItems="center" flexWrap={'wrap'}>
                     Direct Visit
-                    <Tooltip title="When turned on, visitors can direct visit">
+                    <Tooltip title="When turned on, visitors can direct visit" arrow>
                       <IconButton size="small">
                         <InfoOutlinedIcon fontSize="small" />
                       </IconButton>
@@ -765,7 +818,10 @@ const StepContentComponent: React.FC<StepContentProps> = ({
               label={
                 <Box display="flex" alignItems="center" flexWrap={'wrap'}>
                   Can Notification Arrival
-                  <Tooltip title="When turned on, the host will be notified when their visitor arrives.">
+                  <Tooltip
+                    title="When turned on, the host will be notified when their visitor arrives."
+                    arrow
+                  >
                     <IconButton size="small">
                       <InfoOutlinedIcon fontSize="small" />
                     </IconButton>
@@ -790,7 +846,10 @@ const StepContentComponent: React.FC<StepContentProps> = ({
               label={
                 <Box display="flex" alignItems="center">
                   Status (Enable/Disable)
-                  <Tooltip title="When turned on, this type will appear on the visitor portal for selection.">
+                  <Tooltip
+                    title="When turned on, this type will appear on the visitor portal for selection."
+                    arrow
+                  >
                     <IconButton size="small">
                       <InfoOutlinedIcon fontSize="small" />
                     </IconButton>
@@ -816,7 +875,10 @@ const StepContentComponent: React.FC<StepContentProps> = ({
                 label={
                   <Box display="flex" alignItems="center">
                     Vip
-                    <Tooltip title="When turned on, special features for VIP visitors will be enabled.">
+                    <Tooltip
+                      title="When turned on, special features for VIP visitors will be enabled."
+                      arrow
+                    >
                       <IconButton size="small">
                         <InfoOutlinedIcon fontSize="small" />
                       </IconButton>
@@ -844,7 +906,10 @@ const StepContentComponent: React.FC<StepContentProps> = ({
                 label={
                   <Box display="flex" alignItems="center">
                     Multi Site
-                    <Tooltip title="When turned on, this visitor type can be used across multiple sites.">
+                    <Tooltip
+                      title="When turned on, this visitor type can be used across multiple sites."
+                      arrow
+                    >
                       <IconButton size="small">
                         <InfoOutlinedIcon fontSize="small" />
                       </IconButton>
@@ -900,7 +965,10 @@ const StepContentComponent: React.FC<StepContentProps> = ({
                 label={
                   <Box display="flex" alignItems="center">
                     Simple Visitor
-                    <Tooltip title="When turned on, this visit type is treated as a short or minimal-duration visit.">
+                    <Tooltip
+                      title="When turned on, this visit type is treated as a short or minimal-duration visit."
+                      arrow
+                    >
                       <IconButton size="small">
                         <InfoOutlinedIcon fontSize="small" />
                       </IconButton>
@@ -929,7 +997,10 @@ const StepContentComponent: React.FC<StepContentProps> = ({
                   label={
                     <Box display="flex" alignItems="center">
                       Simple Period
-                      <Tooltip title="When enabled, the duration of the visit is considered short and will be calculated in minutes.">
+                      <Tooltip
+                        title="When enabled, the duration of the visit is considered short and will be calculated in minutes."
+                        arrow
+                      >
                         <IconButton size="small">
                           <InfoOutlinedIcon fontSize="small" />
                         </IconButton>
@@ -942,35 +1013,100 @@ const StepContentComponent: React.FC<StepContentProps> = ({
           )}
 
           <Divider sx={{ mt: 1 }} />
-
           <Grid size={12} mt={1}>
             <Box>
-              <Typography
-                variant="h6"
-                sx={{ mb: 1, borderLeft: '4px solid #673ab7', pl: 1, mt: 2 }}
-              >
-                Visitor Role
-              </Typography>
+              <Box display="flex" alignItems="center" gap={0.5}>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    mb: 1,
+                    borderLeft: '4px solid #673ab7',
+                    pl: 1,
+                    mt: 2,
+                  }}
+                >
+                  Visitor Role
+                </Typography>
+
+                <Tooltip title="Roles that can be assigned to a visitor" arrow>
+                  <IconButton size="small" sx={{ mt: 1 }}>
+                    <InfoOutlinedIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
 
               <Autocomplete
                 multiple
-                options={options}
+                options={visitorRole}
                 value={value}
-                onChange={(event, newValue) => {
-                  setValue(newValue);
-                }}
+                disablePortal
                 disableCloseOnSelect
                 isOptionEqualToValue={(option, value) => option.id === value.id}
-                getOptionLabel={(option) => option.label}
-                renderOption={(props, option, { selected }) => (
-                  <li {...props}>
-                    <Checkbox checked={selected} sx={{ mr: 0.5 }} />
-                    {option.label}
-                  </li>
-                )}
+                getOptionLabel={(option) => option.name}
+                onChange={(_, newValue) => {
+                  setValue(newValue);
+
+                  setFormData((prev: any) => ({
+                    ...prev,
+                    visitor_roles: newValue.map((item: any, index: number) => ({
+                      id: item.id_rel ?? undefined,
+                      role: item.role ?? item.name,
+                      visitor_roles_id: item.id,
+                      active: item.active ?? true,
+                      is_default: index === 0,
+                      visitor_type_id: prev.id ?? undefined,
+                    })),
+                  }));
+                }}
                 renderInput={(params) => (
-                  <TextField {...params} placeholder="Select Visitor Role" sx={{ mt: 1 }} />
+                  <CustomTextField {...params} placeholder="Select Visitor Role" sx={{ mt: 1 }} />
                 )}
+                renderOption={(props, option, { selected }) => {
+                  const selectedIndex = value.findIndex((v) => v.id === option.id);
+                  const isDefault = selectedIndex === 0;
+                  const { key, ...rest } = props;
+                  return (
+                    <li key={key} {...rest}>
+                      <Checkbox checked={selected} sx={{ mr: 0.5 }} />
+                      {option.name}
+                      {selected && (
+                        <Button
+                          size="small"
+                          variant={isDefault ? 'contained' : 'outlined'}
+                          color="secondary"
+                          sx={{ ml: 'auto', minWidth: 80 }}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const current = [...value];
+                            const selectedItem = current.find((v) => v.id === option.id);
+
+                            if (!selectedItem) return;
+
+                            const reordered = [
+                              selectedItem,
+                              ...current.filter((v) => v.id !== option.id),
+                            ];
+                            setValue(reordered);
+                            setFormData((prev: any) => ({
+                              ...prev,
+                              visitor_roles: reordered.map((item: any, index: number) => ({
+                                id: item.id_rel ?? undefined,
+                                role: item.role ?? item.name,
+                                visitor_roles_id: item.id,
+                                active: item.active ?? true,
+                                is_default: index === 0,
+                                visitor_type_id: prev.id ?? undefined,
+                              })),
+                            }));
+                          }}
+                        >
+                          {isDefault ? 'Default' : 'Set Default'}
+                        </Button>
+                      )}
+                    </li>
+                  );
+                }}
               />
             </Box>
           </Grid>

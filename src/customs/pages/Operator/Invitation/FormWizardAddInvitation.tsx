@@ -14,6 +14,7 @@ type Props = {
   sites?: any;
   employee?: any;
   allVisitorEmployee?: any;
+  enableInvitationTypeStep?: boolean;
 };
 
 const FormWizardAddInvitation: React.FC<Props> = (props) => {

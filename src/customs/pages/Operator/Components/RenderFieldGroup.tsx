@@ -49,6 +49,7 @@ type RenderFieldGroupProps = {
   // selectedSiteParentIds: string[];
   selectedSiteParentIds: Record<string, string[]>;
   // siteTree: any[];
+  visitorRoles: any[];
   siteTree: Record<string, any[]>;
   setSelectedSiteParentIds: (v: any) => void;
   setSiteTree: (v: any) => void;
@@ -88,6 +89,7 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
     siteTree,
     setSelectedSiteParentIds,
     setSiteTree,
+    visitorRoles,
     buildSiteTreeWithParent,
     renderTree,
     activeStep,
@@ -376,6 +378,38 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
             </>
           );
         }
+        if ((field.remarks || '').toLowerCase() === 'visitor_role') {
+          return (
+            <CustomTextField
+              select
+              size="small"
+              fullWidth
+              // Nilai role untuk visitor ini saja
+              value={field.answer_text || ''}
+              onChange={(e) => {
+                const selectedRole = e.target.value;
+
+                onChange(index, 'answer_text', selectedRole);
+
+                // Bersihkan validation error jika ada
+                //  if (selectedRole) {
+                //    clearFieldError(key);
+                //  }
+              }}
+              error={!!errorMessage}
+              helperText={errorMessage}
+              sx={{ minWidth: '160px' }}
+            >
+              <MenuItem value="">Select Role</MenuItem>
+
+              {visitorRoles.map((role: any) => (
+                <MenuItem key={role.id} value={role.role}>
+                  {role.role}
+                </MenuItem>
+              ))}
+            </CustomTextField>
+          );
+        }
 
         return (
           <Autocomplete
@@ -523,7 +557,7 @@ const RenderFieldGroup: React.FC<RenderFieldGroupProps> = (props) => {
         if (field.remarks === 'is_driving') {
           return (
             <>
-              <FormControl error={!!errorMessage}>
+              <FormControl error={!!errorMessage} sx={{minWidth: '150px'}}>
                 <RadioGroup
                   row
                   value={field.answer_text || ''}

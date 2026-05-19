@@ -81,7 +81,7 @@ import { FormVisitor } from 'src/customs/api/models/Admin/Visitor';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import VisitorSelect from 'src/customs/components/select2/VisitorSelect';
 import moment from 'moment-timezone';
-import dayjs, { Dayjs, tz } from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import weekday from 'dayjs/plugin/weekday';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
@@ -103,6 +103,8 @@ import CustomTextField from 'src/components/forms/theme-elements/CustomTextField
 import { IconCheck } from '@tabler/icons-react';
 import { IconPencil } from '@tabler/icons-react';
 import PurposeVisitDialog from './components/Dialog/PurposeVisitDialog';
+import { InfoOutlined } from '@mui/icons-material';
+import { IconPlus } from '@tabler/icons-react';
 
 interface FormVisitorTypeProps {
   formData: CreateVisitorRequest;
@@ -115,6 +117,7 @@ interface FormVisitorTypeProps {
   sites?: any;
   employee?: any;
   allVisitorEmployee?: any;
+  enableInvitationTypeStep?: boolean;
 }
 
 dayjs.extend(utc);
@@ -132,6 +135,7 @@ type GroupedPages = {
 type VisitorItem = {
   question_page: SectionPageVisitor[];
   single_page: FormField[];
+  type?: string;
 };
 
 interface GroupVisitor {
@@ -156,6 +160,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   sites,
   employee,
   allVisitorEmployee,
+  enableInvitationTypeStep,
 }) => {
   const THEME = useTheme();
   const isMobile = useMediaQuery(THEME.breakpoints.down('sm'));
@@ -163,7 +168,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
   const { token } = useSession();
-  const [activeStep, setActiveStep] = useState(0);
+  const [activeStep, setActiveStep] = useState(enableInvitationTypeStep ? -1 : 0);
+  const [isSelfInvitation, setIsSelfInvitation] = useState(true);
   const [dynamicSteps, setDynamicSteps] = useState<string[]>([]);
   const [draggableSteps, setDraggableSteps] = useState<string[]>([]);
   const [sectionsData, setSectionsData] = useState<SectionPageVisitorType[]>([]);
@@ -178,7 +184,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const BASE_URL = axiosInstance2.defaults.baseURL;
   const [type, setType] = useState('');
   const [rawSections, setRawSections] = useState<any[]>([]);
-  const [selectedInvitations, setSelectedInvitations] = useState<any[]>([]);
+  const firstStep = enableInvitationTypeStep ? -1 : 0;
   const formsOf = (section: any) => (Array.isArray(section?.[FORM_KEY]) ? section[FORM_KEY] : []);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
@@ -336,12 +342,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     setGroupVisitors((prev) => prev.filter((g) => g.id !== id));
   };
 
-  useEffect(() => {
-    if (!nextDialogOpen) {
-      setSelectedInvitations([]);
-    }
-  }, [nextDialogOpen]);
-
   const generateUUIDv4 = () => {
     const bytes = new Uint8Array(16);
     crypto.getRandomValues(bytes);
@@ -413,6 +413,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       return next;
     });
   };
+
+  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
 
   const getSectionType = (section: any) => {
     const f = formsOf(section);
@@ -551,7 +553,51 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
   const handleSteps = (step: number) => {
     const showVTListSkeleton = vtLoading;
-    if (step == 0) {
+    if (step === -1 && enableInvitationTypeStep) {
+      return (
+        <Box>
+          <CustomFormLabel sx={{ mt: 0 }}>
+            Are you filling this invitation for yourself or someone else?
+          </CustomFormLabel>
+
+          <RadioGroup
+            value={isSelfInvitation === null ? '' : isSelfInvitation ? 'self' : 'other'}
+            onChange={(e) => setIsSelfInvitation(e.target.value === 'self')}
+            row
+          >
+            <FormControlLabel
+              value="self"
+              control={<Radio />}
+              label={
+                <Box display="flex" alignItems="center" gap={0.5}>
+                  Self
+                  <Tooltip title="This invitation is intended for yourself." arrow>
+                    <IconButton size="small">
+                      <InfoOutlined fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              }
+            />
+
+            <FormControlLabel
+              value="other"
+              control={<Radio />}
+              label={
+                <Box display="flex" alignItems="center" gap={0.5}>
+                  Other
+                  <Tooltip title="This invitation is intended for another person or guest." arrow>
+                    <IconButton size="small">
+                      <InfoOutlined fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              }
+            />
+          </RadioGroup>
+        </Box>
+      );
+    } else if (step == 0) {
       return (
         <Box>
           <Grid container spacing={2}>
@@ -578,7 +624,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
               >
                 Select Status Visitor
               </CustomFormLabel>
-              {/* {formData.visitor_type && ( */}
               <Box display="flex" alignItems="center" gap={2}>
                 <FormControlLabel
                   control={
@@ -601,6 +646,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     <Box display="flex" alignItems="center" gap={1}>
                       <IconUser size={18} />
                       Single
+                      <Tooltip arrow title="Only one visitor can be added">
+                        <IconButton size="small" sx={{ ml: 0 }}>
+                          <IconInfoCircle size={22} />
+                        </IconButton>
+                      </Tooltip>
                     </Box>
                   }
                 />
@@ -629,6 +679,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     <Box display="flex" alignItems="center" gap={1}>
                       <IconUsers size={18} />
                       Group
+                      <Tooltip arrow title="Multiple visitors can be added">
+                        <IconButton size="small" sx={{ ml: 0 }}>
+                          <IconInfoCircle size={22} />
+                        </IconButton>
+                      </Tooltip>
                     </Box>
                   }
                 />
@@ -747,7 +802,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   )}
                 </Box>
               )}
-              {/* )} */}
             </Grid>
           </Grid>
         </Box>
@@ -1035,22 +1089,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                           // isEmployee={isEmployee}
                                           onSelect={(v) => handleSelectVisitor(gIdx, v)}
                                         />
-                                        <CustomFormLabel>Type (Opsional)</CustomFormLabel>
-                                        <CustomTextField
-                                          select
-                                          size="small"
-                                          fullWidth
-                                          // value={group.type || ''}
-                                          value={type}
-                                          onChange={(e) => {
-                                            setType(e.target.value);
-                                          }}
-                                        >
-                                          <MenuItem value="leader">Leader</MenuItem>
-                                          <MenuItem value="driver">Driver</MenuItem>
-                                          <MenuItem value="staff">Staff</MenuItem>
-                                          <MenuItem value="visitor">Visitor</MenuItem>
-                                        </CustomTextField>
                                       </Box>
 
                                       {page.form?.map((field: any, fIdx: any) => {
@@ -1110,6 +1148,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                               sx={{ my: 2 }}
                               variant="contained"
                               fullWidth
+                              startIcon={<IconPlus />}
                             >
                               Add New
                             </MuiButton>
@@ -1128,9 +1167,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 <TableCell>
                                   <CustomFormLabel>Search</CustomFormLabel>
                                 </TableCell>
-                                <TableCell>
-                                  <CustomFormLabel>Type (Opsional)</CustomFormLabel>
-                                </TableCell>
+                                {/* <TableCell>
+                                  <CustomFormLabel>Role (Opsional)</CustomFormLabel>
+                                </TableCell> */}
                                 {(dataVisitor[0]?.question_page[activeStep - 1]?.form || []).map(
                                   (f: any, i: any) => (
                                     <TableCell key={f.custom_field_id || i}>
@@ -1168,23 +1207,40 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                           onSelect={(v) => handleSelectVisitor(gIdx, v)}
                                         />
                                       </TableCell>
-                                      <TableCell>
+
+                                      {/* <TableCell sx={{ minWidth: 200 }}>
                                         <CustomTextField
                                           select
                                           size="small"
                                           fullWidth
-                                          sx={{ minWidth: 160 }}
-                                          value={type}
+                                          // Ambil role milik visitor pada baris ini (gIdx)
+                                          value={dataVisitor[gIdx]?.type || ''}
                                           onChange={(e) => {
-                                            setType(e.target.value);
+                                            const selectedRole = e.target.value;
+
+                                            setDataVisitor((prev: any[]) => {
+                                              const updated = [...prev];
+
+                                              // Update hanya visitor pada baris ini
+                                              updated[gIdx] = {
+                                                ...updated[gIdx],
+                                                type: selectedRole,
+                                              };
+
+                                              return updated;
+                                            });
                                           }}
                                         >
-                                          <MenuItem value="leader">Leader</MenuItem>
-                                          <MenuItem value="driver">Driver</MenuItem>
-                                          <MenuItem value="staff">Staff</MenuItem>
-                                          <MenuItem value="visitor">Visitor</MenuItem>
+                                          <MenuItem value="">Select Role</MenuItem>
+
+                                          {visitorRoles.map((role: any) => (
+                                            <MenuItem key={role.id} value={role.role}>
+                                              {role.role}
+                                            </MenuItem>
+                                          ))}
                                         </CustomTextField>
-                                      </TableCell>
+                                      </TableCell> */}
+
                                       {fields.map((field: any) => {
                                         const matchedKey = Object.keys(
                                           groupedPages.batch_page || {},
@@ -1278,6 +1334,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                     onClick={handleAddDetails}
                                     sx={{ mx: 1, my: 1 }}
                                     variant="contained"
+                                    startIcon={<IconPlus />}
                                   >
                                     Add New
                                   </MuiButton>
@@ -1618,6 +1675,40 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   </SimpleTreeView>
                 )}
               </>
+            );
+          }
+          if ((field.remarks || '').toLowerCase() === 'visitor_role') {
+            return (
+              <CustomTextField
+                select
+                size="small"
+                fullWidth
+                // Nilai role untuk visitor ini saja
+                value={field.answer_text || ''}
+                onChange={(e) => {
+                  const selectedRole = e.target.value;
+
+                  onChange(index, 'answer_text', selectedRole);
+
+                  if (selectedRole) clearFieldError(errorKey);
+                }}
+                error={!!errorMessage}
+                helperText={errorMessage}
+              >
+                <MenuItem value="">
+                  <em>Select Role</em>
+                </MenuItem>
+
+                {visitorRoles.map((role: any) => (
+                  <MenuItem
+                    key={role.id}
+                    // Simpan nilai role, misalnya "Driver", "Leader"
+                    value={role.role}
+                  >
+                    {role.role}
+                  </MenuItem>
+                ))}
+              </CustomTextField>
             );
           }
           return (
@@ -3069,6 +3160,42 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       />
                     );
                   }
+                  if ((item.remarks || '').toLowerCase() === 'visitor_role') {
+                    return (
+                      <CustomTextField
+                        select
+                        size="small"
+                        fullWidth
+                        // nilai role disimpan pada field answer_text milik visitor ini
+                        value={item.answer_text || ''}
+                        onChange={(e) => {
+                          const selectedRole = e.target.value;
+
+                          // simpan ke field visitor_role pada row ini
+                          onChange(originalIndex, 'answer_text', selectedRole);
+
+                          // hapus error jika ada
+                          if (selectedRole) {
+                            clearFieldError(key);
+                          }
+                        }}
+                        error={!!errorMessage}
+                        helperText={errorMessage}
+                      >
+                        <MenuItem value="">Select Role</MenuItem>
+
+                        {visitorRoles.map((role: any) => (
+                          <MenuItem
+                            key={role.id}
+                            // simpan value role, misalnya "Driver"
+                            value={role.role}
+                          >
+                            {role.role}
+                          </MenuItem>
+                        ))}
+                      </CustomTextField>
+                    );
+                  }
                   return (
                     <Autocomplete
                       size="small"
@@ -4201,6 +4328,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         flow: TYPE_REGISTERED === 0 ? 'Praregister' : 'Invitation',
         visitor_role: 'Visitor',
         ...(TYPE_REGISTERED !== 0 && { registered_site: formData.registered_site ?? '' }),
+        ...(TYPE_REGISTERED !== 0 && {
+          is_self_registered: isSelfInvitation ?? false,
+          filled_by_relationship: 'Admin',
+        }),
       };
 
       let payload: CreateVisitorRequest | CreateGroupVisitorRequest;
@@ -4288,7 +4419,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         // console.log('Final Payload (Group):', JSON.stringify(parsed, null, 2));
 
         const submitFn = TYPE_REGISTERED === 0 ? createPraRegisterGroup : createVisitorsGroup;
-        const backendResponse = await submitFn(token, parsed as any);
+        await submitFn(token, parsed as any);
         showSwal('success', 'Group visitor created successfully.');
         resetMediaState();
         clearAnswerFiles();
@@ -4315,13 +4446,13 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           data_visitor: [{ question_page }],
         };
 
-        console.log('Payload :', JSON.stringify(payload, null, 2));
+        // console.log('Payload :', JSON.stringify(payload, null, 2));
 
         const parsed = CreateVisitorRequestSchema.parse(payload);
-        console.log('Final Payload (Single):', JSON.stringify(parsed, null, 2));
+        // console.log('Final Payload (Single):', JSON.stringify(parsed, null, 2));
 
         const submitFn = TYPE_REGISTERED === 0 ? createPraRegister : createVisitor;
-        const backendResponse = await submitFn(token, parsed);
+        await submitFn(token, parsed);
 
         const successMessage =
           TYPE_REGISTERED === 0
@@ -4375,6 +4506,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
       const clone = JSON.parse(JSON.stringify(prev[0])) as {
         question_page: SectionPageVisitor[];
+        type: string;
       };
       clone.question_page.forEach((page) => {
         (page.form ?? []).forEach((f) => {
@@ -4383,6 +4515,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           f.answer_file = '';
         });
       });
+
+      clone.type = '';
 
       const next = [...prev, clone];
       setActiveGroupIdx(next.length - 1);
@@ -4669,6 +4803,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     return result;
   };
 
+  const [visitorRoles, setVisitorRoles] = useState<any[]>([]);
+
   useEffect(() => {
     // if (!formData.visitor_type || !token) return;
     setInputValues({});
@@ -4698,6 +4834,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       const res = await getVisitorTypeById(token as string, formData.visitor_type as string);
 
       let sections = res?.collection?.section_page_visitor_types ?? [];
+      const roles = res?.collection?.visitor_roles ?? [];
+
+      setVisitorRoles(roles);
 
       if (TYPE_REGISTERED === 0 || FORM_KEY === 'pra_form') {
         sections = sections.filter((s: any) => (s.pra_form || []).length > 0);
@@ -4784,22 +4923,22 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     setActiveStep(targetStep);
   };
 
- const isVisitorEmpty = (visitor: any) => {
-   if (!visitor?.question_page?.length) return true;
+  const isVisitorEmpty = (visitor: any) => {
+    if (!visitor?.question_page?.length) return true;
 
-   return !visitor.question_page.some((page: any) =>
-     page?.form?.some((f: any) => f?.answer_text || f?.answer_datetime || f?.answer_file),
-   );
- };
+    return !visitor.question_page.some((page: any) =>
+      page?.form?.some((f: any) => f?.answer_text || f?.answer_datetime || f?.answer_file),
+    );
+  };
 
- const hasSavedGroupData = groupVisitors.some(
-   (g) => Array.isArray(g?.data_visitor) && g.data_visitor.some((v: any) => !isVisitorEmpty(v)),
- );
+  const hasSavedGroupData = groupVisitors.some(
+    (g) => Array.isArray(g?.data_visitor) && g.data_visitor.some((v: any) => !isVisitorEmpty(v)),
+  );
 
- const hasCurrentEditingData =
-   Array.isArray(dataVisitor) && dataVisitor.some((v: any) => !isVisitorEmpty(v));
+  const hasCurrentEditingData =
+    Array.isArray(dataVisitor) && dataVisitor.some((v: any) => !isVisitorEmpty(v));
 
- const hasAnyFilled = hasSavedGroupData || hasCurrentEditingData;
+  const hasAnyFilled = hasSavedGroupData || hasCurrentEditingData;
   return (
     <PageContainer title="Visitor" description="this is Add Visitor page">
       <form onSubmit={handleOnSubmit}>
@@ -4977,7 +5116,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             }}
           >
             <MuiButton
-              disabled={activeStep === 0}
+              // disabled={activeStep === -1}
+              disabled={activeStep === firstStep}
               onClick={() => {
                 setActiveStep((prev) => prev - 1);
               }}
@@ -5098,4 +5238,3 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 };
 
 export default FormWizardAddVisitor;
-

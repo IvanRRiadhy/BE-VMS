@@ -70,7 +70,7 @@ const RegisteredSiteDialog: React.FC<Props> = ({
       </DialogTitle>
 
       <DialogContent dividers>
-        <CustomFormLabel sx={{ marginTop: 0 }}>Registered Site</CustomFormLabel>
+        <CustomFormLabel sx={{ marginTop: 0, fontSize: '16px' }}>Registered Site</CustomFormLabel>
         <Autocomplete
           fullWidth
           options={siteData}
@@ -80,13 +80,12 @@ const RegisteredSiteDialog: React.FC<Props> = ({
           isOptionEqualToValue={(option, value) => option.id === value?.id}
           renderInput={(params) => <TextField {...params} label="" />}
         />
-
-        <DialogActions>
-          <Button variant="contained" onClick={handleNext} endIcon={<IconArrowRight width={18} />}>
-            Next
-          </Button>
-        </DialogActions>
       </DialogContent>
+      <DialogActions>
+        <Button variant="contained" onClick={handleNext} endIcon={<IconArrowRight width={18} />}>
+          Next
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 };

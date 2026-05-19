@@ -19,9 +19,6 @@ import Heatmap from './Heatmap';
 import PieCharts from './PieCharts';
 import { useNavigate } from 'react-router';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
-import PieChartsEmployee from './PieChartsEmployee';
-import { getActiveInvitation } from 'src/customs/api/visitor';
-import moment from 'moment';
 import { setDateRange } from 'src/store/apps/Daterange/dateRangeSlice';
 import Calendar from 'src/customs/components/calendar/Calendar';
 import { useQuery } from '@tanstack/react-query';
@@ -57,8 +54,6 @@ const DashboardEmployee = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
-
-
 
   const start = page * rowsPerPage;
   const {
@@ -99,32 +94,6 @@ const DashboardEmployee = () => {
         visitor_period_end: formatDateTime(visitor_period_end),
       }),
     ) || [];
-
-  // useEffect(() => {
-  //   const fetchDataActiveInvtiation = async () => {
-  //     try {
-  //       const response = await getActiveInvitation(token as string);
-  //       // console.log(response);
-
-  //       let rows = response.collection.map((item: any) => ({
-  //         id: item.id,
-  //         // visitor_type:  item.visitor_type_name,
-  //         name: item.visitor.name,
-  //         email: item.visitor.email,
-  //         organization: item.visitor.organization,
-  //         visitor_period_start: item.visitor_period_start,
-  //         visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
-  //         host: item.host_name ?? '-',
-  //         // visitor_status: item.visitor_status,
-  //       }));
-  //       setActiveInvitation(rows || []);
-  //     } catch (error) {
-  //       console.error('Error fetching data:', error);
-  //     }
-  //   };
-
-  //   fetchDataActiveInvtiation();
-  // }, [token]);
 
   const moveApproval = () => {
     navigate('/manager/approval');
@@ -173,7 +142,7 @@ const DashboardEmployee = () => {
 
       // setRefreshTrigger((prev) => prev + 1);
       await refetchApproval();
-    } catch (error:any) {
+    } catch (error: any) {
       setTimeout(() => setLoading(false), 800);
       showSwal('error', error.message ?? 'Failed to action approval.');
     }
@@ -329,7 +298,7 @@ const DashboardEmployee = () => {
                 },
               }}
             >
-              <IconReport  size={30} />
+              <IconReport size={30} />
               Report
             </Button>
           </Box>

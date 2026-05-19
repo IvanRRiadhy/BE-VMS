@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import {
   Box,
   Dialog,
@@ -33,23 +33,13 @@ import iconScanQR from 'src/assets/images/svgs/scan-qr.svg';
 import iconAdd from 'src/assets/images/svgs/add-circle.svg';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import CloseIcon from '@mui/icons-material/Close';
-import FormWizardAddInvitation from './FormWizardAddInvitation';
-import FormWizardAddVisitor from './FormWizardAddVisitor';
+import CloseIcon from '@mui/icons-material/Close';  
 import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   CreateVisitorRequestSchema,
   CreateVisitorRequest,
 } from 'src/customs/api/models/Admin/Visitor';
-import {
-  getAllEmployee,
-  getAllSite,
-  getAllVisitorPagination,
-  getAllVisitorType,
-  getEmployeeById,
-  getVisitorById,
-  getVisitorEmployee,
-} from 'src/customs/api/admin';
+import { getAllVisitorPagination, getEmployeeById, getVisitorById } from 'src/customs/api/admin';
 import FilterMoreContent from './FilterMoreContent';
 import { IconClipboard, IconQrcode, IconShare, IconUser, IconUsers } from '@tabler/icons-react';
 import EmployeeDetailDialog from '../Dialog/EmployeeDetailDialog';
@@ -77,6 +67,12 @@ import InvitationShareDialog from './components/Dialog/InvitationShareDialog';
 import ShareLinkDialog from './components/ShareLinkDialog';
 import { useRegisteredSite } from 'src/hooks/useRegisteredSite';
 import ConfirmUnsavedDialog from 'src/customs/pages/admin/components/ConfirmUnsavedDialog';
+import { useVisitorType } from 'src/hooks/useVisitorType';
+import { useSites } from 'src/hooks/useSites';
+import { useEmployees } from 'src/hooks/useEmployees';
+import { useVisitorEmployees } from 'src/hooks/useVisitorEmployees';
+import InvitationVisitorDialog from './components/InvitationVisitorDialog';
+import PreRegistrationDialog from './components/PreRegistrationDialog';
 
 const Content = () => {
   const { token } = useSession();
@@ -87,7 +83,6 @@ const Content = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [pendingEditId, setPendingEditId] = useState<string | null>(null);
   const [selectedRows, setSelectedRows] = useState<[]>([]);
   const [openDetail, setOpenDetail] = useState(false);
   const [openInviteViaLinkEmail, setOpenInviteViaLinkEmail] = useState(false);
@@ -134,12 +129,13 @@ const Content = () => {
   const [employeeDetail, setEmployeeDetail] = useState<any>(null);
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
-  const [visitorType, setVisitorType] = useState<any[]>([]);
+  // const [visitorType, setVisitorType] = useState<any[]>([]);
   const [openVisitorDialog, setOpenVisitorDialog] = useState(false);
   const [visitorLoading, setVisitorLoading] = useState(false);
   const [visitorError, setVisitorError] = useState<string | null>(null);
   const [visitorDetail, setVisitorDetail] = useState<any>(null);
   const navigate = useNavigate();
+  const [selectedShareLink, setSelectedShareLink] = useState(null);
   // const [siteData, setSiteData] = useState<any[]>([]);
   const [selectedSite, setSelectedSite] = useState<any | null>(null);
   const queryClient = useQueryClient();
@@ -150,9 +146,6 @@ const Content = () => {
   const [torchOn, setTorchOn] = useState(false);
   const scanContainerRef = useRef<HTMLDivElement | null>(null);
   const [wizardKey, setWizardKey] = useState(0);
-  const [allVisitorEmployee, setAllVisitorEmployee] = useState<any[]>([]);
-  const [sites, setSites] = useState<any[]>([]);
-  const [employee, setEmployee] = useState<any[]>([]);
   const [vtLoading, setVTLoading] = useState(false);
   const [emailInput, setEmailInput] = useState('');
   const [openDetailShareLink, setOpenDetailShareLink] = useState(false);
@@ -163,6 +156,7 @@ const Content = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [expiredAt, setExpiredAt] = useState<string | null>(null);
   const [emails, setEmails] = useState<string[]>([]);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const resetRegisteredFlow = () => {
     setSelectedSite(null);
@@ -359,39 +353,18 @@ const Content = () => {
 
   const { data: siteData = [], isLoading: isLoadingSite } = useRegisteredSite(token as string);
   const [selectedShareLinkId, setSelectedShareLinkId] = useState<string | null>(null);
-  useEffect(() => {
-    if (!token) return;
 
-    const fetchAll = async () => {
-      try {
-        setLoading(true);
+  const { visitorType } = useVisitorType(token as string);
+  const { sites } = useSites(token as string);
+  const { employee } = useEmployees(token as string);
+  const { allVisitorEmployee } = useVisitorEmployees(token as string);
 
-        const [vtRes, siteRes, visitorEmpRes, empRes] = await Promise.allSettled([
-          getAllVisitorType(token),
-          getAllSite(token),
-          getVisitorEmployee(token),
-          getAllEmployee(token),
-        ]);
-        if (vtRes?.status === 'fulfilled') setVisitorType(vtRes?.value?.collection || []);
-        if (siteRes?.status === 'fulfilled') setSites(siteRes?.value?.collection || []);
-        if (visitorEmpRes?.status === 'fulfilled')
-          setAllVisitorEmployee(visitorEmpRes?.value?.collection || []);
-        if (empRes?.status === 'fulfilled') setEmployee(empRes?.value?.collection || []);
-      } catch (err) {
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAll();
-  }, [token]);
-
-  const handleCloseDialog = () => {
+  const handleCloseDialog = useCallback(() => {
     setSelectedSite(null);
     setOpenInvitationVisitor(false);
     setOpenPreRegistration(false);
     handleDialogClose();
-  };
+  }, []);
 
   const handleAdd = () => {
     const saved = localStorage.getItem('unsavedVisitorData');
@@ -410,7 +383,7 @@ const Content = () => {
     setEdittingId('');
     setFormDataAddVisitor(freshForm);
     setSelectedSite(null);
-    setPendingEditId(null);
+    // setPendingEditId(null);
   };
 
   const handleSuccess = () => {
@@ -429,7 +402,7 @@ const Content = () => {
 
   const handleCancelDiscard = () => {
     setConfirmDialogOpen(false);
-    setPendingEditId(null);
+    // setPendingEditId(null);
   };
 
   const resetFormData = () => {
@@ -442,6 +415,8 @@ const Content = () => {
     resetFormData();
     setWizardKey((k) => k + 1);
     setOpenDialogIndex(null);
+    setOpenInvitationVisitor(false);
+    setOpenPreRegistration(false);
     setFormDataAddVisitor(defaultFormData);
     setConfirmDialogOpen(false);
     handleDialogClose();
@@ -574,9 +549,6 @@ const Content = () => {
       if (!confirm.isConfirmed) return;
 
       await deleteShareLink(token as string, id);
-      // await queryClient.invalidateQueries({
-      //   queryKey: ['share-links'],
-      // });
       setRefreshKey((prev) => prev + 1);
       showSwal('success', 'Link deleted successfully.');
     } catch (error) {
@@ -584,14 +556,12 @@ const Content = () => {
     }
   };
 
-  const [selectedShareLink, setSelectedShareLink] = useState(null);
-
   const handleOpenInviteDialog = async (row: any) => {
-
     const res = await getShareLinkById(row.id, token as string);
     setSelectedShareLink(res.collection);
     setSelectedShareLinkId(row.id);
-    setGeneratedLink(row.url);
+    setGeneratedLink(row.shorten_url || row.url);
+    // setGeneratedLink(row.url);
     setExpiredAt(row.expired_at);
     setOpenInviteViaLinkEmail(true);
   };
@@ -654,27 +624,16 @@ const Content = () => {
       setEmails([]);
       setEmailInput('');
       setRefreshKey((prev) => prev + 1);
-    } catch (error) {
-      showSwal('error', 'Failed to send invitation');
+    } catch (error: any) {
+      showSwal('error', error?.response.data.message || 'Failed to send invitation');
     }
   };
-  const [refreshKey, setRefreshKey] = useState(0);
 
   const handleCreateLink = async (payload: any) => {
     try {
       setIsGenerating(true);
 
-      // console.log('payload', payload);
       await createShareLink(token as string, payload);
-
-      // await queryClient.invalidateQueries({
-      //   queryKey: ['share-links'],
-      // });
-
-      // await queryClient.refetchQueries({
-      //   queryKey: ['share-links'],
-      // });
-
       setOpenCreateLink(false);
       showSwal('success', 'Share link created successfully');
       setRefreshKey((prev) => prev + 1);
@@ -696,17 +655,13 @@ const Content = () => {
 
       await createShareLink(token as string, finalPayload);
 
-      // await queryClient.invalidateQueries({
-      //   queryKey: ['share-links'],
-      // });
-
       setOpenSendEmail(false);
       setOpenCreateLink(false);
 
       showSwal('success', 'Share link sent successfully');
       setRefreshKey((prev) => prev + 1);
-    } catch (err) {
-      showSwal('error', 'Failed to send share link');
+    } catch (err: any) {
+      showSwal('error', err?.response.data.message || 'Failed to send share link');
     } finally {
       setIsGenerating(false);
     }
@@ -840,7 +795,6 @@ const Content = () => {
                   }
                 }}
                 defaultSelectedHeaderItem="All"
-                // onCheckedChange={(selected) => console.log('Checked table row:', selected)}
                 onView={(row) => {
                   handleView(row.id);
                 }}
@@ -854,9 +808,7 @@ const Content = () => {
                     setPage(0);
                   }
                 }}
-                onAddData={() => {
-                  handleAdd();
-                }}
+                onAddData={handleAdd}
                 isHaveFilterMore={true}
                 filterMoreContent={
                   <FilterMoreContent
@@ -871,95 +823,43 @@ const Content = () => {
           </Grid>
         </Box>
       </Container>
-      {/* Add New Invitation Visitor */}
-      <Dialog
-        fullWidth
-        // maxWidth="xl"
+
+      <InvitationVisitorDialog
         open={openInvitationVisitor}
         onClose={handleDialogClose}
-        keepMounted
-        maxWidth={false}
-        PaperProps={{
-          sx: {
-            width: '100vw',
-          },
-        }}
-      >
-        <DialogTitle display="flex" justifyContent={'space-between'} alignItems="center">
-          Add Invitation Visitor
-          <IconButton
-            aria-label="close"
-            onClick={() => {
-              if (isFormChanged) {
-                openDiscardForCloseAdd();
-              } else {
-                handleCloseDialog();
-              }
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <Divider />
-        <DialogContent>
-          <FormWizardAddVisitor
-            key={wizardKey}
-            formData={formDataAddVisitor}
-            setFormData={setFormDataAddVisitor}
-            edittingId={edittingId}
-            onSuccess={handleSuccess}
-            visitorType={visitorType}
-            sites={sites}
-            employee={employee}
-            allVisitorEmployee={allVisitorEmployee}
-            vtLoading={vtLoading}
-          />
-        </DialogContent>
-      </Dialog>
-      {/* Add Pre registration */}
-      <Dialog
-        fullWidth
-        // maxWidth="xl"
-        maxWidth={false}
-        PaperProps={{
-          sx: {
-            width: '100vw',
-          },
-        }}
+        handleDialogClose={handleDialogClose}
+        handleCloseDialog={handleCloseDialog}
+        openDiscardForCloseAdd={openDiscardForCloseAdd}
+        isFormChanged={isFormChanged}
+        wizardKey={wizardKey}
+        formDataAddVisitor={formDataAddVisitor}
+        setFormDataAddVisitor={setFormDataAddVisitor}
+        edittingId={edittingId}
+        handleSuccess={handleSuccess}
+        visitorType={visitorType}
+        sites={sites}
+        employee={employee}
+        allVisitorEmployee={allVisitorEmployee}
+        vtLoading={vtLoading}
+      />
+
+      <PreRegistrationDialog
         open={openPreRegistration}
-        onClose={handleDialogClose}
-      >
-        <DialogTitle display="flex" justifyContent={'space-between'} alignItems="center">
-          Add Pra Registration
-          <IconButton
-            aria-label="close"
-            onClick={() => {
-              if (isFormChanged) {
-                openDiscardForCloseAdd();
-              } else {
-                handleCloseDialog();
-              }
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <Divider />
-        <DialogContent sx={{ paddingTop: '0px' }}>
-          <FormWizardAddInvitation
-            key={wizardKey}
-            formData={formDataAddVisitor}
-            setFormData={setFormDataAddVisitor}
-            edittingId={edittingId}
-            onSuccess={handleSuccess}
-            visitorType={visitorType}
-            sites={sites}
-            employee={employee}
-            allVisitorEmployee={allVisitorEmployee}
-            vtLoading={vtLoading}
-          />
-        </DialogContent>
-      </Dialog>
+        handleDialogClose={handleDialogClose}
+        handleCloseDialog={handleCloseDialog}
+        openDiscardForCloseAdd={openDiscardForCloseAdd}
+        isFormChanged={isFormChanged}
+        wizardKey={wizardKey}
+        formDataAddVisitor={formDataAddVisitor}
+        setFormDataAddVisitor={setFormDataAddVisitor}
+        edittingId={edittingId}
+        handleSuccess={handleSuccess}
+        visitorType={visitorType}
+        sites={sites}
+        employee={employee}
+        allVisitorEmployee={allVisitorEmployee}
+        vtLoading={vtLoading}
+      />
 
       {/* Detail Employee */}
       <EmployeeDetailDialog
@@ -988,7 +888,6 @@ const Content = () => {
         toast={toast as any}
         onSubmit={handleSelectSite}
       />
-
       {/* QR Code */}
       <QrScannerDialog
         open={openDialogIndex === 1}

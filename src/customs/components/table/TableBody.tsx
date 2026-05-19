@@ -88,6 +88,8 @@ export const TableBodyContent = ({
   isHavePeriod,
   isHaveEmployee,
   isHaveGender,
+  isHaveActive,
+  onActiveToggle,
   isSiteSpaceType,
   isHaveImage,
   imageFields,
@@ -325,6 +327,8 @@ export const TableBodyContent = ({
                 isHaveVip,
                 htmlFields,
                 htmlClampLines,
+                isHaveActive,
+                onActiveToggle,
                 htmlMaxWidth,
                 isAccessControlType,
                 isHavePeriod,
@@ -418,6 +422,8 @@ const TableRowItem = React.memo(
       isHaveEmployee,
       isHaveGender,
       isSiteSpaceType,
+      isHaveActive,
+      onActiveToggle,
       isHaveImage,
       imageFields,
       isDataVerified,
@@ -478,7 +484,6 @@ const TableRowItem = React.memo(
       onPrint,
       onDetail,
     } = props;
-
     const CHECKBOX_COL_WIDTH = 40;
     const ACTION_COL_WIDTH = 105;
     const INDEX_COL_WIDTH = 56;
@@ -856,6 +861,17 @@ const TableRowItem = React.memo(
                 />
               ) : isHaveImage && imageFields.includes(col) ? (
                 <></>
+              ) : isHaveActive && col === 'active' ? (
+                <Box display="flex" alignItems="center" justifyContent="start" width="100%">
+                  <Switch
+                    checked={Boolean(row.active)}
+                    color="primary"
+                    size="small"
+                    onChange={(_, checked) => {
+                      onActiveToggle?.(row, checked);
+                    }}
+                  />
+                </Box>
               ) : (isDataVerified && col === 'secure') ||
                 (isDataVerified && col === 'active') ||
                 col === 'can_upload' ||
@@ -1227,7 +1243,14 @@ const TableRowItem = React.memo(
                   {getAccessActions(row)}
                 </TableCell>
               ) : isHaveDuplicate ? (
-                <TableCell sx={{ display: 'flex', gap: '2px', borderBottom: 'none !important', padding: '0px !important' }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    gap: '2px',
+                    borderBottom: 'none !important',
+                    padding: '0px !important',
+                  }}
+                >
                   <Tooltip title="Duplicate Visitor Type" arrow>
                     <IconButton
                       onClick={() => onDuplicate?.(row)}
@@ -1290,7 +1313,7 @@ const TableRowItem = React.memo(
                       <IconTrash width={14} height={14} />
                     </IconButton>
                   </Tooltip>
-                </TableCell>
+                </Box>
               ) : isHaveView ? (
                 <>
                   <Tooltip title="View Invitation">
@@ -1704,6 +1727,7 @@ const TableRowItem = React.memo(
                     height: 28,
                     padding: 0.5,
                     borderRadius: '50%',
+                    '&:hover': { backgroundColor: '#e06f52', color: 'white' },
                   }}
                 >
                   <IconPencil width={14} height={14} />

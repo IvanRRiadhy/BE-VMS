@@ -47,7 +47,7 @@ const DetailProfile = Loadable(
 
 /* Guest Pages */
 const DashboardLayout = Loadable(lazy(() => import('src/customs/pages/Guest/Dashboard/Dashboard')));
-const PageAcces = Loadable(lazy(() => import('src/customs/pages/Guest/PageAcces')));
+// const PageAcces = Loadable(lazy(() => import('src/customs/pages/Guest/PageAcces')));
 const Invitation = Loadable(lazy(() => import('src/customs/pages/Guest/Invitation/Invitation')));
 const History = Loadable(lazy(() => import('src/customs/pages/Guest/History/History')));
 const Report = Loadable(lazy(() => import('src/customs/pages/Guest/Report/Report')));
@@ -111,6 +111,9 @@ const ManageBrand = Loadable(lazy(() => import('src/customs/pages/admin/content/
 // const FormAddUser = Loadable(
 //   lazy(() => import('src/customs/pages/admin/content/content_setting_user/FormAddUser')),
 // );
+const ManageVisitorRole = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/VisitorRole/Content')),
+);
 const ManageVisitorType = Loadable(
   lazy(() => import('src/customs/pages/admin/content/VisitorType/Content')),
 );
@@ -381,7 +384,7 @@ const Router = [
             children: [
               { index: true, element: <DashboardLayout /> },
               { path: 'dashboard', element: <DashboardLayout /> },
-              { path: 'access-page', element: <PageAcces /> },
+              // { path: 'access-page', element: <PageAcces /> },
               { path: 'invitation', element: <Invitation /> },
               { path: 'history', element: <History /> },
               { path: 'report', element: <Report /> },
@@ -433,6 +436,7 @@ const Router = [
           { path: '/admin/approval-workflow', element: <ManageApprove /> },
           { path: '/admin/manage/brand', element: <ManageBrand /> },
           { path: '/admin/manage/integration', element: <ManageIntegration /> },
+          { path: '/admin/manage/visitor-role', element: <ManageVisitorRole /> },
           { path: '/admin/manage/integration/:id', element: <ManageIntegrationDetail /> },
           { path: '/admin/manage/access-control', element: <ManageAccessControl /> },
           { path: '/admin/manage/custom-field', element: <ManageCustomField /> },

@@ -4,19 +4,14 @@ import { Box } from '@mui/system';
 import {
   Card,
   Typography,
-  IconButton,
-  DialogContent,
-  DialogTitle,
   Grid2 as Grid,
   Button,
-  Dialog,
   Drawer,
   Portal,
   Backdrop,
   CircularProgress,
   Snackbar,
   Alert,
-  DialogActions,
 } from '@mui/material';
 
 import {
@@ -52,13 +47,12 @@ import { getAccessPass } from 'src/customs/api/admin';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
-import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
-import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import AccessPassDialog from '../components/Dialog/AccessPassDialog';
 import { dispatch } from 'src/store/Store';
 import { useSelector } from 'react-redux';
 import Heatmap from './Heatmap';
 import { showSwal } from 'src/customs/components/alerts/alerts';
+import InputInvitationCodeDialog from './components/InputInvitationCodeDialog';
 
 const Dashboard = () => {
   const { token } = useSession();
@@ -66,6 +60,7 @@ const Dashboard = () => {
   const [activeAccessPass, setActiveAccessPass] = useState<any>();
   const [openAccess, setOpenAccess] = useState(false);
   const [openInputInvitationCode, setOpenInputInvitationCode] = useState(false);
+  const [invitationCode, setInvitationCode] = useState('');
   const handleOpenAccess = () => {
     setOpenAccess(true);
   };
@@ -181,20 +176,10 @@ const Dashboard = () => {
     if (!activeAccessPass?.id || !token) return;
     setIsParkingLoading(true);
     try {
-      const res = await openParkingBlocker(token, { trx_visitor_id: activeAccessPass.id });
-      // console.log('res', JSON.stringify(res, null, 2));
-      // setSnackbar({
-      //   open: true,
-      //   message: 'Parking blocker opened successfully.',
-      //   severity: 'success',
-      // });
+      await openParkingBlocker(token, { trx_visitor_id: activeAccessPass.id });
       showSwal('success', 'Parking blocker opened successfully.');
     } catch (error: any) {
-      setSnackbar({
-        open: true,
-        message: 'Failed to open parking blocker.',
-        severity: 'error',
-      });
+      showSwal('error', error?.response.data.msg || 'Failed to open parking blocker.');
     } finally {
       setTimeout(() => setIsParkingLoading(false), 600);
     }
@@ -382,42 +367,15 @@ const Dashboard = () => {
         printRef={printRef}
       />
 
-      <Dialog
+      <InputInvitationCodeDialog
         open={openInputInvitationCode}
+        invitationCode={invitationCode}
         onClose={() => setOpenInputInvitationCode(false)}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle>
-          Input Invitation Code
-          <IconButton
-            aria-label="close"
-            onClick={() => setOpenInputInvitationCode(false)}
-            sx={{
-              position: 'absolute',
-              right: 8,
-              top: 8,
-              color: (theme) => theme.palette.grey[500],
-            }}
-          >
-            <IconX />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent dividers>
-          <CustomFormLabel sx={{ mt: 0 }}>Invitation Code</CustomFormLabel>
-          <CustomTextField
-            fullWidth
-            variant="outlined"
-            size="small"
-            placeholder="Enter your invitation code"
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenInputInvitationCode(false)} variant="contained">
-            Submit
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onChangeInvitationCode={setInvitationCode}
+        onSubmit={() => {
+          console.log(invitationCode);
+        }}
+      />
 
       <Portal>
         <Snackbar

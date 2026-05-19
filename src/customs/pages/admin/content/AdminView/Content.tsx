@@ -1,23 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Button,
   Grid2 as Grid,
   Typography,
-  Card,
-  CardContent,
   Divider,
   TextField,
-  InputAdornment,
   IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
-  ListItem,
-  CardActions,
-  Avatar,
-  CardHeader,
   Checkbox,
-  CircularProgress,
   FormControlLabel,
   MenuItem,
   AlertColor,
@@ -25,38 +16,16 @@ import {
   FormControl,
   RadioGroup,
   Radio,
-  Tooltip,
-  Select,
   Portal,
   Snackbar,
   Alert,
-  Box,
-  useMediaQuery,
-  useTheme,
 } from '@mui/material';
+import { Box, useMediaQuery, useTheme } from '@mui/system';
 import moment from 'moment-timezone';
 import backgroundnodata from 'src/assets/images/backgrounds/bg_nodata.svg';
 import infoPic from 'src/assets/images/backgrounds/info_pic.png';
-import {
-  IconBan,
-  IconCards,
-  IconClock,
-  IconCreditCard,
-  IconForbid2,
-  IconKey,
-  IconKeyOff,
-  IconLogin,
-  IconLogout,
-  IconPrinter,
-  IconSearch,
-  IconX,
-} from '@tabler/icons-react';
-import Container from 'src/components/container/PageContainer';
+import { IconX } from '@tabler/icons-react';
 import PageContainer from 'src/customs/components/container/PageContainer';
-import {
-  AdminCustomSidebarItemsData,
-  AdminNavListingData,
-} from 'src/customs/components/header/navigation/AdminMenu';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import {
@@ -72,14 +41,13 @@ import {
   getInvitationCode,
   getInvitationOperatorRelated,
   getPermissionOperator,
-  getTodayVisitingPurpose,
   getUpComingPurpose,
   getUpComingVisitors,
 } from 'src/customs/api/operator';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import LprImage from 'src/assets/images/products/pic_lpr.png';
-import SearchVisitorDialog from './Dialog/SearchVisitorDialog';
-import DetailVisitorDialog from './Dialog/DetailVisitorDialog';
+import SearchVisitorDialog from 'src/customs/pages/Operator/Dialog/SearchVisitorDialog';
+import DetailVisitorDialog from 'src/customs/pages/Operator/Dialog/DetailVisitorDialog';
 import Swal from 'sweetalert2';
 import { getDetailInvitationForm } from 'src/customs/api/visitor';
 import { FullScreen, useFullScreenHandle } from 'react-full-screen';
@@ -89,79 +57,74 @@ import {
   FormVisitor,
 } from 'src/customs/api/models/Admin/Visitor';
 import { DateTimePicker, LocalizationProvider, renderTimeViewClock } from '@mui/x-date-pickers';
-import dayjs, { Dayjs, tz } from 'dayjs';
+import dayjs from 'dayjs';
 import weekday from 'dayjs/plugin/weekday';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import advancedFormat from 'dayjs/plugin/advancedFormat';
 import utc from 'dayjs/plugin/utc';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-
-import { getAllSite, getAllVisitorType } from 'src/customs/api/admin';
-import FormDialogPraregist from './Dialog/FormDialogPraregist';
-import CameraUpload from './Components/CameraUpload';
+import CameraUpload from 'src/customs/pages/Operator/Components/CameraUpload';
 import { showSwal } from 'src/customs/components/alerts/alerts';
-import FormWizardAddVisitor from './Invitation/FormWizardAddVisitor';
-import FormWizardAddInvitation from './Invitation/FormWizardAddInvitation';
-import ScanQrVisitorDialog from './Dialog/ScanQrVisitorDialog';
+import FormWizardAddVisitor from 'src/customs/pages/Operator/Invitation/FormWizardAddVisitor';
+import FormWizardAddInvitation from 'src/customs/pages/Operator/Invitation/FormWizardAddInvitation';
+import ScanQrVisitorDialog from 'src/customs/pages/Operator/Dialog/ScanQrVisitorDialog';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import VisitingPurposeDialog from './Dialog/VisitingPurposeDialog';
-import InfoDialog from './Dialog/InfoDialog';
-import ExtendVisitDialog from './Dialog/ExtendVisitDialog';
+import InfoDialog from 'src/customs/pages/Operator/Dialog/InfoDialog';
+import ExtendVisitDialog from 'src/customs/pages/Operator/Dialog/ExtendVisitDialog';
 import { useTranslation } from 'react-i18next';
-import VisitorDetailTabs from './Components/VisitorDetailTabs';
-import BlacklistVisitorDialog from './Dialog/BlacklistVisitorDialog';
-import ListVisitorDialog from './Dialog/ListVisitorDialog';
-import TriggeredAccessDialog from './Dialog/TriggeredAccessDialog';
-import DetailVisitingPurpose from './Dialog/DetailVisitingPurpose';
-import SwipeCardDialog from './Dialog/SwipeCardDialog';
-import SwipeAccessDialog from './Dialog/SwipeAccessDialog';
+import BlacklistVisitorDialog from 'src/customs/pages/Operator/Dialog/BlacklistVisitorDialog';
+import ListVisitorDialog from 'src/customs/pages/Operator/Dialog/ListVisitorDialog';
+import TriggeredAccessDialog from 'src/customs/pages/Operator/Dialog/TriggeredAccessDialog';
+import DetailVisitingPurpose from 'src/customs/pages/Operator/Dialog/DetailVisitingPurpose';
+import SwipeCardDialog from 'src/customs/pages/Operator/Dialog/SwipeCardDialog';
+import SwipeAccessDialog from 'src/customs/pages/Operator/Dialog/SwipeAccessDialog';
 import { useDebounce } from 'src/hooks/useDebounce';
-import PrintDialog from './Dialog/PrintDialog';
+import PrintDialog from 'src/customs/pages/Operator/Dialog/PrintDialog';
 import { getPrintBadgeConfig } from 'src/customs/api/Admin/PrintBadge';
-import PrintDialogBulk from './Dialog/PrintDialogBluk';
+import PrintDialogBulk from 'src/customs/pages/Operator/Dialog/PrintDialogBluk';
+import { getRegisteredSiteOperator, returnCard } from 'src/customs/api/Admin/SwapCard';
+import SwipeCardNoCodeDialog from 'src/customs/pages/Operator/Dialog/SwipeCardNoCodeDialog';
+import InvitationQrCard from 'src/customs/pages/Operator/Components/InvitationQrCard';
+import VisitorSearchInput from 'src/customs/pages/Operator/Components/VisitorSearchInput';
+import OperatorToolbar from 'src/customs/pages/Operator/Components/OperatorToolbar';
+import VisitorImage from 'src/customs/pages/Operator/Components/VisitorImage';
+import ReturnCardDialog from 'src/customs/pages/Operator/Dialog/ReturnCardDialog';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+import ParkingDialog from 'src/customs/pages/Operator/Dialog/ParkingDialog';
+import ActionPanelCard from 'src/customs/pages/admin/content/AdminView/Components/ActionPanelCard';
 import {
-  getRegisteredSiteOperator,
-  getSiteAccessOperator,
-  returnCard,
-  swapCard,
-} from 'src/customs/api/Admin/SwapCard';
-import SwipeCardNoCodeDialog from './Dialog/SwipeCardNoCodeDialog';
-import InvitationQrCard from './Components/InvitationQrCard';
-import VisitorSearchInput from './Components/VisitorSearchInput';
-import OperatorToolbar from './Components/OperatorToolbar';
-import VisitorImage from './Components/VisitorImage';
-import ReturnCardDialog from './Dialog/ReturnCardDialog';
-import GlobalBackdropLoading from './Components/GlobalBackdrop';
-import AccessDialog from './Dialog/AccessDialog';
-import ParkingDialog from './Dialog/ParkingDialog';
-import ActionPanelCard from './Components/ActionPanelCard';
-import {
-  getInvitationAccessControl,
   getInvitationSite,
   getInvitationVisitorEmployee,
   getInvitationVisitorHost,
+  getInvitationVisitorType,
 } from 'src/customs/api/Admin/InvitationData';
-import FillPraregistrationGroup from './Invitation/components/FillPraregistrationGroup';
-import GrantAccessDialog from './Dialog/GrantAccessDialog';
-import LprVisitorCard from './Components/LprVisitorCard';
-import ChooseCardDialog from './Dialog/ChooseCardDialog';
-import FillPraregistrationSingle from 'src/customs/pages/Operator/Invitation/components/FillPraregistrationSingle';
+import FillPraregistrationGroup from 'src/customs/pages/Operator/Invitation/components/FillPraregistrationGroup';
+import GrantAccessDialog from 'src/customs/pages/Operator/Dialog/GrantAccessDialog';
+import LprVisitorCard from 'src/customs/pages/Operator/Components/LprVisitorCard';
+import ChooseCardDialog from 'src/customs/pages/Operator/Dialog/ChooseCardDialog';
+import { getPermission } from 'src/customs/api/users';
 import { usePermission } from 'src/hooks/usePermission';
 import VisitorDetailCard from 'src/customs/pages/Operator/Components/VisitorDetailCard';
-import { getPermission } from 'src/customs/api/users';
+import FillPraregistrationSingle from 'src/customs/pages/Operator/Invitation/components/FillPraregistrationSingle';
 import VisitorListCard from 'src/customs/pages/Operator/Dialog/VisitorListCard';
+import {
+  AdminCustomSidebarItemsData,
+  AdminNavListingData,
+} from 'src/customs/components/header/navigation/AdminMenu';
+import Container from 'src/components/container/PageContainer';
+import { getAllSite } from 'src/customs/api/admin';
+
 type DocumentType = 'CardAccess' | 'Other';
 dayjs.extend(utc);
 dayjs.extend(weekday);
 dayjs.extend(localizedFormat);
 dayjs.extend(customParseFormat);
 dayjs.extend(advancedFormat);
-// dayjs.locale('id');
+dayjs.locale('id');
 const Content = () => {
   const theme = useTheme();
   const lgUp = useMediaQuery(theme.breakpoints.up('lg'));
-  const mdUp = useMediaQuery(theme.breakpoints.up('md'));
   const { token } = useSession();
   const { t } = useTranslation();
 
@@ -169,19 +132,15 @@ const Content = () => {
   const [invitationCode, setInvitationCode] = useState<any[]>([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [torchOn, setTorchOn] = useState(false);
   const [wizardKey, setWizardKey] = useState(0);
   const scanContainerRef = useRef<HTMLDivElement | null>(null);
   const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMsg, setSnackbarMsg] = useState('');
-  const [snackbarType, setSnackbarType] = useState<'success' | 'error' | 'info'>('info');
   const [openInvitationVisitor, setOpenInvitationVisitor] = useState(false);
   const [permissionAccess, setPermissionAccess] = useState<any[]>([]);
-  const [search, setSearch] = useState('');
   const handleOpenScanQR = () => setOpenDialogIndex(1);
-  const [visitorStatus, setVisitorStatus] = useState<string | null>(null);
   const [selectedCards, setSelectedCards] = useState<string[]>([]);
   const [openChooseCardDialog, setOpenChooseCardDialog] = useState(false);
   const [loadingAccess, setLoadingAccess] = useState(false);
@@ -190,7 +149,6 @@ const Content = () => {
   const [selectedVisitorNumber, setSelectedVisitorNumber] = useState<string | null>(null);
   const [scannedVisitorNumber, setScannedVisitorNumber] = useState<string | null>(null);
   const [selectMultiple, setSelectMultiple] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
   const [selectedVisitors, setSelectedVisitors] = useState<string[]>([]);
   const [selectedInvitationId, setSelectedInvitationId] = useState<string | null>(null);
   const [bulkAction, setBulkAction] = useState('');
@@ -199,40 +157,35 @@ const Content = () => {
   const [inputValues, setInputValues] = useState<{ [key: number]: string }>({});
   const [uploadNames, setUploadNames] = useState<Record<string, string>>({});
   const [activeStep, setActiveStep] = useState(0);
-  const [previews, setPreviews] = useState<Record<string, string | null>>({});
   const [uploadMethods, setUploadMethods] = useState<Record<string, 'file' | 'camera'>>({});
   const [allVisitorEmployee, setAllVisitorEmployee] = useState<any[]>([]);
   const [openSearch, setOpenSearch] = useState(false);
   const [openDetailVisitingPurpose, setOpenDetailVistingPurpose] = useState(false);
   const [openDetail, setOpenDetail] = useState(false);
   const [visitorData, setVisitorData] = useState<any[]>([]);
-  const [openAccessData, setOpenAccessData] = useState(false);
-  const [typeVisitor, setTypeVisitor] = useState('related');
   const [accessData, setAccessData] = useState<any[]>([]);
-  const [selectedActionAccess, setSelectedActionAccess] = useState<string | null>(null);
   const [selectedMinutes, setSelectedMinutes] = useState<number | null>(null);
   const [openExtendVisit, setOpenExtendVisit] = useState(false);
   const durationOptions = [15, 30, 45, 60, 90, 120, 150, 180];
-  const [loading, setLoading] = useState(false);
   const [openFillForm, setOpenFillForm] = useState(false);
   const [fillFormData, setFillFormData] = useState<any[]>([]);
-  const [fillFormActiveStep, setFillFormActiveStep] = useState(0);
+  const [fillFormActiveStep, setFillFormActiveStep] = useState(-1);
   const [fillFormDataVisitor, setFillFormDataVisitor] = useState<any[]>([]);
-  const [selectedSite, setSelectedSite] = useState<any | null>(null);
   const [openDialogInfo, setOpenDialogInfo] = useState(false);
   const [openSwipeDialog, setOpenSwipeDialog] = useState(false);
   const [selectedInvitations, setSelectedInvitations] = useState<any[]>([]);
   const [openSwipeAccess, setOpenSwipeAccess] = useState(false);
   const handle = useFullScreenHandle();
   const [currentAction, setCurrentAction] = useState<'Checkin' | 'Checkout' | null>(null);
-  const [showExtendButton, setShowExtendButton] = useState(false);
   const [actionButton, setActionButton] = useState<any | null>(null);
   const [visitorCards, setVisitorCards] = useState<any[]>([]);
   const [returnCardNumber, setReturnCardNumber] = useState('');
   const [openListVisitor, setOpenListVisitor] = useState(false);
   const [openBlacklistVisitor, setOpenBlacklistVisitor] = useState(false);
   const [openTriggeredAccess, setOpenTriggeredAccess] = useState(false);
-  const [registerSiteOperator, setRegisterSiteOperator] = useState<any>({});
+  const [registerSiteOperator, setRegisterSiteOperator] = useState<string>(() => {
+    return localStorage.getItem('selectedSite') || '';
+  });
   const [registeredSite, setRegisteredSite] = useState<any[]>([]);
   const [openSwipeDialogNoInvitation, setOpenSwipeDialogNoInvitation] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -246,6 +199,9 @@ const Content = () => {
   const [employee, setEmployee] = useState<any[]>([]);
   const [dialogContainer, setDialogContainer] = useState<HTMLElement | null>(null);
   const [hidePageContainer, setHidePageContainer] = useState(false);
+  const [invitationDetail, setInvitationDetail] = useState<any>([]);
+  const [questionPageTemplate, setQuestionPageTemplate] = useState<any[]>([]);
+  const [applyToAll, setApplyToAll] = useState(false);
   const [openPreviewPrint, setOpenPreviewPrint] = useState(false);
   const [openBulkPrint, setOpenBulkPrint] = useState(false);
   const handleOpenBlacklistVisitor = () => setOpenBlacklistVisitor(true);
@@ -254,41 +210,55 @@ const Content = () => {
   const handleOpenVehicle = () => setOpenVehicle(true);
   const handleCloseListVisitor = () => setOpenListVisitor(false);
   const handleCloseTriggeredAcceess = () => setOpenTriggeredAccess(false);
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [wsPayload, setWsPayload] = useState<any>(null);
   const wsImageQueueRef = useRef<string[]>([]);
   const wsOcrQueueRef = useRef<string[]>([]);
+  const [isSelfGroup, setIsSelfGroup] = useState<boolean | null>(null);
   const [tick, forceTick] = useState(0);
   const socketRef = useRef<WebSocket | null>(null);
   const [sitesOperator, setSitesOperator] = useState<any[]>([]);
-  const [permission, setPermission] = useState<any>({});
-  const permissionHook = usePermission(permission);
+  const [printData, setPrintData] = useState<any>(null);
+  const [resetStep, setResetStep] = useState(0);
   const [openAccessIssuance, setAccessIssuance] = useState(false);
+  const [openReturnCard, setOpenReturnCard] = useState(false);
+  const [openParking, setOpenParking] = useState(false);
+  const [openVehicle, setOpenVehicle] = useState(false);
+  const [totalCountVisitor, setTotalCountVisitor] = useState(0);
+  const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorRequest>(() => {
+    const saved = localStorage.getItem('unsavedVisitorData');
+    return saved ? JSON.parse(saved) : CreateVisitorRequestSchema.parse({});
+  });
+  const [swipePayload, setSwipePayload] = useState<any[]>([]);
+  const parkingData = [
+    { id: 1, vehicle_type: 'Car', vehicle_plate_number: 'BG 817 AS' },
+    { id: 2, vehicle_type: 'Motorcycle', vehicle_plate_number: 'B 1512 AA' },
+  ];
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [typeVisitor, setTypeVisitor] = useState('related');
+  const [upcomingPurpose, setUpcomingPurpose] = useState<any[]>([]);
+  const [upcomingVisitors, setUpcomingVisitors] = useState<any[]>([]);
+
   const [dataDummyAccess, setDataDummyAccess] = useState<any[]>([
     {
       id: '1',
-      site: 'SPU',
-      // visitor_name: 'Dummy Visitor',
-      // status: 'Active',
+      site: 'SCP 3A',
     },
     {
       id: '2',
-      site: 'SPU 2',
-      // visitor_name: 'Dummy Visitor',
-      // status: 'Active',
+      site: 'SPU 2B',
+    },
+    {
+      id: '3',
+      site: 'SPU 1D',
     },
   ]);
-  const [printData, setPrintData] = useState<any>(null);
-  const [resetStep, setResetStep] = useState(0);
-  const [openRevokeDialog, setOpenRevokeDialog] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await getInvitationSite(token as string);
+        const res = await getAllSite(token as string);
         const filteredSites =
           res?.collection?.filter((site: any) => site.can_visited === true) ?? [];
-
         setSitesOperator(filteredSites);
       } catch (error) {
         console.log(error);
@@ -298,9 +268,18 @@ const Content = () => {
   }, [token]);
 
   useEffect(() => {
+    if (registerSiteOperator) {
+      localStorage.setItem('selectedSite', registerSiteOperator);
+    } else {
+      localStorage.removeItem('selectedSite');
+    }
+  }, [registerSiteOperator]);
+
+  useEffect(() => {
     const fetchData = async () => {
       try {
         const res = await getRegisteredSiteOperator(token as string);
+
         const firstSite = res?.collection?.[0];
         setRegisterSiteOperator(firstSite?.id ?? '');
         setRegisteredSite(res?.collection ?? []);
@@ -343,24 +322,46 @@ const Content = () => {
     fetchData();
   }, [token]);
 
-  const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorRequest>(() => {
-    const saved = localStorage.getItem('unsavedVisitorData');
-    return saved ? JSON.parse(saved) : CreateVisitorRequestSchema.parse({});
-  });
-
-  const [swipePayload, setSwipePayload] = useState<any | null>(null);
-
   const currentUsedCards = useMemo(() => {
     if (!Array.isArray(visitorCards)) return [];
 
     return visitorCards
-      .filter((c) => c.is_swapcard && c.card_type !== 'Barcode')
+      .filter(
+        (c) =>
+          (c.is_swapcard == false || c.is_swapcard == true) &&
+          c.card_type !== 'Barcode' &&
+          c.current_used === true,
+      )
       .sort((a, b) => Number(a.current_used) - Number(b.current_used));
   }, [visitorCards]);
 
-  useEffect(() => {
-    setSelectedCards([]);
-  }, [selectedVisitorId]);
+  const handleSubmitBatchSwipe = async (payloads: any[]) => {
+    try {
+      if (!payloads.length) return;
+
+      await createMultipleGrantAccess(token as string, {
+        data: payloads,
+      });
+
+      console.log('payloads', payloads);
+
+      showSwal('success', 'All cards swapped successfully!');
+
+      setSwipePayload([]);
+      setOpenSwipeDialog(false);
+      setOpenChooseCardDialog(false);
+      setSearchTerm('');
+
+      await fetchRelatedVisitorsByInvitationId(invitationId as string);
+    } catch (err: any) {
+      showSwal(
+        'error',
+        Array.isArray(err?.response?.data?.collection)
+          ? err.response.data.collection.join('\n')
+          : err?.response?.data?.collection || 'Failed to swap cards',
+      );
+    }
+  };
 
   const handleSwipeCardSubmit = async (
     value: string,
@@ -372,8 +373,26 @@ const Content = () => {
     setLoadingAccess(true);
     try {
       // const selectedCardNumber = selectedCards[visitorIndex];
-      const selectedCardNumber = selectedCards[0];
-      const selectedCard = filteredCards.find((c) => c.card_number === selectedCardNumber);
+      // const selectedCard = filteredCards.find((c) => c.card_number === selectedCardNumber);
+
+      const visitorSelectedCards = Array.isArray(selectedCards[visitorIndex])
+        ? selectedCards[visitorIndex]
+        : selectedCards;
+
+      const currentUsedCardNumber = String(value).trim();
+
+      const newCardNumber = visitorSelectedCards.find(
+        (cardNumber: string) => String(cardNumber).trim() !== currentUsedCardNumber,
+      );
+
+      if (!newCardNumber) {
+        showSwal('error', 'New card not found');
+        return;
+      }
+
+      const selectedCard = filteredCards.find(
+        (c) => String(c.card_number).trim() === String(newCardNumber).trim(),
+      );
 
       if (!selectedCard) {
         showSwal('error', 'Card not found');
@@ -390,20 +409,22 @@ const Content = () => {
         swap_type: type,
         swap_card_from_site_id: registerSiteOperator,
         is_swapcard: true,
+        registered_site_id: registerSiteOperator,
       };
 
-      console.log('SWAP PAYLOAD', payload);
+      // setSwipePayload((prev) => [...prev, payload]);
 
       if (!hasSwappedCard) {
-        console.log('FIRST SWIPE', payload);
-        await createGrandAccessOperator(token as string, payload);
-        showSwal('success', 'Card swaped successfully!');
-        setOpenChooseCardDialog(false);
-        setSearchTerm('');
-        await fetchRelatedVisitorsByInvitationId(invitationId as string);
+        const newPayload = [...swipePayload, payload];
+        setSwipePayload(newPayload);
+
+        if (!isLastVisitor) {
+          return;
+        }
+        await handleSubmitBatchSwipe(newPayload);
+        setSwipePayload([]);
+        return;
       } else {
-        console.log('SECOND SWIPE NEED SITE');
-        // setSwipePayload(payload);
         setSwipePayload([payload]);
         setCurrentAccessVisitor(visitor);
         setOpenSwipeAccess(true);
@@ -411,7 +432,7 @@ const Content = () => {
 
       setOpenSwipeDialog(false);
     } catch (err: any) {
-      showSwal('error', err?.response?.data?.msg || 'Failed to swipe card');
+      showSwal('error', err?.response?.data?.collection || 'Failed to swipe card');
     } finally {
       setLoadingAccess(false);
     }
@@ -441,14 +462,13 @@ const Content = () => {
         swap_card_from_site_id: registerSiteOperator,
         swap_type: isSwap ? 'CardAccess' : 'Other',
         is_swapcard: isSwap,
+        registered_site_id: registerSiteOperator,
       };
 
       if (isSwap) {
         payload.swap_card_from_card = oldCardData.card_number;
         payload.swap_card_from_site_id = registerSiteOperator;
       }
-
-      console.log('SWAP PAYLOAD', payload);
 
       await createGrandAccessOperator(token as string, payload);
 
@@ -464,8 +484,11 @@ const Content = () => {
       setLoadingAccess(false);
     }
   };
-
-  const [selectedPurpose, setSelectedPurpose] = useState<any>(null);
+  const [selectedPurpose, setSelectedPurpose] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [permission, setPermission] = useState<any>({});
 
   const handleOpenSwipeDialog = () => {
     const hasSwappedBefore = visitorCards.some((c) => c.is_swapcard === true);
@@ -487,9 +510,42 @@ const Content = () => {
   };
 
   const handleOpenDetailVistingPurpose = (item: any) => {
-    setSelectedPurpose(item);
+    setSelectedPurpose({
+      id: item.id,
+      name: item.name,
+    });
     setOpenDetailVistingPurpose(true);
   };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!token) return;
+
+      try {
+        setLoading(true);
+        const [vtRes, permissionRes] = await Promise.allSettled([
+          getInvitationVisitorType(token),
+          getPermission(token),
+        ]);
+
+        if (vtRes.status === 'fulfilled') {
+          setVisitorType(vtRes.value?.collection ?? []);
+        } else {
+        }
+
+        if (permissionRes.status === 'fulfilled') {
+          setPermission(permissionRes.value?.collection ?? {});
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchData();
+  }, [token]);
+
+  const permissionHook = usePermission(permission);
 
   useEffect(() => {
     const handleBrowserFullscreen = () => {
@@ -524,9 +580,7 @@ const Content = () => {
 
     if (!selectedMinutes) return;
     if (!selectedVisitors || selectedVisitors.length === 0) {
-      setSnackbarMsg('No visitor selected.');
-      setSnackbarType('error');
-      setSnackbarOpen(true);
+      toast('Please select visitor first.', 'info');
       return;
     }
 
@@ -566,33 +620,25 @@ const Content = () => {
       setOpenExtendVisit(false);
       setSelectedMinutes(null);
     } catch (error: any) {
-      console.error('❌ Error extending visit:', error);
-
       let msg = 'Failed to extend visit.';
-      let status = null;
 
       if (error.response && error.response.data) {
         msg = error.response.data.msg || error.response.data.message || msg;
         status = error.response.data.status;
       }
-
-      setSnackbarMsg(msg);
-      setSnackbarType('error');
-      setSnackbarOpen(true);
+      toast(msg, 'error');
     } finally {
       setTimeout(() => setLoadingAccess(false), 600);
     }
   };
 
   const handleSuccess = async () => {
-    setSelectedSite(null);
     setFormDataAddVisitor((prev: any) => ({
       ...prev,
       registered_site: '',
     }));
-    // setRefreshTrigger((prev) => prev + 1);
     handleCloseDialog();
-    await fetchTodayVisitingPurpose();
+    await fetchUpcomingPurpose();
   };
 
   useEffect(() => {
@@ -606,18 +652,22 @@ const Content = () => {
 
     const fetchData = async () => {
       try {
-        const [siteRes, employeeRes, allVisitorEmployee] = await Promise.all([
-          // getAllSite(token),
-          // getVisitorEmployee(token),
+        const [siteRes, employeeRes, allVisitorEmployee] = await Promise.allSettled([
           getInvitationSite(token),
           getInvitationVisitorHost(token),
-          // getVisitorEmployee(token),
           getInvitationVisitorEmployee(token),
         ]);
+        if (siteRes.status === 'fulfilled') {
+          setSites(siteRes.value?.collection ?? []);
+        }
 
-        setSites(siteRes?.collection ?? []);
-        setEmployee(employeeRes?.collection ?? []);
-        setAllVisitorEmployee(allVisitorEmployee?.collection ?? []);
+        if (employeeRes.status === 'fulfilled') {
+          setEmployee(employeeRes.value?.collection ?? []);
+        }
+
+        if (allVisitorEmployee.status === 'fulfilled') {
+          setAllVisitorEmployee(allVisitorEmployee.value?.collection ?? []);
+        }
       } catch (err) {
         console.error(err);
       }
@@ -659,7 +709,7 @@ const Content = () => {
     const formData = new FormData();
 
     const filename = file instanceof File && file.name ? file.name : 'selfie.png';
-    console.log('filename', filename);
+    // console.log('filename', filename);
     formData.append('file_name', filename);
     formData.append('file', file, filename);
     formData.append('path', 'visitor');
@@ -692,7 +742,7 @@ const Content = () => {
 
     if (trackKey) {
       setUploadNames((prev) => ({ ...prev, [trackKey]: file.name }));
-      setPreviews((prev) => ({ ...prev, [trackKey]: URL.createObjectURL(file) }));
+      // setPreviews((prev) => ({ ...prev, [trackKey]: URL.createObjectURL(file) }));
     }
 
     const path = await uploadFileToCDN(file);
@@ -703,7 +753,7 @@ const Content = () => {
 
   const handleCloseDialog = () => {
     localStorage.removeItem('unsavedVisitorData');
-    setSelectedSite(null);
+    // setSelectedSite(null);
     setFormDataAddVisitor(CreateVisitorRequestSchema.parse({}));
     setResetStep((prev) => prev + 1);
     setOpenInvitationVisitor(false);
@@ -739,9 +789,7 @@ const Content = () => {
 
   const handleChooseCard = async () => {
     if (!selectedVisitors.length) {
-      setSnackbarMsg('Please select a visitor first.');
-      setSnackbarType('info');
-      setSnackbarOpen(true);
+      toast('Please select a visitor first.', 'info');
       return;
     }
 
@@ -808,61 +856,67 @@ const Content = () => {
   const findCard = (cardNumber: string) =>
     availableCards.find((c) => String(c.card_number).trim() === String(cardNumber).trim());
 
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     const response = await getRegisteredSite(token as string);
-  //     setSiteData(response.collection);
-  //   };
-  //   fetchData();
-  // }, [token]);
-
   const fetchAvailableCards = async () => {
     const res = await getAvailableCardOperator(token as string);
     setAvailableCards(res.collection);
   };
 
+  const isSwapMode = currentUsedCards.length > 1;
   const handleToggleCard = (cardNumber: string) => {
+    const normalized = String(cardNumber);
+
     setSelectedCards((prev) => {
-      const normalized = String(cardNumber);
-      const maxCards = selectedVisitors.length || 1;
+      let updated: string[];
 
       if (prev.includes(normalized)) {
-        return prev.filter((c) => c !== normalized);
+        updated = prev.filter((c) => c !== normalized);
+      } else {
+        updated = [...prev, normalized];
       }
 
-      if (prev.length >= maxCards) {
-        toast(`You can only select up to ${maxCards} cards.`, 'info');
-        return prev;
-      }
-
-      return [...prev, normalized];
+      console.log('updated selectedCards:', updated);
+      return updated;
     });
   };
 
-  const [openReturnCard, setOpenReturnCard] = useState(false);
-  const [openParking, setOpenParking] = useState(false);
-  const [openVehicle, setOpenVehicle] = useState(false);
+  const handleEnableEditing = () => {
+    const confirmed = Swal.fire({
+      title: 'Enable Editing',
+      text: 'Are you sure you want to enable editing? ',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#16a34a',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes',
+      cancelButtonText: 'Cancel',
+      reverseButtons: true,
+      showCloseButton: true,
+    });
+  };
 
   const handleOpenAction = (value: string) => {
     setActionButton(value);
 
     const hasInvitation = invitationCode.length > 0 && relatedVisitors.length > 0;
-
-    // 🟣 CARD → TIDAK PERNAH buka Scan QR
     if (value === 'card') {
       if (!hasInvitation) {
         setOpenSwipeDialogNoInvitation(true);
       } else {
-        // setOpenChooseCardDialog(true); // atau handleChooseCard()
+        // setOpenChooseCardDialog(true);
         handleChooseCard();
       }
       return;
     }
 
-    if (value === 'access' && invitationCode.length > 0 && relatedVisitors.length > 0) {
-      setOpenAccessData(true);
+    if (value === 'enable' && invitationCode.length > 0 && relatedVisitors.length > 0) {
+      handleEnableEditing();
       return;
     }
+
+    // if (value === 'access' && invitationCode.length > 0 && relatedVisitors.length > 0) {
+    //   setOpenAccessData(true);
+    //   return;
+    // }
 
     if (value === 'extend' && invitationCode.length > 0 && relatedVisitors.length > 0) {
       setOpenExtendVisit(true);
@@ -874,6 +928,10 @@ const Content = () => {
     }
     if (value === 'return' && invitationCode.length > 0 && relatedVisitors.length > 0) {
       setOpenReturnCard(true);
+      return;
+    }
+    if (value === 'access' && invitationCode.length > 0 && relatedVisitors.length > 0) {
+      setAccessIssuance(true);
       return;
     }
     if (value === 'parking') {
@@ -904,7 +962,7 @@ const Content = () => {
     const id = selectedVisitorId ?? invitationCode?.[0]?.visitor_id;
 
     if (!id) {
-      toast('Please select visitor first.', 'warning');
+      // toast('Please select visitor first.', 'warning');
       setOpenDialogIndex(1);
       return;
     }
@@ -913,33 +971,29 @@ const Content = () => {
   };
 
   const [invitationId, setInvitationId] = useState<string | null>(null);
-  // const [activeVisitor, setActiveVisitor] = useState<any | null>(null);
+
   const handleSubmitQRCode = async (value: string) => {
     try {
       const res = await getInvitationCode(token as string, value);
       const data = res.collection?.data ?? [];
 
       if (data.length === 0) {
-        setSnackbarMsg('Your code does not exist.');
-        setSnackbarType('error');
-        setSnackbarOpen(true);
+        toast('Your code does not exist.', 'error');
         return;
       }
+
       const invitation = data[0];
       setInvitationId(invitation.id);
       const invitationId = invitation.id;
 
       setInvitationCode(data);
-      setVisitorStatus(data[0]?.visitor_status ?? null);
       setSelectedVisitorNumber(data[0]?.visitor_number ?? null);
       setScannedVisitorNumber(data[0]?.visitor_number ?? null);
 
       setSelectedVisitors([]);
 
       await fetchRelatedVisitorsByInvitationId(invitationId);
-
       const freshVisitors = await getInvitationOperatorRelated(invitationId, token as string);
-      // console.log('freshVisitors', freshVisitors);
       const scannedNumber = data[0]?.visitor_number;
 
       const matchedIds = freshVisitors.collection
@@ -959,43 +1013,41 @@ const Content = () => {
         }),
       );
 
-      // const accessList = Array.isArray(invitation.access) ? invitation.access : [invitation.access];
-      // // console.log('accessList', accessList);
+      const accessList = Array.isArray(invitation.access) ? invitation.access : [invitation.access];
 
-      // const filteredAccess = accessList.filter((a: any) =>
-      //   permissionAccess.some((p: any) => p.access_control_id === a.access_control_id),
-      // );
-      // // console.log('filteredAccess', filteredAccess);
+      const filteredAccess = accessList.filter((a: any) =>
+        permissionAccess.some((p: any) => p.access_control_id === a.access_control_id),
+      );
 
-      // const mergedAccess = filteredAccess.map((a: any) => {
-      //   const perm = permissionAccess.find((p: any) => p.access_control_id === a.access_control_id);
-      //   return {
-      //     // ...a,
-      //     id: a.id,
-      //     name: a.access_control_name ?? '-',
-      //     access_control_id: a.access_control_id,
-      //     early_access: a.early_access,
-      //     visitor_give_access: a.visitor_give_access,
-      //     can_grant: perm?.can_grant ?? false,
-      //     can_revoke: perm?.can_revoke ?? false,
-      //     can_block: perm?.can_block ?? false,
-      //     disabled: !perm,
-      //   };
-      // });
+      const mergedAccess = filteredAccess.map((a: any) => {
+        const perm = permissionAccess.find((p: any) => p.access_control_id === a.access_control_id);
+        return {
+          // ...a,
+          id: a.id,
+          name: a.access_control_name ?? '-',
+          access_control_id: a.access_control_id,
+          early_access: a.early_access,
+          visitor_give_access: a.visitor_give_access,
+          can_grant: perm?.can_grant ?? false,
+          can_revoke: perm?.can_revoke ?? false,
+          can_block: perm?.can_block ?? false,
+          // disabled: !perm,
+        };
+      });
       // console.log('mergedAccess', mergedAccess);
 
-      // // setAccessData([...mergedAccess]);
-      // setAccessData(mergedAccess);
+      // setAccessData([...mergedAccess]);
+      setAccessData(mergedAccess);
 
-      const resAccess = await getInvitationAccessControl(token as string);
-      const rowsAccess = resAccess.collection.map((item: any) => ({
-        id: item.Id,
-        name: item.Name ?? '-',
-        description: item.Description ?? '-',
-      }));
+      // const resAccess = await getInvitationAccessControl(token as string);
+      // const rowsAccess = resAccess.collection.map((item: any) => ({
+      //   id: item.Id,
+      //   name: item.Name ?? '-',
+      //   description: item.Description ?? '-',
+      // }));
       // console.log('resAccess', resAccess);
       // setAccessData(resAccess.collection ?? []);
-      setAccessData(rowsAccess ?? []);
+      // setAccessData(rowsAccess ?? []);
 
       if (currentAction) {
         setSelectedVisitors([invitationId]);
@@ -1020,7 +1072,8 @@ const Content = () => {
         return;
       } else if (actionButton == 'access') {
         setSelectedVisitors([invitationId]);
-        setOpenAccessData(true);
+        // setOpenAccessData(true);
+        setAccessIssuance(true);
         setActionButton(null);
         handleCloseScanQR();
         return;
@@ -1033,10 +1086,9 @@ const Content = () => {
       }
       handleCloseScanQR();
 
-      showSwal('success', 'Code scanned successfully.');
-      setShowExtendButton(true);
+      showSwal('success', 'Code scanned successfully.', 3000);
     } catch (e) {
-      showSwal('error', 'Your code does not exist.');
+      showSwal('error', 'Your code does not exist.', 3000);
     }
   };
 
@@ -1053,6 +1105,9 @@ const Content = () => {
   const fetchRelatedVisitorsByInvitationId = async (invitationId: string) => {
     const relatedRes = await getInvitationOperatorRelated(invitationId, token as string);
     const relatedData = relatedRes.collection ?? [];
+
+    const totalCountVisitor = relatedRes.length ?? relatedData.length ?? 0;
+    setTotalCountVisitor(totalCountVisitor);
 
     const mappedVisitors = relatedData.map((v: any) => ({
       id: v.id ?? '-',
@@ -1078,7 +1133,6 @@ const Content = () => {
       vehicle_type: v.vehicle_type ?? '-',
       group_code: v.visitor_group_code ?? '-',
       group_name: v.group_name ?? '-',
-      // card: (v.card ?? []).map((c: any) => c.card_number),
       card: v.card ?? [],
       host_name: v.host_name ?? '-',
       site_place_name: v.site_place_name ?? '-',
@@ -1119,10 +1173,8 @@ const Content = () => {
         early_access: !!a.early_access,
       })),
     );
-    // console.log('allAccess', allAccess);
 
     setAllAccessData(allAccess);
-    // setAccessData(allAccess);
   };
 
   const formatDateTime = (dateStr?: string, extendMinutes?: number) => {
@@ -1130,7 +1182,6 @@ const Content = () => {
 
     const baseTime = moment.utc(dateStr);
 
-    // Tambahkan menit hanya kalau ada extend
     if (extendMinutes && extendMinutes > 0) {
       baseTime.add(extendMinutes, 'minutes');
     }
@@ -1153,70 +1204,9 @@ const Content = () => {
   //   const keyword = debouncedKeyword.toLowerCase();
 
   //   return relatedVisitors.filter((v) =>
-  //     [v.name].filter(Boolean).some((field) => field.includes(keyword)),
+  //     [v.name].filter(Boolean).some((field) => field.toLowerCase().includes(keyword)),
   //   );
   // }, [relatedVisitors, debouncedKeyword]);
-  const [totalCountVisitor, setTotalCountVisitor] = useState(0);
-  const [upcomingVisitors, setUpcomingVisitors] = useState<any[]>([]);
-  const fetchUpcomingPurpose = async () => {
-    const res = await getUpComingPurpose(token as string, {
-      today: 'true',
-      all_visitor_type: 'true',
-    });
-
-    setUpcomingPurpose(res?.collection ?? []);
-  };
-
-  useEffect(() => {
-    if (!token) return;
-    fetchUpcomingPurpose();
-  }, [token]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const res = await getUpComingVisitors(token as string, {
-        today: 'true',
-        all_visitor_type: 'true',
-        visitor_type: typeof selectedPurpose?.id === 'string' ? selectedPurpose?.id : undefined,
-      });
-
-      const rows = res.collection.map((items: any) => ({
-        id: items.id,
-        name: items.visitor_name,
-        host: items.host_name,
-        invitation_code: items.invitation_code,
-        organization: items.visitor_organization_name,
-        agenda: items.agenda,
-        visitor_period_start: formatDateTime(items.visitor_period_start),
-        visitor_period_end: formatDateTime(items.visitor_period_end, items.extend_visitor_period),
-        visitor_status: items.visitor_status,
-        vehicle_type: items.vehicle_type,
-        vehicle_plate_number: items.vehicle_plate_number,
-      }));
-      setUpcomingVisitors(rows ?? []);
-    };
-    fetchData();
-  }, [token, selectedPurpose]);
-  const visitorsSource = typeVisitor === 'related' ? relatedVisitors : upcomingVisitors;
-  const filteredVisitors = useMemo(() => {
-    const keyword = debouncedKeyword.toLowerCase().trim();
-
-    if (!keyword) return visitorsSource;
-
-    return visitorsSource.filter((v: any) => {
-      if (typeVisitor === 'related') {
-        return [v.name, v.organization]
-          .filter(Boolean)
-          .some((field) => field.toLowerCase().includes(keyword));
-      }
-
-      return [v.visitor_name, v.visitor_organization_name]
-        .filter(Boolean)
-        .some((field) => field.toLowerCase().includes(keyword));
-    });
-  }, [visitorsSource, debouncedKeyword, typeVisitor]);
-
-  const totalVisitors = typeVisitor === 'related' ? totalCountVisitor : upcomingVisitors.length;
 
   const visitorsForSwipe = useMemo(() => {
     return relatedVisitors.filter((v) => selectedVisitors.includes(v.id));
@@ -1241,7 +1231,6 @@ const Content = () => {
     const ids = flat
       .map((v) => (typeof v === 'object' && v !== null ? Number(v.id) : Number(v)))
       .filter((n) => Number.isFinite(n) && n > 0);
-    // dedupe
     return Array.from(new Set(ids));
   };
 
@@ -1249,7 +1238,6 @@ const Content = () => {
     return new Set(normalizeIdsDeep(selectedInvitations).map(String));
   }, [selectedInvitations]);
 
-  // Function & Variable Card
   const capacity = selectMultiple ? selectedVisitors.length : invitationCode.length > 0 ? 1 : 0;
 
   const debouncedSearch = useDebounce(searchTerm, 300);
@@ -1324,9 +1312,7 @@ const Content = () => {
   const handleConfirmChooseCards = async () => {
     try {
       if (!selectedCards.length) {
-        setSnackbarMsg('Please choose at least one card.');
-        setSnackbarType('info');
-        setSnackbarOpen(true);
+        toast('Please choose at least one card.', 'info');
         return;
       }
 
@@ -1340,7 +1326,9 @@ const Content = () => {
       );
 
       // const currentUsed = visitor?.card?.find((c: any) => c.current_used === true);
-      const currentUsed = (visitor?.card as any[])?.find((c) => c.current_used === true);
+      const currentUsed = (visitor?.card as any[])?.find(
+        (c) => c.current_used === true && c.is_swap == true,
+      );
 
       if (currentUsed) {
         const pairs = pairVisitorsWithCards(visitorIds, selectedCards);
@@ -1354,6 +1342,7 @@ const Content = () => {
           swap_card_from_site_id: registerSiteOperator,
           is_swapcard: false,
           swap_type: 'Other',
+          registered_site_id: registerSiteOperator,
         }));
         console.log('payloads', payloads);
 
@@ -1387,6 +1376,7 @@ const Content = () => {
             is_swapcard: false,
             swap_type: 'Other',
             visitorName: visitor.name || visitorId,
+            registered_site_id: registerSiteOperator,
           };
         })
         .filter(Boolean) as any[];
@@ -1399,8 +1389,10 @@ const Content = () => {
         await createMultipleGrantAccess(token as string, {
           data: payloads.map(({ visitorName, ...p }) => p),
         });
+        console.log('payloads multiple', payloads);
       } else {
         const { visitorName, ...payload } = payloads[0];
+
         console.log('payload', payload);
         await createGrandAccessOperator(token as string, payload);
       }
@@ -1448,7 +1440,6 @@ const Content = () => {
 
       handleCloseChooseCard();
     } catch (err: any) {
-      console.error('Assign card error:', err);
       showSwal('error', err?.response?.data?.msg || 'Failed to assign card(s).');
     } finally {
       setTimeout(() => setLoadingAccess(false), 600);
@@ -1456,13 +1447,13 @@ const Content = () => {
   };
 
   const handleClearAll = () => {
-    setSearch('');
     setInvitationCode([]);
     setRelatedVisitors([]);
     setOpen(false);
     setOpenDialogIndex(null);
     setTorchOn(false);
     setActionButton('');
+    setTotalCountVisitor(0);
   };
 
   const handleBlacklistStatus = async (id: string) => {
@@ -1491,10 +1482,10 @@ const Content = () => {
 
       if (!res.isConfirmed) return;
 
-      // if (!res.value) {
-      //   toast('Please provide a reason for blacklist this visitor.', 'info');
-      //   return;
-      // }
+      if (!res.value) {
+        toast('Please provide a reason for blacklist this visitor.', 'info');
+        return;
+      }
 
       const payload = {
         visitor_id: id,
@@ -1585,20 +1576,14 @@ const Content = () => {
       }
 
       setLoadingAccess(true);
-      // const res = await createInvitationActionOperator(token as string, id!, {
-      //   action,
-      //   reason,
-      // });
 
       const payload: any = { action };
-
-      console.log('payload', payload);
 
       if (reason) {
         payload.reason = reason;
       }
 
-      const res = await createInvitationActionOperator(token as string, id!, payload);
+      await createInvitationActionOperator(token as string, id!, payload);
 
       setRelatedVisitors((prev) =>
         prev.map((v) =>
@@ -1636,8 +1621,6 @@ const Content = () => {
         return prev;
       });
 
-      setVisitorStatus(action);
-
       const invitationId = invitationCode?.[0]?.id;
       if (invitationId) {
         const previousSelected = [...selectedVisitors];
@@ -1659,14 +1642,13 @@ const Content = () => {
 
       showSwal('error', message);
     } finally {
-      // setTimeout(() => {
       setLoadingAccess(false);
-      // }, 600);
     }
   };
 
   const formsOf = (section: any) =>
     Array.isArray(section?.['visit_form']) ? section['visit_form'] : [];
+
   const handleRemoveFileForField = async (
     currentUrl: string,
     setAnswerFile: (url: string) => void,
@@ -1679,7 +1661,7 @@ const Content = () => {
       }
 
       setAnswerFile('');
-      setPreviews((p) => ({ ...p, [inputId]: null }));
+      // setPreviews((p) => ({ ...p, [inputId]: null }));
       setUploadNames((n) => {
         const { [inputId]: _, ...rest } = n;
         return rest;
@@ -1713,7 +1695,6 @@ const Content = () => {
     setSelectedVisitors([visitor.id]);
     setSelectedVisitorNumber(visitor.visitor_number);
     setSelectedVisitorId(visitor.id);
-
     setSelectedCards([]);
 
     setInvitationCode((prev) => {
@@ -1739,8 +1720,6 @@ const Content = () => {
         },
       ];
     });
-
-    setVisitorStatus(visitor.visitor_status ?? '-');
   };
 
   const handleApplyBulkAction = async () => {
@@ -1763,7 +1742,6 @@ const Content = () => {
       }
 
       setLoadingAccess(true);
-
       handleOpenFillFormDialog(validToFill.map((v) => v.id));
 
       setTimeout(() => {
@@ -1923,8 +1901,6 @@ const Content = () => {
         }, 500);
       }
     } catch (error: any) {
-      console.error('Multiple Action Failed:', error);
-      // toast('Failed to perform multiple action', 'error');
       showSwal('error', 'Failed to perform multiple action.');
     } finally {
       setTimeout(() => setLoadingAccess(false), 600);
@@ -1975,7 +1951,6 @@ const Content = () => {
       actions.delete('block');
     }
   } else if (selectedData.length > 1) {
-    // // 🔸 Jika ada Preregis yang belum pra-register
     const baseStatusActions: Record<string, string[]> = {
       Checkin: ['checkout', 'block'],
       Checkout: ['block'],
@@ -2077,7 +2052,6 @@ const Content = () => {
       };
 
       const purposeVisitSection = makeSection(purposeVisitSrc, 'Purpose Visit', false, false);
-
       return [visitorGroupSection, purposeVisitSection];
     }
 
@@ -2143,7 +2117,6 @@ const Content = () => {
 
       if (isPurposeVisit(section)) {
         if (!section?.self_only) {
-          // hanya Purpose Visit global (shared)
           forms.forEach((f: any, idx: number) => {
             const existing = (section.form_answers || []).find((ans: any) => sameField(ans, f));
             single_page.push(existing ? { ...f, ...existing } : cloneFormWithEmptyAnswers(f, idx));
@@ -2176,10 +2149,6 @@ const Content = () => {
     };
   };
 
-  const [invitationDetail, setInvitationDetail] = useState<any>([]);
-  const [questionPageTemplate, setQuestionPageTemplate] = useState<any[]>([]);
-  const [applyToAll, setApplyToAll] = useState(false);
-
   const handleApplyToAllChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const checked = event.target.checked;
     setApplyToAll(checked);
@@ -2210,18 +2179,15 @@ const Content = () => {
       const results = await Promise.all(
         visitorList.map((v) => getDetailInvitationForm(token as string, v.id)),
       );
-
       const firstResult = results[0];
-      console.log('firstResult', firstResult);
       const questionPagesTemplate = firstResult?.collection?.question_page ?? [];
-      console.log('questionPagesTemplate', questionPagesTemplate);
 
       setInvitationDetail(firstResult);
       setQuestionPageTemplate(questionPagesTemplate);
 
       const baseSections = buildGroupSections(questionPagesTemplate);
       setFillFormData(baseSections);
-      setFillFormActiveStep(0);
+      setFillFormActiveStep(-1);
 
       const visitorGroupList = results.map((res, idx) => {
         const v = visitorList[idx];
@@ -2239,8 +2205,8 @@ const Content = () => {
           question_page: structuredClone(wrappedSections),
         };
       });
-
       setFillFormDataVisitor(visitorGroupList);
+
       setOpenFillForm(true);
     } catch (e: any) {
       const message =
@@ -2362,10 +2328,6 @@ const Content = () => {
               }));
               break;
 
-            // case 'site_place':
-            //   options = [{ value: sitePlaceId, name: sitePlaceName }];
-            //   break;
-
             case 'site_place':
               options = sitePlaceName
                 ? [
@@ -2419,7 +2381,7 @@ const Content = () => {
                 onChange(index, 'answer_text', newValue instanceof Object ? newValue.value : '')
               }
               renderInput={(params) => (
-                <TextField
+                <CustomTextField
                   {...params}
                   placeholder="Enter at least 3 characters to search"
                   fullWidth
@@ -2444,15 +2406,15 @@ const Content = () => {
         case 5: // Radio
           if (field.remarks === 'gender') {
             const options = [
-              { value: '1', name: 'Male' },
               { value: '0', name: 'Female' },
+              { value: '1', name: 'Male' },
               { value: '2', name: 'Prefer not to say' },
             ];
 
             const value = field.answer_text != null ? String(field.answer_text) : '';
 
             return (
-              <TextField
+              <CustomTextField
                 select
                 size="small"
                 fullWidth
@@ -2475,7 +2437,7 @@ const Content = () => {
                     {opt.name}
                   </MenuItem>
                 ))}
-              </TextField>
+              </CustomTextField>
             );
           }
           if (field.remarks === 'vehicle_type') {
@@ -2492,7 +2454,7 @@ const Content = () => {
             const currentValue = field.answer_text ?? '';
 
             return (
-              <TextField
+              <CustomTextField
                 select
                 size="small"
                 fullWidth
@@ -2508,7 +2470,7 @@ const Content = () => {
                     {opt.label}
                   </MenuItem>
                 ))}
-              </TextField>
+              </CustomTextField>
             );
           }
 
@@ -2576,7 +2538,7 @@ const Content = () => {
           );
         case 8: // Time
           return (
-            <TextField
+            <CustomTextField
               type="time"
               size="small"
               value={field.answer_datetime}
@@ -2662,7 +2624,6 @@ const Content = () => {
                 type="file"
                 accept="*"
                 hidden
-                // onChange={handlePDFUploadFor(index, onChange)
                 onChange={(e) =>
                   handleFileChangeForField(
                     e as React.ChangeEvent<HTMLInputElement>,
@@ -2917,17 +2878,17 @@ const Content = () => {
   };
 
   const allowedActions = useMemo(() => {
-    if (!selectedAccessIds.length || !selectedVisitors.length) return [];
+    if (!selectedAccessIds.length) return [];
 
     if (selectedVisitors.length > 1) {
       const allActions = ['Grant', 'Revoke', 'Block'];
 
-      const permissionActions = selectedAccessIds.flatMap((id) =>
+      const permissionActions = selectedAccessIds.map((id) =>
         getAllowedActionsByPermission(id, permissionAccess),
       );
 
-      const commonPermissionActions = allActions.filter((a) =>
-        permissionActions.every((perm) => perm.includes(a)),
+      const commonPermissionActions = allActions.filter((action) =>
+        permissionActions.every((permList) => permList.includes(action)),
       );
 
       return commonPermissionActions;
@@ -2971,7 +2932,10 @@ const Content = () => {
           type_registered: 1,
           is_group: isGroup,
           tz: tzFromApi,
-          registered_site: '',
+          registered_site_id: registerSiteOperator,
+          flow: 'SubmitPraRegister',
+          is_self_registered: isSelfGroup === true,
+          filled_by_relationship: 'Operator',
           data_visitor: [
             {
               question_page: questionPageTemplate.map((templateSection: any) => ({
@@ -3033,16 +2997,13 @@ const Content = () => {
                     visitor_form_type: 1,
                   };
 
-                  if (answer_text !== null && answer_text !== '') {
-                    fieldPayload.answer_text = answer_text;
-                  }
-
-                  if (answer_datetime) {
-                    fieldPayload.answer_datetime = answer_datetime;
-                  }
-
-                  if (answer_file) {
-                    fieldPayload.answer_file = answer_file;
+                  // mapping berdasarkan field_type
+                  if ([10, 11, 12].includes(templateField.field_type)) {
+                    fieldPayload.answer_file = answer_file ?? null;
+                  } else if (templateField.field_type === 9) {
+                    fieldPayload.answer_datetime = answer_datetime ?? null;
+                  } else {
+                    fieldPayload.answer_text = answer_text !== '' ? (answer_text ?? null) : null;
                   }
 
                   return fieldPayload;
@@ -3055,7 +3016,7 @@ const Content = () => {
 
       const payload = { list_group: dataList };
       console.log('Final Payload (MULTI-VISITOR FIXED):', JSON.stringify(payload, null, 2));
-      const result = await createSubmitCompletePraMultiple(token as string, payload);
+      await createSubmitCompletePraMultiple(token as string, payload);
       showSwal('success', 'Successfully Pra Register!');
       setRelatedVisitors((prev) =>
         prev.map((v) =>
@@ -3069,17 +3030,19 @@ const Content = () => {
         ),
       );
 
+      setOpenFillForm(false);
+
       const invitationId = invitationCode?.[0]?.id;
       if (invitationId) {
-        console.log('🔄 Refetching visitors for invitation:', invitationId);
         await fetchRelatedVisitorsByInvitationId(invitationId);
       }
 
-      setOpenFillForm(false);
-      // setSelectedVisitors([]);
-      // setSelectMultiple(false);
-    } catch (error) {
-      showSwal('error', 'Failed Submit Pra Register!');
+      await fetchUpcomingPurpose();
+    } catch (error: any) {
+      showSwal(
+        'error',
+        error.response.data.collection || error.response.data.message || 'Failed to Pra Register!',
+      );
     } finally {
       setTimeout(() => {
         setLoadingAccess(false);
@@ -3088,7 +3051,6 @@ const Content = () => {
   };
 
   const [openDialogInvitation, setOpenDialogInvitation] = useState(false);
-
   const handleView = async (id: string) => {
     setSelectedInvitationId(id);
     setOpenDialogInvitation(true);
@@ -3134,7 +3096,6 @@ const Content = () => {
 
       const { visitor_give_access, access_control_name, early_access } = record;
 
-      // 🚫 Sudah revoke/block → skip
       if ((visitor_give_access === 2 || visitor_give_access === 3) && action !== 'unblock') {
         invalidVisitors.push({
           visitorId,
@@ -3145,7 +3106,6 @@ const Content = () => {
         return;
       }
 
-      // 🚫 early_access → tidak bisa grant
       if (early_access && action === 'grant') {
         invalidVisitors.push({
           visitorId,
@@ -3204,7 +3164,6 @@ const Content = () => {
     };
   };
 
-  // Access : Grant dll
   const handleAccessAction = async (
     row: any,
     action: 'no_action' | 'grant' | 'revoke' | 'block' | 'unblock',
@@ -3234,19 +3193,15 @@ const Content = () => {
         );
 
         if (!validVisitors.length) {
-          setSnackbarMsg(message || 'No valid visitors to process.');
-          setSnackbarType('error');
-          setSnackbarOpen(true);
+          toast(message || 'No valid visitors to process.', 'error');
           resolve();
           return;
         }
 
         if (invalidVisitors.length) {
-          setSnackbarMsg(
-            'Some visitors cannot perform this action:\n' + invalidVisitors.join('\n'),
-          );
-          setSnackbarType('info');
-          setSnackbarOpen(true);
+          toast('Some visitors cannot perform this action:\n' + invalidVisitors.join('\n'), 'info');
+          resolve();
+          return;
         }
 
         const payload = {
@@ -3257,7 +3212,7 @@ const Content = () => {
           })),
         };
 
-        console.log('📦 Final Payload:', payload);
+        // console.log('Final Payload:', payload);
 
         const res = await createGiveAccessOperator(token as string, payload);
         console.log('Access Action Response:', JSON.stringify(res, null, 2));
@@ -3285,13 +3240,10 @@ const Content = () => {
 
         resolve();
       } catch (err: any) {
-        console.error('❌ Access Action Error:', err);
         const backendMsg =
           err?.response?.data?.collection?.[0] ||
           err?.response?.data?.msg ||
           err?.response?.data?.message ||
-          err?.response?.data?.error ||
-          err?.message ||
           'Failed to execute action.';
 
         showSwal('error', backendMsg);
@@ -3304,14 +3256,12 @@ const Content = () => {
 
   const activeVisitor = useMemo(() => {
     if (selectedVisitorId) {
-      const visitor = relatedVisitors.find((v) => v.id === selectedVisitorId);
-      if (visitor) return visitor;
+      return relatedVisitors.find((v) => v.id === selectedVisitorId);
     }
 
-    return relatedVisitors?.[0] ?? invitationCode?.[0] ?? null;
-  }, [selectedVisitorId, relatedVisitors, invitationCode]);
+    return relatedVisitors?.[0] ?? null;
+  }, [selectedVisitorId, relatedVisitors]);
 
-  // Faceimage && Upload Identity
   const getCdnUrl = (path?: string) => {
     if (!path || path === '-' || path.trim() === '') return null;
 
@@ -3323,50 +3273,10 @@ const Content = () => {
   const activeSelfie = getCdnUrl(activeVisitor?.selfie_image);
   const activeKTP = getCdnUrl(activeVisitor?.identity_image);
   const activeBarcode = getCdnUrl(activeVisitor?.nda);
-
-  const [todayVisitingPurpose, setTodayVisitingPurpose] = useState<any[]>([]);
   const [visitorType, setVisitorType] = useState<any[]>([]);
   const [openMore, setOpenMore] = useState(false);
   const handleOpenMore = () => setOpenMore(true);
-
-  const fetchTodayVisitingPurpose = async () => {
-    try {
-      const res = await getTodayVisitingPurpose(token as string);
-      setTodayVisitingPurpose(res?.collection || []);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   const [vtLoading, setVTLoading] = useState(false);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!token) return;
-
-      try {
-        setLoading(true);
-        const [vtRes, permissionRes] = await Promise.allSettled([
-          getAllVisitorType(token),
-          getPermission(token),
-        ]);
-
-        if (vtRes.status === 'fulfilled') {
-          setVisitorType(vtRes.value?.collection ?? []);
-        } else {
-        }
-
-        if (permissionRes.status === 'fulfilled') {
-          setPermission(permissionRes.value?.collection ?? {});
-          setLoading(false);
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    fetchData();
-  }, [token]);
 
   const handlePrint = () => {
     setOpenPreviewPrint(true);
@@ -3392,16 +3302,16 @@ const Content = () => {
 
       const payload = {
         card_number: returnCardNumber.trim(),
+        registered_site_id: registerSiteOperator,
       };
 
-      // console.log('return card payload', payload);
       await returnCard(token as string, payload);
       showSwal('success', 'Succesfully returned card');
       setOpenReturnCard(false);
       setReturnCardNumber('');
       // await fetchAvailableCards?.();
     } catch (error: any) {
-      showSwal('error', error.response.data.msg || 'Failed to return card');
+      showSwal('error', error.message || 'Failed to return card');
     } finally {
       setLoadingAccess(false);
     }
@@ -3428,19 +3338,69 @@ const Content = () => {
     setOpenSwipeAccess(false);
     setOpenChooseCardDialog(false);
     setSearchTerm('');
-    // if (currentVisitorIndex < filteredVisitors.length - 1) {
-    //   setCurrentVisitorIndex((prev) => prev + 1);
-    //   setOpenSwipeDialog(true);
-    // } else {
-    //   // showSwal('success', 'All visitors processed');
-    //   setCurrentVisitorIndex(0);
-    // }
   };
 
-  const parkingData = [
-    { id: 1, vehicle_type: 'Car', vehicle_plate_number: 'BG 817 AS' },
-    { id: 2, vehicle_type: 'Motorcycle', vehicle_plate_number: 'B 1512 AA' },
-  ];
+  const fetchUpcomingPurpose = async () => {
+    const res = await getUpComingPurpose(token as string, {
+      today: 'true',
+      all_visitor_type: 'true',
+    });
+
+    setUpcomingPurpose(res?.collection ?? []);
+  };
+
+  useEffect(() => {
+    if (!token) return;
+    fetchUpcomingPurpose();
+  }, [token]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const res = await getUpComingVisitors(token as string, {
+        today: 'true',
+        all_visitor_type: 'true',
+        visitor_type: typeof selectedPurpose?.id === 'string' ? selectedPurpose?.id : undefined,
+      });
+
+      const rows = res.collection.map((items: any) => ({
+        id: items.id,
+        name: items.visitor_name,
+        host: items.host_name,
+        invitation_code: items.invitation_code,
+        organization: items.visitor_organization_name,
+        agenda: items.agenda,
+        visitor_period_start: formatDateTime(items.visitor_period_start),
+        visitor_period_end: formatDateTime(items.visitor_period_end, items.extend_visitor_period),
+        visitor_status: items.visitor_status,
+        vehicle_type: items.vehicle_type,
+        vehicle_plate_number: items.vehicle_plate_number,
+      }));
+      setUpcomingVisitors(rows ?? []);
+    };
+    fetchData();
+  }, [token, selectedPurpose]);
+
+  const visitorsSource = typeVisitor === 'related' ? relatedVisitors : upcomingVisitors;
+
+  const filteredVisitors = useMemo(() => {
+    const keyword = debouncedKeyword.toLowerCase().trim();
+
+    if (!keyword) return visitorsSource;
+
+    return visitorsSource.filter((v: any) => {
+      if (typeVisitor === 'related') {
+        return [v.name, v.organization]
+          .filter(Boolean)
+          .some((field) => field.toLowerCase().includes(keyword));
+      }
+
+      return [v.visitor_name, v.visitor_organization_name]
+        .filter(Boolean)
+        .some((field) => field.toLowerCase().includes(keyword));
+    });
+  }, [visitorsSource, debouncedKeyword, typeVisitor]);
+
+  const totalVisitors = typeVisitor === 'related' ? totalCountVisitor : upcomingVisitors.length;
 
   const currentUsedCard = useMemo(() => {
     if (!Array.isArray(visitorCards)) return null;
@@ -3459,16 +3419,12 @@ const Content = () => {
         isDocumentTypeLocked: true,
       };
     }
-
-    // Jika tidak ada kartu aktif, dialog tetap normal
     return {
       documentType: undefined,
       value: '',
       isDocumentTypeLocked: false,
     };
   }, [currentUsedCard]);
-
-  const [upcomingPurpose, setUpcomingPurpose] = useState<any[]>([]);
 
   return (
     <PageContainer
@@ -3486,33 +3442,31 @@ const Content = () => {
               backgroundColor: '#fff',
               height: isFullscreen ? '100vh' : { lg: '100%', xs: '100%' },
               width: '100%',
-              padding: '0 !important',
+              padding: '5px !important',
 
               position: 'relative',
               overflow: 'visible',
             }}
           >
-            {/* RIGHT CONTENT */}
             <Box
               flexGrow={1}
               sx={{
-                overflow: isFullscreen ? 'auto' : 'hidden',
+                // overflow: isFullscreen ? 'auto' : 'hidden',
                 display: 'flex',
-                padding: '10px',
+                padding: '0px !important',
                 flexDirection: 'column',
-
                 height: isFullscreen ? '100vh' : 'auto',
               }}
             >
-              <Grid container spacing={1} mb={0}>
-                <Grid size={{ xs: 12, sm: 12, lg: 9 }}>
+              <Grid container spacing={1} mb={0} alignItems={{ xs: 'start', xl: 'center' }}>
+                <Grid size={{ xs: 12, md: 7.5, lg: 8.2, xl: 9 }}>
                   <VisitorSearchInput
                     onOpenSearch={() => setOpenSearch(true)}
                     onClear={handleClearAll}
                     containerRef={containerRef as any}
                   />
                 </Grid>
-                <Grid size={{ xs: 12, sm: 12, lg: 3 }}>
+                <Grid size={{ xs: 12, md: 4.5, lg: 3.8, xl: 3 }}>
                   <OperatorToolbar
                     registeredSite={registeredSite}
                     selectedSite={registerSiteOperator}
@@ -3542,7 +3496,6 @@ const Content = () => {
                     flexWrap: 'wrap',
                   }}
                 >
-                  {/* 🧩 Card FR */}
                   <Grid
                     size={{ xs: 12, lg: 4.5 }}
                     sx={{ border: '1px solid #e0e0e0', borderRadius: '15px' }}
@@ -3563,7 +3516,6 @@ const Content = () => {
                     />
                   </Grid>
 
-                  {/* Visiting Purpose*/}
                   <ActionPanelCard
                     loading={loading}
                     permission={permissionHook}
@@ -3647,7 +3599,14 @@ const Content = () => {
                   />
                 </Grid>
 
-                <Grid size={{ xs: 12, lg: 3 }}>
+                <Grid
+                  size={{ xs: 12, lg: 3 }}
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    // height: '100%',
+                  }}
+                >
                   <VisitorImage
                     faceImage={activeSelfie}
                     identityImage={activeKTP}
@@ -3673,7 +3632,8 @@ const Content = () => {
             <DetailVisitingPurpose
               open={openDetailVisitingPurpose}
               onClose={() => setOpenDetailVistingPurpose(false)}
-              data={selectedPurpose}
+              data={upcomingVisitors}
+              purposeName={selectedPurpose}
             />
             {/* Search Visitor */}
             <SearchVisitorDialog
@@ -3698,7 +3658,10 @@ const Content = () => {
               onClose={handleCloseScanQR}
               handleSubmitQRCode={handleSubmitQRCode}
               container={containerRef.current ?? undefined}
-              onOpenInvitation={() => setOpenDialogIndex(2)}
+              onOpenInvitation={() => {
+                handleCloseScanQR();
+                setOpenInvitationVisitor(true);
+              }}
             />
             <BlacklistVisitorDialog
               open={openBlacklistVisitor}
@@ -3720,12 +3683,14 @@ const Content = () => {
               setSnackbar={setSnackbar}
               onSubmit={handleSwipeCardSubmitNoCode}
             />
+
             <ChooseCardDialog
               open={openChooseCardDialog}
               onClose={() => {
                 setOpenChooseCardDialog(false);
                 setSearchTerm('');
               }}
+              cards={availableCards}
               containerRef={containerRef}
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}
@@ -3741,6 +3706,7 @@ const Content = () => {
               availableCount={availableCount}
               handleOpenSwipeDialog={handleOpenSwipeDialog}
               handleConfirmChooseCards={handleConfirmChooseCards}
+              setAccessIssuance={setAccessIssuance}
             />
             {/* Dialog Swipe Card */}
             <SwipeCardDialog
@@ -3794,7 +3760,10 @@ const Content = () => {
               renderFieldInput={renderFieldInput}
               getSectionType={getSectionType}
               formsOf={formsOf}
+              isSelfGroup={isSelfGroup}
+              setIsSelfGroup={setIsSelfGroup}
             />
+
             {/* Submit Praregister */}
             <FillPraregistrationSingle
               open={openDialogInvitation}
@@ -3807,26 +3776,25 @@ const Content = () => {
               fetchUpcomingPurpose={fetchUpcomingPurpose}
               registeredSite={registerSiteOperator}
             />
+
             {/* Access Dialog */}
-            <AccessDialog
-              open={openAccessData}
-              onClose={() => {
-                // setAction('');
-                setOpenAccessData(false);
-              }}
-              containerRef={containerRef.current || null}
-              accessData={accessData}
-              selectedVisitors={selectedVisitors}
-              allowedActions={allowedActions}
-              selectedAccessIds={selectedAccessIds}
-              setSelectedAccessIds={setSelectedAccessIds}
-              selectedActionAccess={selectedActionAccess || ''}
-              setSelectedActionAccess={setSelectedActionAccess}
-              handleAccessAction={handleAccessAction}
-              setSnackbarOpen={setSnackbarOpen}
-              setSnackbarMsg={setSnackbarMsg}
-              setSnackbarType={setSnackbarType}
-            />
+            {/* <AccessDialog
+            open={openAccessData}
+            onClose={() => {
+              // setAction('');
+              setOpenAccessData(false);
+            }}
+            containerRef={containerRef.current || null}
+            accessData={accessData}
+            selectedVisitors={selectedVisitors}
+            allowedActions={allowedActions}
+            selectedAccessIds={selectedAccessIds}
+            setSelectedAccessIds={setSelectedAccessIds}
+            selectedActionAccess={selectedActionAccess || ''}
+            setSelectedActionAccess={setSelectedActionAccess}
+            handleAccessAction={handleAccessAction}
+            toast={toast}
+          /> */}
             {/* Extend Visit */}
             <ExtendVisitDialog
               open={openExtendVisit}
@@ -3842,7 +3810,6 @@ const Content = () => {
             {/* Create Invitation */}
             <Dialog
               fullWidth
-              // maxWidth="xl"
               maxWidth={false}
               PaperProps={{
                 sx: {
@@ -3851,7 +3818,6 @@ const Content = () => {
               }}
               open={openInvitationVisitor}
               onClose={handleCloseDialog}
-              // keepMounted
               container={containerRef.current ?? undefined}
             >
               <DialogTitle display="flex" justifyContent={'space-between'} alignItems="center">
@@ -3890,6 +3856,7 @@ const Content = () => {
                   employee={employee}
                   allVisitorEmployee={allVisitorEmployee}
                   vtLoading={vtLoading}
+                  enableInvitationTypeStep={true}
                 />
               </DialogContent>
             </Dialog>
@@ -3929,14 +3896,15 @@ const Content = () => {
                   containerRef={containerRef ?? null}
                   visitorType={visitorType}
                   sites={sites}
+                  registeredSite={registerSiteOperator}
                   employee={employee}
                   allVisitorEmployee={allVisitorEmployee}
                   vtLoading={vtLoading}
+                  enableInvitationTypeStep={false}
                 />
               </DialogContent>
             </Dialog>
 
-            {/* Parking /Vehicle Dialog */}
             <ParkingDialog
               open={openParking}
               onClose={() => {
@@ -3967,7 +3935,7 @@ const Content = () => {
                 autoHideDuration={3000}
                 onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
                 anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-                sx={{ zIndex: 9999999 }}
+                sx={{ zIndex: 999999 }}
               >
                 <Alert
                   onClose={() => setSnackbar((s) => ({ ...s, open: false }))}

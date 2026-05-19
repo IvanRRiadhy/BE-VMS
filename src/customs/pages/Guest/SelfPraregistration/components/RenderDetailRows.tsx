@@ -558,10 +558,12 @@ const RenderDetailRows = ({
                     );
                   case 3: {
                     let options: { value: string; name: string; disabled?: boolean }[] = [];
+                    console.log('otpions', options);
 
                     const isLockedByInvitation =
                       (item.remarks === 'host' && !!invitation?.host) ||
                       (item.remarks === 'site_place' && !!invitation?.site);
+                      console.log('islocked', isLockedByInvitation);
 
                     if (item.remarks === 'host') {
                       options = invitation?.host
@@ -583,12 +585,21 @@ const RenderDetailRows = ({
                           : [];
                     } else if (item.remarks === 'site_place') {
                       options = invitation?.site
-                        ? [{ value: invitation.site.id, name: invitation.site.name }]
+                        ? [
+                            {
+                              value: invitation.site.id,
+                              name: invitation.site.name,
+                              // disabled: invitation.site.can_visited === false,
+                              disabled: true,
+                            },
+                          ]
                         : sites.map((site: any) => ({
                             value: site.id,
                             name: site.name,
                             disabled: site.can_visited === false,
                           }));
+
+                      console.log('invitation', invitation);
                     } else {
                       options = (item.multiple_option_fields || []).map((opt: any) =>
                         typeof opt === 'object' ? opt : { value: opt, name: opt },
@@ -599,9 +610,11 @@ const RenderDetailRows = ({
                         <>
                           <Autocomplete
                             multiple
+                            disabled={isLockedByInvitation}
                             size="small"
                             options={options}
                             getOptionLabel={(option) => option.name}
+                            getOptionDisabled={(option) => option.disabled || false}
                             inputValue={inputValues[index] || ''}
                             onInputChange={(_, newInputValue, reason) => {
                               if (reason !== 'input') return;

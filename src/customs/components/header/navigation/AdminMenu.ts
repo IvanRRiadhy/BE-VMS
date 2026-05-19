@@ -146,6 +146,12 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
         icon: IconSettings,
         href: '/admin/manage/custom-field',
       },
+      {
+        id: uniqueId(),
+        title: 'navigation.visitor_role',
+        icon: IconUserCircle,
+        href: '/admin/manage/visitor-role',
+      },
 
       // {
       //   id: uniqueId(),
@@ -417,6 +423,12 @@ export const AdminCustomSidebarItemsData: ItemDataCustomSidebarItems[] = [
         title: 'navigation.custom_field',
         icon: IconSettings,
         href: '/admin/manage/custom-field',
+      },
+      {
+        id: uniqueId(),
+        title: 'navigation.visitor_role',
+        icon: IconUserCircle,
+        href: '/admin/manage/visitor-role',
       },
       // {
       //   id: uniqueId(),

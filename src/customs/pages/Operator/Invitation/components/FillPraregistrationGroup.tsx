@@ -1,3 +1,4 @@
+import { InfoOutlined } from '@mui/icons-material';
 import {
   Dialog,
   DialogContent,
@@ -17,6 +18,10 @@ import {
   DialogActions,
   Button,
   TableHead,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  Tooltip,
 } from '@mui/material';
 import { Box } from '@mui/system';
 import { IconArrowLeft, IconArrowRight, IconX } from '@tabler/icons-react';
@@ -36,6 +41,8 @@ type Props = {
   renderFieldInput: any;
   getSectionType: any;
   formsOf: any;
+  isSelfGroup: boolean | null;
+  setIsSelfGroup: React.Dispatch<React.SetStateAction<boolean | null>>;
 };
 
 function FillPraregistrationGroup({
@@ -52,6 +59,8 @@ function FillPraregistrationGroup({
   renderFieldInput,
   getSectionType,
   formsOf,
+  isSelfGroup,
+  setIsSelfGroup,
 }: Props) {
   return (
     <Dialog
@@ -69,8 +78,9 @@ function FillPraregistrationGroup({
       </IconButton>
 
       <DialogContent dividers>
-        {fillFormData.length > 0 && (
-          <>
+        {/* {fillFormData.length > 0 && ( */}
+        <>
+          {fillFormActiveStep !== -1 && (
             <Stepper activeStep={fillFormActiveStep} alternativeLabel sx={{ mb: 3 }}>
               {fillFormData.map((s, i) => (
                 <Step key={i} completed={false}>
@@ -89,9 +99,54 @@ function FillPraregistrationGroup({
                 </Step>
               ))}
             </Stepper>
+          )}
 
-            <Box>
-              {(() => {
+          <Box>
+            {fillFormActiveStep === -1 ? (
+              <Box>
+                <CustomFormLabel>Who is filling this group?</CustomFormLabel>
+
+                <RadioGroup
+                  row
+                  value={isSelfGroup === null ? '' : isSelfGroup ? 'self' : 'other'}
+                  onChange={(e) => setIsSelfGroup(e.target.value === 'self')}
+                >
+                  <FormControlLabel
+                    value="self"
+                    control={<Radio />}
+                    label={
+                      <Box display="flex" alignItems="center" gap={0.5}>
+                        Self
+                        <Tooltip title="This invitation is intended for yourself." arrow>
+                          <IconButton size="small">
+                            <InfoOutlined fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                    }
+                  />
+
+                  <FormControlLabel
+                    value="other"
+                    control={<Radio />}
+                    label={
+                      <Box display="flex" alignItems="center" gap={0.5}>
+                        Other
+                        <Tooltip
+                          title="This invitation is intended for another person or guest."
+                          arrow
+                        >
+                          <IconButton size="small">
+                            <InfoOutlined fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                    }
+                  />
+                </RadioGroup>
+              </Box>
+            ) : (
+              (() => {
                 const section = fillFormData[fillFormActiveStep];
                 if (!section) return null;
 
@@ -130,7 +185,10 @@ function FillPraregistrationGroup({
                         </TableHead>
                         <TableBody>
                           {fillFormDataVisitor.map((group, gIdx) => {
-                            const page = group.question_page?.[fillFormActiveStep] ?? section;
+                            // const page = group.question_page?.[fillFormActiveStep] ?? section;
+                            const page = group?.question_page?.[fillFormActiveStep];
+
+                            if (!page?.form) return null;
 
                             return (
                               <TableRow key={gIdx}>
@@ -201,16 +259,17 @@ function FillPraregistrationGroup({
                 }
 
                 return null;
-              })()}
-            </Box>
-          </>
-        )}
+              })()
+            )}
+          </Box>
+        </>
+        {/* )} */}
       </DialogContent>
 
       <DialogActions sx={{ justifyContent: 'space-between', px: 2 }}>
         <Button
-          onClick={() => setFillFormActiveStep((p: number) => Math.max(p - 1, 0))}
-          disabled={fillFormActiveStep === 0}
+          onClick={() => setFillFormActiveStep((p: number) => p - 1)}
+          disabled={fillFormActiveStep === -1}
           startIcon={<IconArrowLeft width={18} />}
         >
           Back

@@ -3,41 +3,23 @@ import {
   Button,
   Typography,
   Grid2 as Grid,
-  FormControl,
   Divider,
   Autocomplete,
   FormControlLabel,
-  RadioGroup,
   FormGroup,
   Checkbox,
 } from '@mui/material';
-import { IconX } from '@tabler/icons-react';
-import { useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
-import CustomRadio from 'src/components/forms/theme-elements/CustomRadio';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import { useSession } from 'src/customs/contexts/SessionContext';
 import { useHost } from 'src/hooks/useHost';
 import { useSites } from 'src/hooks/useSites';
-
-interface VisitorFilters {
-  is_employee: string;
-  is_blacklist: string;
-}
-
-type OptionItem = {
-  id: string;
-  name: string;
-};
 
 type FilterMoreContentProps = {
   filters: any;
   setFilters: React.Dispatch<React.SetStateAction<any>>;
   onApplyFilter: () => void;
   onResetFilter: () => void;
-};
-const defaultFilters: VisitorFilters = {
-  is_employee: '',
-  is_blacklist: '',
 };
 
 const FilterMoreContentVisitor: React.FC<FilterMoreContentProps> = ({
@@ -65,7 +47,8 @@ const FilterMoreContentVisitor: React.FC<FilterMoreContentProps> = ({
 
   const statusOptions = Object.values(statusMap);
 
-  const { data: sites = [] } = useSites();
+  const { token } = useSession();
+  const { sites = [] } = useSites(token as string);
   const { data: host = [] } = useHost();
 
   return (

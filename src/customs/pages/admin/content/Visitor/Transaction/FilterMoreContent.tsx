@@ -17,6 +17,7 @@ import { useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomRadio from 'src/components/forms/theme-elements/CustomRadio';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
+import { useSession } from 'src/customs/contexts/SessionContext';
 import { useHost } from 'src/hooks/useHost';
 import { useSites } from 'src/hooks/useSites';
 
@@ -69,7 +70,9 @@ const FilterTransaction: React.FC<FilterMoreContentProps> = ({
   const visitorRoleOptions = Object.values(visitorRole);
   const statusOptions = Object.values(statusMap);
 
-  const { data: sites = [] } = useSites();
+  const { token } = useSession();
+
+  const { sites = [] } = useSites(token as string);
   const { data: host = [] } = useHost();
 
   return (

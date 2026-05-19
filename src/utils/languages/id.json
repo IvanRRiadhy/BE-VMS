@@ -42,7 +42,8 @@
     "notification": "Notifikasi",
     "history": "Riwayat",
     "invitation": "Undangan",
-    "approval": "Persetujuan"
+    "approval": "Persetujuan",
+    "visitor_role": "Peran Pengunjung"
   },
   "print_badge": "Cetak Badge",
   "transction_visitor": "Transaksi Pengunjung",

@@ -47,7 +47,7 @@ const AccessPassDialog = forwardRef<HTMLDivElement, Props>(
     {
       open,
       onClose,
-      data,
+      data = {},
       isGenerating,
       isParkingLoading,
       onDownload,
@@ -78,7 +78,7 @@ const AccessPassDialog = forwardRef<HTMLDivElement, Props>(
             <Grid container spacing={2} justifyContent="center">
               <Grid size={{ xs: 12, sm: 6 }} textAlign="center">
                 <Typography variant="body2">Invitation Code</Typography>
-                <Typography fontWeight="bold">{data.invitation_code}</Typography>
+                <Typography fontWeight="bold">{data.invitation_code || '-'}</Typography>
               </Grid>
 
               <Grid size={{ xs: 12, sm: 6 }} textAlign="center">

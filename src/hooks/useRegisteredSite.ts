@@ -9,6 +9,6 @@ export const useRegisteredSite = (token?: string) => {
       return res.collection;
     },
     enabled: !!token,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 1 * 60 * 1000,
   });
 };

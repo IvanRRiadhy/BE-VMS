@@ -64,6 +64,7 @@ import {
   getAllPermissionVisitorType,
 } from 'src/customs/api/UserGroup';
 import { IconX } from '@tabler/icons-react';
+import ConfirmUnsavedDialog from '../../../components/ConfirmUnsavedDialog';
 
 const Content = () => {
   const { token } = useSession();
@@ -816,6 +817,11 @@ const Content = () => {
     setSearchKeyword(keyword);
   }, []);
 
+  const handleDiscard = () => {
+    setConfirmDialogOpen(false);
+    forceClosePermission();
+  };
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -897,44 +903,11 @@ const Content = () => {
         accessOptions={accessOptions}
       />
 
-      <Dialog
+      <ConfirmUnsavedDialog
         open={confirmDialogOpen}
         onClose={() => setConfirmDialogOpen(false)}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle>
-          Unsaved Changes
-          <IconButton
-            aria-label="close"
-            onClick={() => setConfirmDialogOpen(false)}
-            sx={{
-              position: 'absolute',
-              right: 8,
-              top: 8,
-              color: (theme) => theme.palette.grey[500],
-            }}
-          >
-            <IconX />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent dividers>
-          You have unsaved changes. Do you want to discard them?
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setConfirmDialogOpen(false)}>Cancel</Button>
-          <Button
-            onClick={() => {
-              setConfirmDialogOpen(false);
-              forceClosePermission();
-            }}
-            color="primary"
-            variant="contained"
-          >
-            Yes, Dicard Changes and Continue
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onDiscard={handleDiscard}
+      />
 
       <Portal>
         <Backdrop

@@ -3,7 +3,6 @@ import {
   Button,
   Typography,
   Grid2 as Grid,
-  FormControl,
   Divider,
   Autocomplete,
   FormControlLabel,
@@ -11,34 +10,17 @@ import {
   FormGroup,
   Checkbox,
 } from '@mui/material';
-import { IconX } from '@tabler/icons-react';
-import { useState } from 'react';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
-import CustomRadio from 'src/components/forms/theme-elements/CustomRadio';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { useDepartment } from 'src/hooks/useDepartment';
 import { useDistricts } from 'src/hooks/useDistricts';
 import { useOrganizations } from 'src/hooks/useOrganization';
-
-interface VisitorFilters {
-  is_employee: string;
-  is_blacklist: string;
-}
-
-type OptionItem = {
-  id: string;
-  name: string;
-};
 
 type FilterMoreContentProps = {
   filters: any;
   setFilters: React.Dispatch<React.SetStateAction<any>>;
   onApplyFilter: () => void;
   onResetFilter: () => void;
-};
-const defaultFilters: VisitorFilters = {
-  is_employee: '',
-  is_blacklist: '',
 };
 
 const FilterVisitor: React.FC<FilterMoreContentProps> = ({
@@ -253,7 +235,6 @@ const FilterVisitor: React.FC<FilterMoreContentProps> = ({
 
         {/* Apply Button */}
         <Grid size={{ xs: 12 }} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-          {/* Reset */}
           <Button variant="outlined" color="primary" onClick={onResetFilter}>
             Reset
           </Button>

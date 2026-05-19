@@ -359,9 +359,7 @@ const handleSearch = useCallback((keyword: string) => {
                 searchKeyword={searchInput}
                 onSearch={handleSearch}
                 onSearchKeywordChange={handleSearchKeywordChange}
-                onAddData={() => {
-                  handleAdd();
-                }}
+                onAddData={handleAdd}
                 isHaveObjectData={true}
               />
             </Grid>

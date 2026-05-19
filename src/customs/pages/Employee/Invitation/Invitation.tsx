@@ -7,8 +7,6 @@ import {
   Divider,
   Grid2 as Grid,
   IconButton,
-  Button,
-  Typography,
   Portal,
   Snackbar,
   Alert,
@@ -36,7 +34,7 @@ import dayjs from 'dayjs';
 import Praregist from './Praregist';
 import { getInvitationRelatedVisitor, getOngoingInvitation } from 'src/customs/api/visitor';
 import { useSelector } from 'react-redux';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import EmployeeDetailDialog from '../Components/Dialog/EmployeeDetailDialog';
 import SelectRegisteredSiteDialog from '../Components/Dialog/SelectRegisteredSiteDialog';
 import { getInvitationSite, getInvitationVisitorType } from 'src/customs/api/Admin/InvitationData';
@@ -56,7 +54,7 @@ import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import RelatedInvitationDialog from '../Components/Dialog/RelatedInvitationDialog';
 import InvitationShareDialog from '../../admin/content/Visitor/Trx/components/Dialog/InvitationShareDialog';
 import ShareLinkDialog from '../../admin/content/Visitor/Trx/components/ShareLinkDialog';
-import ConfirmUnsavedDialog from '../../admin/components/ConfirmUnsavedDialog';
+import ConfirmUnsavedDialog from 'src/customs/pages/admin/components/ConfirmUnsavedDialog';
 
 type VisitorTableRow = {
   id: string;
@@ -182,6 +180,8 @@ const Content = () => {
     resetRegisteredFlow();
   };
 
+  const [selected, setSelected] = useState<number[]>([]);
+  const [disabledIndexes, setDisabledIndexes] = useState<number[]>([]);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [emailInput, setEmailInput] = useState('');
   const [selectedShareLinkId, setSelectedShareLinkId] = useState<string | null>(null);
@@ -411,9 +411,6 @@ const Content = () => {
     }
   };
 
-  const [selected, setSelected] = useState<number[]>([]);
-  const [disabledIndexes, setDisabledIndexes] = useState<number[]>([]);
-
   const selectedVisitorData = useMemo(() => {
     return visitorDetail
       .filter((_, index) => selected.includes(index))
@@ -497,13 +494,10 @@ const Content = () => {
       if (!confirm.isConfirmed) return;
 
       await deleteShareLink(token as string, id);
-      // await queryClient.invalidateQueries({
-      //   queryKey: ['share-links'],
-      // });
       showSwal('success', 'Link deleted successfully.');
       setRefreshKey((prev) => prev + 1);
-    } catch (error) {
-      showSwal('error', 'Something went wrong while deleting link.');
+    } catch (error: any) {
+      showSwal('error', error?.response.data.message || 'Failed to delete link.');
     }
   };
 
@@ -524,7 +518,6 @@ const Content = () => {
   const [shareLinkList, setShareLinkList] = useState([]);
   const [totalFilterRecords, setTotalFilterRecords] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
-  // const [loading, setLoading] = useState(false);
   const start = pageSharelink * rowsPerPageSharelink;
   const fetchData = useCallback(async () => {
     try {
@@ -644,7 +637,7 @@ const Content = () => {
     setSelectedShareLink(res.collection);
 
     setSelectedShareLinkId(row.id);
-    setGeneratedLink(row.url);
+    setGeneratedLink(row.shorten_url || row.url);
     setExpiredAt(row.expired_at);
 
     // setTabValue(0);
@@ -661,10 +654,6 @@ const Content = () => {
       };
 
       await createShareLink(token as string, finalPayload);
-
-      // await queryClient.invalidateQueries({
-      //   queryKey: ['share-links'],
-      // });
 
       setOpenSendEmail(false);
       setOpenCreateLink(false);
@@ -684,10 +673,6 @@ const Content = () => {
 
       await createShareLink(token as string, payload);
 
-      // await queryClient.invalidateQueries({
-      //   queryKey: ['share-links'],
-      // });
-
       setOpenCreateLink(false);
       showSwal('success', 'Share link created successfully');
       setRefreshKey((prev) => prev + 1);
@@ -695,6 +680,21 @@ const Content = () => {
       showSwal('error', 'Failed to create share link');
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleSelectSite = (site: any) => {
+    setFormDataAddVisitor((prev) => ({
+      ...prev,
+      registered_site: site.id,
+    }));
+
+    setOpenDialogIndex(null);
+
+    if (flowTarget === 'invitation') {
+      setOpenInvitationVisitor(true);
+    } else if (flowTarget === 'preReg') {
+      setOpenPreRegistration(true);
     }
   };
 
@@ -732,7 +732,7 @@ const Content = () => {
                 defaultRowsPerPage={rowsPerPage}
                 totalCount={totalFilteredRecords}
                 selectedRows={selectedRows}
-                rowsPerPageOptions={[10, 20, 50, 100]}
+                rowsPerPageOptions={[10, 50, 100]}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);
@@ -871,20 +871,7 @@ const Content = () => {
         isFormChanged={isFormChanged}
         onDiscard={openDiscardForCloseAdd}
         onClose={handleCloseDialog}
-        onNext={(site: any) => {
-          setFormDataAddVisitor((prev) => ({
-            ...prev,
-            registered_site: site.id,
-          }));
-
-          setOpenDialogIndex(null);
-
-          if (flowTarget === 'invitation') {
-            setOpenInvitationVisitor(true);
-          } else if (flowTarget === 'preReg') {
-            setOpenPreRegistration(true);
-          }
-        }}
+        onNext={handleSelectSite}
       />
 
       {/* Related Visitor */}

@@ -110,8 +110,6 @@ export const ListGroupItemSchema = z.object({
   data_visitor: z.array(visitorItemSchema).default([]),
 });
 
-
-
 // export const CreateGroupVisitorRequestSchema = z.object({
 //   list_group: z.array(ListGroupItemSchema),
 // });
@@ -152,8 +150,13 @@ export const CreateVisitorRequestSchema = z.object({
   tz: z.string().optional(),
   registered_site: z.string().optional(),
   flow: z.string().optional(),
-  visitor_role : z.string().optional(),
+  visitor_role: z.string().optional(),
   registered_site_id: z.string().optional(),
+  is_self_registered: z.boolean().optional(),
+  filled_by_name: z.string().optional(),
+  filled_by_email: z.string().optional(),
+  filled_by_phone: z.string().optional(),
+  filled_by_relationship: z.string().optional(),
   data_visitor: z.array(visitorItemSchema).optional(),
 });
 
@@ -168,9 +171,14 @@ export const CreateGroupVisitorRequestSchema = z.object({
       registered_site: z.string().optional(),
       group_code: z.string().optional(),
       group_name: z.string().optional(),
+      is_self_registered: z.boolean().optional(),
+      filled_by_name: z.string().optional(),
+      filled_by_email: z.string().optional(),
+      filled_by_phone: z.string().optional(),
+      filled_by_relationship: z.string().optional(),
       data_visitor: z.array(visitorItemSchema),
       flow: z.string().optional(),
-    })
+    }),
   ),
 });
 

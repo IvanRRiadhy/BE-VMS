@@ -19,7 +19,7 @@ import Container from 'src/components/container/PageContainer';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { Item } from 'src/customs/api/models/Admin/Timezone';
 import { deleteTimezone, getAllTimezone, getTimezoneById } from 'src/customs/api/admin';
-import { IconTrash } from '@tabler/icons-react';
+import { IconPlus, IconTrash } from '@tabler/icons-react';
 import {
   showConfirmDelete,
   showSwal,
@@ -28,6 +28,7 @@ import FormTimezone from './FormTimezone';
 import { useDebounce } from 'src/hooks/useDebounce';
 import bg_nodata from 'src/assets/images/backgrounds/bg_nodata.svg';
 import { IconClock } from '@tabler/icons-react';
+import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
 
 const dayKeyMap: Record<string, string> = {
@@ -183,14 +184,13 @@ const Content = () => {
                     localStorage.removeItem('timezoneFormDraft');
                     setRefreshTrigger((x) => x + 1);
                   }}
+                  startIcon={<IconPlus />}
                 >
-                  + Add
+                   Add
                 </Button>
               </Tooltip>
             </Box>
-
-       
-            <TextField
+            <CustomTextField
               fullWidth
               size="small"
               placeholder="Search time access..."

@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   Box,
-  Button,
   Dialog,
-  DialogActions,
   DialogContent,
   DialogTitle,
   Divider,
@@ -22,6 +20,7 @@ import {
   CreateApprovalWorkflowRequest,
   CreateApprovalWorkflowSchema,
 } from 'src/customs/api/models/Admin/ApprovalWorfklow';
+import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
 
 const Content = ({
   tableData,
@@ -248,7 +247,7 @@ const handleSearch = useCallback((keyword: string) => {
               onSearch={handleSearch}
               onSearchKeywordChange={handleSearchKeywordChange}
               onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
-              onAddData={() => handleAdd()}
+              onAddData={handleAdd}
             />
           </Grid>
         </Grid>
@@ -280,21 +279,11 @@ const handleSearch = useCallback((keyword: string) => {
           />
         </DialogContent>
       </Dialog>
-
-      {/* Dialog Confirm edit */}
-      <Dialog open={confirmDialogOpen} onClose={handleCancelEdit}>
-        <DialogTitle>Unsaved Changes</DialogTitle>
-        <DialogContent>
-          You have unsaved changes for another Document. Are you sure you want to discard them and
-          edit this Document?
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancelEdit}>Cancel</Button>
-          <Button onClick={handleConfirmEdit} color="primary" variant="contained">
-            Yes, Discard and Continue
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmUnsavedDialog
+        open={confirmDialogOpen}
+        onClose={handleCancelEdit}
+        onDiscard={handleConfirmEdit}
+      />
     </Container>
   );
 };

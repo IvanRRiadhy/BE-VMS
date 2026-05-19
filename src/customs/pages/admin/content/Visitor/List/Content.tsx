@@ -221,7 +221,7 @@ const Content = () => {
 
       setRefreshTrigger((prev) => prev + 1);
     } catch (error: any) {
-      showSwal('error', error?.response?.data?.msg ?? 'Action failed');
+      showSwal('error', error?.response?.data?.msg ?? 'Failed to blacklist or whitelist visitor.');
     } finally {
       setLoadingData(false);
     }

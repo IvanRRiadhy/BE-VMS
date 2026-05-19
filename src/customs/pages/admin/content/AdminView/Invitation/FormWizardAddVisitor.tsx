@@ -1030,7 +1030,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     <Box display="flex" alignItems="center" gap={1}>
                       <IconUsers size={18} />
                       Group
-                      {/* <Tooltip title="When activated, you can add more than one visitor">
+                      {/* <Tooltip title="Multiple visitors can be added">
                           <IconButton size="small" sx={{ ml: 0.5 }}>
                             <IconInfoCircle size={16} />
                           </IconButton>

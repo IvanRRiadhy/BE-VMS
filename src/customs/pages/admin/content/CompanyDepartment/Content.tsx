@@ -568,7 +568,6 @@ const Content = () => {
                   onEdit={(row) => openEdit(mapSelectedToEntity, row)}
                   onDelete={(row) => handleDelete(row)}
                   onBatchDelete={handleBatchDelete}
-                  // onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
                   searchKeyword={searchInput}
                   onSearch={handleSearch}
                   onSearchKeywordChange={handleSearchKeywordChange}

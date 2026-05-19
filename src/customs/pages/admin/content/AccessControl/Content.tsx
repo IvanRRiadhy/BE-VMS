@@ -46,6 +46,7 @@ import { IconAccessible } from '@tabler/icons-react';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
+import AccessControlDialog from './AccessControlDialog';
 
 const Content = () => {
   const [tableData, setTableData] = useState<Item[]>([]);
@@ -390,46 +391,21 @@ const handleSearch = useCallback((keyword: string) => {
                 searchKeyword={searchInput}
                 onSearch={handleSearch}
                 onSearchKeywordChange={handleSearchKeywordChange}
-                onAddData={() => {
-                  handleAdd();
-                }}
+                onAddData={handleAdd}
               />
             </Grid>
           </Grid>
         </Box>
       </Container>
-      <Dialog open={openCreateAccessControl} onClose={handleDialogClose} fullWidth maxWidth="md">
-        <DialogTitle sx={{ position: 'relative', padding: 2 }}>
-          {edittingId ? 'Edit' : 'Add'} Access Control
-          <IconButton
-            aria-label="close"
-            onClick={() => {
-              if (hasUnsaved()) {
-                setConfirmDialogOpen(true);
-              } else {
-                handleCloseDialog();
-              }
-            }}
-            sx={{
-              position: 'absolute',
-              right: 8,
-              top: 6,
-              color: (theme) => theme.palette.grey[500],
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <Divider />
-        <DialogContent>
-          <FormAccessControl
-            // formData={formDataAddAccessControl}
-            // setFormData={setFormDataAddAccessControl}
-            onSuccess={handleSuccess}
-            editingId={edittingId}
-          />
-        </DialogContent>
-      </Dialog>
+
+      <AccessControlDialog
+        open={openCreateAccessControl}
+        edittingId={edittingId}
+        onClose={handleCloseDialog}
+        onSuccess={handleSuccess}
+        hasUnsaved={hasUnsaved}
+        setConfirmDialogOpen={setConfirmDialogOpen}
+      />
 
       <ConfirmUnsavedDialog
         open={confirmDialogOpen}

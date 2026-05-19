@@ -712,9 +712,7 @@ const Content = () => {
                 searchKeyword={searchInput}
                 onSearch={handleSearch}
                 onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
-                onAddData={() => {
-                  handleOpenType();
-                }}
+                onAddData={handleOpenType}
                 sortColumns={['name']}
                 onFilterByColumn={(column) => setSortColumn(column.column)}
               />

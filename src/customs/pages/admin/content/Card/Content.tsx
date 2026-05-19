@@ -6,7 +6,6 @@ import {
   DialogTitle,
   DialogActions,
   Button,
-  Skeleton,
   TableRow,
   Table,
   TableHead,
@@ -99,7 +98,6 @@ const Content = () => {
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
-  const [checkedIds, setCheckedIds] = useState<string[]>([]);
   const [tableVisitorCard, setTableVisitorCard] = useState<Item[]>([]);
   const [edittingId, setEdittingId] = useState('');
 
@@ -333,7 +331,6 @@ const Content = () => {
         await Promise.all(rows.map((row) => deleteVisitorCard(token as string, row.id)));
 
         setSelectedRows([]);
-        setCheckedIds([]);
 
         setRefreshTrigger((prev) => prev + 1);
         showSuccessAlert('Deleted!', `${rows.length} items have been deleted.`);
@@ -368,7 +365,7 @@ const Content = () => {
       is_employee_used: false,
     });
 
-    // 🔑 JUGA reset form ke nilai aman
+
     setFormAddVisitorCard((prev) => ({
       ...prev,
       employee_id: null,
@@ -531,7 +528,6 @@ const Content = () => {
                 isHaveHeader={false}
                 isDataVerified={true}
                 sortColumns={['name']}
-                // onFilterByColumn={(column) => setSortColumn(column.column)}
                 onCheckedChange={(selected) => setSelectedRows(selected)}
                 onEdit={(row) => {
                   handleEdit(row.id);
@@ -544,9 +540,7 @@ const Content = () => {
                 searchKeyword={searchInput}
                 onSearch={handleSearch}
                 onSearchKeywordChange={handleSearchKeywordChange}
-                onAddData={() => {
-                  handleAddVisitorCard();
-                }}
+                onAddData={handleAddVisitorCard}
                 isHaveFilterMore={true}
                 filterMoreContent={
                   <FilterMoreContent

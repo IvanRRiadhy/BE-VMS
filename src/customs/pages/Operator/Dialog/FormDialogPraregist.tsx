@@ -20,6 +20,7 @@ import {
   useTheme,
   useMediaQuery,
   MobileStepper,
+  Tooltip,
 } from '@mui/material';
 import { Grid2 as Grid } from '@mui/material';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
@@ -48,7 +49,7 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 import { getVisitorEmployee } from 'src/customs/api/admin';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { createSubmitCompletePra } from 'src/customs/api/operator';
-import { KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
+import { InfoOutlined, KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
 import { useSelector } from 'src/store/Store';
 
 dayjs.extend(utc);
@@ -71,9 +72,10 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
   onSubmitted,
   containerRef,
   registeredSite,
-  selfRegisterData,
+  // selfRegisterData,
 }) => {
-  const [activeStep, setActiveStep] = useState(0);
+  const [activeStep, setActiveStep] = useState(-1);
+  const [isSelfInvitation, setIsSelfInvitation] = useState<boolean | null>(null);
   const { token } = useSession();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -677,7 +679,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       const fileUrl = data?.collection?.file_url;
-      console.log('CDN Response File URL:', fileUrl);
+      // console.log('CDN Response File URL:', fileUrl);
       return fileUrl ? (fileUrl.startsWith('//') ? `http:${fileUrl}` : fileUrl) : null;
     } catch (e) {
       console.error('Upload failed:', e);
@@ -690,7 +692,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
   const handleRemoveFileForField = async (
     currentUrl: string,
     setAnswerFile: (url: string) => void,
-    inputId: string, // <- pakai key yg sama dengan id input
+    inputId: string,
   ) => {
     try {
       setRemoving((s) => ({ ...s, [inputId]: true }));
@@ -1044,8 +1046,6 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
     return val;
   };
 
-  const user = useSelector((state: any) => state.userReducer.data);
-
   const transformToSubmitPayload = (data: any) => ({
     visitor_type: data.visitor_type,
     type_registered: 0,
@@ -1055,12 +1055,8 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
     tz: data.site_place_data?.timezone ?? 'Asia/Jakarta',
     registered_site_id: registeredSite,
     flow: 'SubmitPraregister',
-    is_self_registered: selfRegisterData?.is_self_registered ?? false,
-    filled_by_name: user?.fullname ?? null,
-    filled_by_email: user?.email ?? null,
-    filled_by_phone: user?.phone ?? null,
-    // ...(selfRegisterData?.is_self_registered && {
-      filled_by_relationship: selfRegisterData?.filled_by_relationship ?? 'Self',
+    is_self_registered: isSelfInvitation === true,
+    filled_by_relationship: 'Operator',
     // }),
     data_visitor: [
       {
@@ -1134,7 +1130,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
         (res.status === 'success' || res.status_code === 200 || res.title === 'success' || res.msg);
 
       if (ok) {
-      showSwal('success', 'Successfully Submit Pra Register!');
+        showSwal('success', 'Successfully Submit Pra Register!');
         onSubmitted?.(invitationData.id);
       } else {
         await new Promise((r) => setTimeout(r, 600));
@@ -1154,6 +1150,76 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
       }, 600);
     }
   };
+
+  if (activeStep === -1) {
+    return (
+      <Box mt={0}>
+        <CustomFormLabel sx={{ mt: 0, fontSize: '16px' }}>
+          Are you filling this invitation for yourself or someone else?
+        </CustomFormLabel>
+
+        <RadioGroup
+          value={isSelfInvitation === null ? '' : isSelfInvitation ? 'self' : 'other'}
+          onChange={(e) => setIsSelfInvitation(e.target.value === 'self')}
+          row
+        >
+          <FormControlLabel
+            value="self"
+            control={<Radio />}
+            label={
+              <Box display="flex" alignItems="center" gap={0.5}>
+                Self
+                <Tooltip title="This invitation is intended for yourself." arrow>
+                  <IconButton size="small">
+                    <InfoOutlined fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            }
+          />
+
+          <FormControlLabel
+            value="other"
+            control={<Radio />}
+            label={
+              <Box display="flex" alignItems="center" gap={0.5}>
+                Other
+                <Tooltip title="This invitation is intended for another person or guest." arrow>
+                  <IconButton size="small">
+                    <InfoOutlined fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            }
+          />
+        </RadioGroup>
+
+        <Divider sx={{ my: 0.5 }} />
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
+          <Button
+            onClick={() => {
+              setIsSelfInvitation(null);
+              setActiveStep(-1);
+              onClose?.();
+            }}
+            disabled={activeStep === -1}
+            startIcon={<IconArrowLeft />}
+          >
+            Back
+          </Button>
+          <Button
+            variant="contained"
+            sx={{ mt: 0 }}
+            disabled={isSelfInvitation === null}
+            onClick={() => setActiveStep(0)}
+            endIcon={<IconArrowRight />}
+          >
+            Next
+          </Button>
+        </Box>
+      </Box>
+    );
+  }
 
   return (
     <>
@@ -1256,7 +1322,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
           {!isMobile && (
             <Box display="flex" flexDirection="row" mt={2}>
               <Button
-                disabled={activeStep === 0}
+                disabled={activeStep === -1}
                 onClick={handleBack}
                 startIcon={<IconArrowLeft size={18} />}
               >

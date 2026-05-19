@@ -2,7 +2,7 @@ import { IconButton, Box, AppBar, Toolbar, Stack, Theme } from '@mui/material';
 
 import { useSelector, useDispatch } from 'src/store/Store';
 import { toggleMobileSidebar } from 'src/store/customizer/CustomizerSlice';
-import { IconMenu2 } from '@tabler/icons-react';
+import { IconMenu2, IconMoon, IconMoonFilled } from '@tabler/icons-react';
 import Notifications from 'src/layouts/full/vertical/header/Notification';
 import Profile from 'src/layouts/full/vertical/header/Profile';
 import { AppState } from 'src/store/Store';
@@ -34,7 +34,7 @@ const HeaderHorizontal = ({ itemDataCustomNavListing, itemDataCustomSidebarItems
   }));
 
   const ToolbarStyled = styled(Toolbar)(({ theme }) => ({
-    paddingLeft:  lgUp ? '10px !important' : '10px !important',
+    paddingLeft: lgUp ? '10px !important' : '10px !important',
     paddingRight: theme.spacing(2),
     width: '100%',
     color: `${theme.palette.text.secondary} !important`,
@@ -42,10 +42,6 @@ const HeaderHorizontal = ({ itemDataCustomNavListing, itemDataCustomSidebarItems
     alignItems: 'center',
     justifyContent: 'space-between',
   }));
-
-  const theme = useTheme();
-
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   return (
     <AppBarStyled
@@ -55,7 +51,6 @@ const HeaderHorizontal = ({ itemDataCustomNavListing, itemDataCustomSidebarItems
       sx={{ borderBottom: '1px solid rgba(0,0,0,0.1)' }}
     >
       <ToolbarStyled>
-        {/* Logo dan Sidebar Toggle */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {/* {!isMobile && (
@@ -91,6 +86,7 @@ const HeaderHorizontal = ({ itemDataCustomNavListing, itemDataCustomSidebarItems
         <Stack spacing={1} direction="row" alignItems="center">
           <Notifications />
           <Language />
+          {/* <IconMoonFilled /> */}
           <Profile />
         </Stack>
       </ToolbarStyled>

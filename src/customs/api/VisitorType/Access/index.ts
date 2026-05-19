@@ -33,8 +33,11 @@ export const getVisitorTypeAccessByVisitorId = async (id: string, token: string)
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
-  } catch (error) {
-    console.error('Error fetching data:', error);
+  } catch (error: any) {
+    if (error?.response?.status === 404) {
+      return { collection: [] };
+    }
+
     throw error;
   }
 };
@@ -90,7 +93,7 @@ export const deleteVisitorTypeAccess = async (id: string, token: string): Promis
     });
     return response.data;
   } catch (error) {
-   console.error('Error fetching data:', error);
+    console.error('Error fetching data:', error);
     throw error;
   }
 };

@@ -43,6 +43,7 @@ import TopCard from 'src/customs/components/cards/TopCard';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
 import { getVisitorTypeAccessByVisitorId } from 'src/customs/api/VisitorType/Access';
+import VisitorTypeDialog from './components/VisitorTypeDialog';
 
 type VisitorTypeTableRow = {
   id: string;
@@ -69,7 +70,6 @@ const Content = () => {
       return saved ? JSON.parse(saved) : CreateVisitorTypeRequestSchema.parse({});
     },
   );
-  const [isDuplicateMode, setIsDuplicateMode] = useState(false);
   const [edittingId, setEdittingId] = useState('');
   const defaultFormData = CreateVisitorTypeRequestSchema.parse({});
   const isFormChanged = JSON.stringify(formDataAddVisitorType) !== JSON.stringify(defaultFormData);
@@ -168,12 +168,10 @@ const Content = () => {
   };
   const handleCloseDialog = () => {
     setOpenFormCreateVisitorType(false);
-    setIsDuplicateMode(false);
     localStorage.removeItem('unsavedVisitorTypeData');
   };
 
   const handleAdd = useCallback(() => {
-    setIsDuplicateMode(false);
     const saved = localStorage.getItem('unsavedVisitorTypeData');
     let freshForm;
     if (saved) {
@@ -214,7 +212,6 @@ const Content = () => {
   const handleEdit = async (id: string) => {
     try {
       // setLoading(true);
-      setIsDuplicateMode(false);
       const resp = await getVisitorTypeById(token as string, id);
       const raw = resp?.collection;
 
@@ -430,16 +427,10 @@ const Content = () => {
   const handleDuplicate = async (id: string) => {
     try {
       setLoadingData(true);
-      setIsDuplicateMode(true);
 
-      // 1. Ambil detail visitor type
       const resp = await getVisitorTypeById(token as string, id);
       const raw = resp?.collection;
-
-      // 2. Normalisasi data
       const hydrated = normalizeDetail(raw);
-
-      // 3. Mapping documents
       if (Array.isArray(raw?.visitor_type_documents)) {
         const mappedDocs = raw.visitor_type_documents.map((doc: any) => ({
           document_id: doc.document_id,
@@ -454,7 +445,6 @@ const Content = () => {
         setDocumentIdentities([]);
       }
 
-      // 4. Ambil ACCESS dari API khusus visitor type
       let mappedAccess: any[] = [];
 
       try {
@@ -469,28 +459,16 @@ const Content = () => {
         mappedAccess = [];
       }
 
-      // 5. Simpan ke state yang dikirim ke child sebagai initialAccess
       setDuplicatedAccess(mappedAccess);
-
-      // 6. Buat data duplikasi
       const duplicatedData = {
         ...hydrated,
         name: `${hydrated.name} Copy`,
       };
 
-      // Pastikan id lama tidak ikut
       delete duplicatedData.id;
-
-      // 7. Kosongkan editingId agar submit masuk mode CREATE
       setEdittingId('');
-
-      // 8. Set form data
       setFormDataAddVisitorType(duplicatedData);
-
-      // 9. Reset pending edit
       setPendingEditId(null);
-
-      // 10. Buka dialog
       handleOpenDialog();
     } catch (err) {
       showSwal('error', 'Failed to duplicate visitor type.');
@@ -547,9 +525,7 @@ const Content = () => {
                 onSearchKeywordChange={handleSearchKeywordChange}
                 searchKeyword={searchInput}
                 onSearch={handleSearch}
-                onAddData={() => {
-                  handleAdd();
-                }}
+                onAddData={handleAdd}
                 onBooleanSwitchChange={(row, col, checked) =>
                   handleBooleanSwitch(row, col as keyof VisitorTypeTableRow, checked)
                 }
@@ -558,43 +534,19 @@ const Content = () => {
           </Grid>
         </Box>
       </Container>
-      <Dialog open={openFormCreateVisitorType} onClose={handleDialogClose} maxWidth="xl" fullWidth>
-        <DialogTitle
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          {edittingId ? 'Edit' : 'Add'} Visitor Type
-          <IconButton
-            aria-label="close"
-            onClick={() => {
-              if (isFormChanged) {
-                setConfirmDialogOpen(true);
-              } else {
-                handleCloseDialog();
-              }
-            }}
-            sx={{
-              color: (theme) => theme.palette.grey[500],
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <Divider />
-        <DialogContent sx={{ padding: { xs: 2, md: 3 } }}>
-          <FormVisitorType
-            formData={formDataAddVisitorType}
-            setFormData={setFormDataAddVisitorType}
-            onSuccess={handleSuccess}
-            edittingId={edittingId}
-            initialDocuments={documentIdentities}
-            initialAccess={duplicatedAccess}
-          />
-        </DialogContent>
-      </Dialog>
+      <VisitorTypeDialog
+        open={openFormCreateVisitorType}
+        onClose={handleDialogClose}
+        edittingId={edittingId}
+        isFormChanged={isFormChanged}
+        setConfirmDialogOpen={setConfirmDialogOpen}
+        handleCloseDialog={handleCloseDialog}
+        formDataAddVisitorType={formDataAddVisitorType}
+        setFormDataAddVisitorType={setFormDataAddVisitorType}
+        documentIdentities={documentIdentities}
+        duplicatedAccess={duplicatedAccess}
+        onSuccess={handleSuccess}
+      />
 
       <ConfirmUnsavedDialog
         open={confirmDialogOpen}

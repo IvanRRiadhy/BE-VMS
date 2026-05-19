@@ -38,6 +38,7 @@ import {
 import { IconUsers } from '@tabler/icons-react';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import FilterMoreContent from './FilterMoreContent';
+import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
 
 type EmployeesTableRow = {
   id: string;
@@ -561,9 +562,7 @@ const Content = () => {
                 searchKeyword={searchInput}
                 onSearch={handleSearch}
                 onSearchKeywordChange={handleSearchKeywordChange}
-                onAddData={() => {
-                  handleAdd();
-                }}
+                onAddData={handleAdd}
               />
             </Grid>
           </Grid>
@@ -595,8 +594,7 @@ const Content = () => {
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <Divider />
-        <DialogContent>
+        <DialogContent dividers>
           <FormWizardAddEmployee
             formData={formDataAddEmployee}
             setFormData={setFormDataAddEmployee}
@@ -609,32 +607,12 @@ const Content = () => {
           />
         </DialogContent>
       </Dialog>
-      <Dialog open={confirmDialogOpen} onClose={handleCancelEdit} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          Unsaved Changes
-          <IconButton
-            aria-label="close"
-            onClick={handleCancelEdit}
-            sx={{
-              position: 'absolute',
-              right: 8,
-              top: 8,
-              color: (theme) => theme.palette.grey[500],
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent dividers>
-          You have unsaved changes. Are you sure you want to discard them?
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancelEdit}>Cancel</Button>
-          <Button onClick={handleConfirmEdit} color="primary" variant="contained">
-            Yes, Discard and Continue
-          </Button>
-        </DialogActions>
-      </Dialog>
+
+      <ConfirmUnsavedDialog
+        open={confirmDialogOpen}
+        onClose={handleCancelEdit}
+        onDiscard={handleConfirmEdit}
+      />
     </PageContainer>
   );
 };

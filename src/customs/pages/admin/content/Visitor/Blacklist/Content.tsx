@@ -94,7 +94,7 @@ const Content = () => {
         setTotalFilteredRecords(response.RecordsFiltered);
       } catch (error) {
         console.error('Error fetching data:', error);
-        setTableData([]);
+        // setTableData([]);
       } finally {
         setLoading(false);
       }

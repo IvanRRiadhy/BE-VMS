@@ -53,6 +53,14 @@ export type VisitorTypeDocument = {
   identity_type?: number;
 };
 
+export type VisitorRole = {
+  role?: string;
+  visitor_roles_id?: string;
+  active?: boolean;
+  is_default?: boolean;
+  visitor_type_id?: string;
+};
+
 export type Item = {
   id: string;
   name: string;
@@ -77,6 +85,7 @@ export type Item = {
   prefix: string;
   simple_period: boolean;
   site_visitor_types?: string | null;
+  visitor_roles: VisitorRole[] ;
   visitor_type_documents: VisitorTypeDocument[] | null;
   section_page_visitor_types: SectionPageVisitorType[];
 };
@@ -172,6 +181,18 @@ export const CreateVisitorTypeRequestSchema = z.object({
 
   // site_visitor_types: z.string().nullable().optional(),
   // Nullable fields from your JSON
+  visitor_roles: z
+    .array(
+      z.object({
+        visitor_type_id: z.string().optional(),
+        role: z.string().optional(),
+        visitor_roles_id: z.string().optional(),
+        active: z.boolean().default(false).optional(),
+        is_default: z.boolean().default(false).optional(),
+      }),
+    )
+    .nullable()
+    .optional(),
   visitor_type_documents: z
     .array(z.object({ document_id: z.string(), identity_type: z.number() }))
     .nullable()
@@ -218,6 +239,18 @@ export const updateVisitorTypeSchmea = z.object({
   // Nullable fields from your JSON
   // site_visitor_types: z.string().nullable().optional(),
   // Nullable fields from your JSON
+  visitor_roles: z
+    .array(
+      z.object({
+        visitor_type_id: z.string().optional(),
+        role: z.string().optional(),
+        visitor_roles_id: z.string().optional(),
+        active: z.boolean().default(false).optional(),
+        is_default: z.boolean().default(false).optional(),
+      }),
+    )
+    .nullable()
+    .optional(),
   visitor_type_documents: z
     .array(z.object({ document_id: z.string().optional(), identity_type: z.number().optional() }))
     .nullable()

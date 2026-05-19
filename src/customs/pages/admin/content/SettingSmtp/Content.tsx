@@ -270,7 +270,7 @@ const Content = () => {
       setRefreshTrigger((p) => p + 1);
     } catch (error: any) {
       flushSync(() => setLoading(false));
-      showSwal('error', error.message || 'Failed to send test email.');
+      showSwal('error', error.response.data.msg || 'Failed to send test email.');
     } finally {
       setTimeout(() => setLoading(false), 500);
     }
