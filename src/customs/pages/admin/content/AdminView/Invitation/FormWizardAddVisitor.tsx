@@ -3551,8 +3551,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         </Typography>
 
                         <Typography variant="body2" color="textSecondary" mt={1}>
-                          Supports: JPG, JPEG, PNG, up to
-                          <span style={{ fontWeight: 'semibold' }}> 100KB</span>
+                          Supports: JPG, JPEG, PNG, Up to
+                          <span style={{ fontWeight: 'semibold' }}> 1 Mb</span>
                         </Typography>
                         {(previewSrc || shownName) && (
                           <Box
@@ -3656,7 +3656,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                         <Typography variant="caption" color="textSecondary">
                           Supports: JPG, JPEG, PNG, Up to
-                          <span style={{ fontWeight: '700' }}> 100KB</span>
+                          <span style={{ fontWeight: '700' }}> 1 Mb</span>
                         </Typography>
 
                         <Typography

@@ -479,7 +479,7 @@ const FormWizardAddEmployee = ({
 
       if (edittingId) {
         const { faceimage: _drop, ...withoutImage } = data;
-        const editData: UpdateEmployeeRequest = {
+        const editData: any = {
           ...withoutImage,
           qr_code: formData.card_number,
           is_email_verify: false,
@@ -523,26 +523,6 @@ const FormWizardAddEmployee = ({
       }, 650);
     }
   };
-  // const handleFileUploads = async (employeeId: any, fileFromInput: any, faceImage: any) => {
-  //   try {
-  //     //  console.log('UPLOAD START', { fileFromInput, faceImage });
-  //     if (fileFromInput) {
-  //       await uploadImageEmployee(employeeId, fileFromInput, token as string);
-  //       return;
-  //     }
-
-  //     if (faceImage) {
-  //       const blob = await fetch(faceImage).then((res) => res.blob());
-  //       const file = new File([blob], 'webcam.jpg', { type: 'image/jpeg' });
-  //       await uploadImageEmployee(employeeId, file, token as string);
-  //       return;
-  //     }
-
-  //     console.log('No image to upload');
-  //   } catch (error) {
-  //     console.error('Error uploading image:', error);
-  //   }
-  // };
 
   const handleFileUploads = async (
     employeeId: string,
@@ -566,7 +546,6 @@ const FormWizardAddEmployee = ({
     await Promise.all(tasks);
   };
 
-  // Handle Change Image
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
@@ -1259,7 +1238,8 @@ const FormWizardAddEmployee = ({
                     </Typography>
 
                     <Typography variant="caption" color="textSecondary">
-                      Supports: JPG, JPEG, PNG, Max Size: 2MB
+                      Supports: JPG, JPEG, PNG, Up to
+                      <span style={{ fontWeight: '700' }}>1 Mb</span>
                     </Typography>
                     <Typography
                       variant="subtitle1"

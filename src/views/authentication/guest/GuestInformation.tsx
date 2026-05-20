@@ -55,8 +55,7 @@ import Footer from '../components/Footer';
 import { KeyboardArrowUp } from '@mui/icons-material';
 import { IconDeviceFloppy } from '@tabler/icons-react';
 import PreviewDialog from '../components/PreviewDialog';
-import Swal from 'sweetalert2';
-
+import imageCompression from 'browser-image-compression';
 dayjs.extend(utc);
 dayjs.extend(weekday);
 dayjs.extend(localizedFormat);
@@ -308,40 +307,66 @@ const GuestInformationStepper = () => {
     }
   };
 
+  const compressImage = async (file: File | Blob) => {
+    const compressedFile = await imageCompression(file as File, {
+      maxSizeMB: 1,
+      maxWidthOrHeight: 1920,
+      useWebWorker: true,
+    });
+
+    return compressedFile;
+  };
+
   const handleFileChangeForField = async (
     e: React.ChangeEvent<HTMLInputElement>,
     setAnswerFile: (url: string) => void,
     trackKey?: string,
+    fullscreenHandle?: any,
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (trackKey) {
       setUploadNames((prev) => ({ ...prev, [trackKey]: file.name }));
-      setPreviews((prev) => ({ ...prev, [trackKey]: URL.createObjectURL(file) }));
+      setPreviews((prev) => ({
+        ...prev,
+        [trackKey]: URL.createObjectURL(file),
+      }));
+    }
+    const compressedFile = await compressImage(file);
+    if (compressedFile.size > 1024 * 1024) {
+      showSwal('info', 'File size must be under 1 MB');
+      return;
     }
 
-    const path = await uploadFileToCDN(file);
+    const path = await uploadFileToCDN(compressedFile);
+
     if (path) setAnswerFile(path);
 
     e.target.value = '';
   };
 
-  const handleCaptureForField = async (setAnswerFile: (url: string) => void, trackKey?: string) => {
-    if (!webcamRef.current) return;
-    const imageSrc = webcamRef.current.getScreenshot();
-    if (!imageSrc) return;
+   const handleCaptureForField = async (
+     setAnswerFile: (url: string) => void,
+     trackKey?: string,
+   ) => {
+     if (!webcamRef.current) return;
 
-    const blob = await fetch(imageSrc).then((res) => res.blob());
-    const path = await uploadFileToCDN(blob);
-    if (!path) return;
+     const imageSrc = webcamRef.current.getScreenshot();
+     if (!imageSrc) return;
 
-    if (trackKey) {
-      setPreviews((prev) => ({ ...prev, [trackKey]: imageSrc }));
-      setUploadNames((prev) => ({ ...prev, [trackKey]: 'camera.jpg' }));
-    }
-    setAnswerFile(path);
-  };
+     const blob = await fetch(imageSrc).then((res) => res.blob());
+     const compressedBlob = await compressImage(
+       new File([blob], 'camera.jpg', { type: 'image/jpeg' }),
+     );
+     const path = await uploadFileToCDN(compressedBlob);
+     if (!path) return;
+     if (trackKey) {
+       setPreviews((prev) => ({ ...prev, [trackKey]: imageSrc }));
+       setUploadNames((prev) => ({ ...prev, [trackKey]: 'camera.jpg' }));
+     }
+     setAnswerFile(path);
+   };
 
   const getFieldTypeByRemarks = (remarks: string): number | null => {
     switch (remarks) {
@@ -569,7 +594,7 @@ const GuestInformationStepper = () => {
           </Typography>
 
           <Typography variant="caption" color="textSecondary">
-            Supports: DOCX, JPG, PNG
+            Supports: JPG, JPEG, PNG, Up to <span style={{ fontWeight: '700' }}>1 Mb</span>
           </Typography>
 
           {/* Hidden input */}
@@ -688,7 +713,7 @@ const GuestInformationStepper = () => {
           </Typography>
 
           <Typography variant="caption" color="textSecondary">
-            Supports: JPG, PNG, JPEG, Up to <span style={{ fontWeight: '700' }}> 100KB</span>
+            Supports: JPG, PNG, JPEG, Up to <span style={{ fontWeight: '700' }}>1 Mb</span>
           </Typography>
 
           <Typography

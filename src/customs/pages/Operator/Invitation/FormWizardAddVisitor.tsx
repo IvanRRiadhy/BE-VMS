@@ -68,7 +68,7 @@ import {
   FormField,
   SectionPageVisitor,
 } from 'src/customs/api/models/Admin/Visitor';
-
+import imageCompression from 'browser-image-compression';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
@@ -955,6 +955,85 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     return f?.answer_text === 'true';
   };
 
+  const handleSelectDataVisitor = (v: any | null, isEmployee: boolean = false) => {
+    const currentStep = activeStep - 1;
+
+    // Field yang perlu di-reset jika value null
+    const resetKeys = [
+      'name',
+      'email',
+      'phone',
+      'organization',
+      'indentity_id',
+      'gender',
+      'employee',
+    ];
+
+    // Jika tidak ada data yang dipilih, reset field terkait
+    if (!v) {
+      setSectionsData((prev) =>
+        prev.map((section, sectionIndex) =>
+          sectionIndex !== currentStep
+            ? section
+            : updateSectionForm(section, (arr) =>
+                arr.map((item) => {
+                  if (resetKeys.includes(item.remarks)) {
+                    const errorKey = `${currentStep}:${item.id}`;
+                    clearFieldError(errorKey);
+
+                    return {
+                      ...item,
+                      answer_text: '',
+                    };
+                  }
+
+                  return item;
+                }),
+              ),
+        ),
+      );
+
+      return;
+    }
+    let genderValue: string | undefined;
+
+    if (v.gender === 'Male') genderValue = '1';
+    else if (v.gender === 'Female') genderValue = '0';
+    else if (v.gender === 'Prefer not to say') genderValue = '2';
+    const mapping: Record<string, string | undefined> = {
+      name: v.name,
+      email: v.email,
+      phone: v.phone,
+      organization: isEmployee ? v.Organization?.name || '' : v.organization || '',
+      indentity_id: v.identity_id,
+      gender: genderValue,
+      employee: v.id,
+    };
+
+    // Update form berdasarkan mapping
+    setSectionsData((prev) =>
+      prev.map((section, sectionIndex) =>
+        sectionIndex !== currentStep
+          ? section
+          : updateSectionForm(section, (arr) =>
+              arr.map((item) => {
+                if (mapping[item.remarks] !== undefined) {
+                  const errorKey = `${currentStep}:${item.id}`;
+                  clearFieldError(errorKey);
+
+                  return {
+                    ...item,
+                    answer_text: mapping[item.remarks]!,
+                  };
+                }
+
+                return item;
+              }),
+            ),
+      ),
+    );
+  };
+
   const handleSteps = (step: number) => {
     const showVTListSkeleton = vtLoading;
     if (step === -1 && enableInvitationTypeStep) {
@@ -1331,67 +1410,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       key={String(isEmployee)}
                       token={token as string}
                       isEmployee={isEmployee}
-                      onSelect={(v: any) => {
-                        if (!v) {
-                          const clearKeys = [
-                            'name',
-                            'email',
-                            'phone',
-                            'organization',
-                            'indentity_id',
-                            'gender',
-                            'employee',
-                          ];
-
-                          setSectionsData((prev) =>
-                            prev.map((s, sIdx) =>
-                              sIdx !== activeStep - 1
-                                ? s
-                                : updateSectionForm(s, (arr) => {
-                                    return arr.map((item) =>
-                                      clearKeys.includes(item.remarks)
-                                        ? { ...item, answer_text: '' }
-                                        : item,
-                                    );
-                                  }),
-                            ),
-                          );
-
-                          return;
-                        }
-
-                        let genderValue: string | undefined;
-
-                        if (v.gender === 'Male') genderValue = '1';
-                        else if (v.gender === 'Female') genderValue = '0';
-                        else if (v.gender === 'Prefer not to say') genderValue = '2';
-
-                        const mapping: Record<string, string | undefined> = {
-                          name: v.name,
-                          email: v.email,
-                          phone: v.phone,
-                          organization: isEmployee
-                            ? v.Organization?.name || ''
-                            : v.organization || '',
-                          indentity_id: v.identity_id,
-                          gender: genderValue,
-                          employee: v.id,
-                        };
-
-                        setSectionsData((prev) =>
-                          prev.map((s, sIdx) =>
-                            sIdx !== activeStep - 1
-                              ? s
-                              : updateSectionForm(s, (arr) =>
-                                  arr.map((item) =>
-                                    mapping[item.remarks] !== undefined
-                                      ? { ...item, answer_text: mapping[item.remarks]! }
-                                      : item,
-                                  ),
-                                ),
-                          ),
-                        );
-                      }}
+                      onSelect={(v) => handleSelectDataVisitor(v, isEmployee)}
                     />
 
                     <Accordion key={activeStep} expanded sx={{ mt: 2 }}>
@@ -1660,7 +1679,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                                 setSiteTree={setSiteTree}
                                                 buildSiteTreeWithParent={buildSiteTreeWithParent}
                                                 renderTree={renderTree}
-                                          
                                                 visitorRoles={visitorRoles}
                                                 activeStep={activeStep}
                                                 containerRef={containerRef}
@@ -2132,6 +2150,16 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     }
   };
 
+  const compressImage = async (file: File | Blob) => {
+    const compressedFile = await imageCompression(file as File, {
+      maxSizeMB: 1,
+      maxWidthOrHeight: 1920,
+      useWebWorker: true,
+    });
+
+    return compressedFile;
+  };
+
   const handleFileChangeForField = async (
     e: React.ChangeEvent<HTMLInputElement>,
     setAnswerFile: (url: string) => void,
@@ -2143,10 +2171,21 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
     if (trackKey) {
       setUploadNames((prev) => ({ ...prev, [trackKey]: file.name }));
-      setPreviews((prev) => ({ ...prev, [trackKey]: URL.createObjectURL(file) }));
+      setPreviews((prev) => ({
+        ...prev,
+        [trackKey]: URL.createObjectURL(file),
+      }));
     }
 
-    const path = await uploadFileToCDN(file);
+    // compress
+    const compressedFile = await compressImage(file);
+    if (compressedFile.size > 1024 * 1024) {
+      toast('File size must be under 1 MB', 'info');
+      return;
+    }
+
+    const path = await uploadFileToCDN(compressedFile);
+
     if (path) setAnswerFile(path);
 
     e.target.value = '';
@@ -2159,6 +2198,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   ) => {
     try {
       setRemoving((s) => ({ ...s, [inputId]: true }));
+      console.log('currentUrl', currentUrl);
       if (currentUrl) {
         await axiosInstance2.delete(`/cdn${currentUrl}`);
       }
@@ -2180,13 +2220,17 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
   const handleCaptureForField = async (setAnswerFile: (url: string) => void, trackKey?: string) => {
     if (!webcamRef.current) return;
+
     const imageSrc = webcamRef.current.getScreenshot();
     if (!imageSrc) return;
 
     const blob = await fetch(imageSrc).then((res) => res.blob());
-    const path = await uploadFileToCDN(blob);
+    // compress
+    const compressedBlob = await compressImage(
+      new File([blob], 'camera.jpg', { type: 'image/jpeg' }),
+    );
+    const path = await uploadFileToCDN(compressedBlob);
     if (!path) return;
-
     if (trackKey) {
       setPreviews((prev) => ({ ...prev, [trackKey]: imageSrc }));
       setUploadNames((prev) => ({ ...prev, [trackKey]: 'camera.jpg' }));
@@ -2248,13 +2292,86 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     return node.children.flatMap((child: any) => [child.id, ...collectAllChildIds(child)]);
   };
 
+  // const renderTree = (
+  //   node: any,
+  //   index: number,
+  //   onChange: (index: number, field: keyof FormVisitor, value: any) => void,
+  //   isSelfOnly = false,
+  // ) => {
+  //   // const checked = selectedSiteIds.includes(node.id);
+  //   return (
+  //     <TreeItem
+  //       key={`${node.parentId ?? 'root'}-${node.id}`}
+  //       itemId={`${node.parentId ?? 'root'}-${node.id}`}
+  //       label={
+  //         <Box display="flex" alignItems="center" gap={1}>
+  //           <Checkbox
+  //             size="small"
+  //             // checked={checked}
+  //             checked={
+  //               isSelfOnly
+  //                 ? (selfOnlySelectedSiteIdsMap[selfOnlyVisitorIdx] || []).includes(node.id)
+  //                 : selectedSiteIds.includes(node.id)
+  //             }
+  //             onMouseDown={(e) => e.stopPropagation()}
+  //             onClick={(e) => e.stopPropagation()}
+  //             onChange={(e) => {
+  //               const isChecked = e.target.checked;
+  //               const isParentNode = !!node.children?.length;
+
+  //               const setter = isSelfOnly
+  //                 ? (callback: any) =>
+  //                     setSelfOnlySelectedSiteIdsMap((prevMap) => ({
+  //                       ...prevMap,
+  //                       [selfOnlyVisitorIdx]: callback(prevMap[selfOnlyVisitorIdx] || []),
+  //                     }))
+  //                 : setSelectedSiteIds;
+
+  //               setter((prev: any) => {
+  //                 let updated = [...prev];
+
+  //                 if (isChecked) {
+  //                   if (!updated.includes(node.id)) updated.push(node.id);
+
+  //                   if (!isParentNode && node.parentId && !updated.includes(node.parentId)) {
+  //                     updated.push(node.parentId);
+  //                   }
+  //                 } else {
+  //                   updated = updated.filter((id) => id !== node.id);
+
+  //                   if (isParentNode) {
+  //                     const childIds = collectAllChildIds(node);
+  //                     updated = updated.filter((id) => !childIds.includes(id));
+  //                   }
+  //                 }
+
+  //                 onChange(index, 'answer_text', toCsv(updated));
+  //                 return updated;
+  //               });
+  //             }}
+  //           />
+  //           <Typography variant="body2">{node.name}</Typography>
+  //         </Box>
+  //       }
+  //     >
+  //       {node.children?.map((child: any) => renderTree(child, index, onChange))}
+  //     </TreeItem>
+  //   );
+  // };
+
   const renderTree = (
     node: any,
     index: number,
     onChange: (index: number, field: keyof FormVisitor, value: any) => void,
     isSelfOnly = false,
   ) => {
-    // const checked = selectedSiteIds.includes(node.id);
+    const originalSite = sites.find(
+      (s: any) => String(s.id).toUpperCase() === String(node.id).toUpperCase(),
+    );
+    const canVisited = originalSite?.can_visited === undefined ? true : !!originalSite.can_visited;
+
+    const isDisabled = !canVisited;
+
     return (
       <TreeItem
         key={`${node.parentId ?? 'root'}-${node.id}`}
@@ -2263,7 +2380,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           <Box display="flex" alignItems="center" gap={1}>
             <Checkbox
               size="small"
-              // checked={checked}
+              disabled={isDisabled}
               checked={
                 isSelfOnly
                   ? (selfOnlySelectedSiteIdsMap[selfOnlyVisitorIdx] || []).includes(node.id)
@@ -2272,6 +2389,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
               onMouseDown={(e) => e.stopPropagation()}
               onClick={(e) => e.stopPropagation()}
               onChange={(e) => {
+                if (isDisabled) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  return;
+                }
+
                 const isChecked = e.target.checked;
                 const isParentNode = !!node.children?.length;
 
@@ -2287,14 +2410,18 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   let updated = [...prev];
 
                   if (isChecked) {
-                    if (!updated.includes(node.id)) updated.push(node.id);
+                    if (!updated.includes(node.id)) {
+                      updated.push(node.id);
+                    }
 
+                    // Jika child dipilih, parent ikut dipilih
                     if (!isParentNode && node.parentId && !updated.includes(node.parentId)) {
                       updated.push(node.parentId);
                     }
                   } else {
                     updated = updated.filter((id) => id !== node.id);
 
+                    // Jika parent di-uncheck, hapus semua child
                     if (isParentNode) {
                       const childIds = collectAllChildIds(node);
                       updated = updated.filter((id) => !childIds.includes(id));
@@ -2306,15 +2433,26 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 });
               }}
             />
-            <Typography variant="body2">{node.name}</Typography>
+
+            <Box display="flex" flexDirection="column">
+              <Typography variant="body2" color={isDisabled ? 'text.disabled' : 'text.primary'}>
+                {node.name}
+              </Typography>
+
+              {/* Hanya tampil jika site ini sendiri tidak dapat dikunjungi */}
+              {!canVisited && (
+                <Typography variant="caption" color="error" sx={{ fontStyle: 'italic' }}>
+                  This site cannot be visited.
+                </Typography>
+              )}
+            </Box>
           </Box>
         }
       >
-        {node.children?.map((child: any) => renderTree(child, index, onChange))}
+        {node.children?.map((child: any) => renderTree(child, index, onChange, isSelfOnly))}
       </TreeItem>
     );
   };
-
   const getVisibilityMap = (details: any[]) => {
     const getFlag = (key: string) => {
       const field = details.find((f: any) => f.remarks?.toLowerCase() === key);
@@ -2658,7 +2796,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     options = sites.map((site: any) => ({
                       value: site.id,
                       name: site.name,
-                      disabled: site.can_visited === false,
+                      disabled: false,
+                      can_visited: site.can_visited,
+                      helperText: site.can_visited === false ? 'This site cannot be visited.' : '',
                     }));
                   } else {
                     options = (item.multiple_option_fields || []).map((opt: any) =>
@@ -2782,7 +2922,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     const selectedSiteIds =
                       details.find((d: any) => d.remarks === 'site_place')?.answer_text || [];
 
-                    // ambil semua host dari selected sites
                     const siteHostIds = [
                       ...new Set(
                         sites
@@ -2976,15 +3115,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         select
                         size="small"
                         fullWidth
-                        // nilai role disimpan pada field answer_text milik visitor ini
                         value={item.answer_text || ''}
                         onChange={(e) => {
                           const selectedRole = e.target.value;
-
-                          // simpan ke field visitor_role pada row ini
                           onChange(index, 'answer_text', selectedRole);
-
-                          // hapus error jika ada
                           if (selectedRole) {
                             clearFieldError(key);
                           }
@@ -2995,11 +3129,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         <MenuItem value="">Select Role</MenuItem>
 
                         {visitorRoles.map((role: any) => (
-                          <MenuItem
-                            key={role.id}
-                            // simpan value role, misalnya "Driver"
-                            value={role.role}
-                          >
+                          <MenuItem key={role.id} value={role.role}>
                             {role.role}
                           </MenuItem>
                         ))}
@@ -3194,7 +3324,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     return (
                       <Box sx={{ width: '100%' }}>
                         <Grid container spacing={2}>
-                          {/* Kiri: Visitor Period Start */}
                           <Grid size={{ xs: 12, md: 6 }}>
                             <Box display="flex" alignItems="center" gap={0.5} mb={1}>
                               <Typography variant="subtitle2" fontWeight={600}>
@@ -3256,7 +3385,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             </LocalizationProvider>
                           </Grid>
 
-                          {/* Kanan: Visitor Period End */}
                           <Grid size={{ xs: 12, md: 6 }}>
                             <Box display="flex" alignItems="center" gap={0.5} mb={1}>
                               <Typography variant="subtitle2" fontWeight={600}>
@@ -3408,7 +3536,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           onChange={(e) =>
                             handleFileChangeForField(
                               e as React.ChangeEvent<HTMLInputElement>,
-                              // (url) => onChange(index, 'answer_file', url),
                               (url) => {
                                 onChange(index, 'answer_file', url);
                                 if (url) clearFieldError(key);
@@ -3599,7 +3726,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                         <Typography variant="body2" color="textSecondary" mt={1}>
                           Supports: JPG, JPEG, PNG, up to
-                          <span style={{ fontWeight: 'semibold' }}> 100KB</span>
+                          <span style={{ fontWeight: 'semibold' }}> 1 Mb</span>
                         </Typography>
                         {(previewSrc || shownName) && (
                           <Box
@@ -3703,7 +3830,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                         <Typography variant="caption" color="textSecondary">
                           Supports: JPG, JPEG, PNG, Up to
-                          <span style={{ fontWeight: '700' }}> 100KB</span>
+                          <span style={{ fontWeight: '700' }}> 1 MB</span>
                         </Typography>
 
                         <Typography
@@ -4185,7 +4312,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         // registered_site_id: registeredSite ?? '',
         ...(TYPE_REGISTERED !== 0 && {
           is_self_registered: isSelfInvitation ?? false,
-          filled_by_relationship: 'Operator',
+          filled_by_relationship: 'Other',
         }),
       };
 
@@ -4269,7 +4396,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             flow: TYPE_REGISTERED === 0 ? 'Praregister' : 'Invitation',
             ...(TYPE_REGISTERED !== 0 && {
               is_self_registered: isSelfInvitation ?? false,
-              filled_by_relationship: 'Operator',
+              filled_by_relationship: 'Other',
             }),
             data_visitor: cleanDataVisitor,
           };
@@ -4288,7 +4415,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         clearAnswerFiles();
       } else {
         if (!sectionsData.length) {
-          toast('Minimal isi 1 data visitor.', 'warning');
+          toast('Please add at least one visitor', 'warning');
+          setLoading(false);
           return;
         }
 

@@ -1245,7 +1245,8 @@ const FormWizardAddEmployee = ({
                       }}
                     >
                       <Typography variant="body1" color="textSecondary">
-                        Supports: JPG, JPEG, PNG, Up to <strong>1 MB</strong>
+                        Supports: JPG, JPEG, PNG, Up to:
+                        <span style={{ fontWeight: '700' }}>1 Mb</span>
                       </Typography>
                       <Typography
                         variant="subtitle1"

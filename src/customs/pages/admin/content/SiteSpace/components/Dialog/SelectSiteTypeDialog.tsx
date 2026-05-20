@@ -9,7 +9,7 @@ import {
   Autocomplete,
   TextField,
 } from '@mui/material';
-import { IconX } from '@tabler/icons-react';
+import { IconArrowRight, IconX } from '@tabler/icons-react';
 
 type OptionType = {
   label: string;
@@ -67,8 +67,8 @@ const SelectSiteTypeDialog: React.FC<Props> = ({
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleNext} variant="contained" disabled={options.length === 0}>
+        {/* <Button onClick={onClose}>Cancel</Button> */}
+        <Button onClick={handleNext} variant="contained" disabled={options.length === 0} endIcon={<IconArrowRight/>}>
           Next
         </Button>
       </DialogActions>

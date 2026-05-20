@@ -479,7 +479,7 @@ const FormWizardAddEmployee = ({
 
       if (edittingId) {
         const { faceimage: _drop, ...withoutImage } = data;
-        const editData: UpdateEmployeeRequest = {
+        const editData: any = {
           ...withoutImage,
           qr_code: formData.card_number,
           is_email_verify: false,
@@ -1259,7 +1259,8 @@ const FormWizardAddEmployee = ({
                     </Typography>
 
                     <Typography variant="caption" color="textSecondary">
-                      Supports: JPG, JPEG, PNG, Max Size: 2MB
+                      Supports: JPG, JPEG, PNG, Up to{' '}
+                      <span style={{ fontWeight: '700' }}>1 Mb</span>
                     </Typography>
                     <Typography
                       variant="subtitle1"

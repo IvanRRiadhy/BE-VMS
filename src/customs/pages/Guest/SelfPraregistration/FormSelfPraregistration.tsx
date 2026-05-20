@@ -56,6 +56,7 @@ import {
   FormVisitor,
   SectionPageVisitor,
 } from 'src/customs/api/models/Admin/Visitor';
+import imageCompression from 'browser-image-compression';
 import { axiosInstance2, BASE_URL } from 'src/customs/api/interceptor';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
@@ -961,25 +962,44 @@ const FormSelfPraregistration = ({
 
       return fileUrl.startsWith('//') ? `http:${fileUrl}` : fileUrl;
     } catch (error) {
-      console.error('Upload failed:', error);
       return null;
     }
+  };
+
+  const compressImage = async (file: File | Blob) => {
+    const compressedFile = await imageCompression(file as File, {
+      maxSizeMB: 1,
+      maxWidthOrHeight: 1920,
+      useWebWorker: true,
+    });
+
+    return compressedFile;
   };
 
   const handleFileChangeForField = async (
     e: React.ChangeEvent<HTMLInputElement>,
     setAnswerFile: (url: string) => void,
     trackKey?: string,
+    fullscreenHandle?: any,
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (trackKey) {
       setUploadNames((prev) => ({ ...prev, [trackKey]: file.name }));
-      setPreviews((prev) => ({ ...prev, [trackKey]: URL.createObjectURL(file) }));
+      setPreviews((prev) => ({
+        ...prev,
+        [trackKey]: URL.createObjectURL(file),
+      }));
+    }
+    const compressedFile = await compressImage(file);
+    if (compressedFile.size > 1024 * 1024) {
+      toast('File size must be under 1 MB', 'info');
+      return;
     }
 
-    const path = await uploadFileToCDN(file);
+    const path = await uploadFileToCDN(compressedFile);
+
     if (path) setAnswerFile(path);
 
     e.target.value = '';
@@ -2223,7 +2243,7 @@ const FormSelfPraregistration = ({
                       sx={{ mb: 1, mt: 1 }}
                       startIcon={<IconPlus />}
                     >
-                   Add Group
+                      Add Group
                     </Button>
                   )}
                 </Box>

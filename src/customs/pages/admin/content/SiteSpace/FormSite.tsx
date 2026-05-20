@@ -18,6 +18,7 @@ import {
   Tooltip,
   IconButton,
   Autocomplete,
+  Divider,
 } from '@mui/material';
 
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
@@ -40,7 +41,7 @@ import {
   Tracking,
   UpdateSiteRequestSchema,
 } from 'src/customs/api/models/Admin/Sites';
-import { IconTrash } from '@tabler/icons-react';
+import { IconInfoCircle, IconTrash } from '@tabler/icons-react';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import {
   createSite,
@@ -62,7 +63,6 @@ import {
   createSiteTrackingBulk,
   createSiteParkingBulk,
   getAllDocument,
-  getAllEmployee,
   getSitesAccessById,
 } from 'src/customs/api/admin';
 import {
@@ -186,14 +186,12 @@ const FormSite = ({
         ] = results;
 
         const site = siteRes.status === 'fulfilled' ? siteRes.value.collection : {};
-        console.log('site', site);
+        // console.log('site', site);
         const accessControlList =
           accessControlRes.status === 'fulfilled' ? (accessControlRes.value.collection ?? []) : [];
 
-        // console.log('accessControlList', accessControlList);
         setAccessControl(accessControlList);
 
-        // MASTER DROPDOWN
         const parkingMaster =
           parkingMasterRes.status === 'fulfilled' ? (parkingMasterRes.value.collection ?? []) : [];
 
@@ -213,13 +211,11 @@ const FormSite = ({
             ? (trackingRelationRes.value.collection ?? [])
             : [];
 
-        // dropdown options
         setSiteParking(parkingMaster);
         setSiteTracking(trackingMaster);
 
         const normalizedId = editingId.toLowerCase();
 
-        // selected relation
         const filteredParking = parkingRelation.filter(
           (p: any) => String(p.site_id).toLowerCase() === normalizedId,
         );
@@ -228,7 +224,6 @@ const FormSite = ({
           (t: any) => String(t.site_id).toLowerCase() === normalizedId,
         );
 
-        // map relation -> master
         const mappedParking = filteredParking.map((p: any, idx: number) => {
           const master = parkingMaster.find(
             (x: any) => String(x.id).toLowerCase() === String(p.prk_area_parking_id).toLowerCase(),
@@ -244,33 +239,34 @@ const FormSite = ({
           };
         });
 
-       const mappedAccess = Array.isArray(site)
-         ? site.map((a: any, idx: number) => {
-             const master = accessControlList.find(
-               (x: any) => String(x.id).toLowerCase() === String(a.access_control_id).toLowerCase(),
-             );
+        const mappedAccess = Array.isArray(site)
+          ? site.map((a: any, idx: number) => {
+              const master = accessControlList.find(
+                (x: any) =>
+                  String(x.id).toLowerCase() === String(a.access_control_id).toLowerCase(),
+              );
 
-             return {
-               id: a.id,
-               sort: idx,
-               access_control_id: a.access_control_id,
-               name: master?.name ?? a.name ?? '',
-               early_access: a.early_access ?? false,
-             };
-           })
-         : site?.access_control_id
-           ? [
-               {
-                 id: site.id,
-                 sort: site.sort ?? 0,
-                 access_control_id: site.access_control_id,
-                 name: site.name ?? '',
-                 early_access: site.early_access ?? false,
-               },
-             ]
-           : [];
+              return {
+                id: a.id,
+                sort: idx,
+                access_control_id: a.access_control_id,
+                name: master?.name ?? a.name ?? '',
+                early_access: a.early_access ?? false,
+              };
+            })
+          : site?.access_control_id
+            ? [
+                {
+                  id: site.id,
+                  sort: site.sort ?? 0,
+                  access_control_id: site.access_control_id,
+                  name: site.name ?? '',
+                  early_access: site.early_access ?? false,
+                },
+              ]
+            : [];
 
-        console.log('mappedAccess', mappedAccess);
+        // console.log('mappedAccess', mappedAccess);
 
         const mappedTracking = filteredTracking.map((t: any, idx: number) => {
           const master = trackingMaster.find(
@@ -368,10 +364,11 @@ const FormSite = ({
       | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
       | React.ChangeEvent<{ name?: string; value: unknown }>,
   ) => {
-    const { id, name, value } = e.target as any;
+    const { id, name, value, type } = e.target as any;
+
     setLocalForm((prev) => ({
       ...prev,
-      [name || id]: value,
+      [name || id]: type === 'number' ? (value === '' ? null : Number(value)) : value,
     }));
   };
 
@@ -399,9 +396,55 @@ const FormSite = ({
     };
   };
 
+  const validateRequiredFields = (): boolean => {
+    const newErrors: { [key: string]: string } = {};
+
+    // Name wajib
+    if (!localForm.name?.trim()) {
+      newErrors.name = 'Location Name is required.';
+    }
+
+    // Timezone wajib
+    if (!localForm.timezone?.trim()) {
+      newErrors.timezone = 'Timezone is required.';
+    }
+
+    // Site Host wajib
+    if (!localForm.host) {
+      newErrors.host = 'Site Host is required.';
+    }
+
+    // Can Visit wajib aktif
+    // if (!localForm.can_visited) {
+    //   newErrors.can_visited = 'Can Visit must be enabled.';
+    // }
+
+    // Jika ada error, tampilkan helperText dan hentikan submit
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      showSwal('error', 'Please complete all required fields.');
+      return false;
+    }
+
+    setErrors({});
+    return true;
+  };
+  const toUTCTime = (time: string) => {
+    const [hours, minutes] = time.split(':').map(Number);
+
+    const date = new Date();
+    date.setHours(hours, minutes, 0, 0);
+
+    return date.toISOString().slice(11, 16);
+  };
+
   const handleOnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrors({});
+    // setErrors({});
+
+    if (!validateRequiredFields()) {
+      return;
+    }
 
     try {
       setLoading(true);
@@ -433,15 +476,23 @@ const FormSite = ({
       }
 
       if (editingId) {
-        const updateData = UpdateSiteRequestSchema.parse(localForm);
+        const updateDataRaw = UpdateSiteRequestSchema.parse(localForm);
+
+        const updateData = {
+          ...updateDataRaw,
+          open_time: localForm.open_time ? toUTCTime(localForm.open_time) : null,
+          close_time: localForm.close_time ? toUTCTime(localForm.close_time) : null,
+        };
 
         Object.keys(updateData).forEach((key) => {
           const val = (updateData as any)[key];
           if (val === '' || val === null || val === undefined) delete (updateData as any)[key];
         });
 
+        console.log('updateData', updateData);
+
         const res = await updateSite(editingId, updateData, token);
-        // console.log('res', JSON.stringify(res, null, 2));
+        console.log('res', JSON.stringify(res, null, 2));
 
         await Promise.all(
           (localForm.tracking ?? []).map((t) => {
@@ -473,22 +524,6 @@ const FormSite = ({
           }),
         );
 
-        // 🔹 Update Parking per item
-        // for (const p of localForm.parking ?? []) {
-        //   const payload = {
-        //     site_id: editingId,
-        //     sort: p.sort,
-        //     prk_area_parking_id: p.prk_area_parking_id ?? p.id,
-        //     early_access: p.early_access ?? false,
-        //   };
-
-        //   if (p.id) {
-        //     await updateSiteParking(p.id, payload, token);
-        //   } else {
-        //     await createSiteParking(payload, token);
-        //   }
-        // }
-
         handleFileUpload(editingId);
 
         showSwal('success', 'Site successfully updated!');
@@ -505,8 +540,10 @@ const FormSite = ({
           parent: parentId ?? null,
           is_child: Boolean(parentId),
           type: localForm.type ?? 0,
+          open_time: localForm.open_time ? toUTCTime(localForm.open_time) : null,
+          close_time: localForm.close_time ? toUTCTime(localForm.close_time) : null,
         };
-
+        // console.log('finalFormData', JSON.stringify(finalFormData, null, 2));
         const createData = CreateSiteRequestSchema.parse(finalFormData);
         const res = await createSite(createData, token);
         const newSiteId = res.collection?.id as string;
@@ -530,10 +567,7 @@ const FormSite = ({
       onSuccess?.();
     } catch (err: any) {
       if (err?.errors) setErrors(err.errors);
-      showSwal(
-        'error',
-        err?.response.data.message || err?.response.data.msg || 'Failed to submit form.',
-      );
+      showSwal('error', err.message || 'Failed to create site');
     } finally {
       setLoading(false);
     }
@@ -554,9 +588,6 @@ const FormSite = ({
 
   const handleFileUpload = async (siteId: string) => {
     if (!token || !siteImageFile) return;
-
-    console.log('Uploading image for site:', siteId);
-
     try {
       await uploadImageSite(siteId, siteImageFile, token);
     } catch (err) {
@@ -753,9 +784,9 @@ const FormSite = ({
                 Location Details
               </Typography>
 
-              <Grid container spacing={2}>
+              <Grid container spacing={1}>
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <CustomFormLabel htmlFor="name" sx={{ mt: 0.5 }}>
+                  <CustomFormLabel htmlFor="name" sx={{ mt: 0.5 }} required>
                     Location Name
                   </CustomFormLabel>
                   <CustomTextField
@@ -765,7 +796,6 @@ const FormSite = ({
                     error={Boolean(errors.name)}
                     helperText={errors.name || ''}
                     fullWidth
-                    required
                     disabled={isBatchEdit}
                     sx={{ mb: 2 }}
                   />
@@ -785,9 +815,17 @@ const FormSite = ({
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Box display="flex" alignItems="center" justifyContent="space-between">
-                    <CustomFormLabel htmlFor="type" sx={{ mt: 0.5 }}>
-                      Type
-                    </CustomFormLabel>
+                    <Box display="flex" alignItems="center" gap={0.5}>
+                      <CustomFormLabel htmlFor="type" sx={{ mt: 0.5 }}>
+                        Type
+                      </CustomFormLabel>
+
+                      <Tooltip title="Type Info" arrow>
+                        <IconButton size="small">
+                          <IconInfoCircle size={16} />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
                   </Box>
                   <CustomTextField
                     id="type"
@@ -799,49 +837,23 @@ const FormSite = ({
                     // required
                     disabled
                   />
-                  <Box>
-                    <CustomFormLabel
-                      htmlFor="approval_workflow_id"
-                      required={localForm.need_approval}
-                      sx={{ mt: 0.5 }}
-                    >
-                      Type Approval
-                    </CustomFormLabel>
-                    <CustomSelect
-                      id="approval_workflow_id"
-                      name="approval_workflow_id"
-                      value={localForm.approval_workflow_id ?? ''}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        // const value = Number(e.target.value);
-                        setLocalForm((prev) => ({
-                          ...prev,
-                          approval_workflow_id: e.target.value,
-                          need_approval: e.target.value !== '0' ? true : false,
-                        }));
-                      }}
-                      fullWidth
-                      required={localForm.need_approval}
-                      sx={{ mb: 2 }}
-                      disabled={!localForm.need_approval || isBatchEdit}
-                    >
-                      <MenuItem value="">Select Type Approval</MenuItem>
-                      {approvalData.map((item) => (
-                        <MenuItem key={item.value} value={item.value}>
-                          {item.label}
-                        </MenuItem>
-                      ))}
-                    </CustomSelect>
-                  </Box>
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <CustomFormLabel sx={{ mt: 0.5 }} required>
-                    Site Host
-                  </CustomFormLabel>
+                  <Box display="flex" alignItems="center" gap={0.5}>
+                    <CustomFormLabel sx={{ mt: 0 }} required>
+                      Site Host
+                    </CustomFormLabel>
+
+                    <Tooltip title="Select the host responsible for this site" arrow>
+                      <IconButton size="small">
+                        <IconInfoCircle size={16} />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
                   <Autocomplete
                     id="employee"
                     options={employee ?? []}
                     getOptionLabel={(option: any) => option.name || ''}
-                    // value={selectedEmployee}
                     value={
                       employee.find(
                         (emp: any) => emp.id?.toLowerCase() === localForm.host?.toLowerCase(),
@@ -850,12 +862,132 @@ const FormSite = ({
                     onChange={(event, newValue) => {
                       setLocalForm((prev: any) => ({
                         ...prev,
-                        host: newValue ? newValue.id : '',
+                        host: newValue ? newValue.id : null,
                       }));
                     }}
                     renderInput={(params) => (
-                      <CustomTextField {...params} fullWidth disabled={isBatchEdit} />
+                      <CustomTextField
+                        {...params}
+                        fullWidth
+                        disabled={isBatchEdit}
+                        error={Boolean(errors.host)}
+                        helperText={errors.host || ''}
+                      />
                     )}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Box display="flex" alignItems="center" gap={0.5}>
+                    <CustomFormLabel sx={{ mt: 0 }}>Code</CustomFormLabel>
+
+                    <Tooltip title="Enter a unique site code" arrow>
+                      <IconButton size="small">
+                        <IconInfoCircle size={16} />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                  <CustomTextField
+                    id="code"
+                    value={localForm.code}
+                    onChange={handleChange}
+                    error={Boolean(errors.code)}
+                    helperText={errors.code || ''}
+                    fullWidth
+                    disabled={isBatchEdit}
+                    sx={{ mb: 2 }}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Box display="flex" alignItems="center" gap={0.5}>
+                    <CustomFormLabel sx={{ mt: 0 }}>Max Capacity</CustomFormLabel>
+
+                    <Tooltip title="Maximum number of people allowed in this site" arrow>
+                      <IconButton size="small">
+                        <IconInfoCircle size={16} />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+
+                  <CustomTextField
+                    id="max_capacity"
+                    type="number"
+                    value={localForm.max_capacity}
+                    onChange={handleChange}
+                    error={Boolean(errors.max_capacity)}
+                    helperText={errors.max_capacity || ''}
+                    fullWidth
+                    disabled={isBatchEdit}
+                    sx={{ mb: 2 }}
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Box display="flex" alignItems="center" gap={0.5}>
+                    <CustomFormLabel sx={{ mt: 0 }}>Address</CustomFormLabel>
+
+                    <Tooltip title="Enter the full address of the site" arrow>
+                      <IconButton size="small">
+                        <IconInfoCircle size={16} />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                  <CustomTextField
+                    id="address"
+                    value={localForm.address}
+                    onChange={handleChange}
+                    error={Boolean(errors.address)}
+                    helperText={errors.address || ''}
+                    fullWidth
+                    disabled={isBatchEdit}
+                    sx={{ mb: 2 }}
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Box display="flex" alignItems="center" gap={0.5}>
+                    <CustomFormLabel htmlFor="open_time" sx={{ mt: 0 }}>
+                      Open Time
+                    </CustomFormLabel>
+
+                    <Tooltip title="Set the site opening time" arrow>
+                      <IconButton size="small">
+                        <IconInfoCircle size={16} />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+
+                  <CustomTextField
+                    id="open_time"
+                    type="time"
+                    value={localForm.open_time}
+                    onChange={handleChange}
+                    fullWidth
+                    sx={{ mb: 2 }}
+                    // inputProps={{ step: 1 }}
+                    disabled={isBatchEdit}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Box display="flex" alignItems="center" gap={0.5}>
+                    <CustomFormLabel htmlFor="close_time" sx={{ mt: 0 }}>
+                      Close Time
+                    </CustomFormLabel>
+
+                    <Tooltip title="Set the site closing time" arrow>
+                      <IconButton size="small">
+                        <IconInfoCircle size={16} />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                  <CustomTextField
+                    id="close_time"
+                    type="time"
+                    value={localForm.close_time}
+                    onChange={handleChange}
+                    fullWidth
+                    sx={{ mb: 2 }}
+                    // inputProps={{ step: 1 }}
+                    disabled={isBatchEdit}
                   />
                 </Grid>
               </Grid>
@@ -867,94 +999,137 @@ const FormSite = ({
               <Typography variant="h6" sx={{ mb: 2, borderLeft: '4px solid #673ab7', pl: 1 }}>
                 Language and Timezone
               </Typography>
-              <Box
-                display="flex"
-                alignItems="center"
-                justifyContent="space-between"
-                sx={{ marginX: 1 }}
-              >
-                <CustomFormLabel htmlFor="timezone" required sx={{ mt: 0.5 }}>
-                  Timezone
-                </CustomFormLabel>
-                {isBatchEdit && (
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        size="small"
-                        checked={enabledFields?.timezone || false}
-                        onChange={(e) =>
-                          setEnabledFields((prev) => ({
-                            ...prev,
-                            timezone: e.target.checked,
-                          }))
+              <Grid container spacing={1} alignItems="center">
+                <Grid size={{ xs: 12, sm: 12 }}>
+                  {' '}
+                  <Box
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="space-between"
+                    sx={{ marginX: 0 }}
+                  >
+                    <CustomFormLabel htmlFor="timezone" required sx={{ mt: 0.5 }}>
+                      Timezone
+                    </CustomFormLabel>
+                    {isBatchEdit && (
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            size="small"
+                            checked={enabledFields?.timezone || false}
+                            onChange={(e) =>
+                              setEnabledFields((prev) => ({
+                                ...prev,
+                                timezone: e.target.checked,
+                              }))
+                            }
+                          />
                         }
+                        label=""
+                        labelPlacement="start"
+                        sx={{ mt: 2 }}
                       />
+                    )}
+                  </Box>
+                  <CustomSelect
+                    id="timezone"
+                    name="timezone"
+                    value={localForm.timezone ?? ''}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setLocalForm((prev) => ({ ...prev, timezone: e.target.value }))
                     }
-                    label=""
-                    labelPlacement="start"
-                    sx={{ mt: 2 }}
-                  />
-                )}
-              </Box>
-              <CustomSelect
-                id="timezone"
-                name="timezone"
-                value={localForm.timezone ?? ''}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setLocalForm((prev) => ({ ...prev, timezone: e.target.value }))
-                }
-                fullWidth
-                sx={{ mb: 2 }}
-                selectprops={{ native: true }}
-                disabled={isBatchEdit && !enabledFields?.timezone}
-              >
-                <MenuItem value="" disabled>
-                  Select Timezone
-                </MenuItem>
-                {timezoneOptions.map((tz) => (
-                  <MenuItem key={tz.value} value={tz.value}>
-                    {tz.label}
-                  </MenuItem>
-                ))}
-              </CustomSelect>
-              <Box
-                display="flex"
-                alignItems="center"
-                justifyContent="space-between"
-                sx={{ marginX: 1 }}
-              >
-                <CustomFormLabel htmlFor="signout_time">Check-out Time</CustomFormLabel>
-                {isBatchEdit && (
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        size="small"
-                        checked={enabledFields?.signout_time || false}
-                        onChange={(e) =>
-                          setEnabledFields((prev) => ({
-                            ...prev,
-                            signout_time: e.target.checked,
-                          }))
+                    error={Boolean(errors.timezone)}
+                    fullWidth
+                    sx={{ mb: 1 }}
+                    selectprops={{ native: true }}
+                    disabled={isBatchEdit && !enabledFields?.timezone}
+                  >
+                    <MenuItem value="" disabled>
+                      Select Timezone
+                    </MenuItem>
+                    {timezoneOptions.map((tz) => (
+                      <MenuItem key={tz.value} value={tz.value}>
+                        {tz.label}
+                      </MenuItem>
+                    ))}
+                  </CustomSelect>
+                  {errors.timezone && (
+                    <Typography variant="caption" color="error" sx={{ display: 'block' }}>
+                      {errors.timezone}
+                    </Typography>
+                  )}
+                </Grid>
+                <Grid size={{ xs: 12, sm: 12 }}>
+                  <Box
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="space-between"
+                    sx={{ marginX: 1 }}
+                  >
+                    <CustomFormLabel htmlFor="signout_time" sx={{ mt: 0 }}>
+                      Check-out Time
+                    </CustomFormLabel>
+                    {isBatchEdit && (
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            size="small"
+                            checked={enabledFields?.signout_time || false}
+                            onChange={(e) =>
+                              setEnabledFields((prev) => ({
+                                ...prev,
+                                signout_time: e.target.checked,
+                              }))
+                            }
+                          />
                         }
+                        label=""
+                        labelPlacement="start"
+                        sx={{ mt: 2 }}
                       />
-                    }
-                    label=""
-                    labelPlacement="start"
-                    sx={{ mt: 2 }}
-                  />
-                )}
-              </Box>
+                    )}
+                  </Box>
 
-              <CustomTextField
-                id="signout_time"
-                type="time"
-                value={localForm.signout_time}
-                onChange={handleChange}
-                fullWidth
-                sx={{ mb: 2 }}
-                inputProps={{ step: 1 }}
-                disabled={isBatchEdit && !enabledFields?.signout_time}
-              />
+                  <CustomTextField
+                    id="signout_time"
+                    type="time"
+                    value={localForm.signout_time}
+                    onChange={handleChange}
+                    fullWidth
+                    sx={{ mb: 2 }}
+                    inputProps={{ step: 1 }}
+                    disabled={isBatchEdit && !enabledFields?.signout_time}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 12 }}>
+                  <CustomFormLabel htmlFor="latitude" sx={{ mt: 0 }}>
+                    Latitude
+                  </CustomFormLabel>
+                  <CustomTextField
+                    id="latitude"
+                    type="number"
+                    value={localForm.latitude}
+                    onChange={handleChange}
+                    fullWidth
+                    sx={{ mb: 2 }}
+                    disabled={isBatchEdit}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 12 }}>
+                  <CustomFormLabel htmlFor="longitude" sx={{ mt: 0 }}>
+                    Longtitude
+                  </CustomFormLabel>
+                  <CustomTextField
+                    id="longitude"
+                    type="number"
+                    value={localForm.longitude}
+                    onChange={handleChange}
+                    fullWidth
+                    sx={{ mb: 2 }}
+                    disabled={isBatchEdit}
+                  />
+                </Grid>
+              </Grid>
             </Paper>
           </Grid>
 
@@ -964,7 +1139,7 @@ const FormSite = ({
               <Typography variant="h6" sx={{ mb: 2, borderLeft: '4px solid #673ab7', pl: 1 }}>
                 Settings
               </Typography>
-              <Grid container spacing={2} sx={{ pt: 1 }}>
+              <Grid container spacing={1.5} sx={{ pt: 1 }}>
                 <Grid size={{ xs: 12, xl: 6 }}>
                   <Box>
                     <FormControlLabel
@@ -982,7 +1157,9 @@ const FormSite = ({
                       }
                       label={
                         <Box display="flex" alignItems="center">
-                          Can Visit
+                          <CustomFormLabel sx={{ mt: 0, mb: 0, fontWeight: '500' }}>
+                            Can Visit
+                          </CustomFormLabel>
                           <Tooltip
                             title="Visitors can visit the site."
                             sx={{
@@ -990,7 +1167,7 @@ const FormSite = ({
                             }}
                             arrow
                           >
-                            <IconButton size="small">
+                            <IconButton size="small" sx={{ marginLeft: 2 }}>
                               <InfoOutlinedIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
@@ -998,49 +1175,25 @@ const FormSite = ({
                       }
                       sx={{ marginRight: 0 }}
                     />
+                    {/* {errors.can_visited && (
+                      <Typography variant="caption" color="error" sx={{ ml: 2, display: 'block' }}>
+                        {errors.can_visited}
+                      </Typography>
+                    )} */}
                   </Box>
                 </Grid>
+
                 <Grid size={{ xs: 12, xl: 6 }}>
                   <Box>
                     <FormControlLabel
                       control={
                         <Switch
-                          checked={localForm.need_approval}
-                          onChange={(_, checked) => {
-                            setLocalForm((prev) => ({ ...prev, need_approval: checked }));
-                            if (isBatchEdit) {
-                              setEnabledFields((prev) => ({ ...prev, need_approval: true }));
-                            }
-                          }}
-                        />
-                      }
-                      label={
-                        <Box display="flex" alignItems="center">
-                          Need Approval
-                          <Tooltip
-                            title="Visitors must be approved before visiting the site."
-                            arrow
-                          >
-                            <IconButton size="small">
-                              <InfoOutlinedIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        </Box>
-                      }
-                    />
-                  </Box>
-                </Grid>
-                <Grid size={{ xs: 12, xl: 6 }}>
-                  <Box>
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          // checked={localForm.need_invitation}
+                          checked={localForm.need_invitation || false}
                           onChange={(_, checked) => {
                             setLocalForm((prev) => ({ ...prev, need_invitation: checked }));
-                            if (isBatchEdit) {
-                              setEnabledFields((prev) => ({ ...prev, need_invitation: true }));
-                            }
+                            // if (isBatchEdit) {
+                            //   setEnabledFields((prev) => ({ ...prev, need_invitation: true }));
+                            // }
                           }}
                         />
                       }
@@ -1062,12 +1215,12 @@ const FormSite = ({
                     <FormControlLabel
                       control={
                         <Switch
-                          // checked={localForm.need_invitation}
+                          checked={localForm.can_swap}
                           onChange={(_, checked) => {
-                            setLocalForm((prev) => ({ ...prev, need_invitation: checked }));
-                            if (isBatchEdit) {
-                              setEnabledFields((prev) => ({ ...prev, need_invitation: true }));
-                            }
+                            setLocalForm((prev) => ({ ...prev, can_swap: checked }));
+                            // if (isBatchEdit) {
+                            //   setEnabledFields((prev) => ({ ...prev, can_swap: true }));
+                            // }
                           }}
                         />
                       }
@@ -1239,6 +1392,122 @@ const FormSite = ({
                       }
                     />
                   </Box>
+                </Grid>
+                <Grid size={{ xs: 12, xl: 6 }}>
+                  <Box>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={localForm.need_approval}
+                          onChange={(_, checked) => {
+                            setLocalForm((prev) => ({ ...prev, need_approval: checked }));
+                            if (isBatchEdit) {
+                              setEnabledFields((prev) => ({ ...prev, need_approval: true }));
+                            }
+                          }}
+                        />
+                      }
+                      label={
+                        <Box display="flex" alignItems="center">
+                          Need Approval
+                          <Tooltip
+                            title="Visitors must be approved before visiting the site."
+                            arrow
+                          >
+                            <IconButton size="small">
+                              <InfoOutlinedIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      }
+                    />
+                  </Box>
+                </Grid>
+                <Grid size={{ xs: 12, xl: 6 }}>
+                  <Box>
+                    <Box display="flex" alignItems="center" gap={0.5}>
+                      <CustomFormLabel
+                        htmlFor="approval_workflow_id"
+                        required={localForm.need_approval}
+                        sx={{ mt: 0.5 }}
+                      >
+                        Type Approval
+                      </CustomFormLabel>
+
+                      <Tooltip title="Select the approval workflow type" arrow>
+                        <IconButton size="small">
+                          <IconInfoCircle size={16} />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                    <CustomSelect
+                      id="approval_workflow_id"
+                      name="approval_workflow_id"
+                      value={localForm.approval_workflow_id ?? ''}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        // const value = Number(e.target.value);
+                        setLocalForm((prev) => ({
+                          ...prev,
+                          approval_workflow_id: e.target.value,
+                          need_approval: e.target.value !== '0' ? true : false,
+                        }));
+                      }}
+                      fullWidth
+                      required={localForm.need_approval}
+                      sx={{ mb: 2 }}
+                      disabled={!localForm.need_approval || isBatchEdit}
+                    >
+                      <MenuItem value="">Select Type Approval</MenuItem>
+                      {approvalData.map((item) => (
+                        <MenuItem key={item.value} value={item.value}>
+                          {item.label}
+                        </MenuItem>
+                      ))}
+                    </CustomSelect>
+                  </Box>
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 12 }}>
+                  <Divider sx={{ my: 0.1 }} />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 12 }}>
+                  <CustomFormLabel sx={{ mt: 0 }}>Contact Name</CustomFormLabel>
+                  <CustomTextField
+                    id="contact_name"
+                    value={localForm.contact_name}
+                    onChange={handleChange}
+                    error={Boolean(errors.contact_name)}
+                    helperText={errors.contact_name || ''}
+                    fullWidth
+                    disabled={isBatchEdit}
+                    sx={{ mb: 2 }}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <CustomFormLabel sx={{ mt: 0 }}>Contact Email</CustomFormLabel>
+                  <CustomTextField
+                    id="contact_email"
+                    value={localForm.contact_email}
+                    onChange={handleChange}
+                    error={Boolean(errors.contact_email)}
+                    helperText={errors.contact_email || ''}
+                    fullWidth
+                    disabled={isBatchEdit}
+                    sx={{ mb: 2 }}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <CustomFormLabel sx={{ mt: 0 }}>Contact Phone</CustomFormLabel>
+                  <CustomTextField
+                    id="contact_phone"
+                    value={localForm.contact_phone}
+                    onChange={handleChange}
+                    error={Boolean(errors.contact_phone)}
+                    helperText={errors.contact_phone || ''}
+                    fullWidth
+                    disabled={isBatchEdit}
+                    sx={{ mb: 2 }}
+                  />
                 </Grid>
               </Grid>
             </Paper>
@@ -1621,7 +1890,7 @@ const FormSite = ({
                     Upload Site Image
                   </Typography>
                   <Typography variant="caption" color="textSecondary">
-                    Supports: JPG, JPEG, PNG, Up to 100KB
+                    Supports: JPG, JPEG, PNG, Up to <span style={{ fontWeight: '700' }}>1 Mb</span>
                   </Typography>
                   {previewUrl && (
                     <Box

@@ -1242,7 +1242,7 @@ const FormDriver = ({
                     </Typography>
 
                     <Typography variant="caption" color="textSecondary">
-                      Supports: JPG, JPEG, PNG, Up to 100KB
+                      Supports: JPG, JPEG, PNG, Up to 1 Mb
                     </Typography>
                     <Typography
                       variant="subtitle1"

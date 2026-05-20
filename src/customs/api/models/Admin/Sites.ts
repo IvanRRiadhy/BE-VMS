@@ -38,26 +38,39 @@ export type Tracking = {
 
 export type Item = {
   id: string;
-  type: number | null;
+  type?: number | null;
   name: string;
   description: string | null;
   image: string | null;
   can_visited: boolean;
+  code?: string | null;
   need_approval: boolean;
-  // need_invitation: boolean;
+  need_invitation?: boolean | null;
+  can_swap?: boolean;
+  max_capacity?: number | null;
+  contact_name?: string | null;
+  contact_email?: string | null;
+  contact_phone?: string | null;
+  is_active?: boolean | null;
+  address?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  open_time?: string | null;
+  close_time?: string | null;
+  // type: string;
   // type_approval: string;
-  approval_workflow_id: string | null;
+  approval_workflow_id?: string | null;
   can_signout: boolean;
   auto_signout: boolean;
-  signout_time: string | null;
+  signout_time?: string | null;
   is_registered_point?: boolean;
   timezone?: string | null;
   map_link: string;
   can_contactless_login: boolean;
   need_document: boolean;
-  parent: string | null;
-  is_child: boolean;
-  host: string | null;
+  parent?: string | null;
+  is_child?: boolean | null;
+  host?: string | null;
   access: Access[];
   parking: Parking[];
   tracking: Tracking[];
@@ -116,13 +129,17 @@ export const CreateSiteRequestSchema = z.object({
   description: z.string().nullable().optional().default(''),
   image: z.string().nullable().optional().default(''),
   can_visited: z.boolean().default(false),
+  can_swap: z.boolean().default(false),
+  code: z.string().nullable().optional(),
+  max_capacity: z.number().default(0),
   need_approval: z.boolean().default(false),
-  // need_invitation: z.boolean().default(false),
-  // type_approval: z.string().default(''),
+  need_invitation: z.boolean().nullable().optional().default(false),
+  type_approval: z.string().nullable().optional(),
   approval_workflow_id: z.string().nullable().optional(),
   can_signout: z.boolean().default(false),
   auto_signout: z.boolean().default(false),
   signout_time: z.string().nullable().optional(),
+  is_active: z.boolean().nullable().optional(),
   timezone: z.string().nullable().optional(),
   map_link: z.string().default(''),
   can_contactless_login: z.boolean().default(false),
@@ -130,7 +147,7 @@ export const CreateSiteRequestSchema = z.object({
   is_registered_point: z.boolean().default(false),
   parent: z.string().nullable().optional(),
   is_child: z.boolean().default(false),
-  host: z.string().nullable().optional().default(''),
+  host: z.string().nullable().optional(),
   access: z
     .array(
       z.object({
@@ -142,11 +159,15 @@ export const CreateSiteRequestSchema = z.object({
     )
     .nullable()
     .optional(),
+  close_time: z.string().nullable().optional(),
+  open_time: z.string().nullable().optional(),
+  latitude: z.number().nullable().optional(),
+  longitude: z.number().nullable().optional(),
+  address: z.string().nullable().optional(),
+  contact_name: z.string().nullable().optional(),
+  contact_email: z.string().nullable().optional(),
+  contact_phone: z.string().nullable().optional(),
 });
-
-// export const EditSiteRequestSchema = CreateSiteRequestSchema.extend({
-//   id: z.string(),
-// });
 
 export const CreateSiteAccessSchema = z.object({
   sort: z.number().optional().default(0),
@@ -253,9 +274,11 @@ export const UpdateSiteRequestSchema = z.object({
   description: z.string().nullable().optional().default(''),
   image: z.string().nullable().optional().default(''),
   can_visited: z.boolean().default(false),
-  // need_invitation: z.boolean().default(false),
+  need_invitation: z.boolean().nullable().optional().default(false),
   need_approval: z.boolean().default(false),
+  can_swap: z.boolean().default(false),
   // type_approval: z.number().default(0),
+  is_active: z.boolean().nullable().optional(),
   approval_workflow_id: z.string().nullable().optional(),
   can_signout: z.boolean().default(false),
   auto_signout: z.boolean().default(false),
@@ -267,7 +290,7 @@ export const UpdateSiteRequestSchema = z.object({
   is_registered_point: z.boolean().default(false).optional().nullable(),
   parent: z.string().nullable().optional().default(''),
   is_child: z.boolean().default(false).optional().nullable(),
-  host: z.string().nullable().optional().default(''),
+  host: z.string().nullable().optional(),
   access: z
     .array(
       z.object({
@@ -279,6 +302,16 @@ export const UpdateSiteRequestSchema = z.object({
     )
     .nullable()
     .optional(),
+
+  max_capacity: z.number().default(0),
+  close_time: z.string().nullable().optional(),
+  open_time: z.string().nullable().optional(),
+  latitude: z.number().nullable().optional(),
+  longitude: z.number().nullable().optional(),
+  address: z.string().nullable().optional(),
+  contact_name: z.string().nullable().optional(),
+  contact_email: z.string().nullable().optional(),
+  contact_phone: z.string().nullable().optional(),
 });
 
 export type UpdateSiteRequest = z.infer<typeof UpdateSiteRequestSchema>;

@@ -52,6 +52,7 @@ import {
   IconUser,
   IconUsers,
 } from '@tabler/icons-react';
+import imageCompression from 'browser-image-compression';
 import PageContainer from 'src/components/container/PageContainer';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import Webcam from 'react-webcam';
@@ -551,6 +552,89 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     );
   };
 
+  const handleSelectDataVisitor = (v: any | null, isEmployee: boolean = false) => {
+    const currentStep = activeStep - 1;
+
+    // Field yang perlu di-reset jika value null
+    const resetKeys = [
+      'name',
+      'email',
+      'phone',
+      'organization',
+      'indentity_id',
+      'gender',
+      'employee',
+    ];
+
+    // Jika tidak ada data yang dipilih, reset field terkait
+    if (!v) {
+      setSectionsData((prev) =>
+        prev.map((section, sectionIndex) =>
+          sectionIndex !== currentStep
+            ? section
+            : updateSectionForm(section, (arr) =>
+                arr.map((item) => {
+                  if (resetKeys.includes(item.remarks)) {
+                    const errorKey = `${currentStep}:${item.id}`;
+                    clearFieldError(errorKey);
+
+                    return {
+                      ...item,
+                      answer_text: '',
+                    };
+                  }
+
+                  return item;
+                }),
+              ),
+        ),
+      );
+
+      return;
+    }
+
+    // Konversi gender ke value yang digunakan sistem
+    let genderValue: string | undefined;
+
+    if (v.gender === 'Male') genderValue = '1';
+    else if (v.gender === 'Female') genderValue = '0';
+    else if (v.gender === 'Prefer not to say') genderValue = '2';
+
+    // Mapping data visitor/employee ke field form
+    const mapping: Record<string, string | undefined> = {
+      name: v.name,
+      email: v.email,
+      phone: v.phone,
+      organization: isEmployee ? v.Organization?.name || '' : v.organization || '',
+      indentity_id: v.identity_id,
+      gender: genderValue,
+      employee: v.id,
+    };
+
+    // Update form berdasarkan mapping
+    setSectionsData((prev) =>
+      prev.map((section, sectionIndex) =>
+        sectionIndex !== currentStep
+          ? section
+          : updateSectionForm(section, (arr) =>
+              arr.map((item) => {
+                if (mapping[item.remarks] !== undefined) {
+                  const errorKey = `${currentStep}:${item.id}`;
+                  clearFieldError(errorKey);
+
+                  return {
+                    ...item,
+                    answer_text: mapping[item.remarks]!,
+                  };
+                }
+
+                return item;
+              }),
+            ),
+      ),
+    );
+  };
+
   const handleSteps = (step: number) => {
     const showVTListSkeleton = vtLoading;
     if (step === -1 && enableInvitationTypeStep) {
@@ -826,78 +910,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       key={String(isEmployee)}
                       token={token as string}
                       isEmployee={isEmployee}
-                      onSelect={(v) => {
-                        if (!v) {
-                          const resetKeys = [
-                            'name',
-                            'email',
-                            'phone',
-                            'organization',
-                            'indentity_id',
-                            'gender',
-                            'employee',
-                          ];
-
-                          setSectionsData((prev) =>
-                            prev.map((s, sIdx) =>
-                              sIdx !== activeStep - 1
-                                ? s
-                                : updateSectionForm(s, (arr) =>
-                                    arr.map((item) => {
-                                      if (resetKeys.includes(item.remarks)) {
-                                        const errorKey = `${activeStep - 1}:${item.id}`;
-                                        clearFieldError(errorKey);
-
-                                        return { ...item, answer_text: '' };
-                                      }
-                                      return item;
-                                    }),
-                                  ),
-                            ),
-                          );
-
-                          return;
-                        }
-
-                        let genderValue: string | undefined;
-
-                        if (v.gender === 'Male') genderValue = '1';
-                        else if (v.gender === 'Female') genderValue = '0';
-                        else if (v.gender === 'Prefer not to say') genderValue = '2';
-
-                        const mapping: Record<string, string | undefined> = {
-                          name: v.name,
-                          email: v.email,
-                          phone: v.phone,
-                          organization: isEmployee
-                            ? v.Organization?.name || ''
-                            : v.organization || '',
-                          indentity_id: v.identity_id,
-                          gender: genderValue,
-                          employee: v.id,
-                        };
-
-                        setSectionsData((prev) =>
-                          prev.map((s, sIdx) =>
-                            sIdx !== activeStep - 1
-                              ? s
-                              : updateSectionForm(s, (arr) =>
-                                  arr.map((item) => {
-                                    if (mapping[item.remarks] !== undefined) {
-                                      const errorKey = `${activeStep - 1}:${item.id}`;
-                                      clearFieldError(errorKey);
-
-                                      return {
-                                        ...item,
-                                        answer_text: mapping[item.remarks]!,
-                                      };
-                                    }
-                                    return item;
-                                  }),
-                                ),
-                          ),
-                        );
-                      }}
+                      onSelect={(v) => handleSelectDataVisitor(v, isEmployee)}
                     />
 
                     <Accordion key={activeStep} expanded sx={{ mt: 2 }}>
@@ -1122,7 +1135,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                                   return next;
                                                 });
                                               },
-                                              undefined,
+                                              // undefined,
                                               {
                                                 showLabel: true,
                                                 // uniqueKey: `${activeStep - 1}:${gIdx}:${fIdx}`,
@@ -1167,9 +1180,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 <TableCell>
                                   <CustomFormLabel>Search</CustomFormLabel>
                                 </TableCell>
-                                {/* <TableCell>
-                                  <CustomFormLabel>Role (Opsional)</CustomFormLabel>
-                                </TableCell> */}
                                 {(dataVisitor[0]?.question_page[activeStep - 1]?.form || []).map(
                                   (f: any, i: any) => (
                                     <TableCell key={f.custom_field_id || i}>
@@ -1207,40 +1217,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                           onSelect={(v) => handleSelectVisitor(gIdx, v)}
                                         />
                                       </TableCell>
-
-                                      {/* <TableCell sx={{ minWidth: 200 }}>
-                                        <CustomTextField
-                                          select
-                                          size="small"
-                                          fullWidth
-                                          // Ambil role milik visitor pada baris ini (gIdx)
-                                          value={dataVisitor[gIdx]?.type || ''}
-                                          onChange={(e) => {
-                                            const selectedRole = e.target.value;
-
-                                            setDataVisitor((prev: any[]) => {
-                                              const updated = [...prev];
-
-                                              // Update hanya visitor pada baris ini
-                                              updated[gIdx] = {
-                                                ...updated[gIdx],
-                                                type: selectedRole,
-                                              };
-
-                                              return updated;
-                                            });
-                                          }}
-                                        >
-                                          <MenuItem value="">Select Role</MenuItem>
-
-                                          {visitorRoles.map((role: any) => (
-                                            <MenuItem key={role.id} value={role.role}>
-                                              {role.role}
-                                            </MenuItem>
-                                          ))}
-                                        </CustomTextField>
-                                      </TableCell> */}
-
                                       {fields.map((field: any) => {
                                         const matchedKey = Object.keys(
                                           groupedPages.batch_page || {},
@@ -1280,7 +1256,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                                   return next;
                                                 });
                                               },
-                                              undefined,
                                               {
                                                 showLabel: false,
                                                 uniqueKey: `${activeStep - 1}:${gIdx}:${field.custom_field_id}`,
@@ -1495,7 +1470,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     field: FormVisitor,
     index: number,
     onChange: (index: number, fieldKey: keyof FormVisitor, value: any) => void,
-    onDelete?: (index: number) => void,
     opts?: { showLabel?: boolean; uniqueKey?: string; details?: any[] },
   ) => {
     const showLabel = opts?.showLabel ?? true;
@@ -1661,12 +1635,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     />
                   )}
                 />
-
-                {/* {field.remarks === 'site_place' && siteTree.length > 0 && (
-                <SimpleTreeView>
-                  {siteTree.map((node) => renderTree(node, index, handleSitePlaceChange))}
-                </SimpleTreeView>
-              )} */}
                 {siteTree[siteKey as any]?.length > 0 && (
                   <SimpleTreeView>
                     {siteTree[siteKey as any].map((node: any) =>
@@ -1683,28 +1651,19 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 select
                 size="small"
                 fullWidth
-                // Nilai role untuk visitor ini saja
                 value={field.answer_text || ''}
                 onChange={(e) => {
                   const selectedRole = e.target.value;
-
                   onChange(index, 'answer_text', selectedRole);
-
                   if (selectedRole) clearFieldError(errorKey);
                 }}
                 error={!!errorMessage}
                 helperText={errorMessage}
               >
-                <MenuItem value="">
-                  <em>Select Role</em>
-                </MenuItem>
+                <MenuItem value="">Select Role</MenuItem>
 
                 {visitorRoles.map((role: any) => (
-                  <MenuItem
-                    key={role.id}
-                    // Simpan nilai role, misalnya "Driver", "Leader"
-                    value={role.role}
-                  >
+                  <MenuItem key={role.id} value={role.role}>
                     {role.role}
                   </MenuItem>
                 ))}
@@ -2295,20 +2254,33 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       return String(answerFile).split('/').pop() || '';
     }
   };
+
   const handleFileChangeForField = async (
     e: React.ChangeEvent<HTMLInputElement>,
     setAnswerFile: (url: string) => void,
     trackKey?: string,
+    fullscreenHandle?: any,
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (trackKey) {
       setUploadNames((prev) => ({ ...prev, [trackKey]: file.name }));
-      setPreviews((prev) => ({ ...prev, [trackKey]: URL.createObjectURL(file) }));
+      setPreviews((prev) => ({
+        ...prev,
+        [trackKey]: URL.createObjectURL(file),
+      }));
     }
 
-    const path = await uploadFileToCDN(file);
+    // compress
+    const compressedFile = await compressImage(file);
+    if (compressedFile.size > 1024 * 1024) {
+      toast('File size must be under 1 MB', 'info');
+      return;
+    }
+
+    const path = await uploadFileToCDN(compressedFile);
+
     if (path) setAnswerFile(path);
 
     e.target.value = '';
@@ -2340,15 +2312,29 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     }
   };
 
+  const compressImage = async (file: File | Blob) => {
+    const compressedFile = await imageCompression(file as File, {
+      maxSizeMB: 1,
+      maxWidthOrHeight: 1920,
+      useWebWorker: true,
+    });
+
+    return compressedFile;
+  };
+
   const handleCaptureForField = async (setAnswerFile: (url: string) => void, trackKey?: string) => {
     if (!webcamRef.current) return;
+
     const imageSrc = webcamRef.current.getScreenshot();
     if (!imageSrc) return;
 
     const blob = await fetch(imageSrc).then((res) => res.blob());
-    const path = await uploadFileToCDN(blob);
+    // compress
+    const compressedBlob = await compressImage(
+      new File([blob], 'camera.jpg', { type: 'image/jpeg' }),
+    );
+    const path = await uploadFileToCDN(compressedBlob);
     if (!path) return;
-
     if (trackKey) {
       setPreviews((prev) => ({ ...prev, [trackKey]: imageSrc }));
       setUploadNames((prev) => ({ ...prev, [trackKey]: 'camera.jpg' }));
@@ -2399,73 +2385,100 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     return node.children.flatMap((child: any) => [child.id, ...collectAllChildIds(child)]);
   };
 
-  const renderTree = (
-    node: any,
-    index: number,
-    onChange: (index: number, field: keyof FormVisitor, value: any) => void,
-    isSelfOnly = false,
-  ) => {
-    // const checked = selectedSiteIds.includes(node.id);
-    return (
-      <TreeItem
-        key={`${node.parentId ?? 'root'}-${node.id}`}
-        itemId={`${node.parentId ?? 'root'}-${node.id}`}
-        label={
-          <Box display="flex" alignItems="center" gap={1}>
-            <Checkbox
-              size="small"
-              // checked={checked}
-              checked={
-                isSelfOnly
-                  ? (selfOnlySelectedSiteIdsMap[selfOnlyVisitorIdx] || []).includes(node.id)
-                  : selectedSiteIds.includes(node.id)
+const renderTree = (
+  node: any,
+  index: number,
+  onChange: (index: number, field: keyof FormVisitor, value: any) => void,
+  isSelfOnly = false,
+) => {
+  const originalSite = sites.find(
+    (s: any) => String(s.id).toUpperCase() === String(node.id).toUpperCase(),
+  );
+  const canVisited = originalSite?.can_visited === undefined ? true : !!originalSite.can_visited;
+
+  const isDisabled = !canVisited;
+
+  return (
+    <TreeItem
+      key={`${node.parentId ?? 'root'}-${node.id}`}
+      itemId={`${node.parentId ?? 'root'}-${node.id}`}
+      label={
+        <Box display="flex" alignItems="center" gap={1}>
+          <Checkbox
+            size="small"
+            disabled={isDisabled}
+            checked={
+              isSelfOnly
+                ? (selfOnlySelectedSiteIdsMap[selfOnlyVisitorIdx] || []).includes(node.id)
+                : selectedSiteIds.includes(node.id)
+            }
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+            onChange={(e) => {
+              if (isDisabled) {
+                e.preventDefault();
+                e.stopPropagation();
+                return;
               }
-              onMouseDown={(e) => e.stopPropagation()}
-              onClick={(e) => e.stopPropagation()}
-              onChange={(e) => {
-                const isChecked = e.target.checked;
-                const isParentNode = !!node.children?.length;
 
-                const setter = isSelfOnly
-                  ? (callback: any) =>
-                      setSelfOnlySelectedSiteIdsMap((prevMap) => ({
-                        ...prevMap,
-                        [selfOnlyVisitorIdx]: callback(prevMap[selfOnlyVisitorIdx] || []),
-                      }))
-                  : setSelectedSiteIds;
+              const isChecked = e.target.checked;
+              const isParentNode = !!node.children?.length;
 
-                setter((prev: any) => {
-                  let updated = [...prev];
+              const setter = isSelfOnly
+                ? (callback: any) =>
+                    setSelfOnlySelectedSiteIdsMap((prevMap) => ({
+                      ...prevMap,
+                      [selfOnlyVisitorIdx]: callback(prevMap[selfOnlyVisitorIdx] || []),
+                    }))
+                : setSelectedSiteIds;
 
-                  if (isChecked) {
-                    if (!updated.includes(node.id)) updated.push(node.id);
+              setter((prev: any) => {
+                let updated = [...prev];
 
-                    if (!isParentNode && node.parentId && !updated.includes(node.parentId)) {
-                      updated.push(node.parentId);
-                    }
-                  } else {
-                    updated = updated.filter((id) => id !== node.id);
-
-                    if (isParentNode) {
-                      const childIds = collectAllChildIds(node);
-                      updated = updated.filter((id) => !childIds.includes(id));
-                    }
+                if (isChecked) {
+                  if (!updated.includes(node.id)) {
+                    updated.push(node.id);
                   }
 
-                  onChange(index, 'answer_text', toCsv(updated));
-                  return updated;
-                });
-              }}
-            />
-            <Typography variant="body2">{node.name}</Typography>
-          </Box>
-        }
-      >
-        {node.children?.map((child: any) => renderTree(child, index, onChange))}
-      </TreeItem>
-    );
-  };
+                  // Jika child dipilih, parent ikut dipilih
+                  if (!isParentNode && node.parentId && !updated.includes(node.parentId)) {
+                    updated.push(node.parentId);
+                  }
+                } else {
+                  updated = updated.filter((id) => id !== node.id);
 
+                  // Jika parent di-uncheck, hapus semua child
+                  if (isParentNode) {
+                    const childIds = collectAllChildIds(node);
+                    updated = updated.filter((id) => !childIds.includes(id));
+                  }
+                }
+
+                onChange(index, 'answer_text', toCsv(updated));
+                return updated;
+              });
+            }}
+          />
+
+          <Box display="flex" flexDirection="column">
+            <Typography variant="body2" color={isDisabled ? 'text.disabled' : 'text.primary'}>
+              {node.name}
+            </Typography>
+
+            {/* Hanya tampil jika site ini sendiri tidak dapat dikunjungi */}
+            {!canVisited && (
+              <Typography variant="caption" color="error" sx={{ fontStyle: 'italic' }}>
+                This site cannot be visited.
+              </Typography>
+            )}
+          </Box>
+        </Box>
+      }
+    >
+      {node.children?.map((child: any) => renderTree(child, index, onChange, isSelfOnly))}
+    </TreeItem>
+  );
+};
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const getVisibilityMap = (details: any[]) => {
     const getFlag = (key: string) => {
@@ -2829,8 +2842,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     />
                   );
                 case 3: {
-                  let options: { value: string; name: string; disabled?: boolean | undefined }[] =
-                    [];
+                  let options: {
+                    value: string;
+                    name: string;
+                    disabled?: boolean | undefined;
+                    helperText?: string;
+                  }[] = [];
 
                   if (item.remarks === 'host') {
                     options = employee.map((emp: any) => ({
@@ -2847,7 +2864,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     options = sites.map((site: any) => ({
                       value: site.id,
                       name: site.name,
-                      disabled: site.can_visited === false,
+                      // disabled: site.can_visited === false,
+                      disabled: false,
+                      can_visited: site.can_visited,
+                      helperText: site.can_visited === false ? 'This site cannot be visited.' : '',
                     }));
                   } else {
                     options = (item.multiple_option_fields || []).map((opt: any) =>
@@ -2862,6 +2882,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           size="small"
                           options={options}
                           getOptionLabel={(option) => option.name}
+                          getOptionDisabled={(option) => option.disabled === true}
                           inputValue={
                             isSelfOnly
                               ? selfOnlyInputValuesMap[selfOnlyVisitorIdx]?.[index] || ''
@@ -2907,11 +2928,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             ).includes(opt.value),
                           )}
                           onChange={(_, newValues) => {
-                            const parentIds = newValues.map((v) => v.value);
+                            // Pastikan hanya site yang dapat dikunjungi yang diproses
+                            const validValues = newValues.filter((v) => v.disabled !== true);
 
-                            // const trees = parentIds.flatMap((pid) =>
-                            //   buildSiteTreeWithParent(sites, pid),
-                            // );
+                            const parentIds = validValues.map((v) => v.value);
+
                             const rawTrees = parentIds.flatMap((pid) =>
                               buildSiteTreeWithParent(sites, pid),
                             );
@@ -2947,6 +2968,35 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                               setSiteTree(uniqueTrees);
                             }
                           }}
+                          // renderOption={(props, option) => {
+                          //   const { key, ...otherProps } = props;
+
+                          //   return (
+                          //     <li
+                          //       key={option.value}
+                          //       {...otherProps}
+                          //       style={{
+                          //         ...otherProps.style,
+                          //         opacity: option.disabled ? 0.5 : 1,
+                          //         pointerEvents: option.disabled ? 'none' : 'auto',
+                          //       }}
+                          //     >
+                          //       <Box display="flex" flexDirection="column">
+                          //         <Typography variant="body1">{option.name}</Typography>
+
+                          //         {option.disabled && option.helperText && (
+                          //           <Typography
+                          //             variant="caption"
+                          //             color="error"
+                          //             sx={{ fontStyle: 'italic' }}
+                          //           >
+                          //             {option.helperText}
+                          //           </Typography>
+                          //         )}
+                          //       </Box>
+                          //     </li>
+                          //   );
+                          // }}
                           renderInput={(params) => (
                             <CustomTextField
                               {...params}
@@ -3791,7 +3841,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
                         <Typography variant="body2" color="textSecondary" mt={1}>
                           Supports: JPG, JPEG, PNG, up to
-                          <span style={{ fontWeight: 'semibold' }}> 100KB</span>
+                          <span style={{ fontWeight: 'semibold' }}> 1 Mb</span>
                         </Typography>
                         {/*preview  */}
                         {(previewSrc || shownName) && (
@@ -3892,8 +3942,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                         >
                           <Typography variant="body1" color="textSecondary">
-                            Supports: JPG, PNG, JPEG Up to
-                            <span style={{ fontWeight: '700' }}> 100KB</span>
+                            Supports: JPG, PNG, JPEG, Up to
+                            <span style={{ fontWeight: '700' }}> 1 Mb</span>
                           </Typography>
 
                           <Typography

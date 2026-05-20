@@ -19,7 +19,6 @@ type Props = {
   invitationCode: any[];
   selectedCards: string[];
   handleToggleCard: (card: string) => void;
-  dataDummyAccess: any[];
   formatDateTime: (date: string) => string;
   accessData: any[];
 };
@@ -30,7 +29,6 @@ export default function GrantAccessDialog({
   invitationCode,
   selectedCards,
   handleToggleCard,
-  dataDummyAccess,
   formatDateTime,
   accessData,
 }: Props) {

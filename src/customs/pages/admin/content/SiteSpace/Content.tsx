@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  Backdrop,
   Box,
+  CircularProgress,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -36,6 +38,8 @@ import { useNavigate, useParams } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import SelectSiteTypeDialog from './components/Dialog/SelectSiteTypeDialog';
 import ConfirmUnsavedDialog from 'src/customs/pages/admin/components/ConfirmUnsavedDialog';
+import { useEmployees } from 'src/hooks/useEmployees';
+import { updateSiteActive } from 'src/customs/api/Admin/Site';
 
 type SiteTableRow = {
   id: string;
@@ -87,7 +91,6 @@ const Content = () => {
   const [openDetailType, setOpenDetailType] = useState(false);
   const [selectedType, setSelectedType] = useState<number | null>(null);
   const navigate = useNavigate();
-
   const [breadcrumbItems, setBreadcrumbItems] = useState<{ id: string; name: string }[]>([]);
   const [appliedType, setAppliedType] = useState<number>(-1);
   const { '*': wildcard } = useParams();
@@ -277,6 +280,7 @@ const Content = () => {
           type: item.type,
           description: item.description || '',
           image: item.image || '',
+          active: item.is_active,
         }));
 
         setTableRowSite(tableRows);
@@ -291,17 +295,7 @@ const Content = () => {
     };
 
     fetchData();
-  }, [
-    token,
-    page,
-    rowsPerPage,
-    // sortColumn,
-    sortDir,
-    refreshTrigger,
-    searchKeyword,
-    appliedType,
-    wildcard,
-  ]);
+  }, [token, page, rowsPerPage, sortDir, refreshTrigger, searchKeyword, appliedType, wildcard]);
 
   useEffect(() => {
     if (!allData?.length) {
@@ -360,22 +354,18 @@ const Content = () => {
       ...CreateSiteRequestSchema.parse({}),
       id: '',
       access: [],
-      approval_workflow_id: null,
       parking: [],
       tracking: [],
-      is_registered_point: false,
       parent: null,
-      signout_time: null,
-      is_child: false,
       type: type ?? 0,
-      host: null,
-      timezone: null,
     };
     setFormDataAddSite(empty);
     setInitialFormSnapshot(empty);
     setEdittingId('');
     setOpenFormCreateSiteSpace(true);
   };
+
+
 
   const handleEdit = async (id: string) => {
     const editing = localStorage.getItem('unsavedSiteForm');
@@ -407,6 +397,21 @@ const Content = () => {
 
       if (!found) return;
 
+        const toLocalTime = (utcTime?: string | null) => {
+          if (!utcTime) return '';
+
+          const [hours = 0, minutes = 0, seconds = 0] = utcTime.split(':').map((v) => Number(v));
+
+          const utcDate = new Date(Date.UTC(1970, 0, 1, hours, minutes, seconds));
+
+          return utcDate.toLocaleTimeString('en-GB', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+          });
+        };
+
+
       const normalized = {
         ...found,
         type: safeNumber(found.type),
@@ -415,6 +420,8 @@ const Content = () => {
           found.approval_workflow_id !== null && found.approval_workflow_id !== undefined
             ? String(found.approval_workflow_id)
             : null,
+        open_time: toLocalTime(found.open_time),
+        close_time: toLocalTime(found.close_time),
       };
 
       const parsed = CreateSiteRequestSchema.parse(normalized);
@@ -455,16 +462,9 @@ const Content = () => {
         const parsedData = {
           ...CreateSiteRequestSchema.parse(found),
           id: pendingEditId,
-          approval_workflow_id: null,
           access: [],
           parking: [],
           tracking: [],
-          is_registered_point: false,
-          parent: null,
-          is_child: false,
-          type: 0,
-          host: null,
-          signout_time: null,
         };
         setEdittingId(pendingEditId);
         setFormDataAddSite(parsedData);
@@ -480,13 +480,6 @@ const Content = () => {
         access: [],
         parking: [],
         tracking: [],
-        is_registered_point: false,
-        parent: '',
-        is_child: false,
-        type: 0,
-        host: null,
-        approval_workflow_id: null,
-        signout_time: null,
       };
       setEdittingId('');
       setFormDataAddSite(empty);
@@ -606,20 +599,7 @@ const Content = () => {
     setOpenDetailType(true);
   };
 
-  const [employee, setEmployee] = useState<any[]>([]);
-
-  useEffect(() => {
-    const fetchEmployees = async () => {
-      try {
-        const res = getAllEmployee(token!);
-        const data = (await res).collection || [];
-        setEmployee(data);
-      } catch (error) {
-        console.error('Failed to fetch employees:', error);
-      }
-    };
-    fetchEmployees();
-  }, [token]);
+  const { employee } = useEmployees(token);
 
   const handleSearchKeywordChange = useCallback((keyword: string) => {
     setSearchInput(keyword);
@@ -639,6 +619,23 @@ const Content = () => {
     queryClient.invalidateQueries({
       queryKey: ['registeredSites'],
     });
+  };
+
+  const [loadingBackdrop, setLoadingBackdrop] = useState(false);
+
+  const handleActiveToggle = async (row: any, checked: boolean) => {
+    try {
+      setLoadingBackdrop(true);
+      await updateSiteActive(token as string, row.id, checked);
+
+      showSwal('success', 'Site space successfully updated');
+
+      setRefreshTrigger((prev) => prev + 1);
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.message || 'Failed to update status active');
+    } finally {
+      setLoadingBackdrop(false);
+    }
   };
 
   return (
@@ -673,6 +670,8 @@ const Content = () => {
                   navigate(`/admin/manage/site-space/${newPath}`);
                 }}
                 setCurrentId={(id: any) => setCurrentId(id)}
+                isHaveActive={true}
+                onActiveToggle={handleActiveToggle}
                 overflowX={'auto'}
                 data={tableRowSite}
                 breadcrumbItems={breadcrumbItems}
@@ -713,8 +712,8 @@ const Content = () => {
                 onSearch={handleSearch}
                 onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
                 onAddData={handleOpenType}
-                sortColumns={['name']}
-                onFilterByColumn={(column) => setSortColumn(column.column)}
+                // sortColumns={['name']}
+                // onFilterByColumn={(column) => setSortColumn(column.column)}
               />
             </Grid>
           </Grid>
@@ -766,38 +765,14 @@ const Content = () => {
         showError={showSwal}
       />
 
-      {/* <Dialog open={confirmDialogOpen} onClose={handleCancelEdit} fullWidth maxWidth="sm">
-        <DialogTitle ref={dialogRef}>
-          Unsaved Changes
-          <IconButton
-            aria-label="close"
-            onClick={() => setConfirmDialogOpen(false)}
-            sx={{
-              position: 'absolute',
-              right: 8,
-              top: 8,
-              color: (theme) => theme.palette.grey[500],
-            }}
-          >
-            <IconX />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent dividers>
-          You have unsaved changes. Do you want to discard them?
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancelEdit}>Cancel</Button>
-          <Button onClick={handleConfirmEdit} color="primary" variant="contained">
-            Yes, Discard and Continue
-          </Button>
-        </DialogActions>
-      </Dialog>
-      */}
       <ConfirmUnsavedDialog
         open={confirmDialogOpen}
         onClose={handleCancelEdit}
         onDiscard={handleConfirmEdit}
       />
+      <Backdrop open={loadingBackdrop} sx={{ zIndex: (theme) => theme.zIndex.drawer + 999999 }}>
+        <CircularProgress color="primary" />
+      </Backdrop>
     </PageContainer>
   );
 };

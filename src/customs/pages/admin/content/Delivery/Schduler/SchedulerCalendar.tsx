@@ -1570,8 +1570,8 @@ export default function DnDOutsideCourier({
                         </Typography>
 
                         <Typography variant="body2" color="textSecondary" mt={1}>
-                          Supports: PDF, DOCX, JPG, PNG, up to
-                          <span style={{ fontWeight: 'semibold' }}> 100KB</span>
+                          Supports: JPG, JEPG, PNG, up to
+                          <span style={{ fontWeight: 'semibold' }}> 1 Mb</span>
                         </Typography>
 
                         {/*preview  */}
@@ -1655,8 +1655,8 @@ export default function DnDOutsideCourier({
                         </Typography>
 
                         <Typography variant="caption" color="textSecondary">
-                          Supports: PDF, DOCX, JPG, PNG, up to
-                          <span style={{ fontWeight: '700' }}> 100KB</span>
+                          Supports: JPG, JPEG, PNG, up to
+                          <span style={{ fontWeight: '700' }}> 1 Mb</span>
                         </Typography>
 
                         <Typography
@@ -2417,7 +2417,7 @@ export default function DnDOutsideCourier({
                     onClick={() =>
                       handleRemoveFileForField(
                         (field as any).answer_file,
-                        (url) => onChange(index, 'answer_file', url), 
+                        (url) => onChange(index, 'answer_file', url),
                         key, // reset <input id=key>
                       )
                     }

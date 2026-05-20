@@ -44,6 +44,7 @@ import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alert
 import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
 import { getVisitorTypeAccessByVisitorId } from 'src/customs/api/VisitorType/Access';
 import VisitorTypeDialog from './components/VisitorTypeDialog';
+import { updateVisitorTypeActive } from 'src/customs/api/Admin/VisitorType';
 
 type VisitorTypeTableRow = {
   id: string;
@@ -150,6 +151,7 @@ const Content = () => {
           description: item.description,
           period: item.period,
           grace_time: item.grace_time,
+          active: item.is_enable
         }));
         if (rows) {
           setTableRowVisitorType(rows);
@@ -211,7 +213,7 @@ const Content = () => {
 
   const handleEdit = async (id: string) => {
     try {
-      // setLoading(true);
+      setLoading(true);
       const resp = await getVisitorTypeById(token as string, id);
       const raw = resp?.collection;
 
@@ -247,7 +249,7 @@ const Content = () => {
     } catch (err) {
       console.error('Error fetching visitor type detail:', err);
     } finally {
-      // setLoading(false);
+      setLoading(false);
     }
   };
 
@@ -373,7 +375,7 @@ const Content = () => {
 
       setRefreshTrigger((prev) => prev + 1);
       showSwal('success', 'Successfully deleted visitor type!');
-    } catch (error:any) {
+    } catch (error: any) {
       showSwal('error', error.response.data.msg || 'Failed to delete visitor type.');
     } finally {
       setTimeout(() => {
@@ -449,7 +451,7 @@ const Content = () => {
 
       try {
         const accessRes = await getVisitorTypeAccessByVisitorId(id, token as string);
-        console.log('accessRes', accessRes.collection);
+        // console.log('accessRes', accessRes.collection);
         mappedAccess = (accessRes?.collection ?? []).map((a: any, index: number) => ({
           access_control_id: a.access_control_id ?? '',
           early_access: a.early_access ?? false,
@@ -476,6 +478,22 @@ const Content = () => {
       setLoadingData(false);
     }
   };
+
+  const handleActiveToggle = async (row: any, checked: boolean) => {
+    try {
+      setLoadingData(true);
+      await updateVisitorTypeActive(token as string, row.id, checked);
+
+      showSwal('success', 'Visitor Type successfully updated');
+
+      setRefreshTrigger((prev) => prev + 1);
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.msg || 'Failed to update status active');
+    }finally {
+      setLoadingData(false);
+    }
+  };
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -529,6 +547,8 @@ const Content = () => {
                 onBooleanSwitchChange={(row, col, checked) =>
                   handleBooleanSwitch(row, col as keyof VisitorTypeTableRow, checked)
                 }
+                isHaveActive={true}
+                onActiveToggle={handleActiveToggle}
               />
             </Grid>
           </Grid>

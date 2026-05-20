@@ -85,7 +85,7 @@ export type Item = {
   prefix: string;
   simple_period: boolean;
   site_visitor_types?: string | null;
-  visitor_roles: VisitorRole[] ;
+  visitor_roles: VisitorRole[];
   visitor_type_documents: VisitorTypeDocument[] | null;
   section_page_visitor_types: SectionPageVisitorType[];
 };
@@ -157,6 +157,7 @@ export const CreateVisitorTypeRequestSchema = z.object({
   can_track_cctv: z.boolean().default(false),
   need_document: z.boolean().default(false),
   grace_time: z.number().default(0),
+  expiry_reminder_minutes: z.number().default(0),
   direct_visit: z.boolean().default(false),
   period: z.number().default(0),
   can_notification_arrival: z.boolean().default(false),
@@ -180,7 +181,6 @@ export const CreateVisitorTypeRequestSchema = z.object({
     .default([]),
 
   // site_visitor_types: z.string().nullable().optional(),
-  // Nullable fields from your JSON
   visitor_roles: z
     .array(
       z.object({
@@ -234,11 +234,7 @@ export const updateVisitorTypeSchmea = z.object({
   vip: z.boolean().optional(),
   simple_visitor: z.boolean().default(false),
   simple_period: z.boolean().default(false),
-  // prefix: z.string().default(''),
-
-  // Nullable fields from your JSON
-  // site_visitor_types: z.string().nullable().optional(),
-  // Nullable fields from your JSON
+  expiry_reminder_minutes: z.number().default(0),
   visitor_roles: z
     .array(
       z.object({

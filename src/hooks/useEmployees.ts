@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getAllEmployee } from 'src/customs/api/admin';
 
-export const useEmployees = (token?: string) => {
+export const useEmployees = (token?: string | null) => {
   const [employee, setEmployee] = useState<any[]>([]);
 
   useEffect(() => {

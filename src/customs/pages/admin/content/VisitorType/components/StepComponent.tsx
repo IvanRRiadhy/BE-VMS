@@ -591,6 +591,36 @@ const StepContentComponent: React.FC<StepContentProps> = ({
               // }}
             />
           </Grid>
+          <Grid size={12}>
+            <CustomFormLabel
+              htmlFor="expiry_reminder_minutes"
+              sx={{ mt: 1, display: 'flex', alignItems: 'center' }}
+            >
+              Expired Reminder (Minutes)
+              <Tooltip
+                title="The number of minutes before the visitor is reminded to leave the premises."
+                arrow
+              >
+                <IconButton size="small">
+                  <InfoOutlinedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </CustomFormLabel>
+            <CustomTextField
+              id="expiry_reminder_minutes"
+              value={formData.expiry_reminder_minutes ?? ''}
+              onChange={(e: any) => {
+                setFormData((prev: any) => ({
+                  ...prev,
+                  expiry_reminder_minutes: e.target.value,
+                }));
+              }}
+              error={Boolean(errors.expiry_reminder_minutes)}
+              helperText={errors.expiry_reminder_minutes || ''}
+              fullWidth
+              type="text"
+            />
+          </Grid>
         </Grid>
         <Grid size={{ xs: 12, lg: 4 }}>
           <Grid size={{ xs: 6, xl: 12 }} mt={1}>
@@ -845,7 +875,7 @@ const StepContentComponent: React.FC<StepContentProps> = ({
               }
               label={
                 <Box display="flex" alignItems="center">
-                  Status (Enable/Disable)
+                  Status (Active/Inactive)
                   <Tooltip
                     title="When turned on, this type will appear on the visitor portal for selection."
                     arrow

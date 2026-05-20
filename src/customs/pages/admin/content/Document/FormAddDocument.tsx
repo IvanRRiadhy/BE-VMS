@@ -402,7 +402,7 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
                           Upload File
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          Supports: PDF, Up to 100 KB
+                          Supports: PDF, Up to: <span style={{ fontWeight: '700' }}>1 Mb</span>
                         </Typography>
 
                         {(preview || file) && (

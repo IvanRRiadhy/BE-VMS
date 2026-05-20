@@ -64,51 +64,51 @@ import customParseFormat from 'dayjs/plugin/customParseFormat';
 import advancedFormat from 'dayjs/plugin/advancedFormat';
 import utc from 'dayjs/plugin/utc';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import CameraUpload from './Components/CameraUpload';
+import CameraUpload from 'src/customs/components/camera/CameraUpload';
 import { showSwal } from 'src/customs/components/alerts/alerts';
-import FormWizardAddVisitor from './Invitation/FormWizardAddVisitor';
-import FormWizardAddInvitation from './Invitation/FormWizardAddInvitation';
-import ScanQrVisitorDialog from './Dialog/ScanQrVisitorDialog';
+import FormWizardAddVisitor from 'src/customs/pages/Operator/Invitation/FormWizardAddVisitor';
+import FormWizardAddInvitation from 'src/customs/pages/Operator/Invitation/FormWizardAddInvitation';
+import ScanQrVisitorDialog from 'src/customs/pages/Operator/Dialog/ScanQrVisitorDialog';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
-import InfoDialog from './Dialog/InfoDialog';
-import ExtendVisitDialog from './Dialog/ExtendVisitDialog';
+import InfoDialog from 'src/customs/pages/Operator/Dialog/InfoDialog';
+import ExtendVisitDialog from 'src/customs/pages/Operator/Dialog/ExtendVisitDialog';
 import { useTranslation } from 'react-i18next';
-import BlacklistVisitorDialog from './Dialog/BlacklistVisitorDialog';
-import ListVisitorDialog from './Dialog/ListVisitorDialog';
-import TriggeredAccessDialog from './Dialog/TriggeredAccessDialog';
-import DetailVisitingPurpose from './Dialog/DetailVisitingPurpose';
-import SwipeCardDialog from './Dialog/SwipeCardDialog';
-import SwipeAccessDialog from './Dialog/SwipeAccessDialog';
+import BlacklistVisitorDialog from 'src/customs/pages/Operator/Dialog/BlacklistVisitorDialog';
+import ListVisitorDialog from 'src/customs/pages/Operator/Dialog/ListVisitorDialog';
+import TriggeredAccessDialog from 'src/customs/pages/Operator/Dialog/TriggeredAccessDialog';
+import DetailVisitingPurpose from 'src/customs/pages/Operator/Dialog/DetailVisitingPurpose';
+import SwipeCardDialog from 'src/customs/pages/Operator/Dialog/SwipeCardDialog';
+import SwipeAccessDialog from 'src/customs/pages/Operator/Dialog/SwipeAccessDialog';
 import { useDebounce } from 'src/hooks/useDebounce';
-import PrintDialog from './Dialog/PrintDialog';
-import { getPrintBadgeConfig } from 'src/customs/api/Admin/PrintBadge';
-import PrintDialogBulk from './Dialog/PrintDialogBluk';
-import { getRegisteredSiteOperator, returnCard } from 'src/customs/api/Admin/SwapCard';
-import SwipeCardNoCodeDialog from './Dialog/SwipeCardNoCodeDialog';
-import InvitationQrCard from './Components/InvitationQrCard';
-import VisitorSearchInput from './Components/VisitorSearchInput';
-import OperatorToolbar from './Components/OperatorToolbar';
-import VisitorImage from './Components/VisitorImage';
-import ReturnCardDialog from './Dialog/ReturnCardDialog';
-import GlobalBackdropLoading from './Components/GlobalBackdrop';
-import ParkingDialog from './Dialog/ParkingDialog';
-import ActionPanelCard from './Components/ActionPanelCard';
-import {
-  getInvitationSite,
-  getInvitationVisitorEmployee,
-  getInvitationVisitorHost,
-  getInvitationVisitorType,
-} from 'src/customs/api/Admin/InvitationData';
-import FillPraregistrationGroup from './Invitation/components/FillPraregistrationGroup';
-import GrantAccessDialog from './Dialog/GrantAccessDialog';
-import LprVisitorCard from './Components/LprVisitorCard';
-import ChooseCardDialog from './Dialog/ChooseCardDialog';
-import { getPermission } from 'src/customs/api/users';
+import PrintDialog from 'src/customs/pages/Operator/Dialog/PrintDialog';
+import PrintDialogBulk from 'src/customs/pages/Operator/Dialog/PrintDialogBluk';
+import { returnCard } from 'src/customs/api/Admin/SwapCard';
+import SwipeCardNoCodeDialog from 'src/customs/pages/Operator/Dialog/SwipeCardNoCodeDialog';
+import InvitationQrCard from 'src/customs/pages/Operator/Components/InvitationQrCard';
+import VisitorSearchInput from 'src/customs/pages/Operator/Components/VisitorSearchInput';
+import OperatorToolbar from 'src/customs/pages/Operator/Components/OperatorToolbar';
+import VisitorImage from 'src/customs/pages/Operator/Components/VisitorImage';
+import ReturnCardDialog from 'src/customs/pages/Operator/Dialog/ReturnCardDialog';
+import GlobalBackdropLoading from 'src/customs/pages/Operator/Components/GlobalBackdrop';
+import ParkingDialog from 'src/customs/pages/Operator/Dialog/ParkingDialog';
+import ActionPanelCard from 'src/customs/pages/Operator/Components/ActionPanelCard';
+import FillPraregistrationGroup from 'src/customs/pages/Operator/Invitation/components/FillPraregistrationGroup';
+import GrantAccessDialog from 'src/customs/pages/Operator/Dialog/GrantAccessDialog';
+import LprVisitorCard from 'src/customs/pages/Operator/Components/LprVisitorCard';
+import ChooseCardDialog from 'src/customs/pages/Operator/Dialog/ChooseCardDialog';
 import { usePermission } from 'src/hooks/usePermission';
-import VisitorDetailCard from './Components/VisitorDetailCard';
-import FillPraregistrationSingle from './Invitation/components/FillPraregistrationSingle';
-import VisitorListCard from './Dialog/VisitorListCard';
-import { useSelector } from 'react-redux';
+import VisitorDetailCard from 'src/customs/pages/Operator/Components/VisitorDetailCard';
+import FillPraregistrationSingle from 'src/customs/pages/Operator/Invitation/components/FillPraregistrationSingle';
+import VisitorListCard from 'src/customs/pages/Operator/Dialog/VisitorListCard';
+import usePrintBadgeConfig from 'src/hooks/usePrintBadge';
+import useInvitationVisitorType from 'src/hooks/useInvitationVisitorType';
+import useDataPermission from 'src/hooks/useDataPermission';
+import usePermissionOperator from 'src/hooks/usePermissionOperator';
+import useAvailableCardOperator from 'src/hooks/useAvailableCardOperator';
+import useInvitationSite from 'src/hooks/useInvitationSite';
+import useRegisteredSiteOperator from 'src/hooks/useRegisteredSiteOperator';
+import useInvitationHost from 'src/hooks/useInvitationHost';
+import useInvitationVisitorEmployee from 'src/hooks/useInvitationVisitorEmployee';
 
 type DocumentType = 'CardAccess' | 'Other';
 dayjs.extend(utc);
@@ -127,19 +127,16 @@ const OperatorView = () => {
   const [invitationCode, setInvitationCode] = useState<any[]>([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [torchOn, setTorchOn] = useState(false);
   const [wizardKey, setWizardKey] = useState(0);
   const scanContainerRef = useRef<HTMLDivElement | null>(null);
   const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
   const [openInvitationVisitor, setOpenInvitationVisitor] = useState(false);
-  const [permissionAccess, setPermissionAccess] = useState<any[]>([]);
   const handleOpenScanQR = () => setOpenDialogIndex(1);
   const [selectedCards, setSelectedCards] = useState<string[]>([]);
   const [openChooseCardDialog, setOpenChooseCardDialog] = useState(false);
   const [loadingAccess, setLoadingAccess] = useState(false);
-  const [availableCards, setAvailableCards] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedVisitorNumber, setSelectedVisitorNumber] = useState<string | null>(null);
   const [scannedVisitorNumber, setScannedVisitorNumber] = useState<string | null>(null);
@@ -153,7 +150,6 @@ const OperatorView = () => {
   const [uploadNames, setUploadNames] = useState<Record<string, string>>({});
   const [activeStep, setActiveStep] = useState(0);
   const [uploadMethods, setUploadMethods] = useState<Record<string, 'file' | 'camera'>>({});
-  const [allVisitorEmployee, setAllVisitorEmployee] = useState<any[]>([]);
   const [openSearch, setOpenSearch] = useState(false);
   const [openDetailVisitingPurpose, setOpenDetailVistingPurpose] = useState(false);
   const [openDetail, setOpenDetail] = useState(false);
@@ -178,10 +174,6 @@ const OperatorView = () => {
   const [openListVisitor, setOpenListVisitor] = useState(false);
   const [openBlacklistVisitor, setOpenBlacklistVisitor] = useState(false);
   const [openTriggeredAccess, setOpenTriggeredAccess] = useState(false);
-  const [registerSiteOperator, setRegisterSiteOperator] = useState<string>(() => {
-    return localStorage.getItem('selectedSite') || '';
-  });
-  const [registeredSite, setRegisteredSite] = useState<any[]>([]);
   const [openSwipeDialogNoInvitation, setOpenSwipeDialogNoInvitation] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
   const debouncedKeyword = useDebounce(searchKeyword, 300);
@@ -190,8 +182,6 @@ const OperatorView = () => {
   const newCardRef = useRef<HTMLInputElement | null>(null);
   const [currentAccessVisitor, setCurrentAccessVisitor] = useState<any>(null);
   const [selectedVisitorId, setSelectedVisitorId] = useState<string | null>(null);
-  const [sites, setSites] = useState<any[]>([]);
-  const [employee, setEmployee] = useState<any[]>([]);
   const [dialogContainer, setDialogContainer] = useState<HTMLElement | null>(null);
   const [hidePageContainer, setHidePageContainer] = useState(false);
   const [invitationDetail, setInvitationDetail] = useState<any>([]);
@@ -211,8 +201,6 @@ const OperatorView = () => {
   const [isSelfGroup, setIsSelfGroup] = useState<boolean | null>(null);
   const [tick, forceTick] = useState(0);
   const socketRef = useRef<WebSocket | null>(null);
-  const [sitesOperator, setSitesOperator] = useState<any[]>([]);
-  const [printData, setPrintData] = useState<any>(null);
   const [resetStep, setResetStep] = useState(0);
   const [openAccessIssuance, setAccessIssuance] = useState(false);
   const [openReturnCard, setOpenReturnCard] = useState(false);
@@ -232,35 +220,17 @@ const OperatorView = () => {
   const [typeVisitor, setTypeVisitor] = useState('related');
   const [upcomingPurpose, setUpcomingPurpose] = useState<any[]>([]);
   const [upcomingVisitors, setUpcomingVisitors] = useState<any[]>([]);
-
-  const [dataDummyAccess, setDataDummyAccess] = useState<any[]>([
-    {
-      id: '1',
-      site: 'SCP 3A',
-    },
-    {
-      id: '2',
-      site: 'SPU 2B',
-    },
-    {
-      id: '3',
-      site: 'SPU 1D',
-    },
-  ]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await getInvitationSite(token as string);
-        const filteredSites =
-          res?.collection?.filter((site: any) => site.can_visited === true) ?? [];
-        setSitesOperator(filteredSites);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    fetchData();
-  }, [token]);
+  const { sitesOperator } = useInvitationSite(token);
+  const { registeredSite, registerSiteOperator, setRegisterSiteOperator } =
+    useRegisteredSiteOperator(token);
+  const { printData } = usePrintBadgeConfig(token as string);
+  const { permission, loading: loadingPermission } = useDataPermission(token);
+  const { permissionAccess } = usePermissionOperator(token);
+  const { availableCards, setAvailableCards } = useAvailableCardOperator(token);
+  const { visitorType } = useInvitationVisitorType(token);
+  const { employee } = useInvitationHost(token);
+  const { allVisitorEmployee } = useInvitationVisitorEmployee(token);
+  const permissionHook = usePermission(permission);
 
   useEffect(() => {
     if (registerSiteOperator) {
@@ -269,22 +239,6 @@ const OperatorView = () => {
       localStorage.removeItem('selectedSite');
     }
   }, [registerSiteOperator]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await getRegisteredSiteOperator(token as string);
-
-        const firstSite = res?.collection?.[0];
-        setRegisterSiteOperator(firstSite?.id ?? '');
-        setRegisteredSite(res?.collection ?? []);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-    fetchData();
-  }, [token]);
 
   const generateUUIDv4 = () => {
     const bytes = new Uint8Array(16);
@@ -305,17 +259,6 @@ const OperatorView = () => {
   const sendToScanner = (payload: any) => {
     socketRef.current?.send(JSON.stringify(payload));
   };
-
-  useEffect(() => {
-    if (!token) return;
-
-    const fetchData = async () => {
-      const res = await getPrintBadgeConfig(token);
-      setPrintData(res?.collection ?? []);
-    };
-
-    fetchData();
-  }, [token]);
 
   const currentUsedCards = useMemo(() => {
     if (!Array.isArray(visitorCards)) return [];
@@ -483,7 +426,6 @@ const OperatorView = () => {
     id: string;
     name: string;
   } | null>(null);
-  const [permission, setPermission] = useState<any>({});
 
   const handleOpenSwipeDialog = () => {
     const hasSwappedBefore = visitorCards.some((c) => c.is_swapcard === true);
@@ -511,36 +453,6 @@ const OperatorView = () => {
     });
     setOpenDetailVistingPurpose(true);
   };
-
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!token) return;
-
-      try {
-        setLoading(true);
-        const [vtRes, permissionRes] = await Promise.allSettled([
-          getInvitationVisitorType(token),
-          getPermission(token),
-        ]);
-
-        if (vtRes.status === 'fulfilled') {
-          setVisitorType(vtRes.value?.collection ?? []);
-        } else {
-        }
-
-        if (permissionRes.status === 'fulfilled') {
-          setPermission(permissionRes.value?.collection ?? {});
-          setLoading(false);
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    fetchData();
-  }, [token]);
-
-  const permissionHook = usePermission(permission);
 
   useEffect(() => {
     const handleBrowserFullscreen = () => {
@@ -641,35 +553,6 @@ const OperatorView = () => {
       setDialogContainer(containerRef.current);
     }
   }, [containerRef]);
-
-  useEffect(() => {
-    if (!token) return;
-
-    const fetchData = async () => {
-      try {
-        const [siteRes, employeeRes, allVisitorEmployee] = await Promise.allSettled([
-          getInvitationSite(token),
-          getInvitationVisitorHost(token),
-          getInvitationVisitorEmployee(token),
-        ]);
-        if (siteRes.status === 'fulfilled') {
-          setSites(siteRes.value?.collection ?? []);
-        }
-
-        if (employeeRes.status === 'fulfilled') {
-          setEmployee(employeeRes.value?.collection ?? []);
-        }
-
-        if (allVisitorEmployee.status === 'fulfilled') {
-          setAllVisitorEmployee(allVisitorEmployee.value?.collection ?? []);
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    fetchData();
-  }, [token]);
 
   const handleInvitationCreated = (invitationCode: string) => {
     handleSubmitQRCode(invitationCode);
@@ -806,31 +689,6 @@ const OperatorView = () => {
   };
 
   useEffect(() => {
-    const fetchDataPermission = async () => {
-      try {
-        const res = await getPermissionOperator(token as string);
-        setPermissionAccess(res?.collection ?? []);
-      } catch (e) {
-        console.error(e);
-      }
-    };
-    fetchDataPermission();
-  }, [token]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await getAvailableCardOperator(token as string);
-        setAvailableCards(res?.collection ?? []);
-      } catch (e) {
-        console.error(e);
-      }
-    };
-
-    fetchData();
-  }, [token]);
-
-  useEffect(() => {
     if (!openSwipeDialogNoInvitation) return;
 
     if (focusTarget === 'old') {
@@ -856,7 +714,7 @@ const OperatorView = () => {
     setAvailableCards(res.collection);
   };
 
-  const isSwapMode = currentUsedCards.length > 1;
+
   const handleToggleCard = (cardNumber: string) => {
     const normalized = String(cardNumber);
 
@@ -868,8 +726,6 @@ const OperatorView = () => {
       } else {
         updated = [...prev, normalized];
       }
-
-      console.log('updated selectedCards:', updated);
       return updated;
     });
   };
@@ -2992,7 +2848,6 @@ const OperatorView = () => {
                     visitor_form_type: 1,
                   };
 
-                  // mapping berdasarkan field_type
                   if ([10, 11, 12].includes(templateField.field_type)) {
                     fieldPayload.answer_file = answer_file ?? null;
                   } else if (templateField.field_type === 9) {
@@ -3268,7 +3123,7 @@ const OperatorView = () => {
   const activeSelfie = getCdnUrl(activeVisitor?.selfie_image);
   const activeKTP = getCdnUrl(activeVisitor?.identity_image);
   const activeBarcode = getCdnUrl(activeVisitor?.nda);
-  const [visitorType, setVisitorType] = useState<any[]>([]);
+
   const [openMore, setOpenMore] = useState(false);
   const handleOpenMore = () => setOpenMore(true);
   const [vtLoading, setVTLoading] = useState(false);
@@ -3508,7 +3363,7 @@ const OperatorView = () => {
                 </Grid>
 
                 <ActionPanelCard
-                  loading={loading}
+                  loading={loadingPermission}
                   permission={permissionHook}
                   isFullscreen={isFullscreen}
                   handleOpenScanQR={handleOpenScanQR}
@@ -3728,7 +3583,6 @@ const OperatorView = () => {
             invitationCode={invitationCode}
             selectedCards={selectedCards}
             handleToggleCard={handleToggleCard}
-            dataDummyAccess={dataDummyAccess}
             formatDateTime={formatDateTime}
             accessData={accessData}
           />
@@ -3822,7 +3676,6 @@ const OperatorView = () => {
             <Divider />
             <DialogContent>
               <FormWizardAddVisitor
-                // key={wizardKey}
                 formData={formDataAddVisitor}
                 setFormData={setFormDataAddVisitor}
                 onSuccess={handleSuccess}
@@ -3840,7 +3693,7 @@ const OperatorView = () => {
                 registeredSite={registerSiteOperator}
                 forceTick={tick}
                 visitorType={visitorType}
-                sites={sites}
+                sites={sitesOperator}
                 employee={employee}
                 allVisitorEmployee={allVisitorEmployee}
                 vtLoading={vtLoading}
@@ -3883,7 +3736,7 @@ const OperatorView = () => {
                 onSuccess={handleSuccess}
                 containerRef={containerRef ?? null}
                 visitorType={visitorType}
-                sites={sites}
+                sites={sitesOperator}
                 registeredSite={registerSiteOperator}
                 employee={employee}
                 allVisitorEmployee={allVisitorEmployee}

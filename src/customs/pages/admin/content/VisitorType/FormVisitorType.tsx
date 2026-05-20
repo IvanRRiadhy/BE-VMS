@@ -282,22 +282,19 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         grace_time: Number(localForm.grace_time),
         period: Number(localForm.period),
         section_page_visitor_types: transformedSections,
+        expiry_reminder_minutes: Number(localForm.expiry_reminder_minutes),
         visitor_roles:
           localForm.visitor_roles?.map((item) => ({
             role: item.role,
             visitor_roles_id: item.visitor_roles_id,
             active: item.active ?? true,
             is_default: item.is_default ?? false,
-            // visitor_type_id: generatedVisitorTypeId,
           })) ?? [],
         visitor_type_documents: documentIdentities.map((doc) => ({
           document_id: doc.document_id,
           identity_type: doc.identity_type ?? null,
         })),
       };
-
-      // console.log('Submit data : ', JSON.stringify(data, null, 2));
-
       const parseData: CreateVisitorTypeRequest = CreateVisitorTypeRequestSchema.parse(data);
 
       if (edittingId) {
@@ -354,13 +351,19 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
         setLoading(false);
       }, 600);
     } catch (err: any) {
+      console.error('Submit Error:', err);
+
       if (err?.errors) {
         setErrors(err.errors);
       }
-      showSwal(
-        'error',
-        err.response.data.msg ?? err.response.data.message ?? 'Failed to create visitor type!',
-      );
+
+      const errorMessage =
+        err?.response?.data?.msg ??
+        err?.response?.data?.message ??
+        err?.message ??
+        'Failed to create visitor type!';
+
+      showSwal('error', errorMessage);
       setLoading(false);
     }
   };
@@ -633,8 +636,6 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
       setActiveStep(0);
     }
   }, [formData?.section_page_visitor_types]);
-
-
 
   const buildCreateAccessPayload = (visitorTypeId: string) => ({
     data: selectedAccess.map((a, index) => ({

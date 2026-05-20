@@ -12,7 +12,7 @@ interface Props {
   allVisitorEmployee: any[];
 }
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect,  useRef, useState } from 'react';
 import {
   Autocomplete,
   Button,
@@ -24,18 +24,13 @@ import {
   FormControlLabel,
   FormGroup,
   IconButton,
-  MobileStepper,
-  Paper,
   Radio,
   RadioGroup,
   TableCell,
-  TableContainer,
-  TableHead,
   TableRow,
   TextField,
   Tooltip,
   Typography,
-  useTheme,
   Box,
   Grid2 as Grid,
 } from '@mui/material';
@@ -50,7 +45,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import { FormVisitor } from 'src/customs/api/models/Admin/Visitor';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-
+import imageCompression from 'browser-image-compression';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 
@@ -58,6 +53,7 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 import 'dayjs/locale/id';
 import { IconInfoCircle } from '@tabler/icons-react';
+import { showSwal } from 'src/customs/components/alerts/alerts';
 
 const RenderDetailRows = ({
   details,
@@ -202,25 +198,6 @@ const RenderDetailRows = ({
     return [{ id: parent.id, name: parent.name, children: buildSiteTree(sites, parentId) }];
   };
 
-  const handleFileChangeForField = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-    setAnswerFile: (url: string) => void,
-    trackKey?: string,
-  ) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (trackKey) {
-      setUploadNames((prev) => ({ ...prev, [trackKey]: file.name }));
-      setPreviews((prev) => ({ ...prev, [trackKey]: URL.createObjectURL(file) }));
-    }
-
-    const path = await uploadFileToCDN(file);
-    if (path) setAnswerFile(path);
-
-    e.target.value = '';
-  };
-
   const handlePDFUploadFor =
     (idx: number, onChange: (index: number, fieldKey: keyof FormVisitor, value: any) => void) =>
     async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -311,15 +288,58 @@ const RenderDetailRows = ({
     );
   };
 
+  const compressImage = async (file: File | Blob) => {
+    const compressedFile = await imageCompression(file as File, {
+      maxSizeMB: 1,
+      maxWidthOrHeight: 1920,
+      useWebWorker: true,
+    });
+
+    return compressedFile;
+  };
+
+  const handleFileChangeForField = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setAnswerFile: (url: string) => void,
+    trackKey?: string,
+    fullscreenHandle?: any,
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (trackKey) {
+      setUploadNames((prev) => ({ ...prev, [trackKey]: file.name }));
+      setPreviews((prev) => ({
+        ...prev,
+        [trackKey]: URL.createObjectURL(file),
+      }));
+    }
+    const compressedFile = await compressImage(file);
+    if (compressedFile.size > 1024 * 1024) {
+      // toast('File size must be under 1 MB', 'info');
+      showSwal('info', 'File size must be under 1 MB');
+      return;
+    }
+
+    const path = await uploadFileToCDN(compressedFile);
+
+    if (path) setAnswerFile(path);
+
+    e.target.value = '';
+  };
+
   const handleCaptureForField = async (setAnswerFile: (url: string) => void, trackKey?: string) => {
     if (!webcamRef.current) return;
+
     const imageSrc = webcamRef.current.getScreenshot();
     if (!imageSrc) return;
 
     const blob = await fetch(imageSrc).then((res) => res.blob());
-    const path = await uploadFileToCDN(blob);
+    const compressedBlob = await compressImage(
+      new File([blob], 'camera.jpg', { type: 'image/jpeg' }),
+    );
+    const path = await uploadFileToCDN(compressedBlob);
     if (!path) return;
-
     if (trackKey) {
       setPreviews((prev) => ({ ...prev, [trackKey]: imageSrc }));
       setUploadNames((prev) => ({ ...prev, [trackKey]: 'camera.jpg' }));
@@ -563,7 +583,7 @@ const RenderDetailRows = ({
                     const isLockedByInvitation =
                       (item.remarks === 'host' && !!invitation?.host) ||
                       (item.remarks === 'site_place' && !!invitation?.site);
-                      console.log('islocked', isLockedByInvitation);
+                    console.log('islocked', isLockedByInvitation);
 
                     if (item.remarks === 'host') {
                       options = invitation?.host
@@ -1113,8 +1133,8 @@ const RenderDetailRows = ({
                           </Typography>
 
                           <Typography variant="body2" color="textSecondary" mt={1}>
-                            Supports: JPG, JPEG, PNG, up to
-                            <span style={{ fontWeight: 'semibold' }}> 100KB</span>
+                            Supports: JPG, JPEG, PNG, Up to
+                            <span style={{ fontWeight: 'semibold' }}> 1 Mb</span>
                           </Typography>
                           {(previewSrc || shownName) && (
                             <Box
@@ -1218,8 +1238,8 @@ const RenderDetailRows = ({
                             sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                           >
                             <Typography variant="body1" color="textSecondary">
-                              Supports: PDF, JPG, PNG, JPEG Up to
-                              <span style={{ fontWeight: '700' }}> 100KB</span>
+                              Supports: JPG, PNG, JPEG Up to
+                              <span style={{ fontWeight: '700' }}> 1 Mb</span>
                             </Typography>
 
                             <Typography

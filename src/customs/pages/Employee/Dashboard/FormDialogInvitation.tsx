@@ -427,7 +427,7 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
           </Typography>
 
           <Typography variant="caption" color="textSecondary">
-            Supports: DOCX, JPG, PNG, JPEG, Up to <b>100KB</b>
+            Supports: JPG, PNG, JPEG, Up to <span style={{ fontWeight: '700' }}>1 Mb</span>
           </Typography>
 
           {/* Hidden input */}
@@ -576,7 +576,7 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
           </Typography>
 
           <Typography variant="caption" color="textSecondary">
-            Supports: PDF, DOCX, JPG, PNG, JPEG, Up to <b>100KB</b>
+            Supports: JPG, PNG, JPEG, Up to <b>1 Mb</b>
           </Typography>
 
           <Typography
