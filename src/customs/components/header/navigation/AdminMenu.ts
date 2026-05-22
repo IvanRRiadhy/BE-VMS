@@ -1431,13 +1431,13 @@ export const OperatorNavListingData: ItemDataCustomNavListing[] = [
   //   href: '/operator/visitor',
   // },
 
-  {
-    id: uniqueId(),
-    title: 'navigation.notification',
-    icon: IconBell,
-    chipColor: 'secondary',
-    href: '/operator/notification',
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'navigation.notification',
+  //   icon: IconBell,
+  //   chipColor: 'secondary',
+  //   href: '/operator/notification',
+  // },
 
   // {
   //   id: uniqueId(),

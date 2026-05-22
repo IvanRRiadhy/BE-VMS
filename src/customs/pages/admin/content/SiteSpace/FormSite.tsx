@@ -35,8 +35,6 @@ import {
   CreateSiteRequest,
   CreateSiteRequestSchema,
   Item,
-  TypeApproval,
-  Access,
   Parking,
   Tracking,
   UpdateSiteRequestSchema,
@@ -51,7 +49,6 @@ import {
   updateSite,
   getAllSiteDocument,
   getAllAccessControl,
-  getSiteById,
   getSiteParking,
   getSiteTracking,
   createSiteParking,
@@ -64,6 +61,8 @@ import {
   createSiteParkingBulk,
   getAllDocument,
   getSitesAccessById,
+  deleteSiteDocument,
+  getSiteDocumentBySiteId,
 } from 'src/customs/api/admin';
 import {
   CreateSiteDocumentRequest,
@@ -78,6 +77,7 @@ import { useLocation } from 'react-router';
 import { DndContext, closestCenter, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 import { getAllApprovalWorkflow } from 'src/customs/api/Admin/ApprovalWorkflow';
+import imageCompression from 'browser-image-compression';
 
 type EnabledFields = {
   type: boolean;
@@ -137,7 +137,7 @@ const FormSite = ({
     { value: 'Asia/Jayapura', label: '(UTC+09:00) WIT (Waktu Indonesia Timur)' },
   ];
   const [documentlist, setDocumentList] = useState<DocumentItem[]>([]);
-  const [filteredSiteDocumentList, setFilteredSiteDocumentList] = useState<SiteDocumentItem[]>([]);
+  const [filteredSiteDocumentList, setFilteredSiteDocumentList] = useState<any[]>([]);
   const [siteDocuments, setSiteDocuments] = useState<CreateSiteDocumentRequest[]>([]);
   const [siteParking, setSiteParking] = useState<Parking[]>([]);
   const [siteTracking, setSiteTracking] = useState<Tracking[]>([]);
@@ -151,12 +151,14 @@ const FormSite = ({
 
   const [accessControl, setAccessControl] = useState<AccessControlItem[]>([]);
 
+  const [approvalData, setApprovalData] = useState<{ label: string; value: number }[]>([]);
   const [siteImageFile, setSiteImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [localForm, setLocalForm] = useState(formData);
   const lastSentRef = useRef<string>('');
   const [retentionInput, setRetentionInput] = useState('0');
+  const typeLabel = siteTypes.find((i) => i.value === Number(localForm.type))?.label ?? '';
 
   useEffect(() => {
     setRetentionInput(newDocument.retentionTime.toString());
@@ -174,6 +176,8 @@ const FormSite = ({
           getSiteTracking(token),
           getSitesParking(token),
           getSitesTracking(token),
+          getAllDocument(token),
+          getSiteDocumentBySiteId(token, editingId),
         ]);
 
         const [
@@ -183,6 +187,8 @@ const FormSite = ({
           trackingMasterRes,
           parkingRelationRes,
           trackingRelationRes,
+          documentRes,
+          siteDocumentRes,
         ] = results;
 
         const site = siteRes.status === 'fulfilled' ? siteRes.value.collection : {};
@@ -191,6 +197,10 @@ const FormSite = ({
           accessControlRes.status === 'fulfilled' ? (accessControlRes.value.collection ?? []) : [];
 
         setAccessControl(accessControlList);
+
+        if (documentRes.status === 'fulfilled') {
+          setDocumentList(documentRes.value.collection ?? []);
+        }
 
         const parkingMaster =
           parkingMasterRes.status === 'fulfilled' ? (parkingMasterRes.value.collection ?? []) : [];
@@ -210,6 +220,9 @@ const FormSite = ({
           trackingRelationRes.status === 'fulfilled'
             ? (trackingRelationRes.value.collection ?? [])
             : [];
+
+        const siteDocumentRelations =
+          siteDocumentRes.status === 'fulfilled' ? (siteDocumentRes.value.collection ?? []) : [];
 
         setSiteParking(parkingMaster);
         setSiteTracking(trackingMaster);
@@ -266,8 +279,6 @@ const FormSite = ({
               ]
             : [];
 
-        // console.log('mappedAccess', mappedAccess);
-
         const mappedTracking = filteredTracking.map((t: any, idx: number) => {
           const master = trackingMaster.find(
             (x: any) =>
@@ -283,6 +294,15 @@ const FormSite = ({
             early_access: t.early_access ?? false,
           };
         });
+
+        setFilteredSiteDocumentList(siteDocumentRelations);
+        setSiteDocuments(
+          siteDocumentRelations.map((item: any) => ({
+            site_id: item.site_id,
+            document_id: item.documents?.id ?? item.document_id,
+            retention_time: item.retentionTime ?? item.retention_time ?? 0,
+          })),
+        );
 
         setLocalForm((prev) => ({
           ...prev,
@@ -324,27 +344,6 @@ const FormSite = ({
 
     fetchData();
   }, [token, editingId]);
-
-  useEffect(() => {
-    if (!token || !editingId || !localForm.need_document) return;
-
-    const fetchDoc = async () => {
-      const res = await getAllSiteDocument(token);
-
-      const filtered = res.collection.filter((doc: SiteDocumentItem) => doc.site_id === editingId);
-
-      setFilteredSiteDocumentList(filtered);
-      setSiteDocuments(
-        filtered.map((item) => ({
-          site_id: item.site_id,
-          document_id: item.id,
-          retention_time: item.retentionTime,
-        })),
-      );
-    };
-
-    fetchDoc();
-  }, [token, editingId, localForm.need_document]);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -419,7 +418,6 @@ const FormSite = ({
     //   newErrors.can_visited = 'Can Visit must be enabled.';
     // }
 
-    // Jika ada error, tampilkan helperText dan hentikan submit
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       showSwal('error', 'Please complete all required fields.');
@@ -526,6 +524,41 @@ const FormSite = ({
 
         handleFileUpload(editingId);
 
+        let existingSiteDocuments: any[] = [];
+
+        try {
+          const siteDocumentRes = await getAllSiteDocument(token);
+          existingSiteDocuments = (siteDocumentRes?.collection ?? []).filter(
+            (doc: any) => String(doc.site_id).toLowerCase() === editingId.toLowerCase(),
+          );
+        } catch (error: any) {
+          const message = error?.message?.toLowerCase?.() || '';
+
+          if (!message.includes('not found') && !message.includes('404')) {
+            throw error;
+          }
+        }
+
+        // Hapus semua relasi dokumen lama
+        await Promise.all(
+          existingSiteDocuments.map((doc: any) => deleteSiteDocument(doc.id, token)),
+        );
+
+        if (localForm.need_document) {
+          await Promise.all(
+            (siteDocuments ?? []).map((doc) =>
+              createSiteDocument(
+                {
+                  site_id: editingId,
+                  document_id: doc.document_id,
+                  retention_time: doc.retention_time,
+                },
+                token,
+              ),
+            ),
+          );
+        }
+
         showSwal('success', 'Site successfully updated!');
       } else {
         const isValidParent =
@@ -573,12 +606,29 @@ const FormSite = ({
     }
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const compressImage = async (file: File | Blob) => {
+    const compressedFile = await imageCompression(file as File, {
+      maxSizeMB: 1,
+      maxWidthOrHeight: 1920,
+      useWebWorker: true,
+    });
+
+    return compressedFile;
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
-      setSiteImageFile(selectedFile);
-      setPreviewUrl(URL.createObjectURL(selectedFile));
+
+    if (!selectedFile) return;
+    const compressedFile = await compressImage(selectedFile);
+    if (compressedFile.size > 1024 * 1024) {
+      showSwal('error', 'Image must be under 1 MB');
+      return;
     }
+
+    setSiteImageFile(compressedFile);
+
+    setPreviewUrl(URL.createObjectURL(compressedFile));
   };
 
   const handleClear = () => {
@@ -611,6 +661,8 @@ const FormSite = ({
         ...doc,
         site_id: newSite.id,
       };
+
+      console.log('docWithSiteId', docWithSiteId);
 
       try {
         await createSiteDocument(docWithSiteId, token);
@@ -754,9 +806,6 @@ const FormSite = ({
     }));
   };
 
-  const typeLabel = siteTypes.find((i) => i.value === Number(localForm.type))?.label ?? '';
-  const [approvalData, setApprovalData] = useState<{ label: string; value: number }[]>([]);
-
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -799,19 +848,6 @@ const FormSite = ({
                     disabled={isBatchEdit}
                     sx={{ mb: 2 }}
                   />
-                  <CustomFormLabel htmlFor="description" sx={{ mt: 0.5 }}>
-                    Description
-                  </CustomFormLabel>
-                  <CustomTextField
-                    id="description"
-                    value={localForm.description}
-                    onChange={handleChange}
-                    error={Boolean(errors.description)}
-                    helperText={errors.description || ''}
-                    fullWidth
-                    disabled={isBatchEdit}
-                    sx={{ mb: 2 }}
-                  />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Box display="flex" alignItems="center" justifyContent="space-between">
@@ -819,7 +855,6 @@ const FormSite = ({
                       <CustomFormLabel htmlFor="type" sx={{ mt: 0.5 }}>
                         Type
                       </CustomFormLabel>
-
                       <Tooltip title="Type Info" arrow>
                         <IconButton size="small">
                           <IconInfoCircle size={16} />
@@ -836,6 +871,21 @@ const FormSite = ({
                     sx={{ mb: 2 }}
                     // required
                     disabled
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 12 }}>
+                  <CustomFormLabel htmlFor="description" sx={{ mt: 0.5 }}>
+                    Description
+                  </CustomFormLabel>
+                  <CustomTextField
+                    id="description"
+                    value={localForm.description}
+                    onChange={handleChange}
+                    error={Boolean(errors.description)}
+                    helperText={errors.description || ''}
+                    fullWidth
+                    disabled={isBatchEdit}
+                    sx={{ mb: 2 }}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
@@ -1701,7 +1751,10 @@ const FormSite = ({
                               </TableRow>
                             ) : (
                               filteredSiteDocumentList.map((doc, idx) => {
-                                const docInfo = documentlist.find((d) => d.id === doc.documents.id);
+                                const documentId = doc.documents?.id ?? doc.documentId;
+
+                                // Cari nama dokumen dari master document
+                                const docInfo = documentlist.find((d) => d.id === documentId);
 
                                 return (
                                   <TableRow key={doc.id + idx}>
@@ -1924,7 +1977,6 @@ const FormSite = ({
                       </Button>
                     </Box>
                   )}
-                  {/* hidden file input */}
                   <input
                     type="file"
                     accept="image/*"
@@ -1935,7 +1987,7 @@ const FormSite = ({
                   />
                 </Box>
                 {/* Map Link Field */}
-                <Box sx={{ mt: 4, maxWidth: 600, margin: '0', marginTop: '16px' }}>
+                <Box sx={{ mt: 4, margin: '0', marginTop: '16px' }}>
                   <CustomFormLabel htmlFor="map_link">Map Link (Google Maps)</CustomFormLabel>
                   <CustomTextField
                     id="map_link"

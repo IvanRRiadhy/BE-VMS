@@ -21,6 +21,7 @@ import {
   useMediaQuery,
   MobileStepper,
   Tooltip,
+  Paper,
 } from '@mui/material';
 import { Grid2 as Grid } from '@mui/material';
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
@@ -1056,8 +1057,7 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
     registered_site_id: registeredSite,
     flow: 'SubmitPraregister',
     is_self_registered: isSelfInvitation === true,
-    filled_by_relationship: 'Operator',
-    // }),
+    filled_by_relationship: 'Other',
     data_visitor: [
       {
         question_page: data.question_page?.map((section: any) => ({
@@ -1161,37 +1161,108 @@ const FormDialogPraregist: React.FC<FormDialogPraregistProps> = ({
         <RadioGroup
           value={isSelfInvitation === null ? '' : isSelfInvitation ? 'self' : 'other'}
           onChange={(e) => setIsSelfInvitation(e.target.value === 'self')}
-          row
         >
-          <FormControlLabel
-            value="self"
-            control={<Radio />}
-            label={
-              <Box display="flex" alignItems="center" gap={0.5}>
-                Self
-                <Tooltip title="This invitation is intended for yourself." arrow>
-                  <IconButton size="small">
-                    <InfoOutlined fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              </Box>
-            }
-          />
+          <Grid container spacing={2}>
+            {/* SELF */}
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2.5,
+                  borderRadius: 3,
+                  cursor: 'pointer',
+                  border: '2px solid',
+                  transition: 'all 0.25s ease',
+                  borderColor: isSelfInvitation === true ? 'primary.main' : 'divider',
+                  backgroundColor: isSelfInvitation === true ? 'primary.light' : 'background.paper',
+                  '&:hover': {
+                    transform: 'translateY(-3px)',
+                    boxShadow: 4,
+                  },
+                }}
+                onClick={() => setIsSelfInvitation(true)}
+              >
+                <FormControlLabel
+                  value="self"
+                  control={<Radio checked={isSelfInvitation === true} />}
+                  sx={{ width: '100%', m: 0, alignItems: 'flex-start' }}
+                  label={
+                    <Box ml={1}>
+                      <Box display="flex" alignItems="center" gap={1}>
+                        <Typography fontWeight={700} fontSize={18}>
+                          Self
+                        </Typography>
 
-          <FormControlLabel
-            value="other"
-            control={<Radio />}
-            label={
-              <Box display="flex" alignItems="center" gap={0.5}>
-                Other
-                <Tooltip title="This invitation is intended for another person or guest." arrow>
-                  <IconButton size="small">
-                    <InfoOutlined fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              </Box>
-            }
-          />
+                        <Tooltip title="This invitation is intended for yourself." arrow>
+                          <InfoOutlined
+                            fontSize="small"
+                            color="action"
+                            sx={{ cursor: 'pointer' }}
+                          />
+                        </Tooltip>
+                      </Box>
+
+                      <Typography variant="body2" color="text.secondary" mt={0.5}>
+                        Use this option if you are registering yourself.
+                      </Typography>
+                    </Box>
+                  }
+                />
+              </Paper>
+            </Grid>
+
+            {/* OTHER */}
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2.5,
+                  borderRadius: 3,
+                  cursor: 'pointer',
+                  border: '2px solid',
+                  transition: 'all 0.25s ease',
+                  borderColor: isSelfInvitation === false ? 'primary.main' : 'divider',
+                  backgroundColor:
+                    isSelfInvitation === false ? 'primary.light' : 'background.paper',
+                  '&:hover': {
+                    transform: 'translateY(-3px)',
+                    boxShadow: 4,
+                  },
+                }}
+                onClick={() => setIsSelfInvitation(false)}
+              >
+                <FormControlLabel
+                  value="other"
+                  control={<Radio checked={isSelfInvitation === false} />}
+                  sx={{ width: '100%', m: 0, alignItems: 'flex-start' }}
+                  label={
+                    <Box ml={1}>
+                      <Box display="flex" alignItems="center" gap={1}>
+                        <Typography fontWeight={700} fontSize={18}>
+                          Other
+                        </Typography>
+
+                        <Tooltip
+                          title="This invitation is intended for another person or guest."
+                          arrow
+                        >
+                          <InfoOutlined
+                            fontSize="small"
+                            color="action"
+                            sx={{ cursor: 'pointer' }}
+                          />
+                        </Tooltip>
+                      </Box>
+
+                      <Typography variant="body2" color="text.secondary" mt={0.5}>
+                        Use this option if you are creating an invitation for someone else.
+                      </Typography>
+                    </Box>
+                  }
+                />
+              </Paper>
+            </Grid>
+          </Grid>
         </RadioGroup>
 
         <Divider sx={{ my: 0.5 }} />

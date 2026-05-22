@@ -10,7 +10,6 @@ import {
 } from './models/Users';
 import axiosInstance from './interceptor';
 import { GetProfileResponse } from './models/profile';
-import { AnyAaaaRecord } from 'dns';
 
 export const login = async (body: LoginRequest): Promise<any> => {
   try {
@@ -34,7 +33,7 @@ export const refreshToken = async (body: RefreshTokenRequest): Promise<RefreshTo
   }
 };
 
-export const AuthVisitor = async (body: AuthVisitorRequest): Promise<AuthVisitorResponse> => {
+export const AuthVisitor = async (body: AuthVisitorRequest): Promise<any> => {
   try {
     const response = await axiosInstance.post(`/on-portal/VisitorRequest`, body, {
       headers: { 'Content-Type': 'application/json' },

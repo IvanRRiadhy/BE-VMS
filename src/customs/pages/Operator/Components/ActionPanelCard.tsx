@@ -32,6 +32,8 @@ interface Props {
   setOpenInvitationVisitor: (value: boolean) => void;
   setOpenReturnCard: (value: boolean) => void;
   setAccessIssuance: (value: boolean) => void;
+  connect: any;
+  disconnect: any;
 }
 
 const ButtonSkeleton = () => (
@@ -51,6 +53,8 @@ const ActionPanelCard: FC<Props> = ({
   setOpenInvitationVisitor,
   setOpenReturnCard,
   setAccessIssuance,
+  connect,
+  disconnect,
 }) => {
   const {
     canCheckin,
@@ -576,6 +580,44 @@ const ActionPanelCard: FC<Props> = ({
                     <Typography variant="h6" color="white">
                       Edit Form
                     </Typography>
+                  </Button>
+                </Grid>
+                <Grid size={{ xs: 6, lg: 6 }}>
+                  <Button
+                    onClick={connect}
+                    sx={{
+                      // background: '#5f5f5f',
+                      // '&:hover': { backgroundColor: '#5f5f5f' },
+                      marginLeft: 0,
+                      textTransform: 'none',
+                      fontWeight: 600,
+                      px: 2.5,
+                      zIndex: 999,
+                      width: '100%',
+                      height: '50px',
+                    }}
+                    variant="contained"
+                  >
+                    Connect
+                  </Button>
+                </Grid>
+                <Grid size={{ xs: 6, lg: 6 }}>
+                  <Button
+                    onClick={disconnect}
+                    sx={{
+                      // background: '#5f5f5f',
+                      // '&:hover': { backgroundColor: '#5f5f5f' },
+                      marginLeft: 0,
+                      textTransform: 'none',
+                      fontWeight: 600,
+                      px: 2.5,
+                      zIndex: 999,
+                      width: '100%',
+                      height: '50px',
+                    }}
+                    variant="contained"
+                  >
+                    Disconnect
                   </Button>
                 </Grid>
               </Grid>

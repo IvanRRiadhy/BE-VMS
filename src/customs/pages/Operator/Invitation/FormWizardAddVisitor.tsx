@@ -1036,50 +1036,139 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
   const handleSteps = (step: number) => {
     const showVTListSkeleton = vtLoading;
-    if (step === -1 && enableInvitationTypeStep) {
-      return (
-        <Box>
-          <CustomFormLabel sx={{ mt: 0 }}>
-            Are you filling this invitation for yourself or someone else?
-          </CustomFormLabel>
-          <RadioGroup
-            value={isSelfInvitation === null ? '' : isSelfInvitation ? 'self' : 'other'}
-            onChange={(e) => setIsSelfInvitation(e.target.value === 'self')}
-            row
-          >
-            <FormControlLabel
-              value="self"
-              control={<Radio />}
-              label={
-                <Box display="flex" alignItems="center" gap={0.5}>
-                  Self
-                  <Tooltip title="This invitation is intended for yourself." arrow>
-                    <IconButton size="small">
-                      <InfoOutlined fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              }
-            />
-
-            <FormControlLabel
-              value="other"
-              control={<Radio />}
-              label={
-                <Box display="flex" alignItems="center" gap={0.5}>
-                  Other
-                  <Tooltip title="This invitation is intended for another person or guest." arrow>
-                    <IconButton size="small">
-                      <InfoOutlined fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              }
-            />
-          </RadioGroup>
-        </Box>
-      );
-    } else if (step == 0) {
+   if (step === -1 && enableInvitationTypeStep) {
+     return (
+       <Box
+         sx={{
+           p: 3,
+           borderRadius: 4,
+           background: (theme) =>
+             theme.palette.mode === 'dark'
+               ? 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)'
+               : 'linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%)',
+           border: '1px solid',
+           borderColor: 'divider',
+         }}
+       >
+         <Box mb={3}>
+           <Typography variant="h5" fontWeight={700}>
+             Are you filling this invitation for yourself or someone else?
+           </Typography>
+ 
+           <Typography variant="body2" color="text.secondary" mt={1}>
+             Select whether you are creating the invitation for yourself or for someone else.
+           </Typography>
+         </Box>
+ 
+         <RadioGroup
+           value={isSelfInvitation === null ? '' : isSelfInvitation ? 'self' : 'other'}
+           onChange={(e) => setIsSelfInvitation(e.target.value === 'self')}
+         >
+           <Grid container spacing={2}>
+             {/* SELF */}
+             <Grid size={{ xs: 12, md: 6 }}>
+               <Paper
+                 elevation={0}
+                 sx={{
+                   p: 2.5,
+                   borderRadius: 3,
+                   cursor: 'pointer',
+                   border: '2px solid',
+                   transition: 'all 0.25s ease',
+                   borderColor: isSelfInvitation === true ? 'primary.main' : 'divider',
+                   backgroundColor: isSelfInvitation === true ? 'primary.light' : 'background.paper',
+                   '&:hover': {
+                     transform: 'translateY(-3px)',
+                     boxShadow: 4,
+                   },
+                 }}
+                 onClick={() => setIsSelfInvitation(true)}
+               >
+                 <FormControlLabel
+                   value="self"
+                   control={<Radio checked={isSelfInvitation === true} />}
+                   sx={{ width: '100%', m: 0, alignItems: 'flex-start' }}
+                   label={
+                     <Box ml={1}>
+                       <Box display="flex" alignItems="center" gap={1}>
+                         <Typography fontWeight={700} fontSize={18}>
+                           Self
+                         </Typography>
+ 
+                         <Tooltip title="This invitation is intended for yourself." arrow>
+                           <InfoOutlined
+                             fontSize="small"
+                             color="action"
+                             sx={{ cursor: 'pointer' }}
+                           />
+                         </Tooltip>
+                       </Box>
+ 
+                       <Typography variant="body2" color="text.secondary" mt={0.5}>
+                         Use this option if you are registering yourself.
+                       </Typography>
+                     </Box>
+                   }
+                 />
+               </Paper>
+             </Grid>
+ 
+             {/* OTHER */}
+             <Grid size={{ xs: 12, md: 6 }}>
+               <Paper
+                 elevation={0}
+                 sx={{
+                   p: 2.5,
+                   borderRadius: 3,
+                   cursor: 'pointer',
+                   border: '2px solid',
+                   transition: 'all 0.25s ease',
+                   borderColor: isSelfInvitation === false ? 'primary.main' : 'divider',
+                   backgroundColor:
+                     isSelfInvitation === false ? 'primary.light' : 'background.paper',
+                   '&:hover': {
+                     transform: 'translateY(-3px)',
+                     boxShadow: 4,
+                   },
+                 }}
+                 onClick={() => setIsSelfInvitation(false)}
+               >
+                 <FormControlLabel
+                   value="other"
+                   control={<Radio checked={isSelfInvitation === false} />}
+                   sx={{ width: '100%', m: 0, alignItems: 'flex-start' }}
+                   label={
+                     <Box ml={1}>
+                       <Box display="flex" alignItems="center" gap={1}>
+                         <Typography fontWeight={700} fontSize={18}>
+                           Other
+                         </Typography>
+ 
+                         <Tooltip
+                           title="This invitation is intended for another person or guest."
+                           arrow
+                         >
+                           <InfoOutlined
+                             fontSize="small"
+                             color="action"
+                             sx={{ cursor: 'pointer' }}
+                           />
+                         </Tooltip>
+                       </Box>
+ 
+                       <Typography variant="body2" color="text.secondary" mt={0.5}>
+                         Use this option if you are creating an invitation for someone else.
+                       </Typography>
+                     </Box>
+                   }
+                 />
+               </Paper>
+             </Grid>
+           </Grid>
+         </RadioGroup>
+       </Box>
+     );
+   } else if (step == 0) {
       return (
         <Box>
           <Grid container spacing={2}>
@@ -2577,6 +2666,25 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     Record<number, Record<number, string>>
   >({});
 
+  const dedupeTree = (nodes: any[]) => {
+    const visited = new Set();
+
+    const processNode = (node: any): any => {
+      if (visited.has(node.id)) {
+        return null;
+      }
+
+      visited.add(node.id);
+
+      return {
+        ...node,
+        children: (node.children || []).map(processNode).filter(Boolean),
+      };
+    };
+
+    return nodes.map(processNode).filter(Boolean);
+  };
+
   const renderDetailRows = (
     details: FormVisitor[] | any,
     onChange: (index: number, field: keyof FormVisitor, value: any) => void,
@@ -2591,21 +2699,40 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       );
     }
 
+    const handleSitePlaceChange = (idx: number, field: keyof FormVisitor, value: any) => {
+      onChange(idx, field, value);
+    };
+
     const visibilityMap: any = getVisibilityMap(details);
-    const filteredDetails = details.filter((item, i) => {
+    const filteredDetails = details.filter((item) => {
+      const originalIndex = details.findIndex((d) => d.id === item.id);
       const remark = (item.remarks || '').toLowerCase();
       const visible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
 
       if (!visible && item.answer_text) {
-        onChange(i, 'answer_text', '');
+        onChange(originalIndex, 'answer_text', null);
       }
 
       return visible;
     });
 
-    const handleSitePlaceChange = (idx: number, field: keyof FormVisitor, value: any) => {
-      onChange(idx, field, value);
-    };
+    const employeeIndex = filteredDetails.findIndex(
+      (item) => (item.remarks || '').toLowerCase() === 'employee',
+    );
+
+    const isEmployeeIndex = filteredDetails.findIndex(
+      (item) => (item.remarks || '').toLowerCase() === 'is_employee',
+    );
+
+    if (employeeIndex !== -1 && isEmployeeIndex !== -1) {
+      const [employeeItem] = filteredDetails.splice(employeeIndex, 1);
+
+      const newIsEmployeeIndex = filteredDetails.findIndex(
+        (item) => (item.remarks || '').toLowerCase() === 'is_employee',
+      );
+
+      filteredDetails.splice(newIsEmployeeIndex + 1, 0, employeeItem);
+    }
 
     const startField = details.find(
       (f) => (f.remarks || '').toLowerCase() === 'visitor_period_start',
@@ -2613,27 +2740,39 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
     const startDate = startField?.answer_datetime ? dayjs(startField.answer_datetime) : null;
 
-    return filteredDetails.map((item: any, index: any) => {
-      const key = `${activeStep - 1}:${item.id}`;
+    return filteredDetails.map((item) => {
+      // const key = `${activeStep - 1}:${item.id}`;
+      const originalIndex = details.findIndex((d) => d.id === item.id);
+      const fieldKey = item.custom_field_id || item.id || `${item.remarks}-${originalIndex}`;
+
+      const key = `${activeStep - 1}:${fieldKey}`;
+
       const previewSrc = getPreviewSrc(key, (item as any).answer_file);
       const shownName = uploadNames[key] || fileNameFromAnswer((item as any).answer_file);
       const errorMessage = fieldErrors[key];
+
       const remark = (item.remarks || '').toLowerCase();
       if (remark === 'visitor_period_end') {
         return null;
       }
       const isVisitorPeriodPair =
         remark === 'visitor_period_start' &&
-        filteredDetails[index + 1] &&
-        (filteredDetails[index + 1].remarks || '').toLowerCase() === 'visitor_period_end';
+        filteredDetails[originalIndex + 1] &&
+        (filteredDetails[originalIndex + 1].remarks || '').toLowerCase() === 'visitor_period_end';
       return (
         <TableRow key={key}>
           <TableCell>
             {!isVisitorPeriodPair && (
               <Box display="flex" alignItems="center" gap={0.5} mb={1}>
-                <CustomFormLabel sx={{ mb: 1, mt: 0 }} required={item.mandatory === true}>
+                <Typography variant="subtitle2" fontWeight={600}>
                   {item.long_display_text}
-                </CustomFormLabel>
+                  {item.mandatory && (
+                    <Typography component="span" color="error" sx={{ ml: 0.5 }}>
+                      *
+                    </Typography>
+                  )}
+                </Typography>
+
                 {item.remarks === 'host' && (
                   <Tooltip
                     title="The host is the person in charge responsible for this visitor"
@@ -2698,16 +2837,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           // 'Others',
                         ]}
                         value={item.answer_text || ''}
-                        onChange={(e, newValue) => {
-                          if (newValue === 'Others') {
-                            onChange(index, 'answer_text', '');
-                          } else {
-                            onChange(index, 'answer_text', newValue || '');
-                          }
-                        }}
-                        onInputChange={(e, newInputValue) => {
-                          onChange(index, 'answer_text', newInputValue);
-                          if (newInputValue) clearFieldError(key);
+                        onInputChange={(event, newValue) => {
+                          onChange(originalIndex, 'answer_text', newValue || '');
+                          if (newValue) clearFieldError(key);
                         }}
                         renderInput={(params) => (
                           <CustomTextField
@@ -2724,9 +2856,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   return (
                     <CustomTextField
                       size="small"
-                      value={item.answer_text}
+                      value={item.answer_text || ''}
                       onChange={(e) => {
-                        onChange(index, 'answer_text', e.target.value);
+                        onChange(originalIndex, 'answer_text', e.target.value);
                         if (e.target.value) clearFieldError(key);
                       }}
                       placeholder={
@@ -2752,13 +2884,13 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       size="small"
                       value={item.answer_text}
                       onChange={(e) => {
-                        onChange(index, 'answer_text', e.target.value);
+                        onChange(originalIndex, 'answer_text', e.target.value);
                         if (e.target.value) clearFieldError(key);
                       }}
-                      placeholder="Enter your number"
+                      placeholder="Enter number"
                       fullWidth
-                      error={!!errors[item.remarks]}
-                      helperText={errors[item.remarks]}
+                      error={!!errorMessage}
+                      helperText={errorMessage}
                     />
                   );
                 case 2: // Email
@@ -2766,9 +2898,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     <CustomTextField
                       type="email"
                       size="small"
-                      value={item.answer_text ?? ''}
+                      value={item.answer_text}
                       onChange={(e) => {
-                        onChange(index, 'answer_text', e.target.value);
+                        onChange(originalIndex, 'answer_text', e.target.value);
                         if (e.target.value) clearFieldError(key);
                       }}
                       placeholder={item.remarks === 'email' ? '' : ''}
@@ -2777,9 +2909,13 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       helperText={errorMessage}
                     />
                   );
-
                 case 3: {
-                  let options: { value: string; name: string; disabled?: boolean }[] = [];
+                  let options: {
+                    value: string;
+                    name: string;
+                    disabled?: boolean | undefined;
+                    helperText?: string;
+                  }[] = [];
 
                   if (item.remarks === 'host') {
                     options = employee.map((emp: any) => ({
@@ -2796,6 +2932,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     options = sites.map((site: any) => ({
                       value: site.id,
                       name: site.name,
+                      // disabled: site.can_visited === false,
                       disabled: false,
                       can_visited: site.can_visited,
                       helperText: site.can_visited === false ? 'This site cannot be visited.' : '',
@@ -2813,10 +2950,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           size="small"
                           options={options}
                           getOptionLabel={(option) => option.name}
+                          getOptionDisabled={(option) => option.disabled === true}
                           inputValue={
                             isSelfOnly
-                              ? selfOnlyInputValuesMap[selfOnlyVisitorIdx]?.[index] || ''
-                              : inputValues[index] || ''
+                              ? selfOnlyInputValuesMap[selfOnlyVisitorIdx]?.[originalIndex] || ''
+                              : inputValues[originalIndex] || ''
                           }
                           onInputChange={(_, newInputValue, reason) => {
                             if (reason !== 'input') return;
@@ -2826,13 +2964,13 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 ...prev,
                                 [selfOnlyVisitorIdx]: {
                                   ...(prev[selfOnlyVisitorIdx] || {}),
-                                  [index]: newInputValue,
+                                  [originalIndex]: newInputValue,
                                 },
                               }));
                             } else {
                               setInputValues((prev: any) => ({
                                 ...prev,
-                                [index]: newInputValue,
+                                [originalIndex]: newInputValue,
                               }));
                             }
                           }}
@@ -2845,8 +2983,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           noOptionsText={
                             (
                               (isSelfOnly
-                                ? selfOnlyInputValuesMap[selfOnlyVisitorIdx]?.[index]
-                                : inputValues[index]) || ''
+                                ? selfOnlyInputValuesMap[selfOnlyVisitorIdx]?.[originalIndex]
+                                : inputValues[originalIndex]) || ''
                             ).length < 3
                               ? 'Enter at least 3 characters to search'
                               : 'Not found'
@@ -2858,11 +2996,16 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             ).includes(opt.value),
                           )}
                           onChange={(_, newValues) => {
-                            const parentIds = newValues.map((v) => v.value);
+                            // Pastikan hanya site yang dapat dikunjungi yang diproses
+                            const validValues = newValues.filter((v) => v.disabled !== true);
 
-                            const trees = parentIds.flatMap((pid) =>
+                            const parentIds = validValues.map((v) => v.value);
+
+                            const rawTrees = parentIds.flatMap((pid) =>
                               buildSiteTreeWithParent(sites, pid),
                             );
+
+                            const uniqueTrees = dedupeTree(rawTrees);
 
                             if (isSelfOnly) {
                               setSelfOnlySelectedSiteParentIdsMap((prev: any) => ({
@@ -2874,23 +3017,23 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 ...prev,
                                 [selfOnlyVisitorIdx]: {
                                   ...(prev[selfOnlyVisitorIdx] || {}),
-                                  [index]: '',
+                                  [originalIndex]: '',
                                 },
                               }));
 
                               setSelfOnlySiteTreeMap((prev: any) => ({
                                 ...prev,
-                                [selfOnlyVisitorIdx]: trees,
+                                [selfOnlyVisitorIdx]: uniqueTrees,
                               }));
                             } else {
                               setSelectedSiteParentIds(parentIds);
 
                               setInputValues((prev: any) => ({
                                 ...prev,
-                                [index]: '',
+                                [originalIndex]: '',
                               }));
 
-                              setSiteTree(trees);
+                              setSiteTree(uniqueTrees);
                             }
                           }}
                           renderInput={(params) => (
@@ -2911,7 +3054,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                               ? selfOnlySiteTreeMap[selfOnlyVisitorIdx] || []
                               : siteTree
                             ).map((node) =>
-                              renderTree(node, index, handleSitePlaceChange, isSelfOnly),
+                              renderTree(node, originalIndex, handleSitePlaceChange, isSelfOnly),
                             )}
                           </SimpleTreeView>
                         )}
@@ -2921,7 +3064,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   if (item.remarks === 'host') {
                     const selectedSiteIds =
                       details.find((d: any) => d.remarks === 'site_place')?.answer_text || [];
-
                     const siteHostIds = [
                       ...new Set(
                         sites
@@ -2940,7 +3082,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         group: 'Host Based on Destination',
                       }));
 
-                    // semua host lainnya
                     const otherHosts = employee
                       .filter((emp: any) => !siteHostIds.includes(emp.id))
                       .map((emp: any) => ({
@@ -2958,11 +3099,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         groupBy={(option) => option.group}
                         getOptionLabel={(option) => option.name}
                         isOptionEqualToValue={(option, value) => option.value === value.value}
-                        inputValue={inputValues[index] || ''}
+                        inputValue={inputValues[originalIndex] || ''}
                         onInputChange={(_, newInputValue) => {
                           setInputValues((prev: any) => ({
                             ...prev,
-                            [index]: newInputValue,
+                            [originalIndex]: newInputValue,
                           }));
                         }}
                         filterOptions={(opts, state) => {
@@ -2978,7 +3119,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         onChange={(_, newValue: any) => {
                           const selectedValue = newValue?.value || '';
 
-                          onChange(index, 'answer_text', selectedValue);
+                          onChange(originalIndex, 'answer_text', selectedValue);
 
                           if (selectedValue) {
                             clearFieldError(key);
@@ -3026,17 +3167,16 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       />
                     );
                   }
-
                   if (item.remarks === 'employee') {
                     return (
                       <Autocomplete
                         size="small"
                         options={options}
                         getOptionLabel={(option) => option.name}
-                        inputValue={inputValues[index] || ''}
+                        inputValue={inputValues[originalIndex] || ''}
                         getOptionDisabled={(option) => option.disabled || false}
                         onInputChange={(_, newInputValue) =>
-                          setInputValues((prev) => ({ ...prev, [index]: newInputValue }))
+                          setInputValues((prev) => ({ ...prev, [originalIndex]: newInputValue }))
                         }
                         filterOptions={(opts, state) => {
                           if (state.inputValue.length < 3) return [];
@@ -3045,18 +3185,18 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           );
                         }}
                         noOptionsText={
-                          (inputValues[index] || '').length < 3
+                          (inputValues[originalIndex] || '').length < 3
                             ? 'Enter at least 3 characters to search'
                             : 'Not found'
                         }
                         value={options.find((opt) => opt.value === item.answer_text) || null}
                         onChange={(_, newValue: any) => {
                           if (!newValue) {
-                            onChange(index, 'answer_text', '');
+                            onChange(originalIndex, 'answer_text', null);
                             return;
                           }
                           const selected = newValue;
-                          onChange(index, 'answer_text', selected.value);
+                          onChange(originalIndex, 'answer_text', selected.value);
                           setSectionsData((prev) =>
                             prev.map((s, sIdx) =>
                               sIdx !== activeStep - 1
@@ -3118,7 +3258,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         value={item.answer_text || ''}
                         onChange={(e) => {
                           const selectedRole = e.target.value;
-                          onChange(index, 'answer_text', selectedRole);
+                          onChange(originalIndex, 'answer_text', selectedRole);
                           if (selectedRole) {
                             clearFieldError(key);
                           }
@@ -3141,10 +3281,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       size="small"
                       options={options}
                       getOptionLabel={(option) => option.name}
-                      inputValue={inputValues[index] || ''}
+                      inputValue={inputValues[originalIndex] || ''}
                       getOptionDisabled={(option) => option.disabled || false}
                       onInputChange={(_, newInputValue) =>
-                        setInputValues((prev) => ({ ...prev, [index]: newInputValue }))
+                        setInputValues((prev) => ({ ...prev, [originalIndex]: newInputValue }))
                       }
                       filterOptions={(opts, state) => {
                         if (state.inputValue.length < 3) return [];
@@ -3153,14 +3293,14 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         );
                       }}
                       noOptionsText={
-                        (inputValues[index] || '').length < 3
+                        (inputValues[originalIndex] || '').length < 3
                           ? 'Enter at least 3 characters to search'
                           : 'Not found'
                       }
                       value={options.find((opt) => opt.value === item.answer_text) || null}
                       onChange={(_, newValue) => {
                         const selectedValue = newValue ? newValue.value : '';
-                        onChange(index, 'answer_text', selectedValue);
+                        onChange(originalIndex, 'answer_text', selectedValue);
                         if (selectedValue) clearFieldError(key);
                       }}
                       renderInput={(params) => (
@@ -3182,7 +3322,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         value={startTime}
                         ampm={false}
                         onChange={setStartTime}
-                        format="dddd, DD  MMMMM YYYY, HH:mm"
+                        format="dddd, DD  MMMM YYYY, HH:mm"
                         viewRenderers={{
                           hours: renderTimeViewClock,
                           minutes: renderTimeViewClock,
@@ -3203,13 +3343,13 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         <RadioGroup
                           value={String(item.answer_text)}
                           onChange={(e) => {
-                            onChange(index, 'answer_text', e.target.value);
+                            onChange(originalIndex, 'answer_text', e.target.value);
                             if (e.target.value) clearFieldError(key);
                           }}
                           sx={{ flexDirection: 'row', flexWrap: 'wrap', gap: 1 }}
                         >
                           {(item.multiple_option_fields || [])
-
+                            // .sort((a: any, b: any) => Number(a.value) - Number(b.value))
                             .sort((a: any, b: any) => {
                               if (item.remarks === 'is_driving') {
                                 const order: Record<string, number> = { true: 0, false: 1 };
@@ -3260,8 +3400,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                       const newValue = e.target.checked
                                         ? [...answerArray, val]
                                         : answerArray.filter((v: string) => v !== val);
-                                      // console.log(newValue);
-                                      onChange(index, 'answer_text', newValue);
+                                      onChange(originalIndex, 'answer_text', newValue);
+                                      if (newValue.length > 0) {
+                                        clearFieldError(key);
+                                      }
                                     }}
                                   />
                                 }
@@ -3279,6 +3421,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       )}
                     </>
                   );
+
                 case 8: // TimePicker
                   return (
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -3286,15 +3429,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         value={item.answer_datetime ? dayjs(item.answer_datetime, 'HH:mm') : null}
                         onChange={(newValue) => {
                           const utcTime = newValue?.utc().format('HH:mm');
-                          onChange(index, 'answer_datetime', utcTime);
+                          onChange(originalIndex, 'answer_datetime', utcTime);
                         }}
                         slotProps={{
                           textField: {
                             size: 'small',
                             fullWidth: true,
-                          },
-                          popper: {
-                            container: containerRef.current,
                           },
                         }}
                       />
@@ -3305,12 +3445,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   const remark = (item.remarks || '').toLowerCase();
                   if (
                     remark === 'visitor_period_start' &&
-                    filteredDetails[index + 1] &&
-                    (filteredDetails[index + 1].remarks || '').toLowerCase() ===
+                    filteredDetails[originalIndex + 1] &&
+                    (filteredDetails[originalIndex + 1].remarks || '').toLowerCase() ===
                       'visitor_period_end'
                   ) {
                     const startItem = item;
-                    const endItem = filteredDetails[index + 1];
+                    const endItem = filteredDetails[originalIndex + 1];
 
                     const startIndex = details.findIndex((d) => d.id === startItem.id);
                     const endIndex = details.findIndex((d) => d.id === endItem.id);
@@ -3360,6 +3500,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                     const utc = newValue.utc().format();
                                     onChange(startIndex, 'answer_datetime', utc);
                                     clearFieldError(startKey);
+
                                     if (
                                       endItem.answer_datetime &&
                                       dayjs(endItem.answer_datetime).isBefore(newValue)
@@ -3375,6 +3516,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   seconds: renderTimeViewClock,
                                 }}
                                 slotProps={{
+                                  actionBar: {
+                                    actions: ['clear', 'accept'],
+                                  },
                                   textField: {
                                     fullWidth: true,
                                     error: !!startError,
@@ -3461,7 +3605,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         onChange={(newValue) => {
                           if (newValue) {
                             const utc = newValue.utc().format();
-                            onChange(index, 'answer_datetime', utc);
+                            onChange(originalIndex, 'answer_datetime', utc);
                             clearFieldError(key);
                           }
                         }}
@@ -3482,7 +3626,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     </LocalizationProvider>
                   );
                 }
-                case 10:
+
+                case 10: // TakePicture
                   return (
                     <Box>
                       <Box
@@ -3497,6 +3642,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           pointerEvents: 'auto',
                           opacity: 1,
                         }}
+                        // onClick={() => !isBatchEdit && fileInputRef.current?.click()}
                       >
                         <Box
                           sx={{
@@ -3518,7 +3664,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             }}
                           >
                             <Typography
-                              variant="subtitle1"
+                              variant="h6"
                               component="span"
                               color="primary"
                               sx={{ fontWeight: 600 }}
@@ -3537,56 +3683,58 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             handleFileChangeForField(
                               e as React.ChangeEvent<HTMLInputElement>,
                               (url) => {
-                                onChange(index, 'answer_file', url);
+                                onChange(originalIndex, 'answer_file', url);
                                 if (url) clearFieldError(key);
                               },
                               key,
                             )
                           }
                         />
-                        {(previewSrc || shownName) && (
-                          <Box
-                            mt={1}
-                            display="flex"
-                            alignItems="center"
-                            gap={1}
-                            justifyContent={'center'}
-                          >
-                            {previewSrc ? (
-                              <Box display={'flex'} flexDirection={'column'} alignItems={'center'}>
-                                <img
-                                  src={previewSrc}
-                                  alt="preview"
-                                  style={{
-                                    width: 350,
-                                    height: 200,
-                                    objectFit: 'cover',
-                                    borderRadius: 8,
-                                  }}
-                                />
-                                <Button
-                                  color="error"
-                                  size="small"
-                                  variant="outlined"
-                                  sx={{ mt: 2, minWidth: 120 }}
-                                  onClick={() =>
-                                    handleRemoveFileForField(
-                                      (item as any).answer_file,
-                                      (url) => onChange(index, 'answer_file', url),
-                                      key,
-                                    )
-                                  }
-                                  startIcon={<IconTrash />}
-                                >
-                                  Remove
-                                </Button>
-                              </Box>
-                            ) : (
-                              <></>
-                            )}
-                          </Box>
-                        )}
+                        <br />
                       </Box>
+
+                      {(previewSrc || shownName) && (
+                        <Box
+                          mt={1}
+                          display="flex"
+                          alignItems="center"
+                          gap={1}
+                          justifyContent={'center'}
+                        >
+                          {previewSrc ? (
+                            <Box display={'flex'} flexDirection={'column'} alignItems={'center'}>
+                              <img
+                                src={previewSrc}
+                                alt="preview"
+                                style={{
+                                  width: 350,
+                                  height: 200,
+                                  objectFit: 'cover',
+                                  borderRadius: 8,
+                                }}
+                              />
+                              <Button
+                                color="error"
+                                size="small"
+                                variant="outlined"
+                                sx={{ mt: 2, minWidth: 120 }}
+                                onClick={() =>
+                                  handleRemoveFileForField(
+                                    (item as any).answer_file,
+                                    (url) => onChange(originalIndex, 'answer_file', url),
+                                    key,
+                                  )
+                                }
+                                startIcon={<IconTrash />}
+                              >
+                                Remove
+                              </Button>
+                            </Box>
+                          ) : (
+                            <></>
+                          )}
+                        </Box>
+                      )}
 
                       {errorMessage && (
                         <Typography color="error" variant="caption" display="block" mt={1}>
@@ -3599,7 +3747,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         onClose={() => setOpenCamera(false)}
                         maxWidth="md"
                         fullWidth
-                        disablePortal
                       >
                         <Box sx={{ p: 3 }}>
                           <Box>
@@ -3667,25 +3814,25 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                               onClick={() =>
                                 handleRemoveFileForField(
                                   (item as any).answer_file,
-                                  (url) => onChange(index, 'answer_file', url),
+                                  (url) => onChange(originalIndex, 'answer_file', url),
                                   key,
                                 )
                               }
-                              startIcon={<IconTrash />}
                               color="error"
+                              startIcon={<IconTrash />}
                               sx={{ mr: 1 }}
                             >
                               Clear Foto
                             </MuiButton>
                             <MuiButton
                               variant="contained"
-                              startIcon={<IconCamera />}
                               onClick={() =>
-                                handleCaptureForField(
-                                  (url) => onChange(index, 'answer_file', url),
-                                  key,
-                                )
+                                handleCaptureForField((url) => {
+                                  onChange(originalIndex, 'answer_file', url);
+                                  if (url) clearFieldError(key);
+                                }, key)
                               }
+                              startIcon={<IconCamera />}
                             >
                               Take Foto
                             </MuiButton>
@@ -3703,6 +3850,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   );
 
                 case 11: {
+                  // FileUpload
                   return (
                     <Box>
                       <Box
@@ -3728,14 +3876,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           Supports: JPG, JPEG, PNG, up to
                           <span style={{ fontWeight: 'semibold' }}> 1 Mb</span>
                         </Typography>
+                        {/*preview  */}
                         {(previewSrc || shownName) && (
                           <Box
                             mt={2}
-                            sx={{
-                              display: 'flex',
-                              flexDirection: 'column',
-                              alignItems: 'center',
-                            }}
+                            sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
                           >
                             {previewSrc ? (
                               <>
@@ -3759,7 +3904,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   onClick={() =>
                                     handleRemoveFileForField(
                                       (item as any).answer_file,
-                                      (url) => onChange(index, 'answer_file', url),
+                                      (url) => onChange(originalIndex, 'answer_file', url),
                                       key,
                                     )
                                   }
@@ -3775,18 +3920,16 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             )}
                           </Box>
                         )}
+
                         <input
                           id={`file-${key}`}
                           type="file"
                           accept="*"
                           hidden
                           ref={fileInputRef}
-                          // onChange={(e) => {
-                          //   handlePDFUploadFor(index, onChange)(e);
-                          //   // reenterFullscreen();
-                          // }}
+                          // onChange={handlePDFUploadFor(originalIndex, onChange)}
                           onChange={(e) =>
-                            handlePDFUploadFor(index, (idx, field, url) => {
+                            handlePDFUploadFor(originalIndex, (idx, field, url) => {
                               onChange(idx, field, url);
                               if (url) clearFieldError(key);
                             })(e)
@@ -3824,27 +3967,31 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         onClick={() => fileInputRef.current?.click()}
                       >
                         <CloudUploadIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
-                        <Typography variant="h6" sx={{ mt: 1 }}>
+                        <Typography variant="h6" sx={{ mt: 1, mb: 2 }}>
                           Upload File
                         </Typography>
 
-                        <Typography variant="caption" color="textSecondary">
-                          Supports: JPG, JPEG, PNG, Up to
-                          <span style={{ fontWeight: '700' }}> 1 MB</span>
-                        </Typography>
-
-                        <Typography
-                          variant="subtitle1"
-                          component="span"
-                          color="primary"
-                          sx={{ fontWeight: 600, ml: 1, cursor: 'pointer' }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setOpenCamera(true);
-                          }}
+                        <Box
+                          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                         >
-                          Use Camera
-                        </Typography>
+                          <Typography variant="body1" color="textSecondary">
+                            Supports: JPG, PNG, JPEG, Up to
+                            <span style={{ fontWeight: '700' }}> 1 Mb</span>
+                          </Typography>
+
+                          <Typography
+                            variant="h6"
+                            component="span"
+                            color="primary"
+                            sx={{ fontWeight: 600, ml: 1, cursor: 'pointer' }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenCamera(true);
+                            }}
+                          >
+                            Use Camera
+                          </Typography>
+                        </Box>
 
                         <input
                           id={`file-${key}`}
@@ -3852,26 +3999,28 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           accept="*"
                           hidden
                           ref={fileInputRef}
+                          // onChange={(e) =>
+                          //   handleFileChangeForField(
+                          //     e as React.ChangeEvent<HTMLInputElement>,
+                          //     (url) => onChange(index, 'answer_file', url),
+                          //     key,
+                          //   )
+                          // }
                           onChange={(e) =>
                             handleFileChangeForField(
                               e as React.ChangeEvent<HTMLInputElement>,
                               (url) => {
-                                onChange(index, 'answer_file', url);
+                                onChange(originalIndex, 'answer_file', url);
                                 if (url) clearFieldError(key);
                               },
                               key,
-                              // fullscreenHandle,
                             )
                           }
                         />
                         {(previewSrc || shownName) && (
                           <Box
                             mt={2}
-                            sx={{
-                              display: 'flex',
-                              flexDirection: 'column',
-                              alignItems: 'center',
-                            }}
+                            sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
                           >
                             {previewSrc ? (
                               <>
@@ -3895,7 +4044,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                   onClick={() =>
                                     handleRemoveFileForField(
                                       (item as any).answer_file,
-                                      (url) => onChange(index, 'answer_file', url),
+                                      (url) => onChange(originalIndex, 'answer_file', url),
                                       key,
                                     )
                                   }
@@ -3928,9 +4077,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         onClose={() => setOpenCamera(false)}
                         maxWidth="md"
                         fullWidth
-                        container={containerRef.current}
                       >
-                        <Box sx={{ p: 3 }}>
+                        <Box sx={{ p: 2 }}>
                           <Box
                             display={'flex'}
                             justifyContent={'space-between'}
@@ -3995,11 +4143,11 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           <Divider sx={{ my: 2 }} />
 
                           <Box sx={{ textAlign: 'right' }}>
-                            <MuiButton
+                            <Button
                               onClick={() =>
                                 handleRemoveFileForField(
                                   (item as any).answer_file,
-                                  (url) => onChange(index, 'answer_file', url),
+                                  (url) => onChange(originalIndex, 'answer_file', url),
                                   key,
                                 )
                               }
@@ -4008,24 +4156,26 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                               startIcon={<IconTrash />}
                             >
                               Clear Foto
-                            </MuiButton>
-                            <MuiButton
+                            </Button>
+                            <Button
                               variant="contained"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleCaptureForField((url) => onChange(index, 'answer_file', url));
+                                handleCaptureForField((url) =>
+                                  onChange(originalIndex, 'answer_file', url),
+                                );
                               }}
                               startIcon={<IconCamera />}
                             >
                               Take Foto
-                            </MuiButton>
-                            <MuiButton
+                            </Button>
+                            <Button
                               startIcon={<IconDeviceFloppy />}
                               onClick={() => setOpenCamera(false)}
                               sx={{ ml: 1 }}
                             >
                               Submit
-                            </MuiButton>
+                            </Button>
                           </Box>
                         </Box>
                       </Dialog>
@@ -4037,11 +4187,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                     <CustomTextField
                       size="small"
                       value={item.long_display_text}
-                      onChange={(e) => onChange(index, 'long_display_text', e.target.value)}
+                      onChange={(e) => onChange(originalIndex, 'long_display_text', e.target.value)}
                       placeholder="Enter value"
                       fullWidth
-                      error={!!errorMessage}
-                      helperText={errorMessage}
                     />
                   );
               }

@@ -99,6 +99,7 @@ type DynamicTableProps<
   onBlacklist?: (row: T) => void;
   isHaveVisitor?: boolean;
   isButtonRegisteredSite?: boolean;
+  isCopy?: boolean;
   isButtonGiveAccess?: boolean;
   stickyVisitorCount?: number;
   isHaveSearch?: boolean;
@@ -174,6 +175,7 @@ type DynamicTableProps<
   isBlacklistPage?: boolean;
   onNavigatePage?: any;
   onDuplicate?: (row: T) => void;
+  onCopy?: (row: T) => void;
   onCopyLink?: (row: T) => void;
   onDetailLink?: (row: T) => void;
   onSettingOperator?: (row: T) => void;
@@ -239,9 +241,11 @@ function DynamicTableBase<
   isHaveGender = false,
   isButtonRegisteredSite = false,
   isButtonGiveAccess = false,
+  isCopy = false,
   isAccessControlType,
   isHaveVip = false,
   isHaveAddData = false,
+  onCopy,
   isHaveHeader = false,
   isHaveBooleanSwitch = false,
   isHavePermission = false,
@@ -1617,6 +1621,7 @@ function DynamicTableBase<
                   isSiteSpaceType={isSiteSpaceType}
                   isHaveImage={isHaveImage}
                   imageFields={imageFields}
+                  isCopy={isCopy}
                   isDataVerified={isDataVerified}
                   tooltipLabels={tooltipLabels}
                   isHavePdf={isHavePdf}
@@ -1642,6 +1647,7 @@ function DynamicTableBase<
                   isHaveView={isHaveView}
                   isCurrentUsed={isCurrentUsed}
                   onView={onView}
+                  onCopy={onCopy}
                   onEdit={onEdit}
                   isHavePermission={isHavePermission}
                   onPermission={onPermission}

@@ -101,7 +101,7 @@ const Login = () => {
     try {
       const response = await login(body);
       // const { token, group_id } = response.collection;
-      const { token, user_group_id, employee_id, fullname, email, phone, type, role_access } =
+      const { token, user_group_id, employee_id, fullname, email, phone, type, role_access, id } =
         response.collection;
       saveToken(token, user_group_id, role_access);
 
@@ -111,6 +111,7 @@ const Login = () => {
           email,
           employee_id,
           phone,
+          id,
         }),
       );
 
@@ -144,22 +145,6 @@ const Login = () => {
           navigate('/guest/dashboard');
           break;
       }
-
-      // if (role_access == 'OperatorVMS') {
-      //   navigate('/operator/view');
-      // } else if (role_access == 'Visitor') {
-      //   navigate('/guest/dashboard');
-      // } else if (role_access == 'OperatorAdmin') {
-      //   navigate('/operator-admin/dashboard');
-      // } else if (role_access == 'Manager') {
-      //   navigate('/manager/dashboard');
-      // } else if (role_access == 'Admin') {
-      //   navigate('/admin/dashboard');
-      // } else if (role_access == 'Employee' && type == 0) {
-      //   navigate('/delivery-staff/dashboard');
-      // } else if (role_access == 'Employee') {
-      //   navigate('/employee/dashboard');
-      // }
 
       // if (user_group_id.toUpperCase() === GroupRoleId.Admin) navigate('/admin/dashboard');
       // else if (user_group_id.toUpperCase() === GroupRoleId.OperatorAdmin) {
@@ -202,22 +187,21 @@ const Login = () => {
 
       const res = await AuthVisitor({ code });
       // console.log('✅ AuthVisitor success:', JSON.stringify(res || {}, null, 2));
-
       const status = res.status;
-      const token = res.collection.token;
+      localStorage.setItem('visitor_ref_code', guestCode);
       // console.log('status', status);
 
-      localStorage.setItem('visitor_ref_code', guestCode);
-      setLoading(false);
       if (status === 'process') {
-        // navigate(`/portal/waiting?code=${guestCode}`);
+        setLoading(false);
+
         navigate('/portal/waiting', {
           replace: true,
         });
+
         return;
       }
-
       if (status === 'fiil_form') {
+        setLoading(false);
         navigate(`/portal/information?code=${code}`, {
           // replace: true,
           state: {
@@ -230,10 +214,25 @@ const Login = () => {
         });
         return;
       }
+
+      const token = res.collection.token;
+      const { id, visitor_id } = res.collection || {};
       if (token) {
         saveToken(token, GroupRoleId.Visitor.toLowerCase(), 'Visitor');
         localStorage.removeItem('visitor_ref_code');
         navigate('/guest/dashboard');
+
+        dispatch(
+          setUser({
+            //  fullname,
+            //  email,
+            //  employee_id,
+            //  phone,
+            visitor_id,
+            id,
+          }),
+        );
+
         return;
       }
     } catch (err) {
@@ -806,7 +805,7 @@ const Login = () => {
             open={snackbarOpen}
             autoHideDuration={3000}
             onClose={() => setSnackbarOpen(false)}
-            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+            anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
           >
             <Alert
               onClose={() => setSnackbarOpen(false)}

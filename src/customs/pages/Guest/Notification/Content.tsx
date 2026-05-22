@@ -13,6 +13,8 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 import { deleteDocument, getAllDocumentPagination } from 'src/customs/api/admin';
 
 import { IconBell, IconScript } from '@tabler/icons-react';
+import { AppState, useSelector } from 'src/store/Store';
+import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 
 const Content = () => {
   const [tableData, setTableData] = useState<any[]>([]);
@@ -28,40 +30,18 @@ const Content = () => {
   const [sortDir, setSortDir] = useState('desc');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [searchInput, setSearchInput] = useState('');
+
+  const notifications = useSelector((state: AppState) => state.notifications.items);
+
   const cards = [
     {
       title: 'Total Notification',
-      subTitle: `${0}`,
+      subTitle: `${notifications.length}`,
       subTitleSetting: 10,
       icon: IconBell,
       color: 'none',
     },
   ];
-
-  useEffect(() => {
-    if (!token) return;
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const start = page * rowsPerPage;
-        const response = await getAllDocumentPagination(
-          token,
-          start,
-          rowsPerPage,
-          sortColumn,
-          sortDir,
-          searchKeyword,
-        );
-        setTableData([]);
-        setTotalRecords(response.RecordsTotal);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [token, page, rowsPerPage, sortColumn, sortDir, refreshTrigger, searchKeyword]);
 
   const handleSearchKeywordChange = useCallback((keyword: string) => {
     setSearchInput(keyword);
@@ -73,52 +53,63 @@ const Content = () => {
     setSearchKeyword(keyword);
   }, []);
 
+  useEffect(() => {
+    setTableData(notifications);
+    setTotalRecords(notifications.length);
+  }, [notifications]);
+
+  const rows = notifications.map((item: any, index: number) => ({
+    id: item.id,
+    visitor_name: item.visitor_name,
+    visitor_type: item.visitor_type,
+    title: item.title,
+    message: item.message,
+    visitor_period_end: formatDateTime(item.visit_end, item.extend_visitor_period),
+    site_name: item.site_name,
+    status: item.is_read ? 'Read' : 'Unread',
+  }));
+
   return (
-    <PageContainer
-      itemDataCustomNavListing={AdminNavListingData}
-      itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
-    >
-      <Container title="Notification" description="Notification page">
-        <Box>
-          <Grid container spacing={3}>
-            <Grid size={{ xs: 12, lg: 12 }}>
-              <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
-            </Grid>
-            <Grid size={{ xs: 12, lg: 12 }}>
-              <DynamicTable
-                loading={loading}
-                overflowX={'auto'}
-                data={tableData}
-                isHavePagination={true}
-                selectedRows={selectedRows}
-                defaultRowsPerPage={rowsPerPage}
-                rowsPerPageOptions={[10, 50, 100]}
-                onPaginationChange={(page, rowsPerPage) => {
-                  setPage(page);
-                  setRowsPerPage(rowsPerPage);
-                }}
-                isHaveChecked={true}
-                isHaveAction={false}
-                isHaveSearch={true}
-                isHaveFilter={false}
-                isHaveExportPdf={false}
-                isHaveExportXlf={false}
-                isHaveFilterDuration={false}
-                isHaveAddData={false}
-                isHaveFilterMore={false}
-                isHaveHeader={false}
-                isHavePdf={true}
-                onCheckedChange={(selected) => setSelectedRows(selected)}
-                searchKeyword={searchInput}
-                onSearch={handleSearch}
-                onSearchKeywordChange={handleSearchKeywordChange}
-                onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
-              />
-            </Grid>
+    <Container title="Notification" description="Notification page">
+      <Box>
+        <Grid container spacing={3}>
+          <Grid size={{ xs: 12, lg: 12 }}>
+            <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
           </Grid>
-        </Box>
-      </Container>
-    </PageContainer>
+          <Grid size={{ xs: 12, lg: 12 }}>
+            <DynamicTable
+              loading={loading}
+              overflowX={'auto'}
+              data={[]}
+              isHavePagination={false}
+              selectedRows={selectedRows}
+              defaultRowsPerPage={rowsPerPage}
+              rowsPerPageOptions={[10, 50, 100]}
+              onPaginationChange={(page, rowsPerPage) => {
+                setPage(page);
+                setRowsPerPage(rowsPerPage);
+              }}
+              isHaveChecked={true}
+              isHaveAction={false}
+              isHaveSearch={true}
+              isHaveFilter={false}
+              isHaveExportPdf={false}
+              isHaveExportXlf={false}
+              isHaveFilterDuration={false}
+              isHaveAddData={false}
+              isHaveFilterMore={false}
+              isHaveHeader={false}
+              isHavePdf={true}
+              onCheckedChange={(selected) => setSelectedRows(selected)}
+              searchKeyword={searchInput}
+              onSearch={handleSearch}
+              onSearchKeywordChange={handleSearchKeywordChange}
+              onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
+            />
+          </Grid>
+        </Grid>
+      </Box>
+    </Container>
   );
 };
 

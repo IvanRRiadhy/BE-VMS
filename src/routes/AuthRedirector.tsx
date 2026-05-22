@@ -58,13 +58,6 @@ export default function AuthRedirector() {
     }
   }, [authLoading, isAuthenticated, groupId, location.pathname, navigate, roleAccess]);
 
-  // if (authLoading) {
-  //   return (
-  //     <Backdrop open sx={{ color: '#1976d2', zIndex: 9999, bgcolor: 'rgba(255,255,255,0.8)' }}>
-  //       <CircularProgress color="primary" thickness={4} />
-  //     </Backdrop>
-  //   );
-  // }
 
   if (authLoading) {
     return (

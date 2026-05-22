@@ -3740,7 +3740,6 @@ const Content = () => {
               invitationCode={invitationCode}
               selectedCards={selectedCards}
               handleToggleCard={handleToggleCard}
-              dataDummyAccess={dataDummyAccess}
               formatDateTime={formatDateTime}
               accessData={accessData}
             />

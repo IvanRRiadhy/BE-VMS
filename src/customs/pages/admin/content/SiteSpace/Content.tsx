@@ -40,6 +40,8 @@ import SelectSiteTypeDialog from './components/Dialog/SelectSiteTypeDialog';
 import ConfirmUnsavedDialog from 'src/customs/pages/admin/components/ConfirmUnsavedDialog';
 import { useEmployees } from 'src/hooks/useEmployees';
 import { updateSiteActive } from 'src/customs/api/Admin/Site';
+import DialogSiteSpace from './components/Dialog/DialogSiteSpace';
+import { onMessageListener, requestForToken } from 'src/fcm';
 
 type SiteTableRow = {
   id: string;
@@ -137,7 +139,6 @@ const Content = () => {
     }
 
     const parentType = parentItem.type;
-
     const allowedChildTypes = typeHierarchy[parentType] || [];
 
     const filtered = typeOptions.filter(
@@ -146,7 +147,7 @@ const Content = () => {
 
     setAllowedTypes(filtered);
   }, [id, wildcard, allData]);
-
+  const { employee } = useEmployees(token);
   const [initialFormSnapshot, setInitialFormSnapshot] = useState<Item | null>(null);
   const [formDataAddSite, setFormDataAddSite] = useState<Item>(() => {
     const saved = localStorage.getItem('unsavedSiteForm');
@@ -365,8 +366,6 @@ const Content = () => {
     setOpenFormCreateSiteSpace(true);
   };
 
-
-
   const handleEdit = async (id: string) => {
     const editing = localStorage.getItem('unsavedSiteForm');
 
@@ -397,20 +396,19 @@ const Content = () => {
 
       if (!found) return;
 
-        const toLocalTime = (utcTime?: string | null) => {
-          if (!utcTime) return '';
+      const toLocalTime = (utcTime?: string | null) => {
+        if (!utcTime) return '';
 
-          const [hours = 0, minutes = 0, seconds = 0] = utcTime.split(':').map((v) => Number(v));
+        const [hours = 0, minutes = 0, seconds = 0] = utcTime.split(':').map((v) => Number(v));
 
-          const utcDate = new Date(Date.UTC(1970, 0, 1, hours, minutes, seconds));
+        const utcDate = new Date(Date.UTC(1970, 0, 1, hours, minutes, seconds));
 
-          return utcDate.toLocaleTimeString('en-GB', {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false,
-          });
-        };
-
+        return utcDate.toLocaleTimeString('en-GB', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+        });
+      };
 
       const normalized = {
         ...found,
@@ -508,8 +506,8 @@ const Content = () => {
         await deleteSiteSpace(id, token);
         setRefreshTrigger((prev) => prev + 1);
         showSwal('success', 'Successfully deleted site space!');
-      } catch (error) {
-        showSwal('error', 'Failed to delete site space.');
+      } catch (error: any) {
+        showSwal('error', error.response?.data?.msg || 'Failed to delete site space.');
         setTimeout(() => setLoading(false), 500);
       } finally {
         setTimeout(() => setLoading(false), 600);
@@ -531,6 +529,7 @@ const Content = () => {
       return true;
     } catch (error) {
       showSwal('error', 'Failed to delete some items.');
+      setLoading(false);
       return false;
     } finally {
       setLoading(false);
@@ -599,8 +598,6 @@ const Content = () => {
     setOpenDetailType(true);
   };
 
-  const { employee } = useEmployees(token);
-
   const handleSearchKeywordChange = useCallback((keyword: string) => {
     setSearchInput(keyword);
   }, []);
@@ -637,6 +634,22 @@ const Content = () => {
       setLoadingBackdrop(false);
     }
   };
+
+  // useEffect(() => {
+  //   const setupFCM = async () => {
+  //     const token = await requestForToken();
+
+  //     console.log('TOKEN:', token);
+  //   };
+
+  //   setupFCM();
+
+  //   onMessageListener().then((payload: any) => {
+  //     console.log('Foreground message:', payload);
+
+  //     alert(payload.notification?.title);
+  //   });
+  // }, []);
 
   return (
     <PageContainer
@@ -712,48 +725,27 @@ const Content = () => {
                 onSearch={handleSearch}
                 onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
                 onAddData={handleOpenType}
-                // sortColumns={['name']}
-                // onFilterByColumn={(column) => setSortColumn(column.column)}
               />
             </Grid>
           </Grid>
         </Box>
       </Container>
 
-      <Dialog open={openFormCreateSiteSpace} onClose={handleDialogClose} fullWidth maxWidth="xl">
-        <DialogTitle
-          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-        >
-          {edittingId ? 'Edit' : 'Add'} Site Space
-          <IconButton
-            aria-label="close"
-            onClick={() => {
-              if (isFormChanged) {
-                setConfirmDialogOpen(true);
-              } else {
-                handleCloseModalCreateSiteSpace();
-              }
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <Divider />
-        <DialogContent sx={{ paddingTop: 0 }}>
-          <br />
-          <FormSite
-            formData={formDataAddSite}
-            setFormData={setFormDataAddSite}
-            onSuccess={handleSuccess}
-            editingId={edittingId}
-            isBatchEdit={isBatchEdit}
-            selectedRows={selectedRows}
-            enabledFields={enabledFields}
-            setEnabledFields={setEnabledFields}
-            employee={employee}
-          />
-        </DialogContent>
-      </Dialog>
+      <DialogSiteSpace
+        open={openFormCreateSiteSpace}
+        editingId={edittingId}
+        isFormChanged={isFormChanged}
+        isBatchEdit={isBatchEdit}
+        selectedRows={selectedRows}
+        enabledFields={enabledFields}
+        employee={employee}
+        formData={formDataAddSite}
+        setFormData={setFormDataAddSite}
+        setEnabledFields={setEnabledFields}
+        onSuccess={handleSuccess}
+        onClose={handleCloseModalCreateSiteSpace}
+        onConfirmClose={() => setConfirmDialogOpen(true)}
+      />
 
       <SelectSiteTypeDialog
         open={openDetailType}

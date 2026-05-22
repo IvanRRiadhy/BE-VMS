@@ -126,6 +126,8 @@ export const TableBodyContent = ({
   onBlacklist,
   isActionListVisitor,
   isHaveSettingOperator,
+  onCopy,
+  isCopy,
   onSettingOperator,
   isHaveActionRevoke,
   onActionAccess,
@@ -359,6 +361,8 @@ export const TableBodyContent = ({
                 onDenied,
                 isHaveAccess,
                 getAccessActions,
+                onCopy,
+                isCopy,
                 isHaveView,
                 onView,
                 onEdit,
@@ -475,6 +479,8 @@ const TableRowItem = React.memo(
       onCopyLink,
       onDetailLink,
       isButtonEnabled,
+      isCopy,
+      onCopy,
       isButtonDisabled,
       onIsButtonDisabled,
       isHaveVisitor,
@@ -1599,6 +1605,26 @@ const TableRowItem = React.memo(
                         </IconButton>
                       </Tooltip>
                     )}
+
+                  {isCopy && (
+                    <Tooltip title="Copy">
+                      <IconButton
+                        onClick={() => onCopy?.(row)}
+                        disableRipple
+                        sx={{
+                          color: 'white',
+                          backgroundColor: 'gray',
+                          width: 28,
+                          height: 28,
+                          p: 0.5,
+                          borderRadius: '50%',
+                          '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.7)', color: 'white' },
+                        }}
+                      >
+                        <IconCopy width={14} height={14} />
+                      </IconButton>
+                    </Tooltip>
+                  )}
 
                   <Tooltip title="Edit">
                     <IconButton

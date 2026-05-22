@@ -60,9 +60,9 @@ import {
   getShareLinkById,
 } from 'src/customs/api/ShareLink';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import CreateLinkDialog from 'src/customs/pages/Employee/Components/Dialog/CreateLinkDialog';
-import DetailLinkDialog from 'src/customs/pages/Employee/Components/Dialog/DetailLinkDialog';
-import SendEmailDialog from 'src/customs/pages/Employee/Components/Dialog/SendEmailDialog';
+import CreateLinkDialog from 'src/customs/pages/admin/content/Visitor/Trx/components/Dialog/CreateLinkDialog';
+import DetailLinkDialog from 'src/customs/pages/admin/content/Visitor/Trx/components/Dialog/DetailLinkDialog';
+import SendEmailDialog from 'src/customs/pages/admin/content/Visitor/Trx/components/Dialog/SendEmailDialog';
 import InvitationShareDialog from './components/Dialog/InvitationShareDialog';
 import ShareLinkDialog from './components/ShareLinkDialog';
 import { useRegisteredSite } from 'src/hooks/useRegisteredSite';
@@ -370,15 +370,15 @@ const Content = () => {
     const saved = localStorage.getItem('unsavedVisitorData');
     let freshForm;
 
-    if (saved) {
-      try {
-        freshForm = JSON.parse(saved);
-      } catch {
+    // if (saved) {
+    //   try {
+    //     freshForm = JSON.parse(saved);
+    //   } catch {
         freshForm = CreateVisitorRequestSchema.parse({});
-      }
-    } else {
+    //   }
+    // } else {
       freshForm = CreateVisitorRequestSchema.parse({});
-    }
+    // }
 
     setEdittingId('');
     setFormDataAddVisitor(freshForm);
@@ -393,6 +393,7 @@ const Content = () => {
       registered_site: '',
     }));
     queryClient.invalidateQueries({ queryKey: ['visitors'] });
+    localStorage.removeItem('unsavedVisitorData');
     handleCloseDialog();
   };
 

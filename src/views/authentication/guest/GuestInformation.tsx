@@ -346,27 +346,24 @@ const GuestInformationStepper = () => {
     e.target.value = '';
   };
 
-   const handleCaptureForField = async (
-     setAnswerFile: (url: string) => void,
-     trackKey?: string,
-   ) => {
-     if (!webcamRef.current) return;
+  const handleCaptureForField = async (setAnswerFile: (url: string) => void, trackKey?: string) => {
+    if (!webcamRef.current) return;
 
-     const imageSrc = webcamRef.current.getScreenshot();
-     if (!imageSrc) return;
+    const imageSrc = webcamRef.current.getScreenshot();
+    if (!imageSrc) return;
 
-     const blob = await fetch(imageSrc).then((res) => res.blob());
-     const compressedBlob = await compressImage(
-       new File([blob], 'camera.jpg', { type: 'image/jpeg' }),
-     );
-     const path = await uploadFileToCDN(compressedBlob);
-     if (!path) return;
-     if (trackKey) {
-       setPreviews((prev) => ({ ...prev, [trackKey]: imageSrc }));
-       setUploadNames((prev) => ({ ...prev, [trackKey]: 'camera.jpg' }));
-     }
-     setAnswerFile(path);
-   };
+    const blob = await fetch(imageSrc).then((res) => res.blob());
+    const compressedBlob = await compressImage(
+      new File([blob], 'camera.jpg', { type: 'image/jpeg' }),
+    );
+    const path = await uploadFileToCDN(compressedBlob);
+    if (!path) return;
+    if (trackKey) {
+      setPreviews((prev) => ({ ...prev, [trackKey]: imageSrc }));
+      setUploadNames((prev) => ({ ...prev, [trackKey]: 'camera.jpg' }));
+    }
+    setAnswerFile(path);
+  };
 
   const getFieldTypeByRemarks = (remarks: string): number | null => {
     switch (remarks) {
@@ -1098,9 +1095,11 @@ const GuestInformationStepper = () => {
       registered_site: site_place_data?.id,
       flow: 'SubmitPraregister',
       is_self_registered: selfRegisterData?.is_self_registered ?? false,
-      filled_by_name: fillerData.name,
-      filled_by_email: fillerData.email,
-      filled_by_phone: fillerData.phone,
+      ...(!selfRegisterData?.is_self_registered && {
+        filled_by_name: fillerData.name,
+        filled_by_email: fillerData.email,
+        filled_by_phone: fillerData.phone,
+      }),
       filled_by_relationship: selfRegisterData?.is_self_registered ? 'Self' : 'Other',
       data_visitor: [
         {
@@ -1178,31 +1177,31 @@ const GuestInformationStepper = () => {
         return;
       }
 
-      const res = await SubmitPraForm(payload);
-      console.log('✅ SubmitPraForm success:', JSON.stringify(res || {}, null, 2));
+      // const res = await SubmitPraForm(payload);
+      // console.log('✅ SubmitPraForm success:', JSON.stringify(res || {}, null, 2));
 
-      await new Promise((r) => setTimeout(r, 500));
+      // await new Promise((r) => setTimeout(r, 500));
 
-      const authRes = await AuthVisitor({ code });
+      // const authRes = await AuthVisitor({ code });
       // console.log('✅ AuthVisitor success:', JSON.stringify(authRes || {}, null, 2));
-      const token = authRes?.collection?.token;
+      // const token = authRes?.collection?.token;
 
-      const status = authRes.status;
+      // const status = authRes.status;
 
-      if (status === 'process') {
-        setSubmitting(false);
-        navigate('/portal/waiting', { replace: true });
-        return;
-      }
+      // if (status === 'process') {
+      //   setSubmitting(false);
+      //   navigate('/portal/waiting', { replace: true });
+      //   return;
+      // }
 
-      if (token) {
-        await saveToken(token, GroupRoleId.Visitor);
-        showSwal('success', 'Successfully Pra Register Visitor');
+      // if (token) {
+      //   await saveToken(token, GroupRoleId.Visitor);
+      //   showSwal('success', 'Successfully Pra Register Visitor');
 
-        navigate('/guest/dashboard', { replace: true });
-        localStorage.removeItem('visitor_ref_code');
-        return;
-      }
+      //   navigate('/guest/dashboard', { replace: true });
+      //   localStorage.removeItem('visitor_ref_code');
+      //   return;
+      // }
     } catch (error: any) {
       setSubmitting(false);
       showSwal('error', error.response.data.msg || 'Failed to Pra Register Visitor');

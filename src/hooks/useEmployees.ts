@@ -3,32 +3,30 @@ import { getAllEmployee } from 'src/customs/api/admin';
 
 export const useEmployees = (token?: string | null) => {
   const [employee, setEmployee] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!token) return;
 
-    let isMounted = true;
-
     const fetchEmployees = async () => {
       try {
-        const res = await getAllEmployee(token);
+        setLoading(true);
 
-        if (!isMounted) return;
+        const res = await getAllEmployee(token);
 
         setEmployee(res?.collection ?? []);
       } catch (err) {
         console.error('Failed to fetch employees', err);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchEmployees();
-
-    return () => {
-      isMounted = false;
-    };
   }, [token]);
 
   return {
     employee,
+    loading,
   };
 };

@@ -19,6 +19,7 @@ import {
   Portal,
   Snackbar,
   Alert,
+  Button,
 } from '@mui/material';
 import { Box, useMediaQuery, useTheme } from '@mui/system';
 import moment from 'moment-timezone';
@@ -28,6 +29,7 @@ import { IconX } from '@tabler/icons-react';
 import PageContainer from 'src/components/container/PageContainer';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import { useSerialRS232 } from 'src/hooks/useSerial';
 import {
   createGiveAccessOperator,
   createGrandAccessOperator,
@@ -714,7 +716,6 @@ const OperatorView = () => {
     setAvailableCards(res.collection);
   };
 
-
   const handleToggleCard = (cardNumber: string) => {
     const normalized = String(cardNumber);
 
@@ -822,16 +823,23 @@ const OperatorView = () => {
   };
 
   const [invitationId, setInvitationId] = useState<string | null>(null);
+  const lastSerialRef = useRef('');
+  const serialLockRef = useRef(false);
 
   const handleSubmitQRCode = async (value: string) => {
+    console.log('value', value.length);
+    // if (value.length < 4 || value.length > 15) {
+    //   showSwal('error', 'Code must be between 6 and 10 characters.', 3000);
+    //   return;
+    // }
     try {
       const res = await getInvitationCode(token as string, value);
       const data = res.collection?.data ?? [];
 
-      if (data.length === 0) {
-        toast('Your code does not exist.', 'error');
-        return;
-      }
+      // if (data.length === 0) {
+      //   toast('Your code does not exist.', 'error');
+      //   return;
+      // }
 
       const invitation = data[0];
       setInvitationId(invitation.id);
@@ -3276,6 +3284,40 @@ const OperatorView = () => {
     };
   }, [currentUsedCard]);
 
+  const { connect, disconnect, connected } = useSerialRS232({
+    options: {
+      baudRate: 9600,
+    },
+
+    onConnect: () => {
+      console.log('RS232 CONNECTED');
+
+      toast('RS232 Connected', 'success');
+    },
+
+    onDisconnect: () => {
+      console.log('RS232 DISCONNECTED');
+
+      toast('RS232 Disconnected', 'warning');
+    },
+
+    onData: (data) => {
+      const clean = data.trim();
+
+      if (!clean) return;
+
+      console.log('RS232 DATA:', clean);
+
+      handleSubmitQRCode(clean);
+    },
+
+    onError: (err) => {
+      console.error(err);
+
+      toast('Serial Error', 'error');
+    },
+  });
+
   return (
     <PageContainer title={'Operator View'} description={'Operator View'}>
       <FullScreen handle={handle}>
@@ -3375,6 +3417,8 @@ const OperatorView = () => {
                   setOpenInvitationVisitor={setOpenInvitationVisitor}
                   setOpenReturnCard={setOpenReturnCard}
                   setAccessIssuance={setAccessIssuance}
+                  connect={connect}
+                  disconnect={disconnect}
                 />
 
                 {/* Side Right QR Code */}

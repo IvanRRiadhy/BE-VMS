@@ -142,6 +142,7 @@ const View = () => {
   const [removing, setRemoving] = useState<Record<string, boolean>>({});
   const [inputValues, setInputValues] = useState<{ [key: number]: string }>({});
   const [uploadNames, setUploadNames] = useState<Record<string, string>>({});
+  const [isSelfGroup, setIsSelfGroup] = useState<boolean | null>(null);
   const [activeStep, setActiveStep] = useState(0);
   const [previews, setPreviews] = useState<Record<string, string | null>>({});
   const [uploadMethods, setUploadMethods] = useState<Record<string, 'file' | 'camera'>>({});
@@ -3563,7 +3564,6 @@ const View = () => {
           accessData={accessData}
           selectedCards={selectedCards}
           handleToggleCard={handleToggleCard}
-          dataDummyAccess={dataDummyAccess}
           formatDateTime={formatDateTime}
         />
 
@@ -3582,6 +3582,8 @@ const View = () => {
           renderFieldInput={renderFieldInput}
           getSectionType={getSectionType}
           formsOf={formsOf}
+          isSelfGroup={isSelfGroup}
+          setIsSelfGroup={setIsSelfGroup}
         />
 
         <FillPraregistrationSingle

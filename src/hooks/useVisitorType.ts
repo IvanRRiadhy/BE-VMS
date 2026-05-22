@@ -4,7 +4,7 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 
 import { useEffect, useState } from 'react';
 
-export const useVisitorType = (token?: string) => {
+export const useVisitorType = (token?: string | null) => {
   const [visitorType, setVisitorType] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 

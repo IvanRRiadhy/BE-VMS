@@ -21,9 +21,17 @@ import CustomTextField from 'src/components/forms/theme-elements/CustomTextField
 import { getInvitationSite, getInvitationVisitorType } from 'src/customs/api/Admin/InvitationData';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import { useHost } from 'src/hooks/useHost';
-import { useSites } from 'src/hooks/useSites';
-import { useVisitorType } from 'src/hooks/useVisitorType';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DateTimePicker, renderTimeViewClock } from '@mui/x-date-pickers';
+import dayjs from 'dayjs';
+import 'dayjs/locale/id';
+import utc from 'dayjs/plugin/utc';
+import useInvitationSite from 'src/hooks/useInvitationSite';
+import useInvitationVisitorType from 'src/hooks/useInvitationVisitorType';
+import { useEmployees } from 'src/hooks/useEmployees';
+
+dayjs.extend(utc);
 
 interface Props {
   open: boolean;
@@ -44,40 +52,9 @@ type FieldKey =
 
 const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) => {
   const { token } = useSession();
-  const { data: host = [] } = useHost();
-  // const { data: visitorType = [] } = useVisitorType();
-  const [visitorType, setVisitorType] = useState<any[]>([]);
-  const [sites, setSites] = useState<any[]>([]);
-  useEffect(() => {
-    if (!token) return;
-
-    const fetchData = async () => {
-      try {
-        const [siteRes, visitorTypeRes] = await Promise.allSettled([
-          getInvitationSite(token as string),
-          getInvitationVisitorType(token as string),
-        ]);
-
-        if (siteRes.status === 'fulfilled') {
-          setSites(siteRes.value?.collection ?? []);
-        } else {
-          console.error('Failed getInvitationSite:', siteRes.reason);
-          setSites([]);
-        }
-
-        if (visitorTypeRes.status === 'fulfilled') {
-          setVisitorType(visitorTypeRes.value?.collection ?? []);
-        } else {
-          console.error('Failed getVisitorType:', visitorTypeRes.reason);
-          setVisitorType([]);
-        }
-      } catch (error) {
-        console.error('Error fetchData:', error);
-      }
-    };
-
-    fetchData();
-  }, [token]);
+  const { employee } = useEmployees(token);
+  const { sitesOperator } = useInvitationSite(token);
+  const { visitorType } = useInvitationVisitorType(token);
 
   const initialEnabledState = {
     visitorType: false,
@@ -119,9 +96,6 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
   const resetState = () => {
     setEnabled(initialEnabledState);
     setForm(initialFormState);
-    setSelectedSiteParentIds([]);
-    setSelectedSiteIds([]);
-    setSiteTree([]);
   };
 
   const handleToggle = (key: FieldKey, checked: boolean) => {
@@ -148,6 +122,7 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
   const handleCreateLink = (sendEmail: boolean) => {
     try {
       const payload = buildPayload();
+      console.log('payload', payload);
 
       if (sendEmail) {
         onSendEmail(payload);
@@ -162,41 +137,14 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
     }
   };
 
-  const [selectedSiteParentIds, setSelectedSiteParentIds] = useState<string[]>([]);
-  const [selectedSiteIds, setSelectedSiteIds] = useState<string[]>([]);
-  const [siteTree, setSiteTree] = useState<any[]>([]);
 
-  const buildSiteTree = (
-    sites: any[],
-    parentId: string | null,
-  ): {
-    id: string;
-    name: string;
-    children?: {
-      id: string;
-      name: string;
-      children?: { id: string; name: string; children?: any[] }[];
-    }[];
-  }[] => {
-    return sites
-      .filter((s) => {
-        const siteParent = s.parent ? s.parent.toLowerCase() : null;
-        const target = parentId ? parentId.toLowerCase() : null;
-        return siteParent === target;
-      })
-      .map((s) => ({
-        id: s.id,
-        name: s.name,
-        children: buildSiteTree(sites, s.id),
-      }));
-  };
 
   const handleClose = () => {
     resetState();
     onClose();
   };
 
-  lalu: return (
+  return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
       <DialogTitle>
         Create Link Invitation
@@ -217,7 +165,7 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
             </Stack>
             <Autocomplete
               disabled={!enabled.host}
-              options={host}
+              options={employee}
               getOptionLabel={(option: any) => option.name ?? ''}
               value={form.host}
               onChange={(_, value) => setForm((prev) => ({ ...prev, host: value }))}
@@ -239,21 +187,9 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
               // multiple
               size="small"
               disabled={!enabled.site}
-              // options={sites.filter((s) => !s.parent)} // hanya parent
-              options={sites}
+              options={sitesOperator}
               getOptionLabel={(option: any) => option.name ?? ''}
-              // value={sites.filter((s) => selectedSiteParentIds.includes(s.id))}
-              // value={form.site_id}
-              value={sites.find((s) => s.id === form.site_id) || null}
-              // onChange={(_, newValues) => {
-              //   const parentIds = newValues.map((v: any) => v.id);
-              //   setSelectedSiteParentIds(parentIds);
-
-              //   const trees = parentIds.flatMap((pid) => buildSiteTreeWithParent(sites, pid));
-
-              //   setSiteTree(trees);
-              // }}
-              // onlly one site no parant
+              value={sitesOperator.find((s) => s.id === form.site_id) || null}
               onChange={(_, value) => {
                 setForm((prev) => ({ ...prev, site_id: value?.id }));
               }}
@@ -261,13 +197,6 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
                 <CustomTextField {...params} placeholder="Select Site" fullWidth />
               )}
             />
-
-            {/* TREE */}
-            {/* {enabled.site && siteTree.length > 0 && (
-              <Box mt={2}>
-                <SimpleTreeView>{siteTree.map((node) => renderTreeSite(node))}</SimpleTreeView>
-              </Box>
-            )} */}
           </Grid>
 
           {/* VISITOR TYPE */}
@@ -334,8 +263,41 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
                 onChange={(e) => handleToggle('visitStart', e.target.checked)}
               />
             </Stack>
+            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
+              <DateTimePicker
+                disabled={!enabled.visitStart}
+                ampm={false}
+                format="dddd, DD MMMM YYYY, HH:mm"
+                value={form.visitor_period_start ? dayjs(form.visitor_period_start) : null}
+                onChange={(newValue) => {
+                  setForm((prev) => ({
+                    ...prev,
+                    visitor_period_start: newValue ? newValue.utc().format() : null,
+                  }));
+                }}
+                viewRenderers={{
+                  hours: renderTimeViewClock,
+                  minutes: renderTimeViewClock,
+                  seconds: renderTimeViewClock,
+                }}
+                slotProps={{
+                  actionBar: {
+                    actions: ['clear', 'accept'],
+                  },
+                  textField: {
+                    fullWidth: true,
+                    sx: {
+                      mt: 1,
+                      '& .MuiInputBase-root.Mui-disabled': {
+                        backgroundColor: '#f0f0f0',
+                      },
+                    },
+                  },
+                }}
+              />
+            </LocalizationProvider>
 
-            <CustomTextField
+            {/* <CustomTextField
               type="datetime-local"
               fullWidth
               disabled={!enabled.visitStart}
@@ -348,7 +310,7 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
                     : null,
                 }))
               }
-            />
+            /> */}
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
@@ -361,7 +323,44 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
               />
             </Stack>
 
-            <CustomTextField
+            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
+              <DateTimePicker
+                disabled={!enabled.visitEnd}
+                ampm={false}
+                format="dddd, DD MMMM YYYY, HH:mm"
+                value={form.visitor_period_end ? dayjs(form.visitor_period_end) : null}
+                minDateTime={
+                  form.visitor_period_start ? dayjs(form.visitor_period_start) : undefined
+                }
+                onChange={(newValue) => {
+                  setForm((prev) => ({
+                    ...prev,
+                    visitor_period_end: newValue ? newValue.utc().format() : null,
+                  }));
+                }}
+                viewRenderers={{
+                  hours: renderTimeViewClock,
+                  minutes: renderTimeViewClock,
+                  seconds: renderTimeViewClock,
+                }}
+                slotProps={{
+                  actionBar: {
+                    actions: ['clear', 'accept'],
+                  },
+                  textField: {
+                    fullWidth: true,
+                    sx: {
+                      mt: 1,
+                      '& .MuiInputBase-root.Mui-disabled': {
+                        backgroundColor: '#f0f0f0',
+                      },
+                    },
+                  },
+                }}
+              />
+            </LocalizationProvider>
+
+            {/* <CustomTextField
               type="datetime-local"
               fullWidth
               disabled={!enabled.visitEnd}
@@ -374,7 +373,7 @@ const CreateLinkDialog = ({ open, onClose, onSendEmail, onCreateLink }: Props) =
                     : null,
                 }))
               }
-            />
+            /> */}
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>

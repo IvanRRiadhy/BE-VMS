@@ -183,7 +183,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const [removing, setRemoving] = useState<Record<string, boolean>>({});
   const [nextDialogOpen, setNextDialogOpen] = useState(false);
   const BASE_URL = axiosInstance2.defaults.baseURL;
-  const [type, setType] = useState('');
   const [rawSections, setRawSections] = useState<any[]>([]);
   const firstStep = enableInvitationTypeStep ? -1 : 0;
   const formsOf = (section: any) => (Array.isArray(section?.[FORM_KEY]) ? section[FORM_KEY] : []);
@@ -309,19 +308,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     const randomCode = Array.from({ length: 6 }, () =>
       Math.random().toString(36).charAt(2).toUpperCase(),
     ).join('');
-
-    //  setSelectedSiteParentIdsGroup((prev) => ({
-    //    ...prev,
-    //    [`group-${newGroupIndex}`]: [],
-    //  }));
-
-    //  setSiteTreeGroup((prev) => ({
-    //    ...prev,
-    //    [`group-${newGroupIndex}`]: [],
-    //  }));
-
     setInputValues({});
-
     const detectedTz =
       moment.tz?.guess?.() || Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Jakarta';
 
@@ -414,8 +401,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       return next;
     });
   };
-
-  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
 
   const getSectionType = (section: any) => {
     const f = formsOf(section);
@@ -555,7 +540,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const handleSelectDataVisitor = (v: any | null, isEmployee: boolean = false) => {
     const currentStep = activeStep - 1;
 
-    // Field yang perlu di-reset jika value null
     const resetKeys = [
       'name',
       'email',
@@ -566,7 +550,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       'employee',
     ];
 
-    // Jika tidak ada data yang dipilih, reset field terkait
     if (!v) {
       setSectionsData((prev) =>
         prev.map((section, sectionIndex) =>
@@ -593,14 +576,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       return;
     }
 
-    // Konversi gender ke value yang digunakan sistem
     let genderValue: string | undefined;
 
     if (v.gender === 'Male') genderValue = '1';
     else if (v.gender === 'Female') genderValue = '0';
     else if (v.gender === 'Prefer not to say') genderValue = '2';
 
-    // Mapping data visitor/employee ke field form
     const mapping: Record<string, string | undefined> = {
       name: v.name,
       email: v.email,
@@ -611,7 +592,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       employee: v.id,
     };
 
-    // Update form berdasarkan mapping
     setSectionsData((prev) =>
       prev.map((section, sectionIndex) =>
         sectionIndex !== currentStep
@@ -637,260 +617,348 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
   const handleSteps = (step: number) => {
     const showVTListSkeleton = vtLoading;
-    if (step === -1 && enableInvitationTypeStep) {
-      return (
-        <Box>
-          <CustomFormLabel sx={{ mt: 0 }}>
+  if (step === -1 && enableInvitationTypeStep) {
+    return (
+      <Box
+        sx={{
+          p: 3,
+          borderRadius: 4,
+          background: (theme) =>
+            theme.palette.mode === 'dark'
+              ? 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)'
+              : 'linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%)',
+          border: '1px solid',
+          borderColor: 'divider',
+        }}
+      >
+        <Box mb={3}>
+          <Typography variant="h5" fontWeight={700}>
             Are you filling this invitation for yourself or someone else?
-          </CustomFormLabel>
+          </Typography>
 
-          <RadioGroup
-            value={isSelfInvitation === null ? '' : isSelfInvitation ? 'self' : 'other'}
-            onChange={(e) => setIsSelfInvitation(e.target.value === 'self')}
-            row
-          >
-            <FormControlLabel
-              value="self"
-              control={<Radio />}
-              label={
-                <Box display="flex" alignItems="center" gap={0.5}>
-                  Self
-                  <Tooltip title="This invitation is intended for yourself." arrow>
-                    <IconButton size="small">
-                      <InfoOutlined fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              }
-            />
-
-            <FormControlLabel
-              value="other"
-              control={<Radio />}
-              label={
-                <Box display="flex" alignItems="center" gap={0.5}>
-                  Other
-                  <Tooltip title="This invitation is intended for another person or guest." arrow>
-                    <IconButton size="small">
-                      <InfoOutlined fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              }
-            />
-          </RadioGroup>
+          <Typography variant="body2" color="text.secondary" mt={1}>
+            Select whether you are creating the invitation for yourself or for someone else.
+          </Typography>
         </Box>
-      );
-    } else if (step == 0) {
-      return (
-        <Box>
+
+        <RadioGroup
+          value={isSelfInvitation === null ? '' : isSelfInvitation ? 'self' : 'other'}
+          onChange={(e) => setIsSelfInvitation(e.target.value === 'self')}
+        >
           <Grid container spacing={2}>
+            {/* SELF */}
             <Grid size={{ xs: 12, md: 6 }}>
-              <CustomFormLabel
-                htmlFor="visitor-type"
-                sx={{ mb: 1, borderLeft: '4px solid #673ab7', pl: 1 }}
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2.5,
+                  borderRadius: 3,
+                  cursor: 'pointer',
+                  border: '2px solid',
+                  transition: 'all 0.25s ease',
+                  borderColor: isSelfInvitation === true ? 'primary.main' : 'divider',
+                  backgroundColor: isSelfInvitation === true ? 'primary.light' : 'background.paper',
+                  '&:hover': {
+                    transform: 'translateY(-3px)',
+                    boxShadow: 4,
+                  },
+                }}
+                onClick={() => setIsSelfInvitation(true)}
               >
-                Visitor Type
-              </CustomFormLabel>
-              <FormControl component="fieldset">
-                <VisitorTypeList
-                  visitorType={visitorType || []}
-                  formData={formData}
-                  showVTListSkeleton={showVTListSkeleton}
-                  onChange={(e: any) => handleVisitorTypeChange(e)}
+                <FormControlLabel
+                  value="self"
+                  control={<Radio checked={isSelfInvitation === true} />}
+                  sx={{ width: '100%', m: 0, alignItems: 'flex-start' }}
+                  label={
+                    <Box ml={1}>
+                      <Box display="flex" alignItems="center" gap={1}>
+                        <Typography fontWeight={700} fontSize={18}>
+                          Self
+                        </Typography>
+
+                        <Tooltip title="This invitation is intended for yourself." arrow>
+                          <InfoOutlined
+                            fontSize="small"
+                            color="action"
+                            sx={{ cursor: 'pointer' }}
+                          />
+                        </Tooltip>
+                      </Box>
+
+                      <Typography variant="body2" color="text.secondary" mt={0.5}>
+                        Use this option if you are registering yourself.
+                      </Typography>
+                    </Box>
+                  }
                 />
-              </FormControl>
+              </Paper>
             </Grid>
+
+            {/* OTHER */}
             <Grid size={{ xs: 12, md: 6 }}>
-              <CustomFormLabel
-                htmlFor="visitor-type"
-                sx={{ mb: 1, borderLeft: '4px solid #673ab7', pl: 1 }}
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2.5,
+                  borderRadius: 3,
+                  cursor: 'pointer',
+                  border: '2px solid',
+                  transition: 'all 0.25s ease',
+                  borderColor: isSelfInvitation === false ? 'primary.main' : 'divider',
+                  backgroundColor:
+                    isSelfInvitation === false ? 'primary.light' : 'background.paper',
+                  '&:hover': {
+                    transform: 'translateY(-3px)',
+                    boxShadow: 4,
+                  },
+                }}
+                onClick={() => setIsSelfInvitation(false)}
               >
-                Select Status Visitor
-              </CustomFormLabel>
-              <Box display="flex" alignItems="center" gap={2}>
                 <FormControlLabel
-                  control={
-                    <Radio
-                      checked={formData.is_group === false}
-                      value={formData.is_group}
-                      onChange={() => {
-                        setIsSingle(true);
-                        setIsGroup(false);
-                        setFormData((prev: any) => ({
-                          ...prev,
-                          is_group: false,
-                        }));
-
-                        localStorage.removeItem('unsavedVisitorData');
-                      }}
-                    />
-                  }
+                  value="other"
+                  control={<Radio checked={isSelfInvitation === false} />}
+                  sx={{ width: '100%', m: 0, alignItems: 'flex-start' }}
                   label={
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <IconUser size={18} />
-                      Single
-                      <Tooltip arrow title="Only one visitor can be added">
-                        <IconButton size="small" sx={{ ml: 0 }}>
-                          <IconInfoCircle size={22} />
-                        </IconButton>
-                      </Tooltip>
+                    <Box ml={1}>
+                      <Box display="flex" alignItems="center" gap={1}>
+                        <Typography fontWeight={700} fontSize={18}>
+                          Other
+                        </Typography>
+
+                        <Tooltip
+                          title="This invitation is intended for another person or guest."
+                          arrow
+                        >
+                          <InfoOutlined
+                            fontSize="small"
+                            color="action"
+                            sx={{ cursor: 'pointer' }}
+                          />
+                        </Tooltip>
+                      </Box>
+
+                      <Typography variant="body2" color="text.secondary" mt={0.5}>
+                        Use this option if you are creating an invitation for someone else.
+                      </Typography>
                     </Box>
                   }
                 />
-
-                <FormControlLabel
-                  control={
-                    <Radio
-                      checked={formData.is_group === true}
-                      value={formData.is_group}
-                      onChange={() => {
-                        const value = true;
-
-                        setIsSingle(false);
-                        setIsGroup(value);
-
-                        setFormData((prev: any) => ({
-                          ...prev,
-                          is_group: value,
-                        }));
-
-                        localStorage.removeItem('unsavedVisitorData');
-                      }}
-                    />
-                  }
-                  label={
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <IconUsers size={18} />
-                      Group
-                      <Tooltip arrow title="Multiple visitors can be added">
-                        <IconButton size="small" sx={{ ml: 0 }}>
-                          <IconInfoCircle size={22} />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  }
-                />
-              </Box>
-              {isGroup && (
-                <Box>
-                  <CustomFormLabel sx={{ mb: 1, borderLeft: '4px solid #673ab7', pl: 1 }}>
-                    Group List
-                  </CustomFormLabel>
-
-                  <TableContainer component={Paper}>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Group Name</TableCell>
-                          <TableCell>Code</TableCell>
-                          <TableCell>Visitor Form</TableCell>
-                          <TableCell align="center">Action</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {groupVisitors.map((g, index) => (
-                          <TableRow key={g.id}>
-                            <TableCell>
-                              <TextField
-                                size="small"
-                                fullWidth
-                                name="group_name"
-                                value={g.group_name}
-                                placeholder="Enter group name"
-                                sx={{ minWidth: '100px' }}
-                                onChange={(e) =>
-                                  setGroupVisitors((prev) =>
-                                    prev.map((item) =>
-                                      item.id === g.id
-                                        ? { ...item, group_name: e.target.value }
-                                        : item,
-                                    ),
-                                  )
-                                }
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <TextField
-                                size="small"
-                                fullWidth
-                                name="group_code"
-                                value={g.group_code}
-                                InputProps={{ readOnly: true }}
-                                sx={{ minWidth: '100px' }}
-                                disabled
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Button
-                                variant="outlined"
-                                color="primary"
-                                size="small"
-                                endIcon={<IconArrowRight size={20} />}
-                                onClick={() => {
-                                  setActiveGroupIdx(index);
-                                  const deepClone = (obj: any) => {
-                                    try {
-                                      return structuredClone(obj);
-                                    } catch {
-                                      return JSON.parse(JSON.stringify(obj));
-                                    }
-                                  };
-
-                                  if (g.data_visitor && g.data_visitor.length > 0) {
-                                    const cloned = deepClone(g.data_visitor);
-                                    setDataVisitor(cloned);
-                                  } else {
-                                    const fresh = deepClone(
-                                      seedDataVisitorFromSections(sectionsData),
-                                    );
-                                    setDataVisitor(fresh);
-                                  }
-                                  setActiveStep(1);
-                                }}
-                              >
-                                Visitor Form
-                              </Button>
-                            </TableCell>
-                            <TableCell align="center">
-                              <IconButton
-                                color="error"
-                                onClick={() => handleDeleteGroup(g.id || '')}
-                                size="small"
-                              >
-                                <IconX />
-                              </IconButton>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-
-                        {groupVisitors.length === 0 && (
-                          <TableRow>
-                            <TableCell colSpan={4} align="center">
-                              No group added yet.
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                  {groupVisitors.length === 0 && (
-                    <Button
-                      variant="contained"
-                      size="small"
-                      onClick={handleAddGroup}
-                      sx={{ mb: 1, mt: 1 }}
-                    >
-                      + Add Group
-                    </Button>
-                  )}
-                </Box>
-              )}
+              </Paper>
             </Grid>
           </Grid>
-        </Box>
-      );
-    }
+        </RadioGroup>
+      </Box>
+    );
+  } else if (step == 0) {
+    return (
+      <Box>
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <CustomFormLabel
+              htmlFor="visitor-type"
+              sx={{ mb: 1, borderLeft: '4px solid #673ab7', pl: 1 }}
+            >
+              Visitor Type
+            </CustomFormLabel>
+            <FormControl component="fieldset">
+              <VisitorTypeList
+                visitorType={visitorType || []}
+                formData={formData}
+                showVTListSkeleton={showVTListSkeleton}
+                onChange={(e: any) => handleVisitorTypeChange(e)}
+              />
+            </FormControl>
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <CustomFormLabel
+              htmlFor="visitor-type"
+              sx={{ mb: 1, borderLeft: '4px solid #673ab7', pl: 1 }}
+            >
+              Select Status Visitor
+            </CustomFormLabel>
+            <Box display="flex" alignItems="center" gap={2}>
+              <FormControlLabel
+                control={
+                  <Radio
+                    checked={formData.is_group === false}
+                    value={formData.is_group}
+                    onChange={() => {
+                      setIsSingle(true);
+                      setIsGroup(false);
+                      setFormData((prev: any) => ({
+                        ...prev,
+                        is_group: false,
+                      }));
+
+                      localStorage.removeItem('unsavedVisitorData');
+                    }}
+                  />
+                }
+                label={
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <IconUser size={18} />
+                    Single
+                    <Tooltip arrow title="Only one visitor can be added">
+                      <IconButton size="small" sx={{ ml: 0 }}>
+                        <IconInfoCircle size={22} />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                }
+              />
+
+              <FormControlLabel
+                control={
+                  <Radio
+                    checked={formData.is_group === true}
+                    value={formData.is_group}
+                    onChange={() => {
+                      const value = true;
+
+                      setIsSingle(false);
+                      setIsGroup(value);
+
+                      setFormData((prev: any) => ({
+                        ...prev,
+                        is_group: value,
+                      }));
+
+                      localStorage.removeItem('unsavedVisitorData');
+                    }}
+                  />
+                }
+                label={
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <IconUsers size={18} />
+                    Group
+                    <Tooltip arrow title="Multiple visitors can be added">
+                      <IconButton size="small" sx={{ ml: 0 }}>
+                        <IconInfoCircle size={22} />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                }
+              />
+            </Box>
+            {isGroup && (
+              <Box>
+                <CustomFormLabel sx={{ mb: 1, borderLeft: '4px solid #673ab7', pl: 1 }}>
+                  Group List
+                </CustomFormLabel>
+
+                <TableContainer component={Paper}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Group Name</TableCell>
+                        <TableCell>Code</TableCell>
+                        <TableCell>Visitor Form</TableCell>
+                        <TableCell align="center">Action</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {groupVisitors.map((g, index) => (
+                        <TableRow key={g.id}>
+                          <TableCell>
+                            <TextField
+                              size="small"
+                              fullWidth
+                              name="group_name"
+                              value={g.group_name}
+                              placeholder="Enter group name"
+                              sx={{ minWidth: '100px' }}
+                              onChange={(e) =>
+                                setGroupVisitors((prev) =>
+                                  prev.map((item) =>
+                                    item.id === g.id
+                                      ? { ...item, group_name: e.target.value }
+                                      : item,
+                                  ),
+                                )
+                              }
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <TextField
+                              size="small"
+                              fullWidth
+                              name="group_code"
+                              value={g.group_code}
+                              InputProps={{ readOnly: true }}
+                              sx={{ minWidth: '100px' }}
+                              disabled
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="outlined"
+                              color="primary"
+                              size="small"
+                              endIcon={<IconArrowRight size={20} />}
+                              onClick={() => {
+                                setActiveGroupIdx(index);
+                                const deepClone = (obj: any) => {
+                                  try {
+                                    return structuredClone(obj);
+                                  } catch {
+                                    return JSON.parse(JSON.stringify(obj));
+                                  }
+                                };
+
+                                if (g.data_visitor && g.data_visitor.length > 0) {
+                                  const cloned = deepClone(g.data_visitor);
+                                  setDataVisitor(cloned);
+                                } else {
+                                  const fresh = deepClone(
+                                    seedDataVisitorFromSections(sectionsData),
+                                  );
+                                  setDataVisitor(fresh);
+                                }
+                                setActiveStep(1);
+                              }}
+                            >
+                              Visitor Form
+                            </Button>
+                          </TableCell>
+                          <TableCell align="center">
+                            <IconButton
+                              color="error"
+                              onClick={() => handleDeleteGroup(g.id || '')}
+                              size="small"
+                            >
+                              <IconX />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+
+                      {groupVisitors.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={4} align="center">
+                            No group added yet.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                {groupVisitors.length === 0 && (
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={handleAddGroup}
+                    sx={{ mb: 1, mt: 1 }}
+                  >
+                    + Add Group
+                  </Button>
+                )}
+              </Box>
+            )}
+          </Grid>
+        </Grid>
+      </Box>
+    );
+  }
     const currentSection = sectionsData[step - 1];
     if (!currentSection) return null;
 
@@ -1577,7 +1645,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
               break;
           }
 
-          const uniqueKey = opts?.uniqueKey ?? `${activeStep}:${index}`;
+          // const uniqueKey = opts?.uniqueKey ?? `${activeStep}:${index}`;
+          const uniqueKey =
+            opts?.uniqueKey ?? `${activeStep}:${field.custom_field_id || field.remarks}`;
           const inputVal = inputValues[uniqueKey as any] || '';
           const siteKey = `group-${uniqueKey}`;
           const parents: any = selectedSiteParentIds[siteKey as any] || [];
@@ -1908,6 +1978,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   seconds: renderTimeViewClock,
                 }}
                 slotProps={{
+                  actionBar: {
+                    actions: ['clear', 'accept'],
+                  },
                   textField: {
                     fullWidth: true,
                     error: !!errorMessage,
@@ -2385,100 +2458,100 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     return node.children.flatMap((child: any) => [child.id, ...collectAllChildIds(child)]);
   };
 
-const renderTree = (
-  node: any,
-  index: number,
-  onChange: (index: number, field: keyof FormVisitor, value: any) => void,
-  isSelfOnly = false,
-) => {
-  const originalSite = sites.find(
-    (s: any) => String(s.id).toUpperCase() === String(node.id).toUpperCase(),
-  );
-  const canVisited = originalSite?.can_visited === undefined ? true : !!originalSite.can_visited;
+  const renderTree = (
+    node: any,
+    index: number,
+    onChange: (index: number, field: keyof FormVisitor, value: any) => void,
+    isSelfOnly = false,
+  ) => {
+    const originalSite = sites.find(
+      (s: any) => String(s.id).toUpperCase() === String(node.id).toUpperCase(),
+    );
+    const canVisited = originalSite?.can_visited === undefined ? true : !!originalSite.can_visited;
 
-  const isDisabled = !canVisited;
+    const isDisabled = !canVisited;
 
-  return (
-    <TreeItem
-      key={`${node.parentId ?? 'root'}-${node.id}`}
-      itemId={`${node.parentId ?? 'root'}-${node.id}`}
-      label={
-        <Box display="flex" alignItems="center" gap={1}>
-          <Checkbox
-            size="small"
-            disabled={isDisabled}
-            checked={
-              isSelfOnly
-                ? (selfOnlySelectedSiteIdsMap[selfOnlyVisitorIdx] || []).includes(node.id)
-                : selectedSiteIds.includes(node.id)
-            }
-            onMouseDown={(e) => e.stopPropagation()}
-            onClick={(e) => e.stopPropagation()}
-            onChange={(e) => {
-              if (isDisabled) {
-                e.preventDefault();
-                e.stopPropagation();
-                return;
+    return (
+      <TreeItem
+        key={`${node.parentId ?? 'root'}-${node.id}`}
+        itemId={`${node.parentId ?? 'root'}-${node.id}`}
+        label={
+          <Box display="flex" alignItems="center" gap={1}>
+            <Checkbox
+              size="small"
+              disabled={isDisabled}
+              checked={
+                isSelfOnly
+                  ? (selfOnlySelectedSiteIdsMap[selfOnlyVisitorIdx] || []).includes(node.id)
+                  : selectedSiteIds.includes(node.id)
               }
-
-              const isChecked = e.target.checked;
-              const isParentNode = !!node.children?.length;
-
-              const setter = isSelfOnly
-                ? (callback: any) =>
-                    setSelfOnlySelectedSiteIdsMap((prevMap) => ({
-                      ...prevMap,
-                      [selfOnlyVisitorIdx]: callback(prevMap[selfOnlyVisitorIdx] || []),
-                    }))
-                : setSelectedSiteIds;
-
-              setter((prev: any) => {
-                let updated = [...prev];
-
-                if (isChecked) {
-                  if (!updated.includes(node.id)) {
-                    updated.push(node.id);
-                  }
-
-                  // Jika child dipilih, parent ikut dipilih
-                  if (!isParentNode && node.parentId && !updated.includes(node.parentId)) {
-                    updated.push(node.parentId);
-                  }
-                } else {
-                  updated = updated.filter((id) => id !== node.id);
-
-                  // Jika parent di-uncheck, hapus semua child
-                  if (isParentNode) {
-                    const childIds = collectAllChildIds(node);
-                    updated = updated.filter((id) => !childIds.includes(id));
-                  }
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => {
+                if (isDisabled) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  return;
                 }
 
-                onChange(index, 'answer_text', toCsv(updated));
-                return updated;
-              });
-            }}
-          />
+                const isChecked = e.target.checked;
+                const isParentNode = !!node.children?.length;
 
-          <Box display="flex" flexDirection="column">
-            <Typography variant="body2" color={isDisabled ? 'text.disabled' : 'text.primary'}>
-              {node.name}
-            </Typography>
+                const setter = isSelfOnly
+                  ? (callback: any) =>
+                      setSelfOnlySelectedSiteIdsMap((prevMap) => ({
+                        ...prevMap,
+                        [selfOnlyVisitorIdx]: callback(prevMap[selfOnlyVisitorIdx] || []),
+                      }))
+                  : setSelectedSiteIds;
 
-            {/* Hanya tampil jika site ini sendiri tidak dapat dikunjungi */}
-            {!canVisited && (
-              <Typography variant="caption" color="error" sx={{ fontStyle: 'italic' }}>
-                This site cannot be visited.
+                setter((prev: any) => {
+                  let updated = [...prev];
+
+                  if (isChecked) {
+                    if (!updated.includes(node.id)) {
+                      updated.push(node.id);
+                    }
+
+                    // Jika child dipilih, parent ikut dipilih
+                    if (!isParentNode && node.parentId && !updated.includes(node.parentId)) {
+                      updated.push(node.parentId);
+                    }
+                  } else {
+                    updated = updated.filter((id) => id !== node.id);
+
+                    // Jika parent di-uncheck, hapus semua child
+                    if (isParentNode) {
+                      const childIds = collectAllChildIds(node);
+                      updated = updated.filter((id) => !childIds.includes(id));
+                    }
+                  }
+
+                  onChange(index, 'answer_text', toCsv(updated));
+                  return updated;
+                });
+              }}
+            />
+
+            <Box display="flex" flexDirection="column">
+              <Typography variant="body2" color={isDisabled ? 'text.disabled' : 'text.primary'}>
+                {node.name}
               </Typography>
-            )}
+
+              {/* Hanya tampil jika site ini sendiri tidak dapat dikunjungi */}
+              {!canVisited && (
+                <Typography variant="caption" color="error" sx={{ fontStyle: 'italic' }}>
+                  This site cannot be visited.
+                </Typography>
+              )}
+            </Box>
           </Box>
-        </Box>
-      }
-    >
-      {node.children?.map((child: any) => renderTree(child, index, onChange, isSelfOnly))}
-    </TreeItem>
-  );
-};
+        }
+      >
+        {node.children?.map((child: any) => renderTree(child, index, onChange, isSelfOnly))}
+      </TreeItem>
+    );
+  };
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const getVisibilityMap = (details: any[]) => {
     const getFlag = (key: string) => {
@@ -2641,12 +2714,13 @@ const renderTree = (
     };
 
     const visibilityMap: any = getVisibilityMap(details);
-    const filteredDetails = details.filter((item, i) => {
+    const filteredDetails = details.filter((item) => {
+      const originalIndex = details.findIndex((d) => d.id === item.id);
       const remark = (item.remarks || '').toLowerCase();
       const visible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
 
       if (!visible && item.answer_text) {
-        onChange(i, 'answer_text', null);
+        onChange(originalIndex, 'answer_text', null);
       }
 
       return visible;
@@ -2676,9 +2750,13 @@ const renderTree = (
 
     const startDate = startField?.answer_datetime ? dayjs(startField.answer_datetime) : null;
 
-    return filteredDetails.map((item, index) => {
-      const key = `${activeStep - 1}:${item.id}`;
+    return filteredDetails.map((item) => {
+      // const key = `${activeStep - 1}:${item.id}`;
       const originalIndex = details.findIndex((d) => d.id === item.id);
+      const fieldKey = item.custom_field_id || item.id || `${item.remarks}-${originalIndex}`;
+
+      const key = `${activeStep - 1}:${fieldKey}`;
+
       const previewSrc = getPreviewSrc(key, (item as any).answer_file);
       const shownName = uploadNames[key] || fileNameFromAnswer((item as any).answer_file);
       const errorMessage = fieldErrors[key];
@@ -2689,8 +2767,8 @@ const renderTree = (
       }
       const isVisitorPeriodPair =
         remark === 'visitor_period_start' &&
-        filteredDetails[index + 1] &&
-        (filteredDetails[index + 1].remarks || '').toLowerCase() === 'visitor_period_end';
+        filteredDetails[originalIndex + 1] &&
+        (filteredDetails[originalIndex + 1].remarks || '').toLowerCase() === 'visitor_period_end';
       return (
         <TableRow key={key}>
           <TableCell>
@@ -2885,8 +2963,8 @@ const renderTree = (
                           getOptionDisabled={(option) => option.disabled === true}
                           inputValue={
                             isSelfOnly
-                              ? selfOnlyInputValuesMap[selfOnlyVisitorIdx]?.[index] || ''
-                              : inputValues[index] || ''
+                              ? selfOnlyInputValuesMap[selfOnlyVisitorIdx]?.[originalIndex] || ''
+                              : inputValues[originalIndex] || ''
                           }
                           onInputChange={(_, newInputValue, reason) => {
                             if (reason !== 'input') return;
@@ -2896,13 +2974,13 @@ const renderTree = (
                                 ...prev,
                                 [selfOnlyVisitorIdx]: {
                                   ...(prev[selfOnlyVisitorIdx] || {}),
-                                  [index]: newInputValue,
+                                  [originalIndex]: newInputValue,
                                 },
                               }));
                             } else {
                               setInputValues((prev: any) => ({
                                 ...prev,
-                                [index]: newInputValue,
+                                [originalIndex]: newInputValue,
                               }));
                             }
                           }}
@@ -2915,8 +2993,8 @@ const renderTree = (
                           noOptionsText={
                             (
                               (isSelfOnly
-                                ? selfOnlyInputValuesMap[selfOnlyVisitorIdx]?.[index]
-                                : inputValues[index]) || ''
+                                ? selfOnlyInputValuesMap[selfOnlyVisitorIdx]?.[originalIndex]
+                                : inputValues[originalIndex]) || ''
                             ).length < 3
                               ? 'Enter at least 3 characters to search'
                               : 'Not found'
@@ -2949,7 +3027,7 @@ const renderTree = (
                                 ...prev,
                                 [selfOnlyVisitorIdx]: {
                                   ...(prev[selfOnlyVisitorIdx] || {}),
-                                  [index]: '',
+                                  [originalIndex]: '',
                                 },
                               }));
 
@@ -2962,41 +3040,12 @@ const renderTree = (
 
                               setInputValues((prev: any) => ({
                                 ...prev,
-                                [index]: '',
+                                [originalIndex]: '',
                               }));
 
                               setSiteTree(uniqueTrees);
                             }
                           }}
-                          // renderOption={(props, option) => {
-                          //   const { key, ...otherProps } = props;
-
-                          //   return (
-                          //     <li
-                          //       key={option.value}
-                          //       {...otherProps}
-                          //       style={{
-                          //         ...otherProps.style,
-                          //         opacity: option.disabled ? 0.5 : 1,
-                          //         pointerEvents: option.disabled ? 'none' : 'auto',
-                          //       }}
-                          //     >
-                          //       <Box display="flex" flexDirection="column">
-                          //         <Typography variant="body1">{option.name}</Typography>
-
-                          //         {option.disabled && option.helperText && (
-                          //           <Typography
-                          //             variant="caption"
-                          //             color="error"
-                          //             sx={{ fontStyle: 'italic' }}
-                          //           >
-                          //             {option.helperText}
-                          //           </Typography>
-                          //         )}
-                          //       </Box>
-                          //     </li>
-                          //   );
-                          // }}
                           renderInput={(params) => (
                             <CustomTextField
                               {...params}
@@ -3015,7 +3064,7 @@ const renderTree = (
                               ? selfOnlySiteTreeMap[selfOnlyVisitorIdx] || []
                               : siteTree
                             ).map((node) =>
-                              renderTree(node, index, handleSitePlaceChange, isSelfOnly),
+                              renderTree(node, originalIndex, handleSitePlaceChange, isSelfOnly),
                             )}
                           </SimpleTreeView>
                         )}
@@ -3060,11 +3109,11 @@ const renderTree = (
                         groupBy={(option) => option.group}
                         getOptionLabel={(option) => option.name}
                         isOptionEqualToValue={(option, value) => option.value === value.value}
-                        inputValue={inputValues[index] || ''}
+                        inputValue={inputValues[originalIndex] || ''}
                         onInputChange={(_, newInputValue) => {
                           setInputValues((prev: any) => ({
                             ...prev,
-                            [index]: newInputValue,
+                            [originalIndex]: newInputValue,
                           }));
                         }}
                         filterOptions={(opts, state) => {
@@ -3080,7 +3129,7 @@ const renderTree = (
                         onChange={(_, newValue: any) => {
                           const selectedValue = newValue?.value || '';
 
-                          onChange(index, 'answer_text', selectedValue);
+                          onChange(originalIndex, 'answer_text', selectedValue);
 
                           if (selectedValue) {
                             clearFieldError(key);
@@ -3134,10 +3183,10 @@ const renderTree = (
                         size="small"
                         options={options}
                         getOptionLabel={(option) => option.name}
-                        inputValue={inputValues[index] || ''}
+                        inputValue={inputValues[originalIndex] || ''}
                         getOptionDisabled={(option) => option.disabled || false}
                         onInputChange={(_, newInputValue) =>
-                          setInputValues((prev) => ({ ...prev, [index]: newInputValue }))
+                          setInputValues((prev) => ({ ...prev, [originalIndex]: newInputValue }))
                         }
                         filterOptions={(opts, state) => {
                           if (state.inputValue.length < 3) return [];
@@ -3146,7 +3195,7 @@ const renderTree = (
                           );
                         }}
                         noOptionsText={
-                          (inputValues[index] || '').length < 3
+                          (inputValues[originalIndex] || '').length < 3
                             ? 'Enter at least 3 characters to search'
                             : 'Not found'
                         }
@@ -3216,15 +3265,10 @@ const renderTree = (
                         select
                         size="small"
                         fullWidth
-                        // nilai role disimpan pada field answer_text milik visitor ini
                         value={item.answer_text || ''}
                         onChange={(e) => {
                           const selectedRole = e.target.value;
-
-                          // simpan ke field visitor_role pada row ini
                           onChange(originalIndex, 'answer_text', selectedRole);
-
-                          // hapus error jika ada
                           if (selectedRole) {
                             clearFieldError(key);
                           }
@@ -3235,11 +3279,7 @@ const renderTree = (
                         <MenuItem value="">Select Role</MenuItem>
 
                         {visitorRoles.map((role: any) => (
-                          <MenuItem
-                            key={role.id}
-                            // simpan value role, misalnya "Driver"
-                            value={role.role}
-                          >
+                          <MenuItem key={role.id} value={role.role}>
                             {role.role}
                           </MenuItem>
                         ))}
@@ -3251,10 +3291,10 @@ const renderTree = (
                       size="small"
                       options={options}
                       getOptionLabel={(option) => option.name}
-                      inputValue={inputValues[index] || ''}
+                      inputValue={inputValues[originalIndex] || ''}
                       getOptionDisabled={(option) => option.disabled || false}
                       onInputChange={(_, newInputValue) =>
-                        setInputValues((prev) => ({ ...prev, [index]: newInputValue }))
+                        setInputValues((prev) => ({ ...prev, [originalIndex]: newInputValue }))
                       }
                       filterOptions={(opts, state) => {
                         if (state.inputValue.length < 3) return [];
@@ -3263,7 +3303,7 @@ const renderTree = (
                         );
                       }}
                       noOptionsText={
-                        (inputValues[index] || '').length < 3
+                        (inputValues[originalIndex] || '').length < 3
                           ? 'Enter at least 3 characters to search'
                           : 'Not found'
                       }
@@ -3415,12 +3455,12 @@ const renderTree = (
                   const remark = (item.remarks || '').toLowerCase();
                   if (
                     remark === 'visitor_period_start' &&
-                    filteredDetails[index + 1] &&
-                    (filteredDetails[index + 1].remarks || '').toLowerCase() ===
+                    filteredDetails[originalIndex + 1] &&
+                    (filteredDetails[originalIndex + 1].remarks || '').toLowerCase() ===
                       'visitor_period_end'
                   ) {
                     const startItem = item;
-                    const endItem = filteredDetails[index + 1];
+                    const endItem = filteredDetails[originalIndex + 1];
 
                     const startIndex = details.findIndex((d) => d.id === startItem.id);
                     const endIndex = details.findIndex((d) => d.id === endItem.id);
@@ -3486,6 +3526,9 @@ const renderTree = (
                                   seconds: renderTimeViewClock,
                                 }}
                                 slotProps={{
+                                  actionBar: {
+                                    actions: ['clear', 'accept'],
+                                  },
                                   textField: {
                                     fullWidth: true,
                                     error: !!startError,
@@ -3544,6 +3587,9 @@ const renderTree = (
                                   seconds: renderTimeViewClock,
                                 }}
                                 slotProps={{
+                                  actionBar: {
+                                    actions: ['clear', 'accept'],
+                                  },
                                   textField: {
                                     fullWidth: true,
                                     error: !!endError,
@@ -3583,6 +3629,9 @@ const renderTree = (
                           seconds: renderTimeViewClock,
                         }}
                         slotProps={{
+                          actionBar: {
+                            actions: ['clear', 'accept'],
+                          },
                           textField: {
                             fullWidth: true,
                             error: !!errorMessage,
@@ -3650,7 +3699,7 @@ const renderTree = (
                             handleFileChangeForField(
                               e as React.ChangeEvent<HTMLInputElement>,
                               (url) => {
-                                onChange(index, 'answer_file', url);
+                                onChange(originalIndex, 'answer_file', url);
                                 if (url) clearFieldError(key);
                               },
                               key,
@@ -3688,7 +3737,7 @@ const renderTree = (
                                 onClick={() =>
                                   handleRemoveFileForField(
                                     (item as any).answer_file,
-                                    (url) => onChange(index, 'answer_file', url),
+                                    (url) => onChange(originalIndex, 'answer_file', url),
                                     key,
                                   )
                                 }
@@ -3781,7 +3830,7 @@ const renderTree = (
                               onClick={() =>
                                 handleRemoveFileForField(
                                   (item as any).answer_file,
-                                  (url) => onChange(index, 'answer_file', url),
+                                  (url) => onChange(originalIndex, 'answer_file', url),
                                   key,
                                 )
                               }
@@ -3795,7 +3844,7 @@ const renderTree = (
                               variant="contained"
                               onClick={() =>
                                 handleCaptureForField((url) => {
-                                  onChange(index, 'answer_file', url);
+                                  onChange(originalIndex, 'answer_file', url);
                                   if (url) clearFieldError(key);
                                 }, key)
                               }
@@ -3871,7 +3920,7 @@ const renderTree = (
                                   onClick={() =>
                                     handleRemoveFileForField(
                                       (item as any).answer_file,
-                                      (url) => onChange(index, 'answer_file', url),
+                                      (url) => onChange(originalIndex, 'answer_file', url),
                                       key,
                                     )
                                   }
@@ -3894,9 +3943,9 @@ const renderTree = (
                           accept="*"
                           hidden
                           ref={fileInputRef}
-                          // onChange={handlePDFUploadFor(index, onChange)}
+                          // onChange={handlePDFUploadFor(originalIndex, onChange)}
                           onChange={(e) =>
-                            handlePDFUploadFor(index, (idx, field, url) => {
+                            handlePDFUploadFor(originalIndex, (idx, field, url) => {
                               onChange(idx, field, url);
                               if (url) clearFieldError(key);
                             })(e)
@@ -3977,7 +4026,7 @@ const renderTree = (
                             handleFileChangeForField(
                               e as React.ChangeEvent<HTMLInputElement>,
                               (url) => {
-                                onChange(index, 'answer_file', url);
+                                onChange(originalIndex, 'answer_file', url);
                                 if (url) clearFieldError(key);
                               },
                               key,
@@ -4011,7 +4060,7 @@ const renderTree = (
                                   onClick={() =>
                                     handleRemoveFileForField(
                                       (item as any).answer_file,
-                                      (url) => onChange(index, 'answer_file', url),
+                                      (url) => onChange(originalIndex, 'answer_file', url),
                                       key,
                                     )
                                   }
@@ -4114,7 +4163,7 @@ const renderTree = (
                               onClick={() =>
                                 handleRemoveFileForField(
                                   (item as any).answer_file,
-                                  (url) => onChange(index, 'answer_file', url),
+                                  (url) => onChange(originalIndex, 'answer_file', url),
                                   key,
                                 )
                               }
@@ -4128,7 +4177,9 @@ const renderTree = (
                               variant="contained"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleCaptureForField((url) => onChange(index, 'answer_file', url));
+                                handleCaptureForField((url) =>
+                                  onChange(originalIndex, 'answer_file', url),
+                                );
                               }}
                               startIcon={<IconCamera />}
                             >
@@ -4152,7 +4203,7 @@ const renderTree = (
                     <CustomTextField
                       size="small"
                       value={item.long_display_text}
-                      onChange={(e) => onChange(index, 'long_display_text', e.target.value)}
+                      onChange={(e) => onChange(originalIndex, 'long_display_text', e.target.value)}
                       placeholder="Enter value"
                       fullWidth
                     />

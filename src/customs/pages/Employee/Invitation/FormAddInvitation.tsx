@@ -75,8 +75,6 @@ import {
   createPraRegisterGroup,
   createVisitor,
   createVisitorsGroup,
-  getGrantAccess,
-  getVisitorEmployee,
   getVisitorTypeById,
 } from 'src/customs/api/admin';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
@@ -95,7 +93,7 @@ import utc from 'dayjs/plugin/utc';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import 'dayjs/locale/id';
-import { DateTimePicker, renderTimeViewClock } from '@mui/x-date-pickers';
+import { DateTimePicker, renderTimeViewClock, TimePicker } from '@mui/x-date-pickers';
 import { IconX } from '@tabler/icons-react';
 import { IconArrowRight } from '@tabler/icons-react';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -188,11 +186,11 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     message: string;
     severity: AlertColor; // 'success' | 'info' | 'warning' | 'error'
   }>({ open: false, message: '', severity: 'info' });
-
+  const [previews, setPreviews] = useState<Record<string, string | null>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [openCamera, setOpenCamera] = useState(false);
   const [screenshot, setScreenshot] = useState<string | null>(null);
-
+  const [groupVisitors, setGroupVisitors] = useState<GroupVisitor[]>([]);
   const [inputValues, setInputValues] = useState<{ [key: number]: string }>({});
   const webcamRef = useRef<Webcam>(null);
   const toast = (message: string, severity: AlertColor = 'info') => {
@@ -206,14 +204,10 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
   });
   const TYPE_REGISTERED: 0 | 1 = FORM_KEY === 'pra_form' ? 0 : 1;
 
-  const [previews, setPreviews] = useState<Record<string, string | null>>({});
-
   const updateSectionForm = (sec: any, updater: (arr: any[]) => any[]) => ({
     ...sec,
     [FORM_KEY]: updater(formsOf(sec)),
   });
-
-  const [groupVisitors, setGroupVisitors] = useState<GroupVisitor[]>([]);
 
   const handleAddGroup = () => {
     const randomCode = Array.from({ length: 6 }, () =>
@@ -530,7 +524,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       'employee',
     ];
 
-    // Jika tidak ada data yang dipilih, reset field terkait
     if (!v) {
       setSectionsData((prev) =>
         prev.map((section, sectionIndex) =>
@@ -556,15 +549,12 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
 
       return;
     }
-
-    // Konversi gender ke value yang digunakan sistem
     let genderValue: string | undefined;
 
     if (v.gender === 'Male') genderValue = '1';
     else if (v.gender === 'Female') genderValue = '0';
     else if (v.gender === 'Prefer not to say') genderValue = '2';
 
-    // Mapping data visitor/employee ke field form
     const mapping: Record<string, string | undefined> = {
       name: v.name,
       email: v.email,
@@ -574,8 +564,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       gender: genderValue,
       employee: v.id,
     };
-
-    // Update form berdasarkan mapping
     setSectionsData((prev) =>
       prev.map((section, sectionIndex) =>
         sectionIndex !== currentStep
@@ -1742,6 +1730,9 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                   seconds: renderTimeViewClock,
                 }}
                 slotProps={{
+                  actionBar: {
+                    actions: ['clear', 'accept'],
+                  },
                   textField: {
                     fullWidth: true,
                     error: !!errorMessage,
@@ -2130,27 +2121,24 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     e.target.value = '';
   };
 
-   const handleCaptureForField = async (
-     setAnswerFile: (url: string) => void,
-     trackKey?: string,
-   ) => {
-     if (!webcamRef.current) return;
+  const handleCaptureForField = async (setAnswerFile: (url: string) => void, trackKey?: string) => {
+    if (!webcamRef.current) return;
 
-     const imageSrc = webcamRef.current.getScreenshot();
-     if (!imageSrc) return;
+    const imageSrc = webcamRef.current.getScreenshot();
+    if (!imageSrc) return;
 
-     const blob = await fetch(imageSrc).then((res) => res.blob());
-     const compressedBlob = await compressImage(
-       new File([blob], 'camera.jpg', { type: 'image/jpeg' }),
-     );
-     const path = await uploadFileToCDN(compressedBlob);
-     if (!path) return;
-     if (trackKey) {
-       setPreviews((prev) => ({ ...prev, [trackKey]: imageSrc }));
-       setUploadNames((prev) => ({ ...prev, [trackKey]: 'camera.jpg' }));
-     }
-     setAnswerFile(path);
-   };
+    const blob = await fetch(imageSrc).then((res) => res.blob());
+    const compressedBlob = await compressImage(
+      new File([blob], 'camera.jpg', { type: 'image/jpeg' }),
+    );
+    const path = await uploadFileToCDN(compressedBlob);
+    if (!path) return;
+    if (trackKey) {
+      setPreviews((prev) => ({ ...prev, [trackKey]: imageSrc }));
+      setUploadNames((prev) => ({ ...prev, [trackKey]: 'camera.jpg' }));
+    }
+    setAnswerFile(path);
+  };
 
   const handleRemoveFileForField = async (
     currentUrl: string,
@@ -2177,8 +2165,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       setRemoving((s) => ({ ...s, [inputId]: false }));
     }
   };
-
- 
 
   const [startTime, setStartTime] = useState<Dayjs | null>(dayjs());
   const [siteTree, setSiteTree] = useState<any[]>([]);
@@ -2240,100 +2226,100 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     return node.children.flatMap((child: any) => [child.id, ...collectAllChildIds(child)]);
   };
 
-const renderTree = (
-  node: any,
-  index: number,
-  onChange: (index: number, field: keyof FormVisitor, value: any) => void,
-  isSelfOnly = false,
-) => {
-  const originalSite = sites.find(
-    (s: any) => String(s.id).toUpperCase() === String(node.id).toUpperCase(),
-  );
-  const canVisited = originalSite?.can_visited === undefined ? true : !!originalSite.can_visited;
+  const renderTree = (
+    node: any,
+    index: number,
+    onChange: (index: number, field: keyof FormVisitor, value: any) => void,
+    isSelfOnly = false,
+  ) => {
+    const originalSite = sites.find(
+      (s: any) => String(s.id).toUpperCase() === String(node.id).toUpperCase(),
+    );
+    const canVisited = originalSite?.can_visited === undefined ? true : !!originalSite.can_visited;
 
-  const isDisabled = !canVisited;
+    const isDisabled = !canVisited;
 
-  return (
-    <TreeItem
-      key={`${node.parentId ?? 'root'}-${node.id}`}
-      itemId={`${node.parentId ?? 'root'}-${node.id}`}
-      label={
-        <Box display="flex" alignItems="center" gap={1}>
-          <Checkbox
-            size="small"
-            disabled={isDisabled}
-            checked={
-              isSelfOnly
-                ? (selfOnlySelectedSiteIdsMap[selfOnlyVisitorIdx] || []).includes(node.id)
-                : selectedSiteIds.includes(node.id)
-            }
-            onMouseDown={(e) => e.stopPropagation()}
-            onClick={(e) => e.stopPropagation()}
-            onChange={(e) => {
-              if (isDisabled) {
-                e.preventDefault();
-                e.stopPropagation();
-                return;
+    return (
+      <TreeItem
+        key={`${node.parentId ?? 'root'}-${node.id}`}
+        itemId={`${node.parentId ?? 'root'}-${node.id}`}
+        label={
+          <Box display="flex" alignItems="center" gap={1}>
+            <Checkbox
+              size="small"
+              disabled={isDisabled}
+              checked={
+                isSelfOnly
+                  ? (selfOnlySelectedSiteIdsMap[selfOnlyVisitorIdx] || []).includes(node.id)
+                  : selectedSiteIds.includes(node.id)
               }
-
-              const isChecked = e.target.checked;
-              const isParentNode = !!node.children?.length;
-
-              const setter = isSelfOnly
-                ? (callback: any) =>
-                    setSelfOnlySelectedSiteIdsMap((prevMap) => ({
-                      ...prevMap,
-                      [selfOnlyVisitorIdx]: callback(prevMap[selfOnlyVisitorIdx] || []),
-                    }))
-                : setSelectedSiteIds;
-
-              setter((prev: any) => {
-                let updated = [...prev];
-
-                if (isChecked) {
-                  if (!updated.includes(node.id)) {
-                    updated.push(node.id);
-                  }
-
-                  // Jika child dipilih, parent ikut dipilih
-                  if (!isParentNode && node.parentId && !updated.includes(node.parentId)) {
-                    updated.push(node.parentId);
-                  }
-                } else {
-                  updated = updated.filter((id) => id !== node.id);
-
-                  // Jika parent di-uncheck, hapus semua child
-                  if (isParentNode) {
-                    const childIds = collectAllChildIds(node);
-                    updated = updated.filter((id) => !childIds.includes(id));
-                  }
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => {
+                if (isDisabled) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  return;
                 }
 
-                onChange(index, 'answer_text', toCsv(updated));
-                return updated;
-              });
-            }}
-          />
+                const isChecked = e.target.checked;
+                const isParentNode = !!node.children?.length;
 
-          <Box display="flex" flexDirection="column">
-            <Typography variant="body2" color={isDisabled ? 'text.disabled' : 'text.primary'}>
-              {node.name}
-            </Typography>
+                const setter = isSelfOnly
+                  ? (callback: any) =>
+                      setSelfOnlySelectedSiteIdsMap((prevMap) => ({
+                        ...prevMap,
+                        [selfOnlyVisitorIdx]: callback(prevMap[selfOnlyVisitorIdx] || []),
+                      }))
+                  : setSelectedSiteIds;
 
-            {/* Hanya tampil jika site ini sendiri tidak dapat dikunjungi */}
-            {!canVisited && (
-              <Typography variant="caption" color="error" sx={{ fontStyle: 'italic' }}>
-                This site cannot be visited.
+                setter((prev: any) => {
+                  let updated = [...prev];
+
+                  if (isChecked) {
+                    if (!updated.includes(node.id)) {
+                      updated.push(node.id);
+                    }
+
+                    // Jika child dipilih, parent ikut dipilih
+                    if (!isParentNode && node.parentId && !updated.includes(node.parentId)) {
+                      updated.push(node.parentId);
+                    }
+                  } else {
+                    updated = updated.filter((id) => id !== node.id);
+
+                    // Jika parent di-uncheck, hapus semua child
+                    if (isParentNode) {
+                      const childIds = collectAllChildIds(node);
+                      updated = updated.filter((id) => !childIds.includes(id));
+                    }
+                  }
+
+                  onChange(index, 'answer_text', toCsv(updated));
+                  return updated;
+                });
+              }}
+            />
+
+            <Box display="flex" flexDirection="column">
+              <Typography variant="body2" color={isDisabled ? 'text.disabled' : 'text.primary'}>
+                {node.name}
               </Typography>
-            )}
+
+              {/* Hanya tampil jika site ini sendiri tidak dapat dikunjungi */}
+              {!canVisited && (
+                <Typography variant="caption" color="error" sx={{ fontStyle: 'italic' }}>
+                  This site cannot be visited.
+                </Typography>
+              )}
+            </Box>
           </Box>
-        </Box>
-      }
-    >
-      {node.children?.map((child: any) => renderTree(child, index, onChange, isSelfOnly))}
-    </TreeItem>
-  );
-};
+        }
+      >
+        {node.children?.map((child: any) => renderTree(child, index, onChange, isSelfOnly))}
+      </TreeItem>
+    );
+  };
 
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const getVisibilityMap = (details: any[]) => {
@@ -2467,12 +2453,32 @@ const renderTree = (
     });
   };
 
+  const dedupeTree = (nodes: any[]) => {
+    const visited = new Set();
+
+    const processNode = (node: any): any => {
+      if (visited.has(node.id)) {
+        return null;
+      }
+
+      visited.add(node.id);
+
+      return {
+        ...node,
+        children: (node.children || []).map(processNode).filter(Boolean),
+      };
+    };
+
+    return nodes.map(processNode).filter(Boolean);
+  };
+
   const renderDetailRows = (
     details: FormVisitor[] | any,
     onChange: (index: number, field: keyof FormVisitor, value: any) => void,
+    groupIdx?: string | undefined,
+    isSelfOnly: boolean = false,
   ) => {
     if (!Array.isArray(details)) {
-      console.error('Expected array for details, but got:', details);
       return (
         <TableRow>
           <TableCell colSpan={5}>Invalid data format</TableCell>
@@ -2485,48 +2491,75 @@ const renderTree = (
     };
 
     const visibilityMap: any = getVisibilityMap(details);
-    const filteredDetails = details.filter((item, i) => {
+    const filteredDetails = details.filter((item) => {
+      const originalIndex = details.findIndex((d) => d.id === item.id);
       const remark = (item.remarks || '').toLowerCase();
       const visible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
+
       if (!visible && item.answer_text) {
-        onChange(i, 'answer_text', '');
+        onChange(originalIndex, 'answer_text', null);
       }
 
       return visible;
     });
+
+    const employeeIndex = filteredDetails.findIndex(
+      (item) => (item.remarks || '').toLowerCase() === 'employee',
+    );
+
+    const isEmployeeIndex = filteredDetails.findIndex(
+      (item) => (item.remarks || '').toLowerCase() === 'is_employee',
+    );
+
+    if (employeeIndex !== -1 && isEmployeeIndex !== -1) {
+      const [employeeItem] = filteredDetails.splice(employeeIndex, 1);
+
+      const newIsEmployeeIndex = filteredDetails.findIndex(
+        (item) => (item.remarks || '').toLowerCase() === 'is_employee',
+      );
+
+      filteredDetails.splice(newIsEmployeeIndex + 1, 0, employeeItem);
+    }
+
     const startField = details.find(
       (f) => (f.remarks || '').toLowerCase() === 'visitor_period_start',
     );
 
     const startDate = startField?.answer_datetime ? dayjs(startField.answer_datetime) : null;
 
-    return filteredDetails.map((item, index) => {
-      const key = `${activeStep - 1}:${item.id}`;
+    return filteredDetails.map((item) => {
+      // const key = `${activeStep - 1}:${item.id}`;
+      const originalIndex = details.findIndex((d) => d.id === item.id);
+      const fieldKey = item.custom_field_id || item.id || `${item.remarks}-${originalIndex}`;
+
+      const key = `${activeStep - 1}:${fieldKey}`;
+
       const previewSrc = getPreviewSrc(key, (item as any).answer_file);
       const shownName = uploadNames[key] || fileNameFromAnswer((item as any).answer_file);
       const errorMessage = fieldErrors[key];
+
       const remark = (item.remarks || '').toLowerCase();
       if (remark === 'visitor_period_end') {
         return null;
       }
       const isVisitorPeriodPair =
         remark === 'visitor_period_start' &&
-        filteredDetails[index + 1] &&
-        (filteredDetails[index + 1].remarks || '').toLowerCase() === 'visitor_period_end';
-
+        filteredDetails[originalIndex + 1] &&
+        (filteredDetails[originalIndex + 1].remarks || '').toLowerCase() === 'visitor_period_end';
       return (
         <TableRow key={key}>
           <TableCell>
             {!isVisitorPeriodPair && (
               <Box display="flex" alignItems="center" gap={0.5} mb={1}>
-                <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
+                <Typography variant="subtitle2" fontWeight={600}>
                   {item.long_display_text}
                   {item.mandatory && (
-                    <Typography component="span" color="error" sx={{ ml: 0.5, lineHeight: 1 }}>
+                    <Typography component="span" color="error" sx={{ ml: 0.5 }}>
                       *
                     </Typography>
                   )}
                 </Typography>
+
                 {item.remarks === 'host' && (
                   <Tooltip
                     title="The host is the person in charge responsible for this visitor"
@@ -2592,7 +2625,7 @@ const renderTree = (
                         ]}
                         value={item.answer_text || ''}
                         onInputChange={(event, newValue) => {
-                          onChange(index, 'answer_text', newValue || '');
+                          onChange(originalIndex, 'answer_text', newValue || '');
                           if (newValue) clearFieldError(key);
                         }}
                         renderInput={(params) => (
@@ -2612,7 +2645,7 @@ const renderTree = (
                       size="small"
                       value={item.answer_text || ''}
                       onChange={(e) => {
-                        onChange(index, 'answer_text', e.target.value);
+                        onChange(originalIndex, 'answer_text', e.target.value);
                         if (e.target.value) clearFieldError(key);
                       }}
                       placeholder={
@@ -2638,7 +2671,7 @@ const renderTree = (
                       size="small"
                       value={item.answer_text}
                       onChange={(e) => {
-                        onChange(index, 'answer_text', e.target.value);
+                        onChange(originalIndex, 'answer_text', e.target.value);
                         if (e.target.value) clearFieldError(key);
                       }}
                       placeholder="Enter number"
@@ -2654,7 +2687,7 @@ const renderTree = (
                       size="small"
                       value={item.answer_text}
                       onChange={(e) => {
-                        onChange(index, 'answer_text', e.target.value);
+                        onChange(originalIndex, 'answer_text', e.target.value);
                         if (e.target.value) clearFieldError(key);
                       }}
                       placeholder={item.remarks === 'email' ? '' : ''}
@@ -2664,8 +2697,12 @@ const renderTree = (
                     />
                   );
                 case 3: {
-                  let options: { value: string; name: string; disabled?: boolean | undefined }[] =
-                    [];
+                  let options: {
+                    value: string;
+                    name: string;
+                    disabled?: boolean | undefined;
+                    helperText?: string;
+                  }[] = [];
 
                   if (item.remarks === 'host') {
                     options = employee.map((emp: any) => ({
@@ -2682,6 +2719,7 @@ const renderTree = (
                     options = sites.map((site: any) => ({
                       value: site.id,
                       name: site.name,
+                      // disabled: site.can_visited === false,
                       disabled: false,
                       can_visited: site.can_visited,
                       helperText: site.can_visited === false ? 'This site cannot be visited.' : '',
@@ -2699,14 +2737,29 @@ const renderTree = (
                           size="small"
                           options={options}
                           getOptionLabel={(option) => option.name}
-                          inputValue={inputValues[index] || ''}
+                          getOptionDisabled={(option) => option.disabled === true}
+                          inputValue={
+                            isSelfOnly
+                              ? selfOnlyInputValuesMap[selfOnlyVisitorIdx]?.[originalIndex] || ''
+                              : inputValues[originalIndex] || ''
+                          }
                           onInputChange={(_, newInputValue, reason) => {
                             if (reason !== 'input') return;
 
-                            setInputValues((prev) => ({
-                              ...prev,
-                              [index]: newInputValue,
-                            }));
+                            if (isSelfOnly) {
+                              setSelfOnlyInputValuesMap((prev: any) => ({
+                                ...prev,
+                                [selfOnlyVisitorIdx]: {
+                                  ...(prev[selfOnlyVisitorIdx] || {}),
+                                  [originalIndex]: newInputValue,
+                                },
+                              }));
+                            } else {
+                              setInputValues((prev: any) => ({
+                                ...prev,
+                                [originalIndex]: newInputValue,
+                              }));
+                            }
                           }}
                           filterOptions={(opts, state) => {
                             if (state.inputValue.length < 3) return [];
@@ -2715,25 +2768,60 @@ const renderTree = (
                             );
                           }}
                           noOptionsText={
-                            (inputValues[index] || '').length < 3
+                            (
+                              (isSelfOnly
+                                ? selfOnlyInputValuesMap[selfOnlyVisitorIdx]?.[originalIndex]
+                                : inputValues[originalIndex]) || ''
+                            ).length < 3
                               ? 'Enter at least 3 characters to search'
                               : 'Not found'
                           }
-                          value={options.filter((opt) => selectedSiteParentIds.includes(opt.value))}
+                          value={options.filter((opt) =>
+                            (isSelfOnly
+                              ? selfOnlySelectedSiteParentIdsMap[selfOnlyVisitorIdx] || []
+                              : selectedSiteParentIds
+                            ).includes(opt.value),
+                          )}
                           onChange={(_, newValues) => {
-                            const parentIds = newValues.map((v) => v.value);
+                            // Pastikan hanya site yang dapat dikunjungi yang diproses
+                            const validValues = newValues.filter((v) => v.disabled !== true);
 
-                            setSelectedSiteParentIds(parentIds);
+                            const parentIds = validValues.map((v) => v.value);
 
-                            setInputValues((prev) => ({
-                              ...prev,
-                              [index]: '',
-                            }));
-                            const trees = parentIds.flatMap((pid) =>
+                            const rawTrees = parentIds.flatMap((pid) =>
                               buildSiteTreeWithParent(sites, pid),
                             );
 
-                            setSiteTree(trees);
+                            const uniqueTrees = dedupeTree(rawTrees);
+
+                            if (isSelfOnly) {
+                              setSelfOnlySelectedSiteParentIdsMap((prev: any) => ({
+                                ...prev,
+                                [selfOnlyVisitorIdx]: parentIds,
+                              }));
+
+                              setSelfOnlyInputValuesMap((prev: any) => ({
+                                ...prev,
+                                [selfOnlyVisitorIdx]: {
+                                  ...(prev[selfOnlyVisitorIdx] || {}),
+                                  [originalIndex]: '',
+                                },
+                              }));
+
+                              setSelfOnlySiteTreeMap((prev: any) => ({
+                                ...prev,
+                                [selfOnlyVisitorIdx]: uniqueTrees,
+                              }));
+                            } else {
+                              setSelectedSiteParentIds(parentIds);
+
+                              setInputValues((prev: any) => ({
+                                ...prev,
+                                [originalIndex]: '',
+                              }));
+
+                              setSiteTree(uniqueTrees);
+                            }
                           }}
                           renderInput={(params) => (
                             <CustomTextField
@@ -2745,9 +2833,16 @@ const renderTree = (
                             />
                           )}
                         />
-                        {item.remarks === 'site_place' && siteTree.length > 0 && (
+
+                        {(isSelfOnly ? selfOnlySiteTreeMap[selfOnlyVisitorIdx] || [] : siteTree)
+                          .length > 0 && (
                           <SimpleTreeView>
-                            {siteTree.map((node) => renderTree(node, index, handleSitePlaceChange))}
+                            {(isSelfOnly
+                              ? selfOnlySiteTreeMap[selfOnlyVisitorIdx] || []
+                              : siteTree
+                            ).map((node) =>
+                              renderTree(node, originalIndex, handleSitePlaceChange, isSelfOnly),
+                            )}
                           </SimpleTreeView>
                         )}
                       </>
@@ -2756,8 +2851,6 @@ const renderTree = (
                   if (item.remarks === 'host') {
                     const selectedSiteIds =
                       details.find((d: any) => d.remarks === 'site_place')?.answer_text || [];
-
-                    // ambil semua host dari selected sites
                     const siteHostIds = [
                       ...new Set(
                         sites
@@ -2776,7 +2869,6 @@ const renderTree = (
                         group: 'Host Based on Destination',
                       }));
 
-                    // semua host lainnya
                     const otherHosts = employee
                       .filter((emp: any) => !siteHostIds.includes(emp.id))
                       .map((emp: any) => ({
@@ -2794,11 +2886,11 @@ const renderTree = (
                         groupBy={(option) => option.group}
                         getOptionLabel={(option) => option.name}
                         isOptionEqualToValue={(option, value) => option.value === value.value}
-                        inputValue={inputValues[index] || ''}
+                        inputValue={inputValues[originalIndex] || ''}
                         onInputChange={(_, newInputValue) => {
                           setInputValues((prev: any) => ({
                             ...prev,
-                            [index]: newInputValue,
+                            [originalIndex]: newInputValue,
                           }));
                         }}
                         filterOptions={(opts, state) => {
@@ -2814,7 +2906,7 @@ const renderTree = (
                         onChange={(_, newValue: any) => {
                           const selectedValue = newValue?.value || '';
 
-                          onChange(index, 'answer_text', selectedValue);
+                          onChange(originalIndex, 'answer_text', selectedValue);
 
                           if (selectedValue) {
                             clearFieldError(key);
@@ -2868,10 +2960,10 @@ const renderTree = (
                         size="small"
                         options={options}
                         getOptionLabel={(option) => option.name}
-                        inputValue={inputValues[index] || ''}
+                        inputValue={inputValues[originalIndex] || ''}
                         getOptionDisabled={(option) => option.disabled || false}
                         onInputChange={(_, newInputValue) =>
-                          setInputValues((prev) => ({ ...prev, [index]: newInputValue }))
+                          setInputValues((prev) => ({ ...prev, [originalIndex]: newInputValue }))
                         }
                         filterOptions={(opts, state) => {
                           if (state.inputValue.length < 3) return [];
@@ -2880,18 +2972,18 @@ const renderTree = (
                           );
                         }}
                         noOptionsText={
-                          (inputValues[index] || '').length < 3
+                          (inputValues[originalIndex] || '').length < 3
                             ? 'Enter at least 3 characters to search'
                             : 'Not found'
                         }
                         value={options.find((opt) => opt.value === item.answer_text) || null}
                         onChange={(_, newValue: any) => {
                           if (!newValue) {
-                            onChange(index, 'answer_text', '');
+                            onChange(originalIndex, 'answer_text', null);
                             return;
                           }
                           const selected = newValue;
-                          onChange(index, 'answer_text', selected.value);
+                          onChange(originalIndex, 'answer_text', selected.value);
                           setSectionsData((prev) =>
                             prev.map((s, sIdx) =>
                               sIdx !== activeStep - 1
@@ -2953,7 +3045,7 @@ const renderTree = (
                         value={item.answer_text || ''}
                         onChange={(e) => {
                           const selectedRole = e.target.value;
-                          onChange(index, 'answer_text', selectedRole);
+                          onChange(originalIndex, 'answer_text', selectedRole);
                           if (selectedRole) {
                             clearFieldError(key);
                           }
@@ -2976,10 +3068,10 @@ const renderTree = (
                       size="small"
                       options={options}
                       getOptionLabel={(option) => option.name}
-                      inputValue={inputValues[index] || ''}
+                      inputValue={inputValues[originalIndex] || ''}
                       getOptionDisabled={(option) => option.disabled || false}
                       onInputChange={(_, newInputValue) =>
-                        setInputValues((prev) => ({ ...prev, [index]: newInputValue }))
+                        setInputValues((prev) => ({ ...prev, [originalIndex]: newInputValue }))
                       }
                       filterOptions={(opts, state) => {
                         if (state.inputValue.length < 3) return [];
@@ -2988,14 +3080,14 @@ const renderTree = (
                         );
                       }}
                       noOptionsText={
-                        (inputValues[index] || '').length < 3
+                        (inputValues[originalIndex] || '').length < 3
                           ? 'Enter at least 3 characters to search'
                           : 'Not found'
                       }
                       value={options.find((opt) => opt.value === item.answer_text) || null}
                       onChange={(_, newValue) => {
                         const selectedValue = newValue ? newValue.value : '';
-                        onChange(index, 'answer_text', selectedValue);
+                        onChange(originalIndex, 'answer_text', selectedValue);
                         if (selectedValue) clearFieldError(key);
                       }}
                       renderInput={(params) => (
@@ -3017,7 +3109,7 @@ const renderTree = (
                         value={startTime}
                         ampm={false}
                         onChange={setStartTime}
-                        format="dddd, DD  MMMMM YYYY, HH:mm"
+                        format="dddd, DD  MMMM YYYY, HH:mm"
                         viewRenderers={{
                           hours: renderTimeViewClock,
                           minutes: renderTimeViewClock,
@@ -3031,7 +3123,6 @@ const renderTree = (
                       />
                     </LocalizationProvider>
                   );
-
                 case 5: // Radio
                   return (
                     <>
@@ -3039,7 +3130,7 @@ const renderTree = (
                         <RadioGroup
                           value={String(item.answer_text)}
                           onChange={(e) => {
-                            onChange(index, 'answer_text', e.target.value);
+                            onChange(originalIndex, 'answer_text', e.target.value);
                             if (e.target.value) clearFieldError(key);
                           }}
                           sx={{ flexDirection: 'row', flexWrap: 'wrap', gap: 1 }}
@@ -3096,7 +3187,7 @@ const renderTree = (
                                       const newValue = e.target.checked
                                         ? [...answerArray, val]
                                         : answerArray.filter((v: string) => v !== val);
-                                      onChange(index, 'answer_text', newValue);
+                                      onChange(originalIndex, 'answer_text', newValue);
                                       if (newValue.length > 0) {
                                         clearFieldError(key);
                                       }
@@ -3120,27 +3211,33 @@ const renderTree = (
 
                 case 8: // TimePicker
                   return (
-                    <CustomTextField
-                      type="time"
-                      size="small"
-                      value={item.answer_datetime}
-                      onChange={(e) => onChange(index, 'answer_datetime', e.target.value)}
-                      fullWidth
-                      error={!!errorMessage}
-                      helperText={errorMessage}
-                    />
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                      <TimePicker
+                        value={item.answer_datetime ? dayjs(item.answer_datetime, 'HH:mm') : null}
+                        onChange={(newValue) => {
+                          const utcTime = newValue?.utc().format('HH:mm');
+                          onChange(originalIndex, 'answer_datetime', utcTime);
+                        }}
+                        slotProps={{
+                          textField: {
+                            size: 'small',
+                            fullWidth: true,
+                          },
+                        }}
+                      />
+                    </LocalizationProvider>
                   );
 
                 case 9: {
                   const remark = (item.remarks || '').toLowerCase();
                   if (
                     remark === 'visitor_period_start' &&
-                    filteredDetails[index + 1] &&
-                    (filteredDetails[index + 1].remarks || '').toLowerCase() ===
+                    filteredDetails[originalIndex + 1] &&
+                    (filteredDetails[originalIndex + 1].remarks || '').toLowerCase() ===
                       'visitor_period_end'
                   ) {
                     const startItem = item;
-                    const endItem = filteredDetails[index + 1];
+                    const endItem = filteredDetails[originalIndex + 1];
 
                     const startIndex = details.findIndex((d) => d.id === startItem.id);
                     const endIndex = details.findIndex((d) => d.id === endItem.id);
@@ -3154,7 +3251,6 @@ const renderTree = (
                     return (
                       <Box sx={{ width: '100%' }}>
                         <Grid container spacing={2}>
-                          {/* Kiri: Visitor Period Start */}
                           <Grid size={{ xs: 12, md: 6 }}>
                             <Box display="flex" alignItems="center" gap={0.5} mb={1}>
                               <Typography variant="subtitle2" fontWeight={600}>
@@ -3191,6 +3287,7 @@ const renderTree = (
                                     const utc = newValue.utc().format();
                                     onChange(startIndex, 'answer_datetime', utc);
                                     clearFieldError(startKey);
+
                                     if (
                                       endItem.answer_datetime &&
                                       dayjs(endItem.answer_datetime).isBefore(newValue)
@@ -3206,6 +3303,9 @@ const renderTree = (
                                   seconds: renderTimeViewClock,
                                 }}
                                 slotProps={{
+                                  actionBar: {
+                                    actions: ['clear', 'accept'],
+                                  },
                                   textField: {
                                     fullWidth: true,
                                     error: !!startError,
@@ -3215,6 +3315,7 @@ const renderTree = (
                               />
                             </LocalizationProvider>
                           </Grid>
+
                           <Grid size={{ xs: 12, md: 6 }}>
                             <Box display="flex" alignItems="center" gap={0.5} mb={1}>
                               <Typography variant="subtitle2" fontWeight={600}>
@@ -3263,6 +3364,9 @@ const renderTree = (
                                   seconds: renderTimeViewClock,
                                 }}
                                 slotProps={{
+                                  actionBar: {
+                                    actions: ['clear', 'accept'],
+                                  },
                                   textField: {
                                     fullWidth: true,
                                     error: !!endError,
@@ -3279,6 +3383,7 @@ const renderTree = (
                   if (remark === 'visitor_period_end') {
                     return null;
                   }
+
                   return (
                     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
                       <DateTimePicker
@@ -3290,7 +3395,7 @@ const renderTree = (
                         onChange={(newValue) => {
                           if (newValue) {
                             const utc = newValue.utc().format();
-                            onChange(index, 'answer_datetime', utc);
+                            onChange(originalIndex, 'answer_datetime', utc);
                             clearFieldError(key);
                           }
                         }}
@@ -3301,6 +3406,9 @@ const renderTree = (
                           seconds: renderTimeViewClock,
                         }}
                         slotProps={{
+                          actionBar: {
+                            actions: ['clear', 'accept'],
+                          },
                           textField: {
                             fullWidth: true,
                             error: !!errorMessage,
@@ -3312,7 +3420,7 @@ const renderTree = (
                   );
                 }
 
-                case 10: // TakePicture (Assuming image capture from device camera)
+                case 10: // TakePicture
                   return (
                     <Box>
                       <Box
@@ -3368,7 +3476,7 @@ const renderTree = (
                             handleFileChangeForField(
                               e as React.ChangeEvent<HTMLInputElement>,
                               (url) => {
-                                onChange(index, 'answer_file', url);
+                                onChange(originalIndex, 'answer_file', url);
                                 if (url) clearFieldError(key);
                               },
                               key,
@@ -3398,7 +3506,7 @@ const renderTree = (
                                   borderRadius: 8,
                                 }}
                               />
-                              <MuiButton
+                              <Button
                                 color="error"
                                 size="small"
                                 variant="outlined"
@@ -3406,14 +3514,14 @@ const renderTree = (
                                 onClick={() =>
                                   handleRemoveFileForField(
                                     (item as any).answer_file,
-                                    (url) => onChange(index, 'answer_file', url),
+                                    (url) => onChange(originalIndex, 'answer_file', url),
                                     key,
                                   )
                                 }
                                 startIcon={<IconTrash />}
                               >
                                 Remove
-                              </MuiButton>
+                              </Button>
                             </Box>
                           ) : (
                             <></>
@@ -3438,7 +3546,6 @@ const renderTree = (
                             <Typography variant="h6" mb={2}>
                               Take Photo From Camera
                             </Typography>
-                            {/* close button */}
                             <IconButton
                               onClick={() => setOpenCamera(false)}
                               sx={{ position: 'absolute', top: 10, right: 10 }}
@@ -3500,7 +3607,7 @@ const renderTree = (
                               onClick={() =>
                                 handleRemoveFileForField(
                                   (item as any).answer_file,
-                                  (url) => onChange(index, 'answer_file', url),
+                                  (url) => onChange(originalIndex, 'answer_file', url),
                                   key,
                                 )
                               }
@@ -3514,7 +3621,7 @@ const renderTree = (
                               variant="contained"
                               onClick={() =>
                                 handleCaptureForField((url) => {
-                                  onChange(index, 'answer_file', url);
+                                  onChange(originalIndex, 'answer_file', url);
                                   if (url) clearFieldError(key);
                                 }, key)
                               }
@@ -3590,7 +3697,7 @@ const renderTree = (
                                   onClick={() =>
                                     handleRemoveFileForField(
                                       (item as any).answer_file,
-                                      (url) => onChange(index, 'answer_file', url),
+                                      (url) => onChange(originalIndex, 'answer_file', url),
                                       key,
                                     )
                                   }
@@ -3613,9 +3720,9 @@ const renderTree = (
                           accept="*"
                           hidden
                           ref={fileInputRef}
-                          // onChange={handlePDFUploadFor(index, onChange)}
+                          // onChange={handlePDFUploadFor(originalIndex, onChange)}
                           onChange={(e) =>
-                            handlePDFUploadFor(index, (idx, field, url) => {
+                            handlePDFUploadFor(originalIndex, (idx, field, url) => {
                               onChange(idx, field, url);
                               if (url) clearFieldError(key);
                             })(e)
@@ -3661,7 +3768,7 @@ const renderTree = (
                           sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                         >
                           <Typography variant="body1" color="textSecondary">
-                            Supports: JPG, PNG, JPEG Up to
+                            Supports: JPG, PNG, JPEG, Up to
                             <span style={{ fontWeight: '700' }}> 1 Mb</span>
                           </Typography>
 
@@ -3696,15 +3803,13 @@ const renderTree = (
                             handleFileChangeForField(
                               e as React.ChangeEvent<HTMLInputElement>,
                               (url) => {
-                                onChange(index, 'answer_file', url);
+                                onChange(originalIndex, 'answer_file', url);
                                 if (url) clearFieldError(key);
                               },
                               key,
                             )
                           }
                         />
-
-                        {/*preview  */}
                         {(previewSrc || shownName) && (
                           <Box
                             mt={2}
@@ -3732,7 +3837,7 @@ const renderTree = (
                                   onClick={() =>
                                     handleRemoveFileForField(
                                       (item as any).answer_file,
-                                      (url) => onChange(index, 'answer_file', url),
+                                      (url) => onChange(originalIndex, 'answer_file', url),
                                       key,
                                     )
                                   }
@@ -3831,11 +3936,11 @@ const renderTree = (
                           <Divider sx={{ my: 2 }} />
 
                           <Box sx={{ textAlign: 'right' }}>
-                            <MuiButton
+                            <Button
                               onClick={() =>
                                 handleRemoveFileForField(
                                   (item as any).answer_file,
-                                  (url) => onChange(index, 'answer_file', url),
+                                  (url) => onChange(originalIndex, 'answer_file', url),
                                   key,
                                 )
                               }
@@ -3844,24 +3949,26 @@ const renderTree = (
                               startIcon={<IconTrash />}
                             >
                               Clear Foto
-                            </MuiButton>
-                            <MuiButton
+                            </Button>
+                            <Button
                               variant="contained"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleCaptureForField((url) => onChange(index, 'answer_file', url));
+                                handleCaptureForField((url) =>
+                                  onChange(originalIndex, 'answer_file', url),
+                                );
                               }}
                               startIcon={<IconCamera />}
                             >
                               Take Foto
-                            </MuiButton>
-                            <MuiButton
+                            </Button>
+                            <Button
                               startIcon={<IconDeviceFloppy />}
                               onClick={() => setOpenCamera(false)}
                               sx={{ ml: 1 }}
                             >
                               Submit
-                            </MuiButton>
+                            </Button>
                           </Box>
                         </Box>
                       </Dialog>
@@ -3873,7 +3980,7 @@ const renderTree = (
                     <CustomTextField
                       size="small"
                       value={item.long_display_text}
-                      onChange={(e) => onChange(index, 'long_display_text', e.target.value)}
+                      onChange={(e) => onChange(originalIndex, 'long_display_text', e.target.value)}
                       placeholder="Enter value"
                       fullWidth
                     />
@@ -4939,15 +5046,10 @@ const renderTree = (
               <Button
                 variant="contained"
                 color="primary"
-                disabled={
-                  loading ||
-                  !formData.visitor_type ||
-                  formData.is_group === null ||
-                  formData.is_group === undefined
-                }
+                disabled={loading}
                 onClick={handleOnSubmit}
               >
-                {loading ? <CircularProgress size={20} /> : 'Submit'}
+                Submit
               </Button>
             ) : (
               <Button

@@ -12,6 +12,7 @@ import dateRangeReducer from './apps/Daterange/dateRangeSlice';
 import userReducer from './apps/user/userSlice';
 import storage from 'redux-persist/lib/storage';
 import { persistReducer, persistStore } from 'redux-persist';
+import notificationReducer from './apps/notifications/NotificationSlice';
 
 import { combineReducers } from 'redux';
 import {
@@ -46,6 +47,7 @@ const rootReducer = combineReducers({
   // ticketReducer: TicketReducer,
   // userpostsReducer: UserProfileReducer,
   // blogReducer: BlogReducer,
+  notifications: notificationReducer,
   dateRange: dateRangeReducer,
   userReducer: userReducer,
 });

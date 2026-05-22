@@ -72,6 +72,35 @@ const BioPeopleParking = ({ id }: { id: string }) => {
     block: 0,
   });
 
+  const handleParkingSyncIntegration = async () => {
+    if (!id || !token) {
+      setSyncMsg({ open: true, text: 'Session habis / ID tidak valid.', severity: 'error' });
+      return;
+    }
+
+    try {
+      setSyncing(true);
+      const res = await syncParkingIntegration(id as string, token as string);
+      setSyncing(false);
+
+      if (res.status !== 'success') {
+        showSwal('error', res.msg || 'Sinkronisasi gagal.');
+
+        if (res.status_code === 404 && /not connected/i.test(res.msg || '')) {
+          showSwal('error', 'Unable to connect to the device. Please try again later.');
+        }
+
+        return;
+      }
+      showSwal('success', res.msg || 'Successfully synchronized.');
+      loadTotals();
+      fetchListByType(selectedType);
+    } catch (e: any) {
+      setSyncing(false);
+      showSwal('error', e?.message || 'Failed to synchronize. Please try again later.');
+    }
+  };
+
   const cards = useMemo(
     () => [
       {
@@ -208,35 +237,6 @@ const BioPeopleParking = ({ id }: { id: string }) => {
   useEffect(() => {
     loadTotals();
   }, [id, token]);
-
-  const handleParkingSyncIntegration = async () => {
-    if (!id || !token) {
-      setSyncMsg({ open: true, text: 'Session habis / ID tidak valid.', severity: 'error' });
-      return;
-    }
-
-    try {
-      setSyncing(true);
-      const res = await syncParkingIntegration(id as string, token as string);
-      setSyncing(false);
-
-      if (res.status !== 'success') {
-        showSwal('error', res.msg || 'Sinkronisasi gagal.');
-
-        if (res.status_code === 404 && /not connected/i.test(res.msg || '')) {
-          showSwal('error', 'Unable to connect to the device. Please try again later.');
-        }
-
-        return;
-      }
-      showSwal('success', res.msg || 'Successfully synchronized.');
-      loadTotals();
-      fetchListByType(selectedType);
-    } catch (e: any) {
-      setSyncing(false);
-      showSwal('error', e?.message || 'Failed to synchronize. Please try again later.');
-    }
-  };
 
   const fetchListByType = async (type: string) => {
     if (!token || !id) return;

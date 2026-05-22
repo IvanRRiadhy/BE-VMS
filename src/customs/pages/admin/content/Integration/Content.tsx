@@ -404,40 +404,7 @@ const handleSearch = useCallback((keyword: string) => {
     setPendingIntegration(null);
   };
 
-  // const handleContinueEditing = () => {
-  //   const draft = getDraft();
-
-  //   if (draft) {
-  //     setFormDataAddIntegration(draft);
-  //     setIsDirty(true);
-  //   }
-
-  //   setConfirmDialogOpen(false);
-  //   setOpenFormAddIntegration(true);
-  // };
-
-  // const handleDiscard = () => {
-  //   setAllowAutoSave(false);
-
-  //   localStorage.removeItem(DRAFT_KEY);
-
-  //   setFormDataAddIntegration(
-  //     CreateIntegrationRequestSchema.parse({
-  //       name: '',
-  //       brand_name: '',
-  //       brand_type: 0,
-  //       integration_type: 0,
-  //       api_type_auth: '',
-  //     }),
-  //   );
-
-  //   setIsDirty(false);
-  //   setConfirmDialogOpen(false);
-  //   setOpenFormAddIntegration(false);
-
-  //   setTimeout(() => setAllowAutoSave(true), 0);
-  // };
-
+ 
   const handleRequestClose = () => {
     if (isDirty) {
       setConfirmDialogOpen(true);
@@ -445,6 +412,18 @@ const handleSearch = useCallback((keyword: string) => {
     }
     localStorage.removeItem(DRAFT_KEY);
     setOpenFormAddIntegration(false);
+  };
+
+  const handleCopy = async (id: string) => {
+    try {
+      await navigator.clipboard.writeText(id);
+
+      showSwal('success', 'ID copied successfully');
+    } catch (error) {
+      console.error(error);
+
+      showSwal('error', 'Failed to copy ID');
+    }
   };
 
   return (
@@ -478,6 +457,10 @@ const handleSearch = useCallback((keyword: string) => {
                 isHaveFilter={false}
                 isHaveExportPdf={false}
                 isHaveExportXlf={false}
+                isCopy={true}
+                onCopy={(row) => {
+                  handleCopy(row.id);
+                }}
                 isHaveFilterDuration={false}
                 isHaveAddData={false}
                 isHaveFilterMore={false}

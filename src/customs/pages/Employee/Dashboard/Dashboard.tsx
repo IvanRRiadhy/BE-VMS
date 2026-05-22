@@ -234,7 +234,7 @@ const DashboardEmployee = () => {
         approval_workflow_type,
         approval_status,
         current_step,
-        visitor_period_start: formatDateTime(visitor_period_start),
+        visitor_period_start,
         visitor_period_end: formatDateTime(visitor_period_end),
       }),
     ) || [];
@@ -396,11 +396,13 @@ const DashboardEmployee = () => {
 
       if (!confirm.isConfirmed) return;
 
-      setTimeout(() => setLoading(true), 800);
+      console.log('id', id);
+      if (action === 'Approve') {
+        await approveTicket(token, id);
+      } else {
+        await rejectTicket(token, id);
+      }
 
-      // await createApproval(token, { action }, id);
-      if (action === 'Approve') await approveTicket(token, id);
-      if (action === 'Reject') await rejectTicket(token, id);
       setTimeout(() => {
         showSwal(
           'success',
@@ -408,14 +410,13 @@ const DashboardEmployee = () => {
         );
       }, 850);
 
-      setTimeout(() => setLoading(false), 200);
-
       // setRefreshTrigger((prev) => prev + 1);
       await refetchApproval();
-    } catch (error) {
-      console.error('Approval action error:', error);
+    } catch (error: any) {
       setTimeout(() => setLoading(false), 800);
-      showSwal('error', 'Something went wrong while processing approval.');
+      showSwal('error', error.response.data.msg || 'Failed to approve/reject data.');
+    } finally {
+      setTimeout(() => setLoading(false), 200);
     }
   };
 

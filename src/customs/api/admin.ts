@@ -2048,6 +2048,8 @@ export const getSiteTracking = async (token: string): Promise<any> => {
   return response.data;
 };
 
+
+
 export const createSite = async (
   data: CreateSiteRequest,
   token: string,
@@ -2283,6 +2285,20 @@ export const getAllSiteDocument = async (token: string): Promise<GetAllSiteDocum
   }
 };
 
+export const getSiteDocumentBySiteId = async (token: string, siteId: string): Promise<any> => {
+  try {
+    const response = await axiosInstance.get(`/site-document/site/${siteId}`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+};
+
 export const createSiteDocument = async (
   data: CreateSiteDocumentRequest,
   token: string,
@@ -2299,6 +2315,21 @@ export const createSiteDocument = async (
     throw error;
   }
 };
+
+// delete
+export const deleteSiteDocument = async (id: string, token: string): Promise<any> => {
+  try {
+    const response = await axiosInstance.delete(`/site-document/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data as ValidationErrorResponse;
+    }
+    throw error;
+  }
+}
 //#endregion
 
 //#region Brand API

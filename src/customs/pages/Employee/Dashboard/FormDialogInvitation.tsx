@@ -1025,9 +1025,9 @@ const FormDialogInvitation: React.FC<FormDialogInvitationProps> = ({
     tz: data.site_place_data?.timezone ?? 'Asia/Jakarta',
     flow: 'SubmitPraregister',
     is_self_registered: true,
-    filled_by_name: user?.fullname ?? null,
-    filled_by_email: user?.email ?? null,
-    filled_by_phone: user?.phone ?? null,
+    // filled_by_name: user?.fullname ?? null,
+    // filled_by_email: user?.email ?? null,
+    // filled_by_phone: user?.phone ?? null,
     filled_by_relationship: 'Self',
     data_visitor: [
       {

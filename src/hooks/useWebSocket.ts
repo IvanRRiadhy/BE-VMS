@@ -3,10 +3,8 @@ import { useEffect, useRef, useState } from 'react';
 export function useWebSocket(url: string) {
   const wsRef = useRef<WebSocket | null>(null);
 
-  // 🔥 QUEUE UNTUK SEMUA PESAN
   const messageQueueRef = useRef<string[]>([]);
-
-  // hanya untuk trigger re-render
+  
   const [, setTick] = useState(0);
 
   useEffect(() => {

@@ -25,13 +25,12 @@ import PageContainer from 'src/components/container/PageContainer';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
-import BI_LOGO from 'src/assets/images/logos/BI_Logo.png';
-import FilterMoreContent from '../Dashboard/FilterMoreContent';
 import { Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import bg_nodata from 'src/assets/images/backgrounds/bg_nodata.svg';
 import Swal from 'sweetalert2';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import {
+  approveMeetingHost,
   approveTicket,
   getApprovalTicket,
   rejectTicket,
@@ -69,7 +68,6 @@ const Approval = () => {
   const mdUp = useMediaQuery(theme.breakpoints.up('md'));
   const secdrawerWidth = 300;
   const [searchKeyword, setSearchKeyword] = useState('');
-  const [searchInput, setSearchInput] = useState('');
   const [totalRecords, setTotalRecords] = useState(0);
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -140,19 +138,6 @@ const Approval = () => {
     },
   ];
 
-  const [filters, setFilters] = useState<Filters>({
-    is_action: undefined,
-    start_date: '',
-    end_date: '',
-    site_approval: 0,
-    approval_type: '',
-  });
-
-  const handleApplyFilter = () => {
-    setPage(0);
-    setRefreshTrigger((prev) => prev + 1);
-  };
-
   useEffect(() => {
     if (!token) return;
 
@@ -191,33 +176,34 @@ const Approval = () => {
   }, [token, refreshTrigger, page, rowsPerPage, searchKeyword, sortDir]);
 
   const handleActionApproval = async (id: string, action: 'Approve' | 'Reject') => {
-    if (!id || !token) return;
+    // if (!id || !token) return;
+    console.log('id', id);
 
     try {
-      const confirm = await Swal.fire({
-        title: `Do you want to ${action === 'Approve' ? 'Approve' : 'Reject'} this approval?`,
-        icon: 'question',
-        // imageUrl: BI_LOGO,
-        imageWidth: 100,
-        imageHeight: 100,
-        reverseButtons: true,
-        showCancelButton: true,
-        confirmButtonText: action === 'Approve' ? 'Yes' : 'No',
-        cancelButtonText: 'Cancel',
-        confirmButtonColor: action === 'Approve' ? '#4caf50' : '#f44336',
-        customClass: {
-          title: 'swal2-title-custom',
-          htmlContainer: 'swal2-text-custom',
-        },
-      });
+      // const confirm = await Swal.fire({
+      //   title: `Do you want to ${action === 'Approve' ? 'Approve' : 'Reject'} this approval?`,
+      //   icon: 'question',
+      //   // imageUrl: BI_LOGO,
+      //   imageWidth: 100,
+      //   imageHeight: 100,
+      //   reverseButtons: true,
+      //   showCancelButton: true,
+      //   confirmButtonText: action === 'Approve' ? 'Yes' : 'No',
+      //   cancelButtonText: 'Cancel',
+      //   confirmButtonColor: action === 'Approve' ? '#4caf50' : '#f44336',
+      //   customClass: {
+      //     title: 'swal2-title-custom',
+      //     htmlContainer: 'swal2-text-custom',
+      //   },
+      // });
 
-      if (!confirm.isConfirmed) return;
+      // if (!confirm.isConfirmed) return;
 
       setLoadingAction(true);
 
       // await createApproval(token, { action }, id);
-      if (action === 'Approve') await approveTicket(token, id);
-      if (action === 'Reject') await rejectTicket(token, id);
+      if (action === 'Approve') await approveTicket(token as string, id);
+      if (action === 'Reject') await rejectTicket(token as string, id);
 
       showSwal(
         'success',
@@ -225,23 +211,42 @@ const Approval = () => {
       );
 
       setRefreshTrigger((prev) => prev + 1);
-    } catch (error) {
+      setOpenDialog(false);
+    } catch (error: any) {
       setTimeout(() => setLoadingAction(false), 800);
-      showSwal('error', 'Something went wrong while processing approval.');
+      showSwal('error', error.response.data.msg || 'Failed action approval.');
     } finally {
       setLoadingAction(false);
     }
   };
 
-  const handleSearchKeywordChange = useCallback((keyword: string) => {
-    setSearchInput(keyword);
-  }, []);
+  const [selectedRows, setSelectedRows] = useState<any[]>([]);
+  const handleApproveMeetingHost = async (id: string) => {
+    try {
+      setLoading(true);
 
-  const handleSearch = useCallback((keyword: string) => {
-    setPage(0);
-    setSearchInput(keyword);
-    setSearchKeyword(keyword);
-  }, []);
+      const payload = {
+        list_trx_visitor_id: selectedRows.map((item: any) => item.id),
+      };
+
+      console.log('payload', payload);
+
+      const response = await approveMeetingHost(token, id, payload);
+      console.log('response', response);
+
+      // ✅ setelah approve host success
+      const res = await handleActionApproval(id, 'Approve');
+      console.log('res', res);
+
+      // showSwal('success', response?.msg || 'Approve meeting host successfully.');
+
+      setSelectedRows([]);
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.msg || 'Failed approve meeting host.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!selectedGroupId || !token) return;
@@ -250,7 +255,6 @@ const Approval = () => {
       setGroupDetailLoading(true);
       try {
         const res = await getVisitorTransactionByIds(token, selectedGroupId);
-
         setGroupHeader(res.collection[0]);
         setGroupVisitors(res.collection);
       } catch (e) {
@@ -276,12 +280,6 @@ const Approval = () => {
     visitor_period_end: formatDateTime(item.visitor_period_end),
   }));
 
-  // const handleApproveHost = async () => {
-  //   const payload = {
-  //     list_trx_visitor_id: '1',
-  //   };
-  // };
-
   return (
     <>
       <PageContainer title="Approval" description="Approval page">
@@ -291,48 +289,6 @@ const Approval = () => {
               <TopCard items={cards} size={{ xs: 12, lg: 3 }} />
             </Grid>
             <Grid size={{ xs: 12, lg: 12 }}>
-              {/* <DynamicTable
-                loading={loading}
-                overflowX={'auto'}
-                data={approvalData}
-                isHavePagination={true}
-                // selectedRows={selectedRows}
-                defaultRowsPerPage={rowsPerPage}
-                rowsPerPageOptions={[10, 50, 100]}
-                onPaginationChange={(page, rowsPerPage) => {
-                  setPage(page);
-                  setRowsPerPage(rowsPerPage);
-                }}
-                isHaveChecked={true}
-                isHaveAction={true}
-                isHaveSearch={true}
-                isHaveFilter={false}
-                isHaveExportPdf={false}
-                isHaveExportXlf={false}
-                isHaveFilterDuration={false}
-                isHaveAddData={false}
-                isHaveApproval={true}
-                isHavePeriod={true}
-                onAccept={(row: { approval_ticket_id: string }) =>
-                  handleActionApproval(row.approval_ticket_id, 'Approve')
-                }
-                onDenied={(row: { approval_ticket_id: string }) =>
-                  handleActionApproval(row.approval_ticket_id, 'Reject')
-                }
-                isHaveFilterMore={true}
-                isHaveHeader={false}
-                searchKeyword={searchInput}
-                onSearch={handleSearch}
-                onSearchKeywordChange={handleSearchKeywordChange}
-                filterMoreContent={
-                  <FilterMoreContent
-                    filters={filters}
-                    setFilters={setFilters}
-                    onApplyFilter={handleApplyFilter}
-                  />
-                }
-              /> */}
-
               <Box
                 sx={{
                   display: 'flex',
@@ -691,7 +647,9 @@ const Approval = () => {
         <DialogContent dividers sx={{ padding: '0px !important' }}>
           <DynamicTable
             data={visitorTableData ?? []}
-            selectedRows={[]}
+            selectedRows={selectedRows}
+            onCheckedChange={setSelectedRows}
+            setSelectedRows={setSelectedRows}
             isHaveChecked={true}
             titleHeader="Select visitors for approval or rejection"
             isHaveHeaderTitle={true}
@@ -700,7 +658,19 @@ const Approval = () => {
         </DialogContent>
 
         <DialogActions>
-          <Button onClick={() => setOpenDialog(false)} fullWidth color="error" variant="contained">
+          <Button
+            onClick={(e: any) => {
+              e.stopPropagation();
+
+              if (!selectedId) return;
+
+              handleActionApproval(selectedId, 'Reject');
+              setOpenDialog(false);
+            }}
+            fullWidth
+            color="error"
+            variant="contained"
+          >
             Reject
           </Button>
           <Button
@@ -709,8 +679,9 @@ const Approval = () => {
 
               if (!selectedId) return;
 
-              handleActionApproval(selectedId, 'Approve');
-              setOpenDialog(false);
+              // handleActionApproval(selectedId, 'Approve');
+              // setOpenDialog(false);
+              handleApproveMeetingHost(selectedId);
             }}
             variant="contained"
             fullWidth

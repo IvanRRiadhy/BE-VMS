@@ -86,7 +86,6 @@ const HeaderHorizontal = ({ itemDataCustomNavListing, itemDataCustomSidebarItems
         <Stack spacing={1} direction="row" alignItems="center">
           <Notifications />
           <Language />
-          {/* <IconMoonFilled /> */}
           <Profile />
         </Stack>
       </ToolbarStyled>

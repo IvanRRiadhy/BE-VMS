@@ -3,15 +3,6 @@ import { Stack } from '@mui/system';
 import { useTranslation } from 'react-i18next';
 import BlankCard from 'src/components/shared/BlankCard';
 import {
-  IconX,
-  IconForbid2,
-  IconLogout,
-  IconLogin,
-  IconUsersGroup,
-  IconUser,
-  IconUserPlus,
-  IconCircleX,
-  IconHourglass,
   IconTrendingUp,
   IconTrendingDown,
   IconMinus,
@@ -36,8 +27,6 @@ const TopCard = ({ items = [], size }: any) => {
   const { t } = useTranslation();
   const { token } = useSession();
   const { startDate, endDate } = useSelector((state: any) => state.dateRange);
-
-  const [stats, setStats] = useState<Record<string, number>>({});
   const formatLocalDate = (date: Date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -191,8 +180,6 @@ const TopCard = ({ items = [], size }: any) => {
 
       const dateStr = d.toISOString().split('T')[0];
       days.push(dateStr);
-
-      // cari data di collection (harus simpan raw collection dulu)
       const found = rawCollection.find((x) => x.Date.startsWith(dateStr));
 
       if (found) {
@@ -232,7 +219,6 @@ const TopCard = ({ items = [], size }: any) => {
         const baseColor = getColorByKey(card.key.toString());
         return (
           <Grid key={index} size={size}>
-            {/* <BlankCard> */}
             <CardContent
               sx={{
                 // backgroundColor: '#fff',
@@ -364,7 +350,6 @@ const TopCard = ({ items = [], size }: any) => {
                 </Box>
               </Box>
             </CardContent>
-            {/* </BlankCard> */}
           </Grid>
         );
       })}
