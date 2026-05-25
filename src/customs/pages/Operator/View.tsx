@@ -3336,7 +3336,64 @@ const View = () => {
       value: '',
       isDocumentTypeLocked: false,
     };
-  }, [currentUsedCard]);
+  }, [currentUsedCard]);  
+
+  const scanLockRef = useRef(false);
+  const lastScanRef = useRef('');
+
+  useEffect(() => {
+    // Pastikan socket hanya dibuat sekali
+    const socket = new WebSocket('ws://localhost:3001/ws');
+
+    socket.onopen = () => {
+      console.log('✅ WebSocket connected');
+    };
+
+    socket.onerror = (err) => {
+      console.error('❌ WebSocket error:', err);
+    };
+
+    socket.onmessage = async (event) => {
+      console.log('📥 WebSocket message received:', event.data);
+
+      try {
+        const msg = JSON.parse(event.data);
+
+        console.log('💬 Console client:', msg);
+
+        if (msg?.event === 'BARCODE_SCAN' && msg?.data) {
+          const value = String(msg.data).trim();
+
+          //  console.log('📩 QR Value from socket:', value);
+
+          if (!value) return;
+          if (scanLockRef.current) return;
+          if (lastScanRef.current === value) return;
+
+          scanLockRef.current = true;
+          lastScanRef.current = value;
+
+          try {
+            await handleSubmitQRCode(value);
+          } finally {
+            setTimeout(() => {
+              scanLockRef.current = false;
+              lastScanRef.current = '';
+            }, 2000);
+          }
+        }
+      } catch (err) {
+        console.error('⚠️ Failed to parse WebSocket message:', event.data, err);
+      }
+    };
+    socket.onclose = () => {
+      console.warn('🔌 WebSocket disconnected');
+    };
+
+    return () => {
+      socket.close();
+    };
+  }, []);
 
   return (
     <PageContainer title={'View'} description={'View'}>

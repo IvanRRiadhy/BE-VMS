@@ -4,14 +4,6 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
-  DialogActions,
-  Button,
-  TableRow,
-  Table,
-  TableHead,
-  TableBody,
-  TableCell,
-  TableContainer,
   Divider,
   Grid2 as Grid,
   IconButton,
@@ -45,15 +37,12 @@ import {
   showSwal,
 } from 'src/customs/components/alerts/alerts';
 
-import {
-  IconCards,
-  IconUserCheck,
-  IconCircleCheck,
-  IconUserOff,
-  IconX,
-} from '@tabler/icons-react';
+import { IconCards, IconUserCheck, IconCircleCheck, IconUserOff, IconX } from '@tabler/icons-react';
 import axiosInstance from 'src/customs/api/interceptor';
 import FilterMoreContent from './FilterMoreContent';
+import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
+import ImportErrorDialog from './components/ImportErroDialog';
+import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
 
 type EnableField = {
   employee_id: boolean;
@@ -91,8 +80,7 @@ const typeMap: Record<string, number> = {
 
 const Content = () => {
   const { token } = useSession();
-
-  const [page, setPage] = useState(0);
+  // const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
@@ -101,8 +89,9 @@ const Content = () => {
   const [tableVisitorCard, setTableVisitorCard] = useState<Item[]>([]);
   const [edittingId, setEdittingId] = useState('');
 
-  const [searchKeyword, setSearchKeyword] = useState('');
-  const [searchInput, setSearchInput] = useState('');
+  // const [searchKeyword, setSearchKeyword] = useState('');
+  // const [searchInput, setSearchInput] = useState('');
+  const { page, search, setPage, setSearch } = useTableQueryParams();
 
   const [totalRecords, setTotalRecords] = useState(0);
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
@@ -169,7 +158,7 @@ const Content = () => {
           start,
           rowsPerPage,
           // sortColumn,
-          searchKeyword,
+          search,
           sortDir,
           filters.type === -1 ? undefined : filters.type,
           filters.card_status === -1 ? undefined : filters.card_status,
@@ -225,7 +214,7 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword]);
+  }, [token, page, rowsPerPage, sortColumn, refreshTrigger, search]);
 
   const handleOpenDialog = () => {
     setOpenFormCreateVisitorCard(true);
@@ -301,8 +290,8 @@ const Content = () => {
         await deleteVisitorCard(token as string, id);
         setRefreshTrigger(refreshTrigger + 1);
         showSwal('success', 'Successfully deleted card!');
-      } catch (error) {
-        showSwal('error', 'Failed to delete card.');
+      } catch (error: any) {
+        showSwal('error', error?.response?.data?.msg || 'Failed to delete card.');
         setTimeout(() => setLoading(false), 500);
       } finally {
         setTimeout(() => setLoading(false), 500);
@@ -364,7 +353,6 @@ const Content = () => {
       is_multi_site: false,
       is_employee_used: false,
     });
-
 
     setFormAddVisitorCard((prev) => ({
       ...prev,
@@ -479,15 +467,23 @@ const Content = () => {
     setRefreshTrigger((prev) => prev + 1);
   };
 
-  const handleSearchKeywordChange = useCallback((keyword: string) => {
-    setSearchInput(keyword);
-  }, []);
+  // const handleSearchKeywordChange = useCallback((keyword: string) => {
+  //   setSearchInput(keyword);
+  // }, []);
 
-  const handleSearch = useCallback((keyword: string) => {
-    setPage(0);
-    setSearchInput(keyword);
-    setSearchKeyword(keyword);
-  }, []);
+  // const handleSearch = useCallback((keyword: string) => {
+  //   setPage(0);
+  //   setSearchInput(keyword);
+  //   setSearchKeyword(keyword);
+  // }, []);
+
+  const handleSearch = useCallback(
+    (keyword: string) => {
+      setPage(0);
+      setSearch(keyword);
+    },
+    [setPage, setSearch],
+  );
 
   return (
     <PageContainer
@@ -515,6 +511,7 @@ const Content = () => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);
                 }}
+                currentPage={page}
                 isHaveChecked={true}
                 isHaveAction={true}
                 isHaveSearch={true}
@@ -537,9 +534,9 @@ const Content = () => {
                 onDelete={(row) => handleDeleteVisitorCard(row.id)}
                 onBatchDelete={handleBatchDelete}
                 // onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-                searchKeyword={searchInput}
+                searchKeyword={search}
                 onSearch={handleSearch}
-                onSearchKeywordChange={handleSearchKeywordChange}
+                // onSearchKeywordChange={handleSearchKeywordChange}
                 onAddData={handleAddVisitorCard}
                 isHaveFilterMore={true}
                 filterMoreContent={
@@ -555,77 +552,12 @@ const Content = () => {
         </Box>
       </Container>
 
-      <Dialog
+      <ImportErrorDialog
         open={importErrorOpen}
+        title={importErrorTitle}
+        rows={importErrorRows as any}
         onClose={() => setImportErrorOpen(false)}
-        maxWidth="lg"
-        fullWidth
-      >
-        <DialogTitle>{importErrorTitle}</DialogTitle>
-        <IconButton
-          aria-label="close"
-          onClick={() => setImportErrorOpen(false)}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            color: (theme) => theme.palette.grey[500],
-          }}
-        >
-          <IconX />
-        </IconButton>
-
-        <DialogContent dividers>
-          <TableContainer>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>#</TableCell>
-                  <TableCell>Message</TableCell>
-                  <TableCell>Card Number</TableCell>
-                  <TableCell>Card MAC</TableCell>
-                  <TableCell>Barcode</TableCell>
-                  <TableCell align="center">Status</TableCell>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Remarks</TableCell>
-                  <TableCell>Type</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {importErrorRows.map((row, i) => {
-                  const d = row.data || {};
-                  const statusLabel =
-                    d.card_status === 1
-                      ? 'Active'
-                      : d.card_status === 0
-                        ? 'Inactive'
-                        : (d.card_status ?? '-');
-                  return (
-                    <TableRow key={i}>
-                      <TableCell>{i + 1}</TableCell>
-                      <TableCell>{row.msg || '-'}</TableCell>
-                      <TableCell>{d.card_number ?? '-'}</TableCell>
-                      <TableCell>{d.card_mac ?? '-'}</TableCell>
-                      <TableCell>{d.card_barcode ?? '-'}</TableCell>
-                      <TableCell align="center">{statusLabel}</TableCell>
-                      <TableCell>{d.name ?? '-'}</TableCell>
-                      <TableCell>{d.remarks ?? '-'}</TableCell>
-                      <TableCell>{d.type ?? '-'}</TableCell>
-                    </TableRow>
-                  );
-                })}
-                {importErrorRows.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={9} align="center">
-                      No error details.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </DialogContent>
-      </Dialog>
+      />
 
       <Dialog open={openFormCreateVisitorCard} onClose={handleRequestClose} fullWidth maxWidth="md">
         <DialogTitle display={'flex'} alignItems={'center'} justifyContent={'space-between'}>
@@ -653,32 +585,11 @@ const Content = () => {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={confirmDialogOpen} onClose={handleCancelEditDiscard} fullWidth maxWidth="sm">
-        <DialogTitle>
-          Unsaved Changes
-          <IconButton
-            aria-label="close"
-            onClick={handleCancelEditDiscard}
-            sx={{
-              position: 'absolute',
-              right: 8,
-              top: 8,
-              color: (theme) => theme.palette.grey[500],
-            }}
-          >
-            <IconX />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent dividers>
-          You have unsaved changes. Are you sure you want to discard them?
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancelEditDiscard}>Cancel</Button>
-          <Button onClick={handleConfirmEditDiscard} color="primary" variant="contained">
-            Yes, Discard and Continue
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmUnsavedDialog
+        open={confirmDialogOpen}
+        onClose={handleCancelEditDiscard}
+        onDiscard={handleConfirmEditDiscard}
+      />
     </PageContainer>
   );
 };

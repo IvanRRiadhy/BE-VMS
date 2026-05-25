@@ -18,10 +18,7 @@ import {
   AdminCustomSidebarItemsData,
   AdminNavListingData,
 } from 'src/customs/components/header/navigation/AdminMenu';
-import {
-  getAllAccessControlPagination,
-  deleteAccessControl,
-} from 'src/customs/api/admin';
+import { getAllAccessControlPagination, deleteAccessControl } from 'src/customs/api/admin';
 import {
   CreateAccessControlRequest,
   CreateAccessControlRequestSchema,
@@ -47,6 +44,7 @@ import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alert
 import { useSession } from 'src/customs/contexts/SessionContext';
 import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
 import AccessControlDialog from './AccessControlDialog';
+import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 
 const Content = () => {
   const [tableData, setTableData] = useState<Item[]>([]);
@@ -54,14 +52,15 @@ const Content = () => {
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
-  const [page, setPage] = useState(0);
+  // const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const { page, search, setPage, setSearch } = useTableQueryParams();
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [searchKeyword, setSearchKeyword] = useState('');
-  const [searchInput, setSearchInput] = useState('');
+  // const [searchKeyword, setSearchKeyword] = useState('');
+  // const [searchInput, setSearchInput] = useState('');
   const dialogRef = useRef<HTMLDivElement>(null);
   const [openCreateAccessControl, setOpenCreateAccessControl] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -88,7 +87,7 @@ const Content = () => {
           start,
           rowsPerPage,
           sortColumn,
-          searchKeyword,
+          search,
         );
 
         setTotalRecords(response.RecordsTotal);
@@ -116,7 +115,7 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword]);
+  }, [token, page, rowsPerPage, sortColumn, refreshTrigger, search]);
 
   const defaultFormData: CreateAccessControlRequest = {
     brand_id: null,
@@ -290,18 +289,6 @@ const Content = () => {
     }
   };
 
-  const handleDialogClose = (_event: object, reason: string) => {
-    if (reason === 'backdropClick') {
-      if (hasUnsaved()) {
-        setConfirmDialogOpen(true);
-      } else {
-        handleCloseDialog();
-      }
-    } else {
-      handleCloseDialog();
-    }
-  };
-
   const handleSuccess = () => {
     localStorage.removeItem('unsavedAccessControl');
     handleCloseDialog();
@@ -313,17 +300,23 @@ const Content = () => {
     );
   };
 
-  const handleSearchKeywordChange = useCallback((keyword: string) => {
-    setSearchInput(keyword);
-  }, []);
+  // const handleSearchKeywordChange = useCallback((keyword: string) => {
+  //   setSearchInput(keyword);
+  // }, []);
 
+  // const handleSearch = useCallback((keyword: string) => {
+  //   setPage(0);
+  //   setSearchInput(keyword);
+  //   setSearchKeyword(keyword);
+  // }, []);
 
-const handleSearch = useCallback((keyword: string) => {
-  setPage(0);
-  setSearchInput(keyword);
-  setSearchKeyword(keyword);
-}, []);
-
+  const handleSearch = useCallback(
+    (keyword: string) => {
+      setPage(0);
+      setSearch(keyword);
+    },
+    [setPage, setSearch],
+  );
   const hasUnsaved = () => {
     const raw = localStorage.getItem('unsavedAccessControl');
     if (!raw) return false;
@@ -367,6 +360,7 @@ const handleSearch = useCallback((keyword: string) => {
                 isHaveChecked={true}
                 isHaveAction={true}
                 isHaveSearch={true}
+                currentPage={page}
                 isHaveFilter={false}
                 isHaveExportPdf={false}
                 isHaveExportXlf={false}
@@ -388,9 +382,9 @@ const handleSearch = useCallback((keyword: string) => {
                 isDataVerified={true}
                 onDelete={(row) => handleDelete(row.id)}
                 onBatchDelete={handleBatchDelete}
-                searchKeyword={searchInput}
+                searchKeyword={search}
                 onSearch={handleSearch}
-                onSearchKeywordChange={handleSearchKeywordChange}
+                // onSearchKeywordChange={handleSearchKeywordChange}
                 onAddData={handleAdd}
               />
             </Grid>

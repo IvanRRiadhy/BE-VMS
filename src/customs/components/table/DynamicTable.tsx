@@ -82,6 +82,7 @@ type DynamicTableProps<
   isHaveActionOnlyEdit?: boolean;
   borderRadius?: any;
   // isHaveExportPdf?: boolean;
+  currentPage?: number;
   isHaveBack?: boolean;
   onBack?: any;
   isHaveExportCsv?: boolean;
@@ -175,6 +176,7 @@ type DynamicTableProps<
   isBlacklistPage?: boolean;
   onNavigatePage?: any;
   onDuplicate?: (row: T) => void;
+  selectedHeaderItem?: string;
   onCopy?: (row: T) => void;
   onCopyLink?: (row: T) => void;
   onDetailLink?: (row: T) => void;
@@ -231,6 +233,7 @@ function DynamicTableBase<
   onActiveToggle,
   isHaveExportExcel = false,
   isHavePrint = false,
+  currentPage = 0,
   isHaveExportPdf = false,
   isHaveExportXlf = false,
   isHaveImportExcel = false,
@@ -259,6 +262,7 @@ function DynamicTableBase<
   isHaveAccess = false,
   isCopyLink = false,
   isDetailLink = false,
+  selectedHeaderItem,
   isCurrentUsed = false,
   isButtonDisabled = false,
   isButtonEnabled = false,
@@ -342,8 +346,8 @@ function DynamicTableBase<
   const [checkedIds, setCheckedIds] = useState<Array<T['id']>>([]);
   // const [searchKeyword, setSearchKeyword] = useState('');
   const [selectedColumn, setSelectedColumn] = useState<string>('');
-  const [selectedHeaderItem, setSelectedHeaderItem] = useState<string | null>(
-    defaultSelectedHeaderItem ?? null,
+  const [selectedHeader, setSelectedHeader] = useState(
+    selectedHeaderItem || defaultSelectedHeaderItem,
   );
   const [showDrawer, setShowDrawer] = useState(false);
   const { t } = useTranslation();
@@ -442,12 +446,6 @@ function DynamicTableBase<
   };
 
   const handleSearch = () => {
-    // onSearchKeywordChange?.(searchKeyword || '');
-    // updateQuery({
-    //   page: 0,
-    //   search: searchKeyword,
-    // });
-
     onSearch?.();
   };
 
@@ -735,6 +733,12 @@ function DynamicTableBase<
     }
   };
 
+  useEffect(() => {
+    if (selectedHeaderItem) {
+      setSelectedHeader(selectedHeaderItem);
+    }
+  }, [selectedHeaderItem]);
+
   return (
     <>
       {/* HEADER */}
@@ -759,7 +763,7 @@ function DynamicTableBase<
                       )}
                       onChange={(_e, newValue) => {
                         const selectedItem = headerContent.items[newValue];
-                        setSelectedHeaderItem(selectedItem.name);
+                        // setSelectedHeaderItem(selectedItem.name);
                         onHeaderItemClick?.(selectedItem);
                       }}
                       variant="scrollable"
@@ -1608,7 +1612,7 @@ function DynamicTableBase<
                   isTreeSiteType={isTreeSiteType}
                   toggleRow={toggleRow}
                   openRow={openRow}
-                  page={page}
+                  page={currentPage}
                   isActionEmployee={isActionEmployee}
                   isHaveVip={isHaveVip}
                   htmlFields={htmlFields}
@@ -1691,7 +1695,7 @@ function DynamicTableBase<
               component="div"
               count={totalCount ?? data.length}
               rowsPerPage={rowsPerPage}
-              page={page}
+              page={currentPage}
               onPageChange={handleChangePage}
               onRowsPerPageChange={handleChangeRowsPerPage}
               sx={{ overflow: 'hidden' }}

@@ -5,6 +5,7 @@ import {
   IconClipboard,
   IconClock,
   IconDoor,
+  IconHttpConnect,
   IconKey,
   IconLockAccess,
   IconLogin,
@@ -12,6 +13,8 @@ import {
   IconMapPinCheck,
   IconParking,
   IconPencil,
+  IconPlugConnected,
+  IconPlugConnectedX,
   IconPrinter,
   IconQrcode,
   IconUser,
@@ -32,8 +35,8 @@ interface Props {
   setOpenInvitationVisitor: (value: boolean) => void;
   setOpenReturnCard: (value: boolean) => void;
   setAccessIssuance: (value: boolean) => void;
-  connect: any;
-  disconnect: any;
+  // connect: any;
+  // disconnect: any;
 }
 
 const ButtonSkeleton = () => (
@@ -53,8 +56,8 @@ const ActionPanelCard: FC<Props> = ({
   setOpenInvitationVisitor,
   setOpenReturnCard,
   setAccessIssuance,
-  connect,
-  disconnect,
+  // connect,
+  // disconnect,
 }) => {
   const {
     canCheckin,
@@ -582,7 +585,7 @@ const ActionPanelCard: FC<Props> = ({
                     </Typography>
                   </Button>
                 </Grid>
-                <Grid size={{ xs: 6, lg: 6 }}>
+                {/* <Grid size={{ xs: 6, lg: 6 }}>
                   <Button
                     onClick={connect}
                     sx={{
@@ -595,8 +598,10 @@ const ActionPanelCard: FC<Props> = ({
                       zIndex: 999,
                       width: '100%',
                       height: '50px',
+                      fontSize: '0.9rem',
                     }}
                     variant="contained"
+                    startIcon={<IconPlugConnected size={25} />}
                   >
                     Connect
                   </Button>
@@ -614,12 +619,14 @@ const ActionPanelCard: FC<Props> = ({
                       zIndex: 999,
                       width: '100%',
                       height: '50px',
+                      fontSize: '0.9rem',
                     }}
                     variant="contained"
+                    startIcon={<IconPlugConnectedX size={25} />}
                   >
                     Disconnect
                   </Button>
-                </Grid>
+                </Grid> */}
               </Grid>
             </Grid>
           </Grid>

@@ -343,7 +343,7 @@ const Content = () => {
         data: payloads,
       });
 
-      console.log('payloads', payloads);
+      // console.log('payloads', payloads);
 
       showSwal('success', 'All cards swapped successfully!');
 

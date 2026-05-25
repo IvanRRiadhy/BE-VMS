@@ -309,6 +309,7 @@ export const TableBodyContent = ({
           paginatedData.map((row: any, index: any) => (
             <TableRowItem
               key={row.id}
+              // key={`${row.id}-${page}`}
               row={row}
               index={index}
               {...{
@@ -1936,6 +1937,7 @@ const TableRowItem = React.memo(
     return (
       prev.row === next.row &&
       prev.index === next.index &&
+      prev.page === next.page &&
       prev.checkedIds === next.checkedIds &&
       prev.openRow === next.openRow
     );

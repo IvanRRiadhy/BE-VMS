@@ -51,30 +51,72 @@ export function useSerialRS232({
       setLoading(false);
     }
   }, [options]);
-  //   const startReading = async () => {
-  //     const port = portRef.current;
-  //     if (!port?.readable) return;
-  //     const reader = port.readable.getReader();
-  //     readerRef.current = reader;
-  //     const decoder = new TextDecoder();
-  //     try {
-  //       while (true) {
-  //         const { value, done } = await reader.read();
-  //         if (done) {
-  //           break;
-  //         }
-  //         if (value) {
-  //           const text = decoder.decode(value);
-  //           onData?.(text);
+  // const startReading = async () => {
+  //   const port = portRef.current;
+  //   if (!port?.readable) return;
+  //   const reader = port.readable.getReader();
+  //   readerRef.current = reader;
+  //   const decoder = new TextDecoder();
+  //   try {
+  //     while (true) {
+  //       const { value, done } = await reader.read();
+  //       if (done) {
+  //         break;
+  //       }
+  //       if (value) {
+  //         const text = decoder.decode(value);
+  //         onData?.(text);
+  //       }
+  //     }
+  //   } catch (err) {
+  //     console.error('SERIAL READ ERROR', err);
+  //     onError?.(err);
+  //   } finally {
+  //     reader.releaseLock();
+  //   }
+  // // };
+  // const startReading = async () => {
+  //   const port = portRef.current;
+
+  //   if (!port?.readable) return;
+
+  //   const reader = port.readable.getReader();
+
+  //   readerRef.current = reader;
+
+  //   let serialBuffer = '';
+
+  //   try {
+  //     while (true) {
+  //       const { value, done } = await reader.read();
+
+  //       if (done) break;
+
+  //       if (value) {
+  //         const text = Array.from(value)
+  //           .map((b: any) => String.fromCharCode(b))
+  //           .join('');
+
+  //         serialBuffer += text;
+
+  //         const clean = serialBuffer.replace(/[\x00-\x1F\x7F-\x9F]/g, '').trim();
+
+  //         if (clean.length >= 6) {
+  //           serialBuffer = '';
+
+  //           onData?.(clean);
   //         }
   //       }
-  //     } catch (err) {
-  //       console.error('SERIAL READ ERROR', err);
-  //       onError?.(err);
-  //     } finally {
-  //       reader.releaseLock();
   //     }
-  //   };
+  //   } catch (err) {
+  //     console.error('SERIAL READ ERROR', err);
+
+  //     onError?.(err);
+  //   } finally {
+  //     reader.releaseLock();
+  //   }
+  // };
+
   const startReading = async () => {
     const port = portRef.current;
 
@@ -84,35 +126,41 @@ export function useSerialRS232({
 
     readerRef.current = reader;
 
-    const decoder = new TextDecoder();
-
     let serialBuffer = '';
+    let timeout: any = null;
 
     try {
       while (true) {
         const { value, done } = await reader.read();
 
-        if (done) {
-          break;
-        }
+        if (done) break;
 
         if (value) {
-          const text = decoder.decode(value);
+          const text = Array.from(value)
+            .map((b: any) => String.fromCharCode(b))
+            .join('');
 
           serialBuffer += text;
 
-          if (serialBuffer.includes('\r') || serialBuffer.includes('\n')) {
-            const finalText = serialBuffer
-              .replace(/[\r\n]+/g, '')
-              .replace(/[^\x20-\x7E]/g, '')
-              .trim();
+          console.log('RAW BUFFER:', serialBuffer);
+
+          clearTimeout(timeout);
+
+          timeout = setTimeout(() => {
+            const clean = serialBuffer
+              .replace(/[\x00-\x1F\x7F-\x9F]/g, '')
+              .replace(/[^a-zA-Z0-9-_]/g, '')
+              .trim()
+              .toUpperCase();
+
+            console.log('FINAL CLEAN:', clean);
 
             serialBuffer = '';
 
-            if (finalText) {
-              onData?.(finalText);
-            }
-          }
+            if (!clean) return;
+
+            onData?.(clean);
+          }, 300);
         }
       }
     } catch (err) {

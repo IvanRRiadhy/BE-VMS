@@ -1,5 +1,5 @@
 import React, { useState, useEffect, memo } from 'react';
-import { Box, Button, Typography, InputAdornment } from '@mui/material';
+import { Box, Button, Typography, InputAdornment, TextField } from '@mui/material';
 import { Search } from '@mui/icons-material';
 import { IconArrowAutofitLeft } from '@tabler/icons-react';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
@@ -43,13 +43,17 @@ const SearchToolbar = memo(
         // flexWrap="wrap"
         // width="100%"
       >
-        <CustomTextField
+        <TextField
           fullWidth
           variant="outlined"
           size="small"
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
-          onKeyDown={onKeyDown}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              submit();
+            }
+          }}
           sx={{
             flexGrow: 1,
             minWidth: 0,
@@ -62,6 +66,13 @@ const SearchToolbar = memo(
                 <Search fontSize="small" />
               </InputAdornment>
             ),
+            // onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => {
+            //   if (e.key === 'Enter') {
+            //     submit();
+            //   }
+
+            //   onKeyDown?.(e);
+            // },
           }}
         />
 

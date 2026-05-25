@@ -20,30 +20,6 @@ function App() {
   const customizer = useSelector((state: AppState) => state.customizer);
 
   // useEffect(() => {
-  //   generateToken();
-  // }, []);
-
-  // useEffect(() => {
-  //   const unsubscribe = onMessage(messaging, (payload) => {
-  //     console.log('📩 Message received:', payload);
-
-  //     const title = payload.notification?.title;
-  //     const body = payload.notification?.body;
-
-  //     console.log(title);
-  //     console.log(body);
-
-  //     // contoh tampilkan toast
-  //     alert(`${title} - ${body}`);
-
-  //     // data custom dari backend
-  //     console.log(payload.data);
-  //   });
-
-  //   return () => unsubscribe();
-  // }, []);
-
-  // useEffect(() => {
   //   // Pastikan socket hanya dibuat sekali
   //   const socket = new WebSocket('wss://mqtt.bio-experience.com/ws');
 

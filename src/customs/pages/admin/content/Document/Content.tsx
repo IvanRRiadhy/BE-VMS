@@ -32,6 +32,7 @@ import { IconScript } from '@tabler/icons-react';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import { useSearchParams } from 'react-router';
+import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
 
 const Content = () => {
   const [tableData, setTableData] = useState<Item[]>([]);
@@ -43,10 +44,8 @@ const Content = () => {
   const [rowsPerPage, setRowsPerPage] = useState(Number(searchParams.get('length') || '10'));
   const [searchKeyword, setSearchKeyword] = useState(searchParams.get('search') || '');
   const [searchInput, setSearchInput] = useState(searchParams.get('search') || '');
-
   const [sortColumn] = useState('id');
   const [sortDir] = useState('desc');
-
   const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -363,34 +362,11 @@ const Content = () => {
           />
         </DialogContent>
       </Dialog>
-
-      {/* Dialog Confirm edit */}
-      <Dialog open={confirmDialogOpen} onClose={handleCancelEdit} fullWidth maxWidth="sm">
-        <DialogTitle>
-          Unsaved Changes
-          <IconButton
-            aria-label="close"
-            onClick={handleCancelEdit}
-            sx={{
-              position: 'absolute',
-              right: 8,
-              top: 8,
-              color: (theme) => theme.palette.grey[500],
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent dividers>
-          You have unsaved changes. Are you sure you want to discard them?
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancelEdit}>Cancel</Button>
-          <Button onClick={handleConfirmEdit} color="primary" variant="contained">
-            Yes, Discard and Continue
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmUnsavedDialog
+        open={confirmDialogOpen}
+        onClose={handleCancelEdit}
+        onDiscard={handleConfirmEdit}
+      />
     </PageContainer>
   );
 };

@@ -56,13 +56,6 @@ const ChooseCardDialog = ({
 
   const isChosen = selectedCards.includes(cards.card_number);
 
-  const isLimitReached = selectedCards.length >= (selectedVisitors.length || 1) && !isChosen;
-
-  const [selectedCurrentCard, setSelectedCurrentCard] = useState<any>(null);
-  const [selectedNewCard, setSelectedNewCard] = useState<any>(null);
-
-  
-
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg" container={containerRef?.current}>
       <DialogTitle>Choose Card</DialogTitle>
@@ -97,7 +90,7 @@ const ChooseCardDialog = ({
         </Box>
 
         {/* LAST USED CARD */}
-        {currentUsedCards.length > 0 && (
+        {/* {currentUsedCards.length > 0 && (
           <>
             <Grid container spacing={2} mb={2}>
               {currentUsedCards.map((card: any) => {
@@ -195,15 +188,120 @@ const ChooseCardDialog = ({
 
             <Divider sx={{ mb: 2 }} />
           </>
-        )}
+        )} */}
 
+        {currentUsedCards.map((visitorItem: any) => (
+          <Box key={visitorItem.visitorId} mb={3}>
+            <Typography variant="h5" fontWeight={700} mb={2} color="warning.main">
+              Current Card - {visitorItem.visitorName}
+            </Typography>
+
+            <Grid container spacing={2}>
+              {visitorItem.cards.map((card: any) => {
+                const isSelectable = card.current_used;
+
+                return (
+                  <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={card.id}>
+                    <Paper
+                      sx={(theme) => ({
+                        p: 2,
+                        borderRadius: 2,
+                        position: 'relative',
+                        height: 280,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        textAlign: 'center',
+                        border: '2px solid',
+                        borderColor: theme.palette.warning.main,
+                        backgroundColor: theme.palette.warning.light,
+                        boxShadow: theme.shadows[6],
+                        opacity: isSelectable ? 1 : 0.5,
+                      })}
+                      onClick={(e) => {
+                        if (!isSelectable) return;
+
+                        e.stopPropagation();
+
+                        handleToggleCard(card.card_number);
+                      }}
+                    >
+                      <Box
+                        flexGrow={1}
+                        display="flex"
+                        flexDirection="column"
+                        justifyContent="center"
+                        alignItems="center"
+                      >
+                        <Typography variant="h1" color="text.secondary" mt={1}>
+                          {card.card_number}
+                        </Typography>
+
+                        <Box
+                          display="flex"
+                          justifyContent="space-between"
+                          width="100%"
+                          maxWidth={300}
+                          mt={1}
+                        >
+                          <Typography variant="body1" fontWeight={600}>
+                            Card
+                          </Typography>
+
+                          <Typography variant="body1">{card.card_number}</Typography>
+                        </Box>
+
+                        <Box
+                          display="flex"
+                          justifyContent="space-between"
+                          width="100%"
+                          maxWidth={300}
+                          flexWrap="wrap"
+                          gap={1}
+                        >
+                          <Typography variant="body1" fontWeight={600}>
+                            BLE
+                          </Typography>
+
+                          <Typography variant="body1">{card.card_mac || '-'}</Typography>
+                        </Box>
+                      </Box>
+
+                      <Typography variant="body1">{visitorItem.visitorName}</Typography>
+
+                      <Typography variant="body2" color="warning.main" fontWeight={600}>
+                        (Current Card)
+                      </Typography>
+
+                      <FormControlLabel
+                        onClick={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        control={
+                          <Checkbox
+                            checked={selectedCards.includes(card.card_number)}
+                            onChange={() => handleToggleCard(card.card_number)}
+                          />
+                        }
+                        label=""
+                        sx={{ m: 0 }}
+                      />
+                    </Paper>
+                  </Grid>
+                );
+              })}
+            </Grid>
+
+            <Divider sx={{ mt: 2 }} />
+          </Box>
+        ))}
         {/* CARD LIST */}
         <Grid container spacing={2}>
           {filteredCards.map((card: any) => {
             const isChosen = selectedCards.includes(card.card_number);
             const isLimitReached =
               selectedCards.length >= (selectedVisitors.length || 1) && !isChosen;
-            const isUsed = card.is_used;
+            const isUsed = card.is_used || card.current_used;
             const isDisabled = isLimitReached || isUsed;
             return (
               <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={card.id}>

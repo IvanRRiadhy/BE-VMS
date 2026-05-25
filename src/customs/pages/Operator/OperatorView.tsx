@@ -137,6 +137,7 @@ const OperatorView = () => {
   const [openInvitationVisitor, setOpenInvitationVisitor] = useState(false);
   const handleOpenScanQR = () => setOpenDialogIndex(1);
   const [selectedCards, setSelectedCards] = useState<string[]>([]);
+  const [selectedCurrentCards, setSelectedCurrentCards] = useState<Record<string, string>>({});
   const [openChooseCardDialog, setOpenChooseCardDialog] = useState(false);
   const [loadingAccess, setLoadingAccess] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -234,6 +235,31 @@ const OperatorView = () => {
   const { allVisitorEmployee } = useInvitationVisitorEmployee(token);
   const permissionHook = usePermission(permission);
 
+  const [relatedVisitors, setRelatedVisitors] = useState<
+    {
+      id: string;
+      name: string;
+      selfie_image: string;
+      identity_image: string;
+      organization: string;
+      visitor_number: string;
+      is_driving: boolean;
+      agenda: string;
+      visitor_period_start: string;
+      visitor_period_end: string;
+      email: string;
+      is_praregister_done: boolean;
+      phone: string;
+      gender: string;
+      card: string[];
+      extend_visitor_period: number;
+      visitor_status: string;
+      block_by: string;
+      is_block: boolean;
+      nda: string;
+    }[]
+  >([]);
+
   useEffect(() => {
     if (registerSiteOperator) {
       localStorage.setItem('selectedSite', registerSiteOperator);
@@ -275,6 +301,22 @@ const OperatorView = () => {
       .sort((a, b) => Number(a.current_used) - Number(b.current_used));
   }, [visitorCards]);
 
+  const currentUsedCardsByVisitor = useMemo(() => {
+    return relatedVisitors
+      .filter((v) => selectedVisitors.includes(v.id))
+      .map((visitor) => {
+        const currentCards = (visitor.card ?? []).filter(
+          (c: any) => c.card_type !== 'Barcode' && c.current_used === true,
+        );
+
+        return {
+          visitorId: visitor.id,
+          visitorName: visitor.name,
+          cards: currentCards,
+        };
+      });
+  }, [relatedVisitors, selectedVisitors]);
+
   const handleSubmitBatchSwipe = async (payloads: any[]) => {
     try {
       if (!payloads.length) return;
@@ -287,10 +329,10 @@ const OperatorView = () => {
 
       showSwal('success', 'All cards swapped successfully!');
 
-      setSwipePayload([]);
+      resetSwipeStates();
+
       setOpenSwipeDialog(false);
       setOpenChooseCardDialog(false);
-      setSearchTerm('');
 
       await fetchRelatedVisitorsByInvitationId(invitationId as string);
     } catch (err: any) {
@@ -301,6 +343,15 @@ const OperatorView = () => {
           : err?.response?.data?.collection || 'Failed to swap cards',
       );
     }
+  };
+
+  const resetSwipeStates = () => {
+    setSelectedCards([]);
+    setSwipePayload([]);
+    setCurrentVisitorIndex(0);
+    setSelectedCurrentCards({});
+    setSearchTerm('');
+    setCurrentAccessVisitor(null);
   };
 
   const handleSwipeCardSubmit = async (
@@ -318,12 +369,13 @@ const OperatorView = () => {
       const visitorSelectedCards = Array.isArray(selectedCards[visitorIndex])
         ? selectedCards[visitorIndex]
         : selectedCards;
+      const currentUsed = (visitor?.card ?? []).find((c: any) => c.current_used === true);
 
-      const currentUsedCardNumber = String(value).trim();
+      const currentUsedCardNumber = String(currentUsed?.card_number || '').trim();
+      console.log('currentUsedCardNumber', currentUsedCardNumber);
 
-      const newCardNumber = visitorSelectedCards.find(
-        (cardNumber: string) => String(cardNumber).trim() !== currentUsedCardNumber,
-      );
+      const newCardNumber = selectedCards[visitorIndex];
+      console.log('newCardNumber', newCardNumber);
 
       if (!newCardNumber) {
         showSwal('error', 'New card not found');
@@ -345,7 +397,8 @@ const OperatorView = () => {
         card_number: selectedCard.card_number,
         trx_visitor_id: visitor.id,
         description: `Give card number ${selectedCard.card_number} from ${registerSiteOperator}`,
-        swap_card_from_card: value,
+        // swap_card_from_card: value,
+        swap_card_from_card: currentUsedCardNumber,
         swap_type: type,
         swap_card_from_site_id: registerSiteOperator,
         is_swapcard: true,
@@ -356,18 +409,63 @@ const OperatorView = () => {
 
       if (!hasSwappedCard) {
         const newPayload = [...swipePayload, payload];
+
         setSwipePayload(newPayload);
 
         if (!isLastVisitor) {
           return;
         }
         await handleSubmitBatchSwipe(newPayload);
+        setAvailableCards((prev) =>
+          prev.map((card) => {
+            const assigned = newPayload.find(
+              (p) => String(p.card_number) === String(card.card_number),
+            );
+
+            if (assigned) {
+              return {
+                ...card,
+                current_used: true,
+              };
+            }
+
+            return card;
+          }),
+        );
         setSwipePayload([]);
         return;
       } else {
-        setSwipePayload([payload]);
-        setCurrentAccessVisitor(visitor);
-        setOpenSwipeAccess(true);
+        // setSwipePayload([payload]);
+        // setCurrentAccessVisitor(visitor);
+        // setOpenSwipeAccess(true);
+        const newPayload = [...swipePayload, payload];
+
+        setSwipePayload(newPayload);
+
+        if (!isLastVisitor) {
+          return;
+        }
+
+        await handleSubmitBatchSwipe(newPayload);
+
+        setAvailableCards((prev) =>
+          prev.map((card) => {
+            const assigned = newPayload.find(
+              (p) => String(p.card_number) === String(card.card_number),
+            );
+
+            if (assigned) {
+              return {
+                ...card,
+                current_used: true,
+              };
+            }
+
+            return card;
+          }),
+        );
+
+        setSwipePayload([]);
       }
 
       setOpenSwipeDialog(false);
@@ -560,31 +658,6 @@ const OperatorView = () => {
     handleSubmitQRCode(invitationCode);
   };
 
-  const [relatedVisitors, setRelatedVisitors] = useState<
-    {
-      id: string;
-      name: string;
-      selfie_image: string;
-      identity_image: string;
-      organization: string;
-      visitor_number: string;
-      is_driving: boolean;
-      agenda: string;
-      visitor_period_start: string;
-      visitor_period_end: string;
-      email: string;
-      is_praregister_done: boolean;
-      phone: string;
-      gender: string;
-      card: string[];
-      extend_visitor_period: number;
-      visitor_status: string;
-      block_by: string;
-      is_block: boolean;
-      nda: string;
-    }[]
-  >([]);
-
   const uploadFileToCDN = async (file: File | Blob): Promise<string | null> => {
     const formData = new FormData();
 
@@ -663,8 +736,8 @@ const OperatorView = () => {
   };
 
   const handleCloseChooseCard = () => {
+    resetSwipeStates();
     setOpenChooseCardDialog(false);
-    resetSelections();
   };
 
   const handleChooseCard = async () => {
@@ -716,18 +789,45 @@ const OperatorView = () => {
     setAvailableCards(res.collection);
   };
 
+  // const handleToggleCard = (cardNumber: string) => {
+  //   const normalized = String(cardNumber);
+
+  //   setSelectedCards((prev) => {
+  //     let updated: string[];
+
+  //     if (prev.includes(normalized)) {
+  //       updated = prev.filter((c) => c !== normalized);
+  //     } else {
+  //       updated = [...prev, normalized];
+  //     }
+  //     return updated;
+  //   });
+  // };
+
   const handleToggleCard = (cardNumber: string) => {
     const normalized = String(cardNumber);
 
     setSelectedCards((prev) => {
-      let updated: string[];
-
+      // unselect
       if (prev.includes(normalized)) {
-        updated = prev.filter((c) => c !== normalized);
-      } else {
-        updated = [...prev, normalized];
+        return prev.filter((c) => c !== normalized);
       }
-      return updated;
+
+      const maxSelection = selectMultiple ? selectedVisitors.length : 1;
+
+      // kalau single visitor → replace langsung
+      if (maxSelection === 1) {
+        return [normalized];
+      }
+
+      // multiple visitor → limit sesuai jumlah visitor
+      if (prev.length >= maxSelection) {
+        toast(`You can only select up to ${maxSelection} cards.`, 'info');
+
+        return prev;
+      }
+
+      return [...prev, normalized];
     });
   };
 
@@ -827,7 +927,7 @@ const OperatorView = () => {
   const serialLockRef = useRef(false);
 
   const handleSubmitQRCode = async (value: string) => {
-    console.log('value', value.length);
+    // console.log('value', value.length);
     // if (value.length < 4 || value.length > 15) {
     //   showSwal('error', 'Code must be between 6 and 10 characters.', 3000);
     //   return;
@@ -1136,29 +1236,45 @@ const OperatorView = () => {
   const isChecked = cappedCount > 0 && selectedVisibleCount === cappedCount;
   const isIndeterminate = selectedVisibleCount > 0 && selectedVisibleCount < cappedCount;
 
+  // const handleSelectAll = () => {
+  //   const visible = availableVisibleCards.map((c) => String(c.card_number));
+
+  //   const capacity = selectMultiple ? selectedVisitors.length : invitationCode.length > 0 ? 1 : 0;
+
+  //   if (capacity <= 0) {
+  //     toast('Please select visitor first.', 'warning');
+  //     return;
+  //   }
+
+  //   const selectedVisible = visible.filter((n) => selectedCards.includes(n));
+  //   const cappedCount = Math.min(visible.length, capacity);
+
+  //   const fullySelected = cappedCount > 0 && selectedVisible.length === cappedCount;
+
+  //   if (fullySelected) {
+  //     setSelectedCards((prev) => prev.filter((n) => !visible.includes(n)));
+  //     // toast('Visible cards cleared.', 'info');
+  //   } else {
+  //     const toAdd = visible.slice(0, cappedCount);
+  //     setSelectedCards(toAdd);
+  //     toast(`Selected ${toAdd.length} card(s).`, 'success');
+  //   }
+  // };
+
   const handleSelectAll = () => {
-    const visible = availableVisibleCards.map((c) => String(c.card_number));
+    const maxSelection = selectMultiple ? selectedVisitors.length : 1;
 
-    const capacity = selectMultiple ? selectedVisitors.length : invitationCode.length > 0 ? 1 : 0;
-
-    if (capacity <= 0) {
-      toast('Please select visitor first.', 'warning');
+    if (isChecked) {
+      setSelectedCards([]);
       return;
     }
 
-    const selectedVisible = visible.filter((n) => selectedCards.includes(n));
-    const cappedCount = Math.min(visible.length, capacity);
+    const selectableCards = filteredCards
+      .filter((card) => card.current_used !== true && card.is_used !== true)
+      .slice(0, maxSelection)
+      .map((card) => String(card.card_number));
 
-    const fullySelected = cappedCount > 0 && selectedVisible.length === cappedCount;
-
-    if (fullySelected) {
-      setSelectedCards((prev) => prev.filter((n) => !visible.includes(n)));
-      // toast('Visible cards cleared.', 'info');
-    } else {
-      const toAdd = visible.slice(0, cappedCount);
-      setSelectedCards(toAdd);
-      toast(`Selected ${toAdd.length} card(s).`, 'success');
-    }
+    setSelectedCards(selectableCards);
   };
 
   const pairVisitorsWithCards = (visitorIds: string[], cards: (string | number)[]) => {
@@ -1185,31 +1301,73 @@ const OperatorView = () => {
       );
 
       // const currentUsed = visitor?.card?.find((c: any) => c.current_used === true);
-      const currentUsed = (visitor?.card as any[])?.find(
-        (c) => c.current_used === true && c.is_swap == true,
-      );
+      // const currentUsed = (visitor?.card as any[])?.find((c) => c.current_used === true);
 
-      if (currentUsed) {
-        const pairs = pairVisitorsWithCards(visitorIds, selectedCards);
+      // if (currentUsed) {
+      //   const pairs = pairVisitorsWithCards(visitorIds, selectedCards);
 
-        const payloads = pairs.map(({ visitorId, cardNumber }) => ({
-          card_number: String(cardNumber),
-          trx_visitor_id: visitorId,
-          description: `Give card number ${cardNumber} from ${registerSiteOperator}`,
-          swap_card_from_card: currentUsed?.card_number ?? null,
-          swap_card_from_card_id: currentUsed?.id ?? null,
-          swap_card_from_site_id: registerSiteOperator,
-          is_swapcard: false,
-          swap_type: 'Other',
-          registered_site_id: registerSiteOperator,
-        }));
-        console.log('payloads', payloads);
+      //   const payloads = pairs
+      //     .map(({ visitorId, cardNumber }) => {
+      //       const visitor = relatedVisitors.find(
+      //         (v) => v.id?.toLowerCase() === visitorId.toLowerCase(),
+      //       );
+      //       if (!visitor) return null;
 
-        setSwipePayload(payloads);
-        setCurrentAccessVisitor(visitor);
-        setOpenSwipeAccess(true);
-        return;
-      }
+      //       return {
+      //         card_number: String(cardNumber),
+      //         trx_visitor_id: visitorId,
+      //         description: `Give card number ${cardNumber} from ${registerSiteOperator}`,
+      //         swap_card_from_card: currentUsed?.card_number ?? null,
+      //         swap_card_from_card_id: currentUsed?.id ?? null,
+      //         swap_card_from_site_id: registerSiteOperator,
+      //         is_swapcard: false,
+      //         swap_type: 'Other',
+      //         visitorName: visitor.name || visitorId,
+      //         registered_site_id: registerSiteOperator,
+      //       };
+      //     })
+      //     .filter(Boolean) as any[];
+      //   console.log('payloads', payloads);
+
+      //   // setSwipePayload(payloads);
+      //   // setCurrentAccessVisitor(visitor);
+      //   // setOpenSwipeAccess(true);
+
+      //   if (payloads.length > 1) {
+      //     // await createMultipleGrantAccess(token as string, {
+      //     //   data: payloads,
+      //     // });
+      //   } else {
+      //     // await createGrandAccessOperator(token as string, payloads[0]);
+      //   }
+
+      //   await fetchAvailableCards();
+
+      //   setAvailableCards((prev) =>
+      //     prev.map((card) => {
+      //       const assigned = payloads.find(
+      //         (p) => String(p.card_number) === String(card.card_number),
+      //       );
+
+      //       if (assigned) {
+      //         return {
+      //           ...card,
+      //           current_used: true,
+      //           is_used: true,
+      //           card_status: 'Used',
+      //         };
+      //       }
+
+      //       return card;
+      //     }),
+      //   );
+
+      //   showSwal('success', 'Card swapped successfully.');
+
+      //   // handleCloseChooseCard();
+
+      //   return;
+      // }
 
       if (!visitorIds.length) {
         showSwal('info', 'No visitor found to assign card.');
@@ -1223,22 +1381,31 @@ const OperatorView = () => {
           const visitor = relatedVisitors.find(
             (v) => v.id?.toLowerCase() === visitorId.toLowerCase(),
           );
+
           if (!visitor) return null;
+
+          const currentUsed: any = (visitor.card ?? []).find((c: any) => c.current_used === true);
 
           return {
             card_number: String(cardNumber),
             trx_visitor_id: visitorId,
             description: `Give card number ${cardNumber} from ${registerSiteOperator}`,
+
             swap_card_from_card: currentUsed?.card_number ?? null,
             swap_card_from_card_id: currentUsed?.id ?? null,
+
             swap_card_from_site_id: registerSiteOperator,
-            is_swapcard: false,
-            swap_type: 'Other',
+
+            is_swapcard: !!currentUsed,
+
+            swap_type: currentUsed ? 'Other' : null,
+
             visitorName: visitor.name || visitorId,
+
             registered_site_id: registerSiteOperator,
           };
         })
-        .filter(Boolean) as any[];
+        .filter((p): p is NonNullable<typeof p> => p !== null);
 
       if (!payloads.length) {
         showSwal('error', 'No valid visitor to assign card.');
@@ -1250,7 +1417,9 @@ const OperatorView = () => {
         });
         console.log('payloads multiple', payloads);
       } else {
-        const { visitorName, ...payload } = payloads[0];
+        const { visitorName = '', ...payload } = payloads[0] as {
+          visitorName?: string;
+        } & (typeof payloads)[0];
 
         console.log('payload', payload);
         await createGrandAccessOperator(token as string, payload);
@@ -1265,7 +1434,11 @@ const OperatorView = () => {
 
       setVisitorCards((prev) =>
         prev.map((card) => {
-          if (selectedCards.includes(card.card_number)) {
+          const assigned = payloads.find(
+            (p: any) => String(p.card_number) === String(card.card_number),
+          );
+
+          if (assigned) {
             return {
               ...card,
               current_used: true,
@@ -1278,15 +1451,16 @@ const OperatorView = () => {
           };
         }),
       );
-
-      const message = payloads.map((p) => `• ${p.visitorName} (Card: ${p.card_number})`).join('\n');
+      const message = payloads
+        .map((p: any) => `• ${p.visitorName} (Card: ${p.card_number})`)
+        .join('\n');
 
       showSwal('success', `Successfully assigned card(s):\n${message}`);
 
       setInvitationCode((prev) =>
         prev.map((inv) => {
           const match = payloads.find(
-            (p) => p.trx_visitor_id.toLowerCase() === inv.id?.toLowerCase(),
+            (p: any) => p.trx_visitor_id.toLowerCase() === inv.id?.toLowerCase(),
           );
           if (!match) return inv;
 
@@ -1296,7 +1470,7 @@ const OperatorView = () => {
           };
         }),
       );
-
+      resetSwipeStates();
       handleCloseChooseCard();
     } catch (err: any) {
       showSwal('error', err?.response?.data?.msg || 'Failed to assign card(s).');
@@ -1935,78 +2109,6 @@ const OperatorView = () => {
   };
 
   const asStr = (v: any) => (v == null ? '' : String(v));
-  const sameField = (a: any, b: any) =>
-    (a?.custom_field_id && b?.custom_field_id && a.custom_field_id === b.custom_field_id) ||
-    (a?.remarks &&
-      b?.remarks &&
-      String(a.remarks).toLowerCase() === String(b.remarks).toLowerCase());
-
-  const isPurposeVisit = (section: any) => {
-    if (section?.is_document) return false;
-    const forms = formsOf(section);
-    const PV = new Set([
-      'host',
-      'agenda',
-      'site_place',
-      'visitor_period_start',
-      'visitor_period_end',
-    ]);
-    return forms.some((f: any) => PV.has((f?.remarks ?? '').trim().toLowerCase()));
-  };
-
-  const cloneFormWithEmptyAnswers = (f: any, idx: number) => ({
-    ...f,
-    sort: f.sort ?? idx,
-    remarks: sanitizeRemarks(f.remarks),
-    foreign_id: asStr(f.foreign_id),
-    answer_text: '',
-    answer_datetime: '',
-    answer_file: '',
-    multiple_option_fields: Array.isArray(f.multiple_option_fields)
-      ? f.multiple_option_fields.map((opt: any) => (typeof opt === 'object' ? { ...opt } : opt))
-      : [],
-  });
-
-  const buildGroupedPages = (sections: any[] = []) => {
-    const single_page: any[] = [];
-    const batch_page: Record<string, any> = {};
-
-    sections.forEach((section) => {
-      const forms = formsOf(section);
-
-      if (isPurposeVisit(section)) {
-        if (!section?.self_only) {
-          forms.forEach((f: any, idx: number) => {
-            const existing = (section.form_answers || []).find((ans: any) => sameField(ans, f));
-            single_page.push(existing ? { ...f, ...existing } : cloneFormWithEmptyAnswers(f, idx));
-          });
-        }
-        return;
-      }
-
-      if (!section?.is_document) {
-        forms.forEach((f: any, idx: number) => {
-          const secId = (section as any)?.id ?? (section as any)?.Id ?? null;
-          const formId = (f as any)?.id ?? (f as any)?.Id ?? idx;
-          const secForeign = (section as any)?.foreign_id ?? (section as any)?.foreignId ?? null;
-          const formForeign = (f as any)?.foreign_id ?? (f as any)?.foreignId ?? null;
-          const formCustom = (f as any)?.custom_field_id ?? (f as any)?.customFieldId ?? null;
-
-          const resolvedForeign = formForeign ?? secForeign ?? formCustom ?? formId ?? null;
-
-          batch_page[idx] = {
-            ...cloneFormWithEmptyAnswers(f, idx),
-            foreign_id: asStr(resolvedForeign),
-          };
-        });
-      }
-    });
-
-    return {
-      single_page,
-      batch_page,
-    };
-  };
 
   const handleApplyToAllChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const checked = event.target.checked;
@@ -3193,9 +3295,8 @@ const OperatorView = () => {
   const [currentVisitorIndex, setCurrentVisitorIndex] = useState(0);
 
   const handleCloseSwipeAccess = () => {
-    setOpenSwipeAccess(false);
+    resetSwipeStates();
     setOpenChooseCardDialog(false);
-    setSearchTerm('');
   };
 
   const fetchUpcomingPurpose = async () => {
@@ -3284,39 +3385,110 @@ const OperatorView = () => {
     };
   }, [currentUsedCard]);
 
-  const { connect, disconnect, connected } = useSerialRS232({
-    options: {
-      baudRate: 9600,
-    },
+  const scanLockRef = useRef(false);
+  const lastScanRef = useRef('');
 
-    onConnect: () => {
-      console.log('RS232 CONNECTED');
+  // const { connect, disconnect, connected } = useSerialRS232({
+  //   options: {
+  //     baudRate: 115200,
+  //   },
 
-      toast('RS232 Connected', 'success');
-    },
+  //   onConnect: () => {
+  //     console.log('RS232 CONNECTED');
+  //     toast('RS232 Connected', 'success');
+  //   },
+  //   onDisconnect: () => {
+  //     console.log('RS232 DISCONNECTED');
+  //     toast('RS232 Disconnected', 'warning');
+  //   },
 
-    onDisconnect: () => {
-      console.log('RS232 DISCONNECTED');
+  //   onData: async (data) => {
+  //     if (scanLockRef.current) return;
 
-      toast('RS232 Disconnected', 'warning');
-    },
+  //     const clean = data.replace(/[^a-zA-Z0-9-_]/g, '').trim();
 
-    onData: (data) => {
-      const clean = data.trim();
+  //     if (!clean) return;
 
-      if (!clean) return;
+  //     if (clean.length < 6) return;
 
-      console.log('RS232 DATA:', clean);
+  //     if (clean.length > 20) return;
 
-      handleSubmitQRCode(clean);
-    },
+  //     if (lastScanRef.current === clean) return;
 
-    onError: (err) => {
-      console.error(err);
+  //     scanLockRef.current = true;
+  //     lastScanRef.current = clean;
 
-      toast('Serial Error', 'error');
-    },
-  });
+  //     try {
+  //       console.log('FINAL QR:', clean);
+  //       await handleSubmitQRCode(clean);
+  //     } finally {
+  //       setTimeout(() => {
+  //         scanLockRef.current = false;
+  //         lastScanRef.current = '';
+  //       }, 2000);
+  //     }
+  //   },
+
+  //   onError: (err) => {
+  //     console.error(err);
+
+  //     toast('Serial Error', 'error');
+  //   },
+  // });
+
+  useEffect(() => {
+    // Pastikan socket hanya dibuat sekali
+    const socket = new WebSocket('ws://localhost:3001/ws');
+
+    socket.onopen = () => {
+      console.log('✅ WebSocket connected');
+    };
+
+    socket.onerror = (err) => {
+      console.error('❌ WebSocket error:', err);
+    };
+
+   socket.onmessage = async (event) => {
+     console.log('📥 WebSocket message received:', event.data);
+
+     try {
+       const msg = JSON.parse(event.data);
+
+       console.log('💬 Console client:', msg);
+
+       if (msg?.event === 'BARCODE_SCAN' && msg?.data) {
+         const value = String(msg.data).trim();
+
+        //  console.log('📩 QR Value from socket:', value);
+
+         if (!value) return;
+         if (scanLockRef.current) return;
+         if (lastScanRef.current === value) return;
+
+         scanLockRef.current = true;
+         lastScanRef.current = value;
+
+         try {
+           await handleSubmitQRCode(value);
+         } finally {
+           setTimeout(() => {
+             scanLockRef.current = false;
+             lastScanRef.current = '';
+           }, 2000);
+         }
+       }
+     } catch (err) {
+       console.error('⚠️ Failed to parse WebSocket message:', event.data, err);
+     }
+   };
+    socket.onclose = () => {
+      console.warn('🔌 WebSocket disconnected');
+    };
+
+    return () => {
+      socket.close();
+    };
+  }, []);
 
   return (
     <PageContainer title={'Operator View'} description={'Operator View'}>
@@ -3417,8 +3589,8 @@ const OperatorView = () => {
                   setOpenInvitationVisitor={setOpenInvitationVisitor}
                   setOpenReturnCard={setOpenReturnCard}
                   setAccessIssuance={setAccessIssuance}
-                  connect={connect}
-                  disconnect={disconnect}
+                  // connect={connect}
+                  // disconnect={disconnect}
                 />
 
                 {/* Side Right QR Code */}
@@ -3585,7 +3757,7 @@ const OperatorView = () => {
             isIndeterminate={isIndeterminate}
             handleSelectAll={handleSelectAll}
             capacity={capacity}
-            currentUsedCards={currentUsedCards}
+            currentUsedCards={currentUsedCardsByVisitor}
             selectedCards={selectedCards}
             handleToggleCard={handleToggleCard}
             filteredCards={filteredCards}
@@ -3594,6 +3766,7 @@ const OperatorView = () => {
             handleOpenSwipeDialog={handleOpenSwipeDialog}
             handleConfirmChooseCards={handleConfirmChooseCards}
             setAccessIssuance={setAccessIssuance}
+            setSelectedCurrentCards={setSelectedCurrentCards}
           />
           {/* Dialog Swipe Card */}
           <SwipeCardDialog

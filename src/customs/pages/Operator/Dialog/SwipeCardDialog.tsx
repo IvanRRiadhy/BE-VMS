@@ -185,14 +185,15 @@ const SwipeCardDialog = ({
 
 useEffect(() => {
   if (!open) return;
-  if (!initialValues?.documentType) return;
 
-  // Set type (CardAccess) untuk visitor yang sedang aktif
-  handleChange(currentVisitorIndex, 'type', initialValues.documentType);
+  const visitor = visitors?.[currentVisitorIndex];
 
-  // Set value (card_number dari current_used)
-  handleChange(currentVisitorIndex, 'value', initialValues.value ?? '');
-}, [open, initialValues, currentVisitorIndex]);
+  const currentUsed = (visitor?.card ?? []).find((c: any) => c.current_used === true);
+
+  handleChange(currentVisitorIndex, 'type', initialValues?.documentType || 'CardAccess');
+
+  handleChange(currentVisitorIndex, 'value', currentUsed?.card_number ?? '');
+}, [open, currentVisitorIndex, visitors]);
 
 // Optional:
 // Jika dipaksa CardAccess, dropdown tidak boleh diubah.

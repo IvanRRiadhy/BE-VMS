@@ -49,6 +49,7 @@ import {
 import { IconBuilding, IconBuildingSkyscraper, IconMapPins } from '@tabler/icons-react';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
+import { useSearchParams } from 'react-router';
 
 type EnableField = {
   name: boolean;
@@ -108,14 +109,17 @@ const Content = () => {
   const [tableData, setTableData] = useState<Item[]>([]);
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
   const [totalRecords, setTotalRecords] = useState(0);
-  const [page, setPage] = useState(0);
+
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortDir, setSortDir] = useState<string>('desc');
-
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [searchKeyword, setSearchKeyword] = useState('');
-  const [searchInput, setSearchInput] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialSearch = searchParams.get('search') || '';
+  const [searchInput, setSearchInput] = useState(initialSearch);
+  const [searchKeyword, setSearchKeyword] = useState(initialSearch);
+  const initialPage = Number(searchParams.get('page') || 0);
+  const [page, setPage] = useState(initialPage);
   const [hasFetched, setHasFetched] = useState(false);
 
   const [employeeMap, setEmployeeMap] = useState<Record<string, string>>({});
@@ -140,6 +144,10 @@ const Content = () => {
 
     fetchEmployees();
   }, [token]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [selectedType]);
 
   useEffect(() => {
     if (!token) return;
@@ -252,43 +260,6 @@ const Content = () => {
   });
   const [isAttemptingClose, setIsAttemptingClose] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
-
-  const [formDataAddDepartment, setFormDataAddDepartment] = useState<CreateDepartmentRequest>(
-    () => {
-      const saved = localStorage.getItem('unsavedDepartmentFormAdd');
-      try {
-        const parsed = saved ? JSON.parse(saved) : {};
-        return CreateDepartmentSchema.parse(parsed);
-      } catch {
-        return CreateDepartmentSchema.parse({});
-      }
-    },
-  );
-  const [formDataAddDistrict, setFormDataAddDistrict] = useState<CreateDistrictRequest>(() => {
-    const saved = localStorage.getItem('unsavedDistrictFormAdd');
-    try {
-      const parsed = saved ? JSON.parse(saved) : {};
-      return CreateDistrictSchema.parse(parsed);
-    } catch {
-      return CreateDistrictSchema.parse({});
-    }
-  });
-  const [formDataAddOrganization, setFormDataAddOrganization] = useState<CreateOrganizationRequest>(
-    () => {
-      const saved = localStorage.getItem('unsavedOrganizationFormAdd');
-      try {
-        const parsed = saved ? JSON.parse(saved) : {};
-        //
-        return {
-          name: parsed?.name ?? '',
-          code: parsed?.code ?? '',
-          host: parsed?.host ?? '',
-        };
-      } catch {
-        return CreateOrganizationSchema.parse({});
-      }
-    },
-  );
 
   const mapSelectedToEntity = useMemo<DialogEntity>(() => {
     if (selectedType === 'organization') return 'Organizations';
@@ -458,11 +429,6 @@ const Content = () => {
     };
     localStorage.removeItem(lsKey[entity]);
 
-    // reset form add
-    if (entity === 'department') setFormDataAddDepartment(CreateDepartmentSchema.parse({}));
-    if (entity === 'district') setFormDataAddDistrict(CreateDistrictSchema.parse({}));
-    if (entity === 'organization') setFormDataAddOrganization(CreateOrganizationSchema.parse({}));
-
     if (!keepOpen) {
       closeDialog();
     }
@@ -505,11 +471,34 @@ const Content = () => {
     setSearchInput(keyword);
   }, []);
 
-  const handleSearch = useCallback((keyword: string) => {
-    setPage(0);
-    setSearchInput(keyword);
-    setSearchKeyword(keyword);
-  }, []);
+  const handleSearch = useCallback(
+    (keyword: string) => {
+      setPage(0);
+      setSearchInput(keyword);
+      setSearchKeyword(keyword);
+
+      setSearchParams((prev) => {
+        const params = new URLSearchParams(prev);
+
+        if (keyword?.trim()) {
+          params.set('search', keyword);
+        } else {
+          params.delete('search');
+        }
+
+        params.set('page', '0');
+
+        return params;
+      });
+    },
+    [setSearchParams],
+  );
+
+  const [tableKey, setTableKey] = useState(0);
+
+  // useEffect(() => {
+  //   setPage(0);
+  // }, [selectedType]);
 
   return (
     <PageContainer
@@ -526,14 +515,24 @@ const Content = () => {
             <Grid container mt={1} size={{ xs: 12, lg: 12 }}>
               <Grid size={{ xs: 12, lg: 12 }}>
                 <DynamicTable
+                  key={tableKey}
                   loading={loading}
                   isHavePagination
                   totalCount={totalRecords}
+                  currentPage={page}
                   defaultRowsPerPage={rowsPerPage}
-                  rowsPerPageOptions={[10, 50, 100]}
                   onPaginationChange={(newPage, newRowsPerPage) => {
                     setPage(newPage);
                     setRowsPerPage(newRowsPerPage);
+
+                    setSearchParams((prev) => {
+                      const params = new URLSearchParams(prev);
+
+                      params.set('page', String(newPage));
+                      // params.set('limit', String(newRowsPerPage));
+
+                      return params;
+                    });
                   }}
                   overflowX="auto"
                   data={tableData}
@@ -547,6 +546,7 @@ const Content = () => {
                   isHaveExportPdf={false}
                   isHaveExportXlf={false}
                   isHaveFilterDuration={false}
+                  selectedHeaderItem={selectedType}
                   isHaveAddData
                   onBatchEdit={handleBatchEdit}
                   isHaveHeader
@@ -562,6 +562,18 @@ const Content = () => {
                       item.name === 'district'
                     ) {
                       setSelectedType(item.name);
+                      setPage(0);
+
+                      // force rerender table
+                      setTableKey((prev) => prev + 1);
+
+                      setSearchParams((prev) => {
+                        const params = new URLSearchParams(prev);
+
+                        params.set('page', '0');
+
+                        return params;
+                      });
                     }
                   }}
                   onCheckedChange={(selected) => setSelectedRows(selected)}
