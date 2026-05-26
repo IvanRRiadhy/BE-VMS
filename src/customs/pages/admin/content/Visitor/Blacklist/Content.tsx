@@ -13,20 +13,22 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 import { getBlacklistDt, getListVisitor } from 'src/customs/api/admin';
 import { IconForbid, IconScript } from '@tabler/icons-react';
 import FilterBlacklist from './FilterBlacklist';
+import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 
 const Content = () => {
   const [tableData, setTableData] = useState<any[]>([]);
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
-  const [page, setPage] = useState(0);
+  // const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [sortDir, setSortDir] = useState('desc');
-  const [searchInput, setSearchInput] = useState('');
-  const [searchKeyword, setSearchKeyword] = useState('');
+  // const [searchInput, setSearchInput] = useState('');
+  // const [searchKeyword, setSearchKeyword] = useState('');
+  const { page, search, setPage, setSearch } = useTableQueryParams();
   const [totalActive, setTotalActive] = useState(0);
   const [totalNonActive, setTotalNonActive] = useState(0);
   const [visitors, setVisitors] = useState<any[]>([]);
@@ -66,7 +68,7 @@ const Content = () => {
           start,
           sortDir,
           rowsPerPage,
-          searchKeyword || '',
+          search || '',
           filters.start_date || '',
           filters.end_date || '',
           filters.visitors || '',
@@ -100,7 +102,7 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, sortDir, refreshTrigger, searchKeyword]);
+  }, [token, page, rowsPerPage, sortDir, refreshTrigger, search]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -136,15 +138,23 @@ const Content = () => {
     setRefreshTrigger((prev) => prev + 1);
   };
 
-  const handleSearchKeywordChange = useCallback((keyword: string) => {
-    setSearchInput(keyword);
-  }, []);
+  // const handleSearchKeywordChange = useCallback((keyword: string) => {
+  //   setSearchInput(keyword);
+  // }, []);
 
-  const handleSearch = useCallback((keyword: string) => {
-    setPage(0);
-    setSearchInput(keyword);
-    setSearchKeyword(keyword);
-  }, []);
+  // const handleSearch = useCallback((keyword: string) => {
+  //   setPage(0);
+  //   setSearchInput(keyword);
+  //   setSearchKeyword(keyword);
+  // }, []);
+
+  const handleSearch = useCallback(
+    (keyword: string) => {
+      setPage(0);
+      setSearch(keyword);
+    },
+    [setPage, setSearch],
+  );
 
   return (
     <PageContainer
@@ -170,6 +180,7 @@ const Content = () => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);
                 }}
+                currentPage={page}
                 isHaveChecked={true}
                 isHaveAction={false}
                 isHaveSearch={true}
@@ -181,9 +192,9 @@ const Content = () => {
                 isHaveHeader={false}
                 onCheckedChange={(selected) => setSelectedRows(selected)}
                 // onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-                searchKeyword={searchInput}
+                searchKeyword={search}
                 onSearch={handleSearch}
-                onSearchKeywordChange={handleSearchKeywordChange}
+                // onSearchKeywordChange={handleSearchKeywordChange}
                 filterMoreContent={
                   <FilterBlacklist
                     filters={filters}

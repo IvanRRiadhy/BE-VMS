@@ -261,6 +261,33 @@ const OperatorView = () => {
   >([]);
 
   useEffect(() => {
+    const socket = new WebSocket('ws://localhost:8081/ws/');
+    socketRef.current = socket;
+
+    socket.onopen = () => {
+      // console.log('🟢 WS connected');
+    };
+
+    socket.onmessage = (event) => {
+      const data = event.data;
+      console.log('data', data);
+
+      if (typeof data === 'string' && data.includes('|data:image')) {
+        wsImageQueueRef.current.push(data);
+      } else {
+        wsOcrQueueRef.current.push(data);
+      }
+
+      forceTick((v) => v + 1);
+    };
+
+    socket.onerror = (e) => console.error('🔴 WS error', e);
+    socket.onclose = () => console.warn('⚠️ WS closed');
+
+    return () => socket.close();
+  }, []);
+
+  useEffect(() => {
     if (registerSiteOperator) {
       localStorage.setItem('selectedSite', registerSiteOperator);
     } else {
@@ -3448,39 +3475,39 @@ const OperatorView = () => {
       console.error('❌ WebSocket error:', err);
     };
 
-   socket.onmessage = async (event) => {
-     console.log('📥 WebSocket message received:', event.data);
+    socket.onmessage = async (event) => {
+      console.log('📥 WebSocket message received:', event.data);
 
-     try {
-       const msg = JSON.parse(event.data);
+      try {
+        const msg = JSON.parse(event.data);
 
-       console.log('💬 Console client:', msg);
+        console.log('💬 Console client:', msg);
 
-       if (msg?.event === 'BARCODE_SCAN' && msg?.data) {
-         const value = String(msg.data).trim();
+        if (msg?.event === 'BARCODE_SCAN' && msg?.data) {
+          const value = String(msg.data).trim();
 
-        //  console.log('📩 QR Value from socket:', value);
+          //  console.log('📩 QR Value from socket:', value);
 
-         if (!value) return;
-         if (scanLockRef.current) return;
-         if (lastScanRef.current === value) return;
+          if (!value) return;
+          if (scanLockRef.current) return;
+          if (lastScanRef.current === value) return;
 
-         scanLockRef.current = true;
-         lastScanRef.current = value;
+          scanLockRef.current = true;
+          lastScanRef.current = value;
 
-         try {
-           await handleSubmitQRCode(value);
-         } finally {
-           setTimeout(() => {
-             scanLockRef.current = false;
-             lastScanRef.current = '';
-           }, 2000);
-         }
-       }
-     } catch (err) {
-       console.error('⚠️ Failed to parse WebSocket message:', event.data, err);
-     }
-   };
+          try {
+            await handleSubmitQRCode(value);
+          } finally {
+            setTimeout(() => {
+              scanLockRef.current = false;
+              lastScanRef.current = '';
+            }, 2000);
+          }
+        }
+      } catch (err) {
+        console.error('⚠️ Failed to parse WebSocket message:', event.data, err);
+      }
+    };
     socket.onclose = () => {
       console.warn('🔌 WebSocket disconnected');
     };
@@ -3589,8 +3616,6 @@ const OperatorView = () => {
                   setOpenInvitationVisitor={setOpenInvitationVisitor}
                   setOpenReturnCard={setOpenReturnCard}
                   setAccessIssuance={setAccessIssuance}
-                  // connect={connect}
-                  // disconnect={disconnect}
                 />
 
                 {/* Side Right QR Code */}

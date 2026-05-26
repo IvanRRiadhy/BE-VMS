@@ -42,6 +42,7 @@ import { useEmployees } from 'src/hooks/useEmployees';
 import { updateSiteActive } from 'src/customs/api/Admin/Site';
 import DialogSiteSpace from './components/Dialog/DialogSiteSpace';
 import { onMessageListener, requestForToken } from 'src/fcm';
+import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 
 type SiteTableRow = {
   id: string;
@@ -73,15 +74,16 @@ const Content = () => {
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
-  const [page, setPage] = useState(0);
+  // const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [tableRowSite, setTableRowSite] = useState<SiteTableRow[]>([]);
+  const { page, search, setPage, setSearch } = useTableQueryParams();
   const [edittingId, setEdittingId] = useState('');
   const dialogRef = useRef<HTMLDivElement | null>(null);
-  const [searchKeyword, setSearchKeyword] = useState('');
+  // const [searchKeyword, setSearchKeyword] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [sortDir, setSortDir] = useState<string>('desc');
   const queryClient = useQueryClient();
@@ -249,7 +251,7 @@ const Content = () => {
           start,
           rowsPerPage,
           sortDir,
-          searchKeyword,
+          search,
           appliedType !== -1 ? appliedType : undefined,
           parent,
           is_child,
@@ -286,17 +288,13 @@ const Content = () => {
 
         setTableRowSite(tableRows);
       } catch (error) {
-        setTableRowSite([]);
-        setTableData([]);
-        setTotalRecords(0);
-        setTotalFilteredRecords(0);
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [token, page, rowsPerPage, sortDir, refreshTrigger, searchKeyword, appliedType, wildcard]);
+  }, [token, page, rowsPerPage, sortDir, refreshTrigger, search, appliedType, wildcard]);
 
   useEffect(() => {
     if (!allData?.length) {
@@ -536,16 +534,6 @@ const Content = () => {
     }
   };
 
-  const handleDialogClose = (_event: object, reason: string) => {
-    if (reason === 'backdropClick') {
-      if (isFormChanged) {
-        setConfirmDialogOpen(true);
-      } else {
-        handleCloseModalCreateSiteSpace();
-      }
-    }
-  };
-
   useEffect(() => {
     const handleMouseLeave = (e: MouseEvent) => {
       if (dialogRef.current && !dialogRef.current.contains(e.relatedTarget as Node)) {
@@ -602,11 +590,19 @@ const Content = () => {
     setSearchInput(keyword);
   }, []);
 
-  const handleSearch = useCallback((keyword: string) => {
-    setPage(0);
-    setSearchInput(keyword);
-    setSearchKeyword(keyword);
-  }, []);
+  // const handleSearch = useCallback((keyword: string) => {
+  //   setPage(0);
+  //   setSearchInput(keyword);
+  //   setSearchKeyword(keyword);
+  // }, []);
+
+  const handleSearch = useCallback(
+    (keyword: string) => {
+      setPage(0);
+      setSearch(keyword);
+    },
+    [setPage, setSearch],
+  );
 
   const handleSuccess = () => {
     localStorage.removeItem('unsavedSiteForm');
@@ -635,22 +631,6 @@ const Content = () => {
     }
   };
 
-  // useEffect(() => {
-  //   const setupFCM = async () => {
-  //     const token = await requestForToken();
-
-  //     console.log('TOKEN:', token);
-  //   };
-
-  //   setupFCM();
-
-  //   onMessageListener().then((payload: any) => {
-  //     console.log('Foreground message:', payload);
-
-  //     alert(payload.notification?.title);
-  //   });
-  // }, []);
-
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -670,6 +650,7 @@ const Content = () => {
                 defaultRowsPerPage={rowsPerPage}
                 isHaveImage={true}
                 rowsPerPageOptions={[10, 50, 100]}
+                currentPage={page}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);

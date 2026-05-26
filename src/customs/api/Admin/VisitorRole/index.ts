@@ -37,7 +37,7 @@ export const getVisitorRoleByDt = async (
       start,
       length,
       sort_dir,
-      ...(keyword && { keyword }),
+      ...(keyword && { 'search[value]': keyword }),
       ...(role && { role }),
     },
   });

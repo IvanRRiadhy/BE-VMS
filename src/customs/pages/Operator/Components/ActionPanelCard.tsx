@@ -56,8 +56,6 @@ const ActionPanelCard: FC<Props> = ({
   setOpenInvitationVisitor,
   setOpenReturnCard,
   setAccessIssuance,
-  // connect,
-  // disconnect,
 }) => {
   const {
     canCheckin,

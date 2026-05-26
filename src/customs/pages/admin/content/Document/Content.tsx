@@ -33,6 +33,7 @@ import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alert
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import { useSearchParams } from 'react-router';
 import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
+import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 
 const Content = () => {
   const [tableData, setTableData] = useState<Item[]>([]);
@@ -40,15 +41,17 @@ const Content = () => {
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
   const [searchParams] = useSearchParams();
-  const [page, setPage] = useState(Number(searchParams.get('page') || '0'));
-  const [rowsPerPage, setRowsPerPage] = useState(Number(searchParams.get('length') || '10'));
-  const [searchKeyword, setSearchKeyword] = useState(searchParams.get('search') || '');
-  const [searchInput, setSearchInput] = useState(searchParams.get('search') || '');
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  // const [page, setPage] = useState(Number(searchParams.get('page') || '0'));
+  // const [rowsPerPage, setRowsPerPage] = useState(Number(searchParams.get('length') || '10'));
+  // const [searchKeyword, setSearchKeyword] = useState(searchParams.get('search') || '');
+  // const [searchInput, setSearchInput] = useState(searchParams.get('search') || '');
   const [sortColumn] = useState('id');
   const [sortDir] = useState('desc');
   const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const { page, search, setPage, setSearch } = useTableQueryParams();
   const [formDataAddDocument, setFormDataAddDocument] = useState<CreateDocumentRequest>(() => {
     const saved = localStorage.getItem('unsavedDocumentData');
     return saved ? JSON.parse(saved) : CreateDocumentRequestSchema.parse({});
@@ -65,17 +68,6 @@ const Content = () => {
   ];
 
   useEffect(() => {
-    setPage(Number(searchParams.get('page') || '0'));
-
-    setRowsPerPage(Number(searchParams.get('length') || '10'));
-
-    const keyword = searchParams.get('search') || '';
-
-    setSearchKeyword(keyword);
-    setSearchInput(keyword);
-  }, [searchParams]);
-
-  useEffect(() => {
     if (!token) return;
     const fetchData = async () => {
       setLoading(true);
@@ -87,7 +79,7 @@ const Content = () => {
           rowsPerPage,
           sortColumn,
           sortDir,
-          searchKeyword,
+          search,
         );
         setTableData(response.collection);
         setTotalRecords(response.RecordsTotal);
@@ -97,7 +89,7 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, sortColumn, sortDir, refreshTrigger, searchKeyword]);
+  }, [token, page, rowsPerPage, sortColumn, sortDir, refreshTrigger, search]);
 
   const [openFormAddDocument, setOpenFormAddDocument] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -246,14 +238,16 @@ const Content = () => {
   };
 
   const handleSearchKeywordChange = useCallback((keyword: string) => {
-    setSearchInput(keyword);
+    setSearch(keyword);
   }, []);
 
-  const handleSearch = useCallback(() => {
-    // setPage(0);
-    setSearchKeyword(searchInput);
-  }, [searchInput]);
-
+  const handleSearch = useCallback(
+    (keyword: string) => {
+      setPage(0);
+      setSearch(keyword);
+    },
+    [setPage, setSearch],
+  );
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -274,6 +268,7 @@ const Content = () => {
                 selectedRows={selectedRows}
                 defaultRowsPerPage={rowsPerPage}
                 rowsPerPageOptions={[10, 50, 100]}
+                currentPage={page}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);
@@ -297,9 +292,9 @@ const Content = () => {
                 }}
                 onDelete={(row) => handleDelete(row.id)}
                 onBatchDelete={handleBatchDelete}
-                searchKeyword={searchInput}
+                searchKeyword={search}
                 onSearch={handleSearch}
-                onSearchKeywordChange={handleSearchKeywordChange}
+                // onSearchKeywordChange={handleSearchKeywordChange}
                 onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
                 onAddData={handleAdd}
                 htmlFields={['document_text']}

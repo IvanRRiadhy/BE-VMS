@@ -1,16 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  Autocomplete,
   Backdrop,
   Box,
-  Button,
   CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Grid2 as Grid,
-  IconButton,
   Portal,
 } from '@mui/material';
 import Container from 'src/components/container/PageContainer';
@@ -53,7 +46,6 @@ import { CreateUserSchema, Item } from 'src/customs/api/models/Admin/User';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import { useNavigate } from 'react-router';
 import DialogFormUserGroup from '../components/DialogFormUserGroup';
-import { useDebounce } from 'src/hooks/useDebounce';
 import DialogPermissionUserGroup from '../components/DialogPermissionUserGroup';
 import {
   createPermissionAccessControl,
@@ -63,22 +55,21 @@ import {
   getAllPermissionAccessControl,
   getAllPermissionVisitorType,
 } from 'src/customs/api/UserGroup';
-import { IconX } from '@tabler/icons-react';
 import ConfirmUnsavedDialog from '../../../components/ConfirmUnsavedDialog';
+import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 
 const Content = () => {
   const { token } = useSession();
-  const [page, setPage] = useState(0);
+  // const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [searchKeyword, setSearchKeyword] = useState('');
-  const [searchInput, setSearchInput] = useState('');
+  // const [searchKeyword, setSearchKeyword] = useState('');
+  // const [searchInput, setSearchInput] = useState('');
   const [edittingId, setEdittingId] = useState('');
   const [openFormAddDocument, setOpenFormAddDocument] = useState(false);
   const [formAddUser, setFormAddUser] = useState<any>({});
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
   const [loading, setLoading] = useState(false);
-
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [siteOptions, setSiteOptions] = useState<any[]>([]);
@@ -90,20 +81,15 @@ const Content = () => {
   const [selectedRoleAccess, setSelectedRoleAccess] = useState<string>('');
   const [openPermission, setOpenPermission] = useState(false);
   const [originalData, setOriginalData] = useState<any>(null);
-  const debouncedSearch = useDebounce(searchKeyword, 400);
+  // const debouncedSearch = useDebounce(searchKeyword, 400);
   const [sortDir, setSortDir] = useState('desc');
+  const { page, search, setPage, setSearch } = useTableQueryParams();
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['users-group', token, page, rowsPerPage, sortDir, debouncedSearch],
+    queryKey: ['users-group', token, page, rowsPerPage, sortDir, search],
     queryFn: async () => {
       const start = page * rowsPerPage;
-      const response = await getUserGroupDt(
-        token as string,
-        start,
-        rowsPerPage,
-        debouncedSearch,
-        sortDir,
-      );
+      const response = await getUserGroupDt(token as string, start, rowsPerPage, search, sortDir);
 
       const filteredData = response.collection.map((item: any) => ({
         id: item.id,
@@ -718,7 +704,6 @@ const Content = () => {
     }
   };
 
-  // Access Scope
   const handleAccessScope = async () => {
     if (!token) return;
 
@@ -807,15 +792,23 @@ const Content = () => {
     setPermissionSites({});
   };
 
-  const handleSearchKeywordChange = useCallback((keyword: string) => {
-    setSearchInput(keyword);
-  }, []);
+  // const handleSearchKeywordChange = useCallback((keyword: string) => {
+  //   setSearchInput(keyword);
+  // }, []);
 
-  const handleSearch = useCallback((keyword: string) => {
-    setPage(0);
-    setSearchInput(keyword);
-    setSearchKeyword(keyword);
-  }, []);
+  // const handleSearch = useCallback((keyword: string) => {
+  //   setPage(0);
+  //   setSearchInput(keyword);
+  //   setSearchKeyword(keyword);
+  // }, []);
+
+  const handleSearch = useCallback(
+    (keyword: string) => {
+      setPage(0);
+      setSearch(keyword);
+    },
+    [setPage, setSearch],
+  );
 
   const handleDiscard = () => {
     setConfirmDialogOpen(false);
@@ -849,6 +842,7 @@ const Content = () => {
                   setRowsPerPage(newRowsPerPage);
                 }}
                 isHaveChecked
+                currentPage={page}
                 isHaveAction={true}
                 isOperatorSetting={true}
                 onNavigatePage={() => {
@@ -857,9 +851,9 @@ const Content = () => {
                 isHaveAddData={true}
                 isHaveSearch={true}
                 isHaveSettingOperator={true}
-                searchKeyword={searchInput}
+                searchKeyword={search}
                 onSearch={handleSearch}
-                onSearchKeywordChange={handleSearchKeywordChange}
+                // onSearchKeywordChange={handleSearchKeywordChange}
                 onCheckedChange={(selected) => setSelectedRows(selected)}
                 onEdit={(row) => handleEdit(row.id)}
                 onDelete={(row) => handleDelete(row.id)}

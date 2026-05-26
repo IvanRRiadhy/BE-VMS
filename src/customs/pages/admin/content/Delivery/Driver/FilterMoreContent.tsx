@@ -88,7 +88,7 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
             variant="outlined"
             value={filters.joinStart}
             onChange={handleChange}
-            InputProps={{ sx: { fontSize: '0.7rem' } }}
+            InputProps={{ sx: { fontSize: '0.8rem' } }}
           />
         </Grid2>
 
@@ -103,7 +103,7 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
             variant="outlined"
             value={filters.exitEnd}
             onChange={handleChange}
-            InputProps={{ sx: { fontSize: '0.7rem' } }}
+            InputProps={{ sx: { fontSize: '0.8rem' } }}
           />
         </Grid2>
 
@@ -127,7 +127,7 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
                 {...params}
                 placeholder="Select organization"
                 variant="outlined"
-                InputProps={{ ...params.InputProps, sx: { fontSize: '0.7rem' } }}
+                InputProps={{ ...params.InputProps, sx: { fontSize: '0.8rem' } }}
               />
             )}
           />
@@ -153,7 +153,7 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
                 {...params}
                 placeholder="Select department"
                 variant="outlined"
-                InputProps={{ ...params.InputProps, sx: { fontSize: '0.7rem' } }}
+                InputProps={{ ...params.InputProps, sx: { fontSize: '0.8rem' } }}
               />
             )}
           />
@@ -177,7 +177,7 @@ const FilterMoreContent: React.FC<FilterMoreContentProps> = ({
                 {...params}
                 placeholder="Select district"
                 variant="outlined"
-                InputProps={{ ...params.InputProps, sx: { fontSize: '0.7rem' } }}
+                InputProps={{ ...params.InputProps, sx: { fontSize: '0.8rem' } }}
               />
             )}
           />

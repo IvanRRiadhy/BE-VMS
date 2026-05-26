@@ -21,19 +21,20 @@ import {
   CreateApprovalWorkflowSchema,
 } from 'src/customs/api/models/Admin/ApprovalWorfklow';
 import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
+import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 
 const Content = ({
   tableData,
   searchKeyword,
   setSearchKeyword,
-  searchInput,
-  setSearchInput,
+  page,
+  setPage,
   setRefreshTrigger,
   refreshTrigger,
 }: any) => {
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
   const { token } = useSession();
-  const [page, setPage] = useState(0);
+  // const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
@@ -45,12 +46,11 @@ const Content = ({
     conditions: [],
   };
 
-  const [formDataAddDocument, setFormDataAddDocument] = useState<CreateApprovalWorkflowRequest>(
-    () => {
+  const [formAddApprovalWorkflow, setFormAddApprovalWorkflow] =
+    useState<CreateApprovalWorkflowRequest>(() => {
       const saved = localStorage.getItem('unsavedApprovalWorkflow');
       return saved ? JSON.parse(saved) : defaultApprovalWorkflow;
-    },
-  );
+    });
 
   const [openFormAddDocument, setOpenFormAddDocument] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -61,7 +61,6 @@ const Content = ({
     setEdittingId('');
     localStorage.removeItem('unsavedApprovalWorkflow');
   };
-
 
   const defaultDoc = defaultApprovalWorkflow;
 
@@ -94,7 +93,7 @@ const Content = ({
       setPendingEditId(null);
       setConfirmDialogOpen(true);
     } else {
-      setFormDataAddDocument(defaultApprovalWorkflow);
+      setFormAddApprovalWorkflow(defaultApprovalWorkflow);
       setOpenFormAddDocument(true);
     }
   }, [hasUnsaved]);
@@ -102,7 +101,7 @@ const Content = ({
   const handleEdit = (id: string) => {
     if (hasUnsaved()) {
       const parsed = JSON.parse(localStorage.getItem('unsavedApprovalWorkflow') as string);
-          console.log('parsed data', parsed);
+      console.log('parsed data', parsed);
       if (parsed?.id === id) {
         setOpenFormAddDocument(true);
         return;
@@ -124,9 +123,9 @@ const Content = ({
     const item = tableData.find((item: any) => item.id === pendingEditId);
 
     if (item) {
-      setFormDataAddDocument(CreateApprovalWorkflowSchema.parse(item));
+      setFormAddApprovalWorkflow(CreateApprovalWorkflowSchema.parse(item));
     } else {
-      setFormDataAddDocument(defaultApprovalWorkflow);
+      setFormAddApprovalWorkflow(defaultApprovalWorkflow);
     }
 
     setOpenFormAddDocument(true);
@@ -141,8 +140,8 @@ const Content = ({
 
   useEffect(() => {
     if (!openFormAddDocument) return;
-    localStorage.setItem('unsavedApprovalWorkflow', JSON.stringify({ ...formDataAddDocument }));
-  }, [formDataAddDocument, openFormAddDocument]);
+    localStorage.setItem('unsavedApprovalWorkflow', JSON.stringify({ ...formAddApprovalWorkflow }));
+  }, [formAddApprovalWorkflow, openFormAddDocument]);
 
   const handleDelete = async (id: string) => {
     if (!token) return;
@@ -200,16 +199,23 @@ const Content = ({
     );
   };
 
-  const handleSearchKeywordChange = useCallback((keyword: string) => {
-    setSearchInput(keyword);
-  }, []);
+  // const handleSearchKeywordChange = useCallback((keyword: string) => {
+  //   setSearchInput(keyword);
+  // }, []);
 
+  // const handleSearch = useCallback((keyword: string) => {
+  //   setPage(0);
+  //   setSearchInput(keyword);
+  //   setSearchKeyword(keyword);
+  // }, []);
 
-const handleSearch = useCallback((keyword: string) => {
-  setPage(0);
-  setSearchInput(keyword);
-  setSearchKeyword(keyword);
-}, []);
+  const handleSearch = useCallback(
+    (keyword: string) => {
+      setPage(0);
+      setSearchKeyword(keyword);
+    },
+    [setPage, setSearchKeyword],
+  );
 
   return (
     <Container title="Approval Workflow" description="Approval Workflow">
@@ -231,6 +237,7 @@ const handleSearch = useCallback((keyword: string) => {
               isHaveChecked={true}
               isHaveAction={true}
               isHaveSearch={true}
+              currentPage={page}
               isHaveFilter={false}
               isHaveExportPdf={false}
               isHaveExportXlf={false}
@@ -243,9 +250,9 @@ const handleSearch = useCallback((keyword: string) => {
               onEdit={(row) => handleEdit(row.id)}
               onDelete={(row) => handleDelete(row.id)}
               onBatchDelete={handleBatchDelete}
-              searchKeyword={searchInput}
+              searchKeyword={searchKeyword}
               onSearch={handleSearch}
-              onSearchKeywordChange={handleSearchKeywordChange}
+              // onSearchKeywordChange={handleSearchKeywordChange}
               onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
               onAddData={handleAdd}
             />
@@ -272,8 +279,8 @@ const handleSearch = useCallback((keyword: string) => {
         <DialogContent sx={{ paddingTop: 0 }}>
           <br />
           <FormApprove
-            formData={formDataAddDocument}
-            setFormData={setFormDataAddDocument}
+            formData={formAddApprovalWorkflow}
+            setFormData={setFormAddApprovalWorkflow}
             edittingId={edittingId}
             onSuccess={handleSuccessApprovalWorkflow}
           />

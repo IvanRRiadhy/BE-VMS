@@ -34,6 +34,11 @@ import FilterMoreContent from 'src/customs/pages/admin/content/Delivery/Driver/F
 import { getAllDriverPaginationFilterMore } from 'src/customs/api/Delivery/Driver';
 import FormDriver from 'src/customs/pages/admin/content/Delivery/Driver/FormDriver';
 import { getAllDepartments, getAllDistricts, getAllOrganizations } from 'src/customs/api/admin';
+import { useDistricts } from 'src/hooks/useDistricts';
+import { useDepartment } from 'src/hooks/useDepartment';
+import { useOrganization } from 'src/hooks/useOrganization';
+import ConfirmUnsavedDialog from '../../../components/ConfirmUnsavedDialog';
+import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 
 type DriverTableRows = {
   id: string;
@@ -71,20 +76,18 @@ const Content = () => {
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
-  const [page, setPage] = useState(0);
+  // const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [edittingId, setEdittingId] = useState('');
-  const [searchKeyword, setSearchKeyword] = useState('');
-  const [searchInput, setSearchInput] = useState('');
+  // const [searchKeyword, setSearchKeyword] = useState('');
+  // const [searchInput, setSearchInput] = useState('');
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [tableRowEmployee, setTableRowEmployee] = useState<DriverTableRows[]>([]);
   const [sortDir, setSortDir] = useState<string>('desc');
-  const [organizationData, setOrganizationData] = useState<OptionItem[]>([]);
-  const [departmentData, setDepartmentData] = useState<OptionItem[]>([]);
-  const [districtData, setDistrictData] = useState<OptionItem[]>([]);
+  const { page, search, setPage, setSearch } = useTableQueryParams();
 
   const [filters, setFilters] = useState<Filters>({
     joinStart: '',
@@ -108,38 +111,9 @@ const Content = () => {
     },
   ];
 
-  const fetchDataOrganization = async () => {
-    try {
-      const res = await getAllOrganizations(token as string);
-      setOrganizationData(res?.collection ?? []);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const fetchDataDepartment = async () => {
-    try {
-      const res = await getAllDepartments(token as string);
-      setDepartmentData(res?.collection ?? []);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const fetchDataDistrict = async () => {
-    try {
-      const res = await getAllDistricts(token as string);
-      setDistrictData(res?.collection ?? []);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  useEffect(() => {
-    fetchDataOrganization();
-    fetchDataDepartment();
-    fetchDataDistrict();
-  }, [token]);
+  const { organizations } = useOrganization();
+  const { department } = useDepartment();
+  const { districts } = useDistricts();
 
   useEffect(() => {
     if (!token) return;
@@ -156,7 +130,7 @@ const Content = () => {
             rowsPerPage,
             sortColumn,
             sortDir,
-            searchKeyword,
+            search,
             filters.gender === 0 ? undefined : filters.gender,
             filters.joinStart,
             filters.exitEnd,
@@ -211,7 +185,7 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, sortColumn, refreshTrigger, searchKeyword]);
+  }, [token, page, rowsPerPage, sortColumn, refreshTrigger, search]);
 
   const [initialFormData, setInitialFormData] = useState<CreateDriverRequest>(() => {
     const saved = localStorage.getItem('unsavedDriverData');
@@ -465,16 +439,23 @@ const Content = () => {
     }
   };
 
-  const handleSearchKeywordChange = useCallback((keyword: string) => {
-    setSearchInput(keyword);
-  }, []);
+  // const handleSearchKeywordChange = useCallback((keyword: string) => {
+  //   setSearchInput(keyword);
+  // }, []);
 
+  // const handleSearch = useCallback((keyword: string) => {
+  //   setPage(0);
+  //   setSearchInput(keyword);
+  //   setSearchKeyword(keyword);
+  // }, []);
 
-const handleSearch = useCallback((keyword: string) => {
-  setPage(0);
-  setSearchInput(keyword);
-  setSearchKeyword(keyword);
-}, []);
+  const handleSearch = useCallback(
+    (keyword: string) => {
+      setPage(0);
+      setSearch(keyword);
+    },
+    [setPage, setSearch],
+  );
 
   return (
     <PageContainer
@@ -503,6 +484,7 @@ const handleSearch = useCallback((keyword: string) => {
                 isHavePagination={true}
                 defaultRowsPerPage={rowsPerPage}
                 rowsPerPageOptions={[10, 50, 100]}
+                currentPage={page}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);
@@ -516,9 +498,9 @@ const handleSearch = useCallback((keyword: string) => {
                     filters={filters}
                     setFilters={setFilters}
                     onApplyFilter={handleApplyFilter}
-                    organizationData={organizationData}
-                    departmentData={departmentData}
-                    districtData={districtData}
+                    organizationData={organizations}
+                    departmentData={department}
+                    districtData={districts}
                   />
                 }
                 isHaveHeader={false}
@@ -536,9 +518,9 @@ const handleSearch = useCallback((keyword: string) => {
                 onDelete={(row) => handleDelete(row.id)}
                 onBatchDelete={handleBatchDelete}
                 // onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-                searchKeyword={searchInput}
+                searchKeyword={search}
                 onSearch={handleSearch}
-                onSearchKeywordChange={handleSearchKeywordChange}
+                // onSearchKeywordChange={handleSearchKeywordChange}
                 onAddData={handleAdd}
               />
             </Grid>
@@ -585,32 +567,12 @@ const handleSearch = useCallback((keyword: string) => {
           />
         </DialogContent>
       </Dialog>
-      <Dialog open={confirmDialogOpen} onClose={handleCancelEdit} fullWidth maxWidth="sm">
-        <DialogTitle>
-          Unsaved Changes
-          <IconButton
-            aria-label="close"
-            onClick={handleCancelEdit}
-            sx={{
-              position: 'absolute',
-              right: 8,
-              top: 8,
-              color: (theme) => theme.palette.grey[500],
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent dividers>
-          You have unsaved changes. Do you want to discard them?
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancelEdit}>Cancel</Button>
-          <Button onClick={handleConfirmEdit} color="primary" variant="contained">
-            Yes, Discard and Continue
-          </Button>
-        </DialogActions>
-      </Dialog>
+
+      <ConfirmUnsavedDialog
+        open={confirmDialogOpen}
+        onClose={handleCancelEdit}
+        onDiscard={handleConfirmEdit}
+      />
     </PageContainer>
   );
 };

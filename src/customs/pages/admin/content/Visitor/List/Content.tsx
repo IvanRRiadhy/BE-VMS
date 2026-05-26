@@ -24,6 +24,7 @@ import Swal from 'sweetalert2';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import { useNavigate } from 'react-router';
 import FilterVisitor from './FilterVisitor';
+import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 
 type VisitorTableRow = {
   id: string;
@@ -54,7 +55,7 @@ interface VisitorFilters {
 const Content = () => {
   const { token } = useSession();
   const navigate = useNavigate();
-  const [page, setPage] = useState(0);
+  // const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortDir, setSortDir] = useState<string>('desc');
   const [loading, setLoading] = useState(false);
@@ -85,9 +86,10 @@ const Content = () => {
   const [visitorLoading, setVisitorLoading] = useState(false);
   const [visitorError, setVisitorError] = useState<string | null>(null);
   const [visitorDetail, setVisitorDetail] = useState<any>(null);
-  const [searchInput, setSearchInput] = useState('');
-  const [searchKeyword, setSearchKeyword] = useState('');
+  // const [searchInput, setSearchInput] = useState('');
+  // const [searchKeyword, setSearchKeyword] = useState('');
   // const debouncedSearch = useDebounce(searchKeyword, 500);
+  const { page, search, setPage, setSearch } = useTableQueryParams();
   const [filters, setFilters] = useState<VisitorFilters>({
     organization_id: '',
     department_id: '',
@@ -111,7 +113,7 @@ const Content = () => {
           start,
           rowsPerPage,
           sortDir,
-          searchKeyword,
+          search,
           // filters,
         );
         let rows = response.collection.map((item: any) => {
@@ -142,7 +144,7 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, refreshTrigger, searchKeyword]);
+  }, [token, page, rowsPerPage, refreshTrigger, search]);
 
   const handleView = async (id: string) => {
     if (!id || !token) return;
@@ -255,16 +257,24 @@ const Content = () => {
     handleView(row.id);
   }, []);
 
-  const handleSearchKeywordChange = useCallback((keyword: string) => {
-    setSearchInput(keyword);
-  }, []);
+  // const handleSearchKeywordChange = useCallback((keyword: string) => {
+  //   setSearchInput(keyword);
+  // }, []);
 
-  const handleSearch = useCallback((keyword: string) => {
-    setPage(0);
-    setSearchInput(keyword);
-    setSearchKeyword(keyword);
-  }, []);
-  
+  // const handleSearch = useCallback((keyword: string) => {
+  //   setPage(0);
+  //   setSearchInput(keyword);
+  //   setSearchKeyword(keyword);
+  // }, []);
+
+  const handleSearch = useCallback(
+    (keyword: string) => {
+      setPage(0);
+      setSearch(keyword);
+    },
+    [setPage, setSearch],
+  );
+
   const filterContent = useMemo(
     () => (
       <FilterVisitor
@@ -305,9 +315,10 @@ const Content = () => {
                   onBlacklist={handleBlacklistMemo}
                   onView={handleViewMemo}
                   // onSearchKeywordChange={handleSearchKeywordChange}
-                  searchKeyword={searchInput}
+                  currentPage={page}
+                  searchKeyword={search}
                   onSearch={handleSearch}
-                  onSearchKeywordChange={handleSearchKeywordChange}
+                  // onSearchKeywordChange={handleSearchKeywordChange}
                   isHaveChecked={true}
                   isHaveVip={true}
                   isHaveSearch={true}

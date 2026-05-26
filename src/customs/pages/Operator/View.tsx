@@ -104,6 +104,7 @@ import { usePermission } from 'src/hooks/usePermission';
 import ActionPanelView from './Components/ActionPanelView';
 import VisitorListCard from './Components/VisitorListCard';
 import FillPraregistrationSingle from './Invitation/components/FillPraregistrationSingle';
+import useDataPermission from 'src/hooks/useDataPermission';
 
 dayjs.extend(utc);
 dayjs.extend(weekday);
@@ -491,16 +492,16 @@ const View = () => {
     setOpenDetailVistingPurpose(true);
   };
 
-  const [permission, setPermission] = useState<any>({});
+  // const [permission, setPermission] = useState<any>({});
 
   useEffect(() => {
     const fetchData = async () => {
       if (!token) return;
 
       try {
-        const [vtRes, permissionRes] = await Promise.allSettled([
+        const [vtRes] = await Promise.allSettled([
           getInvitationVisitorType(token),
-          getPermission(token),
+          // getPermission(token),
         ]);
 
         if (vtRes.status === 'fulfilled') {
@@ -509,9 +510,6 @@ const View = () => {
           console.error('VisitorType error:', vtRes.reason);
         }
 
-        if (permissionRes.status === 'fulfilled') {
-          setPermission(permissionRes.value?.collection ?? {});
-        }
       } catch (err) {
         console.error(err);
       }
@@ -519,6 +517,8 @@ const View = () => {
 
     fetchData();
   }, [token]);
+
+  const { permission, loading: loadingPermission } = useDataPermission(token);
 
   const permissionHook = usePermission(permission);
 
@@ -3336,7 +3336,7 @@ const View = () => {
       value: '',
       isDocumentTypeLocked: false,
     };
-  }, [currentUsedCard]);  
+  }, [currentUsedCard]);
 
   const scanLockRef = useRef(false);
   const lastScanRef = useRef('');
@@ -3463,7 +3463,7 @@ const View = () => {
 
             {/* Visiting Purpose*/}
             <ActionPanelView
-              loading={loading}
+              loading={loadingPermission}
               permission={permissionHook}
               isFullscreen={isFullscreen}
               handleOpenScanQR={handleOpenScanQR}

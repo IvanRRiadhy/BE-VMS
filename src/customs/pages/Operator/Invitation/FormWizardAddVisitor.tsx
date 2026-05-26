@@ -482,7 +482,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
   useEffect(() => {
     const queue = ws?.imageQueue?.current;
-    // console.log('🟢 Queue:', queue);
+    console.log('🟢 Queue:', queue);
     if (!queue || queue.length === 0) return;
 
     const images = [...queue];
@@ -5159,6 +5159,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     Array.isArray(dataVisitor) && dataVisitor.some((v: any) => !isVisitorEmpty(v));
 
   const hasAnyFilled = hasSavedGroupData || hasCurrentEditingData;
+  
   return (
     <PageContainer title="Operator View" description="this is operator view">
       <form onSubmit={handleOnSubmit}>

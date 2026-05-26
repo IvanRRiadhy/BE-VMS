@@ -45,6 +45,7 @@ import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
 import { getVisitorTypeAccessByVisitorId } from 'src/customs/api/VisitorType/Access';
 import VisitorTypeDialog from './components/VisitorTypeDialog';
 import { updateVisitorTypeActive } from 'src/customs/api/Admin/VisitorType';
+import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 
 type VisitorTypeTableRow = {
   id: string;
@@ -56,7 +57,8 @@ type VisitorTypeTableRow = {
 const Content = () => {
   const { token } = useSession();
   const [visitorData, setVisitorData] = useState<Item[]>([]);
-  const [page, setPage] = useState(0);
+  // const [page, setPage] = useState(0);
+  const { page, search, setPage, setSearch } = useTableQueryParams();
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
@@ -77,8 +79,8 @@ const Content = () => {
   const [openFormCreateVisitorType, setOpenFormCreateVisitorType] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
-  const [searchKeyword, setSearchKeyword] = useState('');
-  const [searchInput, setSearchInput] = useState('');
+  // const [searchKeyword, setSearchKeyword] = useState('');
+  // const [searchInput, setSearchInput] = useState('');
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [documentIdentities, setDocumentIdentities] = useState<
@@ -139,7 +141,7 @@ const Content = () => {
           rowsPerPage,
           sortColumn,
           sortDir,
-          searchKeyword,
+          search,
         );
         setVisitorData(response.collection);
         setTotalRecords(response.RecordsTotal);
@@ -151,7 +153,7 @@ const Content = () => {
           description: item.description,
           period: item.period,
           grace_time: item.grace_time,
-          active: item.is_enable
+          active: item.is_enable,
         }));
         if (rows) {
           setTableRowVisitorType(rows);
@@ -163,7 +165,7 @@ const Content = () => {
     };
 
     fetchData();
-  }, [token, page, rowsPerPage, refreshTrigger, searchKeyword]);
+  }, [token, page, rowsPerPage, refreshTrigger, search]);
 
   const handleOpenDialog = () => {
     setOpenFormCreateVisitorType(true);
@@ -410,15 +412,23 @@ const Content = () => {
     }
   };
 
-  const handleSearchKeywordChange = useCallback((keyword: string) => {
-    setSearchInput(keyword);
-  }, []);
+  // const handleSearchKeywordChange = useCallback((keyword: string) => {
+  //   setSearchInput(keyword);
+  // }, []);
 
-  const handleSearch = useCallback((keyword: string) => {
-    setPage(0);
-    setSearchInput(keyword);
-    setSearchKeyword(keyword);
-  }, []);
+  // const handleSearch = useCallback((keyword: string) => {
+  //   setPage(0);
+  //   setSearchInput(keyword);
+  //   setSearchKeyword(keyword);
+  // }, []);
+
+  const handleSearch = useCallback(
+    (keyword: string) => {
+      setPage(0);
+      setSearch(keyword);
+    },
+    [setPage, setSearch],
+  );
 
   const handleSuccess = () => {
     localStorage.removeItem('unsavedVisitorTypeData');
@@ -451,7 +461,6 @@ const Content = () => {
 
       try {
         const accessRes = await getVisitorTypeAccessByVisitorId(id, token as string);
-        // console.log('accessRes', accessRes.collection);
         mappedAccess = (accessRes?.collection ?? []).map((a: any, index: number) => ({
           access_control_id: a.access_control_id ?? '',
           early_access: a.early_access ?? false,
@@ -483,13 +492,11 @@ const Content = () => {
     try {
       setLoadingData(true);
       await updateVisitorTypeActive(token as string, row.id, checked);
-
       showSwal('success', 'Visitor Type successfully updated');
-
       setRefreshTrigger((prev) => prev + 1);
     } catch (error: any) {
       showSwal('error', error?.response?.data?.msg || 'Failed to update status active');
-    }finally {
+    } finally {
       setLoadingData(false);
     }
   };
@@ -519,6 +526,7 @@ const Content = () => {
                 isHavePagination={true}
                 defaultRowsPerPage={rowsPerPage}
                 rowsPerPageOptions={[10, 50, 100]}
+                currentPage={page}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);
@@ -540,8 +548,8 @@ const Content = () => {
                 onDuplicate={(row) => handleDuplicate(row.id)}
                 onDelete={(row) => handleDelete(row.id)}
                 onBatchDelete={handleBatchDelete}
-                onSearchKeywordChange={handleSearchKeywordChange}
-                searchKeyword={searchInput}
+                // onSearchKeywordChange={handleSearchKeywordChange}
+                searchKeyword={search}
                 onSearch={handleSearch}
                 onAddData={handleAdd}
                 onBooleanSwitchChange={(row, col, checked) =>

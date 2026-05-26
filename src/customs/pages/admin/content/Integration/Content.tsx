@@ -40,6 +40,7 @@ import { IconWorldCog } from '@tabler/icons-react';
 
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import IntegrationDialog from './components/IntegrationDialog';
+import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 
 type IntegrationTableRow = {
   id: string;
@@ -72,25 +73,22 @@ function sanitizeIntegrationForForm(item: Item): CreateIntegrationRequest {
 
 const Content = () => {
   const theme = useTheme();
-
-  // Pagination state.
   const [integrationData, setIntegrationData] = useState<Item[]>([]);
   const [selectedRows, setSelectedRows] = useState<IntegrationTableRow[]>([]);
   const [tableData, setTableData] = useState<IntegrationTableRow[]>([]);
   const [availableIntegration, setAvailableIntegration] = useState<AvailableItem[]>([]);
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
-  const [page, setPage] = useState(0);
+  // const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-
-  const [searchInput, setSearchInput] = useState('');
-  const [searchKeyword, setSearchKeyword] = useState('');
+  const { page, search, setPage, setSearch } = useTableQueryParams();
+  // const [searchInput, setSearchInput] = useState('');
+  // const [searchKeyword, setSearchKeyword] = useState('');
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [openFormAddIntegration, setOpenFormAddIntegration] = useState(false);
-
   const DRAFT_KEY = 'unsavedIntegrationData';
 
   const getDraft = () => {
@@ -102,17 +100,6 @@ const Content = () => {
       return null;
     }
   };
-
-  function formatEnumLabel(label: unknown) {
-    if (label === null || label === undefined) return '';
-
-    const str = String(label);
-
-    return str
-      .replace(/([A-Z])/g, ' $1')
-      .replace(/^./, (c) => c.toUpperCase())
-      .trim();
-  }
 
   function normalizeBrandType(value: unknown): number {
     if (typeof value === 'number') return value;
@@ -184,12 +171,12 @@ const Content = () => {
     return () => {
       cancelled = true;
     };
-  }, [token, page, rowsPerPage, searchKeyword, refreshTrigger]);
+  }, [token, page, rowsPerPage, search, refreshTrigger]);
 
   const filteredData = useMemo(() => {
-    if (!searchKeyword) return tableData;
+    if (!search) return tableData;
 
-    const keyword = searchKeyword.toLowerCase();
+    const keyword = search.toLowerCase();
 
     return tableData.filter((item) =>
       [
@@ -204,7 +191,7 @@ const Content = () => {
         .toLowerCase()
         .includes(keyword),
     );
-  }, [tableData, searchKeyword]);
+  }, [tableData, search]);
 
   // const [formDataAddIntegration, setFormDataAddIntegration] = useState<any>(() => {
   //   const saved = localStorage.getItem('unsavedIntegrationData');
@@ -230,7 +217,6 @@ const Content = () => {
       api_type_auth: '',
     }),
   );
-
 
   const cards = [
     {
@@ -370,41 +356,26 @@ const Content = () => {
     }
   };
 
-  const handleSearchKeywordChange = useCallback((keyword: string) => {
-    setSearchInput(keyword);
-  }, []);
+  // const handleSearchKeywordChange = useCallback((keyword: string) => {
+  //   setSearchInput(keyword);
+  // }, []);
 
+  // const handleSearch = useCallback((keyword: string) => {
+  //   setPage(0);
+  //   setSearchInput(keyword);
+  //   setSearchKeyword(keyword);
+  // }, []);
 
-const handleSearch = useCallback((keyword: string) => {
-  setPage(0);
-  setSearchInput(keyword);
-  setSearchKeyword(keyword);
-}, []);
+  const handleSearch = useCallback(
+    (keyword: string) => {
+      setPage(0);
+      setSearch(keyword);
+    },
+    [setPage, setSearch],
+  );
 
   const [isDirty, setIsDirty] = useState(false);
 
-  const handleContinueEditing = () => {
-    const draft = getDraft();
-
-    if (draft) {
-      setFormDataAddIntegration(draft);
-    }
-
-    setConfirmDialogOpen(false);
-    setOpenFormAddIntegration(true);
-  };
-
-  const handleDiscard = () => {
-    localStorage.removeItem(DRAFT_KEY);
-
-    setConfirmDialogOpen(false);
-
-    // lanjut buka form baru (pakai pendingIntegration)
-    openForm(pendingIntegration);
-    setPendingIntegration(null);
-  };
-
- 
   const handleRequestClose = () => {
     if (isDirty) {
       setConfirmDialogOpen(true);
@@ -444,6 +415,7 @@ const handleSearch = useCallback((keyword: string) => {
                 totalCount={totalRecords}
                 defaultRowsPerPage={rowsPerPage}
                 rowsPerPageOptions={[10, 50, 100]}
+                currentPage={page}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);
@@ -456,6 +428,7 @@ const handleSearch = useCallback((keyword: string) => {
                 isHaveSearch={true}
                 isHaveFilter={false}
                 isHaveExportPdf={false}
+              
                 isHaveExportXlf={false}
                 isCopy={true}
                 onCopy={(row) => {
@@ -484,14 +457,9 @@ const handleSearch = useCallback((keyword: string) => {
                 onDelete={(row) => {
                   handleDelete(row.id);
                 }}
-                searchKeyword={searchInput}
+                searchKeyword={search}
                 onSearch={handleSearch}
-                onSearchKeywordChange={handleSearchKeywordChange}
-                // onSearchKeywordChange={(keyword) => console.log('Search keyword:', keyword)}
-                // onFilterCalenderChange={(ranges) => console.log('Range filtered:', ranges)}
-                // onAddData={() => {
-                //   handleAdd();
-                // }}
+                // onSearchKeywordChange={handleSearchKeywordChange}
               />
             </Grid>
             <Grid container size={{ xs: 12, lg: 12 }} sx={{ mt: 4 }} justifyContent={'center'}>

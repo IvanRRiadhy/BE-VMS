@@ -7,12 +7,7 @@ import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { IconUsers } from '@tabler/icons-react';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { useQuery } from '@tanstack/react-query';
-import {
-  deleteUser,
-  getAllOrganizations,
-  getAllUser,
-  getUserById,
-} from 'src/customs/api/admin';
+import { deleteUser, getAllOrganizations, getAllUser, getUserById } from 'src/customs/api/admin';
 import {
   AdminCustomSidebarItemsData,
   AdminNavListingData,
@@ -25,11 +20,13 @@ import DialogFormUser from './components/DialogFormUser';
 import { GroupRoleId } from 'src/constant/GroupRoleId';
 import { useQueryClient } from '@tanstack/react-query';
 import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
+import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 
 const Content = () => {
   const { token } = useSession();
-  const [searchInput, setSearchInput] = useState('');
-  const [searchKeyword, setSearchKeyword] = useState('');
+  // const [searchInput, setSearchInput] = useState('');
+  // const [searchKeyword, setSearchKeyword] = useState('');
+  const { page, search, setPage, setSearch } = useTableQueryParams();
   const [edittingId, setEdittingId] = useState('');
   const [openFormAddDocument, setOpenFormAddDocument] = useState(false);
   const [formAddUser, setFormAddUser] = useState<any>({});
@@ -64,8 +61,8 @@ const Content = () => {
         group_name: item.group_name,
         description: item.description || '',
       }))
-      .filter((item: any) => item.fullname.toLowerCase().includes(searchKeyword.toLowerCase()));
-  }, [data, searchKeyword]);
+      .filter((item: any) => item.fullname.toLowerCase().includes(search.toLowerCase()));
+  }, [data, search]);
 
   const totalRecords = data?.collection.length ?? 0;
 
@@ -129,14 +126,22 @@ const Content = () => {
     fetchData();
   }, [token]);
 
-  const handleSearchKeywordChange = useCallback((keyword: string) => {
-    setSearchInput(keyword);
-  }, []);
+  // const handleSearchKeywordChange = useCallback((keyword: string) => {
+  //   setSearchInput(keyword);
+  // }, []);
 
-  const handleSearch = useCallback((keyword: string) => {
-    setSearchInput(keyword);
-    setSearchKeyword(keyword);
-  }, []);
+  // const handleSearch = useCallback((keyword: string) => {
+  //   setSearchInput(keyword);
+  //   setSearchKeyword(keyword);
+  // }, []);
+
+  const handleSearch = useCallback(
+    (keyword: string) => {
+      setPage(0);
+      setSearch(keyword);
+    },
+    [setPage, setSearch],
+  );
 
   const handleDiscard = () => {
     setConfirmDialogOpen(false);
@@ -174,9 +179,9 @@ const Content = () => {
                 isHaveSettingOperator={true}
                 // onSettingOperator={(row) => handleSetting(row.id)}
                 // onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-                searchKeyword={searchInput}
+                searchKeyword={search}
                 onSearch={handleSearch}
-                onSearchKeywordChange={handleSearchKeywordChange}
+                // onSearchKeywordChange={handleSearchKeywordChange}
                 onCheckedChange={(selected) => setSelectedRows(selected)}
                 onEdit={(row) => handleEdit(row.id)}
                 onDelete={(row) => handleDelete(row.id)}

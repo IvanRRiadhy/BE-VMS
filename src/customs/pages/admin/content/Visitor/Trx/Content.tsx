@@ -33,7 +33,7 @@ import iconScanQR from 'src/assets/images/svgs/scan-qr.svg';
 import iconAdd from 'src/assets/images/svgs/add-circle.svg';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import CloseIcon from '@mui/icons-material/Close';  
+import CloseIcon from '@mui/icons-material/Close';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   CreateVisitorRequestSchema,
@@ -73,15 +73,17 @@ import { useEmployees } from 'src/hooks/useEmployees';
 import { useVisitorEmployees } from 'src/hooks/useVisitorEmployees';
 import InvitationVisitorDialog from './components/InvitationVisitorDialog';
 import PreRegistrationDialog from './components/PreRegistrationDialog';
+import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 
 const Content = () => {
   const { token } = useSession();
-  const [page, setPage] = useState(0);
+  // const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
-  const [searchKeyword, setSearchKeyword] = useState('');
-  const [searchInput, setSearchInput] = useState('');
+  // const [searchKeyword, setSearchKeyword] = useState('');
+  // const [searchInput, setSearchInput] = useState('');
+  const { page, search, setPage, setSearch } = useTableQueryParams();
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [selectedRows, setSelectedRows] = useState<[]>([]);
   const [openDetail, setOpenDetail] = useState(false);
@@ -231,7 +233,7 @@ const Content = () => {
     isLoading: isLoading,
     isFetching: isFetching,
   } = useQuery({
-    queryKey: ['visitors', searchKeyword, appliedFilters],
+    queryKey: ['visitors', search, appliedFilters],
     queryFn: async () => {
       const statusParam =
         appliedFilters.status && appliedFilters.status !== 'All'
@@ -250,7 +252,7 @@ const Content = () => {
         token as string,
         0,
         -1,
-        searchKeyword || undefined,
+        search || undefined,
         appliedFilters.start_date
           ? dayjs(appliedFilters.start_date).utc().toISOString()
           : undefined,
@@ -374,10 +376,10 @@ const Content = () => {
     //   try {
     //     freshForm = JSON.parse(saved);
     //   } catch {
-        freshForm = CreateVisitorRequestSchema.parse({});
+    freshForm = CreateVisitorRequestSchema.parse({});
     //   }
     // } else {
-      freshForm = CreateVisitorRequestSchema.parse({});
+    freshForm = CreateVisitorRequestSchema.parse({});
     // }
 
     setEdittingId('');
@@ -668,15 +670,23 @@ const Content = () => {
     }
   };
 
-  const handleSearchKeywordChange = useCallback((keyword: string) => {
-    setSearchInput(keyword);
-  }, []);
+  // const handleSearchKeywordChange = useCallback((keyword: string) => {
+  //   setSearchInput(keyword);
+  // }, []);
 
-  const handleSearch = useCallback((keyword: string) => {
-    setPage(0);
-    setSearchInput(keyword);
-    setSearchKeyword(keyword);
-  }, []);
+  // const handleSearch = useCallback((keyword: string) => {
+  //   setPage(0);
+  //   setSearchInput(keyword);
+  //   setSearchKeyword(keyword);
+  // }, []);
+
+  const handleSearch = useCallback(
+    (keyword: string) => {
+      setPage(0);
+      setSearch(keyword);
+    },
+    [setPage, setSearch],
+  );
 
   const handleSelectSite = (site: any) => {
     setFormDataAddVisitor((prev) => ({
@@ -799,9 +809,9 @@ const Content = () => {
                 onView={(row) => {
                   handleView(row.id);
                 }}
-                searchKeyword={searchInput}
+                searchKeyword={search}
                 onSearch={handleSearch}
-                onSearchKeywordChange={handleSearchKeywordChange}
+                // onSearchKeywordChange={handleSearchKeywordChange}
                 onFilterCalenderChange={(ranges) => {
                   if (ranges.startDate && ranges.endDate) {
                     setStartDate(ranges.startDate.toISOString());

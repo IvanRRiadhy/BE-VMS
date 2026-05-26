@@ -36,6 +36,7 @@ import {
 import FormCustomField from 'src/customs/pages/admin/content/CustomField/FormCustomField';
 import { IconSettings } from '@tabler/icons-react';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
+import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 
 type CustomFieldTableRow = {
   id: string;
@@ -51,14 +52,15 @@ const Content = () => {
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
-  const [page, setPage] = useState(0);
+  // const [page, setPage] = useState(0);
+  const { page, search, setPage, setSearch } = useTableQueryParams();
   const [rowsPerPage, setRowsPerPage] = useState(30);
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [tableRowSite, setTableRowSite] = useState<CustomFieldTableRow[]>([]);
   const [edittingId, setEdittingId] = useState('');
-  const [searchKeyword, setSearchKeyword] = useState('');
-  const [searchInput, setSearchInput] = useState('');
+  // const [searchKeyword, setSearchKeyword] = useState('');
+  // const [searchInput, setSearchInput] = useState('');
   const [initialFormSnapshot, setInitialFormSnapshot] = useState<string | null>(null);
   const [shouldTrackChanges, setShouldTrackChanges] = useState(false);
 
@@ -88,9 +90,9 @@ const Content = () => {
 
         const rows = responseGet.collection
           .filter((item: Item) => {
-            if (!searchKeyword) return true;
+            if (!search) return true;
 
-            const keyword = searchKeyword.toLowerCase();
+            const keyword = search.toLowerCase();
 
             return (
               item.short_name?.toLowerCase().includes(keyword) ||
@@ -116,7 +118,7 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, refreshTrigger, searchKeyword]);
+  }, [token, refreshTrigger, search]);
 
   const [formDataAddCustomField, setFormDataAddCustomField] = useState<CreateCustomFieldRequest>(
     () => {
@@ -302,16 +304,24 @@ const Content = () => {
     }
   };
 
-  const handleSearchKeywordChange = useCallback((keyword: string) => {
-    setSearchInput(keyword);
-  }, []);
+//   const handleSearchKeywordChange = useCallback((keyword: string) => {
+//     setSearchInput(keyword);
+//   }, []);
 
 
-const handleSearch = useCallback((keyword: string) => {
-  setPage(0);
-  setSearchInput(keyword);
-  setSearchKeyword(keyword);
-}, []);
+// const handleSearch = useCallback((keyword: string) => {
+//   setPage(0);
+//   setSearchInput(keyword);
+//   setSearchKeyword(keyword);
+// }, []);
+
+const handleSearch = useCallback(
+  (keyword: string) => {
+    setPage(0);
+    setSearch(keyword);
+  },
+  [setPage, setSearch],
+);
 
   return (
     <PageContainer
@@ -356,9 +366,9 @@ const handleSearch = useCallback((keyword: string) => {
                 }}
                 onDelete={(row) => handleDelete(row.id)}
                 onBatchDelete={handleBatchDelete}
-                searchKeyword={searchInput}
+                searchKeyword={search}
                 onSearch={handleSearch}
-                onSearchKeywordChange={handleSearchKeywordChange}
+                // onSearchKeywordChange={handleSearchKeywordChange}
                 onAddData={handleAdd}
                 isHaveObjectData={true}
               />

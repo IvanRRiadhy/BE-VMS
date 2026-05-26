@@ -11,15 +11,8 @@ import {
   Grid2 as Grid,
   IconButton,
   Portal,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
 } from '@mui/material';
 import { IconCalendarFilled, IconClock, IconX } from '@tabler/icons-react';
-import Paper from '@mui/material/Paper';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import Container from 'src/components/container/PageContainer';
@@ -46,14 +39,12 @@ import {
   getSchedulerDeliveryPagination,
   updateSchedulerDelivery,
 } from 'src/customs/api/Delivery/Scheduler';
-import {
-  CreateSchedulerRequest,
-  CreateSchedulerRequestSchmea,
-} from 'src/customs/api/models/Admin/Scheduler';
+
 import SchedulerForm from './SchedulerForm';
 import FilterMoreContent from './FilterMoreContent';
 import ConfirmUnsavedDialog from '../../../components/ConfirmUnsavedDialog';
 import SchedulerErrorDialog from './Dialog/SchedulerErrorDialog';
+import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 
 interface Filters {
   visitor_type_id: string | null;
@@ -66,7 +57,7 @@ const Content = () => {
   const { token } = useSession();
   const [openDialogScheduler, setOpenDialogScheduler] = useState(false);
   const [schedulerData, setSchedulerData] = useState<any[]>([]);
-  const [page, setPage] = useState(0);
+  // const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState<string>('name');
   const [loading, setLoading] = useState(false);
@@ -74,8 +65,9 @@ const Content = () => {
   const [edittingId, setEdittingId] = useState('');
   const [sortDir, setSortDir] = useState<string>('desc');
   const handleOpenDialog = () => setOpenDialogScheduler(true);
-  const [searchKeyword, setSearchKeyword] = useState('');
-  const [searchInput, setSearchInput] = useState('');
+  // const [searchKeyword, setSearchKeyword] = useState('');
+  // const [searchInput, setSearchInput] = useState('');
+  const { page, search, setPage, setSearch } = useTableQueryParams();
   const [selectedScheduler, setSelectedScheduler] = useState<any>(null);
   const navigate = useNavigate();
   const [totalRecords, setTotalRecords] = useState(0);
@@ -83,16 +75,9 @@ const Content = () => {
   const [loadingData, setLoadingData] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [formDataScheduler, setFormDataScheduler] = useState<CreateSchedulerRequest>(() => {
-    const saved = localStorage.getItem('unsavedSchedulerData');
-
-    try {
-      const parsed = saved ? JSON.parse(saved) : {};
-      return CreateSchedulerRequestSchmea.parse(parsed);
-    } catch (e) {
-      return CreateSchedulerRequestSchmea.parse({});
-    }
-  });
+  const [formMode, setFormMode] = useState<'add' | 'edit'>('add');
+  const [errorDialogOpen, setErrorDialogOpen] = useState(false);
+  const [errorDialogRows, setErrorDialogRows] = useState<any[]>([]);
 
   const [filters, setFilters] = useState<Filters>({
     visitor_type_id: '',
@@ -183,7 +168,7 @@ const Content = () => {
           rowsPerPage,
           sortColumn,
           sortDir,
-          searchKeyword,
+          search,
           filters.visitor_type_id ?? undefined,
           filters.host_id ?? undefined,
           filters.time_access_id ?? undefined,
@@ -191,14 +176,6 @@ const Content = () => {
         );
 
         const collection = res?.collection ?? [];
-
-        // if (!collection.length) {
-        //   setSchedulerData([]);
-        //   setRawSchedulerData([]);
-        //   setTotalFilteredRecords(0);
-        //   setTotalRecords(0);
-        //   return;
-        // }
 
         const rows = collection.map((item: any) => ({
           id: item.id,
@@ -220,10 +197,7 @@ const Content = () => {
     };
 
     fetchDataSchduler();
-  }, [token, page, rowsPerPage, sortColumn, sortDir, searchKeyword, refreshTrigger, filters]);
-
-  const [errorDialogOpen, setErrorDialogOpen] = useState(false);
-  const [errorDialogRows, setErrorDialogRows] = useState<any[]>([]);
+  }, [token, page, rowsPerPage, sortColumn, sortDir, search, refreshTrigger, filters]);
 
   const handleSubmitScheduler = async (payload: any) => {
     setLoadingData(true);
@@ -275,8 +249,6 @@ const Content = () => {
     }
   };
 
-  const [formMode, setFormMode] = useState<'add' | 'edit'>('add');
-
   const handleEdit = (id: string) => {
     const data = rawSchedulerData.find((item) => item.id === id);
     setSelectedScheduler(data);
@@ -289,15 +261,23 @@ const Content = () => {
     setRefreshTrigger((prev) => prev + 1);
   };
 
-  const handleSearchKeywordChange = useCallback((keyword: string) => {
-    setSearchInput(keyword);
-  }, []);
+  // const handleSearchKeywordChange = useCallback((keyword: string) => {
+  //   setSearchInput(keyword);
+  // }, []);
 
-  const handleSearch = useCallback((keyword: string) => {
-    setPage(0);
-    setSearchInput(keyword);
-    setSearchKeyword(keyword);
-  }, []);
+  // const handleSearch = useCallback((keyword: string) => {
+  //   setPage(0);
+  //   setSearchInput(keyword);
+  //   setSearchKeyword(keyword);
+  // }, []);
+
+  const handleSearch = useCallback(
+    (keyword: string) => {
+      setPage(0);
+      setSearch(keyword);
+    },
+    [setPage, setSearch],
+  );
 
   const handleCloseScheduler = (_: any, reason?: string) => {
     if (isDirty) {
@@ -369,9 +349,9 @@ const Content = () => {
                 // setEdittingId(row.id);
               }}
               onDelete={(row) => handleDeleteSchduler(row.id)}
-              searchKeyword={searchInput}
+              searchKeyword={search}
               onSearch={handleSearch}
-              onSearchKeywordChange={handleSearchKeywordChange}
+              // onSearchKeywordChange={handleSearchKeywordChange}
               onAddData={handleAdd}
             />
           </Grid>

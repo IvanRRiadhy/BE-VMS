@@ -14,16 +14,18 @@ import { IconBrandMedium } from '@tabler/icons-react';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import { getVisitorRoleByDt, updateVisitorRole } from 'src/customs/api/Admin/VisitorRole';
 import FilterMoreContent from './components/FilterMoreContent';
+import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 const Content = () => {
   const [tableData, setTableData] = useState<any[]>([]);
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
-  const [page, setPage] = useState(0);
+  // const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [searchKeyword, setSearchKeyword] = useState('');
+  // const [searchKeyword, setSearchKeyword] = useState('');
+  const { page, search, setPage, setSearch } = useTableQueryParams();
   const [searchInput, setSearchInput] = useState('');
   const [sortDir, setSortDir] = useState('desc');
   const cards = [
@@ -46,7 +48,7 @@ const Content = () => {
           start,
           rowsPerPage,
           sortDir,
-          searchKeyword,
+          search,
         );
         setTableData(response.collection);
         setTotalRecords(response.collection.length);
@@ -57,17 +59,19 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, refreshTrigger, searchKeyword]);
+  }, [token, page, rowsPerPage, refreshTrigger, search]);
 
   const handleSearchKeywordChange = useCallback((keyword: string) => {
     setSearchInput(keyword);
   }, []);
 
-  const handleSearch = useCallback((keyword: string) => {
-    setPage(0);
-    setSearchInput(keyword);
-    setSearchKeyword(keyword);
-  }, []);
+ const handleSearch = useCallback(
+   (keyword: string) => {
+     setPage(0);
+     setSearch(keyword);
+   },
+   [setPage, setSearch],
+ );
 
   const [loadingAction, setLoadingAction] = useState(false);
 
@@ -115,6 +119,7 @@ const Content = () => {
                 isHaveExportXlf={false}
                 defaultRowsPerPage={rowsPerPage}
                 rowsPerPageOptions={[10, 50, 100]}
+                currentPage={page}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);
@@ -123,9 +128,9 @@ const Content = () => {
                 isHaveFilterDuration={false}
                 isHaveHeader={false}
                 onCheckedChange={(selected) => setSelectedRows(selected)}
-                searchKeyword={searchInput}
+                searchKeyword={search}
                 onSearch={handleSearch}
-                onSearchKeywordChange={handleSearchKeywordChange}
+                // onSearchKeywordChange={handleSearchKeywordChange}
                 isHaveActive={true}
                 onActiveToggle={handleActiveToggle}
               />

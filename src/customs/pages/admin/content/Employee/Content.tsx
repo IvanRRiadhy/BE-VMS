@@ -39,6 +39,10 @@ import { IconUsers } from '@tabler/icons-react';
 import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
 import FilterMoreContent from './FilterMoreContent';
 import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
+import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
+import { useOrganization } from 'src/hooks/useOrganization';
+import { useDepartment } from 'src/hooks/useDepartment';
+import { useDistricts } from 'src/hooks/useDistricts';
 
 type EmployeesTableRow = {
   id: string;
@@ -76,20 +80,21 @@ const Content = () => {
   const [selectedRows, setSelectedRows] = useState<Item[]>([]);
   const { token } = useSession();
   const [totalRecords, setTotalRecords] = useState(0);
-  const [page, setPage] = useState(0);
+  // const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState<string>('id');
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [edittingId, setEdittingId] = useState('');
-  const [searchKeyword, setSearchKeyword] = useState('');
-  const [searchInput, setSearchInput] = useState('');
+  // const [searchKeyword, setSearchKeyword] = useState('');
+  // const [searchInput, setSearchInput] = useState('');
   const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [tableRowEmployee, setTableRowEmployee] = useState<EmployeesTableRow[]>([]);
   const [sortDir, setSortDir] = useState<string>('desc');
-  const [organizationData, setOrganizationData] = useState<OptionItem[]>([]);
-  const [departmentData, setDepartmentData] = useState<OptionItem[]>([]);
-  const [districtData, setDistrictData] = useState<OptionItem[]>([]);
+  const { page, search, setPage, setSearch } = useTableQueryParams();
+  const { organizations } = useOrganization();
+  const { department } = useDepartment();
+  const { districts } = useDistricts();
 
   const [filters, setFilters] = useState<Filters>({
     joinStart: '',
@@ -115,38 +120,6 @@ const Content = () => {
 
   useEffect(() => {
     if (!token) return;
-
-    const fetchAll = async () => {
-      const [orgRes, deptRes, distRes] = await Promise.allSettled([
-        getAllOrganizations(token as string),
-        getAllDepartments(token as string),
-        getAllDistricts(token as string),
-      ]);
-
-      if (orgRes.status === 'fulfilled') {
-        setOrganizationData(orgRes.value?.collection ?? []);
-      } else {
-        console.error('Organization error:', orgRes.reason);
-      }
-
-      if (deptRes.status === 'fulfilled') {
-        setDepartmentData(deptRes.value?.collection ?? []);
-      } else {
-        console.error('Department error:', deptRes.reason);
-      }
-
-      if (distRes.status === 'fulfilled') {
-        setDistrictData(distRes.value?.collection ?? []);
-      } else {
-        console.error('District error:', distRes.reason);
-      }
-    };
-
-    fetchAll();
-  }, [token]);
-
-  useEffect(() => {
-    if (!token) return;
     const fetchData = async () => {
       setLoading(true);
       try {
@@ -160,7 +133,7 @@ const Content = () => {
             rowsPerPage,
             sortColumn,
             sortDir,
-            searchKeyword,
+            search,
             filters.gender === 0 ? undefined : filters.gender,
             filters.joinStart,
             filters.exitEnd,
@@ -213,7 +186,7 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, refreshTrigger, searchKeyword]);
+  }, [token, page, rowsPerPage, refreshTrigger, search]);
 
   const [initialFormData, setInitialFormData] = useState<CreateEmployeeRequest>(() => {
     const saved = localStorage.getItem('unsavedEmployeeData');
@@ -489,15 +462,22 @@ const Content = () => {
     }
   };
 
-  const handleSearchKeywordChange = useCallback((keyword: string) => {
-    setSearchInput(keyword);
-  }, []);
+  // const handleSearchKeywordChange = useCallback((keyword: string) => {
+  //   setSearchInput(keyword);
+  // }, []);
 
-  const handleSearch = useCallback((keyword: string) => {
-    setPage(0);
-    setSearchInput(keyword);
-    setSearchKeyword(keyword);
-  }, []);
+  // const handleSearch = useCallback((keyword: string) => {
+  //   setPage(0);
+  //   setSearchInput(keyword);
+  //   setSearchKeyword(keyword);
+  // }, []);
+  const handleSearch = useCallback(
+    (keyword: string) => {
+      setPage(0);
+      setSearch(keyword);
+    },
+    [setPage, setSearch],
+  );
 
   return (
     <PageContainer
@@ -526,6 +506,7 @@ const Content = () => {
                 isHavePagination={true}
                 defaultRowsPerPage={rowsPerPage}
                 rowsPerPageOptions={[10, 50, 100]}
+                currentPage={page}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);
@@ -539,9 +520,9 @@ const Content = () => {
                     filters={filters}
                     setFilters={setFilters}
                     onApplyFilter={handleApplyFilter}
-                    organizationData={organizationData}
-                    departmentData={departmentData}
-                    districtData={districtData}
+                    organizationData={organizations}
+                    departmentData={department}
+                    districtData={districts}
                   />
                 }
                 isHaveHeader={false}
@@ -559,9 +540,9 @@ const Content = () => {
                 onDelete={(row) => handleDelete(row)}
                 onBatchDelete={handleBatchDelete}
                 // onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
-                searchKeyword={searchInput}
+                searchKeyword={search}
                 onSearch={handleSearch}
-                onSearchKeywordChange={handleSearchKeywordChange}
+                // onSearchKeywordChange={handleSearchKeywordChange}
                 onAddData={handleAdd}
               />
             </Grid>

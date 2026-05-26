@@ -14,7 +14,7 @@ import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { useDepartment } from 'src/hooks/useDepartment';
 import { useDistricts } from 'src/hooks/useDistricts';
-import { useOrganizations } from 'src/hooks/useOrganization';
+import { useOrganization } from 'src/hooks/useOrganization';
 
 type FilterMoreContentProps = {
   filters: any;
@@ -29,9 +29,9 @@ const FilterVisitor: React.FC<FilterMoreContentProps> = ({
   onApplyFilter,
   onResetFilter,
 }) => {
-  const { data: organizations = [] } = useOrganizations();
-  const { data: department = [] } = useDepartment();
-  const { data: districts = [] } = useDistricts();
+  const { organizations } = useOrganization();
+  const { department } = useDepartment();
+  const { districts } = useDistricts();
 
   return (
     <Box sx={{ padding: { xs: 0, lg: 3 }, margin: 1.5 }}>
@@ -63,7 +63,7 @@ const FilterVisitor: React.FC<FilterMoreContentProps> = ({
                 variant="outlined"
                 InputProps={{
                   ...params.InputProps,
-                  sx: { fontSize: '0.8rem' },
+                  sx: { fontSize: '0.75rem' },
                 }}
               />
             )}
@@ -90,7 +90,7 @@ const FilterVisitor: React.FC<FilterMoreContentProps> = ({
                 variant="outlined"
                 InputProps={{
                   ...params.InputProps,
-                  sx: { fontSize: '0.8rem' },
+                  sx: { fontSize: '0.75rem' },
                 }}
               />
             )}
@@ -117,7 +117,7 @@ const FilterVisitor: React.FC<FilterMoreContentProps> = ({
                 variant="outlined"
                 InputProps={{
                   ...params.InputProps,
-                  sx: { fontSize: '0.8rem' },
+                  sx: { fontSize: '0.75rem' },
                 }}
               />
             )}

@@ -1418,6 +1418,60 @@ const FormSite = ({
                     <FormControlLabel
                       control={
                         <Switch
+                          // checked={localForm.is_pickup_point}
+                          onChange={(_, checked) => {
+                            setLocalForm((prev) => ({ ...prev, is_pickup_point: checked }));
+                            if (isBatchEdit) {
+                              setEnabledFields((prev) => ({ ...prev, is_pickup_point: true }));
+                            }
+                          }}
+                        />
+                      }
+                      label={
+                        <Box display="flex" alignItems="center">
+                          Pickup Point
+                          <Tooltip title="Location for pickup or collection." arrow>
+                            <IconButton size="small">
+                              <InfoOutlinedIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      }
+                    />
+                  </Box>
+                </Grid>
+                <Grid size={{ xs: 12, xl: 6 }}>
+                  <Box>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          // checked={localForm.is_assembly_point}
+                          onChange={(_, checked) => {
+                            setLocalForm((prev) => ({ ...prev, is_assembly_point: checked }));
+                            if (isBatchEdit) {
+                              setEnabledFields((prev) => ({ ...prev, is_assembly_point: true }));
+                            }
+                          }}
+                        />
+                      }
+                      label={
+                        <Box display="flex" alignItems="center">
+                          Assembly Point
+                          <Tooltip title="Designated meeting or gathering point." arrow>
+                            <IconButton size="small">
+                              <InfoOutlinedIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      }
+                    />
+                  </Box>
+                </Grid>
+                <Grid size={{ xs: 12, xl: 6 }}>
+                  <Box>
+                    <FormControlLabel
+                      control={
+                        <Switch
                           checked={localForm.is_registered_point}
                           onChange={(_, checked) => {
                             setLocalForm((prev) => ({ ...prev, is_registered_point: checked }));

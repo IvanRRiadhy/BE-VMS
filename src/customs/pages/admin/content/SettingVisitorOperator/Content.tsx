@@ -43,6 +43,7 @@ import FormSetting from './FormSetting';
 import FormSettingRegisteredSite from './FormSettingRegisteredSite';
 import { getApprovalWorkflowByDt } from 'src/customs/api/Admin/ApprovalWorkflow';
 import VisitorCardSetting from './VisitorCardSetting';
+import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 
 type SettingSMTPRow = {
   id: number;
@@ -57,11 +58,11 @@ const Content = () => {
   const [selectedRows, setSelectedRows] = useState<SettingSMTPRow[]>([]);
   const [isDataReady, setIsDataReady] = useState(false);
   const [totalRecords, setTotalRecords] = useState(0);
-  const [page, setPage] = useState(0);
+  // const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState<string>('id');
-  const [searchKeyword, setSearchKeyword] = useState('');
-  const [searchInput, setSearchInput] = useState('');
+  // const [searchKeyword, setSearchKeyword] = useState('');
+  // const [searchInput, setSearchInput] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Form state
@@ -273,6 +274,7 @@ const Content = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [sortDir, setSortDir] = useState('desc');
+    const { page, search, setPage, setSearch } = useTableQueryParams();
   const [tableData, setTableData] = useState<any[]>([]);
 
   useEffect(() => {
@@ -286,7 +288,7 @@ const Content = () => {
           start,
           rowsPerPage,
           sortDir,
-          searchKeyword,
+          search,
         );
         setTableData(response.collection.map(({ conditions, ...rest }: any) => rest));
         setTotalRecords(response.RecordsTotal);
@@ -299,7 +301,7 @@ const Content = () => {
       }
     };
     fetchData();
-  }, [token, page, rowsPerPage, sortDir, refreshTrigger, searchKeyword]);
+  }, [token, page, rowsPerPage, sortDir, refreshTrigger, search]);
 
   return (
     <PageContainer
@@ -368,7 +370,7 @@ const Content = () => {
                       // onCheckedChange={setSelectedRows}
                       onEdit={(row) => handleEdit(row.id)}
                       // onDelete={(row) => handleDelete(row.id.toString())}
-                      onSearchKeywordChange={setSearchKeyword}
+                      // onSearchKeywordChange={search}
                     />
                   ) : (
                     <FormSetting
@@ -420,10 +422,12 @@ const Content = () => {
                   {!showForm ? (
                     <ApprovalWorkflow
                       tableData={tableData}
-                      searchKeyword={searchKeyword}
-                      setSearchKeyword={setSearchKeyword}
-                      searchInput={searchInput}
-                      setSearchInput={setSearchInput}
+                      searchKeyword={search}
+                      setSearchKeyword={setSearch}
+                      page={page}
+                      setPage={setPage}
+                      // searchInput={searchInput}
+                      // setSearchInput={setSearchInput}
                       refreshTrigger={refreshTrigger}
                       setRefreshTrigger={setRefreshTrigger}
                     />
