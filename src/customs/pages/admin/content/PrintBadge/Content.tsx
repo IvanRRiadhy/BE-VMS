@@ -51,26 +51,68 @@ const Content = () => {
     setErrors((prev) => ({ ...prev, [field]: '' }));
   };
 
+  // const uploadFileToCDN = async (file: File, id: string, token: string): Promise<string | null> => {
+  //   if (!(file instanceof File)) return null;
+
+  //   const formData = new FormData();
+  //   formData.append('logo', file);
+
+  //   try {
+  //     const response = await axiosInstance2.post(`/api/print-badge/upload/${id}`, formData, {
+  //       headers: {
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //     });
+
+  //     const fileUrl = response.data?.collection?.file_url;
+  //     if (!fileUrl) return null;
+
+  //     return fileUrl.startsWith('//') ? `https:${fileUrl}` : fileUrl;
+  //   } catch (error) {
+  //     console.error('Upload failed:', error);
+  //     return null;
+  //   }
+  // };
+
   const uploadFileToCDN = async (file: File, id: string, token: string): Promise<string | null> => {
     if (!(file instanceof File)) return null;
 
-    const formData = new FormData();
-    formData.append('logo', file);
+    const uploadFormData = new FormData();
+    uploadFormData.append('logo', file);
 
     try {
-      const response = await axiosInstance2.post(`/api/print-badge/upload/${id}`, formData, {
+      const response = await axiosInstance2.post(`/api/print-badge/upload/${id}`, uploadFormData, {
         headers: {
           Authorization: `Bearer ${token}`,
+          'Content-Type': undefined,
         },
+        transformRequest: [(data) => data],
       });
 
       const fileUrl = response.data?.collection?.file_url;
+      console.log('uploaded file url:', fileUrl);
       if (!fileUrl) return null;
 
       return fileUrl.startsWith('//') ? `https:${fileUrl}` : fileUrl;
     } catch (error) {
       console.error('Upload failed:', error);
       return null;
+    }
+  };
+
+  const deleteCDN = async (fileUrl: string, token: string) => {
+    try {
+      await axiosInstance2.delete(`/cdn${fileUrl}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        data: {
+          file_url: fileUrl,
+        },
+      });
+      console.log('Deleted old logo from CDN:', fileUrl);
+    } catch (error) {
+      console.error('Delete failed:', error);
     }
   };
 
@@ -99,7 +141,10 @@ const Content = () => {
     }
 
     try {
-      let logoUrl: string | null = printBadgeConfig.logo ?? null;
+      // let logoUrl: string | null = printBadgeConfig.logo ?? null;
+      const oldLogo = printBadgeConfig.logo ?? null;
+
+      let logoUrl: string | null = oldLogo;
 
       if (formData.logo instanceof File) {
         const uploadedUrl = await uploadFileToCDN(
@@ -116,11 +161,6 @@ const Content = () => {
         logoUrl = uploadedUrl;
       }
 
-      if (!logoUrl) {
-        setErrors({ logo: 'Logo is required' });
-        return;
-      }
-
       const payload = {
         logo: logoUrl,
         name: result.data.name,
@@ -128,8 +168,27 @@ const Content = () => {
         printer_name: result.data.printer_name,
         printer_paper_size: result.data.printer_paper_size,
       };
+
       await updatePrintBadgeConfig(printBadgeConfig.id, payload, token as string);
 
+      if (oldLogo && oldLogo !== logoUrl) {
+        try {
+          await deleteCDN(oldLogo, token as string);
+        } catch (err) {
+          console.error(err);
+        }
+      }
+      setPrintBadgeConfig((prev: any) => ({
+        ...prev,
+        ...payload,
+      }));
+
+      if (formData.logo instanceof File) {
+        setFormData((prev) => ({
+          ...prev,
+          logo: null,
+        }));
+      }
       showSwal('success', 'Successfully updated print badge.');
     } catch (error: any) {
       showSwal('error', error?.response?.data?.msg || 'Failed to update print badge.');

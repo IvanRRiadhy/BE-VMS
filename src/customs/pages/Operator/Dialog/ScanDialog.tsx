@@ -372,9 +372,8 @@ const ScanDialog = ({
   useEffect(() => {
     if (!open || !isSingle) return;
 
-    console.log('suc');
     const queue = ws.imageQueue.current;
-    console.log('tes', queue);
+    // console.log('tes', queue);
     if (!queue.length) return;
 
     const items = [...queue];
@@ -536,6 +535,7 @@ const ScanDialog = ({
                   document_image_url: uploadedUrl,
                 },
               });
+              onScanSuccess?.();
             }}
           >
             Confirm

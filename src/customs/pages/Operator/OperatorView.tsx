@@ -29,7 +29,6 @@ import { IconX } from '@tabler/icons-react';
 import PageContainer from 'src/components/container/PageContainer';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import { useSerialRS232 } from 'src/hooks/useSerial';
 import {
   createGiveAccessOperator,
   createGrandAccessOperator,
@@ -42,7 +41,6 @@ import {
   getAvailableCardOperator,
   getInvitationCode,
   getInvitationOperatorRelated,
-  getPermissionOperator,
   getUpComingPurpose,
   getUpComingVisitors,
 } from 'src/customs/api/operator';
@@ -260,32 +258,32 @@ const OperatorView = () => {
     }[]
   >([]);
 
-  useEffect(() => {
-    const socket = new WebSocket('ws://localhost:8081/ws/');
-    socketRef.current = socket;
+  // useEffect(() => {
+  //   const socket = new WebSocket('ws://localhost:8081/ws/');
+  //   socketRef.current = socket;
 
-    socket.onopen = () => {
-      // console.log('🟢 WS connected');
-    };
+  //   socket.onopen = () => {
+  //     console.log('🟢 WS connected');
+  //   };
 
-    socket.onmessage = (event) => {
-      const data = event.data;
-      console.log('data', data);
+  //   socket.onmessage = (event) => {
+  //     const data = event.data;
+  //     console.log('data', data);
 
-      if (typeof data === 'string' && data.includes('|data:image')) {
-        wsImageQueueRef.current.push(data);
-      } else {
-        wsOcrQueueRef.current.push(data);
-      }
+  //     if (typeof data === 'string' && data.includes('|data:image')) {
+  //       wsImageQueueRef.current.push(data);
+  //     } else {
+  //       wsOcrQueueRef.current.push(data);
+  //     }
 
-      forceTick((v) => v + 1);
-    };
+  //     forceTick((v) => v + 1);
+  //   };
 
-    socket.onerror = (e) => console.error('🔴 WS error', e);
-    socket.onclose = () => console.warn('⚠️ WS closed');
+  //   socket.onerror = (e) => console.error('🔴 WS error', e);
+  //   socket.onclose = () => console.warn('⚠️ WS closed');
 
-    return () => socket.close();
-  }, []);
+  //   return () => socket.close();
+  // }, []);
 
   useEffect(() => {
     if (registerSiteOperator) {
@@ -3463,30 +3461,109 @@ const OperatorView = () => {
   //   },
   // });
 
+  // useEffect(() => {
+  //   // Pastikan socket hanya dibuat sekali
+  //   const socket = new WebSocket('ws://localhost:8081/ws');
+
+  //   socket.onopen = () => {
+  //     console.log('✅ WebSocket connected');
+  //   };
+
+  //   socket.onerror = (err) => {
+  //     console.error('❌ WebSocket error:', err);
+  //   };
+
+  //   socket.onmessage = async (event) => {
+  //     console.log('📥 WebSocket message received:', event.data);
+
+  //     try {
+  //       const msg = JSON.parse(event.data);
+
+  //       console.log('💬 Console client:', msg);
+
+  //       if (msg?.event === 'BARCODE_SCAN' && msg?.data) {
+  //         const value = String(msg.data).trim();
+
+  //         //  console.log('📩 QR Value from socket:', value);
+
+  //         if (!value) return;
+  //         if (scanLockRef.current) return;
+  //         if (lastScanRef.current === value) return;
+
+  //         scanLockRef.current = true;
+  //         lastScanRef.current = value;
+
+  //         try {
+  //           await handleSubmitQRCode(value);
+  //         } finally {
+  //           setTimeout(() => {
+  //             scanLockRef.current = false;
+  //             lastScanRef.current = '';
+  //           }, 2000);
+  //         }
+  //       } else {
+  //       }
+  //     } catch (err) {
+  //       console.error('⚠️ Failed to parse WebSocket message:', event.data, err);
+  //     }
+  //   };
+  //   socket.onclose = () => {
+  //     console.warn('🔌 WebSocket disconnected');
+  //   };
+
+  //   return () => {
+  //     socket.close();
+  //   };
+  // }, []);
+
+  const bulkPrintingRef = useRef(false);
+
   useEffect(() => {
-    // Pastikan socket hanya dibuat sekali
-    const socket = new WebSocket('ws://localhost:3001/ws');
+    const socket = new WebSocket('ws://localhost:8081/ws');
+
+    socketRef.current = socket;
 
     socket.onopen = () => {
-      console.log('✅ WebSocket connected');
+      console.log('🟢 WS connected');
     };
 
     socket.onerror = (err) => {
-      console.error('❌ WebSocket error:', err);
+      console.error('❌ WS error:', err);
+    };
+
+    socket.onclose = () => {
+      console.warn('🔌 WS disconnected');
     };
 
     socket.onmessage = async (event) => {
-      console.log('📥 WebSocket message received:', event.data);
+      const raw = event.data;
+
+      console.log('📥 WS message:', raw);
 
       try {
-        const msg = JSON.parse(event.data);
+        // =========================
+        // IMAGE STREAM
+        // =========================
+        if (typeof raw === 'string' && raw.includes('|data:image')) {
+          wsImageQueueRef.current.push(raw);
 
-        console.log('💬 Console client:', msg);
+          forceTick((v) => v + 1);
 
+          return;
+        }
+
+        // =========================
+        // JSON EVENT
+        // =========================
+        const msg = JSON.parse(raw);
+
+        console.log('💬 WS JSON:', msg);
+
+        // =========================
+        // BARCODE
+        // =========================
         if (msg?.event === 'BARCODE_SCAN' && msg?.data) {
           const value = String(msg.data).trim();
-
-          //  console.log('📩 QR Value from socket:', value);
 
           if (!value) return;
           if (scanLockRef.current) return;
@@ -3503,19 +3580,54 @@ const OperatorView = () => {
               lastScanRef.current = '';
             }, 2000);
           }
+
+          return;
+        }
+
+        // =========================
+        // OCR RESULT
+        // =========================
+        if (msg?.event === 'OCR_RESULT') {
+          wsOcrQueueRef.current.push(msg.data);
+
+          forceTick((v) => v + 1);
+
+          return;
+        }
+
+        // =========================
+        // PRINT RESULT
+        // =========================
+        if (msg?.event === 'PRINT_RESULT') {
+          if (bulkPrintingRef.current) {
+            return;
+          }
+
+          if (msg.success) {
+            showSwal('success', 'Printed successfully');
+          } else {
+            showSwal('error', msg.message || 'Print failed');
+          }
+
+          return;
         }
       } catch (err) {
-        console.error('⚠️ Failed to parse WebSocket message:', event.data, err);
+        console.error('⚠️ WS parse error:', err);
       }
-    };
-    socket.onclose = () => {
-      console.warn('🔌 WebSocket disconnected');
     };
 
     return () => {
       socket.close();
     };
   }, []);
+
+  const sendWs = (payload: any) => {
+    if (socketRef.current?.readyState === WebSocket.OPEN) {
+      socketRef.current.send(JSON.stringify(payload));
+    } else {
+      console.warn('WS not connected');
+    }
+  };
 
   return (
     <PageContainer title={'Operator View'} description={'Operator View'}>
@@ -3708,12 +3820,24 @@ const OperatorView = () => {
             onClose={() => setOpenBulkPrint(false)}
             visitors={selectedBulkVisitors}
             printData={printData}
+            onPrint={(base64: any) => {
+              sendWs({
+                cmd: 'print',
+                data: base64,
+              });
+            }}
           />
           <PrintDialog
             open={openPreviewPrint}
             onClose={() => setOpenPreviewPrint(false)}
             invitationData={invitationCode[0]}
             printData={printData}
+            onPrint={(base64: any) => {
+              sendWs({
+                cmd: 'print',
+                data: base64,
+              });
+            }}
           />
           {/* Detail Purpose */}
           <DetailVisitingPurpose
@@ -3791,7 +3915,7 @@ const OperatorView = () => {
             handleOpenSwipeDialog={handleOpenSwipeDialog}
             handleConfirmChooseCards={handleConfirmChooseCards}
             setAccessIssuance={setAccessIssuance}
-            setSelectedCurrentCards={setSelectedCurrentCards}
+            // setSelectedCurrentCards={setSelectedCurrentCards}
           />
           {/* Dialog Swipe Card */}
           <SwipeCardDialog

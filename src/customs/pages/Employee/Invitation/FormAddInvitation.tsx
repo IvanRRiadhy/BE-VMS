@@ -2394,31 +2394,16 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
           if (!item?.mandatory) return;
 
           const remark = (item.remarks || '').toLowerCase();
-          // console.log('[validateCurrentStep] remark:', remark);
           const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
-          // console.log('[validateCurrentStep] isVisible:', isVisible);
           if (!isVisible) return;
 
-          const key = `${activeStep - 1}:${gIdx}:${item.custom_field_id}`;
+          const fieldId = item.custom_field_id || item.id;
+          const key = `${activeStep - 1}:${gIdx}:${fieldId}`;
 
           validateField(item, key, errors);
         });
       });
     } else {
-      // const section = sectionsData[activeStep - 1];
-      // const details = formsOf(section);
-
-      // details.forEach((item: any, index: number) => {
-      //   if (!item?.mandatory) return;
-
-      //   const key = `${activeStep - 1}:${index}`;
-
-      //   const isEmpty = !item.answer_text && !item.answer_file && !item.answer_datetime;
-
-      //   if (isEmpty) {
-      //     errors[key] = `${item.long_display_text} is required`;
-      //   }
-      // });
       const section = sectionsData[activeStep - 1];
       const details = formsOf(section);
 
@@ -2430,11 +2415,9 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         const remark = (item.remarks || '').toLowerCase();
         const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
 
-        // 🚫 Skip jika tidak visible
         if (!isVisible) return;
-
-        // const key = `${activeStep - 1}:${index}`;
-        const key = `${activeStep - 1}:${item.id}`;
+        const fieldId = item.custom_field_id || item.id;
+        const key = `${activeStep - 1}:${fieldId}`;
 
         validateField(item, key, errors);
       });

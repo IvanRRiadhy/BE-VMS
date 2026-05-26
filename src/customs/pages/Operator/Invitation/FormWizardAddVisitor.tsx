@@ -480,31 +480,73 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     setGroupVisitors((prev) => prev.filter((g) => g.id !== id));
   };
 
+  // useEffect(() => {
+  //   const queue = ws?.imageQueue?.current;
+  //   console.log('🟢 Queue:', queue);
+  //   if (!queue || queue.length === 0) return;
+
+  //   const images = [...queue];
+  //   queue.length = 0;
+
+  //   const mapped = images.map((payload) => {
+  //     const [fileName, base64] = payload.split('|');
+  //     return {
+  //       id: generateUUIDv4(),
+  //       documentType: 'ktp',
+  //       selected: true,
+  //       image: { fileName, base64 },
+  //       data: {},
+  //     };
+  //   });
+
+  //   if (!scanSessionActive) {
+  //     bufferedImagesRef.current.push(...mapped);
+  //   } else {
+  //     setGroupScanPreviews((prev) => [...prev, ...mapped]);
+  //     setOpenGroupPreview(true);
+  //   }
+  // }, [scanSessionActive]);
+
   useEffect(() => {
-    const queue = ws?.imageQueue?.current;
-    console.log('🟢 Queue:', queue);
-    if (!queue || queue.length === 0) return;
+    const processQueue = async () => {
+      const queue = ws?.imageQueue?.current;
 
-    const images = [...queue];
-    queue.length = 0;
+      // console.log('🟢 Queue:', queue);
 
-    const mapped = images.map((payload) => {
-      const [fileName, base64] = payload.split('|');
-      return {
-        id: generateUUIDv4(),
-        documentType: 'ktp',
-        selected: true,
-        image: { fileName, base64 },
-        data: {},
-      };
-    });
+      if (!queue || queue.length === 0) return;
 
-    if (!scanSessionActive) {
-      bufferedImagesRef.current.push(...mapped);
-    } else {
-      setGroupScanPreviews((prev) => [...prev, ...mapped]);
-      setOpenGroupPreview(true);
-    }
+      const images = [...queue];
+      queue.length = 0;
+
+      const mapped = await Promise.all(
+        images.map(async (payload) => {
+          const [fileName, base64] = payload.split('|');
+
+          const cdnUrl = await uploadScannerImageBase64(base64, 'ktp');
+
+          return {
+            id: generateUUIDv4(),
+            documentType: 'ktp',
+            selected: true,
+            image: {
+              fileName,
+              base64,
+              cdn_url: cdnUrl,
+            },
+            data: {},
+          };
+        }),
+      );
+
+      if (!scanSessionActive) {
+        bufferedImagesRef.current.push(...mapped);
+      } else {
+        setGroupScanPreviews((prev) => [...prev, ...mapped]);
+        setOpenGroupPreview(true);
+      }
+    };
+
+    processQueue();
   }, [scanSessionActive]);
 
   useEffect(() => {
@@ -746,7 +788,62 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         return section;
       }),
     );
-    setActiveStep((prev) => prev + 1);
+    // setSectionsData((prev) => {
+    //   const updated = prev.map((section) => {
+    //     const sectionType = getSectionType(section);
+
+    //     if (sectionType === 'visitor_information') {
+    //       return updateSectionForm(section, (arr) =>
+    //         arr.map((item) => {
+    //           switch (item.remarks) {
+    //             case 'name':
+    //               return { ...item, answer_text: payload.name ?? '' };
+
+    //             case 'indentity_id':
+    //               return {
+    //                 ...item,
+    //                 answer_text: payload.indentity_id ?? '',
+    //               };
+
+    //             case 'gender': {
+    //               let gender = '2';
+
+    //               if (payload.gender === 'LAKI-LAKI') gender = '1';
+    //               if (payload.gender === 'PEREMPUAN') gender = '0';
+
+    //               return {
+    //                 ...item,
+    //                 answer_text: gender,
+    //               };
+    //             }
+
+    //             default:
+    //               return item;
+    //           }
+    //         }),
+    //       );
+    //     }
+
+    //     if (section.is_document === true) {
+    //       return updateSectionForm(section, (arr) =>
+    //         arr.map((item) =>
+    //           item.field_type === 12 && item.remarks === 'identity_image'
+    //             ? {
+    //                 ...item,
+    //                 answer_file: payload.document_image_url,
+    //               }
+    //             : item,
+    //         ),
+    //       );
+    //     }
+
+    //     return section;
+    //   });
+    //   return updated;
+    // });
+    setTimeout(() => {
+      setActiveStep((prev) => prev + 1);
+    }, 100);
   };
 
   function formatDateTime() {
@@ -799,6 +896,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       });
 
       const fileUrl = res.data?.collection?.file_url;
+      // console.log('📤 Uploaded file URL:', fileUrl);
       if (!fileUrl) return null;
 
       return fileUrl.startsWith('//') ? `http:${fileUrl}` : fileUrl;
@@ -866,7 +964,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
             }),
           };
         });
-
         return {
           ...group,
           data_visitor: updatedVisitors,
@@ -1036,139 +1133,140 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
   const handleSteps = (step: number) => {
     const showVTListSkeleton = vtLoading;
-   if (step === -1 && enableInvitationTypeStep) {
-     return (
-       <Box
-         sx={{
-           p: 3,
-           borderRadius: 4,
-           background: (theme) =>
-             theme.palette.mode === 'dark'
-               ? 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)'
-               : 'linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%)',
-           border: '1px solid',
-           borderColor: 'divider',
-         }}
-       >
-         <Box mb={3}>
-           <Typography variant="h5" fontWeight={700}>
-             Are you filling this invitation for yourself or someone else?
-           </Typography>
- 
-           <Typography variant="body2" color="text.secondary" mt={1}>
-             Select whether you are creating the invitation for yourself or for someone else.
-           </Typography>
-         </Box>
- 
-         <RadioGroup
-           value={isSelfInvitation === null ? '' : isSelfInvitation ? 'self' : 'other'}
-           onChange={(e) => setIsSelfInvitation(e.target.value === 'self')}
-         >
-           <Grid container spacing={2}>
-             {/* SELF */}
-             <Grid size={{ xs: 12, md: 6 }}>
-               <Paper
-                 elevation={0}
-                 sx={{
-                   p: 2.5,
-                   borderRadius: 3,
-                   cursor: 'pointer',
-                   border: '2px solid',
-                   transition: 'all 0.25s ease',
-                   borderColor: isSelfInvitation === true ? 'primary.main' : 'divider',
-                   backgroundColor: isSelfInvitation === true ? 'primary.light' : 'background.paper',
-                   '&:hover': {
-                     transform: 'translateY(-3px)',
-                     boxShadow: 4,
-                   },
-                 }}
-                 onClick={() => setIsSelfInvitation(true)}
-               >
-                 <FormControlLabel
-                   value="self"
-                   control={<Radio checked={isSelfInvitation === true} />}
-                   sx={{ width: '100%', m: 0, alignItems: 'flex-start' }}
-                   label={
-                     <Box ml={1}>
-                       <Box display="flex" alignItems="center" gap={1}>
-                         <Typography fontWeight={700} fontSize={18}>
-                           Self
-                         </Typography>
- 
-                         <Tooltip title="This invitation is intended for yourself." arrow>
-                           <InfoOutlined
-                             fontSize="small"
-                             color="action"
-                             sx={{ cursor: 'pointer' }}
-                           />
-                         </Tooltip>
-                       </Box>
- 
-                       <Typography variant="body2" color="text.secondary" mt={0.5}>
-                         Use this option if you are registering yourself.
-                       </Typography>
-                     </Box>
-                   }
-                 />
-               </Paper>
-             </Grid>
- 
-             {/* OTHER */}
-             <Grid size={{ xs: 12, md: 6 }}>
-               <Paper
-                 elevation={0}
-                 sx={{
-                   p: 2.5,
-                   borderRadius: 3,
-                   cursor: 'pointer',
-                   border: '2px solid',
-                   transition: 'all 0.25s ease',
-                   borderColor: isSelfInvitation === false ? 'primary.main' : 'divider',
-                   backgroundColor:
-                     isSelfInvitation === false ? 'primary.light' : 'background.paper',
-                   '&:hover': {
-                     transform: 'translateY(-3px)',
-                     boxShadow: 4,
-                   },
-                 }}
-                 onClick={() => setIsSelfInvitation(false)}
-               >
-                 <FormControlLabel
-                   value="other"
-                   control={<Radio checked={isSelfInvitation === false} />}
-                   sx={{ width: '100%', m: 0, alignItems: 'flex-start' }}
-                   label={
-                     <Box ml={1}>
-                       <Box display="flex" alignItems="center" gap={1}>
-                         <Typography fontWeight={700} fontSize={18}>
-                           Other
-                         </Typography>
- 
-                         <Tooltip
-                           title="This invitation is intended for another person or guest."
-                           arrow
-                         >
-                           <InfoOutlined
-                             fontSize="small"
-                             color="action"
-                             sx={{ cursor: 'pointer' }}
-                           />
-                         </Tooltip>
-                       </Box>
- 
-                       <Typography variant="body2" color="text.secondary" mt={0.5}>
-                         Use this option if you are creating an invitation for someone else.
-                       </Typography>
-                     </Box>
-                   }
-                 />
-               </Paper>
-             </Grid>
-           </Grid>
-         </RadioGroup>
-       </Box>
-     );
-   } else if (step == 0) {
+    if (step === -1 && enableInvitationTypeStep) {
+      return (
+        <Box
+          sx={{
+            p: 3,
+            borderRadius: 4,
+            background: (theme) =>
+              theme.palette.mode === 'dark'
+                ? 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)'
+                : 'linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%)',
+            border: '1px solid',
+            borderColor: 'divider',
+          }}
+        >
+          <Box mb={3}>
+            <Typography variant="h5" fontWeight={700}>
+              Are you filling this invitation for yourself or someone else?
+            </Typography>
+
+            <Typography variant="body2" color="text.secondary" mt={1}>
+              Select whether you are creating the invitation for yourself or for someone else.
+            </Typography>
+          </Box>
+
+          <RadioGroup
+            value={isSelfInvitation === null ? '' : isSelfInvitation ? 'self' : 'other'}
+            onChange={(e) => setIsSelfInvitation(e.target.value === 'self')}
+          >
+            <Grid container spacing={2}>
+              {/* SELF */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 2.5,
+                    borderRadius: 3,
+                    cursor: 'pointer',
+                    border: '2px solid',
+                    transition: 'all 0.25s ease',
+                    borderColor: isSelfInvitation === true ? 'primary.main' : 'divider',
+                    backgroundColor:
+                      isSelfInvitation === true ? 'primary.light' : 'background.paper',
+                    '&:hover': {
+                      transform: 'translateY(-3px)',
+                      boxShadow: 4,
+                    },
+                  }}
+                  onClick={() => setIsSelfInvitation(true)}
+                >
+                  <FormControlLabel
+                    value="self"
+                    control={<Radio checked={isSelfInvitation === true} />}
+                    sx={{ width: '100%', m: 0, alignItems: 'flex-start' }}
+                    label={
+                      <Box ml={1}>
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <Typography fontWeight={700} fontSize={18}>
+                            Self
+                          </Typography>
+
+                          <Tooltip title="This invitation is intended for yourself." arrow>
+                            <InfoOutlined
+                              fontSize="small"
+                              color="action"
+                              sx={{ cursor: 'pointer' }}
+                            />
+                          </Tooltip>
+                        </Box>
+
+                        <Typography variant="body2" color="text.secondary" mt={0.5}>
+                          Use this option if you are registering yourself.
+                        </Typography>
+                      </Box>
+                    }
+                  />
+                </Paper>
+              </Grid>
+
+              {/* OTHER */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 2.5,
+                    borderRadius: 3,
+                    cursor: 'pointer',
+                    border: '2px solid',
+                    transition: 'all 0.25s ease',
+                    borderColor: isSelfInvitation === false ? 'primary.main' : 'divider',
+                    backgroundColor:
+                      isSelfInvitation === false ? 'primary.light' : 'background.paper',
+                    '&:hover': {
+                      transform: 'translateY(-3px)',
+                      boxShadow: 4,
+                    },
+                  }}
+                  onClick={() => setIsSelfInvitation(false)}
+                >
+                  <FormControlLabel
+                    value="other"
+                    control={<Radio checked={isSelfInvitation === false} />}
+                    sx={{ width: '100%', m: 0, alignItems: 'flex-start' }}
+                    label={
+                      <Box ml={1}>
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <Typography fontWeight={700} fontSize={18}>
+                            Other
+                          </Typography>
+
+                          <Tooltip
+                            title="This invitation is intended for another person or guest."
+                            arrow
+                          >
+                            <InfoOutlined
+                              fontSize="small"
+                              color="action"
+                              sx={{ cursor: 'pointer' }}
+                            />
+                          </Tooltip>
+                        </Box>
+
+                        <Typography variant="body2" color="text.secondary" mt={0.5}>
+                          Use this option if you are creating an invitation for someone else.
+                        </Typography>
+                      </Box>
+                    }
+                  />
+                </Paper>
+              </Grid>
+            </Grid>
+          </RadioGroup>
+        </Box>
+      );
+    } else if (step == 0) {
       return (
         <Box>
           <Grid container spacing={2}>
@@ -1338,7 +1436,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                                 startIcon={<IconScan size={20} />}
                                 onClick={() => {
                                   setActiveGroupIdx(index);
-
                                   setScanSessionActive(true);
                                 }}
                               >
@@ -1431,7 +1528,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         sx={{ display: 'flex', flexDirection: 'row !important', mt: 1 }}
                         value={documentType}
                         onChange={(e) => {
-                          // console.log(e.target.value);
                           setDocumentType(e.target.value as 'ktp' | 'passport');
                         }}
                       >
@@ -2232,7 +2328,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     if (!answerFile) return '';
     try {
       const url = new URL(makeCdnUrl(answerFile)!);
-      // console.log('url', url);
       return url.pathname.split('/').pop() || '';
     } catch {
       return String(answerFile).split('/').pop() || '';
@@ -2287,7 +2382,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   ) => {
     try {
       setRemoving((s) => ({ ...s, [inputId]: true }));
-      console.log('currentUrl', currentUrl);
+      // console.log('currentUrl', currentUrl);
       if (currentUrl) {
         await axiosInstance2.delete(`/cdn${currentUrl}`);
       }
@@ -2616,12 +2711,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           if (!item?.mandatory) return;
 
           const remark = (item.remarks || '').toLowerCase();
-          // console.log('[validateCurrentStep] remark:', remark);
           const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
-          // console.log('[validateCurrentStep] isVisible:', isVisible);
           if (!isVisible) return;
-
-          const key = `${activeStep - 1}:${gIdx}:${item.custom_field_id}`;
+          const fieldId = item.custom_field_id || item.id;
+          const key = `${activeStep - 1}:${gIdx}:${fieldId}`;
 
           validateField(item, key, errors);
         });
@@ -2634,11 +2727,13 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
       details.forEach((item: any, index: number) => {
         if (!item?.mandatory) return;
+
         const remark = (item.remarks || '').toLowerCase();
         const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
 
         if (!isVisible) return;
-        const key = `${activeStep - 1}:${item.id}`;
+        const fieldId = item.custom_field_id || item.id;
+        const key = `${activeStep - 1}:${fieldId}`;
         validateField(item, key, errors);
       });
     }
@@ -4584,7 +4679,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           ...baseMeta,
           data_visitor: [{ question_page }],
         };
-        console.log('payload', payload);
+        // console.log('payload', payload);
 
         const parsed = CreateVisitorRequestSchema.parse(payload);
         // console.log('Final Payload (Single):', JSON.stringify(parsed, null, 2));
@@ -4606,8 +4701,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         resetMediaState();
         clearAnswerFiles();
 
-        console.log('invitationCode', invitationCode);
-
+        // console.log('invitationCode', invitationCode);
         if (invitationCode) {
           onInvitationCreated?.(invitationCode);
         }
@@ -4972,8 +5066,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     return result;
   };
 
-  const activeVisitorType = visitorType?.find((vt: any) => vt.id === formData.visitor_type);
+  const [visitorRoles, setVisitorRoles] = useState<any[]>([]);
+  const [visitorTypeDetail, setVisitorTypeDetail] = useState<any>(null);
 
+  const activeVisitorType = visitorTypeDetail;
   const documentNameMap: Record<string, string> = {
     ktp: 'KTP',
     passport: 'Passport',
@@ -4982,11 +5078,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
   const getDocumentIdByType = (documentType: string) => {
     const docName = documentNameMap[documentType];
-    return activeVisitorType?.visitor_type_documents?.find((d: any) => d.document_name === docName)
-      ?.document_id;
-  };
 
-  const [visitorRoles, setVisitorRoles] = useState<any[]>([]);
+    const found = activeVisitorType?.visitor_type_documents?.find(
+      (d: any) => d.document_name === docName,
+    );
+    return found?.document_id;
+  };
 
   useEffect(() => {
     setInputValues({});
@@ -4994,6 +5091,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     setSelectedSiteIds([]);
     setSiteTree([]);
     if (!formData.visitor_type) return;
+
     const fetchVisitorTypeDetails = async () => {
       // const res = visitorType.find((vt: any) => vt.id === formData.visitor_type);
       const resVisitorType = await getVisitorTypeById(
@@ -5005,6 +5103,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       const roles = resVisitorType?.collection?.visitor_roles ?? [];
 
       setVisitorRoles(roles);
+      setVisitorTypeDetail(resVisitorType.collection);
 
       if (TYPE_REGISTERED === 0 || FORM_KEY === 'pra_form') {
         sections = sections.filter((s: any) => (s.pra_form || []).length > 0);
@@ -5159,7 +5258,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     Array.isArray(dataVisitor) && dataVisitor.some((v: any) => !isVisitorEmpty(v));
 
   const hasAnyFilled = hasSavedGroupData || hasCurrentEditingData;
-  
+
   return (
     <PageContainer title="Operator View" description="this is operator view">
       <form onSubmit={handleOnSubmit}>

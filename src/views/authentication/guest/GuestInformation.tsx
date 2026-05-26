@@ -19,6 +19,8 @@ import {
   Container,
   Backdrop,
   Tooltip,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import { Grid2 as Grid } from '@mui/material';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
@@ -907,8 +909,19 @@ const GuestInformationStepper = () => {
               displayValue = invitationData.host_data?.name || displayValue;
             } else if (f.remarks === 'site_place') {
               displayValue = invitationData.site_place_name || displayValue;
-            }
+            } else if (f.remarks === 'visitor_role') {
+              const selectedRole = f.answer_text;
 
+              displayValue =
+                invitationData?.visitor_type_data?.visitor_roles
+                  ?.filter(
+                    (x: any) => x.active && x.role?.toLowerCase() === selectedRole?.toLowerCase(),
+                  )
+                  ?.map((x: any) => x.role)
+                  ?.join(', ') ||
+                selectedRole ||
+                '';
+            }
             if (!isDriving && ['vehicle_type', 'vehicle_plate'].includes(f.remarks)) {
               return null;
             }
@@ -1055,11 +1068,40 @@ const GuestInformationStepper = () => {
                   </FormControl>
                 )}
 
+                {f.remarks === 'visitor_role' && (
+                  <FormControl fullWidth>
+                    <Select
+                      value={formValues[f.remarks] || ''}
+                      onChange={(e) => handleChange(f.remarks, e.target.value)}
+                      displayEmpty
+                    >
+                      <MenuItem value="">
+                        Select Role
+                      </MenuItem>
+
+                      {invitationData?.visitor_type_data?.visitor_roles
+                        ?.filter((x: any) => x.active)
+                        ?.map((role: any) => (
+                          <MenuItem key={role.visitor_roles_id} value={role.role}>
+                            {role.role}
+                          </MenuItem>
+                        ))}
+                    </Select>
+
+                    {errors[f.remarks] && (
+                      <Typography variant="caption" color="error">
+                        {errors[f.remarks]}
+                      </Typography>
+                    )}
+                  </FormControl>
+                )}
+
                 {![
                   'visitor_period_start',
                   'visitor_period_end',
                   'vehicle_plate',
                   'gender',
+                  'visitor_role',
                   'is_driving',
                   'vehicle_type',
                 ].includes(f.remarks) &&
@@ -1116,7 +1158,7 @@ const GuestInformationStepper = () => {
               is_document: section.is_document,
               can_multiple_used: section.can_multiple_used,
               self_only: section.self_only ?? false,
-              foreign_id: section.foreign_id ?? '',
+              foreign_id: section.foreign_id ?? null,
               form: (section.form ?? []).map((f: any) => {
                 const fieldDef =
                   sectionDef?.visit_form?.find((vf: any) => vf.remarks === f.remarks) || {};
@@ -1171,37 +1213,37 @@ const GuestInformationStepper = () => {
       setSubmitting(true);
       if (!validateFillerData()) return;
       const payload = transformToSubmitPayload(invitationData);
-      console.log('payload', JSON.stringify(payload, null, 2));
+      // console.log('payload', JSON.stringify(payload, null, 2));
       const visitorId = invitationData?.id;
       if (!visitorId) {
         return;
       }
 
-      // const res = await SubmitPraForm(payload);
+      const res = await SubmitPraForm(payload);
       // console.log('✅ SubmitPraForm success:', JSON.stringify(res || {}, null, 2));
 
-      // await new Promise((r) => setTimeout(r, 500));
+      await new Promise((r) => setTimeout(r, 500));
 
-      // const authRes = await AuthVisitor({ code });
+      const authRes = await AuthVisitor({ code });
       // console.log('✅ AuthVisitor success:', JSON.stringify(authRes || {}, null, 2));
-      // const token = authRes?.collection?.token;
+      const token = authRes?.collection?.token;
 
-      // const status = authRes.status;
+      const status = authRes.status;
 
-      // if (status === 'process') {
-      //   setSubmitting(false);
-      //   navigate('/portal/waiting', { replace: true });
-      //   return;
-      // }
+      if (status === 'process') {
+        setSubmitting(false);
+        navigate('/portal/waiting', { replace: true });
+        return;
+      }
 
-      // if (token) {
-      //   await saveToken(token, GroupRoleId.Visitor);
-      //   showSwal('success', 'Successfully Pra Register Visitor');
+      if (token) {
+        await saveToken(token, GroupRoleId.Visitor);
+        showSwal('success', 'Successfully Pra Register Visitor');
 
-      //   navigate('/guest/dashboard', { replace: true });
-      //   localStorage.removeItem('visitor_ref_code');
-      //   return;
-      // }
+        navigate('/guest/dashboard', { replace: true });
+        localStorage.removeItem('visitor_ref_code');
+        return;
+      }
     } catch (error: any) {
       setSubmitting(false);
       showSwal('error', error.response.data.msg || 'Failed to Pra Register Visitor');

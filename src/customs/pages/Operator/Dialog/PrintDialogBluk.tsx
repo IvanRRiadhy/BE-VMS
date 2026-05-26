@@ -14,7 +14,7 @@ import QRCODE from 'react-qr-code';
 import { IconX } from '@tabler/icons-react';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import { useState } from 'react';
-const PrintDialogBulk = ({ open, onClose, visitors, printData }: any) => {
+const PrintDialogBulk = ({ open, onClose, visitors, printData, onPrint }: any) => {
   const COL = printData?.printer_paper_size === 80 ? 24 : 16;
   const row = (l = '', r = '') => `${l.padEnd(COL, ' ')}${r.padStart(COL, ' ')}`;
 
@@ -88,11 +88,8 @@ const PrintDialogBulk = ({ open, onClose, visitors, printData }: any) => {
       </Printer>,
     );
 
-    await fetch('http://localhost:5147/print', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ data: uint8ToBase64(escpos) }),
-    });
+    const base64 = uint8ToBase64(escpos);
+    onPrint(base64);
   };
 
   const handleConfirm = async () => {
@@ -108,12 +105,11 @@ const PrintDialogBulk = ({ open, onClose, visitors, printData }: any) => {
       onClose();
     } catch (err) {
       console.error('BULK PRINT ERROR:', err);
-      // alert('Failed to print badges. Please check printer.');
     } finally {
       setTimeout(() => setPrinting(false), 500);
     }
   };
-  
+
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>Confirm Print</DialogTitle>

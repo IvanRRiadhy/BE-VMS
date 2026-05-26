@@ -1,4 +1,4 @@
-import React, { memo, useState } from 'react';
+import { memo, useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -16,13 +16,6 @@ import {
 } from '@mui/material';
 import { IconX, IconSearch, IconSwipe, IconCards } from '@tabler/icons-react';
 import CardSearchInput from '../Components/CardSearchInput';
-
-type DocumentType = 'CardAccess' | 'Other';
-
-interface SwipeCardDialogInitialValues {
-  documentType: DocumentType;
-  value: string;
-}
 
 const ChooseCardDialog = ({
   open,
@@ -46,16 +39,6 @@ const ChooseCardDialog = ({
   setOpenRevokeDialog,
   initialValues,
 }: any) => {
-  const isSwipeDisabled =
-    //  currentUsedCards.length === 0 ||
-    selectedCards.some((cardNumber: string) => {
-      const card = currentUsedCards.find((c: any) => c.card_number === cardNumber);
-
-      return card?.current_used === true && card?.is_swapcard === true;
-    });
-
-  const isChosen = selectedCards.includes(cards.card_number);
-
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg" container={containerRef?.current}>
       <DialogTitle>Choose Card</DialogTitle>

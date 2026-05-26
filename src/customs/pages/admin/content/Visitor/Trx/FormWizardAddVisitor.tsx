@@ -617,348 +617,349 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
   const handleSteps = (step: number) => {
     const showVTListSkeleton = vtLoading;
-  if (step === -1 && enableInvitationTypeStep) {
-    return (
-      <Box
-        sx={{
-          p: 3,
-          borderRadius: 4,
-          background: (theme) =>
-            theme.palette.mode === 'dark'
-              ? 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)'
-              : 'linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%)',
-          border: '1px solid',
-          borderColor: 'divider',
-        }}
-      >
-        <Box mb={3}>
-          <Typography variant="h5" fontWeight={700}>
-            Are you filling this invitation for yourself or someone else?
-          </Typography>
-
-          <Typography variant="body2" color="text.secondary" mt={1}>
-            Select whether you are creating the invitation for yourself or for someone else.
-          </Typography>
-        </Box>
-
-        <RadioGroup
-          value={isSelfInvitation === null ? '' : isSelfInvitation ? 'self' : 'other'}
-          onChange={(e) => setIsSelfInvitation(e.target.value === 'self')}
+    if (step === -1 && enableInvitationTypeStep) {
+      return (
+        <Box
+          sx={{
+            p: 3,
+            borderRadius: 4,
+            background: (theme) =>
+              theme.palette.mode === 'dark'
+                ? 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)'
+                : 'linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%)',
+            border: '1px solid',
+            borderColor: 'divider',
+          }}
         >
+          <Box mb={3}>
+            <Typography variant="h5" fontWeight={700}>
+              Are you filling this invitation for yourself or someone else?
+            </Typography>
+
+            <Typography variant="body2" color="text.secondary" mt={1}>
+              Select whether you are creating the invitation for yourself or for someone else.
+            </Typography>
+          </Box>
+
+          <RadioGroup
+            value={isSelfInvitation === null ? '' : isSelfInvitation ? 'self' : 'other'}
+            onChange={(e) => setIsSelfInvitation(e.target.value === 'self')}
+          >
+            <Grid container spacing={2}>
+              {/* SELF */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 2.5,
+                    borderRadius: 3,
+                    cursor: 'pointer',
+                    border: '2px solid',
+                    transition: 'all 0.25s ease',
+                    borderColor: isSelfInvitation === true ? 'primary.main' : 'divider',
+                    backgroundColor:
+                      isSelfInvitation === true ? 'primary.light' : 'background.paper',
+                    '&:hover': {
+                      transform: 'translateY(-3px)',
+                      boxShadow: 4,
+                    },
+                  }}
+                  onClick={() => setIsSelfInvitation(true)}
+                >
+                  <FormControlLabel
+                    value="self"
+                    control={<Radio checked={isSelfInvitation === true} />}
+                    sx={{ width: '100%', m: 0, alignItems: 'flex-start' }}
+                    label={
+                      <Box ml={1}>
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <Typography fontWeight={700} fontSize={18}>
+                            Self
+                          </Typography>
+
+                          <Tooltip title="This invitation is intended for yourself." arrow>
+                            <InfoOutlined
+                              fontSize="small"
+                              color="action"
+                              sx={{ cursor: 'pointer' }}
+                            />
+                          </Tooltip>
+                        </Box>
+
+                        <Typography variant="body2" color="text.secondary" mt={0.5}>
+                          Use this option if you are registering yourself.
+                        </Typography>
+                      </Box>
+                    }
+                  />
+                </Paper>
+              </Grid>
+
+              {/* OTHER */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 2.5,
+                    borderRadius: 3,
+                    cursor: 'pointer',
+                    border: '2px solid',
+                    transition: 'all 0.25s ease',
+                    borderColor: isSelfInvitation === false ? 'primary.main' : 'divider',
+                    backgroundColor:
+                      isSelfInvitation === false ? 'primary.light' : 'background.paper',
+                    '&:hover': {
+                      transform: 'translateY(-3px)',
+                      boxShadow: 4,
+                    },
+                  }}
+                  onClick={() => setIsSelfInvitation(false)}
+                >
+                  <FormControlLabel
+                    value="other"
+                    control={<Radio checked={isSelfInvitation === false} />}
+                    sx={{ width: '100%', m: 0, alignItems: 'flex-start' }}
+                    label={
+                      <Box ml={1}>
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <Typography fontWeight={700} fontSize={18}>
+                            Other
+                          </Typography>
+
+                          <Tooltip
+                            title="This invitation is intended for another person or guest."
+                            arrow
+                          >
+                            <InfoOutlined
+                              fontSize="small"
+                              color="action"
+                              sx={{ cursor: 'pointer' }}
+                            />
+                          </Tooltip>
+                        </Box>
+
+                        <Typography variant="body2" color="text.secondary" mt={0.5}>
+                          Use this option if you are creating an invitation for someone else.
+                        </Typography>
+                      </Box>
+                    }
+                  />
+                </Paper>
+              </Grid>
+            </Grid>
+          </RadioGroup>
+        </Box>
+      );
+    } else if (step == 0) {
+      return (
+        <Box>
           <Grid container spacing={2}>
-            {/* SELF */}
             <Grid size={{ xs: 12, md: 6 }}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 2.5,
-                  borderRadius: 3,
-                  cursor: 'pointer',
-                  border: '2px solid',
-                  transition: 'all 0.25s ease',
-                  borderColor: isSelfInvitation === true ? 'primary.main' : 'divider',
-                  backgroundColor: isSelfInvitation === true ? 'primary.light' : 'background.paper',
-                  '&:hover': {
-                    transform: 'translateY(-3px)',
-                    boxShadow: 4,
-                  },
-                }}
-                onClick={() => setIsSelfInvitation(true)}
+              <CustomFormLabel
+                htmlFor="visitor-type"
+                sx={{ mb: 1, borderLeft: '4px solid #673ab7', pl: 1 }}
               >
+                Visitor Type
+              </CustomFormLabel>
+              <FormControl component="fieldset">
+                <VisitorTypeList
+                  visitorType={visitorType || []}
+                  formData={formData}
+                  showVTListSkeleton={showVTListSkeleton}
+                  onChange={(e: any) => handleVisitorTypeChange(e)}
+                />
+              </FormControl>
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <CustomFormLabel
+                htmlFor="visitor-type"
+                sx={{ mb: 1, borderLeft: '4px solid #673ab7', pl: 1 }}
+              >
+                Select Status Visitor
+              </CustomFormLabel>
+              <Box display="flex" alignItems="center" gap={2}>
                 <FormControlLabel
-                  value="self"
-                  control={<Radio checked={isSelfInvitation === true} />}
-                  sx={{ width: '100%', m: 0, alignItems: 'flex-start' }}
+                  control={
+                    <Radio
+                      checked={formData.is_group === false}
+                      value={formData.is_group}
+                      onChange={() => {
+                        setIsSingle(true);
+                        setIsGroup(false);
+                        setFormData((prev: any) => ({
+                          ...prev,
+                          is_group: false,
+                        }));
+
+                        localStorage.removeItem('unsavedVisitorData');
+                      }}
+                    />
+                  }
                   label={
-                    <Box ml={1}>
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <Typography fontWeight={700} fontSize={18}>
-                          Self
-                        </Typography>
-
-                        <Tooltip title="This invitation is intended for yourself." arrow>
-                          <InfoOutlined
-                            fontSize="small"
-                            color="action"
-                            sx={{ cursor: 'pointer' }}
-                          />
-                        </Tooltip>
-                      </Box>
-
-                      <Typography variant="body2" color="text.secondary" mt={0.5}>
-                        Use this option if you are registering yourself.
-                      </Typography>
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <IconUser size={18} />
+                      Single
+                      <Tooltip arrow title="Only one visitor can be added">
+                        <IconButton size="small" sx={{ ml: 0 }}>
+                          <IconInfoCircle size={22} />
+                        </IconButton>
+                      </Tooltip>
                     </Box>
                   }
                 />
-              </Paper>
-            </Grid>
 
-            {/* OTHER */}
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 2.5,
-                  borderRadius: 3,
-                  cursor: 'pointer',
-                  border: '2px solid',
-                  transition: 'all 0.25s ease',
-                  borderColor: isSelfInvitation === false ? 'primary.main' : 'divider',
-                  backgroundColor:
-                    isSelfInvitation === false ? 'primary.light' : 'background.paper',
-                  '&:hover': {
-                    transform: 'translateY(-3px)',
-                    boxShadow: 4,
-                  },
-                }}
-                onClick={() => setIsSelfInvitation(false)}
-              >
                 <FormControlLabel
-                  value="other"
-                  control={<Radio checked={isSelfInvitation === false} />}
-                  sx={{ width: '100%', m: 0, alignItems: 'flex-start' }}
+                  control={
+                    <Radio
+                      checked={formData.is_group === true}
+                      value={formData.is_group}
+                      onChange={() => {
+                        const value = true;
+
+                        setIsSingle(false);
+                        setIsGroup(value);
+
+                        setFormData((prev: any) => ({
+                          ...prev,
+                          is_group: value,
+                        }));
+
+                        localStorage.removeItem('unsavedVisitorData');
+                      }}
+                    />
+                  }
                   label={
-                    <Box ml={1}>
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <Typography fontWeight={700} fontSize={18}>
-                          Other
-                        </Typography>
-
-                        <Tooltip
-                          title="This invitation is intended for another person or guest."
-                          arrow
-                        >
-                          <InfoOutlined
-                            fontSize="small"
-                            color="action"
-                            sx={{ cursor: 'pointer' }}
-                          />
-                        </Tooltip>
-                      </Box>
-
-                      <Typography variant="body2" color="text.secondary" mt={0.5}>
-                        Use this option if you are creating an invitation for someone else.
-                      </Typography>
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <IconUsers size={18} />
+                      Group
+                      <Tooltip arrow title="Multiple visitors can be added">
+                        <IconButton size="small" sx={{ ml: 0 }}>
+                          <IconInfoCircle size={22} />
+                        </IconButton>
+                      </Tooltip>
                     </Box>
                   }
                 />
-              </Paper>
-            </Grid>
-          </Grid>
-        </RadioGroup>
-      </Box>
-    );
-  } else if (step == 0) {
-    return (
-      <Box>
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <CustomFormLabel
-              htmlFor="visitor-type"
-              sx={{ mb: 1, borderLeft: '4px solid #673ab7', pl: 1 }}
-            >
-              Visitor Type
-            </CustomFormLabel>
-            <FormControl component="fieldset">
-              <VisitorTypeList
-                visitorType={visitorType || []}
-                formData={formData}
-                showVTListSkeleton={showVTListSkeleton}
-                onChange={(e: any) => handleVisitorTypeChange(e)}
-              />
-            </FormControl>
-          </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <CustomFormLabel
-              htmlFor="visitor-type"
-              sx={{ mb: 1, borderLeft: '4px solid #673ab7', pl: 1 }}
-            >
-              Select Status Visitor
-            </CustomFormLabel>
-            <Box display="flex" alignItems="center" gap={2}>
-              <FormControlLabel
-                control={
-                  <Radio
-                    checked={formData.is_group === false}
-                    value={formData.is_group}
-                    onChange={() => {
-                      setIsSingle(true);
-                      setIsGroup(false);
-                      setFormData((prev: any) => ({
-                        ...prev,
-                        is_group: false,
-                      }));
-
-                      localStorage.removeItem('unsavedVisitorData');
-                    }}
-                  />
-                }
-                label={
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <IconUser size={18} />
-                    Single
-                    <Tooltip arrow title="Only one visitor can be added">
-                      <IconButton size="small" sx={{ ml: 0 }}>
-                        <IconInfoCircle size={22} />
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
-                }
-              />
-
-              <FormControlLabel
-                control={
-                  <Radio
-                    checked={formData.is_group === true}
-                    value={formData.is_group}
-                    onChange={() => {
-                      const value = true;
-
-                      setIsSingle(false);
-                      setIsGroup(value);
-
-                      setFormData((prev: any) => ({
-                        ...prev,
-                        is_group: value,
-                      }));
-
-                      localStorage.removeItem('unsavedVisitorData');
-                    }}
-                  />
-                }
-                label={
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <IconUsers size={18} />
-                    Group
-                    <Tooltip arrow title="Multiple visitors can be added">
-                      <IconButton size="small" sx={{ ml: 0 }}>
-                        <IconInfoCircle size={22} />
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
-                }
-              />
-            </Box>
-            {isGroup && (
-              <Box>
-                <CustomFormLabel sx={{ mb: 1, borderLeft: '4px solid #673ab7', pl: 1 }}>
-                  Group List
-                </CustomFormLabel>
-
-                <TableContainer component={Paper}>
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Group Name</TableCell>
-                        <TableCell>Code</TableCell>
-                        <TableCell>Visitor Form</TableCell>
-                        <TableCell align="center">Action</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {groupVisitors.map((g, index) => (
-                        <TableRow key={g.id}>
-                          <TableCell>
-                            <TextField
-                              size="small"
-                              fullWidth
-                              name="group_name"
-                              value={g.group_name}
-                              placeholder="Enter group name"
-                              sx={{ minWidth: '100px' }}
-                              onChange={(e) =>
-                                setGroupVisitors((prev) =>
-                                  prev.map((item) =>
-                                    item.id === g.id
-                                      ? { ...item, group_name: e.target.value }
-                                      : item,
-                                  ),
-                                )
-                              }
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <TextField
-                              size="small"
-                              fullWidth
-                              name="group_code"
-                              value={g.group_code}
-                              InputProps={{ readOnly: true }}
-                              sx={{ minWidth: '100px' }}
-                              disabled
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              variant="outlined"
-                              color="primary"
-                              size="small"
-                              endIcon={<IconArrowRight size={20} />}
-                              onClick={() => {
-                                setActiveGroupIdx(index);
-                                const deepClone = (obj: any) => {
-                                  try {
-                                    return structuredClone(obj);
-                                  } catch {
-                                    return JSON.parse(JSON.stringify(obj));
-                                  }
-                                };
-
-                                if (g.data_visitor && g.data_visitor.length > 0) {
-                                  const cloned = deepClone(g.data_visitor);
-                                  setDataVisitor(cloned);
-                                } else {
-                                  const fresh = deepClone(
-                                    seedDataVisitorFromSections(sectionsData),
-                                  );
-                                  setDataVisitor(fresh);
-                                }
-                                setActiveStep(1);
-                              }}
-                            >
-                              Visitor Form
-                            </Button>
-                          </TableCell>
-                          <TableCell align="center">
-                            <IconButton
-                              color="error"
-                              onClick={() => handleDeleteGroup(g.id || '')}
-                              size="small"
-                            >
-                              <IconX />
-                            </IconButton>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-
-                      {groupVisitors.length === 0 && (
-                        <TableRow>
-                          <TableCell colSpan={4} align="center">
-                            No group added yet.
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-                {groupVisitors.length === 0 && (
-                  <Button
-                    variant="contained"
-                    size="small"
-                    onClick={handleAddGroup}
-                    sx={{ mb: 1, mt: 1 }}
-                  >
-                    + Add Group
-                  </Button>
-                )}
               </Box>
-            )}
+              {isGroup && (
+                <Box>
+                  <CustomFormLabel sx={{ mb: 1, borderLeft: '4px solid #673ab7', pl: 1 }}>
+                    Group List
+                  </CustomFormLabel>
+
+                  <TableContainer component={Paper}>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Group Name</TableCell>
+                          <TableCell>Code</TableCell>
+                          <TableCell>Visitor Form</TableCell>
+                          <TableCell align="center">Action</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {groupVisitors.map((g, index) => (
+                          <TableRow key={g.id}>
+                            <TableCell>
+                              <TextField
+                                size="small"
+                                fullWidth
+                                name="group_name"
+                                value={g.group_name}
+                                placeholder="Enter group name"
+                                sx={{ minWidth: '100px' }}
+                                onChange={(e) =>
+                                  setGroupVisitors((prev) =>
+                                    prev.map((item) =>
+                                      item.id === g.id
+                                        ? { ...item, group_name: e.target.value }
+                                        : item,
+                                    ),
+                                  )
+                                }
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <TextField
+                                size="small"
+                                fullWidth
+                                name="group_code"
+                                value={g.group_code}
+                                InputProps={{ readOnly: true }}
+                                sx={{ minWidth: '100px' }}
+                                disabled
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="outlined"
+                                color="primary"
+                                size="small"
+                                endIcon={<IconArrowRight size={20} />}
+                                onClick={() => {
+                                  setActiveGroupIdx(index);
+                                  const deepClone = (obj: any) => {
+                                    try {
+                                      return structuredClone(obj);
+                                    } catch {
+                                      return JSON.parse(JSON.stringify(obj));
+                                    }
+                                  };
+
+                                  if (g.data_visitor && g.data_visitor.length > 0) {
+                                    const cloned = deepClone(g.data_visitor);
+                                    setDataVisitor(cloned);
+                                  } else {
+                                    const fresh = deepClone(
+                                      seedDataVisitorFromSections(sectionsData),
+                                    );
+                                    setDataVisitor(fresh);
+                                  }
+                                  setActiveStep(1);
+                                }}
+                              >
+                                Visitor Form
+                              </Button>
+                            </TableCell>
+                            <TableCell align="center">
+                              <IconButton
+                                color="error"
+                                onClick={() => handleDeleteGroup(g.id || '')}
+                                size="small"
+                              >
+                                <IconX />
+                              </IconButton>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+
+                        {groupVisitors.length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={4} align="center">
+                              No group added yet.
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                  {groupVisitors.length === 0 && (
+                    <Button
+                      variant="contained"
+                      size="small"
+                      onClick={handleAddGroup}
+                      sx={{ mb: 1, mt: 1 }}
+                    >
+                      + Add Group
+                    </Button>
+                  )}
+                </Box>
+              )}
+            </Grid>
           </Grid>
-        </Grid>
-      </Box>
-    );
-  }
+        </Box>
+      );
+    }
     const currentSection = sectionsData[step - 1];
     if (!currentSection) return null;
 
@@ -2628,7 +2629,9 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           const isVisible = visibilityMap.hasOwnProperty(remark) ? visibilityMap[remark] : true;
           if (!isVisible) return;
 
-          const key = `${activeStep - 1}:${gIdx}:${item.custom_field_id}`;
+          // const key = `${activeStep - 1}:${gIdx}:${item.custom_field_id}`;
+          const fieldId = item.custom_field_id || item.id;
+          const key = `${activeStep - 1}:${gIdx}:${fieldId}`;
 
           validateField(item, key, errors);
         });
@@ -2647,8 +2650,8 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
 
         if (!isVisible) return;
 
-        // const key = `${activeStep - 1}:${index}`;
-        const key = `${activeStep - 1}:${item.id}`;
+        const fieldId = item.custom_field_id || item.id;
+        const key = `${activeStep - 1}:${fieldId}`;
 
         validateField(item, key, errors);
       });
