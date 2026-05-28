@@ -2046,9 +2046,8 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
       if (!file) return;
 
       const path = await uploadFileToCDN(file);
-      if (path) onChange(idx, 'answer_file', path); // ⬅️ update baris yang benar
+      if (path) onChange(idx, 'answer_file', path);
 
-      // reset supaya memilih file yang sama tetap memicu onChange
       e.target.value = '';
     };
 
@@ -2071,7 +2070,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     return isImg ? makeCdnUrl(answerFile) : null;
   };
 
-  // —— optional: helper untuk tampilkan nama file dari answer_file (fallback)
   const fileNameFromAnswer = (answerFile?: string) => {
     if (!answerFile) return '';
     try {
@@ -2222,7 +2220,10 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
   const toCsv = (ids: string[]) => ids.join(',');
 
   const collectAllChildIds = (node: any): string[] => {
-    if (!node.children) return [];
+    if (!node.children || node.children.length === 0) {
+      return [];
+    }
+
     return node.children.flatMap((child: any) => [child.id, ...collectAllChildIds(child)]);
   };
 
@@ -2235,6 +2236,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     const originalSite = sites.find(
       (s: any) => String(s.id).toUpperCase() === String(node.id).toUpperCase(),
     );
+
     const canVisited = originalSite?.can_visited === undefined ? true : !!originalSite.can_visited;
 
     const isDisabled = !canVisited;
@@ -2277,25 +2279,70 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                   let updated = [...prev];
 
                   if (isChecked) {
+                    // tambah current
                     if (!updated.includes(node.id)) {
                       updated.push(node.id);
                     }
 
-                    // Jika child dipilih, parent ikut dipilih
+                    // child pilih -> parent ikut
                     if (!isParentNode && node.parentId && !updated.includes(node.parentId)) {
                       updated.push(node.parentId);
                     }
                   } else {
+                    // remove current
                     updated = updated.filter((id) => id !== node.id);
 
-                    // Jika parent di-uncheck, hapus semua child
+                    // parent dihapus -> semua child ikut hilang
                     if (isParentNode) {
                       const childIds = collectAllChildIds(node);
-                      updated = updated.filter((id) => !childIds.includes(id));
+
+                      updated = updated.filter((id) => id !== node.id && !childIds.includes(id));
+                    }
+
+                    // child dihapus -> cek sibling
+                    if (!isParentNode && node.parentId) {
+                      const parentTree = buildSiteTreeWithParent(sites, node.parentId);
+
+                      const collectSiblingIds = (nodes: any[]): string[] =>
+                        nodes.flatMap((n) => [
+                          ...(n.children ? n.children.map((c: any) => c.id) : []),
+                        ]);
+
+                      const siblingIds = collectSiblingIds(parentTree);
+
+                      const stillHasCheckedSibling = siblingIds.some((id: string) =>
+                        updated.includes(id),
+                      );
+
+                      // kalau tidak ada child aktif -> remove parent
+                      if (!stillHasCheckedSibling) {
+                        updated = updated.filter((id) => id !== node.parentId);
+                      }
                     }
                   }
 
+                  // VALIDASI BERDASARKAN PARENT AKTIF
+                  const activeParentIds = isSelfOnly
+                    ? selfOnlySelectedSiteParentIdsMap[selfOnlyVisitorIdx] || []
+                    : selectedSiteParentIds;
+
+                  updated = updated.filter((id) => {
+                    return activeParentIds.some((parentId) => {
+                      if (id === parentId) return true;
+
+                      const tree = buildSiteTreeWithParent(sites, parentId);
+
+                      const collect = (nodes: any[]): string[] =>
+                        nodes.flatMap((n) => [n.id, ...(n.children ? collect(n.children) : [])]);
+
+                      return collect(tree).includes(id);
+                    });
+                  });
+
+                  updated = [...new Set(updated)];
+
                   onChange(index, 'answer_text', toCsv(updated));
+
                   return updated;
                 });
               }}
@@ -2306,7 +2353,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                 {node.name}
               </Typography>
 
-              {/* Hanya tampil jika site ini sendiri tidak dapat dikunjungi */}
               {!canVisited && (
                 <Typography variant="caption" color="error" sx={{ fontStyle: 'italic' }}>
                   This site cannot be visited.
@@ -2769,11 +2815,39 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                             // Pastikan hanya site yang dapat dikunjungi yang diproses
                             const validValues = newValues.filter((v) => v.disabled !== true);
 
-                            const parentIds = validValues.map((v) => v.value);
+                            const parentIds = [...new Set(validValues.map((v) => v.value))];
 
                             const rawTrees = parentIds.flatMap((pid) =>
                               buildSiteTreeWithParent(sites, pid),
                             );
+
+                            // ambil semua id valid dari parent terbaru
+                            const collectIds = (nodes: any[]): string[] => {
+                              return nodes.flatMap((n) => [
+                                n.id,
+                                ...(n.children ? collectIds(n.children) : []),
+                              ]);
+                            };
+
+                            const validIds = collectIds(rawTrees);
+
+                            // ambil value lama
+                            const currentAnswers = Array.isArray(item.answer_text)
+                              ? item.answer_text
+                              : item.answer_text
+                                ? String(item.answer_text).split(',')
+                                : [];
+
+                            // hanya simpan child yang masih valid
+                            const filteredChildren = currentAnswers.filter((id: string) =>
+                              validIds.includes(id),
+                            );
+
+                            // final value
+                            const finalAnswer = [...new Set([...parentIds, ...filteredChildren])];
+
+                            // update
+                            onChange(originalIndex, 'answer_text', finalAnswer);
 
                             const uniqueTrees = dedupeTree(rawTrees);
 
@@ -3976,9 +4050,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     });
   };
 
-  // helpers
   const sanitize = (v?: string | null) => (v ?? '').trim().toLowerCase();
-
   const DEFAULT_VFT = FORM_KEY === 'pra_form' ? 0 : 1;
 
   const mapFieldOut = (tpl: any, sortIdx: number, src?: any) => {
@@ -4217,7 +4289,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
             },
           );
           const cleanDataVisitor = (built.data_visitor ?? []).map((dv: any, idx: number) => {
-            const original = dataVisitor[idx]; // ambil state asli
+            const original = dataVisitor[idx];
 
             const question_page = (dv.question_page ?? []).map((qp: any, sIdx: number) => {
               const isPurposeVisit =
@@ -4266,7 +4338,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         payload = { list_group };
 
         const parsed = CreateGroupVisitorRequestSchema.parse(payload);
-        console.log('🚀 Final Payload (Group):', JSON.stringify(parsed, null, 2));
+        // console.log('🚀 Final Payload (Group):', JSON.stringify(parsed, null, 2));
 
         const submitFn = TYPE_REGISTERED === 0 ? createPraRegisterGroup : createVisitorsGroup;
         await submitFn(token, parsed as any);
@@ -4317,9 +4389,9 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
         onSuccess?.();
       }, 700);
     } catch (err: any) {
-      setTimeout(() => {
-        setLoading(false);
-      }, 700);
+      // setTimeout(() => {
+      setLoading(false);
+      // }, 700);
 
       showSwal(
         'error',
@@ -4528,8 +4600,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
 
     const viSrc = pickVisitorInfoSingle(list);
     const pvSrc = pickPurposeVisit(list);
-
-    // Kumpulkan form dokumen dan clone
     const docForms = cloneForms(collectDocForms(list));
     const otherSingles = list
       .filter(
@@ -4689,20 +4759,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
     setSelectedSiteIds([]);
     setSiteTree([]);
     if (!formData.visitor_type) return;
-
-    // const raw = localStorage.getItem('unsavedVisitorData');
-    // const saved = raw ? JSON.parse(raw) : null;
-    // const sameType = saved?.visitor_type === formData.visitor_type;
-    // const sameMode = saved?.is_group === isGroup;
-
-    // if (sameType && sameMode && saved.sections?.length) {
-    //   setSectionsData(saved.sections);
-    //   setDataVisitor(saved.data_visitor ?? []);
-    //   setGroupedPages(saved.grouped_pages ?? {});
-    //   setDraggableSteps(saved.sections.map((s: any) => s.name));
-    //   setRawSections(saved.sections);
-    //   return;
-    // }
 
     const fetchVisitorTypeDetails = async () => {
       // const res = visitorType.find((vt: any) => vt.id === formData.visitor_type);

@@ -146,7 +146,11 @@ const Approval = () => {
       try {
         const start = page * rowsPerPage;
 
-        const res = await getApprovalTicket(token, start, rowsPerPage, sortDir, searchKeyword);
+        const res = await getApprovalTicket(token, {
+          sort_dir: sortDir,
+          keyword: searchKeyword,
+        });
+        console.log('res', res.collection);
 
         const rows = res.collection.map((item: any) => ({
           approval_ticket_id: item.approval_ticket_id,
@@ -173,7 +177,7 @@ const Approval = () => {
     };
 
     fetchData();
-  }, [token, refreshTrigger, page, rowsPerPage, searchKeyword, sortDir]);
+  }, [token, refreshTrigger, searchKeyword, sortDir]);
 
   const handleActionApproval = async (id: string, action: 'Approve' | 'Reject') => {
     // if (!id || !token) return;
@@ -279,6 +283,8 @@ const Approval = () => {
     visitor_period_start: formatDateTime(item.visitor_period_start),
     visitor_period_end: formatDateTime(item.visitor_period_end),
   }));
+
+  const [triggerCheckAll, setTriggerCheckAll] = useState(false);
 
   return (
     <>
@@ -434,8 +440,14 @@ const Approval = () => {
 
                                               setGroupHeader(res.collection[0]);
                                               setGroupVisitors(res.collection);
+                                              setSelectedRows(res.collection);
+                                              setTriggerCheckAll(false);
+
+                                              setTimeout(() => {
+                                                setTriggerCheckAll(true);
+                                              }, 0);
                                             } catch (err) {
-                                              setGroupVisitors([]);
+                                              // setGroupVisitors([]);
                                             } finally {
                                               setGroupDetailLoading(false);
                                             }
@@ -482,7 +494,7 @@ const Approval = () => {
                                               setGroupHeader(res.collection[0]);
                                               setGroupVisitors(res.collection);
                                             } catch (err) {
-                                              setGroupVisitors([]);
+                                              // setGroupVisitors([]);
                                             } finally {
                                               setGroupDetailLoading(false);
                                             }
@@ -578,6 +590,67 @@ const Approval = () => {
                           </TableRow>
                         </TableHead>
                         <TableBody>
+                          <TableRow
+                            sx={{
+                              backgroundColor: '#f7faff',
+                            }}
+                          >
+                            <TableCell width={50}>
+                              <IconButton size="small" onClick={() => setOpenGroup(!openGroup)}>
+                                {openGroup ? (
+                                  <KeyboardArrowUpOutlined />
+                                ) : (
+                                  <KeyboardArrowDownOutlined />
+                                )}
+                              </IconButton>
+                            </TableCell>
+
+                            <TableCell component="th" scope="row">
+                              <Box>
+                                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                                  Agenda
+                                </Typography>
+
+                                <Typography variant="body1">{groupHeader?.agenda}</Typography>
+                              </Box>
+                            </TableCell>
+
+                            <TableCell component="th" scope="row">
+                              <Box>
+                                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                                  Visitor Type
+                                </Typography>
+
+                                <Typography variant="body1">
+                                  {groupHeader?.visitor_type_name}
+                                </Typography>
+                              </Box>
+                            </TableCell>
+
+                            <TableCell component="th" scope="row">
+                              <Box>
+                                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                                  Visit Start
+                                </Typography>
+
+                                <Typography variant="body1">
+                                  {formatDateTime(groupHeader?.visitor_period_start)}
+                                </Typography>
+                              </Box>
+                            </TableCell>
+
+                            <TableCell component="th" scope="row">
+                              <Box>
+                                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                                  Visit End
+                                </Typography>
+
+                                <Typography variant="body1">
+                                  {formatDateTime(groupHeader?.visitor_period_end)}
+                                </Typography>
+                              </Box>
+                            </TableCell>
+                          </TableRow>
                           {groupDetailLoading ? (
                             <TableRow>
                               <TableCell colSpan={6} align="center">
@@ -646,10 +719,12 @@ const Approval = () => {
 
         <DialogContent dividers sx={{ padding: '0px !important' }}>
           <DynamicTable
+            loading={groupDetailLoading}
             data={visitorTableData ?? []}
             selectedRows={selectedRows}
             onCheckedChange={setSelectedRows}
             setSelectedRows={setSelectedRows}
+            triggerCheckAll={triggerCheckAll}
             isHaveChecked={true}
             titleHeader="Select visitors for approval or rejection"
             isHaveHeaderTitle={true}

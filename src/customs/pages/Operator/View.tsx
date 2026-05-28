@@ -509,7 +509,6 @@ const View = () => {
         } else {
           console.error('VisitorType error:', vtRes.reason);
         }
-
       } catch (err) {
         console.error(err);
       }
@@ -3340,31 +3339,54 @@ const View = () => {
 
   const scanLockRef = useRef(false);
   const lastScanRef = useRef('');
+  const bulkPrintingRef = useRef(false);
 
   useEffect(() => {
-    // Pastikan socket hanya dibuat sekali
-    const socket = new WebSocket('ws://localhost:3001/ws');
+    const socket = new WebSocket('ws://localhost:8081/ws');
+
+    socketRef.current = socket;
 
     socket.onopen = () => {
-      console.log('✅ WebSocket connected');
+      console.log('🟢 WS connected');
     };
 
     socket.onerror = (err) => {
-      console.error('❌ WebSocket error:', err);
+      console.error('❌ WS error:', err);
+    };
+
+    socket.onclose = () => {
+      console.warn('🔌 WS disconnected');
     };
 
     socket.onmessage = async (event) => {
-      console.log('📥 WebSocket message received:', event.data);
+      const raw = event.data;
+
+      console.log('📥 WS message:', raw);
 
       try {
-        const msg = JSON.parse(event.data);
+        // =========================
+        // IMAGE STREAM
+        // =========================
+        if (typeof raw === 'string' && raw.includes('|data:image')) {
+          wsImageQueueRef.current.push(raw);
 
-        console.log('💬 Console client:', msg);
+          forceTick((v) => v + 1);
 
+          return;
+        }
+
+        // =========================
+        // JSON EVENT
+        // =========================
+        const msg = JSON.parse(raw);
+
+        console.log('💬 WS JSON:', msg);
+
+        // =========================
+        // BARCODE
+        // =========================
         if (msg?.event === 'BARCODE_SCAN' && msg?.data) {
           const value = String(msg.data).trim();
-
-          //  console.log('📩 QR Value from socket:', value);
 
           if (!value) return;
           if (scanLockRef.current) return;
@@ -3381,19 +3403,54 @@ const View = () => {
               lastScanRef.current = '';
             }, 2000);
           }
+
+          return;
+        }
+
+        // =========================
+        // OCR RESULT
+        // =========================
+        if (msg?.event === 'OCR_RESULT') {
+          wsOcrQueueRef.current.push(msg.data);
+
+          forceTick((v) => v + 1);
+
+          return;
+        }
+
+        // =========================
+        // PRINT RESULT
+        // =========================
+        if (msg?.event === 'PRINT_RESULT') {
+          if (bulkPrintingRef.current) {
+            return;
+          }
+
+          if (msg.success) {
+            showSwal('success', 'Printed successfully');
+          } else {
+            showSwal('error', msg.message || 'Print failed');
+          }
+
+          return;
         }
       } catch (err) {
-        console.error('⚠️ Failed to parse WebSocket message:', event.data, err);
+        console.error('⚠️ WS parse error:', err);
       }
-    };
-    socket.onclose = () => {
-      console.warn('🔌 WebSocket disconnected');
     };
 
     return () => {
       socket.close();
     };
   }, []);
+
+  const sendWs = (payload: any) => {
+    if (socketRef.current?.readyState === WebSocket.OPEN) {
+      socketRef.current.send(JSON.stringify(payload));
+    } else {
+      console.warn('WS not connected');
+    }
+  };
 
   return (
     <PageContainer title={'View'} description={'View'}>
@@ -3511,12 +3568,24 @@ const View = () => {
           onClose={() => setOpenBulkPrint(false)}
           visitors={selectedBulkVisitors}
           printData={printData}
+          onPrint={(base64: any) => {
+            sendWs({
+              cmd: 'print',
+              data: base64,
+            });
+          }}
         />
         <PrintDialog
           open={openPreviewPrint}
           onClose={() => setOpenPreviewPrint(false)}
           invitationData={invitationCode[0]}
           printData={printData}
+          onPrint={(base64: any) => {
+            sendWs({
+              cmd: 'print',
+              data: base64,
+            });
+          }}
         />
         {/* Detail Purpose */}
         <DetailVisitingPurpose

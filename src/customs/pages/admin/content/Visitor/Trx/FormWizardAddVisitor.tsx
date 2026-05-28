@@ -2455,7 +2455,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   };
 
   const collectAllChildIds = (node: any): string[] => {
-    if (!node.children) return [];
+    if (!node.children || node.children.length === 0) {
+      return [];
+    }
+
     return node.children.flatMap((child: any) => [child.id, ...collectAllChildIds(child)]);
   };
 
@@ -2468,6 +2471,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     const originalSite = sites.find(
       (s: any) => String(s.id).toUpperCase() === String(node.id).toUpperCase(),
     );
+
     const canVisited = originalSite?.can_visited === undefined ? true : !!originalSite.can_visited;
 
     const isDisabled = !canVisited;
@@ -2510,25 +2514,70 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   let updated = [...prev];
 
                   if (isChecked) {
+                    // tambah current
                     if (!updated.includes(node.id)) {
                       updated.push(node.id);
                     }
 
-                    // Jika child dipilih, parent ikut dipilih
+                    // child pilih -> parent ikut
                     if (!isParentNode && node.parentId && !updated.includes(node.parentId)) {
                       updated.push(node.parentId);
                     }
                   } else {
+                    // remove current
                     updated = updated.filter((id) => id !== node.id);
 
-                    // Jika parent di-uncheck, hapus semua child
+                    // parent dihapus -> semua child ikut hilang
                     if (isParentNode) {
                       const childIds = collectAllChildIds(node);
-                      updated = updated.filter((id) => !childIds.includes(id));
+
+                      updated = updated.filter((id) => id !== node.id && !childIds.includes(id));
+                    }
+
+                    // child dihapus -> cek sibling
+                    if (!isParentNode && node.parentId) {
+                      const parentTree = buildSiteTreeWithParent(sites, node.parentId);
+
+                      const collectSiblingIds = (nodes: any[]): string[] =>
+                        nodes.flatMap((n) => [
+                          ...(n.children ? n.children.map((c: any) => c.id) : []),
+                        ]);
+
+                      const siblingIds = collectSiblingIds(parentTree);
+
+                      const stillHasCheckedSibling = siblingIds.some((id: string) =>
+                        updated.includes(id),
+                      );
+
+                      // kalau tidak ada child aktif -> remove parent
+                      if (!stillHasCheckedSibling) {
+                        updated = updated.filter((id) => id !== node.parentId);
+                      }
                     }
                   }
 
+                  // VALIDASI BERDASARKAN PARENT AKTIF
+                  const activeParentIds = isSelfOnly
+                    ? selfOnlySelectedSiteParentIdsMap[selfOnlyVisitorIdx] || []
+                    : selectedSiteParentIds;
+
+                  updated = updated.filter((id) => {
+                    return activeParentIds.some((parentId) => {
+                      if (id === parentId) return true;
+
+                      const tree = buildSiteTreeWithParent(sites, parentId);
+
+                      const collect = (nodes: any[]): string[] =>
+                        nodes.flatMap((n) => [n.id, ...(n.children ? collect(n.children) : [])]);
+
+                      return collect(tree).includes(id);
+                    });
+                  });
+
+                  updated = [...new Set(updated)];
+
                   onChange(index, 'answer_text', toCsv(updated));
+
                   return updated;
                 });
               }}
@@ -2539,7 +2588,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 {node.name}
               </Typography>
 
-              {/* Hanya tampil jika site ini sendiri tidak dapat dikunjungi */}
               {!canVisited && (
                 <Typography variant="caption" color="error" sx={{ fontStyle: 'italic' }}>
                   This site cannot be visited.
@@ -3012,11 +3060,39 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             // Pastikan hanya site yang dapat dikunjungi yang diproses
                             const validValues = newValues.filter((v) => v.disabled !== true);
 
-                            const parentIds = validValues.map((v) => v.value);
+                            const parentIds = [...new Set(validValues.map((v) => v.value))];
 
                             const rawTrees = parentIds.flatMap((pid) =>
                               buildSiteTreeWithParent(sites, pid),
                             );
+
+                            // ambil semua id valid dari parent terbaru
+                            const collectIds = (nodes: any[]): string[] => {
+                              return nodes.flatMap((n) => [
+                                n.id,
+                                ...(n.children ? collectIds(n.children) : []),
+                              ]);
+                            };
+
+                            const validIds = collectIds(rawTrees);
+
+                            // ambil value lama
+                            const currentAnswers = Array.isArray(item.answer_text)
+                              ? item.answer_text
+                              : item.answer_text
+                                ? String(item.answer_text).split(',')
+                                : [];
+
+                            // hanya simpan child yang masih valid
+                            const filteredChildren = currentAnswers.filter((id: string) =>
+                              validIds.includes(id),
+                            );
+
+                            // final value
+                            const finalAnswer = [...new Set([...parentIds, ...filteredChildren])];
+
+                            // update
+                            onChange(originalIndex, 'answer_text', finalAnswer);
 
                             const uniqueTrees = dedupeTree(rawTrees);
 
@@ -4454,21 +4530,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
               registered_site: formData.registered_site ?? '',
             },
           );
-
-          // const cleanDataVisitor = (built.data_visitor ?? []).map((dv: any) => ({
-          //   ...dv,
-          //   question_page: (dv.question_page ?? []).map((qp: any, sIdx: number) => ({
-          //     id: qp.id || qp.Id || rawSections?.[sIdx]?.Id || generateUUIDv4(),
-          //     sort: qp.sort ?? sIdx,
-          //     name: qp.name ?? `Section ${sIdx + 1}`,
-          //     status: qp.status ?? 0,
-          //     is_document: qp.is_document ?? false,
-          //     can_multiple_used: qp.can_multiple_used ?? false,
-          //     foreign_id: qp.foreign_id ?? '',
-          //     self_only: qp.self_only ?? false,
-          //     form: (qp.form ?? []).map(({ id, Id, ...rest }: any) => rest),
-          //   })),
-          // }));
           const cleanDataVisitor = (built.data_visitor ?? []).map((dv: any, idx: number) => {
             const original = dataVisitor[idx];
 
@@ -4517,10 +4578,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
         });
 
         payload = { list_group };
-        // console.log('Payload', JSON.stringify(payload, null, 2));
+        console.log('Payload', JSON.stringify(payload, null, 2));
 
         const parsed = CreateGroupVisitorRequestSchema.parse(payload);
-        // console.log('Final Payload (Group):', JSON.stringify(parsed, null, 2));
+        console.log('Final Payload (Group):', JSON.stringify(parsed, null, 2));
 
         const submitFn = TYPE_REGISTERED === 0 ? createPraRegisterGroup : createVisitorsGroup;
         await submitFn(token, parsed as any);
@@ -4550,10 +4611,10 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
           data_visitor: [{ question_page }],
         };
 
-        // console.log('Payload :', JSON.stringify(payload, null, 2));
+        console.log('Payload :', JSON.stringify(payload, null, 2));
 
         const parsed = CreateVisitorRequestSchema.parse(payload);
-        // console.log('Final Payload (Single):', JSON.stringify(parsed, null, 2));
+        console.log('Final Payload (Single):', JSON.stringify(parsed, null, 2));
 
         const submitFn = TYPE_REGISTERED === 0 ? createPraRegister : createVisitor;
         await submitFn(token, parsed);

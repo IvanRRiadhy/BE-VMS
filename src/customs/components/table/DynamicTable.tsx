@@ -87,6 +87,7 @@ type DynamicTableProps<
   onBack?: any;
   isHaveExportCsv?: boolean;
   isHaveExportExcel?: boolean;
+  triggerCheckAll?: boolean;
   isHavePrint?: boolean;
   isHaveConnection?: boolean;
   isHaveActive?: boolean;
@@ -208,143 +209,144 @@ type DynamicTableProps<
 
 function DynamicTableBase<
   T extends { id: string | number; status?: any; early_access?: any; visitor_give_access?: any },
->({
-  minWidth = 'auto',
-  stickyHeader = false,
-  data,
-  selectedRows,
-  setSelectedRows,
-  searchKeyword,
-  isHaveBack,
-  onBack,
-  isHaveChecked = false,
-  isHaveAction = false,
-  isHaveActionOnlyEdit = false,
-  isSelectedType = false,
-  borderRadius,
-  isHaveVisitor = false,
-  isHaveDuplicate = false,
-  isActionVisitor = false,
-  isHaveSearch = false,
-  isHaveConnection = false,
-  isHaveFilter = false,
-  isHaveExportCsv = false,
-  isHaveActive,
-  onActiveToggle,
-  isHaveExportExcel = false,
-  isHavePrint = false,
-  currentPage = 0,
-  isHaveExportPdf = false,
-  isHaveExportXlf = false,
-  isHaveImportExcel = false,
-  isHaveFilterDuration = false,
-  isActionEmployee = false,
-  isButtonSiteAccess = false,
-  height,
-  isHaveGender = false,
-  isButtonRegisteredSite = false,
-  isButtonGiveAccess = false,
-  isCopy = false,
-  isAccessControlType,
-  isHaveVip = false,
-  isHaveAddData = false,
-  onCopy,
-  isHaveHeader = false,
-  isHaveBooleanSwitch = false,
-  isHavePermission = false,
-  isHaveActionRevoke,
-  breadcrumbItems,
-  isOperatorSetting = false,
-  isBlacklistPage = false,
-  isActionListVisitor = false,
-  isHaveVerified = false,
-  isHaveView = false,
-  isHaveAccess = false,
-  isCopyLink = false,
-  isDetailLink = false,
-  selectedHeaderItem,
-  isCurrentUsed = false,
-  isButtonDisabled = false,
-  isButtonEnabled = false,
-  isHaveEmployee = false,
-  isHaveViewAndAction = false,
-  isHaveCard = false,
-  isHaveImage,
-  onSearch,
-  isHaveSettingOperator = false,
-  isHaveObjectData,
-  isHaveHeaderTitle = false,
-  titleHeader,
-  headerContent,
-  hasFetched = false,
-  onAccept,
-  isSiteSpaceName,
-  isNoActionTableHead = false,
-  onDenied,
-  onActionAccess,
-  onBlacklist,
-  isHaveApproval = false,
-  defaultSelectedHeaderItem,
-  isHavePassword = false,
-  isHavePagination,
-  isHavePdf,
-  isSiteSpaceType = false,
-  isBlacklistAction,
-  isHaveIntegration,
-  onNameClick,
-  isDataVerified = false,
-  htmlFields = [],
-  htmlClampLines,
-  isHaveArrival = false,
-  htmlMaxWidth,
-  rowsPerPageOptions,
-  defaultRowsPerPage,
-  totalCount,
-  isHavePeriod = false,
-  loading = false,
-  isVip,
-  isHaveFilterMore = false,
-  isTreeSiteType,
-  filterMoreContent,
-  sortColumns,
-  onCheckConnection,
-  onPrint,
-  onExportCsv,
-  onExportExcel,
-  onExportPdf,
-  onAccessAction,
-  onNavigatePage,
-  onFileClick,
-  onChooseCard,
-  onEmployeeClick,
-  onImportExcel,
-  onHeaderItemClick,
-  onCheckedChange,
-  onEdit,
-  onRegisteredSite,
-  onCopyLink,
-  onDetailLink,
-  onIsButtonEnabled,
-  onIsButtonDisabled,
-  onGiveAccess,
-  onSettingOperator,
-  onSiteAccess,
-  onView,
-  onBatchEdit,
-  onPermission,
-  setCurrentId,
-  onDelete,
-  onDuplicate,
-  onBatchDelete,
-  onSearchKeywordChange,
-  onFilterByColumn,
-  onFilterCalenderChange,
-  onAddData,
-  onPaginationChange,
-  onBooleanSwitchChange,
-}: DynamicTableProps<T>) {
+>(props: DynamicTableProps<T>) {
+  const {
+    minWidth = 'auto',
+    stickyHeader = false,
+    data,
+    selectedRows,
+    setSelectedRows,
+    searchKeyword,
+    isHaveBack,
+    onBack,
+    isHaveChecked = false,
+    isHaveAction = false,
+    isHaveActionOnlyEdit = false,
+    isSelectedType = false,
+    triggerCheckAll = false,
+    borderRadius,
+    isHaveVisitor = false,
+    isHaveDuplicate = false,
+    isActionVisitor = false,
+    isHaveSearch = false,
+    isHaveConnection = false,
+    isHaveFilter = false,
+    isHaveExportCsv = false,
+    isHaveActive,
+    onActiveToggle,
+    isHaveExportExcel = false,
+    isHavePrint = false,
+    currentPage = 0,
+    isHaveExportPdf = false,
+    isHaveExportXlf = false,
+    isHaveImportExcel = false,
+    isHaveFilterDuration = false,
+    isActionEmployee = false,
+    isButtonSiteAccess = false,
+    height,
+    isHaveGender = false,
+    isButtonRegisteredSite = false,
+    isButtonGiveAccess = false,
+    isCopy = false,
+    isAccessControlType,
+    isHaveVip = false,
+    isHaveAddData = false,
+    onCopy,
+    isHaveHeader = false,
+    isHaveBooleanSwitch = false,
+    isHavePermission = false,
+    isHaveActionRevoke,
+    breadcrumbItems,
+    isOperatorSetting = false,
+    isBlacklistPage = false,
+    isActionListVisitor = false,
+    isHaveVerified = false,
+    isHaveView = false,
+    isHaveAccess = false,
+    isCopyLink = false,
+    isDetailLink = false,
+    selectedHeaderItem,
+    isCurrentUsed = false,
+    isButtonDisabled = false,
+    isButtonEnabled = false,
+    isHaveEmployee = false,
+    isHaveViewAndAction = false,
+    isHaveCard = false,
+    isHaveImage,
+    onSearch,
+    isHaveSettingOperator = false,
+    isHaveObjectData,
+    isHaveHeaderTitle = false,
+    titleHeader,
+    headerContent,
+    hasFetched = false,
+    onAccept,
+    isSiteSpaceName,
+    isNoActionTableHead = false,
+    onDenied,
+    onActionAccess,
+    onBlacklist,
+    isHaveApproval = false,
+    defaultSelectedHeaderItem,
+    isHavePassword = false,
+    isHavePagination,
+    isHavePdf,
+    isSiteSpaceType = false,
+    isBlacklistAction,
+    isHaveIntegration,
+    onNameClick,
+    isDataVerified = false,
+    htmlFields = [],
+    htmlClampLines,
+    isHaveArrival = false,
+    htmlMaxWidth,
+    rowsPerPageOptions,
+    defaultRowsPerPage,
+    totalCount,
+    isHavePeriod = false,
+    loading = false,
+    isVip,
+    isHaveFilterMore = false,
+    isTreeSiteType,
+    filterMoreContent,
+    sortColumns,
+    onCheckConnection,
+    onPrint,
+    onExportCsv,
+    onExportExcel,
+    onExportPdf,
+    onAccessAction,
+    onNavigatePage,
+    onFileClick,
+    onChooseCard,
+    onEmployeeClick,
+    onImportExcel,
+    onHeaderItemClick,
+    onCheckedChange,
+    onEdit,
+    onRegisteredSite,
+    onCopyLink,
+    onDetailLink,
+    onIsButtonEnabled,
+    onIsButtonDisabled,
+    onGiveAccess,
+    onSettingOperator,
+    onSiteAccess,
+    onView,
+    onBatchEdit,
+    onPermission,
+    setCurrentId,
+    onDelete,
+    onDuplicate,
+    onBatchDelete,
+    onSearchKeywordChange,
+    onFilterByColumn,
+    onFilterCalenderChange,
+    onAddData,
+    onPaginationChange,
+    onBooleanSwitchChange,
+  } = props;
   const [checkedIds, setCheckedIds] = useState<Array<T['id']>>([]);
-  // const [searchKeyword, setSearchKeyword] = useState('');
   const [selectedColumn, setSelectedColumn] = useState<string>('');
   const [selectedHeader, setSelectedHeader] = useState(
     selectedHeaderItem || defaultSelectedHeaderItem,
@@ -356,34 +358,6 @@ function DynamicTableBase<
   // Paginaton state.
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(defaultRowsPerPage || 10);
-  // const location = useLocation();
-  // const [searchParams, setSearchParams] = useSearchParams();
-
-  // const [page, setPage] = useState(Number(searchParams.get('page') || '0'));
-
-  // const [rowsPerPage, setRowsPerPage] = useState(
-  //   Number(searchParams.get('length') || defaultRowsPerPage || 10),
-  // );
-
-  // useEffect(() => {
-  //   setPage(Number(searchParams.get('page') || '0'));
-
-  //   setRowsPerPage(Number(searchParams.get('length') || defaultRowsPerPage || 10));
-  // }, [location.search]);
-
-  // const updateQuery = (payload: Record<string, any>) => {
-  //   const params = new URLSearchParams(searchParams);
-
-  //   Object.entries(payload).forEach(([key, value]) => {
-  //     if (value === '' || value === null || value === undefined) {
-  //       params.delete(key);
-  //     } else {
-  //       params.set(key, String(value));
-  //     }
-  //   });
-
-  //   setSearchParams(params);
-  // };
 
   const hiddenColumns = [
     'id',
@@ -435,6 +409,13 @@ function DynamicTableBase<
     setCheckedIds(newChecked);
     onCheckedChange?.(data.filter((row) => newChecked.includes(row.id)));
   };
+  useEffect(() => {
+    if (triggerCheckAll) {
+      handleCheckAll({
+        target: { checked: true },
+      } as React.ChangeEvent<HTMLInputElement>);
+    }
+  }, [triggerCheckAll]);
 
   const handleCheckRow = (id: string, checked: boolean) => {
     const newChecked = checked
@@ -894,91 +875,6 @@ function DynamicTableBase<
 
               <Stack direction="row" spacing={2}>
                 {isHaveSearch && (
-                  // <Box
-                  //   display="flex"
-                  //   justifyContent="space-between"
-                  //   alignItems="center"
-                  //   gap={0.5}
-                  //   // width={ lgUp? '300px' : '100%' }
-                  //   // flexWrap={'wrap'}
-                  // >
-                  //   <CustomTextField
-                  //     fullWidth
-                  //     variant="outlined"
-                  //     size="small"
-                  //     value={searchKeyword}
-                  //     // onChange={(e) => setSearchKeyword(e.target.value)}
-                  //     onChange={(e) => onSearchKeywordChange?.(e.target.value)}
-                  //     onKeyDown={handleKeyDown}
-                  //     sx={{
-                  //       flexGrow: 1,
-                  //       minWidth: 0,
-                  //       width: { xs: '100%', sm: '300px' },
-                  //     }}
-                  //     InputProps={{
-                  //       sx: {
-                  //         height: 36,
-                  //       },
-                  //       startAdornment: (
-                  //         <InputAdornment position="start">
-                  //           <Search fontSize="small" />
-                  //         </InputAdornment>
-                  //       ),
-                  //     }}
-                  //   />
-                  //   <Box display="flex" gap={0.5}>
-                  //     <Button
-                  //       variant="contained"
-                  //       fullWidth
-                  //       onClick={handleSearch}
-                  //       sx={{
-                  //         height: 36,
-                  //         width: '100%',
-                  //         fontSize: '0.7rem',
-                  //         whiteSpace: 'nowrap',
-                  //       }}
-                  //     >
-                  //       <Typography fontSize={'0.7rem'} variant="caption" my={0.2}>
-                  //         {t('search')}
-                  //       </Typography>
-                  //     </Button>
-                  //     {isOperatorSetting && (
-                  //       <Button
-                  //         variant="contained"
-                  //         color="primary"
-                  //         onClick={onNavigatePage}
-                  //         startIcon={<IconArrowAutofitLeft width={18} />}
-                  //         sx={{
-                  //           height: 36,
-                  //           width: '100%',
-                  //           fontSize: '0.7rem',
-                  //           whiteSpace: 'nowrap',
-                  //         }}
-                  //         size="medium"
-                  //       >
-                  //         Operator
-                  //       </Button>
-                  //     )}
-                  //     {isBlacklistPage && (
-                  //       <Button
-                  //         variant="contained"
-                  //         color="primary"
-                  //         onClick={onNavigatePage}
-                  //         startIcon={<IconArrowAutofitLeft width={18} />}
-                  //         sx={{
-                  //           height: 36,
-                  //           width: '100%',
-                  //           fontSize: '0.7rem',
-                  //           whiteSpace: 'nowrap',
-                  //         }}
-                  //         size="medium"
-                  //       >
-                  //         Blacklist
-                  //       </Button>
-                  //     )}
-                  //   </Box>
-                  // </Box>
-
                   <SearchToolbar
                     value={searchKeyword}
                     t={t}

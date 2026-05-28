@@ -2472,76 +2472,12 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
   const toCsv = (ids: string[]) => ids.join(',');
 
   const collectAllChildIds = (node: any): string[] => {
-    if (!node.children) return [];
+    if (!node.children || node.children.length === 0) {
+      return [];
+    }
+
     return node.children.flatMap((child: any) => [child.id, ...collectAllChildIds(child)]);
   };
-
-  // const renderTree = (
-  //   node: any,
-  //   index: number,
-  //   onChange: (index: number, field: keyof FormVisitor, value: any) => void,
-  //   isSelfOnly = false,
-  // ) => {
-  //   // const checked = selectedSiteIds.includes(node.id);
-  //   return (
-  //     <TreeItem
-  //       key={`${node.parentId ?? 'root'}-${node.id}`}
-  //       itemId={`${node.parentId ?? 'root'}-${node.id}`}
-  //       label={
-  //         <Box display="flex" alignItems="center" gap={1}>
-  //           <Checkbox
-  //             size="small"
-  //             // checked={checked}
-  //             checked={
-  //               isSelfOnly
-  //                 ? (selfOnlySelectedSiteIdsMap[selfOnlyVisitorIdx] || []).includes(node.id)
-  //                 : selectedSiteIds.includes(node.id)
-  //             }
-  //             onMouseDown={(e) => e.stopPropagation()}
-  //             onClick={(e) => e.stopPropagation()}
-  //             onChange={(e) => {
-  //               const isChecked = e.target.checked;
-  //               const isParentNode = !!node.children?.length;
-
-  //               const setter = isSelfOnly
-  //                 ? (callback: any) =>
-  //                     setSelfOnlySelectedSiteIdsMap((prevMap) => ({
-  //                       ...prevMap,
-  //                       [selfOnlyVisitorIdx]: callback(prevMap[selfOnlyVisitorIdx] || []),
-  //                     }))
-  //                 : setSelectedSiteIds;
-
-  //               setter((prev: any) => {
-  //                 let updated = [...prev];
-
-  //                 if (isChecked) {
-  //                   if (!updated.includes(node.id)) updated.push(node.id);
-
-  //                   if (!isParentNode && node.parentId && !updated.includes(node.parentId)) {
-  //                     updated.push(node.parentId);
-  //                   }
-  //                 } else {
-  //                   updated = updated.filter((id) => id !== node.id);
-
-  //                   if (isParentNode) {
-  //                     const childIds = collectAllChildIds(node);
-  //                     updated = updated.filter((id) => !childIds.includes(id));
-  //                   }
-  //                 }
-
-  //                 onChange(index, 'answer_text', toCsv(updated));
-  //                 return updated;
-  //               });
-  //             }}
-  //           />
-  //           <Typography variant="body2">{node.name}</Typography>
-  //         </Box>
-  //       }
-  //     >
-  //       {node.children?.map((child: any) => renderTree(child, index, onChange))}
-  //     </TreeItem>
-  //   );
-  // };
 
   const renderTree = (
     node: any,
@@ -2552,6 +2488,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     const originalSite = sites.find(
       (s: any) => String(s.id).toUpperCase() === String(node.id).toUpperCase(),
     );
+
     const canVisited = originalSite?.can_visited === undefined ? true : !!originalSite.can_visited;
 
     const isDisabled = !canVisited;
@@ -2594,25 +2531,70 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                   let updated = [...prev];
 
                   if (isChecked) {
+                    // tambah current
                     if (!updated.includes(node.id)) {
                       updated.push(node.id);
                     }
 
-                    // Jika child dipilih, parent ikut dipilih
+                    // child pilih -> parent ikut
                     if (!isParentNode && node.parentId && !updated.includes(node.parentId)) {
                       updated.push(node.parentId);
                     }
                   } else {
+                    // remove current
                     updated = updated.filter((id) => id !== node.id);
 
-                    // Jika parent di-uncheck, hapus semua child
+                    // parent dihapus -> semua child ikut hilang
                     if (isParentNode) {
                       const childIds = collectAllChildIds(node);
-                      updated = updated.filter((id) => !childIds.includes(id));
+
+                      updated = updated.filter((id) => id !== node.id && !childIds.includes(id));
+                    }
+
+                    // child dihapus -> cek sibling
+                    if (!isParentNode && node.parentId) {
+                      const parentTree = buildSiteTreeWithParent(sites, node.parentId);
+
+                      const collectSiblingIds = (nodes: any[]): string[] =>
+                        nodes.flatMap((n) => [
+                          ...(n.children ? n.children.map((c: any) => c.id) : []),
+                        ]);
+
+                      const siblingIds = collectSiblingIds(parentTree);
+
+                      const stillHasCheckedSibling = siblingIds.some((id: string) =>
+                        updated.includes(id),
+                      );
+
+                      // kalau tidak ada child aktif -> remove parent
+                      if (!stillHasCheckedSibling) {
+                        updated = updated.filter((id) => id !== node.parentId);
+                      }
                     }
                   }
 
+                  // VALIDASI BERDASARKAN PARENT AKTIF
+                  const activeParentIds = isSelfOnly
+                    ? selfOnlySelectedSiteParentIdsMap[selfOnlyVisitorIdx] || []
+                    : selectedSiteParentIds;
+
+                  updated = updated.filter((id) => {
+                    return activeParentIds.some((parentId) => {
+                      if (id === parentId) return true;
+
+                      const tree = buildSiteTreeWithParent(sites, parentId);
+
+                      const collect = (nodes: any[]): string[] =>
+                        nodes.flatMap((n) => [n.id, ...(n.children ? collect(n.children) : [])]);
+
+                      return collect(tree).includes(id);
+                    });
+                  });
+
+                  updated = [...new Set(updated)];
+
                   onChange(index, 'answer_text', toCsv(updated));
+
                   return updated;
                 });
               }}
@@ -2623,7 +2605,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                 {node.name}
               </Typography>
 
-              {/* Hanya tampil jika site ini sendiri tidak dapat dikunjungi */}
               {!canVisited && (
                 <Typography variant="caption" color="error" sx={{ fontStyle: 'italic' }}>
                   This site cannot be visited.
@@ -2637,6 +2618,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       </TreeItem>
     );
   };
+  
   const getVisibilityMap = (details: any[]) => {
     const getFlag = (key: string) => {
       const field = details.find((f: any) => f.remarks?.toLowerCase() === key);
@@ -3037,6 +3019,125 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       typeof opt === 'object' ? opt : { value: opt, name: opt },
                     );
                   }
+                  // if (item.remarks === 'site_place') {
+                  //   return (
+                  //     <>
+                  //       <Autocomplete
+                  //         multiple
+                  //         size="small"
+                  //         options={options}
+                  //         getOptionLabel={(option) => option.name}
+                  //         getOptionDisabled={(option) => option.disabled === true}
+                  //         inputValue={
+                  //           isSelfOnly
+                  //             ? selfOnlyInputValuesMap[selfOnlyVisitorIdx]?.[originalIndex] || ''
+                  //             : inputValues[originalIndex] || ''
+                  //         }
+                  //         onInputChange={(_, newInputValue, reason) => {
+                  //           if (reason !== 'input') return;
+
+                  //           if (isSelfOnly) {
+                  //             setSelfOnlyInputValuesMap((prev: any) => ({
+                  //               ...prev,
+                  //               [selfOnlyVisitorIdx]: {
+                  //                 ...(prev[selfOnlyVisitorIdx] || {}),
+                  //                 [originalIndex]: newInputValue,
+                  //               },
+                  //             }));
+                  //           } else {
+                  //             setInputValues((prev: any) => ({
+                  //               ...prev,
+                  //               [originalIndex]: newInputValue,
+                  //             }));
+                  //           }
+                  //         }}
+                  //         filterOptions={(opts, state) => {
+                  //           if (state.inputValue.length < 3) return [];
+                  //           return opts.filter((opt) =>
+                  //             opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
+                  //           );
+                  //         }}
+                  //         noOptionsText={
+                  //           (
+                  //             (isSelfOnly
+                  //               ? selfOnlyInputValuesMap[selfOnlyVisitorIdx]?.[originalIndex]
+                  //               : inputValues[originalIndex]) || ''
+                  //           ).length < 3
+                  //             ? 'Enter at least 3 characters to search'
+                  //             : 'Not found'
+                  //         }
+                  //         value={options.filter((opt) =>
+                  //           (isSelfOnly
+                  //             ? selfOnlySelectedSiteParentIdsMap[selfOnlyVisitorIdx] || []
+                  //             : selectedSiteParentIds
+                  //           ).includes(opt.value),
+                  //         )}
+                  //         onChange={(_, newValues) => {
+                  //           // Pastikan hanya site yang dapat dikunjungi yang diproses
+                  //           const validValues = newValues.filter((v) => v.disabled !== true);
+
+                  //           const parentIds = validValues.map((v) => v.value);
+
+                  //           const rawTrees = parentIds.flatMap((pid) =>
+                  //             buildSiteTreeWithParent(sites, pid),
+                  //           );
+
+                  //           const uniqueTrees = dedupeTree(rawTrees);
+
+                  //           if (isSelfOnly) {
+                  //             setSelfOnlySelectedSiteParentIdsMap((prev: any) => ({
+                  //               ...prev,
+                  //               [selfOnlyVisitorIdx]: parentIds,
+                  //             }));
+
+                  //             setSelfOnlyInputValuesMap((prev: any) => ({
+                  //               ...prev,
+                  //               [selfOnlyVisitorIdx]: {
+                  //                 ...(prev[selfOnlyVisitorIdx] || {}),
+                  //                 [originalIndex]: '',
+                  //               },
+                  //             }));
+
+                  //             setSelfOnlySiteTreeMap((prev: any) => ({
+                  //               ...prev,
+                  //               [selfOnlyVisitorIdx]: uniqueTrees,
+                  //             }));
+                  //           } else {
+                  //             setSelectedSiteParentIds(parentIds);
+
+                  //             setInputValues((prev: any) => ({
+                  //               ...prev,
+                  //               [originalIndex]: '',
+                  //             }));
+
+                  //             setSiteTree(uniqueTrees);
+                  //           }
+                  //         }}
+                  //         renderInput={(params) => (
+                  //           <CustomTextField
+                  //             {...params}
+                  //             placeholder="Enter at least 3 characters to search"
+                  //             fullWidth
+                  //             error={!!errorMessage}
+                  //             helperText={errorMessage}
+                  //           />
+                  //         )}
+                  //       />
+
+                  //       {(isSelfOnly ? selfOnlySiteTreeMap[selfOnlyVisitorIdx] || [] : siteTree)
+                  //         .length > 0 && (
+                  //         <SimpleTreeView>
+                  //           {(isSelfOnly
+                  //             ? selfOnlySiteTreeMap[selfOnlyVisitorIdx] || []
+                  //             : siteTree
+                  //           ).map((node) =>
+                  //             renderTree(node, originalIndex, handleSitePlaceChange, isSelfOnly),
+                  //           )}
+                  //         </SimpleTreeView>
+                  //       )}
+                  //     </>
+                  //   );
+                  // }
                   if (item.remarks === 'site_place') {
                     return (
                       <>
@@ -3094,11 +3195,39 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             // Pastikan hanya site yang dapat dikunjungi yang diproses
                             const validValues = newValues.filter((v) => v.disabled !== true);
 
-                            const parentIds = validValues.map((v) => v.value);
+                            const parentIds = [...new Set(validValues.map((v) => v.value))];
 
                             const rawTrees = parentIds.flatMap((pid) =>
                               buildSiteTreeWithParent(sites, pid),
                             );
+
+                            // ambil semua id valid dari parent terbaru
+                            const collectIds = (nodes: any[]): string[] => {
+                              return nodes.flatMap((n) => [
+                                n.id,
+                                ...(n.children ? collectIds(n.children) : []),
+                              ]);
+                            };
+
+                            const validIds = collectIds(rawTrees);
+
+                            // ambil value lama
+                            const currentAnswers = Array.isArray(item.answer_text)
+                              ? item.answer_text
+                              : item.answer_text
+                                ? String(item.answer_text).split(',')
+                                : [];
+
+                            // hanya simpan child yang masih valid
+                            const filteredChildren = currentAnswers.filter((id: string) =>
+                              validIds.includes(id),
+                            );
+
+                            // final value
+                            const finalAnswer = [...new Set([...parentIds, ...filteredChildren])];
+
+                            // update
+                            onChange(originalIndex, 'answer_text', finalAnswer);
 
                             const uniqueTrees = dedupeTree(rawTrees);
 

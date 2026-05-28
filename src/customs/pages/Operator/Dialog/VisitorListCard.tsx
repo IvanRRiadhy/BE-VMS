@@ -384,10 +384,7 @@ const VisitorListCard: React.FC<VisitorListCardProps> = ({
                   {visitor.agenda || '-'}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.2 }}>
-                  {`${formatDateTime(visitor.visitor_period_start)} - ${formatDateTime(
-                    visitor.visitor_period_end,
-                    visitor.extend_visitor_period,
-                  )}`}
+                  {`${formatDateTime(visitor.visitor_period_start)} - ${formatDateTime(visitor.visitor_period_end, visitor.extend_visitor_period)}`}
                 </Typography>
               </Box>
 

@@ -72,35 +72,54 @@ export const deleteApprovalWorkflow = async (token: string, id: string): Promise
 };
 
 // Get Approval Manager and Employee
+
 export const getApprovalTicket = async (
   token: string,
-  start: number,
-  length: number,
-  sort_dir?: string,
-  keyword?: string,
-  entity_type?: string,
-  approval_status?: string,
-  entity_id?: string,
+  options?: {
+    start?: number;
+    length?: number;
+    sort_dir?: string;
+    keyword?: string;
+    entity_type?: string;
+    approval_status?: string;
+    entity_id?: string;
+  },
 ): Promise<any> => {
   const params: any = {
-    start,
-    length,
-    sort_dir,
-    'entity-type': 'Invitation',
+    'entity-type': options?.entity_type ?? 'Invitation',
   };
 
-  if (keyword) {
-    params['search[value]'] = keyword;
+  if (options?.start !== undefined) {
+    params.start = options.start;
   }
 
-  if (approval_status) {
-    params['approval-status'] = approval_status;
+  if (options?.length !== undefined) {
+    params.length = options.length;
+  }
+
+  if (options?.sort_dir) {
+    params.sort_dir = options.sort_dir;
+  }
+
+  if (options?.keyword) {
+    params['search[value]'] = options.keyword;
+  }
+
+  if (options?.approval_status) {
+    params['approval-status'] = options.approval_status;
+  }
+
+  if (options?.entity_id) {
+    params['entity-id'] = options.entity_id;
   }
 
   const response = await axiosInstance.get(`/approval-ticket/with-actors/dt`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
     params,
   });
+
   return response.data;
 };
 
