@@ -1,8 +1,4 @@
-import {
-  Backdrop,
-  CircularProgress,
-  Grid2 as Grid,
-} from '@mui/material';
+import { Backdrop, CircularProgress, Grid2 as Grid } from '@mui/material';
 import { Box } from '@mui/system';
 import BI_LOGO from 'src/assets/images/logos/BI_Logo.png';
 import { IconBan, IconCheck, IconScript, IconX } from '@tabler/icons-react';
@@ -112,7 +108,13 @@ const Approval = () => {
       try {
         const start = page * rowsPerPage;
 
-        const res = await getApprovalTicket(token, start, rowsPerPage, sortDir, searchKeyword);
+        const res = await getApprovalTicket(token, {
+          start,
+          length: rowsPerPage,
+          sort_dir: sortDir,
+          keyword: searchKeyword,
+        });
+
         const rows = res.collection.map((item: any) => ({
           id: item.approval_ticket_id,
           agenda: item.agenda,

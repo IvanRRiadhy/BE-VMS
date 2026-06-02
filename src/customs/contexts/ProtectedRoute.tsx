@@ -31,37 +31,16 @@ export const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
 
   if (!isAuthenticated) return <Navigate to="/auth/login" replace />;
 
-  // // ✅ Cek grup jika diset
-  // // if (allowedGroups && allowedGroups.length > 0) {
-  // //   const normalizedGroup = groupId?.toUpperCase();
-  // //   const allowedNormalized = allowedGroups.map((g) => g.toUpperCase());
-  // //   const isAllowed = normalizedGroup && allowedNormalized.includes(normalizedGroup);
+  if (allowedRoles && allowedRoles.length > 0) {
+    const normalizedRole = roleAccess?.toUpperCase();
+    const allowedNormalized = allowedRoles.map((r) => r.toUpperCase());
 
-  // //   if (!isAllowed) {
-  // //     return <Navigate to="/unauthorized" replace />;
-  // //   }
-  // // }
+    const isAllowed = normalizedRole ? allowedNormalized.includes(normalizedRole) : false;
 
-  // if (allowedRoles && allowedRoles.length > 0) {
-  //   const normalizedRole = roleAccess;
-  //   //  const allowedNormalized = allowedRoles.map((r) => r.toUpperCase());
-
-  //   if (!normalizedRole) {
-  //     return <Navigate to="/unauthorized" replace />;
-  //   }
-  // }
-
-   if (allowedRoles && allowedRoles.length > 0) {
-     const normalizedRole = roleAccess?.toUpperCase();
-     const allowedNormalized = allowedRoles.map((r) => r.toUpperCase());
-
-     const isAllowed = normalizedRole ? allowedNormalized.includes(normalizedRole) : false;
-
-     if (!isAllowed) {
-       return <Navigate to="/unauthorized" replace />;
-     }
-   }
-
+    if (!isAllowed) {
+      return <Navigate to="/unauthorized" replace />;
+    }
+  }
 
   return <Outlet />;
 };

@@ -77,6 +77,7 @@ export type Item = {
   direct_visit: boolean;
   period: number;
   can_notification_arrival: boolean;
+  is_quick_access?: boolean | null;
   can_track_ble?: boolean | null;
   is_primary: boolean;
   is_enable: boolean;
@@ -86,6 +87,7 @@ export type Item = {
   simple_period: boolean;
   site_visitor_types?: string | null;
   visitor_roles: VisitorRole[];
+  visitor_category?: string | null;
   visitor_type_documents: VisitorTypeDocument[] | null;
   section_page_visitor_types: SectionPageVisitorType[];
 };
@@ -169,6 +171,8 @@ export const CreateVisitorTypeRequestSchema = z.object({
   vip: z.boolean().default(false),
   simple_visitor: z.boolean().default(false),
   simple_period: z.boolean().default(false),
+  is_quick_access: z.boolean().default(false),
+  visitor_category: z.string().optional().nullable(),
   visitor_type_accesses: z
     .array(
       z.object({
@@ -235,6 +239,8 @@ export const updateVisitorTypeSchmea = z.object({
   simple_visitor: z.boolean().default(false),
   simple_period: z.boolean().default(false),
   expiry_reminder_minutes: z.number().default(0),
+  is_quick_access: z.boolean().default(false),
+  visitor_category: z.string().optional().nullable(),
   visitor_roles: z
     .array(
       z.object({

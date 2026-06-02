@@ -43,8 +43,6 @@ interface FormAddDocumentProps {
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 const FormAddDocument: React.FC<FormAddDocumentProps> = ({
-  // formData,
-  // setFormData,
   initialData,
   edittingId,
   onSuccess,
@@ -487,7 +485,7 @@ const FormAddDocument: React.FC<FormAddDocumentProps> = ({
                 variant="contained"
                 type="submit"
                 disabled={loading}
-                startIcon={loading ? <CircularProgress size={18} /> : undefined}
+                // startIcon={loading ? <CircularProgress size={18} /> : undefined}
               >
                 Submit
               </Button>

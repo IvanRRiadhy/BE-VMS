@@ -294,7 +294,9 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
           document_id: doc.document_id,
           identity_type: doc.identity_type ?? null,
         })),
+        visitor_category: localForm.visitor_category ?? null,
       };
+      console.log('Payload to submit:', data);
       const parseData: CreateVisitorTypeRequest = CreateVisitorTypeRequestSchema.parse(data);
 
       if (edittingId) {
@@ -330,19 +332,19 @@ const FormVisitorType: React.FC<FormVisitorTypeProps> = ({
           edittingId ? 'Visitor type updated successfully!' : 'Visitor type updated successfully!',
         );
       } else {
-        const res = await createVisitorType(token, parseData);
+        // const res = await createVisitorType(token, parseData);
 
-        const visitorTypeId = res.collection?.id;
+        // const visitorTypeId = res.collection?.id;
 
-        if (selectedAccess.length > 0) {
-          const accessPayload = buildCreateAccessPayload(visitorTypeId as string);
-          await createVisitorTypeAccessBulk(accessPayload, token);
-        }
+        // if (selectedAccess.length > 0) {
+        //   const accessPayload = buildCreateAccessPayload(visitorTypeId as string);
+        //   await createVisitorTypeAccessBulk(accessPayload, token);
+        // }
 
-        if (formData.can_track_cctv && selectedAnalytics) {
-          const accessPayloadAnalytics = buildCreateAnalyticsPayload(visitorTypeId as string);
-          await createVisitorTypeAnalyticsBulk(accessPayloadAnalytics, token);
-        }
+        // if (formData.can_track_cctv && selectedAnalytics) {
+        //   const accessPayloadAnalytics = buildCreateAnalyticsPayload(visitorTypeId as string);
+        //   await createVisitorTypeAnalyticsBulk(accessPayloadAnalytics, token);
+        // }
         showSwal('success', 'Visitor type created successfully!');
       }
 

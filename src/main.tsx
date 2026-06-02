@@ -14,7 +14,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Spinner from './views/spinner/Spinner';
 import { loadRuntimeConfig } from './config';
 import { initializeAxiosBaseURL } from './customs/api/interceptor';
-import NotificationProvider from './providers/NotificationProvider';
 
 const queryClient = new QueryClient({
   defaultOptions: {

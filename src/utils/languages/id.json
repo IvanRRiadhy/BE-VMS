@@ -43,7 +43,8 @@
     "history": "Riwayat",
     "invitation": "Undangan",
     "approval": "Persetujuan",
-    "visitor_role": "Peran Pengunjung"
+    "visitor_role": "Peran Pengunjung",
+    "visitor_providers": "Kategori Pengunjung"
   },
   "print_badge": "Cetak Badge",
   "transction_visitor": "Transaksi Pengunjung",

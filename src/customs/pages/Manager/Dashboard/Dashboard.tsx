@@ -1,6 +1,7 @@
 import { Button, Drawer, Grid2 as Grid, Typography } from '@mui/material';
 import { Box } from '@mui/system';
 import {
+  IconBolt,
   IconCalendar,
   IconCheck,
   IconCircleX,
@@ -10,13 +11,12 @@ import {
   IconLogout,
   IconReport,
 } from '@tabler/icons-react';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import PageContainer from 'src/components/container/PageContainer';
 import TopCard from './TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import Heatmap from './Heatmap';
-import PieCharts from './PieCharts';
 import { useNavigate } from 'react-router';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import { setDateRange } from 'src/store/apps/Daterange/dateRangeSlice';
@@ -33,6 +33,7 @@ import { useDispatch } from 'react-redux';
 import { useSelector } from 'react-redux';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { QuickAccessDialog } from 'src/customs/pages/admin/content/Visitor/Trx/components/QuickAccessDialog';
 
 const DashboardEmployee = () => {
   const CardItems = [
@@ -40,11 +41,6 @@ const DashboardEmployee = () => {
     { title: 'checkout', key: 'Checkout', icon: <IconLogout size={25} /> },
     { title: 'denied', key: 'Denied', icon: <IconCircleX size={25} /> },
     { title: 'block', key: 'Block', icon: <IconForbid2 size={25} /> },
-    // {
-    //   title: 'blacklist',
-    //   key: 'blacklist',
-    //   icon: <IconUsersGroup size={22} />,
-    // },
   ];
   const { token } = useSession();
   const [loading, setLoading] = useState(false);
@@ -54,6 +50,7 @@ const DashboardEmployee = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [openQuickAccess, setOpenQuickAccess] = useState(false);
 
   const start = page * rowsPerPage;
   const {
@@ -63,7 +60,12 @@ const DashboardEmployee = () => {
   } = useQuery({
     queryKey: ['approval-ticket', page, rowsPerPage, searchKeyword, sortDir],
     queryFn: async () => {
-      return await getApprovalTicket(token as string, start, rowsPerPage, sortDir, searchKeyword);
+      return await getApprovalTicket(token, {
+        start,
+        length: rowsPerPage,
+        sort_dir: sortDir,
+        keyword: searchKeyword,
+      });
     },
     enabled: !!token,
   });
@@ -301,13 +303,17 @@ const DashboardEmployee = () => {
               <IconReport size={30} />
               Report
             </Button>
+            <Button variant="contained" color="secondary" onClick={() => setOpenQuickAccess(true)}>
+              <IconBolt size={30} />
+              Quick Access
+            </Button>
           </Box>
         </Grid>
 
         {/* Tabel */}
         <Grid size={{ xs: 12, lg: 6 }}>
           <DynamicTable
-            height={490}
+            height={450}
             isHavePagination={false}
             overflowX="auto"
             data={activeInvitation}
@@ -320,7 +326,7 @@ const DashboardEmployee = () => {
 
         <Grid size={{ xs: 12, lg: 6 }}>
           <DynamicTable
-            height={490}
+            height={450}
             isHavePagination={false}
             overflowX="auto"
             data={approvalData}
@@ -340,16 +346,28 @@ const DashboardEmployee = () => {
             isHavePeriod={true}
           />
         </Grid>
-        <Grid size={{ xs: 12, lg: 6 }}>
-          <PieCharts />
+        <Grid size={{ xs: 12, lg: 6 }} sx={{ height: '100%' }}>
+          {/* <PieCharts /> */}
+          <DynamicTable
+            data={[]}
+            isHaveHeaderTitle
+            titleHeader="Quick Access"
+            height={420}
+            overflowX="auto"
+          />
         </Grid>
-        {/* <Grid size={{ xs: 12, lg: 3 }} sx={{ height: '100%' }}>
-          <PieChartsEmployee />
-        </Grid> */}
         <Grid size={{ xs: 12, lg: 6 }} sx={{ height: '100%' }}>
           <Heatmap />
         </Grid>
       </Grid>
+
+      <QuickAccessDialog
+        open={openQuickAccess}
+        onClose={() => setOpenQuickAccess(false)}
+        onSubmit={(data) => {
+          console.log(data);
+        }}
+      />
     </PageContainer>
   );
 };

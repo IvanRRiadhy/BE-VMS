@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   Checkbox,
   Table,
-  TableBody,
   TableCell,
   TableContainer,
   TableHead,
@@ -18,7 +17,6 @@ import {
   Tooltip,
   Skeleton,
   Fab,
-  InputAdornment,
   Drawer,
   Tab,
   Tabs,
@@ -26,9 +24,8 @@ import {
   Breadcrumbs,
 } from '@mui/material';
 import BlankCard from 'src/components/shared/BlankCard';
-import { Stack, useMediaQuery, useTheme } from '@mui/system';
+import { Stack } from '@mui/system';
 import {
-  IconArrowAutofitLeft,
   IconArrowLeft,
   IconFileExport,
   IconFileSpreadsheet,
@@ -42,7 +39,6 @@ import {
   ArrowLeft,
   CalendarMonth,
   ChecklistOutlined,
-  Search,
 } from '@mui/icons-material';
 import EditIconOutline from '@mui/icons-material/Edit';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
@@ -51,8 +47,7 @@ import { IconAdjustmentsHorizontal } from '@tabler/icons-react';
 import { InsertDriveFile } from '@mui/icons-material';
 import backgroundnodata from 'src/assets/images/backgrounds/bg_nodata.svg';
 import { useTranslation } from 'react-i18next';
-import { Link, useNavigate, useSearchParams, useLocation } from 'react-router';
-import { debounce } from 'lodash';
+import { Link } from 'react-router';
 import { TableBodyContent } from './TableBody';
 import SearchToolbar from './components/SearchToolbar';
 

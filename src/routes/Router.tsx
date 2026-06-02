@@ -114,6 +114,9 @@ const ManageBrand = Loadable(lazy(() => import('src/customs/pages/admin/content/
 const ManageVisitorRole = Loadable(
   lazy(() => import('src/customs/pages/admin/content/VisitorRole/Content')),
 );
+const ManageVisitorProviders = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/VisitorProvider/Content')),
+);
 const ManageVisitorType = Loadable(
   lazy(() => import('src/customs/pages/admin/content/VisitorType/Content')),
 );
@@ -409,6 +412,7 @@ const Router = [
         element: <ProtectedRoute allowedRoles={['Admin', 'OperatorAdmin']} />,
         children: [
           { path: '/admin/dashboard', element: <Dashboard /> },
+          // Visitor
           { path: '/admin/visitor/live-visitor', element: <ManageVisitor /> },
           { path: '/admin/visitor/list-visitor', element: <ManageListVisitor /> },
           { path: '/admin/visitor/transaction-visitor', element: <ManageTransactionVisitor /> },
@@ -437,6 +441,7 @@ const Router = [
           { path: '/admin/manage/brand', element: <ManageBrand /> },
           { path: '/admin/manage/integration', element: <ManageIntegration /> },
           { path: '/admin/manage/visitor-role', element: <ManageVisitorRole /> },
+          { path: '/admin/manage/visitor-providers', element: <ManageVisitorProviders /> },
           { path: '/admin/manage/integration/:id', element: <ManageIntegrationDetail /> },
           { path: '/admin/manage/access-control', element: <ManageAccessControl /> },
           { path: '/admin/manage/custom-field', element: <ManageCustomField /> },

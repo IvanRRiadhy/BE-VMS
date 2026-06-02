@@ -64,6 +64,7 @@ export type Item = {
   auto_signout: boolean;
   signout_time?: string | null;
   is_registered_point?: boolean;
+  is_drop_point?: boolean | null;
   timezone?: string | null;
   map_link: string;
   can_contactless_login: boolean;
@@ -145,6 +146,7 @@ export const CreateSiteRequestSchema = z.object({
   can_contactless_login: z.boolean().default(false),
   need_document: z.boolean().default(false),
   is_registered_point: z.boolean().default(false),
+  is_drop_point: z.boolean().optional().nullable(),
   parent: z.string().nullable().optional(),
   is_child: z.boolean().default(false),
   host: z.string().nullable().optional(),
@@ -281,6 +283,7 @@ export const UpdateSiteRequestSchema = z.object({
   is_active: z.boolean().nullable().optional(),
   approval_workflow_id: z.string().nullable().optional(),
   can_signout: z.boolean().default(false),
+  is_drop_point: z.boolean().optional().nullable(),
   auto_signout: z.boolean().default(false),
   signout_time: z.string().nullable().optional(),
   timezone: z.string().nullable().optional(),

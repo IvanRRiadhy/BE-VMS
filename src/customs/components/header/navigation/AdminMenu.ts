@@ -153,6 +153,13 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
         href: '/admin/manage/visitor-role',
       },
 
+      {
+        id: uniqueId(),
+        title: 'navigation.visitor_providers',
+        icon: IconUserCircle,
+        href: '/admin/manage/visitor-providers',
+      },
+
       // {
       //   id: uniqueId(),
       //   title: 'navigation.zone',

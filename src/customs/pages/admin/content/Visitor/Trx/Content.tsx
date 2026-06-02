@@ -41,7 +41,14 @@ import {
 } from 'src/customs/api/models/Admin/Visitor';
 import { getAllVisitorPagination, getEmployeeById, getVisitorById } from 'src/customs/api/admin';
 import FilterMoreContent from './FilterMoreContent';
-import { IconClipboard, IconQrcode, IconShare, IconUser, IconUsers } from '@tabler/icons-react';
+import {
+  IconClipboard,
+  IconQrcode,
+  IconShare,
+  IconUser,
+  IconUsers,
+  IconBolt,
+} from '@tabler/icons-react';
 import EmployeeDetailDialog from '../Dialog/EmployeeDetailDialog';
 import VisitorDetailDialog from '../Dialog/VisitorDetailDialog';
 import { getInvitationCode } from 'src/customs/api/operator';
@@ -74,15 +81,13 @@ import { useVisitorEmployees } from 'src/hooks/useVisitorEmployees';
 import InvitationVisitorDialog from './components/InvitationVisitorDialog';
 import PreRegistrationDialog from './components/PreRegistrationDialog';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
+import { QuickAccessDialog } from './components/QuickAccessDialog';
 
 const Content = () => {
   const { token } = useSession();
-  // const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
   const [edittingId, setEdittingId] = useState('');
-  // const [searchKeyword, setSearchKeyword] = useState('');
-  // const [searchInput, setSearchInput] = useState('');
   const { page, search, setPage, setSearch } = useTableQueryParams();
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [selectedRows, setSelectedRows] = useState<[]>([]);
@@ -159,6 +164,7 @@ const Content = () => {
   const [expiredAt, setExpiredAt] = useState<string | null>(null);
   const [emails, setEmails] = useState<string[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [open, setOpen] = useState(false);
 
   const resetRegisteredFlow = () => {
     setSelectedSite(null);
@@ -227,6 +233,7 @@ const Content = () => {
     start_date: '',
     end_date: '',
   });
+  const [type, setType] = useState<any>(null);
 
   const {
     data: allVisitorData,
@@ -276,22 +283,26 @@ const Content = () => {
     if (!allVisitorData) return [];
 
     return allVisitorData
-      .map((item: any) => ({
-        id: item.id,
-        visitor_type: item.visitor_type_name || '-',
-        name: item.visitor_name || '-',
-        identity_id: item.visitor_identity_id || '-',
-        email: item.visitor_email || '-',
-        organization: item.visitor_organization_name || '-',
-        // gender: item.visitor_gender || '-',
-        invitation_code: item.invitation_code || '-',
-        phone: item.visitor_phone || '-',
-        visitor_period_start: item.visitor_period_start || '-',
-        visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
-        invitation_created_at: item.invitation_created_at,
-        host: item.host ?? '-',
-        visitor_status: item.visitor_status || '-',
-      }))
+      .map((item: any) => {
+        const isExpired =
+          item.visitor_period_end && dayjs(item.visitor_period_end).isBefore(dayjs(), 'day');
+
+        return {
+          id: item.id,
+          visitor_type: item.visitor_type_name || '-',
+          name: item.visitor_name || '-',
+          identity_id: item.visitor_identity_id || '-',
+          email: item.visitor_email || '-',
+          organization: item.visitor_organization_name || '-',
+          invitation_code: item.invitation_code || '-',
+          phone: item.visitor_phone || '-',
+          visitor_period_start: item.visitor_period_start || '-',
+          visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
+          invitation_created_at: item.invitation_created_at,
+          host: item.host ?? '-',
+          visitor_status: isExpired ? 'Expired' : item.visitor_status || '-',
+        };
+      })
       .sort(
         (a: any, b: any) =>
           dayjs(b.invitation_created_at).valueOf() - dayjs(a.invitation_created_at).valueOf(),
@@ -349,6 +360,13 @@ const Content = () => {
             subTitleSetting: 'image',
             color: 'none',
           },
+          {
+            title: 'Quick Access',
+            icon: IconBolt,
+            subTitle: iconAdd,
+            subTitleSetting: 'image',
+            color: 'none',
+          },
         ]
       : []),
   ];
@@ -360,6 +378,7 @@ const Content = () => {
   const { sites } = useSites(token as string);
   const { employee } = useEmployees(token as string);
   const { allVisitorEmployee } = useVisitorEmployees(token as string);
+  const [openQuickAccess, setOpenQuickAccess] = useState(false);
 
   const handleCloseDialog = useCallback(() => {
     setSelectedSite(null);
@@ -379,7 +398,7 @@ const Content = () => {
     freshForm = CreateVisitorRequestSchema.parse({});
     //   }
     // } else {
-    freshForm = CreateVisitorRequestSchema.parse({});
+    // freshForm = CreateVisitorRequestSchema.parse({});
     // }
 
     setEdittingId('');
@@ -670,16 +689,6 @@ const Content = () => {
     }
   };
 
-  // const handleSearchKeywordChange = useCallback((keyword: string) => {
-  //   setSearchInput(keyword);
-  // }, []);
-
-  // const handleSearch = useCallback((keyword: string) => {
-  //   setPage(0);
-  //   setSearchInput(keyword);
-  //   setSearchKeyword(keyword);
-  // }, []);
-
   const handleSearch = useCallback(
     (keyword: string) => {
       setPage(0);
@@ -724,11 +733,13 @@ const Content = () => {
                     setOpenPreRegistration(true);
                   } else if (index === 4) {
                     setOpenDetailShareLink(true);
+                  } else if (index === 5) {
+                    setOpenQuickAccess(true);
                   } else {
                     setOpenDialogIndex(index);
                   }
                 }}
-                size={{ xs: 12, lg: 2.4 }}
+                size={{ xs: 12, lg: 2 }}
               />
             </Grid>
 
@@ -739,6 +750,7 @@ const Content = () => {
                 overflowX={'auto'}
                 minWidth={2400}
                 stickyHeader={true}
+                currentPage={page}
                 data={visitorTableData?.data || []}
                 totalCount={totalFilteredRecords}
                 isNoActionTableHead={true}
@@ -811,7 +823,6 @@ const Content = () => {
                 }}
                 searchKeyword={search}
                 onSearch={handleSearch}
-                // onSearchKeywordChange={handleSearchKeywordChange}
                 onFilterCalenderChange={(ranges) => {
                   if (ranges.startDate && ranges.endDate) {
                     setStartDate(ranges.startDate.toISOString());
@@ -931,6 +942,14 @@ const Content = () => {
         open={openDetail}
         onClose={() => setOpenDetail(false)}
         visitorData={visitorData}
+      />
+
+      <QuickAccessDialog
+        open={openQuickAccess}
+        onClose={() => setOpenQuickAccess(false)}
+        onSubmit={(data) => {
+          console.log(data);
+        }}
       />
 
       {/* Dialog Confirm */}

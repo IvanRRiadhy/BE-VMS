@@ -74,7 +74,7 @@ export const deleteApprovalWorkflow = async (token: string, id: string): Promise
 // Get Approval Manager and Employee
 
 export const getApprovalTicket = async (
-  token: string,
+  token: string | null,
   options?: {
     start?: number;
     length?: number;

@@ -1,9 +1,4 @@
-import {
-  Grid2 as Grid,
-  Portal,
-  CircularProgress,
-  Backdrop,
-} from '@mui/material';
+import { Grid2 as Grid, Portal, CircularProgress, Backdrop } from '@mui/material';
 
 import { IconCircleMinus, IconLogin, IconLogout, IconX } from '@tabler/icons-react';
 import { useState } from 'react';
@@ -16,6 +11,7 @@ import ExpectedVisitorsCard from './components/ExpectedVisitorCard';
 import PendingVisitsCard from './components/PendingVisitCard';
 import LastVisitsCard from './components/LastVisitData';
 import TopCardsUI from './components/TopCardsUi';
+import { QuickAccessDialog } from '../../admin/content/Visitor/Trx/components/QuickAccessDialog';
 
 const DashboardOperator = () => {
   const CardItems = [
@@ -31,13 +27,14 @@ const DashboardOperator = () => {
     },
   ];
   const [loadingAccess, setLoadingAccess] = useState(false);
+  const [openQuickAccess, setOpenQuickAccess] = useState(false);
 
   return (
     <Container title="Dashboard">
       <Grid container spacing={2} sx={{ mt: 0 }}>
         <Grid size={{ xs: 12, lg: 12 }}>
           {/* <TopCards items={CardItems} size={{ xs: 12, sm: 6, md: 4, xl: 2.4 }} /> */}
-          <TopCardsUI />
+          <TopCardsUI onOpenQuick={setOpenQuickAccess} />
         </Grid>
         <Grid size={{ xs: 12, lg: 12 }}>
           <Grid container spacing={2}>
@@ -218,6 +215,14 @@ const DashboardOperator = () => {
           </Grid>
         </Grid>
       </Grid>
+
+      <QuickAccessDialog
+        open={openQuickAccess}
+        onClose={() => setOpenQuickAccess(false)}
+        onSubmit={(data) => {
+          console.log(data);
+        }}
+      />
 
       <Portal>
         <Backdrop

@@ -321,8 +321,8 @@ const Content = () => {
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <Divider />
-        <DialogContent sx={{ paddingTop: 0 }}>
+
+        <DialogContent sx={{ paddingTop: 0 }} dividers>
           <br />
           <FormAddDocument
             initialData={formDataAddDocument}

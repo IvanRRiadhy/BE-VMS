@@ -204,6 +204,7 @@ const Approval = () => {
       // if (!confirm.isConfirmed) return;
 
       setLoadingAction(true);
+      console.log('Performing action:', action, 'on approval ticket ID:', id);
 
       // await createApproval(token, { action }, id);
       if (action === 'Approve') await approveTicket(token as string, id);
@@ -238,9 +239,8 @@ const Approval = () => {
       const response = await approveMeetingHost(token, id, payload);
       console.log('response', response);
 
-      // ✅ setelah approve host success
       const res = await handleActionApproval(id, 'Approve');
-      console.log('res', res);
+      // console.log('res', res);
 
       // showSwal('success', response?.msg || 'Approve meeting host successfully.');
 
@@ -532,7 +532,7 @@ const Approval = () => {
                                       backgroundColor: '#4CAF50',
                                       color: '#fff',
                                     }),
-                                    ...(group.approval_status === 'Reject' && {
+                                    ...(group.approval_status === 'Rejected' && {
                                       backgroundColor: '#f44336',
                                       color: '#fff',
                                     }),

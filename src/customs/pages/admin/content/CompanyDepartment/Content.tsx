@@ -529,8 +529,6 @@ const Content = () => {
                       const params = new URLSearchParams(prev);
 
                       params.set('page', String(newPage));
-                      // params.set('limit', String(newRowsPerPage));
-
                       return params;
                     });
                   }}

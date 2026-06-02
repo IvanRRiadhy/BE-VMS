@@ -890,6 +890,10 @@ const TableRowItem = React.memo(
                 col === 'is_used' ||
                 col === 'link_status' ||
                 col === 'is_active' ||
+                col === 'auto_approve' ||
+                col === 'need_plate_number' ||
+                col === 'support_vehicle' ||
+                col === 'is_quick_access' ||
                 col === 'early_access' ? (
                 <Box display="flex" alignItems="center" justifyContent="start" width="100%">
                   <Tooltip

@@ -4976,23 +4976,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
     setSelectedSiteParentIds([]);
     setSelectedSiteIds([]);
     setSiteTree([]);
-    // const raw = localStorage.getItem('unsavedVisitorData');
-    // const saved = raw ? JSON.parse(raw) : null;
-    // const sameType = saved?.visitor_type === formData.visitor_type;
-    // const sameMode = saved?.is_group === isGroup;
-
-    // if (sameType && sameMode && saved.sections?.length) {
-    //   setSectionsData(saved.sections);
-    //   setDataVisitor(saved.data_visitor ?? []);
-    //   setGroupedPages(saved.grouped_pages ?? {});
-    //   setGroupVisitors(saved.groupVisitors ?? []);
-    //   // setDraggableSteps(saved.sections.map((s: any) => s.name));
-    //   setRawSections(saved.sections);
-    //   setIsGroup(saved.is_group);
-    //   setIsRestoredFromDraft(true);
-    //   return;
-    // }
-    // if (isRestoredFromDraft) return;
     if (!formData.visitor_type) return;
     const fetchVisitorTypeDetails = async () => {
       // const res = visitorType.find((vt: any) => vt.id === formData.visitor_type);

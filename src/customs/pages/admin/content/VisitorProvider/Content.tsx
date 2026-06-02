@@ -1,0 +1,328 @@
+import { useCallback, useEffect, useState } from 'react';
+import {
+  Backdrop,
+  Box,
+  CircularProgress,
+  Grid2 as Grid,
+  Portal,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+} from '@mui/material';
+import Container from 'src/components/container/PageContainer';
+import PageContainer from 'src/customs/components/container/PageContainer';
+import {
+  AdminCustomSidebarItemsData,
+  AdminNavListingData,
+} from 'src/customs/components/header/navigation/AdminMenu';
+
+import TopCard from 'src/customs/components/cards/TopCard';
+import { DynamicTable } from 'src/customs/components/table/DynamicTable';
+import { useSession } from 'src/customs/contexts/SessionContext';
+import { IconBrandMedium, IconCategory, IconX } from '@tabler/icons-react';
+import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alerts';
+import FilterMoreContent from './components/FilterMoreContent';
+import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
+import {
+  deleteVisitorProvider,
+  getVisitorProvidersByDt,
+  getVisitorProvidersById,
+  updateVisitorProviders,
+} from 'src/customs/api/Admin/VisitorProviders';
+import FormVisitorProvider from './FormVisitorProvider';
+import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
+import { de, is } from 'date-fns/locale';
+interface VisitorProviderForm {
+  name: string;
+  code: string;
+  description: string;
+  logo: any;
+  active: boolean;
+  visitor_category: string;
+  support_vehicle: boolean;
+  need_plate_number: boolean;
+  max_duration_minutes: number;
+  auto_approve: boolean;
+  is_quick_access: boolean;
+}
+const Content = () => {
+  const [tableData, setTableData] = useState<any[]>([]);
+  const [selectedRows, setSelectedRows] = useState<any[]>([]);
+  const { token } = useSession();
+  const [totalRecords, setTotalRecords] = useState(0);
+  // const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [loading, setLoading] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const { page, search, setPage, setSearch } = useTableQueryParams();
+  const [sortDir, setSortDir] = useState('desc');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [openDialogVisitorProvider, setOpenDialogVisitorProvider] = useState(false);
+  const [openUnsavedDialog, setOpenUnsavedDialog] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+
+  const cards = [
+    {
+      title: 'Total Visitor Providers',
+      subTitle: `${totalRecords}`,
+      subTitleSetting: 10,
+      icon: IconCategory,
+      color: 'none',
+    },
+  ];
+  useEffect(() => {
+    if (!token) return;
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const start = page * rowsPerPage;
+        const response = await getVisitorProvidersByDt(token, start, rowsPerPage, sortDir, search);
+        const rows = response.collection.map((item: any) => {
+          return {
+            id: item.id,
+            name: item.name,
+            code: item.code,
+            visitor_category: item.visitor_category,
+            max_duration: item.max_duration_minutes,
+            need_plate_number: item.need_plate_number,
+            support_vehicle: item.support_vehicle,
+            auto_approve: item.auto_approve,
+            is_quick_access: item.is_quick_access,
+            active: item.active,
+          };
+        });
+        setTableData(rows);
+        setTotalRecords(response.collection.length);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [token, page, rowsPerPage, refreshTrigger, search]);
+
+  const handleSearch = useCallback(
+    (keyword: string) => {
+      setPage(0);
+      setSearch(keyword);
+    },
+    [setPage, setSearch],
+  );
+
+  const [loadingAction, setLoadingAction] = useState(false);
+  const defaultForm = {
+    name: '',
+    code: '',
+    description: '',
+    logo: null,
+    active: false,
+    visitor_category: 'Regular',
+    support_vehicle: false,
+    need_plate_number: false,
+    max_duration_minutes: 0,
+    auto_approve: false,
+    is_quick_access: false,
+  };
+  const [localForm, setLocalForm] = useState<VisitorProviderForm>(defaultForm);
+  const [initialForm, setInitialForm] = useState<VisitorProviderForm>(defaultForm);
+
+  const handleActiveToggle = async (row: any, checked: boolean) => {
+    setLoadingAction(true);
+    try {
+      const payload = {
+        name: row.name,
+        role: row.role,
+        active: checked,
+      };
+
+      await updateVisitorProviders(token as string, row.id, payload);
+
+      showSwal('success', 'Visitor Provider successfully updated');
+      setRefreshTrigger((prev) => prev + 1);
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.message || 'Failed to update status active');
+    } finally {
+      setLoadingAction(false);
+    }
+  };
+
+  const handleAdd = () => {
+    setEditingId(null);
+    setLocalForm(defaultForm);
+    setIsDirty(false);
+    setOpenDialogVisitorProvider(true);
+  };
+
+  const handleSuccess = () => {
+    setOpenDialogVisitorProvider(false);
+    setRefreshTrigger((prev) => prev + 1);
+    setLocalForm(defaultForm);
+    setIsDirty(false);
+  };
+
+  const handleDiscard = () => {
+    setOpenUnsavedDialog(false);
+    setOpenDialogVisitorProvider(false);
+    setLocalForm(defaultForm);
+    setIsDirty(false);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!token) return;
+
+    const confirmed = await showConfirmDelete(
+      `Are you sure you want to delete this Visitor Provider"?`,
+    );
+
+    if (confirmed) {
+      setLoading(true);
+      try {
+        await deleteVisitorProvider(token, id);
+        setRefreshTrigger((prev) => prev + 1);
+        showSwal('success', `Successfully deleted Visitor Provider.`);
+      } catch (error) {
+        showSwal('error', `Failed to delete Visitor Provider.`);
+      } finally {
+        setTimeout(() => setLoading(false), 500);
+      }
+    }
+  };
+
+  const handleEdit = async (id: string) => {
+    try {
+      // setLoading(true);
+
+      setEditingId(id);
+      const res = await getVisitorProvidersById(token, id);
+      // console.log('res', res.collection);
+
+      setLocalForm(res.collection);
+      setInitialForm(res.collection);
+
+      setIsDirty(false);
+
+      setOpenDialogVisitorProvider(true);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  const handleClose = () => {
+    if (isDirty) {
+      setOpenUnsavedDialog(true);
+      return;
+    }
+
+    setOpenDialogVisitorProvider(false);
+    setLocalForm(defaultForm);
+  };
+
+  const checkIsDirty = (form: VisitorProviderForm) => {
+    return JSON.stringify(form) !== JSON.stringify(defaultForm);
+  };
+
+  const handleChangeForm = (updater: any) => {
+    setLocalForm((prev: any) => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+
+      return next;
+    });
+
+    if (!isDirty) {
+      setIsDirty(true);
+    }
+  };
+
+  return (
+    <PageContainer
+      itemDataCustomNavListing={AdminNavListingData}
+      itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
+    >
+      <Container title="Visitor Providers" description="Visitor Providers page">
+        <Box>
+          <Grid container spacing={3}>
+            <Grid size={{ xs: 12, lg: 12 }}>
+              <TopCard items={cards} size={{ xs: 12, lg: 4 }} />
+            </Grid>
+            <Grid size={{ xs: 12, lg: 12 }}>
+              <DynamicTable
+                loading={loading}
+                overflowX={'auto'}
+                data={tableData}
+                selectedRows={selectedRows}
+                isHaveChecked={true}
+                isHaveSearch={true}
+                isHaveFilter={false}
+                isHaveExportPdf={false}
+                isHaveExportXlf={false}
+                defaultRowsPerPage={rowsPerPage}
+                rowsPerPageOptions={[10, 50, 100]}
+                currentPage={page}
+                onPaginationChange={(page, rowsPerPage) => {
+                  setPage(page);
+                  setRowsPerPage(rowsPerPage);
+                }}
+                isHavePagination={true}
+                isHaveFilterDuration={false}
+                isHaveHeader={false}
+                onCheckedChange={(selected) => setSelectedRows(selected)}
+                searchKeyword={search}
+                onSearch={handleSearch}
+                // onSearchKeywordChange={handleSearchKeywordChange}
+                isHaveActive={true}
+                onActiveToggle={handleActiveToggle}
+                isHaveAddData={true}
+                onAddData={handleAdd}
+                isHaveAction={true}
+                onDelete={(row) => handleDelete(row.id)}
+                onEdit={(row) => {
+                  handleEdit(row.id);
+                  setEditingId(row.id);
+                }}
+              />
+            </Grid>
+          </Grid>
+        </Box>
+      </Container>
+      <Dialog open={openDialogVisitorProvider} onClose={handleClose} fullWidth maxWidth="md">
+        <DialogTitle sx={{ position: 'relative', padding: 3 }}>
+          {editingId ? 'Edit Visitor Provider' : 'Add New Visitor Provider'}
+          <IconButton
+            aria-label="close"
+            onClick={handleClose}
+            sx={{
+              position: 'absolute',
+              right: 10,
+              top: 10,
+              color: (theme) => theme.palette.grey[500],
+            }}
+          >
+            <IconX />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          <FormVisitorProvider
+            form={localForm}
+            setForm={handleChangeForm}
+            editingId={editingId}
+            onSuccess={handleSuccess}
+          />
+        </DialogContent>
+      </Dialog>
+      <ConfirmUnsavedDialog
+        open={openUnsavedDialog}
+        onClose={() => setOpenUnsavedDialog(false)}
+        onDiscard={handleDiscard}
+      />
+      <Portal>
+        <Backdrop open={loadingAction} style={{ zIndex: 99999 }}>
+          <CircularProgress color="primary" />
+        </Backdrop>
+      </Portal>
+    </PageContainer>
+  );
+};
+
+export default Content;

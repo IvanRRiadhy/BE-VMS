@@ -2,6 +2,8 @@ import { Grid2 as Grid, Card, Typography, Box, Stack, Button } from '@mui/materi
 
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 import AddBoxOutlinedIcon from '@mui/icons-material/AddBoxOutlined';
+import { IconBolt } from '@tabler/icons-react';
+import { useNavigate } from 'react-router';
 
 const CardItems = [
   {
@@ -22,7 +24,12 @@ const CardItems = [
   },
 ];
 
-export default function TopCardsUI() {
+export default function TopCardsUI({ onOpenQuick }: any) {
+  const navigate = useNavigate();
+  const handleMoveAddVisitor = () => {
+    navigate('/operator/view');
+  };
+
   return (
     <Grid container spacing={2} alignItems="stretch">
       {CardItems.map((item, index) => (
@@ -95,14 +102,14 @@ export default function TopCardsUI() {
         </Grid>
       ))}
       <Grid size={{ xs: 12, md: 12, lg: 2.4 }} sx={{ display: 'flex' }}>
-        <Card
+        {/* <Card
           onClick={() => {}}
           sx={{
             flex: 1,
             borderRadius: 4,
             cursor: 'pointer',
             minHeight: 120,
-            backgroundColor: 'primary.main',
+            // backgroundColor: 'primary.main',
             boxShadow: '0px 2px 10px rgba(0,0,0,0.08)',
             display: 'flex',
             alignItems: 'center',
@@ -113,12 +120,22 @@ export default function TopCardsUI() {
               color: '#fff',
             },
           }}
+        > */}
+        <Box
+          display={'flex'}
+          flexDirection={'column'}
+          gap={2}
+          width={'100%'}
+          justifyContent={'space-around'}
         >
           <Button
+            variant="contained"
             startIcon={<AddBoxOutlinedIcon />}
+            onClick={handleMoveAddVisitor}
+            fullWidth
             sx={{
               color: '#fff',
-              backgroundColor: 'transparent !important',
+              // backgroundColor: 'transparent !important',
               fontSize: 22,
               fontWeight: 600,
               textTransform: 'none',
@@ -126,14 +143,36 @@ export default function TopCardsUI() {
                 fontSize: 32,
               },
               '&:hover': {
-                backgroundColor: 'transparent !important',
+                backgroundColor: 'primary.main',
                 color: '#fff',
               },
             }}
           >
             Add Visitor
           </Button>
-        </Card>
+          <Button
+            startIcon={<IconBolt />}
+            variant="contained"
+            color="secondary"
+            onClick={onOpenQuick}
+            sx={{
+              color: '#fff',
+              fontSize: 22,
+              fontWeight: 600,
+              textTransform: 'none',
+              '& .MuiButton-startIcon svg': {
+                fontSize: 32,
+              },
+              '&:hover': {
+                backgroundColor: 'secondary',
+                color: '#fff',
+              },
+            }}
+          >
+            Quick Access
+          </Button>
+        </Box>
+        {/* </Card> */}
       </Grid>
     </Grid>
   );

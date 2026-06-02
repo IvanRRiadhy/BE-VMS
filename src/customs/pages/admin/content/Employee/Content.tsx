@@ -1,12 +1,9 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   Box,
-  Button,
   Dialog,
-  DialogActions,
   DialogContent,
   DialogTitle,
-  Divider,
   Grid2 as Grid,
   IconButton,
 } from '@mui/material';
@@ -30,9 +27,6 @@ import {
   getAllEmployeePaginationFilterMore,
   getAllEmployee,
   deleteEmployee,
-  getAllOrganizations,
-  getAllDepartments,
-  getAllDistricts,
 } from 'src/customs/api/admin';
 
 import { IconUsers } from '@tabler/icons-react';

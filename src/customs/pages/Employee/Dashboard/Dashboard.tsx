@@ -18,10 +18,12 @@ import {
 import moment from 'moment-timezone';
 import {
   IconBellRingingFilled,
+  IconBolt,
   IconCards,
   IconCircleMinus,
   IconLogin,
   IconLogout,
+  IconPlus,
   IconX,
 } from '@tabler/icons-react';
 import React, { useEffect, useRef, useState } from 'react';
@@ -61,6 +63,7 @@ import { useDispatch } from 'react-redux';
 import { useSelector } from 'react-redux';
 import Calendar from 'src/customs/components/calendar/Calendar';
 import { IconDownload } from '@tabler/icons-react';
+import { QuickAccessDialog } from '../../admin/content/Visitor/Trx/components/QuickAccessDialog';
 
 const DashboardEmployee = () => {
   const CardItems = [
@@ -106,6 +109,7 @@ const DashboardEmployee = () => {
   const handleClose = () => setAnchorEl(null);
   const [isExporting, setIsExporting] = useState(false);
   const exportRef = useRef<HTMLDivElement>(null);
+  const [openQuickAccess, setOpenQuickAccess] = useState(false);
 
   const start = page * rowsPerPage;
   const navigate = useNavigate();
@@ -207,7 +211,12 @@ const DashboardEmployee = () => {
   } = useQuery({
     queryKey: ['approval-ticket', page, rowsPerPage, searchKeyword, sortDir],
     queryFn: async () => {
-      return await getApprovalTicket(token as string, start, rowsPerPage, sortDir, searchKeyword);
+      return await getApprovalTicket(token, {
+        start,
+        length: rowsPerPage,
+        sort_dir: sortDir,
+        keyword: searchKeyword,
+      });
     },
     enabled: !!token,
   });
@@ -222,7 +231,7 @@ const DashboardEmployee = () => {
         approval_actor_status,
         approval_workflow_type,
         approval_status,
-        current_step,
+        // current_step,
         visitor_period_start,
         visitor_period_end,
       }: any) => ({
@@ -233,7 +242,7 @@ const DashboardEmployee = () => {
         approval_actor_status,
         approval_workflow_type,
         approval_status,
-        current_step,
+        // current_step,
         visitor_period_start,
         visitor_period_end: formatDateTime(visitor_period_end),
       }),
@@ -703,15 +712,25 @@ const DashboardEmployee = () => {
             color="primary"
             sx={{ mt: 0.5 }}
             onClick={handleOpenInviteOrCreateLink}
+            startIcon={<IconPlus />}
           >
             Invite
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            sx={{ mt: 0.5 }}
+            onClick={() => setOpenQuickAccess(true)}
+            startIcon={<IconBolt />}
+          >
+            Quick Access
           </Button>
         </Grid>
 
         <Grid size={{ xs: 12, lg: 6 }}>
           <DynamicTable
             loading={loadingApproval}
-            height={490}
+            height={450}
             overflowX="auto"
             data={approvalData}
             isHaveChecked={true}
@@ -729,7 +748,7 @@ const DashboardEmployee = () => {
         <Grid size={{ xs: 12, lg: 6 }}>
           <DynamicTable
             loading={isFetching}
-            height={490}
+            height={450}
             overflowX="auto"
             data={shareLinkList}
             isHaveChecked={true}
@@ -859,6 +878,14 @@ const DashboardEmployee = () => {
           </Box>
         </DialogContent>
       </Dialog>
+
+      <QuickAccessDialog
+        open={openQuickAccess}
+        onClose={() => setOpenQuickAccess(false)}
+        onSubmit={(data) => {
+          console.log(data);
+        }}
+      />
 
       <CreateLinkDialog
         open={openCreateLink}

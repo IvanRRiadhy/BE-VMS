@@ -1418,19 +1418,19 @@ const FormSite = ({
                     <FormControlLabel
                       control={
                         <Switch
-                          // checked={localForm.is_pickup_point}
+                          checked={localForm.is_drop_point || false}
                           onChange={(_, checked) => {
-                            setLocalForm((prev) => ({ ...prev, is_pickup_point: checked }));
+                            setLocalForm((prev) => ({ ...prev, is_drop_point: checked }));
                             if (isBatchEdit) {
-                              setEnabledFields((prev) => ({ ...prev, is_pickup_point: true }));
+                              setEnabledFields((prev) => ({ ...prev, is_drop_point: true }));
                             }
                           }}
                         />
                       }
                       label={
                         <Box display="flex" alignItems="center">
-                          Pickup Point
-                          <Tooltip title="Location for pickup or collection." arrow>
+                          Drop Point
+                          <Tooltip title="Location for drop-off or collection." arrow>
                             <IconButton size="small">
                               <InfoOutlinedIcon fontSize="small" />
                             </IconButton>
@@ -1440,7 +1440,7 @@ const FormSite = ({
                     />
                   </Box>
                 </Grid>
-                <Grid size={{ xs: 12, xl: 6 }}>
+                {/* <Grid size={{ xs: 12, xl: 6 }}>
                   <Box>
                     <FormControlLabel
                       control={
@@ -1466,7 +1466,7 @@ const FormSite = ({
                       }
                     />
                   </Box>
-                </Grid>
+                </Grid> */}
                 <Grid size={{ xs: 12, xl: 6 }}>
                   <Box>
                     <FormControlLabel

@@ -103,18 +103,14 @@ const StepContentComponent: React.FC<StepContentProps> = ({
     { value: 5, label: 'Face' },
   ];
 
-  // const options = [
-  //   { id: 1, label: 'Visitor', value: 'Visitor' },
-  //   { id: 2, label: 'Delivery', value: 'Delivery' },
-  //   { id: 3, label: 'Simple Visitor', value: 'SimpleVisitor' },
-  //   { id: 4, label: 'VIP', value: 'Vip' },
-  //   { id: 5, label: 'Vendor', value: 'Vendor' },
-  //   { id: 6, label: 'Driver', value: 'Driver' },
-  //   { id: 7, label: 'Guard', value: 'Guard' },
-  //   { id: 8, label: 'Custodian', value: 'Custodian' },
-  //   { id: 9, label: 'Employee', value: 'Employee' },
-  //   { id: 10, label: 'CIT Vendor', value: 'CITVendor' },
-  // ];
+  const options = [
+    { id: 1, name: 'Regular', value: 'Regular' },
+    { id: 2, name: 'VIP', value: 'VIP' },
+    { id: 3, name: 'Contractor', value: 'Contractor' },
+    { id: 4, name: 'Vendor', value: 'Vendor' },
+    { id: 5, name: 'Internship', value: 'Internship' },
+    { id: 6, name: 'TemporaryWorker', value: 'TemporaryWorker' },
+  ];
 
   useEffect(() => {
     if (!formData?.visitor_roles || visitorRole.length === 0) {
@@ -150,6 +146,7 @@ const StepContentComponent: React.FC<StepContentProps> = ({
   }, [formData?.visitor_roles, visitorRole]);
 
   const [value, setValue] = useState<any[]>([]);
+  const [valueVisitorProvider, setValueVisitorProvider] = useState<any | null>(null);
 
   if (activeStep === 0) {
     return (
@@ -191,7 +188,6 @@ const StepContentComponent: React.FC<StepContentProps> = ({
                   <Switch
                     checked={formData.need_document}
                     onChange={(e) => {
-                      // console.log(e.target.checked);
                       setFormData((prev: any) => ({
                         ...prev,
                         need_document: e.target.checked,
@@ -888,7 +884,7 @@ const StepContentComponent: React.FC<StepContentProps> = ({
               }
             />
           </Grid>
-          <Grid size={3} mt={1}>
+          <Grid size={12} mt={1}>
             <Box>
               <FormControlLabel
                 control={
@@ -919,7 +915,7 @@ const StepContentComponent: React.FC<StepContentProps> = ({
             </Box>
           </Grid>
 
-          <Grid size={3} mt={1}>
+          <Grid size={12} mt={1}>
             <Box>
               <FormControlLabel
                 control={
@@ -950,34 +946,36 @@ const StepContentComponent: React.FC<StepContentProps> = ({
             </Box>
           </Grid>
 
-          {/* <Grid size={12} mt={1}>
-              <Box>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={formData.simple_visitor}
-                      onChange={(e) => {
-                        setFormData((prev) => ({
-                          ...prev,
-                          simple_visitor: e.target.checked,
-                        }));
-                      }}
-                    />
-                  }
-                  label={
-                    <Box display="flex" alignItems="center">
-                      Simple Visitor
-                      <Tooltip title="When turned on, this visit type is treated as a short or minimal-duration visit.">
-                        <IconButton size="small">
-                          <InfoOutlinedIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  }
-                />
-              </Box>
-            </Grid> */}
-
+          <Grid size={12} mt={1}>
+            <Box>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={formData.is_quick_access ?? false}
+                    onChange={(e) => {
+                      setFormData((prev: any) => ({
+                        ...prev,
+                        is_quick_access: e.target.checked,
+                      }));
+                    }}
+                  />
+                }
+                label={
+                  <Box display="flex" alignItems="center">
+                    Quick Access
+                    <Tooltip
+                      title="Only one visitor type can be set as Quick Access at a time."
+                      arrow
+                    >
+                      <IconButton size="small">
+                        <InfoOutlinedIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                }
+              />
+            </Box>
+          </Grid>
           <Grid size={12} mt={1}>
             <Box>
               <FormControlLabel
@@ -1138,6 +1136,51 @@ const StepContentComponent: React.FC<StepContentProps> = ({
                   );
                 }}
               />
+            </Box>
+          </Grid>
+          <Grid size={12} mt={1}>
+            <Box>
+              <Box display="flex" alignItems="center" gap={0.5}>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    mb: 1,
+                    borderLeft: '4px solid #673ab7',
+                    pl: 1,
+                    mt: 2,
+                  }}
+                >
+                  Visitor Category
+                </Typography>
+
+                <Tooltip title="Roles that can be assigned to a visitor" arrow>
+                  <IconButton size="small" sx={{ mt: 1 }}>
+                    <InfoOutlinedIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+              <Autocomplete
+                options={options}
+                value={valueVisitorProvider}
+                disablePortal
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                getOptionLabel={(option) => option.name}
+                onChange={(_, newValue) => {
+                  setValueVisitorProvider(newValue);
+
+                  setFormData((prev: any) => ({
+                    ...prev,
+                    visitor_category: newValue?.value ?? null,
+                  }));
+                }}
+                renderInput={(params) => (
+                  <CustomTextField
+                    {...params}
+                    placeholder="Select Visitor Category"
+                    sx={{ mt: 1 }}
+                  />
+                )}
+              />{' '}
             </Box>
           </Grid>
         </Grid>

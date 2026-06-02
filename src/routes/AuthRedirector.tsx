@@ -34,7 +34,7 @@ export default function AuthRedirector() {
       else if (roleAccess === 'Manager') redirectPath = '/manager/dashboard';
       else if (roleAccess === 'Employee') redirectPath = '/employee/dashboard';
       else if (roleAccess === 'OperatorVMS') redirectPath = '/operator/view';
-      else if (roleAccess === 'OperatorAdmin') redirectPath = '/admin/dashboard';
+      else if (roleAccess === 'OperatorAdmin') redirectPath = '/operator-admin/dashboard';
       else if (roleAccess === 'Visitor') redirectPath = '/guest/dashboard';
 
       if (
