@@ -1,23 +1,11 @@
 import { useEffect, useState, useCallback, useLayoutEffect } from 'react';
-import {
-  Box,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  CircularProgress,
-  Divider,
-  Grid2 as Grid,
-  IconButton,
-  Backdrop,
-} from '@mui/material';
+import { Box, CircularProgress, Divider, Grid2 as Grid, IconButton, Backdrop } from '@mui/material';
 import {
   AdminCustomSidebarItemsData,
   AdminNavListingData,
 } from 'src/customs/components/header/navigation/AdminMenu';
 import PageContainer from 'src/customs/components/container/PageContainer';
 import Container from 'src/components/container/PageContainer';
-
-import CloseIcon from '@mui/icons-material/Close';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import {
   CreateVisitorTypeRequest,
@@ -26,7 +14,6 @@ import {
   updateVisitorTypeSchmea,
   UpdateVisitorTypeRequest,
 } from 'src/customs/api/models/Admin/VisitorType';
-import FormVisitorType from './FormVisitorType';
 import { useSession } from 'src/customs/contexts/SessionContext';
 
 import {
@@ -44,7 +31,7 @@ import { showConfirmDelete, showSwal } from 'src/customs/components/alerts/alert
 import ConfirmUnsavedDialog from '../../components/ConfirmUnsavedDialog';
 import { getVisitorTypeAccessByVisitorId } from 'src/customs/api/VisitorType/Access';
 import VisitorTypeDialog from './components/VisitorTypeDialog';
-import { updateVisitorTypeActive } from 'src/customs/api/Admin/VisitorType';
+import { updateQuickVisitorType, updateVisitorTypeActive } from 'src/customs/api/Admin/VisitorType';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 
 type VisitorTypeTableRow = {
@@ -502,6 +489,19 @@ const Content = () => {
     }
   };
 
+  const handleQuickAccessToggle = async (row: any, checked: boolean) => {
+    try {
+      setLoadingData(true);
+      await updateQuickVisitorType(token as string, row.id, checked);
+      showSwal('success', 'Quick Access successfully updated');
+      setRefreshTrigger((prev) => prev + 1);
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.msg || 'Failed to update status active');
+    } finally {
+      setLoadingData(false);
+    }
+  };
+
   return (
     <PageContainer
       itemDataCustomNavListing={AdminNavListingData}
@@ -553,11 +553,12 @@ const Content = () => {
                 searchKeyword={search}
                 onSearch={handleSearch}
                 onAddData={handleAdd}
-                onBooleanSwitchChange={(row, col, checked) =>
-                  handleBooleanSwitch(row, col as keyof VisitorTypeTableRow, checked)
-                }
+                // onBooleanSwitchChange={(row, col, checked) =>
+                //   handleBooleanSwitch(row, col as keyof VisitorTypeTableRow, checked)
+                // }
                 isHaveActive={true}
                 onActiveToggle={handleActiveToggle}
+                onQuickAccessToggle={handleQuickAccessToggle}
               />
             </Grid>
           </Grid>

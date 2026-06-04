@@ -1,11 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-  Backdrop,
-  Box,
-  CircularProgress,
-  Grid2 as Grid,
-  Portal,
-} from '@mui/material';
+import { Backdrop, Box, CircularProgress, Grid2 as Grid, Portal } from '@mui/material';
 import Container from 'src/components/container/PageContainer';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
@@ -57,6 +51,7 @@ import {
 } from 'src/customs/api/UserGroup';
 import ConfirmUnsavedDialog from '../../../components/ConfirmUnsavedDialog';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
+import useDropPoint from 'src/hooks/useDropPoint';
 
 const Content = () => {
   const { token } = useSession();
@@ -73,6 +68,7 @@ const Content = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [siteOptions, setSiteOptions] = useState<any[]>([]);
+  const { dropPoint } = useDropPoint(token);
   const [permissionSites, setPermissionSites] = useState<Record<string, string[]>>({});
   const [regsiteredSiteOptions, setRegisteredSiteOptions] = useState<any[]>([]);
   const [organizationSiteOptions, setOrganizationSiteOptions] = useState<any[]>([]);
@@ -319,6 +315,7 @@ const Content = () => {
         visitorType,
         manageSite,
         siteAssignment,
+        dropPoint,
       });
 
       setPermissionSites((prev) => ({
@@ -382,6 +379,7 @@ const Content = () => {
     'VisitorTypeAssignment',
     'SiteAssignment',
     'ManageVisitorTypeScope',
+    'DropPoint',
   ];
 
   const getDropdownOptions = (perm: string) => {
@@ -420,6 +418,7 @@ const Content = () => {
       'AllowSSOActiveDirectory',
       // 'External',
       // 'ManageTeam',
+
       'VisitorTypeAssignment',
       'OrganizationAssignment',
       'SiteAssignment',
@@ -475,6 +474,7 @@ const Content = () => {
     manageSite: [] as any[],
     visitorType: [] as any[],
     siteAssignment: [] as any[],
+    dropPoint: [] as any[],
   });
 
   const handleSubmitPermission = async () => {
@@ -741,6 +741,7 @@ const Content = () => {
       manageSite: [],
       deleted_access_ids: [],
       siteAssignment: [],
+      dropPoint: [],
     });
 
     setPermissionSites({});
@@ -787,6 +788,7 @@ const Content = () => {
       manageSite: [],
       deleted_access_ids: [],
       siteAssignment: [],
+      dropPoint: [],
     });
 
     setPermissionSites({});
@@ -887,6 +889,7 @@ const Content = () => {
         siteOptions={siteOptions}
         permissionSites={permissionSites}
         setPermissionSites={setPermissionSites}
+        dropPoint={dropPoint}
         organizationSiteOptions={organizationSiteOptions}
         regsiteredSiteOptions={regsiteredSiteOptions}
         visitorTypeOptions={visitorTypeOptions}

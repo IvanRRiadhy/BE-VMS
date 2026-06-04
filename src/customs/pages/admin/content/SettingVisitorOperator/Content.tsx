@@ -44,6 +44,7 @@ import FormSettingRegisteredSite from './FormSettingRegisteredSite';
 import { getApprovalWorkflowByDt } from 'src/customs/api/Admin/ApprovalWorkflow';
 import VisitorCardSetting from './VisitorCardSetting';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
+import NotificationSetting from './NotificationSetting';
 
 type SettingSMTPRow = {
   id: number;
@@ -274,7 +275,7 @@ const Content = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [sortDir, setSortDir] = useState('desc');
-    const { page, search, setPage, setSearch } = useTableQueryParams();
+  const { page, search, setPage, setSearch } = useTableQueryParams();
   const [tableData, setTableData] = useState<any[]>([]);
 
   useEffect(() => {
@@ -283,13 +284,7 @@ const Content = () => {
       setLoading(true);
       try {
         const start = page * rowsPerPage;
-        const response = await getApprovalWorkflowByDt(
-          token,
-          start,
-          rowsPerPage,
-          sortDir,
-          search,
-        );
+        const response = await getApprovalWorkflowByDt(token, start, rowsPerPage, sortDir, search);
         setTableData(response.collection.map(({ conditions, ...rest }: any) => rest));
         setTotalRecords(response.RecordsTotal);
       } catch (error) {
@@ -340,6 +335,7 @@ const Content = () => {
               {/* <Tab label="Operator Setting" /> */}
               <Tab label="Approval Workflow" />
               <Tab label="Visitor Card Setting" />
+              <Tab label="Notification Setting" />
             </Tabs>
 
             <Box
@@ -437,17 +433,12 @@ const Content = () => {
 
               {tabIndex === 2 ? (
                 <Box sx={{ overflowX: 'auto', p: { xs: 0, md: 2 }, height: '100%' }}>
-                  {!showForm ? (
-                    // <VisitorCardSetting
-                    //   tableData={tableData}
-                    //   searchKeyword={searchKeyword}
-                    //   setSearchKeyword={setSearchKeyword}
-                    //   searchInput={searchInput}
-                    //   setSearchInput={setSearchInput}
-                    //   refreshTrigger={refreshTrigger}
-                    //   setRefreshTrigger={setRefreshTrigger}
-                    <VisitorCardSetting />
-                  ) : null}
+                  {!showForm ? <VisitorCardSetting /> : null}
+                </Box>
+              ) : null}
+              {tabIndex === 3 ? (
+                <Box sx={{ overflowX: 'auto', p: { xs: 0, md: 2 }, height: '100%' }}>
+                  {!showForm ? <NotificationSetting /> : null}
                 </Box>
               ) : null}
             </Box>

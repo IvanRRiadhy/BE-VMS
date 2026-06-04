@@ -604,7 +604,7 @@ const StepContentComponent: React.FC<StepContentProps> = ({
             </CustomFormLabel>
             <CustomTextField
               id="expiry_reminder_minutes"
-              value={formData.expiry_reminder_minutes ?? ''}
+              value={formData.expiry_reminder_minutes ?? 0}
               onChange={(e: any) => {
                 setFormData((prev: any) => ({
                   ...prev,
@@ -920,7 +920,7 @@ const StepContentComponent: React.FC<StepContentProps> = ({
               <FormControlLabel
                 control={
                   <Switch
-                    // checked={formData.is_multi_site ?? false}
+                    checked={formData.is_multi_site ?? false}
                     onChange={(e) => {
                       setFormData((prev: any) => ({
                         ...prev,
@@ -945,7 +945,7 @@ const StepContentComponent: React.FC<StepContentProps> = ({
               />
             </Box>
           </Grid>
-
+{/* 
           <Grid size={12} mt={1}>
             <Box>
               <FormControlLabel
@@ -975,7 +975,7 @@ const StepContentComponent: React.FC<StepContentProps> = ({
                 }
               />
             </Box>
-          </Grid>
+          </Grid> */}
           <Grid size={12} mt={1}>
             <Box>
               <FormControlLabel
@@ -1161,7 +1161,8 @@ const StepContentComponent: React.FC<StepContentProps> = ({
               </Box>
               <Autocomplete
                 options={options}
-                value={valueVisitorProvider}
+                // value={valueVisitorProvider}
+                value={options.find((x) => x.value === formData.visitor_category) ?? null}
                 disablePortal
                 isOptionEqualToValue={(option, value) => option.id === value.id}
                 getOptionLabel={(option) => option.name}

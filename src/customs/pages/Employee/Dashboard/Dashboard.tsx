@@ -63,7 +63,9 @@ import { useDispatch } from 'react-redux';
 import { useSelector } from 'react-redux';
 import Calendar from 'src/customs/components/calendar/Calendar';
 import { IconDownload } from '@tabler/icons-react';
-import { QuickAccessDialog } from '../../admin/content/Visitor/Trx/components/QuickAccessDialog';
+
+import { createQuickAccess } from 'src/customs/api/Admin/Visitor';
+import { QuickAccessDialog } from '../Components/Dialog/QuickAccessDialog';
 
 const DashboardEmployee = () => {
   const CardItems = [
@@ -71,11 +73,6 @@ const DashboardEmployee = () => {
     { title: 'checkout', key: 'Checkout', icon: <IconLogout size={25} /> },
     { title: 'denied', key: 'Denied', icon: <IconX size={25} /> },
     { title: 'block', key: 'Block', icon: <IconCircleMinus size={25} /> },
-    // {
-    //   title: 'blacklist',
-    //   key: 'blacklist',
-    //   icon: <IconUsersGroup size={22} />,
-    // },
   ];
 
   const { token } = useSession();
@@ -576,6 +573,20 @@ const DashboardEmployee = () => {
     }
   };
 
+  const handleCreateQuickAccess = async (payload: any) => {
+    try {
+      await createQuickAccess(token, payload);
+
+      showSwal('success', 'Quick access created successfully');
+
+      setOpenQuickAccess(false);
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.message || 'Failed to create quick access');
+
+      throw error;
+    }
+  };
+
   return (
     <PageContainer title="Dashboard" description="This is Employee Dashboard">
       <Grid container spacing={3} alignItems="center" justifyContent="space-between" mb={1}>
@@ -882,9 +893,8 @@ const DashboardEmployee = () => {
       <QuickAccessDialog
         open={openQuickAccess}
         onClose={() => setOpenQuickAccess(false)}
-        onSubmit={(data) => {
-          console.log(data);
-        }}
+        visitorTableData={[]}
+        onSubmit={handleCreateQuickAccess}
       />
 
       <CreateLinkDialog

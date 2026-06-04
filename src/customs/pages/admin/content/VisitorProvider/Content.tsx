@@ -174,7 +174,7 @@ const Content = () => {
     if (!token) return;
 
     const confirmed = await showConfirmDelete(
-      `Are you sure you want to delete this Visitor Provider"?`,
+      `Are you sure you want to delete this Visitor Provider?`,
     );
 
     if (confirmed) {
@@ -197,8 +197,6 @@ const Content = () => {
 
       setEditingId(id);
       const res = await getVisitorProvidersById(token, id);
-      // console.log('res', res.collection);
-
       setLocalForm(res.collection);
       setInitialForm(res.collection);
 

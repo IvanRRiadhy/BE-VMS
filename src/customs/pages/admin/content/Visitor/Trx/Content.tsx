@@ -82,6 +82,7 @@ import InvitationVisitorDialog from './components/InvitationVisitorDialog';
 import PreRegistrationDialog from './components/PreRegistrationDialog';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import { QuickAccessDialog } from './components/QuickAccessDialog';
+import { createQuickAccess } from 'src/customs/api/Admin/Visitor';
 
 const Content = () => {
   const { token } = useSession();
@@ -303,19 +304,39 @@ const Content = () => {
           visitor_status: isExpired ? 'Expired' : item.visitor_status || '-',
         };
       })
-      .sort(
-        (a: any, b: any) =>
-          dayjs(b.invitation_created_at).valueOf() - dayjs(a.invitation_created_at).valueOf(),
-      )
+      .sort((a: any, b: any) => {
+        const dateA = a.invitation_created_at ?? a.visitor_period_start;
+        const dateB = b.invitation_created_at ?? b.visitor_period_start;
+
+        return dayjs(dateB).valueOf() - dayjs(dateA).valueOf();
+      })
       .map(({ invitation_created_at, ...rest }: any) => rest);
   }, [allVisitorData]);
 
+  const quickAccessData = useMemo(
+    () => processedData.filter((item: any) => item.visitor_status === 'QuickAccess'),
+    [processedData],
+  );
+
+  const visitorDataAll = useMemo(
+    () => processedData.filter((item: any) => item.visitor_status !== 'QuickAccess'),
+    [processedData],
+  );
+
   const paginatedData = useMemo(() => {
-    return processedData.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
+    return visitorDataAll.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
   }, [processedData, page, rowsPerPage]);
+
+  const [quickPage, setQuickPage] = useState(0);
+  const [quickRowsPerPage, setQuickRowsPerPage] = useState(10);
+
+  const paginatedQuickAccess = useMemo(() => {
+    return quickAccessData.slice(quickPage * quickRowsPerPage, (quickPage + 1) * quickRowsPerPage);
+  }, [quickAccessData, quickPage, quickRowsPerPage]);
 
   const visitorTableData = {
     data: paginatedData,
+    dataQuickAccess: paginatedQuickAccess,
     RecordsFiltered: processedData.length,
     RecordsTotal: processedData.length,
   };
@@ -697,6 +718,8 @@ const Content = () => {
     [setPage, setSearch],
   );
 
+ 
+
   const handleSelectSite = (site: any) => {
     setFormDataAddVisitor((prev) => ({
       ...prev,
@@ -709,6 +732,20 @@ const Content = () => {
       setOpenInvitationVisitor(true);
     } else if (flowTarget === 'preReg') {
       setOpenPreRegistration(true);
+    }
+  };
+
+  const handleCreateQuickAccess = async (payload: any) => {
+    try {
+      await createQuickAccess(token, payload);
+
+      showSwal('success', 'Quick access created successfully');
+
+      setOpenQuickAccess(false);
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.message || 'Failed to create quick access');
+
+      throw error;
     }
   };
 
@@ -813,7 +850,7 @@ const Content = () => {
                     setPage(0);
                     setAppliedFilters((prev: any) => ({
                       ...prev,
-                      status: item.name === 'All' ? undefined : item.name,
+                      status: item.name === 'All' ? 0 : item.name,
                     }));
                   }
                 }}
@@ -947,9 +984,12 @@ const Content = () => {
       <QuickAccessDialog
         open={openQuickAccess}
         onClose={() => setOpenQuickAccess(false)}
-        onSubmit={(data) => {
-          console.log(data);
-        }}
+        visitorTableData={visitorTableData.dataQuickAccess}
+        handleEmployeeClick={handleEmployeeClick}
+        onSubmit={handleCreateQuickAccess}
+        page={quickPage}
+        setPage={setQuickPage}
+        setRowsPerPage={setQuickRowsPerPage}
       />
 
       {/* Dialog Confirm */}

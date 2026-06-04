@@ -2618,7 +2618,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
       </TreeItem>
     );
   };
-  
+
   const getVisibilityMap = (details: any[]) => {
     const getFlag = (key: string) => {
       const field = details.find((f: any) => f.remarks?.toLowerCase() === key);
@@ -3010,7 +3010,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       value: site.id,
                       name: site.name,
                       // disabled: site.can_visited === false,
-                      disabled: false,
+                      disabled: site.is_drop_point === true,
                       can_visited: site.can_visited,
                       helperText: site.can_visited === false ? 'This site cannot be visited.' : '',
                     }));
@@ -3019,125 +3019,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                       typeof opt === 'object' ? opt : { value: opt, name: opt },
                     );
                   }
-                  // if (item.remarks === 'site_place') {
-                  //   return (
-                  //     <>
-                  //       <Autocomplete
-                  //         multiple
-                  //         size="small"
-                  //         options={options}
-                  //         getOptionLabel={(option) => option.name}
-                  //         getOptionDisabled={(option) => option.disabled === true}
-                  //         inputValue={
-                  //           isSelfOnly
-                  //             ? selfOnlyInputValuesMap[selfOnlyVisitorIdx]?.[originalIndex] || ''
-                  //             : inputValues[originalIndex] || ''
-                  //         }
-                  //         onInputChange={(_, newInputValue, reason) => {
-                  //           if (reason !== 'input') return;
 
-                  //           if (isSelfOnly) {
-                  //             setSelfOnlyInputValuesMap((prev: any) => ({
-                  //               ...prev,
-                  //               [selfOnlyVisitorIdx]: {
-                  //                 ...(prev[selfOnlyVisitorIdx] || {}),
-                  //                 [originalIndex]: newInputValue,
-                  //               },
-                  //             }));
-                  //           } else {
-                  //             setInputValues((prev: any) => ({
-                  //               ...prev,
-                  //               [originalIndex]: newInputValue,
-                  //             }));
-                  //           }
-                  //         }}
-                  //         filterOptions={(opts, state) => {
-                  //           if (state.inputValue.length < 3) return [];
-                  //           return opts.filter((opt) =>
-                  //             opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
-                  //           );
-                  //         }}
-                  //         noOptionsText={
-                  //           (
-                  //             (isSelfOnly
-                  //               ? selfOnlyInputValuesMap[selfOnlyVisitorIdx]?.[originalIndex]
-                  //               : inputValues[originalIndex]) || ''
-                  //           ).length < 3
-                  //             ? 'Enter at least 3 characters to search'
-                  //             : 'Not found'
-                  //         }
-                  //         value={options.filter((opt) =>
-                  //           (isSelfOnly
-                  //             ? selfOnlySelectedSiteParentIdsMap[selfOnlyVisitorIdx] || []
-                  //             : selectedSiteParentIds
-                  //           ).includes(opt.value),
-                  //         )}
-                  //         onChange={(_, newValues) => {
-                  //           // Pastikan hanya site yang dapat dikunjungi yang diproses
-                  //           const validValues = newValues.filter((v) => v.disabled !== true);
-
-                  //           const parentIds = validValues.map((v) => v.value);
-
-                  //           const rawTrees = parentIds.flatMap((pid) =>
-                  //             buildSiteTreeWithParent(sites, pid),
-                  //           );
-
-                  //           const uniqueTrees = dedupeTree(rawTrees);
-
-                  //           if (isSelfOnly) {
-                  //             setSelfOnlySelectedSiteParentIdsMap((prev: any) => ({
-                  //               ...prev,
-                  //               [selfOnlyVisitorIdx]: parentIds,
-                  //             }));
-
-                  //             setSelfOnlyInputValuesMap((prev: any) => ({
-                  //               ...prev,
-                  //               [selfOnlyVisitorIdx]: {
-                  //                 ...(prev[selfOnlyVisitorIdx] || {}),
-                  //                 [originalIndex]: '',
-                  //               },
-                  //             }));
-
-                  //             setSelfOnlySiteTreeMap((prev: any) => ({
-                  //               ...prev,
-                  //               [selfOnlyVisitorIdx]: uniqueTrees,
-                  //             }));
-                  //           } else {
-                  //             setSelectedSiteParentIds(parentIds);
-
-                  //             setInputValues((prev: any) => ({
-                  //               ...prev,
-                  //               [originalIndex]: '',
-                  //             }));
-
-                  //             setSiteTree(uniqueTrees);
-                  //           }
-                  //         }}
-                  //         renderInput={(params) => (
-                  //           <CustomTextField
-                  //             {...params}
-                  //             placeholder="Enter at least 3 characters to search"
-                  //             fullWidth
-                  //             error={!!errorMessage}
-                  //             helperText={errorMessage}
-                  //           />
-                  //         )}
-                  //       />
-
-                  //       {(isSelfOnly ? selfOnlySiteTreeMap[selfOnlyVisitorIdx] || [] : siteTree)
-                  //         .length > 0 && (
-                  //         <SimpleTreeView>
-                  //           {(isSelfOnly
-                  //             ? selfOnlySiteTreeMap[selfOnlyVisitorIdx] || []
-                  //             : siteTree
-                  //           ).map((node) =>
-                  //             renderTree(node, originalIndex, handleSitePlaceChange, isSelfOnly),
-                  //           )}
-                  //         </SimpleTreeView>
-                  //       )}
-                  //     </>
-                  //   );
-                  // }
                   if (item.remarks === 'site_place') {
                     return (
                       <>

@@ -7,10 +7,10 @@ import { useSession } from 'src/customs/contexts/SessionContext';
 import useDropPoint from 'src/hooks/useDropPoint';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import useInvitationVisitorEmployee from 'src/hooks/useInvitationVisitorEmployee';
-import FormQuickAccess from './Dialog/FormQuickAccess';
+import FormQuickAccess from './FormQuickAccess';
 import { getVisitorById } from 'src/customs/api/admin';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
-import TemporaryAccessDialog from './Dialog/TemporaryAccessDialog';
+import TemporaryAccessDialog from './TemporaryAccessDialog';
 
 interface QuickAccessDialogProps {
   open: boolean;
@@ -18,9 +18,6 @@ interface QuickAccessDialogProps {
   onSubmit?: any;
   visitorTableData?: any[];
   handleEmployeeClick?: any;
-  page?: any;
-  setPage?: any;
-  setRowsPerPage?: any;
 }
 
 export interface QuickAccessFormData {
@@ -46,9 +43,6 @@ export const QuickAccessDialog = ({
   onSubmit,
   visitorTableData,
   handleEmployeeClick,
-  page,
-  setPage,
-  setRowsPerPage,
 }: QuickAccessDialogProps) => {
   const handleChange = (field: keyof QuickAccessFormData, value: string | number | null) => {
     setForm((prev) => ({
@@ -108,7 +102,7 @@ export const QuickAccessDialog = ({
           receiver_email: form.receiverEmail,
         }),
         duration: Number(form.duration),
-        host_id: form.hostId,
+        // host_id: form.hostId,
         site_id: form.siteId,
         ...(needPlateNumber && {
           vehicle_plate_number: form.vehiclePlateNumber,
@@ -120,7 +114,9 @@ export const QuickAccessDialog = ({
       console.log('payload', payload);
       await onSubmit?.(payload);
       setOpenQuickAccess(false);
-    } catch (error) {}
+
+    } catch (error) {
+    }
   };
 
   const selectedProvider = visitorProviders?.find((item) => item.id === form.visitorProviderId);
@@ -215,18 +211,11 @@ export const QuickAccessDialog = ({
         <DialogContent dividers sx={{ p: 0 }}>
           <DynamicTable
             data={visitorTableData || []}
-            isHaveSearch={false}
+            isHaveSearch
             isHaveAddData
             isHavePeriod={true}
             isHaveEmployee={true}
-            currentPage={page}
             isActionEmployee={true}
-            isHavePagination={true}
-            rowsPerPageOptions={[10, 50, 100]}
-            onPaginationChange={(page, rowsPerPage) => {
-              setPage(page);
-              setRowsPerPage(rowsPerPage);
-            }}
             isHaveChecked={true}
             onAddData={handleAddData}
             isHaveDataQuickAccess={true}

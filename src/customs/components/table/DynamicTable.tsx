@@ -34,12 +34,7 @@ import {
   IconPlus,
   IconPrinter,
 } from '@tabler/icons-react';
-import {
-  AddCircle,
-  ArrowLeft,
-  CalendarMonth,
-  ChecklistOutlined,
-} from '@mui/icons-material';
+import { AddCircle, ArrowLeft, CalendarMonth, ChecklistOutlined } from '@mui/icons-material';
 import EditIconOutline from '@mui/icons-material/Edit';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import Calendar from '../calendar/Calendar';
@@ -87,6 +82,7 @@ type DynamicTableProps<
   isHaveConnection?: boolean;
   isHaveActive?: boolean;
   onActiveToggle?: any;
+  onQuickAccessToggle?: any;
   onCheckConnection?: any;
   onExportPdf?: () => void;
   onExportCsv?: () => void;
@@ -169,6 +165,8 @@ type DynamicTableProps<
   filterMoreContent?: React.ReactNode;
   sortColumns?: string[];
   isOperatorSetting?: boolean;
+  isHaveDataQuickAccess?: boolean;
+  onDetailQuickAccess?: (row: T) => void;
   isBlacklistPage?: boolean;
   onNavigatePage?: any;
   onDuplicate?: (row: T) => void;
@@ -256,6 +254,8 @@ function DynamicTableBase<
     isBlacklistPage = false,
     isActionListVisitor = false,
     isHaveVerified = false,
+    isHaveDataQuickAccess,
+    onDetailQuickAccess,
     isHaveView = false,
     isHaveAccess = false,
     isCopyLink = false,
@@ -264,6 +264,7 @@ function DynamicTableBase<
     isCurrentUsed = false,
     isButtonDisabled = false,
     isButtonEnabled = false,
+    onQuickAccessToggle,
     isHaveEmployee = false,
     isHaveViewAndAction = false,
     isHaveCard = false,
@@ -715,6 +716,11 @@ function DynamicTableBase<
     }
   }, [selectedHeaderItem]);
 
+  const selectedTabIndex = Math.max(
+    0,
+    headerContent?.items.findIndex((item) => item.name === selectedHeaderItem) ?? 0,
+  );
+
   return (
     <>
       {/* HEADER */}
@@ -734,12 +740,16 @@ function DynamicTableBase<
                       {headerContent.title}
                     </Typography>
                     <Tabs
-                      value={headerContent.items.findIndex(
-                        (item) => item.name === selectedHeaderItem,
-                      )}
+                      value={headerContent.items.findIndex((item) => item.name === selectedHeader)}
+                      // onChange={(_e, newValue) => {
+                      //   const selectedItem = headerContent.items[newValue];
+                      //   // setSelectedHeaderItem(selectedItem.name);
+                      //   onHeaderItemClick?.(selectedItem);
+                      // }}
                       onChange={(_e, newValue) => {
                         const selectedItem = headerContent.items[newValue];
-                        // setSelectedHeaderItem(selectedItem.name);
+
+                        setSelectedHeader(selectedItem.name);
                         onHeaderItemClick?.(selectedItem);
                       }}
                       variant="scrollable"
@@ -1406,6 +1416,24 @@ function DynamicTableBase<
                       </TableCell>
                     )}
 
+                    {isHaveDataQuickAccess && (
+                      <TableCell
+                        sx={{
+                          position: 'sticky',
+                          right: 0,
+                          background: 'white',
+                          zIndex: 2,
+                          textAlign: 'center',
+                        }}
+                      >
+                        {loading ? (
+                          <Skeleton variant="text" width="40%" height={18} animation="wave" />
+                        ) : (
+                          'Action'
+                        )}
+                      </TableCell>
+                    )}
+
                     {isCopyLink && (
                       <TableCell
                         sx={{
@@ -1520,9 +1548,12 @@ function DynamicTableBase<
                   isDataVerified={isDataVerified}
                   tooltipLabels={tooltipLabels}
                   isHavePdf={isHavePdf}
+                  isHaveDataQuickAccess={isHaveDataQuickAccess}
+                  onDetailQuickAccess={onDetailQuickAccess}
                   onFileClick={onFileClick}
                   isHaveActive={isHaveActive}
                   onActiveToggle={onActiveToggle}
+                  onQuickAccessToggle={onQuickAccessToggle}
                   isHaveVerified={isHaveVerified}
                   visiblePasswords={visiblePasswords}
                   togglePassword={togglePassword}

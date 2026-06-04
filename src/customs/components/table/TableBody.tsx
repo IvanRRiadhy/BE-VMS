@@ -81,6 +81,8 @@ export const TableBodyContent = ({
   page,
   isActionEmployee,
   isHaveVip,
+  isHaveDataQuickAccess,
+  onDetailQuickAccess,
   htmlFields,
   htmlClampLines,
   htmlMaxWidth,
@@ -97,6 +99,7 @@ export const TableBodyContent = ({
   tooltipLabels,
   isHavePdf,
   onFileClick,
+  onQuickAccessToggle,
   isHaveVerified,
   visiblePasswords,
   isCurrentUsed,
@@ -332,11 +335,14 @@ export const TableBodyContent = ({
                 htmlClampLines,
                 isHaveActive,
                 onActiveToggle,
+                onQuickAccessToggle,
                 htmlMaxWidth,
                 isAccessControlType,
                 isHavePeriod,
                 isHaveEmployee,
                 isHaveGender,
+                isHaveDataQuickAccess,
+                onDetailQuickAccess,
                 isSiteSpaceType,
                 isHaveDuplicate,
                 onDuplicate,
@@ -431,6 +437,7 @@ const TableRowItem = React.memo(
       onActiveToggle,
       isHaveImage,
       imageFields,
+      onQuickAccessToggle,
       isDataVerified,
       tooltipLabels,
       isHavePdf,
@@ -438,6 +445,8 @@ const TableRowItem = React.memo(
       isHaveVerified,
       isHaveDuplicate,
       onDuplicate,
+      isHaveDataQuickAccess,
+      onDetailQuickAccess,
       visiblePasswords,
       togglePassword,
       isHavePassword,
@@ -879,6 +888,17 @@ const TableRowItem = React.memo(
                     }}
                   />
                 </Box>
+              ) : isHaveActive && col === 'quick_access' ? (
+                <Box display="flex" alignItems="center" justifyContent="start" width="100%">
+                  <Switch
+                    checked={Boolean(row.quick_access)}
+                    color="primary"
+                    size="small"
+                    onChange={(_, checked) => {
+                      onQuickAccessToggle?.(row, checked);
+                    }}
+                  />
+                </Box>
               ) : (isDataVerified && col === 'secure') ||
                 (isDataVerified && col === 'active') ||
                 col === 'can_upload' ||
@@ -1071,7 +1091,9 @@ const TableRowItem = React.memo(
                 <Box display="flex" alignItems="center" width={'100%'} justifyContent={'center'}>
                   <Switch
                     checked={row[col] as boolean}
-                    onChange={(_, checked) => onBooleanSwitchChange?.(row.id, col, checked)}
+                    onChange={(_, checked) => {
+                      onBooleanSwitchChange?.(row.id, col, checked);
+                    }}
                     color="primary"
                     size="small"
                   />
@@ -1109,44 +1131,6 @@ const TableRowItem = React.memo(
                   ) : (
                     String(row[col] ?? '-')
                   )}
-
-                  {/* {isHaveVerified &&
-                                    col === 'email' &&
-                                    (col == 'is_email_verified' ? (
-                                      <Tooltip title="Email Verified">
-                                        <Box
-                                          sx={{
-                                            // mt: '25px',
-                                            backgroundColor: 'green',
-                                            borderRadius: '50%',
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            marginLeft: '5px',
-                                            padding: '1px',
-                                          }}
-                                        >
-                                          <IconCheck color="white" size={16} />
-                                        </Box>
-                                      </Tooltip>
-                                    ) : (
-                                      <Tooltip title="Email Not Verified">
-                                        <Box
-                                          sx={{
-                                            // mt: '25px',
-                                            backgroundColor: 'red',
-                                            borderRadius: '50%',
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            marginLeft: '5px',
-                                            padding: '1px',
-                                          }}
-                                        >
-                                          <IconX color="white" size={16} />
-                                        </Box>
-                                      </Tooltip>
-                                    ))} */}
                 </>
               )}
             </TableCell>
@@ -1155,6 +1139,30 @@ const TableRowItem = React.memo(
         {isHaveCard && (
           <TableCell>
             <Typography variant="body2" color="text.secondary"></Typography>
+          </TableCell>
+        )}
+
+        {isHaveDataQuickAccess && (
+          <TableCell>
+            <Box display="flex" alignItems="end">
+              <Tooltip title="Detail Quick Access">
+                <IconButton
+                  onClick={() => onDetailQuickAccess?.(row.id)}
+                  disableRipple
+                  sx={{
+                    color: 'white',
+                    backgroundColor: 'gray',
+                    width: 32,
+                    height: 32,
+                    padding: 0.5,
+                    borderRadius: '50%',
+                    '&:hover': { backgroundColor: 'gray', color: 'white' },
+                  }}
+                >
+                  <IconEye width={20} height={20} />
+                </IconButton>
+              </Tooltip>
+            </Box>
           </TableCell>
         )}
 
@@ -1758,6 +1766,7 @@ const TableRowItem = React.memo(
                     height: 28,
                     padding: 0.5,
                     borderRadius: '50%',
+
                     '&:hover': { backgroundColor: '#e06f52', color: 'white' },
                   }}
                 >

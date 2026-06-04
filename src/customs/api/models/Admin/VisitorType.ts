@@ -159,7 +159,7 @@ export const CreateVisitorTypeRequestSchema = z.object({
   can_track_cctv: z.boolean().default(false),
   need_document: z.boolean().default(false),
   grace_time: z.number().default(0),
-  expiry_reminder_minutes: z.number().default(0),
+  expiry_reminder_minutes: z.coerce.number().default(0),
   direct_visit: z.boolean().default(false),
   period: z.number().default(0),
   can_notification_arrival: z.boolean().default(false),
@@ -167,11 +167,12 @@ export const CreateVisitorTypeRequestSchema = z.object({
   is_enable: z.boolean().default(false),
   // can_track_ble: z.boolean().default(false).optional(),
   can_track_ble: z.boolean().nullable().optional(),
+  is_multi_site: z.boolean().default(false),
   // prefix: z.string().default(''),
   vip: z.boolean().default(false),
   simple_visitor: z.boolean().default(false),
   simple_period: z.boolean().default(false),
-  is_quick_access: z.boolean().default(false),
+  is_quick_access: z.boolean().nullable().optional().default(false),
   visitor_category: z.string().optional().nullable(),
   visitor_type_accesses: z
     .array(
@@ -236,10 +237,11 @@ export const updateVisitorTypeSchmea = z.object({
   is_primary: z.boolean().optional(),
   is_enable: z.boolean().optional(),
   vip: z.boolean().optional(),
+  is_multi_site: z.boolean().optional(),
   simple_visitor: z.boolean().default(false),
   simple_period: z.boolean().default(false),
-  expiry_reminder_minutes: z.number().default(0),
-  is_quick_access: z.boolean().default(false),
+  expiry_reminder_minutes: z.coerce.number().default(0),
+  is_quick_access: z.boolean().nullable().optional().default(false),
   visitor_category: z.string().optional().nullable(),
   visitor_roles: z
     .array(

@@ -167,3 +167,27 @@ export const createSubmitGroupShareLink = async (
     throw error;
   }
 };
+
+// get inviation site drop point
+export const getInvitationSiteDropPoint = async (token: string): Promise<any> => {
+  try {
+    const response = await axiosInstance.get('/invitation-site/drop-point', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw error;
+  }
+};
+
+// get visitor provider
+export const getVisitorProvider = async (token: string): Promise<any> => {
+  try {
+    const response = await axiosInstance.get('/invitation-visitor-provider', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw error;
+  }
+};

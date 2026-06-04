@@ -2749,7 +2749,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                       value: site.id,
                       name: site.name,
                       // disabled: site.can_visited === false,
-                      disabled: false,
+                      disabled: site.is_drop_point === true,
                       can_visited: site.can_visited,
                       helperText: site.can_visited === false ? 'This site cannot be visited.' : '',
                     }));

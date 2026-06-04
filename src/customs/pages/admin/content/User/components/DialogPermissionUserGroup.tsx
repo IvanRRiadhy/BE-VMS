@@ -39,7 +39,7 @@ interface Props {
 
   selectedRoleAccess: string;
   groupPermissionMap: Record<string, string[]>;
-
+  dropPoint: any;
   formData: any;
   setFormData: React.Dispatch<React.SetStateAction<any>>;
 
@@ -67,6 +67,7 @@ const DialogPermissionUserGroup: React.FC<Props> = ({
   groupPermissionMap,
   formData,
   setFormData,
+  dropPoint,
   permissionSites,
   setPermissionSites,
   organizationSiteOptions,
@@ -116,6 +117,7 @@ const DialogPermissionUserGroup: React.FC<Props> = ({
               <Grid
                 size={
                   perm === 'SiteAssignment' ||
+                  perm === 'DropPoint' ||
                   perm === 'OperatorRegisterSite' ||
                   perm === 'ManageVisitor' ||
                   perm === 'ManageSiteScope' ||
@@ -345,26 +347,41 @@ const DialogPermissionUserGroup: React.FC<Props> = ({
                   )}
 
                   {checked && perm === 'SiteAssignment' && (
-                    <Autocomplete
-                      multiple
-                      options={siteOptions}
-                      getOptionLabel={(option: any) => option.name || ''}
-                      value={siteOptions.filter((opt: any) => formData.siteAssignment.includes(opt.id))}
-                      onChange={(_, newValues) => {
-                        setFormData((prev: any) => ({
-                          ...prev,
-                          siteAssignment: newValues.map((v: any) => v.id),
-                        }));
-                      }}
-                      renderInput={(params) => (
-                        <CustomTextField
-                          {...params}
-                          placeholder="Select sites"
-                          size="small"
-                          fullWidth
-                        />
-                      )}
-                    />
+                    <>
+                      <Autocomplete
+                        multiple
+                        options={siteOptions}
+                        getOptionLabel={(option: any) => option.name || ''}
+                        value={siteOptions.filter((opt: any) =>
+                          formData.siteAssignment.includes(opt.id),
+                        )}
+                        onChange={(_, newValues) => {
+                          setFormData((prev: any) => ({
+                            ...prev,
+                            siteAssignment: newValues.map((v: any) => v.id),
+                          }));
+                        }}
+                        renderInput={(params) => (
+                          <CustomTextField
+                            {...params}
+                            placeholder="Select sites"
+                            size="small"
+                            fullWidth
+                          />
+                        )}
+                        renderOption={(props, option: any) => (
+                          <li {...props} key={option.id}>
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                              <span>{option.name}</span>
+
+                              {option.is_drop_point && (
+                                <small style={{ color: 'orange', fontSize: 11 }}>Drop Point</small>
+                              )}
+                            </div>
+                          </li>
+                        )}
+                      />
+                    </>
                   )}
 
                   {/* REGISTERED SITE */}
@@ -395,27 +412,29 @@ const DialogPermissionUserGroup: React.FC<Props> = ({
 
                   {/* REGISTERED SITE */}
                   {checked && perm === 'ManageSiteScope' && (
-                    <Autocomplete
-                      multiple
-                      disableCloseOnSelect
-                      options={siteOptions}
-                      getOptionLabel={(option: any) => option.name || ''}
-                      value={siteOptions.filter((site) => formData.manageSite.includes(site.id))}
-                      onChange={(_, newValues) => {
-                        setFormData((prev: any) => ({
-                          ...prev,
-                          manageSite: newValues.map((v: any) => v.id),
-                        }));
-                      }}
-                      renderInput={(params) => (
-                        <CustomTextField
-                          {...params}
-                          placeholder="Select sites"
-                          size="small"
-                          fullWidth
-                        />
-                      )}
-                    />
+                    <>
+                      <Autocomplete
+                        multiple
+                        disableCloseOnSelect
+                        options={siteOptions}
+                        getOptionLabel={(option: any) => option.name || ''}
+                        value={siteOptions.filter((site) => formData.manageSite.includes(site.id))}
+                        onChange={(_, newValues) => {
+                          setFormData((prev: any) => ({
+                            ...prev,
+                            manageSite: newValues.map((v: any) => v.id),
+                          }));
+                        }}
+                        renderInput={(params) => (
+                          <CustomTextField
+                            {...params}
+                            placeholder="Select sites"
+                            size="small"
+                            fullWidth
+                          />
+                        )}
+                      />
+                    </>
                   )}
 
                   {checked && perm === 'ManageVisitorTypeScope' && (

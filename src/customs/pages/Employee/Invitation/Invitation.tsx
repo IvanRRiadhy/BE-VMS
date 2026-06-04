@@ -29,7 +29,7 @@ import {
   getVisitorEmployee,
 } from 'src/customs/api/admin';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
-import { IconClipboard, IconLink, IconShare, IconUsers } from '@tabler/icons-react';
+import { IconBolt, IconClipboard, IconLink, IconShare, IconUsers } from '@tabler/icons-react';
 import dayjs from 'dayjs';
 import Praregist from './Praregist';
 import { getInvitationRelatedVisitor, getOngoingInvitation } from 'src/customs/api/visitor';
@@ -55,6 +55,8 @@ import RelatedInvitationDialog from '../Components/Dialog/RelatedInvitationDialo
 import InvitationShareDialog from '../../admin/content/Visitor/Trx/components/Dialog/InvitationShareDialog';
 import ShareLinkDialog from '../../admin/content/Visitor/Trx/components/ShareLinkDialog';
 import ConfirmUnsavedDialog from 'src/customs/pages/admin/components/ConfirmUnsavedDialog';
+import { QuickAccessDialog } from '../Components/Dialog/QuickAccessDialog';
+import { createQuickAccess } from 'src/customs/api/Admin/Visitor';
 
 type VisitorTableRow = {
   id: string;
@@ -134,6 +136,13 @@ const Content = () => {
       subTitleSetting: 'image',
       color: 'none',
     },
+    {
+      title: 'Quick Access',
+      icon: IconBolt,
+      subTitle: iconAdd,
+      subTitleSetting: 'image',
+      color: 'none',
+    },
   ];
 
   const employeeId = useSelector((state: any) => state.userReducer.data?.employee_id);
@@ -168,6 +177,7 @@ const Content = () => {
   const [openSendEmail, setOpenSendEmail] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [expiredAt, setExpiredAt] = useState<string | null>(null);
+  const [openQuickAccess, setOpenQuickAccess] = useState(false);
 
   const resetRegisteredFlow = () => {
     setSelectedSite(null);
@@ -698,6 +708,20 @@ const Content = () => {
     }
   };
 
+  const handleCreateQuickAccess = async (payload: any) => {
+    try {
+      await createQuickAccess(token, payload);
+
+      showSwal('success', 'Quick access created successfully');
+
+      setOpenQuickAccess(false);
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.message || 'Failed to create quick access');
+
+      throw error;
+    }
+  };
+
   return (
     <>
       <PageContainer title="Invitation" description="invitation page">
@@ -713,6 +737,8 @@ const Content = () => {
                     setOpenPreRegistration(true);
                   } else if (index === 2) {
                     setOpenDetailShareLink(true);
+                  } else if (index === 3) {
+                    setOpenQuickAccess(true);
                   } else {
                     setOpenDialogIndex(index);
                   }
@@ -853,6 +879,15 @@ const Content = () => {
           />
         </DialogContent>
       </Dialog>
+
+      <QuickAccessDialog
+        open={openQuickAccess}
+        onClose={() => setOpenQuickAccess(false)}
+        visitorTableData={tableCustomVisitor}
+        handleEmployeeClick={handleEmployeeClick}
+        onSubmit={handleCreateQuickAccess}
+      />
+
       {/* Employee Detail */}
       <EmployeeDetailDialog
         open={openEmployeeDialog}

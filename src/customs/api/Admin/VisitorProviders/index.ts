@@ -1,7 +1,7 @@
 import axiosInstance from '../../interceptor';
 
 export const getAllVisitorProviders = async (token: string) => {
-  const response = await axiosInstance.get('/visitor-provider/active', {
+  const response = await axiosInstance.get('/visitor-provider', {
     headers: { Authorization: `Bearer ${token}` },
   });
   return response.data;

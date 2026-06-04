@@ -1986,7 +1986,7 @@ export const getAllSitePagination = async (
   return response.data;
 };
 
-export const getAllSite = async (token: string): Promise<GetAllSitesResponse> => {
+export const getAllSite = async (token: string | null): Promise<GetAllSitesResponse> => {
   const response = await axiosInstance.get(`/site`, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });
@@ -2047,8 +2047,6 @@ export const getSiteTracking = async (token: string): Promise<any> => {
   });
   return response.data;
 };
-
-
 
 export const createSite = async (
   data: CreateSiteRequest,
@@ -2329,7 +2327,7 @@ export const deleteSiteDocument = async (id: string, token: string): Promise<any
     }
     throw error;
   }
-}
+};
 //#endregion
 
 //#region Brand API

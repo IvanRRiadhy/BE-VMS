@@ -33,7 +33,8 @@ import { useDispatch } from 'react-redux';
 import { useSelector } from 'react-redux';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import { QuickAccessDialog } from 'src/customs/pages/admin/content/Visitor/Trx/components/QuickAccessDialog';
+import { QuickAccessDialog } from '../../Employee/Components/Dialog/QuickAccessDialog';
+import { createQuickAccess } from 'src/customs/api/Admin/Visitor';
 
 const DashboardEmployee = () => {
   const CardItems = [
@@ -203,6 +204,20 @@ const DashboardEmployee = () => {
     }
   };
 
+  const handleCreateQuickAccess = async (payload: any) => {
+    try {
+      await createQuickAccess(token, payload);
+
+      showSwal('success', 'Quick access created successfully');
+
+      setOpenQuickAccess(false);
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.message || 'Failed to create quick access');
+
+      throw error;
+    }
+  };
+
   return (
     <PageContainer title="Dashboard" description="This is Manager Dashboard">
       <Grid container spacing={3} alignItems="center" justifyContent="space-between" mb={1}>
@@ -364,9 +379,8 @@ const DashboardEmployee = () => {
       <QuickAccessDialog
         open={openQuickAccess}
         onClose={() => setOpenQuickAccess(false)}
-        onSubmit={(data) => {
-          console.log(data);
-        }}
+        visitorTableData={[]}
+        onSubmit={handleCreateQuickAccess}
       />
     </PageContainer>
   );
