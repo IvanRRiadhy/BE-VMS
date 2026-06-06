@@ -23,6 +23,7 @@ import {
   CreateVisitorRequest,
 } from 'src/customs/api/models/Admin/Visitor';
 import {
+  getAllVisitorPagination,
   getEmployeeById,
   getFormEmployee,
   getRegisteredSite,
@@ -57,6 +58,7 @@ import ShareLinkDialog from '../../admin/content/Visitor/Trx/components/ShareLin
 import ConfirmUnsavedDialog from 'src/customs/pages/admin/components/ConfirmUnsavedDialog';
 import { QuickAccessDialog } from '../Components/Dialog/QuickAccessDialog';
 import { createQuickAccess } from 'src/customs/api/Admin/Visitor';
+import { fa } from 'zod/v4/locales';
 
 type VisitorTableRow = {
   id: string;
@@ -113,37 +115,6 @@ const Content = () => {
       localStorage.removeItem('unsavedVisitorData');
     }
   }, [formDataAddVisitor, isFormChanged]);
-
-  const cards = [
-    {
-      title: 'Total Visitor',
-      icon: IconUsers,
-      subTitle: `${totalRecords}`,
-      subTitleSetting: 10,
-      color: 'none',
-    },
-    {
-      title: 'Add Pre Registration',
-      icon: IconClipboard,
-      subTitle: iconAdd,
-      subTitleSetting: 'image',
-      color: 'none',
-    },
-    {
-      title: 'Share Link',
-      icon: IconShare,
-      subTitle: iconAdd,
-      subTitleSetting: 'image',
-      color: 'none',
-    },
-    {
-      title: 'Quick Access',
-      icon: IconBolt,
-      subTitle: iconAdd,
-      subTitleSetting: 'image',
-      color: 'none',
-    },
-  ];
 
   const employeeId = useSelector((state: any) => state.userReducer.data?.employee_id);
 
@@ -237,98 +208,204 @@ const Content = () => {
     Waiting: 'Waiting',
   };
 
-  useEffect(() => {
-    if (!token) return;
+  const [search, setSearch] = useState<string>('');
 
-    const fetchData = async () => {
-      setLoading(true);
+  const [filters, setFilters] = useState<any>({
+    status: undefined,
+    visitor_type: '',
+    visitor_role: '',
+    host_id: '',
+    site_id: '',
+    is_employee: '',
+    is_block: '',
+    transaction_status: '',
+    emergency_situation: '',
+    start_date: '',
+    end_date: '',
+  });
 
-      const start = page * rowsPerPage;
+  const [appliedFilters, setAppliedFilters] = useState<any>({
+    status: undefined,
+    visitor_status: '',
+    visitor_type: '',
+    visitor_role: '',
+    host_id: '',
+    site_id: '',
+    is_block: '',
+    transaction_status: '',
+    emergency_situation: '',
+    start_date: '',
+    end_date: '',
+  });
 
-      try {
-        // const response = await getInvitations(token as string, start_date, end_date);
-        const response = await getOngoingInvitation(token as string);
-        // const response = await getAllVisitorPagination(token as string, start, -1);
+  const {
+    data: allVisitorData,
+    isLoading: isLoading,
+    isFetching: isFetching,
+  } = useQuery({
+    queryKey: ['visitors', search, appliedFilters],
+    queryFn: async () => {
+      const statusParam =
+        appliedFilters.status && appliedFilters.status !== 'All'
+          ? appliedFilters.status
+          : undefined;
 
-        let mapped = response.collection
-          .map((item: any) => {
-            const isEmployeeHost = item.host?.toLowerCase() === employeeId?.toLowerCase();
+      const isEmergencyParam =
+        appliedFilters.emergency_situation === ''
+          ? undefined
+          : appliedFilters.emergency_situation === 'true';
 
-            return {
-              id: item.id,
-              employee: isEmployeeHost ?? '-',
+      const isBlockParam =
+        appliedFilters.is_block === '' ? undefined : appliedFilters.is_block === 'true';
 
-              name: item.visitor_name || '-',
-              identity_id: item.visitor_identity_id || '-',
-              visitor_type: item.visitor_type_name || '-',
-              email: item.visitor_email || '-',
-              organization: item.visitor_organization_name || '-',
-              // gender: item.visitor_gender || '-',
-              invitation_code: item.invitation_code || '-',
-              phone: item.visitor_phone || '-',
-              is_vip: item.visitor_is_vip || '-',
-              visitor_period_start: item.visitor_period_start || '-',
-              visitor_period_end:
-                formatDateTime(item.visitor_period_end, item.extend_visitor_period) || '-',
-              host: item.host ?? '-',
-
-              visitor_status: item.visitor_status || '-',
-              invitation_created_at: item.invitation_created_at,
-            };
-          })
-          .sort(
-            (a: any, b: any) =>
-              dayjs(b.invitation_created_at).valueOf() - dayjs(a.invitation_created_at).valueOf(),
-          )
-          .map(({ invitation_created_at, ...rest }: any) => rest);
-
-        if (selectedType !== 'All') {
-          const apiStatus = statusMap[selectedType];
-          mapped = mapped.filter((r: any) => r.visitor_status === apiStatus);
-        }
-        setTableRowVisitors(mapped);
-        setTableCustomVisitor(mapped);
-
-        setTotalRecords(mapped.length);
-        setLoading(false);
-      } catch (error) {
-        setLoading(false);
-        setTableCustomVisitor([]);
-        setTableRowVisitors([]);
-      }
-    };
-
-    fetchData();
-  }, [token, refreshTrigger, selectedType]);
-
-  useEffect(() => {
-    if (!tableRowVisitors.length) return;
-
-    let filtered = [...tableRowVisitors];
-
-    const keyword = searchKeyword.trim().toLowerCase();
-    if (keyword) {
-      filtered = filtered.filter((r) =>
-        [r.name, r.email, r.phone, r.organization, r.identity_id].some((val) =>
-          String(val || '')
-            .toLowerCase()
-            .includes(keyword),
-        ),
+      const res = await getAllVisitorPagination(
+        token as string,
+        0,
+        -1,
+        search || undefined,
+        appliedFilters.start_date
+          ? dayjs(appliedFilters.start_date).utc().toISOString()
+          : undefined,
+        appliedFilters.end_date ? dayjs(appliedFilters.end_date).utc().toISOString() : undefined,
+        statusParam,
+        appliedFilters.data_filter,
+        appliedFilters.site_id || undefined,
+        appliedFilters.visitor_role || undefined,
+        isEmergencyParam,
+        isBlockParam,
+        appliedFilters.host_id || undefined,
       );
-    }
 
-    if (selectedType !== 'All') {
-      const apiStatus = statusMap[selectedType];
-      filtered = filtered.filter((r) => r.visitor_status === apiStatus);
-    }
+      return res.collection;
+    },
+    enabled: !!token,
+    staleTime: 1000 * 60 * 1,
+  });
 
-    const startIndex = page * rowsPerPage;
-    const endIndex = startIndex + rowsPerPage;
-    const paginated = filtered.slice(startIndex, endIndex);
+  const processedData = useMemo(() => {
+    if (!allVisitorData) return [];
 
-    setTableCustomVisitor(paginated);
-    setTotalFilteredRecords(filtered.length);
-  }, [tableRowVisitors, searchKeyword, selectedType, page, rowsPerPage]);
+    return allVisitorData
+      .map((item: any) => {
+        const isExpired =
+          item.visitor_period_end && dayjs(item.visitor_period_end).isBefore(dayjs(), 'day');
+
+        return {
+          id: item.id,
+          visitor_type: item.visitor_type_name || '-',
+          name: item.visitor_name || '-',
+          identity_id: item.visitor_identity_id || '-',
+          email: item.visitor_email || '-',
+          organization: item.visitor_organization_name || '-',
+          invitation_code: item.invitation_code || '-',
+          phone: item.visitor_phone || '-',
+          visitor_period_start: item.visitor_period_start || '-',
+          visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
+          invitation_created_at: item.invitation_created_at,
+          host: item.host ?? '-',
+          visitor_status: isExpired ? 'Expired' : item.visitor_status || '-',
+        };
+      })
+      .sort((a: any, b: any) => {
+        const dateA = a.invitation_created_at ?? a.visitor_period_start;
+        const dateB = b.invitation_created_at ?? b.visitor_period_start;
+
+        return dayjs(dateB).valueOf() - dayjs(dateA).valueOf();
+      })
+      .map(({ invitation_created_at, ...rest }: any) => rest);
+  }, [allVisitorData]);
+
+  const quickAccessData = useMemo(
+    () => processedData.filter((item: any) => item.visitor_status === 'QuickAccess'),
+    [processedData],
+  );
+
+  const visitorDataAll = useMemo(
+    () => processedData.filter((item: any) => item.visitor_status !== 'QuickAccess'),
+    [processedData],
+  );
+
+  const paginatedData = useMemo(() => {
+    return visitorDataAll.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
+  }, [processedData, page, rowsPerPage]);
+
+  const [quickPage, setQuickPage] = useState(0);
+  const [quickRowsPerPage, setQuickRowsPerPage] = useState(10);
+
+  const paginatedQuickAccess = useMemo(() => {
+    return quickAccessData.slice(quickPage * quickRowsPerPage, (quickPage + 1) * quickRowsPerPage);
+  }, [quickAccessData, quickPage, quickRowsPerPage]);
+
+  const visitorTableData = {
+    data: paginatedData,
+    dataQuickAccess: paginatedQuickAccess,
+    RecordsFiltered: processedData.length,
+    RecordsTotal: processedData.length,
+  };
+
+  const totalVisitorRecords = useMemo(() => {
+    return visitorDataAll.length;
+  }, [visitorDataAll]);
+
+  const cards = [
+    {
+      title: 'Total Visitor',
+      icon: IconUsers,
+      subTitle: `${totalVisitorRecords}`,
+      subTitleSetting: 10,
+      color: 'none',
+    },
+    {
+      title: 'Add Pre Registration',
+      icon: IconClipboard,
+      subTitle: iconAdd,
+      subTitleSetting: 'image',
+      color: 'none',
+    },
+    {
+      title: 'Share Link',
+      icon: IconShare,
+      subTitle: iconAdd,
+      subTitleSetting: 'image',
+      color: 'none',
+    },
+    {
+      title: 'Quick Access',
+      icon: IconBolt,
+      subTitle: iconAdd,
+      subTitleSetting: 'image',
+      color: 'none',
+    },
+  ];
+
+  // useEffect(() => {
+  //   // if (!tableRowVisitors.length) return;
+
+  //   let filtered = [...tableRowVisitors];
+
+  //   const keyword = searchKeyword.trim().toLowerCase();
+  //   if (keyword) {
+  //     filtered = filtered.filter((r) =>
+  //       [r.name, r.email, r.phone, r.organization, r.identity_id].some((val) =>
+  //         String(val || '')
+  //           .toLowerCase()
+  //           .includes(keyword),
+  //       ),
+  //     );
+  //   }
+
+  //   if (selectedType !== 'All') {
+  //     const apiStatus = statusMap[selectedType];
+  //     filtered = filtered.filter((r) => r.visitor_status === apiStatus);
+  //   }
+
+  //   const startIndex = page * rowsPerPage;
+  //   const endIndex = startIndex + rowsPerPage;
+  //   const paginated = filtered.slice(startIndex, endIndex);
+
+  //   setTableCustomVisitor(paginated);
+  //   setTotalFilteredRecords(filtered.length);
+  // }, [tableRowVisitors, searchKeyword, selectedType, page, rowsPerPage]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -526,7 +603,7 @@ const Content = () => {
   const [sortDirSharelink, setSortDirSharelink] = useState('desc');
 
   const [shareLinkList, setShareLinkList] = useState([]);
-  const [totalFilterRecords, setTotalFilterRecords] = useState(0);
+
   const [refreshKey, setRefreshKey] = useState(0);
   const start = pageSharelink * rowsPerPageSharelink;
   const fetchData = useCallback(async () => {
@@ -574,7 +651,7 @@ const Content = () => {
         })) || [];
 
       setShareLinkList(mapped);
-      setTotalFilterRecords(res?.RecordsFiltered || 0);
+      // setTotalFilterRecords(res?.RecordsFiltered || 0);
     } catch (err) {
       console.error(err);
     } finally {
@@ -722,6 +799,14 @@ const Content = () => {
     }
   };
 
+  const handleSearch = useCallback(
+    (keyword: string) => {
+      setPage(0);
+      setSearch(keyword);
+    },
+    [setPage, setSearch],
+  );
+
   return (
     <>
       <PageContainer title="Invitation" description="invitation page">
@@ -749,14 +834,15 @@ const Content = () => {
 
             <Grid size={{ xs: 12, lg: 12 }}>
               <DynamicTable
-                loading={loading}
+                loading={isLoading}
                 isHavePagination={true}
                 overflowX={'auto'}
                 minWidth={2400}
                 stickyHeader={true}
-                data={tableCustomVisitor}
-                defaultRowsPerPage={rowsPerPage}
-                totalCount={totalFilteredRecords}
+                currentPage={page}
+                data={visitorTableData?.data || []}
+                totalCount={totalVisitorRecords}
+                isNoActionTableHead={true}
                 selectedRows={selectedRows}
                 rowsPerPageOptions={[10, 50, 100]}
                 onPaginationChange={(page, rowsPerPage) => {
@@ -767,7 +853,6 @@ const Content = () => {
                 isHaveAction={true}
                 isHaveImage={true}
                 isHaveSearch={true}
-                // isHaveFilter={true}
                 isHaveExportPdf={false}
                 isHaveExportXlf={false}
                 isHaveFilterDuration={false}
@@ -779,13 +864,17 @@ const Content = () => {
                 isHaveGender={true}
                 isHaveVisitor={true}
                 isActionVisitor={true}
-                stickyVisitorCount={2}
                 isActionEmployee={true}
+                stickyVisitorCount={2}
+                isBlacklistPage={false}
+                // onNavigatePage={() => {
+                //   navigate('/admin/visitor/blacklist-visitor');
+                // }}
                 isHaveEmployee={true}
-                onEmployeeClick={(row) => {
+                onEmployeeClick={(row: any) => {
                   handleEmployeeClick(row.host as string);
                 }}
-                isHaveVerified={true}
+                isHaveVerified={false}
                 headerContent={{
                   title: '',
                   subTitle: 'Monitoring Data Visitor',
@@ -810,25 +899,27 @@ const Content = () => {
                     item.name === 'Waiting'
                   ) {
                     setSelectedType(item.name);
+                    setPage(0);
+                    setAppliedFilters((prev: any) => ({
+                      ...prev,
+                      status: item.name === 'All' ? 0 : item.name,
+                    }));
                   }
                 }}
                 defaultSelectedHeaderItem="All"
-                onCheckedChange={(selected) => console.log('Checked table row:', selected)}
                 onView={(row) => {
                   handleView(row.id);
                 }}
-                onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
+                searchKeyword={search}
+                onSearch={handleSearch}
                 onFilterCalenderChange={(ranges) => {
                   if (ranges.startDate && ranges.endDate) {
                     setStartDate(ranges.startDate.toISOString());
                     setEndDate(ranges.endDate.toISOString());
                     setPage(0);
-                    setRefreshTrigger((prev) => prev + 1);
                   }
                 }}
-                onAddData={() => {
-                  handleAdd();
-                }}
+                onAddData={handleAdd}
                 isHaveFilterMore={false}
               />
             </Grid>
@@ -883,7 +974,7 @@ const Content = () => {
       <QuickAccessDialog
         open={openQuickAccess}
         onClose={() => setOpenQuickAccess(false)}
-        visitorTableData={tableCustomVisitor}
+        visitorTableData={visitorTableData.dataQuickAccess}
         handleEmployeeClick={handleEmployeeClick}
         onSubmit={handleCreateQuickAccess}
       />

@@ -150,7 +150,7 @@ const Approval = () => {
           sort_dir: sortDir,
           keyword: searchKeyword,
         });
-        console.log('res', res.collection);
+  
 
         const rows = res.collection.map((item: any) => ({
           approval_ticket_id: item.approval_ticket_id,
@@ -204,7 +204,7 @@ const Approval = () => {
       // if (!confirm.isConfirmed) return;
 
       setLoadingAction(true);
-      console.log('Performing action:', action, 'on approval ticket ID:', id);
+      // console.log('Performing action:', action, 'on approval ticket ID:', id);
 
       // await createApproval(token, { action }, id);
       if (action === 'Approve') await approveTicket(token as string, id);
@@ -240,7 +240,7 @@ const Approval = () => {
       console.log('response', response);
 
       const res = await handleActionApproval(id, 'Approve');
-      // console.log('res', res);
+      console.log('res', res);
 
       // showSwal('success', response?.msg || 'Approve meeting host successfully.');
 

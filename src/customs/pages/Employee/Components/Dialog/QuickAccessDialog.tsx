@@ -65,7 +65,7 @@ export const QuickAccessDialog = ({
 
   const initialFormState: QuickAccessFormData = {
     visitorProviderId: '',
-    recipientType: 'self', // "self" is a valid value for recipientType
+    recipientType: 'self',
     receiverName: '',
     receiverEmail: '',
     receiverPhone: '',
@@ -114,9 +114,7 @@ export const QuickAccessDialog = ({
       console.log('payload', payload);
       await onSubmit?.(payload);
       setOpenQuickAccess(false);
-
-    } catch (error) {
-    }
+    } catch (error) {}
   };
 
   const selectedProvider = visitorProviders?.find((item) => item.id === form.visitorProviderId);
