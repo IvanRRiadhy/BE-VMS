@@ -689,31 +689,51 @@ const Content = () => {
     return `${diffHours} hour${diffHours > 1 ? 's' : ''}`;
   };
 
-  const handleSendInvitation = async () => {
-    let finalEmails = [...emails];
+  // const handleSendInvitation = async () => {
+  //   let finalEmails = [...emails];
 
-    if (emailInput.trim() !== '') {
-      finalEmails.push(emailInput.trim());
-    }
+  //   if (emailInput.trim() !== '') {
+  //     finalEmails.push(emailInput.trim());
+  //   }
 
-    if (!finalEmails.length || !selectedShareLinkId) {
+  //   if (!finalEmails.length || !selectedShareLinkId) {
+  //     showSwal('error', 'Please enter at least one email');
+  //     return;
+  //   }
+
+  //   try {
+  //     const payload = {
+  //       emails: finalEmails,
+  //     };
+  //     await createShareLinkByEmailById(token as string, payload, selectedShareLinkId);
+  //     showSwal('success', 'Invitation sent successfully');
+
+  //     setEmails([]);
+  //     setEmailInput('');
+  //     setRefreshKey((prev) => prev + 1);
+  //   } catch (error) {
+  //     console.error(error);
+  //     showSwal('error', 'Failed to send invitation');
+  //   }
+  // };
+
+  const handleSendInvitation = async (emails: any) => {
+    const validEmails = emails.filter((email: any) => email?.trim() !== '');
+
+    if (!validEmails.length || !selectedShareLinkId) {
       showSwal('error', 'Please enter at least one email');
       return;
     }
-
     try {
       const payload = {
-        emails: finalEmails,
+        emails: emails,
       };
-      await createShareLinkByEmailById(token as string, payload, selectedShareLinkId);
+      console.log('payload', payload);
+      await createShareLinkByEmailById(token as string, payload, selectedShareLinkId as string);
       showSwal('success', 'Invitation sent successfully');
-
-      setEmails([]);
-      setEmailInput('');
       setRefreshKey((prev) => prev + 1);
-    } catch (error) {
-      console.error(error);
-      showSwal('error', 'Failed to send invitation');
+    } catch (error: any) {
+      showSwal('error', error?.response.data.message || 'Failed to send invitation');
     }
   };
 

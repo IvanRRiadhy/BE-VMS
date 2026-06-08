@@ -39,14 +39,21 @@ const InvitationShareDialog: React.FC<Props> = ({
   shareLinkData,
 }) => {
   const [tabValue, setTabValue] = useState(0);
-  const [emails, setEmails] = useState<string[]>([]);
+  const [emails, setEmails] = useState<any>();
   const [emailInput, setEmailInput] = useState('');
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle sx={{ position: 'relative' }}>
         Invite Share Link
-        <IconButton onClick={onClose} sx={{ position: 'absolute', top: 8, right: 8 }}>
+        <IconButton
+          onClick={() => {
+            onClose();
+            setEmails([]);
+            setTabValue(0);
+          }}
+          sx={{ position: 'absolute', top: 8, right: 8 }}
+        >
           <IconX />
         </IconButton>
       </DialogTitle>
@@ -112,8 +119,8 @@ ${generatedLink}
           <Box>
             <Typography sx={{ mb: 1 }}>Enter email address to send invitation:</Typography>
 
-            <Autocomplete
-              multiple
+            {/* <Autocomplete
+              // multiple
               freeSolo
               options={[]}
               value={emails}
@@ -128,6 +135,13 @@ ${generatedLink}
               renderInput={(params) => (
                 <CustomTextField {...params} placeholder="Input your email" />
               )}
+            /> */}
+
+            <CustomTextField
+              fullWidth
+              value={emails}
+              placeholder="Input your email"
+              onChange={(e) => setEmails(e.target.value)}
             />
 
             <Typography sx={{ my: 1, color: 'text.secondary' }}>
@@ -138,7 +152,10 @@ ${generatedLink}
               variant="contained"
               sx={{ mt: 2 }}
               fullWidth
-              onClick={() => handleSendInvitation(emails)}
+              onClick={() => {
+                handleSendInvitation([emails]);
+                setEmails('');
+              }}
             >
               Send Invitation
             </Button>
