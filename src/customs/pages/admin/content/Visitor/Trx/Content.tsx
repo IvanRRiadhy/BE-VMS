@@ -658,11 +658,8 @@ const Content = () => {
       const payload = {
         emails: emails,
       };
-      // console.log('payload', payload);
       await createShareLinkByEmailById(token as string, payload, selectedShareLinkId as string);
       showSwal('success', 'Invitation sent successfully');
-      // setEmails([]);
-      // setEmailInput('');
       setRefreshKey((prev) => prev + 1);
     } catch (error: any) {
       showSwal('error', error?.response.data.message || 'Failed to send invitation');
@@ -737,6 +734,7 @@ const Content = () => {
       showSwal('success', 'Quick access created successfully');
 
       setOpenQuickAccess(false);
+      await queryClient.invalidateQueries({ queryKey: ['visitors'] });
     } catch (error: any) {
       showSwal('error', error?.response?.data?.message || 'Failed to create quick access');
 

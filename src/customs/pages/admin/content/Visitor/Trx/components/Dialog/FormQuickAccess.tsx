@@ -166,7 +166,7 @@ export default function FormQuickAccess({
 
           {form.recipientType === 'others' && (
             <Grid size={12}>
-              <CustomFormLabel>Receiver Name</CustomFormLabel>
+              <CustomFormLabel sx={{ mt: 0 }}>Receiver Name</CustomFormLabel>
               <CustomTextField
                 fullWidth
                 value={form.receiverName}
@@ -254,6 +254,7 @@ export default function FormQuickAccess({
           )}
 
           <Grid size={{ xs: 12 }}>
+            <CustomFormLabel>Duration</CustomFormLabel>
             <Box display="flex" gap={2} flexWrap="wrap">
               {[10, 15, 30, 60, 120].map((item) => (
                 <FormControlLabel

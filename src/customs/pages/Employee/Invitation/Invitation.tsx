@@ -35,7 +35,7 @@ import dayjs from 'dayjs';
 import Praregist from './Praregist';
 import { getInvitationRelatedVisitor, getOngoingInvitation } from 'src/customs/api/visitor';
 import { useSelector } from 'react-redux';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import EmployeeDetailDialog from '../Components/Dialog/EmployeeDetailDialog';
 import SelectRegisteredSiteDialog from '../Components/Dialog/SelectRegisteredSiteDialog';
 import { getInvitationSite, getInvitationVisitorType } from 'src/customs/api/Admin/InvitationData';
@@ -237,6 +237,8 @@ const Content = () => {
     start_date: '',
     end_date: '',
   });
+
+  const queryClient = useQueryClient();
 
   const {
     data: allVisitorData,
@@ -812,6 +814,7 @@ const Content = () => {
       showSwal('success', 'Quick access created successfully');
 
       setOpenQuickAccess(false);
+      await queryClient.invalidateQueries({ queryKey: ['visitors'] });
     } catch (error: any) {
       showSwal('error', error?.response?.data?.message || 'Failed to create quick access');
 
