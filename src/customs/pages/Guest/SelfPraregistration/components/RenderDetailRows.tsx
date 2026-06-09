@@ -10,9 +10,10 @@ interface Props {
   sites: any[];
   employee: any[];
   allVisitorEmployee: any[];
+  visitorRoles: any[];
 }
 
-import React, { useEffect,  useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Autocomplete,
   Button,
@@ -62,6 +63,7 @@ const RenderDetailRows = ({
   fieldErrors,
   setFieldErrors,
   uploadNames,
+  visitorRoles,
   setUploadNames,
   onChange,
   allVisitorEmployee,
@@ -269,11 +271,11 @@ const RenderDetailRows = ({
                   }
 
                   onChange(index, 'answer_text', toCsv(updated));
-                  console.log('[TREE CHECK]', {
-                    clicked: node.id,
-                    isChecked,
-                    result: updated,
-                  });
+                  // console.log('[TREE CHECK]', {
+                  //   clicked: node.id,
+                  //   isChecked,
+                  //   result: updated,
+                  // });
 
                   return updated;
                 });
@@ -578,12 +580,12 @@ const RenderDetailRows = ({
                     );
                   case 3: {
                     let options: { value: string; name: string; disabled?: boolean }[] = [];
-                    console.log('otpions', options);
+                    // console.log('otpions', options);
 
                     const isLockedByInvitation =
                       (item.remarks === 'host' && !!invitation?.host) ||
                       (item.remarks === 'site_place' && !!invitation?.site);
-                    console.log('islocked', isLockedByInvitation);
+                    // console.log('islocked', isLockedByInvitation);
 
                     if (item.remarks === 'host') {
                       options = invitation?.host
@@ -619,10 +621,41 @@ const RenderDetailRows = ({
                             disabled: site.can_visited === false,
                           }));
 
-                      console.log('invitation', invitation);
+                      // console.log('invitation', invitation);
                     } else {
                       options = (item.multiple_option_fields || []).map((opt: any) =>
                         typeof opt === 'object' ? opt : { value: opt, name: opt },
+                      );
+                    }
+                    if (item.remarks === 'visitor_role') {
+                      const roleOptions = (visitorRoles || []).map((role: any) => ({
+                        value: role.role,
+                        name: role.role,
+                      }));
+
+                      return (
+                        <Autocomplete
+                          size="small"
+                          options={roleOptions}
+                          getOptionLabel={(option) => option.name}
+                          value={roleOptions.find((opt) => opt.value === item.answer_text) || null}
+                          onChange={(_, newValue) => {
+                            onChange(index, 'answer_text', newValue?.value ?? '');
+
+                            if (newValue) {
+                              clearFieldError(key);
+                            }
+                          }}
+                          renderInput={(params) => (
+                            <CustomTextField
+                              {...params}
+                              placeholder="Select Visitor Role"
+                              fullWidth
+                              error={!!errorMessage}
+                              helperText={errorMessage}
+                            />
+                          )}
+                        />
                       );
                     }
                     if (item.remarks === 'site_place') {
@@ -845,10 +878,14 @@ const RenderDetailRows = ({
                     );
                   case 9:
                     const hasValue = !!item.answer_datetime;
+                    const isLockedByInvitation =
+                      (item.remarks === 'visitor_period_start' &&
+                        !!invitation?.visitor_period_start) ||
+                      (item.remarks === 'visitor_period_end' && !!invitation?.visitor_period_end);
                     return (
                       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
                         <DateTimePicker
-                          disabled={hasValue}
+                          disabled={isLockedByInvitation}
                           value={
                             item.answer_datetime ? dayjs.utc(item.answer_datetime).local() : null
                           }

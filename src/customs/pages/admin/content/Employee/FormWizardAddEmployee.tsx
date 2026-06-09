@@ -26,15 +26,12 @@ import CustomTextField from 'src/components/forms/theme-elements/CustomTextField
 import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import CustomRadio from 'src/components/forms/theme-elements/CustomRadio';
 import Webcam from 'react-webcam';
-import Swal from 'sweetalert2';
-import ReactCrop, { Crop } from 'react-image-crop';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   createEmployee,
   updateEmployee,
   getEmployeeById,
-  getAllEmployee,
   uploadImageEmployee,
   getAllOrganizations,
   getAllDepartments,
@@ -45,11 +42,10 @@ import {
   CreateEmployeeRequest,
   CreateEmployeeRequestSchema,
   CreateEmployeeSubmitSchema,
-  UpdateEmployeeRequest,
 } from 'src/customs/api/models/Admin/Employee';
 import { Item } from 'src/customs/api/models/Admin/Employee';
 import { showSwal } from 'src/customs/components/alerts/alerts';
-const steps = ['Personal Info', 'Work Details', 'Access & Address', 'Other Details', 'Photo'];
+const steps = ['Personal Info', 'Work Details', 'Access & Emergency', 'Other Details', 'Photo'];
 import { getStepSchema, stepFieldMap } from 'src/customs/api/validations/employeeSchemas';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import { MobileStepper, useTheme, useMediaQuery } from '@mui/material';
@@ -72,7 +68,6 @@ interface FormEmployeeProps {
   selectedRows?: Item[];
   enabledFields?: EnabledFields;
   setEnabledFields: React.Dispatch<React.SetStateAction<EnabledFields>>;
-  // setIsFormChanged: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const BASE_URL = axiosInstance2.defaults.baseURL;
@@ -169,18 +164,17 @@ const FormWizardAddEmployee = ({
     const fetchData = async () => {
       if (!token) return;
 
-      const [orgRes, deptRes, distRes] = await Promise.all([
+      const [orgRes, deptRes, distRes] = await Promise.allSettled([
         getAllOrganizations(token),
         getAllDepartments(token),
         getAllDistricts(token),
       ]);
 
-      setOrganization(orgRes.collection ?? []);
-      setDepartment(deptRes.collection ?? []);
-      setDistrict(distRes.collection ?? []);
+      setOrganization(orgRes.status === 'fulfilled' ? (orgRes.value.collection ?? []) : []);
 
-      // const employeeAll = await getAllEmployee(token);
-      // setEmployeeAllRes(employeeAll.collection ?? []);
+      setDepartment(deptRes.status === 'fulfilled' ? (deptRes.value.collection ?? []) : []);
+
+      setDistrict(distRes.status === 'fulfilled' ? (distRes.value.collection ?? []) : []);
 
       if (edittingId && !isBatchEdit) {
         const employeeRes = await getEmployeeById(edittingId, token);
@@ -253,6 +247,7 @@ const FormWizardAddEmployee = ({
         enabledKeys.forEach((k) => (shape[k as string] = true));
 
         const partialSchema = baseSchema.pick(shape);
+
         const res = partialSchema.safeParse(payload);
 
         if (!res.success) {
@@ -276,6 +271,7 @@ const FormWizardAddEmployee = ({
     }
 
     const res = schema.safeParse(payload);
+
     if (res.success) return true;
 
     const em = toErrorMap(res.error.issues);
@@ -562,6 +558,8 @@ const FormWizardAddEmployee = ({
     setPreviewUrl(url);
   }, [localForm.faceimage, siteImageFile]);
 
+  const showVendorCode = localForm.type === 'Vendor' || localForm.type === 'Contractor';
+
   const StepContent = (step: number) => {
     switch (step) {
       case 0:
@@ -657,6 +655,68 @@ const FormWizardAddEmployee = ({
                 helperText={errors.identity_id}
               />
             </Grid2>
+
+            {/* Type */}
+
+            <Grid2 size={{ xs: 12, sm: 12 }}>
+              <FormControl fullWidth error={Boolean(errors.type)}>
+                <CustomFormLabel sx={{ my: 1 }} htmlFor="type" required>
+                  <Typography variant="caption">Type </Typography>
+                </CustomFormLabel>
+
+                <CustomSelect
+                  id="type"
+                  value={localForm.type}
+                  onChange={(e: any) => {
+                    const type = e.target.value;
+
+                    setLocalForm((prev) => ({
+                      ...prev,
+                      type,
+                      vendor_code:
+                        type === 'Vendor' || type === 'Contractor' ? prev.vendor_code : '',
+                    }));
+
+                    if (errors.type) {
+                      setErrors((p) => ({
+                        ...p,
+                        type: '',
+                        // vendor_code: '',
+                      }));
+                    }
+                  }}
+                  fullWidth
+                  disabled={isBatchEdit}
+                >
+                  <MenuItem value={'Permanent'}>Permanent</MenuItem>
+                  <MenuItem value={'Vendor'}>Vendor</MenuItem>
+                  <MenuItem value={'Delivery'}>Delivery</MenuItem>
+                  <MenuItem value={'Contractor'}>Contractor</MenuItem>
+                  <MenuItem value={'Internship'}>Internship</MenuItem>
+                  <MenuItem value={'Temporary'}>Temporary</MenuItem>
+                </CustomSelect>
+
+                <FormHelperText sx={{ marginLeft: '0 !important' }}>{errors.type}</FormHelperText>
+              </FormControl>
+            </Grid2>
+
+            {showVendorCode && (
+              <Grid2 size={{ xs: 12, sm: 12 }}>
+                <CustomFormLabel sx={{ marginY: 1 }} htmlFor="vendor_code" required>
+                  <Typography variant="caption">Vendor Code</Typography>
+                </CustomFormLabel>
+                <CustomTextField
+                  id="vendor_code"
+                  value={localForm.vendor_code}
+                  onChange={handleChange}
+                  fullWidth
+                  variant="outlined"
+                  disabled={isBatchEdit}
+                  error={Boolean(errors.vendor_code)}
+                  helperText={errors.vendor_code}
+                />
+              </Grid2>
+            )}
 
             {/* Email */}
             <Grid2 size={{ xs: 12, sm: 6 }}>
@@ -1132,6 +1192,46 @@ const FormWizardAddEmployee = ({
               <CustomTextField
                 id="ble_card_number"
                 value={localForm.ble_card_number}
+                onChange={handleChange}
+                fullWidth
+                variant="outlined"
+                disabled={isBatchEdit}
+              />
+            </Grid2>
+            <Grid2 size={{ xs: 12 }}>
+              <CustomFormLabel sx={{ marginY: 1 }} htmlFor="emergency_contact_name">
+                <Typography variant="caption">Emergency Contact Name</Typography>
+              </CustomFormLabel>
+              <CustomTextField
+                id="emergency_contact_name"
+                value={localForm.emergency_contact_name}
+                onChange={handleChange}
+                fullWidth
+                variant="outlined"
+                disabled={isBatchEdit}
+              />
+            </Grid2>
+
+            <Grid2 size={{ xs: 12 }}>
+              <CustomFormLabel sx={{ marginY: 1 }} htmlFor="emergency_contact_phone">
+                <Typography variant="caption">Emergency Contact Name</Typography>
+              </CustomFormLabel>
+              <CustomTextField
+                id="emergency_contact_phone"
+                value={localForm.emergency_contact_phone}
+                onChange={handleChange}
+                fullWidth
+                variant="outlined"
+                disabled={isBatchEdit}
+              />
+            </Grid2>
+            <Grid2 size={{ xs: 12 }}>
+              <CustomFormLabel sx={{ marginY: 1 }} htmlFor="emergency_contact_relation">
+                <Typography variant="caption">Emergency Contact Name</Typography>
+              </CustomFormLabel>
+              <CustomTextField
+                id="emergency_contact_relation"
+                value={localForm.emergency_contact_relation}
                 onChange={handleChange}
                 fullWidth
                 variant="outlined"

@@ -86,6 +86,7 @@ export const TableBodyContent = ({
   htmlFields,
   htmlClampLines,
   htmlMaxWidth,
+  isHaveBlacklist,
   isAccessControlType,
   isHavePeriod,
   isHaveEmployee,
@@ -323,6 +324,7 @@ export const TableBodyContent = ({
                 isActionVisitor,
                 paginatedData,
                 columns,
+                isHaveBlacklist,
                 checkedIds,
                 handleCheckRow,
                 isTreeSiteType,
@@ -440,6 +442,7 @@ const TableRowItem = React.memo(
       onQuickAccessToggle,
       isDataVerified,
       tooltipLabels,
+      isHaveBlacklist,
       isHavePdf,
       onFileClick,
       isHaveVerified,
@@ -1636,6 +1639,40 @@ const TableRowItem = React.memo(
                       >
                         <IconCopy width={14} height={14} />
                       </IconButton>
+                    </Tooltip>
+                  )}
+                  {isHaveBlacklist && (
+                    <Tooltip
+                      title={row.is_blacklist ? 'Blacklist Visitor' : 'Whitelist Visitor'}
+                      arrow
+                      placement="top"
+                      slotProps={{
+                        tooltip: {
+                          sx: {
+                            fontSize: '0.85rem',
+                            padding: '8px 14px',
+                          },
+                        },
+                      }}
+                    >
+                      <Button
+                        size="small"
+                        startIcon={row.is_blacklist ? <IconCheck /> : <IconXboxX />}
+                        onClick={() => onBlacklist?.(row)}
+                        sx={{
+                          textTransform: 'none',
+                          borderRadius: 1,
+                          fontWeight: 500,
+                          backgroundColor: row.is_blacklist ? '#16a34a' : '#000',
+                          color: 'white',
+                          '&:hover': {
+                            backgroundColor: row.is_blacklist ? '#15803d' : '#000',
+                            opacity: 0.8,
+                          },
+                        }}
+                      >
+                        {row.is_blacklist ? 'Whitelist' : 'Blacklist'}
+                      </Button>
                     </Tooltip>
                   )}
 

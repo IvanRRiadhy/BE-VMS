@@ -1357,13 +1357,6 @@ const FormSelfPraregistration = ({
             (field.remarks === 'site_place' && !!invitation?.site_id);
 
           switch (field.remarks) {
-            // case 'host':
-            //   options = employee.map((emp: any) => ({
-            //     value: emp.id,
-            //     name: emp.name,
-            //   }));
-            //   break;
-
             case 'host':
               if (invitation?.host) {
                 const hostEmployee = employee.find((emp: any) => emp.id === invitation.host);
@@ -1384,6 +1377,13 @@ const FormSelfPraregistration = ({
                     value: emp.id,
                     name: emp.name,
                   }));
+              break;
+
+            case 'visitor_role':
+              options = (visitorRoles || []).map((role: any) => ({
+                value: role.role,
+                name: role.role,
+              }));
               break;
 
             case 'site_place':
@@ -1409,12 +1409,47 @@ const FormSelfPraregistration = ({
           const uniqueKey = opts?.uniqueKey ?? `${activeStep}:${index}`;
           const inputVal = inputValues[uniqueKey as any] || '';
 
+          if (field.remarks === 'visitor_role') {
+            const roleOptions = (visitorRoles || []).map((role: any) => ({
+              value: role.visitor_roles_id,
+              name: role.role,
+            }));
+
+            return (
+              <Autocomplete
+                size="small"
+                options={roleOptions}
+                getOptionLabel={(option) => option.name}
+                value={
+                  roleOptions.find((opt) => String(opt.value) === String(field.answer_text)) || null
+                }
+                onChange={(_, newValue) => {
+                  const value = newValue?.value ?? '';
+
+                  onChange(index, 'answer_text', value);
+
+                  if (value) {
+                    clearFieldError(errorKey);
+                  }
+                }}
+                renderInput={(params) => (
+                  <CustomTextField
+                    {...params}
+                    placeholder="Select Visitor Role"
+                    fullWidth
+                    error={!!errorMessage}
+                    helperText={errorMessage}
+                    sx={{ minWidth: 160, maxWidth: '100%' }}
+                  />
+                )}
+              />
+            );
+          }
+
           return (
             <Autocomplete
               size="small"
               disabled={isLockedByInvitation}
-              // freeSolo
-              // disabled={shouldDisable}
               options={options}
               getOptionLabel={(option) => (typeof option === 'string' ? option : option.name)}
               inputValue={inputVal}
@@ -1445,7 +1480,6 @@ const FormSelfPraregistration = ({
                   {...params}
                   placeholder="Enter at least 3 characters to search"
                   fullWidth
-                  // disabled={shouldDisable}
                   sx={{ minWidth: 160 }}
                   error={!!errorMessage}
                   helperText={errorMessage}
@@ -1959,6 +1993,7 @@ const FormSelfPraregistration = ({
       );
       const sections = res?.collection?.section_page_visitor_types ?? [];
       const roles = res?.collection?.visitor_roles ?? [];
+      console.log('sections', roles);
 
       setVisitorRoles(roles);
       const injected = injectInvitationData(sections, invitation);
@@ -2271,6 +2306,7 @@ const FormSelfPraregistration = ({
                     <RenderDetailRows
                       details={formsOf(section)}
                       activeStep={activeStep}
+                      visitorRoles={visitorRoles}
                       invitation={invitation}
                       fieldErrors={fieldErrors}
                       setFieldErrors={setFieldErrors}
@@ -2371,9 +2407,9 @@ const FormSelfPraregistration = ({
 
                                     <AccordionDetails>
                                       <Box sx={{ width: '100%', mb: 2 }}>
-                                        <CustomFormLabel>Role (Opsional)</CustomFormLabel>
+                                        {/* <CustomFormLabel>Role (Opsional)</CustomFormLabel> */}
 
-                                        <CustomTextField
+                                        {/* <CustomTextField
                                           select
                                           size="small"
                                           fullWidth
@@ -2399,7 +2435,7 @@ const FormSelfPraregistration = ({
                                               {role.role}
                                             </MenuItem>
                                           ))}
-                                        </CustomTextField>
+                                        </CustomTextField> */}
                                       </Box>
                                       {page.form?.map((field: any, fIdx: any) => {
                                         const matchedKey = Object.keys(
@@ -2474,9 +2510,9 @@ const FormSelfPraregistration = ({
                           >
                             <TableHead>
                               <TableRow>
-                                <TableCell>
+                                {/* <TableCell>
                                   <CustomFormLabel>Role (Opsional)</CustomFormLabel>
-                                </TableCell>
+                                </TableCell> */}
                                 {(dataVisitor[0]?.question_page[activeStep - 1]?.form || []).map(
                                   (f: any, i: any) => (
                                     <TableCell key={f.custom_field_id || i}>
@@ -2504,7 +2540,7 @@ const FormSelfPraregistration = ({
 
                                   return (
                                     <TableRow key={gIdx}>
-                                      <TableCell sx={{ minWidth: 200 }}>
+                                      {/* <TableCell sx={{ minWidth: 200 }}>
                                         <CustomTextField
                                           select
                                           size="small"
@@ -2532,7 +2568,7 @@ const FormSelfPraregistration = ({
                                             </MenuItem>
                                           ))}
                                         </CustomTextField>
-                                      </TableCell>
+                                      </TableCell> */}
                                       {fields.map((field: any) => {
                                         const matchedKey = Object.keys(
                                           groupedPages.batch_page || {},
@@ -2662,6 +2698,7 @@ const FormSelfPraregistration = ({
                         details={mergedVisitForm}
                         activeStep={activeStep}
                         invitation={invitation}
+                        visitorRoles={visitorRoles}
                         fieldErrors={fieldErrors}
                         setFieldErrors={setFieldErrors}
                         uploadNames={uploadNames}

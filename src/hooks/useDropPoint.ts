@@ -8,7 +8,7 @@ const useDropPoint = (token?: string | null) => {
   useEffect(() => {
     if (!token) return;
 
-    const fetchVisitorType = async () => {
+    const fetchDropPoint = async () => {
       try {
         setLoading(true);
 
@@ -20,7 +20,7 @@ const useDropPoint = (token?: string | null) => {
       }
     };
 
-    fetchVisitorType();
+    fetchDropPoint();
   }, [token]);
 
   return {

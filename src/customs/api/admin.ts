@@ -322,6 +322,14 @@ export const createBlacklist = async (token: string, data: any): Promise<any> =>
   return response.data;
 };
 
+export const createEmployeeBlacklist = async (token: string, data: any): Promise<any> => {
+  const response = await axiosInstance.post(`/employee/blacklist`, data, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  return response.data;
+};
+
 //endregion
 
 // Operator Setting Give Access
@@ -1953,6 +1961,38 @@ export const uploadImageEmployee = async (
     }
     throw error;
   }
+};
+
+// Blacklist Employee
+export const getAllEmployeeBlacklistPagination = async (
+  token: string,
+  start: number,
+  length: number,
+  // sortColumn: string,
+  sortDir?: string,
+  keyword: string = '',
+  // joinStart?: string,
+  // exitEnd?: string,
+  statusBlacklist?: boolean,
+): Promise<GetAllEmployeePaginationResponse> => {
+  const params: Record<string, any> = {
+    start,
+    length,
+    // sort_column: sortColumn,
+    sort_dir: sortDir,
+  };
+
+  if (keyword) params['search[value]'] = keyword;
+  // if (joinStart) params['join-start'] = joinStart;
+  // if (exitEnd) params['exit-end'] = exitEnd;
+  if (statusBlacklist !== undefined) params['status-blacklist'] = statusBlacklist;
+
+  const response = await axiosInstance.get(`/employee/blacklist/dt`, {
+    params,
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  return response.data;
 };
 
 //#endregion

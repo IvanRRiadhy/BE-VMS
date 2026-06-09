@@ -3,16 +3,28 @@ import { z } from 'zod';
 import type { CreateEmployeeRequest } from 'src/customs/api/models/Admin/Employee';
 
 // Step 0: Personal Info
-export const Step0Schema = z.object({
-  name: z.string().min(1, 'Employee name is required'),
-  person_id: z.string().min(1, 'Person ID is required'),
-  identity_type: z.string().min(1, 'Identity Type is required'),
-  identity_id: z.string().min(1, 'Identity ID is required'),
-  email: z.string().email('Email is invalid'),
-  gender: z.coerce
-    .number({ required_error: 'Gender is required' })
-    .refine((v) => v === 0 || v === 1, 'Gender is required'),
-});
+export const Step0Schema = z
+  .object({
+    name: z.string().min(1, 'Employee name is required'),
+    person_id: z.string().min(1, 'Person ID is required'),
+    identity_type: z.string().min(1, 'Identity Type is required'),
+    identity_id: z.string().min(1, 'Identity ID is required'),
+    email: z.string().email('Email is invalid'),
+    type: z.string().min(1, 'Type is required'),
+    gender: z.coerce
+      .number({ required_error: 'Gender is required' })
+      .refine((v) => v === 0 || v === 1, 'Gender is required'),
+    vendor_code: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (['Vendor', 'Contractor'].includes(data.type || '') && !data.vendor_code?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['vendor_code'],
+        message: 'Vendor Code is required',
+      });
+    }
+  });
 
 // Step 1: Work Details
 export const Step1Schema = z.object({
@@ -30,7 +42,16 @@ export const Step3Schema = z.object({
 
 // Field yang divalidasi per step
 export const stepFieldMap: Record<number, Array<keyof CreateEmployeeRequest>> = {
-  0: ['name', 'person_id', 'identity_id', 'identity_type', 'email', 'gender'],
+  0: [
+    'name',
+    'person_id',
+    'identity_id',
+    'identity_type',
+    'email',
+    'gender',
+    'type',
+    'vendor_code',
+  ],
   1: ['district_id', 'organization_id', 'department_id'],
   2: [],
   3: ['birth_date', 'join_date'],

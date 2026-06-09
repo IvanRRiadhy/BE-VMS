@@ -1,6 +1,8 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import {
+  Backdrop,
   Box,
+  CircularProgress,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -27,6 +29,8 @@ import {
   getAllEmployeePaginationFilterMore,
   getAllEmployee,
   deleteEmployee,
+  createBlacklist,
+  createEmployeeBlacklist,
 } from 'src/customs/api/admin';
 
 import { IconUsers } from '@tabler/icons-react';
@@ -37,6 +41,8 @@ import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import { useOrganization } from 'src/hooks/useOrganization';
 import { useDepartment } from 'src/hooks/useDepartment';
 import { useDistricts } from 'src/hooks/useDistricts';
+import Swal from 'sweetalert2';
+import { useNavigate } from 'react-router';
 
 type EmployeesTableRow = {
   id: string;
@@ -89,6 +95,7 @@ const Content = () => {
   const { organizations } = useOrganization();
   const { department } = useDepartment();
   const { districts } = useDistricts();
+  const [loadingData, setLoadingData] = useState(false);
 
   const [filters, setFilters] = useState<Filters>({
     joinStart: '',
@@ -137,29 +144,10 @@ const Content = () => {
             String(filters.department),
           );
         } catch (err: any) {
-          if (err?.response?.status === 404 || err?.status === 404) {
-            setTableData([]);
-            setTableRowEmployee([]);
-            setTotalRecords(0);
-            setTotalFilteredRecords(0);
-            return;
-          }
           throw err;
         }
 
         const safeCollection = Array.isArray(employeeRes?.collection) ? employeeRes.collection : [];
-        const isNotFound =
-          employeeRes?.status_code === 404 ||
-          employeeRes?.status === 'not_found' ||
-          safeCollection.length === 0;
-
-        if (isNotFound) {
-          setTableData([]);
-          setTableRowEmployee([]);
-          setTotalRecords(0);
-          setTotalFilteredRecords(0);
-          return;
-        }
 
         setTableData(safeCollection);
         setTotalRecords(employeeRes?.RecordsTotal ?? safeCollection.length ?? 0);
@@ -262,18 +250,6 @@ const Content = () => {
 
     const coerceEmployee = (s: any) => ({
       ...s,
-      // type: toNum(
-      //   s?.type,
-      //   {
-      //     permanent: 1,
-      //     contract: 2,
-      //     internship: 3,
-      //     '0': 0,
-      //     '1': 1,
-      //     '2': 2,
-      //   },
-      //   0,
-      // ),
       gender: toNum(s?.gender, { female: 0, male: 1, f: 0, m: 1, '0': 0, '1': 1 }, 0),
 
       status_employee: toNum(
@@ -456,15 +432,6 @@ const Content = () => {
     }
   };
 
-  // const handleSearchKeywordChange = useCallback((keyword: string) => {
-  //   setSearchInput(keyword);
-  // }, []);
-
-  // const handleSearch = useCallback((keyword: string) => {
-  //   setPage(0);
-  //   setSearchInput(keyword);
-  //   setSearchKeyword(keyword);
-  // }, []);
   const handleSearch = useCallback(
     (keyword: string) => {
       setPage(0);
@@ -472,6 +439,65 @@ const Content = () => {
     },
     [setPage, setSearch],
   );
+
+  const handleBlacklist = async (id: string, isBlacklist?: boolean) => {
+    try {
+      const isBlacklistAction = !isBlacklist;
+
+      const { value: inputReason } = await Swal.fire({
+        icon: isBlacklistAction ? 'warning' : 'question',
+        title: isBlacklistAction ? 'Blacklist Employee' : 'Whitelist Employee',
+        text: isBlacklistAction
+          ? 'Please provide a reason for blacklist this employee'
+          : 'Please provide a reason for whitelist this employee',
+        input: 'text',
+        inputPlaceholder: 'Enter reason...',
+        inputAttributes: { maxlength: '200' },
+        showCloseButton: true,
+        showCancelButton: true,
+        confirmButtonText: 'Yes',
+        confirmButtonColor: isBlacklistAction ? '#16a34a' : '#16a34a',
+        cancelButtonText: 'Cancel',
+        reverseButtons: true,
+        inputValidator: (value) => {
+          if (!value || value.trim().length < 3) {
+            return 'Reason must be at least 3 characters long.';
+          }
+          return null;
+        },
+      });
+
+      if (!inputReason) return;
+
+      setLoadingData(true);
+
+      const payload = {
+        employee_id: id,
+        action: isBlacklistAction ? 'blacklist' : 'whitelist',
+        reason: inputReason.trim(),
+      };
+      await createEmployeeBlacklist(token as string, payload);
+
+      showSwal(
+        'success',
+        isBlacklistAction
+          ? 'Successfully blacklisted employee'
+          : 'Successfully whitelisted employee',
+      );
+
+      setRefreshTrigger((prev) => prev + 1);
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.msg ?? 'Failed to blacklist or whitelist employee.');
+    } finally {
+      setLoadingData(false);
+    }
+  };
+
+  const handleBlacklistMemo = useCallback((row: any) => {
+    handleBlacklist(row.id, Boolean(row.is_blacklist));
+  }, []);
+
+  const navigate = useNavigate();
 
   return (
     <PageContainer
@@ -497,10 +523,16 @@ const Content = () => {
                 isHaveImage={true}
                 isHaveFilter={false}
                 isHaveExportPdf={false}
+                // isListBlacklist={true}
+                isBlacklistPage={true}
+                onNavigatePage={() => {
+                  navigate('/admin/manage/blacklist-employees');
+                }}
                 isHavePagination={true}
                 defaultRowsPerPage={rowsPerPage}
                 rowsPerPageOptions={[10, 50, 100]}
                 currentPage={page}
+                isHaveBlacklist={true}
                 onPaginationChange={(page, rowsPerPage) => {
                   setPage(page);
                   setRowsPerPage(rowsPerPage);
@@ -509,6 +541,7 @@ const Content = () => {
                 isHaveFilterDuration={false}
                 isHaveAddData={true}
                 isHaveFilterMore={true}
+                onBlacklist={handleBlacklistMemo}
                 filterMoreContent={
                   <FilterMoreContent
                     filters={filters}
@@ -533,10 +566,8 @@ const Content = () => {
                 onBatchEdit={handleBatchEdit}
                 onDelete={(row) => handleDelete(row)}
                 onBatchDelete={handleBatchDelete}
-                // onSearchKeywordChange={(keyword) => setSearchKeyword(keyword)}
                 searchKeyword={search}
                 onSearch={handleSearch}
-                // onSearchKeywordChange={handleSearchKeywordChange}
                 onAddData={handleAdd}
               />
             </Grid>
@@ -588,6 +619,15 @@ const Content = () => {
         onClose={handleCancelEdit}
         onDiscard={handleConfirmEdit}
       />
+      <Backdrop
+        open={loadingData}
+        sx={{
+          color: '#fff',
+          zIndex: 999999,
+        }}
+      >
+        <CircularProgress color="primary" />
+      </Backdrop>
     </PageContainer>
   );
 };

@@ -30,10 +30,12 @@ export type Item = {
   district_id: string;
   status_employee: number;
   is_email_verify: boolean;
+  vendor_code: string;
+  emergency_contact_name: string;
+  emergency_contact_phone: string;
+  emergency_contact_relation: string;
   id: string;
 };
-
-//GET
 
 export type GetAllEmployeeResponse = {
   status: string;
@@ -67,8 +69,7 @@ export const CreateEmployeeRequestSchema = z.object({
   identity_id: z.string().default(''),
   card_number: z.string().default(''),
   ble_card_number: z.string().default(''),
-  // type: z.coerce.number().default(0),
-  type: z.string().nullable().optional(),
+  type: z.string().default(''),
   vehicle_plate_number: z.string().nullable().optional(),
   vehicle_type: z.string().nullable().optional(),
   name: z.string().default(''),
@@ -89,7 +90,10 @@ export const CreateEmployeeRequestSchema = z.object({
   organization_id: z.string().default(''),
   department_id: z.string().default(''),
   district_id: z.string().default(''),
-  // status_employee: z.number().default(-1),
+  vendor_code: z.string().optional(),
+  emergency_contact_name: z.string().optional(),
+  emergency_contact_phone: z.string().optional(),
+  emergency_contact_relation: z.string().optional(),
 });
 
 export type CreateEmployeeRequest = z.infer<typeof CreateEmployeeRequestSchema>;
@@ -108,9 +112,16 @@ export const CreateEmployeeSubmitSchema = CreateEmployeeRequestSchema.extend({
   district_id: z.string().trim().min(1, 'District is required'),
   birth_date: z.string().trim().min(1, 'Birth date is required'),
   join_date: z.string().trim().min(1, 'Join date is required'),
-  // exit_date: z.string().trim().min(1, 'Exit date is required'),
+  vendor_code: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (['Vendor', 'Contractor'].includes(data.type || '') && !data.vendor_code?.trim()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['vendor_code'],
+      message: 'Vendor Code is required',
+    });
+  }
 });
-
 export interface CreateEmployeeResponse {
   status: string;
   status_code: number;
@@ -149,6 +160,10 @@ export interface UpdateEmployeeRequest {
   department_id: string;
   district_id: string | null;
   is_email_verify: boolean;
+  vendor_code: string;
+  emergency_contact_name: string;
+  emergency_contact_phone: string;
+  emergency_contact_relation: string;
 }
 
 export interface UpdateEmployeeResponse {

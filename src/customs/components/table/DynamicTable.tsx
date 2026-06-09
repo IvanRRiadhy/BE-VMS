@@ -89,6 +89,7 @@ type DynamicTableProps<
   onActionAccess?: (row: T, action: 'grant' | 'revoke' | 'block') => void;
   onExportExcel?: () => void;
   onPrint?: () => void;
+  isHaveBlacklist?: boolean;
   onBlacklist?: (row: T) => void;
   isHaveVisitor?: boolean;
   isButtonRegisteredSite?: boolean;
@@ -238,6 +239,7 @@ function DynamicTableBase<
     isButtonSiteAccess = false,
     height,
     isHaveGender = false,
+    isHaveBlacklist = false,
     isButtonRegisteredSite = false,
     isButtonGiveAccess = false,
     isCopy = false,
@@ -1533,6 +1535,7 @@ function DynamicTableBase<
                   openRow={openRow}
                   page={currentPage}
                   isActionEmployee={isActionEmployee}
+                  isHaveBlacklist={isHaveBlacklist}
                   isHaveVip={isHaveVip}
                   htmlFields={htmlFields}
                   htmlClampLines={htmlClampLines}

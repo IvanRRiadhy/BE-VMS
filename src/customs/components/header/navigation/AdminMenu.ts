@@ -67,6 +67,12 @@ export const AdminNavListingData: ItemDataCustomNavListing[] = [
           },
           {
             id: uniqueId(),
+            title: 'navigation.blacklist_employee',
+            icon: IconUsers,
+            href: '/admin/manage/blacklist-employees',
+          },
+          {
+            id: uniqueId(),
             title: 'navigation.staff',
             icon: IconSteeringWheel,
             href: '/admin/manage/delivery/staff',

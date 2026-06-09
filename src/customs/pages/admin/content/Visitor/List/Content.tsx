@@ -86,9 +86,7 @@ const Content = () => {
   const [visitorLoading, setVisitorLoading] = useState(false);
   const [visitorError, setVisitorError] = useState<string | null>(null);
   const [visitorDetail, setVisitorDetail] = useState<any>(null);
-  // const [searchInput, setSearchInput] = useState('');
-  // const [searchKeyword, setSearchKeyword] = useState('');
-  // const debouncedSearch = useDebounce(searchKeyword, 500);
+
   const { page, search, setPage, setSearch } = useTableQueryParams();
   const [filters, setFilters] = useState<VisitorFilters>({
     organization_id: '',
@@ -114,7 +112,6 @@ const Content = () => {
           rowsPerPage,
           sortDir,
           search,
-          // filters,
         );
         let rows = response.collection.map((item: any) => {
           return {

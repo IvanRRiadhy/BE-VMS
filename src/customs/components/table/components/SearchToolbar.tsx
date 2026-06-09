@@ -1,7 +1,7 @@
 import React, { useState, useEffect, memo } from 'react';
-import { Box, Button, Typography, InputAdornment, TextField } from '@mui/material';
+import { Box, Button, Typography, InputAdornment, TextField, Tooltip } from '@mui/material';
 import { Search } from '@mui/icons-material';
-import { IconArrowAutofitLeft } from '@tabler/icons-react';
+import { IconArrowAutofitLeft, IconExternalLink } from '@tabler/icons-react';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 
 type SearchToolbarProps = {
@@ -108,19 +108,21 @@ const SearchToolbar = memo(
           )}
 
           {isBlacklistPage && (
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={onNavigatePage}
-              startIcon={<IconArrowAutofitLeft width={18} />}
-              sx={{
-                height: 36,
-                fontSize: '0.7rem',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              Blacklist
-            </Button>
+            <Tooltip title="List Blacklist" arrow placement="top">
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={onNavigatePage}
+                endIcon={<IconExternalLink width={18} />}
+                sx={{
+                  height: 36,
+                  fontSize: '0.8rem',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Blacklist
+              </Button>
+            </Tooltip>
           )}
         </Box>
       </Box>

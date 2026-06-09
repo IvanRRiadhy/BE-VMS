@@ -82,6 +82,10 @@ const ManageEmployee = Loadable(
   lazy(() => import('src/customs/pages/admin/content/Employee/Content')),
 );
 
+const ManageBlacklistEmployee = Loadable(
+  lazy(() => import('src/customs/pages/admin/content/Employee/Blacklist/Content')),
+)
+
 const ManageVip = Loadable(
   lazy(() => import('src/customs/pages/admin/content/Enrollment/Vip/Content')),
 );
@@ -419,6 +423,7 @@ const Router = [
           { path: '/admin/visitor/blacklist-visitor', element: <ManageBlacklistVisitor /> },
           { path: '/admin/manage/companys-deparments', element: <ManageCompanyAndDepartment /> },
           { path: '/admin/manage/employees', element: <ManageEmployee /> },
+          { path: '/admin/manage/blacklist-employees', element: <ManageBlacklistEmployee /> },
           { path: '/admin/manage/vip', element: <ManageVip /> },
           { path: '/admin/manage/vendor', element: <ManageVendor /> },
           { path: '/admin/manage/delivery', element: <ManageDelivery /> },
