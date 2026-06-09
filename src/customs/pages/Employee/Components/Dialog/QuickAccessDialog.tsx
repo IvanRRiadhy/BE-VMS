@@ -18,6 +18,12 @@ interface QuickAccessDialogProps {
   onSubmit?: any;
   visitorTableData?: any[];
   handleEmployeeClick?: any;
+  page?: any;
+  setPage?: any;
+  setRowsPerPage?: any;
+  searchKeyword?: string;
+  onSearch?: (keyword: string) => void;
+  totalCount?: number;
 }
 
 export interface QuickAccessFormData {
@@ -43,6 +49,12 @@ export const QuickAccessDialog = ({
   onSubmit,
   visitorTableData,
   handleEmployeeClick,
+  page,
+  setPage,
+  setRowsPerPage,
+  searchKeyword,
+  onSearch,
+  totalCount,
 }: QuickAccessDialogProps) => {
   const handleChange = (field: keyof QuickAccessFormData, value: string | number | null) => {
     setForm((prev) => ({
@@ -209,11 +221,21 @@ export const QuickAccessDialog = ({
         <DialogContent dividers sx={{ p: 0 }}>
           <DynamicTable
             data={visitorTableData || []}
-            isHaveSearch
+            isHaveSearch={true}
+            searchKeyword={searchKeyword}
+            onSearch={onSearch}
             isHaveAddData
             isHavePeriod={true}
             isHaveEmployee={true}
+            totalCount={totalCount}
+            currentPage={page}
             isActionEmployee={true}
+            isHavePagination={true}
+            rowsPerPageOptions={[10, 50, 100]}
+            onPaginationChange={(page, rowsPerPage) => {
+              setPage(page);
+              setRowsPerPage(rowsPerPage);
+            }}
             isHaveChecked={true}
             onAddData={handleAddData}
             isHaveDataQuickAccess={true}

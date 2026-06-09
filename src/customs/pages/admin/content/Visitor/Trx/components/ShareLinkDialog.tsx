@@ -92,6 +92,14 @@ const ShareLinkDialog: React.FC<Props> = ({
     }
   }, [fetchData, open, token, refreshKey]);
 
+  const handleSearch = useCallback(
+    (keyword: string) => {
+      setPage(0);
+      setSearchKeyword(keyword);
+    },
+    [setPage, setSearchKeyword],
+  );
+
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xl">
       <DialogTitle>
@@ -113,14 +121,16 @@ const ShareLinkDialog: React.FC<Props> = ({
         <DynamicTable
           data={shareLinkList}
           loading={loading}
-          isHaveHeaderTitle
+          isHaveHeaderTitle={false}
+          isHaveSearch={true}
+          onSearch={handleSearch}
           isHaveChecked={true}
           isNoActionTableHead={true}
-          titleHeader="Share Link"
+          // titleHeader="Share Link"
           isCopyLink={true}
           isHavePagination={true}
           totalCount={totalFilterRecords}
-          rowsPerPageOptions={[10, 50, 100]}
+          rowsPerPageOptions={[5, 10, 50, 100]}
           onPaginationChange={(newPage: any, newRowsPerPage: any) => {
             setPage(newPage);
             setRowsPerPage(newRowsPerPage);

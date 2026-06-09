@@ -58,24 +58,7 @@ import ShareLinkDialog from '../../admin/content/Visitor/Trx/components/ShareLin
 import ConfirmUnsavedDialog from 'src/customs/pages/admin/components/ConfirmUnsavedDialog';
 import { QuickAccessDialog } from '../Components/Dialog/QuickAccessDialog';
 import { createQuickAccess } from 'src/customs/api/Admin/Visitor';
-import { fa } from 'zod/v4/locales';
-
-type VisitorTableRow = {
-  id: string;
-  identity_id: string;
-  name: string;
-  visitor_type: string;
-  email: string;
-  organization: string;
-  gender: string;
-  address: string;
-  phone: string;
-  is_vip: string;
-  visitor_period_start: string;
-  visitor_period_end: string;
-  host: string;
-  visitor_status: string;
-};
+import useInvitationVisitorType from 'src/hooks/useInvitationVisitorType';
 
 const Content = () => {
   const { token } = useSession();
@@ -83,15 +66,10 @@ const Content = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [totalRecords, setTotalRecords] = useState(0);
   const [edittingId, setEdittingId] = useState('');
-  const [totalFilteredRecords, setTotalFilteredRecords] = useState(0);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
-  const [discardMode, setDiscardMode] = useState<'close-add' | 'edit' | null>(null);
-  const [tableRowVisitors, setTableRowVisitors] = useState<any[]>([]);
-  const [tableCustomVisitor, setTableCustomVisitor] = useState<VisitorTableRow[]>([]);
   const [selectedRows, setSelectedRows] = useState<[]>([]);
   const [formDataAddVisitor, setFormDataAddVisitor] = useState<CreateVisitorRequest>(() => {
     const saved = localStorage.getItem('unsavedVisitorData');
@@ -136,7 +114,7 @@ const Content = () => {
   const [openRelatedInvitation, setOpenRelatedInvitation] = useState(false);
   const [emails, setEmails] = useState<string[]>([]);
   // Registered Site
-  const [siteData, setSiteData] = useState<any[]>([]);
+  // const [siteData, setSiteData] = useState<any[]>([]);
   const [selectedSite, setSelectedSite] = useState<any | null>(null);
   const [wizardKey, setWizardKey] = useState(0);
   const [generatedLink, setGeneratedLink] = useState('');
@@ -198,31 +176,7 @@ const Content = () => {
     'All' | 'Preregis' | 'Checkin' | 'Checkout' | 'Denied' | 'Block' | 'Waiting'
   >('All');
 
-  const statusMap: Record<string, string> = {
-    All: 'All',
-    Preregis: 'Preregis',
-    Checkin: 'Checkin',
-    Checkout: 'Checkout',
-    Denied: 'denied',
-    Block: 'Block',
-    Waiting: 'Waiting',
-  };
-
   const [search, setSearch] = useState<string>('');
-
-  const [filters, setFilters] = useState<any>({
-    status: undefined,
-    visitor_type: '',
-    visitor_role: '',
-    host_id: '',
-    site_id: '',
-    is_employee: '',
-    is_block: '',
-    transaction_status: '',
-    emergency_situation: '',
-    start_date: '',
-    end_date: '',
-  });
 
   const [appliedFilters, setAppliedFilters] = useState<any>({
     status: undefined,
@@ -317,11 +271,6 @@ const Content = () => {
       .map(({ invitation_created_at, ...rest }: any) => rest);
   }, [allVisitorData]);
 
-  const quickAccessData = useMemo(
-    () => processedData.filter((item: any) => item.visitor_status === 'QuickAccess'),
-    [processedData],
-  );
-
   const visitorDataAll = useMemo(
     () => processedData.filter((item: any) => item.visitor_status !== 'QuickAccess'),
     [processedData],
@@ -331,16 +280,65 @@ const Content = () => {
     return visitorDataAll.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
   }, [processedData, page, rowsPerPage]);
 
+  const [quickSearch, setQuickSearch] = useState('');
   const [quickPage, setQuickPage] = useState(0);
   const [quickRowsPerPage, setQuickRowsPerPage] = useState(10);
 
-  const paginatedQuickAccess = useMemo(() => {
-    return quickAccessData.slice(quickPage * quickRowsPerPage, (quickPage + 1) * quickRowsPerPage);
-  }, [quickAccessData, quickPage, quickRowsPerPage]);
+  const { data: quickAccessResult } = useQuery({
+    queryKey: ['quick-access', quickPage, quickRowsPerPage, quickSearch],
+    queryFn: async () => {
+      const res = await getAllVisitorPagination(
+        token as string,
+        quickPage * quickRowsPerPage,
+        quickRowsPerPage,
+        quickSearch || undefined,
+        undefined,
+        undefined,
+        'QuickAccess',
+      );
+
+      return res;
+    },
+    enabled: !!token && openQuickAccess,
+  });
+
+  const processedQuickAccessData = useMemo(() => {
+    if (!quickAccessResult?.collection) return [];
+
+    return quickAccessResult.collection
+      .map((item: any) => {
+        const isExpired =
+          item.visitor_period_end && dayjs(item.visitor_period_end).isBefore(dayjs(), 'day');
+
+        return {
+          id: item.id,
+          visitor_type: item.visitor_type_name || '-',
+          name: item.visitor_name || '-',
+          // identity_id: item.visitor_identity_id || '-',
+          email: item.visitor_email || '-',
+          organization: item.visitor_organization_name || '-',
+          receiver_name: item.receiver_name || '-',
+          invitation_code: item.invitation_code || '-',
+          phone: item.visitor_phone || '-',
+          visitor_period_start: item.visitor_period_start || '-',
+          visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
+          invitation_created_at: item.invitation_created_at,
+          host: item.host ?? '-',
+          visitor_status: isExpired ? 'Expired' : item.visitor_status || '-',
+        };
+      })
+      .sort((a: any, b: any) => {
+        const dateA = a.invitation_created_at ?? a.visitor_period_start;
+        const dateB = b.invitation_created_at ?? b.visitor_period_start;
+
+        return dayjs(dateB).valueOf() - dayjs(dateA).valueOf();
+      })
+      .map(({ invitation_created_at, ...rest }: any) => rest);
+  }, [quickAccessResult]);
 
   const visitorTableData = {
     data: paginatedData,
-    dataQuickAccess: paginatedQuickAccess,
+    dataQuickAccess: processedQuickAccessData,
     RecordsFiltered: processedData.length,
     RecordsTotal: processedData.length,
   };
@@ -379,44 +377,6 @@ const Content = () => {
       color: 'none',
     },
   ];
-
-  // useEffect(() => {
-  //   // if (!tableRowVisitors.length) return;
-
-  //   let filtered = [...tableRowVisitors];
-
-  //   const keyword = searchKeyword.trim().toLowerCase();
-  //   if (keyword) {
-  //     filtered = filtered.filter((r) =>
-  //       [r.name, r.email, r.phone, r.organization, r.identity_id].some((val) =>
-  //         String(val || '')
-  //           .toLowerCase()
-  //           .includes(keyword),
-  //       ),
-  //     );
-  //   }
-
-  //   if (selectedType !== 'All') {
-  //     const apiStatus = statusMap[selectedType];
-  //     filtered = filtered.filter((r) => r.visitor_status === apiStatus);
-  //   }
-
-  //   const startIndex = page * rowsPerPage;
-  //   const endIndex = startIndex + rowsPerPage;
-  //   const paginated = filtered.slice(startIndex, endIndex);
-
-  //   setTableCustomVisitor(paginated);
-  //   setTotalFilteredRecords(filtered.length);
-  // }, [tableRowVisitors, searchKeyword, selectedType, page, rowsPerPage]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const response = await getRegisteredSite(token as string);
-
-      setSiteData(response.collection);
-    };
-    fetchData();
-  }, [token]);
 
   const handleCloseDialog = () => {
     setSelectedSite(null);
@@ -458,13 +418,11 @@ const Content = () => {
   };
 
   const openDiscardForCloseAdd = () => {
-    setDiscardMode('close-add');
     setConfirmDialogOpen(true);
   };
 
   const handleCancelDiscard = () => {
     setConfirmDialogOpen(false);
-    setDiscardMode(null);
     setPendingEditId(null);
   };
 
@@ -481,7 +439,6 @@ const Content = () => {
     setOpenDialogIndex(null);
     setFormDataAddVisitor(defaultFormData);
     setConfirmDialogOpen(false);
-    setDiscardMode(null);
     handleDialogClose();
   };
 
@@ -505,7 +462,7 @@ const Content = () => {
       .filter((_, index) => selected.includes(index))
       .map((v, i) => ({
         id: v.id,
-        name: v.visitor.name,
+        name: v.visitor_name,
         vehicle_plate_number: v.vehicle_plate_number,
         visitor_status: v.visitor_status,
       }));
@@ -517,7 +474,7 @@ const Content = () => {
     setVisitorError(null);
   };
 
-  const [visitorType, setVisitorType] = useState<any[]>([]);
+  // const [visitorType, setVisitorType] = useState<any[]>([]);
   const [vtLoading, setVtLoading] = useState(false);
   const [sites, setSites] = useState<any[]>([]);
   const [employee, setEmployee] = useState<any[]>([]);
@@ -529,7 +486,6 @@ const Content = () => {
     const fetchSecondaryData = async () => {
       try {
         const [employeeRes, allEmployeeRes, siteRes] = await Promise.all([
-          // getAllCustomField(token),
           getFormEmployee(token),
           getVisitorEmployee(token),
           getInvitationSite(token),
@@ -547,22 +503,7 @@ const Content = () => {
     fetchSecondaryData();
   }, [token]);
 
-  const fetchVisitorType = async () => {
-    try {
-      setVtLoading(true);
-      const res = await getInvitationVisitorType(token as string);
-      // const res = await getAllVisitorType(token as string);
-      setVisitorType(res?.collection || []);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setVtLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchVisitorType();
-  }, [token]);
+  const { visitorType } = useInvitationVisitorType(token);
 
   const handleDeleteLink = async (id: string) => {
     try {
@@ -599,73 +540,7 @@ const Content = () => {
     setOpenDetailLink(true);
   };
 
-  const [pageSharelink, setPageSharelink] = useState(0);
-  const [rowsPerPageSharelink, setRowsPerPageSharelink] = useState(10);
-  const [searchKeywordSharelink, setSearchKeywordSharelink] = useState('');
-  const [sortDirSharelink, setSortDirSharelink] = useState('desc');
-
-  const [shareLinkList, setShareLinkList] = useState([]);
-
   const [refreshKey, setRefreshKey] = useState(0);
-  const start = pageSharelink * rowsPerPageSharelink;
-  const fetchData = useCallback(async () => {
-    try {
-      setLoading(true);
-
-      const res = await getShareLinkByDt(
-        token as string,
-        start,
-        rowsPerPageSharelink,
-        searchKeywordSharelink,
-        sortDirSharelink,
-      );
-
-      const mapped =
-        res?.collection?.map((item: any) => ({
-          id: item.id,
-          agenda: item.agenda,
-          url: item.url,
-          current_usage: item.current_usage,
-          max_usage: item.max_usage,
-          visitor_period_start: formatDateTime(item.visitor_period_start),
-          visitor_period_end: formatDateTime(item.visitor_period_end),
-          expired_at: (() => {
-            const date = new Date(item.expired_at + 'Z');
-
-            const formattedDate = date.toLocaleDateString('en-GB', {
-              day: '2-digit',
-              month: 'long',
-              year: 'numeric',
-            });
-
-            const formattedTime = date
-              .toLocaleTimeString('id-ID', {
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false,
-              })
-              .replace(':', '.');
-
-            return `${formattedDate}, ${formattedTime}`;
-          })(),
-
-          link_status: item.link_status,
-        })) || [];
-
-      setShareLinkList(mapped);
-      // setTotalFilterRecords(res?.RecordsFiltered || 0);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [token, start, searchKeyword, rowsPerPageSharelink, searchKeywordSharelink, sortDirSharelink]);
-
-  useEffect(() => {
-    if (token) {
-      fetchData();
-    }
-  }, [fetchData, token, refreshKey]);
 
   const handleAddShareLink = () => {
     setOpenCreateLink(true);
@@ -690,34 +565,6 @@ const Content = () => {
 
     return `${diffHours} hour${diffHours > 1 ? 's' : ''}`;
   };
-
-  // const handleSendInvitation = async () => {
-  //   let finalEmails = [...emails];
-
-  //   if (emailInput.trim() !== '') {
-  //     finalEmails.push(emailInput.trim());
-  //   }
-
-  //   if (!finalEmails.length || !selectedShareLinkId) {
-  //     showSwal('error', 'Please enter at least one email');
-  //     return;
-  //   }
-
-  //   try {
-  //     const payload = {
-  //       emails: finalEmails,
-  //     };
-  //     await createShareLinkByEmailById(token as string, payload, selectedShareLinkId);
-  //     showSwal('success', 'Invitation sent successfully');
-
-  //     setEmails([]);
-  //     setEmailInput('');
-  //     setRefreshKey((prev) => prev + 1);
-  //   } catch (error) {
-  //     console.error(error);
-  //     showSwal('error', 'Failed to send invitation');
-  //   }
-  // };
 
   const handleSendInvitation = async (emails: any) => {
     const validEmails = emails.filter((email: any) => email?.trim() !== '');
@@ -785,25 +632,10 @@ const Content = () => {
       setOpenCreateLink(false);
       showSwal('success', 'Share link created successfully');
       setRefreshKey((prev) => prev + 1);
-    } catch (err) {
-      showSwal('error', 'Failed to create share link');
+    } catch (err: any) {
+      showSwal('error', err.response.data.message ?? 'Failed to create share link');
     } finally {
       setIsGenerating(false);
-    }
-  };
-
-  const handleSelectSite = (site: any) => {
-    setFormDataAddVisitor((prev) => ({
-      ...prev,
-      registered_site: site.id,
-    }));
-
-    setOpenDialogIndex(null);
-
-    if (flowTarget === 'invitation') {
-      setOpenInvitationVisitor(true);
-    } else if (flowTarget === 'preReg') {
-      setOpenPreRegistration(true);
     }
   };
 
@@ -814,7 +646,7 @@ const Content = () => {
       showSwal('success', 'Quick access created successfully');
 
       setOpenQuickAccess(false);
-      await queryClient.invalidateQueries({ queryKey: ['visitors'] });
+      await queryClient.invalidateQueries({ queryKey: ['quick-access'] });
     } catch (error: any) {
       showSwal('error', error?.response?.data?.message || 'Failed to create quick access');
 
@@ -829,6 +661,11 @@ const Content = () => {
     },
     [setPage, setSearch],
   );
+
+  const handleQuickSearch = useCallback((keyword: string) => {
+    setQuickPage(0);
+    setQuickSearch(keyword);
+  }, []);
 
   return (
     <>
@@ -890,9 +727,6 @@ const Content = () => {
                 isActionEmployee={true}
                 stickyVisitorCount={2}
                 isBlacklistPage={false}
-                // onNavigatePage={() => {
-                //   navigate('/admin/visitor/blacklist-visitor');
-                // }}
                 isHaveEmployee={true}
                 onEmployeeClick={(row: any) => {
                   handleEmployeeClick(row.host as string);
@@ -1000,6 +834,12 @@ const Content = () => {
         visitorTableData={visitorTableData.dataQuickAccess}
         handleEmployeeClick={handleEmployeeClick}
         onSubmit={handleCreateQuickAccess}
+        page={quickPage}
+        setPage={setQuickPage}
+        setRowsPerPage={setQuickRowsPerPage}
+        searchKeyword={quickSearch}
+        onSearch={handleQuickSearch}
+        totalCount={quickAccessResult?.RecordsFiltered ?? 0}
       />
 
       {/* Employee Detail */}
@@ -1010,17 +850,6 @@ const Content = () => {
         employeeLoading={employeeLoading}
         employeeError={employeeError}
         axiosInstance2={axiosInstance2}
-      />
-
-      <SelectRegisteredSiteDialog
-        open={openDialogIndex === 2}
-        siteData={siteData}
-        selectedSite={selectedSite}
-        setSelectedSite={setSelectedSite}
-        isFormChanged={isFormChanged}
-        onDiscard={openDiscardForCloseAdd}
-        onClose={handleCloseDialog}
-        onNext={handleSelectSite}
       />
 
       {/* Related Visitor */}

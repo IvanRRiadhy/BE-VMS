@@ -243,7 +243,7 @@ export default function FormQuickAccess({
 
           {showVehiclePlate && (
             <Grid size={12}>
-              <CustomFormLabel>Vehicle Plate Number</CustomFormLabel>
+              <CustomFormLabel sx={{ mt: 0 }}>Vehicle Plate Number</CustomFormLabel>
 
               <CustomTextField
                 fullWidth
@@ -254,7 +254,7 @@ export default function FormQuickAccess({
           )}
 
           <Grid size={{ xs: 12 }}>
-            <CustomFormLabel>Duration</CustomFormLabel>
+            <CustomFormLabel sx={{ mt: 0 }}>Duration</CustomFormLabel>
             <Box display="flex" gap={2} flexWrap="wrap">
               {[10, 15, 30, 60, 120].map((item) => (
                 <FormControlLabel

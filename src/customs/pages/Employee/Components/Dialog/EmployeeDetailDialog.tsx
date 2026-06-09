@@ -67,18 +67,18 @@ const EmployeeDetailDialog: React.FC<Props> = ({
               </Grid>
 
               {/* Reusable Field */}
-              {renderField('Name', employeeDetail?.name)}
-              {renderField('Phone', employeeDetail?.phone)}
-              {renderField('Email', employeeDetail?.email)}
-              {renderField('Gender', employeeDetail?.gender)}
-              {renderField('Address', employeeDetail?.address)}
-              {renderField('Organization', employeeDetail?.organization_id)}
-              {renderField('Department', employeeDetail?.department_id)}
-              {renderField('District', employeeDetail?.district_id)}
-              {renderField('Status', employeeDetail?.status_employee)}
-              {renderField('Birth Date', employeeDetail?.birth_date)}
-              {renderField('Join Date', employeeDetail?.join_date)}
-              {renderField('Exit Date', employeeDetail?.exit_date)}
+              {renderField('Name', employeeDetail?.name ?? '-')}
+              {renderField('Phone', employeeDetail?.phone ?? '-')}
+              {renderField('Email', employeeDetail?.email ?? '-')}
+              {renderField('Gender', employeeDetail?.gender ?? '-')}
+              {renderField('Address', employeeDetail?.address ?? '-')}
+              {renderField('Organization', employeeDetail?.organization_id ?? '-')}
+              {renderField('Department', employeeDetail?.department_id ?? '-')}
+              {renderField('District', employeeDetail?.district_id ?? '-')}
+              {renderField('Status', employeeDetail?.status_employee ?? '-')}
+              {renderField('Birth Date', employeeDetail?.birth_date ?? '-')}
+              {renderField('Join Date', employeeDetail?.join_date ?? '-')}
+              {renderField('Exit Date', employeeDetail?.exit_date ?? '-')}
             </Grid>
           </Box>
         )}

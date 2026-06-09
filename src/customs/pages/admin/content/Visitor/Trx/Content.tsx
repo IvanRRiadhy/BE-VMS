@@ -167,6 +167,15 @@ const Content = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   const [open, setOpen] = useState(false);
 
+  const { data: siteData = [], isLoading: isLoadingSite } = useRegisteredSite(token as string);
+  const [selectedShareLinkId, setSelectedShareLinkId] = useState<string | null>(null);
+
+  const { visitorType } = useVisitorType(token as string);
+  const { sites } = useSites(token as string);
+  const { employee } = useEmployees(token as string);
+  const { allVisitorEmployee } = useVisitorEmployees(token as string);
+  const [openQuickAccess, setOpenQuickAccess] = useState(false);
+
   const resetRegisteredFlow = () => {
     setSelectedSite(null);
     setFormDataAddVisitor(defaultFormData);
@@ -313,11 +322,6 @@ const Content = () => {
       .map(({ invitation_created_at, ...rest }: any) => rest);
   }, [allVisitorData]);
 
-  const quickAccessData = useMemo(
-    () => processedData.filter((item: any) => item.visitor_status === 'QuickAccess'),
-    [processedData],
-  );
-
   const visitorDataAll = useMemo(
     () => processedData.filter((item: any) => item.visitor_status !== 'QuickAccess'),
     [processedData],
@@ -327,16 +331,65 @@ const Content = () => {
     return visitorDataAll.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
   }, [processedData, page, rowsPerPage]);
 
+  const [quickSearch, setQuickSearch] = useState('');
   const [quickPage, setQuickPage] = useState(0);
   const [quickRowsPerPage, setQuickRowsPerPage] = useState(10);
 
-  const paginatedQuickAccess = useMemo(() => {
-    return quickAccessData.slice(quickPage * quickRowsPerPage, (quickPage + 1) * quickRowsPerPage);
-  }, [quickAccessData, quickPage, quickRowsPerPage]);
+  const { data: quickAccessResult } = useQuery({
+    queryKey: ['quick-access', quickPage, quickRowsPerPage, quickSearch],
+    queryFn: async () => {
+      const res = await getAllVisitorPagination(
+        token as string,
+        quickPage * quickRowsPerPage,
+        quickRowsPerPage,
+        quickSearch || undefined,
+        undefined,
+        undefined,
+        'QuickAccess',
+      );
+
+      return res;
+    },
+    enabled: !!token && openQuickAccess,
+  });
+
+  const processedQuickAccessData = useMemo(() => {
+    if (!quickAccessResult?.collection) return [];
+
+    return quickAccessResult.collection
+      .map((item: any) => {
+        const isExpired =
+          item.visitor_period_end && dayjs(item.visitor_period_end).isBefore(dayjs(), 'day');
+
+        return {
+          id: item.id,
+          visitor_type: item.visitor_type_name || '-',
+          name: item.visitor_name || '-',
+          // identity_id: item.visitor_identity_id || '-',
+          email: item.visitor_email || '-',
+          organization: item.visitor_organization_name || '-',
+          receiver_name: item.receiver_name || '-',
+          invitation_code: item.invitation_code || '-',
+          phone: item.visitor_phone || '-',
+          visitor_period_start: item.visitor_period_start || '-',
+          visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
+          invitation_created_at: item.invitation_created_at,
+          host: item.host ?? '-',
+          visitor_status: isExpired ? 'Expired' : item.visitor_status || '-',
+        };
+      })
+      .sort((a: any, b: any) => {
+        const dateA = a.invitation_created_at ?? a.visitor_period_start;
+        const dateB = b.invitation_created_at ?? b.visitor_period_start;
+
+        return dayjs(dateB).valueOf() - dayjs(dateA).valueOf();
+      })
+      .map(({ invitation_created_at, ...rest }: any) => rest);
+  }, [quickAccessResult]);
 
   const visitorTableData = {
     data: paginatedData,
-    dataQuickAccess: paginatedQuickAccess,
+    dataQuickAccess: processedQuickAccessData ?? [],
     RecordsFiltered: processedData.length,
     RecordsTotal: processedData.length,
   };
@@ -391,15 +444,6 @@ const Content = () => {
         ]
       : []),
   ];
-
-  const { data: siteData = [], isLoading: isLoadingSite } = useRegisteredSite(token as string);
-  const [selectedShareLinkId, setSelectedShareLinkId] = useState<string | null>(null);
-
-  const { visitorType } = useVisitorType(token as string);
-  const { sites } = useSites(token as string);
-  const { employee } = useEmployees(token as string);
-  const { allVisitorEmployee } = useVisitorEmployees(token as string);
-  const [openQuickAccess, setOpenQuickAccess] = useState(false);
 
   const handleCloseDialog = useCallback(() => {
     setSelectedSite(null);
@@ -711,6 +755,10 @@ const Content = () => {
     },
     [setPage, setSearch],
   );
+  const handleQuickSearch = useCallback((keyword: string) => {
+    setQuickPage(0);
+    setQuickSearch(keyword);
+  }, []);
 
   const handleSelectSite = (site: any) => {
     setFormDataAddVisitor((prev) => ({
@@ -734,7 +782,9 @@ const Content = () => {
       showSwal('success', 'Quick access created successfully');
 
       setOpenQuickAccess(false);
-      await queryClient.invalidateQueries({ queryKey: ['visitors'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['quick-access'],
+      });
     } catch (error: any) {
       showSwal('error', error?.response?.data?.message || 'Failed to create quick access');
 
@@ -983,6 +1033,9 @@ const Content = () => {
         page={quickPage}
         setPage={setQuickPage}
         setRowsPerPage={setQuickRowsPerPage}
+        searchKeyword={quickSearch}
+        onSearch={handleQuickSearch}
+        totalCount={quickAccessResult?.RecordsFiltered ?? 0}
       />
 
       {/* Dialog Confirm */}

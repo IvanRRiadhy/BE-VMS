@@ -121,7 +121,7 @@ const RelatedInvitationDialog: React.FC<Props> = ({
                       />
 
                       <Typography mt={1} fontSize={14} noWrap width={60}>
-                        {v.visitor.name}
+                        {v?.name ?? v?.visitor_name ?? ''}
                       </Typography>
                     </Box>
                   );

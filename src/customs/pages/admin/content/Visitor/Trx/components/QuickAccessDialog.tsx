@@ -21,6 +21,9 @@ interface QuickAccessDialogProps {
   page?: any;
   setPage?: any;
   setRowsPerPage?: any;
+  searchKeyword?: string;
+  onSearch?: (keyword: string) => void;
+  totalCount?: number;
 }
 
 export interface QuickAccessFormData {
@@ -49,6 +52,9 @@ export const QuickAccessDialog = ({
   page,
   setPage,
   setRowsPerPage,
+  searchKeyword,
+  onSearch,
+  totalCount,
 }: QuickAccessDialogProps) => {
   const handleChange = (field: keyof QuickAccessFormData, value: string | number | null) => {
     setForm((prev) => ({
@@ -117,7 +123,7 @@ export const QuickAccessDialog = ({
         visitor_email: form.visitorEmail,
         visitor_phone: form.visitorPhone,
       };
-      console.log('payload', payload);
+      // console.log('payload', payload);
       await onSubmit?.(payload);
       setOpenQuickAccess(false);
     } catch (error) {}
@@ -215,10 +221,13 @@ export const QuickAccessDialog = ({
         <DialogContent dividers sx={{ p: 0 }}>
           <DynamicTable
             data={visitorTableData || []}
-            isHaveSearch={false}
+            isHaveSearch={true}
+            searchKeyword={searchKeyword}
+            onSearch={onSearch}
             isHaveAddData
             isHavePeriod={true}
             isHaveEmployee={true}
+            totalCount={totalCount}
             currentPage={page}
             isActionEmployee={true}
             isHavePagination={true}
