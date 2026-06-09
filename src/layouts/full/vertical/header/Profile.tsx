@@ -59,12 +59,6 @@ const Profile = () => {
   useEffect(() => {
     if (!token) return;
 
-    const allowed =
-      groupId === GroupRoleId.Visitor.toLowerCase() ||
-      groupId === GroupRoleId.Employee.toLowerCase();
-
-    if (!allowed) return;
-
     const fetchData = async () => {
       const res = await getProfile(token);
       setData(res?.collection || {});
@@ -127,9 +121,7 @@ const Profile = () => {
             >
               {data.fullname || 'John Does'}
             </Typography>
-            {/* <Typography sx={{ fontSize: '0.8rem' }} variant="subtitle2" color="textSecondary">
-              Designer
-            </Typography> */}
+
             <Typography
               sx={{ fontSize: '0.8rem' }}
               variant="subtitle2"
@@ -138,12 +130,11 @@ const Profile = () => {
               alignItems="center"
               gap={1}
             >
-              {/* <IconMail width={15} height={15} /> */}
               {data.email || 'morV0@example.com'}
             </Typography>
             <Link to={profileUrl} onClick={handleClose2}>
               <Typography variant="body2" mt={0.5} color="primary">
-                Edit Profile
+                See Profile
               </Typography>
             </Link>
           </Box>
@@ -166,10 +157,10 @@ export const getProfilePathByRole = (groupName?: string): string => {
 
   const lower = groupName.toLowerCase();
 
-  // if (lower.includes('admin')) return '/admin/profile';
-  // if (lower.includes('manager')) return '/manager/profile';
+  if (lower.includes('admin')) return '/admin/profile';
+  if (lower.includes('manager')) return '/manager/profile';
   if (lower.includes('employee')) return '/employee/profile';
-  // if (lower.includes('operator')) return '/operator/profile';
+  if (lower.includes('operator')) return '/operator/profile';
   if (lower.includes('visitor') || lower.includes('guest')) return '/guest/profile';
 
   return '/profile';

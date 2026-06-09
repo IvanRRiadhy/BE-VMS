@@ -729,7 +729,7 @@ const DashboardEmployee = () => {
           </Button>
           <Button
             variant="contained"
-            color="primary"
+            color="secondary"
             sx={{ mt: 0.5 }}
             onClick={() => setOpenQuickAccess(true)}
             startIcon={<IconBolt />}

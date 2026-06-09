@@ -84,7 +84,7 @@ const ManageEmployee = Loadable(
 
 const ManageBlacklistEmployee = Loadable(
   lazy(() => import('src/customs/pages/admin/content/Employee/Blacklist/Content')),
-)
+);
 
 const ManageVip = Loadable(
   lazy(() => import('src/customs/pages/admin/content/Enrollment/Vip/Content')),
@@ -429,6 +429,7 @@ const Router = [
           { path: '/admin/manage/delivery', element: <ManageDelivery /> },
           { path: '/admin/manage/delivery/staff', element: <ManageDelivery /> },
           { path: '/admin/visitor/scheduler', element: <ManageDeliveryScheduler /> },
+          { path: '/admin/profile', element: <DetailProfile /> },
           {
             path: '/admin/visitor/scheduler/detail/:id',
             element: <ManageDetailScheduler />,

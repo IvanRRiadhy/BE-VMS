@@ -38,6 +38,9 @@ const DetailProfile = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { token } = useSession();
   const { user } = useAuth();
+  const roleAccess = localStorage.getItem('roleAccess');
+  const isAdmin = roleAccess === 'Admin';
+  console.log('isAdmin', isAdmin);
 
   const [formData, setFormData] = useState<Item>({
     id: '',
@@ -135,11 +138,11 @@ const DetailProfile = () => {
     );
   }
 
-  return (
-    // <PageContainer
-    //   itemDataCustomNavListing={AdminNavListingData}
-    //   itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
-    // >
+  return isAdmin ? (
+    <PageContainer
+      itemDataCustomNavListing={AdminNavListingData}
+      itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
+    >
       <Container title="Profile">
         <Grid container justifyContent="center" sx={{ mt: 4 }}>
           <Grid size={{ xs: 12, md: 10, lg: 8 }}>
@@ -202,15 +205,13 @@ const DetailProfile = () => {
                   <Grid size={{ xs: 12, md: 8 }}>
                     <Box>
                       <Typography variant="h5" fontWeight="bold" gutterBottom>
-                        {activeTab === 0
-                          ? 'Edit Personal Information'
-                          : 'Edit Organization Information'}
+                        {activeTab === 0 ? ' Personal Information' : ' Organization Information'}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary" gutterBottom>
-                        {activeTab === 0
-                          ? 'You can edit your personal details.'
-                          : 'You can edit your organization-related details.'}
-                      </Typography>
+                      {/* <Typography variant="body2" color="text.secondary" gutterBottom>
+                      {activeTab === 0
+                        ? 'You can edit your personal details.'
+                        : 'You can edit your organization-related details.'}
+                    </Typography> */}
                       <Divider sx={{ mb: 3, mt: 1 }} />
 
                       {/* PERSONAL INFO */}
@@ -306,7 +307,7 @@ const DetailProfile = () => {
                       )}
 
                       {/* Tombol aksi */}
-                      <Stack direction="row" justifyContent="flex-end" spacing={1} mt={3}>
+                      {/* <Stack direction="row" justifyContent="flex-end" spacing={1} mt={3}>
                         {!isEditing ? (
                           <Button
                             variant="contained"
@@ -325,7 +326,7 @@ const DetailProfile = () => {
                             </Button>
                           </>
                         )}
-                      </Stack>
+                      </Stack> */}
                     </Box>
                   </Grid>
                 </Grid>
@@ -334,6 +335,205 @@ const DetailProfile = () => {
           </Grid>
         </Grid>
       </Container>
+    </PageContainer>
+  ) : (
+    // </PageContainer>
+    // <PageContainer
+    //   itemDataCustomNavListing={AdminNavListingData}
+    //   itemDataCustomSidebarItems={AdminCustomSidebarItemsData}
+    // >
+    <Container title="Profile">
+      <Grid container justifyContent="center" sx={{ mt: 4 }}>
+        <Grid size={{ xs: 12, md: 10, lg: 8 }}>
+          <Card sx={{ borderRadius: 3, boxShadow: 3 }}>
+            <CardContent sx={{ px: 0 }}>
+              <Grid container spacing={3}>
+                {/* Sidebar kiri */}
+                <Grid
+                  size={{ xs: 12, md: 4 }}
+                  display="flex"
+                  flexDirection="column"
+                  alignItems="center"
+                  textAlign="center"
+                  sx={{
+                    borderRight: { md: '1px solid #eee' },
+                    borderBottom: { xs: '1px solid #eee', md: 'none' },
+                    pb: 2,
+                    px: { xs: 2, md: 0 },
+                  }}
+                >
+                  <Avatar
+                    alt="User Avatar"
+                    src={user?.photo || ''}
+                    sx={{ width: 120, height: 120, mb: 2 }}
+                  />
+                  <Typography variant="h6" fontWeight="bold">
+                    {formData.fullname}
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary" mt={1}>
+                    {formData.group_name || 'User'}
+                  </Typography>
+
+                  <Tabs
+                    orientation={isMobile ? 'horizontal' : 'vertical'}
+                    value={activeTab}
+                    onChange={handleChange}
+                    variant="scrollable"
+                    scrollButtons="auto"
+                    allowScrollButtonsMobile
+                    sx={{
+                      mt: 4,
+                      width: '100%',
+                      '& .MuiTab-root': {
+                        alignItems: 'flex-start',
+                        justifyContent: isMobile ? 'center' : 'flex-start',
+                        textTransform: 'none',
+                        fontWeight: 500,
+                      },
+                      '& .MuiTabs-flexContainer': {
+                        flexDirection: isMobile ? 'row' : 'column',
+                      },
+                    }}
+                  >
+                    <Tab label="Personal Info" />
+                    <Tab label="Organization Info" />
+                  </Tabs>
+                </Grid>
+
+                {/* Konten kanan */}
+                <Grid size={{ xs: 12, md: 8 }}>
+                  <Box>
+                    <Typography variant="h5" fontWeight="bold" gutterBottom>
+                      {activeTab === 0 ? ' Personal Information' : ' Organization Information'}
+                    </Typography>
+                    {/* <Typography variant="body2" color="text.secondary" gutterBottom>
+                      {activeTab === 0
+                        ? 'You can edit your personal details.'
+                        : 'You can edit your organization-related details.'}
+                    </Typography> */}
+                    <Divider sx={{ mb: 3, mt: 1 }} />
+
+                    {/* PERSONAL INFO */}
+                    {activeTab === 0 && (
+                      <Grid container spacing={2}>
+                        <Grid size={{ xs: 12 }}>
+                          <TextField
+                            fullWidth
+                            label="Full Name"
+                            name="fullname"
+                            value={formData.fullname}
+                            onChange={handleInputChange}
+                            InputProps={{ readOnly: !isEditing }}
+                          />
+                        </Grid>
+                        <Grid size={{ xs: 12 }}>
+                          <TextField
+                            fullWidth
+                            label="Email"
+                            name="email"
+                            value={formData.email}
+                            onChange={handleInputChange}
+                            InputProps={{ readOnly: !isEditing }}
+                          />
+                        </Grid>
+                        <Grid size={{ xs: 12 }}>
+                          <TextField
+                            fullWidth
+                            label="Gender"
+                            name="gender"
+                            value={formData.gender}
+                            onChange={handleInputChange}
+                            InputProps={{ readOnly: !isEditing }}
+                          />
+                        </Grid>
+                        <Grid size={{ xs: 12 }}>
+                          <TextField
+                            fullWidth
+                            label="Phone"
+                            name="phone"
+                            value={formData.phone}
+                            onChange={handleInputChange}
+                            InputProps={{ readOnly: !isEditing }}
+                          />
+                        </Grid>
+                        <Grid size={{ xs: 12 }}>
+                          <TextField
+                            fullWidth
+                            label="Address"
+                            name="address"
+                            value={formData.address}
+                            onChange={handleInputChange}
+                            InputProps={{ readOnly: !isEditing }}
+                          />
+                        </Grid>
+                      </Grid>
+                    )}
+
+                    {/* ORGANIZATION INFO */}
+                    {activeTab === 1 && (
+                      <Grid container spacing={2}>
+                        <Grid size={{ xs: 12 }}>
+                          <TextField
+                            fullWidth
+                            label="Organization Name"
+                            name="organization_name"
+                            value={formData.organization_name}
+                            onChange={handleInputChange}
+                            InputProps={{ readOnly: !isEditing }}
+                          />
+                        </Grid>
+                        <Grid size={{ xs: 12 }}>
+                          <TextField
+                            fullWidth
+                            label="Department Name"
+                            name="department_name"
+                            value={formData.department_name}
+                            onChange={handleInputChange}
+                            InputProps={{ readOnly: !isEditing }}
+                          />
+                        </Grid>
+                        <Grid size={{ xs: 12 }}>
+                          <TextField
+                            fullWidth
+                            label="District Name"
+                            name="district_name"
+                            value={formData.district_name}
+                            onChange={handleInputChange}
+                            InputProps={{ readOnly: !isEditing }}
+                          />
+                        </Grid>
+                      </Grid>
+                    )}
+
+                    {/* Tombol aksi */}
+                    {/* <Stack direction="row" justifyContent="flex-end" spacing={1} mt={3}>
+                      {!isEditing ? (
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={() => setIsEditing(true)}
+                        >
+                          Edit
+                        </Button>
+                      ) : (
+                        <>
+                          <Button variant="contained" color="success" onClick={handleSave}>
+                            Save Changes
+                          </Button>
+                          <Button variant="outlined" color="inherit" onClick={handleCancel}>
+                            Cancel
+                          </Button>
+                        </>
+                      )}
+                    </Stack> */}
+                  </Box>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+    </Container>
     // </PageContainer>
   );
 };

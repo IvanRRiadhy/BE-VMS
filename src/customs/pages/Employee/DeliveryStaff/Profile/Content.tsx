@@ -58,7 +58,6 @@ const Content = () => {
         setLoading(true);
         const res = await getProfile(token);
 
-        // ✅ API mengembalikan bentuk { status, collection }
         const d = res?.collection;
         if (!d) return;
 
@@ -192,15 +191,13 @@ const Content = () => {
                 <Grid size={{ xs: 12, md: 8 }}>
                   <Box>
                     <Typography variant="h5" fontWeight="bold" gutterBottom>
-                      {activeTab === 0
-                        ? 'Edit Personal Information'
-                        : 'Edit Organization Information'}
+                      {activeTab === 0 ? ' Personal Information' : ' Organization Information'}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                    {/* <Typography variant="body2" color="text.secondary" gutterBottom>
                       {activeTab === 0
                         ? 'You can edit your personal details.'
                         : 'You can edit your organization-related details.'}
-                    </Typography>
+                    </Typography> */}
                     <Divider sx={{ mb: 3, mt: 1 }} />
 
                     {/* PERSONAL INFO */}
@@ -296,7 +293,7 @@ const Content = () => {
                     )}
 
                     {/* Tombol aksi */}
-                    <Stack direction="row" justifyContent="flex-end" spacing={1} mt={3}>
+                    {/* <Stack direction="row" justifyContent="flex-end" spacing={1} mt={3}>
                       {!isEditing ? (
                         <Button
                           variant="contained"
@@ -315,7 +312,7 @@ const Content = () => {
                           </Button>
                         </>
                       )}
-                    </Stack>
+                    </Stack> */}
                   </Box>
                 </Grid>
               </Grid>
