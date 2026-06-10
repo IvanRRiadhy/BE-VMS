@@ -13,7 +13,7 @@ const NotificationProvider = () => {
   // console.log('user id', user);
 
   useEffect(() => {
-    // if (!user?.id) return;
+    if (!user) return;
 
     const client = mqtt.connect('wss://mqtt.bio-experience.com/ws', {
       username: 'admin',
