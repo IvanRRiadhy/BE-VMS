@@ -11,7 +11,7 @@ import {
   IconLogout,
   IconReport,
 } from '@tabler/icons-react';
-import React, { useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import PageContainer from 'src/components/container/PageContainer';
 import TopCard from './TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
@@ -21,7 +21,7 @@ import { useNavigate } from 'react-router';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import { setDateRange } from 'src/store/apps/Daterange/dateRangeSlice';
 import Calendar from 'src/customs/components/calendar/Calendar';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   approveTicket,
   getApprovalTicket,
@@ -35,6 +35,8 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { QuickAccessDialog } from '../../Employee/Components/Dialog/QuickAccessDialog';
 import { createQuickAccess } from 'src/customs/api/Admin/Visitor';
+import { getAllVisitorPagination } from 'src/customs/api/admin';
+import dayjs from 'dayjs';
 
 const DashboardEmployee = () => {
   const CardItems = [
@@ -74,27 +76,27 @@ const DashboardEmployee = () => {
   const approvalData =
     approvalRes?.collection?.map(
       ({
-        approval_ticket_id,
+        entity_id,
         visitor_type_name,
         agenda,
         host_name,
         approval_actor_status,
         approval_workflow_type,
         approval_status,
-        // current_step,
         visitor_period_start,
         visitor_period_end,
+        ticket_id,
       }: any) => ({
-        id: approval_ticket_id,
+        id: entity_id,
         visitor_type_name,
         agenda,
         host_name,
         approval_actor_status,
         approval_workflow_type,
         approval_status,
-        // current_step,
         visitor_period_start,
         visitor_period_end: formatDateTime(visitor_period_end),
+        ticket_id,
       }),
     ) || [];
 
@@ -147,7 +149,10 @@ const DashboardEmployee = () => {
       await refetchApproval();
     } catch (error: any) {
       setTimeout(() => setLoading(false), 800);
-      showSwal('error', error.message ?? 'Failed to action approval.');
+      showSwal(
+        'error',
+        error.response.data.msg ?? 'Something went wrong while processing approval.',
+      );
     }
   };
 
@@ -204,19 +209,83 @@ const DashboardEmployee = () => {
     }
   };
 
+  const queryClient = useQueryClient();
+
   const handleCreateQuickAccess = async (payload: any) => {
     try {
       await createQuickAccess(token, payload);
 
       showSwal('success', 'Quick access created successfully');
 
-      setOpenQuickAccess(false);
+      await queryClient.invalidateQueries({ queryKey: ['quick-access'] });
+      // setOpenQuickAccess(false);
     } catch (error: any) {
       showSwal('error', error?.response?.data?.message || 'Failed to create quick access');
 
       throw error;
     }
   };
+
+  const [quickSearch, setQuickSearch] = useState('');
+  const [quickPage, setQuickPage] = useState(0);
+  const [quickRowsPerPage, setQuickRowsPerPage] = useState(10);
+
+  const { data: quickAccessResult } = useQuery({
+    queryKey: ['quick-access', quickPage, quickRowsPerPage, quickSearch],
+    queryFn: async () => {
+      const res = await getAllVisitorPagination(
+        token as string,
+        quickPage * quickRowsPerPage,
+        quickRowsPerPage,
+        quickSearch || undefined,
+        undefined,
+        undefined,
+        'QuickAccess',
+      );
+
+      return res;
+    },
+    enabled: !!token && openQuickAccess,
+  });
+
+  const processedQuickAccessData = useMemo(() => {
+    if (!quickAccessResult?.collection) return [];
+
+    return quickAccessResult.collection
+      .map((item: any) => {
+        const isExpired =
+          item.visitor_period_end && dayjs(item.visitor_period_end).isBefore(dayjs(), 'day');
+
+        return {
+          id: item.id,
+          visitor_type: item.visitor_type_name || '-',
+          name_courier: item.visitor_name || '-',
+          // identity_id: item.visitor_identity_id || '-',
+          email: item.visitor_email || '-',
+          organization: item.visitor_organization_name || '-',
+          receiver_name: item.receiver_name || '-',
+          invitation_code: item.invitation_code || '-',
+          phone: item.visitor_phone || '-',
+          visitor_period_start: item.visitor_period_start || '-',
+          visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
+          invitation_created_at: item.invitation_created_at,
+          host: item.host ?? '-',
+          visitor_status: isExpired ? 'Expired' : item.visitor_status || '-',
+        };
+      })
+      .sort((a: any, b: any) => {
+        const dateA = a.invitation_created_at ?? a.visitor_period_start;
+        const dateB = b.invitation_created_at ?? b.visitor_period_start;
+
+        return dayjs(dateB).valueOf() - dayjs(dateA).valueOf();
+      })
+      .map(({ invitation_created_at, ...rest }: any) => rest);
+  }, [quickAccessResult]);
+
+  const handleQuickSearch = useCallback((keyword: string) => {
+    setQuickPage(0);
+    setQuickSearch(keyword);
+  }, []);
 
   return (
     <PageContainer title="Dashboard" description="This is Manager Dashboard">
@@ -379,8 +448,14 @@ const DashboardEmployee = () => {
       <QuickAccessDialog
         open={openQuickAccess}
         onClose={() => setOpenQuickAccess(false)}
-        visitorTableData={[]}
+        visitorTableData={processedQuickAccessData}
         onSubmit={handleCreateQuickAccess}
+        page={quickPage}
+        setPage={setQuickPage}
+        setRowsPerPage={setQuickRowsPerPage}
+        searchKeyword={quickSearch}
+        onSearch={handleQuickSearch}
+        totalCount={quickAccessResult?.RecordsFiltered ?? 0}
       />
     </PageContainer>
   );

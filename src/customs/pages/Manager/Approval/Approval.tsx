@@ -176,9 +176,12 @@ const Approval = () => {
       );
       // }, 400);
       setRefreshTrigger((prev) => prev + 1);
-    } catch (error) {
+    } catch (error: any) {
       setTimeout(() => setLoadingAction(false), 800);
-      showSwal('error', 'Something went wrong while processing approval.');
+      showSwal(
+        'error',
+        error.response.data.msg ?? 'Something went wrong while processing approval.',
+      );
     } finally {
       setLoadingAction(false);
     }

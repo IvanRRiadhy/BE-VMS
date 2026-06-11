@@ -14,6 +14,7 @@ import {
   Snackbar,
   Typography,
   Box,
+  DialogActions,
 } from '@mui/material';
 import moment from 'moment-timezone';
 import {
@@ -26,7 +27,7 @@ import {
   IconPlus,
   IconX,
 } from '@tabler/icons-react';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import QRCode from 'react-qr-code';
 import PageContainer from 'src/components/container/PageContainer';
 import TopCards from './TopCard';
@@ -39,7 +40,11 @@ import {
   openParkingBlocker,
 } from 'src/customs/api/visitor';
 import FormDialogInvitation from './FormDialogInvitation';
-import { getAccessPass } from 'src/customs/api/admin';
+import {
+  getAccessPass,
+  getAllVisitorPagination,
+  getVisitorTransactionByIds,
+} from 'src/customs/api/admin';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
@@ -54,6 +59,7 @@ import { createShareLink, deleteShareLink, getShareLinkByDt } from 'src/customs/
 import AccessPassDialog from '../Components/Dialog/AccessPassDialog';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  approveMeetingHost,
   approveTicket,
   getApprovalTicket,
   rejectTicket,
@@ -66,6 +72,7 @@ import { IconDownload } from '@tabler/icons-react';
 
 import { createQuickAccess } from 'src/customs/api/Admin/Visitor';
 import { QuickAccessDialog } from '../Components/Dialog/QuickAccessDialog';
+import dayjs from 'dayjs';
 
 const DashboardEmployee = () => {
   const CardItems = [
@@ -107,6 +114,12 @@ const DashboardEmployee = () => {
   const [isExporting, setIsExporting] = useState(false);
   const exportRef = useRef<HTMLDivElement>(null);
   const [openQuickAccess, setOpenQuickAccess] = useState(false);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedRows, setSelectedRows] = useState<any[]>([]);
+  const [triggerCheckAll, setTriggerCheckAll] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedApprovalTicketId, setSelectedApprovalTicketId] = useState<string | null>(null);
+  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
 
   const start = page * rowsPerPage;
   const navigate = useNavigate();
@@ -221,29 +234,47 @@ const DashboardEmployee = () => {
   const approvalData =
     approvalRes?.collection?.map(
       ({
-        approval_ticket_id,
+        entity_id,
         visitor_type_name,
         agenda,
         host_name,
         approval_actor_status,
         approval_workflow_type,
         approval_status,
-        // current_step,
         visitor_period_start,
         visitor_period_end,
+        ticket_id,
       }: any) => ({
-        id: approval_ticket_id,
+        id: entity_id,
         visitor_type_name,
         agenda,
         host_name,
         approval_actor_status,
         approval_workflow_type,
         approval_status,
-        // current_step,
         visitor_period_start,
         visitor_period_end: formatDateTime(visitor_period_end),
+        ticket_id,
       }),
     ) || [];
+
+  // const approvalData =
+  //   approvalRes?.collection?.map((item: any) => {
+  //     const { ticket_id, ...rest } = item;
+
+  //     return {
+  //       id: item.entity_id,
+  //       ticket_id,
+  //       visitor_type_name: item.visitor_type_name,
+  //       agenda: item.agenda,
+  //       host_name: item.host_name,
+  //       approval_actor_status: item.approval_actor_status,
+  //       approval_workflow_type: item.approval_workflow_type,
+  //       approval_status: item.approval_status,
+  //       visitor_period_start: item.visitor_period_start,
+  //       visitor_period_end: formatDateTime(item.visitor_period_end),
+  //     };
+  //   }) || [];
 
   useEffect(() => {
     if (!token) return;
@@ -302,6 +333,62 @@ const DashboardEmployee = () => {
 
     fetchData();
   }, [token]);
+
+  const [quickSearch, setQuickSearch] = useState('');
+  const [quickPage, setQuickPage] = useState(0);
+  const [quickRowsPerPage, setQuickRowsPerPage] = useState(10);
+
+  const { data: quickAccessResult } = useQuery({
+    queryKey: ['quick-access', quickPage, quickRowsPerPage, quickSearch],
+    queryFn: async () => {
+      const res = await getAllVisitorPagination(
+        token as string,
+        quickPage * quickRowsPerPage,
+        quickRowsPerPage,
+        quickSearch || undefined,
+        undefined,
+        undefined,
+        'QuickAccess',
+      );
+
+      return res;
+    },
+    enabled: !!token && openQuickAccess,
+  });
+
+  const processedQuickAccessData = useMemo(() => {
+    if (!quickAccessResult?.collection) return [];
+
+    return quickAccessResult.collection
+      .map((item: any) => {
+        const isExpired =
+          item.visitor_period_end && dayjs(item.visitor_period_end).isBefore(dayjs(), 'day');
+
+        return {
+          id: item.id,
+          visitor_type: item.visitor_type_name || '-',
+          name_courier: item.visitor_name || '-',
+          // identity_id: item.visitor_identity_id || '-',
+          email: item.visitor_email || '-',
+          organization: item.visitor_organization_name || '-',
+          receiver_name: item.receiver_name || '-',
+          invitation_code: item.invitation_code || '-',
+          phone: item.visitor_phone || '-',
+          visitor_period_start: item.visitor_period_start || '-',
+          visitor_period_end: formatDateTime(item.visitor_period_end, item.extend_visitor_period),
+          invitation_created_at: item.invitation_created_at,
+          host: item.host ?? '-',
+          visitor_status: isExpired ? 'Expired' : item.visitor_status || '-',
+        };
+      })
+      .sort((a: any, b: any) => {
+        const dateA = a.invitation_created_at ?? a.visitor_period_start;
+        const dateB = b.invitation_created_at ?? b.visitor_period_start;
+
+        return dayjs(dateB).valueOf() - dayjs(dateA).valueOf();
+      })
+      .map(({ invitation_created_at, ...rest }: any) => rest);
+  }, [quickAccessResult]);
 
   const handleView = (row: any) => {
     setSelectedInvitationId(row.id);
@@ -379,50 +466,60 @@ const DashboardEmployee = () => {
     }
   };
 
-  const handleActionApproval = async (id: string, action: 'Approve' | 'Reject') => {
-    if (!id || !token) return;
-
+  const handleApproveMeetingHost = async (id: string) => {
     try {
-      const confirm = await Swal.fire({
-        title: `Do you want to ${action === 'Approve' ? 'Approve' : 'Reject'} this approval?`,
-        icon: 'question',
-        // imageUrl: BI_LOGO,
-        imageWidth: 100,
-        imageHeight: 100,
-        showCancelButton: true,
-        confirmButtonText: action === 'Approve' ? 'Yes' : 'No',
-        cancelButtonText: 'Cancel',
-        reverseButtons: true,
-        confirmButtonColor: action === 'Approve' ? '#4caf50' : '#f44336',
-        customClass: {
-          title: 'swal2-title-custom',
-          htmlContainer: 'swal2-text-custom',
-        },
+      setLoading(true);
+      console.log('id', id);
+      console.log('selectedRows', selectedRows);
+
+      const payload = {
+        list_trx_visitor_id: selectedRows.map((item: any) => item.id),
+      };
+
+      console.log('payload', payload);
+
+      const response = await approveMeetingHost(token, id, payload);
+      console.log('response', response);
+
+      const res = await handleActionApproval(id, 'Approve');
+      console.log('res', res);
+
+      showSwal('success', response?.msg || 'Approve meeting host successfully.');
+
+      queryClient.invalidateQueries({
+        queryKey: ['approval-ticket'],
       });
 
-      if (!confirm.isConfirmed) return;
-
-      console.log('id', id);
-      if (action === 'Approve') {
-        await approveTicket(token, id);
-      } else {
-        await rejectTicket(token, id);
-      }
-
-      setTimeout(() => {
-        showSwal(
-          'success',
-          `Data Approval ${action === 'Approve' ? 'approved' : 'rejected'} successfully.`,
-        );
-      }, 850);
-
-      // setRefreshTrigger((prev) => prev + 1);
-      await refetchApproval();
+      setSelectedRows([]);
     } catch (error: any) {
-      setTimeout(() => setLoading(false), 800);
-      showSwal('error', error.response.data.msg || 'Failed to approve/reject data.');
+      showSwal('error', error?.response?.data?.msg || 'Failed approve meeting host.');
     } finally {
-      setTimeout(() => setLoading(false), 200);
+      setLoading(false);
+    }
+  };
+
+  const handleActionApproval = async (id: string, action: 'Approve' | 'Reject') => {
+    try {
+      setIsGenerating(true);
+
+      if (action === 'Approve') await approveTicket(token as string, id);
+      if (action === 'Reject') await rejectTicket(token as string, id);
+
+      queryClient.invalidateQueries({
+        queryKey: ['approval-ticket'],
+      });
+
+      showSwal(
+        'success',
+        `Data Approval ${action === 'Approve' ? 'approved' : 'denied'} successfully.`,
+      );
+
+      setOpenDialog(false);
+    } catch (error: any) {
+      setTimeout(() => setIsGenerating(false), 800);
+      showSwal('error', error.response.data.msg || 'Failed action approval.');
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -497,8 +594,8 @@ const DashboardEmployee = () => {
 
       setOpenCreateLink(false);
       showSwal('success', 'Share link created successfully');
-    } catch (err) {
-      showSwal('error', 'Failed to create share link');
+    } catch (err: any) {
+      showSwal('error', err.response.data.message ?? 'Failed to create share link');
     } finally {
       setIsGenerating(false);
     }
@@ -575,17 +672,63 @@ const DashboardEmployee = () => {
 
   const handleCreateQuickAccess = async (payload: any) => {
     try {
+      setIsGenerating(true);
       await createQuickAccess(token, payload);
 
       showSwal('success', 'Quick access created successfully');
 
-      setOpenQuickAccess(false);
+      // setOpenQuickAccess(false);
+      await queryClient.invalidateQueries({ queryKey: ['quick-access'] });
     } catch (error: any) {
       showSwal('error', error?.response?.data?.message || 'Failed to create quick access');
 
       throw error;
+    } finally {
+      setIsGenerating(false);
     }
   };
+
+  const handleQuickSearch = useCallback((keyword: string) => {
+    setQuickPage(0);
+    setQuickSearch(keyword);
+  }, []);
+
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [groupVisitors, setGroupVisitors] = useState<any[]>([]);
+  const [groupDetailLoading, setGroupDetailLoading] = useState(false);
+
+  const handleOpenApprovalDialog = async (row: any) => {
+    // console.log('row', row);
+    if (!token) return;
+
+    try {
+      setSelectedId(row.ticket_id);
+      setOpenDialog(true);
+      setGroupDetailLoading(true);
+
+      const res = await getVisitorTransactionByIds(token, row.id);
+
+      setGroupVisitors(res?.collection ?? []);
+      setTriggerCheckAll(true);
+    } catch (error: any) {
+      showSwal('error', error?.response?.data?.msg || 'Failed load visitor detail.');
+    } finally {
+      setGroupDetailLoading(false);
+    }
+  };
+
+  const visitorTableData = groupVisitors.map((item: any) => ({
+    id: item.id,
+    agenda: item.agenda,
+    site_name: item.site_place_name,
+    name: item.visitor_name,
+    organization_name: item.visitor_organization_name,
+    identity_id: item.visitor_identity_id,
+    visitor_phone: item.visitor_phone,
+    email: item.visitor_email,
+    visitor_period_start: formatDateTime(item.visitor_period_start),
+    visitor_period_end: formatDateTime(item.visitor_period_end),
+  }));
 
   return (
     <PageContainer title="Dashboard" description="This is Employee Dashboard">
@@ -743,6 +886,7 @@ const DashboardEmployee = () => {
             loading={loadingApproval}
             height={450}
             overflowX="auto"
+            // minWidth={200}
             data={approvalData}
             isHaveChecked={true}
             isHaveAction={true}
@@ -750,8 +894,8 @@ const DashboardEmployee = () => {
             isHaveHeaderTitle
             titleHeader="Approval"
             isHaveApproval={true}
-            onAccept={(row: any) => handleActionApproval(row.id, 'Approve')}
-            onDenied={(row: any) => handleActionApproval(row.id, 'Reject')}
+            onAccept={(row: any) => handleOpenApprovalDialog(row)}
+            onDenied={(row: any) => handleActionApproval(row.ticket_id, 'Reject')}
             isHavePeriod={true}
           />
         </Grid>
@@ -893,8 +1037,14 @@ const DashboardEmployee = () => {
       <QuickAccessDialog
         open={openQuickAccess}
         onClose={() => setOpenQuickAccess(false)}
-        visitorTableData={[]}
+        visitorTableData={processedQuickAccessData}
         onSubmit={handleCreateQuickAccess}
+        page={quickPage}
+        setPage={setQuickPage}
+        setRowsPerPage={setQuickRowsPerPage}
+        searchKeyword={quickSearch}
+        onSearch={handleQuickSearch}
+        totalCount={quickAccessResult?.RecordsFiltered ?? 0}
       />
 
       <CreateLinkDialog
@@ -971,6 +1121,101 @@ const DashboardEmployee = () => {
           ref={printRef}
         />
       )}
+      {/* 
+      <VisitorApprovalDialog
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+        groupName={groupHeader?.group_name}
+        loading={groupDetailLoading}
+        visitorTableData={visitorTableData ?? []}
+        selectedRows={selectedRows}
+        setSelectedRows={setSelectedRows}
+        triggerCheckAll={triggerCheckAll}
+        selectedId={selectedId ?? undefined}
+        onReject={(id) => {
+          handleActionApproval(id, 'Reject');
+          setOpenDialog(false);
+        }}
+        onApprove={(id) => {
+          handleApproveMeetingHost(id);
+          setOpenDialog(false);
+        }}
+      /> */}
+
+      <Dialog
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+        fullWidth
+        maxWidth={false}
+        PaperProps={{
+          sx: {
+            width: '100vw',
+          },
+        }}
+      >
+        <DialogTitle>
+          {/* {groupHeader?.group_name ?? 'Visitor Group'} */}
+          Visitor Group
+          <IconButton
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
+              color: (theme) => theme.palette.grey[500],
+            }}
+            onClick={() => setOpenDialog(false)}
+          >
+            <IconX />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent dividers sx={{ padding: '0px !important' }}>
+          <DynamicTable
+            loading={groupDetailLoading}
+            data={visitorTableData}
+            selectedRows={selectedRows}
+            onCheckedChange={setSelectedRows}
+            setSelectedRows={setSelectedRows}
+            triggerCheckAll={triggerCheckAll}
+            isHaveChecked={true}
+            titleHeader="Select visitors for approval or rejection"
+            isHaveHeaderTitle={true}
+            isNoActionTableHead={true}
+          />
+        </DialogContent>
+
+        <DialogActions>
+          <Button
+            onClick={(e: any) => {
+              e.stopPropagation();
+
+              if (!selectedId) return;
+
+              handleActionApproval(selectedId, 'Reject');
+              setOpenDialog(false);
+            }}
+            fullWidth
+            color="error"
+            variant="contained"
+          >
+            Reject
+          </Button>
+          <Button
+            onClick={(e: any) => {
+              e.stopPropagation();
+
+              if (!selectedId) return;
+
+              handleApproveMeetingHost(selectedId);
+            }}
+            variant="contained"
+            fullWidth
+          >
+            Approve
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <Portal>
         <Snackbar
           open={snackbar.open}

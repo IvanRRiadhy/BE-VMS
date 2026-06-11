@@ -27,7 +27,6 @@ import { DynamicTable } from 'src/customs/components/table/DynamicTable';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import { Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import bg_nodata from 'src/assets/images/backgrounds/bg_nodata.svg';
-import Swal from 'sweetalert2';
 import { showSwal } from 'src/customs/components/alerts/alerts';
 import {
   approveMeetingHost,
@@ -42,14 +41,7 @@ import { IconPdf } from '@tabler/icons-react';
 import VisitorRow from '../../admin/content/Visitor/Transaction/VisitorRow';
 import { getVisitorTransactionByIds } from 'src/customs/api/admin';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
-
-interface Filters {
-  is_action: boolean | null | undefined;
-  start_date: string;
-  end_date: string;
-  site_approval: number | null;
-  approval_type: string;
-}
+import VisitorApprovalDialog from './components/VisitorApprovalDialog';
 
 type Group = {
   id: string;
@@ -150,7 +142,6 @@ const Approval = () => {
           sort_dir: sortDir,
           keyword: searchKeyword,
         });
-  
 
         const rows = res.collection.map((item: any) => ({
           approval_ticket_id: item.approval_ticket_id,
@@ -181,7 +172,7 @@ const Approval = () => {
 
   const handleActionApproval = async (id: string, action: 'Approve' | 'Reject') => {
     // if (!id || !token) return;
-    console.log('id', id);
+    // console.log('id', id);
 
     try {
       // const confirm = await Swal.fire({
@@ -227,6 +218,7 @@ const Approval = () => {
 
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
   const handleApproveMeetingHost = async (id: string) => {
+    console.log("id", id);
     try {
       setLoading(true);
 
@@ -242,7 +234,7 @@ const Approval = () => {
       const res = await handleActionApproval(id, 'Approve');
       console.log('res', res);
 
-      // showSwal('success', response?.msg || 'Approve meeting host successfully.');
+      showSwal('success', response?.msg || 'Approve meeting host successfully.');
 
       setSelectedRows([]);
     } catch (error: any) {
@@ -379,6 +371,7 @@ const Approval = () => {
                                   setSelectedGroup(group);
                                   setSelectedGroupId(group.entity_id);
                                   setSelectedId(group.approval_ticket_id);
+                                  console.log("selectedId", selectedId);
                                   // setOpenGroup(true);
                                   // setOpenDialog(true);
                                 }}
@@ -691,7 +684,7 @@ const Approval = () => {
           </Grid>
         </Box>
       </PageContainer>
-      <Dialog
+      {/* <Dialog
         open={openDialog}
         onClose={() => setOpenDialog(false)}
         fullWidth
@@ -764,7 +757,27 @@ const Approval = () => {
             Approve
           </Button>
         </DialogActions>
-      </Dialog>
+      </Dialog> */}
+
+      <VisitorApprovalDialog
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+        groupName={groupHeader?.group_name}
+        loading={groupDetailLoading}
+        visitorTableData={visitorTableData ?? []}
+        selectedRows={selectedRows}
+        setSelectedRows={setSelectedRows}
+        triggerCheckAll={triggerCheckAll}
+        selectedId={selectedId ?? undefined}
+        onReject={(id) => {
+          handleActionApproval(id, 'Reject');
+          setOpenDialog(false);
+        }}
+        onApprove={(id) => {
+          handleApproveMeetingHost(id);
+          setOpenDialog(false);
+        }}
+      />
       <Backdrop
         open={loadingAction}
         sx={{

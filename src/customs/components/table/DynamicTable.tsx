@@ -368,6 +368,7 @@ function DynamicTableBase<
     'is_email_verified',
     'url',
     'shorten_url',
+    'ticket_id',
   ];
 
   const fallbackColumns = React.useMemo(() => {
@@ -1155,6 +1156,7 @@ function DynamicTableBase<
               overflowX: paginatedData.length === 0 ? 'hidden' : 'auto',
               overflowY: paginatedData.length === 0 ? 'hidden' : 'auto',
               width: '100%',
+              // height: '100%',
             }}
           >
             {paginatedData.length === 0 && !loading ? (

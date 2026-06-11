@@ -123,9 +123,9 @@ export const QuickAccessDialog = ({
         visitor_email: form.visitorEmail,
         visitor_phone: form.visitorPhone,
       };
-      console.log('payload', payload);
+      // console.log('payload', payload);
       await onSubmit?.(payload);
-      setOpenQuickAccess(false);
+      // setOpenQuickAccess(false);
     } catch (error) {}
   };
 

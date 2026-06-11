@@ -37,7 +37,6 @@ import { getInvitationRelatedVisitor, getOngoingInvitation } from 'src/customs/a
 import { useSelector } from 'react-redux';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import EmployeeDetailDialog from '../Components/Dialog/EmployeeDetailDialog';
-import SelectRegisteredSiteDialog from '../Components/Dialog/SelectRegisteredSiteDialog';
 import { getInvitationSite, getInvitationVisitorType } from 'src/customs/api/Admin/InvitationData';
 import {
   createShareLink,
