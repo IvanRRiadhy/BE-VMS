@@ -1,34 +1,62 @@
-import { useEffect, useState } from 'react';
+// import { useEffect, useState } from 'react';
+// import { getInvitationVisitorEmployee } from 'src/customs/api/Admin/InvitationData';
+
+import { useQuery } from '@tanstack/react-query';
 import { getInvitationVisitorEmployee } from 'src/customs/api/Admin/InvitationData';
 
-const useInvitationVisitorEmployee = (token?: string | null) => {
-  const [allVisitorEmployee, setAllVisitorEmployee] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+// const useInvitationVisitorEmployee = (token?: string | null) => {
+//   const [allVisitorEmployee, setAllVisitorEmployee] = useState<any[]>([]);
+//   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (!token) return;
+//   useEffect(() => {
+//     if (!token) return;
 
-    const fetchData = async () => {
-      try {
-        setLoading(true);
+//     const fetchData = async () => {
+//       try {
+//         setLoading(true);
 
-        const res = await getInvitationVisitorEmployee(token);
-        setAllVisitorEmployee(res?.collection ?? []);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
+//         const res = await getInvitationVisitorEmployee(token);
+//         setAllVisitorEmployee(res?.collection ?? []);
+//       } catch (err) {
+//         console.error(err);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
 
-    fetchData();
-  }, [token]);
+//     fetchData();
+//   }, [token]);
 
-  return {
-    allVisitorEmployee,
-    loading,
-    setAllVisitorEmployee,
-  };
+//   return {
+//     allVisitorEmployee,
+//     loading,
+//     setAllVisitorEmployee,
+//   };
+// };
+
+// export default useInvitationVisitorEmployee;
+
+type InvitationVisitorEmployeeParams = {
+  search?: string;
+  start?: number;
+  length?: number;
 };
 
-export default useInvitationVisitorEmployee;
+export const useInvitationVisitorEmployee = (
+  token: string | null,
+  params?: InvitationVisitorEmployeeParams,
+) => {
+  return useQuery({
+    queryKey: ['invitation-visitor-employee', params],
+    queryFn: async () => {
+      const res = await getInvitationVisitorEmployee(token as string, {
+        'search[value]': params?.search,
+        start: params?.start,
+        length: params?.length,
+      });
+
+      return res?.collection ?? [];
+    },
+    enabled: !!token,
+  });
+};

@@ -14,6 +14,7 @@ type Props = {
   allVisitorEmployee?: any;
   // customField?: any;
   vtLoading?: boolean;
+  search?: any;
 };
 
 const Praregist: React.FC<Props> = (props) => {

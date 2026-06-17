@@ -36,7 +36,7 @@ loadRuntimeConfig()
           <SessionProvider>
             <AuthProvider>
               <QueryClientProvider client={queryClient}>
-                <Suspense fallback={<Spinner />}>
+                <Suspense fallback={null}>
                   <App />
                 </Suspense>
               </QueryClientProvider>

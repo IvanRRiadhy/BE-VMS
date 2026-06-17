@@ -263,9 +263,7 @@ const ReportStaff = Loadable(
 const HistoryStaff = Loadable(
   lazy(() => import('src/customs/pages/Employee/DeliveryStaff/History/Content')),
 );
-const ProfileStaff = Loadable(
-  lazy(() => import('src/customs/pages/Employee/DeliveryStaff/Profile/Content')),
-);
+
 const NotificationStaff = Loadable(
   lazy(() => import('src/customs/pages/Employee/DeliveryStaff/Notification/Content')),
 );
@@ -485,7 +483,7 @@ const Router = [
               { path: 'parking', element: <ParkingEmployee /> },
               { path: 'report', element: <ReportEmployee /> },
               { path: 'history', element: <HistoryEmployee /> },
-              { path: 'profile', element: <ProfileEmployee /> },
+              { path: 'profile', element: <DetailProfile /> },
               { path: 'notification', element: <NotificationEmployee /> },
             ],
           },
@@ -499,7 +497,7 @@ const Router = [
               { path: 'parking', element: <ParkingStaff /> },
               { path: 'report', element: <ReportStaff /> },
               { path: 'history', element: <HistoryStaff /> },
-              { path: 'profile', element: <ProfileStaff /> },
+              { path: 'profile', element: <DetailProfile /> },
               { path: 'notification', element: <NotificationStaff /> },
             ],
           },

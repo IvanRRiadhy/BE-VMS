@@ -267,26 +267,11 @@ const Content = () => {
     return 'Districts';
   }, [selectedType]);
 
-  const openAdd = (entity: DialogEntity) => {
-    const keyMap: Record<DialogEntity, string> = {
-      Organizations: 'unsavedOrganizationFormAdd',
-      Departments: 'unsavedDepartmentFormAdd',
-      Districts: 'unsavedDistrictFormAdd',
-    };
-
-    const saved = localStorage.getItem(keyMap[entity]);
-
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        const hasValue = parsed?.name || parsed?.code || parsed?.host;
-
-        if (hasValue) {
-          setPendingAdd(entity);
-          setConfirmDialogOpen(true);
-          return;
-        }
-      } catch {}
+  const handleAdd = (entity: DialogEntity) => {
+    if (isDirty) {
+      setPendingAdd(entity);
+      setConfirmDialogOpen(true);
+      return;
     }
 
     setDialog({ mode: 'add', entity });
@@ -323,28 +308,10 @@ const Content = () => {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 
   const attemptCloseDialog = () => {
-    if (dialog?.mode === 'add' || dialog?.mode === 'edit') {
-      const keyMap: Record<DialogEntity, string> = {
-        Organizations: 'unsavedOrganizationFormAdd',
-        Departments: 'unsavedDepartmentFormAdd',
-        Districts: 'unsavedDistrictFormAdd',
-      };
-
-      const saved = localStorage.getItem(keyMap[dialog.entity]);
-      let hasValue = false;
-
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          hasValue = parsed?.name || parsed?.code || parsed?.host;
-        } catch {}
-      }
-
-      if (isDirty || hasValue) {
-        setIsAttemptingClose(true);
-        setConfirmDialogOpen(true);
-        return;
-      }
+    if ((dialog?.mode === 'add' || dialog?.mode === 'edit') && isDirty) {
+      setIsAttemptingClose(true);
+      setConfirmDialogOpen(true);
+      return;
     }
 
     closeDialog();
@@ -421,17 +388,11 @@ const Content = () => {
     }
   };
 
-  const handleSuccess = ({ entity, action, keepOpen }: SuccessOpts) => {
-    const lsKey: Record<SuccessOpts['entity'], string> = {
-      department: 'unsavedDepartmentFormAdd',
-      district: 'unsavedDistrictFormAdd',
-      organization: 'unsavedOrganizationFormAdd',
-    };
-    localStorage.removeItem(lsKey[entity]);
-
+  const handleSuccess = ({ keepOpen }: SuccessOpts) => {
     if (!keepOpen) {
       closeDialog();
     }
+
     setIsDirty(false);
     setRefreshTrigger((p) => p + 1);
   };
@@ -440,25 +401,16 @@ const Content = () => {
   const [formKey, setFormKey] = useState(0);
 
   const handleDiscard = () => {
-    const keyMap: Record<DialogEntity, string> = {
-      Organizations: 'unsavedOrganizationFormAdd',
-      Departments: 'unsavedDepartmentFormAdd',
-      Districts: 'unsavedDistrictFormAdd',
-    };
-
-    if (isAttemptingClose && dialog?.entity) {
-      localStorage.removeItem(keyMap[dialog.entity]);
-
+    if (isAttemptingClose) {
       setConfirmDialogOpen(false);
       setIsAttemptingClose(false);
+      setIsDirty(false);
 
       closeDialog();
       return;
     }
 
     if (pendingAdd) {
-      localStorage.removeItem(keyMap[pendingAdd]);
-
       setFormKey((k) => k + 1);
       setDialog({ mode: 'add', entity: pendingAdd });
     }
@@ -581,7 +533,7 @@ const Content = () => {
                   searchKeyword={searchInput}
                   onSearch={handleSearch}
                   onSearchKeywordChange={handleSearchKeywordChange}
-                  onAddData={() => openAdd(mapSelectedToEntity)}
+                  onAddData={() => handleAdd(mapSelectedToEntity)}
                   // onFilterByColumn={(column) => setSortColumn(column.column)}
                 />
               </Grid>

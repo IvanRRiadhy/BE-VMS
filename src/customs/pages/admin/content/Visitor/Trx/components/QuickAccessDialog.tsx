@@ -6,11 +6,12 @@ import { useVisitorProvider } from 'src/hooks/useVisitorProvider';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import useDropPoint from 'src/hooks/useDropPoint';
 import { showSwal } from 'src/customs/components/alerts/alerts';
-import useInvitationVisitorEmployee from 'src/hooks/useInvitationVisitorEmployee';
+
 import FormQuickAccess from './Dialog/FormQuickAccess';
 import { getVisitorById } from 'src/customs/api/admin';
 import { formatDateTime } from 'src/utils/formatDatePeriodEnd';
 import TemporaryAccessDialog from './Dialog/TemporaryAccessDialog';
+import { useInvitationVisitorEmployee } from 'src/hooks/useInvitationVisitorEmployee';
 
 interface QuickAccessDialogProps {
   open: boolean;
@@ -73,7 +74,7 @@ export const QuickAccessDialog = ({
   const [openQrQuickAccess, setOpenQrQuickAccess] = useState(false);
   const { visitorProviders } = useVisitorProvider(token);
   const { dropPoint } = useDropPoint(token);
-  const { allVisitorEmployee } = useInvitationVisitorEmployee(token);
+const { data: allVisitorEmployee = [] } = useInvitationVisitorEmployee(token);
 
   const initialFormState: QuickAccessFormData = {
     visitorProviderId: '',

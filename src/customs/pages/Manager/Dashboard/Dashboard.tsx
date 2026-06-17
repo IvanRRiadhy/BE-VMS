@@ -397,7 +397,7 @@ const DashboardEmployee = () => {
         {/* Tabel */}
         <Grid size={{ xs: 12, lg: 6 }}>
           <DynamicTable
-            height={450}
+            height={'100'}
             isHavePagination={false}
             overflowX="auto"
             data={activeInvitation}
@@ -410,7 +410,7 @@ const DashboardEmployee = () => {
 
         <Grid size={{ xs: 12, lg: 6 }}>
           <DynamicTable
-            height={450}
+            height={'100%'}
             isHavePagination={false}
             overflowX="auto"
             data={approvalData}
@@ -435,7 +435,7 @@ const DashboardEmployee = () => {
           <DynamicTable
             data={[]}
             isHaveHeaderTitle
-            titleHeader="Quick Access"
+            titleHeader="Activities"
             height={420}
             overflowX="auto"
           />

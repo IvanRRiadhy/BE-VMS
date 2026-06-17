@@ -54,7 +54,7 @@ interface VisitorDetailDialogProps {
   error?: string | null;
   detail?: any;
   onClose: () => void;
-  onConfirm: (action: 'checkin' | 'checkout' | 'deny' | 'block') => void;
+  onConfirm?: (action: 'checkin' | 'checkout' | 'deny' | 'block') => void;
 }
 
 const VisitorDetailDialog: React.FC<VisitorDetailDialogProps> = ({

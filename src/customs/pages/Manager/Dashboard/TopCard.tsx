@@ -41,17 +41,17 @@ const TopCard = ({ items = [], size }: any) => {
   const [normalizedData, setNormalizedData] = useState<
     { Date: string; StatusMap: Record<string, number> }[]
   >([]);
-  const normalizeCollection = (collection: ApiDateGroup[]) => {
+  const normalizeCollection = (collection: any[]) => {
     return collection.map((day) => {
       const grouped: Record<string, number> = {};
 
-      (day.Status || []).forEach((item) => {
+      (day.Status || []).forEach((item: any) => {
         const key = item.visitor_status.trim();
         grouped[key] = (grouped[key] || 0) + Number(item.Count || 0);
       });
 
       return {
-        Date: day.Date.split('T')[0],
+        Date: day.date ? day.date.split('T')[0] : '',
         StatusMap: grouped,
       };
     });

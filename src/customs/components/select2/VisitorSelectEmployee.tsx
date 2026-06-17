@@ -1,6 +1,6 @@
 import { Avatar } from '@mui/material';
 import { debounce } from 'lodash';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import AsyncSelect from 'react-select/async';
 import {
   getAllEmployee,
@@ -9,7 +9,11 @@ import {
   getVisitorInvitation,
 } from 'src/customs/api/admin';
 import { axiosInstance2 } from 'src/customs/api/interceptor';
-import { getInvitationVisitor } from 'src/customs/api/Admin/InvitationData';
+import {
+  getInvitationVisitor,
+  getInvitationVisitorEmployee,
+} from 'src/customs/api/Admin/InvitationData';
+import { useDebounce } from 'src/hooks/useDebounce';
 
 type Visitor = {
   id: string;
@@ -43,7 +47,7 @@ type Props = {
   isEmployee?: boolean;
 };
 
-const VisitorSelect: React.FC<Props> = ({ onSelect, token, isEmployee }) => {
+const VisitorSelectEmployee: React.FC<Props> = ({ onSelect, token, isEmployee }) => {
   const BASE_URL = axiosInstance2.defaults.baseURL;
 
   const [selectedOption, setSelectedOption] = React.useState<OptionType | null>(null);
@@ -54,46 +58,69 @@ const VisitorSelect: React.FC<Props> = ({ onSelect, token, isEmployee }) => {
     try {
       let list: any[] = [];
 
+      const params = {
+        'search[value]': inputValue,
+        start: 0,
+        length: 10,
+      };
+
       if (isEmployee) {
         // const res = await getAllEmployee(token);
-        const res = await getVisitorEmployee(token);
+        const res = await getInvitationVisitorEmployee(token, params);
         list = res?.collection ?? [];
       } else {
-        // const res = await getInvitationVisitor(token);
-        const res = await getListVisitor(token);
+        const res = await getInvitationVisitor(token, params);
+        // const res = await getListVisitor(token);
         list = res?.collection ?? [];
       }
 
-      if (!inputValue || inputValue.length < 3) {
-        return list.slice(0, 10).map((item) => {
-          const faceimage = item.selfie_image
-            ? `${BASE_URL}/cdn${item.selfie_image}`
-            : item.photo
-              ? `${BASE_URL}/cdn${item.photo}`
-              : '';
+      // if (!inputValue || inputValue.length < 3) {
+      //   return list.slice(0, 10).map((item) => {
+      //     const faceimage = item.selfie_image
+      //       ? `${BASE_URL}/cdn${item.selfie_image}`
+      //       : item.photo
+      //         ? `${BASE_URL}/cdn${item.photo}`
+      //         : '';
 
-          return {
-            label: item.name || '(No Name)',
-            value: item.id,
-            isDisabled: item.is_blacklist === true,
-            data: {
-              ...item,
-              faceimage,
-            },
-          };
-        });
-      }
+      //     return {
+      //       label: item.name || '(No Name)',
+      //       value: item.id,
+      //       isDisabled: item.is_blacklist === true,
+      //       data: {
+      //         ...item,
+      //         faceimage,
+      //       },
+      //     };
+      //   });
+      // }
 
-      const keyword = inputValue.toLowerCase();
+      // const keyword = inputValue.toLowerCase();
 
-      const filtered = list.filter(
-        (item) =>
-          item.name?.toLowerCase().includes(keyword) ||
-          item.email?.toLowerCase().includes(keyword) ||
-          item.phone?.toLowerCase().includes(keyword),
-      );
+      // const filtered = list.filter(
+      //   (item) =>
+      //     item.name?.toLowerCase().includes(keyword) ||
+      //     item.email?.toLowerCase().includes(keyword) ||
+      //     item.phone?.toLowerCase().includes(keyword),
+      // );
 
-      return filtered.map((item) => {
+      // return filtered.map((item) => {
+      //   const faceimage = item.selfie_image
+      //     ? `${BASE_URL}/cdn${item.selfie_image}`
+      //     : item.photo
+      //       ? `${BASE_URL}/cdn${item.photo}`
+      //       : '';
+
+      //   return {
+      //     label: item.name || '(No Name)',
+      //     value: item.id,
+      //     isDisabled: item.is_blacklist === true,
+      //     data: {
+      //       ...item,
+      //       faceimage,
+      //     },
+      //   };
+      // });
+      return list.map((item) => {
         const faceimage = item.selfie_image
           ? `${BASE_URL}/cdn${item.selfie_image}`
           : item.photo
@@ -199,4 +226,4 @@ const VisitorSelect: React.FC<Props> = ({ onSelect, token, isEmployee }) => {
   );
 };
 
-export default VisitorSelect;
+export default VisitorSelectEmployee;

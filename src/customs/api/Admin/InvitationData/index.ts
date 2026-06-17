@@ -42,30 +42,42 @@ export const getInvitationVisitorType = async (token: string): Promise<any> => {
   }
 };
 
-export const getInvitationVisitor = async (token: string): Promise<any> => {
+export const getInvitationVisitor = async (
+  token: string,
+  params?: {
+    'search[value]'?: string;
+    start?: number;
+    length?: number;
+  },
+): Promise<any> => {
   try {
     const response = await axiosInstance.get('/invitation-visitor', {
       headers: { Authorization: `Bearer ${token}` },
+      params,
     });
+
     return response.data;
   } catch (error: any) {
-    // if (error.response?.status === 404) {
-    //   return { collection: [] };
-    // }
     throw error;
   }
 };
 
-export const getInvitationVisitorEmployee = async (token: string): Promise<any> => {
+export const getInvitationVisitorEmployee = async (
+  token: string,
+  params?: {
+    'search[value]'?: string;
+    start?: number;
+    length?: number;
+  },
+): Promise<any> => {
   try {
     const response = await axiosInstance.get('/invitation-visitor/employee', {
       headers: { Authorization: `Bearer ${token}` },
+      params,
     });
+
     return response.data;
   } catch (error: any) {
-    // if (error.response?.status === 404) {
-    //   return { collection: [] };
-    // }
     throw error;
   }
 };

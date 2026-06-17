@@ -105,6 +105,7 @@ import VisitorTypeList from 'src/customs/pages/Operator/Invitation/components/Vi
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import PurposeVisitDialog from '../../admin/content/Visitor/Trx/components/Dialog/PurposeVisitDialog';
 import { IconInfoCircle } from '@tabler/icons-react';
+import VisitorSelectEmployee from 'src/customs/components/select2/VisitorSelectEmployee';
 
 interface FormVisitorTypeProps {
   formData: CreateVisitorRequest;
@@ -117,6 +118,7 @@ interface FormVisitorTypeProps {
   sites?: any;
   employee?: any;
   allVisitorEmployee?: any;
+  search?: any;
 }
 
 dayjs.extend(utc);
@@ -159,6 +161,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
   sites,
   employee,
   allVisitorEmployee,
+  search,
 }) => {
   const THEME = useTheme();
   const isMobile = useMediaQuery(THEME.breakpoints.down('sm'));
@@ -804,7 +807,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
               if (sectionType === 'visitor_information') {
                 return (
                   <>
-                    <VisitorSelect
+                    <VisitorSelectEmployee
                       key={String(isEmployee)}
                       token={token as string}
                       isEmployee={isEmployee}
@@ -1480,6 +1483,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                 }}
                 error={!!errorMessage}
                 helperText={errorMessage}
+                sx={{ minWidth: 160, maxWidth: '100%' }}
               >
                 <MenuItem value="">Select Role</MenuItem>
 
@@ -2790,11 +2794,23 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                               }));
                             }
                           }}
+                          // filterOptions={(opts, state) => {
+                          //   if (state.inputValue.length < 3) return [];
+                          //   return opts.filter((opt) =>
+                          //     opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
+                          //   );
+                          // }}
                           filterOptions={(opts, state) => {
-                            if (state.inputValue.length < 3) return [];
-                            return opts.filter((opt) =>
-                              opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
-                            );
+                            const keyword = state.inputValue.trim().toLowerCase();
+
+                            // default tampil 10 data
+                            if (keyword.length < 3) {
+                              return opts.slice(0, 10);
+                            }
+
+                            return opts
+                              .filter((opt) => opt.name.toLowerCase().includes(keyword))
+                              .slice(0, 10);
                           }}
                           noOptionsText={
                             (
@@ -2812,7 +2828,6 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                             ).includes(opt.value),
                           )}
                           onChange={(_, newValues) => {
-                            // Pastikan hanya site yang dapat dikunjungi yang diproses
                             const validValues = newValues.filter((v) => v.disabled !== true);
 
                             const parentIds = [...new Set(validValues.map((v) => v.value))];
@@ -2883,7 +2898,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                           renderInput={(params) => (
                             <CustomTextField
                               {...params}
-                              placeholder="Enter at least 3 characters to search"
+                              placeholder="Select Site or type at least 3 characters to search"
                               fullWidth
                               error={!!errorMessage}
                               helperText={errorMessage}
@@ -2926,29 +2941,47 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                         group: 'Host Based on Destination',
                       }));
 
-                    const otherHosts = employee
-                      .filter((emp: any) => !siteHostIds.includes(emp.id))
-                      .map((emp: any) => ({
-                        value: emp.id,
-                        name: emp.name,
-                        group: 'All Host',
-                      }));
+                    const searchText = (inputValues[originalIndex] || '').trim();
+                    const isSearchActive = searchText.length >= 3;
+
+                    const availableHosts = employee.filter(
+                      (emp: any) => !siteHostIds.includes(emp.id),
+                    );
+
+                    const otherHosts = (
+                      isSearchActive ? availableHosts : availableHosts.slice(0, 10)
+                    ).map((emp: any) => ({
+                      value: emp.id,
+                      name: emp.name,
+                      group: 'All Host',
+                    }));
 
                     const finalOptions = [...matchedHosts, ...otherHosts];
 
                     return (
                       <Autocomplete
+                        loadingText="Searching Host..."
                         size="small"
                         options={finalOptions}
                         groupBy={(option) => option.group}
                         getOptionLabel={(option) => option.name}
                         isOptionEqualToValue={(option, value) => option.value === value.value}
                         inputValue={inputValues[originalIndex] || ''}
+                        // onInputChange={(_, newInputValue) => {
+                        //   setInputValues((prev: any) => ({
+                        //     ...prev,
+                        //     [originalIndex]: newInputValue,
+                        //   }));
+                        // }}
                         onInputChange={(_, newInputValue) => {
                           setInputValues((prev: any) => ({
                             ...prev,
                             [originalIndex]: newInputValue,
                           }));
+
+                          if (newInputValue.length >= 3 || newInputValue.length === 0) {
+                            search?.(newInputValue);
+                          }
                         }}
                         filterOptions={(opts, state) => {
                           if (!state.inputValue) {
@@ -3002,7 +3035,7 @@ const FormAddInvitation: React.FC<FormVisitorTypeProps> = ({
                         renderInput={(params) => (
                           <CustomTextField
                             {...params}
-                            placeholder="Choose PIC Host"
+                            placeholder="Select PIC Host or type at least 3 characters to search"
                             fullWidth
                             error={!!errorMessage}
                             helperText={errorMessage}

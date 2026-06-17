@@ -3052,11 +3052,23 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                               }));
                             }
                           }}
+                          // filterOptions={(opts, state) => {
+                          //   if (state.inputValue.length < 3) return [];
+                          //   return opts.filter((opt) =>
+                          //     opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
+                          //   );
+                          // }}
                           filterOptions={(opts, state) => {
-                            if (state.inputValue.length < 3) return [];
-                            return opts.filter((opt) =>
-                              opt.name.toLowerCase().includes(state.inputValue.toLowerCase()),
-                            );
+                            const keyword = state.inputValue.trim().toLowerCase();
+
+                            // default tampil 10 data
+                            if (keyword.length < 3) {
+                              return opts.slice(0, 10);
+                            }
+
+                            return opts
+                              .filter((opt) => opt.name.toLowerCase().includes(keyword))
+                              .slice(0, 10);
                           }}
                           noOptionsText={
                             (
@@ -3074,7 +3086,6 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                             ).includes(opt.value),
                           )}
                           onChange={(_, newValues) => {
-                            // Pastikan hanya site yang dapat dikunjungi yang diproses
                             const validValues = newValues.filter((v) => v.disabled !== true);
 
                             const parentIds = [...new Set(validValues.map((v) => v.value))];
@@ -3145,7 +3156,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                           renderInput={(params) => (
                             <CustomTextField
                               {...params}
-                              placeholder="Enter at least 3 characters to search"
+                              placeholder="Select Site or type at least 3 characters to search"
                               fullWidth
                               error={!!errorMessage}
                               helperText={errorMessage}
@@ -3264,7 +3275,7 @@ const FormWizardAddVisitor: React.FC<FormVisitorTypeProps> = ({
                         renderInput={(params) => (
                           <CustomTextField
                             {...params}
-                            placeholder="Choose PIC Host"
+                            placeholder="Select PIC Host or type at least 3 characters to search"
                             fullWidth
                             error={!!errorMessage}
                             helperText={errorMessage}

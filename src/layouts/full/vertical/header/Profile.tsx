@@ -1,6 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Box,
   Menu,
@@ -11,6 +11,9 @@ import {
   Tooltip,
   Fab,
   Button,
+  Select,
+  MenuItem,
+  Divider,
 } from '@mui/material';
 import { IconMail, IconPower } from '@tabler/icons-react';
 // import ProfileImg from 'src/assets/images/profile/user-1.jpg';
@@ -56,8 +59,13 @@ const Profile = () => {
     navigate('/', { replace: true });
   }, [navigate, clearToken]);
 
+  const fetchedRef = useRef(false);
+
   useEffect(() => {
     if (!token) return;
+    if (fetchedRef.current) return;
+
+    fetchedRef.current = true;
 
     const fetchData = async () => {
       const res = await getProfile(token);
@@ -65,9 +73,12 @@ const Profile = () => {
     };
 
     fetchData();
-  }, [token]);
+  }, []);
+
+  const roleManager = groupId === GroupRoleId.Manager;
 
   const profileUrl = getProfilePathByRole(data.group_name);
+  const [selectedRole, setSelectedRole] = useState(groupId);
 
   return (
     <Box>
@@ -132,6 +143,7 @@ const Profile = () => {
             >
               {data.email || 'morV0@example.com'}
             </Typography>
+
             <Link to={profileUrl} onClick={handleClose2}>
               <Typography variant="body2" mt={0.5} color="primary">
                 See Profile
@@ -145,6 +157,25 @@ const Profile = () => {
             </Fab>
           </Tooltip>
         </Stack>
+
+        {roleManager && (
+          <Box my={1} mx={1}>
+            <Divider sx={{ my: 1 }} />
+            <Typography mb={1} sx={{ fontWeight: 'semibold' }}>
+              Switch Account
+            </Typography>
+            <Select
+              size="small"
+              fullWidth
+              value={selectedRole}
+              onChange={(e) => setSelectedRole(e.target.value)}
+            >
+              <MenuItem value={GroupRoleId.Manager}>Manager</MenuItem>
+
+              <MenuItem value={GroupRoleId.Employee}>Employee</MenuItem>
+            </Select>
+          </Box>
+        )}
       </Menu>
     </Box>
   );

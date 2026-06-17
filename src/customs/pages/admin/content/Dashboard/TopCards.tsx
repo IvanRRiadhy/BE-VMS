@@ -42,17 +42,17 @@ const TopCards = ({ items = [], size }: any) => {
   const [normalizedData, setNormalizedData] = useState<
     { Date: string; StatusMap: Record<string, number> }[]
   >([]);
-  const normalizeCollection = (collection: ApiDateGroup[]) => {
+  const normalizeCollection = (collection: any[]) => {
     return collection.map((day) => {
       const grouped: Record<string, number> = {};
 
-      (day.Status || []).forEach((item) => {
+      (day.Status || []).forEach((item: any) => {
         const key = item.visitor_status.trim();
         grouped[key] = (grouped[key] || 0) + Number(item.Count || 0);
       });
 
       return {
-        Date: day.Date.split('T')[0],
+        Date: day.date ? day.date.split('T')[0] : '',
         StatusMap: grouped,
       };
     });
@@ -67,24 +67,9 @@ const TopCards = ({ items = [], size }: any) => {
 
         const collection: ApiDateGroup[] = res.collection ?? [];
 
-        // const today = new Date();
-
-        // const currentStart = new Date();
-        // currentStart.setDate(today.getDate() - 6);
-
-        // const previousStart = new Date();
-        // previousStart.setDate(today.getDate() - 13);
-
-        // const previousEnd = new Date();
-        // previousEnd.setDate(today.getDate() - 7);
-
-        // const currentTotals: Record<string, number> = {};
-        // const previousTotals: Record<string, number> = {};
-
         const currentStart = new Date(startDate);
         const currentEnd = new Date(endDate);
 
-        // hitung jumlah hari yang dipilih
         const diffDays =
           Math.ceil((currentEnd.getTime() - currentStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
@@ -103,7 +88,6 @@ const TopCards = ({ items = [], size }: any) => {
           // day.Status.forEach((item) => {
           (day.Status || []).forEach((item) => {
             const key = item.visitor_status.trim();
-
 
             if (dayDate >= currentStart && dayDate <= currentEnd) {
               currentTotals[key] = (currentTotals[key] || 0) + item.Count;
@@ -312,60 +296,6 @@ const TopCards = ({ items = [], size }: any) => {
     </Grid>
   );
 };
-
-// const MiniChart = ({ normalizedData, card, change, isChartReady }: any) => {
-//   const [mounted, setMounted] = useState(false);
-
-//   useEffect(() => {
-//     setMounted(true);
-//   }, []);
-
-//   const key = String(card.key);
-
-//   const series = useMemo(() => {
-//     if (!normalizedData || normalizedData.length === 0) {
-//       return [{ name: card.title, data: [0, 0, 0, 0, 0, 0, 0] }];
-//     }
-
-//     const today = new Date();
-//     const values: number[] = [];
-
-//     for (let i = 6; i >= 0; i--) {
-//       const d = new Date();
-//       d.setDate(today.getDate() - i);
-//       const dateStr = d.toISOString().split('T')[0];
-
-//       const found = normalizedData.find((x: any) => x.Date === dateStr);
-//       values.push(found?.StatusMap?.[key] ?? 0);
-//     }
-
-//     return [
-//       {
-//         name: card.title,
-//         data: values,
-//       },
-//     ];
-//   }, [normalizedData, key, card.title]);
-
-//   if (!mounted || !isChartReady || !series?.[0]?.data?.length) {
-//     return null;
-//   }
-
-//   return (
-//     <Chart
-//       options={{
-//         chart: { type: 'area', sparkline: { enabled: true } },
-//         stroke: { curve: 'smooth', width: 2 },
-//         fill: { opacity: 0.3 },
-//         colors: [change?.color || '#999'],
-//         tooltip: { enabled: false },
-//       }}
-//       series={series}
-//       type="area"
-//       height={50}
-//     />
-//   );
-// };
 
 const MiniChart = ({ normalizedData, card, change }: any) => {
   const key = String(card.key);

@@ -151,11 +151,6 @@ const TopVisitingPurposeChart = ({ title }: { title: string }) => {
 
     const fetchData = async () => {
       try {
-        // const today = new Date();
-        // const end_date = today.toISOString().split('T')[0];
-        // const start = new Date(today);
-        // start.setDate(today.getDate() - 7);
-        // const start_date = start.toISOString().split('T')[0];
         const res = await getTopVisitingPurpose(token, start, end);
 
         const labels = res.collection.map((item: any) => item.name);

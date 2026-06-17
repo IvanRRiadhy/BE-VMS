@@ -1,16 +1,8 @@
 import { useState, useRef, useCallback, useMemo } from 'react';
 import {
   Box,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  Divider,
-  DialogActions,
   CircularProgress,
   Grid2 as Grid,
-  IconButton,
-  Button,
-  Typography,
   Portal,
   Snackbar,
   Alert,
@@ -33,7 +25,6 @@ import iconScanQR from 'src/assets/images/svgs/scan-qr.svg';
 import iconAdd from 'src/assets/images/svgs/add-circle.svg';
 import TopCard from 'src/customs/components/cards/TopCard';
 import { DynamicTable } from 'src/customs/components/table/DynamicTable';
-import CloseIcon from '@mui/icons-material/Close';
 import { useSession } from 'src/customs/contexts/SessionContext';
 import {
   CreateVisitorRequestSchema,
@@ -83,6 +74,8 @@ import PreRegistrationDialog from './components/PreRegistrationDialog';
 import { useTableQueryParams } from 'src/hooks/useTableQueryParams';
 import { QuickAccessDialog } from './components/QuickAccessDialog';
 import { createQuickAccess } from 'src/customs/api/Admin/Visitor';
+import { useEmployeePagination } from 'src/hooks/useEmployeePagination';
+import { useDebounce } from 'src/hooks/useDebounce';
 
 const Content = () => {
   const { token } = useSession();
@@ -165,16 +158,27 @@ const Content = () => {
   const [expiredAt, setExpiredAt] = useState<string | null>(null);
   const [emails, setEmails] = useState<string[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [open, setOpen] = useState(false);
 
   const { data: siteData = [], isLoading: isLoadingSite } = useRegisteredSite(token as string);
   const [selectedShareLinkId, setSelectedShareLinkId] = useState<string | null>(null);
 
   const { visitorType } = useVisitorType(token as string);
   const { sites } = useSites(token as string);
-  const { employee } = useEmployees(token as string);
+  // const { employee } = useEmployees(token as string);
+
+  const [hostSearch, setHostSearch] = useState('');
+
+  const debouncedSearch = useDebounce(hostSearch, 400);
+
   const { allVisitorEmployee } = useVisitorEmployees(token as string);
   const [openQuickAccess, setOpenQuickAccess] = useState(false);
+
+  const { data, isLoading: isLoadingEmployee } = useEmployeePagination(token, {
+    'search[value]': debouncedSearch,
+    sortDir: 'desc',
+  });
+
+  const employeeData = data?.collection ?? [];
 
   const resetRegisteredFlow = () => {
     setSelectedSite(null);
@@ -212,10 +216,6 @@ const Content = () => {
     setEmployeeError(null);
   };
 
-  const [selectedType, setSelectedType] = useState<
-    'All' | 'Preregis' | 'Checkin' | 'Checkout' | 'Denied' | 'Block' | 'Waiting'
-  >('All');
-
   const [filters, setFilters] = useState<any>({
     status: undefined,
     visitor_type: '',
@@ -243,7 +243,6 @@ const Content = () => {
     start_date: '',
     end_date: '',
   });
-  const [type, setType] = useState<any>(null);
 
   const {
     data: allVisitorData,
@@ -527,43 +526,6 @@ const Content = () => {
     }
   };
 
-  type VisitorAction = 'checkin' | 'checkout' | 'deny' | 'block';
-
-  const [confirm, setConfirm] = useState<{
-    type: VisitorAction;
-    loading: boolean;
-  } | null>(null);
-
-  const actionMeta: Record<
-    VisitorAction,
-    { title: string; ok: string; color: 'success' | 'error' | 'warning' | 'info' }
-  > = {
-    checkin: { title: 'Confirm Check In', ok: 'Check In', color: 'success' },
-    checkout: { title: 'Confirm Check Out', ok: 'Check Out', color: 'error' },
-    deny: { title: 'Confirm Deny', ok: 'Deny', color: 'warning' },
-    block: { title: 'Confirm Block', ok: 'Block', color: 'info' },
-  };
-
-  const openConfirm = (type: VisitorAction) => setConfirm({ type, loading: false });
-  const closeConfirm = () => {
-    if (!confirm?.loading) setConfirm(null);
-  };
-
-  const runConfirmedAction = async () => {
-    if (!confirm || !token || !visitorDetail?.id) return;
-    setConfirm((c) => (c ? { ...c, loading: true } : c));
-
-    try {
-      await new Promise((r) => setTimeout(r, 400));
-
-      setConfirm(null);
-      setOpenVisitorDialog(false);
-      // setRefreshTrigger((p) => p + 1);
-    } catch (e) {
-      setConfirm((c) => (c ? { ...c, loading: false } : c));
-    }
-  };
-
   const handleApplyFilter = () => {
     setAppliedFilters({
       ...filters,
@@ -613,7 +575,7 @@ const Content = () => {
       ...empty,
     });
 
-    setSelectedType('All');
+    // setSelectedType('All');
     setPage(0);
   };
 
@@ -889,7 +851,7 @@ const Content = () => {
                     item.name === 'Block' ||
                     item.name === 'Waiting'
                   ) {
-                    setSelectedType(item.name);
+                    // setSelectedType(item.name);
                     setPage(0);
                     setAppliedFilters((prev: any) => ({
                       ...prev,
@@ -940,9 +902,11 @@ const Content = () => {
         handleSuccess={handleSuccess}
         visitorType={visitorType}
         sites={sites}
-        employee={employee}
+        employee={employeeData}
+        search={setHostSearch}
         allVisitorEmployee={allVisitorEmployee}
         vtLoading={vtLoading}
+        isLoadingEmployee={isLoadingEmployee}
       />
 
       <PreRegistrationDialog
@@ -958,9 +922,11 @@ const Content = () => {
         handleSuccess={handleSuccess}
         visitorType={visitorType}
         sites={sites}
-        employee={employee}
+        employee={employeeData}
+        search={setHostSearch}
         allVisitorEmployee={allVisitorEmployee}
         vtLoading={vtLoading}
+        isLoadingEmployee={isLoadingEmployee}
       />
 
       {/* Detail Employee */}
@@ -1015,7 +981,6 @@ const Content = () => {
         error={visitorError}
         detail={visitorDetail}
         onClose={() => setOpenVisitorDialog(false)}
-        onConfirm={(action: any) => openConfirm(action)}
       />
 
       <DetailVisitorDialog
@@ -1037,40 +1002,6 @@ const Content = () => {
         onSearch={handleQuickSearch}
         totalCount={quickAccessResult?.RecordsFiltered ?? 0}
       />
-
-      {/* Dialog Confirm */}
-      <Dialog open={!!confirm} onClose={closeConfirm} fullWidth>
-        <Box display="flex" alignItems="center" justifyContent="space-between" sx={{ px: 0.2 }}>
-          <DialogTitle>{confirm ? actionMeta[confirm.type].title : 'Confirm'}</DialogTitle>
-          <IconButton onClick={closeConfirm}>
-            <CloseIcon />
-          </IconButton>
-        </Box>
-        <Divider />
-        <DialogContent sx={{ pt: 2 }}>
-          <Typography>
-            {`Are you sure you want to ${
-              confirm ? actionMeta[confirm.type].ok.toLowerCase() : 'proceed'
-            } `}
-            <b>{visitorDetail?.name ?? 'this visitor'}</b>?
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={closeConfirm} disabled={!!confirm?.loading}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            // color={confirm ? actionMeta[confirm.type].color : 'primary'}
-            color="primary"
-            onClick={runConfirmedAction}
-            disabled={!!confirm?.loading}
-            startIcon={confirm?.loading ? <CircularProgress size={16} /> : undefined}
-          >
-            Submit
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       <ShareLinkDialog
         refreshKey={refreshKey}

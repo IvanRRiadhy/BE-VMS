@@ -44,7 +44,6 @@ export const AuthVisitor = async (body: AuthVisitorRequest): Promise<any> => {
   }
 };
 
-
 export const SubmitPraForm = async (body: any): Promise<AuthVisitorResponse> => {
   try {
     const response = await axiosInstance.post(`/on-portal/submit/pra-form`, body, {
@@ -70,6 +69,20 @@ export const revokeToken = async (token: string): Promise<RevokeTokenResponse> =
 export const getProfile = async (token: string): Promise<GetProfileResponse> => {
   try {
     const response = await axiosInstance.get('/profile/me', {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 400) {
+      throw error.response.data;
+    }
+    throw error;
+  }
+};
+
+export const updateProfile = async (token: string, data: any): Promise<any> => {
+  try {
+    const response = await axiosInstance.put('/profile/me', data, {
       headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
     });
     return response.data;

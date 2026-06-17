@@ -35,7 +35,7 @@ const ShareLinkDialog: React.FC<Props> = ({
 
   const startPage = page * rowsPerPage;
 
-  const [shareLinkList, setShareLinkList] = useState([]);
+  const [shareLinkList, setShareLinkList] = useState<any[]>([]);
   const [totalFilterRecords, setTotalFilterRecords] = useState(0);
   const [loading, setLoading] = useState(false);
 
@@ -129,8 +129,9 @@ const ShareLinkDialog: React.FC<Props> = ({
           // titleHeader="Share Link"
           isCopyLink={true}
           isHavePagination={true}
+          defaultRowsPerPage={rowsPerPage}
           totalCount={totalFilterRecords}
-          rowsPerPageOptions={[5, 10, 50, 100]}
+          rowsPerPageOptions={[10, 50, 100]}
           onPaginationChange={(newPage: any, newRowsPerPage: any) => {
             setPage(newPage);
             setRowsPerPage(newRowsPerPage);

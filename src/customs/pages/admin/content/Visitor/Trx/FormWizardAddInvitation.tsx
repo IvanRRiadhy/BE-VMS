@@ -10,9 +10,11 @@ type Props = {
   vtLoading?: any;
   visitorType?: any;
   sites?: any;
+  search?: any;
   employee?: any;
   allVisitorEmployee?: any;
   enableInvitationTypeStep?: boolean;
+  isLoadingEmployee?: any;
 };
 
 const FormWizardAddInvitation: React.FC<Props> = (props) => {

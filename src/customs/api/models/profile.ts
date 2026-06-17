@@ -10,6 +10,7 @@ export type Item = {
   is_vip: boolean;
   is_email_verified: boolean;
   organization_name: string;
+  password: string;
   district_name: string;
   department_name: string;
 };

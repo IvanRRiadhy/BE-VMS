@@ -126,7 +126,7 @@ export default function TopCardsUI({ onOpenQuick }: any) {
           flexDirection={'column'}
           gap={2}
           width={'100%'}
-          justifyContent={'space-around'}
+          justifyContent={'flex-start'}
         >
           <Button
             variant="contained"
@@ -136,7 +136,7 @@ export default function TopCardsUI({ onOpenQuick }: any) {
             sx={{
               color: '#fff',
               // backgroundColor: 'transparent !important',
-              fontSize: 22,
+              fontSize: 16,
               fontWeight: 600,
               textTransform: 'none',
               '& .MuiButton-startIcon svg': {
@@ -157,7 +157,7 @@ export default function TopCardsUI({ onOpenQuick }: any) {
             onClick={onOpenQuick}
             sx={{
               color: '#fff',
-              fontSize: 22,
+              fontSize: 16,
               fontWeight: 600,
               textTransform: 'none',
               '& .MuiButton-startIcon svg': {

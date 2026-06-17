@@ -15,12 +15,14 @@ interface Props {
   setFormDataAddVisitor: any;
   edittingId: string;
   handleSuccess: () => void;
+  search?: any;
 
   visitorType: any;
   sites: any;
   employee: any;
   allVisitorEmployee: any;
   vtLoading: boolean;
+  isLoadingEmployee?: any;
 }
 
 export default function PreRegistrationDialog({
@@ -33,12 +35,14 @@ export default function PreRegistrationDialog({
   formDataAddVisitor,
   setFormDataAddVisitor,
   edittingId,
+  search,
   handleSuccess,
   visitorType,
   sites,
   employee,
   allVisitorEmployee,
   vtLoading,
+  isLoadingEmployee,
 }: Props) {
   const handleClose = () => {
     if (isFormChanged) {
@@ -76,8 +80,10 @@ export default function PreRegistrationDialog({
           sites={sites}
           employee={employee}
           allVisitorEmployee={allVisitorEmployee}
+          search={search}
           vtLoading={vtLoading}
           enableInvitationTypeStep={false}
+          isLoadingEmployee={isLoadingEmployee}
         />
       </DialogContent>
     </Dialog>

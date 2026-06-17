@@ -108,7 +108,8 @@ import useAvailableCardOperator from 'src/hooks/useAvailableCardOperator';
 import useInvitationSite from 'src/hooks/useInvitationSite';
 import useRegisteredSiteOperator from 'src/hooks/useRegisteredSiteOperator';
 import useInvitationHost from 'src/hooks/useInvitationHost';
-import useInvitationVisitorEmployee from 'src/hooks/useInvitationVisitorEmployee';
+import { useInvitationVisitorEmployee } from 'src/hooks/useInvitationVisitorEmployee';
+// import useInvitationVisitorEmployee from 'src/hooks/useInvitationVisitorEmployee';
 
 type DocumentType = 'CardAccess' | 'Other';
 dayjs.extend(utc);
@@ -230,7 +231,8 @@ const OperatorView = () => {
   const { availableCards, setAvailableCards } = useAvailableCardOperator(token);
   const { visitorType } = useInvitationVisitorType(token);
   const { employee } = useInvitationHost(token);
-  const { allVisitorEmployee } = useInvitationVisitorEmployee(token);
+  // const { allVisitorEmployee } = useInvitationVisitorEmployee(token);
+  const { data: allVisitorEmployee = [] } = useInvitationVisitorEmployee(token);
   const permissionHook = usePermission(permission);
 
   const [relatedVisitors, setRelatedVisitors] = useState<

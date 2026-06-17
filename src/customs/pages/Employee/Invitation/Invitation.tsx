@@ -37,7 +37,11 @@ import { getInvitationRelatedVisitor, getOngoingInvitation } from 'src/customs/a
 import { useSelector } from 'react-redux';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import EmployeeDetailDialog from '../Components/Dialog/EmployeeDetailDialog';
-import { getInvitationSite, getInvitationVisitorType } from 'src/customs/api/Admin/InvitationData';
+import {
+  getInvitationSite,
+  getInvitationVisitorEmployee,
+  getInvitationVisitorType,
+} from 'src/customs/api/Admin/InvitationData';
 import {
   createShareLink,
   createShareLinkByEmailById,
@@ -58,6 +62,8 @@ import ConfirmUnsavedDialog from 'src/customs/pages/admin/components/ConfirmUnsa
 import { QuickAccessDialog } from '../Components/Dialog/QuickAccessDialog';
 import { createQuickAccess } from 'src/customs/api/Admin/Visitor';
 import useInvitationVisitorType from 'src/hooks/useInvitationVisitorType';
+import { useDebounce } from 'src/hooks/useDebounce';
+import { useInvitationVisitorEmployee } from 'src/hooks/useInvitationVisitorEmployee';
 
 const Content = () => {
   const { token } = useSession();
@@ -176,6 +182,7 @@ const Content = () => {
   >('All');
 
   const [search, setSearch] = useState<string>('');
+  const [searchHost, setSearchHost] = useState<any>('');
 
   const [appliedFilters, setAppliedFilters] = useState<any>({
     status: undefined,
@@ -389,16 +396,17 @@ const Content = () => {
     const saved = localStorage.getItem('unsavedVisitorData');
     let freshForm;
 
-    if (saved) {
-      try {
-        freshForm = JSON.parse(saved);
-      } catch {
-        freshForm = CreateVisitorRequestSchema.parse({});
-      }
-    } else {
-      freshForm = CreateVisitorRequestSchema.parse({});
-    }
+    // if (saved) {
+    //   try {
+    //     freshForm = JSON.parse(saved);
+    //   } catch {
+    //     freshForm = CreateVisitorRequestSchema.parse({});
+    //   }
+    // } else {
+    //   freshForm = CreateVisitorRequestSchema.parse({});
+    // }
 
+    freshForm = CreateVisitorRequestSchema.parse({});
     setEdittingId('');
     setFormDataAddVisitor(freshForm);
     setSelectedSite(null);
@@ -477,22 +485,27 @@ const Content = () => {
   const [vtLoading, setVtLoading] = useState(false);
   const [sites, setSites] = useState<any[]>([]);
   const [employee, setEmployee] = useState<any[]>([]);
-  const [allVisitorEmployee, setAllVisitorEmployee] = useState<any[]>([]);
+
+  // const [search, setSearch] = useState<string>('');
+  const debounceSearch = useDebounce(searchHost, 400);
+  const params = {
+    'search[value]': debounceSearch,
+    start: 0,
+    length: 10,
+  };
 
   useEffect(() => {
     if (!token) return;
 
     const fetchSecondaryData = async () => {
       try {
-        const [employeeRes, allEmployeeRes, siteRes] = await Promise.all([
-          getFormEmployee(token),
-          getVisitorEmployee(token),
+        const [employeeRes, siteRes] = await Promise.all([
+          // getFormEmployee(token),
+          getInvitationVisitorEmployee(token),
           getInvitationSite(token),
         ]);
 
-        // setCustomField(customFieldRes?.collection ?? []);
         setEmployee(employeeRes?.collection ?? []);
-        setAllVisitorEmployee(allEmployeeRes?.collection ?? []);
         setSites(siteRes?.collection ?? []);
       } catch (error) {
         console.error('Error fetching secondary data:', error);
@@ -501,6 +514,12 @@ const Content = () => {
 
     fetchSecondaryData();
   }, [token]);
+
+  const { data: allVisitorEmployee = [] } = useInvitationVisitorEmployee(token, {
+    search: debounceSearch,
+    start: 0,
+    length: 10,
+  });
 
   const { visitorType } = useInvitationVisitorType(token);
 
@@ -821,8 +840,8 @@ const Content = () => {
             sites={sites}
             employee={employee}
             allVisitorEmployee={allVisitorEmployee}
-            // customField={customField}
             vtLoading={vtLoading}
+            search={setSearchHost}
           />
         </DialogContent>
       </Dialog>

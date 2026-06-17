@@ -12,7 +12,7 @@ import { memo } from 'react';
 const VisitorTypeList = memo(({ visitorType, formData, onChange, showVTListSkeleton }: any) => {
 
   return (
-    <RadioGroup row value={formData.visitor_type} onChange={onChange}>
+    <RadioGroup row value={formData.visitor_type ?? ''} onChange={onChange}>
       <Grid container spacing={1}>
         {showVTListSkeleton
           ? Array.from({ length: 6 }).map((_, i) => (

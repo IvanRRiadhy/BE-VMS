@@ -76,6 +76,8 @@ type DynamicTableProps<
   isHaveBack?: boolean;
   onBack?: any;
   isHaveExportCsv?: boolean;
+  isHaveAssignTracking?: boolean;
+  onAssignTracking?: any;
   isHaveExportExcel?: boolean;
   triggerCheckAll?: boolean;
   isHavePrint?: boolean;
@@ -143,6 +145,10 @@ type DynamicTableProps<
   defaultSelectedHeaderItem?: string;
   isActionListVisitor?: boolean;
   breadcrumbItems?: any[];
+  isHaveAssign?: boolean;
+  isHaveUnAssign?: boolean;
+  onAssign?: any;
+  onUnAssign?: (row: T) => void;
   isHavePagination?: boolean;
   rowsPerPageOptions?: number[];
   defaultRowsPerPage?: number;
@@ -250,6 +256,8 @@ function DynamicTableBase<
     isHaveHeader = false,
     isHaveBooleanSwitch = false,
     isHavePermission = false,
+    isHaveAssignTracking,
+    onAssignTracking,
     isHaveActionRevoke,
     breadcrumbItems,
     isOperatorSetting = false,
@@ -266,6 +274,10 @@ function DynamicTableBase<
     isCurrentUsed = false,
     isButtonDisabled = false,
     isButtonEnabled = false,
+    isHaveAssign,
+    isHaveUnAssign,
+    onAssign,
+    onUnAssign,
     onQuickAccessToggle,
     isHaveEmployee = false,
     isHaveViewAndAction = false,
@@ -369,6 +381,7 @@ function DynamicTableBase<
     'url',
     'shorten_url',
     'ticket_id',
+    'employee_linked',
   ];
 
   const fallbackColumns = React.useMemo(() => {
@@ -1090,6 +1103,25 @@ function DynamicTableBase<
                   </Tooltip>
                 )}
 
+                {/* {isHaveAssign && (
+                  <Tooltip title="Assign Employee">
+                    <Button
+                      onClick={() => onAssign?.(true)}
+                      disableRipple
+                      variant="contained"
+                      sx={{
+                        color: 'white',
+                        // width: 28,
+                        // height: 28,
+                        // p: 0.5,
+                        // borderRadius: '50%',
+                      }}
+                    >
+                      Assign
+                    </Button>
+                  </Tooltip>
+                )} */}
+
                 {isHaveAddData && (
                   <Tooltip title="Add Data">
                     <Fab
@@ -1534,6 +1566,8 @@ function DynamicTableBase<
                   handleCheckRow={handleCheckRow}
                   isTreeSiteType={isTreeSiteType}
                   toggleRow={toggleRow}
+                  isHaveAssignTracking={isHaveAssignTracking}
+                  onAssignTracking={onAssignTracking}
                   openRow={openRow}
                   page={currentPage}
                   isActionEmployee={isActionEmployee}
@@ -1563,6 +1597,10 @@ function DynamicTableBase<
                   visiblePasswords={visiblePasswords}
                   togglePassword={togglePassword}
                   isHavePassword={isHavePassword}
+                  isHaveAssign={isHaveAssign}
+                  isHaveUnAssign={isHaveUnAssign}
+                  onAssign={onAssign}
+                  onUnAssign={onUnAssign}
                   isHaveCard={isHaveCard}
                   isHaveBooleanSwitch={isHaveBooleanSwitch}
                   onBooleanSwitchChange={onBooleanSwitchChange}

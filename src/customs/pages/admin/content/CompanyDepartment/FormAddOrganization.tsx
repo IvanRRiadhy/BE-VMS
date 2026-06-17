@@ -56,8 +56,7 @@ const FormAddOrganization: React.FC<FormOrganizationProps> = ({
   const {
     control,
     handleSubmit,
-    formState: { errors },
-    watch,
+    formState: { errors, isDirty },
     reset,
   } = useForm<CreateOrganizationRequest>({
     resolver: zodResolver(schema as any),
@@ -69,6 +68,10 @@ const FormAddOrganization: React.FC<FormOrganizationProps> = ({
       is_internal: undefined,
     },
   });
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
 
   useEffect(() => {
     if (mode === 'edit' && data) {
@@ -89,13 +92,6 @@ const FormAddOrganization: React.FC<FormOrganizationProps> = ({
       });
     }
   }, [mode, data, reset]);
-
-  useFormAutoSave({
-    watch,
-    reset,
-    storageKey: 'unsavedOrganizationFormAdd',
-    onDirtyChange,
-  });
 
   useEffect(() => {
     if (!token) return;
@@ -135,23 +131,25 @@ const FormAddOrganization: React.FC<FormOrganizationProps> = ({
       }
 
       // ✅ BATCH
-   if (mode === 'batch' && selectedRows.length > 0) {
-     await Promise.all(
-       selectedRows.map((item) => {
-         const payload = {
-           name: form.name, 
-           code: item.code,
-           host:
-             typeof item.host === 'object' ? String(item.host?.id || '') : String(item.host || ''),
-           is_internal: item.is_internal,
-         };
+      if (mode === 'batch' && selectedRows.length > 0) {
+        await Promise.all(
+          selectedRows.map((item) => {
+            const payload = {
+              name: form.name,
+              code: item.code,
+              host:
+                typeof item.host === 'object'
+                  ? String(item.host?.id || '')
+                  : String(item.host || ''),
+              is_internal: item.is_internal,
+            };
 
-         return updateOrganization(item.id, payload, token);
-       }),
-     );
+            return updateOrganization(item.id, payload, token);
+          }),
+        );
 
-     showSwal('success', 'Batch update successful!');
-   }
+        showSwal('success', 'Batch update successful!');
+      }
 
       reset();
       onSuccess?.();

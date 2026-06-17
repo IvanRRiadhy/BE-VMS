@@ -12,6 +12,30 @@ import Logo from 'src/assets/images/logos/BI_Logo.png';
 // import Logo from 'src/assets/images/logos/bio-experience-1x1-logo.png';
 import CustomNavigation from 'src/customs/components/header/navigation/CustomNavigation';
 
+const AppBarStyled = styled(AppBar)(({ theme }) => ({
+  background: theme.palette.background.paper,
+  justifyContent: 'center',
+  backdropFilter: 'blur(4px)',
+  boxShadow: 'none',
+  padding: '2.5px',
+  width: '100%',
+  zIndex: 1200,
+  borderBottom: '1px solid rgba(0,0,0,0.05)',
+  // [theme.breakpoints.up('lg')]: {
+  //   minHeight: customizer.TopbarHeight,
+  // },
+}));
+
+const ToolbarStyled = styled(Toolbar)(({ theme }) => ({
+  // paddingLeft: lgUp ? '10px !important' : '10px !important',
+  paddingRight: theme.spacing(2),
+  width: '100%',
+  color: `${theme.palette.text.secondary} !important`,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+}));
+
 const HeaderHorizontal = ({ itemDataCustomNavListing, itemDataCustomSidebarItems }: any) => {
   const lgUp = useMediaQuery((theme: Theme) => theme.breakpoints.up('xl'));
   const xl = useMediaQuery((theme: Theme) => theme.breakpoints.down('lg'));
@@ -19,38 +43,23 @@ const HeaderHorizontal = ({ itemDataCustomNavListing, itemDataCustomSidebarItems
   const customizer = useSelector((state: AppState) => state.customizer);
   const dispatch = useDispatch();
 
-  const AppBarStyled = styled(AppBar)(({ theme }) => ({
-    background: theme.palette.background.paper,
-    justifyContent: 'center',
-    backdropFilter: 'blur(4px)',
-    boxShadow: 'none',
-    padding: '2.5px',
-    width: '100%',
-    zIndex: 1200,
-    borderBottom: '1px solid rgba(0,0,0,0.05)',
-    [theme.breakpoints.up('lg')]: {
-      minHeight: customizer.TopbarHeight,
-    },
-  }));
-
-  const ToolbarStyled = styled(Toolbar)(({ theme }) => ({
-    paddingLeft: lgUp ? '10px !important' : '10px !important',
-    paddingRight: theme.spacing(2),
-    width: '100%',
-    color: `${theme.palette.text.secondary} !important`,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  }));
-
   return (
     <AppBarStyled
       position="sticky"
       color="default"
       elevation={8}
-      sx={{ borderBottom: '1px solid rgba(0,0,0,0.1)' }}
+      sx={{
+        borderBottom: '1px solid rgba(0,0,0,0.1)',
+        minHeight: {
+          lg: customizer.TopbarHeight,
+        },
+      }}
     >
-      <ToolbarStyled>
+      <ToolbarStyled
+        sx={{
+          paddingLeft: '10px !important',
+        }}
+      >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {/* {!isMobile && (

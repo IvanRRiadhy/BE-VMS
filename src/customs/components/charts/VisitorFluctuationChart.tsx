@@ -25,50 +25,47 @@ const VisitorFluctuationChart = () => {
   const end = endDate?.toISOString().split('T')[0];
 
   useEffect(() => {
+    if (!token) return;
+
     const fetchData = async () => {
-      if (!token) return;
-
       try {
-        // const today = new Date();
-        // const end_date = today.toISOString().split('T')[0];
-        // const start = new Date(today);
-        // start.setDate(today.getDate() - 7);
-        // const start_date = start.toISOString().split('T')[0];
-
         const res = await getVisitorChart(token, start, end);
         const rows = res?.collection ?? [];
 
-        // 🔹 Ambil tanggal
-        const mappedDates = rows.map((d: any) => new Date(d.Date).getTime());
-        setDates(mappedDates);
+        setDates(rows.map((item: any) => new Date(item.date).getTime()));
 
-        // 🔹 Helper untuk ambil jumlah berdasarkan status name
-        const getCount = (statuses: any[], name: string) =>
+        const getCount = (statuses: any[] = [], name: string) =>
           statuses.find((s) => s.visitor_status?.toLowerCase() === name.toLowerCase())?.Count ?? 0;
-
-        // 🔹 Siapkan data series
-        const checkinSeries = rows.map((r: any) => getCount(r.Status, 'Checkin'));
-        const checkoutSeries = rows.map((r: any) => getCount(r.Status, 'Checkout'));
-        const deniedSeries = rows.map((r: any) => getCount(r.Status, 'Denied'));
-        const blockedSeries = rows.map((r: any) => getCount(r.Status, 'Block'));
 
         setSeries([
           {
             id: 'checkedIn',
             label: 'Checked In',
-            data: checkinSeries,
             color: '#22c55e',
             area: true,
+            data: rows.map((r: any) => getCount(r.status, 'Checkin')),
           },
           {
             id: 'checkedOut',
             label: 'Checked Out',
-            data: checkoutSeries,
             color: '#F44336',
             area: true,
+            data: rows.map((r: any) => getCount(r.status, 'Checkout')),
           },
-          { id: 'denied', label: 'Denied', data: deniedSeries, color: '#8B0000', area: true },
-          { id: 'blocked', label: 'Blocked', data: blockedSeries, color: '#000000', area: true },
+          {
+            id: 'denied',
+            label: 'Denied',
+            color: '#8B0000',
+            area: true,
+            data: rows.map((r: any) => getCount(r.status, 'Denied')),
+          },
+          {
+            id: 'blocked',
+            label: 'Blocked',
+            color: '#000000',
+            area: true,
+            data: rows.map((r: any) => getCount(r.status, 'Block')),
+          },
         ]);
       } catch (err) {
         console.error('Error fetching visitor fluctuation:', err);
@@ -97,30 +94,6 @@ const VisitorFluctuationChart = () => {
         <Typography variant="h5" sx={{ mb: 1, fontWeight: 600 }}>
           {t('fluctuation_visitor')}
         </Typography>
-        {/* <LineChart
-          height={350}
-          xAxis={[
-            {
-              scaleType: 'time',
-              data: dates,
-              valueFormatter: (timestamp) =>
-                new Intl.DateTimeFormat('en-GB', {
-                  day: '2-digit',
-                  month: 'short',
-                  year: 'numeric',
-                }).format(new Date(timestamp as number)),
-            },
-          ]}
-          series={series.map((s) => ({
-            ...s,
-            curve: 'monotoneX',
-          }))}
-          margin={{ top: 20, bottom: 70, left: 50, right: 20 }}
-          grid={{ horizontal: true, vertical: false }}
-          slotProps={{
-            legend: { hidden: true },
-          }}
-        /> */}
 
         <Chart
           type="area"

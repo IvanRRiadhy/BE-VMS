@@ -16,12 +16,13 @@ interface Props {
   setFormDataAddVisitor: any;
   edittingId: string;
   handleSuccess: () => void;
-
+  search?: any;
   visitorType: any;
   sites: any;
   employee: any;
   allVisitorEmployee: any;
   vtLoading: boolean;
+  isLoadingEmployee?: any;
 }
 
 export default function InvitationVisitorDialog({
@@ -33,6 +34,7 @@ export default function InvitationVisitorDialog({
   isFormChanged,
   wizardKey,
   formDataAddVisitor,
+  search,
   setFormDataAddVisitor,
   edittingId,
   handleSuccess,
@@ -41,6 +43,7 @@ export default function InvitationVisitorDialog({
   employee,
   allVisitorEmployee,
   vtLoading,
+  isLoadingEmployee,
 }: Props) {
   const handleClose = () => {
     if (isFormChanged) {
@@ -78,9 +81,11 @@ export default function InvitationVisitorDialog({
           visitorType={visitorType}
           sites={sites}
           employee={employee}
+          search={search}
           allVisitorEmployee={allVisitorEmployee}
           vtLoading={vtLoading}
           enableInvitationTypeStep={true}
+          isLoadingEmployee={isLoadingEmployee}
         />
       </DialogContent>
     </Dialog>

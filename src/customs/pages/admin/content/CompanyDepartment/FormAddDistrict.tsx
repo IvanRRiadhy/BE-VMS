@@ -56,12 +56,12 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({
   const {
     control,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isDirty },
     reset,
     watch,
   } = useForm<CreateDistrictRequest>({
     resolver: zodResolver(schema as any),
-        shouldUnregister: true,
+    shouldUnregister: true,
     defaultValues: {
       name: '',
       code: '',
@@ -89,13 +89,6 @@ const FormAddDistrict: React.FC<FormAddDistrictProps> = ({
       });
     }
   }, [mode, data, reset]);
-
-  useFormAutoSave({
-    watch,
-    reset,
-    storageKey: 'unsavedDistrictFormAdd',
-    onDirtyChange,
-  });
 
   useEffect(() => {
     if (!token) return;

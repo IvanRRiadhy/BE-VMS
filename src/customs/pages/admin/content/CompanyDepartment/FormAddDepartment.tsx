@@ -58,7 +58,7 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
     control,
     handleSubmit,
     watch,
-    formState: { errors },
+    formState: { errors, isDirty },
     reset,
   } = useForm<CreateDepartmentRequest>({
     resolver: zodResolver(schema as any),
@@ -71,12 +71,9 @@ const FormAddDepartment: React.FC<FormAddDepartmentProps> = ({
     },
   });
 
-  useFormAutoSave({
-    watch,
-    reset,
-    storageKey: 'unsavedDepartmentFormAdd',
-    onDirtyChange,
-  });
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
 
   // fetch employee
   useEffect(() => {

@@ -55,7 +55,12 @@ import CreateLinkDialog from '../Components/Dialog/CreateLinkDialog';
 import DetailLinkDialog from '../Components/Dialog/DetailLinkDialog';
 import SendEmailDialog from '../Components/Dialog/SendEmailDialog';
 import { useNavigate } from 'react-router';
-import { createShareLink, deleteShareLink, getShareLinkByDt } from 'src/customs/api/ShareLink';
+import {
+  createShareLink,
+  createShareLinkByEmailById,
+  deleteShareLink,
+  getShareLinkByDt,
+} from 'src/customs/api/ShareLink';
 import AccessPassDialog from '../Components/Dialog/AccessPassDialog';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -73,6 +78,7 @@ import { IconDownload } from '@tabler/icons-react';
 import { createQuickAccess } from 'src/customs/api/Admin/Visitor';
 import { QuickAccessDialog } from '../Components/Dialog/QuickAccessDialog';
 import dayjs from 'dayjs';
+import InvitationShareDialog from '../../admin/content/Visitor/Trx/components/Dialog/InvitationShareDialog';
 
 const DashboardEmployee = () => {
   const CardItems = [
@@ -730,6 +736,53 @@ const DashboardEmployee = () => {
     visitor_period_end: formatDateTime(item.visitor_period_end),
   }));
 
+  const [openInviteViaLinkEmail, setOpenInviteViaLinkEmail] = useState(false);
+  const [generatedLink, setGeneratedLink] = useState('');
+  const [expiredAt, setExpiredAt] = useState<string | null>(null);
+  const [selectedShareLinkId, setSelectedShareLinkId] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [selectedShareLink, setSelectedShareLink] = useState<any>(null);
+
+  const getExpireText = () => {
+    if (!expiredAt) return '';
+
+    const now = new Date();
+    const expireDate = new Date(expiredAt);
+
+    const diffMs = expireDate.getTime() - now.getTime();
+
+    if (diffMs <= 0) return '0';
+
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+
+    if (diffDays > 0) {
+      return `${diffDays} day${diffDays > 1 ? 's' : ''}`;
+    }
+
+    return `${diffHours} hour${diffHours > 1 ? 's' : ''}`;
+  };
+
+  const handleSendInvitation = async (emails: any) => {
+    const validEmails = emails.filter((email: any) => email?.trim() !== '');
+
+    if (!validEmails.length || !selectedShareLinkId) {
+      showSwal('error', 'Please enter at least one email');
+      return;
+    }
+    try {
+      const payload = {
+        emails: emails,
+      };
+      console.log('payload', payload);
+      await createShareLinkByEmailById(token as string, payload, selectedShareLinkId as string);
+      showSwal('success', 'Invitation sent successfully');
+      setRefreshKey((prev) => prev + 1);
+    } catch (error: any) {
+      showSwal('error', error?.response.data.message || 'Failed to send invitation');
+    }
+  };
+
   return (
     <PageContainer title="Dashboard" description="This is Employee Dashboard">
       <Grid container spacing={3} alignItems="center" justifyContent="space-between" mb={1}>
@@ -884,7 +937,7 @@ const DashboardEmployee = () => {
         <Grid size={{ xs: 12, lg: 6 }}>
           <DynamicTable
             loading={loadingApproval}
-            height={450}
+            height={'100%'}
             overflowX="auto"
             // minWidth={200}
             data={approvalData}
@@ -903,7 +956,7 @@ const DashboardEmployee = () => {
         <Grid size={{ xs: 12, lg: 6 }}>
           <DynamicTable
             loading={isFetching}
-            height={450}
+            height={'100%'}
             overflowX="auto"
             data={shareLinkList}
             isHaveChecked={true}
@@ -915,12 +968,15 @@ const DashboardEmployee = () => {
               setPage(page);
               setRowsPerPage(rowsPerPage);
             }}
+            isHaveAddData={true}
             isDetailLink={true}
             onCopyLink={(row: any) => handleCopyLink(row.url)}
             onDetailLink={(row: any) => handleDetailLink(row)}
             onDelete={(row: any) => handleDeleteLink(row.id)}
+            onAddData={() => setOpenCreateLink(true)}
           />
         </Grid>
+
         <Grid size={{ xs: 12, lg: 6 }} sx={{ height: '100%' }}>
           <DynamicTable
             data={invitationDetailVisitor}
@@ -1047,6 +1103,17 @@ const DashboardEmployee = () => {
         totalCount={quickAccessResult?.RecordsFiltered ?? 0}
       />
 
+      <InvitationShareDialog
+        open={openInviteViaLinkEmail}
+        onClose={() => setOpenInviteViaLinkEmail(false)}
+        generatedLink={generatedLink}
+        getExpireText={getExpireText}
+        expiredAt={expiredAt}
+        handleCopyLink={handleCopyLink}
+        handleSendInvitation={handleSendInvitation}
+        shareLinkData={selectedShareLink}
+      />
+
       <CreateLinkDialog
         open={openCreateLink}
         onClose={() => setOpenCreateLink(false)}
@@ -1060,7 +1127,7 @@ const DashboardEmployee = () => {
       <DetailLinkDialog
         open={openDetailLink}
         onClose={() => setOpenDetailLink(false)}
-        dataVisitor={dataVisitor}
+        dataVisitor={[]}
       />
 
       <SendEmailDialog

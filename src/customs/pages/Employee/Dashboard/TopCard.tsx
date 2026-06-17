@@ -20,13 +20,13 @@ const TopCard = ({ items = [], size }: any) => {
   const { t } = useTranslation();
   const { token } = useSession();
   const { startDate, endDate } = useSelector((state: any) => state.dateRange);
-    const formatLocalDate = (date: Date) => {
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
+  const formatLocalDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
 
-      return `${year}-${month}-${day}`;
-    };
+    return `${year}-${month}-${day}`;
+  };
   const start = formatLocalDate(startDate);
   const end = formatLocalDate(endDate);
 
@@ -36,23 +36,21 @@ const TopCard = ({ items = [], size }: any) => {
     { Date: string; StatusMap: Record<string, number> }[]
   >([]);
 
-  const normalizeCollection = (collection: ApiDateGroup[]) => {
+  const normalizeCollection = (collection: any[]) => {
     return collection.map((day) => {
       const grouped: Record<string, number> = {};
 
-      (day.Status || []).forEach((item) => {
+      (day.Status || []).forEach((item: any) => {
         const key = item.visitor_status.trim();
         grouped[key] = (grouped[key] || 0) + Number(item.Count || 0);
       });
 
       return {
-        Date: day.Date.split('T')[0],
+        Date: day.date ? day.date.split('T')[0] : '',
         StatusMap: grouped,
       };
     });
   };
-
-
 
   useEffect(() => {
     if (!token) return;

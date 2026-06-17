@@ -46,21 +46,21 @@ const PageContainer: React.FC<CustomPageContainerProps> = ({
   //     setHideChrome(isF11);
   //   };
 
-    // listen F11 fullscreen changes
-    // window.addEventListener('resize', checkFullscreen);
+  // listen F11 fullscreen changes
+  // window.addEventListener('resize', checkFullscreen);
 
-    // listen react-full-screen child events
-    // const handler = (e: any) => {
-    //   setHideChrome(e.detail.isFullscreen);
-    // };
-    // window.addEventListener('operator-fullscreen-changed', handler);
+  // listen react-full-screen child events
+  // const handler = (e: any) => {
+  //   setHideChrome(e.detail.isFullscreen);
+  // };
+  // window.addEventListener('operator-fullscreen-changed', handler);
 
-    // checkFullscreen(); // initial
+  // checkFullscreen(); // initial
 
-    // return () => {
-    //   // window.removeEventListener('resize', checkFullscreen);
-    //   window.removeEventListener('operator-fullscreen-changed', handler);
-    // };
+  // return () => {
+  //   // window.removeEventListener('resize', checkFullscreen);
+  //   window.removeEventListener('operator-fullscreen-changed', handler);
+  // };
   // }, []);
 
   return (
@@ -107,7 +107,11 @@ const PageContainer: React.FC<CustomPageContainerProps> = ({
             }}
           >
             <Box sx={{ minHeight: 'calc(100vh - 170px)', background: '#ebedefff' }}>
-              {React.isValidElement(children) ? <ScrollToTop>{children}</ScrollToTop> : children}{' '}
+              {React.isValidElement(children) ? (
+                <ScrollToTop>{children}</ScrollToTop>
+              ) : (
+                children
+              )}{' '}
             </Box>
           </Box>
           {/* <Customizer /> */}

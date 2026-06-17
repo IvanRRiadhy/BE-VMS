@@ -84,6 +84,10 @@ export const TableBodyContent = ({
   isHaveDataQuickAccess,
   onDetailQuickAccess,
   htmlFields,
+  isHaveAssign,
+  isHaveUnAssign,
+  onAssign,
+  onUnAssign,
   htmlClampLines,
   htmlMaxWidth,
   isHaveBlacklist,
@@ -103,6 +107,8 @@ export const TableBodyContent = ({
   onQuickAccessToggle,
   isHaveVerified,
   visiblePasswords,
+  isHaveAssignTracking,
+  onAssignTracking,
   isCurrentUsed,
   togglePassword,
   isHavePassword,
@@ -335,6 +341,10 @@ export const TableBodyContent = ({
                 isHaveVip,
                 htmlFields,
                 htmlClampLines,
+                isHaveAssign,
+                isHaveUnAssign,
+                onAssign,
+                onUnAssign,
                 isHaveActive,
                 onActiveToggle,
                 onQuickAccessToggle,
@@ -357,6 +367,8 @@ export const TableBodyContent = ({
                 isHaveVerified,
                 visiblePasswords,
                 togglePassword,
+                isHaveAssignTracking,
+                onAssignTracking,
                 isHavePassword,
                 isHaveCard,
                 isHaveBooleanSwitch,
@@ -439,6 +451,10 @@ const TableRowItem = React.memo(
       onActiveToggle,
       isHaveImage,
       imageFields,
+      isHaveAssign,
+      isHaveUnAssign,
+      onAssign,
+      onUnAssign,
       onQuickAccessToggle,
       isDataVerified,
       tooltipLabels,
@@ -480,6 +496,8 @@ const TableRowItem = React.memo(
       isHaveActionRevoke,
       onActionAccess,
       isHaveActionOnlyEdit,
+      isHaveAssignTracking,
+      onAssignTracking,
       isSelectedType,
       isButtonGiveAccess,
       isButtonRegisteredSite,
@@ -1672,6 +1690,80 @@ const TableRowItem = React.memo(
                         }}
                       >
                         {row.is_blacklist ? 'Whitelist' : 'Blacklist'}
+                      </Button>
+                    </Tooltip>
+                  )}
+
+                  {/* {isHaveAssign && ( */}
+
+                  {isHaveAssign &&
+                    (row.group_name === 'Manager' ||
+                      row.group_name === 'Admin' ||
+                      row.group_name === 'Operator VMS') &&
+                    !row.employee_linked && (
+                      <Tooltip title="Assign Employee" arrow placement="top">
+                        <Button
+                          onClick={() => onAssign?.(row)}
+                          disableRipple
+                          variant="contained"
+                          sx={{
+                            color: 'white',
+
+                            // width: 28,
+                            // height: 28,
+                            // p: 0.5,
+                            // borderRadius: '50%',
+                          }}
+                        >
+                          Assign Employee
+                        </Button>
+                      </Tooltip>
+                    )}
+
+                  {/* {row.group_name === 'Manager' && row.employee_linked && (
+                  {isHaveUnAssign && ( */}
+                  {isHaveUnAssign &&
+                    (row.group_name === 'Manager' ||
+                      row.group_name === 'Admin' ||
+                      row.group_name === 'Operator VMS') &&
+                    row.employee_linked && (
+                      <Tooltip title="Unassign Employee" arrow placement="top">
+                        <Button
+                          onClick={() => onUnAssign?.(row)}
+                          disableRipple
+                          variant="contained"
+                          color="secondary"
+                          sx={{
+                            color: 'white',
+
+                            // width: 28,
+                            // height: 28,
+                            // p: 0.5,
+                            // borderRadius: '50%',
+                          }}
+                        >
+                          Unassign Employee
+                        </Button>
+                      </Tooltip>
+                    )}
+
+                  {isHaveAssignTracking && (
+                    <Tooltip title="Assign Tracking BLE" arrow placement="top">
+                      <Button
+                        onClick={() => onAssignTracking?.(row)}
+                        disableRipple
+                        variant="contained"
+                        // color="secondary"
+                        sx={{
+                          color: 'white',
+                          backgroundColor: '#000',
+                          // width: 28,
+                          // height: 28,
+                          // p: 0.5,
+                          // borderRadius: '50%',
+                        }}
+                      >
+                        Assign Tracking
                       </Button>
                     </Tooltip>
                   )}

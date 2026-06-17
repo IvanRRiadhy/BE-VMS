@@ -123,7 +123,7 @@ const Approval = () => {
           approval_workflow_type: item.approval_workflow_type,
           approval_status: item.approval_status,
           current_step: item.current_step,
-          visitor_period_start: formatDateTime(item.visitor_period_start),
+          visitor_period_start: item.visitor_period_start,
           visitor_period_end: formatDateTime(item.visitor_period_end),
         }));
         setApprovalData(rows);

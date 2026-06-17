@@ -742,7 +742,7 @@ export const getTopVisitingPurpose = async (
     'start-date': start_date,
     'end-date': end_date,
   };
-  const response = await axiosInstance.get('/dashboard/top-visiting-purpose', {
+  const response = await axiosInstance.get('/dashboard/top/purposes', {
     headers: { Authorization: `Bearer ${token}` },
     params,
   });
@@ -758,7 +758,7 @@ export const getTopVisitors = async (
     'start-date': start_date,
     'end-date': end_date,
   };
-  const response = await axiosInstance.get('/dashboard/top-visitors', {
+  const response = await axiosInstance.get('/dashboard/top/visitors', {
     headers: { Authorization: `Bearer ${token}` },
     params,
   });
@@ -846,7 +846,7 @@ export const getTodayPraregister = async (
   start_date: string,
   end_date: string,
 ): Promise<any> => {
-  const response = await axiosInstance.get('/dashboard/today-praregister', {
+  const response = await axiosInstance.get('/dashboard/today/praregister', {
     headers: { Authorization: `Bearer ${token}` },
     params: { 'start-date': start_date, 'end-date': end_date },
   });
@@ -1829,29 +1829,67 @@ export const getEmployeeById = async (id: string, token: string): Promise<any> =
 
 export const getAllEmployeePagination = async (
   token: string,
-  start: number,
-  length: number,
+  start?: number,
+  length?: number,
   sortColumn?: string,
   sortDir?: string,
   keyword: string = '',
-): Promise<GetAllEmployeePaginationResponse> => {
-  // const params: Record<string, any> = {
-  //   start,
-  //   length,
-  //   sort_column: sortColumn,
-  //   'search[value]': keyword, // ← ini memang harus pakai tanda kurung
-  // };
+  gender?: number,
+  joinStart?: string,
+  exitEnd?: string,
+  statusEmployee?: number,
+  organization?: string,
+  district?: string,
+  department?: string,
+): Promise<any> => {
+  const params: Record<string, any> = {};
 
-  const response = await axiosInstance.get(`/employee/dt`, {
-    params: { start, length, sort_column: sortColumn, 'search[value]': keyword },
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: 'application/json',
-    },
-  });
-  console.log('response.data:', response.data);
+  if (start !== undefined) params.start = start;
+  if (length !== undefined) params.length = length;
+  if (sortColumn) params.sort_column = sortColumn;
+  if (sortDir) params.sort_dir = sortDir;
 
-  return response.data;
+  if (keyword) params['search[value]'] = keyword;
+  if (gender !== undefined && gender !== -1) params.gender = gender;
+  if (joinStart) params['join-start'] = joinStart;
+  if (exitEnd) params['exit-end'] = exitEnd;
+  if (statusEmployee !== undefined && statusEmployee !== -1) {
+    params['status-employee'] = statusEmployee;
+  }
+  if (organization && organization !== '0') {
+    params.organization = organization;
+  }
+  if (district && district !== '0') {
+    params.district = district;
+  }
+  if (department && department !== '0') {
+    params.department = department;
+  }
+
+  try {
+    const response = await axiosInstance.get(`/employee/dt`, {
+      params: params,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    if (
+      error?.response?.data?.status === 'not_found' ||
+      error?.response?.data?.status_code === 404
+    ) {
+      return {
+        collection: [],
+        RecordsTotal: 0,
+        RecordsFiltered: 0,
+      };
+    }
+
+    throw error;
+  }
 };
 
 export const getAllEmployeePaginationFilterMore = async (
@@ -1876,7 +1914,6 @@ export const getAllEmployeePaginationFilterMore = async (
     sort_dir: sortDir,
   };
 
-  // ✅ hanya tambahkan jika ada isi
   if (keyword) params['search[value]'] = keyword;
   if (gender !== undefined && gender !== -1) params.gender = gender;
   if (joinStart) params['join-start'] = joinStart;

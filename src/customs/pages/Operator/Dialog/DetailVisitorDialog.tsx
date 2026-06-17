@@ -367,7 +367,7 @@ const DetailVisitorDialog: React.FC<Props> = ({ open, onClose, visitorData, cont
                       <Box display="flex" gap={2} alignItems="flex-start">
                         <IconMapPin />
                         <Box>
-                          <CustomFormLabel sx={{ mt: 0, mb: 0 }}>Registered Site</CustomFormLabel>
+                          <CustomFormLabel sx={{ mt: 0, mb: 0 }}>Site</CustomFormLabel>
                           <Typography>{visitorData[0]?.site_place_name || '-'}</Typography>
                         </Box>
                       </Box>
@@ -385,23 +385,6 @@ const DetailVisitorDialog: React.FC<Props> = ({ open, onClose, visitorData, cont
           >
             <Divider orientation="vertical" flexItem />
           </Grid>
-          {/* Hide */}
-          {/* <Grid
-            size={{ xs: 12, lg: 6.5 }}
-            display="flex"
-            justifyContent="center"
-            // alignItems="center"
-            sx={{ textAlign: 'center' }}
-          >
-            <Box sx={{ width: '100%' }}>
-              <DynamicTable
-                data={[]}
-                isHaveSearch={false}
-                isHaveHeaderTitle={true}
-                titleHeader="History"
-              />
-            </Box>
-          </Grid> */}
         </Grid>
       </DialogContent>
     </Dialog>
